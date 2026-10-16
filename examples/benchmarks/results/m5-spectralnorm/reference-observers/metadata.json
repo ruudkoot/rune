@@ -1,0 +1,23 @@
+[
+  {
+    "profile": "smoke",
+    "size": 8,
+    "reference": "1.2700463058540765",
+    "timeout": 30,
+    "memory_bytes": 1073741824
+  },
+  {
+    "profile": "normal",
+    "size": 256,
+    "reference": "1.2742238859485557",
+    "timeout": 600,
+    "memory_bytes": 4294967296
+  },
+  {
+    "profile": "large",
+    "size": 5500,
+    "reference": "1.2742241527925133",
+    "timeout": 3600,
+    "memory_bytes": 8589934592
+  }
+]

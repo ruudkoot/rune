@@ -1,0 +1,26 @@
+[
+  {
+    "profile": "smoke",
+    "size": 8,
+    "generations": 2,
+    "live": 16,
+    "timeout": 30,
+    "memory_bytes": 1073741824
+  },
+  {
+    "profile": "normal",
+    "size": 128,
+    "generations": 64,
+    "live": 1603,
+    "timeout": 600,
+    "memory_bytes": 4294967296
+  },
+  {
+    "profile": "large",
+    "size": 1024,
+    "generations": 256,
+    "live": 69636,
+    "timeout": 3600,
+    "memory_bytes": 8589934592
+  }
+]

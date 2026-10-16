@@ -1,0 +1,5 @@
+COUNT unbudgeted spectralnorm2 normal rune
+COUNT unbudgeted spectralnorm2 normal rune:opt
+COUNT unbudgeted spectralnorm2 normal rune:new
+COUNT unbudgeted spectralnorm2 normal rune:jit
+COUNT comparisons agree

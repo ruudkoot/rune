@@ -33,3 +33,9 @@ configurations use unchanged portable sources and expected results. The suite
 does not substitute a different arithmetic expression or accept an alternate
 expected result for this host. These failures cannot contribute measurements.
 Recheck after a managed host update and retain the failing baseline.
+
+The later dense-array game_of_life import reproduces this same Overflow on its
+smoke and normal profiles. Its independent rule/buffer/checker tests pass on the
+32-bit host; the source generator call triggers the isolated threshold failure.
+[Both complete attempts](../results/m5-array-life/correctness-attempts.tsv) remain
+separate from 26 passing correctness cases on other configurations.

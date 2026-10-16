@@ -1,0 +1,15 @@
+[
+  {
+    "executable": "benchmarks/multicore-numerical/game_of_life.exe",
+    "name": "game_of_life",
+    "tags": [
+      "10s_100s",
+      "macro_bench"
+    ],
+    "runs": [
+      {
+        "params": "256"
+      }
+    ]
+  }
+]

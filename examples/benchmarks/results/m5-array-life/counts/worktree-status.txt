@@ -1,0 +1,18 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/literature.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/fish-lazy/
+?? examples/benchmarks/fish-strict/
+?? examples/benchmarks/game_of_life/
+?? examples/benchmarks/shared/nofib-fish.sml
+?? examples/benchmarks/shared/sandmark-array-life.sml
+?? examples/benchmarks/shared/sandmark-spectralnorm.sml
+?? examples/benchmarks/spectralnorm2/
+?? tests/benchmarks/check-fish.sh
+?? tests/benchmarks/check-sandmark-array-life.sh
+?? tests/benchmarks/check-sandmark-spectralnorm.sh
+?? tests/benchmarks/data/array-life/
+?? tests/benchmarks/data/fish/
+?? tests/benchmarks/fish.sml
+?? tests/benchmarks/sandmark-array-life.sml
+?? tests/benchmarks/sandmark-spectralnorm.sml

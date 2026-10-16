@@ -1,0 +1,8 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/fish-lazy/
+?? examples/benchmarks/fish-strict/
+?? examples/benchmarks/shared/nofib-fish.sml
+?? tests/benchmarks/check-fish.sh
+?? tests/benchmarks/data/fish/
+?? tests/benchmarks/fish.sml

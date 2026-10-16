@@ -1,0 +1,10 @@
+[1 of 3] Compiling Kernel           ( /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/fish-originals/Kernel.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/fish-originals/observer-build/Kernel.o )
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/fish-originals/Kernel.hs:74:1: warning: [-Wtabs]
+    Tab character found here, and in six further locations.
+    Suggested fix: Please use spaces instead.
+   |
+74 |         | (x0, y0, x1, y1) <- segments]
+   | ^^^^^^^^
+[2 of 3] Compiling Main             ( /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/fish-originals/Observer.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/fish-originals/observer-build/Main.o )
+[3 of 3] Linking /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/fish-originals/observer

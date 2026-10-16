@@ -1,0 +1,1 @@
+game_of_life	600	4194304	shared/input.sml shared/ocaml-random.sml shared/sandmark-array-life.sml game_of_life/benchmark.sml shared/main.sml	64 128 expected/normal.board expected/normal.spare	game_of_life/normal.expected	expected/normal.board expected/normal.spare

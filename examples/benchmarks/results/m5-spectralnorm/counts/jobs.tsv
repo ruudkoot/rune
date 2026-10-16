@@ -1,0 +1,1 @@
+spectralnorm2	600	4194304	shared/input.sml shared/sandmark-spectralnorm.sml spectralnorm2/benchmark.sml shared/main.sml	256 1.2742238859485557	spectralnorm2/normal.expected	-

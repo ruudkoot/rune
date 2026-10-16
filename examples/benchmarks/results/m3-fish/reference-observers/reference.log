@@ -1,0 +1,6 @@
+PASS original and independent integer affine model 255 9344 161547
+PASS original and independent integer affine model 640 9344 169363
+PASS original and independent integer affine model 641 9344 169363
+PASS original length-forced invocation smoke 1
+PASS original length-forced invocation normal 300
+PASS original length-forced invocation large 1500

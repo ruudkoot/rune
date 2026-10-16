@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-fish.is6286ps
+PASS fish-lazy smoke O0
+PASS fish-lazy smoke O2
+PASS fish-lazy smoke hosts
+PASS fish-lazy normal O0
+PASS fish-lazy normal O2
+PASS fish-lazy normal hosts
+PASS fish-strict smoke O0
+PASS fish-strict smoke O2
+PASS fish-strict smoke hosts
+PASS fish-strict normal O0
+PASS fish-strict normal O2
+PASS fish-strict normal hosts

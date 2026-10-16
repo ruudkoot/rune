@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-norm-life.rbqzdwwx
+PASS spectralnorm2 smoke O0
+PASS spectralnorm2 smoke O2
+PASS spectralnorm2 smoke hosts
+PASS spectralnorm2 normal O0
+PASS spectralnorm2 normal O2
+PASS spectralnorm2 normal hosts
+PASS game_of_life smoke O0
+PASS game_of_life smoke O2
+FAIL game_of_life smoke hosts
+PASS game_of_life normal O0
+PASS game_of_life normal O2
+FAIL game_of_life normal hosts

@@ -1,0 +1,5 @@
+COUNT unbudgeted game_of_life normal rune
+COUNT unbudgeted game_of_life normal rune:opt
+COUNT unbudgeted game_of_life normal rune:new
+COUNT unbudgeted game_of_life normal rune:jit
+COUNT comparisons agree

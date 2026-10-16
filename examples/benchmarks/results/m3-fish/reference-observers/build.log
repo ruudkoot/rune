@@ -1,0 +1,9 @@
+[1 of 2] Compiling Main             ( /home/ruud/reference/ghc/nofib/spectral/fish/Main.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/fish-originals/build/Main.o )
+
+/home/ruud/reference/ghc/nofib/spectral/fish/Main.hs:74:1: warning: [-Wtabs]
+    Tab character found here, and in six further locations.
+    Suggested fix: Please use spaces instead.
+   |
+74 |         | (x0, y0, x1, y1) <- segments]
+   | ^^^^^^^^
+[2 of 2] Linking /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/fish-originals/original

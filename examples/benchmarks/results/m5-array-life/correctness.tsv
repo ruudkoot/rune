@@ -1,0 +1,27 @@
+benchmark	profile	optimization	configuration	arguments	status	artifact_directory
+game_of_life	normal	O0	rune	64 128 expected/normal.board expected/normal.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/normal/O0/rune
+game_of_life	normal	O0	rune-jit	64 128 expected/normal.board expected/normal.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/normal/O0/rune-jit
+game_of_life	normal	O0	rune-new	64 128 expected/normal.board expected/normal.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/normal/O0/rune-new
+game_of_life	normal	O0	rune-opt	64 128 expected/normal.board expected/normal.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/normal/O0/rune-opt
+game_of_life	normal	O2	rune	64 128 expected/normal.board expected/normal.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/normal/O2/rune
+game_of_life	normal	O2	rune-jit	64 128 expected/normal.board expected/normal.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/normal/O2/rune-jit
+game_of_life	normal	O2	rune-new	64 128 expected/normal.board expected/normal.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/normal/O2/rune-new
+game_of_life	normal	O2	rune-opt	64 128 expected/normal.board expected/normal.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/normal/O2/rune-opt
+game_of_life	normal	host-default	native-mlkit-4.7.23	64 128 expected/normal.board expected/normal.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/normal/host-default/native-mlkit-4.7.23
+game_of_life	normal	host-default	native-mlton-20241230	64 128 expected/normal.board expected/normal.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/normal/host-default/native-mlton-20241230
+game_of_life	normal	host-default	native-polyml-5.9.2	64 128 expected/normal.board expected/normal.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/normal/host-default/native-polyml-5.9.2
+game_of_life	normal	host-default	native-smlnj-dev-2026.2	64 128 expected/normal.board expected/normal.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/normal/host-default/native-smlnj-dev-2026.2
+game_of_life	normal	host-default	native-smlnj-legacy-110.99.9	64 128 expected/normal.board expected/normal.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/normal/host-default/native-smlnj-legacy-110.99.9
+game_of_life	smoke	O0	rune	2 8 expected/smoke.board expected/smoke.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/smoke/O0/rune
+game_of_life	smoke	O0	rune-jit	2 8 expected/smoke.board expected/smoke.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/smoke/O0/rune-jit
+game_of_life	smoke	O0	rune-new	2 8 expected/smoke.board expected/smoke.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/smoke/O0/rune-new
+game_of_life	smoke	O0	rune-opt	2 8 expected/smoke.board expected/smoke.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/smoke/O0/rune-opt
+game_of_life	smoke	O2	rune	2 8 expected/smoke.board expected/smoke.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/smoke/O2/rune
+game_of_life	smoke	O2	rune-jit	2 8 expected/smoke.board expected/smoke.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/smoke/O2/rune-jit
+game_of_life	smoke	O2	rune-new	2 8 expected/smoke.board expected/smoke.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/smoke/O2/rune-new
+game_of_life	smoke	O2	rune-opt	2 8 expected/smoke.board expected/smoke.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/smoke/O2/rune-opt
+game_of_life	smoke	host-default	native-mlkit-4.7.23	2 8 expected/smoke.board expected/smoke.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/smoke/host-default/native-mlkit-4.7.23
+game_of_life	smoke	host-default	native-mlton-20241230	2 8 expected/smoke.board expected/smoke.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/smoke/host-default/native-mlton-20241230
+game_of_life	smoke	host-default	native-polyml-5.9.2	2 8 expected/smoke.board expected/smoke.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/smoke/host-default/native-polyml-5.9.2
+game_of_life	smoke	host-default	native-smlnj-dev-2026.2	2 8 expected/smoke.board expected/smoke.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/smoke/host-default/native-smlnj-dev-2026.2
+game_of_life	smoke	host-default	native-smlnj-legacy-110.99.9	2 8 expected/smoke.board expected/smoke.spare	pass	results/m5-array-life/attempts-raw/final-norm-life.rbqzdwwx/game_of_life/smoke/host-default/native-smlnj-legacy-110.99.9

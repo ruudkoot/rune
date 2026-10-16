@@ -1,0 +1,3 @@
+PASS original Life board and available independent stencil smoke 2 8
+PASS original Life board and available independent stencil normal 64 128
+PASS original Life board and available independent stencil large 256 1024

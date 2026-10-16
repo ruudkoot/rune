@@ -1,0 +1,6 @@
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-spectralnorm.sml
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/spectralnorm2/benchmark.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sandmark-spectralnorm.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml

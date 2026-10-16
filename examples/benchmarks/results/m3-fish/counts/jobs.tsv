@@ -1,0 +1,2 @@
+fish-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/cell-sequence.sml shared/nofib-fish.sml fish-lazy/benchmark.sml shared/main.sml	300	fish-lazy/normal.expected	-
+fish-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/cell-sequence.sml shared/nofib-fish.sml fish-strict/benchmark.sml shared/main.sml	300	fish-strict/normal.expected	-

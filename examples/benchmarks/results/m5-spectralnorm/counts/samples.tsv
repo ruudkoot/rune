@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+spectralnorm2	normal	rune	O2	compile	0	0	pass	3.38	2.44	0.16	135304	-	-	-	spectralnorm2/rune/build/compile
+spectralnorm2	normal	rune	O2	correctness	0	0	pass	0.72	0.74	0.00	3340	107871743	1099904	21166	spectralnorm2/rune/correctness.0
+spectralnorm2	normal	rune	O2	count	1	1	pass	0.71	0.73	0.00	3476	107871743	1099904	21166	spectralnorm2/rune/fresh.1
+spectralnorm2	normal	rune:opt	O2	compile	0	0	pass	1.82	1.77	0.09	135260	-	-	-	spectralnorm2/rune-opt/build/compile
+spectralnorm2	normal	rune:opt	O2	native-compile	0	0	pass	0.42	0.20	0.05	12392	-	-	-	spectralnorm2/rune-opt/build/native-compile
+spectralnorm2	normal	rune:opt	O2	correctness	0	0	pass	0.24	0.23	0.00	3852	107871743	1099904	21166	spectralnorm2/rune-opt/correctness.0
+spectralnorm2	normal	rune:opt	O2	count	1	1	pass	0.21	0.21	0.00	3812	107871743	1099904	21166	spectralnorm2/rune-opt/fresh.1
+spectralnorm2	normal	rune:new	O2	compile	0	0	pass	1.78	1.74	0.08	135288	-	-	-	spectralnorm2/rune-new/build/compile
+spectralnorm2	normal	rune:new	O2	correctness	0	0	pass	0.58	0.59	0.00	3320	82816409	1099904	21166	spectralnorm2/rune-new/correctness.0
+spectralnorm2	normal	rune:new	O2	count	1	1	pass	0.57	0.59	0.00	3188	82816409	1099904	21166	spectralnorm2/rune-new/fresh.1
+spectralnorm2	normal	rune:jit	O2	compile	0	0	pass	1.88	1.82	0.09	135256	-	-	-	spectralnorm2/rune-jit/build/compile
+spectralnorm2	normal	rune:jit	O2	correctness	0	0	pass	0.19	0.18	0.01	4524	82816409	1099904	21166	spectralnorm2/rune-jit/correctness.0
+spectralnorm2	normal	rune:jit	O2	count	1	1	pass	0.20	0.19	0.01	4484	82816409	1099904	21166	spectralnorm2/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

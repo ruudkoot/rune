@@ -1,0 +1,3 @@
+game_of_life
+64 128 expected/normal.board expected/normal.spare
+64:128:1603:1644:5D7C073F
