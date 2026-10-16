@@ -1910,3 +1910,22 @@ bootstrap and 498 identical bytecode comparisons across seven builds. runedoc an
 runeopt also agree. [The complete transcript](validation/oct16-scs-907-acceptance.log)
 records the run. All 46 inventory fixtures pass and all 861 entries validate;
 the clean pinned-tree circuit-input replay is separately recorded.
+
+## M0 source dependency follow-up — quoted CPP includes, 2026-10-16
+
+The [source review](validation/hartel-cpp-inventory.md) adds transitive quoted
+Haskell/C headers to source identities and removes preprocessor include paths
+from runtime input metadata. The exact pinned Hartel shim receives a narrowly
+scoped portable scalar-operation review. Changed shims and direct primitive
+imports still require review. No compiler/runtime feature or benchmark profile
+changes. [All 19 metadata differences](results/m0-cpp-includes/source-differences.json)
+affect only members, SHA-256 identities or inputs; names, dispositions and
+milestones remain unchanged. All five clean pinned trees reproduce 861 entries.
+All 56 discovery/classification regressions pass.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 907 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 identical bytecode comparisons across seven builds. runedoc
+and runeopt also agree. [The complete transcript](validation/oct16-cpp-inventory-907-acceptance.log)
+records the run. [Source identities and replay logs](results/m0-cpp-includes/README.md)
+make the correction reviewable. Timing and count baselines are unchanged.
