@@ -1,0 +1,12 @@
+[
+  {
+    "source": "nofib",
+    "path": "real/scs",
+    "changes": {
+      "inputs": {
+        "before": "real/scs/scs.stdout",
+        "after": "real/scs/runtime_files/inverter.in;real/scs/scs.stdout"
+      }
+    }
+  }
+]

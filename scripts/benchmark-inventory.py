@@ -491,7 +491,7 @@ def build(source, root, lock):
             for fixture in parent.rglob("*"):
                 if not upstream_file(root, fixture):
                     continue
-                if fixture.is_file() and (fixture.name == "ANSWER" or fixture.suffix in {".stdin", ".stdout", ".faststdin", ".faststdout", ".slowstdin", ".slowstdout", ".expected", ".out", ".ok"} or "DATA" in fixture.relative_to(parent).parts):
+                if fixture.is_file() and (fixture.name == "ANSWER" or fixture.suffix in {".in", ".stdin", ".stdout", ".faststdin", ".faststdout", ".slowstdin", ".slowstdout", ".expected", ".out", ".ok"} or "DATA" in fixture.relative_to(parent).parts):
                     inputs.add(str(fixture.relative_to(root)))
         for ref in re.findall(r'"([^"\n]+)"', text):
             if not re.fullmatch(r"[\w./@+ -]{1,240}", ref):
