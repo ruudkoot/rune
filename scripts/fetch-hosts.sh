@@ -109,10 +109,23 @@ case "$(uname -s)" in
 esac
 
 fetch() {   # fetch URL FILE
-  echo "fetching $1"
+  # say is defined with the parallel install below; a fetch runs only then.
+  say "fetching $1"
   if command -v curl > /dev/null 2>&1; then curl -fL --retry 3 -o "$2" "$1"
   else wget -O "$2" "$1"
   fi
+}
+
+# fail_log LOG WHY: a failed build only names its log, and that file is gone
+# with the runner. Copy the end of it into this host's output. env's printf
+# flushes each line, so the heading stays above the tail.
+fail_log() {
+  env printf '%s\n' "fetch-hosts: $2" >&2
+  if [ -f "$1" ]; then
+    env printf '%s\n' "---- last lines of $1 ----" >&2
+    tail -n 40 "$1" >&2 || true
+  fi
+  return 1
 }
 
 # installed HOST VERSION: that version is already there (and --force is off).
@@ -169,7 +182,7 @@ install_smlnj_bits() {
   # install.sh downloads the remaining parts of the release and builds the
   # runtime system and the heap images in place.
   (cd "$prefix/$name-$v" && sh config/install.sh -default "$bits") > "$prefix/src/$name-$v.log" 2>&1 ||
-    { echo "fetch-hosts: building SML/NJ ($bits-bit) failed; see $prefix/src/$name-$v.log" >&2; return 1; }
+    fail_log "$prefix/src/$name-$v.log" "building SML/NJ ($bits-bit) failed" || return 1
   activate "$name" "$v"
 }
 install_smlnj_legacy() {
@@ -227,7 +240,7 @@ install_smlnj_dev() {
   [ -n "$src" ] || { echo "fetch-hosts: $name.tgz has no build.sh" >&2; return 1; }
   # build.sh uses bash ([[ ]]). It compiles LLVM, which is most of the time.
   (cd "$(dirname "$src")" && bash ./build.sh -install "$prefix/smlnj-dev-$v") > "$prefix/src/smlnj-dev-$v.log" 2>&1 ||
-    { echo "fetch-hosts: building SML/NJ $v failed; see $prefix/src/smlnj-dev-$v.log" >&2; return 1; }
+    fail_log "$prefix/src/smlnj-dev-$v.log" "building SML/NJ $v failed" || return 1
   rm -rf "$prefix/src/smlnj-dev-$v"
   activate smlnj-dev "$v"
   smlnj_dev_system
@@ -271,7 +284,7 @@ install_polyml_build() {
   (cd "$prefix/src/polyml-$v" &&
      ./configure --prefix="$prefix/polyml-$v" &&
      make -j "$jobs" && make compiler && make install) > "$prefix/src/polyml-$v.log" 2>&1 ||
-    { echo "fetch-hosts: building Poly/ML failed; see $prefix/src/polyml-$v.log" >&2; return 1; }
+    fail_log "$prefix/src/polyml-$v.log" "building Poly/ML failed" || return 1
   cp -R "$prefix/src/polyml-$v/basis" "$prefix/polyml-$v/basis"
   rm -rf "$prefix/src/polyml-$v"
   activate polyml "$v"
@@ -305,7 +318,7 @@ install_mlkit() {
       { echo "fetch-hosts: mlkit-bin-dist-linux.tgz of MLKit $v is not the one of MLKIT_SHA256" >&2; return 1; }
     tar -xzf "$prefix/src/mlkit-$v.tgz" -C "$prefix/src"
     (cd "$prefix/src/mlkit-bin-dist-linux" && make install PREFIX="$prefix/mlkit-$v") > "$prefix/src/mlkit-$v.log" 2>&1 ||
-      { echo "fetch-hosts: installing MLKit failed; see $prefix/src/mlkit-$v.log" >&2; return 1; }
+      fail_log "$prefix/src/mlkit-$v.log" "installing MLKit failed" || return 1
     rm -rf "$prefix/src/mlkit-bin-dist-linux"
   else
     [ -x "$prefix/mlton/bin/mlton" ] ||
@@ -315,17 +328,33 @@ install_mlkit() {
     (cd "$prefix/src/mlkit-$v" && PATH=$prefix/mlton/bin:$PATH &&
        ./autobuild && ./configure --with-compiler="$prefix/mlton/bin/mlton" --prefix="$prefix/mlkit-$v" &&
        make mlkit && make mlkit_libs && make install) > "$prefix/src/mlkit-$v.log" 2>&1 ||
-      { echo "fetch-hosts: building MLKit failed; see $prefix/src/mlkit-$v.log" >&2; return 1; }
+      fail_log "$prefix/src/mlkit-$v.log" "building MLKit failed" || return 1
     rm -rf "$prefix/src/mlkit-$v"
   fi
   activate mlkit "$v"
 }
 
 status=0
-# The hosts are installed all at once, each in the background with its
-# output kept apart and shown when all are done: a fresh machine then waits
-# for the slowest (SML/NJ 2026.2, which builds LLVM) rather than for them in turn. The two
-# SML/NJ builds share one download, which is fetched first.
+# say TEXT: a line on the job log now. The shell buffers a pipe in blocks,
+# so a builtin echo can sit unseen for the whole of a long build; env's
+# printf is a process and flushes when it exits.
+say() {
+  env printf '%s\n' "$1"
+}
+
+# The hosts are installed together, each in the background. A fresh machine
+# then waits for the slowest (SML/NJ SMLNJ_DEV_VERSION, which builds LLVM)
+# rather than for them one after another. Each host's output is kept apart
+# and printed when that host finishes, and a line every 30s names the ones
+# still going: a job log that stays quiet until the last host finishes looks
+# stuck. The two SML/NJ 110.99 builds share one download, fetched first.
+say "fetch-hosts: installing in parallel; each host's output appears when that host finishes"
+case " $hosts " in
+  *" smlnj-dev "*)
+    if ! installed smlnj-dev "$SMLNJ_DEV_VERSION"; then
+      say "fetch-hosts: SML/NJ $SMLNJ_DEV_VERSION compiles LLVM and is the slow one"
+    fi ;;
+esac
 case " $hosts " in
   *" smlnj-legacy "*|*" smlnj32 "*)
     if [ ! -f "$prefix/src/smlnj-$SMLNJ_VERSION-config.tgz" ]; then
@@ -333,27 +362,157 @@ case " $hosts " in
         "$prefix/src/smlnj-$SMLNJ_VERSION-config.tgz" || status=1
     fi ;;
 esac
+
+# progress_hint HOST: the last line of that host's build, one log line long.
+# Curl paints its meter with CR; those become separate lines.
+progress_hint() {
+  out="$prefix/src/fetch-$1.out"
+  log=""
+  case "$1" in
+    smlnj-legacy) log="$prefix/src/smlnj-legacy-$SMLNJ_VERSION.log" ;;
+    smlnj32) log="$prefix/src/smlnj32-$SMLNJ_VERSION.log" ;;
+    smlnj-dev) log="$prefix/src/smlnj-dev-$SMLNJ_DEV_VERSION.log" ;;
+    polyml) log="$prefix/src/polyml-$POLYML_VERSION.log" ;;
+    mlkit) log="$prefix/src/mlkit-$MLKIT_VERSION.log" ;;
+  esac
+  src=$out
+  # -nt is not POSIX. find -newer is: the build log wins once it is newer
+  # than the fetch transcript (that is where a long compile writes).
+  if [ -n "$log" ] && [ -f "$log" ] &&
+     { [ ! -f "$out" ] || [ -n "$(find "$log" -newer "$out" -print)" ]; }; then
+    src=$log
+  fi
+  [ -f "$src" ] || return 0
+  hint=$(tail -c 4000 "$src" | tr '\r' '\n' | sed -n '/[^[:space:]]/p' | tail -n 1 | cut -c 1-140) || true
+  env printf '%s' "$hint"
+}
+
+# child_alive PID: the child is still doing work. A zombie has already
+# exited (kill -0 is true for one) and is not alive here.
+child_alive() {
+  [ -n "$1" ] || return 1
+  if [ -r "/proc/$1/stat" ]; then
+    # The command name sits in parentheses and may contain spaces.
+    # The state is the field after the last one. alive_state stays out of
+    # the waiter's own variables: this runs inside that loop.
+    alive_state=$(sed 's/.*) //' "/proc/$1/stat" 2>/dev/null | awk '{ print $1 }') || true
+    [ -n "$alive_state" ] && [ "$alive_state" != Z ]
+    return
+  fi
+  kill -0 "$1" 2>/dev/null
+}
+
+report_host() {
+  say "== $1"
+  if [ -f "$prefix/src/fetch-$1.out" ]; then
+    cat "$prefix/src/fetch-$1.out"
+  fi
+  if [ "$(cat "$prefix/src/fetch-$1.status" 2>/dev/null || true)" != 0 ]; then
+    status=1
+  fi
+  rm -f "$prefix/src/fetch-$1.out" "$prefix/src/fetch-$1.status" \
+    "$prefix/src/fetch-$1.status.tmp" "$prefix/src/fetch-$1.pid"
+}
+
+progress_line() {   # progress_line SECONDS HOST...
+  secs=$1
+  shift
+  msg="fetch-hosts: still building (${secs}s):"
+  for h in "$@"; do
+    hint=$(progress_hint "$h") || true
+    if [ -n "$hint" ]; then msg="$msg $h: $hint"
+    else msg="$msg $h"
+    fi
+  done
+  say "$msg"
+}
+
+# await_hosts HOST...: each was started by install_one. Print a host when
+# it finishes. Every 30s, name the ones still going and the last line of
+# the build. A child that dies without a status cannot leave this waiting.
+await_hosts() {
+  pending="$*"
+  slept=0
+  while [ -n "$pending" ]; do
+    rest=""
+    for h in $pending; do
+      st="$prefix/src/fetch-$h.status"
+      pidf="$prefix/src/fetch-$h.pid"
+      pid=$(cat "$pidf" 2>/dev/null || true)
+      # The status file is renamed into place only after it holds 0 or 1.
+      # An empty file is not a result: the redirect that writes it truncates
+      # first, and treating that as "done" reports the host while it runs.
+      code=$(cat "$st" 2>/dev/null || true)
+      if [ "$code" = 0 ] || [ "$code" = 1 ]; then
+        report_host "$h"
+      elif child_alive "$pid"; then
+        rest="$rest $h"
+      else
+        # Exited between the status check and here, or died without one.
+        # wait on a live child would hide the progress line until it ends.
+        if [ -n "$pid" ]; then wait "$pid" 2>/dev/null || true; fi
+        code=$(cat "$st" 2>/dev/null || true)
+        if [ "$code" = 0 ] || [ "$code" = 1 ]; then
+          report_host "$h"
+        else
+          echo "fetch-hosts: $h ended without a result" >> "$prefix/src/fetch-$h.out"
+          echo 1 > "$prefix/src/fetch-$h.status.tmp"
+          mv "$prefix/src/fetch-$h.status.tmp" "$st"
+          report_host "$h"
+        fi
+      fi
+    done
+    pending=${rest# }
+    [ -n "$pending" ] || return 0
+    # First line at 30s, then every 30s, so a cache hit that finishes at
+    # once does not say it is still building.
+    if [ "$slept" -ge 30 ] && [ "$((slept % 30))" -eq 0 ]; then
+      # The host list is words; awaiting it splits them.
+      # shellcheck disable=SC2086
+      progress_line "$slept" $pending
+    fi
+    # A host finishing delivers SIGCHLD, which can make sleep return
+    # early. That is not a failed install.
+    sleep 5 || true
+    slept=$((slept + 5))
+  done
+}
+
 install_one() {   # install_one HOST: in the background, its output kept apart
   # A host id may contain a hyphen; a function name may not.
   fn=$(printf 'install_%s' "$1" | tr - _)
-  ( if "$fn" > "$prefix/src/fetch-$1.out" 2>&1; then echo 0; else echo 1; fi > "$prefix/src/fetch-$1.status" ) &
+  rm -f "$prefix/src/fetch-$1.out" "$prefix/src/fetch-$1.status" \
+    "$prefix/src/fetch-$1.status.tmp" "$prefix/src/fetch-$1.pid"
+  # Rename the status into place when it is complete. A redirect on the if
+  # would create an empty file at the start, and the waiter would take that
+  # for the result.
+  (
+    if "$fn" > "$prefix/src/fetch-$1.out" 2>&1; then rc=0; else rc=1; fi
+    echo "$rc" > "$prefix/src/fetch-$1.status.tmp"
+    mv "$prefix/src/fetch-$1.status.tmp" "$prefix/src/fetch-$1.status"
+  ) &
+  echo "$!" > "$prefix/src/fetch-$1.pid"
 }
+
 later=""
+started=""
 for h in $hosts; do
-  # MLKit from source is compiled by the MLton being installed
+  # MLKit from source is compiled by the MLton being installed.
   if [ "$h" = mlkit ] && ! mlkit_binary; then later=mlkit; continue; fi
   install_one "$h"
+  started="$started $h"
 done
-wait
-[ -z "$later" ] || { install_one mlkit; wait; }
-for h in $hosts; do
-  echo "== $h"
-  cat "$prefix/src/fetch-$h.out"
-  [ "$(cat "$prefix/src/fetch-$h.status" 2> /dev/null)" = 0 ] || status=1
-  rm -f "$prefix/src/fetch-$h.out" "$prefix/src/fetch-$h.status"
-done
+# The host list is words; awaiting it splits them.
+# shellcheck disable=SC2086
+await_hosts $started
+wait || true
+if [ -n "$later" ]; then
+  install_one mlkit
+  await_hosts mlkit
+  wait || true
+fi
 
-echo "== installed under $prefix"
+say "== installed under $prefix"
 [ -x "$prefix/mlton/bin/mlton" ] && "$prefix/mlton/bin/mlton" | head -1
 [ -x "$prefix/smlnj-legacy/bin/sml" ] && "$prefix/smlnj-legacy/bin/sml" @SMLversion
 [ -x "$prefix/smlnj32/bin/sml" ] && "$prefix/smlnj32/bin/sml" @SMLversion
