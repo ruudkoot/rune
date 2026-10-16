@@ -22,6 +22,14 @@ Ports should preserve this breadth. Demand-sensitive streams, exact real
 arithmetic, search and higher-order code require explicit decisions about
 sharing; strict rewrites are separate implementations.
 
+The [pinned clausify source](clausify-lazy/upstream/Main.hs) credits Colin
+Runciman's 1990 propositional rewriting program, David Wakeling's 1992 batch
+adaptation and the 1994 ordered-insertion correction. This is source history,
+separate from Gabriel ancestry. Formula expansion, lazy subtree sharing,
+ordered literal/clause lists and short-circuit tautology checks are useful
+diagnostic questions; an independent truth-table check establishes logical
+results without establishing a performance cause.
+
 For the list-sorting pilot, Larry C. Paulson's [*ML for the Working Programmer*,
 Lists chapter](https://doi.org/10.1017/CBO9780511811326.005) (second edition,
 1996) supplies the algorithmic background. ML Kit's `kittmergesort` source
