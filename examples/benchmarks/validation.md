@@ -2010,3 +2010,45 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 identical bytecode comparisons across seven builds. runedoc
 and runeopt also agree. [The complete transcript](validation/oct16-wang-925-acceptance.log)
 records the run. All 56 inventory regressions and all 861 inventory entries pass.
+
+## M3 Hartel FFT execution/generation wave — 2026-10-16
+
+Four variants bring the catalogue to 315 programs and 937 profiles. All [112
+canonical smoke/normal cases](results/m3-hartel-fft/coverage.tsv) pass on Rune's
+four engines at O0/O2 and six native hosts at compiler defaults. The numerical
+family's 45 checks and generator's 39 checks pass on every configuration in both
+invocations (1680 assertions). Sixteen normal count samples agree under
+execution-model rules, including allocation across all Rune engines. Existing
+budgets are unchanged. Twelve serial single fresh-process native smoke samples
+validate the adapters separately from headline timings and instrumentation.
+
+Both original GHC programs match all six complete 360/300-line fixtures. Full
+vectors agree with independent positive-sign direct DFTs and a repeated-ramp
+closed form. The pinned GHC Complex module confirms strict components in both
+ports. Lazy whole values/collections and eager collections remain distinct;
+source root arguments, shared products, persistent array stages, explicit
+butterfly association lists and recursive list reordering are retained. The
+SML array adapter validates complete unique writes. Every finite scalar is
+checked with documented bounds stronger than the source's 0.5 comparison.
+
+Complete generator text agrees with a separate bit-mask/string renderer.
+Eight generated dependency graphs agree with direct DFTs on nonuniform complex
+inputs under documented operation meanings. Every generated character and EOF
+is checked against a reviewed fixture; a transposition with unchanged source
+checksum/length is rejected. Tests cover complete maxima 0..8, repeated output,
+character sharing, unused separators and partial empty glue. The measured
+workload generates text; the graph interpretation is an independent check.
+
+Both normal Rune O2 pilots retain all 360/300 original iterations. Smoke reduces
+only repetitions to one at the original FAST input. Large vectors/text have
+recorded complete and auxiliary repeat checks; whole original-repeat large
+profile validation is not claimed. Profile, library, forcing, initialization,
+validation and output adaptations accompany individual source notices and pins.
+[Raw evidence, resource guards and source identities](results/m3-hartel-fft/README.md)
+record each scope. M3 remains in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 937 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 identical bytecode comparisons across seven builds. runedoc
+and runeopt also agree. [The complete transcript](validation/oct16-hartel-fft-937-acceptance.log)
+records the run. All 56 inventory regressions and all 861 inventory entries pass.

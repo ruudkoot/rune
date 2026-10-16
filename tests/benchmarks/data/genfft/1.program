@@ -1,0 +1,20 @@
+sed -e 's/^/||SYNTH_4 /' <<'end'     
+synth_fft_4 i1
+=LET b_0_0=head i1 IN
+ LET i2=tail i1 IN
+ LET b_0_2=head i2 IN
+ LET i3=tail i2 IN
+ LET b_0_1=head i3 IN
+ LET i4=tail i3 IN
+ LET b_0_3=head i4 IN
+ LET
+ b_1_0=add_x b_0_0 r_0_0; b_1_1=sub_x b_0_0 r_0_0; r_0_0=mul_x b_0_1 w_0;
+ b_1_2=add_x b_0_2 r_0_1; b_1_3=sub_x b_0_2 r_0_1; r_0_1=mul_x b_0_3 w_0;
+ b_2_0=add_x b_1_0 r_1_0; b_2_2=sub_x b_1_0 r_1_0; r_1_0=mul_x b_1_2 w_0;
+ b_2_1=add_x b_1_1 r_1_1; b_2_3=sub_x b_1_1 r_1_1; r_1_1=mul_x b_1_3 w_1;
+ w_0=fw_d sector_4 0.0;
+ w_1=fw_d sector_4 1.0
+ IN b_2_0:b_2_1:b_2_2:b_2_3:NIL;
+INLINE sector_4=pi/2.0;
+
+end
