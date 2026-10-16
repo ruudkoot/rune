@@ -426,8 +426,9 @@ xc1:* | Posix.Process.exit/no-flush | XC1-NA | the file handles of tests/basis/h
 xc1:polyml@5.9.2 | Windows.exit/code | HOST-BUG | a forked child that calls Posix.Process.exit never ends, and Windows.exit is the exit primitive, which tests/basis/host/rune-prim.sml writes with it
 native:smlnj-legacy@110.99.9 | Posix.ProcEnv.time/* | HOST-BUG | time () is negative: the seconds since the Epoch overflow 32 bits
 native:smlnj-dev@2026.2 | Posix.ProcEnv.time/* | HOST-BUG | time () is negative: the seconds since the Epoch overflow 32 bits
-*:smlnj-legacy@110.99.9 | Posix.ProcEnv.times/not-negative | HOST-BUG | the elapsed time of times is negative
-*:smlnj-dev@2026.2 | Posix.ProcEnv.times/not-negative | HOST-BUG | the elapsed time of times is negative
+*:smlnj-legacy@110.99.9 | Posix.ProcEnv.times/not-negative | HOST-FLAKY | the elapsed time of times is negative after the machine has been up about 248 days: the runtime returns clock_t through a signed 32-bit int (CLK_TCK is 100), and on a machine booted more recently the check passes
+*:smlnj-dev@2026.2 | Posix.ProcEnv.times/not-negative | HOST-FLAKY | the elapsed time of times is negative after the machine has been up about 248 days: the runtime returns clock_t through a signed 32-bit int (CLK_TCK is 100), and on a machine booted more recently the check passes
+native:smlnj32@110.99.9 | Posix.ProcEnv.times/not-negative | HOST-FLAKY | the elapsed time of times is negative after the machine has been up about 248 days: the runtime returns clock_t through a signed 32-bit int (CLK_TCK is 100), and on a machine booted more recently the check passes
 xc1:smlnj32@* | Posix.ProcEnv.times/* | WIDTH | times gives its times as microseconds in an int (posix_times), the elapsed time since a point in the past among them, and the int of the host has 31 bits: Overflow
 xc1:smlnj32@* | Posix.ProcEnv.time/* | WIDTH | time and Time.now give microseconds since 1970 in an int, and the int of the host has 31 bits: Overflow
 xc1:smlnj32@* | Posix.ProcEnv.wordTo[UG]id/no-validation | WIDTH | lib/basis keeps a uid and a gid in an int, and 1999999999 does not fit the host's 31 bits: Overflow

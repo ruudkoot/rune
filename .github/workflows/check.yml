@@ -44,6 +44,9 @@ jobs:
       - name: Pinned GMP (build and upstream checks)
         run: python3 scripts/build-gmp.py --enable-fat --jobs 4
 
+      # fetch-hosts.sh puts SIGPIPE back at its default before SML/NJ
+      # links its heap. The heap records that disposition and restores it
+      # on startup; the nightly matrix runs the pipe check on that heap.
       - name: make hosts
         run: make hosts
 

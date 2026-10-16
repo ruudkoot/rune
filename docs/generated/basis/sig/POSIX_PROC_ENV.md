@@ -475,12 +475,6 @@ val times : unit
 | <a name="fld-times.cutime"></a>`cutime` | `Time.time` |  |
 | <a name="fld-times.cstime"></a>`cstime` | `Time.time` |  |
 
-<details><summary>Other implementations (1)</summary>
-
-- **SML/NJ 110.99.9 (64-bit), SML/NJ development 2026.2** &mdash; the elapsed time of times is negative
-
-</details>
-
 <details><summary>Tests (4)</summary>
 
 For `Posix.ProcEnv`, in [tests/basis/posix\_procenv.sml](../../../../tests/basis/posix_procenv.sml): `not-negative` &middot; `elapsed-is-wall-time` &middot; `cpu-time-grows` &middot; `children`
