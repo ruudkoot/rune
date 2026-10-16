@@ -321,3 +321,9 @@ preserve those conditions, including outward scans. Neither book establishes
 performance causes for the SML variants. Boxing, laziness, strict retention,
 normalization and validation costs remain source-based diagnostic questions
 until supported by measurements or compiler inspection.
+
+
+## Constructive exact real arithmetic
+
+See the [exact-real arithmetic literature review](validation/exact-reals-literature.md)
+for the imported source, precision argument and validation scopes.

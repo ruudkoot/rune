@@ -157,6 +157,25 @@ class InventoryTest(unittest.TestCase):
                   "The Circuit Simulator example\nDifferent authors\nJanuary, 1998\n\n> main = return ()\n")
         self.assertEqual(self.build("nofib")[0]["authors"], "not stated in scanned source headers")
 
+    def test_exact_reals_paper_attribution_is_recorded(self):
+        self.nofib_roots()
+        self.file("spectral/exact-reals/Makefile", "\n")
+        self.file("spectral/exact-reals/Main.hs",
+                  '-- Taken from "The worlds shortest correct exact real arithmetic program?"\n'
+                  '-- David Lester, Information and Computation 216, pp39-46, 2012, Elsevier\n'
+                  'main = print 0\n')
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "David Lester")
+        self.assertIn("spectral/exact-reals/Main.hs:paper-attribution", row["evidence"])
+
+    def test_changed_exact_reals_paper_attribution_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/exact-reals/Makefile", "\n")
+        self.file("spectral/exact-reals/Main.hs",
+                  '-- Taken from a different paper\n-- David Lester, another work\nmain = print 0\n')
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "not stated in scanned source headers")
+
     def test_atom_multiline_attribution_is_recorded(self):
         self.nofib_roots()
         self.file("spectral/atom/Makefile", "\n")

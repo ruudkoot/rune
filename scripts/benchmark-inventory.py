@@ -545,6 +545,10 @@ def build(source, root, lock):
                     and "A kernel fragment from a program written by\n\t\tRon Legere" in header):
                 authors.add("Ron Legere")
                 item["evidence"].append(str(p.relative_to(root)) + ":attribution-header")
+            if (source == "nofib" and path == "spectral/exact-reals"
+                    and '-- Taken from "The worlds shortest correct exact real arithmetic program?"\n-- David Lester, Information and Computation 216, pp39-46, 2012, Elsevier' in header):
+                authors.add("David Lester")
+                item["evidence"].append(str(p.relative_to(root)) + ":paper-attribution")
             if re.search(r"[Cc]opyright|[Ll]icen[sc]e|[Ww]ritten by|[Aa]uthor:|[Tt]ranslated", header):
                 notices.append(str(p.relative_to(root)) + ":header")
             for attribution in re.finditer(r"(?:[Ww]ritten|[Tt]ranslated|[Pp]orted|[Cc]ontributed)(?: to [^\n]*?)? by ([^\n]+)|[Aa]uthors?: ([^\n]+)", header):

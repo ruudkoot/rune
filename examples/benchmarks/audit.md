@@ -269,3 +269,12 @@ written by. Discovery now recognizes that exact multiline attribution.
 One inventory row gains authors/evidence; source identity, name and disposition
 are unchanged. All 60 regressions pass and all five clean pins reproduce 861
 entries. The source's historical Hugs/GHC anecdote is recorded as history.
+
+## Exact real arithmetic attribution review, 2026-10-17
+
+The exact-reals source explicitly cites David Lester's 2012 paper. Discovery now
+recognizes that exact title/citation and records its author and source evidence.
+One inventory row changes authors/evidence only; identities, names, dispositions
+and inputs are unchanged. All 62 inventory regressions pass, and all five clean
+pinned trees reproduce 861 entries. Paper metadata and numerical reference scopes
+are retained with the import.

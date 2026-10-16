@@ -2138,3 +2138,50 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 identical bytecode comparisons across seven builds. runedoc
 and runeopt also agree. [The complete transcript](validation/oct17-atom-955-acceptance.log)
 records the run.
+
+## M3 constructive exact real arithmetic wave — 2026-10-17
+
+Two variants bring the catalogue to 323 programs and 961 profiles. All [56
+canonical smoke/normal cases](results/m3-exact-reals/coverage.tsv) pass on Rune's
+four engines at O0/O2 and six native hosts at compiler defaults. All 209
+arithmetic/demand checks pass in every configuration in both invocations
+(4180 assertions). Eight normal count samples agree under execution-model rules,
+including allocation across all Rune engines. Existing budgets remain unchanged.
+Six serial single fresh-process native smoke samples validate adapters separately
+from instrumentation and headline comparisons.
+
+Unmodified original GHC programs at endpoints 60/350/800 match the complete
+shared zero fixture. Observers record zero 137-bit approximants. Fourteen
+nontrivial and zero scalar cases supply 84 exact integer approximants and
+fourteen forty-place texts, all reproduced by both policies. Independent
+120-digit mpmath calculations bound their numerical errors. [The literature
+review](validation/exact-reals-literature.md) distinguishes algorithmic arguments,
+the source translation and empirical port validation.
+
+CR values remain precision-to-IntInf functions without argument-result caches.
+Source ratio normalization, floor(rational+1/2) rounding, guard bits, enumeration,
+left-associated summation, range reduction, shared multiplication bounds and
+repeated reciprocal searches remain. Infinite coefficients and constants share
+source constructions. Finite selected series remain separately lazy/strict;
+tests detect unused-tail demand, premature input evaluation and reassociation.
+
+The source's smallest endpoint 60 timed out at 600 seconds in the initial lazy
+Rune stack pilot; the combined pilot never began strict mode. Suite smoke=1 and
+normal=10 change only the summation endpoint, retaining forty decimal places.
+Large=60 keeps original FAST; whole large SML validation is unrecorded. Source
+350/800 parameters, original fixtures and the timeout remain in provenance.
+Initial calibration used the earlier square-root implementation; its source is
+retained. Fresh final canonical/semantic/count checks use the restored explicit
+ratio-normalizing improvement. The final scalar pilot exercises that branch.
+
+[Raw results and source identities](results/m3-exact-reals/README.md) preserve
+complete attempts, samples, numerical references, semantic logs and guards.
+All 62 inventory regressions pass and all five clean pinned trees reproduce
+861 entries. One row gains David Lester's exact paper attribution/evidence only;
+identities, names and dispositions remain. M3 remains in progress.
+
+Full DEBUGINFOD_URLS= make JOBS=4 check exits 0 with 961 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 identical bytecode comparisons across seven builds. runedoc
+and runeopt also agree. [The complete transcript](validation/oct17-exact-reals-961-acceptance.log)
+records the run.
