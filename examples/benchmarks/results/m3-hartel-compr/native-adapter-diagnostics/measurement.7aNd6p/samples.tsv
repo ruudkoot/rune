@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+listcopy-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	4.97	4.08	0.98	672584	-	-	-	listcopy-strict/native-mlton/build/compile
+listcopy-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	4228	-	-	-	listcopy-strict/native-mlton/correctness.0
+listcopy-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	4128	-	-	-	listcopy-strict/native-mlton/fresh.1
+listcopy-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.52	0.52	0.02	36752	-	-	-	listcopy-strict/native-smlnj-legacy/build/compile
+listcopy-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.02	0.01	0.01	7824	-	-	-	listcopy-strict/native-smlnj-legacy/correctness.0
+listcopy-strict	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.02	0.01	0.00	7732	-	-	-	listcopy-strict/native-smlnj-legacy/fresh.1
+listcopy-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.37	0.21	0.11	41552	-	-	-	listcopy-strict/native-polyml/build/compile
+listcopy-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.03	0.02	0.03	13228	-	-	-	listcopy-strict/native-polyml/correctness.0
+listcopy-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.02	0.00	0.01	14900	-	-	-	listcopy-strict/native-polyml/fresh.1

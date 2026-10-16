@@ -1,0 +1,4 @@
+RESULT 12520
+PASS listcompr-strict
+SAMPLE 1 0.008329000
+SUMMARY 1 checks, 0 failed

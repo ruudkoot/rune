@@ -1,0 +1,471 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 80e2358d..1f6947e9 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -313,6 +313,10 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [cichelli-lazy](#cichelli-lazy) | [nofib Cichelli](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/cichelli) | Search first perfect-hash assignments with original pruning and lazy candidate/count fields. |
+ | [scs-strict](#scs-strict) | [nofib SCS](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/scs) | Simulate seeded circuit events with exact rational preprocessing, strict numerical arrays and full trace validation. |
+ | [scs-lazy](#scs-lazy) | [nofib SCS](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/scs) | Simulate seeded circuit events with exact rational preprocessing, lazy numerical arrays and full trace validation. |
++| [listcompr-lazy](#listcompr-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/listcompr) | Compile list comprehensions into local recursive definitions and count the rendered character spine. |
++| [listcompr-strict](#listcompr-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/listcompr) | Compile list comprehensions into local recursive definitions and count the rendered character spine. |
++| [listcopy-lazy](#listcopy-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/listcopy) | Compile and render list comprehensions, then copy and count the character spine. |
++| [listcopy-strict](#listcopy-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/listcopy) | Compile and render list comprehensions, then copy and count the character spine. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -14377,3 +14381,435 @@ The suite's methodology survey frames measurements without transferring historic
+ performance claims to current SML compilers.
+ 
+ [Complete provenance](scs-strict/PROVENANCE.md).
++
++
++## listcompr-lazy
++
++Selected AST evaluation: lazy. Consumer: count rendered character spine.
++
++### Algorithm and workload
++
++Compile the fixed five-definition program containing list comprehensions into
++applications and local recursive helper definitions, then render the result.
++Each input repetition translates the original definitions again. The consumer
++counts the rendered character list's spine without demanding character heads.
++It computes the actual output length; 626*n is only the reviewed result check.
++Full rendered texts are checked separately on small inputs.
++
++### History, authorship and aliases
++
++The source is nofib b7391df4540ac8b11b35e1b2e2c15819b5171798,
++`spectral/hartel/listcompr/Main.hs` and `listcopy/Main.hs`, their Makefiles,
++stdout fixtures and `spectral/hartel/Fast2haskell.hs`. Both complete sources and
++the shared shim are preserved below upstream/. The collection name associates
++these programs with Hartel; these files state no full individual authorship or
++separate redistribution notice. No grant is inferred from another benchmark.
++The original program labels remain in the suite names, with explicit evaluation
++suffixes. The source core agrees byte for byte after removing the reviewed
++benchmark label, copy wrapper and unused line-counter wrapper; the archive
++records the normalization and source identities. They share the SML compiler
++kernel while retaining their materially different consumer pipelines.
++
++### Known variants and source semantics
++
++listcompr counts the rendered stream directly. listcopy first recursively copies
++its spine, retaining the same character cells. It does not reuse the original
++spine, duplicate the input program, or force each character. Source `f_tp` maps
++`f_td`; the nearby lambda-lifting helpers are unreachable from this workload.
++Comprehension generators introduce parent-name-derived local functions; inner
++let definitions retain the enclosing top-level name during transformation.
++The renderer drops only the first semicolon from its `;\n` prefix, retaining
++the newline. Nonalphabetic application names print the first two arguments and
++ignore further arguments. The translation preserves these source quirks.
++
++The lazy variant memoizes expression payloads and AST/list spines. The strict
++variant materializes those finite AST values and spines eagerly. Both keep names,
++rendered character heads/spines and the copy consumer memoized, because the source
++length consumer must not demand unused characters. Fixed constructor argument
++lists and the five-definition input setup use finite SML lists; their payloads
++follow the selected evaluation policy. This setup translation does not attempt
++to reproduce every Haskell list-library thunk. The selected program demands its
++constructor argument spines; additional malformed/demand-sensitive examples are
++separate semantic probes. Fast2haskell's miraseq is a no-op, despite the STRICT
++comment; it is not translated as an evaluation barrier.
++
++### Portable SML97 translation and adaptations
++
++SML datatypes represent the original syntax; the fixed input is transcribed
++through a constructor functor. Explicit memoized delays preserve sharing and
++unused character heads. The length consumer is a tupled tail-recursive cursor
++with a strict integer accumulator. Concatenation retains the source nesting for
++rendered definitions and prefixed lists. In particular, it does not append the
++entire recursive output suffix to empty at each definition: that would introduce
++quadratic copying absent from the source. Only the reachable compiler/renderer
++and required list operations are imported, with the full source retained for
++audit. No alternative desugaring algorithm or cached transformed program is used.
++
++The fixed constructor input, output alphabet, name/qualifier numbers and all
++selected results fit signed 31-bit Int. Even the retained upstream slow fixture
++has 62,600,000 characters. No floating-point or arbitrary-precision arithmetic is
++in the reachable kernel. The final decimal length uses Int.toString.
++
++### Compiler/runtime diagnostic questions
++
++Investigate memoization, AST construction, constructor allocation, recursive
++rendering, append costs, collector retention, and allocation due to the explicit
++copy spine. These are source-derived hypotheses until recorded measurements
++support a particular performance explanation. Allocation/count instrumentation
++runs separately from timings. Finite eager AST construction and lazy character
++consumption make the strict variant a distinct allocation/evaluation workload.
++A private original-normal Rune O2 preflight exhausted a 4 GiB address-space limit;
++this is an observed resource outcome, not a diagnosis of its cause or a host-bug
++workaround. The selected normal input therefore preserves upstream FAST_OPTS.
++
++### Inputs, validation and references
++
++| Suite profile | Repetitions | Expected length | Upstream origin |
++|---|---:|---:|---|
++| smoke | 20 | 12520 | reduced correctness input of the same fixed program |
++| normal | 2000 | 1252000 | unchanged FAST_OPTS |
++| large | 20000 | 12520000 | unchanged NORM_OPTS; explicit scaling selection |
++
++The original SLOW_OPTS=100000 and its 62600000 fixture remain in provenance;
++that larger input is not a selected suite profile. Default time/memory limits
++apply. The input shape, repetition algorithm and original input program are
++unchanged. Source-profile selection is explicit, rather than silently relabeling
++a reduced input as the original normal workload.
++
++Unmodified GHC executions agree with all six original profile fixtures. A separate
++Python AST desugarer/renderer agrees with the complete original transformed AST
++and every byte of the 626-character program. Tests compare the complete input and
++transformed output for 0/1/2 repetitions in both evaluation and copy modes; they
++also check unused character heads, fresh copy spines, shared head cells, repeated
++translation, renderer partiality and rejection of wrong/truncated/extra fixtures.
++Profile checks count and validate every output spine. Complete evidence and
++resource outcomes belong in results/m3-hartel-compr and validation.md.
++
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) provides suite
++context, rather than measurements of this SML port. The pinned suite sources
++provide the algorithm/translation evidence described here. No performance claim
++is inferred from the historical benchmark name.
++
++
++## listcompr-strict
++
++Selected AST evaluation: strict. Consumer: count rendered character spine.
++
++### Algorithm and workload
++
++Compile the fixed five-definition program containing list comprehensions into
++applications and local recursive helper definitions, then render the result.
++Each input repetition translates the original definitions again. The consumer
++counts the rendered character list's spine without demanding character heads.
++It computes the actual output length; 626*n is only the reviewed result check.
++Full rendered texts are checked separately on small inputs.
++
++### History, authorship and aliases
++
++The source is nofib b7391df4540ac8b11b35e1b2e2c15819b5171798,
++`spectral/hartel/listcompr/Main.hs` and `listcopy/Main.hs`, their Makefiles,
++stdout fixtures and `spectral/hartel/Fast2haskell.hs`. Both complete sources and
++the shared shim are preserved below upstream/. The collection name associates
++these programs with Hartel; these files state no full individual authorship or
++separate redistribution notice. No grant is inferred from another benchmark.
++The original program labels remain in the suite names, with explicit evaluation
++suffixes. The source core agrees byte for byte after removing the reviewed
++benchmark label, copy wrapper and unused line-counter wrapper; the archive
++records the normalization and source identities. They share the SML compiler
++kernel while retaining their materially different consumer pipelines.
++
++### Known variants and source semantics
++
++listcompr counts the rendered stream directly. listcopy first recursively copies
++its spine, retaining the same character cells. It does not reuse the original
++spine, duplicate the input program, or force each character. Source `f_tp` maps
++`f_td`; the nearby lambda-lifting helpers are unreachable from this workload.
++Comprehension generators introduce parent-name-derived local functions; inner
++let definitions retain the enclosing top-level name during transformation.
++The renderer drops only the first semicolon from its `;\n` prefix, retaining
++the newline. Nonalphabetic application names print the first two arguments and
++ignore further arguments. The translation preserves these source quirks.
++
++The lazy variant memoizes expression payloads and AST/list spines. The strict
++variant materializes those finite AST values and spines eagerly. Both keep names,
++rendered character heads/spines and the copy consumer memoized, because the source
++length consumer must not demand unused characters. Fixed constructor argument
++lists and the five-definition input setup use finite SML lists; their payloads
++follow the selected evaluation policy. This setup translation does not attempt
++to reproduce every Haskell list-library thunk. The selected program demands its
++constructor argument spines; additional malformed/demand-sensitive examples are
++separate semantic probes. Fast2haskell's miraseq is a no-op, despite the STRICT
++comment; it is not translated as an evaluation barrier.
++
++### Portable SML97 translation and adaptations
++
++SML datatypes represent the original syntax; the fixed input is transcribed
++through a constructor functor. Explicit memoized delays preserve sharing and
++unused character heads. The length consumer is a tupled tail-recursive cursor
++with a strict integer accumulator. Concatenation retains the source nesting for
++rendered definitions and prefixed lists. In particular, it does not append the
++entire recursive output suffix to empty at each definition: that would introduce
++quadratic copying absent from the source. Only the reachable compiler/renderer
++and required list operations are imported, with the full source retained for
++audit. No alternative desugaring algorithm or cached transformed program is used.
++
++The fixed constructor input, output alphabet, name/qualifier numbers and all
++selected results fit signed 31-bit Int. Even the retained upstream slow fixture
++has 62,600,000 characters. No floating-point or arbitrary-precision arithmetic is
++in the reachable kernel. The final decimal length uses Int.toString.
++
++### Compiler/runtime diagnostic questions
++
++Investigate memoization, AST construction, constructor allocation, recursive
++rendering, append costs, collector retention, and allocation due to the explicit
++copy spine. These are source-derived hypotheses until recorded measurements
++support a particular performance explanation. Allocation/count instrumentation
++runs separately from timings. Finite eager AST construction and lazy character
++consumption make the strict variant a distinct allocation/evaluation workload.
++A private original-normal Rune O2 preflight exhausted a 4 GiB address-space limit;
++this is an observed resource outcome, not a diagnosis of its cause or a host-bug
++workaround. The selected normal input therefore preserves upstream FAST_OPTS.
++
++### Inputs, validation and references
++
++| Suite profile | Repetitions | Expected length | Upstream origin |
++|---|---:|---:|---|
++| smoke | 20 | 12520 | reduced correctness input of the same fixed program |
++| normal | 2000 | 1252000 | unchanged FAST_OPTS |
++| large | 20000 | 12520000 | unchanged NORM_OPTS; explicit scaling selection |
++
++The original SLOW_OPTS=100000 and its 62600000 fixture remain in provenance;
++that larger input is not a selected suite profile. Default time/memory limits
++apply. The input shape, repetition algorithm and original input program are
++unchanged. Source-profile selection is explicit, rather than silently relabeling
++a reduced input as the original normal workload.
++
++Unmodified GHC executions agree with all six original profile fixtures. A separate
++Python AST desugarer/renderer agrees with the complete original transformed AST
++and every byte of the 626-character program. Tests compare the complete input and
++transformed output for 0/1/2 repetitions in both evaluation and copy modes; they
++also check unused character heads, fresh copy spines, shared head cells, repeated
++translation, renderer partiality and rejection of wrong/truncated/extra fixtures.
++Profile checks count and validate every output spine. Complete evidence and
++resource outcomes belong in results/m3-hartel-compr and validation.md.
++
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) provides suite
++context, rather than measurements of this SML port. The pinned suite sources
++provide the algorithm/translation evidence described here. No performance claim
++is inferred from the historical benchmark name.
++
++
++## listcopy-lazy
++
++Selected AST evaluation: lazy. Consumer: copy character spine, then count it.
++
++### Algorithm and workload
++
++Compile the fixed five-definition program containing list comprehensions into
++applications and local recursive helper definitions, then render the result.
++Each input repetition translates the original definitions again. The consumer
++counts the rendered character list's spine without demanding character heads.
++It computes the actual output length; 626*n is only the reviewed result check.
++Full rendered texts are checked separately on small inputs.
++
++### History, authorship and aliases
++
++The source is nofib b7391df4540ac8b11b35e1b2e2c15819b5171798,
++`spectral/hartel/listcompr/Main.hs` and `listcopy/Main.hs`, their Makefiles,
++stdout fixtures and `spectral/hartel/Fast2haskell.hs`. Both complete sources and
++the shared shim are preserved below upstream/. The collection name associates
++these programs with Hartel; these files state no full individual authorship or
++separate redistribution notice. No grant is inferred from another benchmark.
++The original program labels remain in the suite names, with explicit evaluation
++suffixes. The source core agrees byte for byte after removing the reviewed
++benchmark label, copy wrapper and unused line-counter wrapper; the archive
++records the normalization and source identities. They share the SML compiler
++kernel while retaining their materially different consumer pipelines.
++
++### Known variants and source semantics
++
++listcompr counts the rendered stream directly. listcopy first recursively copies
++its spine, retaining the same character cells. It does not reuse the original
++spine, duplicate the input program, or force each character. Source `f_tp` maps
++`f_td`; the nearby lambda-lifting helpers are unreachable from this workload.
++Comprehension generators introduce parent-name-derived local functions; inner
++let definitions retain the enclosing top-level name during transformation.
++The renderer drops only the first semicolon from its `;\n` prefix, retaining
++the newline. Nonalphabetic application names print the first two arguments and
++ignore further arguments. The translation preserves these source quirks.
++
++The lazy variant memoizes expression payloads and AST/list spines. The strict
++variant materializes those finite AST values and spines eagerly. Both keep names,
++rendered character heads/spines and the copy consumer memoized, because the source
++length consumer must not demand unused characters. Fixed constructor argument
++lists and the five-definition input setup use finite SML lists; their payloads
++follow the selected evaluation policy. This setup translation does not attempt
++to reproduce every Haskell list-library thunk. The selected program demands its
++constructor argument spines; additional malformed/demand-sensitive examples are
++separate semantic probes. Fast2haskell's miraseq is a no-op, despite the STRICT
++comment; it is not translated as an evaluation barrier.
++
++### Portable SML97 translation and adaptations
++
++SML datatypes represent the original syntax; the fixed input is transcribed
++through a constructor functor. Explicit memoized delays preserve sharing and
++unused character heads. The length consumer is a tupled tail-recursive cursor
++with a strict integer accumulator. Concatenation retains the source nesting for
++rendered definitions and prefixed lists. In particular, it does not append the
++entire recursive output suffix to empty at each definition: that would introduce
++quadratic copying absent from the source. Only the reachable compiler/renderer
++and required list operations are imported, with the full source retained for
++audit. No alternative desugaring algorithm or cached transformed program is used.
++
++The fixed constructor input, output alphabet, name/qualifier numbers and all
++selected results fit signed 31-bit Int. Even the retained upstream slow fixture
++has 62,600,000 characters. No floating-point or arbitrary-precision arithmetic is
++in the reachable kernel. The final decimal length uses Int.toString.
++
++### Compiler/runtime diagnostic questions
++
++Investigate memoization, AST construction, constructor allocation, recursive
++rendering, append costs, collector retention, and allocation due to the explicit
++copy spine. These are source-derived hypotheses until recorded measurements
++support a particular performance explanation. Allocation/count instrumentation
++runs separately from timings. Finite eager AST construction and lazy character
++consumption make the strict variant a distinct allocation/evaluation workload.
++A private original-normal Rune O2 preflight exhausted a 4 GiB address-space limit;
++this is an observed resource outcome, not a diagnosis of its cause or a host-bug
++workaround. The selected normal input therefore preserves upstream FAST_OPTS.
++
++### Inputs, validation and references
++
++| Suite profile | Repetitions | Expected length | Upstream origin |
++|---|---:|---:|---|
++| smoke | 20 | 12520 | reduced correctness input of the same fixed program |
++| normal | 2000 | 1252000 | unchanged FAST_OPTS |
++| large | 20000 | 12520000 | unchanged NORM_OPTS; explicit scaling selection |
++
++The original SLOW_OPTS=100000 and its 62600000 fixture remain in provenance;
++that larger input is not a selected suite profile. Default time/memory limits
++apply. The input shape, repetition algorithm and original input program are
++unchanged. Source-profile selection is explicit, rather than silently relabeling
++a reduced input as the original normal workload.
++
++Unmodified GHC executions agree with all six original profile fixtures. A separate
++Python AST desugarer/renderer agrees with the complete original transformed AST
++and every byte of the 626-character program. Tests compare the complete input and
++transformed output for 0/1/2 repetitions in both evaluation and copy modes; they
++also check unused character heads, fresh copy spines, shared head cells, repeated
++translation, renderer partiality and rejection of wrong/truncated/extra fixtures.
++Profile checks count and validate every output spine. Complete evidence and
++resource outcomes belong in results/m3-hartel-compr and validation.md.
++
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) provides suite
++context, rather than measurements of this SML port. The pinned suite sources
++provide the algorithm/translation evidence described here. No performance claim
++is inferred from the historical benchmark name.
++
++
++## listcopy-strict
++
++Selected AST evaluation: strict. Consumer: copy character spine, then count it.
++
++### Algorithm and workload
++
++Compile the fixed five-definition program containing list comprehensions into
++applications and local recursive helper definitions, then render the result.
++Each input repetition translates the original definitions again. The consumer
++counts the rendered character list's spine without demanding character heads.
++It computes the actual output length; 626*n is only the reviewed result check.
++Full rendered texts are checked separately on small inputs.
++
++### History, authorship and aliases
++
++The source is nofib b7391df4540ac8b11b35e1b2e2c15819b5171798,
++`spectral/hartel/listcompr/Main.hs` and `listcopy/Main.hs`, their Makefiles,
++stdout fixtures and `spectral/hartel/Fast2haskell.hs`. Both complete sources and
++the shared shim are preserved below upstream/. The collection name associates
++these programs with Hartel; these files state no full individual authorship or
++separate redistribution notice. No grant is inferred from another benchmark.
++The original program labels remain in the suite names, with explicit evaluation
++suffixes. The source core agrees byte for byte after removing the reviewed
++benchmark label, copy wrapper and unused line-counter wrapper; the archive
++records the normalization and source identities. They share the SML compiler
++kernel while retaining their materially different consumer pipelines.
++
++### Known variants and source semantics
++
++listcompr counts the rendered stream directly. listcopy first recursively copies
++its spine, retaining the same character cells. It does not reuse the original
++spine, duplicate the input program, or force each character. Source `f_tp` maps
++`f_td`; the nearby lambda-lifting helpers are unreachable from this workload.
++Comprehension generators introduce parent-name-derived local functions; inner
++let definitions retain the enclosing top-level name during transformation.
++The renderer drops only the first semicolon from its `;\n` prefix, retaining
++the newline. Nonalphabetic application names print the first two arguments and
++ignore further arguments. The translation preserves these source quirks.
++
++The lazy variant memoizes expression payloads and AST/list spines. The strict
++variant materializes those finite AST values and spines eagerly. Both keep names,
++rendered character heads/spines and the copy consumer memoized, because the source
++length consumer must not demand unused characters. Fixed constructor argument
++lists and the five-definition input setup use finite SML lists; their payloads
++follow the selected evaluation policy. This setup translation does not attempt
++to reproduce every Haskell list-library thunk. The selected program demands its
++constructor argument spines; additional malformed/demand-sensitive examples are
++separate semantic probes. Fast2haskell's miraseq is a no-op, despite the STRICT
++comment; it is not translated as an evaluation barrier.
++
++### Portable SML97 translation and adaptations
++
++SML datatypes represent the original syntax; the fixed input is transcribed
++through a constructor functor. Explicit memoized delays preserve sharing and
++unused character heads. The length consumer is a tupled tail-recursive cursor
++with a strict integer accumulator. Concatenation retains the source nesting for
++rendered definitions and prefixed lists. In particular, it does not append the
++entire recursive output suffix to empty at each definition: that would introduce
++quadratic copying absent from the source. Only the reachable compiler/renderer
++and required list operations are imported, with the full source retained for
++audit. No alternative desugaring algorithm or cached transformed program is used.
++
++The fixed constructor input, output alphabet, name/qualifier numbers and all
++selected results fit signed 31-bit Int. Even the retained upstream slow fixture
++has 62,600,000 characters. No floating-point or arbitrary-precision arithmetic is
++in the reachable kernel. The final decimal length uses Int.toString.
++
++### Compiler/runtime diagnostic questions
++
++Investigate memoization, AST construction, constructor allocation, recursive
++rendering, append costs, collector retention, and allocation due to the explicit
++copy spine. These are source-derived hypotheses until recorded measurements
++support a particular performance explanation. Allocation/count instrumentation
++runs separately from timings. Finite eager AST construction and lazy character
++consumption make the strict variant a distinct allocation/evaluation workload.
++A private original-normal Rune O2 preflight exhausted a 4 GiB address-space limit;
++this is an observed resource outcome, not a diagnosis of its cause or a host-bug
++workaround. The selected normal input therefore preserves upstream FAST_OPTS.
++
++### Inputs, validation and references
++
++| Suite profile | Repetitions | Expected length | Upstream origin |
++|---|---:|---:|---|
++| smoke | 20 | 12520 | reduced correctness input of the same fixed program |
++| normal | 2000 | 1252000 | unchanged FAST_OPTS |
++| large | 20000 | 12520000 | unchanged NORM_OPTS; explicit scaling selection |
++
++The original SLOW_OPTS=100000 and its 62600000 fixture remain in provenance;
++that larger input is not a selected suite profile. Default time/memory limits
++apply. The input shape, repetition algorithm and original input program are
++unchanged. Source-profile selection is explicit, rather than silently relabeling
++a reduced input as the original normal workload.
++
++Unmodified GHC executions agree with all six original profile fixtures. A separate
++Python AST desugarer/renderer agrees with the complete original transformed AST
++and every byte of the 626-character program. Tests compare the complete input and
++transformed output for 0/1/2 repetitions in both evaluation and copy modes; they
++also check unused character heads, fresh copy spines, shared head cells, repeated
++translation, renderer partiality and rejection of wrong/truncated/extra fixtures.
++Profile checks count and validate every output spine. Complete evidence and
++resource outcomes belong in results/m3-hartel-compr and validation.md.
++
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) provides suite
++context, rather than measurements of this SML port. The pinned suite sources
++provide the algorithm/translation evidence described here. No performance claim
++is inferred from the historical benchmark name.
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index d29f2608..4d2e6eae 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -906,3 +906,15 @@ scs-lazy	large	nofib	real/scs	data/inverter.in 345 400p 4u 1 0 data/large.exactt
+ scs-strict	smoke	nofib	real/scs	data/inverter.in 345 10n 2u 1 0 data/smoke.exacttrace	scs-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/infer-parsing.sml,shared/scs-rational.sml,shared/scs-matrix.sml,shared/scs-types.sml,shared/scs-prepare.sml,shared/scs-random.sml,shared/scs-simulate.sml,shared/scs-parse.sml,shared/scs-check.sml,scs-strict/benchmark.sml,shared/main.sml	30	1048576	application,scientific,rational,binary64,circuit-simulation,random-streams,strict	data/inverter.in,data/smoke.exacttrace	checked-numerical	implemented
+ scs-strict	normal	nofib	real/scs	data/inverter.in 345 2n 4u 1 0 data/normal.exacttrace	scs-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/infer-parsing.sml,shared/scs-rational.sml,shared/scs-matrix.sml,shared/scs-types.sml,shared/scs-prepare.sml,shared/scs-random.sml,shared/scs-simulate.sml,shared/scs-parse.sml,shared/scs-check.sml,scs-strict/benchmark.sml,shared/main.sml	600	4194304	application,scientific,rational,binary64,circuit-simulation,random-streams,strict	data/inverter.in,data/normal.exacttrace	checked-numerical	implemented
+ scs-strict	large	nofib	real/scs	data/inverter.in 345 400p 4u 1 0 data/large.exacttrace	scs-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/infer-parsing.sml,shared/scs-rational.sml,shared/scs-matrix.sml,shared/scs-types.sml,shared/scs-prepare.sml,shared/scs-random.sml,shared/scs-simulate.sml,shared/scs-parse.sml,shared/scs-check.sml,scs-strict/benchmark.sml,shared/main.sml	3600	8388608	application,scientific,rational,binary64,circuit-simulation,random-streams,strict	data/inverter.in,data/large.exacttrace	checked-numerical	implemented
++listcompr-lazy	smoke	nofib	spectral/hartel/listcompr	20	listcompr-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/hartel-compr-data.sml,shared/hartel-compr.sml,shared/hartel-compr-driver.sml,listcompr-lazy/benchmark.sml,shared/main.sml	30	1048576	lists-streams,symbolic-processing,allocation-lifetimes,lazy	-	exact	implemented
++listcompr-lazy	normal	nofib	spectral/hartel/listcompr	2000	listcompr-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/hartel-compr-data.sml,shared/hartel-compr.sml,shared/hartel-compr-driver.sml,listcompr-lazy/benchmark.sml,shared/main.sml	600	4194304	lists-streams,symbolic-processing,allocation-lifetimes,lazy	-	exact	implemented
++listcompr-lazy	large	nofib	spectral/hartel/listcompr	20000	listcompr-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/hartel-compr-data.sml,shared/hartel-compr.sml,shared/hartel-compr-driver.sml,listcompr-lazy/benchmark.sml,shared/main.sml	3600	8388608	lists-streams,symbolic-processing,allocation-lifetimes,lazy	-	exact	implemented
++listcompr-strict	smoke	nofib	spectral/hartel/listcompr	20	listcompr-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/hartel-compr-data.sml,shared/hartel-compr.sml,shared/hartel-compr-driver.sml,listcompr-strict/benchmark.sml,shared/main.sml	30	1048576	lists-streams,symbolic-processing,allocation-lifetimes,strict	-	exact	implemented
++listcompr-strict	normal	nofib	spectral/hartel/listcompr	2000	listcompr-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/hartel-compr-data.sml,shared/hartel-compr.sml,shared/hartel-compr-driver.sml,listcompr-strict/benchmark.sml,shared/main.sml	600	4194304	lists-streams,symbolic-processing,allocation-lifetimes,strict	-	exact	implemented
++listcompr-strict	large	nofib	spectral/hartel/listcompr	20000	listcompr-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/hartel-compr-data.sml,shared/hartel-compr.sml,shared/hartel-compr-driver.sml,listcompr-strict/benchmark.sml,shared/main.sml	3600	8388608	lists-streams,symbolic-processing,allocation-lifetimes,strict	-	exact	implemented
++listcopy-lazy	smoke	nofib	spectral/hartel/listcopy	20	listcopy-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/hartel-compr-data.sml,shared/hartel-compr.sml,shared/hartel-compr-driver.sml,listcopy-lazy/benchmark.sml,shared/main.sml	30	1048576	lists-streams,symbolic-processing,allocation-lifetimes,lazy	-	exact	implemented
++listcopy-lazy	normal	nofib	spectral/hartel/listcopy	2000	listcopy-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/hartel-compr-data.sml,shared/hartel-compr.sml,shared/hartel-compr-driver.sml,listcopy-lazy/benchmark.sml,shared/main.sml	600	4194304	lists-streams,symbolic-processing,allocation-lifetimes,lazy	-	exact	implemented
++listcopy-lazy	large	nofib	spectral/hartel/listcopy	20000	listcopy-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/hartel-compr-data.sml,shared/hartel-compr.sml,shared/hartel-compr-driver.sml,listcopy-lazy/benchmark.sml,shared/main.sml	3600	8388608	lists-streams,symbolic-processing,allocation-lifetimes,lazy	-	exact	implemented
++listcopy-strict	smoke	nofib	spectral/hartel/listcopy	20	listcopy-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/hartel-compr-data.sml,shared/hartel-compr.sml,shared/hartel-compr-driver.sml,listcopy-strict/benchmark.sml,shared/main.sml	30	1048576	lists-streams,symbolic-processing,allocation-lifetimes,strict	-	exact	implemented
++listcopy-strict	normal	nofib	spectral/hartel/listcopy	2000	listcopy-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/hartel-compr-data.sml,shared/hartel-compr.sml,shared/hartel-compr-driver.sml,listcopy-strict/benchmark.sml,shared/main.sml	600	4194304	lists-streams,symbolic-processing,allocation-lifetimes,strict	-	exact	implemented
++listcopy-strict	large	nofib	spectral/hartel/listcopy	20000	listcopy-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/hartel-compr-data.sml,shared/hartel-compr.sml,shared/hartel-compr-driver.sml,listcopy-strict/benchmark.sml,shared/main.sml	3600	8388608	lists-streams,symbolic-processing,allocation-lifetimes,strict	-	exact	implemented

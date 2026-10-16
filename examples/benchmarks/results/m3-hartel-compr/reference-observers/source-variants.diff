@@ -1,0 +1,25 @@
+--- listcompr/Main.hs
++++ listcopy/Main.hs
+@@ -1,7 +1,7 @@
+ {-# LANGUAGE CPP #-}
+ {-# LANGUAGE MagicHash #-}
+ 
+-module Main (main) -- listcompr
++module Main (main) -- listcopy
+ where {
+     import System.Environment (getArgs);
+ --partain: import Fast2haskell;
+@@ -179,7 +179,12 @@
+     f_usort::[T_var] -> [T_var];
+     f_usort []=[];
+     f_usort (a_x:a_xs)=(++) (f_usort [a_u|a_u<-a_xs,f_var_less a_u a_x]) ((:) a_x (f_usort [a_u|a_u<-a_xs,f_var_greater a_u a_x]));
+-    f_benchmark_main a_n=f_sp (f_tp (f_concat (f_take a_n (f_repeat c_prg))));
++    f_benchmark_main a_n=f_copy (f_sp (f_tp (f_concat (f_take a_n (f_repeat c_prg)))));
++    f_copy []=[];
++    f_copy (a_x:a_xs)=(:) a_x (f_copy a_xs);
++    f_nlines [] a_n=(++) (strict_show_i a_n) "\n";
++    f_nlines ('\o012':a_xs) a_n=f_nlines a_xs (((+) :: (Int -> Int -> Int)) a_n (1 :: Int));
++    f_nlines (a_x:a_xs) a_n=f_nlines a_xs a_n;
+     c_cmp_less::Int;
+     c_cmp_less=((negate) :: (Int -> Int)) (1 :: Int);
+     c_cmp_equal::Int;

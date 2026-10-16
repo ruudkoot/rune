@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+listcopy-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	5.17	4.29	1.02	671312	-	-	-	listcopy-lazy/native-mlton/build/compile
+listcopy-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2516	-	-	-	listcopy-lazy/native-mlton/correctness.0
+listcopy-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.01	0.01	0.00	2608	-	-	-	listcopy-lazy/native-mlton/fresh.1
+listcopy-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.58	0.56	0.05	35380	-	-	-	listcopy-lazy/native-smlnj-legacy/build/compile
+listcopy-lazy	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.04	0.02	0.02	6984	-	-	-	listcopy-lazy/native-smlnj-legacy/correctness.0
+listcopy-lazy	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.04	0.02	0.02	7044	-	-	-	listcopy-lazy/native-smlnj-legacy/fresh.1
+listcopy-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.45	0.28	0.11	41308	-	-	-	listcopy-lazy/native-polyml/build/compile
+listcopy-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.02	0.00	0.02	14724	-	-	-	listcopy-lazy/native-polyml/correctness.0
+listcopy-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.03	0.02	0.06	15404	-	-	-	listcopy-lazy/native-polyml/fresh.1

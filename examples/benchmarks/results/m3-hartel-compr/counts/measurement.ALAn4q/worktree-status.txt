@@ -1,0 +1,12 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/listcompr-lazy/
+?? examples/benchmarks/listcompr-strict/
+?? examples/benchmarks/listcopy-lazy/
+?? examples/benchmarks/listcopy-strict/
+?? examples/benchmarks/shared/hartel-compr-data.sml
+?? examples/benchmarks/shared/hartel-compr-driver.sml
+?? examples/benchmarks/shared/hartel-compr.sml
+?? tests/benchmarks/check-hartel-compr.sh
+?? tests/benchmarks/data/hartel-compr/
+?? tests/benchmarks/hartel-compr-tests.sml

@@ -1,0 +1,11 @@
+sqs xs = [(sq x) | x <- xs;(odd x)];
+xys xs ys = [(x,y) | x <- xs;y <- ys];
+sq x = (x*x);
+odd x = (if ((x%1)=0) true false);
+q c d = (LET 
+e z = (c*z);
+p a b = (LET 
+f x y = (c*x);
+g y z = (f b y);
+h = (g a d) IN  (f (g h a) c));
+q = (e (p c d)) IN  (e q));

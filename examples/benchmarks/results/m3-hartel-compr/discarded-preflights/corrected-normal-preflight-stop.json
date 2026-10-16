@@ -1,0 +1,4 @@
+{
+  "reason": "Stopped private normal count preflight after observed RSS 3221548 KiB; replace with guarded profiling before public profile selection",
+  "pid": 271193
+}

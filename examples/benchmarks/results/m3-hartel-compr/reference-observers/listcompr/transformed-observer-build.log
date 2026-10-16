@@ -1,0 +1,12 @@
+
+../Fast2haskell.hs:1:12: warning: [-Wmisplaced-pragmas]
+    Misplaced OPTIONS pragma
+    Suggested fix:
+      Perhaps you meant to place it in the module header?
+      The module header is the section at the top of the file, before the ‘module’ keyword
+  |
+1 | {-# OPTIONS -fglasgow-exts #-}
+  |            ^^^^^^^^^^^^^^^^
+[1 of 3] Compiling Kernel           ( Kernel.hs, Kernel.o )
+[2 of 3] Compiling Main             ( TransformedObserver.hs, TransformedObserver.o )
+[3 of 3] Linking transformed-observer

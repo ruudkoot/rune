@@ -1,0 +1,6 @@
+{
+  "scope": "whole source comparison after exactly the attached benchmark label/copy/unused line-counter differences",
+  "normalized_sha256": "08bfb67317aab03d9f315e0709c6c473455c7d2c1aa3217b1001d21ef5d006b2",
+  "listcompr_source_sha256": "08bfb67317aab03d9f315e0709c6c473455c7d2c1aa3217b1001d21ef5d006b2",
+  "listcopy_source_sha256": "230f831909a538fc672d02a2654c4ae54cc65d39704bdb408755e42c574c50f3"
+}

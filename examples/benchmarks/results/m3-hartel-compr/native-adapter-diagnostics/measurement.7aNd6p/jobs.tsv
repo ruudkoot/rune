@@ -1,0 +1,1 @@
+listcopy-strict	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/hartel-compr-data.sml shared/hartel-compr.sml shared/hartel-compr-driver.sml listcopy-strict/benchmark.sml shared/main.sml	20	listcopy-strict/smoke.expected	-

@@ -1929,3 +1929,46 @@ bootstrap and 498 identical bytecode comparisons across seven builds. runedoc
 and runeopt also agree. [The complete transcript](validation/oct16-cpp-inventory-907-acceptance.log)
 records the run. [Source identities and replay logs](results/m0-cpp-includes/README.md)
 make the correction reviewable. Timing and count baselines are unchanged.
+
+## M3 Hartel comprehension compiler/copy wave — 2026-10-16
+
+Four variants bring the catalogue to 309 programs and 919 profiles:
+listcompr-lazy/strict and listcopy-lazy/strict. The [complete coverage ledger](results/m3-hartel-compr/coverage.tsv)
+records all 112 canonical smoke/normal cases passing on Rune's four engines at
+O0/O2 and six native hosts at compiler defaults. All 42 semantic checks pass on
+each configuration in both invocations (840 assertions). Native hosts are not
+claimed to have been tested with Rune optimization flags.
+
+[Sixteen normal count samples](results/m3-hartel-compr/count-samples.tsv) agree
+under execution-model rules, including allocation across all Rune engines.
+Existing budgets are unchanged; new profiles remain unbudgeted. Twelve serial
+single fresh-process native smoke samples validate the adapters on MLton,
+legacy 64-bit SML/NJ and Poly/ML. These diagnostics remain separate from headline
+comparisons, instrumented counts and bounded resource preflights.
+
+The original GHC programs match all six upstream fixtures and the selected suite
+inputs. A separate AST desugarer/renderer agrees with the full transformed AST
+and every byte of its 626-character rendering. Source review identifies five
+input definitions, parent-name scope during nested desugaring, the leading-newline
+LET renderer quirk, unused lambda-lifting helpers and the exact copy-wrapper
+variation. Both sources and their Fast2haskell compatibility include are preserved.
+Lazy/eager AST evaluation is separately named; both length consumers preserve
+unused character heads. Copy tests require fresh spines with shared head cells;
+repetition tests require fresh transformations. Wrong, truncated and extra
+rendered fixtures are rejected.
+
+Profiles explicitly select 20/2000/20000 repetitions. Normal preserves upstream
+FAST_OPTS; large preserves NORM_OPTS. The original SLOW_OPTS=100000 fixture remains
+in provenance. A private 20000-repeat preflight exhausted a 4 GiB address-space
+limit. Whole large SML validation under the selected 8 GiB limit is unrecorded.
+An earlier prototype introduced quadratic suffix copies through concatenation;
+that implementation was corrected before the canonical checks. Its stopped and
+bounded preflights are retained separately and cannot supply timing samples.
+[Raw evidence and source identities](results/m3-hartel-compr/README.md) accompany
+the accepted results. M3 remains in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 919 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 identical bytecode comparisons across seven builds. runedoc
+and runeopt also agree. [The complete transcript](validation/oct16-hartel-compr-919-acceptance.log)
+records the run. All 56 inventory regressions and all 861 inventory entries pass.

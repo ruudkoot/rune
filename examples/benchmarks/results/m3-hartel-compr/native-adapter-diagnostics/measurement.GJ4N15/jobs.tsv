@@ -1,0 +1,1 @@
+listcompr-strict	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/hartel-compr-data.sml shared/hartel-compr.sml shared/hartel-compr-driver.sml listcompr-strict/benchmark.sml shared/main.sml	20	listcompr-strict/smoke.expected	-

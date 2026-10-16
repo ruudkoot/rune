@@ -1,0 +1,17 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+listcompr-lazy	normal	rune	O2	count	1	1	pass	7.43	4.68	1.14	911472	616513796	2317691984	69312252	counts/measurement.ALAn4q/listcompr-lazy/rune/fresh.1
+listcompr-lazy	normal	rune:opt	O2	count	1	1	pass	3.30	2.23	1.27	912012	616513796	2317691984	69312252	counts/measurement.ALAn4q/listcompr-lazy/rune-opt/fresh.1
+listcompr-lazy	normal	rune:new	O2	count	1	1	pass	5.45	4.45	1.36	1050876	376584678	2317691984	69312252	counts/measurement.ALAn4q/listcompr-lazy/rune-new/fresh.1
+listcompr-lazy	normal	rune:jit	O2	count	1	1	pass	5.30	2.54	0.97	1052328	376584678	2317691984	69312252	counts/measurement.ALAn4q/listcompr-lazy/rune-jit/fresh.1
+listcompr-strict	normal	rune	O2	count	1	1	pass	3.97	3.71	0.63	915516	595538582	2246828400	67147720	counts/measurement.jLLmZN/listcompr-strict/rune/fresh.1
+listcompr-strict	normal	rune:opt	O2	count	1	1	pass	2.87	2.22	0.81	916128	595538582	2246828400	67147720	counts/measurement.jLLmZN/listcompr-strict/rune-opt/fresh.1
+listcompr-strict	normal	rune:new	O2	count	1	1	pass	5.04	4.23	1.08	1052752	364238707	2246828400	67147720	counts/measurement.jLLmZN/listcompr-strict/rune-new/fresh.1
+listcompr-strict	normal	rune:jit	O2	count	1	1	pass	3.57	2.60	1.08	1054272	364238707	2246828400	67147720	counts/measurement.jLLmZN/listcompr-strict/rune-jit/fresh.1
+listcopy-lazy	normal	rune	O2	count	1	1	pass	5.11	4.45	1.10	1050876	667845818	2507996096	75572256	counts/measurement.1ul7l6/listcopy-lazy/rune/fresh.1
+listcopy-lazy	normal	rune:opt	O2	count	1	1	pass	3.46	2.59	1.07	1051464	667845818	2507996096	75572256	counts/measurement.1ul7l6/listcopy-lazy/rune-opt/fresh.1
+listcopy-lazy	normal	rune:new	O2	count	1	1	pass	5.23	4.31	1.17	1050948	407884691	2507996096	75572256	counts/measurement.1ul7l6/listcopy-lazy/rune-new/fresh.1
+listcopy-lazy	normal	rune:jit	O2	count	1	1	pass	3.41	2.54	1.15	1052248	407884691	2507996096	75572256	counts/measurement.1ul7l6/listcopy-lazy/rune-jit/fresh.1
+listcopy-strict	normal	rune	O2	count	1	1	pass	4.73	3.81	1.18	1052016	646870604	2437132432	73407724	counts/measurement.E7Pdf7/listcopy-strict/rune/fresh.1
+listcopy-strict	normal	rune:opt	O2	count	1	1	pass	3.52	2.45	1.19	1052536	646870604	2437132432	73407724	counts/measurement.E7Pdf7/listcopy-strict/rune-opt/fresh.1
+listcopy-strict	normal	rune:new	O2	count	1	1	pass	5.17	4.26	1.31	1052816	395538720	2437132432	73407724	counts/measurement.E7Pdf7/listcopy-strict/rune-new/fresh.1
+listcopy-strict	normal	rune:jit	O2	count	1	1	pass	3.29	2.38	1.10	1054316	395538720	2437132432	73407724	counts/measurement.E7Pdf7/listcopy-strict/rune-jit/fresh.1

@@ -1,0 +1,5 @@
+COUNT unbudgeted listcopy-strict normal rune
+COUNT unbudgeted listcopy-strict normal rune:opt
+COUNT unbudgeted listcopy-strict normal rune:new
+COUNT unbudgeted listcopy-strict normal rune:jit
+COUNT comparisons agree

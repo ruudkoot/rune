@@ -1,0 +1,30 @@
+{
+  "command": [
+    "timeout",
+    "180",
+    "bin/runevm",
+    "tests/out/benchmarks/hartel-comprehensions-originals/one-pilot-O2.rbc",
+    "lazy",
+    "compr",
+    "2000"
+  ],
+  "exit": 124,
+  "guard_reason": null,
+  "rss_limit_kib": 1048576,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 529088,
+  "observed_minimum_available_kib": 18961620,
+  "peak_processes": [
+    {
+      "pid": 246696,
+      "name": "timeout",
+      "rss_kib": 1796
+    },
+    {
+      "pid": 246697,
+      "name": "runevm",
+      "rss_kib": 527292
+    }
+  ],
+  "elapsed_seconds": 180.06592481199186
+}

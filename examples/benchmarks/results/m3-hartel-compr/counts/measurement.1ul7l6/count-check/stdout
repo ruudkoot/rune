@@ -1,0 +1,5 @@
+COUNT unbudgeted listcopy-lazy normal rune
+COUNT unbudgeted listcopy-lazy normal rune:opt
+COUNT unbudgeted listcopy-lazy normal rune:new
+COUNT unbudgeted listcopy-lazy normal rune:jit
+COUNT comparisons agree

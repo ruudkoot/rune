@@ -1,0 +1,4 @@
+RESULT 12520
+PASS listcompr-lazy
+SAMPLE 1 0.009813000
+SUMMARY 1 checks, 0 failed

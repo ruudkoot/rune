@@ -1,0 +1,26 @@
+{
+  "command": [
+    "sh",
+    "-c",
+    "ulimit -v 4194304; exec timeout 180 bin/runevm --count tests/out/benchmarks/hartel-comprehensions-originals/tupled-one-pilot-O2.rbc lazy compr 20000"
+  ],
+  "exit": -9,
+  "guard_reason": "process-tree-rss-guard",
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 2101252,
+  "observed_minimum_available_kib": 18108956,
+  "peak_processes": [
+    {
+      "pid": 306049,
+      "name": "timeout",
+      "rss_kib": 1796
+    },
+    {
+      "pid": 306050,
+      "name": "runevm",
+      "rss_kib": 2099456
+    }
+  ],
+  "elapsed_seconds": 10.69500353798503
+}

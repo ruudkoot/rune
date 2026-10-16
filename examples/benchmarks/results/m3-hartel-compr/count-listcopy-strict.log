@@ -1,0 +1,11 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (919 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=listcopy-strict' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.E7Pdf7
+BENCH MEASURE listcopy-strict normal count
+COUNT unbudgeted listcopy-strict normal rune
+COUNT unbudgeted listcopy-strict normal rune:opt
+COUNT unbudgeted listcopy-strict normal rune:new
+COUNT unbudgeted listcopy-strict normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.E7Pdf7/report.md

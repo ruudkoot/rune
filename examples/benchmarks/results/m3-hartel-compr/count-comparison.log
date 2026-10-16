@@ -1,0 +1,17 @@
+COUNT unbudgeted listcompr-lazy normal rune
+COUNT unbudgeted listcompr-lazy normal rune:opt
+COUNT unbudgeted listcompr-lazy normal rune:new
+COUNT unbudgeted listcompr-lazy normal rune:jit
+COUNT unbudgeted listcompr-strict normal rune
+COUNT unbudgeted listcompr-strict normal rune:opt
+COUNT unbudgeted listcompr-strict normal rune:new
+COUNT unbudgeted listcompr-strict normal rune:jit
+COUNT unbudgeted listcopy-lazy normal rune
+COUNT unbudgeted listcopy-lazy normal rune:opt
+COUNT unbudgeted listcopy-lazy normal rune:new
+COUNT unbudgeted listcopy-lazy normal rune:jit
+COUNT unbudgeted listcopy-strict normal rune
+COUNT unbudgeted listcopy-strict normal rune:opt
+COUNT unbudgeted listcopy-strict normal rune:new
+COUNT unbudgeted listcopy-strict normal rune:jit
+COUNT comparisons agree

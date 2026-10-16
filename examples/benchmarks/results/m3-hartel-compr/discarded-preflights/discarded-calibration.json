@@ -1,0 +1,10 @@
+{
+  "reason": "prototype concatenation helper appended the recursive output suffix to empty at every definition, introducing quadratic spine copies absent from the source; stopped old normal pilot and invalidated both old calibrations",
+  "stopped_process_group": 146175,
+  "discarded": [
+    "normal-pilot",
+    "one-pilot-O2-2000",
+    "one-pilot-O2-10-count",
+    "one-pilot-O2-100-count"
+  ]
+}

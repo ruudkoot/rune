@@ -1,0 +1,12 @@
+PASS unmodified original listcompr smoke 2000 1252000
+PASS unmodified original listcompr normal 20000 12520000
+PASS unmodified original listcompr large 100000 62600000
+Recorded complete transformed program listcompr 0 0
+Recorded complete transformed program listcompr 1 626
+Recorded complete transformed program listcompr 2 1252
+PASS unmodified original listcopy smoke 2000 1252000
+PASS unmodified original listcopy normal 20000 12520000
+PASS unmodified original listcopy large 100000 62600000
+Recorded complete transformed program listcopy 0 0
+Recorded complete transformed program listcopy 1 626
+Recorded complete transformed program listcopy 2 1252

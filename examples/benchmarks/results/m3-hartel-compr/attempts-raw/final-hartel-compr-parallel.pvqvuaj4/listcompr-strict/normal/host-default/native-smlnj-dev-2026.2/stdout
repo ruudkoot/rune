@@ -1,0 +1,223 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : 
+  sig
+    datatype 'a node
+      = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay | Nil
+    type 'a stream = 'a node BenchLazy.delay
+    val empty : unit -> 'a node BenchLazy.state ref
+    val cons : 'a BenchLazy.delay * 'a node BenchLazy.delay
+                -> 'a node BenchLazy.state ref
+    val singleton : 'a -> 'a node BenchLazy.state ref
+    val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+    val head : 'a node BenchLazy.state ref -> 'a
+    val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val iterate : ('a -> 'a)
+                   -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+    val fromList : 'a list -> 'a node BenchLazy.delay
+    val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+    val zipWith : ('a * 'b -> 'c)
+                   -> 'a node BenchLazy.delay
+                   -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+    val append : 'a node BenchLazy.delay
+                  -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val concatMap : ('a -> 'b node BenchLazy.delay)
+                     -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+    val filter : ('a -> bool)
+                  -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+    val dropWhile : ('a -> bool)
+                     -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+    val foldrStream : ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+                       -> 'b BenchLazy.state ref
+                       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+    val zipWith3 : ('a * 'b * 'c -> 'd)
+                    -> 'a node BenchLazy.delay
+                    -> 'b node BenchLazy.delay
+                    -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+    val span : ('a -> bool)
+                -> 'a node BenchLazy.delay
+                -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+    val nth : 'a node BenchLazy.delay -> int -> 'a
+    val take : int -> 'a node BenchLazy.delay -> 'a list
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+    val foldPrefix : ('a * 'b -> 'b)
+                      -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-compr-data.sml]
+functor BenchHartelComprDataFn(B: sig
+                                  type expr
+                                  type def
+                                  type qual
+                                  val var : string -> expr
+                                  val cns : string -> expr
+                                  val app : string * (unit -> expr list)
+                                             -> expr
+                                  val cmp : (unit -> expr)
+                                             * (unit -> qual list)
+                                             -> expr
+                                  val letExpr : (unit -> def list)
+                                                 * (unit -> expr)
+                                                 -> expr
+                                  val definition : string * string list
+                                                    * (unit -> expr)
+                                                    -> def
+                                  val gen : int * string * (unit -> expr)
+                                             -> qual
+                                  val fil : (unit -> expr) -> qual
+                                end) :
+                              sig val program : B.def list end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-compr.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-compr.sml:35.43 Warning: calling polyEqual
+functor BenchHartelComprFn(D: sig
+                              type 'a t
+                              val delay : (unit -> 'a) -> 'a t
+                              val force : 'a t -> 'a
+                            end) :
+                          
+                            sig
+                              structure L : <sig>
+                              structure S : <sig>
+                              type text
+                              type 'a node
+                              type 'a seq
+                              type expr
+                              type def
+                              type qual
+                              val empty : unit -> 'a node D.t
+                              val fromList : 'a list -> 'a node D.t
+                              val map : ('a -> 'b)
+                                         -> 'a node D.t -> 'b node D.t
+                              val append : 'a node D.t
+                                            -> (unit -> 'a node D.t)
+                                            -> 'a node D.t
+                              val nth : 'a node D.t -> int -> 'a
+                              val text : string
+                                          -> char BenchStream.node 
+                                            BenchLazy.delay
+                              val cat : (unit
+                                            -> 'a BenchStream.node 
+                                                BenchLazy.state ref) list
+                                         -> 'a BenchStream.node 
+                                             BenchLazy.state ref
+                              val number : int
+                                            -> char BenchStream.node 
+                                                BenchLazy.state ref
+                              val variable : text -> expr D.t
+                              val constant : text -> expr D.t
+                              val app : text
+                                         -> (unit -> expr D.t list)
+                                         -> expr D.t
+                              val letExpr : (unit -> def D.t list)
+                                             -> (unit -> expr D.t) -> expr D.t
+                              val definition : text
+                                                -> text list
+                                                -> (unit -> expr D.t)
+                                                -> def D.t
+                              val generator : int
+                                               -> text
+                                               -> (unit -> expr D.t)
+                                               -> qual D.t
+                              val filter : (unit -> expr D.t) -> qual D.t
+                              val inputVars : (string * expr D.t) list
+                              val inputConstants : (string * expr D.t) list
+                              val lookup : ''a -> (''a * 'b) list -> 'b
+                              val makeApp : text
+                                             -> (unit -> expr D.t list)
+                                             -> expr D.t
+                              val makeLet : (unit -> def D.t list)
+                                             -> (unit -> expr D.t) -> expr D.t
+                              val makeDefinition : text
+                                                    -> text list
+                                                    -> (unit -> expr D.t)
+                                                    -> def D.t
+                              structure Data : <sig>
+                              val program : def node D.t
+                              val qualify : expr D.t
+                                             -> qual D.t seq
+                                             -> expr D.t -> text -> expr D.t
+                              val transform : expr D.t -> text -> expr D.t
+                              val transformDefinition : def D.t -> def D.t
+                              val repeat : int -> def node D.t
+                              val translated : int -> def D.t node D.t
+                              val prefixed : string
+                                              -> ('a
+                                               -> char BenchStream.node 
+                                                   BenchLazy.state ref)
+                                              -> 'a node D.t
+                                              -> char BenchStream.node 
+                                                  BenchLazy.state ref
+                              val showQualifier : qual D.t
+                                                   -> char BenchStream.node 
+                                                       BenchLazy.state ref
+                              val showExpr : expr D.t
+                                              -> char BenchStream.node 
+                                                BenchLazy.delay
+                              val showDefinition : def D.t
+                                                    -> char BenchStream.node 
+                                                        BenchLazy.state ref
+                              val showProgram : def D.t node D.t
+                                                 -> char BenchStream.node 
+                                                     BenchLazy.state ref
+                              val copy : 'a BenchStream.node BenchLazy.state 
+                                            ref
+                                          -> 'a BenchStream.node 
+                                            BenchLazy.delay
+                              val output : bool
+                                            -> int
+                                            -> char BenchStream.node 
+                                              BenchLazy.delay
+                              val lengthFrom : int
+                                                * 'a BenchStream.node 
+                                                    BenchLazy.state ref
+                                                -> int
+                              val length : 'a BenchStream.node BenchLazy.state 
+                                              ref
+                                            -> int
+                              val outputLength : bool -> int -> int
+                            end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-compr-driver.sml]
+functor BenchHartelComprDriverFn(K: sig
+                                  val outputLength : bool -> int -> int
+                                  end) :
+                                sig
+                                  val run : bool -> string list -> string
+                                  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/listcompr-strict/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Kernel : <sig>
+    structure Driver : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 1252000
+PASS listcompr-strict
+SUMMARY 1 checks, 0 failed

@@ -1,0 +1,38 @@
+[
+  {
+    "benchmark": "listcompr",
+    "profile": "smoke",
+    "n": 2000,
+    "length": 1252000
+  },
+  {
+    "benchmark": "listcompr",
+    "profile": "normal",
+    "n": 20000,
+    "length": 12520000
+  },
+  {
+    "benchmark": "listcompr",
+    "profile": "large",
+    "n": 100000,
+    "length": 62600000
+  },
+  {
+    "benchmark": "listcopy",
+    "profile": "smoke",
+    "n": 2000,
+    "length": 1252000
+  },
+  {
+    "benchmark": "listcopy",
+    "profile": "normal",
+    "n": 20000,
+    "length": 12520000
+  },
+  {
+    "benchmark": "listcopy",
+    "profile": "large",
+    "n": 100000,
+    "length": 62600000
+  }
+]
