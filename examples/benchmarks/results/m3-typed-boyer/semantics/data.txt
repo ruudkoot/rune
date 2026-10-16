@@ -1,0 +1,5 @@
+extra.term
+input.term
+normal.term
+truncated.term
+wrong.term

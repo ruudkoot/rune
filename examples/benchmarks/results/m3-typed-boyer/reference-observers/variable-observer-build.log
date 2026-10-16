@@ -1,0 +1,3 @@
+[1 of 3] Compiling RichKernel       ( RichKernel.lhs, RichKernel.o )
+[2 of 3] Compiling Main             ( VariableObserver.hs, VariableObserver.o )
+[3 of 3] Linking variable-observer

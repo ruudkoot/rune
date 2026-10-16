@@ -1,0 +1,23 @@
+# Benchmark measurement report
+
+Every raw sample, failed phase and configuration is retained in `samples.tsv`.
+Metadata and source/input snapshots accompany this report. Compilation is
+separate from execution. Fresh samples include process startup and shutdown;
+repeated samples time Benchmark.run in process. First rounds are retained;
+no steady-state or causal performance claim is inferred. Times are seconds.
+IQR endpoints use linear interpolation at (n-1)*p. Counts are instructions/bytes/objects.
+
+| Benchmark | Profile | Configuration | Level | Phase | Accepted/attempted | Median | Q1 to Q3 | Counts |
+|---|---|---|---|---|---|---|---|---|
+| boyer-nofib-lazy | smoke | native:mlton@20241230 | O2 | compile | 1/1 | 6.480000000 | 6.480000000 to 6.480000000 | - |
+| boyer-nofib-lazy | smoke | native:mlton@20241230 | O2 | correctness | 1/1 | 0.400000000 | 0.400000000 to 0.400000000 | - |
+| boyer-nofib-lazy | smoke | native:mlton@20241230 | O2 | fresh | 1/1 | 0.460000000 | 0.460000000 to 0.460000000 | - |
+| boyer-nofib-lazy | smoke | native:smlnj-legacy@110.99.9 | O2 | compile | 1/1 | 1.120000000 | 1.120000000 to 1.120000000 | - |
+| boyer-nofib-lazy | smoke | native:smlnj-legacy@110.99.9 | O2 | correctness | 1/1 | 0.960000000 | 0.960000000 to 0.960000000 | - |
+| boyer-nofib-lazy | smoke | native:smlnj-legacy@110.99.9 | O2 | fresh | 1/1 | 0.960000000 | 0.960000000 to 0.960000000 | - |
+| boyer-nofib-lazy | smoke | native:polyml@5.9.2 | O2 | compile | 1/1 | 0.440000000 | 0.440000000 to 0.440000000 | - |
+| boyer-nofib-lazy | smoke | native:polyml@5.9.2 | O2 | correctness | 1/1 | 0.630000000 | 0.630000000 to 0.630000000 | - |
+| boyer-nofib-lazy | smoke | native:polyml@5.9.2 | O2 | fresh | 1/1 | 0.670000000 | 0.670000000 to 0.670000000 | - |
+
+Failure categories and artifact paths:
+

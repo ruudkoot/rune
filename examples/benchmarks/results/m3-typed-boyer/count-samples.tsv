@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+boyer-nofib-lazy	normal	rune	O2	count	1	1	pass	29.47	29.26	0.07	10484	5506722585	15409930400	467913076	counts/measurement.pHvfuW/boyer-nofib-lazy/rune/fresh.1
+boyer-nofib-lazy	normal	rune:opt	O2	count	1	1	pass	14.76	15.15	0.04	11524	5506722585	15409930400	467913076	counts/measurement.pHvfuW/boyer-nofib-lazy/rune-opt/fresh.1
+boyer-nofib-lazy	normal	rune:new	O2	count	1	1	pass	26.17	25.95	0.02	10828	2989690335	15409930400	467913076	counts/measurement.pHvfuW/boyer-nofib-lazy/rune-new/fresh.1
+boyer-nofib-lazy	normal	rune:jit	O2	count	1	1	pass	12.42	12.74	0.07	13260	2989690335	15409930400	467913076	counts/measurement.pHvfuW/boyer-nofib-lazy/rune-jit/fresh.1
+boyer-nofib-strict	normal	rune	O2	count	1	1	pass	184.01	184.47	0.22	18612	35961873369	108126210752	3115983502	counts/measurement.yadD3E/boyer-nofib-strict/rune/fresh.1
+boyer-nofib-strict	normal	rune:opt	O2	count	1	1	pass	92.95	92.52	0.20	19788	35961873369	108126210752	3115983502	counts/measurement.yadD3E/boyer-nofib-strict/rune-opt/fresh.1
+boyer-nofib-strict	normal	rune:new	O2	count	1	1	pass	184.92	185.71	0.24	19040	18781427670	108126210752	3115983502	counts/measurement.yadD3E/boyer-nofib-strict/rune-new/fresh.1
+boyer-nofib-strict	normal	rune:jit	O2	count	1	1	pass	83.00	83.54	0.21	21476	18781427670	108126210752	3115983502	counts/measurement.yadD3E/boyer-nofib-strict/rune-jit/fresh.1

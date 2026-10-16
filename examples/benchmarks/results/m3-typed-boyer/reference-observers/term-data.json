@@ -1,0 +1,493 @@
+{
+  "rules": [
+    [
+      "ADD1",
+      []
+    ],
+    [
+      "AND",
+      [
+        [
+          "(AND ?X ?Y)",
+          "(IF ?X (IF ?Y (TRUE) (FALSE)) (FALSE))"
+        ]
+      ]
+    ],
+    [
+      "IF",
+      [
+        [
+          "(IF (IF ?X ?Y ?Z) ?U ?W)",
+          "(IF ?X (IF ?Y ?U ?W) (IF ?Z ?U ?W))"
+        ]
+      ]
+    ],
+    [
+      "TRUE",
+      []
+    ],
+    [
+      "FALSE",
+      []
+    ],
+    [
+      "APPEND",
+      [
+        [
+          "(APPEND (APPEND ?X ?Y) ?Z)",
+          "(APPEND ?X (APPEND ?Y ?Z))"
+        ]
+      ]
+    ],
+    [
+      "CONS",
+      []
+    ],
+    [
+      "CONSP",
+      [
+        [
+          "(CONSP (CONS ?X ?Y))",
+          "(TRUE)"
+        ]
+      ]
+    ],
+    [
+      "DIFFERENCE",
+      [
+        [
+          "(DIFFERENCE ?X ?X)",
+          "(ZERO)"
+        ],
+        [
+          "(DIFFERENCE (PLUS ?X ?Y) ?X)",
+          "?Y"
+        ],
+        [
+          "(DIFFERENCE (PLUS ?Y ?X) ?X)",
+          "?Y"
+        ],
+        [
+          "(DIFFERENCE (PLUS ?X ?Y) (PLUS ?X ?Z))",
+          "(DIFFERENCE ?Y ?Z)"
+        ],
+        [
+          "(DIFFERENCE (PLUS ?Y (PLUS ?X ?Z)) ?X)",
+          "(PLUS ?Y ?Z)"
+        ],
+        [
+          "(DIFFERENCE (ADD1 (PLUS ?Y ?Z)) ?Z)",
+          "(ADD1 ?Y)"
+        ],
+        [
+          "(DIFFERENCE (ADD1 (ADD1 ?X)) (TWO))",
+          "?X"
+        ]
+      ]
+    ],
+    [
+      "ZERO",
+      []
+    ],
+    [
+      "PLUS",
+      [
+        [
+          "(PLUS (PLUS ?X ?Y) ?Z)",
+          "(PLUS ?X (PLUS ?Y ?Z))"
+        ],
+        [
+          "(PLUS (REMAINDER ?X ?Y) (TIMES ?Y (QUOTIENT ?X ?Y)))",
+          "?X"
+        ],
+        [
+          "(PLUS ?X (ADD1 ?Y))",
+          "(ADD1 (PLUS ?X ?Y))"
+        ]
+      ]
+    ],
+    [
+      "REMAINDER",
+      [
+        [
+          "(REMAINDER ?X (ONE))",
+          "(ZERO)"
+        ],
+        [
+          "(REMAINDER ?X ?X)",
+          "(ZERO)"
+        ],
+        [
+          "(REMAINDER (TIMES ?X ?Y) ?X)",
+          "(ZERO)"
+        ],
+        [
+          "(REMAINDER (TIMES ?X ?Y) ?Y)",
+          "(ZERO)"
+        ]
+      ]
+    ],
+    [
+      "ONE",
+      [
+        [
+          "(ONE)",
+          "(ADD1 (ZERO))"
+        ]
+      ]
+    ],
+    [
+      "TIMES",
+      [
+        [
+          "(TIMES ?X (PLUS ?Y ?Z))",
+          "(PLUS (TIMES ?X ?Y) (TIMES ?X ?Z))"
+        ],
+        [
+          "(TIMES (TIMES ?X ?Y) ?Z)",
+          "(TIMES ?X (TIMES ?Y ?Z))"
+        ],
+        [
+          "(TIMES ?X (DIFFERENCE ?Y ?Z))",
+          "(DIFFERENCE (TIMES ?Y ?X) (TIMES ?Z ?X))"
+        ],
+        [
+          "(TIMES ?X (ADD1 ?Y))",
+          "(PLUS ?X (TIMES ?X ?Y))"
+        ]
+      ]
+    ],
+    [
+      "QUOTIENT",
+      [
+        [
+          "(QUOTIENT (PLUS ?X (PLUS ?X ?Y)) (TWO))",
+          "(PLUS ?X (QUOTIENT ?Y (TWO)))"
+        ],
+        [
+          "(QUOTIENT (TIMES ?Y ?X) ?Y)",
+          "(IF (ZEROP ?Y) (ZERO) ?X)"
+        ]
+      ]
+    ],
+    [
+      "TWO",
+      [
+        [
+          "(TWO)",
+          "(ADD1 (ONE))"
+        ]
+      ]
+    ],
+    [
+      "ZEROP",
+      [
+        [
+          "(ZEROP ?X)",
+          "(EQUAL ?X (ZERO))"
+        ]
+      ]
+    ],
+    [
+      "EQUAL",
+      [
+        [
+          "(EQUAL (PLUS ?X ?Y) (ZERO))",
+          "(AND (ZEROP ?X) (ZEROP ?Y))"
+        ],
+        [
+          "(EQUAL (PLUS ?X ?Y) (PLUS ?X ?Z))",
+          "(EQUAL ?Y ?Z)"
+        ],
+        [
+          "(EQUAL (ZERO) (DIFFERENCE ?X ?Y))",
+          "(NOT (LESSP ?Y ?X))"
+        ],
+        [
+          "(EQUAL ?X (DIFFERENCE ?X ?Y))",
+          "(OR (EQUAL ?X (ZERO)) (ZEROP ?Y))"
+        ],
+        [
+          "(EQUAL (TIMES ?X ?Y) (ZERO))",
+          "(OR (ZEROP ?X) (ZEROP ?Y))"
+        ],
+        [
+          "(EQUAL (APPEND ?X ?Y) (APPEND ?X ?Z))",
+          "(EQUAL ?Y ?Z)"
+        ],
+        [
+          "(EQUAL ?Y (TIMES ?X ?Y))",
+          "(OR (EQUAL ?Y (ZERO)) (EQUAL ?X (ONE)))"
+        ],
+        [
+          "(EQUAL ?X (TIMES ?X ?Y))",
+          "(OR (EQUAL ?X (ZERO)) (EQUAL ?Y (ONE)))"
+        ],
+        [
+          "(EQUAL (TIMES ?X ?Y) (ONE))",
+          "(AND (EQUAL ?X (ONE)) (EQUAL ?Y (ONE)))"
+        ],
+        [
+          "(EQUAL (DIFFERENCE ?X ?Y) (DIFFERENCE ?Z ?Y))",
+          "(IF (LESSP ?X ?Y) (NOT (LESSP ?Y ?Z)) (IF (LESSP ?Z ?Y) (NOT (LESSP ?Y ?X)) (EQUAL ?X ?Z)))"
+        ],
+        [
+          "(EQUAL (LESSP ?X ?Y) ?Z)",
+          "(IF (LESSP ?X ?Y) (EQUAL (TRUE) ?Z) (EQUAL (FALSE) ?Z))"
+        ]
+      ]
+    ],
+    [
+      "NOT",
+      [
+        [
+          "(NOT ?X)",
+          "(IF ?X (FALSE) (TRUE))"
+        ]
+      ]
+    ],
+    [
+      "LESSP",
+      [
+        [
+          "(LESSP (REMAINDER ?X ?Y) ?Y)",
+          "(NOT (ZEROP ?Y))"
+        ],
+        [
+          "(LESSP (QUOTIENT ?X ?Y) ?X)",
+          "(AND (NOT (ZEROP ?X)) (LESSP (ONE) ?Y))"
+        ],
+        [
+          "(LESSP (PLUS ?X ?Y) (PLUS ?X ?Z))",
+          "(LESSP ?Y ?Z)"
+        ],
+        [
+          "(LESSP (TIMES ?X ?Z) (TIMES ?Y ?Z))",
+          "(AND (NOT (ZEROP ?Z)) (LESSP ?X ?Y))"
+        ],
+        [
+          "(LESSP ?Y (PLUS ?X ?Y))",
+          "(NOT (ZEROP ?X))"
+        ]
+      ]
+    ],
+    [
+      "OR",
+      [
+        [
+          "(OR ?X ?Y)",
+          "(IF ?X (TRUE) (IF ?Y (TRUE) (FALSE)))"
+        ]
+      ]
+    ],
+    [
+      "DIVIDES",
+      [
+        [
+          "(DIVIDES ?X ?Y)",
+          "(ZEROP (REMAINDER ?Y ?X))"
+        ]
+      ]
+    ],
+    [
+      "EVEN",
+      [
+        [
+          "(EVEN ?X)",
+          "(IF (ZEROP ?X) (TRUE) (ODD (SUB1 ?X)))"
+        ]
+      ]
+    ],
+    [
+      "ODD",
+      [
+        [
+          "(ODD ?X)",
+          "(EVEN (SUB1 ?X))"
+        ]
+      ]
+    ],
+    [
+      "SUB1",
+      [
+        [
+          "(SUB1 (ADD1 ?X))",
+          "?X"
+        ]
+      ]
+    ],
+    [
+      "EXP",
+      [
+        [
+          "(EXP ?X (PLUS ?Y ?Z))",
+          "(TIMES (EXP ?X ?Y) (EXP ?X ?Z))"
+        ],
+        [
+          "(EXP ?X (TIMES ?Y ?Z))",
+          "(EXP (EXP ?X ?Y) ?Z)"
+        ]
+      ]
+    ],
+    [
+      "F",
+      []
+    ],
+    [
+      "FOUR",
+      [
+        [
+          "(FOUR)",
+          "(ADD1 (ADD1 (TWO)))"
+        ]
+      ]
+    ],
+    [
+      "GCD",
+      [
+        [
+          "(GCD ?X ?Y)",
+          "(GCD ?Y ?X)"
+        ],
+        [
+          "(GCD (TIMES ?X ?Z) (TIMES ?Y ?Z))",
+          "(TIMES ?Z (GCD ?X ?Y))"
+        ]
+      ]
+    ],
+    [
+      "GREATEREQP",
+      [
+        [
+          "(GREATEREQP ?X ?Y)",
+          "(NOT (LESSP ?X ?Y))"
+        ]
+      ]
+    ],
+    [
+      "GREATERP",
+      [
+        [
+          "(GREATERP ?X ?Y)",
+          "(LESSP ?Y ?X)"
+        ]
+      ]
+    ],
+    [
+      "IFF",
+      [
+        [
+          "(IFF ?X ?Y)",
+          "(AND (IMPLIES ?X ?Y) (IMPLIES ?Y ?X))"
+        ]
+      ]
+    ],
+    [
+      "IMPLIES",
+      [
+        [
+          "(IMPLIES ?X ?Y)",
+          "(IF ?X (IF ?Y (TRUE) (FALSE)) (TRUE))"
+        ]
+      ]
+    ],
+    [
+      "LENGTH",
+      [
+        [
+          "(LENGTH (REVERSE ?X))",
+          "(LENGTH ?X)"
+        ],
+        [
+          "(LENGTH (CONS ?X (CONS ?Y (CONS ?Z (CONS ?U ?W)))))",
+          "(PLUS (FOUR) (LENGTH ?W))"
+        ]
+      ]
+    ],
+    [
+      "REVERSE",
+      [
+        [
+          "(REVERSE (APPEND ?X ?Y))",
+          "(APPEND (REVERSE ?Y) (REVERSE ?X))"
+        ]
+      ]
+    ],
+    [
+      "LESSEQP",
+      [
+        [
+          "(LESSEQP ?X ?Y)",
+          "(NOT (LESSP ?Y ?X))"
+        ]
+      ]
+    ],
+    [
+      "LISTP",
+      [
+        [
+          "(LISTP ?X)",
+          "(OR (NILP ?X) (CONSP ?X))"
+        ]
+      ]
+    ],
+    [
+      "NILP",
+      [
+        [
+          "(NILP ?X)",
+          "(EQUAL ?X (NIL))"
+        ]
+      ]
+    ],
+    [
+      "NIL",
+      []
+    ],
+    [
+      "MEMBER",
+      [
+        [
+          "(MEMBER ?X (APPEND ?Y ?Z))",
+          "(OR (MEMBER ?X ?Y) (MEMBER ?X ?Z))"
+        ],
+        [
+          "(MEMBER ?X (REVERSE ?Y))",
+          "(MEMBER ?X ?Y)"
+        ]
+      ]
+    ],
+    [
+      "NLISTP",
+      [
+        [
+          "(NLISTP ?X)",
+          "(NOT (LISTP ?X))"
+        ]
+      ]
+    ]
+  ],
+  "template": "(IMPLIES (AND (IMPLIES ?A ?Y) (AND (IMPLIES ?Y ?Z) (AND (IMPLIES ?Z ?U) (IMPLIES ?U ?W)))) (IMPLIES ?X ?W))",
+  "substitution": [
+    [
+      "X",
+      "(F (PLUS (PLUS ?A ?B) (PLUS ?C (ZERO))))"
+    ],
+    [
+      "Y",
+      "(F (TIMES (TIMES ?A ?B) (PLUS ?C ?D)))"
+    ],
+    [
+      "Z",
+      "(F (REVERSE (APPEND (APPEND ?A ?B) (NIL))))"
+    ],
+    [
+      "U",
+      "(EQUAL (PLUS ?A ?B) (DIFFERENCE ?X ?Y))"
+    ],
+    [
+      "W",
+      "(LESSP (REMAINDER ?A ?B) (MEMBER ?A (LENGTH ?B)))"
+    ]
+  ]
+}

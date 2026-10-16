@@ -1,0 +1,4 @@
+PASS complete original output fast 2
+PASS complete original output normal 15
+PASS complete original output large 75
+Original embedded-rule graph: 41 function IDs; 170284 normal-form bytes

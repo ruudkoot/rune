@@ -1,0 +1,1 @@
+boyer-nofib-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/boyer-ids.sml shared/boyer-graph-data.sml shared/nofib-typed-boyer.sml shared/typed-boyer-driver.sml boyer-nofib-lazy/benchmark.sml shared/main.sml	data/normal.variables	boyer-nofib-lazy/normal.expected	data/normal.variables

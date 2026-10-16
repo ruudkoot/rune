@@ -1,0 +1,1 @@
+boyer-nofib-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/boyer-ids.sml shared/boyer-graph-data.sml shared/nofib-typed-boyer.sml shared/typed-boyer-driver.sml boyer-nofib-lazy/benchmark.sml shared/main.sml	data/smoke.variables	boyer-nofib-lazy/smoke.expected	data/smoke.variables

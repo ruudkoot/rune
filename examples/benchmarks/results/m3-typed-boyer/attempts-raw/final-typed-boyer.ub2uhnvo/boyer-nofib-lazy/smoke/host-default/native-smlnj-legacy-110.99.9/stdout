@@ -1,0 +1,217 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/boyer-ids.sml]
+[autoloading]
+[autoloading done]
+structure BenchBoyerIds : sig
+  val names : string vector
+  val trueId : int
+  val falseId : int
+  val ifId : int
+  val xId : int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/boyer-graph-data.sml]
+functor BenchBoyerDataFn(T: sig
+  type term
+  val variable : int -> term
+  val app : int -> (unit -> term list) -> term
+end) :
+sig
+  val rules : int -> (T.term * T.term) BenchStream.node BenchLazy.state ref
+  val theorem : T.term -> T.term
+  val bindings : unit -> (int * T.term) list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-typed-boyer.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-typed-boyer.sml:30.42 Warning: calling polyEqual
+functor BenchTypedBoyerFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure L : <sig>
+  structure S : <sig>
+  type termNode
+  type argsNode
+  type term
+  type environment
+  val variables : <BaseFct>.<resultStr>.termNode D.t vector
+  val noArgs : <BaseFct>.<resultStr>.argsNode D.t
+  val cache :
+      (<BaseFct>.<resultStr>.term * <BaseFct>.<resultStr>.term) 
+               BenchStream.stream array option ref
+  val variable : int -> <BaseFct>.<resultStr>.termNode D.t
+  val argsFrom :
+      <BaseFct>.<resultStr>.termNode D.t list
+       -> <BaseFct>.<resultStr>.argsNode D.t
+  val app :
+      int
+       -> (unit -> <BaseFct>.<resultStr>.termNode D.t list)
+       -> <BaseFct>.<resultStr>.termNode D.t
+  structure Data : <sig>
+  val equal :
+      <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.termNode D.t -> bool
+  val equalArgs :
+      <BaseFct>.<resultStr>.argsNode D.t
+       -> <BaseFct>.<resultStr>.argsNode D.t -> bool
+  val find :
+      ''a
+       -> (''a * 'b) list BenchLazy.state ref -> bool * 'b BenchLazy.state ref
+  val unify :
+      <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.termNode D.t
+       -> (int * <BaseFct>.<resultStr>.termNode D.t) list BenchLazy.state ref
+       -> bool
+       * (int * <BaseFct>.<resultStr>.termNode D.t) list BenchLazy.state ref
+  val unifyArgs :
+      <BaseFct>.<resultStr>.argsNode D.t
+       -> <BaseFct>.<resultStr>.argsNode D.t
+       -> (int * <BaseFct>.<resultStr>.termNode D.t) list BenchLazy.state ref
+       -> bool
+       * (int * <BaseFct>.<resultStr>.termNode D.t) list BenchLazy.state ref
+  val subst :
+      (int * <BaseFct>.<resultStr>.termNode D.t) list BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.termNode D.t
+  val mapArgs :
+      (<BaseFct>.<resultStr>.termNode D.t
+        -> <BaseFct>.<resultStr>.termNode D.t)
+       -> <BaseFct>.<resultStr>.argsNode D.t
+       -> <BaseFct>.<resultStr>.argsNode D.t
+  val rewrite :
+      <BaseFct>.<resultStr>.termNode D.t -> <BaseFct>.<resultStr>.termNode D.t
+  val rewriteRules :
+      <BaseFct>.<resultStr>.termNode D.t
+       -> (<BaseFct>.<resultStr>.termNode D.t
+          * <BaseFct>.<resultStr>.termNode D.t) BenchStream.stream
+       -> <BaseFct>.<resultStr>.termNode D.t
+  val member :
+      <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.termNode D.t list -> bool
+  val isId : int -> <BaseFct>.<resultStr>.termNode D.t -> bool
+  val truep :
+      <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.termNode D.t list -> bool
+  val falsep :
+      <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.termNode D.t list -> bool
+  val ifArgs :
+      <BaseFct>.<resultStr>.argsNode D.t
+       -> (<BaseFct>.<resultStr>.termNode D.t
+          * <BaseFct>.<resultStr>.termNode D.t
+          * <BaseFct>.<resultStr>.termNode D.t) option
+  val tautologyp :
+      <BaseFct>.<resultStr>.termNode D.t
+       -> <BaseFct>.<resultStr>.termNode D.t list
+       -> <BaseFct>.<resultStr>.termNode D.t list -> bool
+  val input : int -> <BaseFct>.<resultStr>.termNode D.t
+  val normal : int -> <BaseFct>.<resultStr>.termNode D.t
+  val test : int -> bool
+  val write : <BaseFct>.<resultStr>.termNode D.t -> (string -> 'a) -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/typed-boyer-driver.sml]
+[autoloading]
+[autoloading done]
+functor BenchTypedBoyerDriverFn(K: sig
+  val test : int -> bool
+end) :
+sig
+  val variable : string -> int
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/boyer-nofib-lazy/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 100:200:proved
+PASS boyer-nofib-lazy
+SUMMARY 1 checks, 0 failed

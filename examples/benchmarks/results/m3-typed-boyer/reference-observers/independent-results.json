@@ -1,0 +1,38 @@
+{
+  "A": {
+    "result": false,
+    "assignments": 64
+  },
+  "B": {
+    "result": false,
+    "assignments": 64
+  },
+  "C": {
+    "result": false,
+    "assignments": 64
+  },
+  "D": {
+    "result": false,
+    "assignments": 64
+  },
+  "X": {
+    "result": true,
+    "assignments": 32
+  },
+  "Y": {
+    "result": false,
+    "assignments": 32
+  },
+  "Z": {
+    "result": false,
+    "assignments": 32
+  },
+  "U": {
+    "result": false,
+    "assignments": 32
+  },
+  "W": {
+    "result": false,
+    "assignments": 32
+  }
+}

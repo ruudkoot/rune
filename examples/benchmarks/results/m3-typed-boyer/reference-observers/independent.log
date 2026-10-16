@@ -1,0 +1,9 @@
+PASS independent complete rewriting and 64 truth assignments A False
+PASS independent complete rewriting and 64 truth assignments B False
+PASS independent complete rewriting and 64 truth assignments C False
+PASS independent complete rewriting and 64 truth assignments D False
+PASS independent complete rewriting and 32 truth assignments X True
+PASS independent complete rewriting and 32 truth assignments Y False
+PASS independent complete rewriting and 32 truth assignments Z False
+PASS independent complete rewriting and 32 truth assignments U False
+PASS independent complete rewriting and 32 truth assignments W False

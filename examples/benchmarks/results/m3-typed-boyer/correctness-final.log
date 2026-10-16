@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-typed-boyer.ub2uhnvo
+PASS boyer-nofib-lazy smoke O0
+PASS boyer-nofib-lazy smoke O2
+PASS boyer-nofib-lazy smoke hosts
+PASS boyer-nofib-lazy normal O0
+PASS boyer-nofib-lazy normal O2
+PASS boyer-nofib-lazy normal hosts
+FAIL boyer-nofib-strict smoke O0
+PASS boyer-nofib-strict smoke O2
+PASS boyer-nofib-strict smoke hosts
+PASS boyer-nofib-strict normal O0
+PASS boyer-nofib-strict normal O2
+PASS boyer-nofib-strict normal hosts
