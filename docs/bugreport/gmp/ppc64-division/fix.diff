@@ -1,0 +1,18 @@
+--- a/longlong.h
++++ b/longlong.h
+@@ -383,6 +383,15 @@
+ #define __AND_CLOBBER_CC , "cc"
+ #endif /* __GNUC__ < 2 */
+ 
++/* PowerPC addc/adde/subfe write XER[CA]. "cc" is the condition register.
++   GCC clobbers XER[CA] on every asm. Clang does not, and Clang 18 rejects
++   GCC's register name "ca" while accepting "xer". */
++#if defined (__clang__) && (defined (__powerpc__) || defined (__powerpc64__) \
++    || defined (_ARCH_PPC) || defined (_ARCH_PPC64))
++#undef __CLOBBER_CC
++#define __CLOBBER_CC : "cc", "xer"
++#endif
++
+ #if (defined (__a29k__) || defined (_AM29K)) && W_TYPE_SIZE == 32
+ #define add_ssaaaa(sh, sl, ah, al, bh, bl) \
+   __asm__ ("add %1,%4,%5\n\taddc %0,%2,%3"				\
