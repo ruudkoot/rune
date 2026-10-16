@@ -1,0 +1,92 @@
+[
+  {
+    "source": "nofib",
+    "path": "gc/happy",
+    "changes": {
+      "inputs": {
+        "before": "gc/happy/happy.expected",
+        "after": "gc/happy/TestInput.y;gc/happy/happy.expected"
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "gc/spellcheck",
+    "changes": {
+      "inputs": {
+        "before": "gc/spellcheck/spellcheck.stdout",
+        "after": "gc/spellcheck/input;gc/spellcheck/spellcheck.stdout;gc/spellcheck/words"
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "real/hidden",
+    "changes": {
+      "inputs": {
+        "before": "real/hidden/hidden.stdin",
+        "after": "real/hidden/hidden.stdin;real/hidden/runtime_files/four.plate;real/hidden/runtime_files/houses.plate;real/hidden/runtime_files/rad.plate"
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "real/maillist",
+    "changes": {
+      "inputs": {
+        "before": "real/maillist/maillist.faststdout;real/maillist/maillist.slowstdout;real/maillist/maillist.stdout",
+        "after": "real/maillist/maillist.faststdout;real/maillist/maillist.slowstdout;real/maillist/maillist.stdout;real/maillist/runtime_files/fast;real/maillist/runtime_files/norm;real/maillist/runtime_files/slow"
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "spectral/dom-lt",
+    "changes": {
+      "inputs": {
+        "before": "spectral/dom-lt/dom-lt.faststdout;spectral/dom-lt/dom-lt.slowstdout;spectral/dom-lt/dom-lt.stdout",
+        "after": "spectral/dom-lt/dom-lt.faststdout;spectral/dom-lt/dom-lt.slowstdout;spectral/dom-lt/dom-lt.stdout;spectral/dom-lt/ghc-examples.in"
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "spectral/mate",
+    "changes": {
+      "inputs": {
+        "before": "spectral/mate/mate.faststdout;spectral/mate/mate.slowstdout;spectral/mate/mate.stdout",
+        "after": "spectral/mate/mate.faststdout;spectral/mate/mate.slowstdout;spectral/mate/mate.stdout;spectral/mate/runtime_files/heathcote3.prob;spectral/mate/runtime_files/holzhausen.prob;spectral/mate/runtime_files/kohtz.prob"
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "spectral/para",
+    "changes": {
+      "inputs": {
+        "before": "",
+        "after": "spectral/para/runtime_files/input-data"
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "spectral/sorting",
+    "changes": {
+      "inputs": {
+        "before": "spectral/sorting/sorting.faststdout;spectral/sorting/sorting.slowstdout;spectral/sorting/sorting.stdout",
+        "after": "spectral/sorting/Main.hs;spectral/sorting/Sort.hs;spectral/sorting/sorting.faststdout;spectral/sorting/sorting.slowstdout;spectral/sorting/sorting.stdout"
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "spectral/treejoin",
+    "changes": {
+      "inputs": {
+        "before": "spectral/treejoin/treejoin.stdout",
+        "after": "spectral/treejoin/runtime_files/1500.1;spectral/treejoin/runtime_files/1500.2;spectral/treejoin/runtime_files/27000.1;spectral/treejoin/runtime_files/27000.2;spectral/treejoin/runtime_files/8000.1;spectral/treejoin/runtime_files/8000.2;spectral/treejoin/treejoin.stdout"
+      }
+    }
+  }
+]

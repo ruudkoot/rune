@@ -14,6 +14,7 @@ import csv
 import hashlib
 import json
 import re
+import shlex
 import subprocess
 from pathlib import Path
 
@@ -435,6 +436,24 @@ def classify(source, root, item, files, text):
     return milestone, disposition, reason
 
 
+def profile_inputs(root, parent):
+    """Find literal file arguments without evaluating upstream Make or shell code."""
+    makefile = parent / "Makefile"
+    if not makefile.is_file():
+        return set()
+    text = makefile.read_text(errors="replace").replace("\\\n", " ")
+    inputs = set()
+    for value in re.findall(r"^\s*(?:FAST|NORM|SLOW)_OPTS\s*[:?+]?=\s*(.*)$", text, re.M):
+        for token in shlex.split(value, comments=True):
+            ref = token.split("=", 1)[-1] if token.startswith("--") else token
+            if not re.fullmatch(r"[\w./@+ -]{1,240}", ref):
+                continue
+            candidate = (parent / ref).resolve()
+            if candidate.is_relative_to(root) and candidate.is_file() and upstream_file(root, candidate):
+                inputs.add(str(candidate.relative_to(root)))
+    return inputs
+
+
 def build(source, root, lock):
     rows = []
     for item in discover(source, root):
@@ -467,7 +486,7 @@ def build(source, root, lock):
         milestone, disposition, reason = classify(source, root, item, files, code + "\n" + "\n".join(dependency_forms))
         name = item["name"]
         parent = (root / path) if (root / path).is_dir() else (root / path).parent
-        inputs = set()
+        inputs = profile_inputs(root, parent) if source == "nofib" else set()
         if files and parent.exists() and path.startswith(("programs/", "benchmarks/", "imaginary/", "spectral/", "real/", "gc/", "shootout/", "parallel/", "smp/")):
             for fixture in parent.rglob("*"):
                 if not upstream_file(root, fixture):
@@ -519,7 +538,7 @@ def related(rows):
         groups[aliases.get(base, base)].append(row)
     for group in groups.values():
         for row in group:
-            row["related"] = ";".join(other["source"] + ":" + other["path"] for other in group if other is not row)
+            row["related"] = ";".join(sorted(other["source"] + ":" + other["path"] for other in group if other is not row))
 
 
 def validate(rows, locks):
