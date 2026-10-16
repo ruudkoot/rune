@@ -1,0 +1,14 @@
+[
+  {
+    "mode": "two",
+    "exit": 0
+  },
+  {
+    "mode": "three",
+    "exit": 1
+  },
+  {
+    "mode": "multi",
+    "exit": 0
+  }
+]

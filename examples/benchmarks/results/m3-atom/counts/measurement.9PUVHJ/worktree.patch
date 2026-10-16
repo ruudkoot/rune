@@ -1,0 +1,328 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 8cf91f1b..74e7c596 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -328,6 +328,8 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [circsim-strict](#circsim-strict) | [nofib gc](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/circsim) | Simulate registers through balanced-tree packet scans and consume the shown spine. |
+ | [circsim-nofib-lazy](#circsim-nofib-lazy) | [nofib spectral](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/circsim) | Simulate registers through balanced-tree packet scans and consume the printed-character trace. |
+ | [circsim-nofib-strict](#circsim-nofib-strict) | [nofib spectral](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/circsim) | Simulate registers through balanced-tree packet scans and consume the printed-character trace. |
++| [atom-lazy](#atom-lazy) | [nofib atom](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/atom) | Generate the original unshared atom stream with binary32 arithmetic and lazy finite vectors. |
++| [atom-strict](#atom-strict) | [nofib atom](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/atom) | Generate the original unshared atom stream with binary32 arithmetic and strict finite vectors. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -15970,3 +15972,229 @@ these sequential combinators.
+ | smoke | 8 | 4 | 1 | 1:74:4944:74 |
+ | normal | 8 | 40 | 97 | 97:722:49080:70034 |
+ | large | 8 | 200 | 97 | 97:3602:245240:349394 |
++
++
++## atom-lazy
++
++Finite-value evaluation: lazy.
++
++### Algorithm and workload
++
++Produce a prefix of the one-dimensional atom state stream using the original
++force law and explicit-Euler position/velocity updates. Keep positions and
++velocities as finite lists. The timestep is binary32 0.02, spring parameter [1],
++initial position [1] and velocity [0]. The source displays only positions, with
++a tab per component and newline per state.
++
++### History, authorship, revision and aliases
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/atom/Main.hs,
++Makefile and all stdout fixtures. The header attributes the kernel to Ron Legere
++at Caltech Quantum Optics. It records a historical Classic Hugs/GHC discrepancy
++and relates it to commoning identical recursive calls. That anecdote is source
++history rather than a current timing result. Full source and attribution bytes
++are preserved; no separate redistribution notice is stated in these files.
++
++Retain the established atom name with lazy/strict suffixes. The repeated
++self-call is intentionally part of this benchmark; a shared self-referential
++stream or linear state iterator would be a different implementation. The
++independent linear iterator used for reference generation is confined to checks.
++
++### Source quirks, sharing and evaluation variants
++
++Each experiment invocation creates a distinct child experiment with identical
++parameters. Its force law and propagation share that child stream, while the
++outer stream remains separate. The initial state head is shared across calls.
++Small counted-law probes check triangular force demands: for n displayed states,
++lazy mode demands (n-1)*(n-2)/2 force heads (zero below two), while strict mode
++demands n*(n-1)/2. These checks detect accidental stream knotting.
++
++The source Num-list multiplication computes the first product, then multiplies
++the RIGHT tail by itself, ignoring the left tail. Preserve that behavior; the
++one-dimensional profile does not exercise it, so separate two-dimensional source
++oracles do. Addition preserves the longer tail and its source matching order.
++The force stream matches State at spine construction, but propagation leaves
++its force-vector argument undemanded until velocity needs it.
++
++The lazy variant suspends finite vector spines/elements and state fields.
++The strict variant evaluates those finite values eagerly, including terminal
++velocities not displayed by the source. Infinite state/force streams remain
++memoized in both modes. The lazy consumer never forces an unshown velocity
++solely for validation. A source bad-force probe displays two positions without
++demanding force, then fails on the third; the lazy port preserves that behavior.
++
++### Portable arithmetic, drivers and adaptations
++
++Use the existing finite-normal binary32 helper shared with Mandel2. Values are
++stored exactly in binary64 and rounded to 24 significand bits after each source
++operation, ties to even. No optional Real32 structure or runtime feature is
++required. Independent original-profile checks establish that every selected
++operand/result is zero or normal; nonzero frexp exponents stay in [-18,2].
++Products of binary32 operands need at most 48 significant bits; observed addend
++exponent gaps are at most 19, so sums need at most 43. The binary64 intermediate
++therefore represents these selected operations exactly before binary32 rounding.
++The helper does not claim general subnormal/overflow/transcendental support.
++
++Word32 encodes and checks every displayed position bit for bit. Masks, exponents,
++indices and formatting counters have explicit bounded widths; signed zeros are
++distinguished by the encoder. The initial timestep has bits 3CA3D70A. Each driver
++invocation creates a fresh experiment instead of retaining the source top-level
++test CAF across repeated suite invocations. Internal child-stream sharing is
++retained. Profile arguments and the reviewed position file are read once.
++
++Numeric formatting uses SML GEN9 instead of Haskell's shortest Float renderer.
++Every numeric character is inspected, a binary32 roundtrip is checked, and tab/
++newline lengths are consumed. Renderer-dependent text lengths are bounded rather
++than exposed as cross-compiler expected output. Controlled output reports
++position-count:rolling-bit-checkword, using explicitly modular Word32 xor/multiply
++(seed 811C9DC5, multiplier 01000193). Every position is independently checked
++against its fixture before contributing; this checkword does not replace checking.
++
++### Compiler/runtime diagnostic questions
++
++Investigate unshared recursive calls, within-invocation sharing, finite eager/
++lazy vectors, unused velocities, closures, list temporaries, GC and whole-program
++specialization. Emulated binary32 rounding and format validation are substantial
++parts of this SML workload. Timing comparisons use identical SML across compilers;
++GHC supplies correctness references. The source's historical compiler story does
++not establish a performance explanation for current configurations.
++
++### Inputs, correctness and references
++
++| Profile | Displayed states | Input origin |
++|---|---:|---|
++| smoke | 100 | bounded prefix of the original FAST workload |
++| normal | 2500 | unchanged NORM_OPTS |
++| large | 4000 | unchanged SLOW_OPTS |
++
++All three original 1000/2500/4000-state text fixtures remain in provenance.
++Smoke uses 100 states to cover negative positions while keeping routine checks
++bounded; normal/large keep the original parameters. Default limits apply.
++Upstream text/bit observers agree with an independent linear binary32 Euler model
++on all 4000 positions and velocities. Observers force velocities for auxiliary
++checking; the primary lazy benchmark preserves the position-only demand.
++
++SML probes check exact position/state bits, stream demand/triangular structure,
++source vector quirks, sharing, ties to even, signed zero, finite-helper domain,
++format roundtrip and wrong/short/extra references. Whole normal Rune O2 pilots
++validate both policies at 2500 positions. Other coverage is recorded in validation.md.
++
++[The pinned program](https://gitlab.haskell.org/ghc/nofib/-/blob/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/atom/Main.hs)
++provides the algorithm, attribution and historical explanation.
++[Partain](https://doi.org/10.1007/978-1-4471-3215-8_17) supplies nofib context.
++[The SML Real interface](https://smlfamily.github.io/Basis/real.html) specifies the
++rounding/conversion operations used by the helper. Source analysis, finite-input
++bit checks and future performance explanations have separate evidence scopes.
++
++
++## atom-strict
++
++Finite-value evaluation: strict.
++
++### Algorithm and workload
++
++Produce a prefix of the one-dimensional atom state stream using the original
++force law and explicit-Euler position/velocity updates. Keep positions and
++velocities as finite lists. The timestep is binary32 0.02, spring parameter [1],
++initial position [1] and velocity [0]. The source displays only positions, with
++a tab per component and newline per state.
++
++### History, authorship, revision and aliases
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/atom/Main.hs,
++Makefile and all stdout fixtures. The header attributes the kernel to Ron Legere
++at Caltech Quantum Optics. It records a historical Classic Hugs/GHC discrepancy
++and relates it to commoning identical recursive calls. That anecdote is source
++history rather than a current timing result. Full source and attribution bytes
++are preserved; no separate redistribution notice is stated in these files.
++
++Retain the established atom name with lazy/strict suffixes. The repeated
++self-call is intentionally part of this benchmark; a shared self-referential
++stream or linear state iterator would be a different implementation. The
++independent linear iterator used for reference generation is confined to checks.
++
++### Source quirks, sharing and evaluation variants
++
++Each experiment invocation creates a distinct child experiment with identical
++parameters. Its force law and propagation share that child stream, while the
++outer stream remains separate. The initial state head is shared across calls.
++Small counted-law probes check triangular force demands: for n displayed states,
++lazy mode demands (n-1)*(n-2)/2 force heads (zero below two), while strict mode
++demands n*(n-1)/2. These checks detect accidental stream knotting.
++
++The source Num-list multiplication computes the first product, then multiplies
++the RIGHT tail by itself, ignoring the left tail. Preserve that behavior; the
++one-dimensional profile does not exercise it, so separate two-dimensional source
++oracles do. Addition preserves the longer tail and its source matching order.
++The force stream matches State at spine construction, but propagation leaves
++its force-vector argument undemanded until velocity needs it.
++
++The lazy variant suspends finite vector spines/elements and state fields.
++The strict variant evaluates those finite values eagerly, including terminal
++velocities not displayed by the source. Infinite state/force streams remain
++memoized in both modes. The lazy consumer never forces an unshown velocity
++solely for validation. A source bad-force probe displays two positions without
++demanding force, then fails on the third; the lazy port preserves that behavior.
++
++### Portable arithmetic, drivers and adaptations
++
++Use the existing finite-normal binary32 helper shared with Mandel2. Values are
++stored exactly in binary64 and rounded to 24 significand bits after each source
++operation, ties to even. No optional Real32 structure or runtime feature is
++required. Independent original-profile checks establish that every selected
++operand/result is zero or normal; nonzero frexp exponents stay in [-18,2].
++Products of binary32 operands need at most 48 significant bits; observed addend
++exponent gaps are at most 19, so sums need at most 43. The binary64 intermediate
++therefore represents these selected operations exactly before binary32 rounding.
++The helper does not claim general subnormal/overflow/transcendental support.
++
++Word32 encodes and checks every displayed position bit for bit. Masks, exponents,
++indices and formatting counters have explicit bounded widths; signed zeros are
++distinguished by the encoder. The initial timestep has bits 3CA3D70A. Each driver
++invocation creates a fresh experiment instead of retaining the source top-level
++test CAF across repeated suite invocations. Internal child-stream sharing is
++retained. Profile arguments and the reviewed position file are read once.
++
++Numeric formatting uses SML GEN9 instead of Haskell's shortest Float renderer.
++Every numeric character is inspected, a binary32 roundtrip is checked, and tab/
++newline lengths are consumed. Renderer-dependent text lengths are bounded rather
++than exposed as cross-compiler expected output. Controlled output reports
++position-count:rolling-bit-checkword, using explicitly modular Word32 xor/multiply
++(seed 811C9DC5, multiplier 01000193). Every position is independently checked
++against its fixture before contributing; this checkword does not replace checking.
++
++### Compiler/runtime diagnostic questions
++
++Investigate unshared recursive calls, within-invocation sharing, finite eager/
++lazy vectors, unused velocities, closures, list temporaries, GC and whole-program
++specialization. Emulated binary32 rounding and format validation are substantial
++parts of this SML workload. Timing comparisons use identical SML across compilers;
++GHC supplies correctness references. The source's historical compiler story does
++not establish a performance explanation for current configurations.
++
++### Inputs, correctness and references
++
++| Profile | Displayed states | Input origin |
++|---|---:|---|
++| smoke | 100 | bounded prefix of the original FAST workload |
++| normal | 2500 | unchanged NORM_OPTS |
++| large | 4000 | unchanged SLOW_OPTS |
++
++All three original 1000/2500/4000-state text fixtures remain in provenance.
++Smoke uses 100 states to cover negative positions while keeping routine checks
++bounded; normal/large keep the original parameters. Default limits apply.
++Upstream text/bit observers agree with an independent linear binary32 Euler model
++on all 4000 positions and velocities. Observers force velocities for auxiliary
++checking; the primary lazy benchmark preserves the position-only demand.
++
++SML probes check exact position/state bits, stream demand/triangular structure,
++source vector quirks, sharing, ties to even, signed zero, finite-helper domain,
++format roundtrip and wrong/short/extra references. Whole normal Rune O2 pilots
++validate both policies at 2500 positions. Other coverage is recorded in validation.md.
++
++[The pinned program](https://gitlab.haskell.org/ghc/nofib/-/blob/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/atom/Main.hs)
++provides the algorithm, attribution and historical explanation.
++[Partain](https://doi.org/10.1007/978-1-4471-3215-8_17) supplies nofib context.
++[The SML Real interface](https://smlfamily.github.io/Basis/real.html) specifies the
++rounding/conversion operations used by the helper. Source analysis, finite-input
++bit checks and future performance explanations have separate evidence scopes.
+diff --git a/examples/benchmarks/audit.md b/examples/benchmarks/audit.md
+index 58995548..70f5fe61 100644
+--- a/examples/benchmarks/audit.md
++++ b/examples/benchmarks/audit.md
+@@ -261,3 +261,11 @@ heading and records its source evidence. Two inventory rows change authors and
+ evidence only; source identities, names and dispositions remain unchanged.
+ All 58 inventory regressions pass and all five clean pinned trees reproduce
+ 861 entries. The shared simulator's different consumers retain separate ports.
++
++## Atom attribution review, 2026-10-16
++
++The atom header attributes its kernel to Ron Legere on the line after
++written by. Discovery now recognizes that exact multiline attribution.
++One inventory row gains authors/evidence; source identity, name and disposition
++are unchanged. All 60 regressions pass and all five clean pins reproduce 861
++entries. The source's historical Hugs/GHC anecdote is recorded as history.
+diff --git a/examples/benchmarks/inventory.tsv b/examples/benchmarks/inventory.tsv
+index 87950828..8de28168 100644
+--- a/examples/benchmarks/inventory.tsv
++++ b/examples/benchmarks/inventory.tsv
+@@ -611,7 +611,7 @@ nofib	smp/threads004	threads004	threads004	M3	defer	kernel		Einar Karttunen	1eed
+ nofib	smp/threads006	threads006	threads006	M3	defer	kernel		not stated in scanned source headers	e68ff4636b60a7c26b3ed1d9cc7988d7ff9f00c580f2a4ca5de69a879f4c0521	smp/threads006/Main.hs			smp/threads006/Makefile	parallel/concurrent/STM collection; preserve its runtime model and reconsider with the corresponding Rune facilities
+ nofib	smp/threads007	threads007	threads007	M3	defer	kernel		not stated in scanned source headers	653fb4f59496d46c54bc64d8924f3ccf759c6abbff2e75c1fb8aeed9c6e08b66	smp/threads007/Control/Concurrent/CML.hs;smp/threads007/Main.hs		smp/threads007/Control/Concurrent/CML.hs:header	smp/threads007/Makefile	parallel/concurrent/STM collection; preserve its runtime model and reconsider with the corresponding Rune facilities
+ nofib	spectral/ansi	ansi	ansi	M3	import	kernel		not stated in scanned source headers	2fbe6f2e7fbd3c1bfa398c3c1c18ce0168d744ead943d8e3202c5a9a123a39e2	spectral/ansi/Main.hs	spectral/ansi/ansi.faststdout;spectral/ansi/ansi.slowstdout;spectral/ansi/ansi.stdout		spectral/ansi/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	spectral/atom	atom	atom	M3	import	kernel		not stated in scanned source headers	ccd2c6c131ef6e9ab359fdb5c68da7d1642e83c71bcddf92e8153d3fe2e27ae3	spectral/atom/Main.hs	spectral/atom/atom.faststdout;spectral/atom/atom.slowstdout;spectral/atom/atom.stdout	spectral/atom/Main.hs:header	spectral/atom/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	spectral/atom	atom	atom	M3	import	kernel		Ron Legere	ccd2c6c131ef6e9ab359fdb5c68da7d1642e83c71bcddf92e8153d3fe2e27ae3	spectral/atom/Main.hs	spectral/atom/atom.faststdout;spectral/atom/atom.slowstdout;spectral/atom/atom.stdout	spectral/atom/Main.hs:header	spectral/atom/Main.hs:attribution-header;spectral/atom/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/awards	awards	awards	M3	import	kernel		Lennart Augustsson	eb3e4617570fa08bbdc529c3be1dc1a1acfbc5999b134ec7ca4855de97dfbc61	spectral/awards/Main.hs;spectral/awards/QSort.hs		spectral/awards/QSort.hs:header	spectral/awards/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/banner	banner	banner	M3	import	kernel		not stated in scanned source headers	8a6843b42b72b2329bd5b091e46739cee5e89bc7e6e9fd89ff74f53c7952fdff	spectral/banner/Main.hs			spectral/banner/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/boyer	boyer	boyer-nofib	M3	import	symbolic-search	mlkit:test/boyer.sml;mlton:benchmark/tests/boyer.sml;smlnj:programs/boyer	Bob Boyer	21102e3bba50dee3725f8bb353b08668c0bc852c458c61fbf72f878aaf4beda1	spectral/boyer/Main.lhs	spectral/boyer/boyer.faststdout;spectral/boyer/boyer.slowstdout;spectral/boyer/boyer.stdout	spectral/boyer/Main.lhs:header	spectral/boyer/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 8511b102..0a8ad83d 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -948,3 +948,9 @@ circsim-nofib-lazy	large	nofib	spectral/circsim	8 200 97 large.show	circsim-nofi
+ circsim-nofib-strict	smoke	nofib	spectral/circsim	8 4 1 smoke.show	circsim-nofib-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/circsim.sml,shared/circsim-driver.sml,circsim-nofib-strict/benchmark.sml,shared/main.sml	30	1048576	graphs,lists-streams,allocation-lifetimes,strict	smoke.show	exact	implemented
+ circsim-nofib-strict	normal	nofib	spectral/circsim	8 40 97 normal.show	circsim-nofib-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/circsim.sml,shared/circsim-driver.sml,circsim-nofib-strict/benchmark.sml,shared/main.sml	600	4194304	graphs,lists-streams,allocation-lifetimes,strict	normal.show	exact	implemented
+ circsim-nofib-strict	large	nofib	spectral/circsim	8 200 97 large.show	circsim-nofib-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/circsim.sml,shared/circsim-driver.sml,circsim-nofib-strict/benchmark.sml,shared/main.sml	3600	8388608	graphs,lists-streams,allocation-lifetimes,strict	large.show	exact	implemented
++atom-lazy	smoke	nofib	spectral/atom	100 smoke.positions	atom-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-atom.sml,shared/nofib-atom-driver.sml,atom-lazy/benchmark.sml,shared/main.sml	30	1048576	numeric-real,lists-streams,allocation-lifetimes,lazy	smoke.positions	checked-numerical	implemented
++atom-lazy	normal	nofib	spectral/atom	2500 normal.positions	atom-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-atom.sml,shared/nofib-atom-driver.sml,atom-lazy/benchmark.sml,shared/main.sml	600	4194304	numeric-real,lists-streams,allocation-lifetimes,lazy	normal.positions	checked-numerical	implemented
++atom-lazy	large	nofib	spectral/atom	4000 large.positions	atom-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-atom.sml,shared/nofib-atom-driver.sml,atom-lazy/benchmark.sml,shared/main.sml	3600	8388608	numeric-real,lists-streams,allocation-lifetimes,lazy	large.positions	checked-numerical	implemented
++atom-strict	smoke	nofib	spectral/atom	100 smoke.positions	atom-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-atom.sml,shared/nofib-atom-driver.sml,atom-strict/benchmark.sml,shared/main.sml	30	1048576	numeric-real,lists-streams,allocation-lifetimes,strict	smoke.positions	checked-numerical	implemented
++atom-strict	normal	nofib	spectral/atom	2500 normal.positions	atom-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-atom.sml,shared/nofib-atom-driver.sml,atom-strict/benchmark.sml,shared/main.sml	600	4194304	numeric-real,lists-streams,allocation-lifetimes,strict	normal.positions	checked-numerical	implemented
++atom-strict	large	nofib	spectral/atom	4000 large.positions	atom-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-atom.sml,shared/nofib-atom-driver.sml,atom-strict/benchmark.sml,shared/main.sml	3600	8388608	numeric-real,lists-streams,allocation-lifetimes,strict	large.positions	checked-numerical	implemented
+diff --git a/scripts/benchmark-inventory.py b/scripts/benchmark-inventory.py
+index 3d5d2461..11d7a667 100644
+--- a/scripts/benchmark-inventory.py
++++ b/scripts/benchmark-inventory.py
+@@ -541,6 +541,10 @@ def build(source, root, lock):
+                     and "The Circuit Simulator example\nDavid J. King & John O'Donnell\nJanuary, 1998" in header):
+                 authors.update(["David J. King", "John O'Donnell"])
+                 item["evidence"].append(str(p.relative_to(root)) + ":authorship-heading")
++            if (source == "nofib" and path == "spectral/atom"
++                    and "A kernel fragment from a program written by\n\t\tRon Legere" in header):
++                authors.add("Ron Legere")
++                item["evidence"].append(str(p.relative_to(root)) + ":attribution-header")
+             if re.search(r"[Cc]opyright|[Ll]icen[sc]e|[Ww]ritten by|[Aa]uthor:|[Tt]ranslated", header):
+                 notices.append(str(p.relative_to(root)) + ":header")
+             for attribution in re.finditer(r"(?:[Ww]ritten|[Tt]ranslated|[Pp]orted|[Cc]ontributed)(?: to [^\n]*?)? by ([^\n]+)|[Aa]uthors?: ([^\n]+)", header):
+diff --git a/tests/benchmarks/test-inventory.py b/tests/benchmarks/test-inventory.py
+index a958f739..e7082d45 100644
+--- a/tests/benchmarks/test-inventory.py
++++ b/tests/benchmarks/test-inventory.py
+@@ -157,6 +157,22 @@ class InventoryTest(unittest.TestCase):
+                   "The Circuit Simulator example\nDifferent authors\nJanuary, 1998\n\n> main = return ()\n")
+         self.assertEqual(self.build("nofib")[0]["authors"], "not stated in scanned source headers")
+ 
++    def test_atom_multiline_attribution_is_recorded(self):
++        self.nofib_roots()
++        self.file("spectral/atom/Makefile", "\n")
++        self.file("spectral/atom/Main.hs",
++                  "{- A kernel fragment from a program written by\n\t\tRon Legere\n-}\nmain = print 1\n")
++        row = self.build("nofib")[0]
++        self.assertEqual(row["authors"], "Ron Legere")
++        self.assertIn("spectral/atom/Main.hs:attribution-header", row["evidence"])
++
++    def test_changed_atom_attribution_requires_review(self):
++        self.nofib_roots()
++        self.file("spectral/atom/Makefile", "\n")
++        self.file("spectral/atom/Main.hs",
++                  "{- A kernel fragment from a program written by\n\t\tDifferent Person\n-}\nmain = print 1\n")
++        self.assertNotIn("Ron Legere", self.build("nofib")[0]["authors"])
++
+     def test_nested_haskell_programs_are_not_an_aggregate_workload(self):
+         self.nofib_roots()
+         self.file("spectral/group/Makefile", "SUBDIRS = one\n")

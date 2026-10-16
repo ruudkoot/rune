@@ -1,0 +1,12 @@
+{'case': 'semantics', 'mode': 'default', 'exit': 1, 'summary': [('50', '2')], 'details': ['FAIL atom/lazy-position-prefix-100 -- raised an exception', 'FAIL atom/strict-position-prefix-100 -- raised an exception']}
+{'case': 'semantics', 'mode': 'nursery64m', 'exit': 0, 'summary': [('50', '0')], 'details': []}
+{'case': 'trace', 'mode': 'default', 'exit': 1, 'summary': [('2', '2')], 'details': ['DETAIL lazy index=18 observed=BC91A6F2 expected=3F707534 value=~0.017779801040887833', 'FAIL atom/trace-lazy -- false', 'DETAIL strict index=21 observed=3F6B6EF1 expected=3F6ABD81 value=0.9196615815162659', 'FAIL atom/trace-strict -- false']}
+{'case': 'trace', 'mode': 'nursery64m', 'exit': 0, 'summary': [('2', '0')], 'details': []}
+{'case': 'atom-lazy-smoke', 'mode': 'default', 'exit': 1, 'summary': [('1', '1')], 'details': ['FAIL atom-lazy -- Fail: incorrect result: atom binary32 position differs']}
+{'case': 'atom-lazy-smoke', 'mode': 'nursery64m', 'exit': 0, 'summary': [('1', '0')], 'details': []}
+{'case': 'atom-lazy-normal', 'mode': 'default', 'exit': 1, 'summary': [('1', '1')], 'details': ['FAIL atom-lazy -- Fail: incorrect result: atom binary32 position differs']}
+{'case': 'atom-lazy-normal', 'mode': 'nursery64m', 'exit': 1, 'summary': [], 'details': []}
+{'case': 'atom-strict-smoke', 'mode': 'default', 'exit': 1, 'summary': [('1', '1')], 'details': ['FAIL atom-strict -- Fail: incorrect result: atom binary32 position differs']}
+{'case': 'atom-strict-smoke', 'mode': 'nursery64m', 'exit': 0, 'summary': [('1', '0')], 'details': []}
+{'case': 'atom-strict-normal', 'mode': 'default', 'exit': 1, 'summary': [('1', '1')], 'details': ['FAIL atom-strict -- Fail: incorrect result: atom binary32 position differs']}
+{'case': 'atom-strict-normal', 'mode': 'nursery64m', 'exit': 1, 'summary': [('1', '1')], 'details': ['FAIL atom-strict -- Fail: incorrect result: atom binary32 position differs']}

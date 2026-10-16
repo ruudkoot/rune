@@ -1,0 +1,2 @@
+FAIL atom-lazy -- Fail: incorrect result: atom binary32 position differs
+SUMMARY 1 checks, 1 failed

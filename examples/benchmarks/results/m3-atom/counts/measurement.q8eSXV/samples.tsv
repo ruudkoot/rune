@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+atom-lazy	normal	rune	O2	compile	0	0	pass	1.45	1.45	0.08	135108	-	-	-	atom-lazy/rune/build/compile
+atom-lazy	normal	rune	O2	correctness	0	0	pass	29.76	29.41	0.04	36272	4422453263	10864901000	325379977	atom-lazy/rune/correctness.0
+atom-lazy	normal	rune	O2	count	1	1	pass	30.94	30.65	0.05	36488	4422453263	10864901000	325379977	atom-lazy/rune/fresh.1
+atom-lazy	normal	rune:opt	O2	compile	0	0	pass	1.62	1.65	0.07	135240	-	-	-	atom-lazy/rune-opt/build/compile
+atom-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.50	0.30	0.06	12564	-	-	-	atom-lazy/rune-opt/build/native-compile
+atom-lazy	normal	rune:opt	O2	correctness	0	0	pass	12.85	13.61	0.06	37080	4422453263	10864901000	325379977	atom-lazy/rune-opt/correctness.0
+atom-lazy	normal	rune:opt	O2	count	1	1	pass	16.54	15.28	0.09	37060	4422453263	10864901000	325379977	atom-lazy/rune-opt/fresh.1
+atom-lazy	normal	rune:new	O2	compile	0	0	pass	1.38	1.36	0.10	135308	-	-	-	atom-lazy/rune-new/build/compile
+atom-lazy	normal	rune:new	O2	correctness	0	0	pass	29.78	29.43	0.03	37796	2650587129	10864901000	325379977	atom-lazy/rune-new/correctness.0
+atom-lazy	normal	rune:new	O2	count	1	1	pass	26.95	28.63	0.06	37956	2650587129	10864901000	325379977	atom-lazy/rune-new/fresh.1
+atom-lazy	normal	rune:jit	O2	compile	0	0	pass	3.58	1.48	0.08	135232	-	-	-	atom-lazy/rune-jit/build/compile
+atom-lazy	normal	rune:jit	O2	correctness	0	0	pass	13.80	14.63	0.06	38960	2650587129	10864901000	325379977	atom-lazy/rune-jit/correctness.0
+atom-lazy	normal	rune:jit	O2	count	1	1	pass	13.16	13.96	0.06	39068	2650587129	10864901000	325379977	atom-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

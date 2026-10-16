@@ -541,6 +541,10 @@ def build(source, root, lock):
                     and "The Circuit Simulator example\nDavid J. King & John O'Donnell\nJanuary, 1998" in header):
                 authors.update(["David J. King", "John O'Donnell"])
                 item["evidence"].append(str(p.relative_to(root)) + ":authorship-heading")
+            if (source == "nofib" and path == "spectral/atom"
+                    and "A kernel fragment from a program written by\n\t\tRon Legere" in header):
+                authors.add("Ron Legere")
+                item["evidence"].append(str(p.relative_to(root)) + ":attribution-header")
             if re.search(r"[Cc]opyright|[Ll]icen[sc]e|[Ww]ritten by|[Aa]uthor:|[Tt]ranslated", header):
                 notices.append(str(p.relative_to(root)) + ":header")
             for attribution in re.finditer(r"(?:[Ww]ritten|[Tt]ranslated|[Pp]orted|[Cc]ontributed)(?: to [^\n]*?)? by ([^\n]+)|[Aa]uthors?: ([^\n]+)", header):

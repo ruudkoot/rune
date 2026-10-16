@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-atom-parallel.q0gzw05e
+PASS atom-lazy smoke O2
+PASS atom-lazy smoke O0
+FAIL atom-lazy smoke hosts
+PASS atom-lazy normal O2
+PASS atom-lazy normal O0
+PASS atom-strict smoke O0
+PASS atom-strict smoke O2
+FAIL atom-strict smoke hosts
+FAIL atom-lazy normal hosts
+PASS atom-strict normal O2
+PASS atom-strict normal O0
+FAIL atom-strict normal hosts

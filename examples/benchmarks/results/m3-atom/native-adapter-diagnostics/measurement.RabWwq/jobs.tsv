@@ -1,0 +1,1 @@
+atom-strict	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/finite-binary32.sml shared/nofib-atom.sml shared/nofib-atom-driver.sml atom-strict/benchmark.sml shared/main.sml	100 smoke.positions	atom-strict/smoke.expected	smoke.positions

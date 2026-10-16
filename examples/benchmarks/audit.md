@@ -261,3 +261,11 @@ heading and records its source evidence. Two inventory rows change authors and
 evidence only; source identities, names and dispositions remain unchanged.
 All 58 inventory regressions pass and all five clean pinned trees reproduce
 861 entries. The shared simulator's different consumers retain separate ports.
+
+## Atom attribution review, 2026-10-16
+
+The atom header attributes its kernel to Ron Legere on the line after
+written by. Discovery now recognizes that exact multiline attribution.
+One inventory row gains authors/evidence; source identity, name and disposition
+are unchanged. All 60 regressions pass and all five clean pins reproduce 861
+entries. The source's historical Hugs/GHC anecdote is recorded as history.

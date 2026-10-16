@@ -1,0 +1,18 @@
+[1 of 3] Compiling Kernel           ( Kernel.hs, Kernel.o )
+
+Kernel.hs:38:1: warning: [-Wtabs]
+    Tab character found here, and in 19 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+38 |                                        testforce k atoms
+   | ^^^^^^^^
+
+Kernel.hs:168:10: warning: [-Wmissing-methods]
+    • No explicit implementation for
+        ‘abs’ and ‘signum’
+    • In the instance declaration for ‘Num [a]’
+    |
+168 | instance Num a => Num [a] where
+    |          ^^^^^^^^^^^^^^^^
+[2 of 3] Compiling Main             ( Observer.hs, Observer.o )
+[3 of 3] Linking observer

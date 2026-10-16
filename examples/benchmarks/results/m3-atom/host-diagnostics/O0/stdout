@@ -1,0 +1,437 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/finite-binary32.sml]
+[autoloading]
+[autoloading done]
+structure BenchMandelSingle : sig
+  val round : real -> real
+  val add : real * real -> real
+  val sub : real * real -> real
+  val mul : real * real -> real
+  val divide : real * real -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-atom.sml]
+[autoloading]
+[autoloading done]
+functor BenchAtomFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure L : <sig>
+  structure S : <sig>
+  structure Single : <sig>
+  type 'a node
+  type vector
+  type atom
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val add :
+      real <BaseFct>.<resultStr>.node D.t
+       -> real <BaseFct>.<resultStr>.node D.t
+       -> real <BaseFct>.<resultStr>.node D.t
+  val multiply :
+      real <BaseFct>.<resultStr>.node D.t
+       -> real <BaseFct>.<resultStr>.node D.t
+       -> real <BaseFct>.<resultStr>.node D.t
+  val scale :
+      real
+       -> real <BaseFct>.<resultStr>.node D.t
+       -> real <BaseFct>.<resultStr>.node D.t
+  val forceLaw :
+      real <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.atom BenchStream.node BenchLazy.delay
+       -> real <BaseFct>.<resultStr>.node D.t BenchStream.node BenchLazy.delay
+  val propagate :
+      real
+       -> real <BaseFct>.<resultStr>.node D.t BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.atom BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.atom
+  val steps :
+      real
+       -> real <BaseFct>.<resultStr>.node D.t BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.atom BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.atom BenchStream.node
+  val experimentNode :
+      ('a
+        -> <BaseFct>.<resultStr>.atom BenchStream.node BenchLazy.state ref
+        -> real <BaseFct>.<resultStr>.node D.t BenchStream.node 
+          BenchLazy.delay)
+       -> real
+       -> 'a
+       -> <BaseFct>.<resultStr>.atom BenchLazy.delay
+       -> <BaseFct>.<resultStr>.atom BenchStream.node
+  val experiment :
+      ('a
+        -> <BaseFct>.<resultStr>.atom BenchStream.node BenchLazy.state ref
+        -> real <BaseFct>.<resultStr>.node D.t BenchStream.node 
+          BenchLazy.delay)
+       -> real
+       -> 'a
+       -> <BaseFct>.<resultStr>.atom BenchLazy.delay
+       -> <BaseFct>.<resultStr>.atom BenchStream.node BenchLazy.state ref
+  val dt : real
+  val start :
+      unit -> <BaseFct>.<resultStr>.atom BenchStream.node BenchLazy.state ref
+  val bits : real -> Word32.word
+  val format : real -> int
+  val run : int -> Word32.word Vector.vector -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-atom-driver.sml]
+[autoloading]
+[autoloading done]
+functor BenchAtomDriverFn(K: sig
+  val run : int -> Word32.word vector -> string
+end) :
+sig
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/atom-tests.sml]
+[autoloading]
+[autoloading done]
+PASS atom/lazy-position-prefix-0
+PASS atom/strict-position-prefix-0
+PASS atom/lazy-position-prefix-1
+PASS atom/strict-position-prefix-1
+PASS atom/lazy-position-prefix-2
+PASS atom/strict-position-prefix-2
+PASS atom/lazy-position-prefix-3
+PASS atom/strict-position-prefix-3
+PASS atom/lazy-position-prefix-6
+PASS atom/strict-position-prefix-6
+PASS atom/lazy-position-prefix-16
+PASS atom/strict-position-prefix-16
+FAIL atom/lazy-position-prefix-100 -- raised an exception
+FAIL atom/strict-position-prefix-100 -- raised an exception
+PASS atom/unshared-lazy-force-count-0
+PASS atom/unshared-strict-force-count-0
+PASS atom/unshared-lazy-force-count-1
+PASS atom/unshared-strict-force-count-1
+PASS atom/unshared-lazy-force-count-2
+PASS atom/unshared-strict-force-count-2
+PASS atom/unshared-lazy-force-count-3
+PASS atom/unshared-strict-force-count-3
+PASS atom/unshared-lazy-force-count-4
+PASS atom/unshared-strict-force-count-4
+PASS atom/unshared-lazy-force-count-5
+PASS atom/unshared-strict-force-count-5
+PASS atom/unshared-lazy-force-count-6
+PASS atom/unshared-strict-force-count-6
+PASS atom/lazy-full-state-bits
+PASS atom/strict-full-state-bits
+PASS atom/lazy-positions-do-not-demand-unused-force
+PASS atom/next-position-demands-force
+PASS atom/source-vector-multiply-right-tail-square
+PASS atom/source-force-two-dimensions
+PASS atom/multiply-ignores-left-tail
+PASS atom/multiply-right-empty-does-not-demand-left
+PASS atom/add-reuses-longer-tail-head
+PASS atom/binary32-positive-zero
+PASS atom/binary32-negative-zero
+PASS atom/binary32-tie-to-even-low
+PASS atom/binary32-tie-to-even-high
+PASS atom/helper-rejects-subnormal-domain
+PASS atom/rejects-non-binary32-input
+PASS atom/rejects-nonfinite
+PASS atom/lazy-reject-wrong-position
+PASS atom/lazy-reject-short-reference
+PASS atom/lazy-reject-extra-reference
+PASS atom/strict-reject-wrong-position
+PASS atom/strict-reject-short-reference
+PASS atom/strict-reject-extra-reference
+structure NeedAtom : sig
+  structure L : <sig>
+  structure S : <sig>
+  structure Single : <sig>
+  datatype 'a node = Cons of 'a D.t * 'a <BaseFct>.<resultStr>.node D.t | Nil
+  type vector = real node BenchNeed.t
+  datatype atom
+    = State of <BaseFct>.<resultStr>.vector * <BaseFct>.<resultStr>.vector
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val add :
+      real <BaseFct>.<resultStr>.node D.t
+       -> real <BaseFct>.<resultStr>.node D.t
+       -> real <BaseFct>.<resultStr>.node D.t
+  val multiply :
+      real <BaseFct>.<resultStr>.node D.t
+       -> real <BaseFct>.<resultStr>.node D.t
+       -> real <BaseFct>.<resultStr>.node D.t
+  val scale :
+      real
+       -> real <BaseFct>.<resultStr>.node D.t
+       -> real <BaseFct>.<resultStr>.node D.t
+  val forceLaw :
+      real <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.atom BenchStream.node BenchLazy.delay
+       -> real <BaseFct>.<resultStr>.node D.t BenchStream.node BenchLazy.delay
+  val propagate :
+      real
+       -> real <BaseFct>.<resultStr>.node D.t BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.atom BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.atom
+  val steps :
+      real
+       -> real <BaseFct>.<resultStr>.node D.t BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.atom BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.atom BenchStream.node
+  val experimentNode :
+      ('a
+        -> <BaseFct>.<resultStr>.atom BenchStream.node BenchLazy.state ref
+        -> real <BaseFct>.<resultStr>.node D.t BenchStream.node 
+          BenchLazy.delay)
+       -> real
+       -> 'a
+       -> <BaseFct>.<resultStr>.atom BenchLazy.delay
+       -> <BaseFct>.<resultStr>.atom BenchStream.node
+  val experiment :
+      ('a
+        -> <BaseFct>.<resultStr>.atom BenchStream.node BenchLazy.state ref
+        -> real <BaseFct>.<resultStr>.node D.t BenchStream.node 
+          BenchLazy.delay)
+       -> real
+       -> 'a
+       -> <BaseFct>.<resultStr>.atom BenchLazy.delay
+       -> <BaseFct>.<resultStr>.atom BenchStream.node BenchLazy.state ref
+  val dt : real
+  val start :
+      unit -> <BaseFct>.<resultStr>.atom BenchStream.node BenchLazy.state ref
+  val bits : real -> Word32.word
+  val format : real -> int
+  val run : int -> Word32.word Vector.vector -> string
+end
+structure StrictAtom : sig
+  structure L : <sig>
+  structure S : <sig>
+  structure Single : <sig>
+  datatype 'a node = Cons of 'a D.t * 'a <BaseFct>.<resultStr>.node D.t | Nil
+  type vector = real node BenchStrict.t
+  datatype atom
+    = State of <BaseFct>.<resultStr>.vector * <BaseFct>.<resultStr>.vector
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val add :
+      real <BaseFct>.<resultStr>.node D.t
+       -> real <BaseFct>.<resultStr>.node D.t
+       -> real <BaseFct>.<resultStr>.node D.t
+  val multiply :
+      real <BaseFct>.<resultStr>.node D.t
+       -> real <BaseFct>.<resultStr>.node D.t
+       -> real <BaseFct>.<resultStr>.node D.t
+  val scale :
+      real
+       -> real <BaseFct>.<resultStr>.node D.t
+       -> real <BaseFct>.<resultStr>.node D.t
+  val forceLaw :
+      real <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.atom BenchStream.node BenchLazy.delay
+       -> real <BaseFct>.<resultStr>.node D.t BenchStream.node BenchLazy.delay
+  val propagate :
+      real
+       -> real <BaseFct>.<resultStr>.node D.t BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.atom BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.atom
+  val steps :
+      real
+       -> real <BaseFct>.<resultStr>.node D.t BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.atom BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.atom BenchStream.node
+  val experimentNode :
+      ('a
+        -> <BaseFct>.<resultStr>.atom BenchStream.node BenchLazy.state ref
+        -> real <BaseFct>.<resultStr>.node D.t BenchStream.node 
+          BenchLazy.delay)
+       -> real
+       -> 'a
+       -> <BaseFct>.<resultStr>.atom BenchLazy.delay
+       -> <BaseFct>.<resultStr>.atom BenchStream.node
+  val experiment :
+      ('a
+        -> <BaseFct>.<resultStr>.atom BenchStream.node BenchLazy.state ref
+        -> real <BaseFct>.<resultStr>.node D.t BenchStream.node 
+          BenchLazy.delay)
+       -> real
+       -> 'a
+       -> <BaseFct>.<resultStr>.atom BenchLazy.delay
+       -> <BaseFct>.<resultStr>.atom BenchStream.node BenchLazy.state ref
+  val dt : real
+  val start :
+      unit -> <BaseFct>.<resultStr>.atom BenchStream.node BenchLazy.state ref
+  val bits : real -> Word32.word
+  val format : real -> int
+  val run : int -> Word32.word Vector.vector -> string
+end
+structure NeedDriver : sig
+  val run : string list -> string
+end
+structure StrictDriver : sig
+  val run : string list -> string
+end
+structure AtomTests : sig
+  structure N : <sig>
+  structure R : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  val read : string -> TextIO.vector
+  val word : string -> Word32.word
+  val expected : int -> Word32.word vector
+  val vectorN : real NeedAtom.node BenchNeed.t -> Word32.word list
+  val vectorR : real StrictAtom.node BenchStrict.t -> Word32.word list
+  val stateN :
+      NeedAtom.atom BenchLazy.state ref -> Word32.word list * Word32.word list
+  val stateR :
+      StrictAtom.atom BenchLazy.state ref
+       -> Word32.word list * Word32.word list
+  val firstN :
+      int
+       -> NeedAtom.atom BenchStream.node BenchLazy.delay
+       -> (Word32.word list * Word32.word list) list
+  val firstR :
+      int
+       -> StrictAtom.atom BenchStream.node BenchLazy.delay
+       -> (Word32.word list * Word32.word list) list
+  val stateExpected : (Word32.word list * Word32.word list) list
+  val observeN : int -> int
+  val observeR : int -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 50 checks, 2 failed

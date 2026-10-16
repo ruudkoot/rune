@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+atom-lazy	normal	rune	O2	count	1	1	pass	30.94	30.65	0.05	36488	4422453263	10864901000	325379977	counts/measurement.q8eSXV/atom-lazy/rune/fresh.1
+atom-lazy	normal	rune:opt	O2	count	1	1	pass	16.54	15.28	0.09	37060	4422453263	10864901000	325379977	counts/measurement.q8eSXV/atom-lazy/rune-opt/fresh.1
+atom-lazy	normal	rune:new	O2	count	1	1	pass	26.95	28.63	0.06	37956	2650587129	10864901000	325379977	counts/measurement.q8eSXV/atom-lazy/rune-new/fresh.1
+atom-lazy	normal	rune:jit	O2	count	1	1	pass	13.16	13.96	0.06	39068	2650587129	10864901000	325379977	counts/measurement.q8eSXV/atom-lazy/rune-jit/fresh.1
+atom-strict	normal	rune	O2	count	1	1	pass	9.78	10.51	0.00	11660	2300263536	2847408344	78736141	counts/measurement.9PUVHJ/atom-strict/rune/fresh.1
+atom-strict	normal	rune:opt	O2	count	1	1	pass	4.75	5.03	0.01	12096	2300263536	2847408344	78736141	counts/measurement.9PUVHJ/atom-strict/rune-opt/fresh.1
+atom-strict	normal	rune:new	O2	count	1	1	pass	9.73	10.67	0.02	12664	1361664034	2847408344	78736141	counts/measurement.9PUVHJ/atom-strict/rune-new/fresh.1
+atom-strict	normal	rune:jit	O2	count	1	1	pass	4.54	4.86	0.02	13588	1361664034	2847408344	78736141	counts/measurement.9PUVHJ/atom-strict/rune-jit/fresh.1

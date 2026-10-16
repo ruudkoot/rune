@@ -1,0 +1,9 @@
+{
+  "cells": 4000,
+  "position_and_velocity_bit_mismatches": 0,
+  "minimum_nonzero_frexp_exponent": -18,
+  "maximum_frexp_exponent": 2,
+  "maximum_addend_exponent_gap": 19,
+  "domain": "all selected operations are finite binary32 normal or zero; binary64 products exact and sums have at most 24+gap significand bits",
+  "dt_bits": "3ca3d70a"
+}

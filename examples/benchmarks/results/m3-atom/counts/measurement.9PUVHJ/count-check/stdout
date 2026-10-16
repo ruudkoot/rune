@@ -1,0 +1,5 @@
+COUNT unbudgeted atom-strict normal rune
+COUNT unbudgeted atom-strict normal rune:opt
+COUNT unbudgeted atom-strict normal rune:new
+COUNT unbudgeted atom-strict normal rune:jit
+COUNT comparisons agree

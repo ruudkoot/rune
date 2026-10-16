@@ -1,0 +1,32 @@
+[
+  {
+    "profile": "smoke",
+    "n": 1000,
+    "stdout_bytes": 11895,
+    "source_sha256": "2812cecf6e0b8f32cefa522359c3116a91fcdbeb849afe7c0f4fc8da95e418ae",
+    "observer": "forces both position and velocity; primary source shows only positions",
+    "runtime_options": [
+      "-M1g"
+    ]
+  },
+  {
+    "profile": "normal",
+    "n": 2500,
+    "stdout_bytes": 29644,
+    "source_sha256": "2812cecf6e0b8f32cefa522359c3116a91fcdbeb849afe7c0f4fc8da95e418ae",
+    "observer": "forces both position and velocity; primary source shows only positions",
+    "runtime_options": [
+      "-M1g"
+    ]
+  },
+  {
+    "profile": "large",
+    "n": 4000,
+    "stdout_bytes": 47132,
+    "source_sha256": "2812cecf6e0b8f32cefa522359c3116a91fcdbeb849afe7c0f4fc8da95e418ae",
+    "observer": "forces both position and velocity; primary source shows only positions",
+    "runtime_options": [
+      "-M1g"
+    ]
+  }
+]

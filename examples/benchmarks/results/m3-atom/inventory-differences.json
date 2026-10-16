@@ -1,0 +1,14 @@
+{
+  "source": "nofib",
+  "path": "spectral/atom",
+  "changes": {
+    "authors": {
+      "before": "not stated in scanned source headers",
+      "after": "Ron Legere"
+    },
+    "evidence": {
+      "before": "spectral/atom/Makefile",
+      "after": "spectral/atom/Main.hs:attribution-header;spectral/atom/Makefile"
+    }
+  }
+}

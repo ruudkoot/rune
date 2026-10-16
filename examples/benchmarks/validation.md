@@ -2093,3 +2093,48 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 identical bytecode comparisons across seven builds. runedoc
 and runeopt also agree. [The complete transcript](validation/oct16-circsim-949-acceptance.log)
 records the run.
+
+## M3 atom stream wave — 2026-10-17
+
+Two variants bring the catalogue to 321 programs and 955 profiles. The
+[56-case canonical smoke/normal ledger](results/m3-atom/coverage.tsv) records 52
+passes and four incorrect results on legacy 64-bit SML/NJ 110.99.9. All Rune
+engines at O0/O2 and five other native hosts pass. Auxiliary checks record
+996 passing assertions and four failures in the same legacy configuration.
+All rounding, finite-domain and demand probes pass. [The host note](validation/atom-host-results.md)
+records trace differences and default/64-MiB nursery replays without assigning
+an unreduced cause or modifying the source to accommodate a compiler result.
+
+Eight normal count samples agree under execution-model rules, including
+allocation across all four Rune engines. Existing budgets remain unchanged.
+Four serial single fresh-process MLton/PolyML smoke samples validate adapters
+separately from instrumentation and headline comparisons. Both attempted legacy
+samples are rejected at correctness precheck; no incorrect result contributes
+a timing sample.
+
+All three original GHC text fixtures match. Independent binary32 Euler
+calculations agree on all 4000 original positions and velocities. Checked operand
+domains establish that the unchanged finite-normal binary32 helper represents
+the selected intermediate operations exactly before rounding. Primary lazy
+validation preserves position-only demand, while auxiliary observers also check
+velocities. Source stream recursion remains unshared between experiment calls;
+small counted-force probes detect knotting and distinguish finite evaluation
+policies. The original right-tail-square list multiplication quirk is retained.
+
+Tests cover exact position/state bits, stream/field demand, head sharing, vector
+quirks, rounding ties, signed zero, formatting roundtrips and wrong/short/extra
+references. Whole normal Rune O2 pilots pass for both policies. Smoke is a
+bounded 100-state prefix; normal=2500 and large=4000 retain original parameters.
+Whole original large SML validation is unrecorded. [Raw evidence and identities](results/m3-atom/README.md)
+distinguish original, independent, semantic, guarded and measured scopes.
+
+The source's exact multiline heading credits Ron Legere. One inventory row gains
+authorship/evidence only; names, identities and dispositions remain unchanged.
+All 60 inventory regressions pass, and all five clean pinned trees reproduce
+861 inventory entries. M3 remains in progress.
+
+Full DEBUGINFOD_URLS= make JOBS=4 check exits 0 with 955 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 identical bytecode comparisons across seven builds. runedoc
+and runeopt also agree. [The complete transcript](validation/oct17-atom-955-acceptance.log)
+records the run.

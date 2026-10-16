@@ -1,0 +1,3 @@
+extra: force demanded
+CallStack (from HasCallStack):
+  error, called at Extra.hs:6:28 in main:Main

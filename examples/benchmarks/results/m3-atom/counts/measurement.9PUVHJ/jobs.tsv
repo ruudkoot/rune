@@ -1,0 +1,1 @@
+atom-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/finite-binary32.sml shared/nofib-atom.sml shared/nofib-atom-driver.sml atom-strict/benchmark.sml shared/main.sml	2500 normal.positions	atom-strict/normal.expected	normal.positions

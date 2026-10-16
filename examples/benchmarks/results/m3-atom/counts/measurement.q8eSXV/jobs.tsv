@@ -1,0 +1,1 @@
+atom-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/finite-binary32.sml shared/nofib-atom.sml shared/nofib-atom-driver.sml atom-lazy/benchmark.sml shared/main.sml	2500 normal.positions	atom-lazy/normal.expected	normal.positions

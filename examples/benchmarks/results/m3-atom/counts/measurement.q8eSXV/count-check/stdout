@@ -1,0 +1,5 @@
+COUNT unbudgeted atom-lazy normal rune
+COUNT unbudgeted atom-lazy normal rune:opt
+COUNT unbudgeted atom-lazy normal rune:new
+COUNT unbudgeted atom-lazy normal rune:jit
+COUNT comparisons agree

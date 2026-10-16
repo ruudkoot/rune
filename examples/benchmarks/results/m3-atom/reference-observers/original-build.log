@@ -1,0 +1,17 @@
+[1 of 2] Compiling Main             ( Main.hs, Main.o )
+
+Main.hs:38:1: warning: [-Wtabs]
+    Tab character found here, and in 19 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+38 |                                        testforce k atoms
+   | ^^^^^^^^
+
+Main.hs:168:10: warning: [-Wmissing-methods]
+    • No explicit implementation for
+        ‘abs’ and ‘signum’
+    • In the instance declaration for ‘Num [a]’
+    |
+168 | instance Num a => Num [a] where
+    |          ^^^^^^^^^^^^^^^^
+[2 of 2] Linking original

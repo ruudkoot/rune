@@ -1,0 +1,1 @@
+PASS independent linear binary32 Euler oracle: all 4000 position/velocity bits and original rendered positions agree; finite-normal helper domain confirmed
