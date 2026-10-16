@@ -315,6 +315,8 @@ inventory entry.
 | [boyer-nofib-strict](#boyer-nofib-strict) | [nofib boyer](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/boyer) | Prove the typed-term transitivity theorem with attached memoized lemma graphs and strict finite arguments. |
 | [eliza-lazy](#eliza-lazy) | [nofib Eliza](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/eliza) | Recompute keyword-driven conversations with shared cyclic replies and lazy finite candidates/output. |
 | [eliza-strict](#eliza-strict) | [nofib Eliza](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/eliza) | Recompute keyword-driven conversations with shared cyclic replies and strict finite candidates/output. |
+| [infer-lazy](#infer-lazy) | [nofib infer](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/infer) | Parse lambda/let programs and infer/render polymorphic types with lazy value fields and memoized parser pruning. |
+| [infer-strict](#infer-strict) | [nofib infer](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/infer) | Parse lambda/let programs and infer/render polymorphic types with strict value fields and memoized parser pruning. |
 
 ## Running and interpreting checks
 
@@ -437,6 +439,7 @@ sh tests/benchmarks/check-pretty.sh
 sh tests/benchmarks/check-last-piece.sh
 sh tests/benchmarks/check-typed-boyer.sh
 sh tests/benchmarks/check-eliza.sh
+sh tests/benchmarks/check-infer.sh
 python3 tests/benchmarks/test-inventory.py
 python3 scripts/benchmark-inventory.py --check
 python3 tests/benchmarks/latency-oracle.py --check
@@ -13718,3 +13721,239 @@ are claimed only where recorded. Retained program/library sources explain the
 exact algorithm; the suite's measurement survey supplies methodological context.
 
 [Complete provenance](knucleotide3-32/PROVENANCE.md).
+
+## infer-lazy
+
+Selected value evaluation: lazy; parser/result spines remain memoized.
+
+## Algorithm and workload
+
+Parse lambda/let expressions using the source's nondeterministic parser
+combinators and greedy cuts. Infer polymorphic types with association-list
+environments/substitutions, occurs checks, fresh variables and generalisation/
+specialisation. Render the original environment, terms, types, failures and
+prompts, and consume every character with the source polynomial hash.
+
+Each of the source's 200 repetitions parses and infers all 16 input lines again.
+The fresh-variable counter and substitution reset for every expression. The
+initial environment/header are immutable shared setup. Source inputs include
+successful inference, malformed syntax, unbound variables and occurs-check
+failures; those rejected terms are part of a correct benchmark result.
+
+## History, revision, authorship and aliases
+
+nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, real/infer/Main.hs and its
+portable Parse, Shows, Term, Type, Environment, FiniteMap, Substitution, Infer,
+InferMonad, StateX, MaybeM and MyList support. Preserve local NofibUtils, other
+source members, build metadata and all FAST/NORM/SLOW input/output fixtures.
+Makefile excludes TestType/TestTerm as separate support tests; the runnable
+application is Main.hs. The selected program/data headers state no individual
+author or separate redistribution notice. Record that absence without assigning
+a grant or attribution from an unrelated component.
+
+Names infer-lazy/strict identify evaluation variants of this application.
+They are distinct from the smaller classic/nofib type-inference kernels and
+retain the full parsing, polymorphism, state and rendering workload.
+
+## Source details and evaluation variants
+
+Parser alternatives concatenate in source order. starP/plusP retain cutP's first
+result and greedy non-backtracking behavior. Its irrefutable result head and
+separately delayed value/rest fields share one producer result. Both variants
+memoize parser/result-list spines so cut pruning remains effective. The lazy
+variant memoizes value fields and term/type constructors as well; the strict
+variant evaluates those values eagerly along demanded spines. Input identifiers
+use SML strings, and finite input loading/line splitting are strict in both.
+
+Finite-map extension prepends without removing shadowed bindings. Environment
+free-variable collection still sees those entries; substitution composition
+retains duplicate domain entries and maps old values through one shared new
+binding. Preserve first-match lookup, fresh-variable order, syntactic occurs
+checks, constructor-name short circuiting and one-occurrence list subtraction.
+Unequal constructor arities retain the source's partial-operation behavior.
+Rejected inference returns the original failure text; unused error fallbacks
+remain deferred in both variants.
+
+## Portable SML97 translation
+
+SML functors express the parser and kernel; explicit memoized delays preserve
+sharing. The source's nested StateX/Sub/Counter/Maybe machinery becomes curried
+state functions returning an option with the same value/substitution/counter
+order. Administrative wrappers are fused, while association lists, substitution
+composition, fresh names and update order remain. It is a translation of these
+modules, rather than a replacement by mutable union-find inference.
+
+Recursive display functions emit delayed characters with the original precedence,
+spaces, parentheses and prompts. ASCII profiles retain exact character behavior;
+Unicode outside the retained input domain is not claimed equivalent to Haskell.
+Source counters and list sizes fit signed 31-bit Int. The source GHC 64-bit hash
+uses explicit Word64 multiply/add wrapping, with its signed result checked via
+the equivalent unsigned bit pattern on every SML host width.
+
+Reading the fixed input file anew for each repetition replaces NOINLINE salt
+with a portable opaque I/O dependency. This adds input loading costs and prevents
+reusing previous inference results as repeated-run answers. The reference file
+is also consumed anew. Every rendered byte/EOF and the independent expected
+hash are checked before aggregating repetitions:bytes:checked instead of
+printing 200 signed hash lines. Checking and I/O are included measured work.
+No compiler/runtime extension, FFI or parallel feature is required.
+
+## Profiles and diagnostic questions
+
+Smoke, normal and selected large retain the exact FAST/NORM/SLOW files and all
+200 repetitions. Each has 16 lines, with 348/693/1108 bytes; they vary the final
+polymorphic-identity application chain. Complete rendered outputs contain
+643/990/1404 bytes. Source parse/type failures remain in each input profile.
+Default time/memory limits apply. Repetitions are bounded to 1..200 in the driver;
+normal profiles do not reuse parsed terms or inferred types across repetitions.
+
+Diagnostic questions concern parser closures/cuts, value demand, association-list
+search, shadowed entries, substitution sharing/composition, generalisation,
+intermediate type lifetimes, character streams, Word64 hashing and checking.
+These are source-based hypotheses until supported by measurements. Standard
+reports compare identical SML; Haskell supplies correctness references.
+
+## References and validation
+
+The unmodified original reproduces all three 200-line upstream stdout fixtures.
+Export-only observers retain complete rendered texts; an independent polynomial
+hash reproduces every original signed result. A separate parser/Algorithm W
+model agrees on all 48 profile expressions, comparing types modulo variable
+renaming and checking parse/type rejection. It supplements exact source-output
+comparisons without specifying every source-parser quirk.
+
+Twenty-four additional original full expression sessions cover parsing, shadowing,
+polymorphic let, repeated application, occurs checks and literal let-prefix
+behavior. Original boundary observations pin greedy cuts, substitution domain
+order/duplicates and shadowed environment variables. Tests compare both full
+outputs and check cut demand/sharing, constructor short circuiting, occurs checks,
+source partial arity behavior, line splitting and changed/truncated/extra output
+or hash rejection. Current bounded Rune preflights reproduce all three complete
+texts and both full 200-iteration normal computations. Other validation is claimed
+only where recorded.
+
+Luis Damas and Robin Milner, [Principal type-schemes for functional programs](https://doi.org/10.1145/582153.582176),
+POPL 1982, pp. 207–212, supplies context for polymorphic let inference. The retained
+modules specify this particular implementation and its parser/data behavior;
+the paper does not establish current compiler rankings. The suite's nofib and
+measurement survey supplies experimental context.
+
+[Complete provenance](infer-lazy/PROVENANCE.md).
+
+## infer-strict
+
+Selected value evaluation: strict; parser/result spines remain memoized.
+
+## Algorithm and workload
+
+Parse lambda/let expressions using the source's nondeterministic parser
+combinators and greedy cuts. Infer polymorphic types with association-list
+environments/substitutions, occurs checks, fresh variables and generalisation/
+specialisation. Render the original environment, terms, types, failures and
+prompts, and consume every character with the source polynomial hash.
+
+Each of the source's 200 repetitions parses and infers all 16 input lines again.
+The fresh-variable counter and substitution reset for every expression. The
+initial environment/header are immutable shared setup. Source inputs include
+successful inference, malformed syntax, unbound variables and occurs-check
+failures; those rejected terms are part of a correct benchmark result.
+
+## History, revision, authorship and aliases
+
+nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, real/infer/Main.hs and its
+portable Parse, Shows, Term, Type, Environment, FiniteMap, Substitution, Infer,
+InferMonad, StateX, MaybeM and MyList support. Preserve local NofibUtils, other
+source members, build metadata and all FAST/NORM/SLOW input/output fixtures.
+Makefile excludes TestType/TestTerm as separate support tests; the runnable
+application is Main.hs. The selected program/data headers state no individual
+author or separate redistribution notice. Record that absence without assigning
+a grant or attribution from an unrelated component.
+
+Names infer-lazy/strict identify evaluation variants of this application.
+They are distinct from the smaller classic/nofib type-inference kernels and
+retain the full parsing, polymorphism, state and rendering workload.
+
+## Source details and evaluation variants
+
+Parser alternatives concatenate in source order. starP/plusP retain cutP's first
+result and greedy non-backtracking behavior. Its irrefutable result head and
+separately delayed value/rest fields share one producer result. Both variants
+memoize parser/result-list spines so cut pruning remains effective. The lazy
+variant memoizes value fields and term/type constructors as well; the strict
+variant evaluates those values eagerly along demanded spines. Input identifiers
+use SML strings, and finite input loading/line splitting are strict in both.
+
+Finite-map extension prepends without removing shadowed bindings. Environment
+free-variable collection still sees those entries; substitution composition
+retains duplicate domain entries and maps old values through one shared new
+binding. Preserve first-match lookup, fresh-variable order, syntactic occurs
+checks, constructor-name short circuiting and one-occurrence list subtraction.
+Unequal constructor arities retain the source's partial-operation behavior.
+Rejected inference returns the original failure text; unused error fallbacks
+remain deferred in both variants.
+
+## Portable SML97 translation
+
+SML functors express the parser and kernel; explicit memoized delays preserve
+sharing. The source's nested StateX/Sub/Counter/Maybe machinery becomes curried
+state functions returning an option with the same value/substitution/counter
+order. Administrative wrappers are fused, while association lists, substitution
+composition, fresh names and update order remain. It is a translation of these
+modules, rather than a replacement by mutable union-find inference.
+
+Recursive display functions emit delayed characters with the original precedence,
+spaces, parentheses and prompts. ASCII profiles retain exact character behavior;
+Unicode outside the retained input domain is not claimed equivalent to Haskell.
+Source counters and list sizes fit signed 31-bit Int. The source GHC 64-bit hash
+uses explicit Word64 multiply/add wrapping, with its signed result checked via
+the equivalent unsigned bit pattern on every SML host width.
+
+Reading the fixed input file anew for each repetition replaces NOINLINE salt
+with a portable opaque I/O dependency. This adds input loading costs and prevents
+reusing previous inference results as repeated-run answers. The reference file
+is also consumed anew. Every rendered byte/EOF and the independent expected
+hash are checked before aggregating repetitions:bytes:checked instead of
+printing 200 signed hash lines. Checking and I/O are included measured work.
+No compiler/runtime extension, FFI or parallel feature is required.
+
+## Profiles and diagnostic questions
+
+Smoke, normal and selected large retain the exact FAST/NORM/SLOW files and all
+200 repetitions. Each has 16 lines, with 348/693/1108 bytes; they vary the final
+polymorphic-identity application chain. Complete rendered outputs contain
+643/990/1404 bytes. Source parse/type failures remain in each input profile.
+Default time/memory limits apply. Repetitions are bounded to 1..200 in the driver;
+normal profiles do not reuse parsed terms or inferred types across repetitions.
+
+Diagnostic questions concern parser closures/cuts, value demand, association-list
+search, shadowed entries, substitution sharing/composition, generalisation,
+intermediate type lifetimes, character streams, Word64 hashing and checking.
+These are source-based hypotheses until supported by measurements. Standard
+reports compare identical SML; Haskell supplies correctness references.
+
+## References and validation
+
+The unmodified original reproduces all three 200-line upstream stdout fixtures.
+Export-only observers retain complete rendered texts; an independent polynomial
+hash reproduces every original signed result. A separate parser/Algorithm W
+model agrees on all 48 profile expressions, comparing types modulo variable
+renaming and checking parse/type rejection. It supplements exact source-output
+comparisons without specifying every source-parser quirk.
+
+Twenty-four additional original full expression sessions cover parsing, shadowing,
+polymorphic let, repeated application, occurs checks and literal let-prefix
+behavior. Original boundary observations pin greedy cuts, substitution domain
+order/duplicates and shadowed environment variables. Tests compare both full
+outputs and check cut demand/sharing, constructor short circuiting, occurs checks,
+source partial arity behavior, line splitting and changed/truncated/extra output
+or hash rejection. Current bounded Rune preflights reproduce all three complete
+texts and both full 200-iteration normal computations. Other validation is claimed
+only where recorded.
+
+Luis Damas and Robin Milner, [Principal type-schemes for functional programs](https://doi.org/10.1145/582153.582176),
+POPL 1982, pp. 207–212, supplies context for polymorphic let inference. The retained
+modules specify this particular implementation and its parser/data behavior;
+the paper does not establish current compiler rankings. The suite's nofib and
+measurement survey supplies experimental context.
+
+[Complete provenance](infer-strict/PROVENANCE.md).

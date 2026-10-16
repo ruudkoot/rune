@@ -1760,3 +1760,52 @@ runeopt also agree. [The complete transcript](validation/oct16-eliza-packed-889-
 records the run. All 45 inventory regressions pass and all 861 entries reproduce
 from the five clean pinned trees, including the separately committed profile-input
 and related-name-order fixes.
+
+## M4 polymorphic inference application, 2026-10-16
+
+Two imports bring the catalogue to 301 programs and 895 profiles. [All 56
+smoke/normal cases](results/m4-infer/correctness.tsv) pass across Rune's four
+engines at O0/O2 and all six managed native hosts. All 74 semantic/negative checks
+pass all ten configurations twice, with Rune O0/O2 and native defaults. Eight
+normal count samples agree under the execution-model rules, including allocation
+across all four engines. Existing budgets are unchanged; new profiles remain
+unbudgeted. Six final serial native smoke samples validate MLton, SML/NJ and
+Poly/ML adapters. The initial two SML/NJ compile errors from ambiguous tuple
+selectors remain alongside the corrected explicit-pair version's results; failed
+compilation contributes no accepted execution sample. Four earlier successful
+adapter samples are retained too. Counts and one-sample diagnostics remain
+separate from headline timings.
+
+The unmodified original matches all three 200-line fixtures. Full rendered texts
+have 643/990/1404 bytes and independently matching 64-bit hashes. A separate
+parser/Algorithm W model agrees on all 48 profile expressions modulo type-variable
+renaming, including rejected terms. Twenty-four original expression sessions
+cover polymorphism, shadowing, parse/type failures and the source let-prefix
+quirk. Exact source output, independent models and boundary observations support
+different claims rather than treating one compiler as the whole specification.
+
+Both variants memoize parser/control spines for greedy cut pruning; value fields
+and term/type constructors use lazy or strict evaluation. An initial eager-spine
+prototype hit its 2 GiB guard and is retained separately with its source snapshots.
+The corrected bounded pilot matches all six full outputs, and both source 200-
+iteration normal computations pass. Association maps retain shadowed entries,
+duplicate substitution domains and a shared new binding. State wrappers are
+administratively fused; source unification, occurs checks, fresh-variable order,
+partial arity behavior and one-occurrence subtraction remain. Full byte/EOF and
+hash checking rejects incorrect results before accepting a summary/measurement.
+
+Every profile preserves 200 repetitions and its exact upstream input. Runtime
+input reads replace the opaque NOINLINE salt dependency; input/checking costs
+and character/string representation decisions are documented. Immutable initial
+environment/header setup may be shared; computed terms/types are not reused as
+repeated-run answers. Source/data notices, primary literature, models,
+experiments, exact identities and all raw results are retained. Large SML claims
+remain limited to recorded checks. No compiler/runtime prerequisite is added.
+M4 remains in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 895 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 identical bytecode comparisons across seven builds. runedoc and
+runeopt also agree. [The complete transcript](validation/oct16-infer-895-acceptance.log)
+records the run. All 45 inventory fixtures pass and all 861 entries validate;
+the preceding full clean pinned-tree replay remains recorded separately.
