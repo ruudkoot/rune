@@ -1,0 +1,5 @@
+COUNT unbudgeted eliza-lazy normal rune
+COUNT unbudgeted eliza-lazy normal rune:opt
+COUNT unbudgeted eliza-lazy normal rune:new
+COUNT unbudgeted eliza-lazy normal rune:jit
+COUNT comparisons agree

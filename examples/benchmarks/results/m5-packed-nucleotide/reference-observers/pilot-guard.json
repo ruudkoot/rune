@@ -1,0 +1,27 @@
+{
+  "command": [
+    "timeout",
+    "600",
+    "bin/runevm",
+    "tests/out/benchmarks/knucleotide3-originals/pilot.rbc"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 291732,
+  "observed_minimum_available_kib": 21124676,
+  "peak_processes": [
+    {
+      "pid": 3,
+      "name": "timeout",
+      "rss_kib": 1792
+    },
+    {
+      "pid": 4,
+      "name": "runevm",
+      "rss_kib": 289940
+    }
+  ],
+  "elapsed_seconds": 7.133135041978676
+}

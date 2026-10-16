@@ -1,0 +1,51 @@
+{
+  "command": [
+    "make",
+    "bench-count",
+    "BENCH_FILTER==knucleotide3-32"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 339576,
+  "observed_minimum_available_kib": 20266612,
+  "peak_processes": [
+    {
+      "pid": 3288480,
+      "name": "sh",
+      "rss_kib": 1680
+    },
+    {
+      "pid": 3288481,
+      "name": "sh",
+      "rss_kib": 1936
+    },
+    {
+      "pid": 3292738,
+      "name": "sh",
+      "rss_kib": 1236
+    },
+    {
+      "pid": 3292740,
+      "name": "time",
+      "rss_kib": 1460
+    },
+    {
+      "pid": 3292741,
+      "name": "timeout",
+      "rss_kib": 1532
+    },
+    {
+      "pid": 3292742,
+      "name": "runevm-new",
+      "rss_kib": 326968
+    },
+    {
+      "pid": 3288460,
+      "name": "make",
+      "rss_kib": 4764
+    }
+  ],
+  "elapsed_seconds": 28.96069624996744
+}

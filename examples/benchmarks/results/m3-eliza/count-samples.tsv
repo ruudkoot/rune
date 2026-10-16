@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+eliza-lazy	normal	rune	O2	count	1	1	pass	35.76	36.00	0.01	10448	8129471305	23361352888	614692047	counts/measurement.8tuA0K/eliza-lazy/rune/fresh.1
+eliza-lazy	normal	rune:opt	O2	count	1	1	pass	18.96	18.13	0.05	11028	8129471305	23361352888	614692047	counts/measurement.8tuA0K/eliza-lazy/rune-opt/fresh.1
+eliza-lazy	normal	rune:new	O2	count	1	1	pass	35.95	35.86	0.04	10460	5085071813	23361352888	614692047	counts/measurement.8tuA0K/eliza-lazy/rune-new/fresh.1
+eliza-lazy	normal	rune:jit	O2	count	1	1	pass	14.36	15.12	0.02	11880	5085071813	23361352888	614692047	counts/measurement.8tuA0K/eliza-lazy/rune-jit/fresh.1
+eliza-strict	normal	rune	O2	count	1	1	pass	32.69	32.56	0.03	10352	7619213509	20199019560	524692391	counts/measurement.ulzEqe/eliza-strict/rune/fresh.1
+eliza-strict	normal	rune:opt	O2	count	1	1	pass	14.94	15.71	0.05	10972	7619213509	20199019560	524692391	counts/measurement.ulzEqe/eliza-strict/rune-opt/fresh.1
+eliza-strict	normal	rune:new	O2	count	1	1	pass	32.95	32.82	0.06	10520	4718168266	20199019560	524692391	counts/measurement.ulzEqe/eliza-strict/rune-new/fresh.1
+eliza-strict	normal	rune:jit	O2	count	1	1	pass	16.37	15.33	0.05	11680	4718168266	20199019560	524692391	counts/measurement.ulzEqe/eliza-strict/rune-jit/fresh.1

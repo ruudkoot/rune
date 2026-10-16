@@ -1,0 +1,216 @@
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 246
+PASS knucleotide3-32
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-knucleotide-packed.sml]
+[autoloading]
+[autoloading done]
+functor BenchKnucleotidePackedFn(P: sig
+  val threshold : int
+end) :
+sig
+  val for : int -> int -> (int -> 'a) -> unit
+  val code : char -> int
+  val dna : string -> CharArray.array
+  type key
+  type bucket
+  type table
+  val create : unit -> <BaseFct>.<resultStr>.table
+  val hash : <BaseFct>.<resultStr>.key -> Word64.word
+  val index : 'a array -> <BaseFct>.<resultStr>.key -> int
+  val equal : <BaseFct>.<resultStr>.key * <BaseFct>.<resultStr>.key -> bool
+  val find :
+      <BaseFct>.<resultStr>.table
+       -> <BaseFct>.<resultStr>.key -> int ref option
+  val resize : <BaseFct>.<resultStr>.table -> unit
+  val add : <BaseFct>.<resultStr>.table -> <BaseFct>.<resultStr>.key -> unit
+  val fold :
+      <BaseFct>.<resultStr>.table
+       -> (<BaseFct>.<resultStr>.key * int * 'a -> 'a) -> 'a -> 'a
+  val pack : (int -> Word64.word) -> int -> int -> <BaseFct>.<resultStr>.key
+  val packDna : CharArray.array -> int -> int -> <BaseFct>.<resultStr>.key
+  val packKey : string -> <BaseFct>.<resultStr>.key
+  val counts : <BaseFct>.<resultStr>.table -> int -> CharArray.array -> unit
+  val keyString : int -> <BaseFct>.<resultStr>.key -> CharArray.vector
+  val sort : (string * real) list -> (string * real) list
+  val run : string -> (string -> unit) -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/packed-nucleotide-check.sml]
+[autoloading]
+[autoloading done]
+functor PackedNucleotideCheckFn(K: sig
+  val run : string -> (string -> unit) -> unit
+end) :
+sig
+  val run : string -> string -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/knucleotide3-32/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Check : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 246
+PASS knucleotide3-32
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-knucleotide-packed.sml]
+[autoloading]
+[autoloading done]
+functor BenchKnucleotidePackedFn(P: sig
+  val threshold : int
+end) :
+sig
+  val for : int -> int -> (int -> 'a) -> unit
+  val code : char -> int
+  val dna : string -> CharArray.array
+  type key
+  type bucket
+  type table
+  val create : unit -> <BaseFct>.<resultStr>.table
+  val hash : <BaseFct>.<resultStr>.key -> Word64.word
+  val index : 'a array -> <BaseFct>.<resultStr>.key -> int
+  val equal : <BaseFct>.<resultStr>.key * <BaseFct>.<resultStr>.key -> bool
+  val find :
+      <BaseFct>.<resultStr>.table
+       -> <BaseFct>.<resultStr>.key -> int ref option
+  val resize : <BaseFct>.<resultStr>.table -> unit
+  val add : <BaseFct>.<resultStr>.table -> <BaseFct>.<resultStr>.key -> unit
+  val fold :
+      <BaseFct>.<resultStr>.table
+       -> (<BaseFct>.<resultStr>.key * int * 'a -> 'a) -> 'a -> 'a
+  val pack : (int -> Word64.word) -> int -> int -> <BaseFct>.<resultStr>.key
+  val packDna : CharArray.array -> int -> int -> <BaseFct>.<resultStr>.key
+  val packKey : string -> <BaseFct>.<resultStr>.key
+  val counts : <BaseFct>.<resultStr>.table -> int -> CharArray.array -> unit
+  val keyString : int -> <BaseFct>.<resultStr>.key -> CharArray.vector
+  val sort : (string * real) list -> (string * real) list
+  val run : string -> (string -> unit) -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/packed-nucleotide-check.sml]
+[autoloading]
+[autoloading done]
+functor PackedNucleotideCheckFn(K: sig
+  val run : string -> (string -> unit) -> unit
+end) :
+sig
+  val run : string -> string -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/knucleotide3-32/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Check : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 246
+PASS knucleotide3-32
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-knucleotide-packed.sml]
+functor BenchKnucleotidePackedFn(P: sig val threshold : int end) :
+                                
+                                  sig
+                                    val for : int -> int -> (int -> 'a) -> unit
+                                    val code : char -> int
+                                    val dna : string -> CharArray.array
+                                    type key
+                                    type bucket
+                                    type table
+                                    val create : unit -> table
+                                    val hash : key -> Word64.word
+                                    val index : 'a array -> key -> int
+                                    val equal : key * key -> bool
+                                    val find : table -> key -> int ref option
+                                    val resize : table -> unit
+                                    val add : table -> key -> unit
+                                    val fold : table
+                                                -> (key * int * 'a -> 'a)
+                                                -> 'a -> 'a
+                                    val pack : (int -> Word64.word)
+                                                -> int -> int -> key
+                                    val packDna : CharArray.array
+                                                   -> int -> int -> key
+                                    val packKey : string -> key
+                                    val counts : table
+                                                  -> int
+                                                  -> CharArray.array -> unit
+                                    val keyString : int
+                                                     -> key
+                                                     -> CharArray.vector
+                                    val sort : (string * real) list
+                                                -> (string * real) list
+                                    val run : string
+                                               -> (string -> unit) -> unit
+                                  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/packed-nucleotide-check.sml]
+functor PackedNucleotideCheckFn(K: sig
+                                 val run : string -> (string -> unit) -> unit
+                                 end) :
+                               sig val run : string -> string -> int end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/knucleotide3-32/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Kernel : <sig>
+    structure Check : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 246
+PASS knucleotide3-32
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+RESULT 246
+PASS knucleotide3-32
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 246
+PASS knucleotide3-32
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

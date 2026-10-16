@@ -1,0 +1,9 @@
+COUNT unbudgeted knucleotide3-64 normal rune
+COUNT unbudgeted knucleotide3-64 normal rune:opt
+COUNT unbudgeted knucleotide3-64 normal rune:new
+COUNT unbudgeted knucleotide3-64 normal rune:jit
+COUNT unbudgeted knucleotide3-32 normal rune
+COUNT unbudgeted knucleotide3-32 normal rune:opt
+COUNT unbudgeted knucleotide3-32 normal rune:new
+COUNT unbudgeted knucleotide3-32 normal rune:jit
+COUNT comparisons agree

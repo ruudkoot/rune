@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-packed-nucleotide.gdwyduca
+PASS knucleotide3-64 smoke O0
+PASS knucleotide3-64 smoke O2
+PASS knucleotide3-64 smoke hosts
+PASS knucleotide3-64 normal O0
+PASS knucleotide3-64 normal O2
+PASS knucleotide3-64 normal hosts
+PASS knucleotide3-32 smoke O0
+PASS knucleotide3-32 smoke O2
+PASS knucleotide3-32 smoke hosts
+PASS knucleotide3-32 normal O0
+PASS knucleotide3-32 normal O2
+PASS knucleotide3-32 normal hosts

@@ -1,0 +1,6 @@
+PASS complete packed reference/model smoke 64 5000
+PASS complete packed reference/model smoke 32 5000
+PASS complete packed reference/model normal 64 250000
+PASS complete packed reference/model normal 32 250000
+PASS complete packed reference/model large 64 2500000
+PASS complete packed reference/model large 32 2500000

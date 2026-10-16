@@ -1,0 +1,861 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS packed/full-smoke-64
+PASS packed/full-smoke-32
+PASS packed/edge-64-0
+PASS packed/edge-32-0
+PASS packed/edge-64-1
+PASS packed/edge-32-1
+PASS packed/edge-64-2
+PASS packed/edge-32-2
+PASS packed/edge-64-3
+PASS packed/edge-32-3
+PASS packed/edge-64-4
+PASS packed/edge-32-4
+PASS packed/edge-64-5
+PASS packed/edge-32-5
+PASS packed/edge-64-6
+PASS packed/edge-32-6
+PASS packed/edge-64-7
+PASS packed/edge-32-7
+PASS packed/omits-final-window
+PASS packed/cumulative-aliases-64
+PASS packed/cumulative-aliases-32
+PASS packed/leading-zero-length-alias
+PASS packed/64-retains-high-bits
+PASS packed/32-splits-after-fifteen
+PASS packed/pair-hash-uses-first
+PASS packed/source-collision-resize-order
+PASS packed/source-every-pass-statistics
+PASS packed/wrong-output-rejected
+PASS packed/truncated-output-rejected
+PASS packed/extra-output-rejected
+PASS packed/missing-header-rejected
+PASS packed/empty-later-line-rejected
+SUMMARY 32 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+PASS packed/full-smoke-64
+PASS packed/full-smoke-32
+PASS packed/edge-64-0
+PASS packed/edge-32-0
+PASS packed/edge-64-1
+PASS packed/edge-32-1
+PASS packed/edge-64-2
+PASS packed/edge-32-2
+PASS packed/edge-64-3
+PASS packed/edge-32-3
+PASS packed/edge-64-4
+PASS packed/edge-32-4
+PASS packed/edge-64-5
+PASS packed/edge-32-5
+PASS packed/edge-64-6
+PASS packed/edge-32-6
+PASS packed/edge-64-7
+PASS packed/edge-32-7
+PASS packed/omits-final-window
+PASS packed/cumulative-aliases-64
+PASS packed/cumulative-aliases-32
+PASS packed/leading-zero-length-alias
+PASS packed/64-retains-high-bits
+PASS packed/32-splits-after-fifteen
+PASS packed/pair-hash-uses-first
+PASS packed/source-collision-resize-order
+PASS packed/source-every-pass-statistics
+PASS packed/wrong-output-rejected
+PASS packed/truncated-output-rejected
+PASS packed/extra-output-rejected
+PASS packed/missing-header-rejected
+PASS packed/empty-later-line-rejected
+SUMMARY 32 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+PASS packed/full-smoke-64
+PASS packed/full-smoke-32
+PASS packed/edge-64-0
+PASS packed/edge-32-0
+PASS packed/edge-64-1
+PASS packed/edge-32-1
+PASS packed/edge-64-2
+PASS packed/edge-32-2
+PASS packed/edge-64-3
+PASS packed/edge-32-3
+PASS packed/edge-64-4
+PASS packed/edge-32-4
+PASS packed/edge-64-5
+PASS packed/edge-32-5
+PASS packed/edge-64-6
+PASS packed/edge-32-6
+PASS packed/edge-64-7
+PASS packed/edge-32-7
+PASS packed/omits-final-window
+PASS packed/cumulative-aliases-64
+PASS packed/cumulative-aliases-32
+PASS packed/leading-zero-length-alias
+PASS packed/64-retains-high-bits
+PASS packed/32-splits-after-fifteen
+PASS packed/pair-hash-uses-first
+PASS packed/source-collision-resize-order
+PASS packed/source-every-pass-statistics
+PASS packed/wrong-output-rejected
+PASS packed/truncated-output-rejected
+PASS packed/extra-output-rejected
+PASS packed/missing-header-rejected
+PASS packed/empty-later-line-rejected
+SUMMARY 32 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+PASS packed/full-smoke-64
+PASS packed/full-smoke-32
+PASS packed/edge-64-0
+PASS packed/edge-32-0
+PASS packed/edge-64-1
+PASS packed/edge-32-1
+PASS packed/edge-64-2
+PASS packed/edge-32-2
+PASS packed/edge-64-3
+PASS packed/edge-32-3
+PASS packed/edge-64-4
+PASS packed/edge-32-4
+PASS packed/edge-64-5
+PASS packed/edge-32-5
+PASS packed/edge-64-6
+PASS packed/edge-32-6
+PASS packed/edge-64-7
+PASS packed/edge-32-7
+PASS packed/omits-final-window
+PASS packed/cumulative-aliases-64
+PASS packed/cumulative-aliases-32
+PASS packed/leading-zero-length-alias
+PASS packed/64-retains-high-bits
+PASS packed/32-splits-after-fifteen
+PASS packed/pair-hash-uses-first
+PASS packed/source-collision-resize-order
+PASS packed/source-every-pass-statistics
+PASS packed/wrong-output-rejected
+PASS packed/truncated-output-rejected
+PASS packed/extra-output-rejected
+PASS packed/missing-header-rejected
+PASS packed/empty-later-line-rejected
+SUMMARY 32 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 1048576 KiB
+PASS packed/full-smoke-64
+PASS packed/full-smoke-32
+PASS packed/edge-64-0
+PASS packed/edge-32-0
+PASS packed/edge-64-1
+PASS packed/edge-32-1
+PASS packed/edge-64-2
+PASS packed/edge-32-2
+PASS packed/edge-64-3
+PASS packed/edge-32-3
+PASS packed/edge-64-4
+PASS packed/edge-32-4
+PASS packed/edge-64-5
+PASS packed/edge-32-5
+PASS packed/edge-64-6
+PASS packed/edge-32-6
+PASS packed/edge-64-7
+PASS packed/edge-32-7
+PASS packed/omits-final-window
+PASS packed/cumulative-aliases-64
+PASS packed/cumulative-aliases-32
+PASS packed/leading-zero-length-alias
+PASS packed/64-retains-high-bits
+PASS packed/32-splits-after-fifteen
+PASS packed/pair-hash-uses-first
+PASS packed/source-collision-resize-order
+PASS packed/source-every-pass-statistics
+PASS packed/wrong-output-rejected
+PASS packed/truncated-output-rejected
+PASS packed/extra-output-rejected
+PASS packed/missing-header-rejected
+PASS packed/empty-later-line-rejected
+SUMMARY 32 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-knucleotide-packed.sml]
+[autoloading]
+[autoloading done]
+functor BenchKnucleotidePackedFn(P: sig
+  val threshold : int
+end) :
+sig
+  val for : int -> int -> (int -> 'a) -> unit
+  val code : char -> int
+  val dna : string -> CharArray.array
+  type key
+  type bucket
+  type table
+  val create : unit -> <BaseFct>.<resultStr>.table
+  val hash : <BaseFct>.<resultStr>.key -> Word64.word
+  val index : 'a array -> <BaseFct>.<resultStr>.key -> int
+  val equal : <BaseFct>.<resultStr>.key * <BaseFct>.<resultStr>.key -> bool
+  val find :
+      <BaseFct>.<resultStr>.table
+       -> <BaseFct>.<resultStr>.key -> int ref option
+  val resize : <BaseFct>.<resultStr>.table -> unit
+  val add : <BaseFct>.<resultStr>.table -> <BaseFct>.<resultStr>.key -> unit
+  val fold :
+      <BaseFct>.<resultStr>.table
+       -> (<BaseFct>.<resultStr>.key * int * 'a -> 'a) -> 'a -> 'a
+  val pack : (int -> Word64.word) -> int -> int -> <BaseFct>.<resultStr>.key
+  val packDna : CharArray.array -> int -> int -> <BaseFct>.<resultStr>.key
+  val packKey : string -> <BaseFct>.<resultStr>.key
+  val counts : <BaseFct>.<resultStr>.table -> int -> CharArray.array -> unit
+  val keyString : int -> <BaseFct>.<resultStr>.key -> CharArray.vector
+  val sort : (string * real) list -> (string * real) list
+  val run : string -> (string -> unit) -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/packed-nucleotide-check.sml]
+[autoloading]
+[autoloading done]
+functor PackedNucleotideCheckFn(K: sig
+  val run : string -> (string -> unit) -> unit
+end) :
+sig
+  val run : string -> string -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/packed-nucleotide-tests.sml]
+PASS packed/full-smoke-64
+PASS packed/full-smoke-32
+PASS packed/edge-64-0
+PASS packed/edge-32-0
+PASS packed/edge-64-1
+PASS packed/edge-32-1
+PASS packed/edge-64-2
+PASS packed/edge-32-2
+PASS packed/edge-64-3
+PASS packed/edge-32-3
+PASS packed/edge-64-4
+PASS packed/edge-32-4
+PASS packed/edge-64-5
+PASS packed/edge-32-5
+PASS packed/edge-64-6
+PASS packed/edge-32-6
+PASS packed/edge-64-7
+PASS packed/edge-32-7
+PASS packed/omits-final-window
+PASS packed/cumulative-aliases-64
+PASS packed/cumulative-aliases-32
+PASS packed/leading-zero-length-alias
+PASS packed/64-retains-high-bits
+PASS packed/32-splits-after-fifteen
+PASS packed/pair-hash-uses-first
+PASS packed/source-collision-resize-order
+PASS packed/source-every-pass-statistics
+PASS packed/wrong-output-rejected
+PASS packed/truncated-output-rejected
+PASS packed/extra-output-rejected
+PASS packed/missing-header-rejected
+PASS packed/empty-later-line-rejected
+structure Packed64 : sig
+  val for : int -> int -> (int -> 'a) -> unit
+  val code : char -> int
+  val dna : string -> CharArray.array
+  datatype key = Large of Word64.word * Word64.word | Small of Word64.word
+  datatype bucket
+    = Empty
+    | Entry of {count:int ref, key:<BaseFct>.<resultStr>.key,
+                 next:<BaseFct>.<resultStr>.bucket ref}
+  type table = {buckets:bucket array ref, size:int ref}
+  val create : unit -> <BaseFct>.<resultStr>.table
+  val hash : <BaseFct>.<resultStr>.key -> Word64.word
+  val index : 'a array -> <BaseFct>.<resultStr>.key -> int
+  val equal : <BaseFct>.<resultStr>.key * <BaseFct>.<resultStr>.key -> bool
+  val find :
+      <BaseFct>.<resultStr>.table
+       -> <BaseFct>.<resultStr>.key -> int ref option
+  val resize : <BaseFct>.<resultStr>.table -> unit
+  val add : <BaseFct>.<resultStr>.table -> <BaseFct>.<resultStr>.key -> unit
+  val fold :
+      <BaseFct>.<resultStr>.table
+       -> (<BaseFct>.<resultStr>.key * int * 'a -> 'a) -> 'a -> 'a
+  val pack : (int -> Word64.word) -> int -> int -> <BaseFct>.<resultStr>.key
+  val packDna : CharArray.array -> int -> int -> <BaseFct>.<resultStr>.key
+  val packKey : string -> <BaseFct>.<resultStr>.key
+  val counts : <BaseFct>.<resultStr>.table -> int -> CharArray.array -> unit
+  val keyString : int -> <BaseFct>.<resultStr>.key -> CharArray.vector
+  val sort : (string * real) list -> (string * real) list
+  val run : string -> (string -> unit) -> unit
+end
+structure Packed32 : sig
+  val for : int -> int -> (int -> 'a) -> unit
+  val code : char -> int
+  val dna : string -> CharArray.array
+  datatype key = Large of Word64.word * Word64.word | Small of Word64.word
+  datatype bucket
+    = Empty
+    | Entry of {count:int ref, key:<BaseFct>.<resultStr>.key,
+                 next:<BaseFct>.<resultStr>.bucket ref}
+  type table = {buckets:bucket array ref, size:int ref}
+  val create : unit -> <BaseFct>.<resultStr>.table
+  val hash : <BaseFct>.<resultStr>.key -> Word64.word
+  val index : 'a array -> <BaseFct>.<resultStr>.key -> int
+  val equal : <BaseFct>.<resultStr>.key * <BaseFct>.<resultStr>.key -> bool
+  val find :
+      <BaseFct>.<resultStr>.table
+       -> <BaseFct>.<resultStr>.key -> int ref option
+  val resize : <BaseFct>.<resultStr>.table -> unit
+  val add : <BaseFct>.<resultStr>.table -> <BaseFct>.<resultStr>.key -> unit
+  val fold :
+      <BaseFct>.<resultStr>.table
+       -> (<BaseFct>.<resultStr>.key * int * 'a -> 'a) -> 'a -> 'a
+  val pack : (int -> Word64.word) -> int -> int -> <BaseFct>.<resultStr>.key
+  val packDna : CharArray.array -> int -> int -> <BaseFct>.<resultStr>.key
+  val packKey : string -> <BaseFct>.<resultStr>.key
+  val counts : <BaseFct>.<resultStr>.table -> int -> CharArray.array -> unit
+  val keyString : int -> <BaseFct>.<resultStr>.key -> CharArray.vector
+  val sort : (string * real) list -> (string * real) list
+  val run : string -> (string -> unit) -> unit
+end
+structure Check64 : sig
+  val run : string -> string -> int
+end
+structure Check32 : sig
+  val run : string -> string -> int
+end
+structure PackedTests : sig
+  val read : string -> TextIO.vector
+  val rejects : string -> bool
+  val bad : string -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 32 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-knucleotide-packed.sml]
+[autoloading]
+[autoloading done]
+functor BenchKnucleotidePackedFn(P: sig
+  val threshold : int
+end) :
+sig
+  val for : int -> int -> (int -> 'a) -> unit
+  val code : char -> int
+  val dna : string -> CharArray.array
+  type key
+  type bucket
+  type table
+  val create : unit -> <BaseFct>.<resultStr>.table
+  val hash : <BaseFct>.<resultStr>.key -> Word64.word
+  val index : 'a array -> <BaseFct>.<resultStr>.key -> int
+  val equal : <BaseFct>.<resultStr>.key * <BaseFct>.<resultStr>.key -> bool
+  val find :
+      <BaseFct>.<resultStr>.table
+       -> <BaseFct>.<resultStr>.key -> int ref option
+  val resize : <BaseFct>.<resultStr>.table -> unit
+  val add : <BaseFct>.<resultStr>.table -> <BaseFct>.<resultStr>.key -> unit
+  val fold :
+      <BaseFct>.<resultStr>.table
+       -> (<BaseFct>.<resultStr>.key * int * 'a -> 'a) -> 'a -> 'a
+  val pack : (int -> Word64.word) -> int -> int -> <BaseFct>.<resultStr>.key
+  val packDna : CharArray.array -> int -> int -> <BaseFct>.<resultStr>.key
+  val packKey : string -> <BaseFct>.<resultStr>.key
+  val counts : <BaseFct>.<resultStr>.table -> int -> CharArray.array -> unit
+  val keyString : int -> <BaseFct>.<resultStr>.key -> CharArray.vector
+  val sort : (string * real) list -> (string * real) list
+  val run : string -> (string -> unit) -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/packed-nucleotide-check.sml]
+[autoloading]
+[autoloading done]
+functor PackedNucleotideCheckFn(K: sig
+  val run : string -> (string -> unit) -> unit
+end) :
+sig
+  val run : string -> string -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/packed-nucleotide-tests.sml]
+PASS packed/full-smoke-64
+PASS packed/full-smoke-32
+PASS packed/edge-64-0
+PASS packed/edge-32-0
+PASS packed/edge-64-1
+PASS packed/edge-32-1
+PASS packed/edge-64-2
+PASS packed/edge-32-2
+PASS packed/edge-64-3
+PASS packed/edge-32-3
+PASS packed/edge-64-4
+PASS packed/edge-32-4
+PASS packed/edge-64-5
+PASS packed/edge-32-5
+PASS packed/edge-64-6
+PASS packed/edge-32-6
+PASS packed/edge-64-7
+PASS packed/edge-32-7
+PASS packed/omits-final-window
+PASS packed/cumulative-aliases-64
+PASS packed/cumulative-aliases-32
+PASS packed/leading-zero-length-alias
+PASS packed/64-retains-high-bits
+PASS packed/32-splits-after-fifteen
+PASS packed/pair-hash-uses-first
+PASS packed/source-collision-resize-order
+PASS packed/source-every-pass-statistics
+PASS packed/wrong-output-rejected
+PASS packed/truncated-output-rejected
+PASS packed/extra-output-rejected
+PASS packed/missing-header-rejected
+PASS packed/empty-later-line-rejected
+structure Packed64 : sig
+  val for : int -> int -> (int -> 'a) -> unit
+  val code : char -> int
+  val dna : string -> CharArray.array
+  datatype key = Large of Word64.word * Word64.word | Small of Word64.word
+  datatype bucket
+    = Empty
+    | Entry of {count:int ref, key:<BaseFct>.<resultStr>.key,
+                 next:<BaseFct>.<resultStr>.bucket ref}
+  type table = {buckets:bucket array ref, size:int ref}
+  val create : unit -> <BaseFct>.<resultStr>.table
+  val hash : <BaseFct>.<resultStr>.key -> Word64.word
+  val index : 'a array -> <BaseFct>.<resultStr>.key -> int
+  val equal : <BaseFct>.<resultStr>.key * <BaseFct>.<resultStr>.key -> bool
+  val find :
+      <BaseFct>.<resultStr>.table
+       -> <BaseFct>.<resultStr>.key -> int ref option
+  val resize : <BaseFct>.<resultStr>.table -> unit
+  val add : <BaseFct>.<resultStr>.table -> <BaseFct>.<resultStr>.key -> unit
+  val fold :
+      <BaseFct>.<resultStr>.table
+       -> (<BaseFct>.<resultStr>.key * int * 'a -> 'a) -> 'a -> 'a
+  val pack : (int -> Word64.word) -> int -> int -> <BaseFct>.<resultStr>.key
+  val packDna : CharArray.array -> int -> int -> <BaseFct>.<resultStr>.key
+  val packKey : string -> <BaseFct>.<resultStr>.key
+  val counts : <BaseFct>.<resultStr>.table -> int -> CharArray.array -> unit
+  val keyString : int -> <BaseFct>.<resultStr>.key -> CharArray.vector
+  val sort : (string * real) list -> (string * real) list
+  val run : string -> (string -> unit) -> unit
+end
+structure Packed32 : sig
+  val for : int -> int -> (int -> 'a) -> unit
+  val code : char -> int
+  val dna : string -> CharArray.array
+  datatype key = Large of Word64.word * Word64.word | Small of Word64.word
+  datatype bucket
+    = Empty
+    | Entry of {count:int ref, key:<BaseFct>.<resultStr>.key,
+                 next:<BaseFct>.<resultStr>.bucket ref}
+  type table = {buckets:bucket array ref, size:int ref}
+  val create : unit -> <BaseFct>.<resultStr>.table
+  val hash : <BaseFct>.<resultStr>.key -> Word64.word
+  val index : 'a array -> <BaseFct>.<resultStr>.key -> int
+  val equal : <BaseFct>.<resultStr>.key * <BaseFct>.<resultStr>.key -> bool
+  val find :
+      <BaseFct>.<resultStr>.table
+       -> <BaseFct>.<resultStr>.key -> int ref option
+  val resize : <BaseFct>.<resultStr>.table -> unit
+  val add : <BaseFct>.<resultStr>.table -> <BaseFct>.<resultStr>.key -> unit
+  val fold :
+      <BaseFct>.<resultStr>.table
+       -> (<BaseFct>.<resultStr>.key * int * 'a -> 'a) -> 'a -> 'a
+  val pack : (int -> Word64.word) -> int -> int -> <BaseFct>.<resultStr>.key
+  val packDna : CharArray.array -> int -> int -> <BaseFct>.<resultStr>.key
+  val packKey : string -> <BaseFct>.<resultStr>.key
+  val counts : <BaseFct>.<resultStr>.table -> int -> CharArray.array -> unit
+  val keyString : int -> <BaseFct>.<resultStr>.key -> CharArray.vector
+  val sort : (string * real) list -> (string * real) list
+  val run : string -> (string -> unit) -> unit
+end
+structure Check64 : sig
+  val run : string -> string -> int
+end
+structure Check32 : sig
+  val run : string -> string -> int
+end
+structure PackedTests : sig
+  val read : string -> TextIO.vector
+  val rejects : string -> bool
+  val bad : string -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 32 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-knucleotide-packed.sml]
+functor BenchKnucleotidePackedFn(P: sig val threshold : int end) :
+                                
+                                  sig
+                                    val for : int -> int -> (int -> 'a) -> unit
+                                    val code : char -> int
+                                    val dna : string -> CharArray.array
+                                    type key
+                                    type bucket
+                                    type table
+                                    val create : unit -> table
+                                    val hash : key -> Word64.word
+                                    val index : 'a array -> key -> int
+                                    val equal : key * key -> bool
+                                    val find : table -> key -> int ref option
+                                    val resize : table -> unit
+                                    val add : table -> key -> unit
+                                    val fold : table
+                                                -> (key * int * 'a -> 'a)
+                                                -> 'a -> 'a
+                                    val pack : (int -> Word64.word)
+                                                -> int -> int -> key
+                                    val packDna : CharArray.array
+                                                   -> int -> int -> key
+                                    val packKey : string -> key
+                                    val counts : table
+                                                  -> int
+                                                  -> CharArray.array -> unit
+                                    val keyString : int
+                                                     -> key
+                                                     -> CharArray.vector
+                                    val sort : (string * real) list
+                                                -> (string * real) list
+                                    val run : string
+                                               -> (string -> unit) -> unit
+                                  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/packed-nucleotide-check.sml]
+functor PackedNucleotideCheckFn(K: sig
+                                 val run : string -> (string -> unit) -> unit
+                                 end) :
+                               sig val run : string -> string -> int end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/packed-nucleotide-tests.sml]
+PASS packed/full-smoke-64
+PASS packed/full-smoke-32
+PASS packed/edge-64-0
+PASS packed/edge-32-0
+PASS packed/edge-64-1
+PASS packed/edge-32-1
+PASS packed/edge-64-2
+PASS packed/edge-32-2
+PASS packed/edge-64-3
+PASS packed/edge-32-3
+PASS packed/edge-64-4
+PASS packed/edge-32-4
+PASS packed/edge-64-5
+PASS packed/edge-32-5
+PASS packed/edge-64-6
+PASS packed/edge-32-6
+PASS packed/edge-64-7
+PASS packed/edge-32-7
+PASS packed/omits-final-window
+PASS packed/cumulative-aliases-64
+PASS packed/cumulative-aliases-32
+PASS packed/leading-zero-length-alias
+PASS packed/64-retains-high-bits
+PASS packed/32-splits-after-fifteen
+PASS packed/pair-hash-uses-first
+PASS packed/source-collision-resize-order
+PASS packed/source-every-pass-statistics
+PASS packed/wrong-output-rejected
+PASS packed/truncated-output-rejected
+PASS packed/extra-output-rejected
+PASS packed/missing-header-rejected
+PASS packed/empty-later-line-rejected
+structure Packed64 : 
+  sig
+    val for : int -> int -> (int -> 'a) -> unit
+    val code : char -> int
+    val dna : string -> CharArray.array
+    datatype key = Large of Word64.word * Word64.word | Small of Word64.word
+    datatype bucket
+      = Empty | Entry of {count:int ref, key:key, next:bucket ref}
+    type table = {buckets:bucket array ref, size:int ref}
+    val create : unit -> table
+    val hash : key -> Word64.word
+    val index : 'a array -> key -> int
+    val equal : key * key -> bool
+    val find : table -> key -> int ref option
+    val resize : table -> unit
+    val add : table -> key -> unit
+    val fold : table -> (key * int * 'a -> 'a) -> 'a -> 'a
+    val pack : (int -> Word64.word) -> int -> int -> key
+    val packDna : CharArray.array -> int -> int -> key
+    val packKey : string -> key
+    val counts : table -> int -> CharArray.array -> unit
+    val keyString : int -> key -> CharArray.vector
+    val sort : (string * real) list -> (string * real) list
+    val run : string -> (string -> unit) -> unit
+  end
+structure Packed32 : 
+  sig
+    val for : int -> int -> (int -> 'a) -> unit
+    val code : char -> int
+    val dna : string -> CharArray.array
+    datatype key = Large of Word64.word * Word64.word | Small of Word64.word
+    datatype bucket
+      = Empty | Entry of {count:int ref, key:key, next:bucket ref}
+    type table = {buckets:bucket array ref, size:int ref}
+    val create : unit -> table
+    val hash : key -> Word64.word
+    val index : 'a array -> key -> int
+    val equal : key * key -> bool
+    val find : table -> key -> int ref option
+    val resize : table -> unit
+    val add : table -> key -> unit
+    val fold : table -> (key * int * 'a -> 'a) -> 'a -> 'a
+    val pack : (int -> Word64.word) -> int -> int -> key
+    val packDna : CharArray.array -> int -> int -> key
+    val packKey : string -> key
+    val counts : table -> int -> CharArray.array -> unit
+    val keyString : int -> key -> CharArray.vector
+    val sort : (string * real) list -> (string * real) list
+    val run : string -> (string -> unit) -> unit
+  end
+structure Check64 : sig val run : string -> string -> int end
+structure Check32 : sig val run : string -> string -> int end
+structure PackedTests : 
+  sig
+    val read : string -> TextIO.vector
+    val rejects : string -> bool
+    val bad : string -> bool
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 32 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS packed/full-smoke-64
+PASS packed/full-smoke-32
+PASS packed/edge-64-0
+PASS packed/edge-32-0
+PASS packed/edge-64-1
+PASS packed/edge-32-1
+PASS packed/edge-64-2
+PASS packed/edge-32-2
+PASS packed/edge-64-3
+PASS packed/edge-32-3
+PASS packed/edge-64-4
+PASS packed/edge-32-4
+PASS packed/edge-64-5
+PASS packed/edge-32-5
+PASS packed/edge-64-6
+PASS packed/edge-32-6
+PASS packed/edge-64-7
+PASS packed/edge-32-7
+PASS packed/omits-final-window
+PASS packed/cumulative-aliases-64
+PASS packed/cumulative-aliases-32
+PASS packed/leading-zero-length-alias
+PASS packed/64-retains-high-bits
+PASS packed/32-splits-after-fifteen
+PASS packed/pair-hash-uses-first
+PASS packed/source-collision-resize-order
+PASS packed/source-every-pass-statistics
+PASS packed/wrong-output-rejected
+PASS packed/truncated-output-rejected
+PASS packed/extra-output-rejected
+PASS packed/missing-header-rejected
+PASS packed/empty-later-line-rejected
+SUMMARY 32 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PASS packed/full-smoke-64
+PASS packed/full-smoke-32
+PASS packed/edge-64-0
+PASS packed/edge-32-0
+PASS packed/edge-64-1
+PASS packed/edge-32-1
+PASS packed/edge-64-2
+PASS packed/edge-32-2
+PASS packed/edge-64-3
+PASS packed/edge-32-3
+PASS packed/edge-64-4
+PASS packed/edge-32-4
+PASS packed/edge-64-5
+PASS packed/edge-32-5
+PASS packed/edge-64-6
+PASS packed/edge-32-6
+PASS packed/edge-64-7
+PASS packed/edge-32-7
+PASS packed/omits-final-window
+PASS packed/cumulative-aliases-64
+PASS packed/cumulative-aliases-32
+PASS packed/leading-zero-length-alias
+PASS packed/64-retains-high-bits
+PASS packed/32-splits-after-fifteen
+PASS packed/pair-hash-uses-first
+PASS packed/source-collision-resize-order
+PASS packed/source-every-pass-statistics
+PASS packed/wrong-output-rejected
+PASS packed/truncated-output-rejected
+PASS packed/extra-output-rejected
+PASS packed/missing-header-rejected
+PASS packed/empty-later-line-rejected
+SUMMARY 32 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

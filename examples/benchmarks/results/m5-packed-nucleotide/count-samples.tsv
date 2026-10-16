@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+knucleotide3-64	normal	rune	O2	count	1	1	pass	3.43	3.09	0.53	297692	633211813	762580400	19263970	counts/measurement.P0JEzI/knucleotide3-64/rune/fresh.1
+knucleotide3-64	normal	rune:opt	O2	count	1	1	pass	1.80	1.63	0.26	299104	633211813	762580400	19263970	counts/measurement.P0JEzI/knucleotide3-64/rune-opt/fresh.1
+knucleotide3-64	normal	rune:new	O2	count	1	1	pass	3.08	2.90	0.35	325808	427446414	762580400	19263970	counts/measurement.P0JEzI/knucleotide3-64/rune-new/fresh.1
+knucleotide3-64	normal	rune:jit	O2	count	1	1	pass	1.46	1.22	0.32	327096	427446414	762580400	19263970	counts/measurement.P0JEzI/knucleotide3-64/rune-jit/fresh.1
+knucleotide3-32	normal	rune	O2	count	1	1	pass	3.29	3.18	0.29	297616	628794356	766588368	19264176	counts/measurement.IZeH7J/knucleotide3-32/rune/fresh.1
+knucleotide3-32	normal	rune:opt	O2	count	1	1	pass	1.62	1.43	0.28	299148	628794356	766588368	19264176	counts/measurement.IZeH7J/knucleotide3-32/rune-opt/fresh.1
+knucleotide3-32	normal	rune:new	O2	count	1	1	pass	3.20	2.90	0.47	325840	425377020	766588368	19264176	counts/measurement.IZeH7J/knucleotide3-32/rune-new/fresh.1
+knucleotide3-32	normal	rune:jit	O2	count	1	1	pass	1.68	1.33	0.44	326940	425377020	766588368	19264176	counts/measurement.IZeH7J/knucleotide3-32/rune-jit/fresh.1

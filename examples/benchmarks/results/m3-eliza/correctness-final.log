@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-eliza.imhrucoy
+PASS eliza-lazy smoke O0
+PASS eliza-lazy smoke O2
+PASS eliza-lazy smoke hosts
+PASS eliza-lazy normal O0
+PASS eliza-lazy normal O2
+PASS eliza-lazy normal hosts
+PASS eliza-strict smoke O0
+PASS eliza-strict smoke O2
+PASS eliza-strict smoke hosts
+PASS eliza-strict normal O0
+PASS eliza-strict normal O2
+PASS eliza-strict normal hosts

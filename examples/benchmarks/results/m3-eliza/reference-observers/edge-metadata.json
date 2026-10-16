@@ -1,0 +1,8 @@
+{
+  "repeat": "How do you...please state your problem.\n\nWhy did you repeat yourself?\n\nDo you expect a different answer by repeating yourself?\n\nCome, come, elucidate your thoughts.\n\nPlease don't repeat yourself!\n\nWhy did you repeat yourself?\n\n",
+  "rotate": "Tell me more about such feelings.\n\nI'm not sure I understand you fully.\n\nDo you often feel sad?\n\nWhat does that suggest to you?\n\nDo you enjoy feeling sad?\n\nI see.\n\nTell me more about such feelings.\n\n",
+  "trailing-I": "Don't you believe that I can you?\n\n",
+  "no-tail-default": "Don't you believe that I can can me?\n\n",
+  "fallback": "I'm not sure I understand you fully.\n\n",
+  "punctuation": "How do you...please state your problem.\n\nWhy did you repeat yourself?\n\nDo you expect a different answer by repeating yourself?\n\n"
+}

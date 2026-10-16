@@ -1,0 +1,1 @@
+knucleotide3-64	600	4194304	shared/input.sml shared/sandmark-knucleotide-packed.sml shared/packed-nucleotide-check.sml knucleotide3-64/benchmark.sml shared/main.sml	data/normal.fasta data/normal.output	knucleotide3-64/normal.expected	data/normal.fasta data/normal.output

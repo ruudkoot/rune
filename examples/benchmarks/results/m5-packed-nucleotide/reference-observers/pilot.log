@@ -1,0 +1,2 @@
+PASS packed widths32/64 smoke
+PASS packed widths32/64 normal

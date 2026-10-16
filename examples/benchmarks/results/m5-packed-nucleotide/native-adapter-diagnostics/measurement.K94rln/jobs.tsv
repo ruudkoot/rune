@@ -1,0 +1,1 @@
+knucleotide3-32	30	1048576	shared/input.sml shared/sandmark-knucleotide-packed.sml shared/packed-nucleotide-check.sml knucleotide3-32/benchmark.sml shared/main.sml	data/smoke.fasta data/smoke.output	knucleotide3-32/smoke.expected	data/smoke.fasta data/smoke.output

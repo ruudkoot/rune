@@ -1,0 +1,773 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index beab026e..16f02d89 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -285,6 +285,8 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [smallpt](#smallpt) | [nofib smallpt](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/smallpt) | Trace the deterministic nine-sphere scene with diffuse, mirror and glass paths, checking every RGB component. |
+ | [revcomp2](#revcomp2) | [Sandmark revcomp2](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/benchmarksgame/revcomp2.ml) | Reverse and complement FASTA records through a line list and 61-byte buffer, checking every output byte. |
+ | [knucleotide](#knucleotide) | [Sandmark knucleotide](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/benchmarksgame/knucleotide.ml) | Count overlapping DNA substrings using reusable byte keys and mutable chained-table counts, checking sorted frequencies and all queries. |
++| [knucleotide3-32](#knucleotide3-32) | [Sandmark knucleotide3](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/benchmarksgame/knucleotide3.ml) | Count packed DNA keys with the source32-bit representation, cumulative tables and original window bounds. |
++| [knucleotide3-64](#knucleotide3-64) | [Sandmark knucleotide3](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/benchmarksgame/knucleotide3.ml) | Count packed DNA keys with the source64-bit representation, cumulative tables and original window bounds. |
+ | [integer-lazy](#integer-lazy) | [nofib integer](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/integer) | Evaluate all 14 arithmetic/comparison operations on machine-64 and arbitrary-precision Cartesian grids using memoized lists. |
+ | [integer-strict](#integer-strict) | [nofib integer](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/integer) | Evaluate all 14 arithmetic/comparison operations on machine-64 and arbitrary-precision Cartesian grids using eager finite lists. |
+ | [secretary-lazy](#secretary-lazy) | [nofib secretary](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/secretary) | Simulate threshold selection from distinct random rankings with memoized streams and demand-sensitive early stopping. |
+@@ -303,6 +305,8 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [last-piece-strict](#last-piece-strict) | [nofib last-piece](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/last-piece) | Tile the sex-constrained board with source-ordered choices and persistent size-balanced maps, using strict solution trees. |
+ | [boyer-nofib-lazy](#boyer-nofib-lazy) | [nofib boyer](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/boyer) | Prove the typed-term transitivity theorem with attached memoized lemma graphs and lazy finite arguments. |
+ | [boyer-nofib-strict](#boyer-nofib-strict) | [nofib boyer](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/boyer) | Prove the typed-term transitivity theorem with attached memoized lemma graphs and strict finite arguments. |
++| [eliza-lazy](#eliza-lazy) | [nofib Eliza](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/eliza) | Recompute keyword-driven conversations with shared cyclic replies and lazy finite candidates/output. |
++| [eliza-strict](#eliza-strict) | [nofib Eliza](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/eliza) | Recompute keyword-driven conversations with shared cyclic replies and strict finite candidates/output. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -415,6 +419,7 @@ sh tests/benchmarks/check-evolutionary.sh
+ sh tests/benchmarks/check-smallpt.sh
+ sh tests/benchmarks/check-revcomp2.sh
+ sh tests/benchmarks/check-knucleotide.sh
++sh tests/benchmarks/check-packed-nucleotide.sh
+ sh tests/benchmarks/check-integer.sh
+ sh tests/benchmarks/check-secretary.sh
+ sh tests/benchmarks/check-mandel.sh
+@@ -423,6 +428,7 @@ sh tests/benchmarks/check-boyer2.sh
+ sh tests/benchmarks/check-pretty.sh
+ sh tests/benchmarks/check-last-piece.sh
+ sh tests/benchmarks/check-typed-boyer.sh
++sh tests/benchmarks/check-eliza.sh
+ python3 tests/benchmarks/test-inventory.py
+ python3 scripts/benchmark-inventory.py --check
+ ```
+@@ -13172,3 +13178,445 @@ the nofib/measurement survey frames current comparisons. Historical remarks
+ about language advantages or costs do not establish current SML rankings.
+ 
+ [Complete provenance](boyer-nofib-strict/PROVENANCE.md).
++
++## eliza-lazy
++
++Selected finite candidate/output evaluation: lazy; cyclic reply queues remain memoized.
++
++## Algorithm and workload
++
++Run the source's ordered keyword/tail search and cyclic response selection over
++its fixed conversation. Trim only space, period, exclamation mark, question mark
++and comma from line ends; split into words and discard empty lines. Match the
++first key in the original 40-entry order, conjugate its first matching suffix,
++rotate only that key's replies, and handle consecutive repeated word lists with
++a separate cyclic queue. Preserve trailing-I conjugation, fallback replies,
++capitalization, spelling and the two newlines after each response.
++
++Each iteration i starts from the original initial state and selects the first
++(i mod 20) input lines. It recomputes the conversation and consumes its complete
++character length. The driver checks every length against the reviewed 20-entry
++reference cycle and reports iterations:sum:checked. Reference lengths are
++checker data, never substituted for computing a conversation.
++
++## History, revision, authorship and aliases
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/eliza/Main.hs,
++Makefile, eliza.stdin and the three stdout fixtures. The header credits the Hugs
++version to Mark P. Jones, January 12, 1992, adapted from a Pascal implementation
++provided by James Risner with original Pascal code apparently by Robert
++Migliaccio. Retain that wording rather than resolving uncertain attribution.
++The selected program and 335-byte conversation state no separate redistribution
++notice or dataset author; no notice from an unrelated component is substituted.
++The exact input is retained, not regenerated or replaced with invented dialogue.
++
++The explicit eliza-lazy/strict names identify evaluation variants of this nofib
++implementation. They do not claim to reproduce every historical ELIZA script.
++
++## Lazy and strict variants
++
++Reply queues use explicit shared, memoized cycles in both variants. The initial
++state is shared across sessions, as in the Haskell top-level value. A session
++constructs a persistent new key table and advances queue pointers without
++mutating the initial response positions. Memoized queue nodes may be reused;
++computed conversations and their lengths are not cached across iterations.
++
++The lazy variant memoizes candidate-reply and output-character spines, demanding
++the first candidate only. Response and next-state fields have separate memoized
++delays, avoiding construction of an unused final key table. A fixed response does not force its unused conjugated
++suffix. The strict variant constructs finite candidate lists, conjugations and
++output characters eagerly. Cyclic queues remain lazy to avoid turning an
++infinite producer into a divergent strict initialization. Full output agrees;
++allocation, retention and the timing of unused candidate work can differ.
++
++## Portable SML97 translation
++
++Response keys/templates, repeated replies and conjugations are extracted with
++an export-only Haskell observer, with all source text retained. SML strings store
++words/templates; input lines and word lists are finite strict lists. Loading the
++fixed file replaces lazy getContents/lines. Only each selected prefix is trimmed
++and tokenized, but loading the small file is strict and happens once per run.
++String case conversion and conjugation materialize strings, whereas Haskell
++strings are lazy character lists. Output characters and candidate spines retain
++explicit delays where evaluation differs between the named variants.
++
++The composed tails/filter/map pipeline is represented by a delayed candidate
++list with the same nonempty tails, key order and first-match behavior; intermediate
++list layers are fused in this translation. Uppercase mapping within a candidate
++uses a finite strict word list. Record these representation and allocation
++changes when interpreting measurements; this is not an assertion of identical
++Haskell allocation. Reconstructing key tables and rotating cyclic queues preserve
++the original persistent state algorithm rather than using mutable keyword counters.
++
++Source numeric parameters and lengths fit signed 31-bit Int. The summary uses
++IntInf accumulation explicitly. The initial key-table spine and word preparation use strict finite lists.
++Input is ASCII; character behavior outside the
++retained workload is not claimed to implement Haskell's full Unicode semantics.
++The SML driver checks its positive repetition bound of 65000. It replaces many
++printed length lines with checked aggregation; I/O and result checking are
++included costs. No external library, runtime extension or compiler hint is needed.
++
++## Profiles and diagnostic questions
++
++Smoke uses 20 iterations to cover one complete prefix cycle. Normal preserves
++NORM 13000 and selected large preserves SLOW 65000. FAST 1300 is also checked with
++the unmodified original and its fixture. Every run recomputes all selected
++sessions, including repeated occurrences of a prefix. No universal size argument
++is imposed on conversation data. Default profile time/memory limits apply.
++
++Source-based diagnostic questions concern ordered keyword matching, repeated
++case conversion, candidate demand, persistent key-table copying, shared cyclic
++queues, character streams and strict finite-result retention. These are
++hypotheses until supported by measurements. Standard compiler reports compare
++identical SML; original Haskell runs supply correctness evidence.
++
++## References and validation
++
++Unmodified original outputs agree with all three upstream fixtures. An
++independent ordered-key/counter model agrees with all 20 complete conversation
++prefixes and all 65000 original length rows. Export-only observers supply exact
++full response bytes, including punctuation and blank lines. Additional complete
++sessions cover repeated inputs, key rotation, trailing I, empty suffix defaults,
++fallback and punctuation. SML checks include both variants' full output, cyclic
++sharing, demanded/unused suffixes and wrong/truncated/extra output rejection.
++Broader host/profile validation is claimed only where recorded in the results.
++
++Joseph Weizenbaum, [ELIZA—A Computer Program for the Study of Natural Language
++Communication Between Man and Machine](https://doi.org/10.1145/365153.365168),
++Communications of the ACM 9(1), 1966, pp.36–45, provides historical context for
++keyword-based conversational programs. It is not a specification for the
++particular Hugs response table or evidence of current compiler performance.
++The retained nofib source supplies that implementation's exact behavior; the
++suite's nofib and measurement survey supplies comparison methodology.
++
++[Complete provenance](eliza-lazy/PROVENANCE.md).
++
++## eliza-strict
++
++Selected finite candidate/output evaluation: strict; cyclic reply queues remain memoized.
++
++## Algorithm and workload
++
++Run the source's ordered keyword/tail search and cyclic response selection over
++its fixed conversation. Trim only space, period, exclamation mark, question mark
++and comma from line ends; split into words and discard empty lines. Match the
++first key in the original 40-entry order, conjugate its first matching suffix,
++rotate only that key's replies, and handle consecutive repeated word lists with
++a separate cyclic queue. Preserve trailing-I conjugation, fallback replies,
++capitalization, spelling and the two newlines after each response.
++
++Each iteration i starts from the original initial state and selects the first
++(i mod 20) input lines. It recomputes the conversation and consumes its complete
++character length. The driver checks every length against the reviewed 20-entry
++reference cycle and reports iterations:sum:checked. Reference lengths are
++checker data, never substituted for computing a conversation.
++
++## History, revision, authorship and aliases
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/eliza/Main.hs,
++Makefile, eliza.stdin and the three stdout fixtures. The header credits the Hugs
++version to Mark P. Jones, January 12, 1992, adapted from a Pascal implementation
++provided by James Risner with original Pascal code apparently by Robert
++Migliaccio. Retain that wording rather than resolving uncertain attribution.
++The selected program and 335-byte conversation state no separate redistribution
++notice or dataset author; no notice from an unrelated component is substituted.
++The exact input is retained, not regenerated or replaced with invented dialogue.
++
++The explicit eliza-lazy/strict names identify evaluation variants of this nofib
++implementation. They do not claim to reproduce every historical ELIZA script.
++
++## Lazy and strict variants
++
++Reply queues use explicit shared, memoized cycles in both variants. The initial
++state is shared across sessions, as in the Haskell top-level value. A session
++constructs a persistent new key table and advances queue pointers without
++mutating the initial response positions. Memoized queue nodes may be reused;
++computed conversations and their lengths are not cached across iterations.
++
++The lazy variant memoizes candidate-reply and output-character spines, demanding
++the first candidate only. Response and next-state fields have separate memoized
++delays, avoiding construction of an unused final key table. A fixed response does not force its unused conjugated
++suffix. The strict variant constructs finite candidate lists, conjugations and
++output characters eagerly. Cyclic queues remain lazy to avoid turning an
++infinite producer into a divergent strict initialization. Full output agrees;
++allocation, retention and the timing of unused candidate work can differ.
++
++## Portable SML97 translation
++
++Response keys/templates, repeated replies and conjugations are extracted with
++an export-only Haskell observer, with all source text retained. SML strings store
++words/templates; input lines and word lists are finite strict lists. Loading the
++fixed file replaces lazy getContents/lines. Only each selected prefix is trimmed
++and tokenized, but loading the small file is strict and happens once per run.
++String case conversion and conjugation materialize strings, whereas Haskell
++strings are lazy character lists. Output characters and candidate spines retain
++explicit delays where evaluation differs between the named variants.
++
++The composed tails/filter/map pipeline is represented by a delayed candidate
++list with the same nonempty tails, key order and first-match behavior; intermediate
++list layers are fused in this translation. Uppercase mapping within a candidate
++uses a finite strict word list. Record these representation and allocation
++changes when interpreting measurements; this is not an assertion of identical
++Haskell allocation. Reconstructing key tables and rotating cyclic queues preserve
++the original persistent state algorithm rather than using mutable keyword counters.
++
++Source numeric parameters and lengths fit signed 31-bit Int. The summary uses
++IntInf accumulation explicitly. The initial key-table spine and word preparation use strict finite lists.
++Input is ASCII; character behavior outside the
++retained workload is not claimed to implement Haskell's full Unicode semantics.
++The SML driver checks its positive repetition bound of 65000. It replaces many
++printed length lines with checked aggregation; I/O and result checking are
++included costs. No external library, runtime extension or compiler hint is needed.
++
++## Profiles and diagnostic questions
++
++Smoke uses 20 iterations to cover one complete prefix cycle. Normal preserves
++NORM 13000 and selected large preserves SLOW 65000. FAST 1300 is also checked with
++the unmodified original and its fixture. Every run recomputes all selected
++sessions, including repeated occurrences of a prefix. No universal size argument
++is imposed on conversation data. Default profile time/memory limits apply.
++
++Source-based diagnostic questions concern ordered keyword matching, repeated
++case conversion, candidate demand, persistent key-table copying, shared cyclic
++queues, character streams and strict finite-result retention. These are
++hypotheses until supported by measurements. Standard compiler reports compare
++identical SML; original Haskell runs supply correctness evidence.
++
++## References and validation
++
++Unmodified original outputs agree with all three upstream fixtures. An
++independent ordered-key/counter model agrees with all 20 complete conversation
++prefixes and all 65000 original length rows. Export-only observers supply exact
++full response bytes, including punctuation and blank lines. Additional complete
++sessions cover repeated inputs, key rotation, trailing I, empty suffix defaults,
++fallback and punctuation. SML checks include both variants' full output, cyclic
++sharing, demanded/unused suffixes and wrong/truncated/extra output rejection.
++Broader host/profile validation is claimed only where recorded in the results.
++
++Joseph Weizenbaum, [ELIZA—A Computer Program for the Study of Natural Language
++Communication Between Man and Machine](https://doi.org/10.1145/365153.365168),
++Communications of the ACM 9(1), 1966, pp.36–45, provides historical context for
++keyword-based conversational programs. It is not a specification for the
++particular Hugs response table or evidence of current compiler performance.
++The retained nofib source supplies that implementation's exact behavior; the
++suite's nofib and measurement survey supplies comparison methodology.
++
++[Complete provenance](eliza-strict/PROVENANCE.md).
++
++## knucleotide3-64
++
++Selected key threshold: 31; fixed 64-bit source-bit representation.
++
++## Algorithm and workload
++
++Extract the THREE record from FASTA, encode A/T/C/G as 0/1/2/3, and count packed
++keys in persistent-across-pass chained hash tables. Print sorted one-/two-base
++frequencies and the five original query counts. Preserve the loop's omitted last
++window and the absence of clearing between lengths: leading-zero keys of different
++lengths can alias. These are source behavior, not errors for this port to fix.
++The driver validates every output byte and EOF before reporting its byte count.
++
++## History, upstream revision and notices
++
++Sandmark 5605805954a00497ed197c930641cddd580e1507,
++benchmarks/benchmarksgame/knucleotide3.ml. Its header credits Troestler Christophe,
++Mauricio Fernandez, Fabrice Le Fessant, Roman Kashitsyn and KC Sivaramakrishnan,
++whose change removes parallelization. Retain that header, directory Revised BSD
++notice, aggregate Unlicense, README, Dune and fasta3 input-generator source.
++
++Portable buffer/table support follows OCaml 4.14.1, pinned at
++99cb5d93fc30f1a6f3e69f5aa5d2063994d33a93. Selected hashtbl.ml/buffer.ml bytes match
++the installed sources. Retain the Xavier Leroy/INRIA copyrights, LGPL 2.1 notice
++and linking exception, including the notice in the SML adaptation. Generated
++FASTA carries the same fasta3 provenance as the other nucleotide imports; no
++unattributed external dataset is added.
++
++## Numeric variants and source differences
++
++knucleotide3-64 preserves threshold 31: all current query lengths use single packed
++keys. knucleotide3-32 preserves threshold 15: the 18-base query uses two packed
++components in a separate table. Both tables are allocated in both variants,
++including an unused second table in the64 variant. Pair hashing uses only the
++first component, with equality comparing both. These materially different key/
++table representations merit separate names. Both run identically on all SML
++host widths using explicit Word64 rather than native Int width selection.
++
++The byte-key knucleotide benchmark clears its table per length and counts the
++last window. It is a separate algorithm/representation variant; its fixtures
++are not interchangeable with the packed counter. Do not consolidate them.
++
++## Portable SML97 translation
++
++Multiply/add and shifts use Word64. Source32 components need at most 30 significant
++bits; 64-bit source packed keys need at most 62, with 36 used by the largest current
++query. No wrap occurs in the selected positive domain. Explicit Small/Large
++constructors select the key representation; SML tagging/Word64 boxing may add
++indirections compared with native OCaml ints/pairs. Counts, bucket indices and
++profile sizes fit signed 31-bit Int. This is not a claim that host-native integer
++arithmetic has the same allocation cost.
++
++A mutable chained table keeps source initial capacity 262144, identity/first-key
++hashes, head insertion and doubling above two entries per bucket. Transfer
++preserves collision-chain order. Lookup uses an option instead of Not_found;
++that library boundary and its allocation/branch cost are explicit adaptations.
++The table is never cleared between the seven count passes. Both table instances
++and sequence buffers are recreated per Benchmark.run, preventing a repeated
++in-process invocation from accumulating results from its previous invocation.
++
++The portable input buffer begins at 1000 and doubles as needed, following the
++same copied-buffer algorithm used by the existing byte-key port. This replaces
++the source's fixed 130000000-byte initial reservation for its much larger default
++input; record the changed allocation footprint when comparing profiles. Per-line
++encoding preserves ASCII tab values, including the source's default0 for unknown
++bytes. Initial comment/catch-all handling, prefix header selection, later empty-
++line failure, terminal-LF removal and stopping at the next record remain.
++
++Portable merge sort replaces OCaml List.sort while preserving descending
++binary64 frequencies and lexical ties. Binary64 operation association and three-
++decimal formatting remain. The original hardcoded filename becomes an argument;
++complete output checking replaces stdout and is included measured work. No FFI,
++effect handler, parallel feature or prerequisite runtime change is introduced.
++
++## Inputs, profiles and diagnostic questions
++
++Smoke/normal/large reuse the pinned fasta3 inputs with n=1000/50000/500000,
++seed 42 and width 60. THREE contains 5000/250000/2500000 bases. The original Dune
++n=25000000 and auxiliary n=5000000 remain documented, not claimed executed here.
++Large is an explicitly reduced scaling input. Input generation is available in
++the suite's portable SML fasta3 implementation, with exact complete files pinned.
++Default profile limits apply; original outputs for all selected sizes are retained.
++
++Source-based questions concern packed-key arithmetic, width-dependent pair
++allocation, repeated packing, cumulative aliasing, identity-hash collisions,
++retained tables, bucket growth, buffer copying and string formatting. They remain
++hypotheses until supported by inspection or measurements. Standard reports use
++identical SML; OCaml supplies correctness references.
++
++## Reference evidence and validation
++
++The unmodified64-bit OCaml program agrees with an independent packed-key model on
++all complete smoke/normal/large outputs. A separate observer changes only the
++threshold to 15 and agrees with the independent two-table/pair model. It does not
++constitute execution by a 32-bit OCaml compiler. Managed32-bit SML host results are
++recorded separately. Model statistics retain every pass's entries and total counts.
++
++Original complete edge fixtures cover case conversion, THREE-prefix matching,
++initial comments, next-record termination, no final LF, short/empty input and
++unknown bytes. The original library observer records 512 deliberately colliding
++keys through repeated resize, exact fold traversal and every smoke pass's table
++statistics. Tests cover omitted-window bounds, cumulative leading-zero aliases,
++31-/15-digit representations, pair hashing, both full output variants, and
++wrong/truncated/extra output rejection. Large SML and additional host validation
++are claimed only where recorded. Retained program/library sources explain the
++exact algorithm; the suite's measurement survey supplies methodological context.
++
++[Complete provenance](knucleotide3-64/PROVENANCE.md).
++
++## knucleotide3-32
++
++Selected key threshold: 15; fixed 32-bit source-bit representation.
++
++## Algorithm and workload
++
++Extract the THREE record from FASTA, encode A/T/C/G as 0/1/2/3, and count packed
++keys in persistent-across-pass chained hash tables. Print sorted one-/two-base
++frequencies and the five original query counts. Preserve the loop's omitted last
++window and the absence of clearing between lengths: leading-zero keys of different
++lengths can alias. These are source behavior, not errors for this port to fix.
++The driver validates every output byte and EOF before reporting its byte count.
++
++## History, upstream revision and notices
++
++Sandmark 5605805954a00497ed197c930641cddd580e1507,
++benchmarks/benchmarksgame/knucleotide3.ml. Its header credits Troestler Christophe,
++Mauricio Fernandez, Fabrice Le Fessant, Roman Kashitsyn and KC Sivaramakrishnan,
++whose change removes parallelization. Retain that header, directory Revised BSD
++notice, aggregate Unlicense, README, Dune and fasta3 input-generator source.
++
++Portable buffer/table support follows OCaml 4.14.1, pinned at
++99cb5d93fc30f1a6f3e69f5aa5d2063994d33a93. Selected hashtbl.ml/buffer.ml bytes match
++the installed sources. Retain the Xavier Leroy/INRIA copyrights, LGPL 2.1 notice
++and linking exception, including the notice in the SML adaptation. Generated
++FASTA carries the same fasta3 provenance as the other nucleotide imports; no
++unattributed external dataset is added.
++
++## Numeric variants and source differences
++
++knucleotide3-64 preserves threshold 31: all current query lengths use single packed
++keys. knucleotide3-32 preserves threshold 15: the 18-base query uses two packed
++components in a separate table. Both tables are allocated in both variants,
++including an unused second table in the64 variant. Pair hashing uses only the
++first component, with equality comparing both. These materially different key/
++table representations merit separate names. Both run identically on all SML
++host widths using explicit Word64 rather than native Int width selection.
++
++The byte-key knucleotide benchmark clears its table per length and counts the
++last window. It is a separate algorithm/representation variant; its fixtures
++are not interchangeable with the packed counter. Do not consolidate them.
++
++## Portable SML97 translation
++
++Multiply/add and shifts use Word64. Source32 components need at most 30 significant
++bits; 64-bit source packed keys need at most 62, with 36 used by the largest current
++query. No wrap occurs in the selected positive domain. Explicit Small/Large
++constructors select the key representation; SML tagging/Word64 boxing may add
++indirections compared with native OCaml ints/pairs. Counts, bucket indices and
++profile sizes fit signed 31-bit Int. This is not a claim that host-native integer
++arithmetic has the same allocation cost.
++
++A mutable chained table keeps source initial capacity 262144, identity/first-key
++hashes, head insertion and doubling above two entries per bucket. Transfer
++preserves collision-chain order. Lookup uses an option instead of Not_found;
++that library boundary and its allocation/branch cost are explicit adaptations.
++The table is never cleared between the seven count passes. Both table instances
++and sequence buffers are recreated per Benchmark.run, preventing a repeated
++in-process invocation from accumulating results from its previous invocation.
++
++The portable input buffer begins at 1000 and doubles as needed, following the
++same copied-buffer algorithm used by the existing byte-key port. This replaces
++the source's fixed 130000000-byte initial reservation for its much larger default
++input; record the changed allocation footprint when comparing profiles. Per-line
++encoding preserves ASCII tab values, including the source's default0 for unknown
++bytes. Initial comment/catch-all handling, prefix header selection, later empty-
++line failure, terminal-LF removal and stopping at the next record remain.
++
++Portable merge sort replaces OCaml List.sort while preserving descending
++binary64 frequencies and lexical ties. Binary64 operation association and three-
++decimal formatting remain. The original hardcoded filename becomes an argument;
++complete output checking replaces stdout and is included measured work. No FFI,
++effect handler, parallel feature or prerequisite runtime change is introduced.
++
++## Inputs, profiles and diagnostic questions
++
++Smoke/normal/large reuse the pinned fasta3 inputs with n=1000/50000/500000,
++seed 42 and width 60. THREE contains 5000/250000/2500000 bases. The original Dune
++n=25000000 and auxiliary n=5000000 remain documented, not claimed executed here.
++Large is an explicitly reduced scaling input. Input generation is available in
++the suite's portable SML fasta3 implementation, with exact complete files pinned.
++Default profile limits apply; original outputs for all selected sizes are retained.
++
++Source-based questions concern packed-key arithmetic, width-dependent pair
++allocation, repeated packing, cumulative aliasing, identity-hash collisions,
++retained tables, bucket growth, buffer copying and string formatting. They remain
++hypotheses until supported by inspection or measurements. Standard reports use
++identical SML; OCaml supplies correctness references.
++
++## Reference evidence and validation
++
++The unmodified64-bit OCaml program agrees with an independent packed-key model on
++all complete smoke/normal/large outputs. A separate observer changes only the
++threshold to 15 and agrees with the independent two-table/pair model. It does not
++constitute execution by a 32-bit OCaml compiler. Managed32-bit SML host results are
++recorded separately. Model statistics retain every pass's entries and total counts.
++
++Original complete edge fixtures cover case conversion, THREE-prefix matching,
++initial comments, next-record termination, no final LF, short/empty input and
++unknown bytes. The original library observer records 512 deliberately colliding
++keys through repeated resize, exact fold traversal and every smoke pass's table
++statistics. Tests cover omitted-window bounds, cumulative leading-zero aliases,
++31-/15-digit representations, pair hashing, both full output variants, and
++wrong/truncated/extra output rejection. Large SML and additional host validation
++are claimed only where recorded. Retained program/library sources explain the
++exact algorithm; the suite's measurement survey supplies methodological context.
++
++[Complete provenance](knucleotide3-32/PROVENANCE.md).
+diff --git a/examples/benchmarks/audit.md b/examples/benchmarks/audit.md
+index ef487455..63b091de 100644
+--- a/examples/benchmarks/audit.md
++++ b/examples/benchmarks/audit.md
+@@ -1,5 +1,10 @@
+ # Initial source audit
+ 
++The [2026-10-16 profile-input review](validation/inventory-oct16-profile-inputs.md)
++records 22 additional input references across nine nofib entries and normalizes
++related-name ordering. All 861 entries reproduce from clean pinned trees and all 45
++inventory regressions pass. Dispositions and source identities are unchanged.
++
+ The [2026-10-16 allocation/stack review](validation/sandmark-allocation-probes.md)
+ adds four source-specific deferrals for unavailable optimization barriers.
+ Current Sandmark dispositions are 61 import and 82 defer. The baseline table
+diff --git a/examples/benchmarks/inventory.tsv b/examples/benchmarks/inventory.tsv
+index cbfd1ffb..5a4fd342 100644
+--- a/examples/benchmarks/inventory.tsv
++++ b/examples/benchmarks/inventory.tsv
+@@ -64,7 +64,7 @@ mlkit	test/export.mlb	export	export	-	exclude	kernel	mlkit:test/export.sml	not s
+ mlkit	test/export.sml	export	export	-	exclude	kernel	mlkit:test/export.mlb	not stated in scanned source headers	78d87f7a59a6241a96eddacd0bdaa431548a7eb729a6f0b447b5402842c3b401	test/export.sml		doc/license/GPL-LICENSE;doc/license/MLKit-LICENSE;doc/license/SMLNJ-LICENSE	test/Makefile;test/README;test/all.tst;test_dev/Makefile	regression or support source outside the benchmark families; test/all.tst and test_dev/Makefile distinguish compiler/Basis tests
+ mlkit	test/export2.sml	export2	export2	-	exclude	kernel		not stated in scanned source headers	3f52b378f67fdb12352980942946e589eb7e815129c8fc54b4b0060e32f976d8	test/export2.sml		doc/license/GPL-LICENSE;doc/license/MLKit-LICENSE;doc/license/SMLNJ-LICENSE	test/Makefile;test/README;test/all.tst;test_dev/Makefile	regression or support source outside the benchmark families; test/all.tst and test_dev/Makefile distinguish compiler/Basis tests
+ mlkit	test/export3.sml	export3	export3	-	exclude	kernel		not stated in scanned source headers	0f1310cd92a93be4e46d580411f3c255de1236d66ba0f7c72e7b15bc15dadd9d	test/export3.sml		doc/license/GPL-LICENSE;doc/license/MLKit-LICENSE;doc/license/SMLNJ-LICENSE	test/Makefile;test/README;test/all.tst;test_dev/Makefile	regression or support source outside the benchmark families; test/all.tst and test_dev/Makefile distinguish compiler/Basis tests
+-mlkit	test/fft.sml	fft	fft	M2	defer	numerical	mlkit:test_dev/fft_no_basislib.sml;mlton:benchmark/tests/fft.sml;nofib:parallel/OLD/NESL/fft.lhs;nofib:spectral/hartel/fft;smlnj:programs/fft;sandmark:benchmarks/numerical-analysis/fft.exe	not stated in scanned source headers	be83ec1d3eb5bfab187c10cd5652d5a5f4829f155630183fc853504879292294	test/fft.sml		doc/license/GPL-LICENSE;doc/license/MLKit-LICENSE;doc/license/SMLNJ-LICENSE	test/Makefile;test/README;test/all.tst;test_dev/Makefile	calls ML Kit region-reset controls; removing these changes the measured storage policy; reconsider with equivalent region lifetime controls, and retain portable algorithm variants separately
++mlkit	test/fft.sml	fft	fft	M2	defer	numerical	mlkit:test_dev/fft_no_basislib.sml;mlton:benchmark/tests/fft.sml;nofib:parallel/OLD/NESL/fft.lhs;nofib:spectral/hartel/fft;sandmark:benchmarks/numerical-analysis/fft.exe;smlnj:programs/fft	not stated in scanned source headers	be83ec1d3eb5bfab187c10cd5652d5a5f4829f155630183fc853504879292294	test/fft.sml		doc/license/GPL-LICENSE;doc/license/MLKit-LICENSE;doc/license/SMLNJ-LICENSE	test/Makefile;test/README;test/all.tst;test_dev/Makefile	calls ML Kit region-reset controls; removing these changes the measured storage policy; reconsider with equivalent region lifetime controls, and retain portable algorithm variants separately
+ mlkit	test/filesys.sml	filesys	filesys	-	exclude	kernel		not stated in scanned source headers	eae802176b408cb22923fa05d81af5ae103c4dc3427fb171a6edc55f8e2e2eab	test/filesys.sml	test/README	doc/license/GPL-LICENSE;doc/license/MLKit-LICENSE;doc/license/SMLNJ-LICENSE	test/Makefile;test/README;test/all.tst;test_dev/Makefile	regression or support source outside the benchmark families; test/all.tst and test_dev/Makefile distinguish compiler/Basis tests
+ mlkit	test/fns.sml	fns	fns	-	exclude	kernel		not stated in scanned source headers	5ae8652010e35cbf5dee6731ee4daaa852bc263579f125ccf5e5ff5df3f5b7f9	test/fns.sml		doc/license/GPL-LICENSE;doc/license/MLKit-LICENSE;doc/license/SMLNJ-LICENSE	test/Makefile;test/README;test/all.tst;test_dev/Makefile	regression or support source outside the benchmark families; test/all.tst and test_dev/Makefile distinguish compiler/Basis tests
+ mlkit	test/foldbug.sml	foldbug	foldbug	-	exclude	kernel		not stated in scanned source headers	492f02880fdadae7706001f16e3cfb36a4b08182d970fd6e87ac83929970234a	test/foldbug.sml		doc/license/GPL-LICENSE;doc/license/MLKit-LICENSE;doc/license/SMLNJ-LICENSE	test/Makefile;test/README;test/all.tst;test_dev/Makefile	regression or support source outside the benchmark families; test/all.tst and test_dev/Makefile distinguish compiler/Basis tests
+@@ -353,7 +353,7 @@ mlkit	test_dev/f64_4.sml	f64_4	f64_4	-	exclude	kernel		not stated in scanned sou
+ mlkit	test_dev/f64_simple.sml	f64_simple	f64_simple	-	exclude	numerical		not stated in scanned source headers	8b2a5de71cbc84450f30e233776228558261335a3c40409879fec8dfc5c85b76	test_dev/f64_simple.sml		doc/license/GPL-LICENSE;doc/license/MLKit-LICENSE;doc/license/SMLNJ-LICENSE	test/all.tst;test_dev/Makefile;test_dev/Makefile;test_dev/README	regression or support source outside the benchmark families; test/all.tst and test_dev/Makefile distinguish compiler/Basis tests
+ mlkit	test_dev/f64_simple1.sml	f64_simple1	f64_simple1	-	exclude	numerical		not stated in scanned source headers	eb0043a6745b756705c38f68ad489a28d8464267b544f2249cac1eb6e1426aa6	test_dev/f64_simple1.sml		doc/license/GPL-LICENSE;doc/license/MLKit-LICENSE;doc/license/SMLNJ-LICENSE	test/all.tst;test_dev/Makefile;test_dev/Makefile;test_dev/README	regression or support source outside the benchmark families; test/all.tst and test_dev/Makefile distinguish compiler/Basis tests
+ mlkit	test_dev/f64_simple2.sml	f64_simple2	f64_simple2	-	exclude	numerical		not stated in scanned source headers	c4d9fc283d0fa1bbb637c827956f39e68b3ace55827dcd29c4de5c84664ef6aa	test_dev/f64_simple2.sml		doc/license/GPL-LICENSE;doc/license/MLKit-LICENSE;doc/license/SMLNJ-LICENSE	test/all.tst;test_dev/Makefile;test_dev/Makefile;test_dev/README	regression or support source outside the benchmark families; test/all.tst and test_dev/Makefile distinguish compiler/Basis tests
+-mlkit	test_dev/fft_no_basislib.sml	fft_no_basislib	fft_no_basislib	M2	defer	numerical	mlkit:test/fft.sml;mlton:benchmark/tests/fft.sml;nofib:parallel/OLD/NESL/fft.lhs;nofib:spectral/hartel/fft;smlnj:programs/fft;sandmark:benchmarks/numerical-analysis/fft.exe	not stated in scanned source headers	3b461c09246cd34951fd4790b2a75a4da5c7bfd0886dbe250451c42e29c81443	test_dev/fft_no_basislib.sml		doc/license/GPL-LICENSE;doc/license/MLKit-LICENSE;doc/license/SMLNJ-LICENSE	test/all.tst;test_dev/Makefile;test_dev/Makefile;test_dev/README	calls ML Kit region-reset controls; removing these changes the measured storage policy; reconsider with equivalent region lifetime controls, and retain portable algorithm variants separately
++mlkit	test_dev/fft_no_basislib.sml	fft_no_basislib	fft_no_basislib	M2	defer	numerical	mlkit:test/fft.sml;mlton:benchmark/tests/fft.sml;nofib:parallel/OLD/NESL/fft.lhs;nofib:spectral/hartel/fft;sandmark:benchmarks/numerical-analysis/fft.exe;smlnj:programs/fft	not stated in scanned source headers	3b461c09246cd34951fd4790b2a75a4da5c7bfd0886dbe250451c42e29c81443	test_dev/fft_no_basislib.sml		doc/license/GPL-LICENSE;doc/license/MLKit-LICENSE;doc/license/SMLNJ-LICENSE	test/all.tst;test_dev/Makefile;test_dev/Makefile;test_dev/README	calls ML Kit region-reset controls; removing these changes the measured storage policy; reconsider with equivalent region lifetime controls, and retain portable algorithm variants separately
+ mlkit	test_dev/fib.sml	fib	fib-mlkit	M2	import	calls-recursion	mlton:benchmark/tests/fib.sml;sandmark:benchmarks/multicore-effects/rec_seq_fib.exe	not stated in scanned source headers	08a8ed6ee5c8a963fc97b3bd53c132bebe28155bc57b209b2e100505ccd1631f	test_dev/fib.sml		doc/license/GPL-LICENSE;doc/license/MLKit-LICENSE;doc/license/SMLNJ-LICENSE	test/all.tst;test_dev/Makefile;test_dev/Makefile;test_dev/README	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ mlkit	test_dev/fib0.sml	fib0	fib0	M2	import	calls-recursion		not stated in scanned source headers	0eb8228a7521673896e0d41cf4ca0678419cdae855816330aad4179776e2f548	test_dev/fib0.sml		doc/license/GPL-LICENSE;doc/license/MLKit-LICENSE;doc/license/SMLNJ-LICENSE	test/all.tst;test_dev/Makefile;test_dev/Makefile;test_dev/README	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ mlkit	test_dev/floor.sml	floor	floor	-	exclude	kernel		not stated in scanned source headers	5110565fd6a101429d6940eb3a29e569eb47d36c2e85d4015a192f61cd3289f7	test_dev/floor.sml		doc/license/GPL-LICENSE;doc/license/MLKit-LICENSE;doc/license/SMLNJ-LICENSE	test/all.tst;test_dev/Makefile;test_dev/Makefile;test_dev/README	regression or support source outside the benchmark families; test/all.tst and test_dev/Makefile distinguish compiler/Basis tests
+@@ -443,13 +443,13 @@ mlton	benchmark/tests/boyer.sml	boyer	boyer	M2	import	symbolic-search	mlkit:test
+ mlton	benchmark/tests/checksum.sml	checksum	checksum	M2	import	kernel	mlkit:test/checksum.sml;mlkit:test/checksum_smlnj.sml	sweeks@sweeks.com	0dd9f3eadc78e4dc4fd0c2ca43a4e3aaddf4add578022b212eacb8718263763e	benchmark/tests/checksum.sml		LICENSE;benchmark/tests/Makefile:header;benchmark/tests/checksum.sml:header;doc/license/README	benchmark/tests/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ mlton	benchmark/tests/count-graphs.sml	count-graphs	count-graphs	M2	import	application	mlkit:test/count-graphs.sml;smlnj:programs/count-graphs	Henry Cejtin (henry@sourcelight.com).	5eadebab161a6838be1901862efcc288c05a8fb58e740236974d0eb75c4a58c3	benchmark/tests/count-graphs.sml		LICENSE;benchmark/tests/Makefile:header;benchmark/tests/count-graphs.sml:header;doc/license/README	benchmark/tests/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ mlton	benchmark/tests/even-odd.sml	even-odd	even-odd	M2	import	kernel	sandmark:benchmarks/multicore-effects/rec_seq_evenodd.exe	not stated in scanned source headers	10d66c2faca1c4f4509bb124c44d6d3c54f704bb808e9f486af081126344f7ae	benchmark/tests/even-odd.sml		LICENSE;benchmark/tests/Makefile:header;doc/license/README	benchmark/tests/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-mlton	benchmark/tests/fft.sml	fft	fft	M2	import	numerical	mlkit:test/fft.sml;mlkit:test_dev/fft_no_basislib.sml;nofib:parallel/OLD/NESL/fft.lhs;nofib:spectral/hartel/fft;smlnj:programs/fft;sandmark:benchmarks/numerical-analysis/fft.exe	not stated in scanned source headers	ed65438b42e51bd36872507e33c7ecb4d11513aa7d752d3f3c665cd675516343	benchmark/tests/fft.sml		LICENSE;benchmark/tests/Makefile:header;doc/license/README	benchmark/tests/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++mlton	benchmark/tests/fft.sml	fft	fft	M2	import	numerical	mlkit:test/fft.sml;mlkit:test_dev/fft_no_basislib.sml;nofib:parallel/OLD/NESL/fft.lhs;nofib:spectral/hartel/fft;sandmark:benchmarks/numerical-analysis/fft.exe;smlnj:programs/fft	not stated in scanned source headers	ed65438b42e51bd36872507e33c7ecb4d11513aa7d752d3f3c665cd675516343	benchmark/tests/fft.sml		LICENSE;benchmark/tests/Makefile:header;doc/license/README	benchmark/tests/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ mlton	benchmark/tests/fib.sml	fib	fib	M2	import	calls-recursion	mlkit:test_dev/fib.sml;sandmark:benchmarks/multicore-effects/rec_seq_fib.exe	not stated in scanned source headers	f2046b4a2a2e86965fe0a4615009a1591d51e6c509647b801cf621f99ac640d2	benchmark/tests/fib.sml		LICENSE;benchmark/tests/Makefile:header;doc/license/README	benchmark/tests/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ mlton	benchmark/tests/flat-array.sml	flat-array	flat-array	M2	import	numerical		not stated in scanned source headers	07e27d330d2fc00bd34a645cae2f3eecc32c44b7a9a7db3f3e836beebe07d907	benchmark/tests/flat-array.sml		LICENSE;benchmark/tests/Makefile:header;doc/license/README	benchmark/tests/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ mlton	benchmark/tests/fxp.sml	fxp	fxp	M2	import	application	mlkit:test/fxp.sml	not stated in scanned source headers	e1f1df34fcfb2971d576e9839e75015e4be137e90e6cc58a840254a6e61d10e7	benchmark/tests/fxp.sml		LICENSE;benchmark/tests/Makefile:header;doc/license/README	benchmark/tests/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ mlton	benchmark/tests/hamlet.sml	hamlet	hamlet	M2	import	compiler-application		Andreas Rossberg.	67d5707bde9cc6ea3203b58cd947c24c43c2a629342705dfcb0355eb923fc447	benchmark/tests/hamlet.sml	benchmark/tests/DATA/hamlet-input.sml	LICENSE;benchmark/tests/Makefile:header;benchmark/tests/hamlet.sml:header;doc/license/README	benchmark/tests/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ mlton	benchmark/tests/imp-for.sml	imp-for	imp-for	M2	import	kernel		not stated in scanned source headers	c87e5672bff55301d584e4773e74ee2ab5c4276d60f025753b919922515760bd	benchmark/tests/imp-for.sml		LICENSE;benchmark/tests/Makefile:header;doc/license/README	benchmark/tests/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-mlton	benchmark/tests/knuth-bendix.sml	knuth-bendix	knuth-bendix	M2	import	symbolic-search	smlnj:programs/knuth-bendix;sandmark:benchmarks/kb/kb.exe	not stated in scanned source headers	1937691a5db58545832c69a39fc8ac8691346e86298fa9ebda5ebf6674aeab4e	benchmark/tests/knuth-bendix.sml		LICENSE;benchmark/tests/Makefile:header;doc/license/README	benchmark/tests/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++mlton	benchmark/tests/knuth-bendix.sml	knuth-bendix	knuth-bendix	M2	import	symbolic-search	sandmark:benchmarks/kb/kb.exe;smlnj:programs/knuth-bendix	not stated in scanned source headers	1937691a5db58545832c69a39fc8ac8691346e86298fa9ebda5ebf6674aeab4e	benchmark/tests/knuth-bendix.sml		LICENSE;benchmark/tests/Makefile:header;doc/license/README	benchmark/tests/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ mlton	benchmark/tests/lexgen.sml	lexgen	lexgen	M2	import	compiler-application	smlnj:programs/lexgen	not stated in scanned source headers	7b131c0fd9b18cf0f47f21366c9b5ea75ec7f2e807b0dee92457b65eea5c46f8	benchmark/tests/lexgen.sml	benchmark/tests/DATA/ml.lex	LICENSE;benchmark/tests/Makefile:header;benchmark/tests/lexgen.sml:header;doc/license/README	benchmark/tests/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ mlton	benchmark/tests/life.sml	life	life	M2	import	kernel	mlkit:test/life.sml;mlkit:test_dev/life.sml;nofib:spectral/life;smlnj:programs/life	not stated in scanned source headers	05aee67995c0a765e555057d13bf789665b9ce7e73a90bd134fea7943ee91300	benchmark/tests/life.sml		LICENSE;benchmark/tests/Makefile:header;doc/license/README	benchmark/tests/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ mlton	benchmark/tests/logic.sml	logic	logic	M2	import	symbolic-search	mlkit:test/logic.mlb;smlnj:programs/logic	not stated in scanned source headers	cdbf0ff5e6e241ae772f80977ea82bbb2e64b609901934ea30a4e4b971995f14	benchmark/tests/logic.sml		LICENSE;benchmark/tests/Makefile:header;doc/license/README	benchmark/tests/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+@@ -492,14 +492,14 @@ nofib	gc/fibheaps	fibheaps	fibheaps	M3	import	calls-recursion	nofib:spectral/fib
+ nofib	gc/fulsom/Bah.hs	Bah	Bah	-	exclude	application	nofib:real/fulsom/Bah.hs	not stated in scanned source headers	dee4d428691bbf65f391631a984dd56501e45e4483d7d052fde597d707bfca0a	gc/fulsom/Bah.hs;gc/fulsom/Csg.hs;gc/fulsom/Interval.hs;gc/fulsom/Kolor.hs;gc/fulsom/Matrix.hs;gc/fulsom/Oct.hs;gc/fulsom/Quad.hs;gc/fulsom/Raster.hs;gc/fulsom/Shapes.hs;gc/fulsom/Types.hs;gc/fulsom/Vector.hs	gc/fulsom/fulsom.faststdout;gc/fulsom/fulsom.stdout	gc/fulsom/Bah.hs:header;gc/fulsom/Csg.hs:header;gc/fulsom/Interval.hs:header;gc/fulsom/Kolor.hs:header;gc/fulsom/Matrix.hs:header;gc/fulsom/Oct.hs:header;gc/fulsom/Quad.hs:header;gc/fulsom/Raster.hs:header;gc/fulsom/Shapes.hs:header;gc/fulsom/Types.hs:header;gc/fulsom/Vector.hs:header	gc/fulsom/Makefile	auxiliary test or alternate entrypoint; the directory Makefile excludes it or selects the Main driver, not a separate benchmark invocation
+ nofib	gc/fulsom/Main.hs	fulsom	fulsom	M3	import	application	nofib:real/fulsom/Main.hs	not stated in scanned source headers	9a667934091ce6847985daac4192d7f34ffe20c37fd65388af47d5fd1c73d911	gc/fulsom/Csg.hs;gc/fulsom/Interval.hs;gc/fulsom/Kolor.hs;gc/fulsom/Main.hs;gc/fulsom/Matrix.hs;gc/fulsom/Oct.hs;gc/fulsom/Patchlevel.hs;gc/fulsom/Quad.hs;gc/fulsom/Raster.hs;gc/fulsom/Shapes.hs;gc/fulsom/Types.hs;gc/fulsom/Vector.hs	gc/fulsom/fulsom.faststdout;gc/fulsom/fulsom.stdout	gc/fulsom/Csg.hs:header;gc/fulsom/Interval.hs:header;gc/fulsom/Kolor.hs:header;gc/fulsom/Main.hs:header;gc/fulsom/Matrix.hs:header;gc/fulsom/Oct.hs:header;gc/fulsom/Patchlevel.hs:header;gc/fulsom/Quad.hs:header;gc/fulsom/Raster.hs:header;gc/fulsom/Shapes.hs:header;gc/fulsom/Types.hs:header;gc/fulsom/Vector.hs:header	gc/fulsom/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	gc/gc_bench	gc_bench	gc_bench	M3	import	allocation-lifetimes		John Ellis and Pete Kovac	52ecba8fa77375be0b863d9854ef7fd9b3b112ffd0c675f7c0d129ebb4002e1a	gc/gc_bench/Main.hs		gc/gc_bench/Main.hs:header	gc/gc_bench/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	gc/happy	happy	happy	M3	import	integer-arithmetic		not stated in scanned source headers	09e64ba7140a210f177de61d0916899dbea4b936d52cbee15aa3b6af11fb0de1	gc/happy/AbsSyn.lhs;gc/happy/AttrGrammar.lhs;gc/happy/AttrGrammarParser.hs;gc/happy/First.lhs;gc/happy/GenUtils.lhs;gc/happy/Grammar.lhs;gc/happy/Info.lhs;gc/happy/LALR.lhs;gc/happy/Lexer.lhs;gc/happy/Main.lhs;gc/happy/ParseMonad.lhs;gc/happy/Parser.hs;gc/happy/Paths_happy.hs;gc/happy/ProduceCode.lhs;gc/happy/ProduceGLRCode.lhs;gc/happy/Set.hs;gc/happy/Target.lhs	gc/happy/happy.expected	gc/happy/Main.lhs:header	gc/happy/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	gc/happy	happy	happy	M3	import	integer-arithmetic		not stated in scanned source headers	09e64ba7140a210f177de61d0916899dbea4b936d52cbee15aa3b6af11fb0de1	gc/happy/AbsSyn.lhs;gc/happy/AttrGrammar.lhs;gc/happy/AttrGrammarParser.hs;gc/happy/First.lhs;gc/happy/GenUtils.lhs;gc/happy/Grammar.lhs;gc/happy/Info.lhs;gc/happy/LALR.lhs;gc/happy/Lexer.lhs;gc/happy/Main.lhs;gc/happy/ParseMonad.lhs;gc/happy/Parser.hs;gc/happy/Paths_happy.hs;gc/happy/ProduceCode.lhs;gc/happy/ProduceGLRCode.lhs;gc/happy/Set.hs;gc/happy/Target.lhs	gc/happy/TestInput.y;gc/happy/happy.expected	gc/happy/Main.lhs:header	gc/happy/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	gc/hash	hash	hash	M3	import	integer-arithmetic		not stated in scanned source headers	3ec00ac7589a5899fff59badb575a2620e04aa862e974ea136d86ba0db7d9359	gc/hash/HashTable.hs;gc/hash/hash.hs	gc/hash/hash.stdout	gc/hash/HashTable.hs:header	gc/hash/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	gc/lcss	lcss	lcss	M3	import	kernel	nofib:spectral/lcss	not stated in scanned source headers	b294267623dadeb3d1ae776b7a1603bc5f6e80b20b327c7669a17cf99ed754cc	gc/lcss/Main.hs	gc/lcss/lcss.faststdout;gc/lcss/lcss.slowstdout;gc/lcss/lcss.stdout		gc/lcss/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	gc/linear	linear	linear	M3	import	application	nofib:real/linear	Brian D. Moe (Summer 1990;Brian D. Moe (Summer 1990).;Dan Vasicek and copied from his directory 6/22/90	26af39b55cb2c21d1ca09261ab267ddea3f7288cf6d2460a31bcf9886942dd47	gc/linear/AbsCg.lhs;gc/linear/AbsDensematrix.lhs;gc/linear/Absmatlib.lhs;gc/linear/Cg.lhs;gc/linear/Densematrix.lhs;gc/linear/Input.lhs;gc/linear/Main.lhs;gc/linear/Matlib.lhs;gc/linear/Matrix.lhs;gc/linear/Misc.lhs;gc/linear/Utils.lhs	gc/linear/linear.expected;gc/linear/linear.stdout	gc/linear/Input.lhs:header;gc/linear/Main.lhs:header;gc/linear/Matlib.lhs:header;gc/linear/Matrix.lhs:header;gc/linear/Misc.lhs:header	gc/linear/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	gc/mutstore1	mutstore1	mutstore1	M3	import	allocation-lifetimes		not stated in scanned source headers	0f32ab98e4eec6a1e902d3837448b42c05a484233013754874a457f5ef78ecee	gc/mutstore1/Main.hs;gc/mutstore1/Store1.hs			gc/mutstore1/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	gc/mutstore2	mutstore2	mutstore2	M3	import	allocation-lifetimes		not stated in scanned source headers	2f4e1603abd1d214105465278d695ae22a8fae202ebaab6a3edea8f9f3757438	gc/mutstore2/Main.hs;gc/mutstore2/Store2.hs			gc/mutstore2/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	gc/power	power	power	M3	import	integer-arithmetic	nofib:spectral/power	not stated in scanned source headers	0f359c2d373a9d1e8361626fb4199adb36609786c8ebc2371d41ef2de8ce0fb0	gc/power/Main.hs	gc/power/power.faststdout;gc/power/power.slowstdout;gc/power/power.stdout		gc/power/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	gc/spellcheck	spellcheck	spellcheck	M3	import	kernel		not stated in scanned source headers	c664b2b728b0678f008da22dfecd7c3af01404a54bea166918e93134a2233bbc	gc/spellcheck/spellcheck.hs	gc/spellcheck/spellcheck.stdout		gc/spellcheck/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	gc/spellcheck	spellcheck	spellcheck	M3	import	kernel		not stated in scanned source headers	c664b2b728b0678f008da22dfecd7c3af01404a54bea166918e93134a2233bbc	gc/spellcheck/spellcheck.hs	gc/spellcheck/input;gc/spellcheck/spellcheck.stdout;gc/spellcheck/words		gc/spellcheck/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	gc/treejoin	treejoin	treejoin	M3	import	allocation-lifetimes	nofib:spectral/treejoin	not stated in scanned source headers	7d09f51f6384c8d2f9c55217277bb5e07c883131e060ecd312294bad48dc10c5	gc/treejoin/Main.hs	gc/treejoin/treejoin.stdout		gc/treejoin/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	imaginary/bernouilli	bernouilli	bernouilli	M3	import	integer-arithmetic		not stated in scanned source headers	009c7cb1c10bfac6c957aea5313b4e1262e0e519f1aecb1ba80b1e3ccd82241f	imaginary/bernouilli/Main.hs;imaginary/bernouilli/NofibUtils.hs	imaginary/bernouilli/bernouilli.faststdout;imaginary/bernouilli/bernouilli.slowstdout;imaginary/bernouilli/bernouilli.stdout		imaginary/bernouilli/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	imaginary/digits-of-e1	digits-of-e1	digits-of-e1	M3	import	integer-arithmetic		not stated in scanned source headers	bd3faa6db5ec842f1f179d86edf7dd1ec07b58bd44561b9a6ca8edc27531457d	imaginary/digits-of-e1/Main.lhs;imaginary/digits-of-e1/NofibUtils.hs	imaginary/digits-of-e1/digits-of-e1.faststdout;imaginary/digits-of-e1/digits-of-e1.slowstdout;imaginary/digits-of-e1/digits-of-e1.stdout		imaginary/digits-of-e1/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+@@ -516,7 +516,7 @@ nofib	imaginary/tak	tak	tak-nofib	M3	import	calls-recursion	mlkit:test/tak.sml;m
+ nofib	imaginary/wheel-sieve1	wheel-sieve1	wheel-sieve1	M3	import	lists-streams		not stated in scanned source headers	cbada4198c7da1b40deeaf21c2e375af1624d3dda25da0cbab8996d3bdd93713	imaginary/wheel-sieve1/Main.hs	imaginary/wheel-sieve1/wheel-sieve1.faststdout;imaginary/wheel-sieve1/wheel-sieve1.slowstdout;imaginary/wheel-sieve1/wheel-sieve1.stdout		imaginary/wheel-sieve1/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	imaginary/wheel-sieve2	wheel-sieve2	wheel-sieve2	M3	import	lists-streams		not stated in scanned source headers	4c0e1f6185b9f662edce6885ccedff1b65b4ec1cf8ee17450c1aa9ae1d0d189e	imaginary/wheel-sieve2/Main.hs	imaginary/wheel-sieve2/wheel-sieve2.faststdout;imaginary/wheel-sieve2/wheel-sieve2.slowstdout;imaginary/wheel-sieve2/wheel-sieve2.stdout		imaginary/wheel-sieve2/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	imaginary/x2n1	x2n1	x2n1	M3	import	kernel		not stated in scanned source headers	e08267b901251da6113845773038d19d4d316a6f1da6c29bf3112c4b5416347b	imaginary/x2n1/Main.hs	imaginary/x2n1/x2n1.faststdout;imaginary/x2n1/x2n1.slowstdout;imaginary/x2n1/x2n1.stdout		imaginary/x2n1/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	parallel/OLD/NESL/fft.lhs	fft	fft	M3	defer	numerical	mlkit:test/fft.sml;mlkit:test_dev/fft_no_basislib.sml;mlton:benchmark/tests/fft.sml;nofib:spectral/hartel/fft;smlnj:programs/fft;sandmark:benchmarks/numerical-analysis/fft.exe	not stated in scanned source headers	9db87527e409d5e4f88d8f639f636c963329516762c5bd4294e52db46dd15867	parallel/OLD/NESL/GranRandom.hs;parallel/OLD/NESL/Strategies.lhs;parallel/OLD/NESL/fft.lhs			parallel/OLD/NESL/Makefile	parallel/concurrent/STM collection; preserve its runtime model and reconsider with the corresponding Rune facilities
++nofib	parallel/OLD/NESL/fft.lhs	fft	fft	M3	defer	numerical	mlkit:test/fft.sml;mlkit:test_dev/fft_no_basislib.sml;mlton:benchmark/tests/fft.sml;nofib:spectral/hartel/fft;sandmark:benchmarks/numerical-analysis/fft.exe;smlnj:programs/fft	not stated in scanned source headers	9db87527e409d5e4f88d8f639f636c963329516762c5bd4294e52db46dd15867	parallel/OLD/NESL/GranRandom.hs;parallel/OLD/NESL/Strategies.lhs;parallel/OLD/NESL/fft.lhs			parallel/OLD/NESL/Makefile	parallel/concurrent/STM collection; preserve its runtime model and reconsider with the corresponding Rune facilities
+ nofib	parallel/OLD/NESL/integrate.lhs	integrate	integrate	M3	defer	integer-arithmetic	nofib:imaginary/integrate	not stated in scanned source headers	c90751e27f96f072ab8e21bc1e1c101a166337a0bcbdb03a11af5ec1dca06596	parallel/OLD/NESL/Strategies.lhs;parallel/OLD/NESL/integrate.lhs			parallel/OLD/NESL/Makefile	parallel/concurrent/STM collection; preserve its runtime model and reconsider with the corresponding Rune facilities
+ nofib	parallel/OLD/NESL/matrix-inverse.lhs	matrix-inverse	matrix-inverse	M3	defer	numerical		not stated in scanned source headers	3bf98c1b6737d77652e101301b22126eba01d0f199bee8940cf96fdc18bf8cd5	parallel/OLD/NESL/Strategies.lhs;parallel/OLD/NESL/matrix-inverse.lhs			parallel/OLD/NESL/Makefile	parallel/concurrent/STM collection; preserve its runtime model and reconsider with the corresponding Rune facilities
+ nofib	parallel/OLD/NESL/quick_hull.lhs	quick_hull	quick_hull	M3	defer	integer-arithmetic		not stated in scanned source headers	cb759dbba86c60c1d51b283adcb1226ebfb48b6812fde53a89f0f3c3c46d505a	parallel/OLD/NESL/GranRandom.hs;parallel/OLD/NESL/Strategies.lhs;parallel/OLD/NESL/quick_hull.lhs			parallel/OLD/NESL/Makefile	parallel/concurrent/STM collection; preserve its runtime model and reconsider with the corresponding Rune facilities
+@@ -537,7 +537,7 @@ nofib	parallel/linsolv	linsolv	linsolv	M3	defer	integer-arithmetic		not stated i
+ nofib	parallel/mandel	mandel	mandel	M3	defer	numerical	nofib:spectral/mandel	not stated in scanned source headers	2c64a4e634c16e65c7572e17fee4855d5c977d46caeeb13bcd1507d4ef12d14e	parallel/mandel/Main.lhs;parallel/mandel/Mandel.lhs;parallel/mandel/PortablePixmap.lhs	parallel/mandel/mandel.stdout	parallel/mandel/PortablePixmap.lhs:header	parallel/mandel/Makefile	parallel/concurrent/STM collection; preserve its runtime model and reconsider with the corresponding Rune facilities
+ nofib	parallel/matmult	matmult	matmult	M3	defer	kernel		not stated in scanned source headers	0306ef18510465dd3fed366b0fee5b292172c57eb46186bd38e8d6e74fee4960	parallel/matmult/ListAux.hs;parallel/matmult/Main.hs	parallel/matmult/matmult.stdout		parallel/matmult/Makefile	parallel/concurrent/STM collection; preserve its runtime model and reconsider with the corresponding Rune facilities
+ nofib	parallel/minimax	minimax	minimax	M3	defer	symbolic-search	nofib:spectral/minimax;smlnj:programs/minimax	not stated in scanned source headers	f892eff66bcb0217a278413f8c35655385c8d4d8ff8fae742c30f215b4cdbd95	parallel/minimax/Board.hs;parallel/minimax/Game.hs;parallel/minimax/Main.hs;parallel/minimax/Prog.hs;parallel/minimax/Tree.hs;parallel/minimax/Wins.hs	parallel/minimax/minimax.stdout		parallel/minimax/Makefile	parallel/concurrent/STM collection; preserve its runtime model and reconsider with the corresponding Rune facilities
+-nofib	parallel/nbody	nbody	nbody	M3	defer	numerical	smlnj:programs/nbody;sandmark:benchmarks/benchmarksgame/nbody.exe;sandmark:benchmarks/multicore-numerical/nbody.exe	Chih-Ping Chen	72c8c7136796847346a1450269d8143aa8995a049cd18ba43abc4e604ebfcc74	parallel/nbody/Future.hs;parallel/nbody/nbody.hs	parallel/nbody/nbody.stdout	parallel/nbody/nbody.hs:header	parallel/nbody/Makefile	parallel/concurrent/STM collection; preserve its runtime model and reconsider with the corresponding Rune facilities
++nofib	parallel/nbody	nbody	nbody	M3	defer	numerical	sandmark:benchmarks/benchmarksgame/nbody.exe;sandmark:benchmarks/multicore-numerical/nbody.exe;smlnj:programs/nbody	Chih-Ping Chen	72c8c7136796847346a1450269d8143aa8995a049cd18ba43abc4e604ebfcc74	parallel/nbody/Future.hs;parallel/nbody/nbody.hs	parallel/nbody/nbody.stdout	parallel/nbody/nbody.hs:header	parallel/nbody/Makefile	parallel/concurrent/STM collection; preserve its runtime model and reconsider with the corresponding Rune facilities
+ nofib	parallel/parfib	parfib	parfib	M3	defer	calls-recursion		not stated in scanned source headers	79ffbbcc1728e4d3c289e555fb5a1bc93c6c5cfbd635dde7ff3d71ff1d3cae90	parallel/parfib/Main.hs	parallel/parfib/parfib.stdout		parallel/parfib/Makefile	parallel/concurrent/STM collection; preserve its runtime model and reconsider with the corresponding Rune facilities
+ nofib	parallel/partak	partak	partak	M3	defer	calls-recursion		not stated in scanned source headers	758429a24d708c87fe6179e73b7064647f17581092fc01274f2ac19bb15f05dd	parallel/partak/Main.hs	parallel/partak/partak.stdout		parallel/partak/Makefile	parallel/concurrent/STM collection; preserve its runtime model and reconsider with the corresponding Rune facilities
+ nofib	parallel/partree	partree	partree	M3	defer	allocation-lifetimes		not stated in scanned source headers	ecae662ce7a4a8b8abc101a9047bda8172c1ed8cc8153a9969e7545c29d493a0	parallel/partree/Tree.hs;parallel/partree/partree.hs	parallel/partree/partree.stdout		parallel/partree/Makefile	parallel/concurrent/STM collection; preserve its runtime model and reconsider with the corresponding Rune facilities
+@@ -572,14 +572,14 @@ nofib	real/fulsom/Main.hs	fulsom	fulsom-nofib	M4	import	application	nofib:gc/ful
+ nofib	real/gamteb	gamteb	gamteb	M4	import	application		not stated in scanned source headers	59954bb60ebde5c8b56c62aacdb4f252c9647f5d2689bec1147933efce5f5d19	real/gamteb/Compton.hs;real/gamteb/Consts.hs;real/gamteb/Distance.hs;real/gamteb/GamtebMain.hs;real/gamteb/GamtebType.hs;real/gamteb/InitTable.hs;real/gamteb/Main.hs;real/gamteb/NofibUtils.hs;real/gamteb/Output.hs;real/gamteb/Pair.hs;real/gamteb/PhotoElec.hs;real/gamteb/RoulSplit.hs;real/gamteb/TransPort.hs;real/gamteb/Utils.hs	real/gamteb/gamteb.faststdout;real/gamteb/gamteb.slowstdout;real/gamteb/gamteb.stdout	real/gamteb/GamtebMain.hs:header	real/gamteb/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/gg	gg	gg	M4	import	application		not stated in scanned source headers	e670c250f14ce0d26a61f15ab0286d106b24059fb7421b811c658e7fbfc2b434	real/gg/Activity.hs;real/gg/GRIP.hs;real/gg/Graph.hs;real/gg/Main.hs;real/gg/NofibUtils.hs;real/gg/PSlib.hs;real/gg/Parse.hs;real/gg/Pool.hs;real/gg/Spark.hs;real/gg/StdLib.hs	real/gg/gg.faststdin;real/gg/gg.faststdout;real/gg/gg.slowstdin;real/gg/gg.slowstdout;real/gg/gg.stdin;real/gg/gg.stdout		real/gg/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/grep	grep	grep	M4	import	kernel		not stated in scanned source headers	d9dadbddd22cc3db52c300d393d12485206db6731c78dcc12a5c0b846d08e4db	real/grep/Main.lhs;real/grep/NofibUtils.hs;real/grep/Parsers.hs;real/grep/StringMatch.hs	real/grep/grep.faststdin;real/grep/grep.faststdout;real/grep/grep.slowstdin;real/grep/grep.slowstdout;real/grep/grep.stdin;real/grep/grep.stdout		real/grep/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	real/hidden	hidden	hidden	M4	import	application		not stated in scanned source headers	0e1040d3cc5da5880e37c19df57a31156894a845c07a936466cabf56384bafd1	real/hidden/Comparing.hs;real/hidden/Cross.hs;real/hidden/EdgePlate.hs;real/hidden/Geometric.hs;real/hidden/Hide.hs;real/hidden/Main.hs;real/hidden/Matrices.hs;real/hidden/Memo.hs;real/hidden/MyIO.hs;real/hidden/NofibUtils.hs;real/hidden/Numbers.hs;real/hidden/Postscript.hs;real/hidden/Preds.hs;real/hidden/Rotate.lhs;real/hidden/Solve.hs;real/hidden/Vectors.hs;real/hidden/etc/nbpip.c	real/hidden/hidden.stdin		real/hidden/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	real/hidden	hidden	hidden	M4	import	application		not stated in scanned source headers	0e1040d3cc5da5880e37c19df57a31156894a845c07a936466cabf56384bafd1	real/hidden/Comparing.hs;real/hidden/Cross.hs;real/hidden/EdgePlate.hs;real/hidden/Geometric.hs;real/hidden/Hide.hs;real/hidden/Main.hs;real/hidden/Matrices.hs;real/hidden/Memo.hs;real/hidden/MyIO.hs;real/hidden/NofibUtils.hs;real/hidden/Numbers.hs;real/hidden/Postscript.hs;real/hidden/Preds.hs;real/hidden/Rotate.lhs;real/hidden/Solve.hs;real/hidden/Vectors.hs;real/hidden/etc/nbpip.c	real/hidden/hidden.stdin;real/hidden/runtime_files/four.plate;real/hidden/runtime_files/houses.plate;real/hidden/runtime_files/rad.plate		real/hidden/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/hpg	hpg	hpg	M4	import	integer-arithmetic		not stated in scanned source headers	b241e65bac3ced5d134bcb5be065c2b815957a9122949c6ef7f8cd80d007a309	real/hpg/Config.lhs;real/hpg/Env.lhs;real/hpg/GenExp.lhs;real/hpg/GenType.lhs;real/hpg/GenVal.lhs;real/hpg/Main.lhs;real/hpg/NofibUtils.hs;real/hpg/Types.lhs;real/hpg/Utils.lhs	real/hpg/hpg.faststdout;real/hpg/hpg.slowstdout;real/hpg/hpg.stdout	real/hpg/Config.lhs:header;real/hpg/Env.lhs:header;real/hpg/GenExp.lhs:header;real/hpg/GenType.lhs:header;real/hpg/GenVal.lhs:header;real/hpg/Main.lhs:header;real/hpg/Types.lhs:header;real/hpg/Utils.lhs:header	real/hpg/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/infer/Main.hs	infer	infer	M4	import	compiler-application		not stated in scanned source headers	179e72dcd88a32dd9e85e0faaa4e66d7224c54335b1efa8289f55febef3f73f3	real/infer/Environment.hs;real/infer/FiniteMap.hs;real/infer/Infer.hs;real/infer/InferMonad.hs;real/infer/Main.hs;real/infer/MaybeM.hs;real/infer/MyList.hs;real/infer/NofibUtils.hs;real/infer/Parse.hs;real/infer/Shows.hs;real/infer/StateX.hs;real/infer/Substitution.hs;real/infer/Term.hs;real/infer/Type.hs	real/infer/infer.faststdin;real/infer/infer.faststdout;real/infer/infer.slowstdin;real/infer/infer.slowstdout;real/infer/infer.stdin;real/infer/infer.stdout		real/infer/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/infer/TestTerm.hs	TestTerm	TestTerm	-	exclude	kernel		not stated in scanned source headers	1bdc4828944541815460444338a91aded693be41368b6a5dde569746a0dd9d35	real/infer/Parse.hs;real/infer/Shows.hs;real/infer/Term.hs;real/infer/TestTerm.hs	real/infer/infer.faststdin;real/infer/infer.faststdout;real/infer/infer.slowstdin;real/infer/infer.slowstdout;real/infer/infer.stdin;real/infer/infer.stdout		real/infer/Makefile	auxiliary test or alternate entrypoint; the directory Makefile excludes it or selects the Main driver, not a separate benchmark invocation
+ nofib	real/infer/TestType.hs	TestType	TestType	-	exclude	kernel		not stated in scanned source headers	3b39d28013aeb14d9b53c76c7abde081ed63b26c93027803f0fdc578355799ab	real/infer/MyList.hs;real/infer/Parse.hs;real/infer/Shows.hs;real/infer/TestType.hs;real/infer/Type.hs	real/infer/infer.faststdin;real/infer/infer.faststdout;real/infer/infer.slowstdin;real/infer/infer.slowstdout;real/infer/infer.stdin;real/infer/infer.stdout		real/infer/Makefile	auxiliary test or alternate entrypoint; the directory Makefile excludes it or selects the Main driver, not a separate benchmark invocation
+ nofib	real/lift	lift	lift	M4	import	integer-arithmetic		not stated in scanned source headers	5176c15e4bd7d44ca446cc7419363b4cd49b4e4681ab7ec0df7124627263472c	real/lift/LambdaLift.lhs;real/lift/Main.lhs;real/lift/NofibUtils.hs;real/lift/Print.lhs;real/lift/Test.hs;real/lift/Utilities.lhs	real/lift/lift.faststdout;real/lift/lift.slowstdout;real/lift/lift.stdout	real/lift/LambdaLift.lhs:header	real/lift/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/linear	linear	linear-nofib	M4	import	application	nofib:gc/linear	Brian D. Moe (Summer 1990;Brian D. Moe (Summer 1990).;Dan Vasicek and copied from his directory 6/22/90	b02998feda15476d5e6651e2ad3edbd2bffbc842d864228034c83d017e984c8e	real/linear/AbsCg.lhs;real/linear/AbsDensematrix.lhs;real/linear/Absmatlib.lhs;real/linear/Cg.lhs;real/linear/Densematrix.lhs;real/linear/Input.lhs;real/linear/Main.lhs;real/linear/Matlib.lhs;real/linear/Matrix.lhs;real/linear/Misc.lhs;real/linear/NofibUtils.hs;real/linear/Utils.lhs	real/linear/linear.faststdout;real/linear/linear.slowstdout;real/linear/linear.stdout	real/linear/Input.lhs:header;real/linear/Main.lhs:header;real/linear/Matlib.lhs:header;real/linear/Matrix.lhs:header;real/linear/Misc.lhs:header	real/linear/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	real/maillist	maillist	maillist	M4	import	lists-streams		Paul Hudak, January 1992.	7cad251590cd5d44d2e4d14d4236dd93e7f6d4b2967984397455e251167d6aa7	real/maillist/Main.hs	real/maillist/maillist.faststdout;real/maillist/maillist.slowstdout;real/maillist/maillist.stdout	real/maillist/Main.hs:header	real/maillist/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	real/maillist	maillist	maillist	M4	import	lists-streams		Paul Hudak, January 1992.	7cad251590cd5d44d2e4d14d4236dd93e7f6d4b2967984397455e251167d6aa7	real/maillist/Main.hs	real/maillist/maillist.faststdout;real/maillist/maillist.slowstdout;real/maillist/maillist.stdout;real/maillist/runtime_files/fast;real/maillist/runtime_files/norm;real/maillist/runtime_files/slow	real/maillist/Main.hs:header	real/maillist/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/mkhprog	mkhprog	mkhprog	M4	import	application		not stated in scanned source headers	05613206770d88d6334b1092b1a5fc49271a78438212f4b743d4607183c71c1b	real/mkhprog/Main.lhs;real/mkhprog/NofibUtils.hs	real/mkhprog/mkhprog.stdin	real/mkhprog/Main.lhs:header	real/mkhprog/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/parser	parser	parser	M4	import	compiler-application		not stated in scanned source headers	3a279f462707dcc0de97c1b91955e8727a0d7c54c4cbcb324085975ab745cae4	real/parser/Main.hs;real/parser/NofibUtils.hs	real/parser/parser.faststdin;real/parser/parser.faststdout;real/parser/parser.slowstdin;real/parser/parser.slowstdout;real/parser/parser.stdin;real/parser/parser.stdout		real/parser/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/pic	pic	pic	M4	import	application		not stated in scanned source headers	069f386c15bd6861b79abcb5ee53410fdbf47b4146513b5d1295f901dcf75bd6	real/pic/ChargeDensity.hs;real/pic/Consts.hs;real/pic/ElecField.hs;real/pic/Main.hs;real/pic/NofibUtils.hs;real/pic/Pic.hs;real/pic/PicType.hs;real/pic/Potential.hs;real/pic/PushParticle.hs;real/pic/Utils.hs		real/pic/Pic.hs:header	real/pic/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+@@ -624,7 +624,7 @@ nofib	spectral/constraints	constraints	constraints	M3	duplicate	kernel	nofib:gc/
+ nofib	spectral/cryptarithm1	cryptarithm1	cryptarithm1	M3	import	numerical		not stated in scanned source headers	7897c95d4ade2db8d498cb07de42fd2398642e9205f1c40bec8c87feb5934944	spectral/cryptarithm1/Main.hs	spectral/cryptarithm1/cryptarithm1.faststdout;spectral/cryptarithm1/cryptarithm1.slowstdout;spectral/cryptarithm1/cryptarithm1.stdout		spectral/cryptarithm1/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/cryptarithm2	cryptarithm2	cryptarithm2	M3	import	numerical		not stated in scanned source headers	2cfc9c8bbe6ab5d416cfe6e4237ad1f5cdf1e23bbff5cb8dc02c3f9b1a40e49a	spectral/cryptarithm2/Main.hs	spectral/cryptarithm2/cryptarithm2.faststdout;spectral/cryptarithm2/cryptarithm2.slowstdout;spectral/cryptarithm2/cryptarithm2.stdout		spectral/cryptarithm2/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/cse	cse	cse	M3	import	kernel		not stated in scanned source headers	d1c93725a5c775cbe0c52a4e78bf193e38ca0c86dba7e1ce38ab8060ac98a006	spectral/cse/Main.hs;spectral/cse/StateMonad.hs	spectral/cse/cse.faststdout;spectral/cse/cse.slowstdout;spectral/cse/cse.stdout		spectral/cse/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	spectral/dom-lt	dom-lt	dom-lt	M3	import	application		not stated in scanned source headers	a57dfb8d506ec26451ee4fbc400a65baa6b4ca57e9929a0b10da1f0859385de0	spectral/dom-lt/Dom.hs;spectral/dom-lt/Main.hs	spectral/dom-lt/dom-lt.faststdout;spectral/dom-lt/dom-lt.slowstdout;spectral/dom-lt/dom-lt.stdout	spectral/dom-lt/Dom.hs:header	spectral/dom-lt/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	spectral/dom-lt	dom-lt	dom-lt	M3	import	application		not stated in scanned source headers	a57dfb8d506ec26451ee4fbc400a65baa6b4ca57e9929a0b10da1f0859385de0	spectral/dom-lt/Dom.hs;spectral/dom-lt/Main.hs	spectral/dom-lt/dom-lt.faststdout;spectral/dom-lt/dom-lt.slowstdout;spectral/dom-lt/dom-lt.stdout;spectral/dom-lt/ghc-examples.in	spectral/dom-lt/Dom.hs:header	spectral/dom-lt/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/eliza	eliza	eliza	M3	import	kernel		not stated in scanned source headers	371aff2ffa2e38b65ad6340b9994b1c8e7615ce1b5985e9e9a757f5922a21309	spectral/eliza/Main.hs	spectral/eliza/eliza.faststdout;spectral/eliza/eliza.slowstdout;spectral/eliza/eliza.stdin;spectral/eliza/eliza.stdout		spectral/eliza/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/exact-reals	exact-reals	exact-reals	M3	import	integer-arithmetic		not stated in scanned source headers	e0adfd0a7cbe5beb68562bfd5396f5ac886968481c69d7c6540957772bf1a1c3	spectral/exact-reals/Main.hs	spectral/exact-reals/exact-reals.stdout		spectral/exact-reals/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/expert	expert	expert	M3	import	application		not stated in scanned source headers	7980aaeaf37783fb72671dc2be4ac2bc1019cc696d7020ddfdd70dec6ec599bb	spectral/expert/Knowledge.hs;spectral/expert/Main.hs;spectral/expert/Match.hs;spectral/expert/Result.hs;spectral/expert/Search.hs;spectral/expert/Table.hs	spectral/expert/expert.faststdout;spectral/expert/expert.slowstdout;spectral/expert/expert.stdin;spectral/expert/expert.stdout;spectral/expert/runtime_files/animals	spectral/expert/README:header	spectral/expert/Makefile;spectral/expert/README	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+@@ -636,7 +636,7 @@ nofib	spectral/gcd	gcd	gcd	M3	import	allocation-lifetimes		not stated in scanned
+ nofib	spectral/hartel	hartel	hartel	-	exclude	application		Marc Feeley (feeley@iro.umontreal.ca	9ff0c787e433488523b26a51a05b99ea9d0c77d99617a75538d1ee7d155f1ad1	spectral/hartel/Fast2haskell.hs;spectral/hartel/Fast2haskell2.hs;spectral/hartel/comp_lab_zift/Main.hs;spectral/hartel/event/Main.hs;spectral/hartel/fft/Main.hs;spectral/hartel/genfft/Main.hs;spectral/hartel/ida/Main.hs;spectral/hartel/listcompr/Main.hs;spectral/hartel/listcopy/Main.hs;spectral/hartel/nucleic2/Main.hs;spectral/hartel/nucleic2/RA.hs;spectral/hartel/nucleic2/RC.hs;spectral/hartel/nucleic2/RG.hs;spectral/hartel/nucleic2/RU.hs;spectral/hartel/nucleic2/Types.hs;spectral/hartel/nucleic2/unboxery.h;spectral/hartel/parstof/Main.hs;spectral/hartel/sched/Main.hs;spectral/hartel/solid/Main.hs;spectral/hartel/transform/Main.hs;spectral/hartel/typecheck/Main.hs;spectral/hartel/wang/Main.hs;spectral/hartel/wave4main/Main.hs	spectral/hartel/comp_lab_zift/comp_lab_zift.faststdout;spectral/hartel/comp_lab_zift/comp_lab_zift.slowstdout;spectral/hartel/comp_lab_zift/comp_lab_zift.stdout;spectral/hartel/event/event.faststdout;spectral/hartel/event/event.slowstdout;spectral/hartel/event/event.stdout;spectral/hartel/fft/fft.faststdout;spectral/hartel/fft/fft.slowstdout;spectral/hartel/fft/fft.stdout;spectral/hartel/genfft/genfft.faststdout;spectral/hartel/genfft/genfft.slowstdout;spectral/hartel/genfft/genfft.stdout;spectral/hartel/ida/ida.faststdout;spectral/hartel/ida/ida.slowstdout;spectral/hartel/ida/ida.stdout;spectral/hartel/listcompr/listcompr.faststdout;spectral/hartel/listcompr/listcompr.slowstdout;spectral/hartel/listcompr/listcompr.stdout;spectral/hartel/listcopy/listcopy.faststdout;spectral/hartel/listcopy/listcopy.slowstdout;spectral/hartel/listcopy/listcopy.stdout;spectral/hartel/parstof/parstof.faststdout;spectral/hartel/parstof/parstof.slowstdout;spectral/hartel/parstof/parstof.stdout;spectral/hartel/sched/sched.faststdout;spectral/hartel/sched/sched.slowstdout;spectral/hartel/sched/sched.stdout;spectral/hartel/solid/solid.faststdout;spectral/hartel/solid/solid.slowstdout;spectral/hartel/solid/solid.stdout;spectral/hartel/transform/transform.faststdout;spectral/hartel/transform/transform.slowstdout;spectral/hartel/transform/transform.stdout;spectral/hartel/typecheck/typecheck.faststdout;spectral/hartel/typecheck/typecheck.slowstdout;spectral/hartel/typecheck/typecheck.stdout;spectral/hartel/wang/wang.faststdout;spectral/hartel/wang/wang.slowstdout;spectral/hartel/wang/wang.stdout;spectral/hartel/wave4main/wave4main.faststdout;spectral/hartel/wave4main/wave4main.slowstdout;spectral/hartel/wave4main/wave4main.stdout	spectral/hartel/nucleic2/Main.hs:header	spectral/hartel/Makefile	aggregate, support directory, or old source fragment without a standalone Main entrypoint
+ nofib	spectral/hartel/comp_lab_zift	comp_lab_zift	comp_lab_zift	M3	import	application		not stated in scanned source headers	2286e789779b8ca52c3478fd55d8d4764a7c9d6837dce1c7db3e7eabe7dc2d1e	spectral/hartel/comp_lab_zift/Main.hs	spectral/hartel/Fast2haskell.hs;spectral/hartel/comp_lab_zift/comp_lab_zift.faststdout;spectral/hartel/comp_lab_zift/comp_lab_zift.slowstdout;spectral/hartel/comp_lab_zift/comp_lab_zift.stdout		spectral/hartel/comp_lab_zift/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/hartel/event	event	event	M3	import	application		not stated in scanned source headers	3cfc96a6183b83f8c03b1fee4924433e824a43131060927ec838d61f32a72bd1	spectral/hartel/event/Main.hs	spectral/hartel/Fast2haskell.hs;spectral/hartel/event/event.faststdout;spectral/hartel/event/event.slowstdout;spectral/hartel/event/event.stdout		spectral/hartel/event/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	spectral/hartel/fft	fft	fft-nofib	M3	import	numerical	mlkit:test/fft.sml;mlkit:test_dev/fft_no_basislib.sml;mlton:benchmark/tests/fft.sml;nofib:parallel/OLD/NESL/fft.lhs;smlnj:programs/fft;sandmark:benchmarks/numerical-analysis/fft.exe	not stated in scanned source headers	c23129c4afe140bc9f101454bbe9f2f2fa5174c80ab2a49e624c4507ba9d837c	spectral/hartel/fft/Main.hs	spectral/hartel/Fast2haskell.hs;spectral/hartel/fft/fft.faststdout;spectral/hartel/fft/fft.slowstdout;spectral/hartel/fft/fft.stdout		spectral/hartel/fft/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	spectral/hartel/fft	fft	fft-nofib	M3	import	numerical	mlkit:test/fft.sml;mlkit:test_dev/fft_no_basislib.sml;mlton:benchmark/tests/fft.sml;nofib:parallel/OLD/NESL/fft.lhs;sandmark:benchmarks/numerical-analysis/fft.exe;smlnj:programs/fft	not stated in scanned source headers	c23129c4afe140bc9f101454bbe9f2f2fa5174c80ab2a49e624c4507ba9d837c	spectral/hartel/fft/Main.hs	spectral/hartel/Fast2haskell.hs;spectral/hartel/fft/fft.faststdout;spectral/hartel/fft/fft.slowstdout;spectral/hartel/fft/fft.stdout		spectral/hartel/fft/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/hartel/genfft	genfft	genfft	M3	import	numerical		not stated in scanned source headers	d92d7997345f11ccc11e0b05dc6762fa8e9a0ef87681d9bafdcffaf602913d29	spectral/hartel/genfft/Main.hs	spectral/hartel/Fast2haskell.hs;spectral/hartel/genfft/genfft.faststdout;spectral/hartel/genfft/genfft.slowstdout;spectral/hartel/genfft/genfft.stdout		spectral/hartel/genfft/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/hartel/ida	ida	ida	M3	import	application		not stated in scanned source headers	b12ab16011430efaf3cfac823577fabc3500f46683c2e65512a018ce5a27d29e	spectral/hartel/ida/Main.hs	spectral/hartel/Fast2haskell.hs;spectral/hartel/ida/ida.faststdout;spectral/hartel/ida/ida.slowstdout;spectral/hartel/ida/ida.stdout		spectral/hartel/ida/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/hartel/listcompr	listcompr	listcompr	M3	import	lists-streams		not stated in scanned source headers	62ee50e5a282d42030ccfba7a5e29748c4fb12ef3622eea22551d7f305a0516c	spectral/hartel/listcompr/Main.hs	spectral/hartel/Fast2haskell.hs;spectral/hartel/listcompr/listcompr.faststdout;spectral/hartel/listcompr/listcompr.slowstdout;spectral/hartel/listcompr/listcompr.stdout		spectral/hartel/listcompr/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+@@ -657,10 +657,10 @@ nofib	spectral/lcss	lcss	lcss-nofib	M3	import	kernel	nofib:gc/lcss	not stated in
+ nofib	spectral/life	life	life-nofib	M3	import	kernel	mlkit:test/life.sml;mlkit:test_dev/life.sml;mlton:benchmark/tests/life.sml;smlnj:programs/life	not stated in scanned source headers	86a8e72f36e2fc3014879c55d8af7a1b862bd99c3099fbc2e040d359c4b5c476	spectral/life/Main.hs	spectral/life/life.faststdout;spectral/life/life.slowstdout;spectral/life/life.stdout		spectral/life/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/mandel	mandel	mandel	M3	import	numerical	nofib:parallel/mandel	not stated in scanned source headers	9e0e3aa00d20ee1d96009e3bbc35b48f50056db76b212272f2cadaac89a8be05	spectral/mandel/Main.hs;spectral/mandel/Mandel.lhs;spectral/mandel/MandelOld.lhs;spectral/mandel/PortablePixmap.lhs		spectral/mandel/PortablePixmap.lhs:header	spectral/mandel/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/mandel2	mandel2	mandel2	M3	import	numerical		not stated in scanned source headers	cb73824f8e275065462d30d4084c246bfebb21f9b1661c23c311b9c8ceabc6d1	spectral/mandel2/Main.hs;spectral/mandel2/NofibUtils.hs			spectral/mandel2/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	spectral/mate	mate	mate	M3	import	kernel		not stated in scanned source headers	82375c77c35542a2eea499bef40b963614253068f0a12823ad0ecc4b46217857	spectral/mate/Board.hs;spectral/mate/Main.hs;spectral/mate/Move.hs;spectral/mate/Problem.hs;spectral/mate/Solution.hs	spectral/mate/mate.faststdout;spectral/mate/mate.slowstdout;spectral/mate/mate.stdout		spectral/mate/Makefile;spectral/mate/README	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	spectral/mate	mate	mate	M3	import	kernel		not stated in scanned source headers	82375c77c35542a2eea499bef40b963614253068f0a12823ad0ecc4b46217857	spectral/mate/Board.hs;spectral/mate/Main.hs;spectral/mate/Move.hs;spectral/mate/Problem.hs;spectral/mate/Solution.hs	spectral/mate/mate.faststdout;spectral/mate/mate.slowstdout;spectral/mate/mate.stdout;spectral/mate/runtime_files/heathcote3.prob;spectral/mate/runtime_files/holzhausen.prob;spectral/mate/runtime_files/kohtz.prob		spectral/mate/Makefile;spectral/mate/README	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/minimax	minimax	minimax-nofib	M3	import	symbolic-search	nofib:parallel/minimax;smlnj:programs/minimax	not stated in scanned source headers	efe234c33e6eab0b9d6e5273dc8abc96c55f6367e2bb3ca7fa688ee4c815e0e6	spectral/minimax/Board.hs;spectral/minimax/Game.hs;spectral/minimax/Main.hs;spectral/minimax/Prog.hs;spectral/minimax/Tree.hs;spectral/minimax/Wins.hs			spectral/minimax/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/multiplier	multiplier	multiplier	M3	import	kernel		not stated in scanned source headers	90e874aa93dd491d263367d8edc31f7209b0993a9e31c156a672bba7b1b6e9a1	spectral/multiplier/Main.hs	spectral/multiplier/multiplier.faststdout;spectral/multiplier/multiplier.slowstdout;spectral/multiplier/multiplier.stdout	spectral/multiplier/Main.hs:header	spectral/multiplier/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	spectral/para	para	para	M3	import	application		not stated in scanned source headers	2c9525a59278dfae1c4f7df3d2fad20797ff29427db7d347fbca187d64a4ab17	spectral/para/Main.lhs;spectral/para/c++/Para.h;spectral/para/c++/Queue.h;spectral/para/c++/Thin.h			spectral/para/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	spectral/para	para	para	M3	import	application		not stated in scanned source headers	2c9525a59278dfae1c4f7df3d2fad20797ff29427db7d347fbca187d64a4ab17	spectral/para/Main.lhs;spectral/para/c++/Para.h;spectral/para/c++/Queue.h;spectral/para/c++/Thin.h	spectral/para/runtime_files/input-data		spectral/para/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/power	power	power-nofib	M3	import	integer-arithmetic	nofib:gc/power	not stated in scanned source headers	f1843f7270f6850c2830355484fe4b6a064174fdfa4e9b3732f19e6daaad1a8c	spectral/power/Main.hs			spectral/power/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/pretty	pretty	pretty	M3	import	integer-arithmetic		not stated in scanned source headers	0b3e89f295c950d26e0c23e197b9c22f04515939fd5549a74e29e12febdea1f0	spectral/pretty/CharSeq.hs;spectral/pretty/Main.hs;spectral/pretty/Pretty.hs	spectral/pretty/pretty.stdout		spectral/pretty/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/primetest	primetest	primetest	M3	import	integer-arithmetic		simonmar $	91ad428340db8f6cb126455dfe55a33e2f8c9acf8043beac98cc79b6a8415a81	spectral/primetest/IntLib.lhs;spectral/primetest/Main.lhs;spectral/primetest/MyRandom.lhs;spectral/primetest/Prime.lhs	spectral/primetest/primetest.faststdin;spectral/primetest/primetest.faststdout;spectral/primetest/primetest.slowstdin;spectral/primetest/primetest.slowstdout;spectral/primetest/primetest.stdin;spectral/primetest/primetest.stdout	spectral/primetest/Main.lhs:header	spectral/primetest/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+@@ -669,9 +669,9 @@ nofib	spectral/rewrite	rewrite	rewrite	M3	import	symbolic-search		not stated in
+ nofib	spectral/scc	scc	scc	M3	import	kernel		not stated in scanned source headers	bb6373dc6cb21d9771bb06885f561545d13094a8fb79b0681bf33929b96cf794	spectral/scc/Digraph.hs;spectral/scc/Main.hs	spectral/scc/scc.stdout		spectral/scc/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/secretary	secretary	secretary	M3	import	integer-arithmetic		not stated in scanned source headers	97d86d7e6fc123947cd0a0b22c7713f787ae543b9ad47aed052adf47a36a8344	spectral/secretary/Main.lhs	spectral/secretary/secretary.stdout		spectral/secretary/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/simple	simple	simple-nofib	M3	import	numerical	mlton:benchmark/tests/simple.sml;smlnj:programs/simple	Kattamuri Ekanadham <EKNATH@ibm.com>;an id to ph translator, hand annotated for toplevel	df027b488c7bd727c92459ffdfc789b86ebc1102b8100a7358e8d0c52980fcba	spectral/simple/Main.hs;spectral/simple/simple.c		spectral/simple/Main.hs:header	spectral/simple/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	spectral/sorting	sorting	sorting	M3	import	lists-streams		not stated in scanned source headers	19a835d1f78c10d38550aab6fb5915e61c3b7e43114550d4b634977a51c79775	spectral/sorting/Main.hs;spectral/sorting/NofibUtils.hs;spectral/sorting/Sort.hs	spectral/sorting/sorting.faststdout;spectral/sorting/sorting.slowstdout;spectral/sorting/sorting.stdout		spectral/sorting/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	spectral/sorting	sorting	sorting	M3	import	lists-streams		not stated in scanned source headers	19a835d1f78c10d38550aab6fb5915e61c3b7e43114550d4b634977a51c79775	spectral/sorting/Main.hs;spectral/sorting/NofibUtils.hs;spectral/sorting/Sort.hs	spectral/sorting/Main.hs;spectral/sorting/Sort.hs;spectral/sorting/sorting.faststdout;spectral/sorting/sorting.slowstdout;spectral/sorting/sorting.stdout		spectral/sorting/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/sphere	sphere	sphere	M3	import	numerical		not stated in scanned source headers	39c099a56b5f89044393bc3266dbffb1e1722412dde89ba1b9dc28e0aec2bdb8	spectral/sphere/Main.lhs	spectral/sphere/sphere.faststdout;spectral/sphere/sphere.slowstdout;spectral/sphere/sphere.stdout		spectral/sphere/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	spectral/treejoin	treejoin	treejoin-nofib	M3	import	allocation-lifetimes	nofib:gc/treejoin	not stated in scanned source headers	3ef1a47569e2ad9dcf617e9253a4e03bf0e3fa30c83a8dab805a793e21ade1c7	spectral/treejoin/Main.hs	spectral/treejoin/treejoin.stdout		spectral/treejoin/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	spectral/treejoin	treejoin	treejoin-nofib	M3	import	allocation-lifetimes	nofib:gc/treejoin	not stated in scanned source headers	3ef1a47569e2ad9dcf617e9253a4e03bf0e3fa30c83a8dab805a793e21ade1c7	spectral/treejoin/Main.hs	spectral/treejoin/runtime_files/1500.1;spectral/treejoin/runtime_files/1500.2;spectral/treejoin/runtime_files/27000.1;spectral/treejoin/runtime_files/27000.2;spectral/treejoin/runtime_files/8000.1;spectral/treejoin/runtime_files/8000.2;spectral/treejoin/treejoin.stdout		spectral/treejoin/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ sandmark	alt-ergo	alt-ergo	alt-ergo	M5	defer	kernel		not stated in scanned source headers	e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855			dependencies/template/*.opam (package sources and notices)	run_config.json	requires the upstream application/package dependency graph (external); reconsider with a portable implementation of those dependencies
+ sandmark	benchmarks/almabench/almabench.exe	almabench	almabench	M5	import	numerical		Shawn Wagner, from Scott Robert Ladd's versions for	2ee5d01a6ddca80da145e4fc9bb45a82719da1c3d40883bc831ff600206a5d78	benchmarks/almabench/almabench.ml;benchmarks/almabench/dune		LICENSE.md;benchmarks/almabench/almabench.ml:header	benchmarks/almabench/dune	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ sandmark	benchmarks/bdd/bdd.exe	bdd	bdd	M1	import	symbolic-search		Xavier Leroy	540ddfc36ea16f435908e2b9fb18c24f64738396f335ea248b2439ff58a3d0c2	benchmarks/bdd/bdd.ml;benchmarks/bdd/dune		LICENSE.md;benchmarks/bdd/bdd.ml:header	benchmarks/bdd/dune;run_config.json;run_config_byte.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+@@ -682,7 +682,7 @@ sandmark	benchmarks/benchmarksgame/fasta6.exe	fasta6	fasta6	M5	import	kernel		Tr
+ sandmark	benchmarks/benchmarksgame/knucleotide.exe	knucleotide	knucleotide	M5	import	kernel		Troestler Christophe	90d014d143a9a8594cacc9acfe1145921b923e0bf051372f009ad96dea8d1c50	benchmarks/benchmarksgame/dune;benchmarks/benchmarksgame/knucleotide.ml		LICENSE.md;benchmarks/benchmarksgame/LICENSE	benchmarks/benchmarksgame/README.md;benchmarks/benchmarksgame/dune;run_config.json;run_config_byte.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ sandmark	benchmarks/benchmarksgame/knucleotide3.exe	knucleotide3	knucleotide3	M5	import	kernel		Troestler Christophe	b143a3b6c0ce08e6c383e630686c34e5a30381e413585b9e59e82f53dbfdc02a	benchmarks/benchmarksgame/dune;benchmarks/benchmarksgame/knucleotide3.ml		LICENSE.md;benchmarks/benchmarksgame/LICENSE	benchmarks/benchmarksgame/README.md;benchmarks/benchmarksgame/dune;run_config.json;run_config_byte.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ sandmark	benchmarks/benchmarksgame/mandelbrot6.exe	mandelbrot6	mandelbrot6	M5	import	numerical		Paolo Ribeca	2ea12e3b55c654ad840c03717569ea7ef7580549e85df2b6acc495857aadd2ca	benchmarks/benchmarksgame/dune;benchmarks/benchmarksgame/mandelbrot6.ml		LICENSE.md;benchmarks/benchmarksgame/LICENSE	benchmarks/benchmarksgame/README.md;benchmarks/benchmarksgame/dune;multicore_parallel_navajo_run_config.json;multicore_parallel_run_config.json;run_config.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-sandmark	benchmarks/benchmarksgame/nbody.exe	nbody	nbody-sandmark	M5	import	numerical	nofib:parallel/nbody;smlnj:programs/nbody;sandmark:benchmarks/multicore-numerical/nbody.exe	Troestler Christophe	4c19f9c87a9f6c69660351a1990ac943ec26624592d8c13c73d57c989f0ffd94	benchmarks/benchmarksgame/dune;benchmarks/benchmarksgame/nbody.ml		LICENSE.md;benchmarks/benchmarksgame/LICENSE	benchmarks/benchmarksgame/README.md;benchmarks/benchmarksgame/dune;run_config.json;run_config_byte.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++sandmark	benchmarks/benchmarksgame/nbody.exe	nbody	nbody-sandmark	M5	import	numerical	nofib:parallel/nbody;sandmark:benchmarks/multicore-numerical/nbody.exe;smlnj:programs/nbody	Troestler Christophe	4c19f9c87a9f6c69660351a1990ac943ec26624592d8c13c73d57c989f0ffd94	benchmarks/benchmarksgame/dune;benchmarks/benchmarksgame/nbody.ml		LICENSE.md;benchmarks/benchmarksgame/LICENSE	benchmarks/benchmarksgame/README.md;benchmarks/benchmarksgame/dune;run_config.json;run_config_byte.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ sandmark	benchmarks/benchmarksgame/pidigits5.exe	pidigits5	pidigits5	M5	import	integer-arithmetic		Christophe TROESTLER	a34b0b5d75e09fd63178e496937ebfcd31d387d20a76bb7218b88c0aa5ae6a71	benchmarks/benchmarksgame/dune;benchmarks/benchmarksgame/pidigits5.ml		LICENSE.md;benchmarks/benchmarksgame/LICENSE	benchmarks/benchmarksgame/README.md;benchmarks/benchmarksgame/dune;run_config.json;run_config_byte.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ sandmark	benchmarks/benchmarksgame/regexredux2.exe	regexredux2	regexredux2	M5	import	kernel		Christophe TROESTLER	4f208c23bf92edc987781c3e5b2ee86956dbf24cdc636ad1b79f017163b19a04	benchmarks/benchmarksgame/dune;benchmarks/benchmarksgame/regexredux2.ml		LICENSE.md;benchmarks/benchmarksgame/LICENSE	benchmarks/benchmarksgame/README.md;benchmarks/benchmarksgame/dune;run_config.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ sandmark	benchmarks/benchmarksgame/revcomp2.exe	revcomp2	revcomp2	M5	import	lists-streams		Ingo Bormuth <ibormuth@efil.de>	aebd479838d2d5fc33222d7f7a0c56243139bd516c20c9d210d12eb7337d665b	benchmarks/benchmarksgame/dune;benchmarks/benchmarksgame/revcomp2.ml		LICENSE.md;benchmarks/benchmarksgame/LICENSE	benchmarks/benchmarksgame/README.md;benchmarks/benchmarksgame/dune;run_config.json;run_config_byte.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+@@ -751,7 +751,7 @@ sandmark	benchmarks/multicore-numerical/matrix_multiplication_multicore.exe	matr
+ sandmark	benchmarks/multicore-numerical/matrix_multiplication_tiling_multicore.exe	matrix_multiplication_tiling_multicore	matrix_multiplication_tiling_multicore	M5	defer	numerical		not stated in scanned source headers	883bb1f6cd41e6b2d5e67e42cbfcb02b9883d5ce0752a33b3f31e341abe16282	benchmarks/multicore-numerical/dune;benchmarks/multicore-numerical/matrix_multiplication_tiling_multicore.ml		LICENSE.md;benchmarks/multicore-numerical/LICENSE	benchmarks/multicore-numerical/dune;multicore_parallel_run_config.json	source uses OCaml-specific effects, concurrency, GC/weak-reference introspection, unsafe objects or C bindings; reconsider with equivalent runtime facilities
+ sandmark	benchmarks/multicore-numerical/mergesort.exe	mergesort	mergesort	M5	import	lists-streams		not stated in scanned source headers	b7065e9ea16814eb4c327b990c1745f697b85ce5b87d21b3e28b1457ad06789e	benchmarks/multicore-numerical/dune;benchmarks/multicore-numerical/mergesort.ml		LICENSE.md;benchmarks/multicore-numerical/LICENSE	benchmarks/multicore-numerical/dune;multicore_parallel_navajo_run_config.json;multicore_parallel_run_config.json;run_config.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ sandmark	benchmarks/multicore-numerical/mergesort_multicore.exe	mergesort_multicore	mergesort_multicore	M5	defer	lists-streams		not stated in scanned source headers	6fd7774d925995df6fa80a966a79bc42859c40b954a96966170b66dd49d47711	benchmarks/multicore-numerical/dune;benchmarks/multicore-numerical/mergesort_multicore.ml		LICENSE.md;benchmarks/multicore-numerical/LICENSE	benchmarks/multicore-numerical/dune;multicore_parallel_navajo_run_config.json;multicore_parallel_run_config.json	source uses OCaml-specific effects, concurrency, GC/weak-reference introspection, unsafe objects or C bindings; reconsider with equivalent runtime facilities
+-sandmark	benchmarks/multicore-numerical/nbody.exe	nbody	nbody-sandmark-multicore-numerical	M5	import	numerical	nofib:parallel/nbody;smlnj:programs/nbody;sandmark:benchmarks/benchmarksgame/nbody.exe	Troestler Christophe	613c606d77eb998d1fe7ae2d686c790bf6b6a7b65273f6af5a0aae4f9ca1b413	benchmarks/multicore-numerical/dune;benchmarks/multicore-numerical/nbody.ml		LICENSE.md;benchmarks/multicore-numerical/LICENSE	benchmarks/multicore-numerical/dune;multicore_parallel_navajo_run_config.json;multicore_parallel_run_config.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++sandmark	benchmarks/multicore-numerical/nbody.exe	nbody	nbody-sandmark-multicore-numerical	M5	import	numerical	nofib:parallel/nbody;sandmark:benchmarks/benchmarksgame/nbody.exe;smlnj:programs/nbody	Troestler Christophe	613c606d77eb998d1fe7ae2d686c790bf6b6a7b65273f6af5a0aae4f9ca1b413	benchmarks/multicore-numerical/dune;benchmarks/multicore-numerical/nbody.ml		LICENSE.md;benchmarks/multicore-numerical/LICENSE	benchmarks/multicore-numerical/dune;multicore_parallel_navajo_run_config.json;multicore_parallel_run_config.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ sandmark	benchmarks/multicore-numerical/nbody_multicore.exe	nbody_multicore	nbody_multicore	M5	defer	numerical		Troestler Christophe	b58ab676dc74cc5900a2303701d0def9a93c515173dddccd0e5cf90e59e93f66	benchmarks/multicore-numerical/dune;benchmarks/multicore-numerical/nbody_multicore.ml		LICENSE.md;benchmarks/multicore-numerical/LICENSE	benchmarks/multicore-numerical/dune;multicore_parallel_navajo_run_config.json;multicore_parallel_run_config.json	source uses OCaml-specific effects, concurrency, GC/weak-reference introspection, unsafe objects or C bindings; reconsider with equivalent runtime facilities
+ sandmark	benchmarks/multicore-numerical/nqueens.exe	nqueens	nqueens	M5	import	symbolic-search		not stated in scanned source headers	754b535cb5934e1d784061ba6954f177c194c948a3c54ff6d1a467fcf6332684	benchmarks/multicore-numerical/dune;benchmarks/multicore-numerical/nqueens.ml		LICENSE.md;benchmarks/multicore-numerical/LICENSE	benchmarks/multicore-numerical/dune;multicore_parallel_navajo_run_config.json;multicore_parallel_run_config.json;run_config.json;run_config_byte.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ sandmark	benchmarks/multicore-numerical/nqueens_multicore.exe	nqueens_multicore	nqueens_multicore	M5	defer	symbolic-search		not stated in scanned source headers	ef5a3fd8cdbbc144e630e099213c307317ae59f2bc60d7f287df059945d58495	benchmarks/multicore-numerical/dune;benchmarks/multicore-numerical/nqueens_multicore.ml		LICENSE.md;benchmarks/multicore-numerical/LICENSE	benchmarks/multicore-numerical/dune;multicore_parallel_navajo_run_config.json;multicore_parallel_run_config.json	source uses OCaml-specific effects, concurrency, GC/weak-reference introspection, unsafe objects or C bindings; reconsider with equivalent runtime facilities
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 58542c61..80a2b9ca 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -876,3 +876,15 @@ boyer-nofib-lazy	large	nofib	spectral/boyer	data/large.variables	boyer-nofib-laz
+ boyer-nofib-strict	smoke	nofib	spectral/boyer	data/smoke.variables	boyer-nofib-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/boyer-ids.sml,shared/boyer-graph-data.sml,shared/nofib-typed-boyer.sml,shared/typed-boyer-driver.sml,boyer-nofib-strict/benchmark.sml,shared/main.sml	60	1048576	symbolic,rewriting,typed-terms,recursive-rule-graphs,strict	data/smoke.variables	exact	implemented
+ boyer-nofib-strict	normal	nofib	spectral/boyer	data/normal.variables	boyer-nofib-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/boyer-ids.sml,shared/boyer-graph-data.sml,shared/nofib-typed-boyer.sml,shared/typed-boyer-driver.sml,boyer-nofib-strict/benchmark.sml,shared/main.sml	600	4194304	symbolic,rewriting,typed-terms,recursive-rule-graphs,strict	data/normal.variables	exact	implemented
+ boyer-nofib-strict	large	nofib	spectral/boyer	data/large.variables	boyer-nofib-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/boyer-ids.sml,shared/boyer-graph-data.sml,shared/nofib-typed-boyer.sml,shared/typed-boyer-driver.sml,boyer-nofib-strict/benchmark.sml,shared/main.sml	3600	8388608	symbolic,rewriting,typed-terms,recursive-rule-graphs,strict	data/large.variables	exact	implemented
++eliza-lazy	smoke	nofib	spectral/eliza	20 data/eliza.stdin	eliza-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/eliza-data.sml,shared/eliza-lengths.sml,shared/nofib-eliza.sml,shared/eliza-driver.sml,eliza-lazy/benchmark.sml,shared/main.sml	30	1048576	symbolic,strings,keyword-search,cyclic-state,lazy	data/eliza.stdin	exact	implemented
++eliza-lazy	normal	nofib	spectral/eliza	13000 data/eliza.stdin	eliza-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/eliza-data.sml,shared/eliza-lengths.sml,shared/nofib-eliza.sml,shared/eliza-driver.sml,eliza-lazy/benchmark.sml,shared/main.sml	600	4194304	symbolic,strings,keyword-search,cyclic-state,lazy	data/eliza.stdin	exact	implemented
++eliza-lazy	large	nofib	spectral/eliza	65000 data/eliza.stdin	eliza-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/eliza-data.sml,shared/eliza-lengths.sml,shared/nofib-eliza.sml,shared/eliza-driver.sml,eliza-lazy/benchmark.sml,shared/main.sml	3600	8388608	symbolic,strings,keyword-search,cyclic-state,lazy	data/eliza.stdin	exact	implemented
++eliza-strict	smoke	nofib	spectral/eliza	20 data/eliza.stdin	eliza-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/eliza-data.sml,shared/eliza-lengths.sml,shared/nofib-eliza.sml,shared/eliza-driver.sml,eliza-strict/benchmark.sml,shared/main.sml	30	1048576	symbolic,strings,keyword-search,cyclic-state,strict	data/eliza.stdin	exact	implemented
++eliza-strict	normal	nofib	spectral/eliza	13000 data/eliza.stdin	eliza-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/eliza-data.sml,shared/eliza-lengths.sml,shared/nofib-eliza.sml,shared/eliza-driver.sml,eliza-strict/benchmark.sml,shared/main.sml	600	4194304	symbolic,strings,keyword-search,cyclic-state,strict	data/eliza.stdin	exact	implemented
++eliza-strict	large	nofib	spectral/eliza	65000 data/eliza.stdin	eliza-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/eliza-data.sml,shared/eliza-lengths.sml,shared/nofib-eliza.sml,shared/eliza-driver.sml,eliza-strict/benchmark.sml,shared/main.sml	3600	8388608	symbolic,strings,keyword-search,cyclic-state,strict	data/eliza.stdin	exact	implemented
++knucleotide3-64	smoke	sandmark	benchmarks/benchmarksgame/knucleotide3.exe	data/smoke.fasta data/smoke.output	knucleotide3-64/smoke.expected	shared/input.sml,shared/sandmark-knucleotide-packed.sml,shared/packed-nucleotide-check.sml,knucleotide3-64/benchmark.sml,shared/main.sml	30	1048576	bioinformatics,packed-keys,hash-tables,source-width-64	data/smoke.fasta,data/smoke.output	exact	implemented
++knucleotide3-64	normal	sandmark	benchmarks/benchmarksgame/knucleotide3.exe	data/normal.fasta data/normal.output	knucleotide3-64/normal.expected	shared/input.sml,shared/sandmark-knucleotide-packed.sml,shared/packed-nucleotide-check.sml,knucleotide3-64/benchmark.sml,shared/main.sml	600	4194304	bioinformatics,packed-keys,hash-tables,source-width-64	data/normal.fasta,data/normal.output	exact	implemented
++knucleotide3-64	large	sandmark	benchmarks/benchmarksgame/knucleotide3.exe	data/large.fasta data/large.output	knucleotide3-64/large.expected	shared/input.sml,shared/sandmark-knucleotide-packed.sml,shared/packed-nucleotide-check.sml,knucleotide3-64/benchmark.sml,shared/main.sml	3600	8388608	bioinformatics,packed-keys,hash-tables,source-width-64	data/large.fasta,data/large.output	exact	implemented
++knucleotide3-32	smoke	sandmark	benchmarks/benchmarksgame/knucleotide3.exe	data/smoke.fasta data/smoke.output	knucleotide3-32/smoke.expected	shared/input.sml,shared/sandmark-knucleotide-packed.sml,shared/packed-nucleotide-check.sml,knucleotide3-32/benchmark.sml,shared/main.sml	30	1048576	bioinformatics,packed-keys,hash-tables,source-width-32	data/smoke.fasta,data/smoke.output	exact	implemented
++knucleotide3-32	normal	sandmark	benchmarks/benchmarksgame/knucleotide3.exe	data/normal.fasta data/normal.output	knucleotide3-32/normal.expected	shared/input.sml,shared/sandmark-knucleotide-packed.sml,shared/packed-nucleotide-check.sml,knucleotide3-32/benchmark.sml,shared/main.sml	600	4194304	bioinformatics,packed-keys,hash-tables,source-width-32	data/normal.fasta,data/normal.output	exact	implemented
++knucleotide3-32	large	sandmark	benchmarks/benchmarksgame/knucleotide3.exe	data/large.fasta data/large.output	knucleotide3-32/large.expected	shared/input.sml,shared/sandmark-knucleotide-packed.sml,shared/packed-nucleotide-check.sml,knucleotide3-32/benchmark.sml,shared/main.sml	3600	8388608	bioinformatics,packed-keys,hash-tables,source-width-32	data/large.fasta,data/large.output	exact	implemented
+diff --git a/scripts/benchmark-inventory.py b/scripts/benchmark-inventory.py
+index 0c87cee7..145c6b92 100644
+--- a/scripts/benchmark-inventory.py
++++ b/scripts/benchmark-inventory.py
+@@ -14,6 +14,7 @@ import csv
+ import hashlib
+ import json
+ import re
++import shlex
+ import subprocess
+ from pathlib import Path
+ 
+@@ -435,6 +436,24 @@ def classify(source, root, item, files, text):
+     return milestone, disposition, reason
+ 
+ 
++def profile_inputs(root, parent):
++    """Find literal file arguments without evaluating upstream Make or shell code."""
++    makefile = parent / "Makefile"
++    if not makefile.is_file():
++        return set()
++    text = makefile.read_text(errors="replace").replace("\\\n", " ")
++    inputs = set()
++    for value in re.findall(r"^\s*(?:FAST|NORM|SLOW)_OPTS\s*[:?+]?=\s*(.*)$", text, re.M):
++        for token in shlex.split(value, comments=True):
++            ref = token.split("=", 1)[-1] if token.startswith("--") else token
++            if not re.fullmatch(r"[\w./@+ -]{1,240}", ref):
++                continue
++            candidate = (parent / ref).resolve()
++            if candidate.is_relative_to(root) and candidate.is_file() and upstream_file(root, candidate):
++                inputs.add(str(candidate.relative_to(root)))
++    return inputs
++
++
+ def build(source, root, lock):
+     rows = []
+     for item in discover(source, root):
+@@ -467,7 +486,7 @@ def build(source, root, lock):
+         milestone, disposition, reason = classify(source, root, item, files, code + "\n" + "\n".join(dependency_forms))
+         name = item["name"]
+         parent = (root / path) if (root / path).is_dir() else (root / path).parent
+-        inputs = set()
++        inputs = profile_inputs(root, parent) if source == "nofib" else set()
+         if files and parent.exists() and path.startswith(("programs/", "benchmarks/", "imaginary/", "spectral/", "real/", "gc/", "shootout/", "parallel/", "smp/")):
+             for fixture in parent.rglob("*"):
+                 if not upstream_file(root, fixture):
+@@ -519,7 +538,7 @@ def related(rows):
+         groups[aliases.get(base, base)].append(row)
+     for group in groups.values():
+         for row in group:
+-            row["related"] = ";".join(other["source"] + ":" + other["path"] for other in group if other is not row)
++            row["related"] = ";".join(sorted(other["source"] + ":" + other["path"] for other in group if other is not row))
+ 
+ 
+ def validate(rows, locks):
+diff --git a/tests/benchmarks/test-inventory.py b/tests/benchmarks/test-inventory.py
+index c7823323..f027ac6a 100644
+--- a/tests/benchmarks/test-inventory.py
++++ b/tests/benchmarks/test-inventory.py
+@@ -306,6 +306,43 @@ class InventoryTest(unittest.TestCase):
+         self.sandmark_program("strings", 'let result = "' + "x" * 10000 + '"\n')
+         self.assertEqual(self.build("sandmark")[0]["inputs"], "")
+ 
++    def test_nofib_profile_arguments_include_graph_dataset(self):
++        self.nofib_roots()
++        self.file("spectral/dom-lt/Main.hs", "main = return ()\n")
++        self.file("spectral/dom-lt/Makefile", "FAST_OPTS = ghc-examples.in 50\nNORM_OPTS = ghc-examples.in 400\n")
++        self.file("spectral/dom-lt/ghc-examples.in", "graph data\n")
++        self.assertEqual(self.build("nofib")[0]["inputs"], "spectral/dom-lt/ghc-examples.in")
++
++    def test_nofib_profile_paths_support_quotes_flags_and_continuations(self):
++        self.nofib_roots()
++        self.file("spectral/graphs/Main.hs", "main = return ()\n")
++        self.file("spectral/graphs/Makefile",
++                  'NORM_OPTS = "data/input graph.bin" \\\n --lookup=names.tbl 400 # decoy.bin\n')
++        self.file("spectral/graphs/data/input graph.bin", "graph\n")
++        self.file("spectral/graphs/names.tbl", "names\n")
++        self.file("spectral/graphs/decoy.bin", "not an argument\n")
++        self.assertEqual(self.build("nofib")[0]["inputs"],
++                         "spectral/graphs/data/input graph.bin;spectral/graphs/names.tbl")
++
++    def test_nofib_profile_paths_stay_inside_pinned_tree(self):
++        self.nofib_roots()
++        self.file("spectral/graphs/Main.hs", "main = return ()\n")
++        with tempfile.TemporaryDirectory() as outside:
++            dataset = Path(outside) / "external.bin"
++            dataset.write_text("external\n")
++            self.file("spectral/graphs/Makefile", "NORM_OPTS = " + str(dataset) + " 400\n")
++            self.assertEqual(self.build("nofib")[0]["inputs"], "")
++
++    def test_related_names_are_independent_of_discovery_order(self):
++        rows = [dict(source=source, path=path, name="fft") for source, path in
++                [("smlnj", "programs/fft"), ("sandmark", "benchmarks/fft.exe"), ("mlton", "fft.sml")]]
++        reversed_rows = copy.deepcopy(list(reversed(rows)))
++        AUDIT.related(rows)
++        AUDIT.related(reversed_rows)
++        self.assertEqual({r["source"]: r["related"] for r in rows},
++                         {r["source"]: r["related"] for r in reversed_rows})
++        self.assertEqual(rows[0]["related"], "mlton:fft.sml;sandmark:benchmarks/fft.exe")
++
+     def test_digest_includes_member_identity_and_content(self):
+         a = self.file("a.sml", "structure A = struct end\n")
+         b = self.file("b.sml", a.read_text())

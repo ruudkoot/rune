@@ -293,6 +293,8 @@ inventory entry.
 | [smallpt](#smallpt) | [nofib smallpt](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/smallpt) | Trace the deterministic nine-sphere scene with diffuse, mirror and glass paths, checking every RGB component. |
 | [revcomp2](#revcomp2) | [Sandmark revcomp2](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/benchmarksgame/revcomp2.ml) | Reverse and complement FASTA records through a line list and 61-byte buffer, checking every output byte. |
 | [knucleotide](#knucleotide) | [Sandmark knucleotide](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/benchmarksgame/knucleotide.ml) | Count overlapping DNA substrings using reusable byte keys and mutable chained-table counts, checking sorted frequencies and all queries. |
+| [knucleotide3-32](#knucleotide3-32) | [Sandmark knucleotide3](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/benchmarksgame/knucleotide3.ml) | Count packed DNA keys with the source32-bit representation, cumulative tables and original window bounds. |
+| [knucleotide3-64](#knucleotide3-64) | [Sandmark knucleotide3](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/benchmarksgame/knucleotide3.ml) | Count packed DNA keys with the source64-bit representation, cumulative tables and original window bounds. |
 | [integer-lazy](#integer-lazy) | [nofib integer](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/integer) | Evaluate all 14 arithmetic/comparison operations on machine-64 and arbitrary-precision Cartesian grids using memoized lists. |
 | [integer-strict](#integer-strict) | [nofib integer](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/integer) | Evaluate all 14 arithmetic/comparison operations on machine-64 and arbitrary-precision Cartesian grids using eager finite lists. |
 | [secretary-lazy](#secretary-lazy) | [nofib secretary](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/secretary) | Simulate threshold selection from distinct random rankings with memoized streams and demand-sensitive early stopping. |
@@ -311,6 +313,8 @@ inventory entry.
 | [last-piece-strict](#last-piece-strict) | [nofib last-piece](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/last-piece) | Tile the sex-constrained board with source-ordered choices and persistent size-balanced maps, using strict solution trees. |
 | [boyer-nofib-lazy](#boyer-nofib-lazy) | [nofib boyer](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/boyer) | Prove the typed-term transitivity theorem with attached memoized lemma graphs and lazy finite arguments. |
 | [boyer-nofib-strict](#boyer-nofib-strict) | [nofib boyer](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/boyer) | Prove the typed-term transitivity theorem with attached memoized lemma graphs and strict finite arguments. |
+| [eliza-lazy](#eliza-lazy) | [nofib Eliza](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/eliza) | Recompute keyword-driven conversations with shared cyclic replies and lazy finite candidates/output. |
+| [eliza-strict](#eliza-strict) | [nofib Eliza](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/eliza) | Recompute keyword-driven conversations with shared cyclic replies and strict finite candidates/output. |
 
 ## Running and interpreting checks
 
@@ -423,6 +427,7 @@ sh tests/benchmarks/check-evolutionary.sh
 sh tests/benchmarks/check-smallpt.sh
 sh tests/benchmarks/check-revcomp2.sh
 sh tests/benchmarks/check-knucleotide.sh
+sh tests/benchmarks/check-packed-nucleotide.sh
 sh tests/benchmarks/check-integer.sh
 sh tests/benchmarks/check-secretary.sh
 sh tests/benchmarks/check-mandel.sh
@@ -431,6 +436,7 @@ sh tests/benchmarks/check-boyer2.sh
 sh tests/benchmarks/check-pretty.sh
 sh tests/benchmarks/check-last-piece.sh
 sh tests/benchmarks/check-typed-boyer.sh
+sh tests/benchmarks/check-eliza.sh
 python3 tests/benchmarks/test-inventory.py
 python3 scripts/benchmark-inventory.py --check
 python3 tests/benchmarks/latency-oracle.py --check
@@ -13270,3 +13276,445 @@ the nofib/measurement survey frames current comparisons. Historical remarks
 about language advantages or costs do not establish current SML rankings.
 
 [Complete provenance](boyer-nofib-strict/PROVENANCE.md).
+
+## eliza-lazy
+
+Selected finite candidate/output evaluation: lazy; cyclic reply queues remain memoized.
+
+## Algorithm and workload
+
+Run the source's ordered keyword/tail search and cyclic response selection over
+its fixed conversation. Trim only space, period, exclamation mark, question mark
+and comma from line ends; split into words and discard empty lines. Match the
+first key in the original 40-entry order, conjugate its first matching suffix,
+rotate only that key's replies, and handle consecutive repeated word lists with
+a separate cyclic queue. Preserve trailing-I conjugation, fallback replies,
+capitalization, spelling and the two newlines after each response.
+
+Each iteration i starts from the original initial state and selects the first
+(i mod 20) input lines. It recomputes the conversation and consumes its complete
+character length. The driver checks every length against the reviewed 20-entry
+reference cycle and reports iterations:sum:checked. Reference lengths are
+checker data, never substituted for computing a conversation.
+
+## History, revision, authorship and aliases
+
+nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/eliza/Main.hs,
+Makefile, eliza.stdin and the three stdout fixtures. The header credits the Hugs
+version to Mark P. Jones, January 12, 1992, adapted from a Pascal implementation
+provided by James Risner with original Pascal code apparently by Robert
+Migliaccio. Retain that wording rather than resolving uncertain attribution.
+The selected program and 335-byte conversation state no separate redistribution
+notice or dataset author; no notice from an unrelated component is substituted.
+The exact input is retained, not regenerated or replaced with invented dialogue.
+
+The explicit eliza-lazy/strict names identify evaluation variants of this nofib
+implementation. They do not claim to reproduce every historical ELIZA script.
+
+## Lazy and strict variants
+
+Reply queues use explicit shared, memoized cycles in both variants. The initial
+state is shared across sessions, as in the Haskell top-level value. A session
+constructs a persistent new key table and advances queue pointers without
+mutating the initial response positions. Memoized queue nodes may be reused;
+computed conversations and their lengths are not cached across iterations.
+
+The lazy variant memoizes candidate-reply and output-character spines, demanding
+the first candidate only. Response and next-state fields have separate memoized
+delays, avoiding construction of an unused final key table. A fixed response does not force its unused conjugated
+suffix. The strict variant constructs finite candidate lists, conjugations and
+output characters eagerly. Cyclic queues remain lazy to avoid turning an
+infinite producer into a divergent strict initialization. Full output agrees;
+allocation, retention and the timing of unused candidate work can differ.
+
+## Portable SML97 translation
+
+Response keys/templates, repeated replies and conjugations are extracted with
+an export-only Haskell observer, with all source text retained. SML strings store
+words/templates; input lines and word lists are finite strict lists. Loading the
+fixed file replaces lazy getContents/lines. Only each selected prefix is trimmed
+and tokenized, but loading the small file is strict and happens once per run.
+String case conversion and conjugation materialize strings, whereas Haskell
+strings are lazy character lists. Output characters and candidate spines retain
+explicit delays where evaluation differs between the named variants.
+
+The composed tails/filter/map pipeline is represented by a delayed candidate
+list with the same nonempty tails, key order and first-match behavior; intermediate
+list layers are fused in this translation. Uppercase mapping within a candidate
+uses a finite strict word list. Record these representation and allocation
+changes when interpreting measurements; this is not an assertion of identical
+Haskell allocation. Reconstructing key tables and rotating cyclic queues preserve
+the original persistent state algorithm rather than using mutable keyword counters.
+
+Source numeric parameters and lengths fit signed 31-bit Int. The summary uses
+IntInf accumulation explicitly. The initial key-table spine and word preparation use strict finite lists.
+Input is ASCII; character behavior outside the
+retained workload is not claimed to implement Haskell's full Unicode semantics.
+The SML driver checks its positive repetition bound of 65000. It replaces many
+printed length lines with checked aggregation; I/O and result checking are
+included costs. No external library, runtime extension or compiler hint is needed.
+
+## Profiles and diagnostic questions
+
+Smoke uses 20 iterations to cover one complete prefix cycle. Normal preserves
+NORM 13000 and selected large preserves SLOW 65000. FAST 1300 is also checked with
+the unmodified original and its fixture. Every run recomputes all selected
+sessions, including repeated occurrences of a prefix. No universal size argument
+is imposed on conversation data. Default profile time/memory limits apply.
+
+Source-based diagnostic questions concern ordered keyword matching, repeated
+case conversion, candidate demand, persistent key-table copying, shared cyclic
+queues, character streams and strict finite-result retention. These are
+hypotheses until supported by measurements. Standard compiler reports compare
+identical SML; original Haskell runs supply correctness evidence.
+
+## References and validation
+
+Unmodified original outputs agree with all three upstream fixtures. An
+independent ordered-key/counter model agrees with all 20 complete conversation
+prefixes and all 65000 original length rows. Export-only observers supply exact
+full response bytes, including punctuation and blank lines. Additional complete
+sessions cover repeated inputs, key rotation, trailing I, empty suffix defaults,
+fallback and punctuation. SML checks include both variants' full output, cyclic
+sharing, demanded/unused suffixes and wrong/truncated/extra output rejection.
+Broader host/profile validation is claimed only where recorded in the results.
+
+Joseph Weizenbaum, [ELIZA—A Computer Program for the Study of Natural Language
+Communication Between Man and Machine](https://doi.org/10.1145/365153.365168),
+Communications of the ACM 9(1), 1966, pp.36–45, provides historical context for
+keyword-based conversational programs. It is not a specification for the
+particular Hugs response table or evidence of current compiler performance.
+The retained nofib source supplies that implementation's exact behavior; the
+suite's nofib and measurement survey supplies comparison methodology.
+
+[Complete provenance](eliza-lazy/PROVENANCE.md).
+
+## eliza-strict
+
+Selected finite candidate/output evaluation: strict; cyclic reply queues remain memoized.
+
+## Algorithm and workload
+
+Run the source's ordered keyword/tail search and cyclic response selection over
+its fixed conversation. Trim only space, period, exclamation mark, question mark
+and comma from line ends; split into words and discard empty lines. Match the
+first key in the original 40-entry order, conjugate its first matching suffix,
+rotate only that key's replies, and handle consecutive repeated word lists with
+a separate cyclic queue. Preserve trailing-I conjugation, fallback replies,
+capitalization, spelling and the two newlines after each response.
+
+Each iteration i starts from the original initial state and selects the first
+(i mod 20) input lines. It recomputes the conversation and consumes its complete
+character length. The driver checks every length against the reviewed 20-entry
+reference cycle and reports iterations:sum:checked. Reference lengths are
+checker data, never substituted for computing a conversation.
+
+## History, revision, authorship and aliases
+
+nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/eliza/Main.hs,
+Makefile, eliza.stdin and the three stdout fixtures. The header credits the Hugs
+version to Mark P. Jones, January 12, 1992, adapted from a Pascal implementation
+provided by James Risner with original Pascal code apparently by Robert
+Migliaccio. Retain that wording rather than resolving uncertain attribution.
+The selected program and 335-byte conversation state no separate redistribution
+notice or dataset author; no notice from an unrelated component is substituted.
+The exact input is retained, not regenerated or replaced with invented dialogue.
+
+The explicit eliza-lazy/strict names identify evaluation variants of this nofib
+implementation. They do not claim to reproduce every historical ELIZA script.
+
+## Lazy and strict variants
+
+Reply queues use explicit shared, memoized cycles in both variants. The initial
+state is shared across sessions, as in the Haskell top-level value. A session
+constructs a persistent new key table and advances queue pointers without
+mutating the initial response positions. Memoized queue nodes may be reused;
+computed conversations and their lengths are not cached across iterations.
+
+The lazy variant memoizes candidate-reply and output-character spines, demanding
+the first candidate only. Response and next-state fields have separate memoized
+delays, avoiding construction of an unused final key table. A fixed response does not force its unused conjugated
+suffix. The strict variant constructs finite candidate lists, conjugations and
+output characters eagerly. Cyclic queues remain lazy to avoid turning an
+infinite producer into a divergent strict initialization. Full output agrees;
+allocation, retention and the timing of unused candidate work can differ.
+
+## Portable SML97 translation
+
+Response keys/templates, repeated replies and conjugations are extracted with
+an export-only Haskell observer, with all source text retained. SML strings store
+words/templates; input lines and word lists are finite strict lists. Loading the
+fixed file replaces lazy getContents/lines. Only each selected prefix is trimmed
+and tokenized, but loading the small file is strict and happens once per run.
+String case conversion and conjugation materialize strings, whereas Haskell
+strings are lazy character lists. Output characters and candidate spines retain
+explicit delays where evaluation differs between the named variants.
+
+The composed tails/filter/map pipeline is represented by a delayed candidate
+list with the same nonempty tails, key order and first-match behavior; intermediate
+list layers are fused in this translation. Uppercase mapping within a candidate
+uses a finite strict word list. Record these representation and allocation
+changes when interpreting measurements; this is not an assertion of identical
+Haskell allocation. Reconstructing key tables and rotating cyclic queues preserve
+the original persistent state algorithm rather than using mutable keyword counters.
+
+Source numeric parameters and lengths fit signed 31-bit Int. The summary uses
+IntInf accumulation explicitly. The initial key-table spine and word preparation use strict finite lists.
+Input is ASCII; character behavior outside the
+retained workload is not claimed to implement Haskell's full Unicode semantics.
+The SML driver checks its positive repetition bound of 65000. It replaces many
+printed length lines with checked aggregation; I/O and result checking are
+included costs. No external library, runtime extension or compiler hint is needed.
+
+## Profiles and diagnostic questions
+
+Smoke uses 20 iterations to cover one complete prefix cycle. Normal preserves
+NORM 13000 and selected large preserves SLOW 65000. FAST 1300 is also checked with
+the unmodified original and its fixture. Every run recomputes all selected
+sessions, including repeated occurrences of a prefix. No universal size argument
+is imposed on conversation data. Default profile time/memory limits apply.
+
+Source-based diagnostic questions concern ordered keyword matching, repeated
+case conversion, candidate demand, persistent key-table copying, shared cyclic
+queues, character streams and strict finite-result retention. These are
+hypotheses until supported by measurements. Standard compiler reports compare
+identical SML; original Haskell runs supply correctness evidence.
+
+## References and validation
+
+Unmodified original outputs agree with all three upstream fixtures. An
+independent ordered-key/counter model agrees with all 20 complete conversation
+prefixes and all 65000 original length rows. Export-only observers supply exact
+full response bytes, including punctuation and blank lines. Additional complete
+sessions cover repeated inputs, key rotation, trailing I, empty suffix defaults,
+fallback and punctuation. SML checks include both variants' full output, cyclic
+sharing, demanded/unused suffixes and wrong/truncated/extra output rejection.
+Broader host/profile validation is claimed only where recorded in the results.
+
+Joseph Weizenbaum, [ELIZA—A Computer Program for the Study of Natural Language
+Communication Between Man and Machine](https://doi.org/10.1145/365153.365168),
+Communications of the ACM 9(1), 1966, pp.36–45, provides historical context for
+keyword-based conversational programs. It is not a specification for the
+particular Hugs response table or evidence of current compiler performance.
+The retained nofib source supplies that implementation's exact behavior; the
+suite's nofib and measurement survey supplies comparison methodology.
+
+[Complete provenance](eliza-strict/PROVENANCE.md).
+
+## knucleotide3-64
+
+Selected key threshold: 31; fixed 64-bit source-bit representation.
+
+## Algorithm and workload
+
+Extract the THREE record from FASTA, encode A/T/C/G as 0/1/2/3, and count packed
+keys in persistent-across-pass chained hash tables. Print sorted one-/two-base
+frequencies and the five original query counts. Preserve the loop's omitted last
+window and the absence of clearing between lengths: leading-zero keys of different
+lengths can alias. These are source behavior, not errors for this port to fix.
+The driver validates every output byte and EOF before reporting its byte count.
+
+## History, upstream revision and notices
+
+Sandmark 5605805954a00497ed197c930641cddd580e1507,
+benchmarks/benchmarksgame/knucleotide3.ml. Its header credits Troestler Christophe,
+Mauricio Fernandez, Fabrice Le Fessant, Roman Kashitsyn and KC Sivaramakrishnan,
+whose change removes parallelization. Retain that header, directory Revised BSD
+notice, aggregate Unlicense, README, Dune and fasta3 input-generator source.
+
+Portable buffer/table support follows OCaml 4.14.1, pinned at
+99cb5d93fc30f1a6f3e69f5aa5d2063994d33a93. Selected hashtbl.ml/buffer.ml bytes match
+the installed sources. Retain the Xavier Leroy/INRIA copyrights, LGPL 2.1 notice
+and linking exception, including the notice in the SML adaptation. Generated
+FASTA carries the same fasta3 provenance as the other nucleotide imports; no
+unattributed external dataset is added.
+
+## Numeric variants and source differences
+
+knucleotide3-64 preserves threshold 31: all current query lengths use single packed
+keys. knucleotide3-32 preserves threshold 15: the 18-base query uses two packed
+components in a separate table. Both tables are allocated in both variants,
+including an unused second table in the64 variant. Pair hashing uses only the
+first component, with equality comparing both. These materially different key/
+table representations merit separate names. Both run identically on all SML
+host widths using explicit Word64 rather than native Int width selection.
+
+The byte-key knucleotide benchmark clears its table per length and counts the
+last window. It is a separate algorithm/representation variant; its fixtures
+are not interchangeable with the packed counter. Do not consolidate them.
+
+## Portable SML97 translation
+
+Multiply/add and shifts use Word64. Source32 components need at most 30 significant
+bits; 64-bit source packed keys need at most 62, with 36 used by the largest current
+query. No wrap occurs in the selected positive domain. Explicit Small/Large
+constructors select the key representation; SML tagging/Word64 boxing may add
+indirections compared with native OCaml ints/pairs. Counts, bucket indices and
+profile sizes fit signed 31-bit Int. This is not a claim that host-native integer
+arithmetic has the same allocation cost.
+
+A mutable chained table keeps source initial capacity 262144, identity/first-key
+hashes, head insertion and doubling above two entries per bucket. Transfer
+preserves collision-chain order. Lookup uses an option instead of Not_found;
+that library boundary and its allocation/branch cost are explicit adaptations.
+The table is never cleared between the seven count passes. Both table instances
+and sequence buffers are recreated per Benchmark.run, preventing a repeated
+in-process invocation from accumulating results from its previous invocation.
+
+The portable input buffer begins at 1000 and doubles as needed, following the
+same copied-buffer algorithm used by the existing byte-key port. This replaces
+the source's fixed 130000000-byte initial reservation for its much larger default
+input; record the changed allocation footprint when comparing profiles. Per-line
+encoding preserves ASCII tab values, including the source's default0 for unknown
+bytes. Initial comment/catch-all handling, prefix header selection, later empty-
+line failure, terminal-LF removal and stopping at the next record remain.
+
+Portable merge sort replaces OCaml List.sort while preserving descending
+binary64 frequencies and lexical ties. Binary64 operation association and three-
+decimal formatting remain. The original hardcoded filename becomes an argument;
+complete output checking replaces stdout and is included measured work. No FFI,
+effect handler, parallel feature or prerequisite runtime change is introduced.
+
+## Inputs, profiles and diagnostic questions
+
+Smoke/normal/large reuse the pinned fasta3 inputs with n=1000/50000/500000,
+seed 42 and width 60. THREE contains 5000/250000/2500000 bases. The original Dune
+n=25000000 and auxiliary n=5000000 remain documented, not claimed executed here.
+Large is an explicitly reduced scaling input. Input generation is available in
+the suite's portable SML fasta3 implementation, with exact complete files pinned.
+Default profile limits apply; original outputs for all selected sizes are retained.
+
+Source-based questions concern packed-key arithmetic, width-dependent pair
+allocation, repeated packing, cumulative aliasing, identity-hash collisions,
+retained tables, bucket growth, buffer copying and string formatting. They remain
+hypotheses until supported by inspection or measurements. Standard reports use
+identical SML; OCaml supplies correctness references.
+
+## Reference evidence and validation
+
+The unmodified64-bit OCaml program agrees with an independent packed-key model on
+all complete smoke/normal/large outputs. A separate observer changes only the
+threshold to 15 and agrees with the independent two-table/pair model. It does not
+constitute execution by a 32-bit OCaml compiler. Managed32-bit SML host results are
+recorded separately. Model statistics retain every pass's entries and total counts.
+
+Original complete edge fixtures cover case conversion, THREE-prefix matching,
+initial comments, next-record termination, no final LF, short/empty input and
+unknown bytes. The original library observer records 512 deliberately colliding
+keys through repeated resize, exact fold traversal and every smoke pass's table
+statistics. Tests cover omitted-window bounds, cumulative leading-zero aliases,
+31-/15-digit representations, pair hashing, both full output variants, and
+wrong/truncated/extra output rejection. Large SML and additional host validation
+are claimed only where recorded. Retained program/library sources explain the
+exact algorithm; the suite's measurement survey supplies methodological context.
+
+[Complete provenance](knucleotide3-64/PROVENANCE.md).
+
+## knucleotide3-32
+
+Selected key threshold: 15; fixed 32-bit source-bit representation.
+
+## Algorithm and workload
+
+Extract the THREE record from FASTA, encode A/T/C/G as 0/1/2/3, and count packed
+keys in persistent-across-pass chained hash tables. Print sorted one-/two-base
+frequencies and the five original query counts. Preserve the loop's omitted last
+window and the absence of clearing between lengths: leading-zero keys of different
+lengths can alias. These are source behavior, not errors for this port to fix.
+The driver validates every output byte and EOF before reporting its byte count.
+
+## History, upstream revision and notices
+
+Sandmark 5605805954a00497ed197c930641cddd580e1507,
+benchmarks/benchmarksgame/knucleotide3.ml. Its header credits Troestler Christophe,
+Mauricio Fernandez, Fabrice Le Fessant, Roman Kashitsyn and KC Sivaramakrishnan,
+whose change removes parallelization. Retain that header, directory Revised BSD
+notice, aggregate Unlicense, README, Dune and fasta3 input-generator source.
+
+Portable buffer/table support follows OCaml 4.14.1, pinned at
+99cb5d93fc30f1a6f3e69f5aa5d2063994d33a93. Selected hashtbl.ml/buffer.ml bytes match
+the installed sources. Retain the Xavier Leroy/INRIA copyrights, LGPL 2.1 notice
+and linking exception, including the notice in the SML adaptation. Generated
+FASTA carries the same fasta3 provenance as the other nucleotide imports; no
+unattributed external dataset is added.
+
+## Numeric variants and source differences
+
+knucleotide3-64 preserves threshold 31: all current query lengths use single packed
+keys. knucleotide3-32 preserves threshold 15: the 18-base query uses two packed
+components in a separate table. Both tables are allocated in both variants,
+including an unused second table in the64 variant. Pair hashing uses only the
+first component, with equality comparing both. These materially different key/
+table representations merit separate names. Both run identically on all SML
+host widths using explicit Word64 rather than native Int width selection.
+
+The byte-key knucleotide benchmark clears its table per length and counts the
+last window. It is a separate algorithm/representation variant; its fixtures
+are not interchangeable with the packed counter. Do not consolidate them.
+
+## Portable SML97 translation
+
+Multiply/add and shifts use Word64. Source32 components need at most 30 significant
+bits; 64-bit source packed keys need at most 62, with 36 used by the largest current
+query. No wrap occurs in the selected positive domain. Explicit Small/Large
+constructors select the key representation; SML tagging/Word64 boxing may add
+indirections compared with native OCaml ints/pairs. Counts, bucket indices and
+profile sizes fit signed 31-bit Int. This is not a claim that host-native integer
+arithmetic has the same allocation cost.
+
+A mutable chained table keeps source initial capacity 262144, identity/first-key
+hashes, head insertion and doubling above two entries per bucket. Transfer
+preserves collision-chain order. Lookup uses an option instead of Not_found;
+that library boundary and its allocation/branch cost are explicit adaptations.
+The table is never cleared between the seven count passes. Both table instances
+and sequence buffers are recreated per Benchmark.run, preventing a repeated
+in-process invocation from accumulating results from its previous invocation.
+
+The portable input buffer begins at 1000 and doubles as needed, following the
+same copied-buffer algorithm used by the existing byte-key port. This replaces
+the source's fixed 130000000-byte initial reservation for its much larger default
+input; record the changed allocation footprint when comparing profiles. Per-line
+encoding preserves ASCII tab values, including the source's default0 for unknown
+bytes. Initial comment/catch-all handling, prefix header selection, later empty-
+line failure, terminal-LF removal and stopping at the next record remain.
+
+Portable merge sort replaces OCaml List.sort while preserving descending
+binary64 frequencies and lexical ties. Binary64 operation association and three-
+decimal formatting remain. The original hardcoded filename becomes an argument;
+complete output checking replaces stdout and is included measured work. No FFI,
+effect handler, parallel feature or prerequisite runtime change is introduced.
+
+## Inputs, profiles and diagnostic questions
+
+Smoke/normal/large reuse the pinned fasta3 inputs with n=1000/50000/500000,
+seed 42 and width 60. THREE contains 5000/250000/2500000 bases. The original Dune
+n=25000000 and auxiliary n=5000000 remain documented, not claimed executed here.
+Large is an explicitly reduced scaling input. Input generation is available in
+the suite's portable SML fasta3 implementation, with exact complete files pinned.
+Default profile limits apply; original outputs for all selected sizes are retained.
+
+Source-based questions concern packed-key arithmetic, width-dependent pair
+allocation, repeated packing, cumulative aliasing, identity-hash collisions,
+retained tables, bucket growth, buffer copying and string formatting. They remain
+hypotheses until supported by inspection or measurements. Standard reports use
+identical SML; OCaml supplies correctness references.
+
+## Reference evidence and validation
+
+The unmodified64-bit OCaml program agrees with an independent packed-key model on
+all complete smoke/normal/large outputs. A separate observer changes only the
+threshold to 15 and agrees with the independent two-table/pair model. It does not
+constitute execution by a 32-bit OCaml compiler. Managed32-bit SML host results are
+recorded separately. Model statistics retain every pass's entries and total counts.
+
+Original complete edge fixtures cover case conversion, THREE-prefix matching,
+initial comments, next-record termination, no final LF, short/empty input and
+unknown bytes. The original library observer records 512 deliberately colliding
+keys through repeated resize, exact fold traversal and every smoke pass's table
+statistics. Tests cover omitted-window bounds, cumulative leading-zero aliases,
+31-/15-digit representations, pair hashing, both full output variants, and
+wrong/truncated/extra output rejection. Large SML and additional host validation
+are claimed only where recorded. Retained program/library sources explain the
+exact algorithm; the suite's measurement survey supplies methodological context.
+
+[Complete provenance](knucleotide3-32/PROVENANCE.md).

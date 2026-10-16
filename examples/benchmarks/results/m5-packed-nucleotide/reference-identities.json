@@ -1,0 +1,10 @@
+{
+  "ocaml": "4.14.1",
+  "options": [
+    "-O2"
+  ],
+  "sandmark_revision": "5605805954a00497ed197c930641cddd580e1507",
+  "ocaml_library_revision": "99cb5d93fc30f1a6f3e69f5aa5d2063994d33a93",
+  "threshold15_scope": "parameter-only observer on64-bit OCaml; not an actual32-bit OCaml compiler",
+  "scope": "complete upstream output and independent models; originals are correctness references"
+}

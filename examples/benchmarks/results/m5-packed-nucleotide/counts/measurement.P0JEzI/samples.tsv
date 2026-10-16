@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+knucleotide3-64	normal	rune	O2	compile	0	0	pass	1.49	1.48	0.09	135112	-	-	-	knucleotide3-64/rune/build/compile
+knucleotide3-64	normal	rune	O2	correctness	0	0	pass	3.10	3.00	0.27	297636	633211813	762580400	19263970	knucleotide3-64/rune/correctness.0
+knucleotide3-64	normal	rune	O2	count	1	1	pass	3.43	3.09	0.53	297692	633211813	762580400	19263970	knucleotide3-64/rune/fresh.1
+knucleotide3-64	normal	rune:opt	O2	compile	0	0	pass	1.74	1.72	0.11	135320	-	-	-	knucleotide3-64/rune-opt/build/compile
+knucleotide3-64	normal	rune:opt	O2	native-compile	0	0	pass	0.30	0.16	0.03	12540	-	-	-	knucleotide3-64/rune-opt/build/native-compile
+knucleotide3-64	normal	rune:opt	O2	correctness	0	0	pass	1.97	1.56	0.51	299212	633211813	762580400	19263970	knucleotide3-64/rune-opt/correctness.0
+knucleotide3-64	normal	rune:opt	O2	count	1	1	pass	1.80	1.63	0.26	299104	633211813	762580400	19263970	knucleotide3-64/rune-opt/fresh.1
+knucleotide3-64	normal	rune:new	O2	compile	0	0	pass	1.71	1.72	0.08	135260	-	-	-	knucleotide3-64/rune-new/build/compile
+knucleotide3-64	normal	rune:new	O2	correctness	0	0	pass	6.20	4.29	0.37	326072	427446414	762580400	19263970	knucleotide3-64/rune-new/correctness.0
+knucleotide3-64	normal	rune:new	O2	count	1	1	pass	3.08	2.90	0.35	325808	427446414	762580400	19263970	knucleotide3-64/rune-new/fresh.1
+knucleotide3-64	normal	rune:jit	O2	compile	0	0	pass	1.63	1.65	0.06	135076	-	-	-	knucleotide3-64/rune-jit/build/compile
+knucleotide3-64	normal	rune:jit	O2	correctness	0	0	pass	1.62	1.41	0.29	327092	427446414	762580400	19263970	knucleotide3-64/rune-jit/correctness.0
+knucleotide3-64	normal	rune:jit	O2	count	1	1	pass	1.46	1.22	0.32	327096	427446414	762580400	19263970	knucleotide3-64/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

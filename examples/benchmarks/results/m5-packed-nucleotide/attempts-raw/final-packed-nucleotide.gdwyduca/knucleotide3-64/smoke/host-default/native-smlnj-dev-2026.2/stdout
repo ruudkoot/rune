@@ -1,0 +1,63 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-knucleotide-packed.sml]
+functor BenchKnucleotidePackedFn(P: sig val threshold : int end) :
+                                
+                                  sig
+                                    val for : int -> int -> (int -> 'a) -> unit
+                                    val code : char -> int
+                                    val dna : string -> CharArray.array
+                                    type key
+                                    type bucket
+                                    type table
+                                    val create : unit -> table
+                                    val hash : key -> Word64.word
+                                    val index : 'a array -> key -> int
+                                    val equal : key * key -> bool
+                                    val find : table -> key -> int ref option
+                                    val resize : table -> unit
+                                    val add : table -> key -> unit
+                                    val fold : table
+                                                -> (key * int * 'a -> 'a)
+                                                -> 'a -> 'a
+                                    val pack : (int -> Word64.word)
+                                                -> int -> int -> key
+                                    val packDna : CharArray.array
+                                                   -> int -> int -> key
+                                    val packKey : string -> key
+                                    val counts : table
+                                                  -> int
+                                                  -> CharArray.array -> unit
+                                    val keyString : int
+                                                     -> key
+                                                     -> CharArray.vector
+                                    val sort : (string * real) list
+                                                -> (string * real) list
+                                    val run : string
+                                               -> (string -> unit) -> unit
+                                  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/packed-nucleotide-check.sml]
+functor PackedNucleotideCheckFn(K: sig
+                                 val run : string -> (string -> unit) -> unit
+                                 end) :
+                               sig val run : string -> string -> int end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/knucleotide3-64/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Kernel : <sig>
+    structure Check : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 246
+PASS knucleotide3-64
+SUMMARY 1 checks, 0 failed

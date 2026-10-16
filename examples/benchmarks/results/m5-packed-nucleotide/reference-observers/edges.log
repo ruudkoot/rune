@@ -1,0 +1,9 @@
+PASS full original/threshold edge 0
+PASS full original/threshold edge 1
+PASS full original/threshold edge 2
+PASS full original/threshold edge 3
+PASS full original/threshold edge 4
+PASS full original/threshold edge 5
+PASS full original/threshold edge 6
+PASS full original/threshold edge 7
+Recorded collision/resize traversal and complete pass statistics

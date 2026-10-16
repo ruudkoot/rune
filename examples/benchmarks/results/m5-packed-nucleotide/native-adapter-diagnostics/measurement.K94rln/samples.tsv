@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+knucleotide3-32	smoke	native:mlton@20241230	O2	compile	0	0	pass	4.78	3.97	1.03	673332	-	-	-	knucleotide3-32/native-mlton/build/compile
+knucleotide3-32	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	7440	-	-	-	knucleotide3-32/native-mlton/correctness.0
+knucleotide3-32	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.01	0.01	0.00	7456	-	-	-	knucleotide3-32/native-mlton/fresh.1
+knucleotide3-32	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.26	0.24	0.03	38028	-	-	-	knucleotide3-32/native-smlnj-legacy/build/compile
+knucleotide3-32	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.03	0.03	0.00	22736	-	-	-	knucleotide3-32/native-smlnj-legacy/correctness.0
+knucleotide3-32	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.03	0.02	0.01	22724	-	-	-	knucleotide3-32/native-smlnj-legacy/fresh.1
+knucleotide3-32	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.27	0.17	0.03	33888	-	-	-	knucleotide3-32/native-polyml/build/compile
+knucleotide3-32	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.02	0.01	0.01	17724	-	-	-	knucleotide3-32/native-polyml/correctness.0
+knucleotide3-32	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.02	0.01	0.02	17660	-	-	-	knucleotide3-32/native-polyml/fresh.1

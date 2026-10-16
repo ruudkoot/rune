@@ -1,0 +1,14 @@
+[
+  {
+    "variant": "lazy",
+    "exit": 0,
+    "elapsed_seconds": 41.820320901984815,
+    "scope": "bounded correctness preflight; concurrent work; not a timing comparison"
+  },
+  {
+    "variant": "strict",
+    "exit": 0,
+    "elapsed_seconds": 40.376420590037014,
+    "scope": "bounded correctness preflight; concurrent work; not a timing comparison"
+  }
+]

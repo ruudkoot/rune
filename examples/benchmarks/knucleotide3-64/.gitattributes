@@ -1,0 +1,2 @@
+upstream/LICENSE -text -whitespace
+data/*.output -text -whitespace

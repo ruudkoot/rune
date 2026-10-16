@@ -1,0 +1,4 @@
+RESULT 20:5003:checked
+PASS eliza-lazy
+SAMPLE 1 0.008462000
+SUMMARY 1 checks, 0 failed

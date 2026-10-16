@@ -1,0 +1,1 @@
+eliza-strict	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/eliza-data.sml shared/eliza-lengths.sml shared/nofib-eliza.sml shared/eliza-driver.sml eliza-strict/benchmark.sml shared/main.sml	20 data/eliza.stdin	eliza-strict/smoke.expected	data/eliza.stdin

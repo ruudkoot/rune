@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+eliza-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	6.91	3.86	1.22	666888	-	-	-	eliza-strict/native-mlton/build/compile
+eliza-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2536	-	-	-	eliza-strict/native-mlton/correctness.0
+eliza-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2396	-	-	-	eliza-strict/native-mlton/fresh.1
+eliza-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.29	0.23	0.05	36856	-	-	-	eliza-strict/native-smlnj-legacy/build/compile
+eliza-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.02	0.01	0.00	4228	-	-	-	eliza-strict/native-smlnj-legacy/correctness.0
+eliza-strict	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.02	0.01	0.00	4288	-	-	-	eliza-strict/native-smlnj-legacy/fresh.1
+eliza-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.33	0.11	0.08	33092	-	-	-	eliza-strict/native-polyml/build/compile
+eliza-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.01	0.01	0.00	9488	-	-	-	eliza-strict/native-polyml/correctness.0
+eliza-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.01	0.00	0.00	9440	-	-	-	eliza-strict/native-polyml/fresh.1

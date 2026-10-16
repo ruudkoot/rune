@@ -1,0 +1,15 @@
+--- knucleotide3.ml
++++ knucleotide3_32.ml
+@@ -68,11 +68,7 @@
+   mutable count : int;
+ }
+ 
+-let threshold15 =
+-  match Sys.word_size with
+-    32 -> 15
+-  | 64 -> 31
+-  | _ -> assert false
++let threshold15 = 15
+ let threshold16 = threshold15 + 1
+ 
+ let c = 0x40000-1

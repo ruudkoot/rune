@@ -1,0 +1,344 @@
+[
+  {
+    "profile": "smoke",
+    "width": 64,
+    "threshold": 31,
+    "scope": "unmodified64 original",
+    "statistics": [
+      {
+        "k": 1,
+        "small_entries": 4,
+        "large_entries": 0,
+        "small_total": 4999,
+        "large_total": 0
+      },
+      {
+        "k": 2,
+        "small_entries": 16,
+        "large_entries": 0,
+        "small_total": 9997,
+        "large_total": 0
+      },
+      {
+        "k": 3,
+        "small_entries": 64,
+        "large_entries": 0,
+        "small_total": 14994,
+        "large_total": 0
+      },
+      {
+        "k": 4,
+        "small_entries": 256,
+        "large_entries": 0,
+        "small_total": 19990,
+        "large_total": 0
+      },
+      {
+        "k": 6,
+        "small_entries": 2725,
+        "large_entries": 0,
+        "small_total": 24984,
+        "large_total": 0
+      },
+      {
+        "k": 12,
+        "small_entries": 7710,
+        "large_entries": 0,
+        "small_total": 29972,
+        "large_total": 0
+      },
+      {
+        "k": 18,
+        "small_entries": 12690,
+        "large_entries": 0,
+        "small_total": 34954,
+        "large_total": 0
+      }
+    ]
+  },
+  {
+    "profile": "smoke",
+    "width": 32,
+    "threshold": 15,
+    "scope": "explicit threshold observer on64-bit OCaml; not an actual32-bit compiler run",
+    "statistics": [
+      {
+        "k": 1,
+        "small_entries": 4,
+        "large_entries": 0,
+        "small_total": 4999,
+        "large_total": 0
+      },
+      {
+        "k": 2,
+        "small_entries": 16,
+        "large_entries": 0,
+        "small_total": 9997,
+        "large_total": 0
+      },
+      {
+        "k": 3,
+        "small_entries": 64,
+        "large_entries": 0,
+        "small_total": 14994,
+        "large_total": 0
+      },
+      {
+        "k": 4,
+        "small_entries": 256,
+        "large_entries": 0,
+        "small_total": 19990,
+        "large_total": 0
+      },
+      {
+        "k": 6,
+        "small_entries": 2725,
+        "large_entries": 0,
+        "small_total": 24984,
+        "large_total": 0
+      },
+      {
+        "k": 12,
+        "small_entries": 7710,
+        "large_entries": 0,
+        "small_total": 29972,
+        "large_total": 0
+      },
+      {
+        "k": 18,
+        "small_entries": 7710,
+        "large_entries": 4982,
+        "small_total": 29972,
+        "large_total": 4982
+      }
+    ]
+  },
+  {
+    "profile": "normal",
+    "width": 64,
+    "threshold": 31,
+    "scope": "unmodified64 original",
+    "statistics": [
+      {
+        "k": 1,
+        "small_entries": 4,
+        "large_entries": 0,
+        "small_total": 249999,
+        "large_total": 0
+      },
+      {
+        "k": 2,
+        "small_entries": 16,
+        "large_entries": 0,
+        "small_total": 499997,
+        "large_total": 0
+      },
+      {
+        "k": 3,
+        "small_entries": 64,
+        "large_entries": 0,
+        "small_total": 749994,
+        "large_total": 0
+      },
+      {
+        "k": 4,
+        "small_entries": 256,
+        "large_entries": 0,
+        "small_total": 999990,
+        "large_total": 0
+      },
+      {
+        "k": 6,
+        "small_entries": 4096,
+        "large_entries": 0,
+        "small_total": 1249984,
+        "large_total": 0
+      },
+      {
+        "k": 12,
+        "small_entries": 142121,
+        "large_entries": 0,
+        "small_total": 1499972,
+        "large_total": 0
+      },
+      {
+        "k": 18,
+        "small_entries": 281900,
+        "large_entries": 0,
+        "small_total": 1749954,
+        "large_total": 0
+      }
+    ]
+  },
+  {
+    "profile": "normal",
+    "width": 32,
+    "threshold": 15,
+    "scope": "explicit threshold observer on64-bit OCaml; not an actual32-bit compiler run",
+    "statistics": [
+      {
+        "k": 1,
+        "small_entries": 4,
+        "large_entries": 0,
+        "small_total": 249999,
+        "large_total": 0
+      },
+      {
+        "k": 2,
+        "small_entries": 16,
+        "large_entries": 0,
+        "small_total": 499997,
+        "large_total": 0
+      },
+      {
+        "k": 3,
+        "small_entries": 64,
+        "large_entries": 0,
+        "small_total": 749994,
+        "large_total": 0
+      },
+      {
+        "k": 4,
+        "small_entries": 256,
+        "large_entries": 0,
+        "small_total": 999990,
+        "large_total": 0
+      },
+      {
+        "k": 6,
+        "small_entries": 4096,
+        "large_entries": 0,
+        "small_total": 1249984,
+        "large_total": 0
+      },
+      {
+        "k": 12,
+        "small_entries": 142121,
+        "large_entries": 0,
+        "small_total": 1499972,
+        "large_total": 0
+      },
+      {
+        "k": 18,
+        "small_entries": 142121,
+        "large_entries": 139882,
+        "small_total": 1499972,
+        "large_total": 249982
+      }
+    ]
+  },
+  {
+    "profile": "large",
+    "width": 64,
+    "threshold": 31,
+    "scope": "unmodified64 original",
+    "statistics": [
+      {
+        "k": 1,
+        "small_entries": 4,
+        "large_entries": 0,
+        "small_total": 2499999,
+        "large_total": 0
+      },
+      {
+        "k": 2,
+        "small_entries": 16,
+        "large_entries": 0,
+        "small_total": 4999997,
+        "large_total": 0
+      },
+      {
+        "k": 3,
+        "small_entries": 64,
+        "large_entries": 0,
+        "small_total": 7499994,
+        "large_total": 0
+      },
+      {
+        "k": 4,
+        "small_entries": 256,
+        "large_entries": 0,
+        "small_total": 9999990,
+        "large_total": 0
+      },
+      {
+        "k": 6,
+        "small_entries": 4096,
+        "large_entries": 0,
+        "small_total": 12499984,
+        "large_total": 0
+      },
+      {
+        "k": 12,
+        "small_entries": 142121,
+        "large_entries": 0,
+        "small_total": 14999972,
+        "large_total": 0
+      },
+      {
+        "k": 18,
+        "small_entries": 281900,
+        "large_entries": 0,
+        "small_total": 17499954,
+        "large_total": 0
+      }
+    ]
+  },
+  {
+    "profile": "large",
+    "width": 32,
+    "threshold": 15,
+    "scope": "explicit threshold observer on64-bit OCaml; not an actual32-bit compiler run",
+    "statistics": [
+      {
+        "k": 1,
+        "small_entries": 4,
+        "large_entries": 0,
+        "small_total": 2499999,
+        "large_total": 0
+      },
+      {
+        "k": 2,
+        "small_entries": 16,
+        "large_entries": 0,
+        "small_total": 4999997,
+        "large_total": 0
+      },
+      {
+        "k": 3,
+        "small_entries": 64,
+        "large_entries": 0,
+        "small_total": 7499994,
+        "large_total": 0
+      },
+      {
+        "k": 4,
+        "small_entries": 256,
+        "large_entries": 0,
+        "small_total": 9999990,
+        "large_total": 0
+      },
+      {
+        "k": 6,
+        "small_entries": 4096,
+        "large_entries": 0,
+        "small_total": 12499984,
+        "large_total": 0
+      },
+      {
+        "k": 12,
+        "small_entries": 142121,
+        "large_entries": 0,
+        "small_total": 14999972,
+        "large_total": 0
+      },
+      {
+        "k": 18,
+        "small_entries": 142121,
+        "large_entries": 139882,
+        "small_total": 14999972,
+        "large_total": 2499982
+      }
+    ]
+  }
+]
