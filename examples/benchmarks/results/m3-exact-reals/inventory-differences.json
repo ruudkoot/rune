@@ -1,0 +1,16 @@
+[
+  {
+    "source": "nofib",
+    "path": "spectral/exact-reals",
+    "changes": {
+      "authors": {
+        "before": "not stated in scanned source headers",
+        "after": "David Lester"
+      },
+      "evidence": {
+        "before": "spectral/exact-reals/Makefile",
+        "after": "spectral/exact-reals/Main.hs:paper-attribution;spectral/exact-reals/Makefile"
+      }
+    }
+  }
+]

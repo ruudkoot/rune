@@ -1,0 +1,314 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 74e7c596..d9848913 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -330,6 +330,8 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [circsim-nofib-strict](#circsim-nofib-strict) | [nofib spectral](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/circsim) | Simulate registers through balanced-tree packet scans and consume the printed-character trace. |
+ | [atom-lazy](#atom-lazy) | [nofib atom](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/atom) | Generate the original unshared atom stream with binary32 arithmetic and lazy finite vectors. |
+ | [atom-strict](#atom-strict) | [nofib atom](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/atom) | Generate the original unshared atom stream with binary32 arithmetic and strict finite vectors. |
++| [exact-reals-lazy](#exact-reals-lazy) | [nofib exact-reals](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/exact-reals) | Sum constructive-real sine values using exact rational arithmetic and lazy finite series. |
++| [exact-reals-strict](#exact-reals-strict) | [nofib exact-reals](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/exact-reals) | Sum constructive-real sine values using exact rational arithmetic and strict finite series. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -16198,3 +16200,241 @@ provides the algorithm, attribution and historical explanation.
+ [The SML Real interface](https://smlfamily.github.io/Basis/real.html) specifies the
+ rounding/conversion operations used by the helper. Source analysis, finite-input
+ bit checks and future performance explanations have separate evidence scopes.
++
++
++## exact-reals-lazy
++
++Finite series evaluation: lazy.
++
++### Algorithm and workload
++
++Represent a constructive real by a function from requested binary precision to
++an arbitrary-precision integer approximant. Evaluate the left-associated sum of
++sin(i*pi), i=1..n, and render forty decimal places. The result is zero, but the
++port performs the source exact arithmetic, range reduction and power series.
++Nonzero scalar reference cases independently exercise its arithmetic.
++
++### History, authorship, revision and notices
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/exact-reals/Main.hs,
++Makefile and exact-reals.stdout. The header credits David Lester's 2012 paper,
++[The world's shortest correct exact real arithmetic program?](https://doi.org/10.1016/j.ic.2011.09.004),
++Information and Computation 216, pages 39–46. Preserve the complete program and
++fixture. These files state no separate redistribution notice. The suite retains
++the established exact-reals name and gives meaningful evaluation variants
++explicit lazy/strict suffixes.
++
++Selected GHC base sources are pinned at 00920f176b0235d5bb52a8e054d89a664f8938fe.
++Full base/LICENSE and the Ratio, Enum, List and Foldable sources preserve their
++own notices. Their scope does not confer a notice on Lester's program.
++
++### Evaluation, representation and translation
++
++CR remains a precision-to-IntInf function. Function results are not memoized by
++precision. Multiplication shares its two bound calculations within the CR value;
++reciprocal repeats its precision search on every function call, as written.
++Top-level pi, pi/2, pi/4 and sqrt(1/2) constructions and infinite coefficient
++streams are memoized. Constants store CR functions, never precomputed answers.
++
++The lazy policy suspends finite coefficient/power lists and their heads, stopping
++at the first zero rounded term without forcing the unused tail. The strict policy
++constructs those selected finite lists and evaluates their heads eagerly. Infinite
++coefficient streams remain delayed in both. This policy deliberately exposes
++otherwise unused series terms; the algorithm, bounds and requested precision stay
++the same. No infinite list is made eager.
++
++Keep the source left-associated sum. GHC.List/Foldable's list sum uses a strict
++left fold; each CR addition still stores a function and requests two extra guard
++bits from its operands. Reassociating or balancing the sum would change both work
++and precision propagation. Enum CR uses the source default integer enumeration:
++fromEnum evaluates at digitsToBits(40)=137, rounds to an integer, and toEnum
++constructs each exact integer CR. The endpoints are not replaced by an unchecked
++host loop convention.
++
++Reuse the portable exact ratio operations shared with SCS. They follow GHC's
++cross-product/reduction rules using IntInf, including normalization and gcd.
++Each floor-square-root improvement constructs and normalizes its source ratio
++before floor division. Rounding is floor(rational+1/2), with ties toward positive
++infinity, including negative half integers. It is independent of host Real.round.
++Only digitsToBits uses binary64 log/ceiling, with the selected value checked as
++137 on every host. All integer precision counters fit signed 31-bit; arbitrary
++precision intermediates retain IntInf.
++
++Implement the source sine, cosine, atan branches, range reduction and square-root
++path needed by this workload and auxiliary checks. Unused logarithm, exponential,
++hyperbolic, reading and instance methods are omitted from the SML kernel; the
++complete original remains. Finite SML strings replace Haskell output lists.
++Read/validate arguments once per run, construct a fresh summation and compare
++every rendered character with the forty-zero result before accepting it.
++Coefficient/constant sharing persists across repeated in-process calls, as source
++top-level definitions do; final sums are not cached. No runtime feature is added.
++
++### Inputs, validation and calibration
++
++| Profile | Summation endpoint | Origin |
++|---|---:|---|
++| smoke | 1 | small complete sum at unchanged forty digits |
++| normal | 10 | calibrated complete sum at unchanged forty digits |
++| large | 60 | original FAST_OPTS |
++
++Upstream NORM_OPTS=350 and SLOW_OPTS=800 remain documented and available in
++original reference evidence, but are not the suite normal/large choices. An
++initial Rune stack pilot at endpoint 60 reached its 600-second limit before
++finishing the lazy case; the combined pilot never started strict mode. This
++records a time limit, not a wrong result. Endpoints 1 and 10 validate on both
++policies at full precision. Large keeps the default 3600-second/8-GiB limit;
++whole large SML validation is only claimed where separately recorded.
++
++Rune's current IntInf library uses portable base-2^30 limbs and quotient-limb
++search. This exact-rational workload is much more expensive there than on native
++hosts with different big-integer implementations. Reducing digits, replacing
++ratios with unchecked division or changing the summation would alter the workload;
++they are not calibration changes. Profiles change n only.
++
++Original GHC executions at 60/350/800 match the complete shared zero fixture.
++Export-only observers record their 137-bit integer approximants as zero.
++Fourteen scalar cases (pi, signed thirds, sqrt(1/2), trigonometric values and atan
++across its branches) supply 84 exact integer approximants at six precisions and
++14 forty-place texts. Both policies must match these source outputs exactly.
++An independent 120-decimal-digit mpmath calculation checks integer error <=1
++scaled unit and text error <=5.1e-41; this is a numerical cross-check, not a formal
++proof. No floating tolerance replaces the primary exact output comparison.
++
++Auxiliary tests cover half-integer rounding, first-zero stopping, unused inputs,
++shared multiplication bounds, repeated reciprocal searches, left-addition
++precision, small integer square roots, enum endpoints and the empty sum.
++Primary smoke/normal matrices and counts use the manifest. Raw evidence and
++validation scopes are recorded separately in validation.md.
++
++### Compiler/runtime diagnostic questions and literature
++
++Investigate arbitrary-precision arithmetic, gcd/normalization, function closures,
++guard-bit propagation, coefficient sharing, early series termination, finite
++eager evaluation, allocation lifetimes and whole-program specialization.
++These are source-based hypotheses, not measured causal explanations. The common
++SML program is the compiler comparison; original Haskell is a correctness
++reference. Tiny or single-sample native runs are adapter diagnostics.
++
++Lester's paper supplies the constructive-real algorithm and its error argument.
++[Partain](https://doi.org/10.1007/978-1-4471-3215-8_17) supplies suite context.
++The pinned original and base sources supply the specific definitions translated
++here; the independent high-precision check does not establish universal correctness.
++
++
++## exact-reals-strict
++
++Finite series evaluation: strict.
++
++### Algorithm and workload
++
++Represent a constructive real by a function from requested binary precision to
++an arbitrary-precision integer approximant. Evaluate the left-associated sum of
++sin(i*pi), i=1..n, and render forty decimal places. The result is zero, but the
++port performs the source exact arithmetic, range reduction and power series.
++Nonzero scalar reference cases independently exercise its arithmetic.
++
++### History, authorship, revision and notices
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/exact-reals/Main.hs,
++Makefile and exact-reals.stdout. The header credits David Lester's 2012 paper,
++[The world's shortest correct exact real arithmetic program?](https://doi.org/10.1016/j.ic.2011.09.004),
++Information and Computation 216, pages 39–46. Preserve the complete program and
++fixture. These files state no separate redistribution notice. The suite retains
++the established exact-reals name and gives meaningful evaluation variants
++explicit lazy/strict suffixes.
++
++Selected GHC base sources are pinned at 00920f176b0235d5bb52a8e054d89a664f8938fe.
++Full base/LICENSE and the Ratio, Enum, List and Foldable sources preserve their
++own notices. Their scope does not confer a notice on Lester's program.
++
++### Evaluation, representation and translation
++
++CR remains a precision-to-IntInf function. Function results are not memoized by
++precision. Multiplication shares its two bound calculations within the CR value;
++reciprocal repeats its precision search on every function call, as written.
++Top-level pi, pi/2, pi/4 and sqrt(1/2) constructions and infinite coefficient
++streams are memoized. Constants store CR functions, never precomputed answers.
++
++The lazy policy suspends finite coefficient/power lists and their heads, stopping
++at the first zero rounded term without forcing the unused tail. The strict policy
++constructs those selected finite lists and evaluates their heads eagerly. Infinite
++coefficient streams remain delayed in both. This policy deliberately exposes
++otherwise unused series terms; the algorithm, bounds and requested precision stay
++the same. No infinite list is made eager.
++
++Keep the source left-associated sum. GHC.List/Foldable's list sum uses a strict
++left fold; each CR addition still stores a function and requests two extra guard
++bits from its operands. Reassociating or balancing the sum would change both work
++and precision propagation. Enum CR uses the source default integer enumeration:
++fromEnum evaluates at digitsToBits(40)=137, rounds to an integer, and toEnum
++constructs each exact integer CR. The endpoints are not replaced by an unchecked
++host loop convention.
++
++Reuse the portable exact ratio operations shared with SCS. They follow GHC's
++cross-product/reduction rules using IntInf, including normalization and gcd.
++Each floor-square-root improvement constructs and normalizes its source ratio
++before floor division. Rounding is floor(rational+1/2), with ties toward positive
++infinity, including negative half integers. It is independent of host Real.round.
++Only digitsToBits uses binary64 log/ceiling, with the selected value checked as
++137 on every host. All integer precision counters fit signed 31-bit; arbitrary
++precision intermediates retain IntInf.
++
++Implement the source sine, cosine, atan branches, range reduction and square-root
++path needed by this workload and auxiliary checks. Unused logarithm, exponential,
++hyperbolic, reading and instance methods are omitted from the SML kernel; the
++complete original remains. Finite SML strings replace Haskell output lists.
++Read/validate arguments once per run, construct a fresh summation and compare
++every rendered character with the forty-zero result before accepting it.
++Coefficient/constant sharing persists across repeated in-process calls, as source
++top-level definitions do; final sums are not cached. No runtime feature is added.
++
++### Inputs, validation and calibration
++
++| Profile | Summation endpoint | Origin |
++|---|---:|---|
++| smoke | 1 | small complete sum at unchanged forty digits |
++| normal | 10 | calibrated complete sum at unchanged forty digits |
++| large | 60 | original FAST_OPTS |
++
++Upstream NORM_OPTS=350 and SLOW_OPTS=800 remain documented and available in
++original reference evidence, but are not the suite normal/large choices. An
++initial Rune stack pilot at endpoint 60 reached its 600-second limit before
++finishing the lazy case; the combined pilot never started strict mode. This
++records a time limit, not a wrong result. Endpoints 1 and 10 validate on both
++policies at full precision. Large keeps the default 3600-second/8-GiB limit;
++whole large SML validation is only claimed where separately recorded.
++
++Rune's current IntInf library uses portable base-2^30 limbs and quotient-limb
++search. This exact-rational workload is much more expensive there than on native
++hosts with different big-integer implementations. Reducing digits, replacing
++ratios with unchecked division or changing the summation would alter the workload;
++they are not calibration changes. Profiles change n only.
++
++Original GHC executions at 60/350/800 match the complete shared zero fixture.
++Export-only observers record their 137-bit integer approximants as zero.
++Fourteen scalar cases (pi, signed thirds, sqrt(1/2), trigonometric values and atan
++across its branches) supply 84 exact integer approximants at six precisions and
++14 forty-place texts. Both policies must match these source outputs exactly.
++An independent 120-decimal-digit mpmath calculation checks integer error <=1
++scaled unit and text error <=5.1e-41; this is a numerical cross-check, not a formal
++proof. No floating tolerance replaces the primary exact output comparison.
++
++Auxiliary tests cover half-integer rounding, first-zero stopping, unused inputs,
++shared multiplication bounds, repeated reciprocal searches, left-addition
++precision, small integer square roots, enum endpoints and the empty sum.
++Primary smoke/normal matrices and counts use the manifest. Raw evidence and
++validation scopes are recorded separately in validation.md.
++
++### Compiler/runtime diagnostic questions and literature
++
++Investigate arbitrary-precision arithmetic, gcd/normalization, function closures,
++guard-bit propagation, coefficient sharing, early series termination, finite
++eager evaluation, allocation lifetimes and whole-program specialization.
++These are source-based hypotheses, not measured causal explanations. The common
++SML program is the compiler comparison; original Haskell is a correctness
++reference. Tiny or single-sample native runs are adapter diagnostics.
++
++Lester's paper supplies the constructive-real algorithm and its error argument.
++[Partain](https://doi.org/10.1007/978-1-4471-3215-8_17) supplies suite context.
++The pinned original and base sources supply the specific definitions translated
++here; the independent high-precision check does not establish universal correctness.
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 0a8ad83d..6f9ab509 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -954,3 +954,9 @@ atom-lazy	large	nofib	spectral/atom	4000 large.positions	atom-lazy/large.expecte
+ atom-strict	smoke	nofib	spectral/atom	100 smoke.positions	atom-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-atom.sml,shared/nofib-atom-driver.sml,atom-strict/benchmark.sml,shared/main.sml	30	1048576	numeric-real,lists-streams,allocation-lifetimes,strict	smoke.positions	checked-numerical	implemented
+ atom-strict	normal	nofib	spectral/atom	2500 normal.positions	atom-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-atom.sml,shared/nofib-atom-driver.sml,atom-strict/benchmark.sml,shared/main.sml	600	4194304	numeric-real,lists-streams,allocation-lifetimes,strict	normal.positions	checked-numerical	implemented
+ atom-strict	large	nofib	spectral/atom	4000 large.positions	atom-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-atom.sml,shared/nofib-atom-driver.sml,atom-strict/benchmark.sml,shared/main.sml	3600	8388608	numeric-real,lists-streams,allocation-lifetimes,strict	large.positions	checked-numerical	implemented
++exact-reals-lazy	smoke	nofib	spectral/exact-reals	1	exact-reals-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/scs-rational.sml,shared/nofib-exact-reals.sml,shared/nofib-exact-reals-driver.sml,exact-reals-lazy/benchmark.sml,shared/main.sml	30	1048576	arithmetic-bigint,lists-streams,allocation-lifetimes,lazy	-	exact	implemented
++exact-reals-lazy	normal	nofib	spectral/exact-reals	10	exact-reals-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/scs-rational.sml,shared/nofib-exact-reals.sml,shared/nofib-exact-reals-driver.sml,exact-reals-lazy/benchmark.sml,shared/main.sml	600	4194304	arithmetic-bigint,lists-streams,allocation-lifetimes,lazy	-	exact	implemented
++exact-reals-lazy	large	nofib	spectral/exact-reals	60	exact-reals-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/scs-rational.sml,shared/nofib-exact-reals.sml,shared/nofib-exact-reals-driver.sml,exact-reals-lazy/benchmark.sml,shared/main.sml	3600	8388608	arithmetic-bigint,lists-streams,allocation-lifetimes,lazy	-	exact	implemented
++exact-reals-strict	smoke	nofib	spectral/exact-reals	1	exact-reals-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/scs-rational.sml,shared/nofib-exact-reals.sml,shared/nofib-exact-reals-driver.sml,exact-reals-strict/benchmark.sml,shared/main.sml	30	1048576	arithmetic-bigint,lists-streams,allocation-lifetimes,strict	-	exact	implemented
++exact-reals-strict	normal	nofib	spectral/exact-reals	10	exact-reals-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/scs-rational.sml,shared/nofib-exact-reals.sml,shared/nofib-exact-reals-driver.sml,exact-reals-strict/benchmark.sml,shared/main.sml	600	4194304	arithmetic-bigint,lists-streams,allocation-lifetimes,strict	-	exact	implemented
++exact-reals-strict	large	nofib	spectral/exact-reals	60	exact-reals-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/scs-rational.sml,shared/nofib-exact-reals.sml,shared/nofib-exact-reals-driver.sml,exact-reals-strict/benchmark.sml,shared/main.sml	3600	8388608	arithmetic-bigint,lists-streams,allocation-lifetimes,strict	-	exact	implemented
+diff --git a/scripts/benchmark-inventory.py b/scripts/benchmark-inventory.py
+index 11d7a667..35f7a8af 100644
+--- a/scripts/benchmark-inventory.py
++++ b/scripts/benchmark-inventory.py
+@@ -545,6 +545,10 @@ def build(source, root, lock):
+                     and "A kernel fragment from a program written by\n\t\tRon Legere" in header):
+                 authors.add("Ron Legere")
+                 item["evidence"].append(str(p.relative_to(root)) + ":attribution-header")
++            if (source == "nofib" and path == "spectral/exact-reals"
++                    and '-- Taken from "The worlds shortest correct exact real arithmetic program?"\n-- David Lester, Information and Computation 216, pp39-46, 2012, Elsevier' in header):
++                authors.add("David Lester")
++                item["evidence"].append(str(p.relative_to(root)) + ":paper-attribution")
+             if re.search(r"[Cc]opyright|[Ll]icen[sc]e|[Ww]ritten by|[Aa]uthor:|[Tt]ranslated", header):
+                 notices.append(str(p.relative_to(root)) + ":header")
+             for attribution in re.finditer(r"(?:[Ww]ritten|[Tt]ranslated|[Pp]orted|[Cc]ontributed)(?: to [^\n]*?)? by ([^\n]+)|[Aa]uthors?: ([^\n]+)", header):
+diff --git a/tests/benchmarks/test-inventory.py b/tests/benchmarks/test-inventory.py
+index e7082d45..ad5f4503 100644
+--- a/tests/benchmarks/test-inventory.py
++++ b/tests/benchmarks/test-inventory.py
+@@ -157,6 +157,25 @@ class InventoryTest(unittest.TestCase):
+                   "The Circuit Simulator example\nDifferent authors\nJanuary, 1998\n\n> main = return ()\n")
+         self.assertEqual(self.build("nofib")[0]["authors"], "not stated in scanned source headers")
+ 
++    def test_exact_reals_paper_attribution_is_recorded(self):
++        self.nofib_roots()
++        self.file("spectral/exact-reals/Makefile", "\n")
++        self.file("spectral/exact-reals/Main.hs",
++                  '-- Taken from "The worlds shortest correct exact real arithmetic program?"\n'
++                  '-- David Lester, Information and Computation 216, pp39-46, 2012, Elsevier\n'
++                  'main = print 0\n')
++        row = self.build("nofib")[0]
++        self.assertEqual(row["authors"], "David Lester")
++        self.assertIn("spectral/exact-reals/Main.hs:paper-attribution", row["evidence"])
++
++    def test_changed_exact_reals_paper_attribution_requires_review(self):
++        self.nofib_roots()
++        self.file("spectral/exact-reals/Makefile", "\n")
++        self.file("spectral/exact-reals/Main.hs",
++                  '-- Taken from a different paper\n-- David Lester, another work\nmain = print 0\n')
++        row = self.build("nofib")[0]
++        self.assertEqual(row["authors"], "not stated in scanned source headers")
++
+     def test_atom_multiline_attribution_is_recorded(self):
+         self.nofib_roots()
+         self.file("spectral/atom/Makefile", "\n")

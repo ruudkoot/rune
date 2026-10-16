@@ -1,0 +1,1 @@
+exact-reals-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/scs-rational.sml shared/nofib-exact-reals.sml shared/nofib-exact-reals-driver.sml exact-reals-lazy/benchmark.sml shared/main.sml	1	exact-reals-lazy/smoke.expected	-

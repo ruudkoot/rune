@@ -1,0 +1,27 @@
+{
+  "command": [
+    "timeout",
+    "600",
+    "bin/runevm",
+    "tests/out/benchmarks/exact-reals-originals/extra-ratio-pilot.rbc"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 1048576,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 12464,
+  "observed_minimum_available_kib": 19213040,
+  "peak_processes": [
+    {
+      "pid": 1557339,
+      "name": "timeout",
+      "rss_kib": 1796
+    },
+    {
+      "pid": 1557340,
+      "name": "runevm",
+      "rss_kib": 10668
+    }
+  ],
+  "elapsed_seconds": 139.15164731699042
+}

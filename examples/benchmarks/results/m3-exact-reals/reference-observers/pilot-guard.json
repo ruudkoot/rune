@@ -1,0 +1,27 @@
+{
+  "command": [
+    "timeout",
+    "600",
+    "bin/runevm",
+    "tests/out/benchmarks/exact-reals-originals/pilot.rbc"
+  ],
+  "exit": 124,
+  "guard_reason": null,
+  "rss_limit_kib": 1048576,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 12560,
+  "observed_minimum_available_kib": 20782080,
+  "peak_processes": [
+    {
+      "pid": 1442745,
+      "name": "timeout",
+      "rss_kib": 1796
+    },
+    {
+      "pid": 1442746,
+      "name": "runevm",
+      "rss_kib": 10764
+    }
+  ],
+  "elapsed_seconds": 600.0547929739696
+}

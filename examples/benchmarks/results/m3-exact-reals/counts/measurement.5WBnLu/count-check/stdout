@@ -1,0 +1,5 @@
+COUNT unbudgeted exact-reals-lazy normal rune
+COUNT unbudgeted exact-reals-lazy normal rune:opt
+COUNT unbudgeted exact-reals-lazy normal rune:new
+COUNT unbudgeted exact-reals-lazy normal rune:jit
+COUNT comparisons agree

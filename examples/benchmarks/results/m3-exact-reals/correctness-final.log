@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-exact-reals-parallel.vbv28fif
+PASS exact-reals-lazy smoke O2
+PASS exact-reals-lazy smoke O0
+PASS exact-reals-lazy smoke hosts
+PASS exact-reals-lazy normal O2
+PASS exact-reals-lazy normal hosts
+PASS exact-reals-strict smoke O0
+PASS exact-reals-strict smoke O2
+PASS exact-reals-strict smoke hosts
+PASS exact-reals-lazy normal O0
+PASS exact-reals-strict normal O2
+PASS exact-reals-strict normal hosts
+PASS exact-reals-strict normal O0

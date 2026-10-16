@@ -1,0 +1,611 @@
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 0.0000000000000000000000000000000000000000
+PASS exact-reals-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/scs-rational.sml]
+structure BenchScsRational : sig
+  structure I : <sig>
+  type t = IntInf.int * IntInf.int
+  val zero : t
+  val one : t
+  val gcd : IntInf.int * ?.intinf -> IntInf.int
+  val make : IntInf.int * ?.intinf -> IntInf.int * IntInf.int
+  val fromInt : int -> t
+  val add : t * t -> IntInf.int * IntInf.int
+  val sub : t * t -> IntInf.int * IntInf.int
+  val mul : t * t -> IntInf.int * IntInf.int
+  val divide : t * t -> IntInf.int * IntInf.int
+  val negative : t -> t
+  val absolute : t -> t
+  val compare : t * t -> order
+  val equal : t * t -> bool
+  val pow2 : int -> IntInf.int
+  val bits : IntInf.int -> int
+  val rounded : IntInf.int * IntInf.int -> IntInf.int
+  val real : t -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-exact-reals.sml]
+[autoloading]
+[autoloading done]
+functor BenchExactRealsFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure I : <sig>
+  structure R : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  type cr
+  type 'a node
+  val pow2 : int -> IntInf.int
+  val rounded : BenchScsRational.t -> IntInf.int
+  val sizeInBase : IntInf.int -> int
+  val bits : int -> <BaseFct>.<resultStr>.cr -> IntInf.int
+  val integer : IntInf.int -> <BaseFct>.<resultStr>.cr
+  val binary :
+      int
+       -> (IntInf.int * IntInf.int -> IntInf.int)
+       -> <BaseFct>.<resultStr>.cr * <BaseFct>.<resultStr>.cr
+       -> <BaseFct>.<resultStr>.cr
+  val add :
+      <BaseFct>.<resultStr>.cr * <BaseFct>.<resultStr>.cr
+       -> <BaseFct>.<resultStr>.cr
+  val negative : <BaseFct>.<resultStr>.cr -> <BaseFct>.<resultStr>.cr
+  val subtract :
+      <BaseFct>.<resultStr>.cr * <BaseFct>.<resultStr>.cr
+       -> <BaseFct>.<resultStr>.cr
+  val multiply :
+      <BaseFct>.<resultStr>.cr * <BaseFct>.<resultStr>.cr
+       -> <BaseFct>.<resultStr>.cr
+  val reciprocal : <BaseFct>.<resultStr>.cr -> <BaseFct>.<resultStr>.cr
+  val divide :
+      <BaseFct>.<resultStr>.cr * <BaseFct>.<resultStr>.cr
+       -> <BaseFct>.<resultStr>.cr
+  val div2n : <BaseFct>.<resultStr>.cr -> int -> <BaseFct>.<resultStr>.cr
+  val mul2n : <BaseFct>.<resultStr>.cr -> int -> <BaseFct>.<resultStr>.cr
+  val floorSqrt : ?.intinf -> IntInf.int
+  val squareRoot : <BaseFct>.<resultStr>.cr -> <BaseFct>.<resultStr>.cr
+  val take :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val coefficientScan :
+      (BenchScsRational.t * IntInf.int -> BenchScsRational.t)
+       -> BenchScsRational.t BenchStream.node BenchLazy.delay
+  val sinCoefficients : BenchScsRational.t BenchStream.node BenchLazy.delay
+  val cosCoefficients : BenchScsRational.t BenchStream.node BenchLazy.delay
+  val atanCoefficients :
+      (IntInf.int * IntInf.int) BenchStream.node BenchLazy.delay
+  val powerSeries :
+      BenchScsRational.t BenchStream.node BenchLazy.delay
+       -> (int -> int) -> <BaseFct>.<resultStr>.cr -> <BaseFct>.<resultStr>.cr
+  val sinDr : <BaseFct>.<resultStr>.cr -> <BaseFct>.<resultStr>.cr
+  val cosDr : <BaseFct>.<resultStr>.cr -> <BaseFct>.<resultStr>.cr
+  val atanDr : <BaseFct>.<resultStr>.cr -> <BaseFct>.<resultStr>.cr
+  val constants : <BaseFct>.<resultStr>.cr BenchLazy.delay option array
+  val constant : int -> <BaseFct>.<resultStr>.cr
+  val atan : <BaseFct>.<resultStr>.cr -> <BaseFct>.<resultStr>.cr
+  val rangeReduce :
+      <BaseFct>.<resultStr>.cr -> IntInf.int * <BaseFct>.<resultStr>.cr
+  val sinReduced :
+      ?.intinf * <BaseFct>.<resultStr>.cr -> <BaseFct>.<resultStr>.cr
+  val sine : <BaseFct>.<resultStr>.cr -> <BaseFct>.<resultStr>.cr
+  val cosine : <BaseFct>.<resultStr>.cr -> <BaseFct>.<resultStr>.cr
+  val digits : int
+  val digitsToBits : int -> int
+  val fromEnum : <BaseFct>.<resultStr>.cr -> int
+  val toEnum : int -> <BaseFct>.<resultStr>.cr
+  val sumSin : int -> <BaseFct>.<resultStr>.cr
+  val text : int -> <BaseFct>.<resultStr>.cr -> string
+  val run : int -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-exact-reals-driver.sml]
+functor BenchExactRealsDriverFn(K: sig
+  val run : int -> string
+end) :
+sig
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/exact-reals-lazy/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+[autoloading]
+[autoloading done]
+RESULT 0.0000000000000000000000000000000000000000
+PASS exact-reals-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/scs-rational.sml]
+structure BenchScsRational : sig
+  structure I : <sig>
+  type t = IntInf.int * IntInf.int
+  val zero : t
+  val one : t
+  val gcd : IntInf.int * ?.intinf -> IntInf.int
+  val make : IntInf.int * ?.intinf -> IntInf.int * IntInf.int
+  val fromInt : int -> t
+  val add : t * t -> IntInf.int * IntInf.int
+  val sub : t * t -> IntInf.int * IntInf.int
+  val mul : t * t -> IntInf.int * IntInf.int
+  val divide : t * t -> IntInf.int * IntInf.int
+  val negative : t -> t
+  val absolute : t -> t
+  val compare : t * t -> order
+  val equal : t * t -> bool
+  val pow2 : int -> IntInf.int
+  val bits : IntInf.int -> int
+  val rounded : IntInf.int * IntInf.int -> IntInf.int
+  val real : t -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-exact-reals.sml]
+[autoloading]
+[autoloading done]
+functor BenchExactRealsFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure I : <sig>
+  structure R : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  type cr
+  type 'a node
+  val pow2 : int -> IntInf.int
+  val rounded : BenchScsRational.t -> IntInf.int
+  val sizeInBase : IntInf.int -> int
+  val bits : int -> <BaseFct>.<resultStr>.cr -> IntInf.int
+  val integer : IntInf.int -> <BaseFct>.<resultStr>.cr
+  val binary :
+      int
+       -> (IntInf.int * IntInf.int -> IntInf.int)
+       -> <BaseFct>.<resultStr>.cr * <BaseFct>.<resultStr>.cr
+       -> <BaseFct>.<resultStr>.cr
+  val add :
+      <BaseFct>.<resultStr>.cr * <BaseFct>.<resultStr>.cr
+       -> <BaseFct>.<resultStr>.cr
+  val negative : <BaseFct>.<resultStr>.cr -> <BaseFct>.<resultStr>.cr
+  val subtract :
+      <BaseFct>.<resultStr>.cr * <BaseFct>.<resultStr>.cr
+       -> <BaseFct>.<resultStr>.cr
+  val multiply :
+      <BaseFct>.<resultStr>.cr * <BaseFct>.<resultStr>.cr
+       -> <BaseFct>.<resultStr>.cr
+  val reciprocal : <BaseFct>.<resultStr>.cr -> <BaseFct>.<resultStr>.cr
+  val divide :
+      <BaseFct>.<resultStr>.cr * <BaseFct>.<resultStr>.cr
+       -> <BaseFct>.<resultStr>.cr
+  val div2n : <BaseFct>.<resultStr>.cr -> int -> <BaseFct>.<resultStr>.cr
+  val mul2n : <BaseFct>.<resultStr>.cr -> int -> <BaseFct>.<resultStr>.cr
+  val floorSqrt : ?.intinf -> IntInf.int
+  val squareRoot : <BaseFct>.<resultStr>.cr -> <BaseFct>.<resultStr>.cr
+  val take :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val coefficientScan :
+      (BenchScsRational.t * IntInf.int -> BenchScsRational.t)
+       -> BenchScsRational.t BenchStream.node BenchLazy.delay
+  val sinCoefficients : BenchScsRational.t BenchStream.node BenchLazy.delay
+  val cosCoefficients : BenchScsRational.t BenchStream.node BenchLazy.delay
+  val atanCoefficients :
+      (IntInf.int * IntInf.int) BenchStream.node BenchLazy.delay
+  val powerSeries :
+      BenchScsRational.t BenchStream.node BenchLazy.delay
+       -> (int -> int) -> <BaseFct>.<resultStr>.cr -> <BaseFct>.<resultStr>.cr
+  val sinDr : <BaseFct>.<resultStr>.cr -> <BaseFct>.<resultStr>.cr
+  val cosDr : <BaseFct>.<resultStr>.cr -> <BaseFct>.<resultStr>.cr
+  val atanDr : <BaseFct>.<resultStr>.cr -> <BaseFct>.<resultStr>.cr
+  val constants : <BaseFct>.<resultStr>.cr BenchLazy.delay option array
+  val constant : int -> <BaseFct>.<resultStr>.cr
+  val atan : <BaseFct>.<resultStr>.cr -> <BaseFct>.<resultStr>.cr
+  val rangeReduce :
+      <BaseFct>.<resultStr>.cr -> IntInf.int * <BaseFct>.<resultStr>.cr
+  val sinReduced :
+      ?.intinf * <BaseFct>.<resultStr>.cr -> <BaseFct>.<resultStr>.cr
+  val sine : <BaseFct>.<resultStr>.cr -> <BaseFct>.<resultStr>.cr
+  val cosine : <BaseFct>.<resultStr>.cr -> <BaseFct>.<resultStr>.cr
+  val digits : int
+  val digitsToBits : int -> int
+  val fromEnum : <BaseFct>.<resultStr>.cr -> int
+  val toEnum : int -> <BaseFct>.<resultStr>.cr
+  val sumSin : int -> <BaseFct>.<resultStr>.cr
+  val text : int -> <BaseFct>.<resultStr>.cr -> string
+  val run : int -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-exact-reals-driver.sml]
+functor BenchExactRealsDriverFn(K: sig
+  val run : int -> string
+end) :
+sig
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/exact-reals-lazy/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+[autoloading]
+[autoloading done]
+RESULT 0.0000000000000000000000000000000000000000
+PASS exact-reals-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : 
+  sig
+    datatype 'a node
+      = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay | Nil
+    type 'a stream = 'a node BenchLazy.delay
+    val empty : unit -> 'a node BenchLazy.state ref
+    val cons : 'a BenchLazy.delay * 'a node BenchLazy.delay
+                -> 'a node BenchLazy.state ref
+    val singleton : 'a -> 'a node BenchLazy.state ref
+    val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+    val head : 'a node BenchLazy.state ref -> 'a
+    val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val iterate : ('a -> 'a)
+                   -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+    val fromList : 'a list -> 'a node BenchLazy.delay
+    val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+    val zipWith : ('a * 'b -> 'c)
+                   -> 'a node BenchLazy.delay
+                   -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+    val append : 'a node BenchLazy.delay
+                  -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val concatMap : ('a -> 'b node BenchLazy.delay)
+                     -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+    val filter : ('a -> bool)
+                  -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+    val dropWhile : ('a -> bool)
+                     -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+    val foldrStream : ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+                       -> 'b BenchLazy.state ref
+                       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+    val zipWith3 : ('a * 'b * 'c -> 'd)
+                    -> 'a node BenchLazy.delay
+                    -> 'b node BenchLazy.delay
+                    -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+    val span : ('a -> bool)
+                -> 'a node BenchLazy.delay
+                -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+    val nth : 'a node BenchLazy.delay -> int -> 'a
+    val take : int -> 'a node BenchLazy.delay -> 'a list
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+    val foldPrefix : ('a * 'b -> 'b)
+                      -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/scs-rational.sml]
+structure BenchScsRational : 
+  sig
+    structure I : <sig>
+    type t = IntInf.int * IntInf.int
+    val zero : t
+    val one : t
+    val gcd : IntInf.int * ?.intinf -> IntInf.int
+    val make : IntInf.int * ?.intinf -> IntInf.int * IntInf.int
+    val fromInt : int -> t
+    val add : t * t -> IntInf.int * IntInf.int
+    val sub : t * t -> IntInf.int * IntInf.int
+    val mul : t * t -> IntInf.int * IntInf.int
+    val divide : t * t -> IntInf.int * IntInf.int
+    val negative : t -> t
+    val absolute : t -> t
+    val compare : t * t -> order
+    val equal : t * t -> bool
+    val pow2 : int -> IntInf.int
+    val bits : IntInf.int -> int
+    val rounded : IntInf.int * IntInf.int -> IntInf.int
+    val real : t -> real
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-exact-reals.sml]
+functor BenchExactRealsFn(D: sig
+                             type 'a t
+                             val delay : (unit -> 'a) -> 'a t
+                             val force : 'a t -> 'a
+                           end) :
+                         
+                           sig
+                             structure I : <sig>
+                             structure R : <sig>
+                             structure L : <sig>
+                             structure S : <sig>
+                             type cr
+                             type 'a node
+                             val pow2 : int -> IntInf.int
+                             val rounded : BenchScsRational.t -> IntInf.int
+                             val sizeInBase : IntInf.int -> int
+                             val bits : int -> cr -> IntInf.int
+                             val integer : IntInf.int -> cr
+                             val binary : int
+                                           -> (IntInf.int * IntInf.int
+                                            -> IntInf.int)
+                                           -> cr * cr -> cr
+                             val add : cr * cr -> cr
+                             val negative : cr -> cr
+                             val subtract : cr * cr -> cr
+                             val multiply : cr * cr -> cr
+                             val reciprocal : cr -> cr
+                             val divide : cr * cr -> cr
+                             val div2n : cr -> int -> cr
+                             val mul2n : cr -> int -> cr
+                             val floorSqrt : ?.intinf -> IntInf.int
+                             val squareRoot : cr -> cr
+                             val take : int
+                                         -> 'a BenchStream.node 
+                                           BenchLazy.delay
+                                         -> 'a node D.t
+                             val coefficientScan : (BenchScsRational.t
+                                                     * IntInf.int
+                                                     -> BenchScsRational.t)
+                                                    -> BenchScsRational.t 
+                                                        BenchStream.node 
+                                                      BenchLazy.delay
+                             val sinCoefficients : BenchScsRational.t 
+                                                        BenchStream.node 
+                                                      BenchLazy.delay
+                             val cosCoefficients : BenchScsRational.t 
+                                                        BenchStream.node 
+                                                      BenchLazy.delay
+                             val atanCoefficients : (IntInf.int * IntInf.int) 
+                                                         BenchStream.node 
+                                                       BenchLazy.delay
+                             val powerSeries : BenchScsRational.t 
+                                                    BenchStream.node 
+                                                  BenchLazy.delay
+                                                -> (int -> int) -> cr -> cr
+                             val sinDr : cr -> cr
+                             val cosDr : cr -> cr
+                             val atanDr : cr -> cr
+                             val constants : cr BenchLazy.delay option array
+                             val constant : int -> cr
+                             val atan : cr -> cr
+                             val rangeReduce : cr -> IntInf.int * cr
+                             val sinReduced : ?.intinf * cr -> cr
+                             val sine : cr -> cr
+                             val cosine : cr -> cr
+                             val digits : int
+                             val digitsToBits : int -> int
+                             val fromEnum : cr -> int
+                             val toEnum : int -> cr
+                             val sumSin : int -> cr
+                             val text : int -> cr -> string
+                             val run : int -> string
+                           end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-exact-reals-driver.sml]
+functor BenchExactRealsDriverFn(K: sig val run : int -> string end) :
+                               sig val run : string list -> string end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/exact-reals-lazy/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Kernel : <sig>
+    structure Driver : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 0.0000000000000000000000000000000000000000
+PASS exact-reals-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+RESULT 0.0000000000000000000000000000000000000000
+PASS exact-reals-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 0.0000000000000000000000000000000000000000
+PASS exact-reals-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

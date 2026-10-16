@@ -1,0 +1,196 @@
+pi bits 0 3
+pi bits 1 6
+pi bits 2 13
+pi bits 8 804
+pi bits 32 13493037705
+pi bits 137 547342635041262974904156351058877841049928
+pi text 3.1415926535897932384626433832795028841972
+third bits 0 0
+third bits 1 1
+third bits 2 1
+third bits 8 85
+third bits 32 1431655765
+third bits 137 58074857287840164431082599668355108088491
+third text 0.3333333333333333333333333333333333333333
+negative-third bits 0 0
+negative-third bits 1 ~1
+negative-third bits 2 ~1
+negative-third bits 8 ~85
+negative-third bits 32 ~1431655765
+negative-third bits 137 ~58074857287840164431082599668355108088491
+negative-third text -0.3333333333333333333333333333333333333333
+sqrt-half bits 0 1
+sqrt-half bits 1 1
+sqrt-half bits 2 2
+sqrt-half bits 8 181
+sqrt-half bits 32 3037000499
+sqrt-half bits 137 123195376214018309911057291508544029146682
+sqrt-half text 0.7071067811865475244008443621048490392848
+sin-quarter bits 0 1
+sin-quarter bits 1 1
+sin-quarter bits 2 3
+sin-quarter bits 8 181
+sin-quarter bits 32 3037000500
+sin-quarter bits 137 123195376214018309911057291508544029146683
+sin-quarter text 0.7071067811865475244008443621048490392848
+cos-quarter bits 0 1
+cos-quarter bits 1 1
+cos-quarter bits 2 3
+cos-quarter bits 8 181
+cos-quarter bits 32 3037000500
+cos-quarter bits 137 123195376214018309911057291508544029146683
+cos-quarter text 0.7071067811865475244008443621048490392848
+sin-negative-quarter bits 0 ~1
+sin-negative-quarter bits 1 ~1
+sin-negative-quarter bits 2 ~3
+sin-negative-quarter bits 8 ~181
+sin-negative-quarter bits 32 ~3037000500
+sin-negative-quarter bits 137 ~123195376214018309911057291508544029146683
+sin-negative-quarter text -0.7071067811865475244008443621048490392848
+atan-minus-five bits 0 ~1
+atan-minus-five bits 1 ~3
+atan-minus-five bits 2 ~5
+atan-minus-five bits 8 ~352
+atan-minus-five bits 32 ~5898711378
+atan-minus-five bits 137 ~239280160618026076708435744021456425214883
+atan-minus-five text -1.3734007669450158608612719264449611486510
+atan-minus-one bits 0 ~1
+atan-minus-one bits 1 ~1
+atan-minus-one bits 2 ~3
+atan-minus-one bits 8 ~201
+atan-minus-one bits 32 ~3373259426
+atan-minus-one bits 137 ~136835658760315743726039087764719460262482
+atan-minus-one text -0.7853981633974483096156608458198757210493
+atan-minus-half bits 0 0
+atan-minus-half bits 1 ~1
+atan-minus-half bits 2 ~2
+atan-minus-half bits 8 ~119
+atan-minus-half bits 32 ~1991351318
+atan-minus-half bits 137 ~80778806173710396290215911734604125242222
+atan-minus-half text -0.4636476090008061162142562314612144020285
+atan-zero bits 0 0
+atan-zero bits 1 0
+atan-zero bits 2 0
+atan-zero bits 8 0
+atan-zero bits 32 0
+atan-zero bits 137 0
+atan-zero text 0.0000000000000000000000000000000000000000
+atan-fifth bits 0 0
+atan-fifth bits 1 0
+atan-fifth bits 2 1
+atan-fifth bits 8 51
+atan-fifth bits 32 847807474
+atan-fifth bits 137 34391156902605410743642431507982495310081
+atan-fifth text 0.1973955598498807583700497651947902934476
+atan-one bits 0 1
+atan-one bits 1 2
+atan-one bits 2 3
+atan-one bits 8 201
+atan-one bits 32 3373259426
+atan-one bits 137 136835658760315743726039087764719460262482
+atan-one text 0.7853981633974483096156608458198757210493
+atan-five bits 0 1
+atan-five bits 1 3
+atan-five bits 2 6
+atan-five bits 8 352
+atan-five bits 32 5898711378
+atan-five bits 137 239280160618026076708435744021456425214883
+atan-five text 1.3734007669450158608612719264449611486510
+pi bits 0 3
+pi bits 1 6
+pi bits 2 13
+pi bits 8 804
+pi bits 32 13493037705
+pi bits 137 547342635041262974904156351058877841049928
+pi text 3.1415926535897932384626433832795028841972
+third bits 0 0
+third bits 1 1
+third bits 2 1
+third bits 8 85
+third bits 32 1431655765
+third bits 137 58074857287840164431082599668355108088491
+third text 0.3333333333333333333333333333333333333333
+negative-third bits 0 0
+negative-third bits 1 ~1
+negative-third bits 2 ~1
+negative-third bits 8 ~85
+negative-third bits 32 ~1431655765
+negative-third bits 137 ~58074857287840164431082599668355108088491
+negative-third text -0.3333333333333333333333333333333333333333
+sqrt-half bits 0 1
+sqrt-half bits 1 1
+sqrt-half bits 2 2
+sqrt-half bits 8 181
+sqrt-half bits 32 3037000499
+sqrt-half bits 137 123195376214018309911057291508544029146682
+sqrt-half text 0.7071067811865475244008443621048490392848
+sin-quarter bits 0 1
+sin-quarter bits 1 1
+sin-quarter bits 2 3
+sin-quarter bits 8 181
+sin-quarter bits 32 3037000500
+sin-quarter bits 137 123195376214018309911057291508544029146683
+sin-quarter text 0.7071067811865475244008443621048490392848
+cos-quarter bits 0 1
+cos-quarter bits 1 1
+cos-quarter bits 2 3
+cos-quarter bits 8 181
+cos-quarter bits 32 3037000500
+cos-quarter bits 137 123195376214018309911057291508544029146683
+cos-quarter text 0.7071067811865475244008443621048490392848
+sin-negative-quarter bits 0 ~1
+sin-negative-quarter bits 1 ~1
+sin-negative-quarter bits 2 ~3
+sin-negative-quarter bits 8 ~181
+sin-negative-quarter bits 32 ~3037000500
+sin-negative-quarter bits 137 ~123195376214018309911057291508544029146683
+sin-negative-quarter text -0.7071067811865475244008443621048490392848
+atan-minus-five bits 0 ~1
+atan-minus-five bits 1 ~3
+atan-minus-five bits 2 ~5
+atan-minus-five bits 8 ~352
+atan-minus-five bits 32 ~5898711378
+atan-minus-five bits 137 ~239280160618026076708435744021456425214883
+atan-minus-five text -1.3734007669450158608612719264449611486510
+atan-minus-one bits 0 ~1
+atan-minus-one bits 1 ~1
+atan-minus-one bits 2 ~3
+atan-minus-one bits 8 ~201
+atan-minus-one bits 32 ~3373259426
+atan-minus-one bits 137 ~136835658760315743726039087764719460262482
+atan-minus-one text -0.7853981633974483096156608458198757210493
+atan-minus-half bits 0 0
+atan-minus-half bits 1 ~1
+atan-minus-half bits 2 ~2
+atan-minus-half bits 8 ~119
+atan-minus-half bits 32 ~1991351318
+atan-minus-half bits 137 ~80778806173710396290215911734604125242222
+atan-minus-half text -0.4636476090008061162142562314612144020285
+atan-zero bits 0 0
+atan-zero bits 1 0
+atan-zero bits 2 0
+atan-zero bits 8 0
+atan-zero bits 32 0
+atan-zero bits 137 0
+atan-zero text 0.0000000000000000000000000000000000000000
+atan-fifth bits 0 0
+atan-fifth bits 1 0
+atan-fifth bits 2 1
+atan-fifth bits 8 51
+atan-fifth bits 32 847807474
+atan-fifth bits 137 34391156902605410743642431507982495310081
+atan-fifth text 0.1973955598498807583700497651947902934476
+atan-one bits 0 1
+atan-one bits 1 2
+atan-one bits 2 3
+atan-one bits 8 201
+atan-one bits 32 3373259426
+atan-one bits 137 136835658760315743726039087764719460262482
+atan-one text 0.7853981633974483096156608458198757210493
+atan-five bits 0 1
+atan-five bits 1 3
+atan-five bits 2 6
+atan-five bits 8 352
+atan-five bits 32 5898711378
+atan-five bits 137 239280160618026076708435744021456425214883
+atan-five text 1.3734007669450158608612719264449611486510

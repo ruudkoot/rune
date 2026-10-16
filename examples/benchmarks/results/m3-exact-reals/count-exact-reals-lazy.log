@@ -1,0 +1,11 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (961 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=exact-reals-lazy' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.5WBnLu
+BENCH MEASURE exact-reals-lazy normal count
+COUNT unbudgeted exact-reals-lazy normal rune
+COUNT unbudgeted exact-reals-lazy normal rune:opt
+COUNT unbudgeted exact-reals-lazy normal rune:new
+COUNT unbudgeted exact-reals-lazy normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.5WBnLu/report.md

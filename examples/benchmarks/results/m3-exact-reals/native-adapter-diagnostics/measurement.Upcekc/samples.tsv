@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+exact-reals-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	5.52	4.55	1.12	661528	-	-	-	exact-reals-strict/native-mlton/build/compile
+exact-reals-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.01	0.00	0.00	3396	-	-	-	exact-reals-strict/native-mlton/correctness.0
+exact-reals-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.01	0.00	0.01	3432	-	-	-	exact-reals-strict/native-mlton/fresh.1
+exact-reals-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.52	0.51	0.05	36004	-	-	-	exact-reals-strict/native-smlnj-legacy/build/compile
+exact-reals-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.04	0.03	0.00	4980	-	-	-	exact-reals-strict/native-smlnj-legacy/correctness.0
+exact-reals-strict	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.03	0.03	0.00	4980	-	-	-	exact-reals-strict/native-smlnj-legacy/fresh.1
+exact-reals-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.34	0.24	0.06	39764	-	-	-	exact-reals-strict/native-polyml/build/compile
+exact-reals-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.01	0.00	0.00	9072	-	-	-	exact-reals-strict/native-polyml/correctness.0
+exact-reals-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.01	0.00	0.00	9012	-	-	-	exact-reals-strict/native-polyml/fresh.1

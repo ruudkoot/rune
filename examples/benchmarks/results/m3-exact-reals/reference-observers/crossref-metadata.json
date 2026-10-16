@@ -1,0 +1,903 @@
+{
+  "status": "ok",
+  "message-type": "work-list",
+  "message-version": "1.0.0",
+  "message": {
+    "facets": {},
+    "total-results": 78282,
+    "items": [
+      {
+        "indexed": {
+          "date-parts": [
+            [
+              2024,
+              8,
+              29
+            ]
+          ],
+          "date-time": "2024-08-29T07:09:34Z",
+          "timestamp": 1724915374956
+        },
+        "reference-count": 16,
+        "publisher": "Elsevier BV",
+        "license": [
+          {
+            "start": {
+              "date-parts": [
+                [
+                  2012,
+                  7,
+                  1
+                ]
+              ],
+              "date-time": "2012-07-01T00:00:00Z",
+              "timestamp": 1341100800000
+            },
+            "content-version": "tdm",
+            "delay-in-days": 0,
+            "URL": "https://www.elsevier.com/tdm/userlicense/1.0/"
+          },
+          {
+            "start": {
+              "date-parts": [
+                [
+                  2016,
+                  7,
+                  1
+                ]
+              ],
+              "date-time": "2016-07-01T00:00:00Z",
+              "timestamp": 1467331200000
+            },
+            "content-version": "vor",
+            "delay-in-days": 1461,
+            "URL": "https://www.elsevier.com/open-access/userlicense/1.0/"
+          }
+        ],
+        "content-domain": {
+          "domain": [],
+          "crossmark-restriction": false
+        },
+        "short-container-title": [
+          "Information and Computation"
+        ],
+        "published-print": {
+          "date-parts": [
+            [
+              2012,
+              7
+            ]
+          ]
+        },
+        "DOI": "10.1016/j.ic.2011.09.004",
+        "type": "journal-article",
+        "created": {
+          "date-parts": [
+            [
+              2012,
+              3,
+              30
+            ]
+          ],
+          "date-time": "2012-03-30T15:50:08Z",
+          "timestamp": 1333122608000
+        },
+        "page": "39-46",
+        "source": "Crossref",
+        "is-referenced-by-count": 2,
+        "special_numbering": "C",
+        "title": [
+          "The world\u02bcs shortest correct exact real arithmetic program?"
+        ],
+        "prefix": "10.1016",
+        "volume": "216",
+        "author": [
+          {
+            "given": "David R.",
+            "family": "Lester",
+            "sequence": "first",
+            "affiliation": [],
+            "role": [
+              {
+                "role": "author",
+                "vocabulary": "crossref"
+              }
+            ]
+          }
+        ],
+        "member": "78",
+        "reference": [
+          {
+            "key": "10.1016/j.ic.2011.09.004_br0010",
+            "unstructured": "J.-C. Bajard, M. Ercegovac, L. Imbert, F. Rico, Fast evaluation of elementary functions with combined shift-and-add and polynomial methods, in: RNC 4, 2000, pp. 75\u201387."
+          },
+          {
+            "key": "10.1016/j.ic.2011.09.004_br0020",
+            "first-page": "31",
+            "article-title": "Efficient reasoning about executable specifications in Coq",
+            "volume": "vol. 2410",
+            "author": "Barthe",
+            "year": "2002"
+          },
+          {
+            "key": "10.1016/j.ic.2011.09.004_br0030",
+            "doi-asserted-by": "crossref",
+            "first-page": "365",
+            "DOI": "10.1016/j.entcs.2008.03.027",
+            "article-title": "Implementing real numbers with RZ",
+            "volume": "202",
+            "author": "Bauer",
+            "year": "2008",
+            "journal-title": "Electronic Notes in Theoretical Computer Science"
+          },
+          {
+            "key": "10.1016/j.ic.2011.09.004_br0040",
+            "unstructured": "Coq Development Team, The Coq proof assistant reference manual version 8.0, Technical report, INRIA, April 2004, http://coq.inria.fr/doc/main.html."
+          },
+          {
+            "key": "10.1016/j.ic.2011.09.004_br0050",
+            "doi-asserted-by": "crossref",
+            "unstructured": "M. Daumas, G. Melquiond, C. Mu\u00f1oz, Guaranteed proofs using interval arithmetic, in: ARITH 17, 2005, pp. 188\u2013195.",
+            "DOI": "10.1109/ARITH.2005.25"
+          },
+          {
+            "key": "10.1016/j.ic.2011.09.004_br0060",
+            "series-title": "Proceedings of the 4th International Workshop",
+            "article-title": "A survey of exact arithmetic implementations",
+            "author": "Gowland",
+            "year": "2000"
+          },
+          {
+            "key": "10.1016/j.ic.2011.09.004_br0070",
+            "doi-asserted-by": "crossref",
+            "unstructured": "D. Lester, Using PVS to validate the inverse trigonometric functions of an exact arithmetic, in: Proceedings of the Seminar on Numerical Software with Result Verification, Dagstuhl, Germany, 2003, pp. 259\u2013273,.",
+            "DOI": "10.1007/978-3-540-24738-8_16"
+          },
+          {
+            "key": "10.1016/j.ic.2011.09.004_br0080",
+            "doi-asserted-by": "crossref",
+            "first-page": "203",
+            "DOI": "10.1016/S0304-3975(02)00226-8",
+            "article-title": "Using PVS to validate the algorithms of an exact arithmetic",
+            "volume": "291",
+            "author": "Lester",
+            "year": "2003",
+            "journal-title": "Theoretical Computer Science"
+          },
+          {
+            "key": "10.1016/j.ic.2011.09.004_br0090",
+            "unstructured": "V. M\u00e9nissier, Arithm\u00e9tique Exacte, PhD thesis, Universit\u00e9 Pierre et Marie Curie, Paris, December 1994."
+          },
+          {
+            "key": "10.1016/j.ic.2011.09.004_br0100",
+            "series-title": "Elementary Functions",
+            "author": "Muller",
+            "year": "1997"
+          },
+          {
+            "key": "10.1016/j.ic.2011.09.004_br0110",
+            "doi-asserted-by": "crossref",
+            "unstructured": "N. Muller, The iRRAM: Exact arithmetic in C++, CCA2000, 2000, pp. 222\u2013252.",
+            "DOI": "10.1007/3-540-45335-0_14"
+          },
+          {
+            "key": "10.1016/j.ic.2011.09.004_br0120",
+            "doi-asserted-by": "crossref",
+            "unstructured": "C. Mu\u00f1oz, D. Lester, Real number calculations and theorem proving, in: TPHOLs 18, 2005, pp. 239\u2013254.",
+            "DOI": "10.1007/11541868_13"
+          },
+          {
+            "key": "10.1016/j.ic.2011.09.004_br0130",
+            "doi-asserted-by": "crossref",
+            "unstructured": "M. Niqui, Formalising exact arithmetic, PhD thesis, Nijmegen University, 2004.",
+            "DOI": "10.1007/11494645_46"
+          },
+          {
+            "key": "10.1016/j.ic.2011.09.004_br0140",
+            "first-page": "748",
+            "article-title": "PVS: A prototype verification system",
+            "volume": "vol. 607",
+            "author": "Owre",
+            "year": "1992"
+          },
+          {
+            "key": "10.1016/j.ic.2011.09.004_br0150",
+            "article-title": "Isabelle: A Generic Theorem Prover",
+            "volume": "vol. 828",
+            "author": "Paulson",
+            "year": "1994"
+          },
+          {
+            "key": "10.1016/j.ic.2011.09.004_br0160",
+            "series-title": "Computability in Analysis and Physics",
+            "author": "Pour-El",
+            "year": "1989"
+          }
+        ],
+        "container-title": [
+          "Information and Computation"
+        ],
+        "language": "en",
+        "link": [
+          {
+            "URL": "https://api.elsevier.com/content/article/PII:S0890540112000727?httpAccept=text/xml",
+            "content-type": "text/xml",
+            "content-version": "vor",
+            "intended-application": "text-mining"
+          },
+          {
+            "URL": "https://api.elsevier.com/content/article/PII:S0890540112000727?httpAccept=text/plain",
+            "content-type": "text/plain",
+            "content-version": "vor",
+            "intended-application": "text-mining"
+          }
+        ],
+        "deposited": {
+          "date-parts": [
+            [
+              2019,
+              6,
+              26
+            ]
+          ],
+          "date-time": "2019-06-26T10:01:12Z",
+          "timestamp": 1561543272000
+        },
+        "score": 79.66479,
+        "resource": {
+          "primary": {
+            "URL": "https://linkinghub.elsevier.com/retrieve/pii/S0890540112000727"
+          }
+        },
+        "issued": {
+          "date-parts": [
+            [
+              2012,
+              7
+            ]
+          ]
+        },
+        "references-count": 16,
+        "alternative-id": [
+          "S0890540112000727"
+        ],
+        "URL": "https://doi.org/10.1016/j.ic.2011.09.004",
+        "ISSN": [
+          "0890-5401"
+        ],
+        "issn-type": [
+          {
+            "value": "0890-5401",
+            "type": "print"
+          }
+        ],
+        "published": {
+          "date-parts": [
+            [
+              2012,
+              7
+            ]
+          ]
+        }
+      },
+      {
+        "indexed": {
+          "date-parts": [
+            [
+              2024,
+              9,
+              6
+            ]
+          ],
+          "date-time": "2024-09-06T17:00:54Z",
+          "timestamp": 1725642054984
+        },
+        "publisher-location": "London",
+        "reference-count": 17,
+        "publisher": "Springer London",
+        "isbn-type": [
+          {
+            "type": "print",
+            "value": "9783540197607"
+          },
+          {
+            "type": "electronic",
+            "value": "9781447131960"
+          }
+        ],
+        "content-domain": {
+          "domain": [],
+          "crossmark-restriction": false
+        },
+        "published-print": {
+          "date-parts": [
+            [
+              1992
+            ]
+          ]
+        },
+        "DOI": "10.1007/978-1-4471-3196-0_18",
+        "type": "book-chapter",
+        "created": {
+          "date-parts": [
+            [
+              2011,
+              12,
+              11
+            ]
+          ],
+          "date-time": "2011-12-11T21:48:08Z",
+          "timestamp": 1323640088000
+        },
+        "page": "225-238",
+        "source": "Crossref",
+        "is-referenced-by-count": 7,
+        "title": [
+          "Vuillemin\u2019s Exact Real Arithmetic"
+        ],
+        "prefix": "10.1007",
+        "author": [
+          {
+            "given": "David R",
+            "family": "Lester",
+            "sequence": "first",
+            "affiliation": [],
+            "role": [
+              {
+                "role": "author",
+                "vocabulary": "crossref"
+              }
+            ]
+          }
+        ],
+        "member": "297",
+        "reference": [
+          {
+            "key": "18_CR1",
+            "volume-title": "An Introduction to Functional Programming",
+            "author": "RS Bird",
+            "year": "1988",
+            "unstructured": "R.S. Bird and P.L. Wadler. An Introduction to Functional Programming. Prentice-Hall Series in Computer Science. Prentice-Hall International (UK) Ltd., Hemel Hempstead, Hertfordshire, England, 1988."
+          },
+          {
+            "key": "18_CR2",
+            "doi-asserted-by": "publisher",
+            "DOI": "10.1007/978-3-642-61667-9",
+            "volume-title": "Constructive Analysis",
+            "author": "E Bishop",
+            "year": "1985",
+            "unstructured": "E. Bishop and D. Bridges. Constructive Analysis. Springer Verlag, 1985."
+          },
+          {
+            "key": "18_CR3",
+            "first-page": "43",
+            "volume-title": "Research Topics in Functional Programming",
+            "author": "H Boehm",
+            "year": "1990",
+            "unstructured": "H. Boehm and R. Cartwright. Exact real arithmetic: Formulating real numbers as functions. In D.A. Turner, editor, Research Topics in Functional Programming, University of Texas at Austin Year of Programming, pages 43\u201364. Addison-Wesley, 1990."
+          },
+          {
+            "key": "18_CR4",
+            "volume-title": "The Calculi of Lambda-Conversion",
+            "author": "A Church",
+            "year": "1941",
+            "unstructured": "A. Church. The Calculi of Lambda-Conversion. Princeton University Press, Princeton, N.J., 1941."
+          },
+          {
+            "unstructured": "Euclid. Elements.",
+            "key": "18_CR5"
+          },
+          {
+            "unstructured": "C.F. Gauss. Disquisitiones generales circa serium infinitam \n                  \n                    \n                  \n                  $$1 + \\frac{{\\alpha \\beta }}{{1.\\gamma }}x + etc.$$\n                 pars prior. In Werke, volume 3, pages 123\u2013162. K\u00f6niglichen Gesellschaft der Wissenschaften, G\u00f6ttingen, 1812.",
+            "key": "18_CR6"
+          },
+          {
+            "key": "18_CR7",
+            "volume-title": "Werke",
+            "author": "CF Gauss",
+            "year": "1876",
+            "unstructured": "C.F. Gauss. Werke, volume 3. K\u00f6niglichen Gesellschaft der Wissenschaften, G\u00f6ttingen, 1876."
+          },
+          {
+            "key": "18_CR8",
+            "volume-title": "Continued fraction arithmetic",
+            "author": "RW Gosper",
+            "year": "1980",
+            "unstructured": "R.W. Gosper. Continued fraction arithmetic. HAKMEM 101b, MIT, 1980."
+          },
+          {
+            "unstructured": "R.W. Gosper. Continued fraction arithmetic. Unpublished Draft Paper, 1981.",
+            "key": "18_CR9"
+          },
+          {
+            "key": "18_CR10",
+            "first-page": "8",
+            "volume-title": "An Introduction to Orwell 6.00",
+            "author": "Q Miller",
+            "year": "1990",
+            "unstructured": "Q. Miller and P. Wadler. An Introduction to Orwell 6.00. Programming Reasearch Group, 8\u201311 Keble Road, Oxford, UK, January 1990."
+          },
+          {
+            "key": "18_CR11",
+            "volume-title": "Arbitrary precision arithmetic using continued fractions",
+            "author": "SL Peyton Jones",
+            "year": "1530",
+            "unstructured": "S.L. Peyton Jones. Arbitrary precision arithmetic using continued fractions. Internal Note 1530, Deptartment of Computer Science, University College London, January 1984."
+          },
+          {
+            "key": "18_CR12",
+            "volume-title": "Perspectives in Mathematical Logic",
+            "author": "MB Pour-El",
+            "year": "1989",
+            "unstructured": "M.B. Pour-El and J.I. Richards. Computability in Analysis and Physics. Perspectives in Mathematical Logic. Springer-Verlag, Heidelberg, 1989."
+          },
+          {
+            "issue": "5",
+            "key": "18_CR13",
+            "doi-asserted-by": "publisher",
+            "first-page": "784",
+            "DOI": "10.1090/S0002-9939-1954-0063328-5",
+            "volume": "5",
+            "author": "HG Rice",
+            "year": "1954",
+            "unstructured": "H.G. Rice. Recursive real numbers. Proceedings of the American Mathematical Society, 5 (5): 784\u2013791, 1954.",
+            "journal-title": "Proceedings of the American Mathematical Society"
+          },
+          {
+            "key": "18_CR14",
+            "volume-title": "A Concise History of Mathematics",
+            "author": "DJ Struik",
+            "year": "1948",
+            "unstructured": "D.J. Struik. A Concise History of Mathematics. Dover Publications, Mineola, New York, 1948."
+          },
+          {
+            "issue": "3",
+            "key": "18_CR15",
+            "first-page": "230",
+            "volume": "42",
+            "author": "AM Turing",
+            "year": "1936",
+            "unstructured": "A.M. Turing. On computable numbers, with an application to the Entscheidungsproblem. Proceedings of the London Mathematical Society, 42 (3): 230\u2013265, 1936.",
+            "journal-title": "Proceedings of the London Mathematical Society"
+          },
+          {
+            "unstructured": "J. Vuillemin. Arithm\u00e9tic r\u00e9elle exacte par les fractions continues. Technical Report 760, Instituit National de Recherche en Informatique et en Automatique, Domaine de Voluceau, Roquencourt, BP 105, 78153 Le Chesnay Cedex, France, November 1987.",
+            "key": "18_CR16"
+          },
+          {
+            "key": "18_CR17",
+            "first-page": "3",
+            "volume-title": "Analytic Theory of Continued Fractions",
+            "author": "HS Wall",
+            "year": "1948",
+            "unstructured": "H.S. Wall. Analytic Theory of Continued Fractions. Van Nostrand, Inc., 250 Fourth Avenue, New York 3, 1948."
+          }
+        ],
+        "container-title": [
+          "Workshops in Computing",
+          "Functional Programming, Glasgow 1991"
+        ],
+        "link": [
+          {
+            "URL": "http://link.springer.com/content/pdf/10.1007/978-1-4471-3196-0_18",
+            "content-type": "unspecified",
+            "content-version": "vor",
+            "intended-application": "similarity-checking"
+          }
+        ],
+        "deposited": {
+          "date-parts": [
+            [
+              2019,
+              4,
+              21
+            ]
+          ],
+          "date-time": "2019-04-21T10:59:29Z",
+          "timestamp": 1555844369000
+        },
+        "score": 35.551414,
+        "resource": {
+          "primary": {
+            "URL": "http://link.springer.com/10.1007/978-1-4471-3196-0_18"
+          }
+        },
+        "issued": {
+          "date-parts": [
+            [
+              1992
+            ]
+          ]
+        },
+        "ISBN": [
+          "9783540197607",
+          "9781447131960"
+        ],
+        "references-count": 17,
+        "URL": "https://doi.org/10.1007/978-1-4471-3196-0_18",
+        "ISSN": [
+          "1431-1682"
+        ],
+        "issn-type": [
+          {
+            "type": "print",
+            "value": "1431-1682"
+          }
+        ],
+        "published": {
+          "date-parts": [
+            [
+              1992
+            ]
+          ]
+        }
+      },
+      {
+        "indexed": {
+          "date-parts": [
+            [
+              2026,
+              6,
+              8
+            ]
+          ],
+          "date-time": "2026-06-08T21:41:36Z",
+          "timestamp": 1780954896482,
+          "version": "3.54.1"
+        },
+        "reference-count": 0,
+        "publisher": "WORLD SCIENTIFIC",
+        "isbn-type": [
+          {
+            "value": "9789811245213",
+            "type": "print"
+          },
+          {
+            "value": "9789811245220",
+            "type": "electronic"
+          }
+        ],
+        "content-domain": {
+          "domain": [],
+          "crossmark-restriction": false
+        },
+        "published-print": {
+          "date-parts": [
+            [
+              2023,
+              4
+            ]
+          ]
+        },
+        "DOI": "10.1142/9789811245220_0003",
+        "type": "book-chapter",
+        "created": {
+          "date-parts": [
+            [
+              2023,
+              4,
+              3
+            ]
+          ],
+          "date-time": "2023-04-03T02:55:27Z",
+          "timestamp": 1680490527000
+        },
+        "page": "39-69",
+        "source": "Crossref",
+        "is-referenced-by-count": 0,
+        "title": [
+          "Logic for Exact Real Arithmetic: Multiplication"
+        ],
+        "prefix": "10.1142",
+        "author": [
+          {
+            "given": "Helmut",
+            "family": "Schwichtenberg",
+            "sequence": "first",
+            "affiliation": [
+              {
+                "name": "Mathematisches Institut, Ludwig-Maximilians-Universit\u00e4t M\u00fcnchen, Theresienstr., M\u00fcnchen, Germany"
+              }
+            ],
+            "role": [
+              {
+                "vocabulary": "crossref",
+                "role": "author"
+              }
+            ]
+          }
+        ],
+        "member": "219",
+        "published-online": {
+          "date-parts": [
+            [
+              2023,
+              4,
+              2
+            ]
+          ]
+        },
+        "container-title": [
+          "Mathematics for Computation (M4C)"
+        ],
+        "language": "en",
+        "deposited": {
+          "date-parts": [
+            [
+              2023,
+              4,
+              3
+            ]
+          ],
+          "date-time": "2023-04-03T02:55:42Z",
+          "timestamp": 1680490542000
+        },
+        "score": 32.336704,
+        "resource": {
+          "primary": {
+            "URL": "https://www.worldscientific.com/doi/10.1142/9789811245220_0003"
+          }
+        },
+        "issued": {
+          "date-parts": [
+            [
+              2023,
+              4
+            ]
+          ]
+        },
+        "ISBN": [
+          "9789811245213",
+          "9789811245220"
+        ],
+        "references-count": 0,
+        "alternative-id": [
+          "10.1142/9789811245220_0003",
+          "10.1142/12500"
+        ],
+        "URL": "https://doi.org/10.1142/9789811245220_0003",
+        "published": {
+          "date-parts": [
+            [
+              2023,
+              4
+            ]
+          ]
+        }
+      },
+      {
+        "indexed": {
+          "date-parts": [
+            [
+              2025,
+              10,
+              28
+            ]
+          ],
+          "date-time": "2025-10-28T00:24:49Z",
+          "timestamp": 1761611089566
+        },
+        "reference-count": 15,
+        "publisher": "Institute of Electrical and Electronics Engineers (IEEE)",
+        "issue": "8",
+        "license": [
+          {
+            "start": {
+              "date-parts": [
+                [
+                  1990,
+                  1,
+                  1
+                ]
+              ],
+              "date-time": "1990-01-01T00:00:00Z",
+              "timestamp": 631152000000
+            },
+            "content-version": "vor",
+            "delay-in-days": 0,
+            "URL": "https://ieeexplore.ieee.org/Xplorehelp/downloads/license-information/IEEE.html"
+          }
+        ],
+        "content-domain": {
+          "domain": [],
+          "crossmark-restriction": false
+        },
+        "short-container-title": [
+          "IEEE Trans. Comput."
+        ],
+        "published-print": {
+          "date-parts": [
+            [
+              1990
+            ]
+          ]
+        },
+        "DOI": "10.1109/12.57047",
+        "type": "journal-article",
+        "created": {
+          "date-parts": [
+            [
+              2002,
+              8,
+              24
+            ]
+          ],
+          "date-time": "2002-08-24T20:26:37Z",
+          "timestamp": 1030220797000
+        },
+        "page": "1087-1105",
+        "source": "Crossref",
+        "is-referenced-by-count": 74,
+        "title": [
+          "Exact real computer arithmetic with continued fractions"
+        ],
+        "prefix": "10.1109",
+        "volume": "39",
+        "author": [
+          {
+            "given": "J.E.",
+            "family": "Vuillemin",
+            "sequence": "first",
+            "affiliation": [],
+            "role": [
+              {
+                "role": "author",
+                "vocabulary": "crossref"
+              }
+            ]
+          }
+        ],
+        "member": "263",
+        "reference": [
+          {
+            "key": "ref10",
+            "doi-asserted-by": "publisher",
+            "DOI": "10.1145/29650.29673"
+          },
+          {
+            "key": "ref11",
+            "first-page": "115",
+            "volume": "12",
+            "author": "syntaxe",
+            "year": "1975",
+            "journal-title": "S\ufffdmantique et Axiomatique d'un"
+          },
+          {
+            "key": "ref12",
+            "author": "wall",
+            "year": "1948",
+            "journal-title": "Analytic Theory of Continued Fractions"
+          },
+          {
+            "key": "ref13",
+            "doi-asserted-by": "publisher",
+            "DOI": "10.1090/S0002-9947-1953-0053041-6"
+          },
+          {
+            "key": "ref14",
+            "doi-asserted-by": "publisher",
+            "DOI": "10.1007/BF02612324"
+          },
+          {
+            "key": "ref15",
+            "doi-asserted-by": "publisher",
+            "DOI": "10.1007/BF02592188"
+          },
+          {
+            "key": "ref4",
+            "author": "ouspenski",
+            "year": "1966",
+            "journal-title": "Le\ufffdons sur les fonctions calculables"
+          },
+          {
+            "key": "ref3",
+            "doi-asserted-by": "publisher",
+            "DOI": "10.1090/S0002-9939-1954-0063328-5"
+          },
+          {
+            "key": "ref6",
+            "doi-asserted-by": "publisher",
+            "DOI": "10.1016/0304-3975(80)90011-0"
+          },
+          {
+            "key": "ref5",
+            "doi-asserted-by": "crossref",
+            "DOI": "10.1007/978-3-642-61667-9",
+            "author": "bishop",
+            "year": "1985",
+            "journal-title": "Constructive Analysis"
+          },
+          {
+            "key": "ref8",
+            "author": "chailloux",
+            "year": "1982",
+            "journal-title": "LeLisp version 15 Manuel de r\ufffdf\ufffdrence"
+          },
+          {
+            "key": "ref7",
+            "doi-asserted-by": "publisher",
+            "DOI": "10.1145/319838.319860"
+          },
+          {
+            "key": "ref2",
+            "author": "church",
+            "year": "1941",
+            "journal-title": "The Calculi of Lambda Conversion"
+          },
+          {
+            "key": "ref1",
+            "doi-asserted-by": "publisher",
+            "DOI": "10.1112/plms/s2-42.1.230"
+          },
+          {
+            "key": "ref9",
+            "author": "knuth",
+            "year": "1981",
+            "journal-title": "The Art of Computer Programming Vol 2 Seminumerical Algorithms"
+          }
+        ],
+        "container-title": [
+          "IEEE Transactions on Computers"
+        ],
+        "link": [
+          {
+            "URL": "http://xplorestaging.ieee.org/ielx1/12/2065/00057047.pdf?arnumber=57047",
+            "content-type": "unspecified",
+            "content-version": "vor",
+            "intended-application": "similarity-checking"
+          }
+        ],
+        "deposited": {
+          "date-parts": [
+            [
+              2022,
+              1,
+              12
+            ]
+          ],
+          "date-time": "2022-01-12T16:23:32Z",
+          "timestamp": 1642004612000
+        },
+        "score": 29.710266,
+        "resource": {
+          "primary": {
+            "URL": "http://ieeexplore.ieee.org/document/57047/"
+          }
+        },
+        "issued": {
+          "date-parts": [
+            [
+              1990
+            ]
+          ]
+        },
+        "references-count": 15,
+        "journal-issue": {
+          "issue": "8"
+        },
+        "URL": "https://doi.org/10.1109/12.57047",
+        "ISSN": [
+          "0018-9340"
+        ],
+        "issn-type": [
+          {
+            "value": "0018-9340",
+            "type": "print"
+          }
+        ],
+        "published": {
+          "date-parts": [
+            [
+              1990
+            ]
+          ]
+        }
+      }
+    ],
+    "items-per-page": 4,
+    "query": {
+      "start-index": 0,
+      "search-terms": null
+    }
+  }
+}

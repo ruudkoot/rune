@@ -1,0 +1,11 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+ M scripts/benchmark-inventory.py
+ M tests/benchmarks/test-inventory.py
+?? examples/benchmarks/exact-reals-lazy/
+?? examples/benchmarks/exact-reals-strict/
+?? examples/benchmarks/shared/nofib-exact-reals-driver.sml
+?? examples/benchmarks/shared/nofib-exact-reals.sml
+?? tests/benchmarks/check-exact-reals.sh
+?? tests/benchmarks/data/exact-reals/
+?? tests/benchmarks/exact-reals-tests.sml

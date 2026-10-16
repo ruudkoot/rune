@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+exact-reals-lazy	normal	rune	O2	compile	0	0	pass	1.90	1.97	0.10	135376	-	-	-	exact-reals-lazy/rune/build/compile
+exact-reals-lazy	normal	rune	O2	correctness	0	0	pass	54.15	52.93	0.02	10628	12711790362	13359272512	336770664	exact-reals-lazy/rune/correctness.0
+exact-reals-lazy	normal	rune	O2	count	1	1	pass	49.73	50.74	0.02	10776	12711790362	13359272512	336770664	exact-reals-lazy/rune/fresh.1
+exact-reals-lazy	normal	rune:opt	O2	compile	0	0	pass	1.35	1.37	0.07	135368	-	-	-	exact-reals-lazy/rune-opt/build/compile
+exact-reals-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.33	0.19	0.05	13768	-	-	-	exact-reals-lazy/rune-opt/build/native-compile
+exact-reals-lazy	normal	rune:opt	O2	correctness	0	0	pass	21.23	20.29	0.01	11252	12711790362	13359272512	336770664	exact-reals-lazy/rune-opt/correctness.0
+exact-reals-lazy	normal	rune:opt	O2	count	1	1	pass	19.16	20.48	0.02	11300	12711790362	13359272512	336770664	exact-reals-lazy/rune-opt/fresh.1
+exact-reals-lazy	normal	rune:new	O2	compile	0	0	pass	1.42	1.45	0.07	135376	-	-	-	exact-reals-lazy/rune-new/build/compile
+exact-reals-lazy	normal	rune:new	O2	correctness	0	0	pass	39.90	40.25	0.04	10880	7245704344	13359272512	336770664	exact-reals-lazy/rune-new/correctness.0
+exact-reals-lazy	normal	rune:new	O2	count	1	1	pass	43.88	41.96	0.03	10900	7245704344	13359272512	336770664	exact-reals-lazy/rune-new/fresh.1
+exact-reals-lazy	normal	rune:jit	O2	compile	0	0	pass	1.44	1.44	0.07	135224	-	-	-	exact-reals-lazy/rune-jit/build/compile
+exact-reals-lazy	normal	rune:jit	O2	correctness	0	0	pass	14.47	15.64	0.01	12392	7245704344	13359272512	336770664	exact-reals-lazy/rune-jit/correctness.0
+exact-reals-lazy	normal	rune:jit	O2	count	1	1	pass	17.35	15.95	0.03	12276	7245704344	13359272512	336770664	exact-reals-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

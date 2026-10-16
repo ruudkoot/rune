@@ -1,0 +1,15 @@
+{
+  "doi": "10.1016/j.ic.2011.09.004",
+  "title": "The world's shortest correct exact real arithmetic program?",
+  "author": "David R. Lester",
+  "fulltext": "https://www.cs.man.ac.uk/~bparsia/2017/introexercise/lester1_unblanked.pdf",
+  "reviewed_on": "2026-10-17",
+  "reviewed_sections": [
+    "3",
+    "4",
+    "5",
+    "6",
+    "Appendix A"
+  ],
+  "scope": "Algorithmic error bounds and source correspondence; no formal verification claim for SML"
+}

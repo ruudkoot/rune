@@ -1,0 +1,8 @@
+{
+  "mpmath": "1.2.1",
+  "decimal_digits": 120,
+  "scaled_integer_checks": 84,
+  "maximum_scaled_error": "0.976049692451388530026308346745389581097489823292027152268022373039887053556907948431648951853444871834470589983298672637",
+  "decimal_text_checks": 14,
+  "scope": "independent numerical reference for GHC approximants, not a formal proof"
+}
