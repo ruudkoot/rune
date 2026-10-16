@@ -1310,3 +1310,35 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 matching bytecode comparisons across seven compiler builds.
 runedoc and runeopt also agree. [The complete transcript](validation/oct16-multilayer-804-acceptance.log)
 records the run. All 41 inventory tests pass and all 861 entries validate.
+
+## M5 mutable-body integration and exact bitmap output, 2026-10-16
+
+Two imports bring the catalogue to 272 programs and 810 profiles. [All 56
+smoke/normal cases](results/m5-game-numerical/correctness.tsv) pass on Rune's four
+engines at both levels and all six managed native hosts. Twenty semantic and
+negative checks pass all ten configurations at both levels. Eight normal
+count samples pass the combined comparison with unchanged budgets. Six serial
+native smoke samples additionally validate MLton, SML/NJ and Poly/ML adapters.
+Instrumented counts and single-sample diagnostics remain separate from headline timings.
+
+N-body retains mutable records, source constants, force-product association,
+momentum/energy order and velocity-before-position passes. Every run resets
+state and checks energies and all 35 body fields. Original full-size states
+and independent 60-digit smoke/normal integration agree within reviewed bounds.
+Mandelbrot retains refs, cached differences, source stopping, per-pixel exceptions,
+carried byte state and exact P4 layout. Modulo-256 Word8 preserves observed
+source bytes. BinIO compares every output byte and EOF with bounded memory.
+Independent direct-complex/row packing agrees through normal; the complete
+32,000,015-byte original large fixture is retained with its identity.
+
+Source/notice identities preserve Revised BSD CRLF bytes. Representation,
+input/reset and validation costs are documented. Negative tests reject state
+errors and perturbed, truncated or extra bitmap data. No prerequisite
+compiler/runtime feature or universal large SML execution is claimed.
+M5 remains in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 810 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 matching bytecode comparisons across seven compiler builds.
+runedoc and runeopt also agree. [The complete transcript](validation/oct16-game-numerical-810-acceptance.log)
+records the run. All 41 inventory tests pass and all 861 entries validate.
