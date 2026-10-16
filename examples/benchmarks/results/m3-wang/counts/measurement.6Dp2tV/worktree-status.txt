@@ -1,0 +1,9 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/shared/wang-driver.sml
+?? examples/benchmarks/shared/wang.sml
+?? examples/benchmarks/wang-lazy/
+?? examples/benchmarks/wang-strict/
+?? tests/benchmarks/check-wang.sh
+?? tests/benchmarks/data/wang/
+?? tests/benchmarks/wang-tests.sml

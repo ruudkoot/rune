@@ -1,0 +1,6 @@
+{'host': 'smlnj-legacy', 'version': '110.99.9', 'mode': 'default', 'exit': 1, 'summary': [('37', '2')], 'failures': ['DETAIL wang numeric index=0 observed=1.3237708816028E~310 expected=1', 'FAIL wang/strict-nonuniform-5-source-pairing-and-reciprocals -- false', 'DETAIL wang numeric index=0 observed=nan expected=1', 'FAIL wang/strict-nonuniform-7-source-pairing-and-reciprocals -- false'], 'fatal': []}
+{'host': 'smlnj-legacy', 'version': '110.99.9', 'mode': 'nursery64m', 'exit': 0, 'summary': [('37', '0')], 'failures': [], 'fatal': []}
+{'host': 'smlnj32', 'version': '110.99.9', 'mode': 'default', 'exit': 1, 'summary': [], 'failures': [], 'fatal': ['/home/ruud/.local/rune-hosts/smlnj32/bin/sml: Fatal error -- bad object tag 25, obj = 0xf7b58c58, desc = 0xf52d3b64']}
+{'host': 'smlnj32', 'version': '110.99.9', 'mode': 'nursery64m', 'exit': 0, 'summary': [('37', '0')], 'failures': [], 'fatal': []}
+{'host': 'smlnj-dev', 'version': '2026.2', 'mode': 'default', 'exit': 1, 'summary': [('37', '1')], 'failures': ['DETAIL wang numeric index=0 observed=nan expected=1', 'FAIL wang/strict-nonuniform-7-source-pairing-and-reciprocals -- false'], 'fatal': []}
+{'host': 'smlnj-dev', 'version': '2026.2', 'mode': 'nursery64m', 'exit': 0, 'summary': [('37', '0')], 'failures': [], 'fatal': []}

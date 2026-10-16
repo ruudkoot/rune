@@ -1,0 +1,11 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (925 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=wang-lazy' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.7h1aQt
+BENCH MEASURE wang-lazy normal count
+COUNT unbudgeted wang-lazy normal rune
+COUNT unbudgeted wang-lazy normal rune:opt
+COUNT unbudgeted wang-lazy normal rune:new
+COUNT unbudgeted wang-lazy normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.7h1aQt/report.md

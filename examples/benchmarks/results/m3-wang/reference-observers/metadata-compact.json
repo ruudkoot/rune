@@ -1,0 +1,26 @@
+[
+  {
+    "profile": "smoke",
+    "n": 25,
+    "count": 650,
+    "maximum_error": 2.4091839634365897e-13,
+    "source_repetitions": 500,
+    "one_line_checksum": "66805/1375"
+  },
+  {
+    "profile": "normal",
+    "n": 80,
+    "count": 6480,
+    "maximum_error": 1.9195756095768957e-13,
+    "source_repetitions": 500,
+    "one_line_checksum": "631490/13200"
+  },
+  {
+    "profile": "large",
+    "n": 150,
+    "count": 22650,
+    "maximum_error": 5.377920331284258e-13,
+    "source_repetitions": 500,
+    "one_line_checksum": "2181430/45750"
+  }
+]

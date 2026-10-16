@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-wang-parallel.ke21gdl8
+PASS wang-lazy smoke O2
+PASS wang-lazy smoke O0
+PASS wang-lazy smoke hosts
+PASS wang-lazy normal O2
+PASS wang-lazy normal O0
+PASS wang-strict smoke O0
+PASS wang-strict smoke O2
+PASS wang-strict smoke hosts
+PASS wang-lazy normal hosts
+PASS wang-strict normal O0
+PASS wang-strict normal O2
+PASS wang-strict normal hosts

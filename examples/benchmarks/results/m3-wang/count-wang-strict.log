@@ -1,0 +1,11 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (925 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=wang-strict' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.6Dp2tV
+BENCH MEASURE wang-strict normal count
+COUNT unbudgeted wang-strict normal rune
+COUNT unbudgeted wang-strict normal rune:opt
+COUNT unbudgeted wang-strict normal rune:new
+COUNT unbudgeted wang-strict normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.6Dp2tV/report.md

@@ -1,0 +1,27 @@
+{
+  "legacy-381": {
+    "id": 5292190959,
+    "number": 381,
+    "html_url": "https://github.com/smlnj/legacy/issues/381",
+    "title": "`Int64.int` value is sometimes corrupted",
+    "state": "open",
+    "created_at": "2026-08-30T12:59:39Z",
+    "updated_at": "2026-09-29T16:54:43Z",
+    "closed_at": null
+  },
+  "smlnj-394": {
+    "id": 5269194399,
+    "number": 394,
+    "html_url": "https://github.com/smlnj/smlnj/issues/394",
+    "title": "`Int64.int` value is sometimes corrupted",
+    "state": "closed",
+    "created_at": "2026-08-27T15:18:22Z",
+    "updated_at": "2026-09-30T01:01:51Z",
+    "closed_at": "2026-09-30T01:01:51Z"
+  },
+  "resolution_comment_urls": [
+    "https://github.com/smlnj/smlnj/issues/394#issuecomment-5750145843",
+    "https://github.com/smlnj/smlnj/issues/394#issuecomment-5901993103"
+  ],
+  "fetched_on": "2026-10-16"
+}

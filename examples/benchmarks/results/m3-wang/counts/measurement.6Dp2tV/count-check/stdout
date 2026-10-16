@@ -1,0 +1,5 @@
+COUNT unbudgeted wang-strict normal rune
+COUNT unbudgeted wang-strict normal rune:opt
+COUNT unbudgeted wang-strict normal rune:new
+COUNT unbudgeted wang-strict normal rune:jit
+COUNT comparisons agree

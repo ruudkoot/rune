@@ -1,0 +1,1 @@
+PASS independent mutable blocked model: all original 29780 uniform values and 124 nonuniform values agree bit for bit; source f_dist indexing retained

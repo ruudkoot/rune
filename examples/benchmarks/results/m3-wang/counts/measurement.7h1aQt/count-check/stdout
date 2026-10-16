@@ -1,0 +1,5 @@
+COUNT unbudgeted wang-lazy normal rune
+COUNT unbudgeted wang-lazy normal rune:opt
+COUNT unbudgeted wang-lazy normal rune:new
+COUNT unbudgeted wang-lazy normal rune:jit
+COUNT comparisons agree

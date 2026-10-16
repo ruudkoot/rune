@@ -1,0 +1,1 @@
+wang-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/wang.sml shared/wang-driver.sml wang-lazy/benchmark.sml shared/main.sml	80 500	wang-lazy/normal.expected	-

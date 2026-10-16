@@ -1,0 +1,2 @@
+*.values -text -whitespace
+*.input -text -whitespace

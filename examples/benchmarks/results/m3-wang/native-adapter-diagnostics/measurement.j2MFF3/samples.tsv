@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+wang-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	4.51	3.68	1.02	668648	-	-	-	wang-strict/native-mlton/build/compile
+wang-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2820	-	-	-	wang-strict/native-mlton/correctness.0
+wang-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2792	-	-	-	wang-strict/native-mlton/fresh.1
+wang-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.57	0.58	0.02	37560	-	-	-	wang-strict/native-smlnj-legacy/build/compile
+wang-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.01	0.00	4296	-	-	-	wang-strict/native-smlnj-legacy/correctness.0
+wang-strict	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.00	0.00	4332	-	-	-	wang-strict/native-smlnj-legacy/fresh.1
+wang-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.39	0.18	0.10	38420	-	-	-	wang-strict/native-polyml/build/compile
+wang-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.01	0.00	0.00	7028	-	-	-	wang-strict/native-polyml/correctness.0
+wang-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	6984	-	-	-	wang-strict/native-polyml/fresh.1

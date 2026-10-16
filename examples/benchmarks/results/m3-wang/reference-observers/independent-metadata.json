@@ -1,0 +1,35 @@
+[
+  {
+    "n": 2,
+    "count": 6,
+    "original_blocked_model_bit_mismatches": 0,
+    "maximum_difference_from_manufactured_flattened_solution": 1.1398496240601506
+  },
+  {
+    "n": 3,
+    "count": 12,
+    "original_blocked_model_bit_mismatches": 0,
+    "maximum_difference_from_manufactured_flattened_solution": 1.8616025831109353
+  },
+  {
+    "n": 4,
+    "count": 20,
+    "original_blocked_model_bit_mismatches": 0,
+    "maximum_difference_from_manufactured_flattened_solution": 1.7256816137955138
+  },
+  {
+    "n": 5,
+    "count": 30,
+    "original_blocked_model_bit_mismatches": 0,
+    "maximum_difference_from_manufactured_flattened_solution": 1.849733024704622
+  },
+  {
+    "n": 7,
+    "count": 56,
+    "original_blocked_model_bit_mismatches": 0,
+    "maximum_difference_from_manufactured_flattened_solution": 2.1
+  },
+  {
+    "source_scope": "Do not replace source f_dist indexing with a flattened scalar tridiagonal solver; their nonuniform results differ. The selected uniform fixed benchmark agrees with one within recorded bounds."
+  }
+]

@@ -1,0 +1,166 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : 
+  sig
+    datatype 'a node
+      = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay | Nil
+    type 'a stream = 'a node BenchLazy.delay
+    val empty : unit -> 'a node BenchLazy.state ref
+    val cons : 'a BenchLazy.delay * 'a node BenchLazy.delay
+                -> 'a node BenchLazy.state ref
+    val singleton : 'a -> 'a node BenchLazy.state ref
+    val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+    val head : 'a node BenchLazy.state ref -> 'a
+    val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val iterate : ('a -> 'a)
+                   -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+    val fromList : 'a list -> 'a node BenchLazy.delay
+    val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+    val zipWith : ('a * 'b -> 'c)
+                   -> 'a node BenchLazy.delay
+                   -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+    val append : 'a node BenchLazy.delay
+                  -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val concatMap : ('a -> 'b node BenchLazy.delay)
+                     -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+    val filter : ('a -> bool)
+                  -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+    val dropWhile : ('a -> bool)
+                     -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+    val foldrStream : ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+                       -> 'b BenchLazy.state ref
+                       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+    val zipWith3 : ('a * 'b * 'c -> 'd)
+                    -> 'a node BenchLazy.delay
+                    -> 'b node BenchLazy.delay
+                    -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+    val span : ('a -> bool)
+                -> 'a node BenchLazy.delay
+                -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+    val nth : 'a node BenchLazy.delay -> int -> 'a
+    val take : int -> 'a node BenchLazy.delay -> 'a list
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+    val foldPrefix : ('a * 'b -> 'b)
+                      -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/wang.sml]
+functor BenchWangFn(D: sig
+                       type 'a t
+                       val delay : (unit -> 'a) -> 'a t
+                       val force : 'a t -> 'a
+                     end) :
+                   
+                     sig
+                       type 'a node
+                       type 'a seq
+                       type row
+                       type rowcell
+                       val empty : unit -> 'a node D.t
+                       val cons : 'a D.t * 'a node D.t -> 'a node D.t
+                       val head : 'a node D.t -> 'a D.t
+                       val tail : 'a node D.t -> 'a node D.t
+                       val last : 'a node D.t -> 'a D.t
+                       val init : 'a node D.t -> 'a node D.t
+                       val map : ('a D.t -> 'b D.t)
+                                  -> 'a node D.t -> 'b node D.t
+                       val append : 'a node D.t
+                                     -> (unit -> 'a node D.t) -> 'a node D.t
+                       val replicate : int -> 'a D.t -> 'a node D.t
+                       val zip2 : 'a node D.t
+                                   -> 'b node D.t
+                                   -> ('a D.t * 'b D.t) node D.t
+                       val zip3 : 'a node D.t
+                                   -> 'b node D.t
+                                   -> 'c node D.t
+                                   -> ('a D.t * 'b D.t * 'c D.t) node D.t
+                       val a : rowcell -> real
+                       val b : rowcell -> real
+                       val c : rowcell -> real
+                       val rhs : rowcell -> real
+                       val real : 'a -> 'a D.t
+                       val row : 'a * 'b * 'c * 'd
+                                  -> ('a D.t * 'b D.t * 'c D.t * 'd D.t) D.t
+                       val el21 : (real D.t * real D.t * real D.t * real D.t) 
+                                       node D.t
+                                   -> row node D.t
+                       val el22 : row node D.t -> row node D.t
+                       val el23 : row node D.t -> row node D.t
+                       val el2 : (real D.t * real D.t * real D.t * real D.t) 
+                                      node D.t
+                                  -> row node D.t
+                       val eldia : (real D.t * real D.t * real D.t * real D.t) 
+                                        node D.t
+                                    -> row node D.t
+                       val el1 : (rowcell * rowcell) D.t
+                                  -> (real D.t * real D.t * real D.t
+                                     * real D.t) D.t
+                       val el31 : row node D.t -> rowcell -> real node D.t
+                       val el3 : rowcell * row node D.t * rowcell
+                                  -> real node D.t
+                       val matrix : int
+                                     -> (real D.t * real D.t * real D.t
+                                              * real D.t) node D.t node D.t
+                       val solution : (real D.t * real D.t * real D.t
+                                                * real D.t) node D.t node D.t
+                                       -> real node D.t node D.t
+                       val values : int -> real node D.t node D.t
+                       val checkValue : real -> unit
+                       structure L : <sig>
+                       structure S : <sig>
+                       val text : string
+                                   -> char BenchStream.node BenchLazy.delay
+                       val concatenate : (unit
+                                             -> 'a BenchStream.node 
+                                                 BenchLazy.state ref) list
+                                          -> 'a BenchStream.node 
+                                              BenchLazy.state ref
+                       val render : int
+                                     -> char BenchStream.node BenchLazy.state 
+                                       ref * int ref
+                       val digest : char BenchStream.node BenchLazy.state ref
+                                     * int * int
+                                     -> int * int
+                       val run : int -> string
+                     end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/wang-driver.sml]
+functor BenchWangDriverFn(K: sig val run : int -> string end) :
+                         sig val run : string list -> string end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/wang-lazy/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Kernel : <sig>
+    structure Driver : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 500:631490/13200:6500
+PASS wang-lazy
+SUMMARY 1 checks, 0 failed

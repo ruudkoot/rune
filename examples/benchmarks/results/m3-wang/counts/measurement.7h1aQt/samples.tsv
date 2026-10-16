@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+wang-lazy	normal	rune	O2	compile	0	0	pass	1.50	1.36	0.15	135436	-	-	-	wang-lazy/rune/build/compile
+wang-lazy	normal	rune	O2	correctness	0	0	pass	37.49	37.64	0.03	18684	6412017932	17984805000	541171563	wang-lazy/rune/correctness.0
+wang-lazy	normal	rune	O2	count	1	1	pass	34.56	34.67	0.02	18712	6412017932	17984805000	541171563	wang-lazy/rune/fresh.1
+wang-lazy	normal	rune:opt	O2	compile	0	0	pass	1.41	1.41	0.08	135352	-	-	-	wang-lazy/rune-opt/build/compile
+wang-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.30	0.15	0.05	12552	-	-	-	wang-lazy/rune-opt/build/native-compile
+wang-lazy	normal	rune:opt	O2	correctness	0	0	pass	18.66	19.90	0.02	19372	6412017932	17984805000	541171563	wang-lazy/rune-opt/correctness.0
+wang-lazy	normal	rune:opt	O2	count	1	1	pass	18.56	17.52	0.05	19336	6412017932	17984805000	541171563	wang-lazy/rune-opt/fresh.1
+wang-lazy	normal	rune:new	O2	compile	0	0	pass	1.33	1.39	0.08	135244	-	-	-	wang-lazy/rune-new/build/compile
+wang-lazy	normal	rune:new	O2	correctness	0	0	pass	35.05	34.94	0.04	18832	3971995166	17984805000	541171563	wang-lazy/rune-new/correctness.0
+wang-lazy	normal	rune:new	O2	count	1	1	pass	35.26	35.31	0.04	18876	3971995166	17984805000	541171563	wang-lazy/rune-new/fresh.1
+wang-lazy	normal	rune:jit	O2	compile	0	0	pass	1.31	1.36	0.06	135324	-	-	-	wang-lazy/rune-jit/build/compile
+wang-lazy	normal	rune:jit	O2	correctness	0	0	pass	19.33	18.21	0.02	20068	3971995166	17984805000	541171563	wang-lazy/rune-jit/correctness.0
+wang-lazy	normal	rune:jit	O2	count	1	1	pass	16.62	17.86	0.03	20072	3971995166	17984805000	541171563	wang-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

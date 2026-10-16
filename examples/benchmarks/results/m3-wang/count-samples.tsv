@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+wang-lazy	normal	rune	O2	count	1	1	pass	34.56	34.67	0.02	18712	6412017932	17984805000	541171563	counts/measurement.7h1aQt/wang-lazy/rune/fresh.1
+wang-lazy	normal	rune:opt	O2	count	1	1	pass	18.56	17.52	0.05	19336	6412017932	17984805000	541171563	counts/measurement.7h1aQt/wang-lazy/rune-opt/fresh.1
+wang-lazy	normal	rune:new	O2	count	1	1	pass	35.26	35.31	0.04	18876	3971995166	17984805000	541171563	counts/measurement.7h1aQt/wang-lazy/rune-new/fresh.1
+wang-lazy	normal	rune:jit	O2	count	1	1	pass	16.62	17.86	0.03	20072	3971995166	17984805000	541171563	counts/measurement.7h1aQt/wang-lazy/rune-jit/fresh.1
+wang-strict	normal	rune	O2	count	1	1	pass	13.08	13.85	0.01	10496	3344825462	10620352976	317067062	counts/measurement.6Dp2tV/wang-strict/rune/fresh.1
+wang-strict	normal	rune:opt	O2	count	1	1	pass	6.98	7.41	0.00	10880	3344825462	10620352976	317067062	counts/measurement.6Dp2tV/wang-strict/rune-opt/fresh.1
+wang-strict	normal	rune:new	O2	count	1	1	pass	18.20	17.20	0.01	10504	2009634686	10620352976	317067062	counts/measurement.6Dp2tV/wang-strict/rune-new/fresh.1
+wang-strict	normal	rune:jit	O2	count	1	1	pass	7.96	8.41	0.02	11712	2009634686	10620352976	317067062	counts/measurement.6Dp2tV/wang-strict/rune-jit/fresh.1

@@ -1,0 +1,27 @@
+{
+  "command": [
+    "timeout",
+    "600",
+    "bin/runevm",
+    "tests/out/benchmarks/wang-originals/driver-pilot.rbc"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 1048576,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 20480,
+  "observed_minimum_available_kib": 20467068,
+  "peak_processes": [
+    {
+      "pid": 497305,
+      "name": "timeout",
+      "rss_kib": 1796
+    },
+    {
+      "pid": 497306,
+      "name": "runevm",
+      "rss_kib": 18684
+    }
+  ],
+  "elapsed_seconds": 48.56631842197385
+}

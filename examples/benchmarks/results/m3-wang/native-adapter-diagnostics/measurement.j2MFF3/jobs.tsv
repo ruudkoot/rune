@@ -1,0 +1,1 @@
+wang-strict	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/wang.sml shared/wang-driver.sml wang-strict/benchmark.sml shared/main.sml	25 1	wang-strict/smoke.expected	-
