@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+last-piece-lazy	normal	rune	O2	compile	0	0	pass	2.22	2.13	0.10	135228	-	-	-	last-piece-lazy/rune/build/compile
+last-piece-lazy	normal	rune	O2	correctness	0	0	pass	6.80	6.42	0.68	526432	1108931819	1346738384	23666418	last-piece-lazy/rune/correctness.0
+last-piece-lazy	normal	rune	O2	count	1	1	pass	6.14	6.22	0.57	526404	1108931819	1346738384	23666418	last-piece-lazy/rune/fresh.1
+last-piece-lazy	normal	rune:opt	O2	compile	0	0	pass	2.94	2.94	0.17	135228	-	-	-	last-piece-lazy/rune-opt/build/compile
+last-piece-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.42	0.25	0.05	17756	-	-	-	last-piece-lazy/rune-opt/build/native-compile
+last-piece-lazy	normal	rune:opt	O2	correctness	0	0	pass	2.55	2.11	0.59	527088	1108931819	1346738384	23666418	last-piece-lazy/rune-opt/correctness.0
+last-piece-lazy	normal	rune:opt	O2	count	1	1	pass	2.93	2.38	0.68	527096	1108931819	1346738384	23666418	last-piece-lazy/rune-opt/fresh.1
+last-piece-lazy	normal	rune:new	O2	compile	0	0	pass	2.01	1.97	0.11	135284	-	-	-	last-piece-lazy/rune-new/build/compile
+last-piece-lazy	normal	rune:new	O2	correctness	0	0	pass	8.04	5.28	1.15	526592	482002951	1346738384	23666418	last-piece-lazy/rune-new/correctness.0
+last-piece-lazy	normal	rune:new	O2	count	1	1	pass	5.14	4.58	0.55	526604	482002951	1346738384	23666418	last-piece-lazy/rune-new/fresh.1
+last-piece-lazy	normal	rune:jit	O2	compile	0	0	pass	1.77	1.84	0.08	135260	-	-	-	last-piece-lazy/rune-jit/build/compile
+last-piece-lazy	normal	rune:jit	O2	correctness	0	0	pass	1.90	1.63	0.48	528204	482002951	1346738384	23666418	last-piece-lazy/rune-jit/correctness.0
+last-piece-lazy	normal	rune:jit	O2	count	1	1	pass	2.14	1.77	0.61	528248	482002951	1346738384	23666418	last-piece-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

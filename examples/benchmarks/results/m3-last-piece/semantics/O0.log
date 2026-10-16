@@ -1,0 +1,1011 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS last-piece/source-map-prefix-shapes-ascending
+PASS last-piece/source-map-prefix-shapes-descending
+PASS last-piece/source-map-prefix-shapes-zigzag
+PASS last-piece/source-map-prefix-shapes-permuted
+PASS last-piece/initial-board
+PASS last-piece/pick-one-reversed-prefix
+PASS last-piece/remaining-pieces-delayed-and-shared
+PASS last-piece/lazy-root-and-child-demand
+PASS last-piece/offset-bounds-and-collision
+PASS last-piece/fit-anchor-source-precondition
+PASS last-piece/complete-lazy-prefix-0
+PASS last-piece/complete-strict-prefix-0
+PASS last-piece/complete-lazy-prefix-2
+PASS last-piece/complete-strict-prefix-2
+PASS last-piece/complete-lazy-prefix-8
+PASS last-piece/complete-strict-prefix-8
+PASS last-piece/source-search-node-statistics
+PASS last-piece/wrong-board-rejected
+PASS last-piece/truncated-rejected
+PASS last-piece/extra-rejected
+SUMMARY 20 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+PASS last-piece/source-map-prefix-shapes-ascending
+PASS last-piece/source-map-prefix-shapes-descending
+PASS last-piece/source-map-prefix-shapes-zigzag
+PASS last-piece/source-map-prefix-shapes-permuted
+PASS last-piece/initial-board
+PASS last-piece/pick-one-reversed-prefix
+PASS last-piece/remaining-pieces-delayed-and-shared
+PASS last-piece/lazy-root-and-child-demand
+PASS last-piece/offset-bounds-and-collision
+PASS last-piece/fit-anchor-source-precondition
+PASS last-piece/complete-lazy-prefix-0
+PASS last-piece/complete-strict-prefix-0
+PASS last-piece/complete-lazy-prefix-2
+PASS last-piece/complete-strict-prefix-2
+PASS last-piece/complete-lazy-prefix-8
+PASS last-piece/complete-strict-prefix-8
+PASS last-piece/source-search-node-statistics
+PASS last-piece/wrong-board-rejected
+PASS last-piece/truncated-rejected
+PASS last-piece/extra-rejected
+SUMMARY 20 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+PASS last-piece/source-map-prefix-shapes-ascending
+PASS last-piece/source-map-prefix-shapes-descending
+PASS last-piece/source-map-prefix-shapes-zigzag
+PASS last-piece/source-map-prefix-shapes-permuted
+PASS last-piece/initial-board
+PASS last-piece/pick-one-reversed-prefix
+PASS last-piece/remaining-pieces-delayed-and-shared
+PASS last-piece/lazy-root-and-child-demand
+PASS last-piece/offset-bounds-and-collision
+PASS last-piece/fit-anchor-source-precondition
+PASS last-piece/complete-lazy-prefix-0
+PASS last-piece/complete-strict-prefix-0
+PASS last-piece/complete-lazy-prefix-2
+PASS last-piece/complete-strict-prefix-2
+PASS last-piece/complete-lazy-prefix-8
+PASS last-piece/complete-strict-prefix-8
+PASS last-piece/source-search-node-statistics
+PASS last-piece/wrong-board-rejected
+PASS last-piece/truncated-rejected
+PASS last-piece/extra-rejected
+SUMMARY 20 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+PASS last-piece/source-map-prefix-shapes-ascending
+PASS last-piece/source-map-prefix-shapes-descending
+PASS last-piece/source-map-prefix-shapes-zigzag
+PASS last-piece/source-map-prefix-shapes-permuted
+PASS last-piece/initial-board
+PASS last-piece/pick-one-reversed-prefix
+PASS last-piece/remaining-pieces-delayed-and-shared
+PASS last-piece/lazy-root-and-child-demand
+PASS last-piece/offset-bounds-and-collision
+PASS last-piece/fit-anchor-source-precondition
+PASS last-piece/complete-lazy-prefix-0
+PASS last-piece/complete-strict-prefix-0
+PASS last-piece/complete-lazy-prefix-2
+PASS last-piece/complete-strict-prefix-2
+PASS last-piece/complete-lazy-prefix-8
+PASS last-piece/complete-strict-prefix-8
+PASS last-piece/source-search-node-statistics
+PASS last-piece/wrong-board-rejected
+PASS last-piece/truncated-rejected
+PASS last-piece/extra-rejected
+SUMMARY 20 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 1048576 KiB
+PASS last-piece/source-map-prefix-shapes-ascending
+PASS last-piece/source-map-prefix-shapes-descending
+PASS last-piece/source-map-prefix-shapes-zigzag
+PASS last-piece/source-map-prefix-shapes-permuted
+PASS last-piece/initial-board
+PASS last-piece/pick-one-reversed-prefix
+PASS last-piece/remaining-pieces-delayed-and-shared
+PASS last-piece/lazy-root-and-child-demand
+PASS last-piece/offset-bounds-and-collision
+PASS last-piece/fit-anchor-source-precondition
+PASS last-piece/complete-lazy-prefix-0
+PASS last-piece/complete-strict-prefix-0
+PASS last-piece/complete-lazy-prefix-2
+PASS last-piece/complete-strict-prefix-2
+PASS last-piece/complete-lazy-prefix-8
+PASS last-piece/complete-strict-prefix-8
+PASS last-piece/source-search-node-statistics
+PASS last-piece/wrong-board-rejected
+PASS last-piece/truncated-rejected
+PASS last-piece/extra-rejected
+SUMMARY 20 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/puzzle-map.sml]
+structure BenchPuzzleMap : sig
+  type square = int * int
+  datatype board = Bin of int * square * char * board * board | Tip
+  val size : board -> int
+  val leaf : square -> char -> board
+  val compare : (int * int) * (int * int) -> order
+  val lookup : int * int -> board -> char option
+  val balanceL : square -> char -> board -> board -> board
+  val balanceR : square -> char -> board -> board -> board
+  val insert : int * int -> char -> board -> board
+  val toList : board -> (square * char) list
+  val shape : board -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/last-piece-data.sml]
+structure BenchLastPieceData : sig
+  val pieces : (char * (int * int) list list * (int * int) list list) list
+  val firstSolution : ((int * int) * char) list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-last-piece.sml]
+functor BenchLastPieceFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure M : <sig>
+  type sex
+  type piece
+  type solution
+  type siblings
+  type candidates
+  val flip : <BaseFct>.<resultStr>.sex -> <BaseFct>.<resultStr>.sex
+  val next : 'a * int -> 'a * int
+  val extendMaybe :
+      BenchPuzzleMap.board -> int * int -> char -> BenchPuzzleMap.board option
+  val fit :
+      BenchPuzzleMap.board
+       -> int * int -> char -> (int * int) list -> BenchPuzzleMap.board option
+  val pieces : <BaseFct>.<resultStr>.piece list
+  val initial : BenchPuzzleMap.board BenchLazy.state ref
+  val choices :
+      <BaseFct>.<resultStr>.sex
+       -> <BaseFct>.<resultStr>.piece list
+       -> <BaseFct>.<resultStr>.piece list
+       -> <BaseFct>.<resultStr>.candidates D.t
+  val search :
+      int * int
+       -> <BaseFct>.<resultStr>.sex
+       -> BenchPuzzleMap.board
+       -> <BaseFct>.<resultStr>.piece list D.t
+       -> <BaseFct>.<resultStr>.solution D.t
+  val attempts :
+      int * int
+       -> <BaseFct>.<resultStr>.sex
+       -> BenchPuzzleMap.board
+       -> <BaseFct>.<resultStr>.candidates D.t
+       -> <BaseFct>.<resultStr>.siblings D.t
+  val input : int -> BenchPuzzleMap.board * <BaseFct>.<resultStr>.piece list
+  val solve : int -> <BaseFct>.<resultStr>.solution D.t
+  type tree
+  val statistics : <BaseFct>.<resultStr>.solution D.t -> int * int * int
+  val render : <BaseFct>.<resultStr>.solution D.t -> (string -> unit) -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/last-piece-check.sml]
+[autoloading]
+[autoloading done]
+functor LastPieceCheckFn(K: sig
+  type tree
+  val solve : int -> tree
+  val render : tree -> (string -> unit) -> int
+end) :
+sig
+  val run : int -> string -> int * int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/last-piece-tests.sml]
+[autoloading]
+[autoloading done]
+PASS last-piece/source-map-prefix-shapes-ascending
+PASS last-piece/source-map-prefix-shapes-descending
+PASS last-piece/source-map-prefix-shapes-zigzag
+PASS last-piece/source-map-prefix-shapes-permuted
+PASS last-piece/initial-board
+PASS last-piece/pick-one-reversed-prefix
+PASS last-piece/remaining-pieces-delayed-and-shared
+PASS last-piece/lazy-root-and-child-demand
+PASS last-piece/offset-bounds-and-collision
+PASS last-piece/fit-anchor-source-precondition
+PASS last-piece/complete-lazy-prefix-0
+PASS last-piece/complete-strict-prefix-0
+PASS last-piece/complete-lazy-prefix-2
+PASS last-piece/complete-strict-prefix-2
+PASS last-piece/complete-lazy-prefix-8
+PASS last-piece/complete-strict-prefix-8
+PASS last-piece/source-search-node-statistics
+PASS last-piece/wrong-board-rejected
+PASS last-piece/truncated-rejected
+PASS last-piece/extra-rejected
+structure LastPieceNeed : sig
+  structure M : <sig>
+  datatype sex = Female | Male
+  datatype piece
+    = Piece of char * (int * int) list list * (int * int) list list
+  datatype solution
+    = Choose of <BaseFct>.<resultStr>.siblings D.t
+    | Failure of BenchPuzzleMap.board * (int * int)
+    | Soln of BenchPuzzleMap.board
+  datatype siblings
+    = More of <BaseFct>.<resultStr>.solution D.t
+               * <BaseFct>.<resultStr>.siblings D.t
+    | NoSolutions
+  datatype candidates
+    = CEnd
+    | Candidate of char * (int * int) list
+                    * <BaseFct>.<resultStr>.piece list D.t
+                    * <BaseFct>.<resultStr>.candidates D.t
+  val flip : <BaseFct>.<resultStr>.sex -> <BaseFct>.<resultStr>.sex
+  val next : 'a * int -> 'a * int
+  val extendMaybe :
+      BenchPuzzleMap.board -> int * int -> char -> BenchPuzzleMap.board option
+  val fit :
+      BenchPuzzleMap.board
+       -> int * int -> char -> (int * int) list -> BenchPuzzleMap.board option
+  val pieces : <BaseFct>.<resultStr>.piece list
+  val initial : BenchPuzzleMap.board BenchLazy.state ref
+  val choices :
+      <BaseFct>.<resultStr>.sex
+       -> <BaseFct>.<resultStr>.piece list
+       -> <BaseFct>.<resultStr>.piece list
+       -> <BaseFct>.<resultStr>.candidates D.t
+  val search :
+      int * int
+       -> <BaseFct>.<resultStr>.sex
+       -> BenchPuzzleMap.board
+       -> <BaseFct>.<resultStr>.piece list D.t
+       -> <BaseFct>.<resultStr>.solution D.t
+  val attempts :
+      int * int
+       -> <BaseFct>.<resultStr>.sex
+       -> BenchPuzzleMap.board
+       -> <BaseFct>.<resultStr>.candidates D.t
+       -> <BaseFct>.<resultStr>.siblings D.t
+  val input : int -> BenchPuzzleMap.board * <BaseFct>.<resultStr>.piece list
+  val solve : int -> <BaseFct>.<resultStr>.solution D.t
+  type tree = solution BenchNeed.t
+  val statistics : <BaseFct>.<resultStr>.solution D.t -> int * int * int
+  val render : <BaseFct>.<resultStr>.solution D.t -> (string -> unit) -> int
+end
+structure LastPieceStrict : sig
+  structure M : <sig>
+  datatype sex = Female | Male
+  datatype piece
+    = Piece of char * (int * int) list list * (int * int) list list
+  datatype solution
+    = Choose of <BaseFct>.<resultStr>.siblings D.t
+    | Failure of BenchPuzzleMap.board * (int * int)
+    | Soln of BenchPuzzleMap.board
+  datatype siblings
+    = More of <BaseFct>.<resultStr>.solution D.t
+               * <BaseFct>.<resultStr>.siblings D.t
+    | NoSolutions
+  datatype candidates
+    = CEnd
+    | Candidate of char * (int * int) list
+                    * <BaseFct>.<resultStr>.piece list D.t
+                    * <BaseFct>.<resultStr>.candidates D.t
+  val flip : <BaseFct>.<resultStr>.sex -> <BaseFct>.<resultStr>.sex
+  val next : 'a * int -> 'a * int
+  val extendMaybe :
+      BenchPuzzleMap.board -> int * int -> char -> BenchPuzzleMap.board option
+  val fit :
+      BenchPuzzleMap.board
+       -> int * int -> char -> (int * int) list -> BenchPuzzleMap.board option
+  val pieces : <BaseFct>.<resultStr>.piece list
+  val initial : BenchPuzzleMap.board BenchLazy.state ref
+  val choices :
+      <BaseFct>.<resultStr>.sex
+       -> <BaseFct>.<resultStr>.piece list
+       -> <BaseFct>.<resultStr>.piece list
+       -> <BaseFct>.<resultStr>.candidates D.t
+  val search :
+      int * int
+       -> <BaseFct>.<resultStr>.sex
+       -> BenchPuzzleMap.board
+       -> <BaseFct>.<resultStr>.piece list D.t
+       -> <BaseFct>.<resultStr>.solution D.t
+  val attempts :
+      int * int
+       -> <BaseFct>.<resultStr>.sex
+       -> BenchPuzzleMap.board
+       -> <BaseFct>.<resultStr>.candidates D.t
+       -> <BaseFct>.<resultStr>.siblings D.t
+  val input : int -> BenchPuzzleMap.board * <BaseFct>.<resultStr>.piece list
+  val solve : int -> <BaseFct>.<resultStr>.solution D.t
+  type tree = solution BenchStrict.t
+  val statistics : <BaseFct>.<resultStr>.solution D.t -> int * int * int
+  val render : <BaseFct>.<resultStr>.solution D.t -> (string -> unit) -> int
+end
+structure LastPieceNeedCheck : sig
+  val run : int -> string -> int * int
+end
+structure LastPieceStrictCheck : sig
+  val run : int -> string -> int * int
+end
+structure LastPieceTests : sig
+  structure N : <sig>
+  structure M : <sig>
+  val ids : LastPieceNeed.piece list -> char list
+  val orders : (string * int list) list
+  val rejects : string -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 20 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/puzzle-map.sml]
+structure BenchPuzzleMap : sig
+  type square = int * int
+  datatype board = Bin of int * square * char * board * board | Tip
+  val size : board -> int
+  val leaf : square -> char -> board
+  val compare : (int * int) * (int * int) -> order
+  val lookup : int * int -> board -> char option
+  val balanceL : square -> char -> board -> board -> board
+  val balanceR : square -> char -> board -> board -> board
+  val insert : int * int -> char -> board -> board
+  val toList : board -> (square * char) list
+  val shape : board -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/last-piece-data.sml]
+structure BenchLastPieceData : sig
+  val pieces : (char * (int * int) list list * (int * int) list list) list
+  val firstSolution : ((int * int) * char) list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-last-piece.sml]
+functor BenchLastPieceFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure M : <sig>
+  type sex
+  type piece
+  type solution
+  type siblings
+  type candidates
+  val flip : <BaseFct>.<resultStr>.sex -> <BaseFct>.<resultStr>.sex
+  val next : 'a * int -> 'a * int
+  val extendMaybe :
+      BenchPuzzleMap.board -> int * int -> char -> BenchPuzzleMap.board option
+  val fit :
+      BenchPuzzleMap.board
+       -> int * int -> char -> (int * int) list -> BenchPuzzleMap.board option
+  val pieces : <BaseFct>.<resultStr>.piece list
+  val initial : BenchPuzzleMap.board BenchLazy.state ref
+  val choices :
+      <BaseFct>.<resultStr>.sex
+       -> <BaseFct>.<resultStr>.piece list
+       -> <BaseFct>.<resultStr>.piece list
+       -> <BaseFct>.<resultStr>.candidates D.t
+  val search :
+      int * int
+       -> <BaseFct>.<resultStr>.sex
+       -> BenchPuzzleMap.board
+       -> <BaseFct>.<resultStr>.piece list D.t
+       -> <BaseFct>.<resultStr>.solution D.t
+  val attempts :
+      int * int
+       -> <BaseFct>.<resultStr>.sex
+       -> BenchPuzzleMap.board
+       -> <BaseFct>.<resultStr>.candidates D.t
+       -> <BaseFct>.<resultStr>.siblings D.t
+  val input : int -> BenchPuzzleMap.board * <BaseFct>.<resultStr>.piece list
+  val solve : int -> <BaseFct>.<resultStr>.solution D.t
+  type tree
+  val statistics : <BaseFct>.<resultStr>.solution D.t -> int * int * int
+  val render : <BaseFct>.<resultStr>.solution D.t -> (string -> unit) -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/last-piece-check.sml]
+[autoloading]
+[autoloading done]
+functor LastPieceCheckFn(K: sig
+  type tree
+  val solve : int -> tree
+  val render : tree -> (string -> unit) -> int
+end) :
+sig
+  val run : int -> string -> int * int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/last-piece-tests.sml]
+[autoloading]
+[autoloading done]
+PASS last-piece/source-map-prefix-shapes-ascending
+PASS last-piece/source-map-prefix-shapes-descending
+PASS last-piece/source-map-prefix-shapes-zigzag
+PASS last-piece/source-map-prefix-shapes-permuted
+PASS last-piece/initial-board
+PASS last-piece/pick-one-reversed-prefix
+PASS last-piece/remaining-pieces-delayed-and-shared
+PASS last-piece/lazy-root-and-child-demand
+PASS last-piece/offset-bounds-and-collision
+PASS last-piece/fit-anchor-source-precondition
+PASS last-piece/complete-lazy-prefix-0
+PASS last-piece/complete-strict-prefix-0
+PASS last-piece/complete-lazy-prefix-2
+PASS last-piece/complete-strict-prefix-2
+PASS last-piece/complete-lazy-prefix-8
+PASS last-piece/complete-strict-prefix-8
+PASS last-piece/source-search-node-statistics
+PASS last-piece/wrong-board-rejected
+PASS last-piece/truncated-rejected
+PASS last-piece/extra-rejected
+structure LastPieceNeed : sig
+  structure M : <sig>
+  datatype sex = Female | Male
+  datatype piece
+    = Piece of char * (int * int) list list * (int * int) list list
+  datatype solution
+    = Choose of <BaseFct>.<resultStr>.siblings D.t
+    | Failure of BenchPuzzleMap.board * (int * int)
+    | Soln of BenchPuzzleMap.board
+  datatype siblings
+    = More of <BaseFct>.<resultStr>.solution D.t
+               * <BaseFct>.<resultStr>.siblings D.t
+    | NoSolutions
+  datatype candidates
+    = CEnd
+    | Candidate of char * (int * int) list
+                    * <BaseFct>.<resultStr>.piece list D.t
+                    * <BaseFct>.<resultStr>.candidates D.t
+  val flip : <BaseFct>.<resultStr>.sex -> <BaseFct>.<resultStr>.sex
+  val next : 'a * int -> 'a * int
+  val extendMaybe :
+      BenchPuzzleMap.board -> int * int -> char -> BenchPuzzleMap.board option
+  val fit :
+      BenchPuzzleMap.board
+       -> int * int -> char -> (int * int) list -> BenchPuzzleMap.board option
+  val pieces : <BaseFct>.<resultStr>.piece list
+  val initial : BenchPuzzleMap.board BenchLazy.state ref
+  val choices :
+      <BaseFct>.<resultStr>.sex
+       -> <BaseFct>.<resultStr>.piece list
+       -> <BaseFct>.<resultStr>.piece list
+       -> <BaseFct>.<resultStr>.candidates D.t
+  val search :
+      int * int
+       -> <BaseFct>.<resultStr>.sex
+       -> BenchPuzzleMap.board
+       -> <BaseFct>.<resultStr>.piece list D.t
+       -> <BaseFct>.<resultStr>.solution D.t
+  val attempts :
+      int * int
+       -> <BaseFct>.<resultStr>.sex
+       -> BenchPuzzleMap.board
+       -> <BaseFct>.<resultStr>.candidates D.t
+       -> <BaseFct>.<resultStr>.siblings D.t
+  val input : int -> BenchPuzzleMap.board * <BaseFct>.<resultStr>.piece list
+  val solve : int -> <BaseFct>.<resultStr>.solution D.t
+  type tree = solution BenchNeed.t
+  val statistics : <BaseFct>.<resultStr>.solution D.t -> int * int * int
+  val render : <BaseFct>.<resultStr>.solution D.t -> (string -> unit) -> int
+end
+structure LastPieceStrict : sig
+  structure M : <sig>
+  datatype sex = Female | Male
+  datatype piece
+    = Piece of char * (int * int) list list * (int * int) list list
+  datatype solution
+    = Choose of <BaseFct>.<resultStr>.siblings D.t
+    | Failure of BenchPuzzleMap.board * (int * int)
+    | Soln of BenchPuzzleMap.board
+  datatype siblings
+    = More of <BaseFct>.<resultStr>.solution D.t
+               * <BaseFct>.<resultStr>.siblings D.t
+    | NoSolutions
+  datatype candidates
+    = CEnd
+    | Candidate of char * (int * int) list
+                    * <BaseFct>.<resultStr>.piece list D.t
+                    * <BaseFct>.<resultStr>.candidates D.t
+  val flip : <BaseFct>.<resultStr>.sex -> <BaseFct>.<resultStr>.sex
+  val next : 'a * int -> 'a * int
+  val extendMaybe :
+      BenchPuzzleMap.board -> int * int -> char -> BenchPuzzleMap.board option
+  val fit :
+      BenchPuzzleMap.board
+       -> int * int -> char -> (int * int) list -> BenchPuzzleMap.board option
+  val pieces : <BaseFct>.<resultStr>.piece list
+  val initial : BenchPuzzleMap.board BenchLazy.state ref
+  val choices :
+      <BaseFct>.<resultStr>.sex
+       -> <BaseFct>.<resultStr>.piece list
+       -> <BaseFct>.<resultStr>.piece list
+       -> <BaseFct>.<resultStr>.candidates D.t
+  val search :
+      int * int
+       -> <BaseFct>.<resultStr>.sex
+       -> BenchPuzzleMap.board
+       -> <BaseFct>.<resultStr>.piece list D.t
+       -> <BaseFct>.<resultStr>.solution D.t
+  val attempts :
+      int * int
+       -> <BaseFct>.<resultStr>.sex
+       -> BenchPuzzleMap.board
+       -> <BaseFct>.<resultStr>.candidates D.t
+       -> <BaseFct>.<resultStr>.siblings D.t
+  val input : int -> BenchPuzzleMap.board * <BaseFct>.<resultStr>.piece list
+  val solve : int -> <BaseFct>.<resultStr>.solution D.t
+  type tree = solution BenchStrict.t
+  val statistics : <BaseFct>.<resultStr>.solution D.t -> int * int * int
+  val render : <BaseFct>.<resultStr>.solution D.t -> (string -> unit) -> int
+end
+structure LastPieceNeedCheck : sig
+  val run : int -> string -> int * int
+end
+structure LastPieceStrictCheck : sig
+  val run : int -> string -> int * int
+end
+structure LastPieceTests : sig
+  structure N : <sig>
+  structure M : <sig>
+  val ids : LastPieceNeed.piece list -> char list
+  val orders : (string * int list) list
+  val rejects : string -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 20 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/puzzle-map.sml]
+structure BenchPuzzleMap : 
+  sig
+    type square = int * int
+    datatype board = Bin of int * square * char * board * board | Tip
+    val size : board -> int
+    val leaf : square -> char -> board
+    val compare : (int * int) * (int * int) -> order
+    val lookup : int * int -> board -> char option
+    val balanceL : square -> char -> board -> board -> board
+    val balanceR : square -> char -> board -> board -> board
+    val insert : int * int -> char -> board -> board
+    val toList : board -> (square * char) list
+    val shape : board -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/last-piece-data.sml]
+structure BenchLastPieceData : 
+  sig
+    val pieces : (char * (int * int) list list * (int * int) list list) list
+    val firstSolution : ((int * int) * char) list
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-last-piece.sml]
+functor BenchLastPieceFn(D: sig
+                            type 'a t
+                            val delay : (unit -> 'a) -> 'a t
+                            val force : 'a t -> 'a
+                          end) :
+                        
+                          sig
+                            structure M : <sig>
+                            type sex
+                            type piece
+                            type solution
+                            type siblings
+                            type candidates
+                            val flip : sex -> sex
+                            val next : 'a * int -> 'a * int
+                            val extendMaybe : BenchPuzzleMap.board
+                                               -> int * int
+                                               -> char
+                                               -> BenchPuzzleMap.board option
+                            val fit : BenchPuzzleMap.board
+                                       -> int * int
+                                       -> char
+                                       -> (int * int) list
+                                       -> BenchPuzzleMap.board option
+                            val pieces : piece list
+                            val initial : BenchPuzzleMap.board BenchLazy.state 
+                                             ref
+                            val choices : sex
+                                           -> piece list
+                                           -> piece list -> candidates D.t
+                            val attempts : int * int
+                                            -> sex
+                                            -> BenchPuzzleMap.board
+                                            -> candidates D.t -> siblings D.t
+                            val search : int * int
+                                          -> sex
+                                          -> BenchPuzzleMap.board
+                                          -> piece list D.t -> solution D.t
+                            val input : int
+                                         -> BenchPuzzleMap.board * piece list
+                            val solve : int -> solution D.t
+                            type tree
+                            val statistics : solution D.t -> int * int * int
+                            val render : solution D.t
+                                          -> (string -> unit) -> int
+                          end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/last-piece-check.sml]
+functor LastPieceCheckFn(K: sig
+                            type tree
+                            val solve : int -> tree
+                            val render : tree -> (string -> unit) -> int
+                          end) :
+                        sig val run : int -> string -> int * int end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/last-piece-tests.sml]
+PASS last-piece/source-map-prefix-shapes-ascending
+PASS last-piece/source-map-prefix-shapes-descending
+PASS last-piece/source-map-prefix-shapes-zigzag
+PASS last-piece/source-map-prefix-shapes-permuted
+PASS last-piece/initial-board
+PASS last-piece/pick-one-reversed-prefix
+PASS last-piece/remaining-pieces-delayed-and-shared
+PASS last-piece/lazy-root-and-child-demand
+PASS last-piece/offset-bounds-and-collision
+PASS last-piece/fit-anchor-source-precondition
+PASS last-piece/complete-lazy-prefix-0
+PASS last-piece/complete-strict-prefix-0
+PASS last-piece/complete-lazy-prefix-2
+PASS last-piece/complete-strict-prefix-2
+PASS last-piece/complete-lazy-prefix-8
+PASS last-piece/complete-strict-prefix-8
+PASS last-piece/source-search-node-statistics
+PASS last-piece/wrong-board-rejected
+PASS last-piece/truncated-rejected
+PASS last-piece/extra-rejected
+structure LastPieceNeed : 
+  sig
+    structure M : <sig>
+    datatype sex = Female | Male
+    datatype piece
+      = Piece of char * (int * int) list list * (int * int) list list
+    datatype solution
+      = Choose of siblings D.t
+    | Failure of BenchPuzzleMap.board * (int * int)
+    | Soln of BenchPuzzleMap.board
+    datatype siblings = More of solution D.t * siblings D.t | NoSolutions
+    datatype candidates
+      = CEnd
+    | Candidate of char * (int * int) list * piece list D.t * candidates D.t
+    val flip : sex -> sex
+    val next : 'a * int -> 'a * int
+    val extendMaybe : BenchPuzzleMap.board
+                       -> int * int -> char -> BenchPuzzleMap.board option
+    val fit : BenchPuzzleMap.board
+               -> int * int
+               -> char -> (int * int) list -> BenchPuzzleMap.board option
+    val pieces : piece list
+    val initial : BenchPuzzleMap.board BenchLazy.state ref
+    val choices : sex -> piece list -> piece list -> candidates D.t
+    val attempts : int * int
+                    -> sex
+                    -> BenchPuzzleMap.board -> candidates D.t -> siblings D.t
+    val search : int * int
+                  -> sex
+                  -> BenchPuzzleMap.board -> piece list D.t -> solution D.t
+    val input : int -> BenchPuzzleMap.board * piece list
+    val solve : int -> solution D.t
+    type tree = solution BenchNeed.t
+    val statistics : solution D.t -> int * int * int
+    val render : solution D.t -> (string -> unit) -> int
+  end
+structure LastPieceStrict : 
+  sig
+    structure M : <sig>
+    datatype sex = Female | Male
+    datatype piece
+      = Piece of char * (int * int) list list * (int * int) list list
+    datatype solution
+      = Choose of siblings D.t
+    | Failure of BenchPuzzleMap.board * (int * int)
+    | Soln of BenchPuzzleMap.board
+    datatype siblings = More of solution D.t * siblings D.t | NoSolutions
+    datatype candidates
+      = CEnd
+    | Candidate of char * (int * int) list * piece list D.t * candidates D.t
+    val flip : sex -> sex
+    val next : 'a * int -> 'a * int
+    val extendMaybe : BenchPuzzleMap.board
+                       -> int * int -> char -> BenchPuzzleMap.board option
+    val fit : BenchPuzzleMap.board
+               -> int * int
+               -> char -> (int * int) list -> BenchPuzzleMap.board option
+    val pieces : piece list
+    val initial : BenchPuzzleMap.board BenchLazy.state ref
+    val choices : sex -> piece list -> piece list -> candidates D.t
+    val attempts : int * int
+                    -> sex
+                    -> BenchPuzzleMap.board -> candidates D.t -> siblings D.t
+    val search : int * int
+                  -> sex
+                  -> BenchPuzzleMap.board -> piece list D.t -> solution D.t
+    val input : int -> BenchPuzzleMap.board * piece list
+    val solve : int -> solution D.t
+    type tree = solution BenchStrict.t
+    val statistics : solution D.t -> int * int * int
+    val render : solution D.t -> (string -> unit) -> int
+  end
+structure LastPieceNeedCheck : sig val run : int -> string -> int * int end
+structure LastPieceStrictCheck : sig val run : int -> string -> int * int end
+structure LastPieceTests : 
+  sig
+    structure N : <sig>
+    structure M : <sig>
+    val ids : LastPieceNeed.piece list -> char list
+    val orders : (string * int list) list
+    val rejects : string -> bool
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 20 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS last-piece/source-map-prefix-shapes-ascending
+PASS last-piece/source-map-prefix-shapes-descending
+PASS last-piece/source-map-prefix-shapes-zigzag
+PASS last-piece/source-map-prefix-shapes-permuted
+PASS last-piece/initial-board
+PASS last-piece/pick-one-reversed-prefix
+PASS last-piece/remaining-pieces-delayed-and-shared
+PASS last-piece/lazy-root-and-child-demand
+PASS last-piece/offset-bounds-and-collision
+PASS last-piece/fit-anchor-source-precondition
+PASS last-piece/complete-lazy-prefix-0
+PASS last-piece/complete-strict-prefix-0
+PASS last-piece/complete-lazy-prefix-2
+PASS last-piece/complete-strict-prefix-2
+PASS last-piece/complete-lazy-prefix-8
+PASS last-piece/complete-strict-prefix-8
+PASS last-piece/source-search-node-statistics
+PASS last-piece/wrong-board-rejected
+PASS last-piece/truncated-rejected
+PASS last-piece/extra-rejected
+SUMMARY 20 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PASS last-piece/source-map-prefix-shapes-ascending
+PASS last-piece/source-map-prefix-shapes-descending
+PASS last-piece/source-map-prefix-shapes-zigzag
+PASS last-piece/source-map-prefix-shapes-permuted
+PASS last-piece/initial-board
+PASS last-piece/pick-one-reversed-prefix
+PASS last-piece/remaining-pieces-delayed-and-shared
+PASS last-piece/lazy-root-and-child-demand
+PASS last-piece/offset-bounds-and-collision
+PASS last-piece/fit-anchor-source-precondition
+PASS last-piece/complete-lazy-prefix-0
+PASS last-piece/complete-strict-prefix-0
+PASS last-piece/complete-lazy-prefix-2
+PASS last-piece/complete-strict-prefix-2
+PASS last-piece/complete-lazy-prefix-8
+PASS last-piece/complete-strict-prefix-8
+PASS last-piece/source-search-node-statistics
+PASS last-piece/wrong-board-rejected
+PASS last-piece/truncated-rejected
+PASS last-piece/extra-rejected
+SUMMARY 20 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

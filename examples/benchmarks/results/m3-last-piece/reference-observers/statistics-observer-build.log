@@ -1,0 +1,10 @@
+[1 of 3] Compiling Kernel           ( Kernel.hs, Kernel.o )
+
+Kernel.hs:19:1: warning: [-Wtabs]
+    Tab character found here, and in 126 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+19 |                           nest 2 (displayBoard bd)]
+   | ^^^^^^^^
+[2 of 3] Compiling Main             ( StatisticsObserver.hs, StatisticsObserver.o )
+[3 of 3] Linking /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/last-piece-originals/statistics-observer

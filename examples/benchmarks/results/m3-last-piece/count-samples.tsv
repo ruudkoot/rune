@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+last-piece-lazy	normal	rune	O2	count	1	1	pass	6.14	6.22	0.57	526404	1108931819	1346738384	23666418	counts/measurement.RUzfJc/last-piece-lazy/rune/fresh.1
+last-piece-lazy	normal	rune:opt	O2	count	1	1	pass	2.93	2.38	0.68	527096	1108931819	1346738384	23666418	counts/measurement.RUzfJc/last-piece-lazy/rune-opt/fresh.1
+last-piece-lazy	normal	rune:new	O2	count	1	1	pass	5.14	4.58	0.55	526604	482002951	1346738384	23666418	counts/measurement.RUzfJc/last-piece-lazy/rune-new/fresh.1
+last-piece-lazy	normal	rune:jit	O2	count	1	1	pass	2.14	1.77	0.61	528248	482002951	1346738384	23666418	counts/measurement.RUzfJc/last-piece-lazy/rune-jit/fresh.1
+last-piece-strict	normal	rune	O2	count	1	1	pass	3.77	3.54	0.51	503648	1024954488	850582848	12694286	counts/measurement.0ZT3KS/last-piece-strict/rune/fresh.1
+last-piece-strict	normal	rune:opt	O2	count	1	1	pass	2.17	1.70	0.54	504348	1024954488	850582848	12694286	counts/measurement.0ZT3KS/last-piece-strict/rune-opt/fresh.1
+last-piece-strict	normal	rune:new	O2	count	1	1	pass	3.76	3.06	0.75	503912	421360052	850582848	12694286	counts/measurement.0ZT3KS/last-piece-strict/rune-new/fresh.1
+last-piece-strict	normal	rune:jit	O2	count	1	1	pass	1.64	1.25	0.56	505448	421360052	850582848	12694286	counts/measurement.0ZT3KS/last-piece-strict/rune-jit/fresh.1

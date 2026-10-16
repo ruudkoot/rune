@@ -1,0 +1,12 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/last-piece-lazy/
+?? examples/benchmarks/last-piece-strict/
+?? examples/benchmarks/shared/last-piece-check.sml
+?? examples/benchmarks/shared/last-piece-data.sml
+?? examples/benchmarks/shared/last-piece-driver.sml
+?? examples/benchmarks/shared/nofib-last-piece.sml
+?? examples/benchmarks/shared/puzzle-map.sml
+?? tests/benchmarks/check-last-piece.sh
+?? tests/benchmarks/data/last-piece/
+?? tests/benchmarks/last-piece-tests.sml

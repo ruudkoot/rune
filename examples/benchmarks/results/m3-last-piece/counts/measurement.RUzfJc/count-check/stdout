@@ -1,0 +1,5 @@
+COUNT unbudgeted last-piece-lazy normal rune
+COUNT unbudgeted last-piece-lazy normal rune:opt
+COUNT unbudgeted last-piece-lazy normal rune:new
+COUNT unbudgeted last-piece-lazy normal rune:jit
+COUNT comparisons agree

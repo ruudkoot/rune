@@ -1,0 +1,4 @@
+RESULT 2:1:100
+PASS last-piece-lazy
+SAMPLE 1 0.000109000
+SUMMARY 1 checks, 0 failed

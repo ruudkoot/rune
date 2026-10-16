@@ -1,0 +1,4 @@
+PASS original/independent complete prefix 0 1 solutions; 1 states
+PASS original/independent complete prefix 2 1 solutions; 3 states
+PASS original/independent complete prefix 8 1 solutions; 76 states
+PASS original/independent complete prefix 13 3 solutions; 103513 states

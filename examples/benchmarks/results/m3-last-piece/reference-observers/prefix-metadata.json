@@ -1,0 +1,34 @@
+[
+  {
+    "remaining": 0,
+    "source_replaced": "fixed valid prefix from first original solution, same initial a/sex/search API",
+    "solutions": 1,
+    "independent_visits": 1,
+    "bytes": 100,
+    "comparison": "complete original output and independent bitmask/reversed-prefix-choice model"
+  },
+  {
+    "remaining": 2,
+    "source_replaced": "fixed valid prefix from first original solution, same initial a/sex/search API",
+    "solutions": 1,
+    "independent_visits": 3,
+    "bytes": 100,
+    "comparison": "complete original output and independent bitmask/reversed-prefix-choice model"
+  },
+  {
+    "remaining": 8,
+    "source_replaced": "fixed valid prefix from first original solution, same initial a/sex/search API",
+    "solutions": 1,
+    "independent_visits": 76,
+    "bytes": 100,
+    "comparison": "complete original output and independent bitmask/reversed-prefix-choice model"
+  },
+  {
+    "remaining": 13,
+    "source_replaced": "fixed valid prefix from first original solution, same initial a/sex/search API",
+    "solutions": 3,
+    "independent_visits": 103513,
+    "bytes": 300,
+    "comparison": "complete original output and independent bitmask/reversed-prefix-choice model"
+  }
+]

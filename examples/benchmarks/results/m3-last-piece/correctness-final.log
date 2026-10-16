@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-last-piece.mgs9s7ev
+PASS last-piece-lazy smoke O0
+PASS last-piece-lazy smoke O2
+PASS last-piece-lazy smoke hosts
+PASS last-piece-lazy normal O0
+PASS last-piece-lazy normal O2
+PASS last-piece-lazy normal hosts
+PASS last-piece-strict smoke O0
+PASS last-piece-strict smoke O2
+PASS last-piece-strict smoke hosts
+PASS last-piece-strict normal O0
+PASS last-piece-strict normal O2
+PASS last-piece-strict normal hosts

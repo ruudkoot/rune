@@ -1,0 +1,2 @@
+expected/*.output -text -whitespace
+upstream/** -text -whitespace

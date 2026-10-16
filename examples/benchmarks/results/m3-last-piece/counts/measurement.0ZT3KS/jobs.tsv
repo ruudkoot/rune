@@ -1,0 +1,1 @@
+last-piece-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/puzzle-map.sml shared/last-piece-data.sml shared/nofib-last-piece.sml shared/last-piece-check.sml shared/last-piece-driver.sml last-piece-strict/benchmark.sml shared/main.sml	13 expected/normal.output	last-piece-strict/normal.expected	expected/normal.output

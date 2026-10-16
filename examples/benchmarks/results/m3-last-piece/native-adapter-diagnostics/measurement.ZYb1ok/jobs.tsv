@@ -1,0 +1,1 @@
+last-piece-strict	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/puzzle-map.sml shared/last-piece-data.sml shared/nofib-last-piece.sml shared/last-piece-check.sml shared/last-piece-driver.sml last-piece-strict/benchmark.sml shared/main.sml	2 expected/smoke.output	last-piece-strict/smoke.expected	expected/smoke.output
