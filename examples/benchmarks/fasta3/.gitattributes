@@ -1,0 +1,3 @@
+# Exact notice/oracle bytes are independent of checkout text settings.
+upstream/LICENSE -text -whitespace
+oracle/* -text

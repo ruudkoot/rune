@@ -1131,3 +1131,27 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 matching bytecode comparisons across seven compiler builds.
 runedoc and runeopt also agree. [The complete transcript](validation/oct16-tree-permutations-762-acceptance.log)
 records the run. All 41 inventory tests pass and all 861 entries validate.
+
+## M5 sequential FASTA output strategies, 2026-10-16
+
+Two imports bring the catalogue to 258 programs and 768 profiles. [All 56
+smoke/normal cases](results/m5-fasta/correctness.tsv) pass on Rune's four engines
+at both levels and all six managed native hosts. Nine semantic/negative checks
+pass all ten configurations at both levels. Eight normal count samples pass the
+combined comparison with unchanged budgets. These instrumented samples remain
+separate from headline timings.
+
+The variants preserve division/reciprocal arithmetic, linear/midpoint lookup,
+line/whole-buffer allocation, source data and cross-sequence RNG state. Reviewed
+complete RNG-cycle bytes and an independent header/line state machine check every
+output byte. Originals and an independent periodic reference agree through the
+published 25,000,000 input. Source/dataset/notice identities, buffer initialization,
+seed reset, input acquisition and validation costs are recorded. Large execution
+of the new SML ports is not claimed. No prerequisite runtime/compiler feature is
+added. M5 remains in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 768 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 matching bytecode comparisons across seven compiler builds.
+runedoc and runeopt also agree. [The complete transcript](validation/oct16-fasta-768-acceptance.log)
+records the run. All 41 inventory tests pass and all 861 entries validate.
