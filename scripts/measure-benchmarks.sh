@@ -73,7 +73,7 @@ git diff --binary HEAD > "$out/worktree.patch"
 git status --porcelain > "$out/worktree-status.txt"
 cp examples/benchmarks/manifest.tsv examples/benchmarks/upstreams.tsv "$out/"
 mkdir -p "$out/tool-sources"
-for path in scripts/measure-benchmarks.sh tests/basis/run-matrix.sh examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/catalog-main.sml examples/benchmarks/shared/report.sml examples/benchmarks/shared/report-main.sml examples/benchmarks/shared/counts.sml examples/benchmarks/shared/counts-main.sml; do
+for path in scripts/measure-benchmarks.sh scripts/benchmark-result.sh tests/basis/run-matrix.sh examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/catalog-main.sml examples/benchmarks/shared/report.sml examples/benchmarks/shared/report-main.sml examples/benchmarks/shared/counts.sml examples/benchmarks/shared/counts-main.sml; do
   destination=$out/tool-sources/$path
   mkdir -p "$(dirname "$destination")"
   cp "$path" "$destination"
@@ -96,14 +96,8 @@ execute() {
       bench-limit "$quota" "$memory" "$@" < "$phase_input" > "$phase_dir/stdout" 2> "$phase_dir/stderr" || phase_exit=$?
   printf '%s\n' "$phase_exit" > "$phase_dir/exit"
 }
-classify() {
-  category=pass
-  if [ "$phase_exit" = 124 ]; then category=timeout
-  elif [ "$phase_exit" = 125 ]; then category=limit-setup-failure
-  elif grep -Eiq 'out of memory|allocation failed|cannot allocate memory|heap limit|insufficient memory|unable to reserve' "$phase_dir/stderr" "$phase_dir/stdout"; then category=memory-limit
-  elif [ "$phase_exit" != 0 ]; then category=$1
-  fi
-}
+. "$root/scripts/benchmark-result.sh"
+
 record() {
   record_phase=$1; record_process=$2; record_round=$3; record_category=$4; record_seconds=${5:-}
   metrics=$(tail -1 "$phase_dir/os.tsv" 2>/dev/null || true)
@@ -114,16 +108,7 @@ record() {
     "$name" "$profile" "$id" "$level" "$record_phase" "$record_process" "$record_round" "$record_category" \
     "$record_seconds" "$(printf '%s\n' "$metrics" | cut -f2-)" "$counters" "${phase_dir#"$out"/}" >> "$out/samples.tsv"
 }
-validate() {
-  classify runtime-failure
-  if grep -Eq '^FAIL .* -- (incorrect result|expected )' "$phase_dir/stdout"; then category=incorrect-result; fi
-  if [ "$category" = pass ]; then
-    if ! grep -q "^SUMMARY $rounds checks, 0 failed$" "$phase_dir/stdout" || \
-       grep -q '^FAIL ' "$phase_dir/stdout" || \
-       [ "$(grep -c '^PASS ' "$phase_dir/stdout")" != "$rounds" ]; then category=incorrect-result; fi
-  fi
-  [ "$category" = pass ] || status=1
-}
+
 stage_data() {
   destination=$1
   mkdir -p "$destination"

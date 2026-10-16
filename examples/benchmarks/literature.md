@@ -102,6 +102,17 @@ high-precision refinement/coefficient reconstruction and one-to-one root matchin
 validate selected outputs. Convergence variation, boxing and allocation require
 separate investigation before assigning performance causes.
 
+The [sequential multilayer workload](naive-multilayer/PROVENANCE.md) adds
+mutable model parameters, higher-order activation fields and dense Jacobian
+allocation. Rumelhart, Hinton and Williams's
+[backpropagation paper](https://doi.org/10.1038/323533a0) (1986) supplies method
+context. The [Ionosphere dataset record](https://doi.org/10.24432/C5W01B)
+provides provenance, citation and licensing. Gradient finite differences and
+independent structured-derivative training check the selected model results;
+training-set predictions are correctness observations. They do not establish
+generalization performance. Compiler specialization, temporary arrays and
+input/model initialization need separate investigation.
+
 ## Decision diagrams and closure lifetimes
 
 Welch's [*A Technique for High-Performance Data Compression*](https://doi.org/10.1109/MC.1984.1659158)
