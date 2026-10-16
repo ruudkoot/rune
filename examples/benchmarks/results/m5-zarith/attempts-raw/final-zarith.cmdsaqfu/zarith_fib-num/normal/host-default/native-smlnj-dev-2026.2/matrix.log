@@ -1,0 +1,224 @@
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 1346269
+PASS zarith_fib-num
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/zarith-integers.sml]
+signature BENCH_ZARITH_NUMBER =
+  sig
+  type t
+  val one : t
+  val fromInt : int -> t
+  val add : t * t -> t
+  val pred : t -> t
+  val greater : t * t -> bool
+  val toString : t -> string
+end
+structure BenchZarithInt : BENCH_ZARITH_NUMBER
+structure BenchZarithBig : BENCH_ZARITH_NUMBER
+structure BenchZarithNative : BENCH_ZARITH_NUMBER
+structure BenchZarithNum : BENCH_ZARITH_NUMBER
+functor BenchZarithFibFn(N: sig
+  type t
+  val one : t
+  val fromInt : int -> t
+  val add : t * t -> t
+  val pred : t -> t
+  val greater : t * t -> bool
+  val toString : t -> string
+end) :
+sig
+  val fib : int -> N.t
+end
+functor BenchZarithTakFn(N: sig
+  type t
+  val one : t
+  val fromInt : int -> t
+  val add : t * t -> t
+  val pred : t -> t
+  val greater : t * t -> bool
+  val toString : t -> string
+end) :
+sig
+  val tak : N.t * N.t * N.t -> N.t
+end
+structure BenchZarithFact : sig
+  val fact : int -> IntInf.int
+end
+structure BenchZarithRepeat : sig
+  val run : int -> ('a -> 'b) -> 'a -> ('b -> 'c) -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/zarith_fib-num/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure N : <sig>
+  structure Kernel : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+[autoloading]
+[autoloading done]
+RESULT 1346269
+PASS zarith_fib-num
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/zarith-integers.sml]
+signature BENCH_ZARITH_NUMBER =
+  sig
+  type t
+  val one : t
+  val fromInt : int -> t
+  val add : t * t -> t
+  val pred : t -> t
+  val greater : t * t -> bool
+  val toString : t -> string
+end
+structure BenchZarithInt : BENCH_ZARITH_NUMBER
+structure BenchZarithBig : BENCH_ZARITH_NUMBER
+structure BenchZarithNative : BENCH_ZARITH_NUMBER
+structure BenchZarithNum : BENCH_ZARITH_NUMBER
+functor BenchZarithFibFn(N: sig
+  type t
+  val one : t
+  val fromInt : int -> t
+  val add : t * t -> t
+  val pred : t -> t
+  val greater : t * t -> bool
+  val toString : t -> string
+end) :
+sig
+  val fib : int -> N.t
+end
+functor BenchZarithTakFn(N: sig
+  type t
+  val one : t
+  val fromInt : int -> t
+  val add : t * t -> t
+  val pred : t -> t
+  val greater : t * t -> bool
+  val toString : t -> string
+end) :
+sig
+  val tak : N.t * N.t * N.t -> N.t
+end
+structure BenchZarithFact : sig
+  val fact : int -> IntInf.int
+end
+structure BenchZarithRepeat : sig
+  val run : int -> ('a -> 'b) -> 'a -> ('b -> 'c) -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/zarith_fib-num/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure N : <sig>
+  structure Kernel : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+[autoloading]
+[autoloading done]
+RESULT 1346269
+PASS zarith_fib-num
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/zarith-integers.sml]
+signature BENCH_ZARITH_NUMBER = 
+  sig
+    type t
+    val one : t
+    val fromInt : int -> t
+    val add : t * t -> t
+    val pred : t -> t
+    val greater : t * t -> bool
+    val toString : t -> string
+  end
+structure BenchZarithInt : BENCH_ZARITH_NUMBER
+structure BenchZarithBig : BENCH_ZARITH_NUMBER
+structure BenchZarithNative : BENCH_ZARITH_NUMBER
+structure BenchZarithNum : BENCH_ZARITH_NUMBER
+functor BenchZarithFibFn(N: sig
+                            type t
+                            val one : t
+                            val fromInt : int -> t
+                            val add : t * t -> t
+                            val pred : t -> t
+                            val greater : t * t -> bool
+                            val toString : t -> string
+                          end) :
+                        sig val fib : int -> N.t end
+functor BenchZarithTakFn(N: sig
+                            type t
+                            val one : t
+                            val fromInt : int -> t
+                            val add : t * t -> t
+                            val pred : t -> t
+                            val greater : t * t -> bool
+                            val toString : t -> string
+                          end) :
+                        sig val tak : N.t * N.t * N.t -> N.t end
+structure BenchZarithFact : sig val fact : int -> IntInf.int end
+structure BenchZarithRepeat : sig
+  val run : int -> ('a -> 'b) -> 'a -> ('b -> 'c) -> 'b
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/zarith_fib-num/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure N : <sig>
+    structure Kernel : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 1346269
+PASS zarith_fib-num
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+RESULT 1346269
+PASS zarith_fib-num
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 1346269
+PASS zarith_fib-num
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

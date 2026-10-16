@@ -1,0 +1,18 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/shared/zarith-integers.sml
+?? examples/benchmarks/shared/zarith-pi.sml
+?? examples/benchmarks/shared/zarith-upstream/
+?? examples/benchmarks/zarith_fact/
+?? examples/benchmarks/zarith_fib-int/
+?? examples/benchmarks/zarith_fib-natint/
+?? examples/benchmarks/zarith_fib-num/
+?? examples/benchmarks/zarith_fib/
+?? examples/benchmarks/zarith_pi/
+?? examples/benchmarks/zarith_tak-int/
+?? examples/benchmarks/zarith_tak-natint/
+?? examples/benchmarks/zarith_tak-num/
+?? examples/benchmarks/zarith_tak/
+?? tests/benchmarks/check-sandmark-zarith.sh
+?? tests/benchmarks/data/zarith/
+?? tests/benchmarks/sandmark-zarith.sml

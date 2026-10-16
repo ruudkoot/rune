@@ -1,0 +1,3 @@
+# Preserve whitespace in the byte-identical pinned library sources.
+zarith.1.14/z.ml -whitespace
+zarith.1.14/z.mli -whitespace

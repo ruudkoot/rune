@@ -1,0 +1,42 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/zarith-pi.sml]
+[autoloading]
+[autoloading done]
+structure BenchZarithPi : sig
+  type lft = IntInf.int * IntInf.int * IntInf.int * IntInf.int
+  val zero : IntInf.int
+  val one : IntInf.int
+  val ten : IntInf.int
+  val negativeTen : IntInf.int
+  val unit : IntInf.int * IntInf.int * IntInf.int * IntInf.int
+  val floorEv : lft -> IntInf.int -> IntInf.int
+  val comp : lft -> lft -> IntInf.int * IntInf.int * IntInf.int * IntInf.int
+  val prod :
+      lft -> IntInf.int -> IntInf.int * IntInf.int * IntInf.int * IntInf.int
+  val cons : lft -> int -> IntInf.int * IntInf.int * IntInf.int * IntInf.int
+  val run : int -> (string -> 'a) -> 'a
+  val check : int -> string -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/zarith_pi/benchmark.sml]
+[autoloading]
+[autoloading done]
+structure Benchmark : sig
+  val name : string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 128:checked
+PASS zarith_pi
+SUMMARY 1 checks, 0 failed

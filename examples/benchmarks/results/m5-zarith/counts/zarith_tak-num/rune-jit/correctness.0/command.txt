@@ -1,0 +1,3 @@
+/home/ruud/rune/.worktrees/benchmarks/bin/runevm-new-opt
+--count
+prog.rbc

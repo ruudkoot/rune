@@ -1,0 +1,3 @@
+RESULT 89
+PASS zarith_fib-int
+SUMMARY 1 checks, 0 failed

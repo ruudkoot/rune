@@ -1,0 +1,15 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (744 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='zarith' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.oBgaBb
+BENCH MEASURE zarith_fact normal count
+BENCH MEASURE zarith_fib normal count
+BENCH MEASURE zarith_fib-int normal count
+BENCH MEASURE zarith_fib-natint normal count
+BENCH MEASURE zarith_fib-num normal count
+BENCH MEASURE zarith_tak normal count
+BENCH MEASURE zarith_tak-int normal count
+BENCH MEASURE zarith_tak-natint normal count
+BENCH MEASURE zarith_tak-num normal count
+BENCH MEASURE zarith_pi normal count
+make: *** [Makefile:1010: bench-count] Terminated

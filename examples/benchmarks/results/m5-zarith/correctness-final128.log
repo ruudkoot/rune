@@ -1,0 +1,7 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-zarith.8hxo29f5
+PASS zarith_pi smoke O0
+PASS zarith_pi smoke O2
+PASS zarith_pi smoke hosts
+PASS zarith_pi normal O0
+PASS zarith_pi normal O2
+PASS zarith_pi normal hosts

@@ -1,0 +1,10 @@
+zarith_fact	600	4194304	shared/input.sml shared/zarith-integers.sml zarith_fact/benchmark.sml shared/main.sml	40 10000 815915283247897734345611269596115894272000000000	zarith_fact/normal.expected	-
+zarith_fib	600	4194304	shared/input.sml shared/zarith-integers.sml zarith_fib/benchmark.sml shared/main.sml	30 1346269	zarith_fib/normal.expected	-
+zarith_fib-int	600	4194304	shared/input.sml shared/zarith-integers.sml zarith_fib-int/benchmark.sml shared/main.sml	30 1346269	zarith_fib-int/normal.expected	-
+zarith_fib-natint	600	4194304	shared/input.sml shared/zarith-integers.sml zarith_fib-natint/benchmark.sml shared/main.sml	30 1346269	zarith_fib-natint/normal.expected	-
+zarith_fib-num	600	4194304	shared/input.sml shared/zarith-integers.sml zarith_fib-num/benchmark.sml shared/main.sml	30 1346269	zarith_fib-num/normal.expected	-
+zarith_tak	600	4194304	shared/input.sml shared/zarith-integers.sml zarith_tak/benchmark.sml shared/main.sml	100 7	zarith_tak/normal.expected	-
+zarith_tak-int	600	4194304	shared/input.sml shared/zarith-integers.sml zarith_tak-int/benchmark.sml shared/main.sml	100 7	zarith_tak-int/normal.expected	-
+zarith_tak-natint	600	4194304	shared/input.sml shared/zarith-integers.sml zarith_tak-natint/benchmark.sml shared/main.sml	100 7	zarith_tak-natint/normal.expected	-
+zarith_tak-num	600	4194304	shared/input.sml shared/zarith-integers.sml zarith_tak-num/benchmark.sml shared/main.sml	100 7	zarith_tak-num/normal.expected	-
+zarith_pi	600	4194304	shared/input.sml shared/zarith-pi.sml zarith_pi/benchmark.sml shared/main.sml	1000 expected/1000.txt	zarith_pi/normal.expected	expected/1000.txt

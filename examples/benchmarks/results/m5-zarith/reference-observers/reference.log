@@ -1,0 +1,35 @@
+PASS original and independent reference zarith_fact [10, 0] fact-smoke
+PASS original and independent reference zarith_fact [40, 10000] fact-normal
+PASS original and independent reference zarith_fact [40, 1000000] fact-large
+PASS original and independent reference zarith_fib ['int', 10] fib-int-smoke
+PASS original and independent reference zarith_tak ['int', 0] tak-int-smoke
+PASS original and independent reference zarith_fib ['int', 30] fib-int-normal
+PASS original and independent reference zarith_tak ['int', 100] tak-int-normal
+PASS original and independent reference zarith_fib ['int', 40] fib-int-large
+PASS original and independent reference zarith_tak ['int', 2500] tak-int-large
+PASS original and independent reference zarith_fib ['natint', 10] fib-natint-smoke
+PASS original and independent reference zarith_tak ['natint', 0] tak-natint-smoke
+PASS original and independent reference zarith_fib ['natint', 30] fib-natint-normal
+PASS original and independent reference zarith_tak ['natint', 100] tak-natint-normal
+PASS original and independent reference zarith_fib ['natint', 40] fib-natint-large
+PASS original and independent reference zarith_tak ['natint', 2500] tak-natint-large
+PASS original and independent reference zarith_fib ['Z', 10] fib-Z-smoke
+PASS original and independent reference zarith_tak ['Z', 0] tak-Z-smoke
+PASS original and independent reference zarith_fib ['Z', 30] fib-Z-normal
+PASS original and independent reference zarith_tak ['Z', 100] tak-Z-normal
+PASS original and independent reference zarith_fib ['Z', 40] fib-Z-large
+PASS original and independent reference zarith_tak ['Z', 2500] tak-Z-large
+PASS original and independent reference zarith_fib ['num', 10] fib-num-smoke
+PASS original and independent reference zarith_tak ['num', 0] tak-num-smoke
+PASS original and independent reference zarith_fib ['num', 30] fib-num-normal
+PASS original and independent reference zarith_tak ['num', 100] tak-num-normal
+PASS original and independent reference zarith_fib ['num', 40] fib-num-large
+PASS original and independent reference zarith_tak ['num', 2500] tak-num-large
+PASS original and independent reference zarith_pi [0] pi-0
+PASS original and independent reference zarith_pi [1] pi-1
+PASS original and independent reference zarith_pi [9] pi-9
+PASS original and independent reference zarith_pi [10] pi-10
+PASS original and independent reference zarith_pi [11] pi-11
+PASS original and independent reference zarith_pi [27] pi-27
+PASS original and independent reference zarith_pi [1000] pi-1000
+PASS original and independent reference zarith_pi [10000] pi-10000

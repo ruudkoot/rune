@@ -1003,3 +1003,35 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 matching bytecode comparisons across seven compiler builds.
 runedoc and runeopt also agree. [The complete transcript](validation/oct16-geometry-arrays-714-acceptance.log)
 records the combined wave; all 38 inventory tests pass.
+
+## M5 integer arithmetic variants, 2026-10-16
+
+Ten imports bring the catalogue to 250 programs and 744 profiles. [All 280
+canonical smoke/normal cases](results/m5-zarith/correctness.tsv) pass on Rune's
+four engines at both levels and all six managed native hosts. Canonical
+arguments match the current manifest. Forty normal count samples pass and
+applicable instruction/allocation comparisons agree; these remain unbudgeted
+instrumented results, separate from headline timing.
+
+The ports retain four numeric modes, recursive kernels, right-first calls,
+count+1 repetitions, integer-only Num dispatch and complete four-coefficient pi
+composition. Thirty-seven bounded original OCaml references agree with independent
+integer/Decimal algorithms. Complete pi digits/layout agree through 10,000.
+Normal pi is calibrated to 128 digits; superseded 1,000/256-digit attempts remain
+explicitly incomplete in the archive, with no timeout or successful timing claim.
+Library source pins, individual notices, adaptations and validation costs are
+recorded. No universal large SML execution is claimed. M5 remains in progress.
+
+Twenty-one semantic checks run on all ten configurations at both requested
+levels. Nine configurations pass all checks; native32 SML/NJ fails one Word64
+boundary check at each level while passing all selected benchmark profiles.
+The [separate runtime-input diagnostic](validation/zarith-word64.md) records
+incorrect constant subtraction, distinguishes it from runtime conversion, and
+keeps the remaining root-cause uncertainty explicit. No changed expected result
+or benchmark workaround is used.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 744 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 matching bytecode comparisons across seven compiler builds.
+runedoc and runeopt also agree. [The complete transcript](validation/oct16-zarith-744-acceptance.log)
+records the run. All 38 inventory tests pass and all 861 entries validate.

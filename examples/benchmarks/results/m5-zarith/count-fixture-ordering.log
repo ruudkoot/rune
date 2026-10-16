@@ -1,0 +1,3 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: Fail: missing examples/benchmarks/zarith_pi/expected/256.txt
+make: *** [Makefile:1009: bench-count] Error 1

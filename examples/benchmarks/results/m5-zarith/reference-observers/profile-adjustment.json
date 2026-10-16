@@ -1,0 +1,53 @@
+{
+  "candidate1000": {
+    "reason": "1000-digit candidate normal profile remained running after 7 minutes of instrumented Rune execution; interrupted for profile calibration, not reported as a timeout",
+    "old_normal_digits": 1000,
+    "new_normal_digits": 256,
+    "published_large_digits": 10000,
+    "stopped_roots": [
+      1937217,
+      1937473
+    ],
+    "stopped_processes": [
+      1963581,
+      1963580,
+      1963579,
+      1963577,
+      1937284,
+      1937283,
+      1937229,
+      1937217,
+      1989244,
+      1989243,
+      1989232,
+      1989196,
+      1937480,
+      1937473
+    ]
+  },
+  "candidate256": {
+    "reason": "still-running candidate interrupted after the 128-digit bounded diagnostic completed; select a practical normal profile before ten-sample comparisons",
+    "stopped_roots": [
+      2033590,
+      2038049
+    ],
+    "stopped_processes": [
+      2041646,
+      2041644,
+      2041334,
+      2041299,
+      2033590,
+      2085577,
+      2085576,
+      2085575,
+      2085573,
+      2039311,
+      2039307,
+      2038049
+    ]
+  },
+  "normal_digits": 128,
+  "published_large_digits": 10000,
+  "diagnostic128_elapsed_seconds": 22.43,
+  "diagnostic_is_not_headline_timing": true
+}

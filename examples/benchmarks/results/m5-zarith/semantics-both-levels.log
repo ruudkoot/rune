@@ -1,0 +1,1307 @@
+PROGRAM LIMIT AS 4194304 KiB
+PASS zarith/fib-small-modes
+PASS zarith/fib-base
+PASS zarith/factorial
+PASS zarith/negative-factorial-base
+PASS zarith/tak-small-modes
+PASS zarith/native-signed-order
+PASS zarith/pi-lft-full-product
+PASS zarith/pi-division-truncates
+PASS zarith/pi-layout-0
+PASS zarith/pi-layout-1
+PASS zarith/pi-layout-9
+PASS zarith/pi-layout-10
+PASS zarith/pi-layout-11
+PASS zarith/pi-layout-27
+PASS zarith/pi-rejects-digit-perturbation
+PASS zarith/pi-rejects-padding-perturbation
+PASS zarith/pi-rejects-extra-output
+PASS zarith/repeat-extra-call
+PASS zarith/repeat-negative-base
+PASS zarith/repeat-checks-discarded-values
+PASS zarith/native-wraparound
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+PASS zarith/fib-small-modes
+PASS zarith/fib-base
+PASS zarith/factorial
+PASS zarith/negative-factorial-base
+PASS zarith/tak-small-modes
+PASS zarith/native-signed-order
+PASS zarith/pi-lft-full-product
+PASS zarith/pi-division-truncates
+PASS zarith/pi-layout-0
+PASS zarith/pi-layout-1
+PASS zarith/pi-layout-9
+PASS zarith/pi-layout-10
+PASS zarith/pi-layout-11
+PASS zarith/pi-layout-27
+PASS zarith/pi-rejects-digit-perturbation
+PASS zarith/pi-rejects-padding-perturbation
+PASS zarith/pi-rejects-extra-output
+PASS zarith/repeat-extra-call
+PASS zarith/repeat-negative-base
+PASS zarith/repeat-checks-discarded-values
+PASS zarith/native-wraparound
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+PASS zarith/fib-small-modes
+PASS zarith/fib-base
+PASS zarith/factorial
+PASS zarith/negative-factorial-base
+PASS zarith/tak-small-modes
+PASS zarith/native-signed-order
+PASS zarith/pi-lft-full-product
+PASS zarith/pi-division-truncates
+PASS zarith/pi-layout-0
+PASS zarith/pi-layout-1
+PASS zarith/pi-layout-9
+PASS zarith/pi-layout-10
+PASS zarith/pi-layout-11
+PASS zarith/pi-layout-27
+PASS zarith/pi-rejects-digit-perturbation
+PASS zarith/pi-rejects-padding-perturbation
+PASS zarith/pi-rejects-extra-output
+PASS zarith/repeat-extra-call
+PASS zarith/repeat-negative-base
+PASS zarith/repeat-checks-discarded-values
+PASS zarith/native-wraparound
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+PASS zarith/fib-small-modes
+PASS zarith/fib-base
+PASS zarith/factorial
+PASS zarith/negative-factorial-base
+PASS zarith/tak-small-modes
+PASS zarith/native-signed-order
+PASS zarith/pi-lft-full-product
+PASS zarith/pi-division-truncates
+PASS zarith/pi-layout-0
+PASS zarith/pi-layout-1
+PASS zarith/pi-layout-9
+PASS zarith/pi-layout-10
+PASS zarith/pi-layout-11
+PASS zarith/pi-layout-27
+PASS zarith/pi-rejects-digit-perturbation
+PASS zarith/pi-rejects-padding-perturbation
+PASS zarith/pi-rejects-extra-output
+PASS zarith/repeat-extra-call
+PASS zarith/repeat-negative-base
+PASS zarith/repeat-checks-discarded-values
+PASS zarith/native-wraparound
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 4194304 KiB
+PASS zarith/fib-small-modes
+PASS zarith/fib-base
+PASS zarith/factorial
+PASS zarith/negative-factorial-base
+PASS zarith/tak-small-modes
+PASS zarith/native-signed-order
+PASS zarith/pi-lft-full-product
+PASS zarith/pi-division-truncates
+PASS zarith/pi-layout-0
+PASS zarith/pi-layout-1
+PASS zarith/pi-layout-9
+PASS zarith/pi-layout-10
+PASS zarith/pi-layout-11
+PASS zarith/pi-layout-27
+PASS zarith/pi-rejects-digit-perturbation
+PASS zarith/pi-rejects-padding-perturbation
+PASS zarith/pi-rejects-extra-output
+PASS zarith/repeat-extra-call
+PASS zarith/repeat-negative-base
+PASS zarith/repeat-checks-discarded-values
+PASS zarith/native-wraparound
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/zarith-integers.sml]
+signature BENCH_ZARITH_NUMBER =
+  sig
+  type t
+  val one : t
+  val fromInt : int -> t
+  val add : t * t -> t
+  val pred : t -> t
+  val greater : t * t -> bool
+  val toString : t -> string
+end
+structure BenchZarithInt : BENCH_ZARITH_NUMBER
+structure BenchZarithBig : BENCH_ZARITH_NUMBER
+structure BenchZarithNative : BENCH_ZARITH_NUMBER
+structure BenchZarithNum : BENCH_ZARITH_NUMBER
+functor BenchZarithFibFn(N: sig
+  type t
+  val one : t
+  val fromInt : int -> t
+  val add : t * t -> t
+  val pred : t -> t
+  val greater : t * t -> bool
+  val toString : t -> string
+end) :
+sig
+  val fib : int -> N.t
+end
+functor BenchZarithTakFn(N: sig
+  type t
+  val one : t
+  val fromInt : int -> t
+  val add : t * t -> t
+  val pred : t -> t
+  val greater : t * t -> bool
+  val toString : t -> string
+end) :
+sig
+  val tak : N.t * N.t * N.t -> N.t
+end
+structure BenchZarithFact : sig
+  val fact : int -> IntInf.int
+end
+structure BenchZarithRepeat : sig
+  val run : int -> ('a -> 'b) -> 'a -> ('b -> 'c) -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/zarith-pi.sml]
+structure BenchZarithPi : sig
+  type lft = IntInf.int * IntInf.int * IntInf.int * IntInf.int
+  val zero : IntInf.int
+  val one : IntInf.int
+  val ten : IntInf.int
+  val negativeTen : IntInf.int
+  val unit : IntInf.int * IntInf.int * IntInf.int * IntInf.int
+  val floorEv : lft -> IntInf.int -> IntInf.int
+  val comp : lft -> lft -> IntInf.int * IntInf.int * IntInf.int * IntInf.int
+  val prod :
+      lft -> IntInf.int -> IntInf.int * IntInf.int * IntInf.int * IntInf.int
+  val cons : lft -> int -> IntInf.int * IntInf.int * IntInf.int * IntInf.int
+  val run : int -> (string -> 'a) -> 'a
+  val check : int -> string -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sandmark-zarith.sml]
+[autoloading]
+[autoloading done]
+PASS zarith/fib-small-modes
+PASS zarith/fib-base
+PASS zarith/factorial
+PASS zarith/negative-factorial-base
+PASS zarith/tak-small-modes
+PASS zarith/native-signed-order
+PASS zarith/pi-lft-full-product
+PASS zarith/pi-division-truncates
+PASS zarith/pi-layout-0
+PASS zarith/pi-layout-1
+PASS zarith/pi-layout-9
+PASS zarith/pi-layout-10
+PASS zarith/pi-layout-11
+PASS zarith/pi-layout-27
+PASS zarith/pi-rejects-digit-perturbation
+PASS zarith/pi-rejects-padding-perturbation
+PASS zarith/pi-rejects-extra-output
+PASS zarith/repeat-extra-call
+PASS zarith/repeat-negative-base
+PASS zarith/repeat-checks-discarded-values
+PASS zarith/native-wraparound
+structure ZarithPilot : sig
+  structure I : <sig>
+  structure Z : <sig>
+  structure N : <sig>
+  structure U : <sig>
+  structure TI : <sig>
+  structure TZ : <sig>
+  structure TN : <sig>
+  structure TU : <sig>
+end
+structure ZarithPiTests : sig
+  val read : string -> TextIO.vector
+  val fails : (unit -> 'a) -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/zarith-integers.sml]
+signature BENCH_ZARITH_NUMBER =
+  sig
+  type t
+  val one : t
+  val fromInt : int -> t
+  val add : t * t -> t
+  val pred : t -> t
+  val greater : t * t -> bool
+  val toString : t -> string
+end
+structure BenchZarithInt : BENCH_ZARITH_NUMBER
+structure BenchZarithBig : BENCH_ZARITH_NUMBER
+structure BenchZarithNative : BENCH_ZARITH_NUMBER
+structure BenchZarithNum : BENCH_ZARITH_NUMBER
+functor BenchZarithFibFn(N: sig
+  type t
+  val one : t
+  val fromInt : int -> t
+  val add : t * t -> t
+  val pred : t -> t
+  val greater : t * t -> bool
+  val toString : t -> string
+end) :
+sig
+  val fib : int -> N.t
+end
+functor BenchZarithTakFn(N: sig
+  type t
+  val one : t
+  val fromInt : int -> t
+  val add : t * t -> t
+  val pred : t -> t
+  val greater : t * t -> bool
+  val toString : t -> string
+end) :
+sig
+  val tak : N.t * N.t * N.t -> N.t
+end
+structure BenchZarithFact : sig
+  val fact : int -> IntInf.int
+end
+structure BenchZarithRepeat : sig
+  val run : int -> ('a -> 'b) -> 'a -> ('b -> 'c) -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/zarith-pi.sml]
+structure BenchZarithPi : sig
+  type lft = IntInf.int * IntInf.int * IntInf.int * IntInf.int
+  val zero : IntInf.int
+  val one : IntInf.int
+  val ten : IntInf.int
+  val negativeTen : IntInf.int
+  val unit : IntInf.int * IntInf.int * IntInf.int * IntInf.int
+  val floorEv : lft -> IntInf.int -> IntInf.int
+  val comp : lft -> lft -> IntInf.int * IntInf.int * IntInf.int * IntInf.int
+  val prod :
+      lft -> IntInf.int -> IntInf.int * IntInf.int * IntInf.int * IntInf.int
+  val cons : lft -> int -> IntInf.int * IntInf.int * IntInf.int * IntInf.int
+  val run : int -> (string -> 'a) -> 'a
+  val check : int -> string -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sandmark-zarith.sml]
+[autoloading]
+[autoloading done]
+PASS zarith/fib-small-modes
+PASS zarith/fib-base
+PASS zarith/factorial
+PASS zarith/negative-factorial-base
+PASS zarith/tak-small-modes
+FAIL zarith/native-signed-order -- false
+PASS zarith/pi-lft-full-product
+PASS zarith/pi-division-truncates
+PASS zarith/pi-layout-0
+PASS zarith/pi-layout-1
+PASS zarith/pi-layout-9
+PASS zarith/pi-layout-10
+PASS zarith/pi-layout-11
+PASS zarith/pi-layout-27
+PASS zarith/pi-rejects-digit-perturbation
+PASS zarith/pi-rejects-padding-perturbation
+PASS zarith/pi-rejects-extra-output
+PASS zarith/repeat-extra-call
+PASS zarith/repeat-negative-base
+PASS zarith/repeat-checks-discarded-values
+PASS zarith/native-wraparound
+structure ZarithPilot : sig
+  structure I : <sig>
+  structure Z : <sig>
+  structure N : <sig>
+  structure U : <sig>
+  structure TI : <sig>
+  structure TZ : <sig>
+  structure TN : <sig>
+  structure TU : <sig>
+end
+structure ZarithPiTests : sig
+  val read : string -> TextIO.vector
+  val fails : (unit -> 'a) -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 21 checks, 1 failed
+PROGRAM FAIL native:smlnj32@110.99.9 (load 0, exit 1)
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/zarith-integers.sml]
+signature BENCH_ZARITH_NUMBER = 
+  sig
+    type t
+    val one : t
+    val fromInt : int -> t
+    val add : t * t -> t
+    val pred : t -> t
+    val greater : t * t -> bool
+    val toString : t -> string
+  end
+structure BenchZarithInt : BENCH_ZARITH_NUMBER
+structure BenchZarithBig : BENCH_ZARITH_NUMBER
+structure BenchZarithNative : BENCH_ZARITH_NUMBER
+structure BenchZarithNum : BENCH_ZARITH_NUMBER
+functor BenchZarithFibFn(N: sig
+                            type t
+                            val one : t
+                            val fromInt : int -> t
+                            val add : t * t -> t
+                            val pred : t -> t
+                            val greater : t * t -> bool
+                            val toString : t -> string
+                          end) :
+                        sig val fib : int -> N.t end
+functor BenchZarithTakFn(N: sig
+                            type t
+                            val one : t
+                            val fromInt : int -> t
+                            val add : t * t -> t
+                            val pred : t -> t
+                            val greater : t * t -> bool
+                            val toString : t -> string
+                          end) :
+                        sig val tak : N.t * N.t * N.t -> N.t end
+structure BenchZarithFact : sig val fact : int -> IntInf.int end
+structure BenchZarithRepeat : sig
+  val run : int -> ('a -> 'b) -> 'a -> ('b -> 'c) -> 'b
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/zarith-pi.sml]
+structure BenchZarithPi : 
+  sig
+    type lft = IntInf.int * IntInf.int * IntInf.int * IntInf.int
+    val zero : IntInf.int
+    val one : IntInf.int
+    val ten : IntInf.int
+    val negativeTen : IntInf.int
+    val unit : IntInf.int * IntInf.int * IntInf.int * IntInf.int
+    val floorEv : lft -> IntInf.int -> IntInf.int
+    val comp : lft -> lft -> IntInf.int * IntInf.int * IntInf.int * IntInf.int
+    val prod : lft
+                -> IntInf.int
+                -> IntInf.int * IntInf.int * IntInf.int * IntInf.int
+    val cons : lft -> int -> IntInf.int * IntInf.int * IntInf.int * IntInf.int
+    val run : int -> (string -> 'a) -> 'a
+    val check : int -> string -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sandmark-zarith.sml]
+PASS zarith/fib-small-modes
+PASS zarith/fib-base
+PASS zarith/factorial
+PASS zarith/negative-factorial-base
+PASS zarith/tak-small-modes
+PASS zarith/native-signed-order
+PASS zarith/pi-lft-full-product
+PASS zarith/pi-division-truncates
+PASS zarith/pi-layout-0
+PASS zarith/pi-layout-1
+PASS zarith/pi-layout-9
+PASS zarith/pi-layout-10
+PASS zarith/pi-layout-11
+PASS zarith/pi-layout-27
+PASS zarith/pi-rejects-digit-perturbation
+PASS zarith/pi-rejects-padding-perturbation
+PASS zarith/pi-rejects-extra-output
+PASS zarith/repeat-extra-call
+PASS zarith/repeat-negative-base
+PASS zarith/repeat-checks-discarded-values
+PASS zarith/native-wraparound
+structure ZarithPilot : 
+  sig
+    structure I : <sig>
+    structure Z : <sig>
+    structure N : <sig>
+    structure U : <sig>
+    structure TI : <sig>
+    structure TZ : <sig>
+    structure TN : <sig>
+    structure TU : <sig>
+  end
+structure ZarithPiTests : 
+  sig
+    val read : string -> TextIO.vector
+    val fails : (unit -> 'a) -> bool
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+PASS zarith/fib-small-modes
+PASS zarith/fib-base
+PASS zarith/factorial
+PASS zarith/negative-factorial-base
+PASS zarith/tak-small-modes
+PASS zarith/native-signed-order
+PASS zarith/pi-lft-full-product
+PASS zarith/pi-division-truncates
+PASS zarith/pi-layout-0
+PASS zarith/pi-layout-1
+PASS zarith/pi-layout-9
+PASS zarith/pi-layout-10
+PASS zarith/pi-layout-11
+PASS zarith/pi-layout-27
+PASS zarith/pi-rejects-digit-perturbation
+PASS zarith/pi-rejects-padding-perturbation
+PASS zarith/pi-rejects-extra-output
+PASS zarith/repeat-extra-call
+PASS zarith/repeat-negative-base
+PASS zarith/repeat-checks-discarded-values
+PASS zarith/native-wraparound
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+PASS zarith/fib-small-modes
+PASS zarith/fib-base
+PASS zarith/factorial
+PASS zarith/negative-factorial-base
+PASS zarith/tak-small-modes
+PASS zarith/native-signed-order
+PASS zarith/pi-lft-full-product
+PASS zarith/pi-division-truncates
+PASS zarith/pi-layout-0
+PASS zarith/pi-layout-1
+PASS zarith/pi-layout-9
+PASS zarith/pi-layout-10
+PASS zarith/pi-layout-11
+PASS zarith/pi-layout-27
+PASS zarith/pi-rejects-digit-perturbation
+PASS zarith/pi-rejects-padding-perturbation
+PASS zarith/pi-rejects-extra-output
+PASS zarith/repeat-extra-call
+PASS zarith/repeat-negative-base
+PASS zarith/repeat-checks-discarded-values
+PASS zarith/native-wraparound
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23
+PROGRAM LIMIT AS 4194304 KiB
+PASS zarith/fib-small-modes
+PASS zarith/fib-base
+PASS zarith/factorial
+PASS zarith/negative-factorial-base
+PASS zarith/tak-small-modes
+PASS zarith/native-signed-order
+PASS zarith/pi-lft-full-product
+PASS zarith/pi-division-truncates
+PASS zarith/pi-layout-0
+PASS zarith/pi-layout-1
+PASS zarith/pi-layout-9
+PASS zarith/pi-layout-10
+PASS zarith/pi-layout-11
+PASS zarith/pi-layout-27
+PASS zarith/pi-rejects-digit-perturbation
+PASS zarith/pi-rejects-padding-perturbation
+PASS zarith/pi-rejects-extra-output
+PASS zarith/repeat-extra-call
+PASS zarith/repeat-negative-base
+PASS zarith/repeat-checks-discarded-values
+PASS zarith/native-wraparound
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+PASS zarith/fib-small-modes
+PASS zarith/fib-base
+PASS zarith/factorial
+PASS zarith/negative-factorial-base
+PASS zarith/tak-small-modes
+PASS zarith/native-signed-order
+PASS zarith/pi-lft-full-product
+PASS zarith/pi-division-truncates
+PASS zarith/pi-layout-0
+PASS zarith/pi-layout-1
+PASS zarith/pi-layout-9
+PASS zarith/pi-layout-10
+PASS zarith/pi-layout-11
+PASS zarith/pi-layout-27
+PASS zarith/pi-rejects-digit-perturbation
+PASS zarith/pi-rejects-padding-perturbation
+PASS zarith/pi-rejects-extra-output
+PASS zarith/repeat-extra-call
+PASS zarith/repeat-negative-base
+PASS zarith/repeat-checks-discarded-values
+PASS zarith/native-wraparound
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+PASS zarith/fib-small-modes
+PASS zarith/fib-base
+PASS zarith/factorial
+PASS zarith/negative-factorial-base
+PASS zarith/tak-small-modes
+PASS zarith/native-signed-order
+PASS zarith/pi-lft-full-product
+PASS zarith/pi-division-truncates
+PASS zarith/pi-layout-0
+PASS zarith/pi-layout-1
+PASS zarith/pi-layout-9
+PASS zarith/pi-layout-10
+PASS zarith/pi-layout-11
+PASS zarith/pi-layout-27
+PASS zarith/pi-rejects-digit-perturbation
+PASS zarith/pi-rejects-padding-perturbation
+PASS zarith/pi-rejects-extra-output
+PASS zarith/repeat-extra-call
+PASS zarith/repeat-negative-base
+PASS zarith/repeat-checks-discarded-values
+PASS zarith/native-wraparound
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+PASS zarith/fib-small-modes
+PASS zarith/fib-base
+PASS zarith/factorial
+PASS zarith/negative-factorial-base
+PASS zarith/tak-small-modes
+PASS zarith/native-signed-order
+PASS zarith/pi-lft-full-product
+PASS zarith/pi-division-truncates
+PASS zarith/pi-layout-0
+PASS zarith/pi-layout-1
+PASS zarith/pi-layout-9
+PASS zarith/pi-layout-10
+PASS zarith/pi-layout-11
+PASS zarith/pi-layout-27
+PASS zarith/pi-rejects-digit-perturbation
+PASS zarith/pi-rejects-padding-perturbation
+PASS zarith/pi-rejects-extra-output
+PASS zarith/repeat-extra-call
+PASS zarith/repeat-negative-base
+PASS zarith/repeat-checks-discarded-values
+PASS zarith/native-wraparound
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 4194304 KiB
+PASS zarith/fib-small-modes
+PASS zarith/fib-base
+PASS zarith/factorial
+PASS zarith/negative-factorial-base
+PASS zarith/tak-small-modes
+PASS zarith/native-signed-order
+PASS zarith/pi-lft-full-product
+PASS zarith/pi-division-truncates
+PASS zarith/pi-layout-0
+PASS zarith/pi-layout-1
+PASS zarith/pi-layout-9
+PASS zarith/pi-layout-10
+PASS zarith/pi-layout-11
+PASS zarith/pi-layout-27
+PASS zarith/pi-rejects-digit-perturbation
+PASS zarith/pi-rejects-padding-perturbation
+PASS zarith/pi-rejects-extra-output
+PASS zarith/repeat-extra-call
+PASS zarith/repeat-negative-base
+PASS zarith/repeat-checks-discarded-values
+PASS zarith/native-wraparound
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/zarith-integers.sml]
+signature BENCH_ZARITH_NUMBER =
+  sig
+  type t
+  val one : t
+  val fromInt : int -> t
+  val add : t * t -> t
+  val pred : t -> t
+  val greater : t * t -> bool
+  val toString : t -> string
+end
+structure BenchZarithInt : BENCH_ZARITH_NUMBER
+structure BenchZarithBig : BENCH_ZARITH_NUMBER
+structure BenchZarithNative : BENCH_ZARITH_NUMBER
+structure BenchZarithNum : BENCH_ZARITH_NUMBER
+functor BenchZarithFibFn(N: sig
+  type t
+  val one : t
+  val fromInt : int -> t
+  val add : t * t -> t
+  val pred : t -> t
+  val greater : t * t -> bool
+  val toString : t -> string
+end) :
+sig
+  val fib : int -> N.t
+end
+functor BenchZarithTakFn(N: sig
+  type t
+  val one : t
+  val fromInt : int -> t
+  val add : t * t -> t
+  val pred : t -> t
+  val greater : t * t -> bool
+  val toString : t -> string
+end) :
+sig
+  val tak : N.t * N.t * N.t -> N.t
+end
+structure BenchZarithFact : sig
+  val fact : int -> IntInf.int
+end
+structure BenchZarithRepeat : sig
+  val run : int -> ('a -> 'b) -> 'a -> ('b -> 'c) -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/zarith-pi.sml]
+structure BenchZarithPi : sig
+  type lft = IntInf.int * IntInf.int * IntInf.int * IntInf.int
+  val zero : IntInf.int
+  val one : IntInf.int
+  val ten : IntInf.int
+  val negativeTen : IntInf.int
+  val unit : IntInf.int * IntInf.int * IntInf.int * IntInf.int
+  val floorEv : lft -> IntInf.int -> IntInf.int
+  val comp : lft -> lft -> IntInf.int * IntInf.int * IntInf.int * IntInf.int
+  val prod :
+      lft -> IntInf.int -> IntInf.int * IntInf.int * IntInf.int * IntInf.int
+  val cons : lft -> int -> IntInf.int * IntInf.int * IntInf.int * IntInf.int
+  val run : int -> (string -> 'a) -> 'a
+  val check : int -> string -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sandmark-zarith.sml]
+[autoloading]
+[autoloading done]
+PASS zarith/fib-small-modes
+PASS zarith/fib-base
+PASS zarith/factorial
+PASS zarith/negative-factorial-base
+PASS zarith/tak-small-modes
+PASS zarith/native-signed-order
+PASS zarith/pi-lft-full-product
+PASS zarith/pi-division-truncates
+PASS zarith/pi-layout-0
+PASS zarith/pi-layout-1
+PASS zarith/pi-layout-9
+PASS zarith/pi-layout-10
+PASS zarith/pi-layout-11
+PASS zarith/pi-layout-27
+PASS zarith/pi-rejects-digit-perturbation
+PASS zarith/pi-rejects-padding-perturbation
+PASS zarith/pi-rejects-extra-output
+PASS zarith/repeat-extra-call
+PASS zarith/repeat-negative-base
+PASS zarith/repeat-checks-discarded-values
+PASS zarith/native-wraparound
+structure ZarithPilot : sig
+  structure I : <sig>
+  structure Z : <sig>
+  structure N : <sig>
+  structure U : <sig>
+  structure TI : <sig>
+  structure TZ : <sig>
+  structure TN : <sig>
+  structure TU : <sig>
+end
+structure ZarithPiTests : sig
+  val read : string -> TextIO.vector
+  val fails : (unit -> 'a) -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/zarith-integers.sml]
+signature BENCH_ZARITH_NUMBER =
+  sig
+  type t
+  val one : t
+  val fromInt : int -> t
+  val add : t * t -> t
+  val pred : t -> t
+  val greater : t * t -> bool
+  val toString : t -> string
+end
+structure BenchZarithInt : BENCH_ZARITH_NUMBER
+structure BenchZarithBig : BENCH_ZARITH_NUMBER
+structure BenchZarithNative : BENCH_ZARITH_NUMBER
+structure BenchZarithNum : BENCH_ZARITH_NUMBER
+functor BenchZarithFibFn(N: sig
+  type t
+  val one : t
+  val fromInt : int -> t
+  val add : t * t -> t
+  val pred : t -> t
+  val greater : t * t -> bool
+  val toString : t -> string
+end) :
+sig
+  val fib : int -> N.t
+end
+functor BenchZarithTakFn(N: sig
+  type t
+  val one : t
+  val fromInt : int -> t
+  val add : t * t -> t
+  val pred : t -> t
+  val greater : t * t -> bool
+  val toString : t -> string
+end) :
+sig
+  val tak : N.t * N.t * N.t -> N.t
+end
+structure BenchZarithFact : sig
+  val fact : int -> IntInf.int
+end
+structure BenchZarithRepeat : sig
+  val run : int -> ('a -> 'b) -> 'a -> ('b -> 'c) -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/zarith-pi.sml]
+structure BenchZarithPi : sig
+  type lft = IntInf.int * IntInf.int * IntInf.int * IntInf.int
+  val zero : IntInf.int
+  val one : IntInf.int
+  val ten : IntInf.int
+  val negativeTen : IntInf.int
+  val unit : IntInf.int * IntInf.int * IntInf.int * IntInf.int
+  val floorEv : lft -> IntInf.int -> IntInf.int
+  val comp : lft -> lft -> IntInf.int * IntInf.int * IntInf.int * IntInf.int
+  val prod :
+      lft -> IntInf.int -> IntInf.int * IntInf.int * IntInf.int * IntInf.int
+  val cons : lft -> int -> IntInf.int * IntInf.int * IntInf.int * IntInf.int
+  val run : int -> (string -> 'a) -> 'a
+  val check : int -> string -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sandmark-zarith.sml]
+[autoloading]
+[autoloading done]
+PASS zarith/fib-small-modes
+PASS zarith/fib-base
+PASS zarith/factorial
+PASS zarith/negative-factorial-base
+PASS zarith/tak-small-modes
+FAIL zarith/native-signed-order -- false
+PASS zarith/pi-lft-full-product
+PASS zarith/pi-division-truncates
+PASS zarith/pi-layout-0
+PASS zarith/pi-layout-1
+PASS zarith/pi-layout-9
+PASS zarith/pi-layout-10
+PASS zarith/pi-layout-11
+PASS zarith/pi-layout-27
+PASS zarith/pi-rejects-digit-perturbation
+PASS zarith/pi-rejects-padding-perturbation
+PASS zarith/pi-rejects-extra-output
+PASS zarith/repeat-extra-call
+PASS zarith/repeat-negative-base
+PASS zarith/repeat-checks-discarded-values
+PASS zarith/native-wraparound
+structure ZarithPilot : sig
+  structure I : <sig>
+  structure Z : <sig>
+  structure N : <sig>
+  structure U : <sig>
+  structure TI : <sig>
+  structure TZ : <sig>
+  structure TN : <sig>
+  structure TU : <sig>
+end
+structure ZarithPiTests : sig
+  val read : string -> TextIO.vector
+  val fails : (unit -> 'a) -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 21 checks, 1 failed
+PROGRAM FAIL native:smlnj32@110.99.9 (load 0, exit 1)
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/zarith-integers.sml]
+signature BENCH_ZARITH_NUMBER = 
+  sig
+    type t
+    val one : t
+    val fromInt : int -> t
+    val add : t * t -> t
+    val pred : t -> t
+    val greater : t * t -> bool
+    val toString : t -> string
+  end
+structure BenchZarithInt : BENCH_ZARITH_NUMBER
+structure BenchZarithBig : BENCH_ZARITH_NUMBER
+structure BenchZarithNative : BENCH_ZARITH_NUMBER
+structure BenchZarithNum : BENCH_ZARITH_NUMBER
+functor BenchZarithFibFn(N: sig
+                            type t
+                            val one : t
+                            val fromInt : int -> t
+                            val add : t * t -> t
+                            val pred : t -> t
+                            val greater : t * t -> bool
+                            val toString : t -> string
+                          end) :
+                        sig val fib : int -> N.t end
+functor BenchZarithTakFn(N: sig
+                            type t
+                            val one : t
+                            val fromInt : int -> t
+                            val add : t * t -> t
+                            val pred : t -> t
+                            val greater : t * t -> bool
+                            val toString : t -> string
+                          end) :
+                        sig val tak : N.t * N.t * N.t -> N.t end
+structure BenchZarithFact : sig val fact : int -> IntInf.int end
+structure BenchZarithRepeat : sig
+  val run : int -> ('a -> 'b) -> 'a -> ('b -> 'c) -> 'b
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/zarith-pi.sml]
+structure BenchZarithPi : 
+  sig
+    type lft = IntInf.int * IntInf.int * IntInf.int * IntInf.int
+    val zero : IntInf.int
+    val one : IntInf.int
+    val ten : IntInf.int
+    val negativeTen : IntInf.int
+    val unit : IntInf.int * IntInf.int * IntInf.int * IntInf.int
+    val floorEv : lft -> IntInf.int -> IntInf.int
+    val comp : lft -> lft -> IntInf.int * IntInf.int * IntInf.int * IntInf.int
+    val prod : lft
+                -> IntInf.int
+                -> IntInf.int * IntInf.int * IntInf.int * IntInf.int
+    val cons : lft -> int -> IntInf.int * IntInf.int * IntInf.int * IntInf.int
+    val run : int -> (string -> 'a) -> 'a
+    val check : int -> string -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sandmark-zarith.sml]
+PASS zarith/fib-small-modes
+PASS zarith/fib-base
+PASS zarith/factorial
+PASS zarith/negative-factorial-base
+PASS zarith/tak-small-modes
+PASS zarith/native-signed-order
+PASS zarith/pi-lft-full-product
+PASS zarith/pi-division-truncates
+PASS zarith/pi-layout-0
+PASS zarith/pi-layout-1
+PASS zarith/pi-layout-9
+PASS zarith/pi-layout-10
+PASS zarith/pi-layout-11
+PASS zarith/pi-layout-27
+PASS zarith/pi-rejects-digit-perturbation
+PASS zarith/pi-rejects-padding-perturbation
+PASS zarith/pi-rejects-extra-output
+PASS zarith/repeat-extra-call
+PASS zarith/repeat-negative-base
+PASS zarith/repeat-checks-discarded-values
+PASS zarith/native-wraparound
+structure ZarithPilot : 
+  sig
+    structure I : <sig>
+    structure Z : <sig>
+    structure N : <sig>
+    structure U : <sig>
+    structure TI : <sig>
+    structure TZ : <sig>
+    structure TN : <sig>
+    structure TU : <sig>
+  end
+structure ZarithPiTests : 
+  sig
+    val read : string -> TextIO.vector
+    val fails : (unit -> 'a) -> bool
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+PASS zarith/fib-small-modes
+PASS zarith/fib-base
+PASS zarith/factorial
+PASS zarith/negative-factorial-base
+PASS zarith/tak-small-modes
+PASS zarith/native-signed-order
+PASS zarith/pi-lft-full-product
+PASS zarith/pi-division-truncates
+PASS zarith/pi-layout-0
+PASS zarith/pi-layout-1
+PASS zarith/pi-layout-9
+PASS zarith/pi-layout-10
+PASS zarith/pi-layout-11
+PASS zarith/pi-layout-27
+PASS zarith/pi-rejects-digit-perturbation
+PASS zarith/pi-rejects-padding-perturbation
+PASS zarith/pi-rejects-extra-output
+PASS zarith/repeat-extra-call
+PASS zarith/repeat-negative-base
+PASS zarith/repeat-checks-discarded-values
+PASS zarith/native-wraparound
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+PASS zarith/fib-small-modes
+PASS zarith/fib-base
+PASS zarith/factorial
+PASS zarith/negative-factorial-base
+PASS zarith/tak-small-modes
+PASS zarith/native-signed-order
+PASS zarith/pi-lft-full-product
+PASS zarith/pi-division-truncates
+PASS zarith/pi-layout-0
+PASS zarith/pi-layout-1
+PASS zarith/pi-layout-9
+PASS zarith/pi-layout-10
+PASS zarith/pi-layout-11
+PASS zarith/pi-layout-27
+PASS zarith/pi-rejects-digit-perturbation
+PASS zarith/pi-rejects-padding-perturbation
+PASS zarith/pi-rejects-extra-output
+PASS zarith/repeat-extra-call
+PASS zarith/repeat-negative-base
+PASS zarith/repeat-checks-discarded-values
+PASS zarith/native-wraparound
+SUMMARY 21 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23
+bench-zarith: numeric modes, recurrence bases, repeated calls and full pi output checked (/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/zarith-checks.Rl9ly5)
