@@ -1715,3 +1715,48 @@ existing budgets, bootstrap and 498 identical bytecode comparisons across seven
 compiler builds. runedoc and runeopt also agree. [The complete transcript](validation/oct16-typed-boyer-877-acceptance.log)
 records the run. The separately recorded inventory checks validate 861 entries
 and pass all 41 tests before the subsequent profile-input audit refresh.
+
+## M3 Eliza and M5 packed nucleotide representations, 2026-10-16
+
+Four imports bring the catalogue to 299 programs and 889 profiles. All 112
+smoke/normal cases pass across Rune's four engines at O0/O2 and all six managed
+native hosts: [Eliza](results/m3-eliza/correctness.tsv) and
+[packed nucleotide counting](results/m5-packed-nucleotide/correctness.tsv).
+All 60 Eliza and 32 nucleotide semantic/negative checks pass all ten
+configurations twice, with Rune O0/O2 and native defaults. Sixteen normal count
+samples agree under the execution-model rules, including allocation across all
+four engines. Existing budgets are unchanged; these new profiles are unbudgeted.
+Twelve serial native smoke samples validate MLton, SML/NJ and Poly/ML adapters.
+Counts, preflights and one-sample diagnostics remain separate from headline timings.
+
+Eliza preserves ordered keywords, exact conjugations, cyclic reply rotation and
+repeated-input handling. Memoized initial queues are shared; every conversation
+is recomputed. Independent models match all 20 full prefix conversations and all
+65000 original length rows. Separate lazy response/next-state fields preserve
+unused-state demand. Strict input loading, word/string representation and fused
+candidate-list layers are explicit translation choices. Source normal 13000 and
+large 65000 remain; smoke covers one complete prefix cycle.
+
+The packed counter preserves the omitted last window and cumulative tables,
+including cross-length leading-zero aliases. Fixed thresholds 31/15 retain the
+source's single-/pair-key representations on every SML host. The original 64-bit
+OCaml program and an independent model agree on full outputs for all selected
+input sizes. A separate threshold 15 observer also agrees; it does not constitute
+a 32-bit OCaml compiler run. Original library observations pin 512 colliding keys,
+resize/fold order and all smoke-pass statistics. Buffer reservation, option lookup,
+tagged keys, sorting and output checking remain documented adaptations. The
+byte-key counter stays a separate source variant.
+
+Both families reject changed/truncated/extra output before accepting a result.
+Exact source/input/library notices, originals, observers, models, raw samples,
+source identities and the clean pinned inventory replay are retained. Large SML
+validation is claimed only where recorded. No compiler/runtime prerequisite is
+introduced. M3 and M5 remain in progress; M4 and M8 are not closed by these imports.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with the 889-profile catalogue,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 matching bytecode comparisons across seven builds. runedoc and
+runeopt also agree. [The complete transcript](validation/oct16-eliza-packed-889-acceptance.log)
+records the run. All 45 inventory regressions pass and all 861 entries reproduce
+from the five clean pinned trees, including the separately committed profile-input
+and related-name-order fixes.
