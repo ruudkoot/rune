@@ -2,7 +2,7 @@
 structure Benchmark =
 struct
   val name = "binary-trees"
-  datatype tree = Empty | Node of tree * tree
+  open BenchBinaryTree
   fun make 0 = Node(Empty,Empty)
     | make depth = let val d=depth-1 in Node(make d,make d) end
   fun checksum (Node(Empty,_)) = 1

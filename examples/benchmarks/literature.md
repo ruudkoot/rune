@@ -231,3 +231,15 @@ zero boundaries, exception handling and buffer swaps come from the pinned
 Sandmark implementation, independently of that historical attribution. The
 shared generator and complete original/reference boards establish input and
 result identity; performance effects remain hypotheses until measured.
+
+## Benchmark Game references added with sequential ports
+
+* The [binary-tree task](https://benchmarksgame-team.pages.debian.net/benchmarksgame/description/binarytrees.html)
+  records GCBench ancestry and its allocation/lifetime model. Tree layout and
+  traversal observations in individual ports remain explicit source variants.
+* The [fannkuch task](https://benchmarksgame-team.pages.debian.net/benchmarksgame/description/fannkuchredux.html)
+  documents permutation/checksum ordering and cites Anderson and Rettig,
+  [*Performing Lisp Analysis of the FANNKUCH Benchmark*](https://doi.org/10.1145/382109.382124).
+  That paper is a historical reference here. The imported sequential variant's
+  bounds repair and correctness evidence come from the retained source,
+  checked OCaml reference and independent SML implementation.

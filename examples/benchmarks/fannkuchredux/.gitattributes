@@ -1,0 +1,2 @@
+# Preserve the exact upstream directory BSD notice bytes.
+upstream/LICENSE -text -whitespace
