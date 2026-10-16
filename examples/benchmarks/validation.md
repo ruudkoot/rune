@@ -1510,3 +1510,45 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 matching bytecode comparisons across seven compiler builds.
 runedoc and runeopt also agree. [The complete transcript](validation/oct16-integer-831-acceptance.log)
 records the run. All 41 inventory tests pass and all 861 entries validate.
+
+## M3 demand-sensitive secretary simulation, 2026-10-16
+
+Two imports bring the catalogue to 281 programs and 837 profiles. [All 56
+smoke/normal cases](results/m3-secretary/correctness.tsv) pass across Rune's four
+engines at both levels and all six managed native hosts. All 145 semantic/
+negative checks pass all ten configurations at both levels. Eight normal count
+samples agree across Rune engines. Existing budgets remain unchanged; these
+new profiles are currently unbudgeted. Six serial native smoke samples validate
+MLton, SML/NJ and Poly/ML adapters. Instrumented counts and single-sample
+diagnostics remain separate from headline timings.
+
+The unmodified workload plus exact random-1.1 source reproduces its pinned
+stdout. Original count-expression observers and an independent complete-
+permutation/set model agree through 50000 trials. Separate observers agree on
+60 full RNG states, six complete permutations, 30 lazy/strict demand cases and
+five general Integer ranges through signed 10^50. Source authorship/history,
+dependency revision, BSD/Haskell98 notices and every adaptation are retained.
+
+The lazy variant preserves random streams, linear nub membership, finite
+take100, shared prefix maximum/search and early stopping. The strict variant
+materializes the complete finite permutation through a bounded producer.
+Both retain trial map/filter/length and probability division. Word32 keeps the
+source's fixed-width generator states; range accumulation remains IntInf.
+Validate all five exact counts, numerical ratios and EOF before reporting.
+Negative checks reject changed counts, perturbed/nonfinite probabilities,
+truncation and extra data. Each invocation resets the original seed sequence.
+
+Selected profiles use 50/500/5000 trials; the original 5000 default is selected
+large, with 50000 retained as an additional reference. Current-kernel Rune O2
+preflights validate both 5000 success vectors; they are not canonical large-
+profile validation on all configurations. An earlier IntInf-state calibration
+was deliberately stopped and remains explicitly intermediate. No compiler
+failure or accepted measurement is inferred from that SIGTERM. No alternate
+RNG, prerequisite compiler/runtime feature or universal large SML execution is
+introduced or claimed. M3 remains in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 837 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 matching bytecode comparisons across seven compiler builds.
+runedoc and runeopt also agree. [The complete transcript](validation/oct16-secretary-837-acceptance.log)
+records the run. All 41 inventory tests pass and all 861 entries validate.
