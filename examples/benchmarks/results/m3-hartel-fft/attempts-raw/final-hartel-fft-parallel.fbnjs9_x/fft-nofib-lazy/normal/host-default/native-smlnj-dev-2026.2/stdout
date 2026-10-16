@@ -1,0 +1,116 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-fft.sml]
+functor BenchHartelFftFn(D: sig
+                            type 'a t
+                            val delay : (unit -> 'a) -> 'a t
+                            val force : 'a t -> 'a
+                          end) :
+                        
+                          sig
+                            type complex
+                            type 'a node
+                            type 'a seq
+                            val empty : unit -> 'a node D.t
+                            val fromList : 'a list -> 'a node D.t
+                            val lengthFrom : int * 'a node D.t -> int
+                            val length : 'a node D.t -> int
+                            val append : 'a node D.t
+                                          -> 'a node D.t -> 'a node D.t
+                            val concat : 'a node node D.t -> 'a node D.t
+                            val take : int -> 'a node D.t -> 'a node D.t
+                            val drop : int -> 'a node D.t -> 'a node D.t
+                            val map : ('a D.t -> 'b D.t)
+                                       -> 'a node D.t -> 'b node D.t
+                            val map2 : ('a D.t * 'b D.t -> 'c D.t)
+                                        -> 'a node D.t
+                                        -> 'b node D.t -> 'c node D.t
+                            val add : complex * complex -> real * real
+                            val subtract : complex * complex -> real * real
+                            val multiply : complex * complex -> real * real
+                            val pi : real D.t
+                            val unitRoot : int -> int -> real * real
+                            val pow2 : int -> int
+                            val log2 : int -> int
+                            val reverseBits : int -> int -> int
+                            val input : int -> (real * real) node D.t
+                            val arrayOfList : (real * real) node D.t
+                                               -> (real * real) D.t array
+                            val elements : 'a D.t array -> 'a node D.t
+                            val reorderArray : 'a D.t array -> 'a D.t array
+                            val arrayFft : int
+                                            -> int
+                                            -> (real * real) D.t array
+                                            -> complex D.t array
+                            val arrayMain : (real * real) node D.t
+                                             -> complex node D.t
+                            val listFft : int
+                                           -> int
+                                           -> (real * real) node D.t
+                                           -> complex node D.t
+                            val join : int
+                                        -> 'a node D.t
+                                        -> 'a node D.t -> 'a node D.t
+                            val reorder : int -> 'a node D.t -> 'a node D.t
+                            val listMain : (real * real) node D.t
+                                            -> complex node D.t
+                            val reference : int -> (real * real) vector
+                            val componentClose : real * real -> bool
+                            val checkValue : (real * real) * (real * real)
+                                              -> unit
+                            val sourceCompare : complex * complex -> bool
+                            val truth : char node D.t
+                            val comparisons : (real * real) vector
+                                               -> int
+                                               -> (real * real) node D.t
+                                               -> (real * real) node D.t
+                                               -> char node node D.t
+                            val digest : char node D.t * int * int
+                                          -> int * int
+                            val run : int -> (real * real) vector -> string
+                          end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-fft-driver.sml]
+functor BenchHartelFftDriverFn(K: sig
+                                  val reference : int -> (real * real) vector
+                                  val run : int
+                                             -> (real * real) vector -> string
+                                end) :
+                              sig val run : string list -> string end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/fft-nofib-lazy/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Kernel : <sig>
+    structure Driver : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 360:59904/512:3600
+PASS fft-nofib-lazy
+SUMMARY 1 checks, 0 failed

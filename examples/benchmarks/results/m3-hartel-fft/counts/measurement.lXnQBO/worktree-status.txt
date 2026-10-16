@@ -1,0 +1,16 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/fft-nofib-lazy/
+?? examples/benchmarks/fft-nofib-strict/
+?? examples/benchmarks/genfft-lazy/
+?? examples/benchmarks/genfft-strict/
+?? examples/benchmarks/shared/genfft-driver.sml
+?? examples/benchmarks/shared/genfft.sml
+?? examples/benchmarks/shared/hartel-fft-driver.sml
+?? examples/benchmarks/shared/hartel-fft.sml
+?? tests/benchmarks/check-genfft.sh
+?? tests/benchmarks/check-hartel-fft.sh
+?? tests/benchmarks/data/genfft/
+?? tests/benchmarks/data/hartel-fft/
+?? tests/benchmarks/genfft-tests.sml
+?? tests/benchmarks/hartel-fft-tests.sml

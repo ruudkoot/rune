@@ -1,0 +1,51 @@
+{
+  "command": [
+    "make",
+    "bench-count",
+    "BENCH_FILTER==genfft-lazy"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 147208,
+  "observed_minimum_available_kib": 19658676,
+  "peak_processes": [
+    {
+      "pid": 975055,
+      "name": "sh",
+      "rss_kib": 1680
+    },
+    {
+      "pid": 975056,
+      "name": "sh",
+      "rss_kib": 1936
+    },
+    {
+      "pid": 996626,
+      "name": "sh",
+      "rss_kib": 1224
+    },
+    {
+      "pid": 996628,
+      "name": "time",
+      "rss_kib": 1460
+    },
+    {
+      "pid": 996629,
+      "name": "timeout",
+      "rss_kib": 1532
+    },
+    {
+      "pid": 996630,
+      "name": "runevm-new",
+      "rss_kib": 134540
+    },
+    {
+      "pid": 975005,
+      "name": "make",
+      "rss_kib": 4836
+    }
+  ],
+  "elapsed_seconds": 301.0222914799815
+}

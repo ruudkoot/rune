@@ -1,0 +1,3 @@
+PASS original FFT vectors and analytic spectrum smoke lazy and strict
+PASS original FFT vectors and analytic spectrum normal lazy and strict
+PASS original FFT vectors and analytic spectrum large lazy and strict

@@ -1,0 +1,4 @@
+RESULT 1:14976/128:10
+PASS fft-nofib-lazy
+SAMPLE 1 0.002737000
+SUMMARY 1 checks, 0 failed

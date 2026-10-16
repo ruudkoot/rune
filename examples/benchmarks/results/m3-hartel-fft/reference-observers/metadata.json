@@ -1,0 +1,56 @@
+[
+  {
+    "name": "fft",
+    "profile": "smoke",
+    "n": 1,
+    "repetitions": 360,
+    "checksum": "14976/128",
+    "observer_bytes": 9087,
+    "source_sha256": "d9cb199ecd9c51967db029d29ba44e51033fa78ce5b24079eee3f629dcdc2e73"
+  },
+  {
+    "name": "fft",
+    "profile": "normal",
+    "n": 3,
+    "repetitions": 360,
+    "checksum": "59904/512",
+    "observer_bytes": 33246,
+    "source_sha256": "d9cb199ecd9c51967db029d29ba44e51033fa78ce5b24079eee3f629dcdc2e73"
+  },
+  {
+    "name": "fft",
+    "profile": "large",
+    "n": 5,
+    "repetitions": 360,
+    "checksum": "239616/2048",
+    "observer_bytes": 129508,
+    "source_sha256": "d9cb199ecd9c51967db029d29ba44e51033fa78ce5b24079eee3f629dcdc2e73"
+  },
+  {
+    "name": "genfft",
+    "profile": "smoke",
+    "n": 3,
+    "repetitions": 300,
+    "checksum": "417707/5532",
+    "observer_bytes": 5532,
+    "source_sha256": "402893a8d085250190ddeaab2d7ca1f470ca3804c72cae2b69547332224e5499"
+  },
+  {
+    "name": "genfft",
+    "profile": "normal",
+    "n": 6,
+    "repetitions": 300,
+    "checksum": "5925859/79360",
+    "observer_bytes": 79360,
+    "source_sha256": "402893a8d085250190ddeaab2d7ca1f470ca3804c72cae2b69547332224e5499"
+  },
+  {
+    "name": "genfft",
+    "profile": "large",
+    "n": 8,
+    "repetitions": 300,
+    "checksum": "31387091/426210",
+    "observer_bytes": 426210,
+    "source_sha256": "402893a8d085250190ddeaab2d7ca1f470ca3804c72cae2b69547332224e5499"
+  }
+]

@@ -1,0 +1,4 @@
+RESULT 1:14976/128:10
+PASS fft-nofib-strict
+SAMPLE 1 0.000480000
+SUMMARY 1 checks, 0 failed

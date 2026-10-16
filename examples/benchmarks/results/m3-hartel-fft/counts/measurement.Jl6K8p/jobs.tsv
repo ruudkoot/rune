@@ -1,0 +1,1 @@
+genfft-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/genfft.sml shared/genfft-driver.sml genfft-lazy/benchmark.sml shared/main.sml	6 300 normal.program	genfft-lazy/normal.expected	normal.program

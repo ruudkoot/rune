@@ -1,0 +1,491 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 5ab10d65..2c4f8fc0 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -1,8 +1,9 @@
+ # Rune benchmarks
+ 
+ Portable SML97 benchmark programs, being implemented from the
+-[roadmap](../../docs/plans/benchmarks.md). The runnable catalogue includes the five M1 pilots and the growing M2 classic
+-SML collection, with fixed profiles and result checks. The larger source
++[roadmap](../../docs/plans/benchmarks.md). The runnable catalogue covers the classic SML collection and staged nofib/Sandmark
++ports, with fixed profiles and result checks. Recorded coverage is in
++[validation.md](validation.md). The larger source
+ [inventory](inventory.tsv) schedules future imports; it is not a list of
+ passing programs. See the [source audit](audit.md) and [literature map](literature.md).
+ 
+@@ -319,6 +320,10 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [listcopy-strict](#listcopy-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/listcopy) | Compile and render list comprehensions, then copy and count the character spine. |
+ | [wang-lazy](#wang-lazy) | [nofib Hartel](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/wang) | Solve and render the original blocked numerical workload with lazy real fields and intermediate lists. |
+ | [wang-strict](#wang-strict) | [nofib Hartel](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/wang) | Solve and render the original blocked numerical workload with strict real fields and intermediate lists. |
++| [fft-nofib-lazy](#fft-nofib-lazy) | [nofib Hartel](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/fft) | Run and validate both persistent-array and recursive-list Fourier transforms. |
++| [fft-nofib-strict](#fft-nofib-strict) | [nofib Hartel](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/fft) | Run and validate both persistent-array and recursive-list Fourier transforms. |
++| [genfft-lazy](#genfft-lazy) | [nofib Hartel](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/genfft) | Generate and check complete source for unrolled FFT dependency graphs. |
++| [genfft-strict](#genfft-strict) | [nofib Hartel](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/genfft) | Generate and check complete source for unrolled FFT dependency graphs. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -15033,3 +15038,443 @@ results/m3-wang; these pilot facts alone do not close M3.
+ [Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) provides suite
+ context. The pinned source supplies the algorithm and evaluation evidence here.
+ No unverified historical algorithm attribution or general solver claim is made.
++
++
++## fft-nofib-lazy
++
++Selected collection/value evaluation: lazy.
++
++### Algorithm and workload
++
++Run both original transforms on a real ramp [63,62,...,0] repeated 2^coarse
++times. The first transform uses bit-reversed input and iterative fresh arrays;
++the second recursively transforms lists and uses the source join/reorder pass.
++Compare every result, render its status character and consume the complete
++status stream with the source ASCII-sum/length checksum. Both transforms share
++the generated input and its 64 memoized complex payloads.
++
++### History, authorship, revision and aliases
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798,
++`spectral/hartel/fft/Main.hs`, Makefile, three 360-line stdout fixtures, and
++`spectral/hartel/Fast2haskell.hs`. Preserve their complete bytes under upstream/.
++The collection name records the Hartel association; the program/shim files state
++no full individual authorship or separate redistribution notice. The related
++GHC Complex module has a University of Glasgow 2001 notice and BSD-style license;
++its file and base-library license are preserved with their own scope.
++
++The classic SML fft keeps the unsuffixed name. This distinct nofib workload uses
++fft-nofib-lazy/strict. It runs two array/list algorithms with a different input
++and consumer. genfft generates transform source text; its embedded numerical FFT
++helpers are unreachable there. These are distinct workloads with shared ancestry,
++not duplicate runnable implementations.
++
++### Evaluation variants and source semantics
++
++GHC 9.4.7 Data.Complex at revision
++00920f176b0235d5bb52a8e054d89a664f8938fe declares both components strict. The SML
++complex pair therefore has strict binary64 fields in both variants. The lazy
++variant memoizes whole complex values, array lookups/indices, comparison strings
++and collection spines. The strict variant evaluates these finite values/spines
++eagerly. The shared pi value follows the selected evaluation policy. Record
++initialization can consequently move between compilation/startup and first use
++on different host adapters; headline reports compare identical SML sources.
++
++Both array butterfly outputs share z=root*y and their input lookup cells. The
++list transform shares its root per recursive node and shares the product list
++between plus/minus branches. Preserve source root arguments, including large
++array angles; no modular reduction or twiddle-table substitution changes them.
++List reordering retains split/join traversal rather than replacing it with a
++direct permutation. Fast2haskell's miraseq does not demand its first argument.
++
++### Portable SML97 translation and adaptations
++
++Fresh SML arrays model the functional Haskell arrays: populate each new array,
++then keep it read-only while later stages refer to it. Explicit association lists
++and pair order are retained for butterfly stages. Array.tabulate supplies the
++shim's tabulation helper; this replaces its library association-building layer.
++Standard initialization supplies a shared zero cell. A separate seen array and
++write counter validate complete unique index coverage before any stage escapes.
++These extra validation allocations and bounds checks are part of the SML workload.
++The input and stage arrays, lists, shared cells and arithmetic remain distinct;
++there is no in-place butterfly overwrite.
++
++Complex addition/subtraction/multiplication retain the pinned base module's field
++expressions and operation grouping. The shim's log2 retains logarithm, rounding
++and conversion operations. Nonnegative bounded bit operations use fixed Word32
++or div/mod2 equivalents. At 2048 points, index products stay below 2^22 and all
++source/driver integers fit signed 31 bits. Standard SML operations replace the
++Haskell libraries; no compiler/runtime prerequisite is added.
++
++An independent closed-form spectrum is built once per driver invocation. For
++N=64*m and output k, frequencies not divisible by m are zero. For k=m*q,
++q=0 gives (2016*m,0); q=1..63 gives (N/2,(N/2)/tan(pi*q/64)). This is the positive
++sign, unnormalized transform used by the source. Every scalar from both algorithms
++must be finite and within absolute 1e-7 plus relative 1e-12 of that value. The
++original method-comparison bound 0.5 also remains. Reference GHC discrepancies
++are at most 7.69e-9 (array) and 2.71e-11 (list); an independent direct DFT differs
++from the formula by at most 1.21e-8 on the selected inputs. The chosen bound is a
++reviewed finite-input rule with margin, not a general floating-point error theorem.
++Tests reject perturbations that the original 0.5 comparison would accept.
++
++The original successful t-character stream is retained and consumed; its checksum
++is 117*N/N. The driver validates every repeated result, formats the original
++checksum/newline contribution and reports repetitions:checksum:emitted-bytes.
++Controlled summary output replaces separate per-iteration writes. Numerical
++reference/checking work is included and documented for SML compiler comparisons.
++
++### Compiler/runtime diagnostic questions
++
++Investigate fresh arrays and persistent lists, array checks, association cells,
++complex representation, memoized roots/products, initialization, collector
++retention, trigonometric calls and whole-program specialization. These are
++source-derived hypotheses until supported by measurements. Count/allocation
++instrumentation and serial timings have separate archives. The array algorithm
++forms a root per butterfly; the list algorithm shares one per recursive node.
++Aggregate results cover both algorithms; they do not isolate either one's cost.
++
++### Profiles, correctness and references
++
++| Profile | Coarse | Points | Repetitions | Suite result |
++|---|---:|---:|---:|---|
++| smoke | 1 | 128 | 1 | 1:14976/128:10 |
++| normal | 3 | 512 | 360 | 360:59904/512:3600 |
++| large | 5 | 2048 | 360 | 360:239616/2048:4320 |
++
++Normal/large retain original NORM_OPTS/SLOW_OPTS and all 360 iterations. Smoke
++preserves FAST_OPTS and reduces only iterations to one. Default limits apply.
++The unmodified GHC program agrees with all three 360-line fixtures. Full vectors
++from both original algorithms agree with independent direct DFT/analytic checks.
++SML tests compare those vectors, nonuniform complex inputs, source checksums,
++repeat formatting, bounds, invalid scalars and input sharing. Whole normal
++Rune O2 pilots retain all 360 iterations. Other coverage belongs in validation.md.
++
++[Cooley and Tukey](https://www.cs.jhu.edu/~misha/ReadingSeminar/Papers/Cooley65.pdf)
++provide algorithmic background; [Partain](https://doi.org/10.1007/978-1-4471-3215-8_17)
++provides nofib context. The pinned sources establish these implementations and
++[GHC's Complex definition](https://github.com/ghc/ghc/blob/00920f176b0235d5bb52a8e054d89a664f8938fe/libraries/base/Data/Complex.hs)
++establishes field strictness. Source observations, reference discrepancies and
++performance hypotheses have the distinct evidence scopes described above.
++
++
++## fft-nofib-strict
++
++Selected collection/value evaluation: strict.
++
++### Algorithm and workload
++
++Run both original transforms on a real ramp [63,62,...,0] repeated 2^coarse
++times. The first transform uses bit-reversed input and iterative fresh arrays;
++the second recursively transforms lists and uses the source join/reorder pass.
++Compare every result, render its status character and consume the complete
++status stream with the source ASCII-sum/length checksum. Both transforms share
++the generated input and its 64 memoized complex payloads.
++
++### History, authorship, revision and aliases
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798,
++`spectral/hartel/fft/Main.hs`, Makefile, three 360-line stdout fixtures, and
++`spectral/hartel/Fast2haskell.hs`. Preserve their complete bytes under upstream/.
++The collection name records the Hartel association; the program/shim files state
++no full individual authorship or separate redistribution notice. The related
++GHC Complex module has a University of Glasgow 2001 notice and BSD-style license;
++its file and base-library license are preserved with their own scope.
++
++The classic SML fft keeps the unsuffixed name. This distinct nofib workload uses
++fft-nofib-lazy/strict. It runs two array/list algorithms with a different input
++and consumer. genfft generates transform source text; its embedded numerical FFT
++helpers are unreachable there. These are distinct workloads with shared ancestry,
++not duplicate runnable implementations.
++
++### Evaluation variants and source semantics
++
++GHC 9.4.7 Data.Complex at revision
++00920f176b0235d5bb52a8e054d89a664f8938fe declares both components strict. The SML
++complex pair therefore has strict binary64 fields in both variants. The lazy
++variant memoizes whole complex values, array lookups/indices, comparison strings
++and collection spines. The strict variant evaluates these finite values/spines
++eagerly. The shared pi value follows the selected evaluation policy. Record
++initialization can consequently move between compilation/startup and first use
++on different host adapters; headline reports compare identical SML sources.
++
++Both array butterfly outputs share z=root*y and their input lookup cells. The
++list transform shares its root per recursive node and shares the product list
++between plus/minus branches. Preserve source root arguments, including large
++array angles; no modular reduction or twiddle-table substitution changes them.
++List reordering retains split/join traversal rather than replacing it with a
++direct permutation. Fast2haskell's miraseq does not demand its first argument.
++
++### Portable SML97 translation and adaptations
++
++Fresh SML arrays model the functional Haskell arrays: populate each new array,
++then keep it read-only while later stages refer to it. Explicit association lists
++and pair order are retained for butterfly stages. Array.tabulate supplies the
++shim's tabulation helper; this replaces its library association-building layer.
++Standard initialization supplies a shared zero cell. A separate seen array and
++write counter validate complete unique index coverage before any stage escapes.
++These extra validation allocations and bounds checks are part of the SML workload.
++The input and stage arrays, lists, shared cells and arithmetic remain distinct;
++there is no in-place butterfly overwrite.
++
++Complex addition/subtraction/multiplication retain the pinned base module's field
++expressions and operation grouping. The shim's log2 retains logarithm, rounding
++and conversion operations. Nonnegative bounded bit operations use fixed Word32
++or div/mod2 equivalents. At 2048 points, index products stay below 2^22 and all
++source/driver integers fit signed 31 bits. Standard SML operations replace the
++Haskell libraries; no compiler/runtime prerequisite is added.
++
++An independent closed-form spectrum is built once per driver invocation. For
++N=64*m and output k, frequencies not divisible by m are zero. For k=m*q,
++q=0 gives (2016*m,0); q=1..63 gives (N/2,(N/2)/tan(pi*q/64)). This is the positive
++sign, unnormalized transform used by the source. Every scalar from both algorithms
++must be finite and within absolute 1e-7 plus relative 1e-12 of that value. The
++original method-comparison bound 0.5 also remains. Reference GHC discrepancies
++are at most 7.69e-9 (array) and 2.71e-11 (list); an independent direct DFT differs
++from the formula by at most 1.21e-8 on the selected inputs. The chosen bound is a
++reviewed finite-input rule with margin, not a general floating-point error theorem.
++Tests reject perturbations that the original 0.5 comparison would accept.
++
++The original successful t-character stream is retained and consumed; its checksum
++is 117*N/N. The driver validates every repeated result, formats the original
++checksum/newline contribution and reports repetitions:checksum:emitted-bytes.
++Controlled summary output replaces separate per-iteration writes. Numerical
++reference/checking work is included and documented for SML compiler comparisons.
++
++### Compiler/runtime diagnostic questions
++
++Investigate fresh arrays and persistent lists, array checks, association cells,
++complex representation, memoized roots/products, initialization, collector
++retention, trigonometric calls and whole-program specialization. These are
++source-derived hypotheses until supported by measurements. Count/allocation
++instrumentation and serial timings have separate archives. The array algorithm
++forms a root per butterfly; the list algorithm shares one per recursive node.
++Aggregate results cover both algorithms; they do not isolate either one's cost.
++
++### Profiles, correctness and references
++
++| Profile | Coarse | Points | Repetitions | Suite result |
++|---|---:|---:|---:|---|
++| smoke | 1 | 128 | 1 | 1:14976/128:10 |
++| normal | 3 | 512 | 360 | 360:59904/512:3600 |
++| large | 5 | 2048 | 360 | 360:239616/2048:4320 |
++
++Normal/large retain original NORM_OPTS/SLOW_OPTS and all 360 iterations. Smoke
++preserves FAST_OPTS and reduces only iterations to one. Default limits apply.
++The unmodified GHC program agrees with all three 360-line fixtures. Full vectors
++from both original algorithms agree with independent direct DFT/analytic checks.
++SML tests compare those vectors, nonuniform complex inputs, source checksums,
++repeat formatting, bounds, invalid scalars and input sharing. Whole normal
++Rune O2 pilots retain all 360 iterations. Other coverage belongs in validation.md.
++
++[Cooley and Tukey](https://www.cs.jhu.edu/~misha/ReadingSeminar/Papers/Cooley65.pdf)
++provide algorithmic background; [Partain](https://doi.org/10.1007/978-1-4471-3215-8_17)
++provides nofib context. The pinned sources establish these implementations and
++[GHC's Complex definition](https://github.com/ghc/ghc/blob/00920f176b0235d5bb52a8e054d89a664f8938fe/libraries/base/Data/Complex.hs)
++establishes field strictness. Source observations, reference discrepancies and
++performance hypotheses have the distinct evidence scopes described above.
++
++
++## genfft-lazy
++
++Selected collection/value evaluation: lazy.
++
++### Algorithm and workload
++
++Generate source text for unrolled radix-two FFT dependency graphs of sizes
++4,8,...,2^(maximum+1). Emit bit-reversed input bindings, every butterfly's
++add/subtract/multiply equations, shared root definitions, ordered output groups,
++and exact SYNTH/sector text. The measured workload is source generation.
++The .program fixtures are data, including the shell-looking header.
++
++### History, authorship, revision and aliases
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798,
++`spectral/hartel/genfft/Main.hs`, Makefile, three 300-line stdout fixtures, and
++`spectral/hartel/Fast2haskell.hs`. Full original bytes are preserved under upstream/.
++The collection name records the Hartel association. These files state no full
++individual authorship or separate redistribution notice; none is inferred from
++a related module's notice. Keep the established genfft name with explicit lazy
++and strict suffixes.
++
++This program shares embedded numerical helpers with Hartel fft, but its entrypoint
++only generates text and checks its characters. Those numerical helpers and unused
++Fast boilerplate remain in provenance. The numerical FFT and classic SML fft
++therefore remain separate workloads.
++
++### Variants and source behavior
++
++The lazy variant memoizes character heads and list spines; the strict variant
++constructs those finite lists eagerly. Both preserve input/output name order,
++bit reversal, zero-bit insertion, groups of eight output variables, separators,
++trailing spaces and final newlines. Shared numeric-name strings remain shared
++values when reused. The finite integer bit-list/fold helpers and scalar name
++parameters use eager SML operations in both variants; their complete values are
++needed by the selected generator. Int.toString replaces the Haskell decimal
++formatter on this nonnegative domain. Fast2haskell's miraseq is a no-op.
++
++### Portable SML97 translation and adaptations
++
++Retain the recursive bit-list construction and left fold for insertZero, plus
++the source enumeration, map, take/drop, grouping, concatenation and foldr1-style
++glue. The latter stays partial on an empty collection and leaves a singleton's
++separator unused. The generator constructs source characters for every repetition;
++a fixture is used only by the checker. No generated program replaces the kernel.
++
++Indices and shifts are nonnegative and bounded by the selected exponent 8.
++Fixed Word32 shifts and div/mod2 implement the source scalar bit operations within
++a width-independent domain. Every intermediate integer fits signed 31 bits:
++the largest complete output has 426210 ASCII characters and sum+length 31387091.
++The driver compares each checksum separately, avoiding a narrow sum of 300 large
++checksums. Repeated formatted output has at most 4800 bytes in selected profiles.
++There is no reachable floating-point or arbitrary-precision arithmetic.
++
++Load the reviewed complete source fixture once per driver invocation, then compare
++every newly generated character for each repetition, including EOF. The source
++ASCII-sum/length checksum is also computed and validated. Full byte comparison
++rejects a deliberately transposed fixture with the same checksum and length.
++This additional checking cost is included in identical-SML compiler comparisons.
++The driver formats every iteration's source checksum/newline contribution and
++reports repetitions:checksum:emitted-bytes through controlled suite output.
++
++### Compiler/runtime diagnostic questions
++
++Investigate recursive generation, integer/name formatting, sharing, eager/lazy
++character lists, concatenation, closure specialization, stack/heap growth and
++collector retention. These are source-derived hypotheses until established by
++measurement. Byte checking, reference loading, kernel generation and final result
++formatting remain visible parts of the SML workload. Profiling/counts remain
++separate from headline timings.
++
++### Profiles, correctness and references
++
++| Profile | Maximum exponent | Repetitions | Generated bytes per iteration | Suite result |
++|---|---:|---:|---:|---|
++| smoke | 3 | 1 | 5532 | 1:417707/5532:12 |
++| normal | 6 | 300 | 79360 | 300:5925859/79360:4200 |
++| large | 8 | 300 | 426210 | 300:31387091/426210:4800 |
++
++Normal/large retain original NORM_OPTS/SLOW_OPTS and all 300 iterations. Smoke
++preserves FAST_OPTS and reduces only repetitions to one. Default limits apply.
++Every program from exponent one through the maximum is generated in each
++iteration. The input parameter is an exponent bound, not a universal size.
++
++Unmodified GHC executions match every byte of all three 300-line fixtures.
++Export-only observers record complete source for maxima 0..8. A separate renderer
++using bit-mask insertion and reversed binary strings agrees with all selected
++bytes. An independent evaluator checks all eight generated dependency graphs
++against direct DFTs on nonuniform complex inputs, under documented complex
++add/subtract/multiply and positive-unit-root meanings. This validates the graph
++model rather than executing the historical target framework.
++
++SML checks compare full source for maxima 0..8 in both modes, repeated output,
++wrong/truncated/extra/checksum-colliding fixtures, character sharing, unused
++separators and partial empty glue. Whole normal Rune O2 pilots retain all 300
++iterations. Recorded host coverage and resource outcomes belong in validation.md.
++
++[Cooley and Tukey](https://www.cs.jhu.edu/~misha/ReadingSeminar/Papers/Cooley65.pdf)
++provide algorithmic background and [Partain](https://doi.org/10.1007/978-1-4471-3215-8_17)
++provides suite context. Exact source/history observations and independent graph
++checks have their recorded evidence; performance questions remain hypotheses.
++
++
++## genfft-strict
++
++Selected collection/value evaluation: strict.
++
++### Algorithm and workload
++
++Generate source text for unrolled radix-two FFT dependency graphs of sizes
++4,8,...,2^(maximum+1). Emit bit-reversed input bindings, every butterfly's
++add/subtract/multiply equations, shared root definitions, ordered output groups,
++and exact SYNTH/sector text. The measured workload is source generation.
++The .program fixtures are data, including the shell-looking header.
++
++### History, authorship, revision and aliases
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798,
++`spectral/hartel/genfft/Main.hs`, Makefile, three 300-line stdout fixtures, and
++`spectral/hartel/Fast2haskell.hs`. Full original bytes are preserved under upstream/.
++The collection name records the Hartel association. These files state no full
++individual authorship or separate redistribution notice; none is inferred from
++a related module's notice. Keep the established genfft name with explicit lazy
++and strict suffixes.
++
++This program shares embedded numerical helpers with Hartel fft, but its entrypoint
++only generates text and checks its characters. Those numerical helpers and unused
++Fast boilerplate remain in provenance. The numerical FFT and classic SML fft
++therefore remain separate workloads.
++
++### Variants and source behavior
++
++The lazy variant memoizes character heads and list spines; the strict variant
++constructs those finite lists eagerly. Both preserve input/output name order,
++bit reversal, zero-bit insertion, groups of eight output variables, separators,
++trailing spaces and final newlines. Shared numeric-name strings remain shared
++values when reused. The finite integer bit-list/fold helpers and scalar name
++parameters use eager SML operations in both variants; their complete values are
++needed by the selected generator. Int.toString replaces the Haskell decimal
++formatter on this nonnegative domain. Fast2haskell's miraseq is a no-op.
++
++### Portable SML97 translation and adaptations
++
++Retain the recursive bit-list construction and left fold for insertZero, plus
++the source enumeration, map, take/drop, grouping, concatenation and foldr1-style
++glue. The latter stays partial on an empty collection and leaves a singleton's
++separator unused. The generator constructs source characters for every repetition;
++a fixture is used only by the checker. No generated program replaces the kernel.
++
++Indices and shifts are nonnegative and bounded by the selected exponent 8.
++Fixed Word32 shifts and div/mod2 implement the source scalar bit operations within
++a width-independent domain. Every intermediate integer fits signed 31 bits:
++the largest complete output has 426210 ASCII characters and sum+length 31387091.
++The driver compares each checksum separately, avoiding a narrow sum of 300 large
++checksums. Repeated formatted output has at most 4800 bytes in selected profiles.
++There is no reachable floating-point or arbitrary-precision arithmetic.
++
++Load the reviewed complete source fixture once per driver invocation, then compare
++every newly generated character for each repetition, including EOF. The source
++ASCII-sum/length checksum is also computed and validated. Full byte comparison
++rejects a deliberately transposed fixture with the same checksum and length.
++This additional checking cost is included in identical-SML compiler comparisons.
++The driver formats every iteration's source checksum/newline contribution and
++reports repetitions:checksum:emitted-bytes through controlled suite output.
++
++### Compiler/runtime diagnostic questions
++
++Investigate recursive generation, integer/name formatting, sharing, eager/lazy
++character lists, concatenation, closure specialization, stack/heap growth and
++collector retention. These are source-derived hypotheses until established by
++measurement. Byte checking, reference loading, kernel generation and final result
++formatting remain visible parts of the SML workload. Profiling/counts remain
++separate from headline timings.
++
++### Profiles, correctness and references
++
++| Profile | Maximum exponent | Repetitions | Generated bytes per iteration | Suite result |
++|---|---:|---:|---:|---|
++| smoke | 3 | 1 | 5532 | 1:417707/5532:12 |
++| normal | 6 | 300 | 79360 | 300:5925859/79360:4200 |
++| large | 8 | 300 | 426210 | 300:31387091/426210:4800 |
++
++Normal/large retain original NORM_OPTS/SLOW_OPTS and all 300 iterations. Smoke
++preserves FAST_OPTS and reduces only repetitions to one. Default limits apply.
++Every program from exponent one through the maximum is generated in each
++iteration. The input parameter is an exponent bound, not a universal size.
++
++Unmodified GHC executions match every byte of all three 300-line fixtures.
++Export-only observers record complete source for maxima 0..8. A separate renderer
++using bit-mask insertion and reversed binary strings agrees with all selected
++bytes. An independent evaluator checks all eight generated dependency graphs
++against direct DFTs on nonuniform complex inputs, under documented complex
++add/subtract/multiply and positive-unit-root meanings. This validates the graph
++model rather than executing the historical target framework.
++
++SML checks compare full source for maxima 0..8 in both modes, repeated output,
++wrong/truncated/extra/checksum-colliding fixtures, character sharing, unused
++separators and partial empty glue. Whole normal Rune O2 pilots retain all 300
++iterations. Recorded host coverage and resource outcomes belong in validation.md.
++
++[Cooley and Tukey](https://www.cs.jhu.edu/~misha/ReadingSeminar/Papers/Cooley65.pdf)
++provide algorithmic background and [Partain](https://doi.org/10.1007/978-1-4471-3215-8_17)
++provides suite context. Exact source/history observations and independent graph
++checks have their recorded evidence; performance questions remain hypotheses.
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index d970e0ac..7bb080c9 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -924,3 +924,15 @@ wang-lazy	large	nofib	spectral/hartel/wang	150 500	wang-lazy/large.expected	shar
+ wang-strict	smoke	nofib	spectral/hartel/wang	25 1	wang-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/wang.sml,shared/wang-driver.sml,wang-strict/benchmark.sml,shared/main.sml	30	1048576	numeric-real,allocation-lifetimes,strict	-	checked-numerical	implemented
+ wang-strict	normal	nofib	spectral/hartel/wang	80 500	wang-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/wang.sml,shared/wang-driver.sml,wang-strict/benchmark.sml,shared/main.sml	600	4194304	numeric-real,allocation-lifetimes,strict	-	checked-numerical	implemented
+ wang-strict	large	nofib	spectral/hartel/wang	150 500	wang-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/wang.sml,shared/wang-driver.sml,wang-strict/benchmark.sml,shared/main.sml	3600	8388608	numeric-real,allocation-lifetimes,strict	-	checked-numerical	implemented
++fft-nofib-lazy	smoke	nofib	spectral/hartel/fft	1 1	fft-nofib-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-fft.sml,shared/hartel-fft-driver.sml,fft-nofib-lazy/benchmark.sml,shared/main.sml	30	1048576	numeric-real,arrays-vectors,lists-streams,lazy	-	checked-numerical	implemented
++fft-nofib-lazy	normal	nofib	spectral/hartel/fft	3 360	fft-nofib-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-fft.sml,shared/hartel-fft-driver.sml,fft-nofib-lazy/benchmark.sml,shared/main.sml	600	4194304	numeric-real,arrays-vectors,lists-streams,lazy	-	checked-numerical	implemented
++fft-nofib-lazy	large	nofib	spectral/hartel/fft	5 360	fft-nofib-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-fft.sml,shared/hartel-fft-driver.sml,fft-nofib-lazy/benchmark.sml,shared/main.sml	3600	8388608	numeric-real,arrays-vectors,lists-streams,lazy	-	checked-numerical	implemented
++fft-nofib-strict	smoke	nofib	spectral/hartel/fft	1 1	fft-nofib-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-fft.sml,shared/hartel-fft-driver.sml,fft-nofib-strict/benchmark.sml,shared/main.sml	30	1048576	numeric-real,arrays-vectors,lists-streams,strict	-	checked-numerical	implemented
++fft-nofib-strict	normal	nofib	spectral/hartel/fft	3 360	fft-nofib-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-fft.sml,shared/hartel-fft-driver.sml,fft-nofib-strict/benchmark.sml,shared/main.sml	600	4194304	numeric-real,arrays-vectors,lists-streams,strict	-	checked-numerical	implemented
++fft-nofib-strict	large	nofib	spectral/hartel/fft	5 360	fft-nofib-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-fft.sml,shared/hartel-fft-driver.sml,fft-nofib-strict/benchmark.sml,shared/main.sml	3600	8388608	numeric-real,arrays-vectors,lists-streams,strict	-	checked-numerical	implemented
++genfft-lazy	smoke	nofib	spectral/hartel/genfft	3 1 smoke.program	genfft-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/genfft.sml,shared/genfft-driver.sml,genfft-lazy/benchmark.sml,shared/main.sml	30	1048576	symbolic-processing,lists-streams,allocation-lifetimes,lazy	smoke.program	exact	implemented
++genfft-lazy	normal	nofib	spectral/hartel/genfft	6 300 normal.program	genfft-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/genfft.sml,shared/genfft-driver.sml,genfft-lazy/benchmark.sml,shared/main.sml	600	4194304	symbolic-processing,lists-streams,allocation-lifetimes,lazy	normal.program	exact	implemented
++genfft-lazy	large	nofib	spectral/hartel/genfft	8 300 large.program	genfft-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/genfft.sml,shared/genfft-driver.sml,genfft-lazy/benchmark.sml,shared/main.sml	3600	8388608	symbolic-processing,lists-streams,allocation-lifetimes,lazy	large.program	exact	implemented
++genfft-strict	smoke	nofib	spectral/hartel/genfft	3 1 smoke.program	genfft-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/genfft.sml,shared/genfft-driver.sml,genfft-strict/benchmark.sml,shared/main.sml	30	1048576	symbolic-processing,lists-streams,allocation-lifetimes,strict	smoke.program	exact	implemented
++genfft-strict	normal	nofib	spectral/hartel/genfft	6 300 normal.program	genfft-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/genfft.sml,shared/genfft-driver.sml,genfft-strict/benchmark.sml,shared/main.sml	600	4194304	symbolic-processing,lists-streams,allocation-lifetimes,strict	normal.program	exact	implemented
++genfft-strict	large	nofib	spectral/hartel/genfft	8 300 large.program	genfft-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/genfft.sml,shared/genfft-driver.sml,genfft-strict/benchmark.sml,shared/main.sml	3600	8388608	symbolic-processing,lists-streams,allocation-lifetimes,strict	large.program	exact	implemented

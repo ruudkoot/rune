@@ -1,0 +1,58 @@
+sed -e 's/^/||SYNTH_4 /' <<'end'     
+synth_fft_4 i1
+=LET b_0_0=head i1 IN
+ LET i2=tail i1 IN
+ LET b_0_2=head i2 IN
+ LET i3=tail i2 IN
+ LET b_0_1=head i3 IN
+ LET i4=tail i3 IN
+ LET b_0_3=head i4 IN
+ LET
+ b_1_0=add_x b_0_0 r_0_0; b_1_1=sub_x b_0_0 r_0_0; r_0_0=mul_x b_0_1 w_0;
+ b_1_2=add_x b_0_2 r_0_1; b_1_3=sub_x b_0_2 r_0_1; r_0_1=mul_x b_0_3 w_0;
+ b_2_0=add_x b_1_0 r_1_0; b_2_2=sub_x b_1_0 r_1_0; r_1_0=mul_x b_1_2 w_0;
+ b_2_1=add_x b_1_1 r_1_1; b_2_3=sub_x b_1_1 r_1_1; r_1_1=mul_x b_1_3 w_1;
+ w_0=fw_d sector_4 0.0;
+ w_1=fw_d sector_4 1.0
+ IN b_2_0:b_2_1:b_2_2:b_2_3:NIL;
+INLINE sector_4=pi/2.0;
+
+end
+sed -e 's/^/||SYNTH_8 /' <<'end'     
+synth_fft_8 i1
+=LET b_0_0=head i1 IN
+ LET i2=tail i1 IN
+ LET b_0_4=head i2 IN
+ LET i3=tail i2 IN
+ LET b_0_2=head i3 IN
+ LET i4=tail i3 IN
+ LET b_0_6=head i4 IN
+ LET i5=tail i4 IN
+ LET b_0_1=head i5 IN
+ LET i6=tail i5 IN
+ LET b_0_5=head i6 IN
+ LET i7=tail i6 IN
+ LET b_0_3=head i7 IN
+ LET i8=tail i7 IN
+ LET b_0_7=head i8 IN
+ LET
+ b_1_0=add_x b_0_0 r_0_0; b_1_1=sub_x b_0_0 r_0_0; r_0_0=mul_x b_0_1 w_0;
+ b_1_2=add_x b_0_2 r_0_1; b_1_3=sub_x b_0_2 r_0_1; r_0_1=mul_x b_0_3 w_0;
+ b_1_4=add_x b_0_4 r_0_2; b_1_5=sub_x b_0_4 r_0_2; r_0_2=mul_x b_0_5 w_0;
+ b_1_6=add_x b_0_6 r_0_3; b_1_7=sub_x b_0_6 r_0_3; r_0_3=mul_x b_0_7 w_0;
+ b_2_0=add_x b_1_0 r_1_0; b_2_2=sub_x b_1_0 r_1_0; r_1_0=mul_x b_1_2 w_0;
+ b_2_1=add_x b_1_1 r_1_1; b_2_3=sub_x b_1_1 r_1_1; r_1_1=mul_x b_1_3 w_2;
+ b_2_4=add_x b_1_4 r_1_2; b_2_6=sub_x b_1_4 r_1_2; r_1_2=mul_x b_1_6 w_0;
+ b_2_5=add_x b_1_5 r_1_3; b_2_7=sub_x b_1_5 r_1_3; r_1_3=mul_x b_1_7 w_2;
+ b_3_0=add_x b_2_0 r_2_0; b_3_4=sub_x b_2_0 r_2_0; r_2_0=mul_x b_2_4 w_0;
+ b_3_1=add_x b_2_1 r_2_1; b_3_5=sub_x b_2_1 r_2_1; r_2_1=mul_x b_2_5 w_1;
+ b_3_2=add_x b_2_2 r_2_2; b_3_6=sub_x b_2_2 r_2_2; r_2_2=mul_x b_2_6 w_2;
+ b_3_3=add_x b_2_3 r_2_3; b_3_7=sub_x b_2_3 r_2_3; r_2_3=mul_x b_2_7 w_3;
+ w_0=fw_d sector_8 0.0;
+ w_1=fw_d sector_8 1.0;
+ w_2=fw_d sector_8 2.0;
+ w_3=fw_d sector_8 3.0
+ IN b_3_0:b_3_1:b_3_2:b_3_3:b_3_4:b_3_5:b_3_6:b_3_7:NIL;
+INLINE sector_8=pi/4.0;
+
+end

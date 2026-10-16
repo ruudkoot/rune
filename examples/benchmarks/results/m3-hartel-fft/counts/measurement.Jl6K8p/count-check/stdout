@@ -1,0 +1,5 @@
+COUNT unbudgeted genfft-lazy normal rune
+COUNT unbudgeted genfft-lazy normal rune:opt
+COUNT unbudgeted genfft-lazy normal rune:new
+COUNT unbudgeted genfft-lazy normal rune:jit
+COUNT comparisons agree

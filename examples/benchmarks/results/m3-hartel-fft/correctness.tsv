@@ -1,0 +1,113 @@
+benchmark	profile	optimization	configuration	arguments	status	artifact_directory
+fft-nofib-lazy	normal	O0	rune	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/normal/O0/rune
+fft-nofib-lazy	normal	O0	rune-jit	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/normal/O0/rune-jit
+fft-nofib-lazy	normal	O0	rune-new	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/normal/O0/rune-new
+fft-nofib-lazy	normal	O0	rune-opt	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/normal/O0/rune-opt
+fft-nofib-lazy	normal	O2	rune	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/normal/O2/rune
+fft-nofib-lazy	normal	O2	rune-jit	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/normal/O2/rune-jit
+fft-nofib-lazy	normal	O2	rune-new	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/normal/O2/rune-new
+fft-nofib-lazy	normal	O2	rune-opt	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/normal/O2/rune-opt
+fft-nofib-lazy	normal	host-default	native-mlkit-4.7.23	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/normal/host-default/native-mlkit-4.7.23
+fft-nofib-lazy	normal	host-default	native-mlton-20241230	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/normal/host-default/native-mlton-20241230
+fft-nofib-lazy	normal	host-default	native-polyml-5.9.2	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/normal/host-default/native-polyml-5.9.2
+fft-nofib-lazy	normal	host-default	native-smlnj-dev-2026.2	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/normal/host-default/native-smlnj-dev-2026.2
+fft-nofib-lazy	normal	host-default	native-smlnj-legacy-110.99.9	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/normal/host-default/native-smlnj-legacy-110.99.9
+fft-nofib-lazy	normal	host-default	native-smlnj32-110.99.9	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/normal/host-default/native-smlnj32-110.99.9
+fft-nofib-lazy	smoke	O0	rune	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/smoke/O0/rune
+fft-nofib-lazy	smoke	O0	rune-jit	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/smoke/O0/rune-jit
+fft-nofib-lazy	smoke	O0	rune-new	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/smoke/O0/rune-new
+fft-nofib-lazy	smoke	O0	rune-opt	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/smoke/O0/rune-opt
+fft-nofib-lazy	smoke	O2	rune	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/smoke/O2/rune
+fft-nofib-lazy	smoke	O2	rune-jit	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/smoke/O2/rune-jit
+fft-nofib-lazy	smoke	O2	rune-new	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/smoke/O2/rune-new
+fft-nofib-lazy	smoke	O2	rune-opt	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/smoke/O2/rune-opt
+fft-nofib-lazy	smoke	host-default	native-mlkit-4.7.23	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/smoke/host-default/native-mlkit-4.7.23
+fft-nofib-lazy	smoke	host-default	native-mlton-20241230	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/smoke/host-default/native-mlton-20241230
+fft-nofib-lazy	smoke	host-default	native-polyml-5.9.2	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/smoke/host-default/native-polyml-5.9.2
+fft-nofib-lazy	smoke	host-default	native-smlnj-dev-2026.2	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/smoke/host-default/native-smlnj-dev-2026.2
+fft-nofib-lazy	smoke	host-default	native-smlnj-legacy-110.99.9	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/smoke/host-default/native-smlnj-legacy-110.99.9
+fft-nofib-lazy	smoke	host-default	native-smlnj32-110.99.9	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-lazy/smoke/host-default/native-smlnj32-110.99.9
+fft-nofib-strict	normal	O0	rune	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/normal/O0/rune
+fft-nofib-strict	normal	O0	rune-jit	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/normal/O0/rune-jit
+fft-nofib-strict	normal	O0	rune-new	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/normal/O0/rune-new
+fft-nofib-strict	normal	O0	rune-opt	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/normal/O0/rune-opt
+fft-nofib-strict	normal	O2	rune	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/normal/O2/rune
+fft-nofib-strict	normal	O2	rune-jit	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/normal/O2/rune-jit
+fft-nofib-strict	normal	O2	rune-new	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/normal/O2/rune-new
+fft-nofib-strict	normal	O2	rune-opt	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/normal/O2/rune-opt
+fft-nofib-strict	normal	host-default	native-mlkit-4.7.23	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/normal/host-default/native-mlkit-4.7.23
+fft-nofib-strict	normal	host-default	native-mlton-20241230	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/normal/host-default/native-mlton-20241230
+fft-nofib-strict	normal	host-default	native-polyml-5.9.2	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/normal/host-default/native-polyml-5.9.2
+fft-nofib-strict	normal	host-default	native-smlnj-dev-2026.2	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/normal/host-default/native-smlnj-dev-2026.2
+fft-nofib-strict	normal	host-default	native-smlnj-legacy-110.99.9	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/normal/host-default/native-smlnj-legacy-110.99.9
+fft-nofib-strict	normal	host-default	native-smlnj32-110.99.9	3 360	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/normal/host-default/native-smlnj32-110.99.9
+fft-nofib-strict	smoke	O0	rune	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/smoke/O0/rune
+fft-nofib-strict	smoke	O0	rune-jit	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/smoke/O0/rune-jit
+fft-nofib-strict	smoke	O0	rune-new	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/smoke/O0/rune-new
+fft-nofib-strict	smoke	O0	rune-opt	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/smoke/O0/rune-opt
+fft-nofib-strict	smoke	O2	rune	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/smoke/O2/rune
+fft-nofib-strict	smoke	O2	rune-jit	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/smoke/O2/rune-jit
+fft-nofib-strict	smoke	O2	rune-new	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/smoke/O2/rune-new
+fft-nofib-strict	smoke	O2	rune-opt	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/smoke/O2/rune-opt
+fft-nofib-strict	smoke	host-default	native-mlkit-4.7.23	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/smoke/host-default/native-mlkit-4.7.23
+fft-nofib-strict	smoke	host-default	native-mlton-20241230	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/smoke/host-default/native-mlton-20241230
+fft-nofib-strict	smoke	host-default	native-polyml-5.9.2	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/smoke/host-default/native-polyml-5.9.2
+fft-nofib-strict	smoke	host-default	native-smlnj-dev-2026.2	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/smoke/host-default/native-smlnj-dev-2026.2
+fft-nofib-strict	smoke	host-default	native-smlnj-legacy-110.99.9	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/smoke/host-default/native-smlnj-legacy-110.99.9
+fft-nofib-strict	smoke	host-default	native-smlnj32-110.99.9	1 1	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/fft-nofib-strict/smoke/host-default/native-smlnj32-110.99.9
+genfft-lazy	normal	O0	rune	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/normal/O0/rune
+genfft-lazy	normal	O0	rune-jit	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/normal/O0/rune-jit
+genfft-lazy	normal	O0	rune-new	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/normal/O0/rune-new
+genfft-lazy	normal	O0	rune-opt	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/normal/O0/rune-opt
+genfft-lazy	normal	O2	rune	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/normal/O2/rune
+genfft-lazy	normal	O2	rune-jit	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/normal/O2/rune-jit
+genfft-lazy	normal	O2	rune-new	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/normal/O2/rune-new
+genfft-lazy	normal	O2	rune-opt	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/normal/O2/rune-opt
+genfft-lazy	normal	host-default	native-mlkit-4.7.23	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/normal/host-default/native-mlkit-4.7.23
+genfft-lazy	normal	host-default	native-mlton-20241230	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/normal/host-default/native-mlton-20241230
+genfft-lazy	normal	host-default	native-polyml-5.9.2	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/normal/host-default/native-polyml-5.9.2
+genfft-lazy	normal	host-default	native-smlnj-dev-2026.2	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/normal/host-default/native-smlnj-dev-2026.2
+genfft-lazy	normal	host-default	native-smlnj-legacy-110.99.9	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/normal/host-default/native-smlnj-legacy-110.99.9
+genfft-lazy	normal	host-default	native-smlnj32-110.99.9	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/normal/host-default/native-smlnj32-110.99.9
+genfft-lazy	smoke	O0	rune	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/smoke/O0/rune
+genfft-lazy	smoke	O0	rune-jit	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/smoke/O0/rune-jit
+genfft-lazy	smoke	O0	rune-new	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/smoke/O0/rune-new
+genfft-lazy	smoke	O0	rune-opt	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/smoke/O0/rune-opt
+genfft-lazy	smoke	O2	rune	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/smoke/O2/rune
+genfft-lazy	smoke	O2	rune-jit	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/smoke/O2/rune-jit
+genfft-lazy	smoke	O2	rune-new	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/smoke/O2/rune-new
+genfft-lazy	smoke	O2	rune-opt	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/smoke/O2/rune-opt
+genfft-lazy	smoke	host-default	native-mlkit-4.7.23	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/smoke/host-default/native-mlkit-4.7.23
+genfft-lazy	smoke	host-default	native-mlton-20241230	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/smoke/host-default/native-mlton-20241230
+genfft-lazy	smoke	host-default	native-polyml-5.9.2	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/smoke/host-default/native-polyml-5.9.2
+genfft-lazy	smoke	host-default	native-smlnj-dev-2026.2	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/smoke/host-default/native-smlnj-dev-2026.2
+genfft-lazy	smoke	host-default	native-smlnj-legacy-110.99.9	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/smoke/host-default/native-smlnj-legacy-110.99.9
+genfft-lazy	smoke	host-default	native-smlnj32-110.99.9	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-lazy/smoke/host-default/native-smlnj32-110.99.9
+genfft-strict	normal	O0	rune	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/normal/O0/rune
+genfft-strict	normal	O0	rune-jit	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/normal/O0/rune-jit
+genfft-strict	normal	O0	rune-new	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/normal/O0/rune-new
+genfft-strict	normal	O0	rune-opt	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/normal/O0/rune-opt
+genfft-strict	normal	O2	rune	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/normal/O2/rune
+genfft-strict	normal	O2	rune-jit	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/normal/O2/rune-jit
+genfft-strict	normal	O2	rune-new	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/normal/O2/rune-new
+genfft-strict	normal	O2	rune-opt	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/normal/O2/rune-opt
+genfft-strict	normal	host-default	native-mlkit-4.7.23	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/normal/host-default/native-mlkit-4.7.23
+genfft-strict	normal	host-default	native-mlton-20241230	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/normal/host-default/native-mlton-20241230
+genfft-strict	normal	host-default	native-polyml-5.9.2	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/normal/host-default/native-polyml-5.9.2
+genfft-strict	normal	host-default	native-smlnj-dev-2026.2	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/normal/host-default/native-smlnj-dev-2026.2
+genfft-strict	normal	host-default	native-smlnj-legacy-110.99.9	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/normal/host-default/native-smlnj-legacy-110.99.9
+genfft-strict	normal	host-default	native-smlnj32-110.99.9	6 300 normal.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/normal/host-default/native-smlnj32-110.99.9
+genfft-strict	smoke	O0	rune	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/smoke/O0/rune
+genfft-strict	smoke	O0	rune-jit	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/smoke/O0/rune-jit
+genfft-strict	smoke	O0	rune-new	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/smoke/O0/rune-new
+genfft-strict	smoke	O0	rune-opt	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/smoke/O0/rune-opt
+genfft-strict	smoke	O2	rune	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/smoke/O2/rune
+genfft-strict	smoke	O2	rune-jit	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/smoke/O2/rune-jit
+genfft-strict	smoke	O2	rune-new	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/smoke/O2/rune-new
+genfft-strict	smoke	O2	rune-opt	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/smoke/O2/rune-opt
+genfft-strict	smoke	host-default	native-mlkit-4.7.23	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/smoke/host-default/native-mlkit-4.7.23
+genfft-strict	smoke	host-default	native-mlton-20241230	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/smoke/host-default/native-mlton-20241230
+genfft-strict	smoke	host-default	native-polyml-5.9.2	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/smoke/host-default/native-polyml-5.9.2
+genfft-strict	smoke	host-default	native-smlnj-dev-2026.2	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/smoke/host-default/native-smlnj-dev-2026.2
+genfft-strict	smoke	host-default	native-smlnj-legacy-110.99.9	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/smoke/host-default/native-smlnj-legacy-110.99.9
+genfft-strict	smoke	host-default	native-smlnj32-110.99.9	3 1 smoke.program	pass	results/m3-hartel-fft/attempts-raw/final-hartel-fft-parallel.fbnjs9_x/genfft-strict/smoke/host-default/native-smlnj32-110.99.9

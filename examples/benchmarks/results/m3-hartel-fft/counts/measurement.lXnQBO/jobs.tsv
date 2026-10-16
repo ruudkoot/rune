@@ -1,0 +1,1 @@
+genfft-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/genfft.sml shared/genfft-driver.sml genfft-strict/benchmark.sml shared/main.sml	6 300 normal.program	genfft-strict/normal.expected	normal.program

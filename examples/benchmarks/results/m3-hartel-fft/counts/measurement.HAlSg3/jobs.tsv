@@ -1,0 +1,1 @@
+fft-nofib-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/hartel-fft.sml shared/hartel-fft-driver.sml fft-nofib-strict/benchmark.sml shared/main.sml	3 360	fft-nofib-strict/normal.expected	-

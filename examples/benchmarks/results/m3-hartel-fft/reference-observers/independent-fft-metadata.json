@@ -1,0 +1,35 @@
+[
+  {
+    "profile": "smoke",
+    "n": 128,
+    "max_original_analytic_error": {
+      "IAA": 2.5476117657134987e-11,
+      "RLL": 1.6924793870205837e-12
+    },
+    "max_direct_dft_analytic_error": 1.813599194701054e-11,
+    "fft_bound_absolute": 1e-07,
+    "fft_bound_relative": 1e-12
+  },
+  {
+    "profile": "normal",
+    "n": 512,
+    "max_original_analytic_error": {
+      "IAA": 4.791899205808291e-10,
+      "RLL": 6.769917548082335e-12
+    },
+    "max_direct_dft_analytic_error": 1.005954380159415e-09,
+    "fft_bound_absolute": 1e-07,
+    "fft_bound_relative": 1e-12
+  },
+  {
+    "profile": "large",
+    "n": 2048,
+    "max_original_analytic_error": {
+      "IAA": 7.684988036027162e-09,
+      "RLL": 2.707967019232934e-11
+    },
+    "max_direct_dft_analytic_error": 1.2069233700670306e-08,
+    "fft_bound_absolute": 1e-07,
+    "fft_bound_relative": 1e-12
+  }
+]

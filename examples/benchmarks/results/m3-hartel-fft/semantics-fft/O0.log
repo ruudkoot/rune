@@ -1,0 +1,1547 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS fft/lazy-smoke-arrayMain-source-values
+PASS fft/lazy-smoke-listMain-source-values
+PASS fft/lazy-smoke-analytic-and-status
+PASS fft/lazy-smoke-repeat
+PASS fft/strict-smoke-arrayMain-source-values
+PASS fft/strict-smoke-listMain-source-values
+PASS fft/strict-smoke-analytic-and-status
+PASS fft/strict-smoke-repeat
+PASS fft/lazy-normal-arrayMain-source-values
+PASS fft/lazy-normal-listMain-source-values
+PASS fft/lazy-normal-analytic-and-status
+PASS fft/lazy-normal-repeat
+PASS fft/strict-normal-arrayMain-source-values
+PASS fft/strict-normal-listMain-source-values
+PASS fft/strict-normal-analytic-and-status
+PASS fft/strict-normal-repeat
+PASS fft/lazy-large-arrayMain-source-values
+PASS fft/lazy-large-listMain-source-values
+PASS fft/lazy-large-analytic-and-status
+PASS fft/lazy-large-repeat
+PASS fft/strict-large-arrayMain-source-values
+PASS fft/strict-large-listMain-source-values
+PASS fft/strict-large-analytic-and-status
+PASS fft/strict-large-repeat
+PASS fft/lazy-nonuniform-8-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-8-listMain-direct-dft
+PASS fft/strict-nonuniform-8-arrayMain-direct-dft
+PASS fft/strict-nonuniform-8-listMain-direct-dft
+PASS fft/lazy-nonuniform-16-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-16-listMain-direct-dft
+PASS fft/strict-nonuniform-16-arrayMain-direct-dft
+PASS fft/strict-nonuniform-16-listMain-direct-dft
+PASS fft/lazy-nonuniform-32-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-32-listMain-direct-dft
+PASS fft/strict-nonuniform-32-arrayMain-direct-dft
+PASS fft/strict-nonuniform-32-listMain-direct-dft
+PASS fft/source-comparison-half-inclusive
+PASS fft/source-comparison-half-exceeded
+PASS fft/strong-check-rejects-legacy-tolerance-perturbation
+PASS fft/inside-bound
+PASS fft/reject-outside-bound
+PASS fft/reject-nan
+PASS fft/reject-infinity
+PASS fft/input-copies-share-complex-cell
+PASS fft/numerical-input-head-is-memoized
+SUMMARY 45 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+PASS fft/lazy-smoke-arrayMain-source-values
+PASS fft/lazy-smoke-listMain-source-values
+PASS fft/lazy-smoke-analytic-and-status
+PASS fft/lazy-smoke-repeat
+PASS fft/strict-smoke-arrayMain-source-values
+PASS fft/strict-smoke-listMain-source-values
+PASS fft/strict-smoke-analytic-and-status
+PASS fft/strict-smoke-repeat
+PASS fft/lazy-normal-arrayMain-source-values
+PASS fft/lazy-normal-listMain-source-values
+PASS fft/lazy-normal-analytic-and-status
+PASS fft/lazy-normal-repeat
+PASS fft/strict-normal-arrayMain-source-values
+PASS fft/strict-normal-listMain-source-values
+PASS fft/strict-normal-analytic-and-status
+PASS fft/strict-normal-repeat
+PASS fft/lazy-large-arrayMain-source-values
+PASS fft/lazy-large-listMain-source-values
+PASS fft/lazy-large-analytic-and-status
+PASS fft/lazy-large-repeat
+PASS fft/strict-large-arrayMain-source-values
+PASS fft/strict-large-listMain-source-values
+PASS fft/strict-large-analytic-and-status
+PASS fft/strict-large-repeat
+PASS fft/lazy-nonuniform-8-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-8-listMain-direct-dft
+PASS fft/strict-nonuniform-8-arrayMain-direct-dft
+PASS fft/strict-nonuniform-8-listMain-direct-dft
+PASS fft/lazy-nonuniform-16-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-16-listMain-direct-dft
+PASS fft/strict-nonuniform-16-arrayMain-direct-dft
+PASS fft/strict-nonuniform-16-listMain-direct-dft
+PASS fft/lazy-nonuniform-32-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-32-listMain-direct-dft
+PASS fft/strict-nonuniform-32-arrayMain-direct-dft
+PASS fft/strict-nonuniform-32-listMain-direct-dft
+PASS fft/source-comparison-half-inclusive
+PASS fft/source-comparison-half-exceeded
+PASS fft/strong-check-rejects-legacy-tolerance-perturbation
+PASS fft/inside-bound
+PASS fft/reject-outside-bound
+PASS fft/reject-nan
+PASS fft/reject-infinity
+PASS fft/input-copies-share-complex-cell
+PASS fft/numerical-input-head-is-memoized
+SUMMARY 45 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+PASS fft/lazy-smoke-arrayMain-source-values
+PASS fft/lazy-smoke-listMain-source-values
+PASS fft/lazy-smoke-analytic-and-status
+PASS fft/lazy-smoke-repeat
+PASS fft/strict-smoke-arrayMain-source-values
+PASS fft/strict-smoke-listMain-source-values
+PASS fft/strict-smoke-analytic-and-status
+PASS fft/strict-smoke-repeat
+PASS fft/lazy-normal-arrayMain-source-values
+PASS fft/lazy-normal-listMain-source-values
+PASS fft/lazy-normal-analytic-and-status
+PASS fft/lazy-normal-repeat
+PASS fft/strict-normal-arrayMain-source-values
+PASS fft/strict-normal-listMain-source-values
+PASS fft/strict-normal-analytic-and-status
+PASS fft/strict-normal-repeat
+PASS fft/lazy-large-arrayMain-source-values
+PASS fft/lazy-large-listMain-source-values
+PASS fft/lazy-large-analytic-and-status
+PASS fft/lazy-large-repeat
+PASS fft/strict-large-arrayMain-source-values
+PASS fft/strict-large-listMain-source-values
+PASS fft/strict-large-analytic-and-status
+PASS fft/strict-large-repeat
+PASS fft/lazy-nonuniform-8-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-8-listMain-direct-dft
+PASS fft/strict-nonuniform-8-arrayMain-direct-dft
+PASS fft/strict-nonuniform-8-listMain-direct-dft
+PASS fft/lazy-nonuniform-16-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-16-listMain-direct-dft
+PASS fft/strict-nonuniform-16-arrayMain-direct-dft
+PASS fft/strict-nonuniform-16-listMain-direct-dft
+PASS fft/lazy-nonuniform-32-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-32-listMain-direct-dft
+PASS fft/strict-nonuniform-32-arrayMain-direct-dft
+PASS fft/strict-nonuniform-32-listMain-direct-dft
+PASS fft/source-comparison-half-inclusive
+PASS fft/source-comparison-half-exceeded
+PASS fft/strong-check-rejects-legacy-tolerance-perturbation
+PASS fft/inside-bound
+PASS fft/reject-outside-bound
+PASS fft/reject-nan
+PASS fft/reject-infinity
+PASS fft/input-copies-share-complex-cell
+PASS fft/numerical-input-head-is-memoized
+SUMMARY 45 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+PASS fft/lazy-smoke-arrayMain-source-values
+PASS fft/lazy-smoke-listMain-source-values
+PASS fft/lazy-smoke-analytic-and-status
+PASS fft/lazy-smoke-repeat
+PASS fft/strict-smoke-arrayMain-source-values
+PASS fft/strict-smoke-listMain-source-values
+PASS fft/strict-smoke-analytic-and-status
+PASS fft/strict-smoke-repeat
+PASS fft/lazy-normal-arrayMain-source-values
+PASS fft/lazy-normal-listMain-source-values
+PASS fft/lazy-normal-analytic-and-status
+PASS fft/lazy-normal-repeat
+PASS fft/strict-normal-arrayMain-source-values
+PASS fft/strict-normal-listMain-source-values
+PASS fft/strict-normal-analytic-and-status
+PASS fft/strict-normal-repeat
+PASS fft/lazy-large-arrayMain-source-values
+PASS fft/lazy-large-listMain-source-values
+PASS fft/lazy-large-analytic-and-status
+PASS fft/lazy-large-repeat
+PASS fft/strict-large-arrayMain-source-values
+PASS fft/strict-large-listMain-source-values
+PASS fft/strict-large-analytic-and-status
+PASS fft/strict-large-repeat
+PASS fft/lazy-nonuniform-8-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-8-listMain-direct-dft
+PASS fft/strict-nonuniform-8-arrayMain-direct-dft
+PASS fft/strict-nonuniform-8-listMain-direct-dft
+PASS fft/lazy-nonuniform-16-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-16-listMain-direct-dft
+PASS fft/strict-nonuniform-16-arrayMain-direct-dft
+PASS fft/strict-nonuniform-16-listMain-direct-dft
+PASS fft/lazy-nonuniform-32-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-32-listMain-direct-dft
+PASS fft/strict-nonuniform-32-arrayMain-direct-dft
+PASS fft/strict-nonuniform-32-listMain-direct-dft
+PASS fft/source-comparison-half-inclusive
+PASS fft/source-comparison-half-exceeded
+PASS fft/strong-check-rejects-legacy-tolerance-perturbation
+PASS fft/inside-bound
+PASS fft/reject-outside-bound
+PASS fft/reject-nan
+PASS fft/reject-infinity
+PASS fft/input-copies-share-complex-cell
+PASS fft/numerical-input-head-is-memoized
+SUMMARY 45 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 1048576 KiB
+PASS fft/lazy-smoke-arrayMain-source-values
+PASS fft/lazy-smoke-listMain-source-values
+PASS fft/lazy-smoke-analytic-and-status
+PASS fft/lazy-smoke-repeat
+PASS fft/strict-smoke-arrayMain-source-values
+PASS fft/strict-smoke-listMain-source-values
+PASS fft/strict-smoke-analytic-and-status
+PASS fft/strict-smoke-repeat
+PASS fft/lazy-normal-arrayMain-source-values
+PASS fft/lazy-normal-listMain-source-values
+PASS fft/lazy-normal-analytic-and-status
+PASS fft/lazy-normal-repeat
+PASS fft/strict-normal-arrayMain-source-values
+PASS fft/strict-normal-listMain-source-values
+PASS fft/strict-normal-analytic-and-status
+PASS fft/strict-normal-repeat
+PASS fft/lazy-large-arrayMain-source-values
+PASS fft/lazy-large-listMain-source-values
+PASS fft/lazy-large-analytic-and-status
+PASS fft/lazy-large-repeat
+PASS fft/strict-large-arrayMain-source-values
+PASS fft/strict-large-listMain-source-values
+PASS fft/strict-large-analytic-and-status
+PASS fft/strict-large-repeat
+PASS fft/lazy-nonuniform-8-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-8-listMain-direct-dft
+PASS fft/strict-nonuniform-8-arrayMain-direct-dft
+PASS fft/strict-nonuniform-8-listMain-direct-dft
+PASS fft/lazy-nonuniform-16-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-16-listMain-direct-dft
+PASS fft/strict-nonuniform-16-arrayMain-direct-dft
+PASS fft/strict-nonuniform-16-listMain-direct-dft
+PASS fft/lazy-nonuniform-32-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-32-listMain-direct-dft
+PASS fft/strict-nonuniform-32-arrayMain-direct-dft
+PASS fft/strict-nonuniform-32-listMain-direct-dft
+PASS fft/source-comparison-half-inclusive
+PASS fft/source-comparison-half-exceeded
+PASS fft/strong-check-rejects-legacy-tolerance-perturbation
+PASS fft/inside-bound
+PASS fft/reject-outside-bound
+PASS fft/reject-nan
+PASS fft/reject-infinity
+PASS fft/input-copies-share-complex-cell
+PASS fft/numerical-input-head-is-memoized
+SUMMARY 45 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-fft.sml]
+[autoloading]
+[autoloading done]
+functor BenchHartelFftFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type complex
+  type 'a node
+  type 'a seq
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val lengthFrom : int * 'a <BaseFct>.<resultStr>.node D.t -> int
+  val length : 'a <BaseFct>.<resultStr>.node D.t -> int
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val concat :
+      'a <BaseFct>.<resultStr>.node <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val map :
+      ('a D.t -> 'b D.t)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val map2 :
+      ('a D.t * 'b D.t -> 'c D.t)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+  val add :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> real * real
+  val subtract :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> real * real
+  val multiply :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> real * real
+  val pi : real D.t
+  val unitRoot : int -> int -> real * real
+  val pow2 : int -> int
+  val log2 : int -> int
+  val reverseBits : int -> int -> int
+  val input : int -> (real * real) <BaseFct>.<resultStr>.node D.t
+  val arrayOfList :
+      (real * real) <BaseFct>.<resultStr>.node D.t -> (real * real) D.t array
+  val elements : 'a D.t array -> 'a <BaseFct>.<resultStr>.node D.t
+  val reorderArray : 'a D.t array -> 'a D.t array
+  val arrayFft :
+      int
+       -> int
+       -> (real * real) D.t array -> <BaseFct>.<resultStr>.complex D.t array
+  val arrayMain :
+      (real * real) <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.complex <BaseFct>.<resultStr>.node D.t
+  val listFft :
+      int
+       -> int
+       -> (real * real) <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.complex <BaseFct>.<resultStr>.node D.t
+  val join :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val reorder :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val listMain :
+      (real * real) <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.complex <BaseFct>.<resultStr>.node D.t
+  val reference : int -> (real * real) vector
+  val componentClose : real * real -> bool
+  val checkValue : (real * real) * (real * real) -> unit
+  val sourceCompare :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex -> bool
+  val truth : char <BaseFct>.<resultStr>.node D.t
+  val comparisons :
+      (real * real) vector
+       -> int
+       -> (real * real) <BaseFct>.<resultStr>.node D.t
+       -> (real * real) <BaseFct>.<resultStr>.node D.t
+       -> char <BaseFct>.<resultStr>.node <BaseFct>.<resultStr>.node D.t
+  val digest : char <BaseFct>.<resultStr>.node D.t * int * int -> int * int
+  val run : int -> (real * real) vector -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-fft-driver.sml]
+functor BenchHartelFftDriverFn(K: sig
+  val reference : int -> (real * real) vector
+  val run : int -> (real * real) vector -> string
+end) :
+sig
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/hartel-fft-tests.sml]
+[autoloading]
+[autoloading done]
+PASS fft/lazy-smoke-arrayMain-source-values
+PASS fft/lazy-smoke-listMain-source-values
+PASS fft/lazy-smoke-analytic-and-status
+PASS fft/lazy-smoke-repeat
+PASS fft/strict-smoke-arrayMain-source-values
+PASS fft/strict-smoke-listMain-source-values
+PASS fft/strict-smoke-analytic-and-status
+PASS fft/strict-smoke-repeat
+PASS fft/lazy-normal-arrayMain-source-values
+PASS fft/lazy-normal-listMain-source-values
+PASS fft/lazy-normal-analytic-and-status
+PASS fft/lazy-normal-repeat
+PASS fft/strict-normal-arrayMain-source-values
+PASS fft/strict-normal-listMain-source-values
+PASS fft/strict-normal-analytic-and-status
+PASS fft/strict-normal-repeat
+PASS fft/lazy-large-arrayMain-source-values
+PASS fft/lazy-large-listMain-source-values
+PASS fft/lazy-large-analytic-and-status
+PASS fft/lazy-large-repeat
+PASS fft/strict-large-arrayMain-source-values
+PASS fft/strict-large-listMain-source-values
+PASS fft/strict-large-analytic-and-status
+PASS fft/strict-large-repeat
+PASS fft/lazy-nonuniform-8-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-8-listMain-direct-dft
+PASS fft/strict-nonuniform-8-arrayMain-direct-dft
+PASS fft/strict-nonuniform-8-listMain-direct-dft
+PASS fft/lazy-nonuniform-16-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-16-listMain-direct-dft
+PASS fft/strict-nonuniform-16-arrayMain-direct-dft
+PASS fft/strict-nonuniform-16-listMain-direct-dft
+PASS fft/lazy-nonuniform-32-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-32-listMain-direct-dft
+PASS fft/strict-nonuniform-32-arrayMain-direct-dft
+PASS fft/strict-nonuniform-32-listMain-direct-dft
+PASS fft/source-comparison-half-inclusive
+PASS fft/source-comparison-half-exceeded
+PASS fft/strong-check-rejects-legacy-tolerance-perturbation
+PASS fft/inside-bound
+PASS fft/reject-outside-bound
+PASS fft/reject-nan
+PASS fft/reject-infinity
+PASS fft/input-copies-share-complex-cell
+PASS fft/numerical-input-head-is-memoized
+structure NeedFft : sig
+  type complex = real * real
+  datatype 'a node = Cons of 'a D.t * 'a <BaseFct>.<resultStr>.node D.t | Nil
+  type 'a seq = 'a node BenchNeed.t
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val lengthFrom : int * 'a <BaseFct>.<resultStr>.node D.t -> int
+  val length : 'a <BaseFct>.<resultStr>.node D.t -> int
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val concat :
+      'a <BaseFct>.<resultStr>.node <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val map :
+      ('a D.t -> 'b D.t)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val map2 :
+      ('a D.t * 'b D.t -> 'c D.t)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+  val add :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> real * real
+  val subtract :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> real * real
+  val multiply :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> real * real
+  val pi : real D.t
+  val unitRoot : int -> int -> real * real
+  val pow2 : int -> int
+  val log2 : int -> int
+  val reverseBits : int -> int -> int
+  val input : int -> (real * real) <BaseFct>.<resultStr>.node D.t
+  val arrayOfList :
+      (real * real) <BaseFct>.<resultStr>.node D.t -> (real * real) D.t array
+  val elements : 'a D.t array -> 'a <BaseFct>.<resultStr>.node D.t
+  val reorderArray : 'a D.t array -> 'a D.t array
+  val arrayFft :
+      int
+       -> int
+       -> (real * real) D.t array -> <BaseFct>.<resultStr>.complex D.t array
+  val arrayMain :
+      (real * real) <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.complex <BaseFct>.<resultStr>.node D.t
+  val listFft :
+      int
+       -> int
+       -> (real * real) <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.complex <BaseFct>.<resultStr>.node D.t
+  val join :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val reorder :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val listMain :
+      (real * real) <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.complex <BaseFct>.<resultStr>.node D.t
+  val reference : int -> (real * real) vector
+  val componentClose : real * real -> bool
+  val checkValue : (real * real) * (real * real) -> unit
+  val sourceCompare :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex -> bool
+  val truth : char <BaseFct>.<resultStr>.node D.t
+  val comparisons :
+      (real * real) vector
+       -> int
+       -> (real * real) <BaseFct>.<resultStr>.node D.t
+       -> (real * real) <BaseFct>.<resultStr>.node D.t
+       -> char <BaseFct>.<resultStr>.node <BaseFct>.<resultStr>.node D.t
+  val digest : char <BaseFct>.<resultStr>.node D.t * int * int -> int * int
+  val run : int -> (real * real) vector -> string
+end
+structure StrictFft : sig
+  type complex = real * real
+  datatype 'a node = Cons of 'a D.t * 'a <BaseFct>.<resultStr>.node D.t | Nil
+  type 'a seq = 'a node BenchStrict.t
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val lengthFrom : int * 'a <BaseFct>.<resultStr>.node D.t -> int
+  val length : 'a <BaseFct>.<resultStr>.node D.t -> int
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val concat :
+      'a <BaseFct>.<resultStr>.node <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val map :
+      ('a D.t -> 'b D.t)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val map2 :
+      ('a D.t * 'b D.t -> 'c D.t)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+  val add :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> real * real
+  val subtract :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> real * real
+  val multiply :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> real * real
+  val pi : real D.t
+  val unitRoot : int -> int -> real * real
+  val pow2 : int -> int
+  val log2 : int -> int
+  val reverseBits : int -> int -> int
+  val input : int -> (real * real) <BaseFct>.<resultStr>.node D.t
+  val arrayOfList :
+      (real * real) <BaseFct>.<resultStr>.node D.t -> (real * real) D.t array
+  val elements : 'a D.t array -> 'a <BaseFct>.<resultStr>.node D.t
+  val reorderArray : 'a D.t array -> 'a D.t array
+  val arrayFft :
+      int
+       -> int
+       -> (real * real) D.t array -> <BaseFct>.<resultStr>.complex D.t array
+  val arrayMain :
+      (real * real) <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.complex <BaseFct>.<resultStr>.node D.t
+  val listFft :
+      int
+       -> int
+       -> (real * real) <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.complex <BaseFct>.<resultStr>.node D.t
+  val join :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val reorder :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val listMain :
+      (real * real) <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.complex <BaseFct>.<resultStr>.node D.t
+  val reference : int -> (real * real) vector
+  val componentClose : real * real -> bool
+  val checkValue : (real * real) * (real * real) -> unit
+  val sourceCompare :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex -> bool
+  val truth : char <BaseFct>.<resultStr>.node D.t
+  val comparisons :
+      (real * real) vector
+       -> int
+       -> (real * real) <BaseFct>.<resultStr>.node D.t
+       -> (real * real) <BaseFct>.<resultStr>.node D.t
+       -> char <BaseFct>.<resultStr>.node <BaseFct>.<resultStr>.node D.t
+  val digest : char <BaseFct>.<resultStr>.node D.t * int * int -> int * int
+  val run : int -> (real * real) vector -> string
+end
+structure NeedDriver : sig
+  val run : string list -> string
+end
+structure StrictDriver : sig
+  val run : string list -> string
+end
+structure FftTests : sig
+  structure N : <sig>
+  structure R : <sig>
+  val number : string -> real
+  val reference : string -> (real * real) list * (real * real) list
+  val close : (real * real) * (real * real) -> bool
+  val agrees : (real * real) list * (real * real) list -> bool
+  val needValues : 'a NeedFft.node BenchNeed.t -> 'a list
+  val strictValues : 'a StrictFft.node BenchStrict.t -> 'a list
+  val multiply : (real * real) * (real * real) -> real * real
+  val add : (real * real) * (real * real) -> real * real
+  val custom : int -> (real * real) list
+  val dft : (real * real) list -> (real * real) list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 45 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-fft.sml]
+[autoloading]
+[autoloading done]
+functor BenchHartelFftFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type complex
+  type 'a node
+  type 'a seq
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val lengthFrom : int * 'a <BaseFct>.<resultStr>.node D.t -> int
+  val length : 'a <BaseFct>.<resultStr>.node D.t -> int
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val concat :
+      'a <BaseFct>.<resultStr>.node <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val map :
+      ('a D.t -> 'b D.t)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val map2 :
+      ('a D.t * 'b D.t -> 'c D.t)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+  val add :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> real * real
+  val subtract :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> real * real
+  val multiply :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> real * real
+  val pi : real D.t
+  val unitRoot : int -> int -> real * real
+  val pow2 : int -> int
+  val log2 : int -> int
+  val reverseBits : int -> int -> int
+  val input : int -> (real * real) <BaseFct>.<resultStr>.node D.t
+  val arrayOfList :
+      (real * real) <BaseFct>.<resultStr>.node D.t -> (real * real) D.t array
+  val elements : 'a D.t array -> 'a <BaseFct>.<resultStr>.node D.t
+  val reorderArray : 'a D.t array -> 'a D.t array
+  val arrayFft :
+      int
+       -> int
+       -> (real * real) D.t array -> <BaseFct>.<resultStr>.complex D.t array
+  val arrayMain :
+      (real * real) <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.complex <BaseFct>.<resultStr>.node D.t
+  val listFft :
+      int
+       -> int
+       -> (real * real) <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.complex <BaseFct>.<resultStr>.node D.t
+  val join :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val reorder :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val listMain :
+      (real * real) <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.complex <BaseFct>.<resultStr>.node D.t
+  val reference : int -> (real * real) vector
+  val componentClose : real * real -> bool
+  val checkValue : (real * real) * (real * real) -> unit
+  val sourceCompare :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex -> bool
+  val truth : char <BaseFct>.<resultStr>.node D.t
+  val comparisons :
+      (real * real) vector
+       -> int
+       -> (real * real) <BaseFct>.<resultStr>.node D.t
+       -> (real * real) <BaseFct>.<resultStr>.node D.t
+       -> char <BaseFct>.<resultStr>.node <BaseFct>.<resultStr>.node D.t
+  val digest : char <BaseFct>.<resultStr>.node D.t * int * int -> int * int
+  val run : int -> (real * real) vector -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-fft-driver.sml]
+functor BenchHartelFftDriverFn(K: sig
+  val reference : int -> (real * real) vector
+  val run : int -> (real * real) vector -> string
+end) :
+sig
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/hartel-fft-tests.sml]
+[autoloading]
+[autoloading done]
+PASS fft/lazy-smoke-arrayMain-source-values
+PASS fft/lazy-smoke-listMain-source-values
+PASS fft/lazy-smoke-analytic-and-status
+PASS fft/lazy-smoke-repeat
+PASS fft/strict-smoke-arrayMain-source-values
+PASS fft/strict-smoke-listMain-source-values
+PASS fft/strict-smoke-analytic-and-status
+PASS fft/strict-smoke-repeat
+PASS fft/lazy-normal-arrayMain-source-values
+PASS fft/lazy-normal-listMain-source-values
+PASS fft/lazy-normal-analytic-and-status
+PASS fft/lazy-normal-repeat
+PASS fft/strict-normal-arrayMain-source-values
+PASS fft/strict-normal-listMain-source-values
+PASS fft/strict-normal-analytic-and-status
+PASS fft/strict-normal-repeat
+PASS fft/lazy-large-arrayMain-source-values
+PASS fft/lazy-large-listMain-source-values
+PASS fft/lazy-large-analytic-and-status
+PASS fft/lazy-large-repeat
+PASS fft/strict-large-arrayMain-source-values
+PASS fft/strict-large-listMain-source-values
+PASS fft/strict-large-analytic-and-status
+PASS fft/strict-large-repeat
+PASS fft/lazy-nonuniform-8-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-8-listMain-direct-dft
+PASS fft/strict-nonuniform-8-arrayMain-direct-dft
+PASS fft/strict-nonuniform-8-listMain-direct-dft
+PASS fft/lazy-nonuniform-16-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-16-listMain-direct-dft
+PASS fft/strict-nonuniform-16-arrayMain-direct-dft
+PASS fft/strict-nonuniform-16-listMain-direct-dft
+PASS fft/lazy-nonuniform-32-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-32-listMain-direct-dft
+PASS fft/strict-nonuniform-32-arrayMain-direct-dft
+PASS fft/strict-nonuniform-32-listMain-direct-dft
+PASS fft/source-comparison-half-inclusive
+PASS fft/source-comparison-half-exceeded
+PASS fft/strong-check-rejects-legacy-tolerance-perturbation
+PASS fft/inside-bound
+PASS fft/reject-outside-bound
+PASS fft/reject-nan
+PASS fft/reject-infinity
+PASS fft/input-copies-share-complex-cell
+PASS fft/numerical-input-head-is-memoized
+structure NeedFft : sig
+  type complex = real * real
+  datatype 'a node = Cons of 'a D.t * 'a <BaseFct>.<resultStr>.node D.t | Nil
+  type 'a seq = 'a node BenchNeed.t
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val lengthFrom : int * 'a <BaseFct>.<resultStr>.node D.t -> int
+  val length : 'a <BaseFct>.<resultStr>.node D.t -> int
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val concat :
+      'a <BaseFct>.<resultStr>.node <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val map :
+      ('a D.t -> 'b D.t)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val map2 :
+      ('a D.t * 'b D.t -> 'c D.t)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+  val add :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> real * real
+  val subtract :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> real * real
+  val multiply :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> real * real
+  val pi : real D.t
+  val unitRoot : int -> int -> real * real
+  val pow2 : int -> int
+  val log2 : int -> int
+  val reverseBits : int -> int -> int
+  val input : int -> (real * real) <BaseFct>.<resultStr>.node D.t
+  val arrayOfList :
+      (real * real) <BaseFct>.<resultStr>.node D.t -> (real * real) D.t array
+  val elements : 'a D.t array -> 'a <BaseFct>.<resultStr>.node D.t
+  val reorderArray : 'a D.t array -> 'a D.t array
+  val arrayFft :
+      int
+       -> int
+       -> (real * real) D.t array -> <BaseFct>.<resultStr>.complex D.t array
+  val arrayMain :
+      (real * real) <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.complex <BaseFct>.<resultStr>.node D.t
+  val listFft :
+      int
+       -> int
+       -> (real * real) <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.complex <BaseFct>.<resultStr>.node D.t
+  val join :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val reorder :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val listMain :
+      (real * real) <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.complex <BaseFct>.<resultStr>.node D.t
+  val reference : int -> (real * real) vector
+  val componentClose : real * real -> bool
+  val checkValue : (real * real) * (real * real) -> unit
+  val sourceCompare :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex -> bool
+  val truth : char <BaseFct>.<resultStr>.node D.t
+  val comparisons :
+      (real * real) vector
+       -> int
+       -> (real * real) <BaseFct>.<resultStr>.node D.t
+       -> (real * real) <BaseFct>.<resultStr>.node D.t
+       -> char <BaseFct>.<resultStr>.node <BaseFct>.<resultStr>.node D.t
+  val digest : char <BaseFct>.<resultStr>.node D.t * int * int -> int * int
+  val run : int -> (real * real) vector -> string
+end
+structure StrictFft : sig
+  type complex = real * real
+  datatype 'a node = Cons of 'a D.t * 'a <BaseFct>.<resultStr>.node D.t | Nil
+  type 'a seq = 'a node BenchStrict.t
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val lengthFrom : int * 'a <BaseFct>.<resultStr>.node D.t -> int
+  val length : 'a <BaseFct>.<resultStr>.node D.t -> int
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val concat :
+      'a <BaseFct>.<resultStr>.node <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val map :
+      ('a D.t -> 'b D.t)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val map2 :
+      ('a D.t * 'b D.t -> 'c D.t)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+  val add :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> real * real
+  val subtract :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> real * real
+  val multiply :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> real * real
+  val pi : real D.t
+  val unitRoot : int -> int -> real * real
+  val pow2 : int -> int
+  val log2 : int -> int
+  val reverseBits : int -> int -> int
+  val input : int -> (real * real) <BaseFct>.<resultStr>.node D.t
+  val arrayOfList :
+      (real * real) <BaseFct>.<resultStr>.node D.t -> (real * real) D.t array
+  val elements : 'a D.t array -> 'a <BaseFct>.<resultStr>.node D.t
+  val reorderArray : 'a D.t array -> 'a D.t array
+  val arrayFft :
+      int
+       -> int
+       -> (real * real) D.t array -> <BaseFct>.<resultStr>.complex D.t array
+  val arrayMain :
+      (real * real) <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.complex <BaseFct>.<resultStr>.node D.t
+  val listFft :
+      int
+       -> int
+       -> (real * real) <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.complex <BaseFct>.<resultStr>.node D.t
+  val join :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val reorder :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val listMain :
+      (real * real) <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.complex <BaseFct>.<resultStr>.node D.t
+  val reference : int -> (real * real) vector
+  val componentClose : real * real -> bool
+  val checkValue : (real * real) * (real * real) -> unit
+  val sourceCompare :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex -> bool
+  val truth : char <BaseFct>.<resultStr>.node D.t
+  val comparisons :
+      (real * real) vector
+       -> int
+       -> (real * real) <BaseFct>.<resultStr>.node D.t
+       -> (real * real) <BaseFct>.<resultStr>.node D.t
+       -> char <BaseFct>.<resultStr>.node <BaseFct>.<resultStr>.node D.t
+  val digest : char <BaseFct>.<resultStr>.node D.t * int * int -> int * int
+  val run : int -> (real * real) vector -> string
+end
+structure NeedDriver : sig
+  val run : string list -> string
+end
+structure StrictDriver : sig
+  val run : string list -> string
+end
+structure FftTests : sig
+  structure N : <sig>
+  structure R : <sig>
+  val number : string -> real
+  val reference : string -> (real * real) list * (real * real) list
+  val close : (real * real) * (real * real) -> bool
+  val agrees : (real * real) list * (real * real) list -> bool
+  val needValues : 'a NeedFft.node BenchNeed.t -> 'a list
+  val strictValues : 'a StrictFft.node BenchStrict.t -> 'a list
+  val multiply : (real * real) * (real * real) -> real * real
+  val add : (real * real) * (real * real) -> real * real
+  val custom : int -> (real * real) list
+  val dft : (real * real) list -> (real * real) list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 45 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-fft.sml]
+functor BenchHartelFftFn(D: sig
+                            type 'a t
+                            val delay : (unit -> 'a) -> 'a t
+                            val force : 'a t -> 'a
+                          end) :
+                        
+                          sig
+                            type complex
+                            type 'a node
+                            type 'a seq
+                            val empty : unit -> 'a node D.t
+                            val fromList : 'a list -> 'a node D.t
+                            val lengthFrom : int * 'a node D.t -> int
+                            val length : 'a node D.t -> int
+                            val append : 'a node D.t
+                                          -> 'a node D.t -> 'a node D.t
+                            val concat : 'a node node D.t -> 'a node D.t
+                            val take : int -> 'a node D.t -> 'a node D.t
+                            val drop : int -> 'a node D.t -> 'a node D.t
+                            val map : ('a D.t -> 'b D.t)
+                                       -> 'a node D.t -> 'b node D.t
+                            val map2 : ('a D.t * 'b D.t -> 'c D.t)
+                                        -> 'a node D.t
+                                        -> 'b node D.t -> 'c node D.t
+                            val add : complex * complex -> real * real
+                            val subtract : complex * complex -> real * real
+                            val multiply : complex * complex -> real * real
+                            val pi : real D.t
+                            val unitRoot : int -> int -> real * real
+                            val pow2 : int -> int
+                            val log2 : int -> int
+                            val reverseBits : int -> int -> int
+                            val input : int -> (real * real) node D.t
+                            val arrayOfList : (real * real) node D.t
+                                               -> (real * real) D.t array
+                            val elements : 'a D.t array -> 'a node D.t
+                            val reorderArray : 'a D.t array -> 'a D.t array
+                            val arrayFft : int
+                                            -> int
+                                            -> (real * real) D.t array
+                                            -> complex D.t array
+                            val arrayMain : (real * real) node D.t
+                                             -> complex node D.t
+                            val listFft : int
+                                           -> int
+                                           -> (real * real) node D.t
+                                           -> complex node D.t
+                            val join : int
+                                        -> 'a node D.t
+                                        -> 'a node D.t -> 'a node D.t
+                            val reorder : int -> 'a node D.t -> 'a node D.t
+                            val listMain : (real * real) node D.t
+                                            -> complex node D.t
+                            val reference : int -> (real * real) vector
+                            val componentClose : real * real -> bool
+                            val checkValue : (real * real) * (real * real)
+                                              -> unit
+                            val sourceCompare : complex * complex -> bool
+                            val truth : char node D.t
+                            val comparisons : (real * real) vector
+                                               -> int
+                                               -> (real * real) node D.t
+                                               -> (real * real) node D.t
+                                               -> char node node D.t
+                            val digest : char node D.t * int * int
+                                          -> int * int
+                            val run : int -> (real * real) vector -> string
+                          end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-fft-driver.sml]
+functor BenchHartelFftDriverFn(K: sig
+                                  val reference : int -> (real * real) vector
+                                  val run : int
+                                             -> (real * real) vector -> string
+                                end) :
+                              sig val run : string list -> string end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/hartel-fft-tests.sml]
+PASS fft/lazy-smoke-arrayMain-source-values
+PASS fft/lazy-smoke-listMain-source-values
+PASS fft/lazy-smoke-analytic-and-status
+PASS fft/lazy-smoke-repeat
+PASS fft/strict-smoke-arrayMain-source-values
+PASS fft/strict-smoke-listMain-source-values
+PASS fft/strict-smoke-analytic-and-status
+PASS fft/strict-smoke-repeat
+PASS fft/lazy-normal-arrayMain-source-values
+PASS fft/lazy-normal-listMain-source-values
+PASS fft/lazy-normal-analytic-and-status
+PASS fft/lazy-normal-repeat
+PASS fft/strict-normal-arrayMain-source-values
+PASS fft/strict-normal-listMain-source-values
+PASS fft/strict-normal-analytic-and-status
+PASS fft/strict-normal-repeat
+PASS fft/lazy-large-arrayMain-source-values
+PASS fft/lazy-large-listMain-source-values
+PASS fft/lazy-large-analytic-and-status
+PASS fft/lazy-large-repeat
+PASS fft/strict-large-arrayMain-source-values
+PASS fft/strict-large-listMain-source-values
+PASS fft/strict-large-analytic-and-status
+PASS fft/strict-large-repeat
+PASS fft/lazy-nonuniform-8-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-8-listMain-direct-dft
+PASS fft/strict-nonuniform-8-arrayMain-direct-dft
+PASS fft/strict-nonuniform-8-listMain-direct-dft
+PASS fft/lazy-nonuniform-16-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-16-listMain-direct-dft
+PASS fft/strict-nonuniform-16-arrayMain-direct-dft
+PASS fft/strict-nonuniform-16-listMain-direct-dft
+PASS fft/lazy-nonuniform-32-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-32-listMain-direct-dft
+PASS fft/strict-nonuniform-32-arrayMain-direct-dft
+PASS fft/strict-nonuniform-32-listMain-direct-dft
+PASS fft/source-comparison-half-inclusive
+PASS fft/source-comparison-half-exceeded
+PASS fft/strong-check-rejects-legacy-tolerance-perturbation
+PASS fft/inside-bound
+PASS fft/reject-outside-bound
+PASS fft/reject-nan
+PASS fft/reject-infinity
+PASS fft/input-copies-share-complex-cell
+PASS fft/numerical-input-head-is-memoized
+structure NeedFft : 
+  sig
+    type complex = real * real
+    datatype 'a node = Cons of 'a D.t * 'a node D.t | Nil
+    type 'a seq = 'a node BenchNeed.t
+    val empty : unit -> 'a node D.t
+    val fromList : 'a list -> 'a node D.t
+    val lengthFrom : int * 'a node D.t -> int
+    val length : 'a node D.t -> int
+    val append : 'a node D.t -> 'a node D.t -> 'a node D.t
+    val concat : 'a node node D.t -> 'a node D.t
+    val take : int -> 'a node D.t -> 'a node D.t
+    val drop : int -> 'a node D.t -> 'a node D.t
+    val map : ('a D.t -> 'b D.t) -> 'a node D.t -> 'b node D.t
+    val map2 : ('a D.t * 'b D.t -> 'c D.t)
+                -> 'a node D.t -> 'b node D.t -> 'c node D.t
+    val add : complex * complex -> real * real
+    val subtract : complex * complex -> real * real
+    val multiply : complex * complex -> real * real
+    val pi : real D.t
+    val unitRoot : int -> int -> real * real
+    val pow2 : int -> int
+    val log2 : int -> int
+    val reverseBits : int -> int -> int
+    val input : int -> (real * real) node D.t
+    val arrayOfList : (real * real) node D.t -> (real * real) D.t array
+    val elements : 'a D.t array -> 'a node D.t
+    val reorderArray : 'a D.t array -> 'a D.t array
+    val arrayFft : int -> int -> (real * real) D.t array -> complex D.t array
+    val arrayMain : (real * real) node D.t -> complex node D.t
+    val listFft : int -> int -> (real * real) node D.t -> complex node D.t
+    val join : int -> 'a node D.t -> 'a node D.t -> 'a node D.t
+    val reorder : int -> 'a node D.t -> 'a node D.t
+    val listMain : (real * real) node D.t -> complex node D.t
+    val reference : int -> (real * real) vector
+    val componentClose : real * real -> bool
+    val checkValue : (real * real) * (real * real) -> unit
+    val sourceCompare : complex * complex -> bool
+    val truth : char node D.t
+    val comparisons : (real * real) vector
+                       -> int
+                       -> (real * real) node D.t
+                       -> (real * real) node D.t -> char node node D.t
+    val digest : char node D.t * int * int -> int * int
+    val run : int -> (real * real) vector -> string
+  end
+structure StrictFft : 
+  sig
+    type complex = real * real
+    datatype 'a node = Cons of 'a D.t * 'a node D.t | Nil
+    type 'a seq = 'a node BenchStrict.t
+    val empty : unit -> 'a node D.t
+    val fromList : 'a list -> 'a node D.t
+    val lengthFrom : int * 'a node D.t -> int
+    val length : 'a node D.t -> int
+    val append : 'a node D.t -> 'a node D.t -> 'a node D.t
+    val concat : 'a node node D.t -> 'a node D.t
+    val take : int -> 'a node D.t -> 'a node D.t
+    val drop : int -> 'a node D.t -> 'a node D.t
+    val map : ('a D.t -> 'b D.t) -> 'a node D.t -> 'b node D.t
+    val map2 : ('a D.t * 'b D.t -> 'c D.t)
+                -> 'a node D.t -> 'b node D.t -> 'c node D.t
+    val add : complex * complex -> real * real
+    val subtract : complex * complex -> real * real
+    val multiply : complex * complex -> real * real
+    val pi : real D.t
+    val unitRoot : int -> int -> real * real
+    val pow2 : int -> int
+    val log2 : int -> int
+    val reverseBits : int -> int -> int
+    val input : int -> (real * real) node D.t
+    val arrayOfList : (real * real) node D.t -> (real * real) D.t array
+    val elements : 'a D.t array -> 'a node D.t
+    val reorderArray : 'a D.t array -> 'a D.t array
+    val arrayFft : int -> int -> (real * real) D.t array -> complex D.t array
+    val arrayMain : (real * real) node D.t -> complex node D.t
+    val listFft : int -> int -> (real * real) node D.t -> complex node D.t
+    val join : int -> 'a node D.t -> 'a node D.t -> 'a node D.t
+    val reorder : int -> 'a node D.t -> 'a node D.t
+    val listMain : (real * real) node D.t -> complex node D.t
+    val reference : int -> (real * real) vector
+    val componentClose : real * real -> bool
+    val checkValue : (real * real) * (real * real) -> unit
+    val sourceCompare : complex * complex -> bool
+    val truth : char node D.t
+    val comparisons : (real * real) vector
+                       -> int
+                       -> (real * real) node D.t
+                       -> (real * real) node D.t -> char node node D.t
+    val digest : char node D.t * int * int -> int * int
+    val run : int -> (real * real) vector -> string
+  end
+structure NeedDriver : sig val run : string list -> string end
+structure StrictDriver : sig val run : string list -> string end
+structure FftTests : 
+  sig
+    structure N : <sig>
+    structure R : <sig>
+    val number : string -> real
+    val reference : string -> (real * real) list * (real * real) list
+    val close : (real * real) * (real * real) -> bool
+    val agrees : (real * real) list * (real * real) list -> bool
+    val needValues : 'a NeedFft.node BenchNeed.t -> 'a list
+    val strictValues : 'a StrictFft.node BenchStrict.t -> 'a list
+    val multiply : (real * real) * (real * real) -> real * real
+    val add : (real * real) * (real * real) -> real * real
+    val custom : int -> (real * real) list
+    val dft : (real * real) list -> (real * real) list
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 45 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS fft/lazy-smoke-arrayMain-source-values
+PASS fft/lazy-smoke-listMain-source-values
+PASS fft/lazy-smoke-analytic-and-status
+PASS fft/lazy-smoke-repeat
+PASS fft/strict-smoke-arrayMain-source-values
+PASS fft/strict-smoke-listMain-source-values
+PASS fft/strict-smoke-analytic-and-status
+PASS fft/strict-smoke-repeat
+PASS fft/lazy-normal-arrayMain-source-values
+PASS fft/lazy-normal-listMain-source-values
+PASS fft/lazy-normal-analytic-and-status
+PASS fft/lazy-normal-repeat
+PASS fft/strict-normal-arrayMain-source-values
+PASS fft/strict-normal-listMain-source-values
+PASS fft/strict-normal-analytic-and-status
+PASS fft/strict-normal-repeat
+PASS fft/lazy-large-arrayMain-source-values
+PASS fft/lazy-large-listMain-source-values
+PASS fft/lazy-large-analytic-and-status
+PASS fft/lazy-large-repeat
+PASS fft/strict-large-arrayMain-source-values
+PASS fft/strict-large-listMain-source-values
+PASS fft/strict-large-analytic-and-status
+PASS fft/strict-large-repeat
+PASS fft/lazy-nonuniform-8-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-8-listMain-direct-dft
+PASS fft/strict-nonuniform-8-arrayMain-direct-dft
+PASS fft/strict-nonuniform-8-listMain-direct-dft
+PASS fft/lazy-nonuniform-16-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-16-listMain-direct-dft
+PASS fft/strict-nonuniform-16-arrayMain-direct-dft
+PASS fft/strict-nonuniform-16-listMain-direct-dft
+PASS fft/lazy-nonuniform-32-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-32-listMain-direct-dft
+PASS fft/strict-nonuniform-32-arrayMain-direct-dft
+PASS fft/strict-nonuniform-32-listMain-direct-dft
+PASS fft/source-comparison-half-inclusive
+PASS fft/source-comparison-half-exceeded
+PASS fft/strong-check-rejects-legacy-tolerance-perturbation
+PASS fft/inside-bound
+PASS fft/reject-outside-bound
+PASS fft/reject-nan
+PASS fft/reject-infinity
+PASS fft/input-copies-share-complex-cell
+PASS fft/numerical-input-head-is-memoized
+SUMMARY 45 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PASS fft/lazy-smoke-arrayMain-source-values
+PASS fft/lazy-smoke-listMain-source-values
+PASS fft/lazy-smoke-analytic-and-status
+PASS fft/lazy-smoke-repeat
+PASS fft/strict-smoke-arrayMain-source-values
+PASS fft/strict-smoke-listMain-source-values
+PASS fft/strict-smoke-analytic-and-status
+PASS fft/strict-smoke-repeat
+PASS fft/lazy-normal-arrayMain-source-values
+PASS fft/lazy-normal-listMain-source-values
+PASS fft/lazy-normal-analytic-and-status
+PASS fft/lazy-normal-repeat
+PASS fft/strict-normal-arrayMain-source-values
+PASS fft/strict-normal-listMain-source-values
+PASS fft/strict-normal-analytic-and-status
+PASS fft/strict-normal-repeat
+PASS fft/lazy-large-arrayMain-source-values
+PASS fft/lazy-large-listMain-source-values
+PASS fft/lazy-large-analytic-and-status
+PASS fft/lazy-large-repeat
+PASS fft/strict-large-arrayMain-source-values
+PASS fft/strict-large-listMain-source-values
+PASS fft/strict-large-analytic-and-status
+PASS fft/strict-large-repeat
+PASS fft/lazy-nonuniform-8-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-8-listMain-direct-dft
+PASS fft/strict-nonuniform-8-arrayMain-direct-dft
+PASS fft/strict-nonuniform-8-listMain-direct-dft
+PASS fft/lazy-nonuniform-16-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-16-listMain-direct-dft
+PASS fft/strict-nonuniform-16-arrayMain-direct-dft
+PASS fft/strict-nonuniform-16-listMain-direct-dft
+PASS fft/lazy-nonuniform-32-arrayMain-direct-dft
+PASS fft/lazy-nonuniform-32-listMain-direct-dft
+PASS fft/strict-nonuniform-32-arrayMain-direct-dft
+PASS fft/strict-nonuniform-32-listMain-direct-dft
+PASS fft/source-comparison-half-inclusive
+PASS fft/source-comparison-half-exceeded
+PASS fft/strong-check-rejects-legacy-tolerance-perturbation
+PASS fft/inside-bound
+PASS fft/reject-outside-bound
+PASS fft/reject-nan
+PASS fft/reject-infinity
+PASS fft/input-copies-share-complex-cell
+PASS fft/numerical-input-head-is-memoized
+SUMMARY 45 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

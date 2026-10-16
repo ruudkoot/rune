@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+fft-nofib-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	4.23	3.54	0.81	666876	-	-	-	fft-nofib-strict/native-mlton/build/compile
+fft-nofib-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2436	-	-	-	fft-nofib-strict/native-mlton/correctness.0
+fft-nofib-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2436	-	-	-	fft-nofib-strict/native-mlton/fresh.1
+fft-nofib-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.30	0.27	0.04	38548	-	-	-	fft-nofib-strict/native-smlnj-legacy/build/compile
+fft-nofib-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.01	0.00	4092	-	-	-	fft-nofib-strict/native-smlnj-legacy/correctness.0
+fft-nofib-strict	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.01	0.00	4076	-	-	-	fft-nofib-strict/native-smlnj-legacy/fresh.1
+fft-nofib-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.26	0.13	0.06	35124	-	-	-	fft-nofib-strict/native-polyml/build/compile
+fft-nofib-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	6100	-	-	-	fft-nofib-strict/native-polyml/correctness.0
+fft-nofib-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	6044	-	-	-	fft-nofib-strict/native-polyml/fresh.1

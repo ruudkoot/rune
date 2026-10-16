@@ -1,0 +1,127 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/genfft.sml]
+[autoloading]
+[autoloading done]
+functor BenchHartelGenFftFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a seq
+  type text
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val text : string -> char <BaseFct>.<resultStr>.node D.t
+  val texts : 'a D.t list -> 'a <BaseFct>.<resultStr>.node D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val concat :
+      'a <BaseFct>.<resultStr>.node <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val cat :
+      'a <BaseFct>.<resultStr>.node D.t list
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val glue :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val map :
+      ('a D.t -> 'b D.t)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val range : int * int -> int <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val parts :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node <BaseFct>.<resultStr>.node D.t
+  val number : int -> char <BaseFct>.<resultStr>.node D.t
+  val pow2 : int -> int
+  val reverseBits : int -> int -> int
+  val insertZero : int -> int -> int
+  val bvar : int -> int -> char <BaseFct>.<resultStr>.node D.t
+  val rvar : int -> int -> char <BaseFct>.<resultStr>.node D.t
+  val wvar : int -> char <BaseFct>.<resultStr>.node D.t
+  val equation : int -> int -> int -> char <BaseFct>.<resultStr>.node D.t
+  val level : int -> int -> char <BaseFct>.<resultStr>.node D.t
+  val allLevels : int -> char <BaseFct>.<resultStr>.node D.t
+  val rootEquation :
+      char <BaseFct>.<resultStr>.node D.t
+       -> int -> char <BaseFct>.<resultStr>.node D.t
+  val roots : int -> char <BaseFct>.<resultStr>.node D.t
+  val inputHead :
+      int
+       -> char <BaseFct>.<resultStr>.node <BaseFct>.<resultStr>.node D.t
+       -> char <BaseFct>.<resultStr>.node <BaseFct>.<resultStr>.node D.t
+  val inputTail :
+      int
+       -> char <BaseFct>.<resultStr>.node <BaseFct>.<resultStr>.node D.t
+       -> char <BaseFct>.<resultStr>.node <BaseFct>.<resultStr>.node D.t
+  val inputList : int -> char <BaseFct>.<resultStr>.node D.t
+  val outputList : int -> char <BaseFct>.<resultStr>.node D.t
+  val generate : int -> char <BaseFct>.<resultStr>.node D.t
+  val program : int -> char <BaseFct>.<resultStr>.node D.t
+  val check : int -> string -> int * int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/genfft-driver.sml]
+[autoloading]
+[autoloading done]
+functor BenchHartelGenFftDriverFn(K: sig
+  val check : int -> string -> int * int
+end) :
+sig
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/genfft-strict/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 300:5925859/79360:4200
+PASS genfft-strict
+SUMMARY 1 checks, 0 failed

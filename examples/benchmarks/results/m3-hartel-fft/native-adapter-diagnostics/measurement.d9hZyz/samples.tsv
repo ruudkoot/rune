@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+genfft-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	4.29	3.47	0.96	668636	-	-	-	genfft-lazy/native-mlton/build/compile
+genfft-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2496	-	-	-	genfft-lazy/native-mlton/correctness.0
+genfft-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2476	-	-	-	genfft-lazy/native-mlton/fresh.1
+genfft-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.31	0.29	0.04	38804	-	-	-	genfft-lazy/native-smlnj-legacy/build/compile
+genfft-lazy	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.00	0.00	5432	-	-	-	genfft-lazy/native-smlnj-legacy/correctness.0
+genfft-lazy	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.01	0.00	5440	-	-	-	genfft-lazy/native-smlnj-legacy/fresh.1
+genfft-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.31	0.16	0.05	35508	-	-	-	genfft-lazy/native-polyml/build/compile
+genfft-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	11164	-	-	-	genfft-lazy/native-polyml/correctness.0
+genfft-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.01	0.01	0.00	11064	-	-	-	genfft-lazy/native-polyml/fresh.1

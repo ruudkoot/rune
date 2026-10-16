@@ -1,0 +1,4 @@
+RESULT 1:417707/5532:12
+PASS genfft-lazy
+SAMPLE 1 0.003451000
+SUMMARY 1 checks, 0 failed

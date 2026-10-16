@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+fft-nofib-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	4.19	3.48	0.79	666800	-	-	-	fft-nofib-lazy/native-mlton/build/compile
+fft-nofib-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	3256	-	-	-	fft-nofib-lazy/native-mlton/correctness.0
+fft-nofib-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	3268	-	-	-	fft-nofib-lazy/native-mlton/fresh.1
+fft-nofib-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.35	0.32	0.05	35388	-	-	-	fft-nofib-lazy/native-smlnj-legacy/build/compile
+fft-nofib-lazy	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.02	0.00	4756	-	-	-	fft-nofib-lazy/native-smlnj-legacy/correctness.0
+fft-nofib-lazy	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.01	0.00	4728	-	-	-	fft-nofib-lazy/native-smlnj-legacy/fresh.1
+fft-nofib-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.30	0.20	0.04	39440	-	-	-	fft-nofib-lazy/native-polyml/build/compile
+fft-nofib-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	7752	-	-	-	fft-nofib-lazy/native-polyml/correctness.0
+fft-nofib-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	7936	-	-	-	fft-nofib-lazy/native-polyml/fresh.1

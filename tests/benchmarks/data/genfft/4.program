@@ -1,0 +1,306 @@
+sed -e 's/^/||SYNTH_4 /' <<'end'     
+synth_fft_4 i1
+=LET b_0_0=head i1 IN
+ LET i2=tail i1 IN
+ LET b_0_2=head i2 IN
+ LET i3=tail i2 IN
+ LET b_0_1=head i3 IN
+ LET i4=tail i3 IN
+ LET b_0_3=head i4 IN
+ LET
+ b_1_0=add_x b_0_0 r_0_0; b_1_1=sub_x b_0_0 r_0_0; r_0_0=mul_x b_0_1 w_0;
+ b_1_2=add_x b_0_2 r_0_1; b_1_3=sub_x b_0_2 r_0_1; r_0_1=mul_x b_0_3 w_0;
+ b_2_0=add_x b_1_0 r_1_0; b_2_2=sub_x b_1_0 r_1_0; r_1_0=mul_x b_1_2 w_0;
+ b_2_1=add_x b_1_1 r_1_1; b_2_3=sub_x b_1_1 r_1_1; r_1_1=mul_x b_1_3 w_1;
+ w_0=fw_d sector_4 0.0;
+ w_1=fw_d sector_4 1.0
+ IN b_2_0:b_2_1:b_2_2:b_2_3:NIL;
+INLINE sector_4=pi/2.0;
+
+end
+sed -e 's/^/||SYNTH_8 /' <<'end'     
+synth_fft_8 i1
+=LET b_0_0=head i1 IN
+ LET i2=tail i1 IN
+ LET b_0_4=head i2 IN
+ LET i3=tail i2 IN
+ LET b_0_2=head i3 IN
+ LET i4=tail i3 IN
+ LET b_0_6=head i4 IN
+ LET i5=tail i4 IN
+ LET b_0_1=head i5 IN
+ LET i6=tail i5 IN
+ LET b_0_5=head i6 IN
+ LET i7=tail i6 IN
+ LET b_0_3=head i7 IN
+ LET i8=tail i7 IN
+ LET b_0_7=head i8 IN
+ LET
+ b_1_0=add_x b_0_0 r_0_0; b_1_1=sub_x b_0_0 r_0_0; r_0_0=mul_x b_0_1 w_0;
+ b_1_2=add_x b_0_2 r_0_1; b_1_3=sub_x b_0_2 r_0_1; r_0_1=mul_x b_0_3 w_0;
+ b_1_4=add_x b_0_4 r_0_2; b_1_5=sub_x b_0_4 r_0_2; r_0_2=mul_x b_0_5 w_0;
+ b_1_6=add_x b_0_6 r_0_3; b_1_7=sub_x b_0_6 r_0_3; r_0_3=mul_x b_0_7 w_0;
+ b_2_0=add_x b_1_0 r_1_0; b_2_2=sub_x b_1_0 r_1_0; r_1_0=mul_x b_1_2 w_0;
+ b_2_1=add_x b_1_1 r_1_1; b_2_3=sub_x b_1_1 r_1_1; r_1_1=mul_x b_1_3 w_2;
+ b_2_4=add_x b_1_4 r_1_2; b_2_6=sub_x b_1_4 r_1_2; r_1_2=mul_x b_1_6 w_0;
+ b_2_5=add_x b_1_5 r_1_3; b_2_7=sub_x b_1_5 r_1_3; r_1_3=mul_x b_1_7 w_2;
+ b_3_0=add_x b_2_0 r_2_0; b_3_4=sub_x b_2_0 r_2_0; r_2_0=mul_x b_2_4 w_0;
+ b_3_1=add_x b_2_1 r_2_1; b_3_5=sub_x b_2_1 r_2_1; r_2_1=mul_x b_2_5 w_1;
+ b_3_2=add_x b_2_2 r_2_2; b_3_6=sub_x b_2_2 r_2_2; r_2_2=mul_x b_2_6 w_2;
+ b_3_3=add_x b_2_3 r_2_3; b_3_7=sub_x b_2_3 r_2_3; r_2_3=mul_x b_2_7 w_3;
+ w_0=fw_d sector_8 0.0;
+ w_1=fw_d sector_8 1.0;
+ w_2=fw_d sector_8 2.0;
+ w_3=fw_d sector_8 3.0
+ IN b_3_0:b_3_1:b_3_2:b_3_3:b_3_4:b_3_5:b_3_6:b_3_7:NIL;
+INLINE sector_8=pi/4.0;
+
+end
+sed -e 's/^/||SYNTH_16 /' <<'end'     
+synth_fft_16 i1
+=LET b_0_0=head i1 IN
+ LET i2=tail i1 IN
+ LET b_0_8=head i2 IN
+ LET i3=tail i2 IN
+ LET b_0_4=head i3 IN
+ LET i4=tail i3 IN
+ LET b_0_12=head i4 IN
+ LET i5=tail i4 IN
+ LET b_0_2=head i5 IN
+ LET i6=tail i5 IN
+ LET b_0_10=head i6 IN
+ LET i7=tail i6 IN
+ LET b_0_6=head i7 IN
+ LET i8=tail i7 IN
+ LET b_0_14=head i8 IN
+ LET i9=tail i8 IN
+ LET b_0_1=head i9 IN
+ LET i10=tail i9 IN
+ LET b_0_9=head i10 IN
+ LET i11=tail i10 IN
+ LET b_0_5=head i11 IN
+ LET i12=tail i11 IN
+ LET b_0_13=head i12 IN
+ LET i13=tail i12 IN
+ LET b_0_3=head i13 IN
+ LET i14=tail i13 IN
+ LET b_0_11=head i14 IN
+ LET i15=tail i14 IN
+ LET b_0_7=head i15 IN
+ LET i16=tail i15 IN
+ LET b_0_15=head i16 IN
+ LET
+ b_1_0=add_x b_0_0 r_0_0; b_1_1=sub_x b_0_0 r_0_0; r_0_0=mul_x b_0_1 w_0;
+ b_1_2=add_x b_0_2 r_0_1; b_1_3=sub_x b_0_2 r_0_1; r_0_1=mul_x b_0_3 w_0;
+ b_1_4=add_x b_0_4 r_0_2; b_1_5=sub_x b_0_4 r_0_2; r_0_2=mul_x b_0_5 w_0;
+ b_1_6=add_x b_0_6 r_0_3; b_1_7=sub_x b_0_6 r_0_3; r_0_3=mul_x b_0_7 w_0;
+ b_1_8=add_x b_0_8 r_0_4; b_1_9=sub_x b_0_8 r_0_4; r_0_4=mul_x b_0_9 w_0;
+ b_1_10=add_x b_0_10 r_0_5; b_1_11=sub_x b_0_10 r_0_5; r_0_5=mul_x b_0_11 w_0;
+ b_1_12=add_x b_0_12 r_0_6; b_1_13=sub_x b_0_12 r_0_6; r_0_6=mul_x b_0_13 w_0;
+ b_1_14=add_x b_0_14 r_0_7; b_1_15=sub_x b_0_14 r_0_7; r_0_7=mul_x b_0_15 w_0;
+ b_2_0=add_x b_1_0 r_1_0; b_2_2=sub_x b_1_0 r_1_0; r_1_0=mul_x b_1_2 w_0;
+ b_2_1=add_x b_1_1 r_1_1; b_2_3=sub_x b_1_1 r_1_1; r_1_1=mul_x b_1_3 w_4;
+ b_2_4=add_x b_1_4 r_1_2; b_2_6=sub_x b_1_4 r_1_2; r_1_2=mul_x b_1_6 w_0;
+ b_2_5=add_x b_1_5 r_1_3; b_2_7=sub_x b_1_5 r_1_3; r_1_3=mul_x b_1_7 w_4;
+ b_2_8=add_x b_1_8 r_1_4; b_2_10=sub_x b_1_8 r_1_4; r_1_4=mul_x b_1_10 w_0;
+ b_2_9=add_x b_1_9 r_1_5; b_2_11=sub_x b_1_9 r_1_5; r_1_5=mul_x b_1_11 w_4;
+ b_2_12=add_x b_1_12 r_1_6; b_2_14=sub_x b_1_12 r_1_6; r_1_6=mul_x b_1_14 w_0;
+ b_2_13=add_x b_1_13 r_1_7; b_2_15=sub_x b_1_13 r_1_7; r_1_7=mul_x b_1_15 w_4;
+ b_3_0=add_x b_2_0 r_2_0; b_3_4=sub_x b_2_0 r_2_0; r_2_0=mul_x b_2_4 w_0;
+ b_3_1=add_x b_2_1 r_2_1; b_3_5=sub_x b_2_1 r_2_1; r_2_1=mul_x b_2_5 w_2;
+ b_3_2=add_x b_2_2 r_2_2; b_3_6=sub_x b_2_2 r_2_2; r_2_2=mul_x b_2_6 w_4;
+ b_3_3=add_x b_2_3 r_2_3; b_3_7=sub_x b_2_3 r_2_3; r_2_3=mul_x b_2_7 w_6;
+ b_3_8=add_x b_2_8 r_2_4; b_3_12=sub_x b_2_8 r_2_4; r_2_4=mul_x b_2_12 w_0;
+ b_3_9=add_x b_2_9 r_2_5; b_3_13=sub_x b_2_9 r_2_5; r_2_5=mul_x b_2_13 w_2;
+ b_3_10=add_x b_2_10 r_2_6; b_3_14=sub_x b_2_10 r_2_6; r_2_6=mul_x b_2_14 w_4;
+ b_3_11=add_x b_2_11 r_2_7; b_3_15=sub_x b_2_11 r_2_7; r_2_7=mul_x b_2_15 w_6;
+ b_4_0=add_x b_3_0 r_3_0; b_4_8=sub_x b_3_0 r_3_0; r_3_0=mul_x b_3_8 w_0;
+ b_4_1=add_x b_3_1 r_3_1; b_4_9=sub_x b_3_1 r_3_1; r_3_1=mul_x b_3_9 w_1;
+ b_4_2=add_x b_3_2 r_3_2; b_4_10=sub_x b_3_2 r_3_2; r_3_2=mul_x b_3_10 w_2;
+ b_4_3=add_x b_3_3 r_3_3; b_4_11=sub_x b_3_3 r_3_3; r_3_3=mul_x b_3_11 w_3;
+ b_4_4=add_x b_3_4 r_3_4; b_4_12=sub_x b_3_4 r_3_4; r_3_4=mul_x b_3_12 w_4;
+ b_4_5=add_x b_3_5 r_3_5; b_4_13=sub_x b_3_5 r_3_5; r_3_5=mul_x b_3_13 w_5;
+ b_4_6=add_x b_3_6 r_3_6; b_4_14=sub_x b_3_6 r_3_6; r_3_6=mul_x b_3_14 w_6;
+ b_4_7=add_x b_3_7 r_3_7; b_4_15=sub_x b_3_7 r_3_7; r_3_7=mul_x b_3_15 w_7;
+ w_0=fw_d sector_16 0.0;
+ w_1=fw_d sector_16 1.0;
+ w_2=fw_d sector_16 2.0;
+ w_3=fw_d sector_16 3.0;
+ w_4=fw_d sector_16 4.0;
+ w_5=fw_d sector_16 5.0;
+ w_6=fw_d sector_16 6.0;
+ w_7=fw_d sector_16 7.0
+ IN b_4_0:b_4_1:b_4_2:b_4_3:b_4_4:b_4_5:b_4_6:b_4_7:
+ b_4_8:b_4_9:b_4_10:b_4_11:b_4_12:b_4_13:b_4_14:b_4_15:NIL;
+INLINE sector_16=pi/8.0;
+
+end
+sed -e 's/^/||SYNTH_32 /' <<'end'     
+synth_fft_32 i1
+=LET b_0_0=head i1 IN
+ LET i2=tail i1 IN
+ LET b_0_16=head i2 IN
+ LET i3=tail i2 IN
+ LET b_0_8=head i3 IN
+ LET i4=tail i3 IN
+ LET b_0_24=head i4 IN
+ LET i5=tail i4 IN
+ LET b_0_4=head i5 IN
+ LET i6=tail i5 IN
+ LET b_0_20=head i6 IN
+ LET i7=tail i6 IN
+ LET b_0_12=head i7 IN
+ LET i8=tail i7 IN
+ LET b_0_28=head i8 IN
+ LET i9=tail i8 IN
+ LET b_0_2=head i9 IN
+ LET i10=tail i9 IN
+ LET b_0_18=head i10 IN
+ LET i11=tail i10 IN
+ LET b_0_10=head i11 IN
+ LET i12=tail i11 IN
+ LET b_0_26=head i12 IN
+ LET i13=tail i12 IN
+ LET b_0_6=head i13 IN
+ LET i14=tail i13 IN
+ LET b_0_22=head i14 IN
+ LET i15=tail i14 IN
+ LET b_0_14=head i15 IN
+ LET i16=tail i15 IN
+ LET b_0_30=head i16 IN
+ LET i17=tail i16 IN
+ LET b_0_1=head i17 IN
+ LET i18=tail i17 IN
+ LET b_0_17=head i18 IN
+ LET i19=tail i18 IN
+ LET b_0_9=head i19 IN
+ LET i20=tail i19 IN
+ LET b_0_25=head i20 IN
+ LET i21=tail i20 IN
+ LET b_0_5=head i21 IN
+ LET i22=tail i21 IN
+ LET b_0_21=head i22 IN
+ LET i23=tail i22 IN
+ LET b_0_13=head i23 IN
+ LET i24=tail i23 IN
+ LET b_0_29=head i24 IN
+ LET i25=tail i24 IN
+ LET b_0_3=head i25 IN
+ LET i26=tail i25 IN
+ LET b_0_19=head i26 IN
+ LET i27=tail i26 IN
+ LET b_0_11=head i27 IN
+ LET i28=tail i27 IN
+ LET b_0_27=head i28 IN
+ LET i29=tail i28 IN
+ LET b_0_7=head i29 IN
+ LET i30=tail i29 IN
+ LET b_0_23=head i30 IN
+ LET i31=tail i30 IN
+ LET b_0_15=head i31 IN
+ LET i32=tail i31 IN
+ LET b_0_31=head i32 IN
+ LET
+ b_1_0=add_x b_0_0 r_0_0; b_1_1=sub_x b_0_0 r_0_0; r_0_0=mul_x b_0_1 w_0;
+ b_1_2=add_x b_0_2 r_0_1; b_1_3=sub_x b_0_2 r_0_1; r_0_1=mul_x b_0_3 w_0;
+ b_1_4=add_x b_0_4 r_0_2; b_1_5=sub_x b_0_4 r_0_2; r_0_2=mul_x b_0_5 w_0;
+ b_1_6=add_x b_0_6 r_0_3; b_1_7=sub_x b_0_6 r_0_3; r_0_3=mul_x b_0_7 w_0;
+ b_1_8=add_x b_0_8 r_0_4; b_1_9=sub_x b_0_8 r_0_4; r_0_4=mul_x b_0_9 w_0;
+ b_1_10=add_x b_0_10 r_0_5; b_1_11=sub_x b_0_10 r_0_5; r_0_5=mul_x b_0_11 w_0;
+ b_1_12=add_x b_0_12 r_0_6; b_1_13=sub_x b_0_12 r_0_6; r_0_6=mul_x b_0_13 w_0;
+ b_1_14=add_x b_0_14 r_0_7; b_1_15=sub_x b_0_14 r_0_7; r_0_7=mul_x b_0_15 w_0;
+ b_1_16=add_x b_0_16 r_0_8; b_1_17=sub_x b_0_16 r_0_8; r_0_8=mul_x b_0_17 w_0;
+ b_1_18=add_x b_0_18 r_0_9; b_1_19=sub_x b_0_18 r_0_9; r_0_9=mul_x b_0_19 w_0;
+ b_1_20=add_x b_0_20 r_0_10; b_1_21=sub_x b_0_20 r_0_10; r_0_10=mul_x b_0_21 w_0;
+ b_1_22=add_x b_0_22 r_0_11; b_1_23=sub_x b_0_22 r_0_11; r_0_11=mul_x b_0_23 w_0;
+ b_1_24=add_x b_0_24 r_0_12; b_1_25=sub_x b_0_24 r_0_12; r_0_12=mul_x b_0_25 w_0;
+ b_1_26=add_x b_0_26 r_0_13; b_1_27=sub_x b_0_26 r_0_13; r_0_13=mul_x b_0_27 w_0;
+ b_1_28=add_x b_0_28 r_0_14; b_1_29=sub_x b_0_28 r_0_14; r_0_14=mul_x b_0_29 w_0;
+ b_1_30=add_x b_0_30 r_0_15; b_1_31=sub_x b_0_30 r_0_15; r_0_15=mul_x b_0_31 w_0;
+ b_2_0=add_x b_1_0 r_1_0; b_2_2=sub_x b_1_0 r_1_0; r_1_0=mul_x b_1_2 w_0;
+ b_2_1=add_x b_1_1 r_1_1; b_2_3=sub_x b_1_1 r_1_1; r_1_1=mul_x b_1_3 w_8;
+ b_2_4=add_x b_1_4 r_1_2; b_2_6=sub_x b_1_4 r_1_2; r_1_2=mul_x b_1_6 w_0;
+ b_2_5=add_x b_1_5 r_1_3; b_2_7=sub_x b_1_5 r_1_3; r_1_3=mul_x b_1_7 w_8;
+ b_2_8=add_x b_1_8 r_1_4; b_2_10=sub_x b_1_8 r_1_4; r_1_4=mul_x b_1_10 w_0;
+ b_2_9=add_x b_1_9 r_1_5; b_2_11=sub_x b_1_9 r_1_5; r_1_5=mul_x b_1_11 w_8;
+ b_2_12=add_x b_1_12 r_1_6; b_2_14=sub_x b_1_12 r_1_6; r_1_6=mul_x b_1_14 w_0;
+ b_2_13=add_x b_1_13 r_1_7; b_2_15=sub_x b_1_13 r_1_7; r_1_7=mul_x b_1_15 w_8;
+ b_2_16=add_x b_1_16 r_1_8; b_2_18=sub_x b_1_16 r_1_8; r_1_8=mul_x b_1_18 w_0;
+ b_2_17=add_x b_1_17 r_1_9; b_2_19=sub_x b_1_17 r_1_9; r_1_9=mul_x b_1_19 w_8;
+ b_2_20=add_x b_1_20 r_1_10; b_2_22=sub_x b_1_20 r_1_10; r_1_10=mul_x b_1_22 w_0;
+ b_2_21=add_x b_1_21 r_1_11; b_2_23=sub_x b_1_21 r_1_11; r_1_11=mul_x b_1_23 w_8;
+ b_2_24=add_x b_1_24 r_1_12; b_2_26=sub_x b_1_24 r_1_12; r_1_12=mul_x b_1_26 w_0;
+ b_2_25=add_x b_1_25 r_1_13; b_2_27=sub_x b_1_25 r_1_13; r_1_13=mul_x b_1_27 w_8;
+ b_2_28=add_x b_1_28 r_1_14; b_2_30=sub_x b_1_28 r_1_14; r_1_14=mul_x b_1_30 w_0;
+ b_2_29=add_x b_1_29 r_1_15; b_2_31=sub_x b_1_29 r_1_15; r_1_15=mul_x b_1_31 w_8;
+ b_3_0=add_x b_2_0 r_2_0; b_3_4=sub_x b_2_0 r_2_0; r_2_0=mul_x b_2_4 w_0;
+ b_3_1=add_x b_2_1 r_2_1; b_3_5=sub_x b_2_1 r_2_1; r_2_1=mul_x b_2_5 w_4;
+ b_3_2=add_x b_2_2 r_2_2; b_3_6=sub_x b_2_2 r_2_2; r_2_2=mul_x b_2_6 w_8;
+ b_3_3=add_x b_2_3 r_2_3; b_3_7=sub_x b_2_3 r_2_3; r_2_3=mul_x b_2_7 w_12;
+ b_3_8=add_x b_2_8 r_2_4; b_3_12=sub_x b_2_8 r_2_4; r_2_4=mul_x b_2_12 w_0;
+ b_3_9=add_x b_2_9 r_2_5; b_3_13=sub_x b_2_9 r_2_5; r_2_5=mul_x b_2_13 w_4;
+ b_3_10=add_x b_2_10 r_2_6; b_3_14=sub_x b_2_10 r_2_6; r_2_6=mul_x b_2_14 w_8;
+ b_3_11=add_x b_2_11 r_2_7; b_3_15=sub_x b_2_11 r_2_7; r_2_7=mul_x b_2_15 w_12;
+ b_3_16=add_x b_2_16 r_2_8; b_3_20=sub_x b_2_16 r_2_8; r_2_8=mul_x b_2_20 w_0;
+ b_3_17=add_x b_2_17 r_2_9; b_3_21=sub_x b_2_17 r_2_9; r_2_9=mul_x b_2_21 w_4;
+ b_3_18=add_x b_2_18 r_2_10; b_3_22=sub_x b_2_18 r_2_10; r_2_10=mul_x b_2_22 w_8;
+ b_3_19=add_x b_2_19 r_2_11; b_3_23=sub_x b_2_19 r_2_11; r_2_11=mul_x b_2_23 w_12;
+ b_3_24=add_x b_2_24 r_2_12; b_3_28=sub_x b_2_24 r_2_12; r_2_12=mul_x b_2_28 w_0;
+ b_3_25=add_x b_2_25 r_2_13; b_3_29=sub_x b_2_25 r_2_13; r_2_13=mul_x b_2_29 w_4;
+ b_3_26=add_x b_2_26 r_2_14; b_3_30=sub_x b_2_26 r_2_14; r_2_14=mul_x b_2_30 w_8;
+ b_3_27=add_x b_2_27 r_2_15; b_3_31=sub_x b_2_27 r_2_15; r_2_15=mul_x b_2_31 w_12;
+ b_4_0=add_x b_3_0 r_3_0; b_4_8=sub_x b_3_0 r_3_0; r_3_0=mul_x b_3_8 w_0;
+ b_4_1=add_x b_3_1 r_3_1; b_4_9=sub_x b_3_1 r_3_1; r_3_1=mul_x b_3_9 w_2;
+ b_4_2=add_x b_3_2 r_3_2; b_4_10=sub_x b_3_2 r_3_2; r_3_2=mul_x b_3_10 w_4;
+ b_4_3=add_x b_3_3 r_3_3; b_4_11=sub_x b_3_3 r_3_3; r_3_3=mul_x b_3_11 w_6;
+ b_4_4=add_x b_3_4 r_3_4; b_4_12=sub_x b_3_4 r_3_4; r_3_4=mul_x b_3_12 w_8;
+ b_4_5=add_x b_3_5 r_3_5; b_4_13=sub_x b_3_5 r_3_5; r_3_5=mul_x b_3_13 w_10;
+ b_4_6=add_x b_3_6 r_3_6; b_4_14=sub_x b_3_6 r_3_6; r_3_6=mul_x b_3_14 w_12;
+ b_4_7=add_x b_3_7 r_3_7; b_4_15=sub_x b_3_7 r_3_7; r_3_7=mul_x b_3_15 w_14;
+ b_4_16=add_x b_3_16 r_3_8; b_4_24=sub_x b_3_16 r_3_8; r_3_8=mul_x b_3_24 w_0;
+ b_4_17=add_x b_3_17 r_3_9; b_4_25=sub_x b_3_17 r_3_9; r_3_9=mul_x b_3_25 w_2;
+ b_4_18=add_x b_3_18 r_3_10; b_4_26=sub_x b_3_18 r_3_10; r_3_10=mul_x b_3_26 w_4;
+ b_4_19=add_x b_3_19 r_3_11; b_4_27=sub_x b_3_19 r_3_11; r_3_11=mul_x b_3_27 w_6;
+ b_4_20=add_x b_3_20 r_3_12; b_4_28=sub_x b_3_20 r_3_12; r_3_12=mul_x b_3_28 w_8;
+ b_4_21=add_x b_3_21 r_3_13; b_4_29=sub_x b_3_21 r_3_13; r_3_13=mul_x b_3_29 w_10;
+ b_4_22=add_x b_3_22 r_3_14; b_4_30=sub_x b_3_22 r_3_14; r_3_14=mul_x b_3_30 w_12;
+ b_4_23=add_x b_3_23 r_3_15; b_4_31=sub_x b_3_23 r_3_15; r_3_15=mul_x b_3_31 w_14;
+ b_5_0=add_x b_4_0 r_4_0; b_5_16=sub_x b_4_0 r_4_0; r_4_0=mul_x b_4_16 w_0;
+ b_5_1=add_x b_4_1 r_4_1; b_5_17=sub_x b_4_1 r_4_1; r_4_1=mul_x b_4_17 w_1;
+ b_5_2=add_x b_4_2 r_4_2; b_5_18=sub_x b_4_2 r_4_2; r_4_2=mul_x b_4_18 w_2;
+ b_5_3=add_x b_4_3 r_4_3; b_5_19=sub_x b_4_3 r_4_3; r_4_3=mul_x b_4_19 w_3;
+ b_5_4=add_x b_4_4 r_4_4; b_5_20=sub_x b_4_4 r_4_4; r_4_4=mul_x b_4_20 w_4;
+ b_5_5=add_x b_4_5 r_4_5; b_5_21=sub_x b_4_5 r_4_5; r_4_5=mul_x b_4_21 w_5;
+ b_5_6=add_x b_4_6 r_4_6; b_5_22=sub_x b_4_6 r_4_6; r_4_6=mul_x b_4_22 w_6;
+ b_5_7=add_x b_4_7 r_4_7; b_5_23=sub_x b_4_7 r_4_7; r_4_7=mul_x b_4_23 w_7;
+ b_5_8=add_x b_4_8 r_4_8; b_5_24=sub_x b_4_8 r_4_8; r_4_8=mul_x b_4_24 w_8;
+ b_5_9=add_x b_4_9 r_4_9; b_5_25=sub_x b_4_9 r_4_9; r_4_9=mul_x b_4_25 w_9;
+ b_5_10=add_x b_4_10 r_4_10; b_5_26=sub_x b_4_10 r_4_10; r_4_10=mul_x b_4_26 w_10;
+ b_5_11=add_x b_4_11 r_4_11; b_5_27=sub_x b_4_11 r_4_11; r_4_11=mul_x b_4_27 w_11;
+ b_5_12=add_x b_4_12 r_4_12; b_5_28=sub_x b_4_12 r_4_12; r_4_12=mul_x b_4_28 w_12;
+ b_5_13=add_x b_4_13 r_4_13; b_5_29=sub_x b_4_13 r_4_13; r_4_13=mul_x b_4_29 w_13;
+ b_5_14=add_x b_4_14 r_4_14; b_5_30=sub_x b_4_14 r_4_14; r_4_14=mul_x b_4_30 w_14;
+ b_5_15=add_x b_4_15 r_4_15; b_5_31=sub_x b_4_15 r_4_15; r_4_15=mul_x b_4_31 w_15;
+ w_0=fw_d sector_32 0.0;
+ w_1=fw_d sector_32 1.0;
+ w_2=fw_d sector_32 2.0;
+ w_3=fw_d sector_32 3.0;
+ w_4=fw_d sector_32 4.0;
+ w_5=fw_d sector_32 5.0;
+ w_6=fw_d sector_32 6.0;
+ w_7=fw_d sector_32 7.0;
+ w_8=fw_d sector_32 8.0;
+ w_9=fw_d sector_32 9.0;
+ w_10=fw_d sector_32 10.0;
+ w_11=fw_d sector_32 11.0;
+ w_12=fw_d sector_32 12.0;
+ w_13=fw_d sector_32 13.0;
+ w_14=fw_d sector_32 14.0;
+ w_15=fw_d sector_32 15.0
+ IN b_5_0:b_5_1:b_5_2:b_5_3:b_5_4:b_5_5:b_5_6:b_5_7:
+ b_5_8:b_5_9:b_5_10:b_5_11:b_5_12:b_5_13:b_5_14:b_5_15:
+ b_5_16:b_5_17:b_5_18:b_5_19:b_5_20:b_5_21:b_5_22:b_5_23:
+ b_5_24:b_5_25:b_5_26:b_5_27:b_5_28:b_5_29:b_5_30:b_5_31:NIL;
+INLINE sector_32=pi/16.0;
+
+end

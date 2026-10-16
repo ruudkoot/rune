@@ -1,0 +1,5 @@
+COUNT unbudgeted genfft-strict normal rune
+COUNT unbudgeted genfft-strict normal rune:opt
+COUNT unbudgeted genfft-strict normal rune:new
+COUNT unbudgeted genfft-strict normal rune:jit
+COUNT comparisons agree

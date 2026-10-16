@@ -1,0 +1,9 @@
+{
+  "ghc": "9.4.7",
+  "options": [
+    "-O2"
+  ],
+  "nofib_revision": "b7391df4540ac8b11b35e1b2e2c15819b5171798",
+  "ghc_complex_revision": "00920f176b0235d5bb52a8e054d89a664f8938fe",
+  "scope": "Unmodified original complete 360/300-line fixtures; export-only full vectors and generated programs; independent DFT/spectrum/renderer/dependency-graph models"
+}

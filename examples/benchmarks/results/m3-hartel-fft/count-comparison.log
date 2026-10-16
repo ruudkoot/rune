@@ -1,0 +1,17 @@
+COUNT unbudgeted fft-nofib-lazy normal rune
+COUNT unbudgeted fft-nofib-lazy normal rune:opt
+COUNT unbudgeted fft-nofib-lazy normal rune:new
+COUNT unbudgeted fft-nofib-lazy normal rune:jit
+COUNT unbudgeted fft-nofib-strict normal rune
+COUNT unbudgeted fft-nofib-strict normal rune:opt
+COUNT unbudgeted fft-nofib-strict normal rune:new
+COUNT unbudgeted fft-nofib-strict normal rune:jit
+COUNT unbudgeted genfft-lazy normal rune
+COUNT unbudgeted genfft-lazy normal rune:opt
+COUNT unbudgeted genfft-lazy normal rune:new
+COUNT unbudgeted genfft-lazy normal rune:jit
+COUNT unbudgeted genfft-strict normal rune
+COUNT unbudgeted genfft-strict normal rune:opt
+COUNT unbudgeted genfft-strict normal rune:new
+COUNT unbudgeted genfft-strict normal rune:jit
+COUNT comparisons agree

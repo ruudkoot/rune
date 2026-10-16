@@ -1,0 +1,3 @@
+PASS complete generator smoke lazy and strict
+PASS complete generator normal lazy and strict
+PASS complete generator large lazy and strict

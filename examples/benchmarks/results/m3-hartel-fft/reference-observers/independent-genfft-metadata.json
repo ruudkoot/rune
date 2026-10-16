@@ -1,0 +1,66 @@
+[
+  {
+    "n": 4,
+    "definitions": 12,
+    "inputs": 4,
+    "outputs": 4,
+    "maximum_direct_dft_error": 7.944109290391274e-15,
+    "interpretation": "add_x/sub_x/mul_x complex arithmetic, fw_d positive unit root; model of generated graph, not execution in the original target framework"
+  },
+  {
+    "n": 8,
+    "definitions": 36,
+    "inputs": 8,
+    "outputs": 8,
+    "maximum_direct_dft_error": 5.784080825025105e-14,
+    "interpretation": "add_x/sub_x/mul_x complex arithmetic, fw_d positive unit root; model of generated graph, not execution in the original target framework"
+  },
+  {
+    "n": 16,
+    "definitions": 96,
+    "inputs": 16,
+    "outputs": 16,
+    "maximum_direct_dft_error": 2.7244936362134586e-13,
+    "interpretation": "add_x/sub_x/mul_x complex arithmetic, fw_d positive unit root; model of generated graph, not execution in the original target framework"
+  },
+  {
+    "n": 32,
+    "definitions": 240,
+    "inputs": 32,
+    "outputs": 32,
+    "maximum_direct_dft_error": 7.896940126926099e-13,
+    "interpretation": "add_x/sub_x/mul_x complex arithmetic, fw_d positive unit root; model of generated graph, not execution in the original target framework"
+  },
+  {
+    "n": 64,
+    "definitions": 576,
+    "inputs": 64,
+    "outputs": 64,
+    "maximum_direct_dft_error": 3.2469548488711864e-12,
+    "interpretation": "add_x/sub_x/mul_x complex arithmetic, fw_d positive unit root; model of generated graph, not execution in the original target framework"
+  },
+  {
+    "n": 128,
+    "definitions": 1344,
+    "inputs": 128,
+    "outputs": 128,
+    "maximum_direct_dft_error": 1.4245515353325076e-11,
+    "interpretation": "add_x/sub_x/mul_x complex arithmetic, fw_d positive unit root; model of generated graph, not execution in the original target framework"
+  },
+  {
+    "n": 256,
+    "definitions": 3072,
+    "inputs": 256,
+    "outputs": 256,
+    "maximum_direct_dft_error": 4.711026727018281e-11,
+    "interpretation": "add_x/sub_x/mul_x complex arithmetic, fw_d positive unit root; model of generated graph, not execution in the original target framework"
+  },
+  {
+    "n": 512,
+    "definitions": 6912,
+    "inputs": 512,
+    "outputs": 512,
+    "maximum_direct_dft_error": 1.9948412076108102e-10,
+    "interpretation": "add_x/sub_x/mul_x complex arithmetic, fw_d positive unit root; model of generated graph, not execution in the original target framework"
+  }
+]

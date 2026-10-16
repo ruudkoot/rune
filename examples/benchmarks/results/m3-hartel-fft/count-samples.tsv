@@ -1,0 +1,17 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+fft-nofib-lazy	normal	rune	O2	count	1	1	pass	10.38	11.17	0.03	35316	1859364844	5044804752	146636054	counts/measurement.nJWZtW/fft-nofib-lazy/rune/fresh.1
+fft-nofib-lazy	normal	rune:opt	O2	count	1	1	pass	5.52	5.90	0.03	35792	1859364844	5044804752	146636054	counts/measurement.nJWZtW/fft-nofib-lazy/rune-opt/fresh.1
+fft-nofib-lazy	normal	rune:new	O2	count	1	1	pass	9.67	10.20	0.01	35592	1093822633	5044804752	146636054	counts/measurement.nJWZtW/fft-nofib-lazy/rune-new/fresh.1
+fft-nofib-lazy	normal	rune:jit	O2	count	1	1	pass	4.99	5.42	0.02	36404	1093822633	5044804752	146636054	counts/measurement.nJWZtW/fft-nofib-lazy/rune-jit/fresh.1
+fft-nofib-strict	normal	rune	O2	count	1	1	pass	3.44	3.68	0.00	10828	687654415	925891648	21606594	counts/measurement.HAlSg3/fft-nofib-strict/rune/fresh.1
+fft-nofib-strict	normal	rune:opt	O2	count	1	1	pass	1.11	1.17	0.00	11308	687654415	925891648	21606594	counts/measurement.HAlSg3/fft-nofib-strict/rune-opt/fresh.1
+fft-nofib-strict	normal	rune:new	O2	count	1	1	pass	2.99	3.09	0.02	11152	370202790	925891648	21606594	counts/measurement.HAlSg3/fft-nofib-strict/rune-new/fresh.1
+fft-nofib-strict	normal	rune:jit	O2	count	1	1	pass	0.93	0.91	0.00	11960	370202790	925891648	21606594	counts/measurement.HAlSg3/fft-nofib-strict/rune-jit/fresh.1
+genfft-lazy	normal	rune	O2	count	1	1	pass	48.29	48.58	0.07	10484	10280340094	35799351856	1086725228	counts/measurement.Jl6K8p/genfft-lazy/rune/fresh.1
+genfft-lazy	normal	rune:opt	O2	count	1	1	pass	22.57	23.96	0.04	10812	10280340094	35799351856	1086725228	counts/measurement.Jl6K8p/genfft-lazy/rune-opt/fresh.1
+genfft-lazy	normal	rune:new	O2	count	1	1	pass	56.34	55.44	0.11	133312	6310805073	35799351856	1086725228	counts/measurement.Jl6K8p/genfft-lazy/rune-new/fresh.1
+genfft-lazy	normal	rune:jit	O2	count	1	1	pass	25.79	27.32	0.10	134540	6310805073	35799351856	1086725228	counts/measurement.Jl6K8p/genfft-lazy/rune-jit/fresh.1
+genfft-strict	normal	rune	O2	count	1	1	pass	11.55	12.24	0.04	71648	2795410922	7059070984	178245725	counts/measurement.lXnQBO/genfft-strict/rune/fresh.1
+genfft-strict	normal	rune:opt	O2	count	1	1	pass	7.60	5.85	0.04	72084	2795410922	7059070984	178245725	counts/measurement.lXnQBO/genfft-strict/rune-opt/fresh.1
+genfft-strict	normal	rune:new	O2	count	1	1	pass	14.97	13.69	0.04	40472	1697386791	7059070984	178245725	counts/measurement.lXnQBO/genfft-strict/rune-new/fresh.1
+genfft-strict	normal	rune:jit	O2	count	1	1	pass	6.20	6.56	0.03	41524	1697386791	7059070984	178245725	counts/measurement.lXnQBO/genfft-strict/rune-jit/fresh.1

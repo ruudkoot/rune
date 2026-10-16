@@ -1,0 +1,27 @@
+{
+  "command": [
+    "timeout",
+    "600",
+    "bin/runevm",
+    "tests/out/benchmarks/hartel-fft-originals/fft-normal-pilot.rbc"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 1048576,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 37168,
+  "observed_minimum_available_kib": 21558648,
+  "peak_processes": [
+    {
+      "pid": 947348,
+      "name": "timeout",
+      "rss_kib": 1796
+    },
+    {
+      "pid": 947349,
+      "name": "runevm",
+      "rss_kib": 35372
+    }
+  ],
+  "elapsed_seconds": 12.55567529500695
+}

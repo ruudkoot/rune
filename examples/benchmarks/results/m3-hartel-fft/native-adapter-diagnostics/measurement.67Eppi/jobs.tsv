@@ -1,0 +1,1 @@
+fft-nofib-strict	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/hartel-fft.sml shared/hartel-fft-driver.sml fft-nofib-strict/benchmark.sml shared/main.sml	1 1	fft-nofib-strict/smoke.expected	-
