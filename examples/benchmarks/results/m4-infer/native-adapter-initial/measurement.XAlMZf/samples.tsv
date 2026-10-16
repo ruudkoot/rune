@@ -1,0 +1,8 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+infer-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	6.34	5.68	1.18	666664	-	-	-	infer-strict/native-mlton/build/compile
+infer-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.35	0.26	0.12	3416	-	-	-	infer-strict/native-mlton/correctness.0
+infer-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.35	0.24	0.15	3456	-	-	-	infer-strict/native-mlton/fresh.1
+infer-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	compile-error	0.09	0.07	0.02	28868	-	-	-	infer-strict/native-smlnj-legacy/build/compile
+infer-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.55	0.44	0.14	57540	-	-	-	infer-strict/native-polyml/build/compile
+infer-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.31	0.26	0.16	58564	-	-	-	infer-strict/native-polyml/correctness.0
+infer-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.34	0.27	0.19	58952	-	-	-	infer-strict/native-polyml/fresh.1

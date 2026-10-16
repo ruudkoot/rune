@@ -1,0 +1,11 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/infer-lazy/
+?? examples/benchmarks/infer-strict/
+?? examples/benchmarks/shared/infer-driver.sml
+?? examples/benchmarks/shared/infer-parsing.sml
+?? examples/benchmarks/shared/nofib-infer.sml
+?? tests/benchmarks/check-infer.sh
+?? tests/benchmarks/data/infer/
+?? tests/benchmarks/infer-case-data.sml
+?? tests/benchmarks/infer-tests.sml

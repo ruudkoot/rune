@@ -1,0 +1,170 @@
+[
+  {
+    "case": 0,
+    "input": "",
+    "bytes": 122,
+    "unsigned_hash": "12620952081751132769",
+    "response": "Failed to parse\n? "
+  },
+  {
+    "case": 1,
+    "input": " ",
+    "bytes": 122,
+    "unsigned_hash": "12620952081751132769",
+    "response": "Failed to parse\n? "
+  },
+  {
+    "case": 2,
+    "input": "x",
+    "bytes": 121,
+    "unsigned_hash": "17663759043567929864",
+    "response": "Failed to type\n? "
+  },
+  {
+    "case": 3,
+    "input": "(x",
+    "bytes": 122,
+    "unsigned_hash": "12620952081751132769",
+    "response": "Failed to parse\n? "
+  },
+  {
+    "case": 4,
+    "input": "\\x.x",
+    "bytes": 123,
+    "unsigned_hash": "8784406488458152251",
+    "response": "\\x. x : a0 -> a0\n? "
+  },
+  {
+    "case": 5,
+    "input": "\\x.x x",
+    "bytes": 121,
+    "unsigned_hash": "17663759043567929864",
+    "response": "Failed to type\n? "
+  },
+  {
+    "case": 6,
+    "input": "let id = \\x.x in id id",
+    "bytes": 146,
+    "unsigned_hash": "10446186732546163292",
+    "response": "let  id = (\\x. x)  in  id id : a2 -> a2\n? "
+  },
+  {
+    "case": 7,
+    "input": "let id = \\x.x in unit id",
+    "bytes": 155,
+    "unsigned_hash": "941634492129108672",
+    "response": "let  id = (\\x. x)  in  unit id : List (a2 -> a2)\n? "
+  },
+  {
+    "case": 8,
+    "input": "\\x. let f = x in f f",
+    "bytes": 121,
+    "unsigned_hash": "17663759043567929864",
+    "response": "Failed to type\n? "
+  },
+  {
+    "case": 9,
+    "input": "letx=\\y.y in x",
+    "bytes": 141,
+    "unsigned_hash": "14084076758757082145",
+    "response": "let  x = (\\y. y)  in  x : a1 -> a1\n? "
+  },
+  {
+    "case": 10,
+    "input": "let id = \\x.x in let id = id in id",
+    "bytes": 161,
+    "unsigned_hash": "17652883683066966612",
+    "response": "let  id = (\\x. x)  in  let  id = id  in  id : a2 -> a2\n? "
+  },
+  {
+    "case": 11,
+    "input": "\\unit. unit",
+    "bytes": 129,
+    "unsigned_hash": "15203277090294699943",
+    "response": "\\unit. unit : a0 -> a0\n? "
+  },
+  {
+    "case": 12,
+    "input": "\\x x. x",
+    "bytes": 131,
+    "unsigned_hash": "11407530796263058115",
+    "response": "\\x x. x : a0 -> a1 -> a1\n? "
+  },
+  {
+    "case": 13,
+    "input": "let f = \\x.x in let g = f in g g",
+    "bytes": 159,
+    "unsigned_hash": "15962232870723335185",
+    "response": "let  f = (\\x. x)  in  let  g = f  in  g g : a3 -> a3\n? "
+  },
+  {
+    "case": 14,
+    "input": "\\f. let x = f in x",
+    "bytes": 139,
+    "unsigned_hash": "6961062777609938792",
+    "response": "\\f. let  x = f  in  x : a0 -> a0\n? "
+  },
+  {
+    "case": 15,
+    "input": "append (unit (\\x.x)) (unit (\\y.y))",
+    "bytes": 161,
+    "unsigned_hash": "12884253173775887910",
+    "response": "append (unit (\\x. x)) (unit (\\y. y)) : List (a6 -> a6)\n? "
+  },
+  {
+    "case": 16,
+    "input": "fix (\\x.x)",
+    "bytes": 123,
+    "unsigned_hash": "3372521779732462537",
+    "response": "fix (\\x. x) : a2\n? "
+  },
+  {
+    "case": 17,
+    "input": "fix unit",
+    "bytes": 121,
+    "unsigned_hash": "17663759043567929864",
+    "response": "Failed to type\n? "
+  },
+  {
+    "case": 18,
+    "input": "let in = x in in",
+    "bytes": 122,
+    "unsigned_hash": "12620952081751132769",
+    "response": "Failed to parse\n? "
+  },
+  {
+    "case": 19,
+    "input": "x ?",
+    "bytes": 122,
+    "unsigned_hash": "12620952081751132769",
+    "response": "Failed to parse\n? "
+  },
+  {
+    "case": 20,
+    "input": "unit unit",
+    "bytes": 139,
+    "unsigned_hash": "9295660070180895586",
+    "response": "unit unit : List (a1 -> List a1)\n? "
+  },
+  {
+    "case": 21,
+    "input": "\\a b. let x = a b in x",
+    "bytes": 157,
+    "unsigned_hash": "6396300720443637739",
+    "response": "\\a b. let  x = a b  in  x : (a1 -> a2) -> a1 -> a2\n? "
+  },
+  {
+    "case": 22,
+    "input": "\\x. let y = \\z.x in y",
+    "bytes": 151,
+    "unsigned_hash": "5517510223111721843",
+    "response": "\\x. let  y = (\\z. x)  in  y : a0 -> a2 -> a0\n? "
+  },
+  {
+    "case": 23,
+    "input": "(\\x. x) (let id = \\x.x in id id)",
+    "bytes": 156,
+    "unsigned_hash": "9104511459079559442",
+    "response": "(\\x. x) (let  id = (\\x. x)  in  id id) : a3 -> a3\n? "
+  }
+]

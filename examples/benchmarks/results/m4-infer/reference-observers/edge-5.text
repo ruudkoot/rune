@@ -1,0 +1,5 @@
+[unit : All x. x -> List x,
+ append : All x. List x -> List x -> List x,
+ fix : All x. (x -> x) -> x]
+? Failed to type
+? 

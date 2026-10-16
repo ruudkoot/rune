@@ -1,0 +1,542 @@
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/infer-parsing.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/infer-parsing.sml:54.35 Warning: calling polyEqual
+functor BenchInferParsingFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure L : <sig>
+  val defer : (unit -> 'a) -> 'a BenchLazy.state ref
+  val expose : 'a BenchLazy.state ref -> 'a
+  type 'a node
+  type 'a seq
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node BenchLazy.state ref
+  val single : 'a D.t -> 'a <BaseFct>.<resultStr>.node BenchLazy.state ref
+  val append :
+      'a <BaseFct>.<resultStr>.node BenchLazy.delay
+       -> (unit -> 'a <BaseFct>.<resultStr>.node BenchLazy.state ref)
+       -> 'a <BaseFct>.<resultStr>.node BenchLazy.delay
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node BenchLazy.delay
+       -> 'b <BaseFct>.<resultStr>.node BenchLazy.delay
+  val bind :
+      'a <BaseFct>.<resultStr>.node BenchLazy.delay
+       -> ('a -> 'b <BaseFct>.<resultStr>.node BenchLazy.delay)
+       -> 'b <BaseFct>.<resultStr>.node BenchLazy.state ref
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node BenchLazy.state ref
+  val toList : 'a <BaseFct>.<resultStr>.node BenchLazy.state ref -> 'a list
+  val fold :
+      ('a * 'b -> 'b)
+       -> 'b -> 'a <BaseFct>.<resultStr>.node BenchLazy.delay -> 'b
+  val foldCells :
+      ('a D.t * 'b -> 'b)
+       -> 'b -> 'a <BaseFct>.<resultStr>.node BenchLazy.delay -> 'b
+  val exists :
+      ('a -> bool) -> 'a <BaseFct>.<resultStr>.node BenchLazy.delay -> bool
+  val length : 'a <BaseFct>.<resultStr>.node BenchLazy.delay -> int
+  type 'a parser
+  val returnP :
+      'a -> 'b -> ('a * 'b) <BaseFct>.<resultStr>.node BenchLazy.state ref
+  val thenP :
+      ('a -> ('b * 'c) <BaseFct>.<resultStr>.node BenchLazy.delay)
+       -> ('b -> 'c -> 'd <BaseFct>.<resultStr>.node BenchLazy.delay)
+       -> 'a -> 'd <BaseFct>.<resultStr>.node BenchLazy.state ref
+  val eachP :
+      ('a -> ('b D.t * 'c) <BaseFct>.<resultStr>.node BenchLazy.delay)
+       -> ('b -> 'd)
+       -> 'a -> ('d D.t * 'c) <BaseFct>.<resultStr>.node BenchLazy.state ref
+  val elseP :
+      ('a -> 'b <BaseFct>.<resultStr>.node BenchLazy.delay)
+       -> ('a -> 'b <BaseFct>.<resultStr>.node BenchLazy.state ref)
+       -> 'a -> 'b <BaseFct>.<resultStr>.node BenchLazy.delay
+  val failP : 'a -> 'b <BaseFct>.<resultStr>.node BenchLazy.state ref
+  val guardP :
+      bool
+       -> ('a -> 'b <BaseFct>.<resultStr>.node BenchLazy.state ref)
+       -> 'a -> 'b <BaseFct>.<resultStr>.node BenchLazy.state ref
+  val filterP :
+      ('a -> bool)
+       -> ('b -> ('a D.t * 'c) <BaseFct>.<resultStr>.node BenchLazy.delay)
+       -> 'b -> ('a D.t * 'c) <BaseFct>.<resultStr>.node BenchLazy.state ref
+  val consP :
+      ('a -> ('b D.t * 'c) <BaseFct>.<resultStr>.node BenchLazy.delay)
+       -> ('c
+        -> ('b <BaseFct>.<resultStr>.node D.t * 'd) <BaseFct>.<resultStr>.node 
+          BenchLazy.delay)
+       -> 'a
+       -> ('b <BaseFct>.<resultStr>.node D.t * 'd) <BaseFct>.<resultStr>.node 
+           BenchLazy.state ref
+  val cutP :
+      ('a -> ('b D.t * 'c D.t) <BaseFct>.<resultStr>.node BenchLazy.state ref)
+       -> 'a
+       -> ('b D.t * 'c D.t) <BaseFct>.<resultStr>.node BenchLazy.state ref
+  val starP :
+      ('a D.t -> ('b D.t * 'a D.t) <BaseFct>.<resultStr>.node BenchLazy.delay)
+       -> 'a D.t
+       -> ('b <BaseFct>.<resultStr>.node D.t * 'a D.t) 
+             <BaseFct>.<resultStr>.node BenchLazy.state ref
+  val plusP :
+      ('a D.t -> ('b D.t * 'a D.t) <BaseFct>.<resultStr>.node BenchLazy.delay)
+       -> 'a D.t
+       -> ('b <BaseFct>.<resultStr>.node D.t * 'a D.t) 
+           <BaseFct>.<resultStr>.node BenchLazy.delay
+  val endP :
+      'a list D.t
+       -> (unit D.t * 'a list D.t) <BaseFct>.<resultStr>.node BenchLazy.state 
+         ref
+  val itemP :
+      'a list D.t
+       -> ('a D.t * 'a list D.t) <BaseFct>.<resultStr>.node BenchLazy.state 
+         ref
+  val litP :
+      ''a
+       -> ''a list D.t
+       -> (''a D.t * ''a list D.t) <BaseFct>.<resultStr>.node BenchLazy.state 
+         ref
+  val litsP :
+      ''a list
+       -> ''a list D.t
+       -> (''a <BaseFct>.<resultStr>.node D.t * ''a list D.t) 
+             <BaseFct>.<resultStr>.node BenchLazy.state ref
+  val exactlyP :
+      ('a -> ('b * 'c list D.t) <BaseFct>.<resultStr>.node BenchLazy.delay)
+       -> 'a
+       -> ('b * 'c list D.t) <BaseFct>.<resultStr>.node BenchLazy.state ref
+  val spaceP :
+      char list D.t
+       -> (char D.t * char list D.t) <BaseFct>.<resultStr>.node 
+           BenchLazy.state ref
+  val alphaP :
+      char list D.t
+       -> (char D.t * char list D.t) <BaseFct>.<resultStr>.node 
+           BenchLazy.state ref
+  val lowerP :
+      char list D.t
+       -> (char D.t * char list D.t) <BaseFct>.<resultStr>.node 
+           BenchLazy.state ref
+  val upperP :
+      char list D.t
+       -> (char D.t * char list D.t) <BaseFct>.<resultStr>.node 
+           BenchLazy.state ref
+  val spacesP :
+      char list D.t
+       -> (char <BaseFct>.<resultStr>.node D.t * char list D.t) 
+             <BaseFct>.<resultStr>.node BenchLazy.state ref
+  val lexicalP :
+      ('a -> ('b * char list D.t) <BaseFct>.<resultStr>.node BenchLazy.delay)
+       -> 'a
+       -> ('b * char list D.t) <BaseFct>.<resultStr>.node BenchLazy.state ref
+  val lexP :
+      string
+       -> char list D.t
+       -> (char <BaseFct>.<resultStr>.node D.t * char list D.t) 
+             <BaseFct>.<resultStr>.node BenchLazy.state ref
+  val lexactlyP :
+      (char list D.t
+        -> ('a * 'b list D.t) <BaseFct>.<resultStr>.node BenchLazy.delay)
+       -> char list D.t
+       -> ('a * 'b list D.t) <BaseFct>.<resultStr>.node BenchLazy.state ref
+  val surroundP :
+      string
+       -> (char list D.t
+        -> ('a * char list D.t) <BaseFct>.<resultStr>.node BenchLazy.delay)
+       -> string
+       -> char list D.t
+       -> ('a * char list D.t) <BaseFct>.<resultStr>.node BenchLazy.state ref
+  val parenP :
+      (char list D.t
+        -> ('a * char list D.t) <BaseFct>.<resultStr>.node BenchLazy.delay)
+       -> char list D.t
+       -> ('a * char list D.t) <BaseFct>.<resultStr>.node BenchLazy.state ref
+  val plusSepP :
+      string
+       -> (char list D.t
+        -> ('a D.t * char list D.t) <BaseFct>.<resultStr>.node BenchLazy.delay)
+       -> char list D.t
+       -> ('a <BaseFct>.<resultStr>.node D.t * char list D.t) 
+             <BaseFct>.<resultStr>.node BenchLazy.state ref
+  val listP :
+      (char list D.t
+        -> ('a D.t * char list D.t) <BaseFct>.<resultStr>.node BenchLazy.delay)
+       -> char list D.t
+       -> ('a <BaseFct>.<resultStr>.node D.t * char list D.t) 
+             <BaseFct>.<resultStr>.node BenchLazy.state ref
+  val word : char <BaseFct>.<resultStr>.node -> string
+  val useP :
+      'a
+       -> (char list D.t
+        -> ('a D.t * 'b) <BaseFct>.<resultStr>.node BenchLazy.state ref)
+       -> string -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-infer.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-infer.sml:24.35 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-infer.sml:20.46 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-infer.sml:16.54 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-infer.sml:15.19 Warning: calling polyEqual
+functor BenchInferFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure P : <sig>
+  type mono
+  type term
+  type poly
+  type sub
+  type env
+  type 'a infer
+  val arrow :
+      <BaseFct>.<resultStr>.mono D.t
+       -> <BaseFct>.<resultStr>.mono D.t -> <BaseFct>.<resultStr>.mono D.t
+  val lookup :
+      (unit -> 'a)
+       -> (''b * 'a) <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+       -> ''b -> 'a
+  val member :
+      ''a
+       -> ''a <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay -> bool
+  val nub :
+      ''a <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+       -> ''a <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val remove :
+      ''a
+       -> ''a <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+       -> ''a <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+  val minus :
+      ''a <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+       -> ''a <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+       -> ''a <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+  val freeNode :
+      <BaseFct>.<resultStr>.mono
+       -> string <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val freeMono :
+      <BaseFct>.<resultStr>.mono D.t
+       -> string <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val freePoly :
+      <BaseFct>.<resultStr>.poly
+       -> string <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+  val freeEnv :
+      ('a * <BaseFct>.<resultStr>.poly) 
+           <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+       -> string <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val lookupSub :
+      (string * <BaseFct>.<resultStr>.mono D.t) 
+           <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+       -> string -> <BaseFct>.<resultStr>.mono D.t
+  val applyNode :
+      (string * <BaseFct>.<resultStr>.mono D.t) 
+           <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.mono -> <BaseFct>.<resultStr>.mono
+  val applySub :
+      (string * <BaseFct>.<resultStr>.mono D.t) 
+           <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.mono D.t -> <BaseFct>.<resultStr>.mono D.t
+  val extendSub :
+      (string * <BaseFct>.<resultStr>.mono D.t) 
+           <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+       -> string
+       -> <BaseFct>.<resultStr>.mono D.t
+       -> (string * <BaseFct>.<resultStr>.mono D.t) 
+             <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val equal :
+      <BaseFct>.<resultStr>.mono D.t -> <BaseFct>.<resultStr>.mono D.t -> bool
+  val equalArgs :
+      <BaseFct>.<resultStr>.mono <BaseFct>.<resultStr>.P.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.mono <BaseFct>.<resultStr>.P.<returnStr>.seq
+       -> bool
+  val unify :
+      <BaseFct>.<resultStr>.mono D.t
+       -> <BaseFct>.<resultStr>.mono D.t
+       -> (string * <BaseFct>.<resultStr>.mono D.t) 
+           <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+       -> (string * <BaseFct>.<resultStr>.mono D.t) 
+             <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay option
+  val unifies :
+      <BaseFct>.<resultStr>.mono <BaseFct>.<resultStr>.P.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.mono <BaseFct>.<resultStr>.P.<returnStr>.seq
+       -> (string * <BaseFct>.<resultStr>.mono D.t) 
+           <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+       -> (string * <BaseFct>.<resultStr>.mono D.t) 
+             <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay option
+  val unifyVar :
+      string
+       -> <BaseFct>.<resultStr>.mono D.t
+       -> (string * <BaseFct>.<resultStr>.mono D.t) 
+           <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+       -> (string * <BaseFct>.<resultStr>.mono D.t) 
+             <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay option
+  val returnI : 'a -> 'b -> 'c -> (('a * 'b) * 'c) option
+  val thenI :
+      ('a -> 'b -> (('c * 'd) * 'e) option)
+       -> ('c -> 'd -> 'e -> 'f option) -> 'a -> 'b -> 'f option
+  val getSubI : 'a -> 'b -> (('a * 'a) * 'b) option
+  val substituteI :
+      <BaseFct>.<resultStr>.mono D.t
+       -> (string * <BaseFct>.<resultStr>.mono D.t) 
+           <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+       -> 'a
+       -> ((<BaseFct>.<resultStr>.mono D.t
+           * (string * <BaseFct>.<resultStr>.mono D.t) 
+               <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay) * 'a) 
+         option
+  val freshI :
+      'a -> int -> ((<BaseFct>.<resultStr>.mono D.t * 'a) * int) option
+  val freshesI :
+      int
+       -> 'a
+       -> int
+       -> ((<BaseFct>.<resultStr>.mono 
+                 <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+           * 'a) * int) option
+  val zip :
+      'a <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+       -> 'b <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+       -> ('a * 'b D.t) <BaseFct>.<resultStr>.P.<returnStr>.node 
+         BenchLazy.delay
+  val specialiseI :
+      <BaseFct>.<resultStr>.poly
+       -> 'a -> int -> ((<BaseFct>.<resultStr>.mono D.t * 'a) * int) option
+  val generaliseI :
+      ('a * <BaseFct>.<resultStr>.poly) 
+           <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.mono D.t
+       -> (string * <BaseFct>.<resultStr>.mono D.t) 
+           <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+       -> 'b
+       -> ((<BaseFct>.<resultStr>.poly
+           * (string * <BaseFct>.<resultStr>.mono D.t) 
+               <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay) * 'b) 
+         option
+  val unifyI :
+      <BaseFct>.<resultStr>.mono D.t
+       -> <BaseFct>.<resultStr>.mono D.t
+       -> (string * <BaseFct>.<resultStr>.mono D.t) 
+           <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+       -> 'a
+       -> ((unit
+           * (string * <BaseFct>.<resultStr>.mono D.t) 
+               <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay) * 'a) 
+         option
+  val extend :
+      ('a * 'b) <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+       -> 'a
+       -> 'b
+       -> ('a * 'b) <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state 
+         ref
+  val inferTerm :
+      (string * <BaseFct>.<resultStr>.poly) 
+             <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.term D.t
+       -> (string * <BaseFct>.<resultStr>.mono D.t) 
+           <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+       -> int
+       -> ((<BaseFct>.<resultStr>.mono D.t
+           * (string * <BaseFct>.<resultStr>.mono D.t) 
+               <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay) * int)
+         option
+  val chars : char <BaseFct>.<resultStr>.P.<returnStr>.node -> string
+  val idParser :
+      char list D.t
+       -> (string D.t * char list D.t) 
+             <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val lowerId :
+      char list D.t
+       -> (string D.t * char list D.t) 
+             <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val upperId :
+      char list D.t
+       -> (string D.t * char list D.t) 
+             <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val readsMono :
+      int
+       -> char list D.t
+       -> (<BaseFct>.<resultStr>.mono D.t * char list D.t) 
+           <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+  val readsArrow :
+      char list D.t
+       -> (<BaseFct>.<resultStr>.mono D.t * char list D.t) 
+             <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val readsCon :
+      char list D.t
+       -> (<BaseFct>.<resultStr>.mono D.t * char list D.t) 
+             <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val readsTypeVar :
+      char list D.t
+       -> (<BaseFct>.<resultStr>.mono D.t * char list D.t) 
+           <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+  val readsPoly :
+      char list D.t
+       -> (<BaseFct>.<resultStr>.poly D.t * char list D.t) 
+             <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val readsPair :
+      char list D.t
+       -> ((string * <BaseFct>.<resultStr>.poly) D.t * char list D.t) 
+             <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val readsEnv :
+      char list D.t
+       -> ((string * <BaseFct>.<resultStr>.poly) 
+                  <BaseFct>.<resultStr>.P.<returnStr>.node D.t * char list D.t)
+             <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val abstraction :
+      string <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.term D.t -> <BaseFct>.<resultStr>.term D.t
+  val readsTerm :
+      char list D.t
+       -> (<BaseFct>.<resultStr>.term D.t * char list D.t) 
+           <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+  val readsAtomic :
+      char list D.t
+       -> (<BaseFct>.<resultStr>.term D.t * char list D.t) 
+           <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+  val readsVar :
+      char list D.t
+       -> (<BaseFct>.<resultStr>.term D.t * char list D.t) 
+           <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+  val readsAbs :
+      char list D.t
+       -> (<BaseFct>.<resultStr>.term D.t * char list D.t) 
+           <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+  val readsLet :
+      char list D.t
+       -> (<BaseFct>.<resultStr>.term D.t * char list D.t) 
+           <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+  val readsAtomics :
+      char list D.t
+       -> (<BaseFct>.<resultStr>.term D.t * char list D.t) 
+             <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val environmentText : string
+  val testEnv :
+      (string * <BaseFct>.<resultStr>.poly) 
+             <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  type text
+  val word :
+      string
+       -> char <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val cat :
+      (unit -> 'a <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay) 
+         list
+       -> 'a <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val parens :
+      bool
+       -> (unit
+        -> char <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref)
+       -> char <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val separated :
+      string
+       -> ('a D.t
+        -> char <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay)
+       -> 'a <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+       -> char <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val prefixed :
+      string
+       -> ('a D.t
+        -> char <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay)
+       -> 'a <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+       -> char <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val arrowArgs :
+      'a <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+       -> ('a D.t * 'a D.t) option
+  val showMono :
+      int
+       -> <BaseFct>.<resultStr>.mono D.t
+       -> char <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+  val showPoly :
+      <BaseFct>.<resultStr>.poly
+       -> char <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val showPair :
+      (string * <BaseFct>.<resultStr>.poly) D.t
+       -> char <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val showEnv :
+      (string * <BaseFct>.<resultStr>.poly) 
+             <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+       -> char <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val showTerm :
+      int
+       -> <BaseFct>.<resultStr>.term D.t
+       -> char <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val showAbs :
+      <BaseFct>.<resultStr>.term D.t
+       -> char <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val prompt :
+      char <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val parseFailure :
+      char <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val typeFailure :
+      char <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val header :
+      char <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val readInferShow :
+      string
+       -> char <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val lines : string -> string list
+  val outputs :
+      string list
+       -> char <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.state ref
+  val render :
+      string -> char <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay
+  val app :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.P.<returnStr>.node BenchLazy.delay -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/infer-driver.sml]
+[autoloading]
+[autoloading done]
+functor BenchInferDriverFn(K: sig
+  type text
+  val render : string -> text
+  val app : (char -> unit) -> text -> unit
+end) :
+sig
+  val read : string -> TextIO.vector
+  val check : string -> string -> Word64.word -> int
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/infer-strict/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 200:128600:checked
+PASS infer-strict
+SUMMARY 1 checks, 0 failed

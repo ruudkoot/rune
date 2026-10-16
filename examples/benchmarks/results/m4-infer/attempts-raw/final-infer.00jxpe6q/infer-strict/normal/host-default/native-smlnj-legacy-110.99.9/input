@@ -1,0 +1,3 @@
+infer-strict
+200 data/normal.input data/normal.text 4015445733702633
+200:198000:checked

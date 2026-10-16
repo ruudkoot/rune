@@ -1,0 +1,23 @@
+[
+  {
+    "profile": "smoke",
+    "bytes": 643,
+    "unsigned_hash": "13194159443869525036",
+    "signed_hash": "-5252584629840026580",
+    "repetitions": 200
+  },
+  {
+    "profile": "normal",
+    "bytes": 990,
+    "unsigned_hash": "4015445733702633",
+    "signed_hash": "4015445733702633",
+    "repetitions": 200
+  },
+  {
+    "profile": "large",
+    "bytes": 1404,
+    "unsigned_hash": "13936911344147461745",
+    "signed_hash": "-4509832729562089871",
+    "repetitions": 200
+  }
+]

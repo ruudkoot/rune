@@ -1,0 +1,1 @@
+let f = \x.x in let g = f in g g

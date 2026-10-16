@@ -1,0 +1,28 @@
+0  'Failed to parse\n? '
+1   'Failed to parse\n? '
+2 x 'Failed to type\n? '
+3 (x 'Failed to parse\n? '
+4 \x.x '\\x. x : a0 -> a0\n? '
+5 \x.x x 'Failed to type\n? '
+6 let id = \x.x in id id 'let  id = (\\x. x)  in  id id : a2 -> a2\n? '
+7 let id = \x.x in unit id 'let  id = (\\x. x)  in  unit id : List (a2 -> a2)\n? '
+8 \x. let f = x in f f 'Failed to type\n? '
+9 letx=\y.y in x 'let  x = (\\y. y)  in  x : a1 -> a1\n? '
+10 let id = \x.x in let id = id in id 'let  id = (\\x. x)  in  let  id = id  in  id : a2 -> a2\n? '
+11 \unit. unit '\\unit. unit : a0 -> a0\n? '
+12 \x x. x '\\x x. x : a0 -> a1 -> a1\n? '
+13 let f = \x.x in let g = f in g g 'let  f = (\\x. x)  in  let  g = f  in  g g : a3 -> a3\n? '
+14 \f. let x = f in x '\\f. let  x = f  in  x : a0 -> a0\n? '
+15 append (unit (\x.x)) (unit (\y.y)) 'append (unit (\\x. x)) (unit (\\y. y)) : List (a6 -> a6)\n? '
+16 fix (\x.x) 'fix (\\x. x) : a2\n? '
+17 fix unit 'Failed to type\n? '
+18 let in = x in in 'Failed to parse\n? '
+19 x ? 'Failed to parse\n? '
+20 unit unit 'unit unit : List (a1 -> List a1)\n? '
+21 \a b. let x = a b in x '\\a b. let  x = a b  in  x : (a1 -> a2) -> a1 -> a2\n? '
+22 \x. let y = \z.x in y '\\x. let  y = (\\z. x)  in  y : a0 -> a2 -> a0\n? '
+23 (\x. x) (let id = \x.x in id id) '(\\x. x) (let  id = (\\x. x)  in  id id) : a3 -> a3\n? '
+False
+[("x","w"),("y","List z"),("x","w")]
+["b","a"]
+

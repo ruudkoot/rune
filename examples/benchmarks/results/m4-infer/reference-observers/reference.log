@@ -1,0 +1,3 @@
+PASS original fixture, full text and independent hash smoke 643 -5252584629840026580
+PASS original fixture, full text and independent hash normal 990 4015445733702633
+PASS original fixture, full text and independent hash large 1404 -4509832729562089871

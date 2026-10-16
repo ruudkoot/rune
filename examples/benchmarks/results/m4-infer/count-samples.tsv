@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+infer-lazy	normal	rune	O2	count	1	1	pass	12.88	13.69	0.02	35072	2784771196	6893079712	204696506	counts/measurement.belk3w/infer-lazy/rune/fresh.1
+infer-lazy	normal	rune:opt	O2	count	1	1	pass	7.35	7.69	0.01	36308	2784771196	6893079712	204696506	counts/measurement.belk3w/infer-lazy/rune-opt/fresh.1
+infer-lazy	normal	rune:new	O2	count	1	1	pass	16.17	14.79	0.01	35532	1600908047	6893079712	204696506	counts/measurement.belk3w/infer-lazy/rune-new/fresh.1
+infer-lazy	normal	rune:jit	O2	count	1	1	pass	6.72	7.19	0.05	37712	1600908047	6893079712	204696506	counts/measurement.belk3w/infer-lazy/rune-jit/fresh.1
+infer-strict	normal	rune	O2	count	1	1	pass	9.93	10.68	0.03	68068	2294990586	6069519168	173839600	counts/measurement.O0TxCu/infer-strict/rune/fresh.1
+infer-strict	normal	rune:opt	O2	count	1	1	pass	5.16	5.36	0.07	69028	2294990586	6069519168	173839600	counts/measurement.O0TxCu/infer-strict/rune-opt/fresh.1
+infer-strict	normal	rune:new	O2	count	1	1	pass	9.01	9.68	0.04	68320	1272441085	6069519168	173839600	counts/measurement.O0TxCu/infer-strict/rune-new/fresh.1
+infer-strict	normal	rune:jit	O2	count	1	1	pass	4.78	4.96	0.05	70300	1272441085	6069519168	173839600	counts/measurement.O0TxCu/infer-strict/rune-jit/fresh.1

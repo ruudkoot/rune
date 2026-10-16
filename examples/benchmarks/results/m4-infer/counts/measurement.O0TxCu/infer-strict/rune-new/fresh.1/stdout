@@ -1,0 +1,3 @@
+RESULT 200:198000:checked
+PASS infer-strict
+SUMMARY 1 checks, 0 failed

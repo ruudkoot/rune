@@ -1,0 +1,8 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+infer-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	9.06	5.98	1.24	666336	-	-	-	infer-lazy/native-mlton/build/compile
+infer-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.48	0.32	0.16	3524	-	-	-	infer-lazy/native-mlton/correctness.0
+infer-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.50	0.30	0.21	3552	-	-	-	infer-lazy/native-mlton/fresh.1
+infer-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	compile-error	0.20	0.06	0.14	28932	-	-	-	infer-lazy/native-smlnj-legacy/build/compile
+infer-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.58	0.48	0.12	62316	-	-	-	infer-lazy/native-polyml/build/compile
+infer-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.45	0.41	0.14	65344	-	-	-	infer-lazy/native-polyml/correctness.0
+infer-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.39	0.30	0.19	60144	-	-	-	infer-lazy/native-polyml/fresh.1

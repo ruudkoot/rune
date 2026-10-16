@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+infer-lazy	normal	rune	O2	compile	0	0	pass	2.53	2.22	0.45	266624	-	-	-	infer-lazy/rune/build/compile
+infer-lazy	normal	rune	O2	correctness	0	0	pass	16.69	15.50	0.07	35140	2784771196	6893079712	204696506	infer-lazy/rune/correctness.0
+infer-lazy	normal	rune	O2	count	1	1	pass	12.88	13.69	0.02	35072	2784771196	6893079712	204696506	infer-lazy/rune/fresh.1
+infer-lazy	normal	rune:opt	O2	compile	0	0	pass	2.29	2.15	0.28	266700	-	-	-	infer-lazy/rune-opt/build/compile
+infer-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.49	0.36	0.03	24348	-	-	-	infer-lazy/rune-opt/build/native-compile
+infer-lazy	normal	rune:opt	O2	correctness	0	0	pass	9.73	8.20	0.01	36176	2784771196	6893079712	204696506	infer-lazy/rune-opt/correctness.0
+infer-lazy	normal	rune:opt	O2	count	1	1	pass	7.35	7.69	0.01	36308	2784771196	6893079712	204696506	infer-lazy/rune-opt/fresh.1
+infer-lazy	normal	rune:new	O2	compile	0	0	pass	2.20	2.14	0.25	266592	-	-	-	infer-lazy/rune-new/build/compile
+infer-lazy	normal	rune:new	O2	correctness	0	0	pass	12.86	13.76	0.01	35624	1600908047	6893079712	204696506	infer-lazy/rune-new/correctness.0
+infer-lazy	normal	rune:new	O2	count	1	1	pass	16.17	14.79	0.01	35532	1600908047	6893079712	204696506	infer-lazy/rune-new/fresh.1
+infer-lazy	normal	rune:jit	O2	compile	0	0	pass	2.28	2.05	0.36	266696	-	-	-	infer-lazy/rune-jit/build/compile
+infer-lazy	normal	rune:jit	O2	correctness	0	0	pass	8.06	8.61	0.06	37716	1600908047	6893079712	204696506	infer-lazy/rune-jit/correctness.0
+infer-lazy	normal	rune:jit	O2	count	1	1	pass	6.72	7.19	0.05	37712	1600908047	6893079712	204696506	infer-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

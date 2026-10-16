@@ -1,0 +1,1 @@
+infer-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/infer-parsing.sml shared/nofib-infer.sml shared/infer-driver.sml infer-lazy/benchmark.sml shared/main.sml	200 data/smoke.input data/smoke.text 13194159443869525036	infer-lazy/smoke.expected	data/smoke.input data/smoke.text

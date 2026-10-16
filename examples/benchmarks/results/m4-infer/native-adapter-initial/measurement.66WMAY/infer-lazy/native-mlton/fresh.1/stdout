@@ -1,0 +1,4 @@
+RESULT 200:128600:checked
+PASS infer-lazy
+SAMPLE 1 0.499376000
+SUMMARY 1 checks, 0 failed

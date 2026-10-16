@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-infer.00jxpe6q
+PASS infer-lazy smoke O0
+PASS infer-lazy smoke O2
+PASS infer-lazy smoke hosts
+PASS infer-lazy normal O0
+PASS infer-lazy normal O2
+PASS infer-lazy normal hosts
+PASS infer-strict smoke O0
+PASS infer-strict smoke O2
+PASS infer-strict smoke hosts
+PASS infer-strict normal O0
+PASS infer-strict normal O2
+PASS infer-strict normal hosts

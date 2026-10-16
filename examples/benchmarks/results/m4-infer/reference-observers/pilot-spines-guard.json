@@ -1,0 +1,27 @@
+{
+  "command": [
+    "timeout",
+    "60",
+    "bin/runevm",
+    "tests/out/benchmarks/infer-originals/pilot-spines.rbc"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 524288,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 131648,
+  "observed_minimum_available_kib": 20954768,
+  "peak_processes": [
+    {
+      "pid": 3,
+      "name": "timeout",
+      "rss_kib": 1796
+    },
+    {
+      "pid": 4,
+      "name": "runevm",
+      "rss_kib": 129852
+    }
+  ],
+  "elapsed_seconds": 0.7647076009889133
+}

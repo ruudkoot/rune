@@ -1,0 +1,1 @@
+infer-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/infer-parsing.sml shared/nofib-infer.sml shared/infer-driver.sml infer-lazy/benchmark.sml shared/main.sml	200 data/normal.input data/normal.text 4015445733702633	infer-lazy/normal.expected	data/normal.input data/normal.text

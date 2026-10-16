@@ -1,0 +1,4 @@
+infer-strict
+200 data/smoke.input data/smoke.text 13194159443869525036
+200:128600:checked
+1

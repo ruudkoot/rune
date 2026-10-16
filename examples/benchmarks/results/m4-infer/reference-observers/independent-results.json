@@ -1,0 +1,863 @@
+[
+  {
+    "profile": "smoke",
+    "line": 0,
+    "input": "(\\x.x)",
+    "status": "pass",
+    "canonical_type": [
+      "c",
+      "->",
+      [
+        [
+          "v",
+          0
+        ],
+        [
+          "v",
+          0
+        ]
+      ]
+    ]
+  },
+  {
+    "profile": "smoke",
+    "line": 1,
+    "input": "\\x.\\y.x",
+    "status": "pass",
+    "canonical_type": [
+      "c",
+      "->",
+      [
+        [
+          "v",
+          0
+        ],
+        [
+          "c",
+          "->",
+          [
+            [
+              "v",
+              1
+            ],
+            [
+              "v",
+              0
+            ]
+          ]
+        ]
+      ]
+    ]
+  },
+  {
+    "profile": "smoke",
+    "line": 2,
+    "input": "(x",
+    "status": "parse-failure",
+    "canonical_type": null
+  },
+  {
+    "profile": "smoke",
+    "line": 3,
+    "input": "x",
+    "status": "type-failure",
+    "canonical_type": null
+  },
+  {
+    "profile": "smoke",
+    "line": 4,
+    "input": "(\\f.\\g.\\x.(g(f(x))))",
+    "status": "pass",
+    "canonical_type": [
+      "c",
+      "->",
+      [
+        [
+          "c",
+          "->",
+          [
+            [
+              "v",
+              0
+            ],
+            [
+              "v",
+              1
+            ]
+          ]
+        ],
+        [
+          "c",
+          "->",
+          [
+            [
+              "c",
+              "->",
+              [
+                [
+                  "v",
+                  1
+                ],
+                [
+                  "v",
+                  2
+                ]
+              ]
+            ],
+            [
+              "c",
+              "->",
+              [
+                [
+                  "v",
+                  0
+                ],
+                [
+                  "v",
+                  2
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  },
+  {
+    "profile": "smoke",
+    "line": 5,
+    "input": "(\\x. x x)    ",
+    "status": "type-failure",
+    "canonical_type": null
+  },
+  {
+    "profile": "smoke",
+    "line": 6,
+    "input": "(\\x.x) (\\x.x)",
+    "status": "pass",
+    "canonical_type": [
+      "c",
+      "->",
+      [
+        [
+          "v",
+          0
+        ],
+        [
+          "v",
+          0
+        ]
+      ]
+    ]
+  },
+  {
+    "profile": "smoke",
+    "line": 7,
+    "input": "(\\id. id id) (\\x.x)",
+    "status": "type-failure",
+    "canonical_type": null
+  },
+  {
+    "profile": "smoke",
+    "line": 8,
+    "input": "let id = \\x.x in id id ",
+    "status": "pass",
+    "canonical_type": [
+      "c",
+      "->",
+      [
+        [
+          "v",
+          0
+        ],
+        [
+          "v",
+          0
+        ]
+      ]
+    ]
+  },
+  {
+    "profile": "smoke",
+    "line": 9,
+    "input": "\\x. let f = x in f f      ",
+    "status": "type-failure",
+    "canonical_type": null
+  },
+  {
+    "profile": "smoke",
+    "line": 10,
+    "input": "fix (\\x.x)",
+    "status": "pass",
+    "canonical_type": [
+      "v",
+      0
+    ]
+  },
+  {
+    "profile": "smoke",
+    "line": 11,
+    "input": "fix unit",
+    "status": "type-failure",
+    "canonical_type": null
+  },
+  {
+    "profile": "smoke",
+    "line": 12,
+    "input": "\\x. unit (unit x)",
+    "status": "pass",
+    "canonical_type": [
+      "c",
+      "->",
+      [
+        [
+          "v",
+          0
+        ],
+        [
+          "c",
+          "List",
+          [
+            [
+              "c",
+              "List",
+              [
+                [
+                  "v",
+                  0
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  },
+  {
+    "profile": "smoke",
+    "line": 13,
+    "input": "fix (\\x. append (unit x))",
+    "status": "type-failure",
+    "canonical_type": null
+  },
+  {
+    "profile": "smoke",
+    "line": 14,
+    "input": "\\x. fix (\\xs. append (unit x) xs)",
+    "status": "pass",
+    "canonical_type": [
+      "c",
+      "->",
+      [
+        [
+          "v",
+          0
+        ],
+        [
+          "c",
+          "List",
+          [
+            [
+              "v",
+              0
+            ]
+          ]
+        ]
+      ]
+    ]
+  },
+  {
+    "profile": "smoke",
+    "line": 15,
+    "input": "let id = \\x.x in id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id",
+    "status": "pass",
+    "canonical_type": [
+      "c",
+      "->",
+      [
+        [
+          "v",
+          0
+        ],
+        [
+          "v",
+          0
+        ]
+      ]
+    ]
+  },
+  {
+    "profile": "normal",
+    "line": 0,
+    "input": "(\\x.x)",
+    "status": "pass",
+    "canonical_type": [
+      "c",
+      "->",
+      [
+        [
+          "v",
+          0
+        ],
+        [
+          "v",
+          0
+        ]
+      ]
+    ]
+  },
+  {
+    "profile": "normal",
+    "line": 1,
+    "input": "\\x.\\y.x",
+    "status": "pass",
+    "canonical_type": [
+      "c",
+      "->",
+      [
+        [
+          "v",
+          0
+        ],
+        [
+          "c",
+          "->",
+          [
+            [
+              "v",
+              1
+            ],
+            [
+              "v",
+              0
+            ]
+          ]
+        ]
+      ]
+    ]
+  },
+  {
+    "profile": "normal",
+    "line": 2,
+    "input": "(x",
+    "status": "parse-failure",
+    "canonical_type": null
+  },
+  {
+    "profile": "normal",
+    "line": 3,
+    "input": "x",
+    "status": "type-failure",
+    "canonical_type": null
+  },
+  {
+    "profile": "normal",
+    "line": 4,
+    "input": "(\\f.\\g.\\x.(g(f(x))))",
+    "status": "pass",
+    "canonical_type": [
+      "c",
+      "->",
+      [
+        [
+          "c",
+          "->",
+          [
+            [
+              "v",
+              0
+            ],
+            [
+              "v",
+              1
+            ]
+          ]
+        ],
+        [
+          "c",
+          "->",
+          [
+            [
+              "c",
+              "->",
+              [
+                [
+                  "v",
+                  1
+                ],
+                [
+                  "v",
+                  2
+                ]
+              ]
+            ],
+            [
+              "c",
+              "->",
+              [
+                [
+                  "v",
+                  0
+                ],
+                [
+                  "v",
+                  2
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  },
+  {
+    "profile": "normal",
+    "line": 5,
+    "input": "(\\x. x x)    ",
+    "status": "type-failure",
+    "canonical_type": null
+  },
+  {
+    "profile": "normal",
+    "line": 6,
+    "input": "(\\x.x) (\\x.x)",
+    "status": "pass",
+    "canonical_type": [
+      "c",
+      "->",
+      [
+        [
+          "v",
+          0
+        ],
+        [
+          "v",
+          0
+        ]
+      ]
+    ]
+  },
+  {
+    "profile": "normal",
+    "line": 7,
+    "input": "(\\id. id id) (\\x.x)",
+    "status": "type-failure",
+    "canonical_type": null
+  },
+  {
+    "profile": "normal",
+    "line": 8,
+    "input": "let id = \\x.x in id id ",
+    "status": "pass",
+    "canonical_type": [
+      "c",
+      "->",
+      [
+        [
+          "v",
+          0
+        ],
+        [
+          "v",
+          0
+        ]
+      ]
+    ]
+  },
+  {
+    "profile": "normal",
+    "line": 9,
+    "input": "\\x. let f = x in f f      ",
+    "status": "type-failure",
+    "canonical_type": null
+  },
+  {
+    "profile": "normal",
+    "line": 10,
+    "input": "fix (\\x.x)",
+    "status": "pass",
+    "canonical_type": [
+      "v",
+      0
+    ]
+  },
+  {
+    "profile": "normal",
+    "line": 11,
+    "input": "fix unit",
+    "status": "type-failure",
+    "canonical_type": null
+  },
+  {
+    "profile": "normal",
+    "line": 12,
+    "input": "\\x. unit (unit x)",
+    "status": "pass",
+    "canonical_type": [
+      "c",
+      "->",
+      [
+        [
+          "v",
+          0
+        ],
+        [
+          "c",
+          "List",
+          [
+            [
+              "c",
+              "List",
+              [
+                [
+                  "v",
+                  0
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  },
+  {
+    "profile": "normal",
+    "line": 13,
+    "input": "fix (\\x. append (unit x))",
+    "status": "type-failure",
+    "canonical_type": null
+  },
+  {
+    "profile": "normal",
+    "line": 14,
+    "input": "\\x. fix (\\xs. append (unit x) xs)",
+    "status": "pass",
+    "canonical_type": [
+      "c",
+      "->",
+      [
+        [
+          "v",
+          0
+        ],
+        [
+          "c",
+          "List",
+          [
+            [
+              "v",
+              0
+            ]
+          ]
+        ]
+      ]
+    ]
+  },
+  {
+    "profile": "normal",
+    "line": 15,
+    "input": "let id = \\x.x in id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id",
+    "status": "pass",
+    "canonical_type": [
+      "c",
+      "->",
+      [
+        [
+          "v",
+          0
+        ],
+        [
+          "v",
+          0
+        ]
+      ]
+    ]
+  },
+  {
+    "profile": "large",
+    "line": 0,
+    "input": "(\\x.x)",
+    "status": "pass",
+    "canonical_type": [
+      "c",
+      "->",
+      [
+        [
+          "v",
+          0
+        ],
+        [
+          "v",
+          0
+        ]
+      ]
+    ]
+  },
+  {
+    "profile": "large",
+    "line": 1,
+    "input": "\\x.\\y.x",
+    "status": "pass",
+    "canonical_type": [
+      "c",
+      "->",
+      [
+        [
+          "v",
+          0
+        ],
+        [
+          "c",
+          "->",
+          [
+            [
+              "v",
+              1
+            ],
+            [
+              "v",
+              0
+            ]
+          ]
+        ]
+      ]
+    ]
+  },
+  {
+    "profile": "large",
+    "line": 2,
+    "input": "(x",
+    "status": "parse-failure",
+    "canonical_type": null
+  },
+  {
+    "profile": "large",
+    "line": 3,
+    "input": "x",
+    "status": "type-failure",
+    "canonical_type": null
+  },
+  {
+    "profile": "large",
+    "line": 4,
+    "input": "(\\f.\\g.\\x.(g(f(x))))",
+    "status": "pass",
+    "canonical_type": [
+      "c",
+      "->",
+      [
+        [
+          "c",
+          "->",
+          [
+            [
+              "v",
+              0
+            ],
+            [
+              "v",
+              1
+            ]
+          ]
+        ],
+        [
+          "c",
+          "->",
+          [
+            [
+              "c",
+              "->",
+              [
+                [
+                  "v",
+                  1
+                ],
+                [
+                  "v",
+                  2
+                ]
+              ]
+            ],
+            [
+              "c",
+              "->",
+              [
+                [
+                  "v",
+                  0
+                ],
+                [
+                  "v",
+                  2
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  },
+  {
+    "profile": "large",
+    "line": 5,
+    "input": "(\\x. x x)    ",
+    "status": "type-failure",
+    "canonical_type": null
+  },
+  {
+    "profile": "large",
+    "line": 6,
+    "input": "(\\x.x) (\\x.x)",
+    "status": "pass",
+    "canonical_type": [
+      "c",
+      "->",
+      [
+        [
+          "v",
+          0
+        ],
+        [
+          "v",
+          0
+        ]
+      ]
+    ]
+  },
+  {
+    "profile": "large",
+    "line": 7,
+    "input": "(\\id. id id) (\\x.x)",
+    "status": "type-failure",
+    "canonical_type": null
+  },
+  {
+    "profile": "large",
+    "line": 8,
+    "input": "let id = \\x.x in id id ",
+    "status": "pass",
+    "canonical_type": [
+      "c",
+      "->",
+      [
+        [
+          "v",
+          0
+        ],
+        [
+          "v",
+          0
+        ]
+      ]
+    ]
+  },
+  {
+    "profile": "large",
+    "line": 9,
+    "input": "\\x. let f = x in f f      ",
+    "status": "type-failure",
+    "canonical_type": null
+  },
+  {
+    "profile": "large",
+    "line": 10,
+    "input": "fix (\\x.x)",
+    "status": "pass",
+    "canonical_type": [
+      "v",
+      0
+    ]
+  },
+  {
+    "profile": "large",
+    "line": 11,
+    "input": "fix unit",
+    "status": "type-failure",
+    "canonical_type": null
+  },
+  {
+    "profile": "large",
+    "line": 12,
+    "input": "\\x. unit (unit x)",
+    "status": "pass",
+    "canonical_type": [
+      "c",
+      "->",
+      [
+        [
+          "v",
+          0
+        ],
+        [
+          "c",
+          "List",
+          [
+            [
+              "c",
+              "List",
+              [
+                [
+                  "v",
+                  0
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  },
+  {
+    "profile": "large",
+    "line": 13,
+    "input": "fix (\\x. append (unit x))",
+    "status": "type-failure",
+    "canonical_type": null
+  },
+  {
+    "profile": "large",
+    "line": 14,
+    "input": "\\x. fix (\\xs. append (unit x) xs)",
+    "status": "pass",
+    "canonical_type": [
+      "c",
+      "->",
+      [
+        [
+          "v",
+          0
+        ],
+        [
+          "c",
+          "List",
+          [
+            [
+              "v",
+              0
+            ]
+          ]
+        ]
+      ]
+    ]
+  },
+  {
+    "profile": "large",
+    "line": 15,
+    "input": "let id = \\x.x in id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id id ",
+    "status": "pass",
+    "canonical_type": [
+      "c",
+      "->",
+      [
+        [
+          "v",
+          0
+        ],
+        [
+          "v",
+          0
+        ]
+      ]
+    ]
+  }
+]
