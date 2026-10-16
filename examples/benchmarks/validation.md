@@ -1681,3 +1681,37 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 matching bytecode comparisons across seven compiler builds.
 runedoc and runeopt also agree. [The complete transcript](validation/oct16-last-piece-871-acceptance.log)
 records the run. All 41 inventory tests pass and all 861 entries validate.
+
+## M3 typed Boyer terms and recursive lemma graphs, 2026-10-16
+
+Two imports bring the committed catalogue to 295 programs and 877 profiles.
+[All 56 final smoke/normal cases](results/m3-typed-boyer/correctness.tsv) pass
+across Rune's four engines at O0/O2 and all six managed native hosts. The initial
+run's Rune O0 strict-smoke timeout at 30 seconds is retained in the complete
+60-attempt ledger. A documented 60-second override preserves FAST2 and all 100
+repetitions; all four O0 engines pass the replay. Normal preserves NORM15 and
+its default 600-second limit. No incorrect result is accepted as a measurement.
+
+Thirty semantic/negative checks pass all ten configurations twice, with Rune
+O0/O2 and native defaults. Original and independent models agree on complete
+input/normalized terms, all nine variable inputs and all 32 truth assignments;
+only X proves the theorem. Its normalized form contains 170284 bytes. All three
+original stdout fixtures match. Equality avoids forcing cyclic lemma fields,
+substitution preserves their pointers, and failed unification environments remain
+undemanded when their Boolean is false. This typed representation stays separate
+from classic Boyer and nofib's Lisp-parsing Boyer2 variant.
+
+Eight normal count samples agree across applicable Rune engines, including
+allocation counts for all four. Existing budgets are unchanged; these new
+profiles are unbudgeted. Six serial native smoke samples validate the MLton,
+SML/NJ and Poly/ML adapters. Bounded preflights, counts and single-sample adapter
+diagnostics remain separate from headline timings. Exact sources, Public Domain
+notice/history, inputs, observers, independent models and raw results are kept.
+No prerequisite compiler/runtime feature is introduced. M3 remains in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0. It checks the 877-profile
+catalogue, the 16-program routine set, 331 language fixtures per compiler,
+existing budgets, bootstrap and 498 identical bytecode comparisons across seven
+compiler builds. runedoc and runeopt also agree. [The complete transcript](validation/oct16-typed-boyer-877-acceptance.log)
+records the run. The separately recorded inventory checks validate 861 entries
+and pass all 41 tests before the subsequent profile-input audit refresh.
