@@ -1,0 +1,92 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-hash.sml]
+structure BenchNofibHash : 
+  sig
+    val hash : string -> Word64.word
+    val signed : string -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/compress.sml]
+functor BenchCompressFn(D: sig
+                           type 'a t
+                           val delay : (unit -> 'a) -> 'a t
+                           val force : 'a t -> 'a
+                         end) :
+                       
+                         sig
+                           type treeNode
+                           type prefix
+                           type tree
+                           type 'a node
+                           type 'a stream
+                           val emptyTree : unit -> treeNode D.t
+                           val empty : unit -> 'a node D.t
+                           val value : 'a -> 'a D.t
+                           val insert : char
+                                         -> int
+                                         -> treeNode D.t -> treeNode D.t
+                           val balancedKeys : int list
+                           val initial : treeNode D.t
+                           val codeString : string
+                                             -> int
+                                             -> int D.t
+                                             -> int D.t
+                                             -> treeNode D.t
+                                             -> (int * int D.t * treeNode D.t) 
+                                               D.t
+                           val encodeFrom : string
+                                             -> int
+                                             -> int D.t
+                                             -> treeNode D.t -> int node D.t
+                           val encode : string -> int node D.t
+                           val prepend : 'a D.t -> 'a node D.t -> 'a node D.t
+                           val pack : int node D.t -> int node D.t
+                           val toList : 'a node D.t -> 'a list
+                           val compress : string -> string
+                         end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/compress-driver.sml]
+functor BenchCompressDriverFn(C: sig val compress : string -> string end) :
+                             
+                               sig
+                                 val file : string -> string
+                                 val twoDigits : int -> string
+                                 val run : string list -> string
+                               end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/compress-lazy/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Codec : <sig>
+    structure Driver : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 267673520321527625090
+PASS compress-lazy
+SUMMARY 1 checks, 0 failed

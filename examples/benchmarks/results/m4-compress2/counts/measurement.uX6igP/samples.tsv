@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+compress-lazy	normal	rune	O2	compile	0	0	pass	1.69	1.70	0.06	135352	-	-	-	compress-lazy/rune/build/compile
+compress-lazy	normal	rune	O2	correctness	0	0	pass	10.19	10.58	0.03	10612	2053384980	6496245408	152467444	compress-lazy/rune/correctness.0
+compress-lazy	normal	rune	O2	count	1	1	pass	8.82	9.14	0.01	10600	2053384980	6496245408	152467444	compress-lazy/rune/fresh.1
+compress-lazy	normal	rune:opt	O2	compile	0	0	pass	1.53	1.53	0.05	135212	-	-	-	compress-lazy/rune-opt/build/compile
+compress-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.31	0.15	0.04	14068	-	-	-	compress-lazy/rune-opt/build/native-compile
+compress-lazy	normal	rune:opt	O2	correctness	0	0	pass	5.57	4.40	0.02	11292	2053384980	6496245408	152467444	compress-lazy/rune-opt/correctness.0
+compress-lazy	normal	rune:opt	O2	count	1	1	pass	4.47	4.62	0.02	11204	2053384980	6496245408	152467444	compress-lazy/rune-opt/fresh.1
+compress-lazy	normal	rune:new	O2	compile	0	0	pass	1.63	1.62	0.07	135260	-	-	-	compress-lazy/rune-new/build/compile
+compress-lazy	normal	rune:new	O2	correctness	0	0	pass	8.20	8.58	0.01	10712	1164037048	6496245408	152467444	compress-lazy/rune-new/correctness.0
+compress-lazy	normal	rune:new	O2	count	1	1	pass	8.14	8.46	0.01	10876	1164037048	6496245408	152467444	compress-lazy/rune-new/fresh.1
+compress-lazy	normal	rune:jit	O2	compile	0	0	pass	1.62	1.58	0.09	135260	-	-	-	compress-lazy/rune-jit/build/compile
+compress-lazy	normal	rune:jit	O2	correctness	0	0	pass	5.26	4.10	0.01	12040	1164037048	6496245408	152467444	compress-lazy/rune-jit/correctness.0
+compress-lazy	normal	rune:jit	O2	count	1	1	pass	4.07	4.14	0.02	12064	1164037048	6496245408	152467444	compress-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

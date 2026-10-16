@@ -1,0 +1,5 @@
+[1 of 5] Compiling Encode           ( Encode.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/compress2-originals/original-reference-build/Encode.o )
+[2 of 5] Compiling NofibUtils       ( NofibUtils.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/compress2-originals/original-reference-build/NofibUtils.o )
+[3 of 5] Compiling WriteRoutines    ( WriteRoutines.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/compress2-originals/original-reference-build/WriteRoutines.o )
+[4 of 5] Compiling Main             ( /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/compress2-originals/Main.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/compress2-originals/original-reference-build/Main.o )
+[5 of 5] Linking /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/compress2-originals/original [Objects changed]

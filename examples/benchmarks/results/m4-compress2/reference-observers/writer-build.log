@@ -1,0 +1,4 @@
+[1 of 4] Compiling Encode           ( Encode.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/compress2-originals/writer-build/Encode.o )
+[2 of 4] Compiling WriteRoutines    ( WriteRoutines.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/compress2-originals/writer-build/WriteRoutines.o )
+[3 of 4] Compiling WriterObserver   ( /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/compress2-originals/WriterObserver.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/compress2-originals/writer-build/WriterObserver.o )
+[4 of 4] Linking /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/compress2-originals/writer

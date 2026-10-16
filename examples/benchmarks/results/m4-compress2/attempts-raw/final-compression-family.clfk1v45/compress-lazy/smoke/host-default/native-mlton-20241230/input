@@ -1,0 +1,3 @@
+compress-lazy
+DATA/smoke/input.bin 1 expected/smoke
+6416268572697873158

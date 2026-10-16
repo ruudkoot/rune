@@ -1,0 +1,17 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+compress-lazy	normal	rune	O2	count	1	1	pass	8.82	9.14	0.01	10600	2053384980	6496245408	152467444	counts/measurement.uX6igP/compress-lazy/rune/fresh.1
+compress-lazy	normal	rune:opt	O2	count	1	1	pass	4.47	4.62	0.02	11204	2053384980	6496245408	152467444	counts/measurement.uX6igP/compress-lazy/rune-opt/fresh.1
+compress-lazy	normal	rune:new	O2	count	1	1	pass	8.14	8.46	0.01	10876	1164037048	6496245408	152467444	counts/measurement.uX6igP/compress-lazy/rune-new/fresh.1
+compress-lazy	normal	rune:jit	O2	count	1	1	pass	4.07	4.14	0.02	12064	1164037048	6496245408	152467444	counts/measurement.uX6igP/compress-lazy/rune-jit/fresh.1
+compress-strict	normal	rune	O2	count	1	1	pass	2.21	2.26	0.06	67872	766105509	1677209280	30181572	counts/measurement.qCL3Xl/compress-strict/rune/fresh.1
+compress-strict	normal	rune:opt	O2	count	1	1	pass	1.16	1.18	0.04	68508	766105509	1677209280	30181572	counts/measurement.qCL3Xl/compress-strict/rune-opt/fresh.1
+compress-strict	normal	rune:new	O2	count	1	1	pass	2.46	2.50	0.07	68268	298683885	1677209280	30181572	counts/measurement.qCL3Xl/compress-strict/rune-new/fresh.1
+compress-strict	normal	rune:jit	O2	count	1	1	pass	0.95	0.91	0.06	69436	298683885	1677209280	30181572	counts/measurement.qCL3Xl/compress-strict/rune-jit/fresh.1
+compress2-lazy	normal	rune	O2	count	1	1	pass	41.66	42.14	0.03	35596	7303515710	26809199704	699475277	counts/measurement.PK5TxV/compress2-lazy/rune/fresh.1
+compress2-lazy	normal	rune:opt	O2	count	1	1	pass	21.45	22.35	0.04	36204	7303515710	26809199704	699475277	counts/measurement.PK5TxV/compress2-lazy/rune-opt/fresh.1
+compress2-lazy	normal	rune:new	O2	count	1	1	pass	40.14	40.37	0.07	36020	4352628211	26809199704	699475277	counts/measurement.PK5TxV/compress2-lazy/rune-new/fresh.1
+compress2-lazy	normal	rune:jit	O2	count	1	1	pass	22.02	23.00	0.06	37624	4352628211	26809199704	699475277	counts/measurement.PK5TxV/compress2-lazy/rune-jit/fresh.1
+compress2-strict	normal	rune	O2	count	1	1	pass	27.72	27.43	0.02	19332	5274890603	18715996576	466692440	counts/measurement.ygRyR2/compress2-strict/rune/fresh.1
+compress2-strict	normal	rune:opt	O2	count	1	1	pass	15.74	15.00	0.05	20012	5274890603	18715996576	466692440	counts/measurement.ygRyR2/compress2-strict/rune-opt/fresh.1
+compress2-strict	normal	rune:new	O2	count	1	1	pass	27.83	27.41	0.03	19508	3120212170	18715996576	466692440	counts/measurement.ygRyR2/compress2-strict/rune-new/fresh.1
+compress2-strict	normal	rune:jit	O2	count	1	1	pass	16.29	15.60	0.07	21136	3120212170	18715996576	466692440	counts/measurement.ygRyR2/compress2-strict/rune-jit/fresh.1

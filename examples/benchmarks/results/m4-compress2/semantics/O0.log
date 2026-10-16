@@ -1,0 +1,897 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS compress2/writer-0
+PASS compress2/writer-1
+PASS compress2/writer-2
+PASS compress2/writer-3
+PASS compress2/writer-4
+PASS compress2/writer-5
+PASS compress2/writer-6
+PASS compress2/writer-7
+PASS compress2/size-does-not-force-code
+PASS compress2/lazy-all31cut-fixtures
+PASS compress2/strict-dictionary-all31cut-fixtures
+PASS compress2/empty-source-tail-byte
+PASS compress2/width-marker-at513
+PASS compress2/width-marker-does-not-read-feedback
+PASS compress2/full-dictionary-ratio-improves
+PASS compress2/clear-resets-to-initial-dictionary
+PASS compress2/code-payload-shared-by-writer-components
+PASS compress2/eof-does-not-force-dictionary
+SUMMARY 18 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+PASS compress2/writer-0
+PASS compress2/writer-1
+PASS compress2/writer-2
+PASS compress2/writer-3
+PASS compress2/writer-4
+PASS compress2/writer-5
+PASS compress2/writer-6
+PASS compress2/writer-7
+PASS compress2/size-does-not-force-code
+PASS compress2/lazy-all31cut-fixtures
+PASS compress2/strict-dictionary-all31cut-fixtures
+PASS compress2/empty-source-tail-byte
+PASS compress2/width-marker-at513
+PASS compress2/width-marker-does-not-read-feedback
+PASS compress2/full-dictionary-ratio-improves
+PASS compress2/clear-resets-to-initial-dictionary
+PASS compress2/code-payload-shared-by-writer-components
+PASS compress2/eof-does-not-force-dictionary
+SUMMARY 18 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+PASS compress2/writer-0
+PASS compress2/writer-1
+PASS compress2/writer-2
+PASS compress2/writer-3
+PASS compress2/writer-4
+PASS compress2/writer-5
+PASS compress2/writer-6
+PASS compress2/writer-7
+PASS compress2/size-does-not-force-code
+PASS compress2/lazy-all31cut-fixtures
+PASS compress2/strict-dictionary-all31cut-fixtures
+PASS compress2/empty-source-tail-byte
+PASS compress2/width-marker-at513
+PASS compress2/width-marker-does-not-read-feedback
+PASS compress2/full-dictionary-ratio-improves
+PASS compress2/clear-resets-to-initial-dictionary
+PASS compress2/code-payload-shared-by-writer-components
+PASS compress2/eof-does-not-force-dictionary
+SUMMARY 18 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+PASS compress2/writer-0
+PASS compress2/writer-1
+PASS compress2/writer-2
+PASS compress2/writer-3
+PASS compress2/writer-4
+PASS compress2/writer-5
+PASS compress2/writer-6
+PASS compress2/writer-7
+PASS compress2/size-does-not-force-code
+PASS compress2/lazy-all31cut-fixtures
+PASS compress2/strict-dictionary-all31cut-fixtures
+PASS compress2/empty-source-tail-byte
+PASS compress2/width-marker-at513
+PASS compress2/width-marker-does-not-read-feedback
+PASS compress2/full-dictionary-ratio-improves
+PASS compress2/clear-resets-to-initial-dictionary
+PASS compress2/code-payload-shared-by-writer-components
+PASS compress2/eof-does-not-force-dictionary
+SUMMARY 18 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 1048576 KiB
+PASS compress2/writer-0
+PASS compress2/writer-1
+PASS compress2/writer-2
+PASS compress2/writer-3
+PASS compress2/writer-4
+PASS compress2/writer-5
+PASS compress2/writer-6
+PASS compress2/writer-7
+PASS compress2/size-does-not-force-code
+PASS compress2/lazy-all31cut-fixtures
+PASS compress2/strict-dictionary-all31cut-fixtures
+PASS compress2/empty-source-tail-byte
+PASS compress2/width-marker-at513
+PASS compress2/width-marker-does-not-read-feedback
+PASS compress2/full-dictionary-ratio-improves
+PASS compress2/clear-resets-to-initial-dictionary
+PASS compress2/code-payload-shared-by-writer-components
+PASS compress2/eof-does-not-force-dictionary
+SUMMARY 18 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml]
+functor BenchCellSequenceFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a sequence
+  val value : 'a -> 'a D.t
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val head : 'a <BaseFct>.<resultStr>.node D.t -> 'a
+  val tail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val delayedTail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromCell : 'a D.t D.t -> 'a D.t
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val replicate : int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val init :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> 'd <BaseFct>.<resultStr>.node D.t
+  val zip3 :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> ('a D.t * 'b D.t * 'c D.t) <BaseFct>.<resultStr>.node D.t
+  val equal :
+      ('a * 'b -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t -> bool
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/compress2-bits.sml]
+structure BenchCompress2Bits : sig
+  structure N : <sig>
+  structure S : <sig>
+  datatype event = Clear | Code of int BenchNeed.t | NewWordSize
+  type codes = event S.sequence
+  type result = (int S.sequence * int S.sequence) BenchNeed.t
+  val value : 'a -> 'a BenchNeed.t
+  val bytes : result -> int S.node BenchNeed.t
+  val sizes : result -> int S.node BenchNeed.t
+  val intAnd : int * int -> int
+  val intOr : int * int -> int
+  val left : int * int -> int
+  val right : int * int -> int
+  val padding : int -> int S.node BenchNeed.t
+  val output :
+      int
+       -> int -> int -> int BenchNeed.t -> event S.node BenchNeed.t -> result
+  val outputCodes : event S.node BenchNeed.t -> result
+  val characters : result -> char S.node BenchNeed.t
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/compress2.sml]
+functor BenchCompress2Fn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure B : <sig>
+  structure N : <sig>
+  structure S : <sig>
+  type trieNode
+  type trie
+  type match
+  type update
+  val value : 'a -> 'a D.t
+  val empty : unit -> <BaseFct>.<resultStr>.trieNode D.t
+  val build : int -> int -> <BaseFct>.<resultStr>.trieNode D.t
+  val initial : <BaseFct>.<resultStr>.trieNode D.t
+  val firstEntry : int
+  val firstChange : int
+  val maxCode : int
+  val dataOf :
+      <BaseFct>.<resultStr>.update -> <BaseFct>.<resultStr>.match BenchNeed.t
+  val treeOf :
+      <BaseFct>.<resultStr>.update -> <BaseFct>.<resultStr>.trieNode D.t
+  val searchRead :
+      string
+       -> int
+       -> int BenchNeed.t
+       -> int
+       -> <BaseFct>.<resultStr>.trieNode D.t
+       -> (int * int BenchNeed.t * int) BenchNeed.t
+  val searchWrite :
+      string
+       -> int
+       -> int BenchNeed.t
+       -> int
+       -> int
+       -> <BaseFct>.<resultStr>.trieNode D.t -> <BaseFct>.<resultStr>.update
+  val encode :
+      int * int * int * int * int * int
+       -> <BaseFct>.<resultStr>.trieNode D.t
+       -> int BenchCompress2Bits.S.node BenchNeed.t
+       -> string
+       -> int
+       -> BenchCompress2Bits.event BenchCompress2Bits.S.node BenchNeed.t
+  val compress : string -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/compress2-writer-checks.sml]
+[autoloading]
+[autoloading done]
+PASS compress2/writer-0
+PASS compress2/writer-1
+PASS compress2/writer-2
+PASS compress2/writer-3
+PASS compress2/writer-4
+PASS compress2/writer-5
+PASS compress2/writer-6
+PASS compress2/writer-7
+PASS compress2/size-does-not-force-code
+structure Compress2WriterTests : sig
+  structure B : <sig>
+  val read : string -> TextIO.vector
+  val show : int list -> string
+  val rendered : BenchCompress2Bits.event list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/compress2-checks.sml]
+[autoloading]
+[autoloading done]
+PASS compress2/lazy-all31cut-fixtures
+PASS compress2/strict-dictionary-all31cut-fixtures
+PASS compress2/empty-source-tail-byte
+PASS compress2/width-marker-at513
+PASS compress2/width-marker-does-not-read-feedback
+PASS compress2/full-dictionary-ratio-improves
+PASS compress2/clear-resets-to-initial-dictionary
+PASS compress2/code-payload-shared-by-writer-components
+PASS compress2/eof-does-not-force-dictionary
+structure Compress2Tests : sig
+  structure L : <sig>
+  structure E : <sig>
+  val file : string -> string
+  val input : string
+  val digits : int -> string
+  val selected : int -> string
+end
+structure Compress2ControlTests : sig
+  structure C : <sig>
+  structure B : <sig>
+  structure S : <sig>
+  val code : BenchCompress2Bits.event S.node BenchNeed.t -> int
+end
+structure Compress2SharingTests : sig
+  structure B : <sig>
+  structure L : <sig>
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 18 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml]
+functor BenchCellSequenceFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a sequence
+  val value : 'a -> 'a D.t
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val head : 'a <BaseFct>.<resultStr>.node D.t -> 'a
+  val tail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val delayedTail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromCell : 'a D.t D.t -> 'a D.t
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val replicate : int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val init :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> 'd <BaseFct>.<resultStr>.node D.t
+  val zip3 :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> ('a D.t * 'b D.t * 'c D.t) <BaseFct>.<resultStr>.node D.t
+  val equal :
+      ('a * 'b -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t -> bool
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/compress2-bits.sml]
+structure BenchCompress2Bits : sig
+  structure N : <sig>
+  structure S : <sig>
+  datatype event = Clear | Code of int BenchNeed.t | NewWordSize
+  type codes = event S.sequence
+  type result = (int S.sequence * int S.sequence) BenchNeed.t
+  val value : 'a -> 'a BenchNeed.t
+  val bytes : result -> int S.node BenchNeed.t
+  val sizes : result -> int S.node BenchNeed.t
+  val intAnd : int * int -> int
+  val intOr : int * int -> int
+  val left : int * int -> int
+  val right : int * int -> int
+  val padding : int -> int S.node BenchNeed.t
+  val output :
+      int
+       -> int -> int -> int BenchNeed.t -> event S.node BenchNeed.t -> result
+  val outputCodes : event S.node BenchNeed.t -> result
+  val characters : result -> char S.node BenchNeed.t
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/compress2.sml]
+functor BenchCompress2Fn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure B : <sig>
+  structure N : <sig>
+  structure S : <sig>
+  type trieNode
+  type trie
+  type match
+  type update
+  val value : 'a -> 'a D.t
+  val empty : unit -> <BaseFct>.<resultStr>.trieNode D.t
+  val build : int -> int -> <BaseFct>.<resultStr>.trieNode D.t
+  val initial : <BaseFct>.<resultStr>.trieNode D.t
+  val firstEntry : int
+  val firstChange : int
+  val maxCode : int
+  val dataOf :
+      <BaseFct>.<resultStr>.update -> <BaseFct>.<resultStr>.match BenchNeed.t
+  val treeOf :
+      <BaseFct>.<resultStr>.update -> <BaseFct>.<resultStr>.trieNode D.t
+  val searchRead :
+      string
+       -> int
+       -> int BenchNeed.t
+       -> int
+       -> <BaseFct>.<resultStr>.trieNode D.t
+       -> (int * int BenchNeed.t * int) BenchNeed.t
+  val searchWrite :
+      string
+       -> int
+       -> int BenchNeed.t
+       -> int
+       -> int
+       -> <BaseFct>.<resultStr>.trieNode D.t -> <BaseFct>.<resultStr>.update
+  val encode :
+      int * int * int * int * int * int
+       -> <BaseFct>.<resultStr>.trieNode D.t
+       -> int BenchCompress2Bits.S.node BenchNeed.t
+       -> string
+       -> int
+       -> BenchCompress2Bits.event BenchCompress2Bits.S.node BenchNeed.t
+  val compress : string -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/compress2-writer-checks.sml]
+[autoloading]
+[autoloading done]
+PASS compress2/writer-0
+PASS compress2/writer-1
+PASS compress2/writer-2
+PASS compress2/writer-3
+PASS compress2/writer-4
+PASS compress2/writer-5
+PASS compress2/writer-6
+PASS compress2/writer-7
+PASS compress2/size-does-not-force-code
+structure Compress2WriterTests : sig
+  structure B : <sig>
+  val read : string -> TextIO.vector
+  val show : int list -> string
+  val rendered : BenchCompress2Bits.event list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/compress2-checks.sml]
+[autoloading]
+[autoloading done]
+PASS compress2/lazy-all31cut-fixtures
+PASS compress2/strict-dictionary-all31cut-fixtures
+PASS compress2/empty-source-tail-byte
+PASS compress2/width-marker-at513
+PASS compress2/width-marker-does-not-read-feedback
+PASS compress2/full-dictionary-ratio-improves
+PASS compress2/clear-resets-to-initial-dictionary
+PASS compress2/code-payload-shared-by-writer-components
+PASS compress2/eof-does-not-force-dictionary
+structure Compress2Tests : sig
+  structure L : <sig>
+  structure E : <sig>
+  val file : string -> string
+  val input : string
+  val digits : int -> string
+  val selected : int -> string
+end
+structure Compress2ControlTests : sig
+  structure C : <sig>
+  structure B : <sig>
+  structure S : <sig>
+  val code : BenchCompress2Bits.event S.node BenchNeed.t -> int
+end
+structure Compress2SharingTests : sig
+  structure B : <sig>
+  structure L : <sig>
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 18 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml]
+functor BenchCellSequenceFn(D: sig
+                               type 'a t
+                               val delay : (unit -> 'a) -> 'a t
+                               val force : 'a t -> 'a
+                             end) :
+                           
+                             sig
+                               type 'a node
+                               type 'a sequence
+                               val value : 'a -> 'a D.t
+                               val empty : unit -> 'a node D.t
+                               val cons : 'a D.t -> 'a node D.t -> 'a node D.t
+                               val fromList : 'a list -> 'a node D.t
+                               val head : 'a node D.t -> 'a
+                               val tail : 'a node D.t -> 'a node D.t
+                               val delayedTail : 'a node D.t -> 'a node D.t
+                               val fromCell : 'a D.t D.t -> 'a D.t
+                               val map : ('a -> 'b)
+                                          -> 'a node D.t -> 'b node D.t
+                               val append : 'a node D.t
+                                             -> 'a node D.t -> 'a node D.t
+                               val take : int -> 'a node D.t -> 'a node D.t
+                               val replicate : int -> 'a D.t -> 'a node D.t
+                               val init : 'a node D.t -> 'a node D.t
+                               val zipWith3 : ('a * 'b * 'c -> 'd)
+                                               -> 'a node D.t
+                                               -> 'b node D.t
+                                               -> 'c node D.t -> 'd node D.t
+                               val zip3 : 'a node D.t
+                                           -> 'b node D.t
+                                           -> 'c node D.t
+                                           -> ('a D.t * 'b D.t * 'c D.t) node 
+                                             D.t
+                               val equal : ('a * 'b -> bool)
+                                            -> 'a node D.t
+                                            -> 'b node D.t -> bool
+                               val toList : 'a node D.t -> 'a list
+                             end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/compress2-bits.sml]
+structure BenchCompress2Bits : 
+  sig
+    structure N : <sig>
+    structure S : <sig>
+    datatype event = Clear | Code of int BenchNeed.t | NewWordSize
+    type codes = event S.sequence
+    type result = (int S.sequence * int S.sequence) BenchNeed.t
+    val value : 'a -> 'a BenchNeed.t
+    val bytes : result -> int S.node BenchNeed.t
+    val sizes : result -> int S.node BenchNeed.t
+    val intAnd : int * int -> int
+    val intOr : int * int -> int
+    val left : int * int -> int
+    val right : int * int -> int
+    val padding : int -> int S.node BenchNeed.t
+    val output : int
+                  -> int
+                  -> int
+                  -> int BenchNeed.t -> event S.node BenchNeed.t -> result
+    val outputCodes : event S.node BenchNeed.t -> result
+    val characters : result -> char S.node BenchNeed.t
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/compress2.sml]
+functor BenchCompress2Fn(D: sig
+                            type 'a t
+                            val delay : (unit -> 'a) -> 'a t
+                            val force : 'a t -> 'a
+                          end) :
+                        
+                          sig
+                            structure B : <sig>
+                            structure N : <sig>
+                            structure S : <sig>
+                            type trieNode
+                            type trie
+                            type match
+                            type update
+                            val value : 'a -> 'a D.t
+                            val empty : unit -> trieNode D.t
+                            val build : int -> int -> trieNode D.t
+                            val initial : trieNode D.t
+                            val firstEntry : int
+                            val firstChange : int
+                            val maxCode : int
+                            val dataOf : update -> match BenchNeed.t
+                            val treeOf : update -> trieNode D.t
+                            val searchRead : string
+                                              -> int
+                                              -> int BenchNeed.t
+                                              -> int
+                                              -> trieNode D.t
+                                              -> (int * int BenchNeed.t * int) 
+                                                BenchNeed.t
+                            val searchWrite : string
+                                               -> int
+                                               -> int BenchNeed.t
+                                               -> int
+                                               -> int
+                                               -> trieNode D.t -> update
+                            val encode : int * int * int * int * int * int
+                                          -> trieNode D.t
+                                          -> int BenchCompress2Bits.S.node 
+                                            BenchNeed.t
+                                          -> string
+                                          -> int
+                                          -> BenchCompress2Bits.event 
+                                              BenchCompress2Bits.S.node 
+                                            BenchNeed.t
+                            val compress : string -> string
+                          end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/compress2-writer-checks.sml]
+PASS compress2/writer-0
+PASS compress2/writer-1
+PASS compress2/writer-2
+PASS compress2/writer-3
+PASS compress2/writer-4
+PASS compress2/writer-5
+PASS compress2/writer-6
+PASS compress2/writer-7
+PASS compress2/size-does-not-force-code
+structure Compress2WriterTests : 
+  sig
+    structure B : <sig>
+    val read : string -> TextIO.vector
+    val show : int list -> string
+    val rendered : BenchCompress2Bits.event list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/compress2-checks.sml]
+PASS compress2/lazy-all31cut-fixtures
+PASS compress2/strict-dictionary-all31cut-fixtures
+PASS compress2/empty-source-tail-byte
+PASS compress2/width-marker-at513
+PASS compress2/width-marker-does-not-read-feedback
+PASS compress2/full-dictionary-ratio-improves
+PASS compress2/clear-resets-to-initial-dictionary
+PASS compress2/code-payload-shared-by-writer-components
+PASS compress2/eof-does-not-force-dictionary
+structure Compress2Tests : 
+  sig
+    structure L : <sig>
+    structure E : <sig>
+    val file : string -> string
+    val input : string
+    val digits : int -> string
+    val selected : int -> string
+  end
+structure Compress2ControlTests : 
+  sig
+    structure C : <sig>
+    structure B : <sig>
+    structure S : <sig>
+    val code : BenchCompress2Bits.event S.node BenchNeed.t -> int
+  end
+structure Compress2SharingTests : 
+  sig
+    structure B : <sig>
+    structure L : <sig>
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 18 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS compress2/writer-0
+PASS compress2/writer-1
+PASS compress2/writer-2
+PASS compress2/writer-3
+PASS compress2/writer-4
+PASS compress2/writer-5
+PASS compress2/writer-6
+PASS compress2/writer-7
+PASS compress2/size-does-not-force-code
+PASS compress2/lazy-all31cut-fixtures
+PASS compress2/strict-dictionary-all31cut-fixtures
+PASS compress2/empty-source-tail-byte
+PASS compress2/width-marker-at513
+PASS compress2/width-marker-does-not-read-feedback
+PASS compress2/full-dictionary-ratio-improves
+PASS compress2/clear-resets-to-initial-dictionary
+PASS compress2/code-payload-shared-by-writer-components
+PASS compress2/eof-does-not-force-dictionary
+SUMMARY 18 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PASS compress2/writer-0
+PASS compress2/writer-1
+PASS compress2/writer-2
+PASS compress2/writer-3
+PASS compress2/writer-4
+PASS compress2/writer-5
+PASS compress2/writer-6
+PASS compress2/writer-7
+PASS compress2/size-does-not-force-code
+PASS compress2/lazy-all31cut-fixtures
+PASS compress2/strict-dictionary-all31cut-fixtures
+PASS compress2/empty-source-tail-byte
+PASS compress2/width-marker-at513
+PASS compress2/width-marker-does-not-read-feedback
+PASS compress2/full-dictionary-ratio-improves
+PASS compress2/clear-resets-to-initial-dictionary
+PASS compress2/code-payload-shared-by-writer-components
+PASS compress2/eof-does-not-force-dictionary
+SUMMARY 18 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

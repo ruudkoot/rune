@@ -1,0 +1,3 @@
+PASS original500hashfixture andall31compressedbytefixtures smoke
+PASS original500hashfixture andall31compressedbytefixtures normal
+PASS original500hashfixture andall31compressedbytefixtures large

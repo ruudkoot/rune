@@ -1155,3 +1155,31 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 matching bytecode comparisons across seven compiler builds.
 runedoc and runeopt also agree. [The complete transcript](validation/oct16-fasta-768-acceptance.log)
 records the run. All 41 inventory tests pass and all 861 entries validate.
+
+## M4 variable-width compression, 2026-10-16
+
+Two imports bring the catalogue to 260 programs and 774 profiles. [All 112
+smoke/normal cases](results/m4-compress2/correctness.tsv) pass for both new
+variants and both existing users of the shared compression driver, on Rune's
+four engines at both levels and all six managed native hosts. Eighteen semantic,
+writer and demand checks pass all ten configurations at both levels. Sixteen
+normal count samples pass the combined comparison with unchanged budgets.
+These instrumented samples remain separate from headline timings.
+
+The port preserves the five-field persistent dictionary, variable-width event
+protocol and shared byte-count feedback knot. The strict variant makes finite
+dictionary construction eager while retaining the causal delayed feedback streams.
+Complete compressed bytes are checked before hashing. All three original
+500-iteration runs match pinned stdout fixtures; all 31 cut fixtures per profile
+agree with the corresponding original hashes. Source integer widths, full-result
+forcing, XML attribution and missing individual program/input notices are explicit.
+The common driver's maximum repetition guard changes from 200 to 500; existing
+selected profiles and codecs are unchanged and included in the regression run.
+No general .Z compatibility, universal large SML execution or prerequisite
+compiler/runtime feature is claimed. M4 remains in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 774 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 matching bytecode comparisons across seven compiler builds.
+runedoc and runeopt also agree. [The complete transcript](validation/oct16-compress2-774-acceptance.log)
+records the run. All 41 inventory tests pass and all 861 entries validate.

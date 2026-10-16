@@ -1,0 +1,3 @@
+compress-strict
+DATA/normal/input.bin 200 expected/normal
+267673520321527625090

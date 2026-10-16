@@ -1,0 +1,5 @@
+COUNT unbudgeted compress2-lazy normal rune
+COUNT unbudgeted compress2-lazy normal rune:opt
+COUNT unbudgeted compress2-lazy normal rune:new
+COUNT unbudgeted compress2-lazy normal rune:jit
+COUNT comparisons agree

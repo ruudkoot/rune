@@ -1,0 +1,3 @@
+# Original binary inputs and compressed-byte fixtures.
+data/** -text -whitespace
+expected/**/*.bin binary

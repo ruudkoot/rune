@@ -1,0 +1,6 @@
+[1 of 6] Compiling Encode           ( Encode.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/compress2-originals/observer-reference-build/Encode.o )
+[2 of 6] Compiling NofibUtils       ( NofibUtils.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/compress2-originals/observer-reference-build/NofibUtils.o )
+[3 of 6] Compiling WriteRoutines    ( WriteRoutines.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/compress2-originals/observer-reference-build/WriteRoutines.o )
+[4 of 6] Compiling Kernel           ( Kernel.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/compress2-originals/observer-reference-build/Kernel.o )
+[5 of 6] Compiling Observer         ( /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/compress2-originals/Observer.hs, /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/compress2-originals/observer-reference-build/Observer.o )
+[6 of 6] Linking /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/compress2-originals/observer [Objects changed]

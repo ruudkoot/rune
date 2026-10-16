@@ -1,0 +1,11 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+ M examples/benchmarks/shared/compress-driver.sml
+?? examples/benchmarks/compress2-lazy/
+?? examples/benchmarks/compress2-strict/
+?? examples/benchmarks/shared/compress2-bits.sml
+?? examples/benchmarks/shared/compress2.sml
+?? tests/benchmarks/check-compress2.sh
+?? tests/benchmarks/compress2-checks.sml
+?? tests/benchmarks/compress2-writer-checks.sml
+?? tests/benchmarks/data/compress2/

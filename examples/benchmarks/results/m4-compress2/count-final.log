@@ -1,0 +1,44 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (774 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=compress-lazy' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.uX6igP
+BENCH MEASURE compress-lazy normal count
+COUNT unbudgeted compress-lazy normal rune
+COUNT unbudgeted compress-lazy normal rune:opt
+COUNT unbudgeted compress-lazy normal rune:new
+COUNT unbudgeted compress-lazy normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.uX6igP/report.md
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (774 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=compress-strict' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.qCL3Xl
+BENCH MEASURE compress-strict normal count
+COUNT unbudgeted compress-strict normal rune
+COUNT unbudgeted compress-strict normal rune:opt
+COUNT unbudgeted compress-strict normal rune:new
+COUNT unbudgeted compress-strict normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.qCL3Xl/report.md
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (774 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=compress2-lazy' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.PK5TxV
+BENCH MEASURE compress2-lazy normal count
+COUNT unbudgeted compress2-lazy normal rune
+COUNT unbudgeted compress2-lazy normal rune:opt
+COUNT unbudgeted compress2-lazy normal rune:new
+COUNT unbudgeted compress2-lazy normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.PK5TxV/report.md
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (774 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=compress2-strict' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.ygRyR2
+BENCH MEASURE compress2-strict normal count
+COUNT unbudgeted compress2-strict normal rune
+COUNT unbudgeted compress2-strict normal rune:opt
+COUNT unbudgeted compress2-strict normal rune:new
+COUNT unbudgeted compress2-strict normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.ygRyR2/report.md

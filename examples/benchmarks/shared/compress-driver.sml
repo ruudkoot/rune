@@ -9,7 +9,7 @@ struct
   fun twoDigits n = if n<10 then "0"^Int.toString n else Int.toString n
   fun run [path,iterations,reference] =
     let
-      val repetitions = BenchInput.between (1,200) (BenchInput.integer iterations)
+      val repetitions = BenchInput.between (1,500) (BenchInput.integer iterations)
       val input = file path
       val fixtures = Vector.tabulate(31,fn cut =>
         file(reference^"/cut-"^twoDigits cut^".bin"))

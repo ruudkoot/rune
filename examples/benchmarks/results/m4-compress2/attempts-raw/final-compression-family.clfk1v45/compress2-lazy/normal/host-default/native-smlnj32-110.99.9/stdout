@@ -1,0 +1,185 @@
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml]
+functor BenchCellSequenceFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a sequence
+  val value : 'a -> 'a D.t
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val head : 'a <BaseFct>.<resultStr>.node D.t -> 'a
+  val tail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val delayedTail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromCell : 'a D.t D.t -> 'a D.t
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val replicate : int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val init :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> 'd <BaseFct>.<resultStr>.node D.t
+  val zip3 :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> ('a D.t * 'b D.t * 'c D.t) <BaseFct>.<resultStr>.node D.t
+  val equal :
+      ('a * 'b -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t -> bool
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-hash.sml]
+structure BenchNofibHash : sig
+  val hash : string -> Word64.word
+  val signed : string -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/compress2-bits.sml]
+structure BenchCompress2Bits : sig
+  structure N : <sig>
+  structure S : <sig>
+  datatype event = Clear | Code of int BenchNeed.t | NewWordSize
+  type codes = event S.sequence
+  type result = (int S.sequence * int S.sequence) BenchNeed.t
+  val value : 'a -> 'a BenchNeed.t
+  val bytes : result -> int S.node BenchNeed.t
+  val sizes : result -> int S.node BenchNeed.t
+  val intAnd : int * int -> int
+  val intOr : int * int -> int
+  val left : int * int -> int
+  val right : int * int -> int
+  val padding : int -> int S.node BenchNeed.t
+  val output :
+      int
+       -> int -> int -> int BenchNeed.t -> event S.node BenchNeed.t -> result
+  val outputCodes : event S.node BenchNeed.t -> result
+  val characters : result -> char S.node BenchNeed.t
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/compress2.sml]
+functor BenchCompress2Fn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure B : <sig>
+  structure N : <sig>
+  structure S : <sig>
+  type trieNode
+  type trie
+  type match
+  type update
+  val value : 'a -> 'a D.t
+  val empty : unit -> <BaseFct>.<resultStr>.trieNode D.t
+  val build : int -> int -> <BaseFct>.<resultStr>.trieNode D.t
+  val initial : <BaseFct>.<resultStr>.trieNode D.t
+  val firstEntry : int
+  val firstChange : int
+  val maxCode : int
+  val dataOf :
+      <BaseFct>.<resultStr>.update -> <BaseFct>.<resultStr>.match BenchNeed.t
+  val treeOf :
+      <BaseFct>.<resultStr>.update -> <BaseFct>.<resultStr>.trieNode D.t
+  val searchRead :
+      string
+       -> int
+       -> int BenchNeed.t
+       -> int
+       -> <BaseFct>.<resultStr>.trieNode D.t
+       -> (int * int BenchNeed.t * int) BenchNeed.t
+  val searchWrite :
+      string
+       -> int
+       -> int BenchNeed.t
+       -> int
+       -> int
+       -> <BaseFct>.<resultStr>.trieNode D.t -> <BaseFct>.<resultStr>.update
+  val encode :
+      int * int * int * int * int * int
+       -> <BaseFct>.<resultStr>.trieNode D.t
+       -> int BenchCompress2Bits.S.node BenchNeed.t
+       -> string
+       -> int
+       -> BenchCompress2Bits.event BenchCompress2Bits.S.node BenchNeed.t
+  val compress : string -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/compress-driver.sml]
+[autoloading]
+[autoloading done]
+functor BenchCompressDriverFn(C: sig
+  val compress : string -> string
+end) :
+sig
+  val file : string -> string
+  val twoDigits : int -> string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/compress2-lazy/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Codec : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+[autoloading]
+[autoloading done]
+RESULT ~376464649841334272068
+PASS compress2-lazy
+SUMMARY 1 checks, 0 failed

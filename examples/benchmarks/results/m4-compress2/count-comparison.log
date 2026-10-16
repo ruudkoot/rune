@@ -1,0 +1,17 @@
+COUNT unbudgeted compress-lazy normal rune
+COUNT unbudgeted compress-lazy normal rune:opt
+COUNT unbudgeted compress-lazy normal rune:new
+COUNT unbudgeted compress-lazy normal rune:jit
+COUNT unbudgeted compress-strict normal rune
+COUNT unbudgeted compress-strict normal rune:opt
+COUNT unbudgeted compress-strict normal rune:new
+COUNT unbudgeted compress-strict normal rune:jit
+COUNT unbudgeted compress2-lazy normal rune
+COUNT unbudgeted compress2-lazy normal rune:opt
+COUNT unbudgeted compress2-lazy normal rune:new
+COUNT unbudgeted compress2-lazy normal rune:jit
+COUNT unbudgeted compress2-strict normal rune
+COUNT unbudgeted compress2-strict normal rune:opt
+COUNT unbudgeted compress2-strict normal rune:new
+COUNT unbudgeted compress2-strict normal rune:jit
+COUNT comparisons agree

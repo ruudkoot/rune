@@ -1,0 +1,9 @@
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/compress2-bits.sml
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/compress2.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/compress2-writer-checks.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/compress2-checks.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml

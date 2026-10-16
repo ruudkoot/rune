@@ -1,0 +1,5 @@
+COUNT unbudgeted compress-strict normal rune
+COUNT unbudgeted compress-strict normal rune:opt
+COUNT unbudgeted compress-strict normal rune:new
+COUNT unbudgeted compress-strict normal rune:jit
+COUNT comparisons agree
