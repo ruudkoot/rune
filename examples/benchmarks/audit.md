@@ -252,3 +252,12 @@ input discovery. All five clean pinned trees reproduce all 861 entries; 19
 records change only members, digests or inputs. The exact Hartel compatibility
 shim receives a source-identity-guarded scalar-operation review. Workload names,
 dispositions and scope are unchanged. All 56 inventory regressions pass.
+
+## Circuit simulator authorship review, 2026-10-16
+
+The gc/circsim and spectral/circsim literate headings explicitly name David J.
+King and John O'Donnell, January 1998. Discovery now recognizes that exact
+heading and records its source evidence. Two inventory rows change authors and
+evidence only; source identities, names and dispositions remain unchanged.
+All 58 inventory regressions pass and all five clean pinned trees reproduce
+861 entries. The shared simulator's different consumers retain separate ports.

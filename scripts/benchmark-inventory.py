@@ -537,6 +537,10 @@ def build(source, root, lock):
         item["evidence"].extend(str(p.relative_to(root)) for p in context)
         for p in files + context:
             header = p.read_text(errors="replace")[:8000]
+            if (source == "nofib" and path in {"gc/circsim", "spectral/circsim"}
+                    and "The Circuit Simulator example\nDavid J. King & John O'Donnell\nJanuary, 1998" in header):
+                authors.update(["David J. King", "John O'Donnell"])
+                item["evidence"].append(str(p.relative_to(root)) + ":authorship-heading")
             if re.search(r"[Cc]opyright|[Ll]icen[sc]e|[Ww]ritten by|[Aa]uthor:|[Tt]ranslated", header):
                 notices.append(str(p.relative_to(root)) + ":header")
             for attribution in re.finditer(r"(?:[Ww]ritten|[Tt]ranslated|[Pp]orted|[Cc]ontributed)(?: to [^\n]*?)? by ([^\n]+)|[Aa]uthors?: ([^\n]+)", header):
