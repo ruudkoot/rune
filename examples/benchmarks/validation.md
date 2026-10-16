@@ -1972,3 +1972,41 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 identical bytecode comparisons across seven builds. runedoc
 and runeopt also agree. [The complete transcript](validation/oct16-hartel-compr-919-acceptance.log)
 records the run. All 56 inventory regressions and all 861 inventory entries pass.
+
+## M3 Wang numerical wave — 2026-10-16
+
+Two variants bring the catalogue to 311 programs and 925 profiles. All [56
+canonical smoke/normal cases](results/m3-wang/coverage.tsv) pass on Rune's four
+engines at O0/O2 and six native hosts at their compiler defaults. All eight
+normal count samples agree under execution-model rules, including allocation
+across all Rune engines. Existing budgets remain unchanged. Six serial single
+fresh-process native smoke samples validate the adapters separately from
+instrumentation and headline comparisons.
+
+The [37-check auxiliary program](results/m3-wang/semantic-summary.tsv) records
+14 complete passing runs, four with incorrect results and two runtime failures.
+Of 740 planned assertions, 714 pass, six fail and 20 remain unfinished after
+32-bit SML/NJ aborts. The [host note](validation/wang-host-results.md) distinguishes
+these default failures from successful profile validation and separate 64 MiB
+nursery replays. All three supplied SML/NJ hosts pass the latter; the sources
+and default settings remain unchanged. The exact cause is unreduced. Existing
+reports and current issue-state metadata provide investigation references;
+newer upstream builds have not been tested here.
+
+The original Haskell program matches every byte of all three 500-line fixtures.
+Full numerical observers and an independent mutable blocked model agree bit for
+bit on 29780 uniform and 124 nonuniform values. SML checks preserve source
+reconstruction divisions and block pairing, verify every scalar against explicit
+bounds, validate source checksums and repeated formatting, test sharing/demand,
+and reject deliberately perturbed and nonfinite values. All source notices and
+literal fixtures are preserved. Smoke reduces only repetitions to one at block
+size 25; normal and large retain sizes 80/150 and all 500 repetitions. Both
+whole-program Rune O2 normal and large pilots pass under their recorded guards.
+[Raw evidence and source identities](results/m3-wang/README.md) accompany every
+scope. M3 remains in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 925 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 identical bytecode comparisons across seven builds. runedoc
+and runeopt also agree. [The complete transcript](validation/oct16-wang-925-acceptance.log)
+records the run. All 56 inventory regressions and all 861 inventory entries pass.
