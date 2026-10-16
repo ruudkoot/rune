@@ -358,6 +358,88 @@ class InventoryTest(unittest.TestCase):
         a.write_text("structure A = struct val x = 1 end\n")
         self.assertNotEqual(before, AUDIT.digest(self.root, [a]))
 
+    def test_cpp_dependencies_are_transitive_source_members(self):
+        self.nofib_roots()
+        self.file("spectral/compiler/Makefile", "\n")
+        self.file("spectral/compiler/Main.hs", '#include "../shared.h"\nmain = print 1\n')
+        self.file("spectral/shared.h", '#include "constants.inc"\n')
+        header = self.file("spectral/constants.inc", "value = 1\n")
+        before = self.build("nofib")[0]
+        self.assertEqual(before["members"],
+                         "spectral/compiler/Main.hs;spectral/constants.inc;spectral/shared.h")
+        self.assertEqual(before["inputs"], "")
+        header.write_text("value = 2\n")
+        self.assertNotEqual(before["sha256"], self.build("nofib")[0]["sha256"])
+
+    def test_cpp_dependencies_follow_file_entrypoints(self):
+        self.nofib_roots()
+        self.file("spectral/compiler/Makefile", "\n")
+        self.file("spectral/compiler/one.hs", '#include "values.inc"\nmain = print value\n')
+        self.file("spectral/compiler/two.hs", "main = print 2\n")
+        self.file("spectral/compiler/values.inc", "value = 1\n")
+        rows = {r["path"]: r for r in self.build("nofib")}
+        self.assertIn("spectral/compiler/values.inc", rows["spectral/compiler/one.hs"]["members"])
+        self.assertNotIn("spectral/compiler/values.inc", rows["spectral/compiler/two.hs"]["members"])
+
+    def test_cpp_headers_cannot_hide_unavailable_primitive_imports(self):
+        self.nofib_roots()
+        self.file("spectral/compiler/Makefile", "\n")
+        self.file("spectral/compiler/Main.hs", '#include "primitive.inc"\nmain = print 1\n')
+        self.file("spectral/compiler/primitive.inc", "import GHC.Prim\n")
+        self.assertEqual(self.build("nofib")[0]["disposition"], "defer")
+
+    def test_cpp_c_helpers_retain_headers_outside_the_program_directory(self):
+        self.nofib_roots()
+        self.file("spectral/compiler/Makefile", "\n")
+        self.file("spectral/compiler/Main.hs", "main = print 1\n")
+        self.file("spectral/compiler/helper.c", '#include "../helper.h"\n')
+        self.file("spectral/helper.h", "int helper(void);\n")
+        self.assertIn("spectral/helper.h", self.build("nofib")[0]["members"])
+
+    def test_cpp_cycles_terminate_and_cannot_escape_the_upstream(self):
+        main = self.file("repo/Main.hs", '#include "a.inc"\n#include "../outside.inc"\n')
+        header = self.file("repo/a.inc", '#include "Main.hs"\n')
+        self.file("outside.inc", "must not enter the source identity\n")
+        self.assertEqual(AUDIT.source_files(self.root / "repo", "Main.hs"), sorted([main, header]))
+
+    def test_cpp_header_is_not_runtime_data_but_cli_source_is(self):
+        self.nofib_roots()
+        self.file("spectral/compiler/Makefile", "FAST_OPTS = table.hs\n")
+        self.file("spectral/compiler/Main.hs", '#include "helpers.hs"\nmain = print 1\n')
+        self.file("spectral/compiler/helpers.hs", "value = 1\n")
+        self.file("spectral/compiler/table.hs", "rows = []\n")
+        self.assertEqual(self.build("nofib")[0]["inputs"], "spectral/compiler/table.hs")
+
+    def hartel_shim(self):
+        self.nofib_roots()
+        self.file("spectral/hartel/listcompr/Makefile", "\n")
+        self.file("spectral/hartel/listcompr/Main.hs",
+                  '#include "../Fast2haskell.hs"\nmain = print 1\n')
+        shim = self.root / "spectral/hartel/Fast2haskell.hs"
+        shim.write_bytes((ROOT / "tests/benchmarks/data/inventory-hartel/Fast2haskell.hs").read_bytes())
+        return shim
+
+    def test_reviewed_hartel_shim_has_portable_scalar_operations(self):
+        self.hartel_shim()
+        self.assertEqual(self.build("nofib")[0]["disposition"], "import")
+
+    def test_changed_hartel_shim_requires_a_new_capability_review(self):
+        shim = self.hartel_shim()
+        shim.write_bytes(shim.read_bytes() + b"\n-- changed upstream shim\n")
+        self.assertEqual(self.build("nofib")[0]["disposition"], "defer")
+
+    def test_reviewed_shim_does_not_hide_direct_primitive_imports(self):
+        self.hartel_shim()
+        self.file("spectral/hartel/listcompr/Main.hs",
+                  '#include "../Fast2haskell.hs"\nimport GHC.Prim\nmain = print 1\n')
+        self.assertEqual(self.build("nofib")[0]["disposition"], "defer")
+
+    def test_unreviewed_shim_path_does_not_inherit_the_exception(self):
+        shim = self.hartel_shim()
+        self.file("spectral/hartel/listcompr/Main.hs", '#include "../other.hs"\nmain = print 1\n')
+        shim.rename(shim.with_name("other.hs"))
+        self.assertEqual(self.build("nofib")[0]["disposition"], "defer")
+
     def test_classic_names_are_reserved_before_foreign_variants(self):
         rows = [dict(source="nofib", path="spectral/tak", name="tak", disposition="import"),
                 dict(source="mlton", path="benchmark/tests/tak.sml", name="tak", disposition="import")]

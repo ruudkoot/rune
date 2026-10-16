@@ -89,10 +89,24 @@ def upstream_file(root, path):
     return not any(part in ignored for part in path.relative_to(root).parts)
 
 
+def quoted_includes(root, files):
+    files = list(files)
+    pending = [p for p in files if p.suffix in {".hs", ".lhs", ".c", ".h"}]
+    while pending:
+        member = pending.pop()
+        for name in re.findall(r'^\s*#\s*include\s*"([^"\n]+)"', member.read_text(errors="replace"), re.M):
+            dependency = (member.parent / name).resolve()
+            if dependency.is_relative_to(root) and dependency.is_file() and upstream_file(root, dependency):
+                if dependency not in files:
+                    files.append(dependency)
+                    pending.append(dependency)
+    return sorted(files)
+
+
 def source_files(root, path):
     p = root / path
     if p.is_dir():
-        return sorted(q for q in p.rglob("*") if q.is_file() and q.suffix in EXTENSIONS and upstream_file(root, q))
+        return quoted_includes(root, sorted(q for q in p.rglob("*") if q.is_file() and q.suffix in EXTENSIONS and upstream_file(root, q)))
     files = [p] if p.exists() else []
     if p.suffix in {".hs", ".lhs"} and p.exists():
         # Multi-entrypoint directories have one inventory key per executable,
@@ -117,7 +131,7 @@ def source_files(root, path):
             member = p.parent / word
             if member.is_file() and member not in files:
                 files.append(member)
-    return sorted(files)
+    return quoted_includes(root, files)
 
 
 def code_only(text, language="ml"):
@@ -181,6 +195,17 @@ def haskell_code(path):
         else:
             text = "\n".join(re.findall(r"^[ \t]*> ?(.*)$", text, re.M))
     return code_only(text, "haskell")
+
+
+def nofib_feature_code(root, path):
+    code = haskell_code(path)
+    if (str(path.relative_to(root)) == "spectral/hartel/Fast2haskell.hs"
+            and hashlib.sha256(path.read_bytes()).hexdigest() == "b94c6d53bd465be5b940bcbfec12c66c2ba971039072f91c0edb04558bea7596"):
+        # Reviewed Fast shim: scalar bit operations and persistent arrays have
+        # portable counterparts; delay/write are upstream error stubs. Keep
+        # every other capability check and reject changed/unreviewed shims.
+        code = re.sub(r"^\s*import\s+GHC\.Prim\s*;?", "", code, flags=re.M)
+    return code
 
 
 def sexps(text):
@@ -482,7 +507,7 @@ def build(source, root, lock):
             files = source_files(root, path)
         files = sorted(set(files))
         text = "\n".join(p.read_text(errors="replace") for p in files if p.suffix in EXTENSIONS and p.suffix not in {".cm", ".mlb"})
-        code = "\n".join(haskell_code(p) for p in files if p.suffix in {".hs", ".lhs"}) if source == "nofib" else code_only(text)
+        code = "\n".join(nofib_feature_code(root, p) for p in files) if source == "nofib" else code_only(text)
         milestone, disposition, reason = classify(source, root, item, files, code + "\n" + "\n".join(dependency_forms))
         name = item["name"]
         parent = (root / path) if (root / path).is_dir() else (root / path).parent
@@ -493,7 +518,8 @@ def build(source, root, lock):
                     continue
                 if fixture.is_file() and (fixture.name == "ANSWER" or fixture.suffix in {".in", ".stdin", ".stdout", ".faststdin", ".faststdout", ".slowstdin", ".slowstdout", ".expected", ".out", ".ok"} or "DATA" in fixture.relative_to(parent).parts):
                     inputs.add(str(fixture.relative_to(root)))
-        for ref in re.findall(r'"([^"\n]+)"', text):
+        input_text = re.sub(r'^\s*#\s*include[^\n]*$', '', text, flags=re.M)
+        for ref in re.findall(r'"([^"\n]+)"', input_text):
             if not re.fullmatch(r"[\w./@+ -]{1,240}", ref):
                 continue
             candidate = (parent / ref).resolve()

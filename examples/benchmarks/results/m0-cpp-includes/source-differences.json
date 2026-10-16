@@ -1,0 +1,316 @@
+[
+  {
+    "source": "nofib",
+    "path": "parallel/blackscholes",
+    "changes": {
+      "sha256": {
+        "before": "652424b4ea039c866a8e0564d208161378c1b0edca9f56ba331d5193fd85d54a",
+        "after": "7f85579d11c186651ebdf29b2e00267516f6e752c01ec5b0b4e3cac0416271e8"
+      },
+      "members": {
+        "before": "parallel/blackscholes/Future.hs;parallel/blackscholes/blackscholes.hs",
+        "after": "parallel/blackscholes/Future.hs;parallel/blackscholes/blackscholes.hs;parallel/blackscholes/blackscholes_data.hs-inc"
+      },
+      "inputs": {
+        "before": "parallel/blackscholes/blackscholes.stdout;parallel/blackscholes/blackscholes_data.hs-inc",
+        "after": "parallel/blackscholes/blackscholes.stdout"
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "smp/callback001",
+    "changes": {
+      "inputs": {
+        "before": "smp/callback001/callback001.faststdout;smp/callback001/callback001.slowstdout;smp/callback001/callback001.stdout;smp/callback001/cbits.h",
+        "after": "smp/callback001/callback001.faststdout;smp/callback001/callback001.slowstdout;smp/callback001/callback001.stdout"
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "smp/callback002",
+    "changes": {
+      "inputs": {
+        "before": "smp/callback002/cbits.h",
+        "after": ""
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "spectral/hartel/comp_lab_zift",
+    "changes": {
+      "sha256": {
+        "before": "2286e789779b8ca52c3478fd55d8d4764a7c9d6837dce1c7db3e7eabe7dc2d1e",
+        "after": "e12e97f6af603f47b01e7eb4c5fd2efe9f874f976e9b9c8a74affe2f0533b6e7"
+      },
+      "members": {
+        "before": "spectral/hartel/comp_lab_zift/Main.hs",
+        "after": "spectral/hartel/Fast2haskell.hs;spectral/hartel/comp_lab_zift/Main.hs"
+      },
+      "inputs": {
+        "before": "spectral/hartel/Fast2haskell.hs;spectral/hartel/comp_lab_zift/comp_lab_zift.faststdout;spectral/hartel/comp_lab_zift/comp_lab_zift.slowstdout;spectral/hartel/comp_lab_zift/comp_lab_zift.stdout",
+        "after": "spectral/hartel/comp_lab_zift/comp_lab_zift.faststdout;spectral/hartel/comp_lab_zift/comp_lab_zift.slowstdout;spectral/hartel/comp_lab_zift/comp_lab_zift.stdout"
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "spectral/hartel/event",
+    "changes": {
+      "sha256": {
+        "before": "3cfc96a6183b83f8c03b1fee4924433e824a43131060927ec838d61f32a72bd1",
+        "after": "387538edd2cb3956fdc69b2d24374a2d0c00f59a6d359e42deee480367182c1a"
+      },
+      "members": {
+        "before": "spectral/hartel/event/Main.hs",
+        "after": "spectral/hartel/Fast2haskell.hs;spectral/hartel/event/Main.hs"
+      },
+      "inputs": {
+        "before": "spectral/hartel/Fast2haskell.hs;spectral/hartel/event/event.faststdout;spectral/hartel/event/event.slowstdout;spectral/hartel/event/event.stdout",
+        "after": "spectral/hartel/event/event.faststdout;spectral/hartel/event/event.slowstdout;spectral/hartel/event/event.stdout"
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "spectral/hartel/fft",
+    "changes": {
+      "sha256": {
+        "before": "c23129c4afe140bc9f101454bbe9f2f2fa5174c80ab2a49e624c4507ba9d837c",
+        "after": "6980cc79c520b391a4f2767dbd693613ff8431efefa221a3bbc3e1dd88ef49d0"
+      },
+      "members": {
+        "before": "spectral/hartel/fft/Main.hs",
+        "after": "spectral/hartel/Fast2haskell.hs;spectral/hartel/fft/Main.hs"
+      },
+      "inputs": {
+        "before": "spectral/hartel/Fast2haskell.hs;spectral/hartel/fft/fft.faststdout;spectral/hartel/fft/fft.slowstdout;spectral/hartel/fft/fft.stdout",
+        "after": "spectral/hartel/fft/fft.faststdout;spectral/hartel/fft/fft.slowstdout;spectral/hartel/fft/fft.stdout"
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "spectral/hartel/genfft",
+    "changes": {
+      "sha256": {
+        "before": "d92d7997345f11ccc11e0b05dc6762fa8e9a0ef87681d9bafdcffaf602913d29",
+        "after": "affb93bae2f3910c84e8fdc148f8442a6869e426f772d77d35c18ec1e3e66a73"
+      },
+      "members": {
+        "before": "spectral/hartel/genfft/Main.hs",
+        "after": "spectral/hartel/Fast2haskell.hs;spectral/hartel/genfft/Main.hs"
+      },
+      "inputs": {
+        "before": "spectral/hartel/Fast2haskell.hs;spectral/hartel/genfft/genfft.faststdout;spectral/hartel/genfft/genfft.slowstdout;spectral/hartel/genfft/genfft.stdout",
+        "after": "spectral/hartel/genfft/genfft.faststdout;spectral/hartel/genfft/genfft.slowstdout;spectral/hartel/genfft/genfft.stdout"
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "spectral/hartel/ida",
+    "changes": {
+      "sha256": {
+        "before": "b12ab16011430efaf3cfac823577fabc3500f46683c2e65512a018ce5a27d29e",
+        "after": "cc36fc782204a45fa24d7598d9c1eacbbbd67efcfd3ebeb119d3ecdc49e49208"
+      },
+      "members": {
+        "before": "spectral/hartel/ida/Main.hs",
+        "after": "spectral/hartel/Fast2haskell.hs;spectral/hartel/ida/Main.hs"
+      },
+      "inputs": {
+        "before": "spectral/hartel/Fast2haskell.hs;spectral/hartel/ida/ida.faststdout;spectral/hartel/ida/ida.slowstdout;spectral/hartel/ida/ida.stdout",
+        "after": "spectral/hartel/ida/ida.faststdout;spectral/hartel/ida/ida.slowstdout;spectral/hartel/ida/ida.stdout"
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "spectral/hartel/listcompr",
+    "changes": {
+      "sha256": {
+        "before": "62ee50e5a282d42030ccfba7a5e29748c4fb12ef3622eea22551d7f305a0516c",
+        "after": "2a9617f4b99a155a2dba8e2d3651b8ec8ab5678d2877adf993db7b32f61929d4"
+      },
+      "members": {
+        "before": "spectral/hartel/listcompr/Main.hs",
+        "after": "spectral/hartel/Fast2haskell.hs;spectral/hartel/listcompr/Main.hs"
+      },
+      "inputs": {
+        "before": "spectral/hartel/Fast2haskell.hs;spectral/hartel/listcompr/listcompr.faststdout;spectral/hartel/listcompr/listcompr.slowstdout;spectral/hartel/listcompr/listcompr.stdout",
+        "after": "spectral/hartel/listcompr/listcompr.faststdout;spectral/hartel/listcompr/listcompr.slowstdout;spectral/hartel/listcompr/listcompr.stdout"
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "spectral/hartel/listcopy",
+    "changes": {
+      "sha256": {
+        "before": "ed385e8cca5337ad7f1d6356ae820f3fe675eb3f511e676159d83f15f7b852e0",
+        "after": "947ea91beecef38a7c1de1bb808b4af50956821cc9f008ddd25fe3dc2fff69b1"
+      },
+      "members": {
+        "before": "spectral/hartel/listcopy/Main.hs",
+        "after": "spectral/hartel/Fast2haskell.hs;spectral/hartel/listcopy/Main.hs"
+      },
+      "inputs": {
+        "before": "spectral/hartel/Fast2haskell.hs;spectral/hartel/listcopy/listcopy.faststdout;spectral/hartel/listcopy/listcopy.slowstdout;spectral/hartel/listcopy/listcopy.stdout",
+        "after": "spectral/hartel/listcopy/listcopy.faststdout;spectral/hartel/listcopy/listcopy.slowstdout;spectral/hartel/listcopy/listcopy.stdout"
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "spectral/hartel/nucleic2",
+    "changes": {
+      "inputs": {
+        "before": "spectral/hartel/nucleic2/unboxery.h",
+        "after": ""
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "spectral/hartel/parstof",
+    "changes": {
+      "sha256": {
+        "before": "ce4dce59fb4ecc6b9d7d6dcc66b2ee90e3afaa981c0f95d3896ca45c7b0ef87c",
+        "after": "e1798eef00523cc85cd8ae61f6b345d0bfbaa5412dfb56888732404ae739f7b3"
+      },
+      "members": {
+        "before": "spectral/hartel/parstof/Main.hs",
+        "after": "spectral/hartel/Fast2haskell.hs;spectral/hartel/parstof/Main.hs"
+      },
+      "inputs": {
+        "before": "spectral/hartel/Fast2haskell.hs;spectral/hartel/parstof/parstof.faststdout;spectral/hartel/parstof/parstof.slowstdout;spectral/hartel/parstof/parstof.stdout",
+        "after": "spectral/hartel/parstof/parstof.faststdout;spectral/hartel/parstof/parstof.slowstdout;spectral/hartel/parstof/parstof.stdout"
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "spectral/hartel/sched",
+    "changes": {
+      "sha256": {
+        "before": "8496fc3330f5f01b0a42f5c619317881d2d1f1e6589acba8c90164cd1137f216",
+        "after": "8a30680096fc1071a910b07b6719fbb882eb4211377ca4dc092e4241f7005852"
+      },
+      "members": {
+        "before": "spectral/hartel/sched/Main.hs",
+        "after": "spectral/hartel/Fast2haskell.hs;spectral/hartel/sched/Main.hs"
+      },
+      "inputs": {
+        "before": "spectral/hartel/Fast2haskell.hs;spectral/hartel/sched/sched.faststdout;spectral/hartel/sched/sched.slowstdout;spectral/hartel/sched/sched.stdout",
+        "after": "spectral/hartel/sched/sched.faststdout;spectral/hartel/sched/sched.slowstdout;spectral/hartel/sched/sched.stdout"
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "spectral/hartel/solid",
+    "changes": {
+      "sha256": {
+        "before": "f495a8d7afb9286c334b8c92af10065cbd89b78e8564157653b74cf109893a62",
+        "after": "4abefc32000930fc4d2ad8d2238033e16780aa90221e495494ad583d69bb69bc"
+      },
+      "members": {
+        "before": "spectral/hartel/solid/Main.hs",
+        "after": "spectral/hartel/Fast2haskell.hs;spectral/hartel/solid/Main.hs"
+      },
+      "inputs": {
+        "before": "spectral/hartel/Fast2haskell.hs;spectral/hartel/solid/solid.faststdout;spectral/hartel/solid/solid.slowstdout;spectral/hartel/solid/solid.stdout",
+        "after": "spectral/hartel/solid/solid.faststdout;spectral/hartel/solid/solid.slowstdout;spectral/hartel/solid/solid.stdout"
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "spectral/hartel/transform",
+    "changes": {
+      "sha256": {
+        "before": "95ea2b9b6c821a1bb8a975d90933f47702b3d650f47714b0654d3f1ff316b707",
+        "after": "8ce246ac6e2e6524013ba0040902afdd6f93d733fbe611324ee4140e76fc8b63"
+      },
+      "members": {
+        "before": "spectral/hartel/transform/Main.hs",
+        "after": "spectral/hartel/Fast2haskell.hs;spectral/hartel/transform/Main.hs"
+      },
+      "inputs": {
+        "before": "spectral/hartel/Fast2haskell.hs;spectral/hartel/transform/transform.faststdout;spectral/hartel/transform/transform.slowstdout;spectral/hartel/transform/transform.stdout",
+        "after": "spectral/hartel/transform/transform.faststdout;spectral/hartel/transform/transform.slowstdout;spectral/hartel/transform/transform.stdout"
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "spectral/hartel/typecheck",
+    "changes": {
+      "sha256": {
+        "before": "86bef1f613822d923db8ed8d1899fe710ea1b036736fc716973c3e66113a9281",
+        "after": "d088f993831694783dc9b2082313132401f89437a82f9f78d000af9e472a56b0"
+      },
+      "members": {
+        "before": "spectral/hartel/typecheck/Main.hs",
+        "after": "spectral/hartel/Fast2haskell.hs;spectral/hartel/typecheck/Main.hs"
+      },
+      "inputs": {
+        "before": "spectral/hartel/Fast2haskell.hs;spectral/hartel/typecheck/typecheck.faststdout;spectral/hartel/typecheck/typecheck.slowstdout;spectral/hartel/typecheck/typecheck.stdout",
+        "after": "spectral/hartel/typecheck/typecheck.faststdout;spectral/hartel/typecheck/typecheck.slowstdout;spectral/hartel/typecheck/typecheck.stdout"
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "spectral/hartel/wang",
+    "changes": {
+      "sha256": {
+        "before": "0a17a45b8ef6c71f9e5f440e1cf84a83281258e6f11562b5d287b298b95753bb",
+        "after": "aca8e9a84e345429921988bf31134347752c6a359811cb9ca4d2a2c677924e60"
+      },
+      "members": {
+        "before": "spectral/hartel/wang/Main.hs",
+        "after": "spectral/hartel/Fast2haskell.hs;spectral/hartel/wang/Main.hs"
+      },
+      "inputs": {
+        "before": "spectral/hartel/Fast2haskell.hs;spectral/hartel/wang/wang.faststdout;spectral/hartel/wang/wang.slowstdout;spectral/hartel/wang/wang.stdout",
+        "after": "spectral/hartel/wang/wang.faststdout;spectral/hartel/wang/wang.slowstdout;spectral/hartel/wang/wang.stdout"
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "spectral/hartel/wave4main",
+    "changes": {
+      "sha256": {
+        "before": "ba2389a9ed05b9e1b79b9fd4335f803ae2e5fd00ecaa3daa840c97b705396220",
+        "after": "f4713b576472e975102554d9c18746bd704ebfd19d493bfda1a0f4549834dd3c"
+      },
+      "members": {
+        "before": "spectral/hartel/wave4main/Main.hs",
+        "after": "spectral/hartel/Fast2haskell.hs;spectral/hartel/wave4main/Main.hs"
+      },
+      "inputs": {
+        "before": "spectral/hartel/Fast2haskell.hs;spectral/hartel/wave4main/wave4main.faststdout;spectral/hartel/wave4main/wave4main.slowstdout;spectral/hartel/wave4main/wave4main.stdout",
+        "after": "spectral/hartel/wave4main/wave4main.faststdout;spectral/hartel/wave4main/wave4main.slowstdout;spectral/hartel/wave4main/wave4main.stdout"
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "real/fem",
+    "changes": {
+      "sha256": {
+        "before": "1f8cae363bfe0e3e4e5bc41900566f99dd5feeab928873669925a8b4b7a6aaf5",
+        "after": "7c06a52d51982c9ef4e6f964a1e262d4101adf27abc3f89bf800c7afcb160179"
+      },
+      "members": {
+        "before": "real/fem/Assemble_loadvec.hs;real/fem/Assemble_stiffness.hs;real/fem/Basics.hs;real/fem/DB_interface.hs;real/fem/Database.hs;real/fem/Degrees.hs;real/fem/Displacement.hs;real/fem/Elemforce.hs;real/fem/Elemstif.hs;real/fem/Main.hs;real/fem/Matrix.hs;real/fem/NofibUtils.hs;real/fem/Pre_assemble.hs;real/fem/PrintSource.hs;real/fem/Printuvwforce.hs;real/fem/VBlldecomp.hs;real/fem/VBmatrix.hs;real/fem/Vector.hs;real/fem/inC/assemble_loadvec.c;real/fem/inC/assemble_stiffness.c;real/fem/inC/bar_2d.c;real/fem/inC/displacement.c;real/fem/inC/fem.c;real/fem/inC/internalforce.c;real/fem/inC/pre_assemble.c;real/fem/inC/read_data.c;real/fem/inC/vblldecomp.c",
+        "after": "real/fem/Assemble_loadvec.hs;real/fem/Assemble_stiffness.hs;real/fem/Basics.hs;real/fem/DB_interface.hs;real/fem/Database.hs;real/fem/Degrees.hs;real/fem/Displacement.hs;real/fem/Elemforce.hs;real/fem/Elemstif.hs;real/fem/Main.hs;real/fem/Matrix.hs;real/fem/NofibUtils.hs;real/fem/Pre_assemble.hs;real/fem/PrintSource.hs;real/fem/Printuvwforce.hs;real/fem/VBlldecomp.hs;real/fem/VBmatrix.hs;real/fem/Vector.hs;real/fem/inC/assemble_loadvec.c;real/fem/inC/assemble_stiffness.c;real/fem/inC/bar_2d.c;real/fem/inC/database;real/fem/inC/displacement.c;real/fem/inC/fem.c;real/fem/inC/internalforce.c;real/fem/inC/pre_assemble.c;real/fem/inC/read_data.c;real/fem/inC/vblldecomp.c"
+      }
+    }
+  }
+]
