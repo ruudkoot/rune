@@ -1,0 +1,5 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+evolutionary_algorithm	normal	rune	O2	count	1	1	pass	1.10	1.14	0.00	10536	234035263	151884984	2727829	counts/measurement.excOEU/evolutionary_algorithm/rune/fresh.1
+evolutionary_algorithm	normal	rune:opt	O2	count	1	1	pass	0.40	0.41	0.00	10912	234035263	151884984	2727829	counts/measurement.excOEU/evolutionary_algorithm/rune-opt/fresh.1
+evolutionary_algorithm	normal	rune:new	O2	count	1	1	pass	0.94	0.97	0.00	10500	134497076	151884984	2727829	counts/measurement.excOEU/evolutionary_algorithm/rune-new/fresh.1
+evolutionary_algorithm	normal	rune:jit	O2	count	1	1	pass	0.34	0.34	0.00	11716	134497076	151884984	2727829	counts/measurement.excOEU/evolutionary_algorithm/rune-jit/fresh.1

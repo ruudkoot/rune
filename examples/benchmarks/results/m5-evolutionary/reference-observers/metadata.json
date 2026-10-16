@@ -1,0 +1,56 @@
+{
+  "ocamlopt": "4.14.1",
+  "options": [
+    "-O2"
+  ],
+  "profiles": [
+    {
+      "profile": "tiny",
+      "args": [
+        "3",
+        "2",
+        "0"
+      ],
+      "seed": 42,
+      "seconds": 0.003531763970386237,
+      "bytes": 18,
+      "sha256": "36ab4e3c1196c15c85e0e83b577748c51835e448ad4353c57db0e787be5d7db6"
+    },
+    {
+      "profile": "smoke",
+      "args": [
+        "16",
+        "16",
+        "128"
+      ],
+      "seed": 42,
+      "seconds": 0.0032767250086180866,
+      "bytes": 329,
+      "sha256": "10c4cf6755f27cbaef1f33d6a219010cf32a53715efad7b3f536eb9dff500cf2"
+    },
+    {
+      "profile": "normal",
+      "args": [
+        "128",
+        "128",
+        "10000"
+      ],
+      "seed": 42,
+      "seconds": 0.06808816996635869,
+      "bytes": 17036,
+      "sha256": "d5b28f6a06584b38581f558944f4c1085ce3be8275ef81339bc0998561aae9b0"
+    },
+    {
+      "profile": "large",
+      "args": [
+        "1000",
+        "1000",
+        "100000"
+      ],
+      "seed": 42,
+      "seconds": 4.18351004604483,
+      "bytes": 1005014,
+      "sha256": "98e62c02df0ce3ad05447fc5ab05634e06b2582d7084b91043b286e9dda4e9b1"
+    }
+  ]
+}

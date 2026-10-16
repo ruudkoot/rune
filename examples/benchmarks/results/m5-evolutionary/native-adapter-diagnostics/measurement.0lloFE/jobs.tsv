@@ -1,0 +1,1 @@
+evolutionary_algorithm	30	1048576	shared/input.sml shared/ocaml-random.sml shared/sandmark-evolutionary.sml shared/evolutionary-check.sml evolutionary_algorithm/benchmark.sml shared/main.sml	16 16 128 expected/smoke.txt	evolutionary_algorithm/smoke.expected	expected/smoke.txt

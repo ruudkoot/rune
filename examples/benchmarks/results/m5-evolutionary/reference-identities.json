@@ -1,0 +1,9 @@
+{
+  "ocamlopt": "4.14.1",
+  "options": [
+    "-O2"
+  ],
+  "seed": 42,
+  "sandmark_revision": "5605805954a00497ed197c930641cddd580e1507",
+  "source_adaptations": "OSentropy replaced byseed42; budget arg and returned population observation"
+}

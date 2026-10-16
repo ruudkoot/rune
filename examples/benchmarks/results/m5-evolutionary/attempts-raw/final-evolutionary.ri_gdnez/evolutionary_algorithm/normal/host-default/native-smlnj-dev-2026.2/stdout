@@ -1,0 +1,65 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-random.sml]
+structure BenchOCamlRandom : 
+  sig
+    type state = {index:int ref, words:Word32.word array}
+    val defaultWords : Word32.word vector
+    val seed42Words : Word32.word vector
+    val seed512Words : Word32.word vector
+    val make : Word32.word vector -> state
+    val default : unit -> state
+    val seed42 : unit -> state
+    val seed512 : unit -> state
+    val bits : state -> int
+    val integer : state -> int -> int
+    val real : state -> real -> real
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-evolutionary.sml]
+structure BenchEvolutionary : 
+  sig
+    type bitstring = bool array
+    type individual = {chromosome:bitstring, fitness:real}
+    val for : int -> int -> (int -> 'a) -> unit
+    val chromosome : individual -> bitstring
+    val evaluate : (bitstring -> real) -> bitstring -> individual
+    val fittest : individual -> individual -> individual
+    val popFittest : individual array -> individual
+    val onemax : bool array -> real
+    val randomBits : BenchOCamlRandom.state -> int -> bool array
+    val tournament : BenchOCamlRandom.state
+                      -> int -> individual array -> individual
+    val mutate : BenchOCamlRandom.state -> real -> bool array -> bool array
+    val run : BenchOCamlRandom.state
+               -> int
+               -> int
+               -> int
+               -> real -> (bitstring -> real) -> int -> individual array
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/evolutionary-check.sml]
+structure EvolutionCheck : 
+  sig
+    structure K : <sig>
+    val check : int
+                 -> int
+                 -> string -> BenchEvolutionary.individual array -> unit
+    val run : int -> int -> int -> string -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/evolutionary_algorithm/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 128:128:10000:checked
+PASS evolutionary_algorithm
+SUMMARY 1 checks, 0 failed

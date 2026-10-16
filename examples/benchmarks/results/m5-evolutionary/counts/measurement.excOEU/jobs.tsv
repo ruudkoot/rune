@@ -1,0 +1,1 @@
+evolutionary_algorithm	600	4194304	shared/input.sml shared/ocaml-random.sml shared/sandmark-evolutionary.sml shared/evolutionary-check.sml evolutionary_algorithm/benchmark.sml shared/main.sml	128 128 10000 expected/normal.txt	evolutionary_algorithm/normal.expected	expected/normal.txt

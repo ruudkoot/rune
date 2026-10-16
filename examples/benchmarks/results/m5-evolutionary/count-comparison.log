@@ -1,0 +1,5 @@
+COUNT unbudgeted evolutionary_algorithm normal rune
+COUNT unbudgeted evolutionary_algorithm normal rune:opt
+COUNT unbudgeted evolutionary_algorithm normal rune:new
+COUNT unbudgeted evolutionary_algorithm normal rune:jit
+COUNT comparisons agree

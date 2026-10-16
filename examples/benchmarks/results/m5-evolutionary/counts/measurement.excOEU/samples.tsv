@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+evolutionary_algorithm	normal	rune	O2	compile	0	0	pass	1.26	1.24	0.07	135260	-	-	-	evolutionary_algorithm/rune/build/compile
+evolutionary_algorithm	normal	rune	O2	correctness	0	0	pass	1.01	1.05	0.00	10644	234035263	151884984	2727829	evolutionary_algorithm/rune/correctness.0
+evolutionary_algorithm	normal	rune	O2	count	1	1	pass	1.10	1.14	0.00	10536	234035263	151884984	2727829	evolutionary_algorithm/rune/fresh.1
+evolutionary_algorithm	normal	rune:opt	O2	compile	0	0	pass	1.63	1.53	0.16	135296	-	-	-	evolutionary_algorithm/rune-opt/build/compile
+evolutionary_algorithm	normal	rune:opt	O2	native-compile	0	0	pass	0.30	0.15	0.04	12168	-	-	-	evolutionary_algorithm/rune-opt/build/native-compile
+evolutionary_algorithm	normal	rune:opt	O2	correctness	0	0	pass	0.38	0.39	0.00	10948	234035263	151884984	2727829	evolutionary_algorithm/rune-opt/correctness.0
+evolutionary_algorithm	normal	rune:opt	O2	count	1	1	pass	0.40	0.41	0.00	10912	234035263	151884984	2727829	evolutionary_algorithm/rune-opt/fresh.1
+evolutionary_algorithm	normal	rune:new	O2	compile	0	0	pass	1.55	1.49	0.12	135320	-	-	-	evolutionary_algorithm/rune-new/build/compile
+evolutionary_algorithm	normal	rune:new	O2	correctness	0	0	pass	1.04	1.07	0.01	10516	134497076	151884984	2727829	evolutionary_algorithm/rune-new/correctness.0
+evolutionary_algorithm	normal	rune:new	O2	count	1	1	pass	0.94	0.97	0.00	10500	134497076	151884984	2727829	evolutionary_algorithm/rune-new/fresh.1
+evolutionary_algorithm	normal	rune:jit	O2	compile	0	0	pass	1.45	1.42	0.09	135356	-	-	-	evolutionary_algorithm/rune-jit/build/compile
+evolutionary_algorithm	normal	rune:jit	O2	correctness	0	0	pass	0.34	0.33	0.01	11596	134497076	151884984	2727829	evolutionary_algorithm/rune-jit/correctness.0
+evolutionary_algorithm	normal	rune:jit	O2	count	1	1	pass	0.34	0.34	0.00	11716	134497076	151884984	2727829	evolutionary_algorithm/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

@@ -1,0 +1,23 @@
+[
+  {
+    "profile": "tiny",
+    "evaluations": 6,
+    "new_generations": 2,
+    "random_bit_draws": 38,
+    "comparison": "every complete chromosome/fitness, packed-bit/int-popcount reference"
+  },
+  {
+    "profile": "smoke",
+    "evaluations": 176,
+    "new_generations": 10,
+    "random_bit_draws": 5696,
+    "comparison": "every complete chromosome/fitness, packed-bit/int-popcount reference"
+  },
+  {
+    "profile": "normal",
+    "evaluations": 10368,
+    "new_generations": 80,
+    "random_bit_draws": 2658304,
+    "comparison": "every complete chromosome/fitness, packed-bit/int-popcount reference"
+  }
+]

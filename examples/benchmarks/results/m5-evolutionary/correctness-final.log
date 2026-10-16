@@ -1,0 +1,7 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-evolutionary.ri_gdnez
+PASS evolutionary_algorithm smoke O0
+PASS evolutionary_algorithm smoke O2
+FAIL evolutionary_algorithm smoke hosts
+PASS evolutionary_algorithm normal O0
+PASS evolutionary_algorithm normal O2
+FAIL evolutionary_algorithm normal hosts

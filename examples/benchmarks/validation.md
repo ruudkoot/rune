@@ -1368,3 +1368,32 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 matching bytecode comparisons across seven compiler builds.
 runedoc and runeopt also agree. [The complete transcript](validation/oct16-pidigits5-813-acceptance.log)
 records the run. All 41 inventory tests pass and all 861 entries validate.
+
+## M5 seeded sequential evolutionary search, 2026-10-16
+
+One import brings the catalogue to 274 programs and 816 profiles. [All 28
+smoke/normal cases](results/m5-evolutionary/coverage.tsv) are accounted for: 26 pass;
+both native32 cases raise the documented bounded-random arithmetic Overflow.
+Every Rune engine passes both profiles at both levels, as do the other native
+hosts. Twelve semantic/negative checks run at both levels on all ten
+configurations. Native32's six selection-dependent cases fail with that same
+exception; its other six and all other configurations pass. Four normal count
+samples agree with unchanged budgets. Three serial native smoke samples also
+validate MLton, SML/NJ and Poly/ML adapters. These diagnostics and instrumented
+counts remain separate from headline timings.
+
+The port preserves boolean chromosomes, float fitness, strict tie behavior,
+recursive selection, copying mutation, every draw and the source's strict
+post-generation budget check. Seed 42 replaces OS entropy explicitly. Complete
+original deterministic populations agree with independent packed-bit/popcount
+computation for tiny/smoke/normal, including exact evaluation/draw counts.
+Source/library notices and CRLF bytes, seed patch, originals, references and
+all failures are retained. The unmodified nondeterministic original completes
+but supplies no golden. No RNG arithmetic workaround, new runtime feature or
+universal large SML execution is introduced. M5 remains in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 816 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 matching bytecode comparisons across seven compiler builds.
+runedoc and runeopt also agree. [The complete transcript](validation/oct16-evolutionary-816-acceptance.log)
+records the run. All 41 inventory tests pass and all 861 entries validate.
