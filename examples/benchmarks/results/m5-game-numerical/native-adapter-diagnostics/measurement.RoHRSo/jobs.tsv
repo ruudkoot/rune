@@ -1,0 +1,1 @@
+nbody-sandmark	30	1048576	shared/input.sml shared/sandmark-nbody.sml shared/record-nbody-check.sml nbody-sandmark/benchmark.sml shared/main.sml	10 expected/smoke.txt 1.0E~10 1.0E~10	nbody-sandmark/smoke.expected	expected/smoke.txt

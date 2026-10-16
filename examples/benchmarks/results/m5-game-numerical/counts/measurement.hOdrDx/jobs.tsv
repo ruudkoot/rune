@@ -1,0 +1,1 @@
+mandelbrot6	600	4194304	shared/input.sml shared/sandmark-mandelbrot6.sml shared/pbm-check.sml mandelbrot6/benchmark.sml shared/main.sml	256 expected/normal.pbm	mandelbrot6/normal.expected	expected/normal.pbm

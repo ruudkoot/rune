@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-game-numerical.ay2tkq27
+PASS nbody-sandmark smoke O0
+PASS nbody-sandmark smoke O2
+PASS nbody-sandmark smoke hosts
+PASS nbody-sandmark normal O0
+PASS nbody-sandmark normal O2
+PASS nbody-sandmark normal hosts
+PASS mandelbrot6 smoke O0
+PASS mandelbrot6 smoke O2
+PASS mandelbrot6 smoke hosts
+PASS mandelbrot6 normal O0
+PASS mandelbrot6 normal O2
+PASS mandelbrot6 normal hosts

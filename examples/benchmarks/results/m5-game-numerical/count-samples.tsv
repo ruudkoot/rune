@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+nbody-sandmark	normal	rune	O2	count	1	1	pass	0.07	0.08	0.00	6040	19639364	3808160	75546	counts/measurement.xsqb4U/nbody-sandmark/rune/fresh.1
+nbody-sandmark	normal	rune:opt	O2	count	1	1	pass	0.04	0.03	0.00	6424	19639364	3808160	75546	counts/measurement.xsqb4U/nbody-sandmark/rune-opt/fresh.1
+nbody-sandmark	normal	rune:new	O2	count	1	1	pass	0.06	0.06	0.00	6100	12735255	3808160	75546	counts/measurement.xsqb4U/nbody-sandmark/rune-new/fresh.1
+nbody-sandmark	normal	rune:jit	O2	count	1	1	pass	0.03	0.02	0.00	7244	12735255	3808160	75546	counts/measurement.xsqb4U/nbody-sandmark/rune-jit/fresh.1
+mandelbrot6	normal	rune	O2	count	1	1	pass	0.44	0.45	0.00	10472	93976082	10148480	361356	counts/measurement.hOdrDx/mandelbrot6/rune/fresh.1
+mandelbrot6	normal	rune:opt	O2	count	1	1	pass	0.12	0.12	0.00	10876	93976082	10148480	361356	counts/measurement.hOdrDx/mandelbrot6/rune-opt/fresh.1
+mandelbrot6	normal	rune:new	O2	count	1	1	pass	0.31	0.32	0.00	10488	54297412	10148480	361356	counts/measurement.hOdrDx/mandelbrot6/rune-new/fresh.1
+mandelbrot6	normal	rune:jit	O2	count	1	1	pass	0.05	0.05	0.00	11436	54297412	10148480	361356	counts/measurement.hOdrDx/mandelbrot6/rune-jit/fresh.1

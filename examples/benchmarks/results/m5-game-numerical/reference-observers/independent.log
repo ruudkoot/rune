@@ -1,0 +1,11 @@
+PASS every independent PBM byte 1
+PASS every independent PBM byte 7
+PASS every independent PBM byte 8
+PASS every independent PBM byte 9
+PASS every independent PBM byte 16
+PASS every independent PBM byte 17
+PASS every independent PBM byte 64
+PASS every independent PBM byte 256
+PASS independent nbody {'program': 'nbody', 'steps': 0, 'precision': 60, 'state_max_error': 0.0, 'energy_error': 8.326672684688674e-17, 'momentum_max_abs': '5.59710952099283420117231290708690613784411780E-18', 'reference': 'high-precision equations from original zero-step state'}
+PASS independent nbody {'program': 'nbody', 'steps': 10, 'precision': 60, 'state_max_error': 3.552713678800501e-15, 'energy_error': 1.3877787807814457e-16, 'momentum_max_abs': '5.59710952099283420117231290708690613784411882E-18', 'reference': 'high-precision equations from original zero-step state'}
+PASS independent nbody {'program': 'nbody', 'steps': 10000, 'precision': 60, 'state_max_error': 6.7841288142744816e-12, 'energy_error': 5.273559366969494e-16, 'momentum_max_abs': '5.59710952099283420117231290708690613784412968E-18', 'reference': 'high-precision equations from original zero-step state'}

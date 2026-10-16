@@ -1,0 +1,167 @@
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 10:37:checked
+PASS nbody-sandmark
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-nbody.sml]
+[autoloading]
+[autoloading done]
+structure BenchRecordNBody : sig
+  type body =
+    {mass:real, vx:real ref, vy:real ref, vz:real ref, x:real ref, y:real ref,
+      z:real ref}
+  val pi : real
+  val solarMass : real
+  val daysPerYear : real
+  val for : int -> int -> (int -> 'a) -> unit
+  val planet : real * real * real * real * real * real * real -> body
+  val initial : unit -> body array
+  val advance : body array -> real -> unit
+  val energy : body array -> real
+  val offset : body array -> unit
+  val state : body array -> real list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/record-nbody-check.sml]
+[autoloading]
+[autoloading done]
+structure BenchRecordNBodyCheck : sig
+  structure N : <sig>
+  val values : string -> real list
+  val matches : real -> real -> real list -> real list -> bool
+  val run : int -> string -> real -> real -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/nbody-sandmark/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  val bound : string -> real
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 10:37:checked
+PASS nbody-sandmark
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-nbody.sml]
+[autoloading]
+[autoloading done]
+structure BenchRecordNBody : sig
+  type body =
+    {mass:real, vx:real ref, vy:real ref, vz:real ref, x:real ref, y:real ref,
+      z:real ref}
+  val pi : real
+  val solarMass : real
+  val daysPerYear : real
+  val for : int -> int -> (int -> 'a) -> unit
+  val planet : real * real * real * real * real * real * real -> body
+  val initial : unit -> body array
+  val advance : body array -> real -> unit
+  val energy : body array -> real
+  val offset : body array -> unit
+  val state : body array -> real list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/record-nbody-check.sml]
+[autoloading]
+[autoloading done]
+structure BenchRecordNBodyCheck : sig
+  structure N : <sig>
+  val values : string -> real list
+  val matches : real -> real -> real list -> real list -> bool
+  val run : int -> string -> real -> real -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/nbody-sandmark/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  val bound : string -> real
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 10:37:checked
+PASS nbody-sandmark
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-nbody.sml]
+structure BenchRecordNBody : 
+  sig
+    type body =
+      {mass:real, vx:real ref, vy:real ref, vz:real ref, x:real ref,
+        y:real ref, z:real ref}
+    val pi : real
+    val solarMass : real
+    val daysPerYear : real
+    val for : int -> int -> (int -> 'a) -> unit
+    val planet : real * real * real * real * real * real * real -> body
+    val initial : unit -> body array
+    val advance : body array -> real -> unit
+    val energy : body array -> real
+    val offset : body array -> unit
+    val state : body array -> real list
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/record-nbody-check.sml]
+structure BenchRecordNBodyCheck : 
+  sig
+    structure N : <sig>
+    val values : string -> real list
+    val matches : real -> real -> real list -> real list -> bool
+    val run : int -> string -> real -> real -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/nbody-sandmark/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    val bound : string -> real
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 10:37:checked
+PASS nbody-sandmark
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+RESULT 10:37:checked
+PASS nbody-sandmark
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 10:37:checked
+PASS nbody-sandmark
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

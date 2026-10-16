@@ -1,0 +1,1 @@
+mandelbrot6	30	1048576	shared/input.sml shared/sandmark-mandelbrot6.sml shared/pbm-check.sml mandelbrot6/benchmark.sml shared/main.sml	17 expected/smoke.pbm	mandelbrot6/smoke.expected	expected/smoke.pbm

@@ -1,0 +1,12 @@
+extra.pbm
+mandelbrot-1.pbm
+mandelbrot-16.pbm
+mandelbrot-17.pbm
+mandelbrot-64.pbm
+mandelbrot-7.pbm
+mandelbrot-8.pbm
+mandelbrot-9.pbm
+nbody-0.expected
+nbody-10.expected
+perturbed.pbm
+truncated.pbm

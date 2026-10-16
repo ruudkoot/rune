@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+mandelbrot6	normal	rune	O2	compile	0	0	pass	1.69	1.69	0.07	135076	-	-	-	mandelbrot6/rune/build/compile
+mandelbrot6	normal	rune	O2	correctness	0	0	pass	0.45	0.46	0.00	10536	93976082	10148480	361356	mandelbrot6/rune/correctness.0
+mandelbrot6	normal	rune	O2	count	1	1	pass	0.44	0.45	0.00	10472	93976082	10148480	361356	mandelbrot6/rune/fresh.1
+mandelbrot6	normal	rune:opt	O2	compile	0	0	pass	1.80	1.79	0.08	135324	-	-	-	mandelbrot6/rune-opt/build/compile
+mandelbrot6	normal	rune:opt	O2	native-compile	0	0	pass	0.32	0.17	0.03	12340	-	-	-	mandelbrot6/rune-opt/build/native-compile
+mandelbrot6	normal	rune:opt	O2	correctness	0	0	pass	0.13	0.13	0.00	10848	93976082	10148480	361356	mandelbrot6/rune-opt/correctness.0
+mandelbrot6	normal	rune:opt	O2	count	1	1	pass	0.12	0.12	0.00	10876	93976082	10148480	361356	mandelbrot6/rune-opt/fresh.1
+mandelbrot6	normal	rune:new	O2	compile	0	0	pass	1.56	1.55	0.07	135236	-	-	-	mandelbrot6/rune-new/build/compile
+mandelbrot6	normal	rune:new	O2	correctness	0	0	pass	0.28	0.28	0.00	10512	54297412	10148480	361356	mandelbrot6/rune-new/correctness.0
+mandelbrot6	normal	rune:new	O2	count	1	1	pass	0.31	0.32	0.00	10488	54297412	10148480	361356	mandelbrot6/rune-new/fresh.1
+mandelbrot6	normal	rune:jit	O2	compile	0	0	pass	1.48	1.44	0.10	135228	-	-	-	mandelbrot6/rune-jit/build/compile
+mandelbrot6	normal	rune:jit	O2	correctness	0	0	pass	0.05	0.04	0.01	11688	54297412	10148480	361356	mandelbrot6/rune-jit/correctness.0
+mandelbrot6	normal	rune:jit	O2	count	1	1	pass	0.05	0.05	0.00	11436	54297412	10148480	361356	mandelbrot6/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

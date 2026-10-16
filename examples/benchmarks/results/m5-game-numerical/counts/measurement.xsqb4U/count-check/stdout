@@ -1,0 +1,5 @@
+COUNT unbudgeted nbody-sandmark normal rune
+COUNT unbudgeted nbody-sandmark normal rune:opt
+COUNT unbudgeted nbody-sandmark normal rune:new
+COUNT unbudgeted nbody-sandmark normal rune:jit
+COUNT comparisons agree

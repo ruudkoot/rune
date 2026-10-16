@@ -1,0 +1,4 @@
+RESULT 17:60
+PASS mandelbrot6
+SAMPLE 1 0.000058000
+SUMMARY 1 checks, 0 failed

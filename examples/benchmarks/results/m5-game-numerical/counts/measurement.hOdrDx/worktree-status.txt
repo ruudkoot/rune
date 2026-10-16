@@ -1,0 +1,11 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/mandelbrot6/
+?? examples/benchmarks/nbody-sandmark/
+?? examples/benchmarks/shared/pbm-check.sml
+?? examples/benchmarks/shared/record-nbody-check.sml
+?? examples/benchmarks/shared/sandmark-mandelbrot6.sml
+?? examples/benchmarks/shared/sandmark-nbody.sml
+?? tests/benchmarks/check-game-numerical.sh
+?? tests/benchmarks/data/game-numerical/
+?? tests/benchmarks/game-numerical-tests.sml

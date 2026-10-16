@@ -1,0 +1,85 @@
+[
+  {
+    "program": "mandelbrot6",
+    "width": 1,
+    "bytes": 8,
+    "sha256": "a8ed35a163cba662b15fe455af22d5f91668d6eb59ef9a2aa9e19e1658745819",
+    "reference": "independent direct complex iteration and per-row bit packing"
+  },
+  {
+    "program": "mandelbrot6",
+    "width": 7,
+    "bytes": 14,
+    "sha256": "5c8c0137a526ae1609eb7fd0b4cf7b2502816f9c8fdebab1346e47923d43c108",
+    "reference": "independent direct complex iteration and per-row bit packing"
+  },
+  {
+    "program": "mandelbrot6",
+    "width": 8,
+    "bytes": 15,
+    "sha256": "5cb3c72ff26073f0dcd32ae46289dcf3ef468694ab383f4b98b1bf33c155f6d3",
+    "reference": "independent direct complex iteration and per-row bit packing"
+  },
+  {
+    "program": "mandelbrot6",
+    "width": 9,
+    "bytes": 25,
+    "sha256": "938f0a0fb19d6e0d884754e89369ae63cf71b840291bc40796692859cec261ce",
+    "reference": "independent direct complex iteration and per-row bit packing"
+  },
+  {
+    "program": "mandelbrot6",
+    "width": 16,
+    "bytes": 41,
+    "sha256": "8560a9f45ef36c9d5d15f5024ad4c91a322a4b373d675d163f6cf51f54d5b141",
+    "reference": "independent direct complex iteration and per-row bit packing"
+  },
+  {
+    "program": "mandelbrot6",
+    "width": 17,
+    "bytes": 60,
+    "sha256": "11a01916753a7774492b5b818545d4d6dfaabcd93de1da2c4eb5dd3597fcaf79",
+    "reference": "independent direct complex iteration and per-row bit packing"
+  },
+  {
+    "program": "mandelbrot6",
+    "width": 64,
+    "bytes": 521,
+    "sha256": "54e0a14da37569cba6fa618c771c2704f6711783326b2b42197fc533c8f1337b",
+    "reference": "independent direct complex iteration and per-row bit packing"
+  },
+  {
+    "program": "mandelbrot6",
+    "width": 256,
+    "bytes": 8203,
+    "sha256": "57960e156292a51abda32531136363feb782d5bbfcb63170e531bc8cd7445766",
+    "reference": "independent direct complex iteration and per-row bit packing"
+  },
+  {
+    "program": "nbody",
+    "steps": 0,
+    "precision": 60,
+    "state_max_error": 0.0,
+    "energy_error": 8.326672684688674e-17,
+    "momentum_max_abs": "5.59710952099283420117231290708690613784411780E-18",
+    "reference": "high-precision equations from original zero-step state"
+  },
+  {
+    "program": "nbody",
+    "steps": 10,
+    "precision": 60,
+    "state_max_error": 3.552713678800501e-15,
+    "energy_error": 1.3877787807814457e-16,
+    "momentum_max_abs": "5.59710952099283420117231290708690613784411882E-18",
+    "reference": "high-precision equations from original zero-step state"
+  },
+  {
+    "program": "nbody",
+    "steps": 10000,
+    "precision": 60,
+    "state_max_error": 6.7841288142744816e-12,
+    "energy_error": 5.273559366969494e-16,
+    "momentum_max_abs": "5.59710952099283420117231290708690613784412968E-18",
+    "reference": "high-precision equations from original zero-step state"
+  }
+]

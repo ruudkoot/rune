@@ -1,0 +1,57 @@
+benchmark	profile	optimization	configuration	arguments	status	artifact_directory
+mandelbrot6	normal	O0	rune	256 expected/normal.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/normal/O0/rune
+mandelbrot6	normal	O0	rune-jit	256 expected/normal.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/normal/O0/rune-jit
+mandelbrot6	normal	O0	rune-new	256 expected/normal.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/normal/O0/rune-new
+mandelbrot6	normal	O0	rune-opt	256 expected/normal.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/normal/O0/rune-opt
+mandelbrot6	normal	O2	rune	256 expected/normal.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/normal/O2/rune
+mandelbrot6	normal	O2	rune-jit	256 expected/normal.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/normal/O2/rune-jit
+mandelbrot6	normal	O2	rune-new	256 expected/normal.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/normal/O2/rune-new
+mandelbrot6	normal	O2	rune-opt	256 expected/normal.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/normal/O2/rune-opt
+mandelbrot6	normal	host-default	native-mlkit-4.7.23	256 expected/normal.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/normal/host-default/native-mlkit-4.7.23
+mandelbrot6	normal	host-default	native-mlton-20241230	256 expected/normal.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/normal/host-default/native-mlton-20241230
+mandelbrot6	normal	host-default	native-polyml-5.9.2	256 expected/normal.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/normal/host-default/native-polyml-5.9.2
+mandelbrot6	normal	host-default	native-smlnj-dev-2026.2	256 expected/normal.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/normal/host-default/native-smlnj-dev-2026.2
+mandelbrot6	normal	host-default	native-smlnj-legacy-110.99.9	256 expected/normal.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/normal/host-default/native-smlnj-legacy-110.99.9
+mandelbrot6	normal	host-default	native-smlnj32-110.99.9	256 expected/normal.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/normal/host-default/native-smlnj32-110.99.9
+mandelbrot6	smoke	O0	rune	17 expected/smoke.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/smoke/O0/rune
+mandelbrot6	smoke	O0	rune-jit	17 expected/smoke.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/smoke/O0/rune-jit
+mandelbrot6	smoke	O0	rune-new	17 expected/smoke.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/smoke/O0/rune-new
+mandelbrot6	smoke	O0	rune-opt	17 expected/smoke.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/smoke/O0/rune-opt
+mandelbrot6	smoke	O2	rune	17 expected/smoke.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/smoke/O2/rune
+mandelbrot6	smoke	O2	rune-jit	17 expected/smoke.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/smoke/O2/rune-jit
+mandelbrot6	smoke	O2	rune-new	17 expected/smoke.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/smoke/O2/rune-new
+mandelbrot6	smoke	O2	rune-opt	17 expected/smoke.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/smoke/O2/rune-opt
+mandelbrot6	smoke	host-default	native-mlkit-4.7.23	17 expected/smoke.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/smoke/host-default/native-mlkit-4.7.23
+mandelbrot6	smoke	host-default	native-mlton-20241230	17 expected/smoke.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/smoke/host-default/native-mlton-20241230
+mandelbrot6	smoke	host-default	native-polyml-5.9.2	17 expected/smoke.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/smoke/host-default/native-polyml-5.9.2
+mandelbrot6	smoke	host-default	native-smlnj-dev-2026.2	17 expected/smoke.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/smoke/host-default/native-smlnj-dev-2026.2
+mandelbrot6	smoke	host-default	native-smlnj-legacy-110.99.9	17 expected/smoke.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/smoke/host-default/native-smlnj-legacy-110.99.9
+mandelbrot6	smoke	host-default	native-smlnj32-110.99.9	17 expected/smoke.pbm	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/mandelbrot6/smoke/host-default/native-smlnj32-110.99.9
+nbody-sandmark	normal	O0	rune	10000 expected/normal.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/normal/O0/rune
+nbody-sandmark	normal	O0	rune-jit	10000 expected/normal.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/normal/O0/rune-jit
+nbody-sandmark	normal	O0	rune-new	10000 expected/normal.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/normal/O0/rune-new
+nbody-sandmark	normal	O0	rune-opt	10000 expected/normal.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/normal/O0/rune-opt
+nbody-sandmark	normal	O2	rune	10000 expected/normal.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/normal/O2/rune
+nbody-sandmark	normal	O2	rune-jit	10000 expected/normal.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/normal/O2/rune-jit
+nbody-sandmark	normal	O2	rune-new	10000 expected/normal.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/normal/O2/rune-new
+nbody-sandmark	normal	O2	rune-opt	10000 expected/normal.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/normal/O2/rune-opt
+nbody-sandmark	normal	host-default	native-mlkit-4.7.23	10000 expected/normal.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/normal/host-default/native-mlkit-4.7.23
+nbody-sandmark	normal	host-default	native-mlton-20241230	10000 expected/normal.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/normal/host-default/native-mlton-20241230
+nbody-sandmark	normal	host-default	native-polyml-5.9.2	10000 expected/normal.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/normal/host-default/native-polyml-5.9.2
+nbody-sandmark	normal	host-default	native-smlnj-dev-2026.2	10000 expected/normal.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/normal/host-default/native-smlnj-dev-2026.2
+nbody-sandmark	normal	host-default	native-smlnj-legacy-110.99.9	10000 expected/normal.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/normal/host-default/native-smlnj-legacy-110.99.9
+nbody-sandmark	normal	host-default	native-smlnj32-110.99.9	10000 expected/normal.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/normal/host-default/native-smlnj32-110.99.9
+nbody-sandmark	smoke	O0	rune	10 expected/smoke.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/smoke/O0/rune
+nbody-sandmark	smoke	O0	rune-jit	10 expected/smoke.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/smoke/O0/rune-jit
+nbody-sandmark	smoke	O0	rune-new	10 expected/smoke.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/smoke/O0/rune-new
+nbody-sandmark	smoke	O0	rune-opt	10 expected/smoke.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/smoke/O0/rune-opt
+nbody-sandmark	smoke	O2	rune	10 expected/smoke.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/smoke/O2/rune
+nbody-sandmark	smoke	O2	rune-jit	10 expected/smoke.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/smoke/O2/rune-jit
+nbody-sandmark	smoke	O2	rune-new	10 expected/smoke.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/smoke/O2/rune-new
+nbody-sandmark	smoke	O2	rune-opt	10 expected/smoke.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/smoke/O2/rune-opt
+nbody-sandmark	smoke	host-default	native-mlkit-4.7.23	10 expected/smoke.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/smoke/host-default/native-mlkit-4.7.23
+nbody-sandmark	smoke	host-default	native-mlton-20241230	10 expected/smoke.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/smoke/host-default/native-mlton-20241230
+nbody-sandmark	smoke	host-default	native-polyml-5.9.2	10 expected/smoke.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/smoke/host-default/native-polyml-5.9.2
+nbody-sandmark	smoke	host-default	native-smlnj-dev-2026.2	10 expected/smoke.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/smoke/host-default/native-smlnj-dev-2026.2
+nbody-sandmark	smoke	host-default	native-smlnj-legacy-110.99.9	10 expected/smoke.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/smoke/host-default/native-smlnj-legacy-110.99.9
+nbody-sandmark	smoke	host-default	native-smlnj32-110.99.9	10 expected/smoke.txt 1.0E~10 1.0E~10	pass	results/m5-game-numerical/attempts-raw/final-game-numerical.ay2tkq27/nbody-sandmark/smoke/host-default/native-smlnj32-110.99.9

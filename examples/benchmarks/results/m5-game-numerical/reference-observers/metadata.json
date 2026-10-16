@@ -1,0 +1,89 @@
+[
+  {
+    "program": "nbody",
+    "steps": 0,
+    "seconds": 0.00689542997861281,
+    "sha256": "71cd65cd4e8ad6653fa33c307f2a719f1de5199e1a750cd4a49cf4321f0d6a1f"
+  },
+  {
+    "program": "nbody",
+    "steps": 10,
+    "seconds": 0.00621890596812591,
+    "sha256": "65da9fd6e3f1c4105c8bd4545cfa29b260cd50a74f0a9f4bb089dc1d47853c8a"
+  },
+  {
+    "program": "nbody",
+    "steps": 10000,
+    "seconds": 0.009768021001946181,
+    "sha256": "4a2b89c8b1b2fe0ffc802ff8c2d785f217a70a1c618bfeeeddb0548f51fcbb55"
+  },
+  {
+    "program": "nbody",
+    "steps": 50000000,
+    "seconds": 14.914602977980394,
+    "sha256": "4819b97c4a57c5587f033f001bd14d4977e7f5dddfa287cdb898a6da788d10b4"
+  },
+  {
+    "program": "mandelbrot6",
+    "width": 1,
+    "bytes": 8,
+    "seconds": 0.0030253719887696207,
+    "sha256": "a8ed35a163cba662b15fe455af22d5f91668d6eb59ef9a2aa9e19e1658745819"
+  },
+  {
+    "program": "mandelbrot6",
+    "width": 7,
+    "bytes": 14,
+    "seconds": 0.006259739981032908,
+    "sha256": "5c8c0137a526ae1609eb7fd0b4cf7b2502816f9c8fdebab1346e47923d43c108"
+  },
+  {
+    "program": "mandelbrot6",
+    "width": 8,
+    "bytes": 15,
+    "seconds": 0.003259770048316568,
+    "sha256": "5cb3c72ff26073f0dcd32ae46289dcf3ef468694ab383f4b98b1bf33c155f6d3"
+  },
+  {
+    "program": "mandelbrot6",
+    "width": 9,
+    "bytes": 25,
+    "seconds": 0.0026752440026029944,
+    "sha256": "938f0a0fb19d6e0d884754e89369ae63cf71b840291bc40796692859cec261ce"
+  },
+  {
+    "program": "mandelbrot6",
+    "width": 16,
+    "bytes": 41,
+    "seconds": 0.0029247129568830132,
+    "sha256": "8560a9f45ef36c9d5d15f5024ad4c91a322a4b373d675d163f6cf51f54d5b141"
+  },
+  {
+    "program": "mandelbrot6",
+    "width": 17,
+    "bytes": 60,
+    "seconds": 0.00397149397758767,
+    "sha256": "11a01916753a7774492b5b818545d4d6dfaabcd93de1da2c4eb5dd3597fcaf79"
+  },
+  {
+    "program": "mandelbrot6",
+    "width": 64,
+    "bytes": 521,
+    "seconds": 0.005310111038852483,
+    "sha256": "54e0a14da37569cba6fa618c771c2704f6711783326b2b42197fc533c8f1337b"
+  },
+  {
+    "program": "mandelbrot6",
+    "width": 256,
+    "bytes": 8203,
+    "seconds": 0.017309613001998514,
+    "sha256": "57960e156292a51abda32531136363feb782d5bbfcb63170e531bc8cd7445766"
+  },
+  {
+    "program": "mandelbrot6",
+    "width": 16000,
+    "bytes": 32000015,
+    "seconds": 27.90889923000941,
+    "sha256": "609262469ee6a0262ccd03932e557f745c9e7b997ad17835a02a0232a64807be"
+  }
+]

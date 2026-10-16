@@ -1,0 +1,4 @@
+RESULT 10:37:checked
+PASS nbody-sandmark
+SAMPLE 1 0.000140000
+SUMMARY 1 checks, 0 failed

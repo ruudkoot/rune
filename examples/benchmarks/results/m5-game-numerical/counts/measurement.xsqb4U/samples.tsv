@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+nbody-sandmark	normal	rune	O2	compile	0	0	pass	1.31	1.30	0.05	135352	-	-	-	nbody-sandmark/rune/build/compile
+nbody-sandmark	normal	rune	O2	correctness	0	0	pass	0.07	0.08	0.00	6036	19639364	3808160	75546	nbody-sandmark/rune/correctness.0
+nbody-sandmark	normal	rune	O2	count	1	1	pass	0.07	0.08	0.00	6040	19639364	3808160	75546	nbody-sandmark/rune/fresh.1
+nbody-sandmark	normal	rune:opt	O2	compile	0	0	pass	1.54	1.49	0.11	135316	-	-	-	nbody-sandmark/rune-opt/build/compile
+nbody-sandmark	normal	rune:opt	O2	native-compile	0	0	pass	0.37	0.24	0.03	12408	-	-	-	nbody-sandmark/rune-opt/build/native-compile
+nbody-sandmark	normal	rune:opt	O2	correctness	0	0	pass	0.04	0.03	0.01	6396	19639364	3808160	75546	nbody-sandmark/rune-opt/correctness.0
+nbody-sandmark	normal	rune:opt	O2	count	1	1	pass	0.04	0.03	0.00	6424	19639364	3808160	75546	nbody-sandmark/rune-opt/fresh.1
+nbody-sandmark	normal	rune:new	O2	compile	0	0	pass	3.07	1.70	0.09	135300	-	-	-	nbody-sandmark/rune-new/build/compile
+nbody-sandmark	normal	rune:new	O2	correctness	0	0	pass	0.07	0.07	0.00	6032	12735255	3808160	75546	nbody-sandmark/rune-new/correctness.0
+nbody-sandmark	normal	rune:new	O2	count	1	1	pass	0.06	0.06	0.00	6100	12735255	3808160	75546	nbody-sandmark/rune-new/fresh.1
+nbody-sandmark	normal	rune:jit	O2	compile	0	0	pass	1.48	1.44	0.09	135248	-	-	-	nbody-sandmark/rune-jit/build/compile
+nbody-sandmark	normal	rune:jit	O2	correctness	0	0	pass	0.02	0.02	0.00	7244	12735255	3808160	75546	nbody-sandmark/rune-jit/correctness.0
+nbody-sandmark	normal	rune:jit	O2	count	1	1	pass	0.03	0.02	0.00	7244	12735255	3808160	75546	nbody-sandmark/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

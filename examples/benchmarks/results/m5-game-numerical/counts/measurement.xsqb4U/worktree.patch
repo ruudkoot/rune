@@ -1,0 +1,162 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index c67837d8..d272ceea 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -278,6 +278,8 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [qr-decomposition](#qr-decomposition) | [Sandmark qr_decomposition](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/numerical-analysis/qr_decomposition.ml) | Build dense Householder QR factors and check orthogonality and complete reconstruction. |
+ | [crout-decomposition](#crout-decomposition) | [Sandmark crout_decomposition](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/numerical-analysis/crout_decomposition.ml) | Run source-specific Crout updates and dense permutation reconstruction with reviewed numerical outputs. |
+ | [naive-multilayer](#naive-multilayer) | [Sandmark neural network](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/numerical-analysis/naive_multilayer.ml) | Train a sequential multilayer classifier using dense Jacobian backpropagation on the complete Ionosphere dataset. |
++| [nbody-sandmark](#nbody-sandmark) | [Sandmark nbody](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/benchmarksgame/nbody.ml) | Advance five mutable planet records with ordered pair forces and verify complete states and energies. |
++| [mandelbrot6](#mandelbrot6) | [Sandmark mandelbrot6](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/benchmarksgame/mandelbrot6.ml) | Render the source 50-step Mandelbrot bitmap with per-pixel exceptions and exact streamed byte checks. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -384,6 +386,7 @@ sh tests/benchmarks/check-puzzle.sh
+ sh tests/benchmarks/check-sandmark-fft.sh
+ sh tests/benchmarks/check-sandmark-numerical.sh
+ sh tests/benchmarks/check-multilayer.sh
++sh tests/benchmarks/check-game-numerical.sh
+ python3 tests/benchmarks/test-inventory.py
+ python3 scripts/benchmark-inventory.py --check
+ ```
+@@ -10644,3 +10647,126 @@ supported by compiler inspection or measurement. Standard comparisons use
+ identical SML; OCaml and independent training supply correctness references.
+ 
+ [Complete provenance](naive-multilayer/PROVENANCE.md).
++
++## nbody-sandmark
++
++Sandmark 5605805954a00497ed197c930641cddd580e1507,
++benchmarks/benchmarksgame/nbody.ml. The header credits Christophe Troestler.
++Retain the directory Revised BSD notice and its original CRLF bytes, source,
++build/run metadata and identities. The five-body constants are embedded program
++data; no external astronomical dataset is acquired.
++
++## Algorithm and known variants
++
++Simulate the Sun and four outer planets by direct pairwise gravitational
++updates, fixed timestep 0.01, and a separate position-update pass. Preserve
++pair order, dx*otherMass*mag multiplication association, source pi literal,
++solar_mass=4*pi*pi, forward mutable momentum sums including the initially
++stationary Sun, and kinetic-before-potential energy accumulation.
++
++The classic SML/NJ nbody uses immutable data. nofib's n-body uses a contiguous
++seven-slot mutable body layout, different momentum/energy summation order and
++position-update placement. Share neither implementation nor name merely because
++the physical equations agree. This source's mutable records become SML records
++with six real refs and an immutable mass. Record layout, boxing and aliasing
++are explicit translation choices. No array-of-scalars replacement or change
++to force accumulation is introduced.
++
++## Profiles, observation and validation
++
++Smoke 10 and normal 10,000 are reduced step counts; large preserves the selected
++50,000,000-step upstream run. Reconstruct all bodies and offset momentum at
++every invocation, including repeated calls. This resets the original mutable
++globals and gives each run the same physical initial conditions. Selected
++indices/counters fit 31 bits; all numerical work is binary64 on supported hosts.
++
++The original prints two energies with nine fractional digits. The portable
++driver checks full-precision initial/final energies and all 35 final body fields,
++then reports steps:37:checked. No energy alone substitutes for the complete
++state. Absolute/relative budgets are 1e-10/1e-10 for smoke/normal and 1e-5/1e-8
++for large, allowing accumulated integration/math-library rounding on the
++selected trajectories. They are not general orbit/energy conservation bounds.
++Reference parsing and validation are measured work. No physical constants,
++step count, timestep or stopping rule is changed.
++
++Original two-line outputs agree with rounded observer energies at 0/10/10,000/
++50,000,000 steps. An independent 60-digit integration from the exact zero-step
++binary64 state validates all smoke/normal coordinates and velocities, energies
++and momentum. At 10,000 steps, maximum state error is about 6.8e-12 and energy
++error about 5.3e-16. Full large original state is retained; universal large SML
++execution/high-precision large integration is not claimed.
++
++Semantic checks include complete states, independent fresh records, momentum,
++hand-computed two-body updates, kinetic/potential energy, one-body drift and
++perturbed/missing/nonfinite state rejection. Mutable record allocation, ref
++accesses, scalar arithmetic, loop specialization and energy order are diagnostic
++hypotheses until investigated by compiler inspection or measurements.
++
++## References
++
++The [Benchmarks Game n-body description](https://benchmarksgame-team.pages.debian.net/benchmarksgame/description/nbody.html)
++and retained program identify this direct workload. The shared numerical
++literature map distinguishes direct pairwise integration from Barnes-Hut tree
++approximation; historical timings do not transfer to this port. Standard
++reports compare identical SML; OCaml/high-precision physics supply references.
++
++[Complete provenance](nbody-sandmark/PROVENANCE.md).
++
++## mandelbrot6
++
++Sandmark 5605805954a00497ed197c930641cddd580e1507,
++benchmarks/benchmarksgame/mandelbrot6.ml. The header credits Paolo Ribeca and
++its earlier OCaml 3 ancestry to Christophe Troestler, Christian Szegedy and
++Yaron Minsky. Retain that header and the directory Revised BSD notice with
++its original CRLF bytes. No external image/input dataset is acquired.
++
++## Algorithm and variants
++
++Render the source viewport with zr/zi/trmti scalar refs, at most 50 iterations
++and strict squared escape test >4. Preserve zi-before-zr updates, cached previous
++square difference, increment order and per-pixel Exit exception/handler.
++A successful last iteration sets the bit; an escape clears it. Emit the exact
++binary P4 header, MSB-first bytes and zero-padded final row byte.
++
++The source carries one shifting int accumulator across all rows without reset.
++Only its low eight bits reach output_byte. The port uses Word8 shifts/or with
++modulo 256 truncation, preserving every observed byte while making machine-width
++arithmetic portable. Do not replace it by a signed 31-bit accumulator that can
++overflow. Keep the shared accumulator, odd-width padding and exception pattern.
++Other classic/nofib Mandelbrot programs have different viewport/iteration/data
++representations and remain separately named.
++
++## Profiles and result checks
++
++Smoke 17 explicitly exercises partial bytes; normal 256 is reduced comparative
++work. Large preserves the selected 16,000-square source run. Inputs use the
++same coordinate division and fixed 50-step limit, with no clock-dependent search.
++All selected counters fit 31 bits; numerical operations use binary64.
++
++A thin emit callback replaces output_byte. It reads and compares every expected
++PBM byte through SML97 BinIO, then requires EOF. Streaming verification keeps
++memory bounded rather than retaining the full image; expected-file I/O and
++comparison are measured work. The source's diagnostic header and bit encoding
++remain exact. The final result reports width:checked-bytes. There is no
++floating error tolerance that accepts a different classification bitmap.
++
++Original images at 1/7/8/9/16/17/64/256 and 16,000 have verified headers, sizes
++and identities. An independent direct-complex iterator with separate row-bit
++packing agrees on every byte through normal size. Full 32,000,015-byte large
++source image is retained. Large SML execution is claimed only where explicitly
++recorded. Numeric roundoff near escape boundaries is therefore observable.
++
++Semantic/negative checks cover every small image, aligned and partial rows,
++perturbation (including padding), truncation and extra bytes. No SIMD batching,
++algorithmic symmetry, alternate inside test or skipped output replaces the
++source. Float refs, loops, exceptions, byte arithmetic, branch behavior and
++stream I/O are source-based diagnostic questions until measured or inspected.
++
++## References
++
++The [Benchmarks Game Mandelbrot description](https://benchmarksgame-team.pages.debian.net/benchmarksgame/description/mandelbrot.html)
++provides problem context; the retained source defines this 50-step approximation
++and output convention. Standard reports compare identical SML, with OCaml and
++independent complex arithmetic as correctness references.
++
++[Complete provenance](mandelbrot6/PROVENANCE.md).
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 0008d392..b94507be 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -803,3 +803,9 @@ crout-decomposition	large	sandmark	benchmarks/numerical-analysis/crout_decomposi
+ naive-multilayer	smoke	sandmark	benchmarks/numerical-analysis/naive_multilayer.exe	1 expected/smoke.txt	naive-multilayer/smoke.expected	shared/input.sml,shared/lazy.sml,shared/ocaml-random.sml,shared/sandmark-multilayer.sml,shared/multilayer-files.sml,naive-multilayer/benchmark.sml,shared/main.sml	30	1048576	numerical,neural-network,higher-order,arrays,floating-point,allocation-lifetimes	data/samples.txt,expected/smoke.txt	exact	implemented
+ naive-multilayer	normal	sandmark	benchmarks/numerical-analysis/naive_multilayer.exe	20 expected/normal.txt	naive-multilayer/normal.expected	shared/input.sml,shared/lazy.sml,shared/ocaml-random.sml,shared/sandmark-multilayer.sml,shared/multilayer-files.sml,naive-multilayer/benchmark.sml,shared/main.sml	600	4194304	numerical,neural-network,higher-order,arrays,floating-point,allocation-lifetimes	data/samples.txt,expected/normal.txt	exact	implemented
+ naive-multilayer	large	sandmark	benchmarks/numerical-analysis/naive_multilayer.exe	1000 expected/large.txt	naive-multilayer/large.expected	shared/input.sml,shared/lazy.sml,shared/ocaml-random.sml,shared/sandmark-multilayer.sml,shared/multilayer-files.sml,naive-multilayer/benchmark.sml,shared/main.sml	3600	8388608	numerical,neural-network,higher-order,arrays,floating-point,allocation-lifetimes	data/samples.txt,expected/large.txt	exact	implemented
++nbody-sandmark	smoke	sandmark	benchmarks/benchmarksgame/nbody.exe	10 expected/smoke.txt 1.0E~10 1.0E~10	nbody-sandmark/smoke.expected	shared/input.sml,shared/sandmark-nbody.sml,shared/record-nbody-check.sml,nbody-sandmark/benchmark.sml,shared/main.sml	30	1048576	numerical,floating-point,mutable-records	expected/smoke.txt	checked-numerical	implemented
++nbody-sandmark	normal	sandmark	benchmarks/benchmarksgame/nbody.exe	10000 expected/normal.txt 1.0E~10 1.0E~10	nbody-sandmark/normal.expected	shared/input.sml,shared/sandmark-nbody.sml,shared/record-nbody-check.sml,nbody-sandmark/benchmark.sml,shared/main.sml	600	4194304	numerical,floating-point,mutable-records	expected/normal.txt	checked-numerical	implemented
++nbody-sandmark	large	sandmark	benchmarks/benchmarksgame/nbody.exe	50000000 expected/large.txt 1.0E~5 1.0E~8	nbody-sandmark/large.expected	shared/input.sml,shared/sandmark-nbody.sml,shared/record-nbody-check.sml,nbody-sandmark/benchmark.sml,shared/main.sml	3600	8388608	numerical,floating-point,mutable-records	expected/large.txt	checked-numerical	implemented
++mandelbrot6	smoke	sandmark	benchmarks/benchmarksgame/mandelbrot6.exe	17 expected/smoke.pbm	mandelbrot6/smoke.expected	shared/input.sml,shared/sandmark-mandelbrot6.sml,shared/pbm-check.sml,mandelbrot6/benchmark.sml,shared/main.sml	30	1048576	numerical,floating-point,exceptions,bit-packing,streaming	expected/smoke.pbm	exact	implemented
++mandelbrot6	normal	sandmark	benchmarks/benchmarksgame/mandelbrot6.exe	256 expected/normal.pbm	mandelbrot6/normal.expected	shared/input.sml,shared/sandmark-mandelbrot6.sml,shared/pbm-check.sml,mandelbrot6/benchmark.sml,shared/main.sml	600	4194304	numerical,floating-point,exceptions,bit-packing,streaming	expected/normal.pbm	exact	implemented
++mandelbrot6	large	sandmark	benchmarks/benchmarksgame/mandelbrot6.exe	16000 expected/large.pbm	mandelbrot6/large.expected	shared/input.sml,shared/sandmark-mandelbrot6.sml,shared/pbm-check.sml,mandelbrot6/benchmark.sml,shared/main.sml	3600	8388608	numerical,floating-point,exceptions,bit-packing,streaming	expected/large.pbm	exact	implemented

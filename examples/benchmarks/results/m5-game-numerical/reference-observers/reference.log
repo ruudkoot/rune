@@ -1,0 +1,13 @@
+PASS complete original nbody 0
+PASS complete original nbody 10
+PASS complete original nbody 10000
+PASS complete original nbody 50000000
+PASS original PBM 1 8
+PASS original PBM 7 14
+PASS original PBM 8 15
+PASS original PBM 9 25
+PASS original PBM 16 41
+PASS original PBM 17 60
+PASS original PBM 64 521
+PASS original PBM 256 8203
+PASS original PBM 16000 32000015

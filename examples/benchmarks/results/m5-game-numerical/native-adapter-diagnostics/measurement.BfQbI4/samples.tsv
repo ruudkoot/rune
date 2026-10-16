@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+mandelbrot6	smoke	native:mlton@20241230	O2	compile	0	0	pass	4.60	3.62	0.98	673468	-	-	-	mandelbrot6/native-mlton/build/compile
+mandelbrot6	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2116	-	-	-	mandelbrot6/native-mlton/correctness.0
+mandelbrot6	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2140	-	-	-	mandelbrot6/native-mlton/fresh.1
+mandelbrot6	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.13	0.11	0.02	31544	-	-	-	mandelbrot6/native-smlnj-legacy/build/compile
+mandelbrot6	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.01	0.00	4096	-	-	-	mandelbrot6/native-smlnj-legacy/correctness.0
+mandelbrot6	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.01	0.00	4016	-	-	-	mandelbrot6/native-smlnj-legacy/fresh.1
+mandelbrot6	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.26	0.07	0.07	27460	-	-	-	mandelbrot6/native-polyml/build/compile
+mandelbrot6	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	5888	-	-	-	mandelbrot6/native-polyml/correctness.0
+mandelbrot6	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	5856	-	-	-	mandelbrot6/native-polyml/fresh.1
