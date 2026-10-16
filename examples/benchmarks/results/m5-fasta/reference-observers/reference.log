@@ -1,0 +1,8 @@
+PASS original and independent complete RNG cycle fasta3
+PASS original and independent complete RNG cycle fasta6
+PASS original and independent complete FASTA output fasta3 smoke 151
+PASS original and independent complete FASTA output fasta6 smoke 151
+PASS original and independent complete FASTA output fasta3 normal 50000
+PASS original and independent complete FASTA output fasta6 normal 50000
+PASS original and independent complete FASTA output fasta3 large 25000000
+PASS original and independent complete FASTA output fasta6 large 25000000

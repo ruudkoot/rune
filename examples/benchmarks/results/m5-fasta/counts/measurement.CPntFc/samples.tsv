@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+fasta6	normal	rune	O2	compile	0	0	pass	1.31	1.34	0.05	135244	-	-	-	fasta6/rune/build/compile
+fasta6	normal	rune	O2	correctness	0	0	pass	0.44	0.43	0.03	35092	94220308	60961008	1327972	fasta6/rune/correctness.0
+fasta6	normal	rune	O2	count	1	1	pass	0.44	0.44	0.02	35076	94220308	60961008	1327972	fasta6/rune/fresh.1
+fasta6	normal	rune:opt	O2	compile	0	0	pass	1.39	1.39	0.09	135228	-	-	-	fasta6/rune-opt/build/compile
+fasta6	normal	rune:opt	O2	native-compile	0	0	pass	0.33	0.18	0.02	12260	-	-	-	fasta6/rune-opt/build/native-compile
+fasta6	normal	rune:opt	O2	correctness	0	0	pass	0.19	0.16	0.04	35508	94220308	60961008	1327972	fasta6/rune-opt/correctness.0
+fasta6	normal	rune:opt	O2	count	1	1	pass	0.20	0.17	0.05	35512	94220308	60961008	1327972	fasta6/rune-opt/fresh.1
+fasta6	normal	rune:new	O2	compile	0	0	pass	1.37	1.33	0.11	135084	-	-	-	fasta6/rune-new/build/compile
+fasta6	normal	rune:new	O2	correctness	0	0	pass	0.39	0.39	0.01	35184	70636567	60961008	1327972	fasta6/rune-new/correctness.0
+fasta6	normal	rune:new	O2	count	1	1	pass	0.33	0.31	0.02	35152	70636567	60961008	1327972	fasta6/rune-new/fresh.1
+fasta6	normal	rune:jit	O2	compile	0	0	pass	1.23	1.23	0.04	135244	-	-	-	fasta6/rune-jit/build/compile
+fasta6	normal	rune:jit	O2	correctness	0	0	pass	0.17	0.13	0.03	36160	70636567	60961008	1327972	fasta6/rune-jit/correctness.0
+fasta6	normal	rune:jit	O2	count	1	1	pass	0.16	0.13	0.03	36228	70636567	60961008	1327972	fasta6/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

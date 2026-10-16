@@ -1,0 +1,5 @@
+COUNT unbudgeted fasta6 normal rune
+COUNT unbudgeted fasta6 normal rune:opt
+COUNT unbudgeted fasta6 normal rune:new
+COUNT unbudgeted fasta6 normal rune:jit
+COUNT comparisons agree

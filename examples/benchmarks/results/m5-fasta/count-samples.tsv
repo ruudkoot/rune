@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+fasta3	normal	rune	O2	count	1	1	pass	0.43	0.45	0.00	10512	91447408	50703944	1234301	counts/measurement.6ngsjO/fasta3/rune/fresh.1
+fasta3	normal	rune:opt	O2	count	1	1	pass	0.16	0.16	0.00	10948	91447408	50703944	1234301	counts/measurement.6ngsjO/fasta3/rune-opt/fresh.1
+fasta3	normal	rune:new	O2	count	1	1	pass	0.36	0.37	0.00	10532	70599578	50703944	1234301	counts/measurement.6ngsjO/fasta3/rune-new/fresh.1
+fasta3	normal	rune:jit	O2	count	1	1	pass	0.13	0.12	0.01	11592	70599578	50703944	1234301	counts/measurement.6ngsjO/fasta3/rune-jit/fresh.1
+fasta6	normal	rune	O2	count	1	1	pass	0.44	0.44	0.02	35076	94220308	60961008	1327972	counts/measurement.CPntFc/fasta6/rune/fresh.1
+fasta6	normal	rune:opt	O2	count	1	1	pass	0.20	0.17	0.05	35512	94220308	60961008	1327972	counts/measurement.CPntFc/fasta6/rune-opt/fresh.1
+fasta6	normal	rune:new	O2	count	1	1	pass	0.33	0.31	0.02	35152	70636567	60961008	1327972	counts/measurement.CPntFc/fasta6/rune-new/fresh.1
+fasta6	normal	rune:jit	O2	count	1	1	pass	0.16	0.13	0.03	36228	70636567	60961008	1327972	counts/measurement.CPntFc/fasta6/rune-jit/fresh.1

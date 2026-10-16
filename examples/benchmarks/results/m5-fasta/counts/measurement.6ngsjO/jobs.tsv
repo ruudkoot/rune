@@ -1,0 +1,1 @@
+fasta3	600	4194304	shared/input.sml shared/sandmark-fasta.sml shared/fasta-cycle-check.sml fasta3/benchmark.sml shared/main.sml	50000 oracle/alu.data oracle/iub.cycle oracle/homo.cycle	fasta3/normal.expected	oracle/alu.data oracle/iub.cycle oracle/homo.cycle

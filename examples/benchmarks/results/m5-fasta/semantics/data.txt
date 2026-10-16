@@ -1,0 +1,5 @@
+alu.data
+fasta3-iub.cycle
+fasta3-homo.cycle
+fasta3-smoke.output
+fasta6-smoke.output

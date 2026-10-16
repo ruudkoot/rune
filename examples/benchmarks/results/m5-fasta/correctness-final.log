@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-sandmark-fasta.v_mm3yu0
+PASS fasta3 smoke O0
+PASS fasta3 smoke O2
+PASS fasta3 smoke hosts
+PASS fasta3 normal O0
+PASS fasta3 normal O2
+PASS fasta3 normal hosts
+PASS fasta6 smoke O0
+PASS fasta6 smoke O2
+PASS fasta6 smoke hosts
+PASS fasta6 normal O0
+PASS fasta6 normal O2
+PASS fasta6 normal hosts

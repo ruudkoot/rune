@@ -1,0 +1,486 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS sandmark-fasta/embedded-alu
+PASS sandmark-fasta/both-original-smokes
+PASS sandmark-fasta/reviewed-cycle-oracle
+PASS sandmark-fasta/line-boundary-variants
+PASS sandmark-fasta/circular-boundary-index
+PASS sandmark-fasta/rejects-truncated-output
+PASS sandmark-fasta/rejects-extra-output
+PASS sandmark-fasta/reset-between-runs
+PASS sandmark-fasta/rejects-wrong-cycle-byte
+SUMMARY 9 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+PASS sandmark-fasta/embedded-alu
+PASS sandmark-fasta/both-original-smokes
+PASS sandmark-fasta/reviewed-cycle-oracle
+PASS sandmark-fasta/line-boundary-variants
+PASS sandmark-fasta/circular-boundary-index
+PASS sandmark-fasta/rejects-truncated-output
+PASS sandmark-fasta/rejects-extra-output
+PASS sandmark-fasta/reset-between-runs
+PASS sandmark-fasta/rejects-wrong-cycle-byte
+SUMMARY 9 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+PASS sandmark-fasta/embedded-alu
+PASS sandmark-fasta/both-original-smokes
+PASS sandmark-fasta/reviewed-cycle-oracle
+PASS sandmark-fasta/line-boundary-variants
+PASS sandmark-fasta/circular-boundary-index
+PASS sandmark-fasta/rejects-truncated-output
+PASS sandmark-fasta/rejects-extra-output
+PASS sandmark-fasta/reset-between-runs
+PASS sandmark-fasta/rejects-wrong-cycle-byte
+SUMMARY 9 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+PASS sandmark-fasta/embedded-alu
+PASS sandmark-fasta/both-original-smokes
+PASS sandmark-fasta/reviewed-cycle-oracle
+PASS sandmark-fasta/line-boundary-variants
+PASS sandmark-fasta/circular-boundary-index
+PASS sandmark-fasta/rejects-truncated-output
+PASS sandmark-fasta/rejects-extra-output
+PASS sandmark-fasta/reset-between-runs
+PASS sandmark-fasta/rejects-wrong-cycle-byte
+SUMMARY 9 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 1048576 KiB
+PASS sandmark-fasta/embedded-alu
+PASS sandmark-fasta/both-original-smokes
+PASS sandmark-fasta/reviewed-cycle-oracle
+PASS sandmark-fasta/line-boundary-variants
+PASS sandmark-fasta/circular-boundary-index
+PASS sandmark-fasta/rejects-truncated-output
+PASS sandmark-fasta/rejects-extra-output
+PASS sandmark-fasta/reset-between-runs
+PASS sandmark-fasta/rejects-wrong-cycle-byte
+SUMMARY 9 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-fasta.sml]
+[autoloading]
+[autoloading done]
+structure BenchSandmarkFasta : sig
+  type output =
+    {buffer:CharArray.array * int * int -> unit, character:char -> unit,
+      text:string * int * int -> unit}
+  val modulus : int
+  val width : int
+  val modulusReal : real
+  val inverse : real
+  val last : int ref
+  val alu : string
+  val iub : (char * real) array
+  val homo : (char * real) array
+  val for : int -> int -> (int -> 'a) -> unit
+  val step : int -> int
+  val text : output -> string -> unit
+  val newline : output -> unit
+  val writeCircular : (int * int -> 'a) -> int -> int -> int -> int
+  val repeat : output -> (int * int -> 'a) -> int -> int -> unit
+  val make3 : (char * real) array -> real array * char array
+  val random3 : real -> real
+  val char3 : real array * 'a array -> 'a
+  val randomBlock3 :
+      output -> string -> string -> (char * real) array -> int -> unit
+  val run3 : int -> output -> unit
+  val make6 : (char * real) array -> real array * char array
+  val char6 :
+      int
+       -> real array -> CharArray.array -> int -> CharArray.elem array -> int
+  val randomBlock6 :
+      output -> int -> string -> string -> (char * real) array -> int -> int
+  val run6 : int -> output -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/fasta-cycle-check.sml]
+[autoloading]
+[autoloading done]
+structure BenchFastaCycleCheck : sig
+  val read : string -> TextIO.vector
+  val run :
+      (int
+        -> {buffer:CharArray.array * int * int -> unit,
+         character:char -> unit, text:string * int * int -> unit}
+        -> 'a)
+       -> int -> string -> string -> string -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sandmark-fasta-checks.sml]
+PASS sandmark-fasta/embedded-alu
+PASS sandmark-fasta/both-original-smokes
+PASS sandmark-fasta/reviewed-cycle-oracle
+PASS sandmark-fasta/line-boundary-variants
+PASS sandmark-fasta/circular-boundary-index
+PASS sandmark-fasta/rejects-truncated-output
+PASS sandmark-fasta/rejects-extra-output
+PASS sandmark-fasta/reset-between-runs
+PASS sandmark-fasta/rejects-wrong-cycle-byte
+structure SandmarkFastaTests : sig
+  val contents : string -> TextIO.vector
+  val alu : TextIO.vector
+  val iub : TextIO.vector
+  val homo : TextIO.vector
+  val collect :
+      ('a
+        -> {buffer:CharArray.array * int * int -> unit,
+         character:char -> unit, text:string * int * int -> unit}
+        -> 'b)
+       -> 'a -> string
+end
+structure SandmarkFastaOracleNegative : sig end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 9 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-fasta.sml]
+[autoloading]
+[autoloading done]
+structure BenchSandmarkFasta : sig
+  type output =
+    {buffer:CharArray.array * int * int -> unit, character:char -> unit,
+      text:string * int * int -> unit}
+  val modulus : int
+  val width : int
+  val modulusReal : real
+  val inverse : real
+  val last : int ref
+  val alu : string
+  val iub : (char * real) array
+  val homo : (char * real) array
+  val for : int -> int -> (int -> 'a) -> unit
+  val step : int -> int
+  val text : output -> string -> unit
+  val newline : output -> unit
+  val writeCircular : (int * int -> 'a) -> int -> int -> int -> int
+  val repeat : output -> (int * int -> 'a) -> int -> int -> unit
+  val make3 : (char * real) array -> real array * char array
+  val random3 : real -> real
+  val char3 : real array * 'a array -> 'a
+  val randomBlock3 :
+      output -> string -> string -> (char * real) array -> int -> unit
+  val run3 : int -> output -> unit
+  val make6 : (char * real) array -> real array * char array
+  val char6 :
+      int
+       -> real array -> CharArray.array -> int -> CharArray.elem array -> int
+  val randomBlock6 :
+      output -> int -> string -> string -> (char * real) array -> int -> int
+  val run6 : int -> output -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/fasta-cycle-check.sml]
+[autoloading]
+[autoloading done]
+structure BenchFastaCycleCheck : sig
+  val read : string -> TextIO.vector
+  val run :
+      (int
+        -> {buffer:CharArray.array * int * int -> unit,
+         character:char -> unit, text:string * int * int -> unit}
+        -> 'a)
+       -> int -> string -> string -> string -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sandmark-fasta-checks.sml]
+PASS sandmark-fasta/embedded-alu
+PASS sandmark-fasta/both-original-smokes
+PASS sandmark-fasta/reviewed-cycle-oracle
+PASS sandmark-fasta/line-boundary-variants
+PASS sandmark-fasta/circular-boundary-index
+PASS sandmark-fasta/rejects-truncated-output
+PASS sandmark-fasta/rejects-extra-output
+PASS sandmark-fasta/reset-between-runs
+PASS sandmark-fasta/rejects-wrong-cycle-byte
+structure SandmarkFastaTests : sig
+  val contents : string -> TextIO.vector
+  val alu : TextIO.vector
+  val iub : TextIO.vector
+  val homo : TextIO.vector
+  val collect :
+      ('a
+        -> {buffer:CharArray.array * int * int -> unit,
+         character:char -> unit, text:string * int * int -> unit}
+        -> 'b)
+       -> 'a -> string
+end
+structure SandmarkFastaOracleNegative : sig end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 9 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-fasta.sml]
+structure BenchSandmarkFasta : 
+  sig
+    type output =
+      {buffer:CharArray.array * int * int -> unit, character:char -> unit,
+        text:string * int * int -> unit}
+    val modulus : int
+    val width : int
+    val modulusReal : real
+    val inverse : real
+    val last : int ref
+    val alu : string
+    val iub : (char * real) array
+    val homo : (char * real) array
+    val for : int -> int -> (int -> 'a) -> unit
+    val step : int -> int
+    val text : output -> string -> unit
+    val newline : output -> unit
+    val writeCircular : (int * int -> 'a) -> int -> int -> int -> int
+    val repeat : output -> (int * int -> 'a) -> int -> int -> unit
+    val make3 : (char * real) array -> real array * char array
+    val random3 : real -> real
+    val char3 : real array * 'a array -> 'a
+    val randomBlock3 : output
+                        -> string
+                        -> string -> (char * real) array -> int -> unit
+    val run3 : int -> output -> unit
+    val make6 : (char * real) array -> real array * char array
+    val char6 : int
+                 -> real array
+                 -> CharArray.array -> int -> CharArray.elem array -> int
+    val randomBlock6 : output
+                        -> int
+                        -> string
+                        -> string -> (char * real) array -> int -> int
+    val run6 : int -> output -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/fasta-cycle-check.sml]
+structure BenchFastaCycleCheck : 
+  sig
+    val read : string -> TextIO.vector
+    val run : (int
+                -> {buffer:CharArray.array * int * int -> unit,
+                 character:char -> unit, text:string * int * int -> unit}
+                -> 'a)
+               -> int -> string -> string -> string -> int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sandmark-fasta-checks.sml]
+PASS sandmark-fasta/embedded-alu
+PASS sandmark-fasta/both-original-smokes
+PASS sandmark-fasta/reviewed-cycle-oracle
+PASS sandmark-fasta/line-boundary-variants
+PASS sandmark-fasta/circular-boundary-index
+PASS sandmark-fasta/rejects-truncated-output
+PASS sandmark-fasta/rejects-extra-output
+PASS sandmark-fasta/reset-between-runs
+PASS sandmark-fasta/rejects-wrong-cycle-byte
+structure SandmarkFastaTests : 
+  sig
+    val contents : string -> TextIO.vector
+    val alu : TextIO.vector
+    val iub : TextIO.vector
+    val homo : TextIO.vector
+    val collect : ('a
+                    -> {buffer:CharArray.array * int * int -> unit,
+                     character:char -> unit, text:string * int * int -> unit}
+                    -> 'b)
+                   -> 'a -> string
+  end
+structure SandmarkFastaOracleNegative : sig end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 9 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS sandmark-fasta/embedded-alu
+PASS sandmark-fasta/both-original-smokes
+PASS sandmark-fasta/reviewed-cycle-oracle
+PASS sandmark-fasta/line-boundary-variants
+PASS sandmark-fasta/circular-boundary-index
+PASS sandmark-fasta/rejects-truncated-output
+PASS sandmark-fasta/rejects-extra-output
+PASS sandmark-fasta/reset-between-runs
+PASS sandmark-fasta/rejects-wrong-cycle-byte
+SUMMARY 9 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PASS sandmark-fasta/embedded-alu
+PASS sandmark-fasta/both-original-smokes
+PASS sandmark-fasta/reviewed-cycle-oracle
+PASS sandmark-fasta/line-boundary-variants
+PASS sandmark-fasta/circular-boundary-index
+PASS sandmark-fasta/rejects-truncated-output
+PASS sandmark-fasta/rejects-extra-output
+PASS sandmark-fasta/reset-between-runs
+PASS sandmark-fasta/rejects-wrong-cycle-byte
+SUMMARY 9 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

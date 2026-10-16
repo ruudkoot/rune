@@ -1,0 +1,69 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-fasta.sml]
+[autoloading]
+[autoloading done]
+structure BenchSandmarkFasta : sig
+  type output =
+    {buffer:CharArray.array * int * int -> unit, character:char -> unit,
+      text:string * int * int -> unit}
+  val modulus : int
+  val width : int
+  val modulusReal : real
+  val inverse : real
+  val last : int ref
+  val alu : string
+  val iub : (char * real) array
+  val homo : (char * real) array
+  val for : int -> int -> (int -> 'a) -> unit
+  val step : int -> int
+  val text : output -> string -> unit
+  val newline : output -> unit
+  val writeCircular : (int * int -> 'a) -> int -> int -> int -> int
+  val repeat : output -> (int * int -> 'a) -> int -> int -> unit
+  val make3 : (char * real) array -> real array * char array
+  val random3 : real -> real
+  val char3 : real array * 'a array -> 'a
+  val randomBlock3 :
+      output -> string -> string -> (char * real) array -> int -> unit
+  val run3 : int -> output -> unit
+  val make6 : (char * real) array -> real array * char array
+  val char6 :
+      int
+       -> real array -> CharArray.array -> int -> CharArray.elem array -> int
+  val randomBlock6 :
+      output -> int -> string -> string -> (char * real) array -> int -> int
+  val run6 : int -> output -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/fasta-cycle-check.sml]
+[autoloading]
+[autoloading done]
+structure BenchFastaCycleCheck : sig
+  val read : string -> TextIO.vector
+  val run :
+      (int
+        -> {buffer:CharArray.array * int * int -> unit,
+         character:char -> unit, text:string * int * int -> unit}
+        -> 'a)
+       -> int -> string -> string -> string -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/fasta6/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 508411
+PASS fasta6
+SUMMARY 1 checks, 0 failed

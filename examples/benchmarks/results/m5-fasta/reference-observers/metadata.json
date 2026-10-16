@@ -1,0 +1,45 @@
+{
+  "compiler": "4.14.1",
+  "programs": {
+    "fasta3": {
+      "source_sha256": "df4f6ecdec2bc68dbb234060f6a7e7371eb8c962cdd4e232a5d9b7d7ddd9df9b",
+      "cycle_hashes": {
+        "iub": "64abd4b84f35c1a8927a3d87e22a56d65b36e02eff28c4518fccf5b92bcf0d48",
+        "homo": "fcafa1e188fd696f470b77e751aaedf32a4bae3b2d0c8fbca4fc67576d1a0193"
+      }
+    },
+    "fasta6": {
+      "source_sha256": "c9fa16ca68bdecc7fc68e8935045195003c0e43098bc6de11fe429a22e9daccb",
+      "cycle_hashes": {
+        "iub": "64abd4b84f35c1a8927a3d87e22a56d65b36e02eff28c4518fccf5b92bcf0d48",
+        "homo": "fcafa1e188fd696f470b77e751aaedf32a4bae3b2d0c8fbca4fc67576d1a0193"
+      }
+    }
+  },
+  "profiles": [
+    {
+      "profile": "smoke",
+      "n": 151,
+      "timeout": 30,
+      "memory_bytes": 1073741824,
+      "output_bytes": 1614,
+      "output_sha256": "a85d78ee6b1c3090654e59d25cd46695e0fe0e13da0ee7c6651947f464258f42"
+    },
+    {
+      "profile": "normal",
+      "n": 50000,
+      "timeout": 600,
+      "memory_bytes": 4294967296,
+      "output_bytes": 508411,
+      "output_sha256": "6b40f34703840e073cef7fd62cc95a65f280ba1cf3891aa189a820fe0e081f06"
+    },
+    {
+      "profile": "large",
+      "n": 25000000,
+      "timeout": 3600,
+      "memory_bytes": 8589934592,
+      "output_bytes": 254166745,
+      "output_sha256": "3fcf4f78104c8a65ef210fe1d469f4e473456c791225f2f1f9114f4986aa09fa"
+    }
+  ]
+}

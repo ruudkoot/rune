@@ -1,0 +1,9 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/fasta3/
+?? examples/benchmarks/fasta6/
+?? examples/benchmarks/shared/fasta-cycle-check.sml
+?? examples/benchmarks/shared/sandmark-fasta.sml
+?? tests/benchmarks/check-sandmark-fasta.sh
+?? tests/benchmarks/data/sandmark-fasta/
+?? tests/benchmarks/sandmark-fasta-checks.sml
