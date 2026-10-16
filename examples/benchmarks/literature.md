@@ -195,3 +195,13 @@ rejection sampling and selected initial states are reproduced in SML97.
 Reference streams establish input identity; they do not establish performance
 sensitivity to a compiler transformation. Setup precomputation, validation
 work and the isolated 32-bit SML/NJ arithmetic failure are recorded separately.
+
+## Sorting source attribution
+
+The nofib sorting modules cite only a “Meira thesis.” Richard Jones's
+[University of Kent bibliography](https://www.cs.kent.ac.uk/people/staff/rej/gcbib/gcbibM.html)
+records Silvio R. de L. Meira, *On the Efficiency of Applicative Algorithms*,
+PhD thesis, March 1985 (entry meir85). This is a bibliographic candidate for the
+abbreviated attribution; exact code ancestry remains an inference. No technical
+or timing finding is taken from the unread thesis. The retained source and tagged
+GHC observers establish the port's algorithms, ties and composition order.

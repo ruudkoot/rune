@@ -953,3 +953,29 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 matching bytecode comparisons across seven compiler builds.
 runedoc and runeopt also agree. [The complete transcript](validation/oct16-banner-696-acceptance.log)
 records the run; all 35 inventory tests pass.
+
+## M3 sorting and M5 barrier review, 2026-10-16
+
+Two imports bring the catalogue to 236 programs and 702 profiles. [All 56
+smoke/normal cases](results/m3-sorting/correctness.tsv) pass on Rune's four engines
+at both levels and all six managed native hosts. Forty semantic checks pass all
+ten configurations at both levels, and count comparisons agree. Eight algorithms,
+seven reversals, guard/tie order and tree representations remain intact. Complete
+sorted rows agree with GHC, independent sorting and pinned hash fixtures.
+
+Normal600/large3000 source-file parameters and per-repetition file reads are
+preserved. UTF-8 acquisition, output validation and explicit numeric-width
+semantics are recorded. No universal large SML or headline timing claim is made.
+
+The [opaque-call review](validation/sandmark-opaque-call.md) separately defers the
+pinned morestacks microbenchmark for its unavailable optimization barrier.
+A source digest guards that disposition and changed programs receive fresh
+review. All 143 pinned Sandmark entries were rebuilt and all 861 inventory
+entries reconcile; all other inventory entries and alias ordering are unchanged.
+All 38 discovery tests pass. M3 and M5 remain in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 702 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 matching bytecode comparisons across seven compiler builds.
+runedoc and runeopt also agree. [The complete transcript](validation/oct16-sorting-702-acceptance.log)
+records that run. All 38 inventory tests pass and all 861 entries validate.
