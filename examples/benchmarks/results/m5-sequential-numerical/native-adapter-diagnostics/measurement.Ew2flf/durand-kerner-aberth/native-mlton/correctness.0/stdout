@@ -1,0 +1,4 @@
+RESULT 10:80:checked
+PASS durand-kerner-aberth
+SAMPLE 1 0.000739000
+SUMMARY 1 checks, 0 failed

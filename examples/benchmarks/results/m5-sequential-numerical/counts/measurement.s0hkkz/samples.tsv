@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+qr-decomposition	normal	rune	O2	compile	0	0	pass	1.49	1.48	0.06	135396	-	-	-	qr-decomposition/rune/build/compile
+qr-decomposition	normal	rune	O2	correctness	0	0	pass	1.24	1.28	0.01	11104	279726359	555173096	13614989	qr-decomposition/rune/correctness.0
+qr-decomposition	normal	rune	O2	count	1	1	pass	1.18	1.22	0.00	11136	279726359	555173096	13614989	qr-decomposition/rune/fresh.1
+qr-decomposition	normal	rune:opt	O2	compile	0	0	pass	1.54	1.48	0.11	135312	-	-	-	qr-decomposition/rune-opt/build/compile
+qr-decomposition	normal	rune:opt	O2	native-compile	0	0	pass	1.46	0.18	0.03	15668	-	-	-	qr-decomposition/rune-opt/build/native-compile
+qr-decomposition	normal	rune:opt	O2	correctness	0	0	pass	0.70	0.72	0.01	11812	279726359	555173096	13614989	qr-decomposition/rune-opt/correctness.0
+qr-decomposition	normal	rune:opt	O2	count	1	1	pass	0.54	0.55	0.00	11620	279726359	555173096	13614989	qr-decomposition/rune-opt/fresh.1
+qr-decomposition	normal	rune:new	O2	compile	0	0	pass	1.40	1.36	0.08	135348	-	-	-	qr-decomposition/rune-new/build/compile
+qr-decomposition	normal	rune:new	O2	correctness	0	0	pass	1.04	1.07	0.00	11896	198566450	555173096	13614989	qr-decomposition/rune-new/correctness.0
+qr-decomposition	normal	rune:new	O2	count	1	1	pass	1.08	1.11	0.00	11648	198566450	555173096	13614989	qr-decomposition/rune-new/fresh.1
+qr-decomposition	normal	rune:jit	O2	compile	0	0	pass	1.41	1.39	0.06	135264	-	-	-	qr-decomposition/rune-jit/build/compile
+qr-decomposition	normal	rune:jit	O2	correctness	0	0	pass	0.45	0.46	0.00	12904	198566450	555173096	13614989	qr-decomposition/rune-jit/correctness.0
+qr-decomposition	normal	rune:jit	O2	count	1	1	pass	0.46	0.48	0.00	12888	198566450	555173096	13614989	qr-decomposition/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

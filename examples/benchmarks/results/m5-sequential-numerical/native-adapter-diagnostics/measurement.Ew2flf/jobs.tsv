@@ -1,0 +1,1 @@
+durand-kerner-aberth	30	1048576	shared/input.sml shared/lazy.sml shared/sandmark-durand-kerner.sml shared/durand-kerner-files.sml durand-kerner-aberth/benchmark.sml shared/main.sml	10 expected/smoke.txt	durand-kerner-aberth/smoke.expected	data/coefficients.txt expected/smoke.txt

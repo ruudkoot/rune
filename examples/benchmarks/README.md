@@ -281,6 +281,10 @@ inventory entry.
 | [puzzle-lazy](#puzzle-lazy) | [nofib puzzle](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/puzzle) | Stream exhaustive bridge histories through stable minimum selection using memoized delays. |
 | [puzzle-strict](#puzzle-strict) | [nofib puzzle](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/puzzle) | Materialize exhaustive bridge histories before stable minimum selection and rendering. |
 | [fft-sandmark](#fft-sandmark) | [Sandmark FFT](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/numerical-analysis/fft.ml) | Compute a radix-two complex FFT and source-convention inverse, checking every ramp coefficient and recovered sample. |
+| [levinson-durbin](#levinson-durbin) | [Sandmark levinson_durbin](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/numerical-analysis/levinson_durbin.ml) | Compute autocorrelations and source-order Levinson-Durbin coefficients for five vowel signals. |
+| [durand-kerner-aberth](#durand-kerner-aberth) | [Sandmark durand_kerner_aberth](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/numerical-analysis/durand_kerner_aberth.ml) | Find polynomial roots with simultaneous Durand-Kerner updates and the source circle initialization. |
+| [qr-decomposition](#qr-decomposition) | [Sandmark qr_decomposition](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/numerical-analysis/qr_decomposition.ml) | Build dense Householder QR factors and check orthogonality and complete reconstruction. |
+| [crout-decomposition](#crout-decomposition) | [Sandmark crout_decomposition](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/numerical-analysis/crout_decomposition.ml) | Run source-specific Crout updates and dense permutation reconstruction with reviewed numerical outputs. |
 
 ## Running and interpreting checks
 
@@ -382,6 +386,7 @@ sh tests/benchmarks/check-nofib-life.sh
 sh tests/benchmarks/check-clausify.sh
 sh tests/benchmarks/check-puzzle.sh
 sh tests/benchmarks/check-sandmark-fft.sh
+sh tests/benchmarks/check-sandmark-numerical.sh
 python3 tests/benchmarks/test-inventory.py
 python3 scripts/benchmark-inventory.py --check
 python3 tests/benchmarks/latency-oracle.py --check
@@ -10320,3 +10325,324 @@ until established by inspection or measurements. Standard comparisons use
 identical SML; OCaml supplies a correctness reference.
 
 [Complete provenance](fft-sandmark/PROVENANCE.md).
+
+## levinson-durbin
+
+Sandmark 5605805954a00497ed197c930641cddd580e1507,
+benchmarks/numerical-analysis/levinson_durbin.ml, levinson_durbin_dataset.ml
+and dune. Retain the directory MIT notice, Copyright 2015 Akinori ABE, and
+OCamlPro adaptation credit. The dataset header identifies Japanese vowels
+/a/, /i/, /u/, /e/, /o/, sampling rate 16,000, and [its original Tokyo source URL](http://www.gavo.t.u-tokyo.ac.jp/~mine/B3enshu2001/samples.html).
+It names no separate recording author or data grant. That exact page could not
+be retrieved with the available web tool on 2026-10-16; no grant is inferred
+from unrelated current speech pages or the directory's software notice.
+
+## Algorithm and variants
+
+Compute unnormalized, non-circular autocorrelations by sequential products/sums,
+then Levinson-Durbin recursion with a fresh coefficient array at every order.
+Keep the source accumulator references, update order, reflection coefficient,
+old-array reversed coefficient reads and multiplicative variance recurrence.
+The wrapper computes autocorr(order+1); its returned coefficient count is
+order+1. Preserve that source offset. Lags beyond the signal length are zero.
+This is a sequential numerical workload with no meaningful lazy variant.
+
+OCaml float arrays become SML97 RealArray, for loops become explicit tail
+loops and mutable scalar accumulators remain refs. No dense solver, FFT
+correlation, normalized statistics or in-place coefficient update replaces the
+benchmark. Selected indices/counters fit 31 bits; numerical work uses the
+supported hosts' binary64 real arithmetic. Array layout/unboxing remains
+compiler/runtime dependent.
+
+## Inputs and validation
+
+Smoke order 8 and normal 128 are reduced settings; large preserves default
+10,000. The five signals retain all 1,957/3,439/2,644/3,316/2,793 samples.
+Every original value is exactly a signed 16-bit integer divided by 32,768;
+all 14,149 converted samples have verified identical IEEE64 encodings. Retain
+the raw dataset module, headers, conversion script and identities. Loading
+portable PCM text adds input parsing. Read-only input arrays initialize on the
+first run through a memoized SML delay, keeping file I/O out of host export;
+fresh processes load once and repeated calls reuse unchanged inputs. Reference
+fixtures are read and checked each invocation. This first-run cost is observable.
+
+Check every coefficient and variance for all five signals. Coefficient bounds
+are 2e-9 + 2e-8*abs(reference); variance bounds are 2e-10 +
+2e-9*abs(reference). Reject nonfinite values and wrong labels/counts. These
+selected-input budgets allow accumulated recurrence rounding; they are not a
+general conditioning guarantee. Original outputs are finite at all profiles.
+For smoke/normal, an independent 80-digit dense Toeplitz solve and exact integer
+correlations agree: maximum coefficient difference about 1.05e-11, variance
+1.83e-13. Correlation sums themselves are exact binary64 for these inputs:
+integer product sums need fewer than 53 significant bits before scaling by 2^-30.
+Large has complete original fixtures; independent dense solving and universal
+large SML execution are not claimed.
+
+Semantic checks cover hand-computed covariances, zero lags, first-order/white
+processes, fresh-array reflection, the wrapper offset, unchanged input and
+perturbed/missing/nonfinite results and tolerance boundaries. The portable
+driver consumes all results and prints order:coefficient-count:checked instead
+of discarding the original tuples. Validation/input costs are measured work.
+
+## References and diagnostic questions
+
+Levinson's [1946 paper](https://doi.org/10.1002/sapm1946251261) anchors prediction
+and Toeplitz recursion. The retained program specifies this particular
+unnormalized recurrence, wrapper offset and datasets. Repeated array allocation,
+scalar-ref optimization, real boxing, sequential sums, object lifetimes and
+conditioning are source-based hypotheses until established by inspection or
+measurements. Standard comparisons use identical SML; OCaml and independent
+high-precision linear algebra supply correctness references.
+
+[Complete provenance](levinson-durbin/PROVENANCE.md).
+
+## Algorithm and variants
+
+Compute unnormalized, non-circular autocorrelations by sequential products/sums,
+then Levinson-Durbin recursion with a fresh coefficient array at every order.
+Keep the source accumulator references, update order, reflection coefficient,
+old-array reversed coefficient reads and multiplicative variance recurrence.
+The wrapper computes autocorr(order+1); its returned coefficient count is
+order+1. Preserve that source offset. Lags beyond the signal length are zero.
+This is a sequential numerical workload with no meaningful lazy variant.
+
+OCaml float arrays become SML97 RealArray, for loops become explicit tail
+loops and mutable scalar accumulators remain refs. No dense solver, FFT
+correlation, normalized statistics or in-place coefficient update replaces the
+benchmark. Selected indices/counters fit 31 bits; numerical work uses the
+supported hosts' binary64 real arithmetic. Array layout/unboxing remains
+compiler/runtime dependent.
+
+## Inputs and validation
+
+Smoke order 8 and normal 128 are reduced settings; large preserves default
+10,000. The five signals retain all 1,957/3,439/2,644/3,316/2,793 samples.
+Every original value is exactly a signed 16-bit integer divided by 32,768;
+all 14,149 converted samples have verified identical IEEE64 encodings. Retain
+the raw dataset module, headers, conversion script and identities. Loading
+portable PCM text adds input parsing. Read-only input arrays initialize on the
+first run through a memoized SML delay, keeping file I/O out of host export;
+fresh processes load once and repeated calls reuse unchanged inputs. Reference
+fixtures are read and checked each invocation. This first-run cost is observable.
+
+Check every coefficient and variance for all five signals. Coefficient bounds
+are 2e-9 + 2e-8*abs(reference); variance bounds are 2e-10 +
+2e-9*abs(reference). Reject nonfinite values and wrong labels/counts. These
+selected-input budgets allow accumulated recurrence rounding; they are not a
+general conditioning guarantee. Original outputs are finite at all profiles.
+For smoke/normal, an independent 80-digit dense Toeplitz solve and exact integer
+correlations agree: maximum coefficient difference about 1.05e-11, variance
+1.83e-13. Correlation sums themselves are exact binary64 for these inputs:
+integer product sums need fewer than 53 significant bits before scaling by 2^-30.
+Large has complete original fixtures; independent dense solving and universal
+large SML execution are not claimed.
+
+Semantic checks cover hand-computed covariances, zero lags, first-order/white
+processes, fresh-array reflection, the wrapper offset, unchanged input and
+perturbed/missing/nonfinite results and tolerance boundaries. The portable
+driver consumes all results and prints order:coefficient-count:checked instead
+of discarding the original tuples. Validation/input costs are measured work.
+
+## References and diagnostic questions
+
+Levinson's [1946 paper](https://doi.org/10.1002/sapm1946251261) anchors prediction
+and Toeplitz recursion. The retained program specifies this particular
+unnormalized recurrence, wrapper offset and datasets. Repeated array allocation,
+scalar-ref optimization, real boxing, sequential sums, object lifetimes and
+conditioning are source-based hypotheses until established by inspection or
+measurements. Standard comparisons use identical SML; OCaml and independent
+high-precision linear algebra supply correctness references.
+
+[Complete provenance](levinson-durbin/PROVENANCE.md).
+
+## durand-kerner-aberth
+
+Sandmark 5605805954a00497ed197c930641cddd580e1507,
+benchmarks/numerical-analysis/durand_kerner_aberth.ml and dune. Retain the
+MIT notice, Copyright 2015 Akinori ABE, embedded coefficient table and OCamlPro
+adaptation credit. Complex helper semantics/notices are retained from OCaml
+4.14.1, revision 99cb5d93fc30f1a6f3e69f5aa5d2063994d33a93. No external dataset
+is acquired; the 98 coefficients are the upstream program's constants.
+
+## Algorithm and variants
+
+Use the source's Durand-Kerner simultaneous root updates and Aberth-style
+circle initialization: radius 1,000, coefficient-derived center, rotated angles
+and the exact pi literal 3.14159265358979. Each new root vector reads the whole
+old vector. Preserve Horner evaluation, sequential reference accumulation of
+root-difference products, leading coefficient, stable ratio-based complex
+division and reverse-index convergence scan. Do not substitute a full
+Ehrlich-Aberth iteration or update roots in place. Retain the established
+upstream compound name while explaining which method the source implements.
+
+Stopping uses squared complex displacement <1e-6 for every root. That is not
+a 1e-6 absolute-root accuracy claim. It is deterministic; unchanged selected
+inputs converge without a replacement work bound. Ordinary profile time/memory
+limits detect failures. OCaml float records become real pairs, arrays remain
+arrays, and for loops become portable tail loops. Scalar mutable accumulators
+remain refs. No arbitrary precision is used in the measured kernel.
+
+## Inputs and validation
+
+Smoke 10%, normal 50%, large 100% select the exact leading coefficient prefix
+with floor(98*percent/100), giving degrees 8/48/97. Large preserves the source
+default. All profiles retain Main's ten root searches. Read-only coefficients
+load once on the first run through a memoized SML delay; repeated calls reuse
+them and select a new prefix. Source globals initialize before Main, so input
+loading/prefix creation and first-run warmup costs are explicit adaptations.
+
+Compare every computed root to a distinct high-precision reference root,
+allowing permutations. Absolute complex-distance budgets are 1e-8/1e-6/1e-4
+for smoke/normal/large. The reference loader requires separation >4*budget;
+finite checks, counts and one-to-one matching reject missing/duplicate roots.
+These budgets cover the source's approximate termination on selected inputs,
+not arbitrary polynomials. Fixtures are read each run, and matching costs are
+part of execution. The final line reports percent:total-roots:checked.
+
+All original ten-search profiles complete. Independent 80-digit Newton
+refinement of each original root and reconstruction of every monic coefficient
+certify distinct complete root sets. Original maximum root errors are about
+3.14e-11,1.98e-8,1.68e-6, and minimum separations .712/.119/.0165, respectively.
+Complete source outputs, refined roots and reconstruction errors are retained.
+Large SML execution is claimed only where recorded separately.
+
+Semantic checks cover complex division scaling, Horner evaluation, circle
+initialization, strict squared stopping, known linear/quadratic roots, vector
+lengths, permutation acceptance and duplicate/missing/perturbed/nonfinite roots.
+
+## References and runtime questions
+
+Aberth's [1973 paper](https://www.ams.org/mcom/1973-27-122/S0025-5718-1973-0329236-7/S0025-5718-1973-0329236-7.pdf)
+provides the simultaneous-root-method context and references Durand and Kerner.
+The retained code determines the actual update and initialization here. Pair
+boxing, polymorphic accumulator refs, allocation, Horner specialization,
+math-library calls, root order and convergence variation are diagnostic
+questions until supported by compiler inspection or measurements. Standard
+comparisons use identical SML; OCaml supplies the source reference.
+
+[Complete provenance](durand-kerner-aberth/PROVENANCE.md).
+
+## qr-decomposition
+
+Sandmark 5605805954a00497ed197c930641cddd580e1507,
+benchmarks/numerical-analysis/qr_decomposition.ml and dune. Retain the directory
+MIT license, Copyright 2015 Akinori ABE, OCamlPro adaptation credit and complete
+219-by-30 embedded matrix. No external dataset is acquired. The header mentions
+Gram-Schmidt; the executed qr function uses explicit Householder matrices.
+The established workload name remains qr-decomposition.
+
+## Algorithm and translation
+
+Transpose input into working columns. Build each Householder matrix, update
+Q by dense multiplication of copied row suffixes, update later working columns
+and extract triangular R. Preserve the first-stage shallow row-pointer blit,
+subsequent row slices, original-row snapshots before writes, signed-zero-aware
+copysign and source scalar operation order. Keep explicit dense Householder
+matrices and the source gemm/axpy loop order; do not replace them by compact
+reflectors, Gram-Schmidt or an optimized BLAS routine.
+
+OCaml float arrays become RealArray rows under an outer Array. Array.sub/blit
+become explicit fresh slices/pointer copies. Scalar accumulator refs remain
+refs; for loops become portable tail loops. These library/representation changes
+can affect copying, allocation and unboxing. Selected indices fit 31 bits and
+all numerical operations use binary64 on the supported hosts. This strict
+source has no separately meaningful lazy variant.
+
+## Inputs, checks and observation
+
+Smoke/normal use the first 5/64 rows and all 30 columns. Large preserves the
+complete 219-row source input. Prefix selection is an explicit reduced-input
+adapter; it does not synthesize a new matrix distribution. Read-only input text
+loads once on the first run through a memoized SML delay, then unchanged rows
+are reused across repeated calls. New prefix arrays and reference validation
+costs are measured. The original embeds the full array at process startup.
+
+Check Q/R dimensions and finiteness, triangular zeros, every independent
+entry of QQ^T against identity with absolute 1e-9, and every reconstruction
+entry against input with 1e-9+1e-10*abs(input). Test Q before reconstruction to
+avoid extra post-use retention. These selected-input budgets are not a general
+rank/conditioning theorem. The repeated columns make the matrix rank deficient;
+compare invariants rather than a unique signed Q basis. Original full output
+is finite with maximum reconstruction error about 5.18e-13; reduced cases also
+pass. Its actual algorithm/result records are retained. The final driver prints
+rows:columns:checked. Large SML execution is claimed only where explicitly recorded.
+
+Semantic/negative checks cover rectangular and wide inputs, source signed-zero
+behavior, reflection, input preservation, nonorthogonal Q, nontriangular R,
+perturbed/nonfinite results and tolerance boundaries. Validation adds a bounded
+orthogonality pass and a full result scan to the original computation.
+
+## References and diagnostics
+
+Householder's [1958 paper](https://web.stanford.edu/class/cme324/classics/householder.pdf)
+anchors reflection-based triangularization. Source inspection identifies the
+particular dense matrices, aliasing and copied suffixes. Dot-product refs,
+real boxing, matrix layout, slices, memory locality and Householder allocation
+are performance hypotheses until supported by inspection or measurement.
+Standard reports compare identical SML; OCaml is a correctness reference.
+
+[Complete provenance](qr-decomposition/PROVENANCE.md).
+
+## crout-decomposition
+
+Sandmark 5605805954a00497ed197c930641cddd580e1507,
+benchmarks/numerical-analysis/crout_decomposition.ml and dune. Retain the directory
+MIT license, Copyright 2015 Akinori ABE, OCamlPro adaptation credit and complete
+2730-by-18 embedded matrix. The source supplies the table; no external dataset
+is acquired. Preserve the established Crout workload name and explain its
+actual unit-lower/upper storage convention.
+
+## Algorithm and source limitation
+
+Keep shallow input copying, first-maximum pivot ties, synchronized row swaps,
+sequential dot sums, upper/below-diagonal update order, the 1e-6 pivot guard,
+right-block processing, explicit L/U construction, dense permutation matrix
+and both original dense products. Pivot selection inspects the raw input column,
+not an updated Schur-complement column. This is retained source behavior.
+
+The full original recomposition is not equal to its input: maximum residual
+is 10452/1195, about 8.746443514644351. Exact rational execution independently
+reproduces every original result to less than 1e-15. Its skipped pivot columns
+include 3, 5..17; reduced inputs have different pivot selections. A three-by-three
+counterexample also demonstrates the raw-column/zero-pivot effect. The port
+therefore checks the reviewed source result, not a false LU reconstruction
+invariant. This benchmark is not a claim that the implementation is a reliable
+general-purpose factorizer. No pivot repair is silently introduced.
+
+## Translation, inputs and validation
+
+OCaml float arrays become RealArray rows with outer Arrays. Preserve mutable
+scalar/tuple accumulator refs, shallow row-pointer copies, distinct zero rows,
+loops and operation ordering. The dense permutation product is not replaced by
+row reindexing in the benchmark. All selected indices/counters fit 31 bits;
+measured arithmetic is binary64 on the supported SML hosts.
+
+Smoke 6 and normal 128 select source row prefixes, retaining all 18 columns;
+large preserves all 2730 rows. Document this explicit reduced-input adapter.
+Read-only source input text initializes on first run through a memoized SML
+delay, keeping file I/O out of host export. Repeated calls reuse unchanged input;
+new prefix arrays and per-run reference parsing/validation remain measured work.
+The original embeds its full table at startup.
+
+Check dimensions, finiteness and every returned element against complete
+original fixtures using 2e-9+2e-9*abs(reference). This is a selected-output
+rounding budget, not a bound on decomposition error versus the input matrix.
+The final line reports rows:columns:checked. Original full-size and adapted prefix executions, plus
+full rational comparisons, are retained; universal large SML execution is not claimed.
+
+Semantic checks cover swaps and input preservation, rectangular/right-block
+processing, the exact source counterexample, perturbed/nonfinite/wrong-shaped
+results and tolerance boundaries. Original full-size residual and exact-source
+agreement are recorded distinctly from portable-host validation.
+
+## References and diagnostics
+
+Crout's [1941 paper](https://doi.org/10.1109/T-AIEE.1941.5058258) anchors the
+method family; the retained program defines this variant's pivot logic,
+unit-lower storage and limitation. Dense permutation construction, row aliasing,
+scalar/tuple refs, loop specialization, boxing, locality and pivot branches are
+source-based questions until supported by compiler inspection or measurements.
+Standard comparisons use identical SML; OCaml and rational arithmetic supply
+correctness references for the actual source behavior.
+
+[Complete provenance](crout-decomposition/PROVENANCE.md).

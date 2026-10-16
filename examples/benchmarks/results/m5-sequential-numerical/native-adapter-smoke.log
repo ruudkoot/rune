@@ -1,0 +1,24 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (801 profiles)
+BENCH_PROFILE=smoke BENCH_CONFIGS=native:mlton,native:smlnj-legacy,native:polyml BENCH_FILTER='=levinson-durbin' BENCH_LEVEL= BENCH_MODE=fresh BENCH_SAMPLES=1 BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh time
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.nSdFvK
+BENCH MEASURE levinson-durbin smoke time
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.nSdFvK/report.md
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (801 profiles)
+BENCH_PROFILE=smoke BENCH_CONFIGS=native:mlton,native:smlnj-legacy,native:polyml BENCH_FILTER='=durand-kerner-aberth' BENCH_LEVEL= BENCH_MODE=fresh BENCH_SAMPLES=1 BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh time
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Ew2flf
+BENCH MEASURE durand-kerner-aberth smoke time
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Ew2flf/report.md
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (801 profiles)
+BENCH_PROFILE=smoke BENCH_CONFIGS=native:mlton,native:smlnj-legacy,native:polyml BENCH_FILTER='=qr-decomposition' BENCH_LEVEL= BENCH_MODE=fresh BENCH_SAMPLES=1 BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh time
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.AOq0Sk
+BENCH MEASURE qr-decomposition smoke time
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.AOq0Sk/report.md
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (801 profiles)
+BENCH_PROFILE=smoke BENCH_CONFIGS=native:mlton,native:smlnj-legacy,native:polyml BENCH_FILTER='=crout-decomposition' BENCH_LEVEL= BENCH_MODE=fresh BENCH_SAMPLES=1 BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh time
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.iJ9vFv
+BENCH MEASURE crout-decomposition smoke time
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.iJ9vFv/report.md

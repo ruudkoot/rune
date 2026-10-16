@@ -1,0 +1,4 @@
+RESULT 6:18:checked
+PASS crout-decomposition
+SAMPLE 1 0.023785000
+SUMMARY 1 checks, 0 failed

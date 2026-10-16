@@ -1,0 +1,4 @@
+RESULT 5:30:checked
+PASS qr-decomposition
+SAMPLE 1 0.003016000
+SUMMARY 1 checks, 0 failed

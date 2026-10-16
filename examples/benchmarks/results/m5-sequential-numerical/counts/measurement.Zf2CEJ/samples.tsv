@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+levinson-durbin	normal	rune	O2	compile	0	0	pass	1.41	1.40	0.05	135360	-	-	-	levinson-durbin/rune/build/compile
+levinson-durbin	normal	rune	O2	correctness	0	0	pass	0.52	0.53	0.00	10888	131521420	347197824	8010642	levinson-durbin/rune/correctness.0
+levinson-durbin	normal	rune	O2	count	1	1	pass	0.56	0.58	0.00	10908	131521420	347197824	8010642	levinson-durbin/rune/fresh.1
+levinson-durbin	normal	rune:opt	O2	compile	0	0	pass	1.68	1.60	0.14	135264	-	-	-	levinson-durbin/rune-opt/build/compile
+levinson-durbin	normal	rune:opt	O2	native-compile	0	0	pass	0.37	0.19	0.05	12652	-	-	-	levinson-durbin/rune-opt/build/native-compile
+levinson-durbin	normal	rune:opt	O2	correctness	0	0	pass	0.29	0.30	0.00	11556	131521420	347197824	8010642	levinson-durbin/rune-opt/correctness.0
+levinson-durbin	normal	rune:opt	O2	count	1	1	pass	0.29	0.29	0.01	11472	131521420	347197824	8010642	levinson-durbin/rune-opt/fresh.1
+levinson-durbin	normal	rune:new	O2	compile	0	0	pass	1.71	1.67	0.09	135236	-	-	-	levinson-durbin/rune-new/build/compile
+levinson-durbin	normal	rune:new	O2	correctness	0	0	pass	0.58	0.59	0.01	11452	94430451	347197824	8010642	levinson-durbin/rune-new/correctness.0
+levinson-durbin	normal	rune:new	O2	count	1	1	pass	0.62	0.64	0.00	11504	94430451	347197824	8010642	levinson-durbin/rune-new/fresh.1
+levinson-durbin	normal	rune:jit	O2	compile	0	0	pass	1.63	1.60	0.08	135224	-	-	-	levinson-durbin/rune-jit/build/compile
+levinson-durbin	normal	rune:jit	O2	correctness	0	0	pass	0.25	0.25	0.01	12496	94430451	347197824	8010642	levinson-durbin/rune-jit/correctness.0
+levinson-durbin	normal	rune:jit	O2	count	1	1	pass	1.41	0.27	0.00	12408	94430451	347197824	8010642	levinson-durbin/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

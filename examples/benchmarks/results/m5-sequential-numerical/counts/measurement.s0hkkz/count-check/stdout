@@ -1,0 +1,5 @@
+COUNT unbudgeted qr-decomposition normal rune
+COUNT unbudgeted qr-decomposition normal rune:opt
+COUNT unbudgeted qr-decomposition normal rune:new
+COUNT unbudgeted qr-decomposition normal rune:jit
+COUNT comparisons agree

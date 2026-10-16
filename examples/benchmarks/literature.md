@@ -71,6 +71,37 @@ Both exercise floating-point work, but their tree traversal, locality,
 allocation and asymptotic scaling differ. Keep them distinct and record
 physical inputs and approximation parameters.
 
+## Structured numerical workloads
+
+Levinson's [prediction/filter-design paper](https://doi.org/10.1002/sapm1946251261)
+(1946) provides context for autoregressive coefficient workloads. Sandmark's
+[Levinson-Durbin port](levinson-durbin/PROVENANCE.md) preserves unnormalized
+correlations, fresh coefficient arrays and its order-plus-one wrapper. Exact
+PCM conversion and independent high-precision dense solves establish the
+selected results; array lifetimes and scalar-ref optimization remain diagnostic
+questions.
+
+Householder's [unitary triangularization paper](https://web.stanford.edu/class/cme324/classics/householder.pdf)
+(1958) explains the reflection family. The [QR workload](qr-decomposition/PROVENANCE.md)
+constructs full Householder matrices and copies row suffixes. Its rank-deficient
+input makes reconstruction/orthogonality checks preferable to requiring one
+particular Q basis. These implementation details come from source inspection.
+
+[Crout's 1941 paper](https://doi.org/10.1109/T-AIEE.1941.5058258) anchors a method
+family; it does not certify this benchmark's pivot selector. The
+[retained Sandmark variant](crout-decomposition/PROVENANCE.md) selects raw-column
+pivots and has a reproducible full-size reconstruction limitation. Original
+execution and exact rational replay establish its actual result. Keep source
+behavior, mathematical reconstruction accuracy and performance hypotheses distinct.
+
+Aberth's [simultaneous-root-method paper](https://www.ams.org/mcom/1973-27-122/S0025-5718-1973-0329236-7/S0025-5718-1973-0329236-7.pdf)
+(1973) supplies context and references Durand and Kerner. The
+[source workload](durand-kerner-aberth/PROVENANCE.md) uses Durand-Kerner updates
+with a circle initializer and squared-displacement stopping. Complete
+high-precision refinement/coefficient reconstruction and one-to-one root matching
+validate selected outputs. Convergence variation, boxing and allocation require
+separate investigation before assigning performance causes.
+
 ## Decision diagrams and closure lifetimes
 
 Welch's [*A Technique for High-Performance Data Compression*](https://doi.org/10.1109/MC.1984.1659158)

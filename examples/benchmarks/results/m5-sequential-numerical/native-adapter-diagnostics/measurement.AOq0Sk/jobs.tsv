@@ -1,0 +1,1 @@
+qr-decomposition	30	1048576	shared/input.sml shared/lazy.sml shared/sandmark-qr.sml shared/numerical-matrix-files.sml shared/qr-check.sml qr-decomposition/benchmark.sml shared/main.sml	5	qr-decomposition/smoke.expected	data/matrix.txt

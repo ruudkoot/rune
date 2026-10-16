@@ -1,0 +1,1 @@
+levinson-durbin	600	4194304	shared/input.sml shared/lazy.sml shared/sandmark-levinson.sml shared/levinson-files.sml levinson-durbin/benchmark.sml shared/main.sml	128 expected/normal.txt	levinson-durbin/normal.expected	data/a.pcm data/i.pcm data/u.pcm data/e.pcm data/o.pcm expected/normal.txt

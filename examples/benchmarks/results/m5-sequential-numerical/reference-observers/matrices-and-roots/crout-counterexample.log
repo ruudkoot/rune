@@ -1,0 +1,4 @@
+2 2 0 
+1 1 1 
+1 1 1 
+PASS original OCaml reproduces exact source counterexample

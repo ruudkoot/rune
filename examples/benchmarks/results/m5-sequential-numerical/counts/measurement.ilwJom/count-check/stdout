@@ -1,0 +1,5 @@
+COUNT unbudgeted crout-decomposition normal rune
+COUNT unbudgeted crout-decomposition normal rune:opt
+COUNT unbudgeted crout-decomposition normal rune:new
+COUNT unbudgeted crout-decomposition normal rune:jit
+COUNT comparisons agree

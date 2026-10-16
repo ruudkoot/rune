@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+durand-kerner-aberth	smoke	native:mlton@20241230	O2	compile	0	0	pass	4.29	3.46	0.87	672076	-	-	-	durand-kerner-aberth/native-mlton/build/compile
+durand-kerner-aberth	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2436	-	-	-	durand-kerner-aberth/native-mlton/correctness.0
+durand-kerner-aberth	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2384	-	-	-	durand-kerner-aberth/native-mlton/fresh.1
+durand-kerner-aberth	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.19	0.15	0.04	34936	-	-	-	durand-kerner-aberth/native-smlnj-legacy/build/compile
+durand-kerner-aberth	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.00	0.00	4084	-	-	-	durand-kerner-aberth/native-smlnj-legacy/correctness.0
+durand-kerner-aberth	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.01	0.00	4052	-	-	-	durand-kerner-aberth/native-smlnj-legacy/fresh.1
+durand-kerner-aberth	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.27	0.13	0.05	32096	-	-	-	durand-kerner-aberth/native-polyml/build/compile
+durand-kerner-aberth	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.01	0.00	0.00	13560	-	-	-	durand-kerner-aberth/native-polyml/correctness.0
+durand-kerner-aberth	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.01	0.00	0.00	13472	-	-	-	durand-kerner-aberth/native-polyml/fresh.1

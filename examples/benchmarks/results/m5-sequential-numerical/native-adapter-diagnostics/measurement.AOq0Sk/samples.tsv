@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+qr-decomposition	smoke	native:mlton@20241230	O2	compile	0	0	pass	4.55	3.68	0.91	667712	-	-	-	qr-decomposition/native-mlton/build/compile
+qr-decomposition	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	3436	-	-	-	qr-decomposition/native-mlton/correctness.0
+qr-decomposition	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	3484	-	-	-	qr-decomposition/native-mlton/fresh.1
+qr-decomposition	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.25	0.22	0.04	34912	-	-	-	qr-decomposition/native-smlnj-legacy/build/compile
+qr-decomposition	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.01	0.00	4440	-	-	-	qr-decomposition/native-smlnj-legacy/correctness.0
+qr-decomposition	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.00	0.01	4496	-	-	-	qr-decomposition/native-smlnj-legacy/fresh.1
+qr-decomposition	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.27	0.12	0.07	34436	-	-	-	qr-decomposition/native-polyml/build/compile
+qr-decomposition	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	9028	-	-	-	qr-decomposition/native-polyml/correctness.0
+qr-decomposition	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	9024	-	-	-	qr-decomposition/native-polyml/fresh.1

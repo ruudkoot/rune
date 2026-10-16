@@ -1,0 +1,9 @@
+{
+  "ocamlopt": "4.14.1",
+  "compiler_options": [
+    "-O2"
+  ],
+  "sandmark_revision": "5605805954a00497ed197c930641cddd580e1507",
+  "complex_library_revision": "99cb5d93fc30f1a6f3e69f5aa5d2063994d33a93",
+  "reference_purpose": "correctness and adapter diagnostics, not headline timings"
+}

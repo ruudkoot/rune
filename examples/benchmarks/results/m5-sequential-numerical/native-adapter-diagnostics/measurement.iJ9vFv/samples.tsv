@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+crout-decomposition	smoke	native:mlton@20241230	O2	compile	0	0	pass	4.51	3.77	0.79	671600	-	-	-	crout-decomposition/native-mlton/build/compile
+crout-decomposition	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.01	0.01	0.00	11664	-	-	-	crout-decomposition/native-mlton/correctness.0
+crout-decomposition	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.01	0.01	0.00	11652	-	-	-	crout-decomposition/native-mlton/fresh.1
+crout-decomposition	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.21	0.17	0.04	35376	-	-	-	crout-decomposition/native-smlnj-legacy/build/compile
+crout-decomposition	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.02	0.02	0.00	7760	-	-	-	crout-decomposition/native-smlnj-legacy/correctness.0
+crout-decomposition	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.03	0.02	0.00	7768	-	-	-	crout-decomposition/native-smlnj-legacy/fresh.1
+crout-decomposition	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.25	0.12	0.04	33416	-	-	-	crout-decomposition/native-polyml/build/compile
+crout-decomposition	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.02	0.01	0.02	17020	-	-	-	crout-decomposition/native-polyml/correctness.0
+crout-decomposition	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.03	0.03	0.00	17052	-	-	-	crout-decomposition/native-polyml/fresh.1

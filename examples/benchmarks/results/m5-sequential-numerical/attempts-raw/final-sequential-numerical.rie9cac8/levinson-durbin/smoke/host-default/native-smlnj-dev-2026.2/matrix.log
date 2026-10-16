@@ -1,0 +1,189 @@
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 8:45:checked
+PASS levinson-durbin
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-levinson.sml]
+structure BenchLevinson : sig
+  val for : int -> int -> (int -> 'a) -> unit
+  val mapiSum : (int -> Real64Array.elem -> real) -> Real64Array.array -> real
+  val autocorr : Real64Array.array -> int -> Real64Array.array
+  val levinson : Real64Array.array -> Real64Array.array * real
+  val coefficients : Real64Array.array -> int -> Real64Array.array * real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/levinson-files.sml]
+[autoloading]
+[autoloading done]
+structure BenchLevinsonFiles : sig
+  type reference = {ar:Real64Array.array, label:string, sigma:real}
+  val tokens : string -> string list
+  val real : string -> real
+  val data : string -> Real64Array.array
+  val references :
+      string -> {ar:Real64Array.array, label:string, sigma:real} list
+  val check : reference -> Real64Array.array * real -> unit
+  val labels : string list
+  val validate : int -> Real64Array.array list -> reference list -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/levinson-durbin/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure F : <sig>
+  val inputs : Real64Array.array list BenchLazy.state ref
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 8:45:checked
+PASS levinson-durbin
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-levinson.sml]
+structure BenchLevinson : sig
+  val for : int -> int -> (int -> 'a) -> unit
+  val mapiSum : (int -> Real64Array.elem -> real) -> Real64Array.array -> real
+  val autocorr : Real64Array.array -> int -> Real64Array.array
+  val levinson : Real64Array.array -> Real64Array.array * real
+  val coefficients : Real64Array.array -> int -> Real64Array.array * real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/levinson-files.sml]
+[autoloading]
+[autoloading done]
+structure BenchLevinsonFiles : sig
+  type reference = {ar:Real64Array.array, label:string, sigma:real}
+  val tokens : string -> string list
+  val real : string -> real
+  val data : string -> Real64Array.array
+  val references :
+      string -> {ar:Real64Array.array, label:string, sigma:real} list
+  val check : reference -> Real64Array.array * real -> unit
+  val labels : string list
+  val validate : int -> Real64Array.array list -> reference list -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/levinson-durbin/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure F : <sig>
+  val inputs : Real64Array.array list BenchLazy.state ref
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 8:45:checked
+PASS levinson-durbin
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-levinson.sml]
+structure BenchLevinson : 
+  sig
+    val for : int -> int -> (int -> 'a) -> unit
+    val mapiSum : (int -> Real64Array.elem -> real)
+                   -> Real64Array.array -> real
+    val autocorr : Real64Array.array -> int -> Real64Array.array
+    val levinson : Real64Array.array -> Real64Array.array * real
+    val coefficients : Real64Array.array -> int -> Real64Array.array * real
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/levinson-files.sml]
+structure BenchLevinsonFiles : 
+  sig
+    type reference = {ar:Real64Array.array, label:string, sigma:real}
+    val tokens : string -> string list
+    val real : string -> real
+    val data : string -> Real64Array.array
+    val references : string
+                      -> {ar:Real64Array.array, label:string, sigma:real} list
+    val check : reference -> Real64Array.array * real -> unit
+    val labels : string list
+    val validate : int -> Real64Array.array list -> reference list -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/levinson-durbin/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure F : <sig>
+    val inputs : Real64Array.array list BenchLazy.state ref
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 8:45:checked
+PASS levinson-durbin
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+RESULT 8:45:checked
+PASS levinson-durbin
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 8:45:checked
+PASS levinson-durbin
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

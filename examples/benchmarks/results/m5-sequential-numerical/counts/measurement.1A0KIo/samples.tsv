@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+durand-kerner-aberth	normal	rune	O2	compile	0	0	pass	1.37	1.33	0.08	135348	-	-	-	durand-kerner-aberth/rune/build/compile
+durand-kerner-aberth	normal	rune	O2	correctness	0	0	pass	3.97	4.10	0.00	10808	1156741993	1266296656	31468604	durand-kerner-aberth/rune/correctness.0
+durand-kerner-aberth	normal	rune	O2	count	1	1	pass	3.62	3.72	0.02	10480	1156741993	1266296656	31468604	durand-kerner-aberth/rune/fresh.1
+durand-kerner-aberth	normal	rune:opt	O2	compile	0	0	pass	1.14	1.11	0.07	135300	-	-	-	durand-kerner-aberth/rune-opt/build/compile
+durand-kerner-aberth	normal	rune:opt	O2	native-compile	0	0	pass	0.27	0.13	0.03	12548	-	-	-	durand-kerner-aberth/rune-opt/build/native-compile
+durand-kerner-aberth	normal	rune:opt	O2	correctness	0	0	pass	1.28	1.32	0.00	11208	1156741993	1266296656	31468604	durand-kerner-aberth/rune-opt/correctness.0
+durand-kerner-aberth	normal	rune:opt	O2	count	1	1	pass	1.22	1.26	0.00	11220	1156741993	1266296656	31468604	durand-kerner-aberth/rune-opt/fresh.1
+durand-kerner-aberth	normal	rune:new	O2	compile	0	0	pass	1.20	1.20	0.05	135096	-	-	-	durand-kerner-aberth/rune-new/build/compile
+durand-kerner-aberth	normal	rune:new	O2	correctness	0	0	pass	2.80	2.90	0.00	10756	563350557	1266296656	31468604	durand-kerner-aberth/rune-new/correctness.0
+durand-kerner-aberth	normal	rune:new	O2	count	1	1	pass	3.19	3.30	0.00	10788	563350557	1266296656	31468604	durand-kerner-aberth/rune-new/fresh.1
+durand-kerner-aberth	normal	rune:jit	O2	compile	0	0	pass	1.35	1.31	0.08	135220	-	-	-	durand-kerner-aberth/rune-jit/build/compile
+durand-kerner-aberth	normal	rune:jit	O2	correctness	0	0	pass	0.88	0.89	0.02	11788	563350557	1266296656	31468604	durand-kerner-aberth/rune-jit/correctness.0
+durand-kerner-aberth	normal	rune:jit	O2	count	1	1	pass	0.89	0.92	0.00	11920	563350557	1266296656	31468604	durand-kerner-aberth/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

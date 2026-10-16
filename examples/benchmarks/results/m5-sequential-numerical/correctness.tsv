@@ -1,0 +1,113 @@
+benchmark	profile	optimization	configuration	arguments	status	artifact_directory
+crout-decomposition	normal	O0	rune	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/normal/O0/rune
+crout-decomposition	normal	O0	rune-jit	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/normal/O0/rune-jit
+crout-decomposition	normal	O0	rune-new	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/normal/O0/rune-new
+crout-decomposition	normal	O0	rune-opt	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/normal/O0/rune-opt
+crout-decomposition	normal	O2	rune	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/normal/O2/rune
+crout-decomposition	normal	O2	rune-jit	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/normal/O2/rune-jit
+crout-decomposition	normal	O2	rune-new	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/normal/O2/rune-new
+crout-decomposition	normal	O2	rune-opt	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/normal/O2/rune-opt
+crout-decomposition	normal	host-default	native-mlkit-4.7.23	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/normal/host-default/native-mlkit-4.7.23
+crout-decomposition	normal	host-default	native-mlton-20241230	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/normal/host-default/native-mlton-20241230
+crout-decomposition	normal	host-default	native-polyml-5.9.2	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/normal/host-default/native-polyml-5.9.2
+crout-decomposition	normal	host-default	native-smlnj-dev-2026.2	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/normal/host-default/native-smlnj-dev-2026.2
+crout-decomposition	normal	host-default	native-smlnj-legacy-110.99.9	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/normal/host-default/native-smlnj-legacy-110.99.9
+crout-decomposition	normal	host-default	native-smlnj32-110.99.9	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/normal/host-default/native-smlnj32-110.99.9
+crout-decomposition	smoke	O0	rune	6 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/smoke/O0/rune
+crout-decomposition	smoke	O0	rune-jit	6 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/smoke/O0/rune-jit
+crout-decomposition	smoke	O0	rune-new	6 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/smoke/O0/rune-new
+crout-decomposition	smoke	O0	rune-opt	6 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/smoke/O0/rune-opt
+crout-decomposition	smoke	O2	rune	6 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/smoke/O2/rune
+crout-decomposition	smoke	O2	rune-jit	6 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/smoke/O2/rune-jit
+crout-decomposition	smoke	O2	rune-new	6 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/smoke/O2/rune-new
+crout-decomposition	smoke	O2	rune-opt	6 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/smoke/O2/rune-opt
+crout-decomposition	smoke	host-default	native-mlkit-4.7.23	6 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/smoke/host-default/native-mlkit-4.7.23
+crout-decomposition	smoke	host-default	native-mlton-20241230	6 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/smoke/host-default/native-mlton-20241230
+crout-decomposition	smoke	host-default	native-polyml-5.9.2	6 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/smoke/host-default/native-polyml-5.9.2
+crout-decomposition	smoke	host-default	native-smlnj-dev-2026.2	6 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/smoke/host-default/native-smlnj-dev-2026.2
+crout-decomposition	smoke	host-default	native-smlnj-legacy-110.99.9	6 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/smoke/host-default/native-smlnj-legacy-110.99.9
+crout-decomposition	smoke	host-default	native-smlnj32-110.99.9	6 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/crout-decomposition/smoke/host-default/native-smlnj32-110.99.9
+durand-kerner-aberth	normal	O0	rune	50 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/normal/O0/rune
+durand-kerner-aberth	normal	O0	rune-jit	50 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/normal/O0/rune-jit
+durand-kerner-aberth	normal	O0	rune-new	50 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/normal/O0/rune-new
+durand-kerner-aberth	normal	O0	rune-opt	50 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/normal/O0/rune-opt
+durand-kerner-aberth	normal	O2	rune	50 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/normal/O2/rune
+durand-kerner-aberth	normal	O2	rune-jit	50 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/normal/O2/rune-jit
+durand-kerner-aberth	normal	O2	rune-new	50 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/normal/O2/rune-new
+durand-kerner-aberth	normal	O2	rune-opt	50 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/normal/O2/rune-opt
+durand-kerner-aberth	normal	host-default	native-mlkit-4.7.23	50 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/normal/host-default/native-mlkit-4.7.23
+durand-kerner-aberth	normal	host-default	native-mlton-20241230	50 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/normal/host-default/native-mlton-20241230
+durand-kerner-aberth	normal	host-default	native-polyml-5.9.2	50 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/normal/host-default/native-polyml-5.9.2
+durand-kerner-aberth	normal	host-default	native-smlnj-dev-2026.2	50 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/normal/host-default/native-smlnj-dev-2026.2
+durand-kerner-aberth	normal	host-default	native-smlnj-legacy-110.99.9	50 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/normal/host-default/native-smlnj-legacy-110.99.9
+durand-kerner-aberth	normal	host-default	native-smlnj32-110.99.9	50 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/normal/host-default/native-smlnj32-110.99.9
+durand-kerner-aberth	smoke	O0	rune	10 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/smoke/O0/rune
+durand-kerner-aberth	smoke	O0	rune-jit	10 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/smoke/O0/rune-jit
+durand-kerner-aberth	smoke	O0	rune-new	10 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/smoke/O0/rune-new
+durand-kerner-aberth	smoke	O0	rune-opt	10 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/smoke/O0/rune-opt
+durand-kerner-aberth	smoke	O2	rune	10 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/smoke/O2/rune
+durand-kerner-aberth	smoke	O2	rune-jit	10 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/smoke/O2/rune-jit
+durand-kerner-aberth	smoke	O2	rune-new	10 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/smoke/O2/rune-new
+durand-kerner-aberth	smoke	O2	rune-opt	10 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/smoke/O2/rune-opt
+durand-kerner-aberth	smoke	host-default	native-mlkit-4.7.23	10 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/smoke/host-default/native-mlkit-4.7.23
+durand-kerner-aberth	smoke	host-default	native-mlton-20241230	10 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/smoke/host-default/native-mlton-20241230
+durand-kerner-aberth	smoke	host-default	native-polyml-5.9.2	10 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/smoke/host-default/native-polyml-5.9.2
+durand-kerner-aberth	smoke	host-default	native-smlnj-dev-2026.2	10 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/smoke/host-default/native-smlnj-dev-2026.2
+durand-kerner-aberth	smoke	host-default	native-smlnj-legacy-110.99.9	10 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/smoke/host-default/native-smlnj-legacy-110.99.9
+durand-kerner-aberth	smoke	host-default	native-smlnj32-110.99.9	10 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/durand-kerner-aberth/smoke/host-default/native-smlnj32-110.99.9
+levinson-durbin	normal	O0	rune	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/normal/O0/rune
+levinson-durbin	normal	O0	rune-jit	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/normal/O0/rune-jit
+levinson-durbin	normal	O0	rune-new	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/normal/O0/rune-new
+levinson-durbin	normal	O0	rune-opt	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/normal/O0/rune-opt
+levinson-durbin	normal	O2	rune	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/normal/O2/rune
+levinson-durbin	normal	O2	rune-jit	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/normal/O2/rune-jit
+levinson-durbin	normal	O2	rune-new	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/normal/O2/rune-new
+levinson-durbin	normal	O2	rune-opt	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/normal/O2/rune-opt
+levinson-durbin	normal	host-default	native-mlkit-4.7.23	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/normal/host-default/native-mlkit-4.7.23
+levinson-durbin	normal	host-default	native-mlton-20241230	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/normal/host-default/native-mlton-20241230
+levinson-durbin	normal	host-default	native-polyml-5.9.2	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/normal/host-default/native-polyml-5.9.2
+levinson-durbin	normal	host-default	native-smlnj-dev-2026.2	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/normal/host-default/native-smlnj-dev-2026.2
+levinson-durbin	normal	host-default	native-smlnj-legacy-110.99.9	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/normal/host-default/native-smlnj-legacy-110.99.9
+levinson-durbin	normal	host-default	native-smlnj32-110.99.9	128 expected/normal.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/normal/host-default/native-smlnj32-110.99.9
+levinson-durbin	smoke	O0	rune	8 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/smoke/O0/rune
+levinson-durbin	smoke	O0	rune-jit	8 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/smoke/O0/rune-jit
+levinson-durbin	smoke	O0	rune-new	8 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/smoke/O0/rune-new
+levinson-durbin	smoke	O0	rune-opt	8 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/smoke/O0/rune-opt
+levinson-durbin	smoke	O2	rune	8 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/smoke/O2/rune
+levinson-durbin	smoke	O2	rune-jit	8 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/smoke/O2/rune-jit
+levinson-durbin	smoke	O2	rune-new	8 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/smoke/O2/rune-new
+levinson-durbin	smoke	O2	rune-opt	8 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/smoke/O2/rune-opt
+levinson-durbin	smoke	host-default	native-mlkit-4.7.23	8 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/smoke/host-default/native-mlkit-4.7.23
+levinson-durbin	smoke	host-default	native-mlton-20241230	8 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/smoke/host-default/native-mlton-20241230
+levinson-durbin	smoke	host-default	native-polyml-5.9.2	8 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/smoke/host-default/native-polyml-5.9.2
+levinson-durbin	smoke	host-default	native-smlnj-dev-2026.2	8 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/smoke/host-default/native-smlnj-dev-2026.2
+levinson-durbin	smoke	host-default	native-smlnj-legacy-110.99.9	8 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/smoke/host-default/native-smlnj-legacy-110.99.9
+levinson-durbin	smoke	host-default	native-smlnj32-110.99.9	8 expected/smoke.txt	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/levinson-durbin/smoke/host-default/native-smlnj32-110.99.9
+qr-decomposition	normal	O0	rune	64	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/normal/O0/rune
+qr-decomposition	normal	O0	rune-jit	64	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/normal/O0/rune-jit
+qr-decomposition	normal	O0	rune-new	64	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/normal/O0/rune-new
+qr-decomposition	normal	O0	rune-opt	64	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/normal/O0/rune-opt
+qr-decomposition	normal	O2	rune	64	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/normal/O2/rune
+qr-decomposition	normal	O2	rune-jit	64	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/normal/O2/rune-jit
+qr-decomposition	normal	O2	rune-new	64	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/normal/O2/rune-new
+qr-decomposition	normal	O2	rune-opt	64	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/normal/O2/rune-opt
+qr-decomposition	normal	host-default	native-mlkit-4.7.23	64	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/normal/host-default/native-mlkit-4.7.23
+qr-decomposition	normal	host-default	native-mlton-20241230	64	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/normal/host-default/native-mlton-20241230
+qr-decomposition	normal	host-default	native-polyml-5.9.2	64	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/normal/host-default/native-polyml-5.9.2
+qr-decomposition	normal	host-default	native-smlnj-dev-2026.2	64	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/normal/host-default/native-smlnj-dev-2026.2
+qr-decomposition	normal	host-default	native-smlnj-legacy-110.99.9	64	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/normal/host-default/native-smlnj-legacy-110.99.9
+qr-decomposition	normal	host-default	native-smlnj32-110.99.9	64	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/normal/host-default/native-smlnj32-110.99.9
+qr-decomposition	smoke	O0	rune	5	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/smoke/O0/rune
+qr-decomposition	smoke	O0	rune-jit	5	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/smoke/O0/rune-jit
+qr-decomposition	smoke	O0	rune-new	5	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/smoke/O0/rune-new
+qr-decomposition	smoke	O0	rune-opt	5	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/smoke/O0/rune-opt
+qr-decomposition	smoke	O2	rune	5	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/smoke/O2/rune
+qr-decomposition	smoke	O2	rune-jit	5	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/smoke/O2/rune-jit
+qr-decomposition	smoke	O2	rune-new	5	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/smoke/O2/rune-new
+qr-decomposition	smoke	O2	rune-opt	5	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/smoke/O2/rune-opt
+qr-decomposition	smoke	host-default	native-mlkit-4.7.23	5	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/smoke/host-default/native-mlkit-4.7.23
+qr-decomposition	smoke	host-default	native-mlton-20241230	5	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/smoke/host-default/native-mlton-20241230
+qr-decomposition	smoke	host-default	native-polyml-5.9.2	5	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/smoke/host-default/native-polyml-5.9.2
+qr-decomposition	smoke	host-default	native-smlnj-dev-2026.2	5	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/smoke/host-default/native-smlnj-dev-2026.2
+qr-decomposition	smoke	host-default	native-smlnj-legacy-110.99.9	5	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/smoke/host-default/native-smlnj-legacy-110.99.9
+qr-decomposition	smoke	host-default	native-smlnj32-110.99.9	5	pass	results/m5-sequential-numerical/attempts-raw/final-sequential-numerical.rie9cac8/qr-decomposition/smoke/host-default/native-smlnj32-110.99.9

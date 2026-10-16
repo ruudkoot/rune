@@ -1,0 +1,5 @@
+{'program': 'qr_decomposition', 'args': [], 'exit': 0, 'stdout': '', 'stderr': '', 'seconds': 1.5133194379741326}
+{'program': 'qr_observer', 'args': [], 'exit': 0, 'stdout': 'rows=219 columns=30 q_nonfinite=0 r_nonfinite=0 result_nonfinite=0 max_finite_residual=5.1758597408024798e-13\n', 'stderr': '', 'seconds': 1.8050865010009147}
+{'program': 'durand_kerner_aberth', 'args': ['10'], 'exit': 0, 'stdout': '', 'stderr': '', 'seconds': 0.00448334903921932}
+{'program': 'durand_kerner_aberth', 'args': ['50'], 'exit': 0, 'stdout': '', 'stderr': '', 'seconds': 0.1404329789802432}
+{'program': 'durand_kerner_aberth', 'args': ['100'], 'exit': 0, 'stdout': '', 'stderr': '', 'seconds': 1.1821227569598705}

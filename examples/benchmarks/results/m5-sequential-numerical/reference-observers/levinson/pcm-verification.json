@@ -1,0 +1,22 @@
+{
+  "a": {
+    "samples": 1957,
+    "sha256": "7580460256c2f2cb9434912814d3ea3d7a33f7083a89f7d5eaaf75822188c2e4"
+  },
+  "i": {
+    "samples": 3439,
+    "sha256": "0da09840530125089d15c12d69c5bf9646fd3bbc555b3970b4cd8da5fb43c85e"
+  },
+  "u": {
+    "samples": 2644,
+    "sha256": "756b02cec0dcd9ca4c40fd02c13bd817644d26a6185c13f57257d52f81f56b66"
+  },
+  "e": {
+    "samples": 3316,
+    "sha256": "71fbc12c54f49e5d3ad58fa4cb89a96afc3cfa3e16c751a3e43bb529126f96f0"
+  },
+  "o": {
+    "samples": 2793,
+    "sha256": "a8c0031bf3d2acf8826d0351c7e426a0d8f4a20eb8843d1eb9f856ab8f7975d6"
+  }
+}

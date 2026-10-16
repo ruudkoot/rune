@@ -1,0 +1,44 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (801 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=levinson-durbin' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Zf2CEJ
+BENCH MEASURE levinson-durbin normal count
+COUNT unbudgeted levinson-durbin normal rune
+COUNT unbudgeted levinson-durbin normal rune:opt
+COUNT unbudgeted levinson-durbin normal rune:new
+COUNT unbudgeted levinson-durbin normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Zf2CEJ/report.md
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (801 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=durand-kerner-aberth' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.1A0KIo
+BENCH MEASURE durand-kerner-aberth normal count
+COUNT unbudgeted durand-kerner-aberth normal rune
+COUNT unbudgeted durand-kerner-aberth normal rune:opt
+COUNT unbudgeted durand-kerner-aberth normal rune:new
+COUNT unbudgeted durand-kerner-aberth normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.1A0KIo/report.md
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (801 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=qr-decomposition' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.s0hkkz
+BENCH MEASURE qr-decomposition normal count
+COUNT unbudgeted qr-decomposition normal rune
+COUNT unbudgeted qr-decomposition normal rune:opt
+COUNT unbudgeted qr-decomposition normal rune:new
+COUNT unbudgeted qr-decomposition normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.s0hkkz/report.md
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (801 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=crout-decomposition' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.ilwJom
+BENCH MEASURE crout-decomposition normal count
+COUNT unbudgeted crout-decomposition normal rune
+COUNT unbudgeted crout-decomposition normal rune:opt
+COUNT unbudgeted crout-decomposition normal rune:new
+COUNT unbudgeted crout-decomposition normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.ilwJom/report.md

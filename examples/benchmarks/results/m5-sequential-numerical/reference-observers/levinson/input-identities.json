@@ -1,0 +1,45 @@
+{
+  "sample_rate": 16000,
+  "quantization_denominator": 32768,
+  "conversion": "exact signed-16 integer/32768, verified IEEE64 identity for every sample",
+  "sources": {
+    "levinson_durbin.ml": "cd603c584e9b4c0759d8996bc83109a971c6d34d3d84bf44443652c3e3a02186",
+    "levinson_durbin_dataset.ml": "d506fca2d4d2c0fe59875515dce5f74151cf9df70e05a55fffe800e93a4bf5ef",
+    "LICENSE": "503740f71766637c6b3ff1f1b5c0ac69acc6d7c5ab2faae070ad7092f19d5d70",
+    "dune": "f6bd9eb03b8b4803e2f331787af72090ecd5c9dc4055d9dd99188ab33be348f4"
+  },
+  "vowels": {
+    "a": {
+      "samples": 1957,
+      "minimum": -22746,
+      "maximum": 18649,
+      "pcm_sha256": "7580460256c2f2cb9434912814d3ea3d7a33f7083a89f7d5eaaf75822188c2e4"
+    },
+    "i": {
+      "samples": 3439,
+      "minimum": -7178,
+      "maximum": 4489,
+      "pcm_sha256": "0da09840530125089d15c12d69c5bf9646fd3bbc555b3970b4cd8da5fb43c85e"
+    },
+    "u": {
+      "samples": 2644,
+      "minimum": -13495,
+      "maximum": 13730,
+      "pcm_sha256": "756b02cec0dcd9ca4c40fd02c13bd817644d26a6185c13f57257d52f81f56b66"
+    },
+    "e": {
+      "samples": 3316,
+      "minimum": -15089,
+      "maximum": 10486,
+      "pcm_sha256": "71fbc12c54f49e5d3ad58fa4cb89a96afc3cfa3e16c751a3e43bb529126f96f0"
+    },
+    "o": {
+      "samples": 2793,
+      "minimum": -24123,
+      "maximum": 17546,
+      "pcm_sha256": "a8c0031bf3d2acf8826d0351c7e426a0d8f4a20eb8843d1eb9f856ab8f7975d6"
+    }
+  },
+  "upstream_dataset_page": "http://www.gavo.t.u-tokyo.ac.jp/~mine/B3enshu2001/samples.html",
+  "page_audit": "Exact original URL not retrievable through available web tool on2026-10-16; scoped search did not recover it. No per-dataset grant inferred from unrelated OJAD pages or the directory MIT notice."
+}

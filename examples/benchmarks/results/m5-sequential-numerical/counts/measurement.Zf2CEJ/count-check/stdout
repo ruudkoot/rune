@@ -1,0 +1,5 @@
+COUNT unbudgeted levinson-durbin normal rune
+COUNT unbudgeted levinson-durbin normal rune:opt
+COUNT unbudgeted levinson-durbin normal rune:new
+COUNT unbudgeted levinson-durbin normal rune:jit
+COUNT comparisons agree

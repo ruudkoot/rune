@@ -1,0 +1,1072 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS levinson/exact-autocorrelation-and-zero-lags
+PASS levinson/empty-correlation-rejected
+PASS levinson/zero-order-core
+PASS levinson/white-correlation
+PASS levinson/first-order-process
+PASS levinson/fresh-array-reflection
+PASS levinson/wrapper-preserves-order-plus-one
+PASS levinson/input-correlation-unmodified
+PASS levinson/reject-perturbed-coefficient
+PASS levinson/reject-perturbed-variance
+PASS levinson/reject-wrong-length
+PASS levinson/reject-nonfinite
+PASS levinson/coefficient-boundary
+PASS numerical-matrix/QR-rectangular
+PASS numerical-matrix/QR-wide
+PASS numerical-matrix/QR-input-unmodified
+PASS numerical-matrix/QR-negative-zero-sign
+PASS numerical-matrix/Householder-reflection
+PASS numerical-matrix/reject-nonorthogonal-Q
+PASS numerical-matrix/reject-nontriangular-R
+PASS numerical-matrix/Crout-pivot-and-input
+PASS numerical-matrix/Crout-wide
+PASS numerical-matrix/Crout-raw-pivot-counterexample
+PASS numerical-matrix/reject-perturbed-result
+PASS numerical-matrix/reject-infinite-result
+PASS numerical-matrix/reject-result-dimensions
+PASS numerical-matrix/absolute-boundary
+PASS durand-kerner/complex-polynomial
+PASS durand-kerner/scaled-complex-division
+PASS durand-kerner/initial-circle-and-center
+PASS durand-kerner/short-coefficients-rejected
+PASS durand-kerner/squared-strict-stopping-boundary
+PASS durand-kerner/mismatched-vectors-rejected
+PASS durand-kerner/linear-complex-root
+PASS durand-kerner/quadratic-roots
+PASS durand-kerner/root-permutation-accepted
+PASS durand-kerner/duplicate-root-rejected
+PASS durand-kerner/missing-root-rejected
+PASS durand-kerner/perturbed-root-rejected
+PASS durand-kerner/nonfinite-root-rejected
+SUMMARY 40 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+PASS levinson/exact-autocorrelation-and-zero-lags
+PASS levinson/empty-correlation-rejected
+PASS levinson/zero-order-core
+PASS levinson/white-correlation
+PASS levinson/first-order-process
+PASS levinson/fresh-array-reflection
+PASS levinson/wrapper-preserves-order-plus-one
+PASS levinson/input-correlation-unmodified
+PASS levinson/reject-perturbed-coefficient
+PASS levinson/reject-perturbed-variance
+PASS levinson/reject-wrong-length
+PASS levinson/reject-nonfinite
+PASS levinson/coefficient-boundary
+PASS numerical-matrix/QR-rectangular
+PASS numerical-matrix/QR-wide
+PASS numerical-matrix/QR-input-unmodified
+PASS numerical-matrix/QR-negative-zero-sign
+PASS numerical-matrix/Householder-reflection
+PASS numerical-matrix/reject-nonorthogonal-Q
+PASS numerical-matrix/reject-nontriangular-R
+PASS numerical-matrix/Crout-pivot-and-input
+PASS numerical-matrix/Crout-wide
+PASS numerical-matrix/Crout-raw-pivot-counterexample
+PASS numerical-matrix/reject-perturbed-result
+PASS numerical-matrix/reject-infinite-result
+PASS numerical-matrix/reject-result-dimensions
+PASS numerical-matrix/absolute-boundary
+PASS durand-kerner/complex-polynomial
+PASS durand-kerner/scaled-complex-division
+PASS durand-kerner/initial-circle-and-center
+PASS durand-kerner/short-coefficients-rejected
+PASS durand-kerner/squared-strict-stopping-boundary
+PASS durand-kerner/mismatched-vectors-rejected
+PASS durand-kerner/linear-complex-root
+PASS durand-kerner/quadratic-roots
+PASS durand-kerner/root-permutation-accepted
+PASS durand-kerner/duplicate-root-rejected
+PASS durand-kerner/missing-root-rejected
+PASS durand-kerner/perturbed-root-rejected
+PASS durand-kerner/nonfinite-root-rejected
+SUMMARY 40 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+PASS levinson/exact-autocorrelation-and-zero-lags
+PASS levinson/empty-correlation-rejected
+PASS levinson/zero-order-core
+PASS levinson/white-correlation
+PASS levinson/first-order-process
+PASS levinson/fresh-array-reflection
+PASS levinson/wrapper-preserves-order-plus-one
+PASS levinson/input-correlation-unmodified
+PASS levinson/reject-perturbed-coefficient
+PASS levinson/reject-perturbed-variance
+PASS levinson/reject-wrong-length
+PASS levinson/reject-nonfinite
+PASS levinson/coefficient-boundary
+PASS numerical-matrix/QR-rectangular
+PASS numerical-matrix/QR-wide
+PASS numerical-matrix/QR-input-unmodified
+PASS numerical-matrix/QR-negative-zero-sign
+PASS numerical-matrix/Householder-reflection
+PASS numerical-matrix/reject-nonorthogonal-Q
+PASS numerical-matrix/reject-nontriangular-R
+PASS numerical-matrix/Crout-pivot-and-input
+PASS numerical-matrix/Crout-wide
+PASS numerical-matrix/Crout-raw-pivot-counterexample
+PASS numerical-matrix/reject-perturbed-result
+PASS numerical-matrix/reject-infinite-result
+PASS numerical-matrix/reject-result-dimensions
+PASS numerical-matrix/absolute-boundary
+PASS durand-kerner/complex-polynomial
+PASS durand-kerner/scaled-complex-division
+PASS durand-kerner/initial-circle-and-center
+PASS durand-kerner/short-coefficients-rejected
+PASS durand-kerner/squared-strict-stopping-boundary
+PASS durand-kerner/mismatched-vectors-rejected
+PASS durand-kerner/linear-complex-root
+PASS durand-kerner/quadratic-roots
+PASS durand-kerner/root-permutation-accepted
+PASS durand-kerner/duplicate-root-rejected
+PASS durand-kerner/missing-root-rejected
+PASS durand-kerner/perturbed-root-rejected
+PASS durand-kerner/nonfinite-root-rejected
+SUMMARY 40 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+PASS levinson/exact-autocorrelation-and-zero-lags
+PASS levinson/empty-correlation-rejected
+PASS levinson/zero-order-core
+PASS levinson/white-correlation
+PASS levinson/first-order-process
+PASS levinson/fresh-array-reflection
+PASS levinson/wrapper-preserves-order-plus-one
+PASS levinson/input-correlation-unmodified
+PASS levinson/reject-perturbed-coefficient
+PASS levinson/reject-perturbed-variance
+PASS levinson/reject-wrong-length
+PASS levinson/reject-nonfinite
+PASS levinson/coefficient-boundary
+PASS numerical-matrix/QR-rectangular
+PASS numerical-matrix/QR-wide
+PASS numerical-matrix/QR-input-unmodified
+PASS numerical-matrix/QR-negative-zero-sign
+PASS numerical-matrix/Householder-reflection
+PASS numerical-matrix/reject-nonorthogonal-Q
+PASS numerical-matrix/reject-nontriangular-R
+PASS numerical-matrix/Crout-pivot-and-input
+PASS numerical-matrix/Crout-wide
+PASS numerical-matrix/Crout-raw-pivot-counterexample
+PASS numerical-matrix/reject-perturbed-result
+PASS numerical-matrix/reject-infinite-result
+PASS numerical-matrix/reject-result-dimensions
+PASS numerical-matrix/absolute-boundary
+PASS durand-kerner/complex-polynomial
+PASS durand-kerner/scaled-complex-division
+PASS durand-kerner/initial-circle-and-center
+PASS durand-kerner/short-coefficients-rejected
+PASS durand-kerner/squared-strict-stopping-boundary
+PASS durand-kerner/mismatched-vectors-rejected
+PASS durand-kerner/linear-complex-root
+PASS durand-kerner/quadratic-roots
+PASS durand-kerner/root-permutation-accepted
+PASS durand-kerner/duplicate-root-rejected
+PASS durand-kerner/missing-root-rejected
+PASS durand-kerner/perturbed-root-rejected
+PASS durand-kerner/nonfinite-root-rejected
+SUMMARY 40 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 1048576 KiB
+PASS levinson/exact-autocorrelation-and-zero-lags
+PASS levinson/empty-correlation-rejected
+PASS levinson/zero-order-core
+PASS levinson/white-correlation
+PASS levinson/first-order-process
+PASS levinson/fresh-array-reflection
+PASS levinson/wrapper-preserves-order-plus-one
+PASS levinson/input-correlation-unmodified
+PASS levinson/reject-perturbed-coefficient
+PASS levinson/reject-perturbed-variance
+PASS levinson/reject-wrong-length
+PASS levinson/reject-nonfinite
+PASS levinson/coefficient-boundary
+PASS numerical-matrix/QR-rectangular
+PASS numerical-matrix/QR-wide
+PASS numerical-matrix/QR-input-unmodified
+PASS numerical-matrix/QR-negative-zero-sign
+PASS numerical-matrix/Householder-reflection
+PASS numerical-matrix/reject-nonorthogonal-Q
+PASS numerical-matrix/reject-nontriangular-R
+PASS numerical-matrix/Crout-pivot-and-input
+PASS numerical-matrix/Crout-wide
+PASS numerical-matrix/Crout-raw-pivot-counterexample
+PASS numerical-matrix/reject-perturbed-result
+PASS numerical-matrix/reject-infinite-result
+PASS numerical-matrix/reject-result-dimensions
+PASS numerical-matrix/absolute-boundary
+PASS durand-kerner/complex-polynomial
+PASS durand-kerner/scaled-complex-division
+PASS durand-kerner/initial-circle-and-center
+PASS durand-kerner/short-coefficients-rejected
+PASS durand-kerner/squared-strict-stopping-boundary
+PASS durand-kerner/mismatched-vectors-rejected
+PASS durand-kerner/linear-complex-root
+PASS durand-kerner/quadratic-roots
+PASS durand-kerner/root-permutation-accepted
+PASS durand-kerner/duplicate-root-rejected
+PASS durand-kerner/missing-root-rejected
+PASS durand-kerner/perturbed-root-rejected
+PASS durand-kerner/nonfinite-root-rejected
+SUMMARY 40 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-levinson.sml]
+structure BenchLevinson : sig
+  val for : int -> int -> (int -> 'a) -> unit
+  val mapiSum : (int -> Real64Array.elem -> real) -> Real64Array.array -> real
+  val autocorr : Real64Array.array -> int -> Real64Array.array
+  val levinson : Real64Array.array -> Real64Array.array * real
+  val coefficients : Real64Array.array -> int -> Real64Array.array * real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/levinson-files.sml]
+[autoloading]
+[autoloading done]
+structure BenchLevinsonFiles : sig
+  type reference = {ar:Real64Array.array, label:string, sigma:real}
+  val tokens : string -> string list
+  val real : string -> real
+  val data : string -> Real64Array.array
+  val references :
+      string -> {ar:Real64Array.array, label:string, sigma:real} list
+  val check : reference -> Real64Array.array * real -> unit
+  val labels : string list
+  val validate : int -> Real64Array.array list -> reference list -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-qr.sml]
+[autoloading]
+[autoloading done]
+structure BenchHouseholderQR : sig
+  type matrix = Real64Array.array array
+  val for : int -> int -> (int -> 'a) -> unit
+  val initMatrix :
+      int
+       -> int -> (int -> int -> Real64Array.elem) -> Real64Array.array array
+  val size : matrix -> int * int
+  val row : matrix -> int -> Real64Array.array
+  val sub : matrix -> int -> int -> Real64Array.elem
+  val rowSlice : Real64Array.array -> int -> int -> Real64Array.array
+  val matrixSlice : 'a array -> int -> int -> 'a array
+  val dot : Real64Array.array -> Real64Array.array -> real
+  val axpy : real -> Real64Array.array -> Real64Array.array -> unit
+  val gemvT : matrix -> Real64Array.array -> Real64Array.array
+  val gemm : matrix -> matrix -> Real64Array.array array
+  val transpose : matrix -> Real64Array.array array
+  val householder :
+      Real64Array.array -> Real64Array.array -> Real64Array.array array
+  val gemmHouseholder :
+      int -> Real64Array.array array -> Real64Array.array array -> unit
+  val qr : matrix -> Real64Array.array array * Real64Array.array array
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-crout.sml]
+structure BenchCrout : sig
+  type matrix = Real64Array.array array
+  val for : int -> int -> (int -> 'a) -> unit
+  val initMatrix :
+      int
+       -> int -> (int -> int -> Real64Array.elem) -> Real64Array.array array
+  val size : matrix -> int * int
+  val sub : matrix -> int -> int -> Real64Array.elem
+  val update : matrix -> int -> int -> Real64Array.elem -> unit
+  val swap : 'a array -> int -> int -> unit
+  val foldi : ('a -> int -> 'a) -> 'a -> int -> int -> 'a
+  val sumi : (int -> real) -> int -> int -> real
+  val maxi : (int -> real) -> int -> int -> int
+  val lup : Real64Array.array array -> int array * Real64Array.array array
+  val gemm : matrix -> matrix -> Real64Array.array array
+  val main : Real64Array.array array -> Real64Array.array array
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/numerical-matrix-files.sml]
+structure BenchMatrixFiles : sig
+  type matrix = Real64Array.array array
+  val tokens : string -> string list
+  val real : string -> real
+  val load : string -> Real64Array.array array
+  val size : matrix -> int * int
+  val prefix : 'a array -> int -> 'a array
+  val check : real -> real -> matrix -> matrix -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/qr-check.sml]
+structure BenchQRCheck : sig
+  structure Q : <sig>
+  val factors :
+      BenchHouseholderQR.matrix
+       -> BenchHouseholderQR.matrix -> BenchHouseholderQR.matrix -> unit
+  val run : BenchHouseholderQR.matrix -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-durand-kerner.sml]
+structure BenchDurandKerner : sig
+  type complex = real * real
+  val zero : complex
+  val add : complex * complex -> real * real
+  val sub : complex * complex -> real * real
+  val mul : complex * complex -> real * real
+  val divide : complex * complex -> real * real
+  val for : int -> int -> (int -> 'a) -> unit
+  val foldLefti : (int -> 'a -> 'b -> 'a) -> 'a -> 'b array -> 'a
+  val norm2 : complex -> real
+  val exponential : complex -> real * real
+  val initial : real -> complex array -> (real * real) array
+  val polynomial : complex array -> complex -> complex
+  val allClose : real -> complex array -> complex array -> bool
+  val rootsWith :
+      real -> complex array -> complex array -> (real * real) array
+  val roots : complex array -> (real * real) array
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/durand-kerner-files.sml]
+structure BenchDurandKernerFiles : sig
+  structure C : <sig>
+  type reference =
+    {count:int, roots:BenchDurandKerner.complex array, tolerance:real}
+  val tokens : string -> string list
+  val real : string -> real
+  val pairs : string list -> (real * real) array
+  val coefficients : string -> (real * real) array
+  val reference :
+      string -> {count:int, roots:(real * real) array, tolerance:real}
+  val check : reference -> (real * real) array -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/levinson-tests.sml]
+PASS levinson/exact-autocorrelation-and-zero-lags
+PASS levinson/empty-correlation-rejected
+PASS levinson/zero-order-core
+PASS levinson/white-correlation
+PASS levinson/first-order-process
+PASS levinson/fresh-array-reflection
+PASS levinson/wrapper-preserves-order-plus-one
+PASS levinson/input-correlation-unmodified
+PASS levinson/reject-perturbed-coefficient
+PASS levinson/reject-perturbed-variance
+PASS levinson/reject-wrong-length
+PASS levinson/reject-nonfinite
+PASS levinson/coefficient-boundary
+structure LevinsonTests : sig
+  structure K : <sig>
+  structure F : <sig>
+  val close : real * real -> bool
+  val array : real list -> Real64Array.array -> bool
+  val rejects : (unit -> 'a) -> bool
+  val reference : {ar:Real64Array.array, label:string, sigma:real}
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/numerical-matrix-tests.sml]
+PASS numerical-matrix/QR-rectangular
+PASS numerical-matrix/QR-wide
+PASS numerical-matrix/QR-input-unmodified
+PASS numerical-matrix/QR-negative-zero-sign
+PASS numerical-matrix/Householder-reflection
+PASS numerical-matrix/reject-nonorthogonal-Q
+PASS numerical-matrix/reject-nontriangular-R
+PASS numerical-matrix/Crout-pivot-and-input
+PASS numerical-matrix/Crout-wide
+PASS numerical-matrix/Crout-raw-pivot-counterexample
+PASS numerical-matrix/reject-perturbed-result
+PASS numerical-matrix/reject-infinite-result
+PASS numerical-matrix/reject-result-dimensions
+PASS numerical-matrix/absolute-boundary
+structure MatrixTests : sig
+  structure Q : <sig>
+  structure C : <sig>
+  structure M : <sig>
+  val matrix : Real64Array.elem list list -> Real64Array.array array
+  val rejects : (unit -> 'a) -> bool
+  val same : BenchMatrixFiles.matrix -> BenchMatrixFiles.matrix -> bool
+  val a : Real64Array.array array
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/durand-kerner-tests.sml]
+PASS durand-kerner/complex-polynomial
+PASS durand-kerner/scaled-complex-division
+PASS durand-kerner/initial-circle-and-center
+PASS durand-kerner/short-coefficients-rejected
+PASS durand-kerner/squared-strict-stopping-boundary
+PASS durand-kerner/mismatched-vectors-rejected
+PASS durand-kerner/linear-complex-root
+PASS durand-kerner/quadratic-roots
+PASS durand-kerner/root-permutation-accepted
+PASS durand-kerner/duplicate-root-rejected
+PASS durand-kerner/missing-root-rejected
+PASS durand-kerner/perturbed-root-rejected
+PASS durand-kerner/nonfinite-root-rejected
+structure RootTests : sig
+  structure C : <sig>
+  structure F : <sig>
+  val near : BenchDurandKerner.complex -> BenchDurandKerner.complex -> bool
+  val rejects : (unit -> 'a) -> bool
+  val reference : {count:int, roots:(real * real) array, tolerance:real}
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 40 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-levinson.sml]
+structure BenchLevinson : sig
+  val for : int -> int -> (int -> 'a) -> unit
+  val mapiSum : (int -> Real64Array.elem -> real) -> Real64Array.array -> real
+  val autocorr : Real64Array.array -> int -> Real64Array.array
+  val levinson : Real64Array.array -> Real64Array.array * real
+  val coefficients : Real64Array.array -> int -> Real64Array.array * real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/levinson-files.sml]
+[autoloading]
+[autoloading done]
+structure BenchLevinsonFiles : sig
+  type reference = {ar:Real64Array.array, label:string, sigma:real}
+  val tokens : string -> string list
+  val real : string -> real
+  val data : string -> Real64Array.array
+  val references :
+      string -> {ar:Real64Array.array, label:string, sigma:real} list
+  val check : reference -> Real64Array.array * real -> unit
+  val labels : string list
+  val validate : int -> Real64Array.array list -> reference list -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-qr.sml]
+[autoloading]
+[autoloading done]
+structure BenchHouseholderQR : sig
+  type matrix = Real64Array.array array
+  val for : int -> int -> (int -> 'a) -> unit
+  val initMatrix :
+      int
+       -> int -> (int -> int -> Real64Array.elem) -> Real64Array.array array
+  val size : matrix -> int * int
+  val row : matrix -> int -> Real64Array.array
+  val sub : matrix -> int -> int -> Real64Array.elem
+  val rowSlice : Real64Array.array -> int -> int -> Real64Array.array
+  val matrixSlice : 'a array -> int -> int -> 'a array
+  val dot : Real64Array.array -> Real64Array.array -> real
+  val axpy : real -> Real64Array.array -> Real64Array.array -> unit
+  val gemvT : matrix -> Real64Array.array -> Real64Array.array
+  val gemm : matrix -> matrix -> Real64Array.array array
+  val transpose : matrix -> Real64Array.array array
+  val householder :
+      Real64Array.array -> Real64Array.array -> Real64Array.array array
+  val gemmHouseholder :
+      int -> Real64Array.array array -> Real64Array.array array -> unit
+  val qr : matrix -> Real64Array.array array * Real64Array.array array
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-crout.sml]
+structure BenchCrout : sig
+  type matrix = Real64Array.array array
+  val for : int -> int -> (int -> 'a) -> unit
+  val initMatrix :
+      int
+       -> int -> (int -> int -> Real64Array.elem) -> Real64Array.array array
+  val size : matrix -> int * int
+  val sub : matrix -> int -> int -> Real64Array.elem
+  val update : matrix -> int -> int -> Real64Array.elem -> unit
+  val swap : 'a array -> int -> int -> unit
+  val foldi : ('a -> int -> 'a) -> 'a -> int -> int -> 'a
+  val sumi : (int -> real) -> int -> int -> real
+  val maxi : (int -> real) -> int -> int -> int
+  val lup : Real64Array.array array -> int array * Real64Array.array array
+  val gemm : matrix -> matrix -> Real64Array.array array
+  val main : Real64Array.array array -> Real64Array.array array
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/numerical-matrix-files.sml]
+structure BenchMatrixFiles : sig
+  type matrix = Real64Array.array array
+  val tokens : string -> string list
+  val real : string -> real
+  val load : string -> Real64Array.array array
+  val size : matrix -> int * int
+  val prefix : 'a array -> int -> 'a array
+  val check : real -> real -> matrix -> matrix -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/qr-check.sml]
+structure BenchQRCheck : sig
+  structure Q : <sig>
+  val factors :
+      BenchHouseholderQR.matrix
+       -> BenchHouseholderQR.matrix -> BenchHouseholderQR.matrix -> unit
+  val run : BenchHouseholderQR.matrix -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-durand-kerner.sml]
+structure BenchDurandKerner : sig
+  type complex = real * real
+  val zero : complex
+  val add : complex * complex -> real * real
+  val sub : complex * complex -> real * real
+  val mul : complex * complex -> real * real
+  val divide : complex * complex -> real * real
+  val for : int -> int -> (int -> 'a) -> unit
+  val foldLefti : (int -> 'a -> 'b -> 'a) -> 'a -> 'b array -> 'a
+  val norm2 : complex -> real
+  val exponential : complex -> real * real
+  val initial : real -> complex array -> (real * real) array
+  val polynomial : complex array -> complex -> complex
+  val allClose : real -> complex array -> complex array -> bool
+  val rootsWith :
+      real -> complex array -> complex array -> (real * real) array
+  val roots : complex array -> (real * real) array
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/durand-kerner-files.sml]
+structure BenchDurandKernerFiles : sig
+  structure C : <sig>
+  type reference =
+    {count:int, roots:BenchDurandKerner.complex array, tolerance:real}
+  val tokens : string -> string list
+  val real : string -> real
+  val pairs : string list -> (real * real) array
+  val coefficients : string -> (real * real) array
+  val reference :
+      string -> {count:int, roots:(real * real) array, tolerance:real}
+  val check : reference -> (real * real) array -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/levinson-tests.sml]
+PASS levinson/exact-autocorrelation-and-zero-lags
+PASS levinson/empty-correlation-rejected
+PASS levinson/zero-order-core
+PASS levinson/white-correlation
+PASS levinson/first-order-process
+PASS levinson/fresh-array-reflection
+PASS levinson/wrapper-preserves-order-plus-one
+PASS levinson/input-correlation-unmodified
+PASS levinson/reject-perturbed-coefficient
+PASS levinson/reject-perturbed-variance
+PASS levinson/reject-wrong-length
+PASS levinson/reject-nonfinite
+PASS levinson/coefficient-boundary
+structure LevinsonTests : sig
+  structure K : <sig>
+  structure F : <sig>
+  val close : real * real -> bool
+  val array : real list -> Real64Array.array -> bool
+  val rejects : (unit -> 'a) -> bool
+  val reference : {ar:Real64Array.array, label:string, sigma:real}
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/numerical-matrix-tests.sml]
+PASS numerical-matrix/QR-rectangular
+PASS numerical-matrix/QR-wide
+PASS numerical-matrix/QR-input-unmodified
+PASS numerical-matrix/QR-negative-zero-sign
+PASS numerical-matrix/Householder-reflection
+PASS numerical-matrix/reject-nonorthogonal-Q
+PASS numerical-matrix/reject-nontriangular-R
+PASS numerical-matrix/Crout-pivot-and-input
+PASS numerical-matrix/Crout-wide
+PASS numerical-matrix/Crout-raw-pivot-counterexample
+PASS numerical-matrix/reject-perturbed-result
+PASS numerical-matrix/reject-infinite-result
+PASS numerical-matrix/reject-result-dimensions
+PASS numerical-matrix/absolute-boundary
+structure MatrixTests : sig
+  structure Q : <sig>
+  structure C : <sig>
+  structure M : <sig>
+  val matrix : Real64Array.elem list list -> Real64Array.array array
+  val rejects : (unit -> 'a) -> bool
+  val same : BenchMatrixFiles.matrix -> BenchMatrixFiles.matrix -> bool
+  val a : Real64Array.array array
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/durand-kerner-tests.sml]
+PASS durand-kerner/complex-polynomial
+PASS durand-kerner/scaled-complex-division
+PASS durand-kerner/initial-circle-and-center
+PASS durand-kerner/short-coefficients-rejected
+PASS durand-kerner/squared-strict-stopping-boundary
+PASS durand-kerner/mismatched-vectors-rejected
+PASS durand-kerner/linear-complex-root
+PASS durand-kerner/quadratic-roots
+PASS durand-kerner/root-permutation-accepted
+PASS durand-kerner/duplicate-root-rejected
+PASS durand-kerner/missing-root-rejected
+PASS durand-kerner/perturbed-root-rejected
+PASS durand-kerner/nonfinite-root-rejected
+structure RootTests : sig
+  structure C : <sig>
+  structure F : <sig>
+  val near : BenchDurandKerner.complex -> BenchDurandKerner.complex -> bool
+  val rejects : (unit -> 'a) -> bool
+  val reference : {count:int, roots:(real * real) array, tolerance:real}
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 40 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-levinson.sml]
+structure BenchLevinson : 
+  sig
+    val for : int -> int -> (int -> 'a) -> unit
+    val mapiSum : (int -> Real64Array.elem -> real)
+                   -> Real64Array.array -> real
+    val autocorr : Real64Array.array -> int -> Real64Array.array
+    val levinson : Real64Array.array -> Real64Array.array * real
+    val coefficients : Real64Array.array -> int -> Real64Array.array * real
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/levinson-files.sml]
+structure BenchLevinsonFiles : 
+  sig
+    type reference = {ar:Real64Array.array, label:string, sigma:real}
+    val tokens : string -> string list
+    val real : string -> real
+    val data : string -> Real64Array.array
+    val references : string
+                      -> {ar:Real64Array.array, label:string, sigma:real} list
+    val check : reference -> Real64Array.array * real -> unit
+    val labels : string list
+    val validate : int -> Real64Array.array list -> reference list -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-qr.sml]
+structure BenchHouseholderQR : 
+  sig
+    type matrix = Real64Array.array array
+    val for : int -> int -> (int -> 'a) -> unit
+    val initMatrix : int
+                      -> int
+                      -> (int -> int -> Real64Array.elem)
+                      -> Real64Array.array array
+    val size : matrix -> int * int
+    val row : matrix -> int -> Real64Array.array
+    val sub : matrix -> int -> int -> Real64Array.elem
+    val rowSlice : Real64Array.array -> int -> int -> Real64Array.array
+    val matrixSlice : 'a array -> int -> int -> 'a array
+    val dot : Real64Array.array -> Real64Array.array -> real
+    val axpy : real -> Real64Array.array -> Real64Array.array -> unit
+    val gemvT : matrix -> Real64Array.array -> Real64Array.array
+    val gemm : matrix -> matrix -> Real64Array.array array
+    val transpose : matrix -> Real64Array.array array
+    val householder : Real64Array.array
+                       -> Real64Array.array -> Real64Array.array array
+    val gemmHouseholder : int
+                           -> Real64Array.array array
+                           -> Real64Array.array array -> unit
+    val qr : matrix -> Real64Array.array array * Real64Array.array array
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-crout.sml]
+structure BenchCrout : 
+  sig
+    type matrix = Real64Array.array array
+    val for : int -> int -> (int -> 'a) -> unit
+    val initMatrix : int
+                      -> int
+                      -> (int -> int -> Real64Array.elem)
+                      -> Real64Array.array array
+    val size : matrix -> int * int
+    val sub : matrix -> int -> int -> Real64Array.elem
+    val update : matrix -> int -> int -> Real64Array.elem -> unit
+    val swap : 'a array -> int -> int -> unit
+    val foldi : ('a -> int -> 'a) -> 'a -> int -> int -> 'a
+    val sumi : (int -> real) -> int -> int -> real
+    val maxi : (int -> real) -> int -> int -> int
+    val lup : Real64Array.array array -> int array * Real64Array.array array
+    val gemm : matrix -> matrix -> Real64Array.array array
+    val main : Real64Array.array array -> Real64Array.array array
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/numerical-matrix-files.sml]
+structure BenchMatrixFiles : 
+  sig
+    type matrix = Real64Array.array array
+    val tokens : string -> string list
+    val real : string -> real
+    val load : string -> Real64Array.array array
+    val size : matrix -> int * int
+    val prefix : 'a array -> int -> 'a array
+    val check : real -> real -> matrix -> matrix -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/qr-check.sml]
+structure BenchQRCheck : 
+  sig
+    structure Q : <sig>
+    val factors : BenchHouseholderQR.matrix
+                   -> BenchHouseholderQR.matrix
+                   -> BenchHouseholderQR.matrix -> unit
+    val run : BenchHouseholderQR.matrix -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-durand-kerner.sml]
+structure BenchDurandKerner : 
+  sig
+    type complex = real * real
+    val zero : complex
+    val add : complex * complex -> real * real
+    val sub : complex * complex -> real * real
+    val mul : complex * complex -> real * real
+    val divide : complex * complex -> real * real
+    val for : int -> int -> (int -> 'a) -> unit
+    val foldLefti : (int -> 'a -> 'b -> 'a) -> 'a -> 'b array -> 'a
+    val norm2 : complex -> real
+    val exponential : complex -> real * real
+    val initial : real -> complex array -> (real * real) array
+    val polynomial : complex array -> complex -> complex
+    val allClose : real -> complex array -> complex array -> bool
+    val rootsWith : real
+                     -> complex array -> complex array -> (real * real) array
+    val roots : complex array -> (real * real) array
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/durand-kerner-files.sml]
+structure BenchDurandKernerFiles : 
+  sig
+    structure C : <sig>
+    type reference =
+      {count:int, roots:BenchDurandKerner.complex array, tolerance:real}
+    val tokens : string -> string list
+    val real : string -> real
+    val pairs : string list -> (real * real) array
+    val coefficients : string -> (real * real) array
+    val reference : string
+                     -> {count:int, roots:(real * real) array, tolerance:real}
+    val check : reference -> (real * real) array -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/levinson-tests.sml]
+PASS levinson/exact-autocorrelation-and-zero-lags
+PASS levinson/empty-correlation-rejected
+PASS levinson/zero-order-core
+PASS levinson/white-correlation
+PASS levinson/first-order-process
+PASS levinson/fresh-array-reflection
+PASS levinson/wrapper-preserves-order-plus-one
+PASS levinson/input-correlation-unmodified
+PASS levinson/reject-perturbed-coefficient
+PASS levinson/reject-perturbed-variance
+PASS levinson/reject-wrong-length
+PASS levinson/reject-nonfinite
+PASS levinson/coefficient-boundary
+structure LevinsonTests : 
+  sig
+    structure K : <sig>
+    structure F : <sig>
+    val close : real * real -> bool
+    val array : real list -> Real64Array.array -> bool
+    val rejects : (unit -> 'a) -> bool
+    val reference : {ar:Real64Array.array, label:string, sigma:real}
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/numerical-matrix-tests.sml]
+PASS numerical-matrix/QR-rectangular
+PASS numerical-matrix/QR-wide
+PASS numerical-matrix/QR-input-unmodified
+PASS numerical-matrix/QR-negative-zero-sign
+PASS numerical-matrix/Householder-reflection
+PASS numerical-matrix/reject-nonorthogonal-Q
+PASS numerical-matrix/reject-nontriangular-R
+PASS numerical-matrix/Crout-pivot-and-input
+PASS numerical-matrix/Crout-wide
+PASS numerical-matrix/Crout-raw-pivot-counterexample
+PASS numerical-matrix/reject-perturbed-result
+PASS numerical-matrix/reject-infinite-result
+PASS numerical-matrix/reject-result-dimensions
+PASS numerical-matrix/absolute-boundary
+structure MatrixTests : 
+  sig
+    structure Q : <sig>
+    structure C : <sig>
+    structure M : <sig>
+    val matrix : Real64Array.elem list list -> Real64Array.array array
+    val rejects : (unit -> 'a) -> bool
+    val same : BenchMatrixFiles.matrix -> BenchMatrixFiles.matrix -> bool
+    val a : Real64Array.array array
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/durand-kerner-tests.sml]
+PASS durand-kerner/complex-polynomial
+PASS durand-kerner/scaled-complex-division
+PASS durand-kerner/initial-circle-and-center
+PASS durand-kerner/short-coefficients-rejected
+PASS durand-kerner/squared-strict-stopping-boundary
+PASS durand-kerner/mismatched-vectors-rejected
+PASS durand-kerner/linear-complex-root
+PASS durand-kerner/quadratic-roots
+PASS durand-kerner/root-permutation-accepted
+PASS durand-kerner/duplicate-root-rejected
+PASS durand-kerner/missing-root-rejected
+PASS durand-kerner/perturbed-root-rejected
+PASS durand-kerner/nonfinite-root-rejected
+structure RootTests : 
+  sig
+    structure C : <sig>
+    structure F : <sig>
+    val near : BenchDurandKerner.complex -> BenchDurandKerner.complex -> bool
+    val rejects : (unit -> 'a) -> bool
+    val reference : {count:int, roots:(real * real) array, tolerance:real}
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 40 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS levinson/exact-autocorrelation-and-zero-lags
+PASS levinson/empty-correlation-rejected
+PASS levinson/zero-order-core
+PASS levinson/white-correlation
+PASS levinson/first-order-process
+PASS levinson/fresh-array-reflection
+PASS levinson/wrapper-preserves-order-plus-one
+PASS levinson/input-correlation-unmodified
+PASS levinson/reject-perturbed-coefficient
+PASS levinson/reject-perturbed-variance
+PASS levinson/reject-wrong-length
+PASS levinson/reject-nonfinite
+PASS levinson/coefficient-boundary
+PASS numerical-matrix/QR-rectangular
+PASS numerical-matrix/QR-wide
+PASS numerical-matrix/QR-input-unmodified
+PASS numerical-matrix/QR-negative-zero-sign
+PASS numerical-matrix/Householder-reflection
+PASS numerical-matrix/reject-nonorthogonal-Q
+PASS numerical-matrix/reject-nontriangular-R
+PASS numerical-matrix/Crout-pivot-and-input
+PASS numerical-matrix/Crout-wide
+PASS numerical-matrix/Crout-raw-pivot-counterexample
+PASS numerical-matrix/reject-perturbed-result
+PASS numerical-matrix/reject-infinite-result
+PASS numerical-matrix/reject-result-dimensions
+PASS numerical-matrix/absolute-boundary
+PASS durand-kerner/complex-polynomial
+PASS durand-kerner/scaled-complex-division
+PASS durand-kerner/initial-circle-and-center
+PASS durand-kerner/short-coefficients-rejected
+PASS durand-kerner/squared-strict-stopping-boundary
+PASS durand-kerner/mismatched-vectors-rejected
+PASS durand-kerner/linear-complex-root
+PASS durand-kerner/quadratic-roots
+PASS durand-kerner/root-permutation-accepted
+PASS durand-kerner/duplicate-root-rejected
+PASS durand-kerner/missing-root-rejected
+PASS durand-kerner/perturbed-root-rejected
+PASS durand-kerner/nonfinite-root-rejected
+SUMMARY 40 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PASS levinson/exact-autocorrelation-and-zero-lags
+PASS levinson/empty-correlation-rejected
+PASS levinson/zero-order-core
+PASS levinson/white-correlation
+PASS levinson/first-order-process
+PASS levinson/fresh-array-reflection
+PASS levinson/wrapper-preserves-order-plus-one
+PASS levinson/input-correlation-unmodified
+PASS levinson/reject-perturbed-coefficient
+PASS levinson/reject-perturbed-variance
+PASS levinson/reject-wrong-length
+PASS levinson/reject-nonfinite
+PASS levinson/coefficient-boundary
+PASS numerical-matrix/QR-rectangular
+PASS numerical-matrix/QR-wide
+PASS numerical-matrix/QR-input-unmodified
+PASS numerical-matrix/QR-negative-zero-sign
+PASS numerical-matrix/Householder-reflection
+PASS numerical-matrix/reject-nonorthogonal-Q
+PASS numerical-matrix/reject-nontriangular-R
+PASS numerical-matrix/Crout-pivot-and-input
+PASS numerical-matrix/Crout-wide
+PASS numerical-matrix/Crout-raw-pivot-counterexample
+PASS numerical-matrix/reject-perturbed-result
+PASS numerical-matrix/reject-infinite-result
+PASS numerical-matrix/reject-result-dimensions
+PASS numerical-matrix/absolute-boundary
+PASS durand-kerner/complex-polynomial
+PASS durand-kerner/scaled-complex-division
+PASS durand-kerner/initial-circle-and-center
+PASS durand-kerner/short-coefficients-rejected
+PASS durand-kerner/squared-strict-stopping-boundary
+PASS durand-kerner/mismatched-vectors-rejected
+PASS durand-kerner/linear-complex-root
+PASS durand-kerner/quadratic-roots
+PASS durand-kerner/root-permutation-accepted
+PASS durand-kerner/duplicate-root-rejected
+PASS durand-kerner/missing-root-rejected
+PASS durand-kerner/perturbed-root-rejected
+PASS durand-kerner/nonfinite-root-rejected
+SUMMARY 40 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+crout-decomposition	normal	rune	O2	compile	0	0	pass	1.43	1.39	0.08	135364	-	-	-	crout-decomposition/rune/build/compile
+crout-decomposition	normal	rune	O2	correctness	0	0	pass	0.22	0.21	0.02	41212	49140193	129855296	2872556	crout-decomposition/rune/correctness.0
+crout-decomposition	normal	rune	O2	count	1	1	pass	0.27	0.25	0.02	41256	49140193	129855296	2872556	crout-decomposition/rune/fresh.1
+crout-decomposition	normal	rune:opt	O2	compile	0	0	pass	1.51	1.47	0.09	135260	-	-	-	crout-decomposition/rune-opt/build/compile
+crout-decomposition	normal	rune:opt	O2	native-compile	0	0	pass	0.33	0.18	0.03	15508	-	-	-	crout-decomposition/rune-opt/build/native-compile
+crout-decomposition	normal	rune:opt	O2	correctness	0	0	pass	0.12	0.10	0.01	41944	49140193	129855296	2872556	crout-decomposition/rune-opt/correctness.0
+crout-decomposition	normal	rune:opt	O2	count	1	1	pass	0.12	0.11	0.01	41908	49140193	129855296	2872556	crout-decomposition/rune-opt/fresh.1
+crout-decomposition	normal	rune:new	O2	compile	0	0	pass	1.50	1.49	0.06	135240	-	-	-	crout-decomposition/rune-new/build/compile
+crout-decomposition	normal	rune:new	O2	correctness	0	0	pass	0.25	0.22	0.04	47396	32993149	129855296	2872556	crout-decomposition/rune-new/correctness.0
+crout-decomposition	normal	rune:new	O2	count	1	1	pass	0.21	0.20	0.01	47408	32993149	129855296	2872556	crout-decomposition/rune-new/fresh.1
+crout-decomposition	normal	rune:jit	O2	compile	0	0	pass	1.37	1.33	0.08	135228	-	-	-	crout-decomposition/rune-jit/build/compile
+crout-decomposition	normal	rune:jit	O2	correctness	0	0	pass	0.14	0.13	0.01	48488	32993149	129855296	2872556	crout-decomposition/rune-jit/correctness.0
+crout-decomposition	normal	rune:jit	O2	count	1	1	pass	0.14	0.13	0.02	48532	32993149	129855296	2872556	crout-decomposition/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

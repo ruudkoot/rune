@@ -1,0 +1,17 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+levinson-durbin	normal	rune	O2	count	1	1	pass	0.56	0.58	0.00	10908	131521420	347197824	8010642	counts/measurement.Zf2CEJ/levinson-durbin/rune/fresh.1
+levinson-durbin	normal	rune:opt	O2	count	1	1	pass	0.29	0.29	0.01	11472	131521420	347197824	8010642	counts/measurement.Zf2CEJ/levinson-durbin/rune-opt/fresh.1
+levinson-durbin	normal	rune:new	O2	count	1	1	pass	0.62	0.64	0.00	11504	94430451	347197824	8010642	counts/measurement.Zf2CEJ/levinson-durbin/rune-new/fresh.1
+levinson-durbin	normal	rune:jit	O2	count	1	1	pass	1.41	0.27	0.00	12408	94430451	347197824	8010642	counts/measurement.Zf2CEJ/levinson-durbin/rune-jit/fresh.1
+durand-kerner-aberth	normal	rune	O2	count	1	1	pass	3.62	3.72	0.02	10480	1156741993	1266296656	31468604	counts/measurement.1A0KIo/durand-kerner-aberth/rune/fresh.1
+durand-kerner-aberth	normal	rune:opt	O2	count	1	1	pass	1.22	1.26	0.00	11220	1156741993	1266296656	31468604	counts/measurement.1A0KIo/durand-kerner-aberth/rune-opt/fresh.1
+durand-kerner-aberth	normal	rune:new	O2	count	1	1	pass	3.19	3.30	0.00	10788	563350557	1266296656	31468604	counts/measurement.1A0KIo/durand-kerner-aberth/rune-new/fresh.1
+durand-kerner-aberth	normal	rune:jit	O2	count	1	1	pass	0.89	0.92	0.00	11920	563350557	1266296656	31468604	counts/measurement.1A0KIo/durand-kerner-aberth/rune-jit/fresh.1
+qr-decomposition	normal	rune	O2	count	1	1	pass	1.18	1.22	0.00	11136	279726359	555173096	13614989	counts/measurement.s0hkkz/qr-decomposition/rune/fresh.1
+qr-decomposition	normal	rune:opt	O2	count	1	1	pass	0.54	0.55	0.00	11620	279726359	555173096	13614989	counts/measurement.s0hkkz/qr-decomposition/rune-opt/fresh.1
+qr-decomposition	normal	rune:new	O2	count	1	1	pass	1.08	1.11	0.00	11648	198566450	555173096	13614989	counts/measurement.s0hkkz/qr-decomposition/rune-new/fresh.1
+qr-decomposition	normal	rune:jit	O2	count	1	1	pass	0.46	0.48	0.00	12888	198566450	555173096	13614989	counts/measurement.s0hkkz/qr-decomposition/rune-jit/fresh.1
+crout-decomposition	normal	rune	O2	count	1	1	pass	0.27	0.25	0.02	41256	49140193	129855296	2872556	counts/measurement.ilwJom/crout-decomposition/rune/fresh.1
+crout-decomposition	normal	rune:opt	O2	count	1	1	pass	0.12	0.11	0.01	41908	49140193	129855296	2872556	counts/measurement.ilwJom/crout-decomposition/rune-opt/fresh.1
+crout-decomposition	normal	rune:new	O2	count	1	1	pass	0.21	0.20	0.01	47408	32993149	129855296	2872556	counts/measurement.ilwJom/crout-decomposition/rune-new/fresh.1
+crout-decomposition	normal	rune:jit	O2	count	1	1	pass	0.14	0.13	0.02	48532	32993149	129855296	2872556	counts/measurement.ilwJom/crout-decomposition/rune-jit/fresh.1

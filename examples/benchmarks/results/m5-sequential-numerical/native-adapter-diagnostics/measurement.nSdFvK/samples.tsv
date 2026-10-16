@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+levinson-durbin	smoke	native:mlton@20241230	O2	compile	0	0	pass	4.56	3.73	0.82	671820	-	-	-	levinson-durbin/native-mlton/build/compile
+levinson-durbin	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	3524	-	-	-	levinson-durbin/native-mlton/correctness.0
+levinson-durbin	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	3624	-	-	-	levinson-durbin/native-mlton/fresh.1
+levinson-durbin	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.19	0.16	0.03	31088	-	-	-	levinson-durbin/native-smlnj-legacy/build/compile
+levinson-durbin	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.02	0.01	0.00	5820	-	-	-	levinson-durbin/native-smlnj-legacy/correctness.0
+levinson-durbin	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.01	0.00	5788	-	-	-	levinson-durbin/native-smlnj-legacy/fresh.1
+levinson-durbin	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.27	0.12	0.05	32984	-	-	-	levinson-durbin/native-polyml/build/compile
+levinson-durbin	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.01	0.00	0.00	13784	-	-	-	levinson-durbin/native-polyml/correctness.0
+levinson-durbin	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.01	0.00	0.01	13984	-	-	-	levinson-durbin/native-polyml/fresh.1

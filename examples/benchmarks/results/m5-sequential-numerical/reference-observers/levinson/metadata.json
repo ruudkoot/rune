@@ -1,0 +1,125 @@
+[
+  {
+    "order": 8,
+    "seconds": 0.006627815018873662,
+    "results": [
+      {
+        "label": "a",
+        "size": 9,
+        "sigma": 1.5072233743725887,
+        "all_finite": true,
+        "maximum_abs_coefficient": 2.1440720987814563
+      },
+      {
+        "label": "i",
+        "size": 9,
+        "sigma": 0.2813165322855454,
+        "all_finite": true,
+        "maximum_abs_coefficient": 1.7743350260696438
+      },
+      {
+        "label": "u",
+        "size": 9,
+        "sigma": 0.27075354300947246,
+        "all_finite": true,
+        "maximum_abs_coefficient": 1.9493992543858714
+      },
+      {
+        "label": "e",
+        "size": 9,
+        "sigma": 0.7741812517722113,
+        "all_finite": true,
+        "maximum_abs_coefficient": 3.062779845139599
+      },
+      {
+        "label": "o",
+        "size": 9,
+        "sigma": 1.2732288580953868,
+        "all_finite": true,
+        "maximum_abs_coefficient": 1.7578846753994375
+      }
+    ]
+  },
+  {
+    "order": 128,
+    "seconds": 0.019598530023358762,
+    "results": [
+      {
+        "label": "a",
+        "size": 129,
+        "sigma": 0.6449906032488193,
+        "all_finite": true,
+        "maximum_abs_coefficient": 1.6787917148633167
+      },
+      {
+        "label": "i",
+        "size": 129,
+        "sigma": 0.16392707539052456,
+        "all_finite": true,
+        "maximum_abs_coefficient": 1.4174842485386994
+      },
+      {
+        "label": "u",
+        "size": 129,
+        "sigma": 0.12387137857496493,
+        "all_finite": true,
+        "maximum_abs_coefficient": 1.6995570887857054
+      },
+      {
+        "label": "e",
+        "size": 129,
+        "sigma": 0.4135716369904703,
+        "all_finite": true,
+        "maximum_abs_coefficient": 2.919961859939156
+      },
+      {
+        "label": "o",
+        "size": 129,
+        "sigma": 0.6231787804824461,
+        "all_finite": true,
+        "maximum_abs_coefficient": 1.3936964627246278
+      }
+    ]
+  },
+  {
+    "order": 10000,
+    "seconds": 4.015698582981713,
+    "results": [
+      {
+        "label": "a",
+        "size": 10001,
+        "sigma": 0.3298240616556385,
+        "all_finite": true,
+        "maximum_abs_coefficient": 1.554680669504128
+      },
+      {
+        "label": "i",
+        "size": 10001,
+        "sigma": 0.0965173716471345,
+        "all_finite": true,
+        "maximum_abs_coefficient": 1.3289229192996117
+      },
+      {
+        "label": "u",
+        "size": 10001,
+        "sigma": 0.06395589025654336,
+        "all_finite": true,
+        "maximum_abs_coefficient": 1.5233447419058779
+      },
+      {
+        "label": "e",
+        "size": 10001,
+        "sigma": 0.23680037799327533,
+        "all_finite": true,
+        "maximum_abs_coefficient": 2.7118255553902473
+      },
+      {
+        "label": "o",
+        "size": 10001,
+        "sigma": 0.35461634992909213,
+        "all_finite": true,
+        "maximum_abs_coefficient": 1.286146777394722
+      }
+    ]
+  }
+]

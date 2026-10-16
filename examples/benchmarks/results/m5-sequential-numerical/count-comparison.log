@@ -1,0 +1,17 @@
+COUNT unbudgeted levinson-durbin normal rune
+COUNT unbudgeted levinson-durbin normal rune:opt
+COUNT unbudgeted levinson-durbin normal rune:new
+COUNT unbudgeted levinson-durbin normal rune:jit
+COUNT unbudgeted durand-kerner-aberth normal rune
+COUNT unbudgeted durand-kerner-aberth normal rune:opt
+COUNT unbudgeted durand-kerner-aberth normal rune:new
+COUNT unbudgeted durand-kerner-aberth normal rune:jit
+COUNT unbudgeted qr-decomposition normal rune
+COUNT unbudgeted qr-decomposition normal rune:opt
+COUNT unbudgeted qr-decomposition normal rune:new
+COUNT unbudgeted qr-decomposition normal rune:jit
+COUNT unbudgeted crout-decomposition normal rune
+COUNT unbudgeted crout-decomposition normal rune:opt
+COUNT unbudgeted crout-decomposition normal rune:new
+COUNT unbudgeted crout-decomposition normal rune:jit
+COUNT comparisons agree

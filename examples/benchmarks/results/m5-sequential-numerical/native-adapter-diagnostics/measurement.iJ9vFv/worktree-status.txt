@@ -1,0 +1,18 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/crout-decomposition/
+?? examples/benchmarks/durand-kerner-aberth/
+?? examples/benchmarks/levinson-durbin/
+?? examples/benchmarks/qr-decomposition/
+?? examples/benchmarks/shared/durand-kerner-files.sml
+?? examples/benchmarks/shared/levinson-files.sml
+?? examples/benchmarks/shared/numerical-matrix-files.sml
+?? examples/benchmarks/shared/qr-check.sml
+?? examples/benchmarks/shared/sandmark-crout.sml
+?? examples/benchmarks/shared/sandmark-durand-kerner.sml
+?? examples/benchmarks/shared/sandmark-levinson.sml
+?? examples/benchmarks/shared/sandmark-qr.sml
+?? tests/benchmarks/check-sandmark-numerical.sh
+?? tests/benchmarks/durand-kerner-tests.sml
+?? tests/benchmarks/levinson-tests.sml
+?? tests/benchmarks/numerical-matrix-tests.sml

@@ -1,0 +1,1 @@
+crout-decomposition	30	1048576	shared/input.sml shared/lazy.sml shared/sandmark-crout.sml shared/numerical-matrix-files.sml crout-decomposition/benchmark.sml shared/main.sml	6 expected/smoke.txt	crout-decomposition/smoke.expected	data/matrix.txt expected/smoke.txt

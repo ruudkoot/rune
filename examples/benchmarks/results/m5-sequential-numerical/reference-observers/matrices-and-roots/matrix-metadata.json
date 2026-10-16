@@ -1,0 +1,32 @@
+[
+  {
+    "program": "qr",
+    "rows": 5,
+    "observer": "rows=5 columns=30 nonfinite=0 max_residual=3.5527136788005009e-15"
+  },
+  {
+    "program": "qr",
+    "rows": 64,
+    "observer": "rows=64 columns=30 nonfinite=0 max_residual=2.7311486405778851e-14"
+  },
+  {
+    "program": "qr",
+    "rows": null,
+    "observer": "rows=219 columns=30 nonfinite=0 max_residual=5.1758597408024798e-13"
+  },
+  {
+    "program": "crout",
+    "rows": 6,
+    "observer": "rows=6 columns=18 nonfinite=0 max_residual=2.2204460492503131e-16"
+  },
+  {
+    "program": "crout",
+    "rows": 128,
+    "observer": "rows=128 columns=18 nonfinite=0 max_residual=2.2204460492503131e-16"
+  },
+  {
+    "program": "crout",
+    "rows": null,
+    "observer": "rows=2730 columns=18 nonfinite=0 max_residual=8.7464435146443513"
+  }
+]
