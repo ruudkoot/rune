@@ -1,0 +1,5 @@
+COUNT unbudgeted scs-lazy normal rune
+COUNT unbudgeted scs-lazy normal rune:opt
+COUNT unbudgeted scs-lazy normal rune:new
+COUNT unbudgeted scs-lazy normal rune:jit
+COUNT comparisons agree

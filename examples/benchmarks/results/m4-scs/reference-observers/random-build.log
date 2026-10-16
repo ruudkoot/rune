@@ -1,0 +1,1 @@
+tests/out/benchmarks/scs-originals/random.sml:15:25: error: only a constructor can be applied in a pattern

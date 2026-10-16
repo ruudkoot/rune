@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+scs-lazy	normal	rune	O2	count	1	1	pass	104.78	104.79	0.11	68256	24079670053	37072526520	1004260753	counts/measurement.IMZr9v/scs-lazy/rune/fresh.1
+scs-lazy	normal	rune:opt	O2	count	1	1	pass	45.47	45.74	0.10	69644	24079670053	37072526520	1004260753	counts/measurement.IMZr9v/scs-lazy/rune-opt/fresh.1
+scs-lazy	normal	rune:new	O2	count	1	1	pass	99.95	99.67	0.12	68500	14207308284	37072526520	1004260753	counts/measurement.IMZr9v/scs-lazy/rune-new/fresh.1
+scs-lazy	normal	rune:jit	O2	count	1	1	pass	38.22	38.37	0.09	71304	14207308284	37072526520	1004260753	counts/measurement.IMZr9v/scs-lazy/rune-jit/fresh.1
+scs-strict	normal	rune	O2	count	1	1	pass	123.70	122.78	0.04	35460	25006300409	37689422680	1024841997	counts/measurement.ie4v35/scs-strict/rune/fresh.1
+scs-strict	normal	rune:opt	O2	count	1	1	pass	46.70	47.65	0.05	36872	25006300409	37689422680	1024841997	counts/measurement.ie4v35/scs-strict/rune-opt/fresh.1
+scs-strict	normal	rune:new	O2	count	1	1	pass	103.16	103.07	0.10	68564	14768386004	37689422680	1024841997	counts/measurement.ie4v35/scs-strict/rune-new/fresh.1
+scs-strict	normal	rune:jit	O2	count	1	1	pass	40.36	40.70	0.11	71300	14768386004	37689422680	1024841997	counts/measurement.ie4v35/scs-strict/rune-jit/fresh.1

@@ -1,0 +1,41 @@
+[
+  {
+    "profile": "smoke",
+    "args": [
+      "runtime_files/inverter",
+      "345",
+      "10n",
+      "2u",
+      "1",
+      "0"
+    ],
+    "bytes": 141978,
+    "rows": 371
+  },
+  {
+    "profile": "normal",
+    "args": [
+      "runtime_files/inverter",
+      "345",
+      "2n",
+      "4u",
+      "1",
+      "0"
+    ],
+    "bytes": 1119280,
+    "rows": 2913
+  },
+  {
+    "profile": "large",
+    "args": [
+      "runtime_files/inverter",
+      "345",
+      "400p",
+      "4u",
+      "1",
+      "0"
+    ],
+    "bytes": 4377567,
+    "rows": 11315
+  }
+]

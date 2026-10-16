@@ -1,0 +1,6 @@
+PASS independent exact matrices and IEEE conversion smoke
+PASS independent full stochastic trace {'profile': 'smoke', 'rows': 371, 'events': 170, 'max_absolute_error': 0.0, 'minimum_cdf_margin': 0.0018751911821406429}
+PASS independent exact matrices and IEEE conversion normal
+PASS independent full stochastic trace {'profile': 'normal', 'rows': 2913, 'events': 912, 'max_absolute_error': 0.0, 'minimum_cdf_margin': 8.56819873344336e-06}
+PASS independent exact matrices and IEEE conversion large
+PASS independent full stochastic trace {'profile': 'large', 'rows': 11315, 'events': 1314, 'max_absolute_error': 0.0, 'minimum_cdf_margin': 8.705900323174864e-06}

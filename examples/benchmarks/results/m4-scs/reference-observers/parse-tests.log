@@ -1,0 +1,2 @@
+PASS actual circuit parser: every index, exact parameter, waveform and name agrees
+PASS source decimal/SI/whitespace cases

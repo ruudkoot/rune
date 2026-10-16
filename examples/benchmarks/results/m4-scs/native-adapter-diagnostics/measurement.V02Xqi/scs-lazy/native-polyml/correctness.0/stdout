@@ -1,0 +1,4 @@
+RESULT 371:6678:checked
+PASS scs-lazy
+SAMPLE 1 0.204788000
+SUMMARY 1 checks, 0 failed

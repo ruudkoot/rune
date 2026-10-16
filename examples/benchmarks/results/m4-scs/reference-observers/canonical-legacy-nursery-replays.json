@@ -1,0 +1,26 @@
+[
+  {
+    "benchmark": "scs-lazy",
+    "profile": "smoke",
+    "nursery": "64m",
+    "exit": 0,
+    "status": "pass",
+    "scope": "diagnostic runtime override; original default-setting failure retained"
+  },
+  {
+    "benchmark": "scs-lazy",
+    "profile": "normal",
+    "nursery": "64m",
+    "exit": 0,
+    "status": "pass",
+    "scope": "diagnostic runtime override; original default-setting failure retained"
+  },
+  {
+    "benchmark": "scs-strict",
+    "profile": "normal",
+    "nursery": "64m",
+    "exit": 0,
+    "status": "pass",
+    "scope": "diagnostic runtime override; original default-setting failure retained"
+  }
+]

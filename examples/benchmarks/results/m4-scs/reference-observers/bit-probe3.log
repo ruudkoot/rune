@@ -1,0 +1,489 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS probe/binary64-format
+CASE 0 expected=0 real=0
+CASE 1 expected=4607182418800017408 real=1
+  man=0.5 exp=1 scaled=4503599627370496 near=4503599627370496 zero=4503599627370496
+CASE 2 expected=13830554455654793216 real=~1
+  man=0.5 exp=1 scaled=4503599627370496 near=4503599627370496 zero=4503599627370496
+CASE 3 expected=4599676419421066581 real=0.33333333333333331
+  man=0.666666666667 exp=~1 scaled=6004799503160661 near=6004799503160661 zero=6004799503160661
+CASE 4 expected=13823048456275842389 real=~0.33333333333333331
+  man=0.666666666667 exp=~1 scaled=6004799503160661 near=6004799503160661 zero=6004799503160661
+CASE 5 expected=4591870180066957722 real=0.10000000000000001
+  man=0.8 exp=~3 scaled=7205759403792794 near=7205759403792794 zero=7205759403792794
+CASE 6 expected=4845873199050653696 real=9007199254740992
+  man=0.5 exp=54 scaled=4503599627370496 near=4503599627370496 zero=4503599627370496
+CASE 7 expected=4845873199050653698 real=9007199254740996
+  man=0.5 exp=54 scaled=4503599627370498 near=4503599627370498 zero=4503599627370498
+CASE 8 expected=4842870799299073366 real=6004799503160662
+  man=0.666666666667 exp=53 scaled=6004799503160662 near=6004799503160662 zero=6004799503160662
+CASE 9 expected=1 real=4.9406564584124654E~324
+  man=0.5 exp=~1073 scaled=4503599627370496 near=4503599627370496 zero=4503599627370496
+CASE 10 expected=0 real=0
+CASE 11 expected=2 real=9.8813129168249309E~324
+  man=0.5 exp=~1072 scaled=4503599627370496 near=4503599627370496 zero=4503599627370496
+CASE 12 expected=9223372036854775808 real=~0
+CASE 13 expected=4503599627370495 real=2.2250738585072009E~308
+  man=1 exp=~1022 scaled=9007199254740990 near=9007199254740990 zero=9007199254740990
+CASE 14 expected=9218868437227405311 real=1.7976931348623157E308
+  man=1 exp=1024 scaled=9007199254740991 near=9007199254740991 zero=9007199254740991
+CASE 15 expected=9218868437227405312 real=inf
+CASE 16 expected=6095730106324201297 real=3.3333333333333332E99
+  man=0.761991594188 exp=331 scaled=6863410119290705 near=6863410119290705 zero=6863410119290705
+CASE 17 expected=3117897643442471908 real=3.0000000000000001E~100
+  man=0.656175217435 exp=~330 scaled=5910300929459172 near=5910300929459172 zero=5910300929459172
+DIRECT minsub=4.9406564584124654E~324
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+PASS probe/binary64-format
+CASE 0 expected=0 real=0
+CASE 1 expected=4607182418800017408 real=1
+  man=0.5 exp=1 scaled=4503599627370496 near=4503599627370496 zero=4503599627370496
+CASE 2 expected=13830554455654793216 real=~1
+  man=0.5 exp=1 scaled=4503599627370496 near=4503599627370496 zero=4503599627370496
+CASE 3 expected=4599676419421066581 real=0.33333333333333331
+  man=0.666666666667 exp=~1 scaled=6004799503160661 near=6004799503160661 zero=6004799503160661
+CASE 4 expected=13823048456275842389 real=~0.33333333333333331
+  man=0.666666666667 exp=~1 scaled=6004799503160661 near=6004799503160661 zero=6004799503160661
+CASE 5 expected=4591870180066957722 real=0.10000000000000001
+  man=0.8 exp=~3 scaled=7205759403792794 near=7205759403792794 zero=7205759403792794
+CASE 6 expected=4845873199050653696 real=9007199254740992
+  man=0.5 exp=54 scaled=4503599627370496 near=4503599627370496 zero=4503599627370496
+CASE 7 expected=4845873199050653698 real=9007199254740996
+  man=0.5 exp=54 scaled=4503599627370498 near=4503599627370498 zero=4503599627370498
+CASE 8 expected=4842870799299073366 real=6004799503160662
+  man=0.666666666667 exp=53 scaled=6004799503160662 near=6004799503160662 zero=6004799503160662
+CASE 9 expected=1 real=4.9406564584124654E~324
+  man=0.5 exp=~1073 scaled=4503599627370496 near=4503599627370496 zero=4503599627370496
+CASE 10 expected=0 real=0
+CASE 11 expected=2 real=9.8813129168249309E~324
+  man=0.5 exp=~1072 scaled=4503599627370496 near=4503599627370496 zero=4503599627370496
+CASE 12 expected=9223372036854775808 real=0
+CASE 13 expected=4503599627370495 real=2.2250738585072009E~308
+  man=1 exp=~1022 scaled=9007199254740990 near=9007199254740990 zero=9007199254740990
+CASE 14 expected=9218868437227405311 real=1.7976931348623157E308
+  man=1 exp=1024 scaled=9007199254740991 near=9007199254740991 zero=9007199254740991
+CASE 15 expected=9218868437227405312 real=inf
+CASE 16 expected=6095730106324201297 real=3.3333333333333332E99
+  man=0.761991594188 exp=331 scaled=6863410119290705 near=6863410119290705 zero=6863410119290705
+CASE 17 expected=3117897643442471908 real=3.0000000000000001E~100
+  man=0.656175217435 exp=~330 scaled=5910300929459172 near=5910300929459172 zero=5910300929459172
+DIRECT minsub=4.9406564584124654E~324
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/scs-originals/rational.sml]
+structure BenchScsRational : sig
+  structure I : <sig>
+  type t = IntInf.int * IntInf.int
+  val zero : t
+  val one : t
+  val gcd : IntInf.int * ?.intinf -> IntInf.int
+  val make : IntInf.int * ?.intinf -> IntInf.int * IntInf.int
+  val fromInt : int -> t
+  val add : t * t -> IntInf.int * IntInf.int
+  val sub : t * t -> IntInf.int * IntInf.int
+  val mul : t * t -> IntInf.int * IntInf.int
+  val divide : t * t -> IntInf.int * IntInf.int
+  val negative : t -> t
+  val absolute : t -> t
+  val compare : t * t -> order
+  val equal : t * t -> bool
+  val pow2 : int -> IntInf.int
+  val bits : IntInf.int -> int
+  val rounded : IntInf.int * IntInf.int -> IntInf.int
+  val real : t -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/scs-originals/bit-probe.sml]
+[autoloading]
+[autoloading done]
+PASS probe/binary64-format
+CASE 0 expected=0 real=0
+CASE 1 expected=4607182418800017408 real=1
+  man=0.5 exp=1 scaled=4503599627370496 near=4503599627370496 zero=4503599627370496
+CASE 2 expected=13830554455654793216 real=~1
+  man=0.5 exp=1 scaled=4503599627370496 near=4503599627370496 zero=4503599627370496
+CASE 3 expected=4599676419421066581 real=0.3333333333333333
+  man=0.666666666667 exp=~1 scaled=6004799503160661 near=6004799503160661 zero=6004799503160661
+CASE 4 expected=13823048456275842389 real=~0.3333333333333333
+  man=0.666666666667 exp=~1 scaled=6004799503160661 near=6004799503160661 zero=6004799503160661
+CASE 5 expected=4591870180066957722 real=0.1
+  man=0.8 exp=~3 scaled=7205759403792794 near=7205759403792794 zero=7205759403792794
+CASE 6 expected=4845873199050653696 real=9007199254740992
+  man=0.5 exp=54 scaled=4503599627370496 near=4503599627370496 zero=4503599627370496
+CASE 7 expected=4845873199050653698 real=9007199254740996
+  man=0.5 exp=54 scaled=4503599627370498 near=4503599627370498 zero=4503599627370498
+CASE 8 expected=4842870799299073366 real=6004799503160662
+  man=0.666666666667 exp=53 scaled=6004799503160662 near=6004799503160662 zero=6004799503160662
+CASE 9 expected=1 real=0
+CASE 10 expected=0 real=0
+CASE 11 expected=2 real=0
+CASE 12 expected=9223372036854775808 real=~0
+CASE 13 expected=4503599627370495 real=0
+CASE 14 expected=9218868437227405311 real=1.7976931348623157E308
+  man=1 exp=1024 scaled=9007199254740991 near=9007199254740991 zero=9007199254740991
+CASE 15 expected=9218868437227405312 real=inf
+CASE 16 expected=6095730106324201297 real=3.333333333333333E99
+  man=0.761991594188 exp=331 scaled=6863410119290705 near=6863410119290705 zero=6863410119290705
+CASE 17 expected=3117897643442471908 real=3E~100
+  man=0.656175217435 exp=~330 scaled=5910300929459172 near=5910300929459172 zero=5910300929459172
+DIRECT minsub=0
+structure Probe : sig
+  structure Q : <sig>
+  val large : string -> IntInf.int
+  val input : TextIO.instream
+  val loop : int -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/scs-originals/rational.sml]
+structure BenchScsRational : sig
+  structure I : <sig>
+  type t = IntInf.int * IntInf.int
+  val zero : t
+  val one : t
+  val gcd : IntInf.int * ?.intinf -> IntInf.int
+  val make : IntInf.int * ?.intinf -> IntInf.int * IntInf.int
+  val fromInt : int -> t
+  val add : t * t -> IntInf.int * IntInf.int
+  val sub : t * t -> IntInf.int * IntInf.int
+  val mul : t * t -> IntInf.int * IntInf.int
+  val divide : t * t -> IntInf.int * IntInf.int
+  val negative : t -> t
+  val absolute : t -> t
+  val compare : t * t -> order
+  val equal : t * t -> bool
+  val pow2 : int -> IntInf.int
+  val bits : IntInf.int -> int
+  val rounded : IntInf.int * IntInf.int -> IntInf.int
+  val real : t -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/scs-originals/bit-probe.sml]
+[autoloading]
+[autoloading done]
+PASS probe/binary64-format
+CASE 0 expected=0 real=0
+CASE 1 expected=4607182418800017408 real=1
+  man=0.5 exp=1 scaled=4503599627370496 near=4503599627370496 zero=4503599627370496
+CASE 2 expected=13830554455654793216 real=~1
+  man=0.5 exp=1 scaled=4503599627370496 near=4503599627370496 zero=4503599627370496
+CASE 3 expected=4599676419421066581 real=0.3333333333333333
+  man=0.666666666667 exp=~1 scaled=6004799503160661 near=6004799503160661 zero=6004799503160661
+CASE 4 expected=13823048456275842389 real=~0.3333333333333333
+  man=0.666666666667 exp=~1 scaled=6004799503160661 near=6004799503160661 zero=6004799503160661
+CASE 5 expected=4591870180066957722 real=0.1
+  man=0.8 exp=~3 scaled=7205759403792794 near=7205759403792794 zero=7205759403792794
+CASE 6 expected=4845873199050653696 real=9007199254740992
+  man=0.5 exp=54 scaled=4503599627370496 near=4503599627370496 zero=4503599627370496
+CASE 7 expected=4845873199050653698 real=9007199254740996
+  man=0.5 exp=54 scaled=4503599627370498 near=4503599627370498 zero=4503599627370498
+CASE 8 expected=4842870799299073366 real=6004799503160662
+  man=0.666666666667 exp=53 scaled=6004799503160662 near=6004799503160662 zero=6004799503160662
+CASE 9 expected=1 real=0
+CASE 10 expected=0 real=0
+CASE 11 expected=2 real=0
+CASE 12 expected=9223372036854775808 real=~0
+CASE 13 expected=4503599627370495 real=0
+CASE 14 expected=9218868437227405311 real=1.7976931348623157E308
+  man=1 exp=1024 scaled=9007199254740991 near=9007199254740991 zero=9007199254740991
+CASE 15 expected=9218868437227405312 real=inf
+CASE 16 expected=6095730106324201297 real=3.333333333333333E99
+  man=0.761991594188 exp=331 scaled=6863410119290705 near=6863410119290705 zero=6863410119290705
+CASE 17 expected=3117897643442471908 real=3E~100
+  man=0.656175217435 exp=~330 scaled=5910300929459172 near=5910300929459172 zero=5910300929459172
+DIRECT minsub=0
+structure Probe : sig
+  structure Q : <sig>
+  val large : string -> IntInf.int
+  val input : TextIO.instream
+  val loop : int -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/scs-originals/rational.sml]
+structure BenchScsRational : 
+  sig
+    structure I : <sig>
+    type t = IntInf.int * IntInf.int
+    val zero : t
+    val one : t
+    val gcd : IntInf.int * ?.intinf -> IntInf.int
+    val make : IntInf.int * ?.intinf -> IntInf.int * IntInf.int
+    val fromInt : int -> t
+    val add : t * t -> IntInf.int * IntInf.int
+    val sub : t * t -> IntInf.int * IntInf.int
+    val mul : t * t -> IntInf.int * IntInf.int
+    val divide : t * t -> IntInf.int * IntInf.int
+    val negative : t -> t
+    val absolute : t -> t
+    val compare : t * t -> order
+    val equal : t * t -> bool
+    val pow2 : int -> IntInf.int
+    val bits : IntInf.int -> int
+    val rounded : IntInf.int * IntInf.int -> IntInf.int
+    val real : t -> real
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/scs-originals/bit-probe.sml]
+PASS probe/binary64-format
+CASE 0 expected=0 real=0
+CASE 1 expected=4607182418800017408 real=1
+  man=0.5 exp=1 scaled=4503599627370496 near=4503599627370496 zero=4503599627370496
+CASE 2 expected=13830554455654793216 real=~1
+  man=0.5 exp=1 scaled=4503599627370496 near=4503599627370496 zero=4503599627370496
+CASE 3 expected=4599676419421066581 real=0.3333333333333333
+  man=0.666666666667 exp=~1 scaled=6004799503160661 near=6004799503160661 zero=6004799503160661
+CASE 4 expected=13823048456275842389 real=~0.3333333333333333
+  man=0.666666666667 exp=~1 scaled=6004799503160661 near=6004799503160661 zero=6004799503160661
+CASE 5 expected=4591870180066957722 real=0.1
+  man=0.8 exp=~3 scaled=7205759403792794 near=7205759403792794 zero=7205759403792794
+CASE 6 expected=4845873199050653696 real=9007199254740992
+  man=0.5 exp=54 scaled=4503599627370496 near=4503599627370496 zero=4503599627370496
+CASE 7 expected=4845873199050653698 real=9007199254740996
+  man=0.5 exp=54 scaled=4503599627370498 near=4503599627370498 zero=4503599627370498
+CASE 8 expected=4842870799299073366 real=6004799503160662
+  man=0.666666666667 exp=53 scaled=6004799503160662 near=6004799503160662 zero=6004799503160662
+CASE 9 expected=1 real=0
+CASE 10 expected=0 real=0
+CASE 11 expected=2 real=0
+CASE 12 expected=9223372036854775808 real=~0
+CASE 13 expected=4503599627370495 real=0
+CASE 14 expected=9218868437227405311 real=1.7976931348623157E308
+  man=1 exp=1024 scaled=9007199254740991 near=9007199254740991 zero=9007199254740991
+CASE 15 expected=9218868437227405312 real=inf
+CASE 16 expected=6095730106324201297 real=3.333333333333333E99
+  man=0.761991594188 exp=331 scaled=6863410119290705 near=6863410119290705 zero=6863410119290705
+CASE 17 expected=3117897643442471908 real=3E~100
+  man=0.656175217435 exp=~330 scaled=5910300929459172 near=5910300929459172 zero=5910300929459172
+DIRECT minsub=0
+structure Probe : 
+  sig
+    structure Q : <sig>
+    val large : string -> IntInf.int
+    val input : TextIO.instream
+    val loop : int -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS probe/binary64-format
+CASE 0 expected=0 real=0.0
+CASE 1 expected=4607182418800017408 real=1.0
+  man=0.5 exp=1 scaled=4503599627370496.0 near=4503599627370496 zero=4503599627370496
+CASE 2 expected=13830554455654793216 real=~1.0
+  man=0.5 exp=1 scaled=4503599627370496.0 near=4503599627370496 zero=4503599627370496
+CASE 3 expected=4599676419421066581 real=0.33333333333333331
+  man=0.666666666667 exp=~1 scaled=6004799503160661.0 near=6004799503160662 zero=6004799503160661
+CASE 4 expected=13823048456275842389 real=~0.33333333333333331
+  man=0.666666666667 exp=~1 scaled=6004799503160661.0 near=6004799503160662 zero=6004799503160661
+CASE 5 expected=4591870180066957722 real=0.10000000000000001
+  man=0.8 exp=~3 scaled=7205759403792794.0 near=7205759403792794 zero=7205759403792794
+CASE 6 expected=4845873199050653696 real=9007199254740992.0
+  man=0.5 exp=54 scaled=4503599627370496.0 near=4503599627370496 zero=4503599627370496
+CASE 7 expected=4845873199050653698 real=9007199254740996.0
+  man=0.5 exp=54 scaled=4503599627370498.0 near=4503599627370498 zero=4503599627370498
+CASE 8 expected=4842870799299073366 real=6004799503160662.0
+  man=0.666666666667 exp=53 scaled=6004799503160662.0 near=6004799503160662 zero=6004799503160662
+CASE 9 expected=1 real=4.9406564584124654E~324
+  man=0.5 exp=~1073 scaled=4503599627370496.0 near=4503599627370496 zero=4503599627370496
+CASE 10 expected=0 real=0.0
+CASE 11 expected=2 real=9.8813129168249309E~324
+  man=0.5 exp=~1072 scaled=4503599627370496.0 near=4503599627370496 zero=4503599627370496
+CASE 12 expected=9223372036854775808 real=~0.0
+CASE 13 expected=4503599627370495 real=2.2250738585072009E~308
+  man=1.0 exp=~1022 scaled=9007199254740990.0 near=9007199254740990 zero=9007199254740990
+CASE 14 expected=9218868437227405311 real=1.7976931348623157E308
+  man=1.0 exp=1024 scaled=9007199254740991.0 near=9007199254740992 zero=9007199254740991
+CASE 15 expected=9218868437227405312 real=inf
+CASE 16 expected=6095730106324201297 real=3.3333333333333332E99
+  man=0.761991594188 exp=331 scaled=6863410119290705.0 near=6863410119290706 zero=6863410119290705
+CASE 17 expected=3117897643442471908 real=3.0000000000000001E~100
+  man=0.656175217435 exp=~330 scaled=5910300929459172.0 near=5910300929459172 zero=5910300929459172
+DIRECT minsub=4.9406564584124654E~324
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2

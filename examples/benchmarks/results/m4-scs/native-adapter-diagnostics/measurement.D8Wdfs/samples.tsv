@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+scs-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	11.22	7.72	1.68	663608	-	-	-	scs-strict/native-mlton/build/compile
+scs-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.21	0.20	0.02	15488	-	-	-	scs-strict/native-mlton/correctness.0
+scs-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.20	0.20	0.00	15500	-	-	-	scs-strict/native-mlton/fresh.1
+scs-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	1.41	1.42	0.06	37600	-	-	-	scs-strict/native-smlnj-legacy/build/compile
+scs-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	1.09	1.13	0.03	20544	-	-	-	scs-strict/native-smlnj-legacy/correctness.0
+scs-strict	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	1.11	1.14	0.02	20552	-	-	-	scs-strict/native-smlnj-legacy/fresh.1
+scs-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.73	0.71	0.12	77268	-	-	-	scs-strict/native-polyml/build/compile
+scs-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.32	0.34	0.10	52944	-	-	-	scs-strict/native-polyml/correctness.0
+scs-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.25	0.25	0.08	44592	-	-	-	scs-strict/native-polyml/fresh.1

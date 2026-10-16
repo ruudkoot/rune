@@ -1,0 +1,39 @@
+{
+  "DOI": "10.1145/62959.62969",
+  "title": [
+    "Efficient and portable combined random number generators"
+  ],
+  "author": [
+    {
+      "given": "P.",
+      "family": "L'Ecuyer",
+      "sequence": "first",
+      "affiliation": [
+        {
+          "name": "D\u00e9partement d'informatique, Universit\u00e9 Laval, Ste-Foy, Quebec, Canada, GlK 7P4."
+        }
+      ],
+      "role": [
+        {
+          "vocabulary": "crossref",
+          "role": "author"
+        }
+      ]
+    }
+  ],
+  "publisher": "Association for Computing Machinery (ACM)",
+  "container-title": [
+    "Communications of the ACM"
+  ],
+  "volume": "31",
+  "issue": "6",
+  "page": "742-751",
+  "published": {
+    "date-parts": [
+      [
+        1988,
+        6
+      ]
+    ]
+  }
+}

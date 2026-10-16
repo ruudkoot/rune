@@ -1,0 +1,57 @@
+[1 of 8] Compiling ParseLib         ( ParseLib.hs, ParseLib.o )
+
+ParseLib.hs:15:15: warning: [-Wtabs]
+    Tab character found here, and in 72 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+15 | character' c x          | null x                = []
+   |               ^^
+[2 of 8] Compiling RandomFix        ( RandomFix.hs, RandomFix.o )
+
+RandomFix.hs:46:1: warning: [-Wtabs]
+    Tab character found here, and in 21 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+46 |         if 1 <= s2 && s2 <= 2147483398 then
+   | ^^^^^^^^
+[3 of 8] Compiling Types            ( Types.hs, Types.o )
+
+Types.hs:4:10: warning: [-Wtabs]
+    Tab character found here, and in 52 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+4 | type Name               = String
+  |          ^^^^^^^
+[4 of 8] Compiling Parse            ( Parse.hs, Parse.o )
+
+Parse.hs:17:8: warning: [-Wtabs]
+    Tab character found here, and in 120 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+17 | circuit :: Parser (Circuit, [Name])
+   |        ^
+[5 of 8] Compiling LinearAlgebra    ( LinearAlgebra.hs, LinearAlgebra.o )
+
+LinearAlgebra.hs:10:10: warning: [-Wtabs]
+    Tab character found here, and in 175 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+10 | apply m v               | cm == cv      = accumArray (+) 0 (1, rm) [(r, v ! c * m ! (r, c)) | (r, c) <- indices m]
+   |          ^^^^^^^
+[6 of 8] Compiling Simulate         ( Simulate.hs, Simulate.o )
+
+Simulate.hs:13:43: warning: [-Wtabs]
+    Tab character found here, and in 505 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+13 | simulate circuit seed dt end_time temp rbc      = select trace
+   |                                           ^^^^^^
+[7 of 8] Compiling Main             ( Main.hs, Main.o )
+
+Main.hs:12:1: warning: [-Wtabs]
+    Tab character found here, and in 109 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+12 |         args <- getArgs
+   | ^^^^^^^^
+[8 of 8] Linking original

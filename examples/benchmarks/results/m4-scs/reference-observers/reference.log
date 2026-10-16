@@ -1,0 +1,3 @@
+PASS unmodified source fixture and full trace smoke 141978 371
+PASS unmodified source fixture and full trace normal 1119280 2913
+PASS unmodified source fixture and full trace large 4377567 11315

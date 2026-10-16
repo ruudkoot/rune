@@ -1,0 +1,23 @@
+[
+  {
+    "profile": "smoke",
+    "rows": 371,
+    "events": 170,
+    "max_absolute_error": 0.0,
+    "minimum_cdf_margin": 0.0018751911821406429
+  },
+  {
+    "profile": "normal",
+    "rows": 2913,
+    "events": 912,
+    "max_absolute_error": 0.0,
+    "minimum_cdf_margin": 8.56819873344336e-06
+  },
+  {
+    "profile": "large",
+    "rows": 11315,
+    "events": 1314,
+    "max_absolute_error": 0.0,
+    "minimum_cdf_margin": 8.705900323174864e-06
+  }
+]

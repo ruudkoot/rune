@@ -1066,7 +1066,7 @@ records the run. All 38 inventory tests pass and all 861 entries validate.
 
 Two imports bring the catalogue to 254 programs and 756 profiles. [All 56
 requested smoke/normal cases](results/m3-cryptarithm1/coverage.tsv) are accounted
-for: 55 pass, and strict normal on legacy64 SML/NJ 110.99.9 reaches its
+for: 55 pass, and strict normal on legacy 64-bit SML/NJ 110.99.9 reaches its
 1,200-second cap without a result. That full-size host check remains incomplete.
 Native32 and SML/NJ 2026.2 complete it; every Rune engine passes both profiles at
 both levels. Eight semantic checks pass all ten configurations at both levels.
@@ -1277,7 +1277,7 @@ records the run. All 41 inventory tests pass and all 861 entries validate.
 
 One import brings the catalogue to 270 programs and 804 profiles. [All 28
 smoke/normal cases](results/m5-multilayer/coverage.tsv) are accounted for: 27 pass;
-legacy64 SML/NJ normal produces an incorrect numerical result. Every Rune engine
+legacy 64-bit SML/NJ normal produces an incorrect numerical result. Every Rune engine
 passes both profiles at both levels, and all other native hosts pass. Twelve
 semantic/negative checks run on all ten configurations at both levels. All pass
 except native32's strict decimal initialization comparison, once per level.
@@ -1292,7 +1292,7 @@ training agrees on complete smoke/normal parameters, predictions and loss;
 finite differences check all parameters in a small network. Original large
 outputs are retained; universal large SML execution is not claimed.
 
-[Host findings](validation/multilayer-smlnj.md) separate GC-sensitive legacy64
+[Host findings](validation/multilayer-smlnj.md) separate GC-sensitive legacy 64-bit
 NaNs from native32 decimal reading. Nursery diagnostics are consistent with the
 existing GC report without reducing the exact failing entry. Exact dyadic
 references verify all 417 generated parameters; native32 misreads 62 decimal
@@ -1557,7 +1557,7 @@ records the run. All 41 inventory tests pass and all 861 entries validate.
 
 Six imports bring the catalogue to 287 programs and 855 profiles. All 168
 selected cases are accounted for: 162 pass, five reject incorrect results and
-one raises Domain. Only managed legacy64 SML/NJ fails. Every Rune engine passes
+one raises Domain. Only managed legacy 64-bit SML/NJ fails. Every Rune engine passes
 both smoke/normal profiles at O0/O2; the other five native hosts pass all
 profiles. [Orbit coverage](results/m3-mandel/coverage.tsv) records 110/112 passes;
 [tree coverage](results/m3-mandel2/coverage.tsv) records 52/56. The historical
@@ -1568,7 +1568,7 @@ twice, with Rune O0/O2 and native defaults. Legacy64 fails two orbit and three
 tree checks per pass; other configurations pass all checks. Its scalar binary32
 bit/demand checks pass. Twenty-four normal count samples agree across Rune
 engines. Existing budgets are unchanged; new profiles are unbudgeted. Seventeen
-serial native smoke diagnostics pass; one legacy64 lazy-tree correctness
+serial native smoke diagnostics pass; one legacy 64-bit lazy-tree correctness
 precheck is rejected and contributes no fresh timing. Counts and single-sample
 diagnostics remain separate from headline timings.
 
@@ -1854,3 +1854,59 @@ bootstrap and 498 identical bytecode comparisons across seven builds. runedoc an
 runeopt also agree. [The complete transcript](validation/oct16-cichelli-901-acceptance.log)
 records the run. All 45 inventory fixtures pass and all 861 entries validate;
 the preceding full clean pinned-tree replay remains separately recorded.
+
+## M4 SET circuit simulation and host arithmetic diagnostics, 2026-10-16
+
+Two numerical variants bring the catalogue to 305 programs and 907 profiles.
+[The complete 56-case smoke/normal ledger](results/m4-scs/coverage.tsv) records 53
+passes and three incorrect native legacy 64-bit SML/NJ results. All four Rune engines
+pass both optimization levels/profiles/variants; all five other native hosts
+pass. Default-setting failures remain recorded, with no accepted timing. Separate
+64 MiB nursery replays pass all three failed profile cases, supporting a recorded
+GC-corruption hypothesis without changing suite defaults or proving a reduction.
+
+The 118-case semantic/negative set runs on all ten configurations twice, with
+Rune O0/O2 and native defaults. Of 2360 assertions, 2329 pass and 31 fail. Three
+SML/NJ subnormal conversion boundaries fail per host/run; six explicit Poly/ML
+integral-nearest probes fail per run; one additional legacy 64-bit workload assertion
+fails. Every assertion passes on Rune, MLton and MLKit. The complete outputs and
+per-configuration summaries preserve the failures. The bit encoder now truncates
+an exactly integral significand; separate nearest-mode probes retain the Poly/ML
+native defect, with a [minimal report](../../docs/bugreport/polyml/Real.toLargeInt/nearest-integral/BUGREPORT.md).
+No kernel arithmetic is changed for a host bug. [The host note](validation/scs-host-math.md)
+links the existing SML/NJ reports and separates observed behavior from hypotheses.
+
+Eight normal count samples agree under the execution-model rules, including
+allocation across all Rune engines. Existing budgets remain unchanged; new
+profiles are unbudgeted. Five serial native smoke samples pass adapter validation;
+one legacy lazy correctness precheck rejects an incorrect result before sampling.
+Counts, bounded preflights and single-sample diagnostics remain separate from
+headline timings.
+
+The unmodified original matches all Done fixtures. Export-only observers and a
+separate Fraction/mutable-matrix/binary64 model agree exactly on all three full
+traces: 371/2913/11315 rows and 170/912/1314 extra events. Exact prepared matrices
+and binary64 conversions agree too, with 3960 Rune bit checks. Independent normal/
+large minimum CDF margins exceed 8.56e-6. Validation checks exact names, dimensions,
+rational times/event records, row counts and EOF, plus finite current/voltage
+bounds. Deliberately perturbed values, nonfinite values and malformed/truncated/
+extra data are rejected. Synthetic small circuits cover every element class,
+full-rank preprocessing, zero temperature, background charge and huge seeds.
+
+Exact IntInf rational preprocessing, source pivots/accumulation order, seeded
+random mapping, constraint corrections, probability normalization, first-event
+selection, last-state stepping and inclusive end times remain. Numerical cells
+use lazy or eager payload evaluation; parser/RNG/conditional/trace control remains
+memoized. Source parameters and literal inverter data stay fixed. GEN17 rendering
+and escape-length counting replace the Haskell formatter with documented costs.
+No prior trajectory serves as a repeated-run answer. Exact original/base/array
+notices, references, raw traces, models, diagnostics and identities are retained.
+Whole large SML validation is claimed only where recorded. No prerequisite
+compiler/runtime feature is added. M4 remains in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 907 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 identical bytecode comparisons across seven builds. runedoc and
+runeopt also agree. [The complete transcript](validation/oct16-scs-907-acceptance.log)
+records the run. All 46 inventory fixtures pass and all 861 entries validate;
+the clean pinned-tree circuit-input replay is separately recorded.

@@ -1,0 +1,26 @@
+[1 of 5] Compiling ParseLib         ( ParseLib.hs, ParseLib.o )
+
+ParseLib.hs:15:15: warning: [-Wtabs]
+    Tab character found here, and in 72 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+15 | character' c x          | null x                = []
+   |               ^^
+[2 of 5] Compiling Types            ( Types.hs, Types.o )
+
+Types.hs:4:10: warning: [-Wtabs]
+    Tab character found here, and in 52 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+4 | type Name               = String
+  |          ^^^^^^^
+[3 of 5] Compiling Parse            ( Parse.hs, Parse.o )
+
+Parse.hs:17:8: warning: [-Wtabs]
+    Tab character found here, and in 120 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+17 | circuit :: Parser (Circuit, [Name])
+   |        ^
+[4 of 5] Compiling Main             ( ParseObserver.hs, ParseObserver.o )
+[5 of 5] Linking ParseObserver

@@ -1,0 +1,100 @@
+[
+  {
+    "name": "inverter-small",
+    "args": [
+      "runtime_files/inverter.in",
+      "345",
+      "10n",
+      "20n",
+      "1",
+      "0",
+      "inverter-small.exacttrace"
+    ],
+    "rows": 5,
+    "origin": "original inverter fixture"
+  },
+  {
+    "name": "inverter-zero-temperature",
+    "args": [
+      "runtime_files/inverter.in",
+      "345",
+      "10n",
+      "20n",
+      "0",
+      "0",
+      "inverter-zero-temperature.exacttrace"
+    ],
+    "rows": 3,
+    "origin": "original inverter fixture"
+  },
+  {
+    "name": "inverter-background",
+    "args": [
+      "runtime_files/inverter.in",
+      "345",
+      "10n",
+      "20n",
+      "1",
+      "0.125",
+      "inverter-background.exacttrace"
+    ],
+    "rows": 5,
+    "origin": "original inverter fixture"
+  },
+  {
+    "name": "inverter-huge-seed",
+    "args": [
+      "runtime_files/inverter.in",
+      "1267650600228229401496703217721",
+      "10n",
+      "20n",
+      "1",
+      "0",
+      "inverter-huge-seed.exacttrace"
+    ],
+    "rows": 5,
+    "origin": "original inverter fixture"
+  },
+  {
+    "name": "rc",
+    "args": [
+      "rc.in",
+      "345",
+      "1u",
+      "3u",
+      "1",
+      "0",
+      "rc.exacttrace"
+    ],
+    "rows": 4,
+    "origin": "synthetic constructor/conditional coverage circuit"
+  },
+  {
+    "name": "rl",
+    "args": [
+      "rl.in",
+      "345",
+      "1n",
+      "3n",
+      "1",
+      "0",
+      "rl.exacttrace"
+    ],
+    "rows": 4,
+    "origin": "synthetic constructor/conditional coverage circuit"
+  },
+  {
+    "name": "gi",
+    "args": [
+      "gi.in",
+      "345",
+      "1n",
+      "2n",
+      "1",
+      "0",
+      "gi.exacttrace"
+    ],
+    "rows": 3,
+    "origin": "synthetic constructor/conditional coverage circuit"
+  }
+]

@@ -1,0 +1,18 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? docs/bugreport/polyml/Real.toLargeInt/
+?? examples/benchmarks/scs-lazy/
+?? examples/benchmarks/scs-strict/
+?? examples/benchmarks/shared/scs-check.sml
+?? examples/benchmarks/shared/scs-matrix.sml
+?? examples/benchmarks/shared/scs-parse.sml
+?? examples/benchmarks/shared/scs-prepare.sml
+?? examples/benchmarks/shared/scs-random.sml
+?? examples/benchmarks/shared/scs-rational.sml
+?? examples/benchmarks/shared/scs-simulate.sml
+?? examples/benchmarks/shared/scs-types.sml
+?? tests/benchmarks/check-scs.sh
+?? tests/benchmarks/data/scs/
+?? tests/benchmarks/scs-bits.sml
+?? tests/benchmarks/scs-cases.sml
+?? tests/benchmarks/scs-tests.sml

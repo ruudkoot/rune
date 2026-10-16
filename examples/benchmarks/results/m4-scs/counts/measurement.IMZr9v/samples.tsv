@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+scs-lazy	normal	rune	O2	compile	0	0	pass	3.21	2.91	0.50	266800	-	-	-	scs-lazy/rune/build/compile
+scs-lazy	normal	rune	O2	correctness	0	0	pass	111.85	112.31	0.10	68236	24079670053	37072526520	1004260753	scs-lazy/rune/correctness.0
+scs-lazy	normal	rune	O2	count	1	1	pass	104.78	104.79	0.11	68256	24079670053	37072526520	1004260753	scs-lazy/rune/fresh.1
+scs-lazy	normal	rune:opt	O2	compile	0	0	pass	2.47	2.31	0.31	266768	-	-	-	scs-lazy/rune-opt/build/compile
+scs-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.57	0.39	0.09	25940	-	-	-	scs-lazy/rune-opt/build/native-compile
+scs-lazy	normal	rune:opt	O2	correctness	0	0	pass	45.21	43.68	0.08	69696	24079670053	37072526520	1004260753	scs-lazy/rune-opt/correctness.0
+scs-lazy	normal	rune:opt	O2	count	1	1	pass	45.47	45.74	0.10	69644	24079670053	37072526520	1004260753	scs-lazy/rune-opt/fresh.1
+scs-lazy	normal	rune:new	O2	compile	0	0	pass	3.09	2.95	0.26	266736	-	-	-	scs-lazy/rune-new/build/compile
+scs-lazy	normal	rune:new	O2	correctness	0	0	pass	90.63	90.07	0.11	68412	14207308284	37072526520	1004260753	scs-lazy/rune-new/correctness.0
+scs-lazy	normal	rune:new	O2	count	1	1	pass	99.95	99.67	0.12	68500	14207308284	37072526520	1004260753	scs-lazy/rune-new/fresh.1
+scs-lazy	normal	rune:jit	O2	compile	0	0	pass	2.84	2.73	0.28	266800	-	-	-	scs-lazy/rune-jit/build/compile
+scs-lazy	normal	rune:jit	O2	correctness	0	0	pass	40.35	40.65	0.07	71264	14207308284	37072526520	1004260753	scs-lazy/rune-jit/correctness.0
+scs-lazy	normal	rune:jit	O2	count	1	1	pass	38.22	38.37	0.09	71304	14207308284	37072526520	1004260753	scs-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

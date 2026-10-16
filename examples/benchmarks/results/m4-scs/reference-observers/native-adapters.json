@@ -1,0 +1,12 @@
+[
+  {
+    "benchmark": "scs-lazy",
+    "exit": 2,
+    "scope": "serial idle native smoke adapter diagnostic; defaults unchanged; not headline timing"
+  },
+  {
+    "benchmark": "scs-strict",
+    "exit": 0,
+    "scope": "serial idle native smoke adapter diagnostic; defaults unchanged; not headline timing"
+  }
+]

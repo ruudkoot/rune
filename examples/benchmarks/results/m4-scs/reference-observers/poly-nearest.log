@@ -1,0 +1,70 @@
+PROGRAM LIMIT AS 1048576 KiB
+nearest=4503599627370497 truncated=4503599627370497 expected=4503599627370497
+PASS
+PROGRAM FAIL rune (load 1, exit 0)
+PROGRAM LIMIT AS 1048576 KiB
+nearest=4503599627370497 truncated=4503599627370497 expected=4503599627370497
+PASS
+PROGRAM FAIL native:mlton@20241230 (load 1, exit 0)
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/docs/bugreport/polyml/Real.toLargeInt/nearest-integral/bug.sml]
+[autoloading]
+[autoloading done]
+nearest=4503599627370497 truncated=4503599627370497 expected=4503599627370497
+PASS
+structure Bug : sig
+  val value : real
+  val wanted : IntInf.int
+  val nearest : IntInf.int
+  val truncated : IntInf.int
+end
+val it = () : unit
+- 
+PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 1, exit 0)
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/docs/bugreport/polyml/Real.toLargeInt/nearest-integral/bug.sml]
+[autoloading]
+[autoloading done]
+nearest=4503599627370497 truncated=4503599627370497 expected=4503599627370497
+PASS
+structure Bug : sig
+  val value : real
+  val wanted : IntInf.int
+  val nearest : IntInf.int
+  val truncated : IntInf.int
+end
+val it = () : unit
+- 
+PROGRAM FAIL native:smlnj32@110.99.9 (load 1, exit 0)
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/docs/bugreport/polyml/Real.toLargeInt/nearest-integral/bug.sml]
+nearest=4503599627370497 truncated=4503599627370497 expected=4503599627370497
+PASS
+structure Bug : 
+  sig
+    val value : real
+    val wanted : IntInf.int
+    val nearest : IntInf.int
+    val truncated : IntInf.int
+  end
+val it = () : unit
+- 
+PROGRAM FAIL native:smlnj-dev@2026.2 (load 1, exit 0)
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+nearest=4503599627370498 truncated=4503599627370497 expected=4503599627370497
+FAIL
+PROGRAM FAIL native:polyml@5.9.2 (load 1, exit 0)

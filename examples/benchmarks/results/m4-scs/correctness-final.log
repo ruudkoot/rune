@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-scs-parallel.3umepdgp
+PASS scs-lazy smoke O2
+PASS scs-lazy smoke O0
+FAIL scs-lazy smoke hosts
+PASS scs-lazy normal O2
+FAIL scs-lazy normal hosts
+PASS scs-strict smoke O0
+PASS scs-strict smoke O2
+PASS scs-lazy normal O0
+PASS scs-strict smoke hosts
+PASS scs-strict normal O2
+FAIL scs-strict normal hosts
+PASS scs-strict normal O0

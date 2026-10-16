@@ -1,0 +1,2 @@
+FAIL scs-lazy -- Fail: incorrect result: event time differs
+SUMMARY 1 checks, 1 failed

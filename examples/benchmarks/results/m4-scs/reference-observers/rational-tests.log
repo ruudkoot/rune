@@ -1,0 +1,4 @@
+PASS exact rational conversion tests/out/benchmarks/scs-originals/rational-bits.data 18
+PASS all preprocessing scalar bits tests/out/benchmarks/scs-originals/smoke.prepare 1314
+PASS all preprocessing scalar bits tests/out/benchmarks/scs-originals/normal.prepare 1314
+PASS all preprocessing scalar bits tests/out/benchmarks/scs-originals/large.prepare 1314
