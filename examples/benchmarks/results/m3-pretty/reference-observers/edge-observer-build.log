@@ -1,0 +1,18 @@
+[1 of 4] Compiling CharSeq          ( CharSeq.hs, CharSeq.o )
+
+CharSeq.hs:21:1: warning: [-Wtabs]
+    Tab character found here, and in 10 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+21 |           | CAppend CSeq CSeq
+   | ^^^^^^^^
+[2 of 4] Compiling Pretty           ( Pretty.hs, Pretty.o )
+
+Pretty.hs:37:1: warning: [-Wtabs]
+    Tab character found here, and in 51 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+37 |             -> Bool           -- True => vertical context
+   | ^^^^^^^^
+[3 of 4] Compiling Main             ( EdgeObserver.hs, EdgeObserver.o )
+[4 of 4] Linking edge-observer

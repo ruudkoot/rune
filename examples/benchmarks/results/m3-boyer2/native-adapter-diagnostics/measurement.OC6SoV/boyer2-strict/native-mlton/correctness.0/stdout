@@ -1,0 +1,4 @@
+RESULT 1:proved
+PASS boyer2-strict
+SAMPLE 1 0.011659000
+SUMMARY 1 checks, 0 failed

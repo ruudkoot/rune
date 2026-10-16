@@ -1,0 +1,13 @@
+{
+  "nil": "",
+  "empty-string": "",
+  "beside": "ab",
+  "cat": "a b",
+  "above-nil": "a",
+  "above-empty-string": "a\n",
+  "nest-horizontal": "a\nb",
+  "nest-vertical": "\ta\n\tb",
+  "embedded-newline": "\ta\nb",
+  "sep-fit": "aaa bbb",
+  "sep-wrap": "aaa\nbbb"
+}

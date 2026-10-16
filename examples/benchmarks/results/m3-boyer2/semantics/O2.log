@@ -1,0 +1,1366 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS boyer2/original-rule-count
+PASS boyer2/parentheses-without-spaces
+PASS boyer2/missing-close-source-acceptance
+PASS boyer2/trailing-space-empty-token
+PASS boyer2/tab-is-symbol-character
+PASS boyer2/extra-close-rejected-as-nil
+PASS boyer2/noncons-selectors-return-nil
+PASS boyer2/latest-rule-first
+PASS boyer2/first-list-prefix-unification
+PASS boyer2/extra-first-arguments-fail
+PASS boyer2/repeated-variable-consistent
+PASS boyer2/head-mismatch-does-not-demand-tail
+PASS boyer2/source-malformed-rule-kept
+PASS boyer2/substitution-preserves-function-head
+PASS boyer2/tautology-true-and-false
+PASS boyer2/if-assumption-branches
+PASS boyer2/complete-lazy-normal-form
+PASS boyer2/complete-strict-normal-form
+PASS boyer2/source-theorem-1
+PASS boyer2/source-theorem-2
+PASS boyer2/source-theorem-60
+PASS boyer2/source-theorem-600
+PASS boyer2/wrong-normal-form-rejected
+PASS boyer2/truncated-normal-form-rejected
+PASS boyer2/extra-normal-form-rejected
+SUMMARY 25 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+PASS boyer2/original-rule-count
+PASS boyer2/parentheses-without-spaces
+PASS boyer2/missing-close-source-acceptance
+PASS boyer2/trailing-space-empty-token
+PASS boyer2/tab-is-symbol-character
+PASS boyer2/extra-close-rejected-as-nil
+PASS boyer2/noncons-selectors-return-nil
+PASS boyer2/latest-rule-first
+PASS boyer2/first-list-prefix-unification
+PASS boyer2/extra-first-arguments-fail
+PASS boyer2/repeated-variable-consistent
+PASS boyer2/head-mismatch-does-not-demand-tail
+PASS boyer2/source-malformed-rule-kept
+PASS boyer2/substitution-preserves-function-head
+PASS boyer2/tautology-true-and-false
+PASS boyer2/if-assumption-branches
+PASS boyer2/complete-lazy-normal-form
+PASS boyer2/complete-strict-normal-form
+PASS boyer2/source-theorem-1
+PASS boyer2/source-theorem-2
+PASS boyer2/source-theorem-60
+PASS boyer2/source-theorem-600
+PASS boyer2/wrong-normal-form-rejected
+PASS boyer2/truncated-normal-form-rejected
+PASS boyer2/extra-normal-form-rejected
+SUMMARY 25 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+PASS boyer2/original-rule-count
+PASS boyer2/parentheses-without-spaces
+PASS boyer2/missing-close-source-acceptance
+PASS boyer2/trailing-space-empty-token
+PASS boyer2/tab-is-symbol-character
+PASS boyer2/extra-close-rejected-as-nil
+PASS boyer2/noncons-selectors-return-nil
+PASS boyer2/latest-rule-first
+PASS boyer2/first-list-prefix-unification
+PASS boyer2/extra-first-arguments-fail
+PASS boyer2/repeated-variable-consistent
+PASS boyer2/head-mismatch-does-not-demand-tail
+PASS boyer2/source-malformed-rule-kept
+PASS boyer2/substitution-preserves-function-head
+PASS boyer2/tautology-true-and-false
+PASS boyer2/if-assumption-branches
+PASS boyer2/complete-lazy-normal-form
+PASS boyer2/complete-strict-normal-form
+PASS boyer2/source-theorem-1
+PASS boyer2/source-theorem-2
+PASS boyer2/source-theorem-60
+PASS boyer2/source-theorem-600
+PASS boyer2/wrong-normal-form-rejected
+PASS boyer2/truncated-normal-form-rejected
+PASS boyer2/extra-normal-form-rejected
+SUMMARY 25 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+PASS boyer2/original-rule-count
+PASS boyer2/parentheses-without-spaces
+PASS boyer2/missing-close-source-acceptance
+PASS boyer2/trailing-space-empty-token
+PASS boyer2/tab-is-symbol-character
+PASS boyer2/extra-close-rejected-as-nil
+PASS boyer2/noncons-selectors-return-nil
+PASS boyer2/latest-rule-first
+PASS boyer2/first-list-prefix-unification
+PASS boyer2/extra-first-arguments-fail
+PASS boyer2/repeated-variable-consistent
+PASS boyer2/head-mismatch-does-not-demand-tail
+PASS boyer2/source-malformed-rule-kept
+PASS boyer2/substitution-preserves-function-head
+PASS boyer2/tautology-true-and-false
+PASS boyer2/if-assumption-branches
+PASS boyer2/complete-lazy-normal-form
+PASS boyer2/complete-strict-normal-form
+PASS boyer2/source-theorem-1
+PASS boyer2/source-theorem-2
+PASS boyer2/source-theorem-60
+PASS boyer2/source-theorem-600
+PASS boyer2/wrong-normal-form-rejected
+PASS boyer2/truncated-normal-form-rejected
+PASS boyer2/extra-normal-form-rejected
+SUMMARY 25 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 1048576 KiB
+PASS boyer2/original-rule-count
+PASS boyer2/parentheses-without-spaces
+PASS boyer2/missing-close-source-acceptance
+PASS boyer2/trailing-space-empty-token
+PASS boyer2/tab-is-symbol-character
+PASS boyer2/extra-close-rejected-as-nil
+PASS boyer2/noncons-selectors-return-nil
+PASS boyer2/latest-rule-first
+PASS boyer2/first-list-prefix-unification
+PASS boyer2/extra-first-arguments-fail
+PASS boyer2/repeated-variable-consistent
+PASS boyer2/head-mismatch-does-not-demand-tail
+PASS boyer2/source-malformed-rule-kept
+PASS boyer2/substitution-preserves-function-head
+PASS boyer2/tautology-true-and-false
+PASS boyer2/if-assumption-branches
+PASS boyer2/complete-lazy-normal-form
+PASS boyer2/complete-strict-normal-form
+PASS boyer2/source-theorem-1
+PASS boyer2/source-theorem-2
+PASS boyer2/source-theorem-60
+PASS boyer2/source-theorem-600
+PASS boyer2/wrong-normal-form-rejected
+PASS boyer2/truncated-normal-form-rejected
+PASS boyer2/extra-normal-form-rejected
+SUMMARY 25 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/boyer2-rules.sml]
+structure BenchBoyerTwoRules : sig
+  val texts : string list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-boyer2.sml]
+functor BenchBoyerTwoFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type node
+  type term
+  type rulesNode
+  type rules
+  type lutNode
+  type lut
+  val nilTerm : <BaseFct>.<resultStr>.term
+  val noRules : <BaseFct>.<resultStr>.rules
+  val emptyTerm : unit -> <BaseFct>.<resultStr>.term
+  val ruleCons :
+      <BaseFct>.<resultStr>.term
+       -> <BaseFct>.<resultStr>.rulesNode D.t
+       -> <BaseFct>.<resultStr>.rulesNode D.t
+  val atom : string -> <BaseFct>.<resultStr>.node D.t
+  val cons :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val tokens : string -> string list
+  val sublist : string list -> string list * <BaseFct>.<resultStr>.term
+  val parse : string -> <BaseFct>.<resultStr>.term
+  val tv : <BaseFct>.<resultStr>.node D.t -> string
+  val isAtom : <BaseFct>.<resultStr>.node D.t -> bool
+  val car : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val cdr : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val cadr : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val caddr : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val cadddr :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val equal :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val assoc :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val add :
+      string * <BaseFct>.<resultStr>.term * <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.lutNode D.t
+  val lookup :
+      string
+       -> <BaseFct>.<resultStr>.lutNode D.t -> <BaseFct>.<resultStr>.rules
+  val addLemma :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.lutNode D.t
+  val lemmaCache : <BaseFct>.<resultStr>.lutNode D.t BenchLazy.state ref
+  val applySubst :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val applyList :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val unify :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> bool * <BaseFct>.<resultStr>.node D.t
+  val unifyList :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> bool * <BaseFct>.<resultStr>.node D.t
+  val rewrite :
+      <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val rewriteArgs :
+      <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val rewriteRules :
+      <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.rules -> <BaseFct>.<resultStr>.node D.t
+  val member :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val constant : string -> <BaseFct>.<resultStr>.node D.t -> bool
+  val truep :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val falsep :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val tautologyp :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> bool
+  val statement : <BaseFct>.<resultStr>.term BenchLazy.state ref
+  val subterm : int -> <BaseFct>.<resultStr>.term
+  val teststatement : int -> <BaseFct>.<resultStr>.node D.t
+  val normal : int -> <BaseFct>.<resultStr>.node D.t
+  val test : int -> bool
+  val write : <BaseFct>.<resultStr>.node D.t -> (string -> 'a) -> 'a
+  val ruleCount : <BaseFct>.<resultStr>.rulesNode D.t -> int
+  val entries : <BaseFct>.<resultStr>.lutNode D.t -> (string * int) list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/boyer2-normal-check.sml]
+[autoloading]
+[autoloading done]
+functor BoyerTwoNormalCheckFn(K: sig
+  type term
+  val normal : int -> term
+  val write : term -> (string -> unit) -> unit
+end) :
+sig
+  val run : int -> string -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/boyer2-tests.sml]
+PASS boyer2/original-rule-count
+PASS boyer2/parentheses-without-spaces
+PASS boyer2/missing-close-source-acceptance
+PASS boyer2/trailing-space-empty-token
+PASS boyer2/tab-is-symbol-character
+PASS boyer2/extra-close-rejected-as-nil
+PASS boyer2/noncons-selectors-return-nil
+PASS boyer2/latest-rule-first
+PASS boyer2/first-list-prefix-unification
+PASS boyer2/extra-first-arguments-fail
+PASS boyer2/repeated-variable-consistent
+PASS boyer2/head-mismatch-does-not-demand-tail
+PASS boyer2/source-malformed-rule-kept
+PASS boyer2/substitution-preserves-function-head
+PASS boyer2/tautology-true-and-false
+PASS boyer2/if-assumption-branches
+PASS boyer2/complete-lazy-normal-form
+PASS boyer2/complete-strict-normal-form
+PASS boyer2/source-theorem-1
+PASS boyer2/source-theorem-2
+PASS boyer2/source-theorem-60
+PASS boyer2/source-theorem-600
+PASS boyer2/wrong-normal-form-rejected
+PASS boyer2/truncated-normal-form-rejected
+PASS boyer2/extra-normal-form-rejected
+structure BoyerTwoNeed : sig
+  datatype node
+    = Atom of string
+    | Cons of <BaseFct>.<resultStr>.node D.t * <BaseFct>.<resultStr>.node D.t
+    | Nil
+  type term = node BenchNeed.t
+  datatype rulesNode
+    = RCons of <BaseFct>.<resultStr>.term
+                * <BaseFct>.<resultStr>.rulesNode D.t
+    | RNil
+  type rules = rulesNode BenchNeed.t
+  datatype lutNode
+    = Empty
+    | Node of <BaseFct>.<resultStr>.lutNode D.t * string
+               * <BaseFct>.<resultStr>.rules
+               * <BaseFct>.<resultStr>.lutNode D.t
+  type lut = lutNode BenchNeed.t
+  val nilTerm : <BaseFct>.<resultStr>.term
+  val noRules : <BaseFct>.<resultStr>.rules
+  val emptyTerm : unit -> <BaseFct>.<resultStr>.term
+  val ruleCons :
+      <BaseFct>.<resultStr>.term
+       -> <BaseFct>.<resultStr>.rulesNode D.t
+       -> <BaseFct>.<resultStr>.rulesNode D.t
+  val atom : string -> <BaseFct>.<resultStr>.node D.t
+  val cons :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val tokens : string -> string list
+  val sublist : string list -> string list * <BaseFct>.<resultStr>.term
+  val parse : string -> <BaseFct>.<resultStr>.term
+  val tv : <BaseFct>.<resultStr>.node D.t -> string
+  val isAtom : <BaseFct>.<resultStr>.node D.t -> bool
+  val car : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val cdr : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val cadr : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val caddr : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val cadddr :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val equal :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val assoc :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val add :
+      string * <BaseFct>.<resultStr>.term * <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.lutNode D.t
+  val lookup :
+      string
+       -> <BaseFct>.<resultStr>.lutNode D.t -> <BaseFct>.<resultStr>.rules
+  val addLemma :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.lutNode D.t
+  val lemmaCache : <BaseFct>.<resultStr>.lutNode D.t BenchLazy.state ref
+  val applySubst :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val applyList :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val unify :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> bool * <BaseFct>.<resultStr>.node D.t
+  val unifyList :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> bool * <BaseFct>.<resultStr>.node D.t
+  val rewrite :
+      <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val rewriteArgs :
+      <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val rewriteRules :
+      <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.rules -> <BaseFct>.<resultStr>.node D.t
+  val member :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val constant : string -> <BaseFct>.<resultStr>.node D.t -> bool
+  val truep :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val falsep :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val tautologyp :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> bool
+  val statement : <BaseFct>.<resultStr>.term BenchLazy.state ref
+  val subterm : int -> <BaseFct>.<resultStr>.term
+  val teststatement : int -> <BaseFct>.<resultStr>.node D.t
+  val normal : int -> <BaseFct>.<resultStr>.node D.t
+  val test : int -> bool
+  val write : <BaseFct>.<resultStr>.node D.t -> (string -> 'a) -> 'a
+  val ruleCount : <BaseFct>.<resultStr>.rulesNode D.t -> int
+  val entries : <BaseFct>.<resultStr>.lutNode D.t -> (string * int) list
+end
+structure BoyerTwoStrict : sig
+  datatype node
+    = Atom of string
+    | Cons of <BaseFct>.<resultStr>.node D.t * <BaseFct>.<resultStr>.node D.t
+    | Nil
+  type term = node BenchStrict.t
+  datatype rulesNode
+    = RCons of <BaseFct>.<resultStr>.term
+                * <BaseFct>.<resultStr>.rulesNode D.t
+    | RNil
+  type rules = rulesNode BenchStrict.t
+  datatype lutNode
+    = Empty
+    | Node of <BaseFct>.<resultStr>.lutNode D.t * string
+               * <BaseFct>.<resultStr>.rules
+               * <BaseFct>.<resultStr>.lutNode D.t
+  type lut = lutNode BenchStrict.t
+  val nilTerm : <BaseFct>.<resultStr>.term
+  val noRules : <BaseFct>.<resultStr>.rules
+  val emptyTerm : unit -> <BaseFct>.<resultStr>.term
+  val ruleCons :
+      <BaseFct>.<resultStr>.term
+       -> <BaseFct>.<resultStr>.rulesNode D.t
+       -> <BaseFct>.<resultStr>.rulesNode D.t
+  val atom : string -> <BaseFct>.<resultStr>.node D.t
+  val cons :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val tokens : string -> string list
+  val sublist : string list -> string list * <BaseFct>.<resultStr>.term
+  val parse : string -> <BaseFct>.<resultStr>.term
+  val tv : <BaseFct>.<resultStr>.node D.t -> string
+  val isAtom : <BaseFct>.<resultStr>.node D.t -> bool
+  val car : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val cdr : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val cadr : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val caddr : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val cadddr :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val equal :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val assoc :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val add :
+      string * <BaseFct>.<resultStr>.term * <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.lutNode D.t
+  val lookup :
+      string
+       -> <BaseFct>.<resultStr>.lutNode D.t -> <BaseFct>.<resultStr>.rules
+  val addLemma :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.lutNode D.t
+  val lemmaCache : <BaseFct>.<resultStr>.lutNode D.t BenchLazy.state ref
+  val applySubst :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val applyList :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val unify :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> bool * <BaseFct>.<resultStr>.node D.t
+  val unifyList :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> bool * <BaseFct>.<resultStr>.node D.t
+  val rewrite :
+      <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val rewriteArgs :
+      <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val rewriteRules :
+      <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.rules -> <BaseFct>.<resultStr>.node D.t
+  val member :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val constant : string -> <BaseFct>.<resultStr>.node D.t -> bool
+  val truep :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val falsep :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val tautologyp :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> bool
+  val statement : <BaseFct>.<resultStr>.term BenchLazy.state ref
+  val subterm : int -> <BaseFct>.<resultStr>.term
+  val teststatement : int -> <BaseFct>.<resultStr>.node D.t
+  val normal : int -> <BaseFct>.<resultStr>.node D.t
+  val test : int -> bool
+  val write : <BaseFct>.<resultStr>.node D.t -> (string -> 'a) -> 'a
+  val ruleCount : <BaseFct>.<resultStr>.rulesNode D.t -> int
+  val entries : <BaseFct>.<resultStr>.lutNode D.t -> (string * int) list
+end
+structure BoyerTwoNeedCheck : sig
+  val run : int -> string -> unit
+end
+structure BoyerTwoStrictCheck : sig
+  val run : int -> string -> unit
+end
+structure BoyerTwoTests : sig
+  structure N : <sig>
+  structure S : <sig>
+  val isNil : BoyerTwoNeed.node BenchNeed.t -> bool
+  val rejects : string -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 25 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/boyer2-rules.sml]
+structure BenchBoyerTwoRules : sig
+  val texts : string list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-boyer2.sml]
+functor BenchBoyerTwoFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type node
+  type term
+  type rulesNode
+  type rules
+  type lutNode
+  type lut
+  val nilTerm : <BaseFct>.<resultStr>.term
+  val noRules : <BaseFct>.<resultStr>.rules
+  val emptyTerm : unit -> <BaseFct>.<resultStr>.term
+  val ruleCons :
+      <BaseFct>.<resultStr>.term
+       -> <BaseFct>.<resultStr>.rulesNode D.t
+       -> <BaseFct>.<resultStr>.rulesNode D.t
+  val atom : string -> <BaseFct>.<resultStr>.node D.t
+  val cons :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val tokens : string -> string list
+  val sublist : string list -> string list * <BaseFct>.<resultStr>.term
+  val parse : string -> <BaseFct>.<resultStr>.term
+  val tv : <BaseFct>.<resultStr>.node D.t -> string
+  val isAtom : <BaseFct>.<resultStr>.node D.t -> bool
+  val car : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val cdr : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val cadr : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val caddr : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val cadddr :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val equal :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val assoc :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val add :
+      string * <BaseFct>.<resultStr>.term * <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.lutNode D.t
+  val lookup :
+      string
+       -> <BaseFct>.<resultStr>.lutNode D.t -> <BaseFct>.<resultStr>.rules
+  val addLemma :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.lutNode D.t
+  val lemmaCache : <BaseFct>.<resultStr>.lutNode D.t BenchLazy.state ref
+  val applySubst :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val applyList :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val unify :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> bool * <BaseFct>.<resultStr>.node D.t
+  val unifyList :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> bool * <BaseFct>.<resultStr>.node D.t
+  val rewrite :
+      <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val rewriteArgs :
+      <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val rewriteRules :
+      <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.rules -> <BaseFct>.<resultStr>.node D.t
+  val member :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val constant : string -> <BaseFct>.<resultStr>.node D.t -> bool
+  val truep :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val falsep :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val tautologyp :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> bool
+  val statement : <BaseFct>.<resultStr>.term BenchLazy.state ref
+  val subterm : int -> <BaseFct>.<resultStr>.term
+  val teststatement : int -> <BaseFct>.<resultStr>.node D.t
+  val normal : int -> <BaseFct>.<resultStr>.node D.t
+  val test : int -> bool
+  val write : <BaseFct>.<resultStr>.node D.t -> (string -> 'a) -> 'a
+  val ruleCount : <BaseFct>.<resultStr>.rulesNode D.t -> int
+  val entries : <BaseFct>.<resultStr>.lutNode D.t -> (string * int) list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/boyer2-normal-check.sml]
+[autoloading]
+[autoloading done]
+functor BoyerTwoNormalCheckFn(K: sig
+  type term
+  val normal : int -> term
+  val write : term -> (string -> unit) -> unit
+end) :
+sig
+  val run : int -> string -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/boyer2-tests.sml]
+PASS boyer2/original-rule-count
+PASS boyer2/parentheses-without-spaces
+PASS boyer2/missing-close-source-acceptance
+PASS boyer2/trailing-space-empty-token
+PASS boyer2/tab-is-symbol-character
+PASS boyer2/extra-close-rejected-as-nil
+PASS boyer2/noncons-selectors-return-nil
+PASS boyer2/latest-rule-first
+PASS boyer2/first-list-prefix-unification
+PASS boyer2/extra-first-arguments-fail
+PASS boyer2/repeated-variable-consistent
+PASS boyer2/head-mismatch-does-not-demand-tail
+PASS boyer2/source-malformed-rule-kept
+PASS boyer2/substitution-preserves-function-head
+PASS boyer2/tautology-true-and-false
+PASS boyer2/if-assumption-branches
+PASS boyer2/complete-lazy-normal-form
+PASS boyer2/complete-strict-normal-form
+PASS boyer2/source-theorem-1
+PASS boyer2/source-theorem-2
+PASS boyer2/source-theorem-60
+PASS boyer2/source-theorem-600
+PASS boyer2/wrong-normal-form-rejected
+PASS boyer2/truncated-normal-form-rejected
+PASS boyer2/extra-normal-form-rejected
+structure BoyerTwoNeed : sig
+  datatype node
+    = Atom of string
+    | Cons of <BaseFct>.<resultStr>.node D.t * <BaseFct>.<resultStr>.node D.t
+    | Nil
+  type term = node BenchNeed.t
+  datatype rulesNode
+    = RCons of <BaseFct>.<resultStr>.term
+                * <BaseFct>.<resultStr>.rulesNode D.t
+    | RNil
+  type rules = rulesNode BenchNeed.t
+  datatype lutNode
+    = Empty
+    | Node of <BaseFct>.<resultStr>.lutNode D.t * string
+               * <BaseFct>.<resultStr>.rules
+               * <BaseFct>.<resultStr>.lutNode D.t
+  type lut = lutNode BenchNeed.t
+  val nilTerm : <BaseFct>.<resultStr>.term
+  val noRules : <BaseFct>.<resultStr>.rules
+  val emptyTerm : unit -> <BaseFct>.<resultStr>.term
+  val ruleCons :
+      <BaseFct>.<resultStr>.term
+       -> <BaseFct>.<resultStr>.rulesNode D.t
+       -> <BaseFct>.<resultStr>.rulesNode D.t
+  val atom : string -> <BaseFct>.<resultStr>.node D.t
+  val cons :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val tokens : string -> string list
+  val sublist : string list -> string list * <BaseFct>.<resultStr>.term
+  val parse : string -> <BaseFct>.<resultStr>.term
+  val tv : <BaseFct>.<resultStr>.node D.t -> string
+  val isAtom : <BaseFct>.<resultStr>.node D.t -> bool
+  val car : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val cdr : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val cadr : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val caddr : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val cadddr :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val equal :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val assoc :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val add :
+      string * <BaseFct>.<resultStr>.term * <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.lutNode D.t
+  val lookup :
+      string
+       -> <BaseFct>.<resultStr>.lutNode D.t -> <BaseFct>.<resultStr>.rules
+  val addLemma :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.lutNode D.t
+  val lemmaCache : <BaseFct>.<resultStr>.lutNode D.t BenchLazy.state ref
+  val applySubst :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val applyList :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val unify :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> bool * <BaseFct>.<resultStr>.node D.t
+  val unifyList :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> bool * <BaseFct>.<resultStr>.node D.t
+  val rewrite :
+      <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val rewriteArgs :
+      <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val rewriteRules :
+      <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.rules -> <BaseFct>.<resultStr>.node D.t
+  val member :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val constant : string -> <BaseFct>.<resultStr>.node D.t -> bool
+  val truep :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val falsep :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val tautologyp :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> bool
+  val statement : <BaseFct>.<resultStr>.term BenchLazy.state ref
+  val subterm : int -> <BaseFct>.<resultStr>.term
+  val teststatement : int -> <BaseFct>.<resultStr>.node D.t
+  val normal : int -> <BaseFct>.<resultStr>.node D.t
+  val test : int -> bool
+  val write : <BaseFct>.<resultStr>.node D.t -> (string -> 'a) -> 'a
+  val ruleCount : <BaseFct>.<resultStr>.rulesNode D.t -> int
+  val entries : <BaseFct>.<resultStr>.lutNode D.t -> (string * int) list
+end
+structure BoyerTwoStrict : sig
+  datatype node
+    = Atom of string
+    | Cons of <BaseFct>.<resultStr>.node D.t * <BaseFct>.<resultStr>.node D.t
+    | Nil
+  type term = node BenchStrict.t
+  datatype rulesNode
+    = RCons of <BaseFct>.<resultStr>.term
+                * <BaseFct>.<resultStr>.rulesNode D.t
+    | RNil
+  type rules = rulesNode BenchStrict.t
+  datatype lutNode
+    = Empty
+    | Node of <BaseFct>.<resultStr>.lutNode D.t * string
+               * <BaseFct>.<resultStr>.rules
+               * <BaseFct>.<resultStr>.lutNode D.t
+  type lut = lutNode BenchStrict.t
+  val nilTerm : <BaseFct>.<resultStr>.term
+  val noRules : <BaseFct>.<resultStr>.rules
+  val emptyTerm : unit -> <BaseFct>.<resultStr>.term
+  val ruleCons :
+      <BaseFct>.<resultStr>.term
+       -> <BaseFct>.<resultStr>.rulesNode D.t
+       -> <BaseFct>.<resultStr>.rulesNode D.t
+  val atom : string -> <BaseFct>.<resultStr>.node D.t
+  val cons :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val tokens : string -> string list
+  val sublist : string list -> string list * <BaseFct>.<resultStr>.term
+  val parse : string -> <BaseFct>.<resultStr>.term
+  val tv : <BaseFct>.<resultStr>.node D.t -> string
+  val isAtom : <BaseFct>.<resultStr>.node D.t -> bool
+  val car : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val cdr : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val cadr : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val caddr : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val cadddr :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val equal :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val assoc :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val add :
+      string * <BaseFct>.<resultStr>.term * <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.lutNode D.t
+  val lookup :
+      string
+       -> <BaseFct>.<resultStr>.lutNode D.t -> <BaseFct>.<resultStr>.rules
+  val addLemma :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.lutNode D.t
+  val lemmaCache : <BaseFct>.<resultStr>.lutNode D.t BenchLazy.state ref
+  val applySubst :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val applyList :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val unify :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> bool * <BaseFct>.<resultStr>.node D.t
+  val unifyList :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> bool * <BaseFct>.<resultStr>.node D.t
+  val rewrite :
+      <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val rewriteArgs :
+      <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val rewriteRules :
+      <BaseFct>.<resultStr>.lutNode D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.rules -> <BaseFct>.<resultStr>.node D.t
+  val member :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val constant : string -> <BaseFct>.<resultStr>.node D.t -> bool
+  val truep :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val falsep :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val tautologyp :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> bool
+  val statement : <BaseFct>.<resultStr>.term BenchLazy.state ref
+  val subterm : int -> <BaseFct>.<resultStr>.term
+  val teststatement : int -> <BaseFct>.<resultStr>.node D.t
+  val normal : int -> <BaseFct>.<resultStr>.node D.t
+  val test : int -> bool
+  val write : <BaseFct>.<resultStr>.node D.t -> (string -> 'a) -> 'a
+  val ruleCount : <BaseFct>.<resultStr>.rulesNode D.t -> int
+  val entries : <BaseFct>.<resultStr>.lutNode D.t -> (string * int) list
+end
+structure BoyerTwoNeedCheck : sig
+  val run : int -> string -> unit
+end
+structure BoyerTwoStrictCheck : sig
+  val run : int -> string -> unit
+end
+structure BoyerTwoTests : sig
+  structure N : <sig>
+  structure S : <sig>
+  val isNil : BoyerTwoNeed.node BenchNeed.t -> bool
+  val rejects : string -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 25 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/boyer2-rules.sml]
+structure BenchBoyerTwoRules : sig val texts : string list end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-boyer2.sml]
+functor BenchBoyerTwoFn(D: sig
+                           type 'a t
+                           val delay : (unit -> 'a) -> 'a t
+                           val force : 'a t -> 'a
+                         end) :
+                       
+                         sig
+                           type node
+                           type term
+                           type rulesNode
+                           type rules
+                           type lutNode
+                           type lut
+                           val nilTerm : term
+                           val noRules : rules
+                           val emptyTerm : unit -> term
+                           val ruleCons : term
+                                           -> rulesNode D.t -> rulesNode D.t
+                           val atom : string -> node D.t
+                           val cons : node D.t -> node D.t -> node D.t
+                           val tokens : string -> string list
+                           val sublist : string list -> string list * term
+                           val parse : string -> term
+                           val tv : node D.t -> string
+                           val isAtom : node D.t -> bool
+                           val car : node D.t -> node D.t
+                           val cdr : node D.t -> node D.t
+                           val cadr : node D.t -> node D.t
+                           val caddr : node D.t -> node D.t
+                           val cadddr : node D.t -> node D.t
+                           val equal : node D.t -> node D.t -> bool
+                           val assoc : node D.t -> node D.t -> node D.t
+                           val add : string * term * lutNode D.t
+                                      -> lutNode D.t
+                           val lookup : string -> lutNode D.t -> rules
+                           val addLemma : node D.t
+                                           -> lutNode D.t -> lutNode D.t
+                           val lemmaCache : lutNode D.t BenchLazy.state ref
+                           val applyList : node D.t -> node D.t -> node D.t
+                           val applySubst : node D.t -> node D.t -> node D.t
+                           val unifyList : node D.t
+                                            -> node D.t
+                                            -> node D.t -> bool * node D.t
+                           val unify : node D.t
+                                        -> node D.t
+                                        -> node D.t -> bool * node D.t
+                           val rewriteRules : lutNode D.t
+                                               -> node D.t
+                                               -> rules -> node D.t
+                           val rewriteArgs : lutNode D.t
+                                              -> node D.t -> node D.t
+                           val rewrite : lutNode D.t -> node D.t -> node D.t
+                           val member : node D.t -> node D.t -> bool
+                           val constant : string -> node D.t -> bool
+                           val truep : node D.t -> node D.t -> bool
+                           val falsep : node D.t -> node D.t -> bool
+                           val tautologyp : node D.t
+                                             -> node D.t -> node D.t -> bool
+                           val statement : term BenchLazy.state ref
+                           val subterm : int -> term
+                           val teststatement : int -> node D.t
+                           val normal : int -> node D.t
+                           val test : int -> bool
+                           val write : node D.t -> (string -> 'a) -> 'a
+                           val ruleCount : rulesNode D.t -> int
+                           val entries : lutNode D.t -> (string * int) list
+                         end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/boyer2-normal-check.sml]
+functor BoyerTwoNormalCheckFn(K: sig
+                                 type term
+                                 val normal : int -> term
+                                 val write : term -> (string -> unit) -> unit
+                               end) :
+                             sig val run : int -> string -> unit end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/boyer2-tests.sml]
+PASS boyer2/original-rule-count
+PASS boyer2/parentheses-without-spaces
+PASS boyer2/missing-close-source-acceptance
+PASS boyer2/trailing-space-empty-token
+PASS boyer2/tab-is-symbol-character
+PASS boyer2/extra-close-rejected-as-nil
+PASS boyer2/noncons-selectors-return-nil
+PASS boyer2/latest-rule-first
+PASS boyer2/first-list-prefix-unification
+PASS boyer2/extra-first-arguments-fail
+PASS boyer2/repeated-variable-consistent
+PASS boyer2/head-mismatch-does-not-demand-tail
+PASS boyer2/source-malformed-rule-kept
+PASS boyer2/substitution-preserves-function-head
+PASS boyer2/tautology-true-and-false
+PASS boyer2/if-assumption-branches
+PASS boyer2/complete-lazy-normal-form
+PASS boyer2/complete-strict-normal-form
+PASS boyer2/source-theorem-1
+PASS boyer2/source-theorem-2
+PASS boyer2/source-theorem-60
+PASS boyer2/source-theorem-600
+PASS boyer2/wrong-normal-form-rejected
+PASS boyer2/truncated-normal-form-rejected
+PASS boyer2/extra-normal-form-rejected
+structure BoyerTwoNeed : 
+  sig
+    datatype node = Atom of string | Cons of node D.t * node D.t | Nil
+    type term = node BenchNeed.t
+    datatype rulesNode = RCons of term * rulesNode D.t | RNil
+    type rules = rulesNode BenchNeed.t
+    datatype lutNode
+      = Empty | Node of lutNode D.t * string * rules * lutNode D.t
+    type lut = lutNode BenchNeed.t
+    val nilTerm : term
+    val noRules : rules
+    val emptyTerm : unit -> term
+    val ruleCons : term -> rulesNode D.t -> rulesNode D.t
+    val atom : string -> node D.t
+    val cons : node D.t -> node D.t -> node D.t
+    val tokens : string -> string list
+    val sublist : string list -> string list * term
+    val parse : string -> term
+    val tv : node D.t -> string
+    val isAtom : node D.t -> bool
+    val car : node D.t -> node D.t
+    val cdr : node D.t -> node D.t
+    val cadr : node D.t -> node D.t
+    val caddr : node D.t -> node D.t
+    val cadddr : node D.t -> node D.t
+    val equal : node D.t -> node D.t -> bool
+    val assoc : node D.t -> node D.t -> node D.t
+    val add : string * term * lutNode D.t -> lutNode D.t
+    val lookup : string -> lutNode D.t -> rules
+    val addLemma : node D.t -> lutNode D.t -> lutNode D.t
+    val lemmaCache : lutNode D.t BenchLazy.state ref
+    val applyList : node D.t -> node D.t -> node D.t
+    val applySubst : node D.t -> node D.t -> node D.t
+    val unifyList : node D.t -> node D.t -> node D.t -> bool * node D.t
+    val unify : node D.t -> node D.t -> node D.t -> bool * node D.t
+    val rewriteRules : lutNode D.t -> node D.t -> rules -> node D.t
+    val rewriteArgs : lutNode D.t -> node D.t -> node D.t
+    val rewrite : lutNode D.t -> node D.t -> node D.t
+    val member : node D.t -> node D.t -> bool
+    val constant : string -> node D.t -> bool
+    val truep : node D.t -> node D.t -> bool
+    val falsep : node D.t -> node D.t -> bool
+    val tautologyp : node D.t -> node D.t -> node D.t -> bool
+    val statement : term BenchLazy.state ref
+    val subterm : int -> term
+    val teststatement : int -> node D.t
+    val normal : int -> node D.t
+    val test : int -> bool
+    val write : node D.t -> (string -> 'a) -> 'a
+    val ruleCount : rulesNode D.t -> int
+    val entries : lutNode D.t -> (string * int) list
+  end
+structure BoyerTwoStrict : 
+  sig
+    datatype node = Atom of string | Cons of node D.t * node D.t | Nil
+    type term = node BenchStrict.t
+    datatype rulesNode = RCons of term * rulesNode D.t | RNil
+    type rules = rulesNode BenchStrict.t
+    datatype lutNode
+      = Empty | Node of lutNode D.t * string * rules * lutNode D.t
+    type lut = lutNode BenchStrict.t
+    val nilTerm : term
+    val noRules : rules
+    val emptyTerm : unit -> term
+    val ruleCons : term -> rulesNode D.t -> rulesNode D.t
+    val atom : string -> node D.t
+    val cons : node D.t -> node D.t -> node D.t
+    val tokens : string -> string list
+    val sublist : string list -> string list * term
+    val parse : string -> term
+    val tv : node D.t -> string
+    val isAtom : node D.t -> bool
+    val car : node D.t -> node D.t
+    val cdr : node D.t -> node D.t
+    val cadr : node D.t -> node D.t
+    val caddr : node D.t -> node D.t
+    val cadddr : node D.t -> node D.t
+    val equal : node D.t -> node D.t -> bool
+    val assoc : node D.t -> node D.t -> node D.t
+    val add : string * term * lutNode D.t -> lutNode D.t
+    val lookup : string -> lutNode D.t -> rules
+    val addLemma : node D.t -> lutNode D.t -> lutNode D.t
+    val lemmaCache : lutNode D.t BenchLazy.state ref
+    val applyList : node D.t -> node D.t -> node D.t
+    val applySubst : node D.t -> node D.t -> node D.t
+    val unifyList : node D.t -> node D.t -> node D.t -> bool * node D.t
+    val unify : node D.t -> node D.t -> node D.t -> bool * node D.t
+    val rewriteRules : lutNode D.t -> node D.t -> rules -> node D.t
+    val rewriteArgs : lutNode D.t -> node D.t -> node D.t
+    val rewrite : lutNode D.t -> node D.t -> node D.t
+    val member : node D.t -> node D.t -> bool
+    val constant : string -> node D.t -> bool
+    val truep : node D.t -> node D.t -> bool
+    val falsep : node D.t -> node D.t -> bool
+    val tautologyp : node D.t -> node D.t -> node D.t -> bool
+    val statement : term BenchLazy.state ref
+    val subterm : int -> term
+    val teststatement : int -> node D.t
+    val normal : int -> node D.t
+    val test : int -> bool
+    val write : node D.t -> (string -> 'a) -> 'a
+    val ruleCount : rulesNode D.t -> int
+    val entries : lutNode D.t -> (string * int) list
+  end
+structure BoyerTwoNeedCheck : sig val run : int -> string -> unit end
+structure BoyerTwoStrictCheck : sig val run : int -> string -> unit end
+structure BoyerTwoTests : 
+  sig
+    structure N : <sig>
+    structure S : <sig>
+    val isNil : BoyerTwoNeed.node BenchNeed.t -> bool
+    val rejects : string -> bool
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 25 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS boyer2/original-rule-count
+PASS boyer2/parentheses-without-spaces
+PASS boyer2/missing-close-source-acceptance
+PASS boyer2/trailing-space-empty-token
+PASS boyer2/tab-is-symbol-character
+PASS boyer2/extra-close-rejected-as-nil
+PASS boyer2/noncons-selectors-return-nil
+PASS boyer2/latest-rule-first
+PASS boyer2/first-list-prefix-unification
+PASS boyer2/extra-first-arguments-fail
+PASS boyer2/repeated-variable-consistent
+PASS boyer2/head-mismatch-does-not-demand-tail
+PASS boyer2/source-malformed-rule-kept
+PASS boyer2/substitution-preserves-function-head
+PASS boyer2/tautology-true-and-false
+PASS boyer2/if-assumption-branches
+PASS boyer2/complete-lazy-normal-form
+PASS boyer2/complete-strict-normal-form
+PASS boyer2/source-theorem-1
+PASS boyer2/source-theorem-2
+PASS boyer2/source-theorem-60
+PASS boyer2/source-theorem-600
+PASS boyer2/wrong-normal-form-rejected
+PASS boyer2/truncated-normal-form-rejected
+PASS boyer2/extra-normal-form-rejected
+SUMMARY 25 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PASS boyer2/original-rule-count
+PASS boyer2/parentheses-without-spaces
+PASS boyer2/missing-close-source-acceptance
+PASS boyer2/trailing-space-empty-token
+PASS boyer2/tab-is-symbol-character
+PASS boyer2/extra-close-rejected-as-nil
+PASS boyer2/noncons-selectors-return-nil
+PASS boyer2/latest-rule-first
+PASS boyer2/first-list-prefix-unification
+PASS boyer2/extra-first-arguments-fail
+PASS boyer2/repeated-variable-consistent
+PASS boyer2/head-mismatch-does-not-demand-tail
+PASS boyer2/source-malformed-rule-kept
+PASS boyer2/substitution-preserves-function-head
+PASS boyer2/tautology-true-and-false
+PASS boyer2/if-assumption-branches
+PASS boyer2/complete-lazy-normal-form
+PASS boyer2/complete-strict-normal-form
+PASS boyer2/source-theorem-1
+PASS boyer2/source-theorem-2
+PASS boyer2/source-theorem-60
+PASS boyer2/source-theorem-600
+PASS boyer2/wrong-normal-form-rejected
+PASS boyer2/truncated-normal-form-rejected
+PASS boyer2/extra-normal-form-rejected
+SUMMARY 25 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

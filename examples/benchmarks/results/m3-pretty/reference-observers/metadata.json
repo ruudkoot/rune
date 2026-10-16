@@ -1,0 +1,68 @@
+[
+  {
+    "width": 0,
+    "words": 0,
+    "bytes": 43,
+    "comparison": "complete original output and independent main-document layout"
+  },
+  {
+    "width": 10,
+    "words": 0,
+    "bytes": 43,
+    "comparison": "complete original output and independent main-document layout"
+  },
+  {
+    "width": 18,
+    "words": 0,
+    "bytes": 43,
+    "comparison": "complete original output and independent main-document layout"
+  },
+  {
+    "width": 80,
+    "words": 0,
+    "bytes": 43,
+    "comparison": "complete original output and independent main-document layout"
+  },
+  {
+    "width": 22,
+    "words": 1,
+    "bytes": 49,
+    "comparison": "complete original output and independent main-document layout"
+  },
+  {
+    "width": 23,
+    "words": 1,
+    "bytes": 48,
+    "comparison": "complete original output and independent main-document layout"
+  },
+  {
+    "width": 20,
+    "words": 10,
+    "bytes": 103,
+    "comparison": "complete original output and independent main-document layout"
+  },
+  {
+    "width": 80,
+    "words": 50,
+    "bytes": 343,
+    "comparison": "complete original output and independent main-document layout"
+  },
+  {
+    "width": 317,
+    "words": 50,
+    "bytes": 342,
+    "comparison": "complete original output and independent main-document layout"
+  },
+  {
+    "width": 318,
+    "words": 50,
+    "bytes": 342,
+    "comparison": "complete original output and independent main-document layout"
+  },
+  {
+    "width": 80,
+    "words": 5000,
+    "bytes": 30043,
+    "comparison": "complete original output and independent main-document layout"
+  }
+]

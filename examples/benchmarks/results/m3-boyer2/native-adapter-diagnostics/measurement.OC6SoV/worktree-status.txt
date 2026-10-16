@@ -1,0 +1,19 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/boyer2-lazy/
+?? examples/benchmarks/boyer2-strict/
+?? examples/benchmarks/pretty-lazy/
+?? examples/benchmarks/pretty-strict/
+?? examples/benchmarks/shared/boyer2-driver.sml
+?? examples/benchmarks/shared/boyer2-normal-check.sml
+?? examples/benchmarks/shared/boyer2-rules.sml
+?? examples/benchmarks/shared/nofib-boyer2.sml
+?? examples/benchmarks/shared/nofib-pretty.sml
+?? examples/benchmarks/shared/pretty-check.sml
+?? examples/benchmarks/shared/pretty-driver.sml
+?? tests/benchmarks/boyer2-tests.sml
+?? tests/benchmarks/check-boyer2.sh
+?? tests/benchmarks/check-pretty.sh
+?? tests/benchmarks/data/boyer2/
+?? tests/benchmarks/data/pretty/
+?? tests/benchmarks/pretty-tests.sml

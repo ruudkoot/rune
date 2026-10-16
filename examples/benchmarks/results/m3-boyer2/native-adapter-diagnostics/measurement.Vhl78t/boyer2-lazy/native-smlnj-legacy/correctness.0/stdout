@@ -1,0 +1,4 @@
+RESULT 1:proved
+PASS boyer2-lazy
+SAMPLE 1 0.005873000
+SUMMARY 1 checks, 0 failed

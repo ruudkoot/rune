@@ -1,0 +1,404 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 0bbfae39..fd6de21a 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -295,6 +295,10 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [mandel-old-strict](#mandel-old-strict) | [nofib MandelOld](https://gitlab.haskell.org/ghc/nofib/-/blob/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/mandel/MandelOld.lhs) | Count complex-orbit escapes with inclusive squared thresholds and eager finite lists. |
+ | [mandel2-lazy](#mandel2-lazy) | [nofib mandel2](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/mandel2) | Build and validate the adaptive binary32 Mandelbrot tree with memoized corners and children. |
+ | [mandel2-strict](#mandel2-strict) | [nofib mandel2](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/mandel2) | Build and validate the adaptive binary32 Mandelbrot tree with eager corners and subtrees. |
++| [boyer2-lazy](#boyer2-lazy) | [nofib boyer2](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/boyer2) | Parse and rewrite Lisp-like theorem terms using an ordered unbalanced lemma lookup tree with lazy evaluation. |
++| [boyer2-strict](#boyer2-strict) | [nofib boyer2](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/boyer2) | Parse and rewrite Lisp-like theorem terms using an ordered unbalanced lemma lookup tree with strict evaluation. |
++| [pretty-lazy](#pretty-lazy) | [nofib pretty](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/pretty) | Format the flag-driven hanging document and flatten its indentation tree with lazy evaluation, checking every byte. |
++| [pretty-strict](#pretty-strict) | [nofib pretty](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/pretty) | Format the flag-driven hanging document and flatten its indentation tree with strict evaluation, checking every byte. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -411,6 +415,8 @@ sh tests/benchmarks/check-integer.sh
+ sh tests/benchmarks/check-secretary.sh
+ sh tests/benchmarks/check-mandel.sh
+ sh tests/benchmarks/check-mandel2.sh
++sh tests/benchmarks/check-boyer2.sh
++sh tests/benchmarks/check-pretty.sh
+ python3 tests/benchmarks/test-inventory.py
+ python3 scripts/benchmark-inventory.py --check
+ ```
+@@ -12385,3 +12391,359 @@ and measurement references supply context. Neither the book nor these source
+ observations establishes the relative speed of the SML variants.
+ 
+ [Complete provenance](mandel2-strict/PROVENANCE.md).
++
++## boyer2-lazy
++
++Selected evaluation: lazy finite terms, LUT paths and rule-bucket spines.
++
++## Algorithm and workload
++
++Parse a Lisp-like rule base, construct its unbalanced lookup tree, substitute
++into a transitivity statement, rewrite arguments before ordered lemma attempts,
++and check the resulting conditional term as a tautology. Each iteration inserts
++a distinct cN atom into two substitution terms. Preserve statement/substitution
++text, rule insertion order, association lookup, short circuiting and every result.
++The z substitution uses the source's [] symbol, without renaming it to nil.
++
++## History, authorship, revision and variants
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/boyer2/Main.hs,
++Lisplikefns.hs, Rewritefns.hs, Checker.hs, Rulebasetext.hs and Makefile. Headers
++credit Tony Kitto's Hope+ work beginning March1988 and record a June1993 Haskell
++conversion as JSM; do not expand those initials without evidence. Rule comments
++cite Gabriel pages118..126 and record the altered or rule. Individual files
++state no separate license; retain their notices without importing the public-
++domain claim from the different nofib boyer program.
++
++Classic SML boyer and nofib boyer share ancestry, but this implementation parses
++text into binary Nil/Atom/Cons nodes and uses an unbalanced string-keyed LUT,
++rather than per-function embedded lemma fields/property lists. It also varies
++cN each iteration. Preserve these material variants as boyer2-lazy/strict,
++without conflating their implementations or expected normal forms.
++
++## Exact source behavior and quirks
++
++The lexer treats only space and parentheses as delimiters. Tabs remain symbol
++characters. Trailing spaces can produce an empty token; top-level leftover
++tokens return Nil. The parser accepts end-of-input without a final close.
++Selectors on non-cons values return Nil. Association lookup stops on malformed
++entries. Unification terminates successfully when the first argument list ends,
++even if the pattern list has remaining arguments. Do not silently strengthen
++it to equal-length matching.
++
++One retained difference rule has no RHS after parsing. The source accepts it
++into the LUT and caddr returns Nil. Preserve that exact malformed string and
++behavior; independent references explicitly account for it. New rules prepend
++to a matching bucket, so reversing insertion priority changes the workload.
++
++## Portable translation, laziness and state
++
++SML97 retains binary Lisp nodes, association lists, unbalanced persistent LUT
++nodes and ordered rule buckets. The lazy variant memoizes term/tree/bucket
++spines and fields; substitution and rewrite results are demanded by the checker.
++The strict variant constructs finite terms, bucket spines and LUT paths eagerly.
++Both retain short-circuit matching/Boolean logic and agree on results. A shared
++Nil and empty bucket represent source nullary constructors.
++
++Tokens use immutable SML strings instead of Haskell character lists; tokenization
++is strict while preserving exact token boundaries and text. Literal rule strings
++are extracted byte-for-byte, including spaces, into a portable SML data module.
++The original raw source and extraction/reference scripts remain available.
++The active rule base and statement are immutable CAF-like caches. An outer
++memoized delay in both variants keeps parsing/LUT construction inside runtime
++execution, including native-host export adapters. Repeated in-process calls may
++reuse these immutable caches, as the source does; fresh-process runs start anew.
++No mutable substitution state leaks between theorem inputs.
++
++Indices/counts use bounded default Int; selected 0..3000 inputs and rule/string
++sizes fit 31 bits. Runtime cN construction uses decimal positive integers. No
++arbitrary-precision or modular numeric operation is silently substituted.
++
++## Inputs, validation and compiler/runtime questions
++
++Smoke runs one theorem; normal preserves NORM600 and large SLOW3000. Upstream
++FAST60 also has a complete reference. Every original result/report line agrees
++with the pinned fixtures. The portable driver validates every Boolean result,
++then reports count:proved instead of printing the repeated report sentence.
++Bounds and output suppression are explicit driver adaptations. No dataset or
++external runtime facility is needed.
++
++Four complete input/rewritten forms agree between original GHC and an independent
++proper-tree/dictionary rewrite model. An independent truth-table evaluator checks
++all 32 assignments for each normalized formula. SML lazy/strict variants compare
++every byte of the complete normal forms in supplemental checks. Negative checks
++reject wrong, truncated and extra forms; small tests cover parsing, rule order,
++unification quirks, failed-head tail demand, substitution and false formulas.
++Forcing complete normal forms is a test observation, not extra benchmark work:
++the timed driver retains the original tautology check's demand pattern.
++
++Source-based questions include parsing cost, string comparisons, unbalanced LUT
++shape, rule priority, memoized rewriting, eager unused terms, sharing and cache
++warmup. Treat them as hypotheses until measured/inspected. Standard comparisons
++use identical SML; GHC supplies correctness references. Large execution is claimed
++only where recorded. Gabriel's Performance and Evaluation of Lisp Systems and
++the nofib/measurement survey supply context; their historical results do not
++establish causes or rankings for this translation.
++
++[Complete provenance](boyer2-lazy/PROVENANCE.md).
++
++## boyer2-strict
++
++Selected evaluation: strict finite terms, LUT paths and rule-bucket spines.
++
++## Algorithm and workload
++
++Parse a Lisp-like rule base, construct its unbalanced lookup tree, substitute
++into a transitivity statement, rewrite arguments before ordered lemma attempts,
++and check the resulting conditional term as a tautology. Each iteration inserts
++a distinct cN atom into two substitution terms. Preserve statement/substitution
++text, rule insertion order, association lookup, short circuiting and every result.
++The z substitution uses the source's [] symbol, without renaming it to nil.
++
++## History, authorship, revision and variants
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/boyer2/Main.hs,
++Lisplikefns.hs, Rewritefns.hs, Checker.hs, Rulebasetext.hs and Makefile. Headers
++credit Tony Kitto's Hope+ work beginning March1988 and record a June1993 Haskell
++conversion as JSM; do not expand those initials without evidence. Rule comments
++cite Gabriel pages118..126 and record the altered or rule. Individual files
++state no separate license; retain their notices without importing the public-
++domain claim from the different nofib boyer program.
++
++Classic SML boyer and nofib boyer share ancestry, but this implementation parses
++text into binary Nil/Atom/Cons nodes and uses an unbalanced string-keyed LUT,
++rather than per-function embedded lemma fields/property lists. It also varies
++cN each iteration. Preserve these material variants as boyer2-lazy/strict,
++without conflating their implementations or expected normal forms.
++
++## Exact source behavior and quirks
++
++The lexer treats only space and parentheses as delimiters. Tabs remain symbol
++characters. Trailing spaces can produce an empty token; top-level leftover
++tokens return Nil. The parser accepts end-of-input without a final close.
++Selectors on non-cons values return Nil. Association lookup stops on malformed
++entries. Unification terminates successfully when the first argument list ends,
++even if the pattern list has remaining arguments. Do not silently strengthen
++it to equal-length matching.
++
++One retained difference rule has no RHS after parsing. The source accepts it
++into the LUT and caddr returns Nil. Preserve that exact malformed string and
++behavior; independent references explicitly account for it. New rules prepend
++to a matching bucket, so reversing insertion priority changes the workload.
++
++## Portable translation, laziness and state
++
++SML97 retains binary Lisp nodes, association lists, unbalanced persistent LUT
++nodes and ordered rule buckets. The lazy variant memoizes term/tree/bucket
++spines and fields; substitution and rewrite results are demanded by the checker.
++The strict variant constructs finite terms, bucket spines and LUT paths eagerly.
++Both retain short-circuit matching/Boolean logic and agree on results. A shared
++Nil and empty bucket represent source nullary constructors.
++
++Tokens use immutable SML strings instead of Haskell character lists; tokenization
++is strict while preserving exact token boundaries and text. Literal rule strings
++are extracted byte-for-byte, including spaces, into a portable SML data module.
++The original raw source and extraction/reference scripts remain available.
++The active rule base and statement are immutable CAF-like caches. An outer
++memoized delay in both variants keeps parsing/LUT construction inside runtime
++execution, including native-host export adapters. Repeated in-process calls may
++reuse these immutable caches, as the source does; fresh-process runs start anew.
++No mutable substitution state leaks between theorem inputs.
++
++Indices/counts use bounded default Int; selected 0..3000 inputs and rule/string
++sizes fit 31 bits. Runtime cN construction uses decimal positive integers. No
++arbitrary-precision or modular numeric operation is silently substituted.
++
++## Inputs, validation and compiler/runtime questions
++
++Smoke runs one theorem; normal preserves NORM600 and large SLOW3000. Upstream
++FAST60 also has a complete reference. Every original result/report line agrees
++with the pinned fixtures. The portable driver validates every Boolean result,
++then reports count:proved instead of printing the repeated report sentence.
++Bounds and output suppression are explicit driver adaptations. No dataset or
++external runtime facility is needed.
++
++Four complete input/rewritten forms agree between original GHC and an independent
++proper-tree/dictionary rewrite model. An independent truth-table evaluator checks
++all 32 assignments for each normalized formula. SML lazy/strict variants compare
++every byte of the complete normal forms in supplemental checks. Negative checks
++reject wrong, truncated and extra forms; small tests cover parsing, rule order,
++unification quirks, failed-head tail demand, substitution and false formulas.
++Forcing complete normal forms is a test observation, not extra benchmark work:
++the timed driver retains the original tautology check's demand pattern.
++
++Source-based questions include parsing cost, string comparisons, unbalanced LUT
++shape, rule priority, memoized rewriting, eager unused terms, sharing and cache
++warmup. Treat them as hypotheses until measured/inspected. Standard comparisons
++use identical SML; GHC supplies correctness references. Large execution is claimed
++only where recorded. Gabriel's Performance and Evaluation of Lisp Systems and
++the nofib/measurement survey supply context; their historical results do not
++establish causes or rankings for this translation.
++
++[Complete provenance](boyer2-strict/PROVENANCE.md).
++
++## pretty-lazy
++
++Selected evaluation: lazy metadata fields, CharSeq nodes and output.
++
++## Algorithm and workload
++
++Construct a higher-order document containing the -42/@/string header, comma-space
++line and a hanging label followed by repeated xxxxx words. Pretty functions take
++width and vertical context and return text, last-line length, emptiness and fit
++metadata. A separate CharSeq tree stores append/indent/newline/string/character
++nodes; flatten it with an indentation worklist, then append the Main newline.
++Preserve this metadata-driven layout and tree traversal rather than replacing
++the benchmark with direct construction of its known output string.
++
++## History, authorship, revision and aliases
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/pretty/Main.hs,
++Pretty.hs, CharSeq.hs, Makefile and pretty.stdout. The selected headers state
++no author or separate redistribution notice. Retain the files and comments
++about historical nhc/hbc behavior without inventing attribution or a license.
++Explicit pretty-lazy/strict names distinguish evaluation variants. This is the
++pinned flag-based implementation, not a replacement modern pretty library.
++
++## Known behavior and variant differences
++
++The source uses ppCat, which keeps all repeated words beside each other. Width80
++does not wrap its default 50 words; the hang decision chooses a new indented
++line. Tabs represent each complete group of eight indentation columns. Empty
++string differs from nil; trailing spaces, the final newline, and raw embedded
++newlines remain observable. ppNest applies only in vertical context. Retain the
++source's horizontal contexts for both ppHang candidates, including its TODO.
++
++The lazy variant memoizes whole pretty results, individual metadata fields,
++CharSeq nodes and character output. Fit/emptiness tests can avoid unused child
++results or layout alternatives. The strict variant evaluates finite metadata,
++CharSeq and output nodes eagerly. Both retain a memoized cyclic word-input
++stream with a finite take boundary: forcing an infinite strict producer is
++not substituted for the source input. Complete output bytes agree.
++
++## Portable SML translation and representation
++
++SML97 implements the required document combinators, append/indent worklist,
++short-circuit flags and character lists. Field delays preserve where-bound
++sharing and non-demand; ordinary strict Boolean function calls would force too
++much. Source constructors whose nil/indent simplifications were commented out
++remain unsimplified. Selected ASCII literals use SML char lists; no Unicode
++workload is claimed. Source negative integer spelling becomes '-' in output,
++while bounded counts/widths fit even 31-bit Int.
++
++The port covers the benchmark's required APIs and adds source combinators used
++by edge tests. Unused PprStyle and numeric-formatting exports remain in the
++retained upstream files, without claiming a complete general-purpose library.
++Each invocation constructs the document/results anew; only constant constructor
++cells and immutable input values are shared. Checking consumes every byte and
++EOF and reports width:words:bytes rather than writing the formatted document to
++stdout. Reference I/O and validation costs are measured work.
++
++## Profiles, checks and diagnostic questions
++
++Smoke width20/10 words uses the source ppShow/take interface. Normal preserves
++width80/50 words and the pinned 343-byte output. Selected large width80/5000
++words has a complete 30043-byte original/independent reference. The driver bounds
++width to0..65535 and words to0..5000. No universal size argument or acquired data
++is introduced.
++
++Unmodified GHC output agrees with the fixture. Parameterized original calls and
++an independent main-document layout model agree at empty, one-word, fit-boundary,
++smoke/normal/large inputs. Eleven original combinator edge layouts agree with
++independent expected bytes. Tests cover unused alternatives, negative-width
++short circuiting, shared child metadata/text, nil indentation demand, and exact
++spaces/tabs/newlines. Changed bytes/whitespace, truncation and extra output fail.
++
++Source-based questions include closure allocation, metadata selection, lazy
++record sharing, eager alternative construction, CharSeq traversal, worklist
++retention and output lists. They remain hypotheses until source/measurement
++analysis establishes them. Standard reports compare identical SML; Haskell is
++an original correctness reference. Large execution is claimed only when
++recorded. The maintained nofib source and suite measurement literature provide
++context; a general pretty-printing paper does not specify these exact flags,
++TODO behaviors or output bytes.
++
++[Complete provenance](pretty-lazy/PROVENANCE.md).
++
++## pretty-strict
++
++Selected evaluation: strict metadata fields, CharSeq nodes and output.
++
++## Algorithm and workload
++
++Construct a higher-order document containing the -42/@/string header, comma-space
++line and a hanging label followed by repeated xxxxx words. Pretty functions take
++width and vertical context and return text, last-line length, emptiness and fit
++metadata. A separate CharSeq tree stores append/indent/newline/string/character
++nodes; flatten it with an indentation worklist, then append the Main newline.
++Preserve this metadata-driven layout and tree traversal rather than replacing
++the benchmark with direct construction of its known output string.
++
++## History, authorship, revision and aliases
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/pretty/Main.hs,
++Pretty.hs, CharSeq.hs, Makefile and pretty.stdout. The selected headers state
++no author or separate redistribution notice. Retain the files and comments
++about historical nhc/hbc behavior without inventing attribution or a license.
++Explicit pretty-lazy/strict names distinguish evaluation variants. This is the
++pinned flag-based implementation, not a replacement modern pretty library.
++
++## Known behavior and variant differences
++
++The source uses ppCat, which keeps all repeated words beside each other. Width80
++does not wrap its default 50 words; the hang decision chooses a new indented
++line. Tabs represent each complete group of eight indentation columns. Empty
++string differs from nil; trailing spaces, the final newline, and raw embedded
++newlines remain observable. ppNest applies only in vertical context. Retain the
++source's horizontal contexts for both ppHang candidates, including its TODO.
++
++The lazy variant memoizes whole pretty results, individual metadata fields,
++CharSeq nodes and character output. Fit/emptiness tests can avoid unused child
++results or layout alternatives. The strict variant evaluates finite metadata,
++CharSeq and output nodes eagerly. Both retain a memoized cyclic word-input
++stream with a finite take boundary: forcing an infinite strict producer is
++not substituted for the source input. Complete output bytes agree.
++
++## Portable SML translation and representation
++
++SML97 implements the required document combinators, append/indent worklist,
++short-circuit flags and character lists. Field delays preserve where-bound
++sharing and non-demand; ordinary strict Boolean function calls would force too
++much. Source constructors whose nil/indent simplifications were commented out
++remain unsimplified. Selected ASCII literals use SML char lists; no Unicode
++workload is claimed. Source negative integer spelling becomes '-' in output,
++while bounded counts/widths fit even 31-bit Int.
++
++The port covers the benchmark's required APIs and adds source combinators used
++by edge tests. Unused PprStyle and numeric-formatting exports remain in the
++retained upstream files, without claiming a complete general-purpose library.
++Each invocation constructs the document/results anew; only constant constructor
++cells and immutable input values are shared. Checking consumes every byte and
++EOF and reports width:words:bytes rather than writing the formatted document to
++stdout. Reference I/O and validation costs are measured work.
++
++## Profiles, checks and diagnostic questions
++
++Smoke width20/10 words uses the source ppShow/take interface. Normal preserves
++width80/50 words and the pinned 343-byte output. Selected large width80/5000
++words has a complete 30043-byte original/independent reference. The driver bounds
++width to0..65535 and words to0..5000. No universal size argument or acquired data
++is introduced.
++
++Unmodified GHC output agrees with the fixture. Parameterized original calls and
++an independent main-document layout model agree at empty, one-word, fit-boundary,
++smoke/normal/large inputs. Eleven original combinator edge layouts agree with
++independent expected bytes. Tests cover unused alternatives, negative-width
++short circuiting, shared child metadata/text, nil indentation demand, and exact
++spaces/tabs/newlines. Changed bytes/whitespace, truncation and extra output fail.
++
++Source-based questions include closure allocation, metadata selection, lazy
++record sharing, eager alternative construction, CharSeq traversal, worklist
++retention and output lists. They remain hypotheses until source/measurement
++analysis establishes them. Standard reports compare identical SML; Haskell is
++an original correctness reference. Large execution is claimed only when
++recorded. The maintained nofib source and suite measurement literature provide
++context; a general pretty-printing paper does not specify these exact flags,
++TODO behaviors or output bytes.
++
++[Complete provenance](pretty-strict/PROVENANCE.md).
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 21be1a28..b75146c2 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -854,3 +854,15 @@ mandel2-lazy	large	nofib	spectral/mandel2	data/large.sizes expected/large.tree	m
+ mandel2-strict	smoke	nofib	spectral/mandel2	data/smoke.sizes expected/smoke.tree	mandel2-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/finite-binary32.sml,shared/mandel2-point.sml,shared/nofib-mandel2.sml,shared/mandel2-check.sml,shared/mandel2-driver.sml,mandel2-strict/benchmark.sml,shared/main.sml	30	1048576	rendering,floating-point,binary32-emulation,adaptive-tree,strict	data/smoke.sizes,expected/smoke.tree	exact	implemented
+ mandel2-strict	normal	nofib	spectral/mandel2	data/normal.sizes expected/normal.tree	mandel2-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/finite-binary32.sml,shared/mandel2-point.sml,shared/nofib-mandel2.sml,shared/mandel2-check.sml,shared/mandel2-driver.sml,mandel2-strict/benchmark.sml,shared/main.sml	600	4194304	rendering,floating-point,binary32-emulation,adaptive-tree,strict	data/normal.sizes,expected/normal.tree	exact	implemented
+ mandel2-strict	large	nofib	spectral/mandel2	data/large.sizes expected/large.tree	mandel2-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/finite-binary32.sml,shared/mandel2-point.sml,shared/nofib-mandel2.sml,shared/mandel2-check.sml,shared/mandel2-driver.sml,mandel2-strict/benchmark.sml,shared/main.sml	3600	8388608	rendering,floating-point,binary32-emulation,adaptive-tree,strict	data/large.sizes,expected/large.tree	exact	implemented
++boyer2-lazy	smoke	nofib	spectral/boyer2	1	boyer2-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/boyer2-rules.sml,shared/nofib-boyer2.sml,shared/boyer2-driver.sml,boyer2-lazy/benchmark.sml,shared/main.sml	30	1048576	symbolic,rewriting,parsing,unbalanced-trees,lazy	-	exact	implemented
++boyer2-lazy	normal	nofib	spectral/boyer2	600	boyer2-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/boyer2-rules.sml,shared/nofib-boyer2.sml,shared/boyer2-driver.sml,boyer2-lazy/benchmark.sml,shared/main.sml	600	4194304	symbolic,rewriting,parsing,unbalanced-trees,lazy	-	exact	implemented
++boyer2-lazy	large	nofib	spectral/boyer2	3000	boyer2-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/boyer2-rules.sml,shared/nofib-boyer2.sml,shared/boyer2-driver.sml,boyer2-lazy/benchmark.sml,shared/main.sml	3600	8388608	symbolic,rewriting,parsing,unbalanced-trees,lazy	-	exact	implemented
++boyer2-strict	smoke	nofib	spectral/boyer2	1	boyer2-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/boyer2-rules.sml,shared/nofib-boyer2.sml,shared/boyer2-driver.sml,boyer2-strict/benchmark.sml,shared/main.sml	30	1048576	symbolic,rewriting,parsing,unbalanced-trees,strict	-	exact	implemented
++boyer2-strict	normal	nofib	spectral/boyer2	600	boyer2-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/boyer2-rules.sml,shared/nofib-boyer2.sml,shared/boyer2-driver.sml,boyer2-strict/benchmark.sml,shared/main.sml	600	4194304	symbolic,rewriting,parsing,unbalanced-trees,strict	-	exact	implemented
++boyer2-strict	large	nofib	spectral/boyer2	3000	boyer2-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/boyer2-rules.sml,shared/nofib-boyer2.sml,shared/boyer2-driver.sml,boyer2-strict/benchmark.sml,shared/main.sml	3600	8388608	symbolic,rewriting,parsing,unbalanced-trees,strict	-	exact	implemented
++pretty-lazy	smoke	nofib	spectral/pretty	20 10 expected/smoke.output	pretty-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-pretty.sml,shared/pretty-check.sml,shared/pretty-driver.sml,pretty-lazy/benchmark.sml,shared/main.sml	30	1048576	formatting,higher-order,metadata,character-trees,lazy	expected/smoke.output	exact	implemented
++pretty-lazy	normal	nofib	spectral/pretty	80 50 expected/normal.output	pretty-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-pretty.sml,shared/pretty-check.sml,shared/pretty-driver.sml,pretty-lazy/benchmark.sml,shared/main.sml	600	4194304	formatting,higher-order,metadata,character-trees,lazy	expected/normal.output	exact	implemented
++pretty-lazy	large	nofib	spectral/pretty	80 5000 expected/large.output	pretty-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-pretty.sml,shared/pretty-check.sml,shared/pretty-driver.sml,pretty-lazy/benchmark.sml,shared/main.sml	3600	8388608	formatting,higher-order,metadata,character-trees,lazy	expected/large.output	exact	implemented
++pretty-strict	smoke	nofib	spectral/pretty	20 10 expected/smoke.output	pretty-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-pretty.sml,shared/pretty-check.sml,shared/pretty-driver.sml,pretty-strict/benchmark.sml,shared/main.sml	30	1048576	formatting,higher-order,metadata,character-trees,strict	expected/smoke.output	exact	implemented
++pretty-strict	normal	nofib	spectral/pretty	80 50 expected/normal.output	pretty-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-pretty.sml,shared/pretty-check.sml,shared/pretty-driver.sml,pretty-strict/benchmark.sml,shared/main.sml	600	4194304	formatting,higher-order,metadata,character-trees,strict	expected/normal.output	exact	implemented
++pretty-strict	large	nofib	spectral/pretty	80 5000 expected/large.output	pretty-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-pretty.sml,shared/pretty-check.sml,shared/pretty-driver.sml,pretty-strict/benchmark.sml,shared/main.sml	3600	8388608	formatting,higher-order,metadata,character-trees,strict	expected/large.output	exact	implemented

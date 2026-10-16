@@ -1,0 +1,1 @@
+pretty-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/nofib-pretty.sml shared/pretty-check.sml shared/pretty-driver.sml pretty-lazy/benchmark.sml shared/main.sml	20 10 expected/smoke.output	pretty-lazy/smoke.expected	expected/smoke.output

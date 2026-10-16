@@ -1,0 +1,11 @@
+PASS original/independent full layout 0 0 43 bytes
+PASS original/independent full layout 10 0 43 bytes
+PASS original/independent full layout 18 0 43 bytes
+PASS original/independent full layout 80 0 43 bytes
+PASS original/independent full layout 22 1 49 bytes
+PASS original/independent full layout 23 1 48 bytes
+PASS original/independent full layout 20 10 103 bytes
+PASS original/independent full layout 80 50 343 bytes
+PASS original/independent full layout 317 50 342 bytes
+PASS original/independent full layout 318 50 342 bytes
+PASS original/independent full layout 80 5000 30043 bytes

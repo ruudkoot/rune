@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+pretty-lazy	normal	rune	O2	count	1	1	pass	0.00	0.00	0.00	2652	149391	462512	13116	counts/measurement.sePP1n/pretty-lazy/rune/fresh.1
+pretty-lazy	normal	rune:opt	O2	count	1	1	pass	0.00	0.00	0.00	3208	149391	462512	13116	counts/measurement.sePP1n/pretty-lazy/rune-opt/fresh.1
+pretty-lazy	normal	rune:new	O2	count	1	1	pass	0.00	0.00	0.00	2740	87737	462512	13116	counts/measurement.sePP1n/pretty-lazy/rune-new/fresh.1
+pretty-lazy	normal	rune:jit	O2	count	1	1	pass	0.02	0.01	0.00	4460	87737	462512	13116	counts/measurement.sePP1n/pretty-lazy/rune-jit/fresh.1
+pretty-strict	normal	rune	O2	count	1	1	pass	0.00	0.00	0.00	2528	87102	180040	4463	counts/measurement.U4Ga62/pretty-strict/rune/fresh.1
+pretty-strict	normal	rune:opt	O2	count	1	1	pass	0.00	0.00	0.00	3076	87102	180040	4463	counts/measurement.U4Ga62/pretty-strict/rune-opt/fresh.1
+pretty-strict	normal	rune:new	O2	count	1	1	pass	0.00	0.00	0.00	2708	50037	180040	4463	counts/measurement.U4Ga62/pretty-strict/rune-new/fresh.1
+pretty-strict	normal	rune:jit	O2	count	1	1	pass	0.01	0.00	0.00	4044	50037	180040	4463	counts/measurement.U4Ga62/pretty-strict/rune-jit/fresh.1

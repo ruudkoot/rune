@@ -1,0 +1,4 @@
+1.normal
+extra.normal
+truncated.normal
+wrong.normal

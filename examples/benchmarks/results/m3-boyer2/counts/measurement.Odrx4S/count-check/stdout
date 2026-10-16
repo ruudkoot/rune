@@ -1,0 +1,5 @@
+COUNT unbudgeted boyer2-lazy normal rune
+COUNT unbudgeted boyer2-lazy normal rune:opt
+COUNT unbudgeted boyer2-lazy normal rune:new
+COUNT unbudgeted boyer2-lazy normal rune:jit
+COUNT comparisons agree

@@ -1,0 +1,229 @@
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-pretty.sml]
+[autoloading]
+[autoloading done]
+functor BenchPrettyFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type cnode
+  type cseq
+  type rep
+  type pretty
+  type textNode
+  type text
+  structure L : <sig>
+  structure S : <sig>
+  val cNil : <BaseFct>.<resultStr>.cnode D.t
+  val cNL : <BaseFct>.<resultStr>.cnode D.t
+  val cAppend :
+      <BaseFct>.<resultStr>.cnode D.t
+       -> <BaseFct>.<resultStr>.cnode D.t -> <BaseFct>.<resultStr>.cnode D.t
+  val cIndent :
+      int D.t
+       -> <BaseFct>.<resultStr>.cnode D.t -> <BaseFct>.<resultStr>.cnode D.t
+  val cStr : char list -> <BaseFct>.<resultStr>.cnode D.t
+  val cCh : char -> <BaseFct>.<resultStr>.cnode D.t
+  val later : (unit -> 'a D.t) -> 'a D.t
+  val seq : <BaseFct>.<resultStr>.rep D.t -> <BaseFct>.<resultStr>.cnode D.t
+  val last : <BaseFct>.<resultStr>.rep D.t -> int
+  val empty : <BaseFct>.<resultStr>.rep D.t -> bool
+  val fits : <BaseFct>.<resultStr>.rep D.t -> bool
+  val nilDoc : int -> 'a -> <BaseFct>.<resultStr>.rep D.t
+  val str : char list -> int -> 'a -> <BaseFct>.<resultStr>.rep D.t
+  val char : char -> int -> 'a -> <BaseFct>.<resultStr>.rep D.t
+  val ofString : string -> int -> 'a -> <BaseFct>.<resultStr>.rep D.t
+  val int : int -> int -> 'a -> <BaseFct>.<resultStr>.rep D.t
+  val beside :
+      (int -> bool -> <BaseFct>.<resultStr>.rep D.t)
+       -> (int -> bool -> <BaseFct>.<resultStr>.rep D.t)
+       -> int -> 'a -> <BaseFct>.<resultStr>.rep D.t
+  val besideSP :
+      (int -> bool -> <BaseFct>.<resultStr>.rep D.t)
+       -> (int -> bool -> <BaseFct>.<resultStr>.rep D.t)
+       -> int -> 'a -> <BaseFct>.<resultStr>.rep D.t
+  val above :
+      ('a -> bool -> <BaseFct>.<resultStr>.rep D.t)
+       -> ('a -> bool -> <BaseFct>.<resultStr>.rep D.t)
+       -> 'a -> 'b -> <BaseFct>.<resultStr>.rep D.t
+  val nest :
+      int
+       -> (int -> bool -> <BaseFct>.<resultStr>.rep D.t)
+       -> int -> bool -> <BaseFct>.<resultStr>.rep D.t
+  val hang :
+      (int -> bool -> <BaseFct>.<resultStr>.rep D.t)
+       -> int
+       -> (int -> bool -> <BaseFct>.<resultStr>.rep D.t)
+       -> int -> bool -> <BaseFct>.<resultStr>.rep D.t
+  val foldDocs :
+      ((int -> 'a -> <BaseFct>.<resultStr>.rep D.t)
+        -> (int -> 'a -> <BaseFct>.<resultStr>.rep D.t)
+        -> int -> 'a -> <BaseFct>.<resultStr>.rep D.t)
+       -> (int -> 'a -> <BaseFct>.<resultStr>.rep D.t) BenchStream.node 
+         BenchLazy.delay
+       -> int -> 'a -> <BaseFct>.<resultStr>.rep D.t
+  val besides :
+      (int -> bool -> <BaseFct>.<resultStr>.rep D.t) BenchStream.node 
+         BenchLazy.delay
+       -> int -> bool -> <BaseFct>.<resultStr>.rep D.t
+  val cat :
+      (int -> bool -> <BaseFct>.<resultStr>.rep D.t) BenchStream.node 
+         BenchLazy.delay
+       -> int -> bool -> <BaseFct>.<resultStr>.rep D.t
+  val aboves :
+      (int -> bool -> <BaseFct>.<resultStr>.rep D.t) BenchStream.node 
+         BenchLazy.delay
+       -> int -> bool -> <BaseFct>.<resultStr>.rep D.t
+  val sep :
+      (int -> bool -> <BaseFct>.<resultStr>.rep D.t) BenchStream.node 
+           BenchLazy.state ref
+       -> int -> bool -> <BaseFct>.<resultStr>.rep D.t
+  val take :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val chars :
+      char list
+       -> <BaseFct>.<resultStr>.textNode D.t
+       -> <BaseFct>.<resultStr>.textNode D.t
+  val indent :
+      int D.t
+       -> <BaseFct>.<resultStr>.textNode D.t
+       -> <BaseFct>.<resultStr>.textNode D.t
+  val flatten :
+      int D.t
+       -> bool
+       -> <BaseFct>.<resultStr>.cnode D.t
+       -> (int D.t * <BaseFct>.<resultStr>.cnode D.t) list
+       -> <BaseFct>.<resultStr>.textNode D.t
+  val flattenStack :
+      bool
+       -> (int D.t * <BaseFct>.<resultStr>.cnode D.t) list
+       -> <BaseFct>.<resultStr>.textNode D.t
+  val show :
+      'a
+       -> ('a -> bool -> <BaseFct>.<resultStr>.rep D.t)
+       -> <BaseFct>.<resultStr>.textNode D.t
+  val append :
+      <BaseFct>.<resultStr>.textNode D.t
+       -> <BaseFct>.<resultStr>.textNode D.t
+       -> <BaseFct>.<resultStr>.textNode D.t
+  val app : (char -> 'a) -> <BaseFct>.<resultStr>.textNode D.t -> unit
+  val make : int -> int -> bool -> <BaseFct>.<resultStr>.rep D.t
+  val run : int -> int -> (char -> 'a) -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/pretty-check.sml]
+[autoloading]
+[autoloading done]
+functor PrettyCheckFn(K: sig
+  val run : int -> int -> (char -> unit) -> unit
+end) :
+sig
+  val run : int -> int -> string -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/pretty-driver.sml]
+functor BenchPrettyDriverFn(K: sig
+  val run : int -> int -> (char -> unit) -> unit
+end) :
+sig
+  structure Check : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/pretty-lazy/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+[autoloading]
+[autoloading done]
+RESULT 80:50:343
+PASS pretty-lazy
+SUMMARY 1 checks, 0 failed

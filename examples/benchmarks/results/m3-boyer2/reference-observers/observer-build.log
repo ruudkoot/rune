@@ -1,0 +1,35 @@
+[1 of 7] Compiling Lisplikefns      ( Lisplikefns.hs, Lisplikefns.o )
+
+Lisplikefns.hs:33:1: warning: [-Wtabs]
+    Tab character found here, and in 29 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+33 |                      where (r, l) = sublist t
+   | ^^^^^^^^
+[2 of 7] Compiling Checker          ( Checker.hs, Checker.o )
+
+Checker.hs:29:5: warning: [-Wtabs]
+    Tab character found here, and in three further locations.
+    Suggested fix: Please use spaces instead.
+   |
+29 |         Atom "if" -> if truep (car y, truelst) then
+   |     ^^^^
+[3 of 7] Compiling Rewritefns       ( Rewritefns.hs, Rewritefns.o )
+
+Rewritefns.hs:25:5: warning: [-Wtabs]
+    Tab character found here, and in 11 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+25 |         Cons (yh, yt) -> yt
+   |     ^^^^
+[4 of 7] Compiling Rulebasetext     ( Rulebasetext.hs, Rulebasetext.o )
+[5 of 7] Compiling Kernel           ( Kernel.hs, Kernel.o )
+
+Kernel.hs:45:17: warning: [-Wtabs]
+    Tab character found here, and in one further location.
+    Suggested fix: Please use spaces instead.
+   |
+45 |     | otherwise                       = error "Malformed lemma"
+   |                 ^^^^^^^^
+[6 of 7] Compiling Main             ( Observer.hs, Observer.o )
+[7 of 7] Linking /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/boyer2-originals/observer

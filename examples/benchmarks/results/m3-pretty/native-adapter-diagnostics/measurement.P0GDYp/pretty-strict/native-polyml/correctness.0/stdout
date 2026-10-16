@@ -1,0 +1,4 @@
+RESULT 20:10:103
+PASS pretty-strict
+SAMPLE 1 0.000071000
+SUMMARY 1 checks, 0 failed

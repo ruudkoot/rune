@@ -1,0 +1,5 @@
+PASS original full output smoke 1
+PASS original full output fast 60
+PASS original full output normal 600
+PASS original full output large 3000
+Rule strings preserved: 106

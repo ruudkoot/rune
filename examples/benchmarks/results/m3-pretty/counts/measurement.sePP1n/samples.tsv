@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+pretty-lazy	normal	rune	O2	compile	0	0	pass	1.88	1.86	0.12	135196	-	-	-	pretty-lazy/rune/build/compile
+pretty-lazy	normal	rune	O2	correctness	0	0	pass	0.00	0.00	0.00	2716	149391	462512	13116	pretty-lazy/rune/correctness.0
+pretty-lazy	normal	rune	O2	count	1	1	pass	0.00	0.00	0.00	2652	149391	462512	13116	pretty-lazy/rune/fresh.1
+pretty-lazy	normal	rune:opt	O2	compile	0	0	pass	2.27	2.26	0.13	135324	-	-	-	pretty-lazy/rune-opt/build/compile
+pretty-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.52	0.31	0.08	15468	-	-	-	pretty-lazy/rune-opt/build/native-compile
+pretty-lazy	normal	rune:opt	O2	correctness	0	0	pass	0.00	0.00	0.00	3232	149391	462512	13116	pretty-lazy/rune-opt/correctness.0
+pretty-lazy	normal	rune:opt	O2	count	1	1	pass	0.00	0.00	0.00	3208	149391	462512	13116	pretty-lazy/rune-opt/fresh.1
+pretty-lazy	normal	rune:new	O2	compile	0	0	pass	2.47	2.43	0.17	135208	-	-	-	pretty-lazy/rune-new/build/compile
+pretty-lazy	normal	rune:new	O2	correctness	0	0	pass	0.01	0.00	0.02	2864	87737	462512	13116	pretty-lazy/rune-new/correctness.0
+pretty-lazy	normal	rune:new	O2	count	1	1	pass	0.00	0.00	0.00	2740	87737	462512	13116	pretty-lazy/rune-new/fresh.1
+pretty-lazy	normal	rune:jit	O2	compile	0	0	pass	2.12	2.15	0.13	135304	-	-	-	pretty-lazy/rune-jit/build/compile
+pretty-lazy	normal	rune:jit	O2	correctness	0	0	pass	0.01	0.01	0.00	4420	87737	462512	13116	pretty-lazy/rune-jit/correctness.0
+pretty-lazy	normal	rune:jit	O2	count	1	1	pass	0.02	0.01	0.00	4460	87737	462512	13116	pretty-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

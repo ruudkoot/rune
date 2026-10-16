@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+boyer2-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	4.70	3.72	1.08	666728	-	-	-	boyer2-strict/native-mlton/build/compile
+boyer2-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.01	0.01	0.00	5080	-	-	-	boyer2-strict/native-mlton/correctness.0
+boyer2-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.01	0.00	0.00	5108	-	-	-	boyer2-strict/native-mlton/fresh.1
+boyer2-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.27	0.24	0.04	36348	-	-	-	boyer2-strict/native-smlnj-legacy/build/compile
+boyer2-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.04	0.05	0.00	7856	-	-	-	boyer2-strict/native-smlnj-legacy/correctness.0
+boyer2-strict	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.05	0.04	0.01	7864	-	-	-	boyer2-strict/native-smlnj-legacy/fresh.1
+boyer2-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.29	0.14	0.06	34528	-	-	-	boyer2-strict/native-polyml/build/compile
+boyer2-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.03	0.02	0.00	12796	-	-	-	boyer2-strict/native-polyml/correctness.0
+boyer2-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.03	0.02	0.01	12784	-	-	-	boyer2-strict/native-polyml/fresh.1

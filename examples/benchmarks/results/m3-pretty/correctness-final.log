@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-pretty.z9gu0hlg
+PASS pretty-lazy smoke O0
+PASS pretty-lazy smoke O2
+PASS pretty-lazy smoke hosts
+PASS pretty-lazy normal O0
+PASS pretty-lazy normal O2
+PASS pretty-lazy normal hosts
+PASS pretty-strict smoke O0
+PASS pretty-strict smoke O2
+PASS pretty-strict smoke hosts
+PASS pretty-strict normal O0
+PASS pretty-strict normal O2
+PASS pretty-strict normal hosts

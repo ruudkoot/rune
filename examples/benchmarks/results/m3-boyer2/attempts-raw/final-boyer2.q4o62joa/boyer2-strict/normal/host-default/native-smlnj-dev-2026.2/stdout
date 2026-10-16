@@ -1,0 +1,113 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/boyer2-rules.sml]
+structure BenchBoyerTwoRules : sig val texts : string list end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-boyer2.sml]
+functor BenchBoyerTwoFn(D: sig
+                           type 'a t
+                           val delay : (unit -> 'a) -> 'a t
+                           val force : 'a t -> 'a
+                         end) :
+                       
+                         sig
+                           type node
+                           type term
+                           type rulesNode
+                           type rules
+                           type lutNode
+                           type lut
+                           val nilTerm : term
+                           val noRules : rules
+                           val emptyTerm : unit -> term
+                           val ruleCons : term
+                                           -> rulesNode D.t -> rulesNode D.t
+                           val atom : string -> node D.t
+                           val cons : node D.t -> node D.t -> node D.t
+                           val tokens : string -> string list
+                           val sublist : string list -> string list * term
+                           val parse : string -> term
+                           val tv : node D.t -> string
+                           val isAtom : node D.t -> bool
+                           val car : node D.t -> node D.t
+                           val cdr : node D.t -> node D.t
+                           val cadr : node D.t -> node D.t
+                           val caddr : node D.t -> node D.t
+                           val cadddr : node D.t -> node D.t
+                           val equal : node D.t -> node D.t -> bool
+                           val assoc : node D.t -> node D.t -> node D.t
+                           val add : string * term * lutNode D.t
+                                      -> lutNode D.t
+                           val lookup : string -> lutNode D.t -> rules
+                           val addLemma : node D.t
+                                           -> lutNode D.t -> lutNode D.t
+                           val lemmaCache : lutNode D.t BenchLazy.state ref
+                           val applyList : node D.t -> node D.t -> node D.t
+                           val applySubst : node D.t -> node D.t -> node D.t
+                           val unifyList : node D.t
+                                            -> node D.t
+                                            -> node D.t -> bool * node D.t
+                           val unify : node D.t
+                                        -> node D.t
+                                        -> node D.t -> bool * node D.t
+                           val rewriteRules : lutNode D.t
+                                               -> node D.t
+                                               -> rules -> node D.t
+                           val rewriteArgs : lutNode D.t
+                                              -> node D.t -> node D.t
+                           val rewrite : lutNode D.t -> node D.t -> node D.t
+                           val member : node D.t -> node D.t -> bool
+                           val constant : string -> node D.t -> bool
+                           val truep : node D.t -> node D.t -> bool
+                           val falsep : node D.t -> node D.t -> bool
+                           val tautologyp : node D.t
+                                             -> node D.t -> node D.t -> bool
+                           val statement : term BenchLazy.state ref
+                           val subterm : int -> term
+                           val teststatement : int -> node D.t
+                           val normal : int -> node D.t
+                           val test : int -> bool
+                           val write : node D.t -> (string -> 'a) -> 'a
+                           val ruleCount : rulesNode D.t -> int
+                           val entries : lutNode D.t -> (string * int) list
+                         end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/boyer2-driver.sml]
+functor BenchBoyerTwoDriverFn(K: sig val test : int -> bool end) :
+                             sig val run : string list -> string end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/boyer2-strict/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Kernel : <sig>
+    structure Driver : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 600:proved
+PASS boyer2-strict
+SUMMARY 1 checks, 0 failed

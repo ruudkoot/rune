@@ -1,0 +1,26 @@
+[
+  {
+    "profile": "smoke",
+    "iterations": 1,
+    "output_sha256": "0e7021745aa066f34a15acd93f70ce35c6a8eaa66ac6dbc7594c7d9a1394390e",
+    "comparison": "complete original output and every expected theorem result"
+  },
+  {
+    "profile": "fast",
+    "iterations": 60,
+    "output_sha256": "ab2c90c6955263075034041d4969a4b21316559784c433f857a48aba5be2b767",
+    "comparison": "complete original output and every expected theorem result"
+  },
+  {
+    "profile": "normal",
+    "iterations": 600,
+    "output_sha256": "87031290d961d86f22328c9317d406e4828a1b240ed3e0231c17a1a3e3ed6039",
+    "comparison": "complete original output and every expected theorem result"
+  },
+  {
+    "profile": "large",
+    "iterations": 3000,
+    "output_sha256": "e78eac1b6ef1a491182e11ef845878b19e0297df7791517771e42d2e975e937f",
+    "comparison": "complete original output and every expected theorem result"
+  }
+]

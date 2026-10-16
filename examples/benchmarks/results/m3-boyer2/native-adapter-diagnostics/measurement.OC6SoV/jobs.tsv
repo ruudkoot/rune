@@ -1,0 +1,1 @@
+boyer2-strict	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/boyer2-rules.sml shared/nofib-boyer2.sml shared/boyer2-driver.sml boyer2-strict/benchmark.sml shared/main.sml	1	boyer2-strict/smoke.expected	-

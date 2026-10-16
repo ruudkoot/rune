@@ -1,0 +1,4 @@
+PASS independent full input/normal form, original LUT and all 32 truth assignments: 1 341062 bytes
+PASS independent full input/normal form, original LUT and all 32 truth assignments: 2 341062 bytes
+PASS independent full input/normal form, original LUT and all 32 truth assignments: 60 341844 bytes
+PASS independent full input/normal form, original LUT and all 32 truth assignments: 600 342626 bytes

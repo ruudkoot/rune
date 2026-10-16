@@ -1,0 +1,3 @@
+pretty-strict
+20 10 expected/smoke.output
+20:10:103

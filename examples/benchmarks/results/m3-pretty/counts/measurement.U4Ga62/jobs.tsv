@@ -1,0 +1,1 @@
+pretty-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/nofib-pretty.sml shared/pretty-check.sml shared/pretty-driver.sml pretty-strict/benchmark.sml shared/main.sml	80 50 expected/normal.output	pretty-strict/normal.expected	expected/normal.output

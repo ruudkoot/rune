@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+boyer2-lazy	normal	rune	O2	compile	0	0	pass	1.72	1.69	0.12	135240	-	-	-	boyer2-lazy/rune/build/compile
+boyer2-lazy	normal	rune	O2	correctness	0	0	pass	19.30	20.14	0.08	10496	3456751626	3187150984	93733769	boyer2-lazy/rune/correctness.0
+boyer2-lazy	normal	rune	O2	count	1	1	pass	20.85	20.17	0.02	10484	3456751626	3187150984	93733769	boyer2-lazy/rune/fresh.1
+boyer2-lazy	normal	rune:opt	O2	compile	0	0	pass	1.40	1.39	0.08	135240	-	-	-	boyer2-lazy/rune-opt/build/compile
+boyer2-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.33	0.16	0.05	12392	-	-	-	boyer2-lazy/rune-opt/build/native-compile
+boyer2-lazy	normal	rune:opt	O2	correctness	0	0	pass	8.18	8.56	0.02	10820	3456751626	3187150984	93733769	boyer2-lazy/rune-opt/correctness.0
+boyer2-lazy	normal	rune:opt	O2	count	1	1	pass	7.41	7.78	0.00	10944	3456751626	3187150984	93733769	boyer2-lazy/rune-opt/fresh.1
+boyer2-lazy	normal	rune:new	O2	compile	0	0	pass	1.37	1.37	0.06	135244	-	-	-	boyer2-lazy/rune-new/build/compile
+boyer2-lazy	normal	rune:new	O2	correctness	0	0	pass	17.23	16.38	0.01	18776	1922061479	3187150984	93733769	boyer2-lazy/rune-new/correctness.0
+boyer2-lazy	normal	rune:new	O2	count	1	1	pass	15.73	16.49	0.02	18688	1922061479	3187150984	93733769	boyer2-lazy/rune-new/fresh.1
+boyer2-lazy	normal	rune:jit	O2	compile	0	0	pass	1.65	1.63	0.10	135068	-	-	-	boyer2-lazy/rune-jit/build/compile
+boyer2-lazy	normal	rune:jit	O2	correctness	0	0	pass	9.69	8.40	0.05	19872	1922061479	3187150984	93733769	boyer2-lazy/rune-jit/correctness.0
+boyer2-lazy	normal	rune:jit	O2	count	1	1	pass	5.73	6.00	0.02	19864	1922061479	3187150984	93733769	boyer2-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check
