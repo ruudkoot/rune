@@ -1647,3 +1647,37 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 matching bytecode comparisons across seven compiler builds.
 runedoc and runeopt also agree. [The complete transcript](validation/oct16-boyer-pretty-867-acceptance.log)
 records the run. All 41 inventory tests pass and all 861 entries validate.
+
+## M3 Last Piece persistent-map board search, 2026-10-16
+
+Two imports bring the catalogue to 293 programs and 871 profiles. [All 56
+smoke/normal cases](results/m3-last-piece/correctness.tsv) pass across Rune's four
+engines at both levels and all six managed native hosts. Twenty semantic/
+negative checks pass all ten configurations twice, with Rune O0/O2 and native
+defaults. Eight normal count samples agree across Rune engines. Existing budgets
+are unchanged; new profiles are unbudgeted. Six serial native smoke samples
+validate MLton, SML/NJ and Poly/ML adapters. Counts and single-sample diagnostics
+remain separate from headline timings.
+
+The port preserves containers' size-balanced persistent map and source rotations;
+all 256 insertion-prefix shapes agree with the pinned original. Reversed skipped-
+prefix choices, orientation order, shared remaining pieces, delayed child search,
+sex transitions and unchecked-anchor fit preconditions remain. Strict evaluation
+constructs the finite tree eagerly. Both variants reproduce the original three
+solutions and all 300 output bytes. Used-domain rendering preserves indented
+blank lines without claiming the entire external pretty library.
+
+Original/independent prefix cases agree at 0/2/8/13 pieces. The full bitmask model
+visits 103513 search states; original statistics report 59488 failures and three
+solutions. Smoke is a valid reduced two-piece subproblem; normal preserves the
+full fixed puzzle. No artificial larger instance is introduced. Every output
+byte and EOF are checked; wrong/truncated/extra output is rejected. Exact source,
+dependency revisions/notices, witness inputs, models and all results are retained.
+No prerequisite compiler/runtime feature is introduced or claimed. M3 remains
+in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 871 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 matching bytecode comparisons across seven compiler builds.
+runedoc and runeopt also agree. [The complete transcript](validation/oct16-last-piece-871-acceptance.log)
+records the run. All 41 inventory tests pass and all 861 entries validate.
