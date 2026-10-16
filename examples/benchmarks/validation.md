@@ -1342,3 +1342,29 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 matching bytecode comparisons across seven compiler builds.
 runedoc and runeopt also agree. [The complete transcript](validation/oct16-game-numerical-810-acceptance.log)
 records the run. All 41 inventory tests pass and all 861 entries validate.
+
+## M5 three-state arbitrary-precision pi, 2026-10-16
+
+One import brings the catalogue to 273 programs and 813 profiles. [All 28
+smoke/normal cases](results/m5-pidigits5/correctness.tsv) pass on Rune's four
+engines at both levels and all six managed native hosts. Thirteen semantic
+and negative checks pass all ten configurations at both levels. Four normal
+count samples agree with unchanged budgets; three serial native smoke samples
+validate MLton, SML/NJ and Poly/ML adapters. Instrumented counts and single-sample
+diagnostics remain separate from headline timings.
+
+The port preserves three components, both extraction divisions, separate
+accumulator additions, tuple-work order and exact streamed digit/block output.
+Zarith becomes IntInf with truncating quotient. Complete original outputs through
+10,000 digits agree with independent high-precision Gauss-Legendre pi and block
+formatting. Source/library identities, original author bytes and notices are
+retained. Normal 128 follows bounded calibration; incomplete larger exploratory
+sequences contribute no measurements. The general four-coefficient and optimized
+nofib variants remain separately implemented. No prerequisite compiler/runtime
+feature or universal large SML execution is claimed. M5 remains in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 813 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 matching bytecode comparisons across seven compiler builds.
+runedoc and runeopt also agree. [The complete transcript](validation/oct16-pidigits5-813-acceptance.log)
+records the run. All 41 inventory tests pass and all 861 entries validate.
