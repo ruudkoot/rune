@@ -986,7 +986,7 @@ bin/rune-repl.load.rbc: bin/rune-boot src/repl/load.sml lib/basis/MANIFEST
 # the REPL started once and saved once it has compiled its library again
 # (docs/repl.md): what bin/rune-repl restores, its arguments the files to
 # use; it reads the Basis's documentation for :doc before it is saved
-bin/rune-repl.img: bin/rune-repl.units/units bin/rune-repl.load.rbc bin/runevm docs/generated/basis/members.json
+bin/rune-repl.img: bin/rune-repl.units/units bin/rune-repl.load.rbc bin/runevm docs/lib/basis/members.json
 	bin/runevm --heap-size 67108864 bin/rune-repl.load.rbc bin/rune-repl.units/units --make-image $@ < /dev/null
 bin/rune-repl: bin/rune-repl.img
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ "$$1" = --dap ]; then shift; exec "$$d/rune-dap" "$$@"; fi\nexec "$$d/runevm" --heap-size 67108864 --restore "$$d/rune-repl.img" -- "$$@"\n' > $@
@@ -1086,7 +1086,8 @@ check-docs: $(RUNE) $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_UNIT) --check
 	$(RUNEDOC) $(DOCS_RUNNER) --check
 	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) --check &&) true
-	$(RUNEDOC) --palette docs/generated/palette --check
+	$(RUNEDOC) $(DOCS_OVERVIEW) --check
+	$(RUNEDOC) --palette docs/lib/palette --check
 	sh tests/basis/check-claims.sh
 	sh tests/basis/check-notes.sh
 
@@ -1096,35 +1097,53 @@ check-docs: $(RUNE) $(RUNEDOC) manifests
 # made from deviations.txt by tests/basis/gen-annotations.sh and committed.
 DOCS_BASIS := --lib lib --library basis --tests tests/basis --annotations tests/basis/annotations.txt \
               --law-skips tests/basis/law-skips.txt \
-              --out docs/generated/basis --title "The Standard ML Basis Library"
+              --out docs/lib/basis \
+              --conventions ../conventions.md --emit-conventions
 # the libraries beside it (docs/plans/quickcheck.md, D1)
-DOCS_RANDOM := --lib lib --library random --out docs/generated/random --basis-docs ../basis --title "Random numbers"
-DOCS_PROPERTY := --lib lib --library test/property --out docs/generated/test/property --basis-docs ../../basis \
-                 --title "Property testing"
+DOCS_RANDOM := --lib lib --library random --out docs/lib/random --basis-docs ../basis \
+               --conventions ../conventions.md
+DOCS_PROPERTY := --lib lib --library test/property --out docs/lib/test/property --basis-docs ../../basis \
+                 --conventions ../../conventions.md
 # the arbitraries of the Basis Library's types, the library beside it (in a
 # directory of its own: runedoc removes from its output what it did not write)
-DOCS_PROPERTY_BASIS := --lib lib --library test/property/basis --out docs/generated/test/property-basis \
+DOCS_PROPERTY_BASIS := --lib lib --library test/property/basis --out docs/lib/test/property-basis \
                        --basis-docs ../../basis --library-docs test/property ../property \
-                       --title "Property testing: the Basis Library's arbitraries"
+                       --conventions ../../conventions.md
 # the unit-testing library (docs/plans/unit-testing.md, M1)
-DOCS_UNIT := --lib lib --library test/unit --out docs/generated/test/unit --basis-docs ../../basis \
-             --library-docs test/property ../property --title "Unit testing"
+DOCS_UNIT := --lib lib --library test/unit --out docs/lib/test/unit --basis-docs ../../basis \
+             --library-docs test/property ../property \
+             --conventions ../../conventions.md
 # the runner (docs/plans/unit-testing.md, M3)
-DOCS_RUNNER := --lib lib --library test/runner --out docs/generated/test/runner --basis-docs ../../basis \
-               --library-docs test/unit ../unit --library-docs terminal ../../terminal --title "Running tests"
+DOCS_RUNNER := --lib lib --library test/runner --out docs/lib/test/runner --basis-docs ../../basis \
+               --library-docs test/unit ../unit --library-docs terminal ../../terminal \
+               --conventions ../../conventions.md
 # the libraries of docs/plans/repl.md (The libraries), each in
-# docs/generated/NAME (REPL_LIBS, with the manifests)
-TITLE_unicode := Unicode
-TITLE_json := JSON
-TITLE_terminal := Terminal
-TITLE_digest := Digests
-TITLE_jsonrpc := JSON-RPC
-TITLE_dap := Debug Adapter Protocol
-TITLE_pretty := Pretty printing
-TITLE_markdown := Markdown
-TITLE_zmtp := ZMTP
-TITLE_jupyter := Jupyter
-docs_lib = --lib lib --library $(1) --out docs/generated/$(1) --basis-docs ../basis --title "$(TITLE_$(1))"
+# docs/lib/NAME (REPL_LIBS, with the manifests). The heading of the library's
+# README.md is its name, on its pages and in the overview below.
+docs_lib = --lib lib --library $(1) --out docs/lib/$(1) --basis-docs ../basis \
+           --conventions ../conventions.md
+# docs/lib/README.md, the overview of every library above, grouped by the
+# Area of its README.md. The order here is the order of the areas and of
+# the libraries in one. REL differs from the library's name only for
+# test/property/basis, whose pages cannot share test/property: runedoc
+# removes from an output directory what it did not write.
+DOCS_OVERVIEW := --lib lib --overview docs/lib \
+	--library-page basis \
+	--library-page random \
+	--library-page test/property \
+	--library-page test/property/basis test/property-basis \
+	--library-page test/unit \
+	--library-page test/runner \
+	--library-page unicode \
+	--library-page pretty \
+	--library-page markdown \
+	--library-page terminal \
+	--library-page json \
+	--library-page jsonrpc \
+	--library-page dap \
+	--library-page zmtp \
+	--library-page jupyter \
+	--library-page digest
 
 docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_BASIS)
@@ -1134,7 +1153,8 @@ docs: $(RUNEDOC) manifests
 	$(RUNEDOC) $(DOCS_UNIT)
 	$(RUNEDOC) $(DOCS_RUNNER)
 	$(foreach l,$(REPL_LIBS),$(RUNEDOC) $(call docs_lib,$(l)) &&) true
-	$(RUNEDOC) --palette docs/generated/palette
+	$(RUNEDOC) $(DOCS_OVERVIEW)
+	$(RUNEDOC) --palette docs/lib/palette
 
 # ---------------------------------------------------------------- Basis Library suite
 # tests/basis/README.md. make test-basis is the suite in the configuration

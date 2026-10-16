@@ -93,7 +93,7 @@ Which pieces count as equations is decided by `DocExamples.isEquation`
 never run.
 
 The Basis has 793 `Example:` paragraphs with 810 code spans. 789 of the
-spans are run, in 65 signatures (`docs/generated/basis/coverage.md`,
+spans are run, in 65 signatures (`docs/lib/basis/coverage.md`,
 "Examples that are run"). The other 21 are:
 
 | Where | Span | What it is | Rewrite (M1) |
@@ -243,7 +243,7 @@ QuickCheck's classic ones do, never see this (E3).
 names: `Int`, `Int8`, `Int16`, `Int32`, `Int64`, `FixedInt`, `IntInf`,
 `LargeInt` and `Position`. They are five implementations: `Int64`,
 `FixedInt` and `Position` are `Int`, and `LargeInt` is `IntInf`
-(`docs/generated/basis/sig/INTEGER.md`). Likewise `WORD` has seven names
+(`docs/lib/basis/sig/INTEGER.md`). Likewise `WORD` has seven names
 and four implementations (`Word`, `Word8`, `Word16`, `Word32`). A law in
 the signature is a claim about each implementation, and the narrow ones
 have domains small enough to test exhaustively (D8, D9).
@@ -1122,7 +1122,7 @@ anything else only by naming its files on the command line.
   - **What it shares with runedoc.** runedoc's `--library` already reads such a MANIFEST on top of the Basis (`src/doc/docmain.sml:122-141`, `src/doc/docelab.sml:18-36`). It learns to read the same `# library:` dependencies. Its rule that a name with a `/` is a path (`docmain.sml:124-126`) becomes "a path when it starts with `/` or `.`", so that `test/property` is a name.
   - **No primitives.** A library other than the Basis is elaborated without `_prim` in both tools. runedoc allows them for every library today (`docelab.sml:29`).
   - **Installing.** `scripts/install.sh` copies every library that has a MANIFEST.
-  - **Documentation.** `make docs` documents the new libraries too, into `docs/generated/random` and `docs/generated/test/property`.
+  - **Documentation.** `make docs` documents the new libraries too, into `docs/lib/random` and `docs/lib/test/property`.
   - **Tests.** Their suites live in `tests/lib/`, with a runner of their own, so they need no rows in `docs/language.md`.
   - **Later.** The MANIFEST is what a build language's "library" would read, so the build language of the incremental-compilation roadmap (on branch `heap-layout`; its D15 and D16) can subsume the option when it comes.
 * **B. File lists.** A `FILES` list per library, which every user expands on the command line. It needs no compiler change, but every user repeats it, `install.sh` still has to learn the libraries, and runedoc and the compiler disagree about what a library is.
@@ -1374,7 +1374,7 @@ tomorrow. M2 to M6 are part 1 of the brief; M1 and M7 to M9 are part 2.
     - reals from 53 bits, in two ints of at most 27 bits;
     - `hash` and `hashString`, replay tokens, and `fromEntropy`.
     
-    It is written in `Word64`, with an int only at its interface, and documented in full (`lib/random/DOCUMENTED`; `docs/generated/random` from `make docs`, checked by `make check-docs`).
+    It is written in `Word64`, with an int only at its interface, and documented in full (`lib/random/DOCUMENTED`; `docs/lib/random` from `make docs`, checked by `make check-docs`).
   - **Its tests in `tests/lib`** (`make test-lib`, in `make check`):
     - the known answers of `tests/lib/random/reference.c`, a C transcription of splitmix64.c, the JDK's split and Lemire's draw, which the runner compiles and compares;
     - `props.sml`, with χ² tests of `below`, `int` and `bool` at p = 0.001 under fixed seeds, reals, the errors raised, tokens and `split`;
@@ -1411,7 +1411,7 @@ tomorrow. M2 to M6 are part 1 of the brief; M1 and M7 to M9 are part 2.
     - a node set to 0 changes its part alone;
     - the planted bugs over an `int list` and over an `int -> bool` are found;
     - exceptions as outcomes, fresh arrays for each side of a law, discards, giving up, coverage, and replay.
-  - **The documentation's examples run** (`make test-lib`), and the library is documented in full (`docs/generated/test/property`). Its links into the Basis come from M3's `--basis-docs`.
+  - **The documentation's examples run** (`make test-lib`), and the library is documented in full (`docs/lib/test/property`). Its links into the Basis come from M3's `--basis-docs`.
   - **Found on the way:** a first version of the tests used `Int.abs` on drawn integers and failed at `minInt`, an edge of P1 whose absolute value overflows. It was the test's bug, of the named law's kind.
   - **Not yet portable at this commit.** `make test-lib-hosts` found two problems, which M5 fixes:
     - SML/NJ has no `PackRealLittle` and Poly/ML has no `PackReal64Little`, and the library used the first. Both are optional in the Basis, so neither may be used.

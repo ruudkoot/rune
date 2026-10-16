@@ -690,7 +690,7 @@ struct
                ["val use = Compiler.use;", basisExceptions];
       ReplSession.quiet := false;
       (* the Basis's documentation, for :doc, in the image *)
-      ReplDoc.load (OS.Path.concat (lib, "../docs/generated/basis/members.json"));
+      ReplDoc.load (OS.Path.concat (lib, "../docs/lib/basis/members.json"));
       (* --make-image IMAGE: the REPL as it is now, written to IMAGE; the
          world that writes it stops, and one started from it (runevm
          --restore IMAGE FILE...) goes on here with its own arguments

@@ -3,7 +3,7 @@
 `Runtime` is Rune's own: what a program can ask about the machine it is
 running on, and what it can tell that machine to do. It is not in the Standard
 ML Basis Library, so nothing here ports
-([docs/generated/basis/sig/RUNTIME.md](../../docs/generated/basis/sig/RUNTIME.md)).
+([docs/lib/basis/sig/RUNTIME.md](../../docs/lib/basis/sig/RUNTIME.md)).
 
 | Program | What it shows |
 | --- | --- |

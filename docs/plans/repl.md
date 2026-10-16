@@ -287,7 +287,7 @@ line (P5).
   `type mismatch between int and int/1 (type constructor mismatch: int
   vs int)` (`src/elab/elaborate.sml:46-55`; met while writing P1,
   `logs/p1-error-example.log` in the drafts).
-* runedoc writes Markdown (`docs/generated/basis/`): pages that list every
+* runedoc writes Markdown (`docs/lib/basis/`): pages that list every
   member for people (`index/a.md` to `index/z.md`), and tables for programs
   that name modules only (`claims.tsv`, `notes.tsv`), but no
   machine-readable index of members; search is out of its scope
@@ -2076,7 +2076,7 @@ and 450 of C; M7 to M13 about 10,000 and 500 of C.
 * **As built** (2026-10-10): `src/util/color.sml`, `src/util/diagnostic.sml`
   and `Error.show`, through which `rune` and `runedoc` print; `--color`,
   `--diagnostics` and `--diagnostics-json` on both; `runedoc --palette`,
-  which `make docs` runs into `docs/generated/palette`; `lib/unicode` and
+  which `make docs` runs into `docs/lib/palette`; `lib/unicode` and
   `lib/json`; `tests/diagnostics` (eleven cases, reviewed), `tests/color`,
   `make test-diagnostics`, and a terminal script of `rune`'s excerpt;
   `docs/diagnostics.md`, the manual pages and the completions. Where it
@@ -2425,7 +2425,7 @@ Windows, and any Rune program can read a line with them.
   the file of the Basis's unit, rather than the elaborator a span per
   stamp. `:browse` and the verbose feedback print a signature with its own
   types by its names (`ReplShow.signatureLines`). `:doc` reads
-  `docs/generated/basis/members.json`, which runedoc now writes beside
+  `docs/lib/basis/members.json`, which runedoc now writes beside
   each library's pages (`DocSite.membersIndex`: each public signature's
   members with their specifications and comments as Markdown, and which
   structure each describes; exempt from the limit on a page's size, being
@@ -3016,7 +3016,7 @@ milestones' checks ran.
   their default palettes were not to be had where M13 was built, and the
   contrast is measured on the other five.
 * **`:doc` beyond the Basis.** runedoc writes a `members.json` for every
-  library (`docs/generated/NAME`), which `:doc` would read once a session
+  library (`docs/lib/NAME`), which `:doc` would read once a session
   can load a library (*Autoloading a library*); the session's own
   declarations would need their comments kept by the compiler, as GHCi's
   `:doc` and IPython's `?` show a user's own documentation.

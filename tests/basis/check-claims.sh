@@ -1,6 +1,6 @@
 #!/bin/sh
 # The structures that the library's documentation says implement a signature
-# (docs/generated/basis/claims.tsv, written by runedoc from the `Implements:`
+# (docs/lib/basis/claims.tsv, written by runedoc from the `Implements:`
 # paragraphs and the ascriptions of lib/basis) against the structures that
 # this suite matches against the specification's signatures
 # (`structure C : SPEC_SIG ... = Structure` in tests/basis/*_sig.sml):
@@ -19,7 +19,7 @@
 #   tests/basis/check-claims.sh [CLAIMS.tsv]
 set -u
 cd "$(dirname "$0")/../.."
-claims=${1:-docs/generated/basis/claims.tsv}
+claims=${1:-docs/lib/basis/claims.tsv}
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT HUP INT TERM
 status=0

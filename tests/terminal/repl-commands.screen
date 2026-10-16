@@ -3,7 +3,7 @@ Rune @VERSION@. Type :help for instructions.
 [1, 2] : int list
 - :doc Option.isSome
 val isSome : 'a option -> bool
-  Option : OPTION, docs/generated/basis/sig/OPTION.md#val-issome
+  Option : OPTION, docs/lib/basis/sig/OPTION.md#val-issome
 
 isSome opt is true when opt carries a value.
 

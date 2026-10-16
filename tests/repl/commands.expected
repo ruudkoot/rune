@@ -42,7 +42,7 @@ Option.isSome : 'a option -> bool
 List.length : 'a list -> int
 - List.nth : 'a list * int -> 'a
 - val isSome : 'a option -> bool
-  Option : OPTION, docs/generated/basis/sig/OPTION.md#val-issome
+  Option : OPTION, docs/lib/basis/sig/OPTION.md#val-issome
 
 isSome opt is true when opt carries a value.
 

@@ -19,15 +19,23 @@ runedoc \- generate the documentation of a Standard ML library
 .B runedoc
 .RB ( \-\-page | \-\-dump\-ir | \-\-lint )
 .IR file.sml " ..."
+.br
+.B runedoc
+.BI \-\-overview " DIR"
+.RB [ \-\-check ]
+.BI \-\-library-page " NAME"
+.RI [ REL ]
 .SH DESCRIPTION
 .B runedoc
 makes cross-linked Markdown pages from the signatures of a library and the
 comments in them: a page for every signature with an entry for each type,
 value, exception and substructure it specifies, a page for every functor, an
-overview, the structures with the signatures they implement, the top-level
-environment, the exceptions and who raises them, an index of identifiers, how
-the library reads its specification, and how much is documented. It uses the
-lexer, the parser and the elaborator of
+overview, the structures with the signatures they implement, the exceptions
+and who raises them, an index of identifiers and how much is documented. The
+Basis Library also has the top-level environment, the types that are one
+type, and how it reads its specification. How to read a page is one
+.I conventions.md
+for the whole tree. It uses the lexer, the parser and the elaborator of
 .BR rune (1).
 .PP
 A library is a directory with a
@@ -35,7 +43,10 @@ A library is a directory with a
 that lists its files in the order they are compiled in; the names that begin
 with
 .B Rune
-are internal and the rest is documented. A structure is documented on the page
+are internal and the rest is documented. Its
+.I README.md
+is the overview of the library: the heading is its name, and GitHub renders
+the file where the sources are browsed. A structure is documented on the page
 of the signature it implements, which the comment above it claims with
 .B Implements:
 and the elaborator checks.
@@ -132,7 +143,62 @@ is not what would be written. For a tree of generated pages that is kept under
 version control.
 .TP
 .BI \-\-title " TEXT"
-The title of the overview page (default: the name of the library).
+The title of the pages when the library has no
+.IR README.md
+(default: the name of the library). A
+.I README.md
+that begins with a heading names the library, and that heading is the title.
+When both are given they have to be the same.
+.TP
+.BI \-\-overview " DIR"
+Write
+.IB DIR /README.md\fR,
+the overview of the libraries named with
+.BR \-\-library-page ,
+and stop. With
+.BR \-\-check ,
+fail if that page is not what would be written. The libraries are grouped by
+the
+.B Area:
+of each library's
+.IR README.md ,
+a row's name is the heading of that file, and a row's text is its first
+paragraph. The rest of the file is the long description, which the library's
+own page shows after the short one. The area is an HTML comment,
+.BR "<!-- Area: NAME -->" ,
+so the rendered file is the heading and the prose, or a paragraph
+.BR "Area: NAME" .
+.TP
+.BI \-\-library-page " NAME [REL]"
+One library of
+.BR \-\-overview .
+.I NAME
+is read as
+.B \-\-library
+reads it, and
+.I REL
+is the directory of its pages under
+.IR DIR .
+.I REL
+defaults to
+.IR NAME .
+The library's name is the heading of its
+.IR README.md .
+Repeat the option. The first library of an area places that area, and the
+libraries of one area stay in the order they are named.
+.TP
+.BI \-\-conventions " REL"
+Link "how to read these pages" to
+.I REL
+instead of a
+.I conventions.md
+in the library's own tree.
+.TP
+.B \-\-emit-conventions
+Also write that page at
+.IR REL .
+The Basis Library writes the one copy,
+.IR docs/lib/conventions.md .
 .TP
 .BI \-\-tests " DIR"
 A test suite whose checks are labelled

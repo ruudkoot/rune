@@ -1,4 +1,4 @@
-<!-- A hand-written mock of what docgen is to generate for docs/generated/basis/sig/LIST.md.
+<!-- A hand-written mock of what docgen is to generate for docs/lib/basis/sig/LIST.md.
      It belongs to docs/plans/docgen.md. Names of pages that do not exist yet are not linked here;
      links into lib/ and tests/ are real. -->
 

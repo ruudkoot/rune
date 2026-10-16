@@ -610,7 +610,7 @@ struct
       fun site c = out ^ "/site." ^ c
       val () = List.app (fn c => (rmTree (site c);
                                   if exec {cmd = ["bin/runedoc-" ^ c, "--lib", "lib", "--library", "basis", "--tests", "tests/basis",
-                                                  "--annotations", "tests/basis/annotations.txt", "--out", site c, "--title", "Basis"],
+                                                  "--annotations", "tests/basis/annotations.txt", "--out", site c],
                                            dir = NONE, stdin = "", stdout = "", stderr = site c ^ ".err", timeout = 0} <> 0
                                   then say ("FAIL doc-cross site: runedoc-" ^ c ^ " failed: " ^ firstLine (site c ^ ".err") ^ "\n")
                                   else ()))

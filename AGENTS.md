@@ -30,7 +30,7 @@ keep these invariants:
   the specification keeps so, with a `where type` for every type that another
   signature names, since that signature was read with the structure whole; a
   type that several structures share has to be made abstract where it is
-  declared instead. `docs/generated/basis/types.md` lists what still leaks.
+  declared instead. `docs/lib/basis/types.md` lists what still leaks.
 * A basis structure says which signature it implements in the comment above
   it (`Implements: SIG where type ...`, `docs/doc-comments.md`), and
   `tests/basis/<name>_sig.sml` matches it against the transcription;
@@ -344,9 +344,12 @@ keep these invariants:
 * Comments are written in the language of `docs/doc-comments.md`, and in a
   signature every comment documents something, is a `----` heading or is
   prose; `make check-docs` lints `lib/basis` and `src`. The documentation in
-  `docs/generated/basis` is made from the library's comments: after changing
-  a signature or a comment of `lib/basis`, run `make docs` and commit what it
-  writes (`make check-docs` fails on a stale tree). Never edit it by hand.
+  `docs/lib` is made from the libraries' comments, and `docs/lib/README.md`
+  lists the libraries. A library's overview is `README.md` beside its sources:
+  the heading is the name that list uses (`docs/doc-comments.md`). After
+  changing a signature, a comment or that file, run `make docs`
+  and commit what it writes (`make check-docs` fails on a stale tree). Never
+  edit it by hand.
   Every piece of an `Example:` is a claim, a closed `bool` that is true; it is
   compiled by `make docs` and run by `make test-basis`; give a description an example where it shows
   what prose cannot, and find its value by running it.
@@ -356,7 +359,7 @@ keep these invariants:
   generated `MANIFEST` records what each file uses of the basis library as
   well (`rune --basis-check --library NAME` checks it). It may not use `_prim`. The mechanism's tests are in
   `tests/lib` (`make test-lib`), and a library's own tests, `tests/lib/NAME`, are suites on
-  `lib/test/unit` (`Test`, `Expect`, `Main`; docs/generated/test/unit), whose
+  `lib/test/unit` (`Test`, `Expect`, `Main`; docs/lib/test/unit), whose
   `PASS`/`FAIL` lines both targets read. After a change to such a library, run `make
   test-lib-hosts`: its tests on MLton, SML/NJ 110.99.9, SML/NJ 2026.2, Poly/ML and MLKit, against their
   own Basis. **Never work around a bug of a compiler other than Rune in such a

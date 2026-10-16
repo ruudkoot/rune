@@ -1,6 +1,6 @@
 #!/bin/sh
 # The readings and deviations that the library's documentation records
-# (docs/generated/basis/notes.tsv, written by runedoc from the notes of the
+# (docs/lib/basis/notes.tsv, written by runedoc from the notes of the
 # doc comments) against what this suite records in deviations.txt. The
 # documentation is where a reading is written down; this file only explains
 # failures. So the suite reads the documentation's export, and runedoc never
@@ -17,8 +17,8 @@
 #   tests/basis/check-notes.sh [NOTES.tsv [CLAIMS.tsv]]
 set -u
 cd "$(dirname "$0")/../.."
-notes=${1:-docs/generated/basis/notes.tsv}
-claims=${2:-docs/generated/basis/claims.tsv}
+notes=${1:-docs/lib/basis/notes.tsv}
+claims=${2:-docs/lib/basis/claims.tsv}
 deviations=tests/basis/deviations.txt
 status=0
 [ -f "$notes" ] || { echo "check-notes: no $notes (run make docs)"; exit 1; }

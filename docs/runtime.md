@@ -956,7 +956,7 @@ the frames of *Stacks, calls and exceptions* as data, `Runtime.save` the image
 this page describes under *The system layer*, `Runtime.same` the identity
 the collector maintains, and `Runtime.catchInterrupt` and
 `Runtime.maskInterrupt` the interrupt of *Interrupts*. The page of the signature is
-[generated/basis/sig/RUNTIME.md](generated/basis/sig/RUNTIME.md), and
+[lib/basis/sig/RUNTIME.md](lib/basis/sig/RUNTIME.md), and
 [../examples/runtime](../examples/runtime) has a program for each part of it.
 
 ## Loading a program

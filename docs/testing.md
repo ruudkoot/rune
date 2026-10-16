@@ -20,7 +20,7 @@ today's.
 ## Writing a test
 
 A test written in Standard ML is a suite on `lib/test/unit`
-([generated/test/unit](generated/test/unit/README.md); the roadmap
+([lib/test/unit](lib/test/unit/README.md); the roadmap
 [plans/unit-testing.md](plans/unit-testing.md)): a tree of named tests,
 `Test.describe "json" [Test.it "decode" (fn () => ...), ...]`, whose checks
 (`Expect.that`, `Expect.eq`, `Expect.raises`) are soft, and a program
@@ -36,7 +36,7 @@ suite runs in `make test-lib` and `make test-lib-hosts`.
 
 `make check` is `make check-tools`, which builds every tool a test needs,
 and then `bin/rune-test run --tier check`. `bin/rune-test` is the runner
-(`lib/test/runner`, [generated/test/runner](generated/test/runner/README.md)),
+(`lib/test/runner`, [lib/test/runner](lib/test/runner/README.md)),
 compiled by `bin/rune` from its inventory, `tests/runner/*.sml`, and run on
 `bin/runevm`. Its tests are trees of commands: each runs as a process in a
 group of its own, in a directory of its own under the run's directory

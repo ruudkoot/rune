@@ -6,7 +6,7 @@ _runedoc() {
     prev=${COMP_WORDS[COMP_CWORD-1]}
 
     case $prev in
-        --library|--out|--tests|--examples|--lib)
+        --library|--out|--tests|--examples|--lib|--overview)
             COMPREPLY=($(compgen -d -- "$cur"))
             return
             ;;
@@ -20,7 +20,7 @@ _runedoc() {
     esac
 
     if [[ $cur == -* ]]; then
-        COMPREPLY=($(compgen -W '--library --out --check --title --tests --annotations --examples
+        COMPREPLY=($(compgen -W '--library --out --check --title --overview --library-page --conventions --emit-conventions --tests --annotations --examples
             --labels --check-coverage --page --dump-ir --lint --palette --color=always --color=never --color=auto
             --diagnostics=full --diagnostics=short --diagnostics-json --lib --version --help' -- "$cur"))
         return
