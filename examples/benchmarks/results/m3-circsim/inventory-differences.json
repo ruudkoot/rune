@@ -1,0 +1,30 @@
+[
+  {
+    "source": "nofib",
+    "path": "gc/circsim",
+    "changes": {
+      "authors": {
+        "before": "not stated in scanned source headers",
+        "after": "David J. King;John O'Donnell"
+      },
+      "evidence": {
+        "before": "gc/circsim/Makefile",
+        "after": "gc/circsim/Main.lhs:authorship-heading;gc/circsim/Makefile"
+      }
+    }
+  },
+  {
+    "source": "nofib",
+    "path": "spectral/circsim",
+    "changes": {
+      "authors": {
+        "before": "not stated in scanned source headers",
+        "after": "David J. King;John O'Donnell"
+      },
+      "evidence": {
+        "before": "spectral/circsim/Makefile",
+        "after": "spectral/circsim/Main.lhs:authorship-heading;spectral/circsim/Makefile"
+      }
+    }
+  }
+]

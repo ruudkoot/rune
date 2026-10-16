@@ -1,0 +1,17 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+circsim-lazy	normal	rune	O2	count	1	1	pass	35.97	35.99	0.05	34852	6389591596	20077281552	585417372	counts/measurement.Klasmt/circsim-lazy/rune/fresh.1
+circsim-lazy	normal	rune:opt	O2	count	1	1	pass	21.03	19.79	0.02	35708	6389591596	20077281552	585417372	counts/measurement.Klasmt/circsim-lazy/rune-opt/fresh.1
+circsim-lazy	normal	rune:new	O2	count	1	1	pass	36.41	36.59	0.02	35216	3655065955	20077281552	585417372	counts/measurement.Klasmt/circsim-lazy/rune-new/fresh.1
+circsim-lazy	normal	rune:jit	O2	count	1	1	pass	21.18	20.44	0.09	36784	3655065955	20077281552	585417372	counts/measurement.Klasmt/circsim-lazy/rune-jit/fresh.1
+circsim-strict	normal	rune	O2	count	1	1	pass	9.83	7.89	0.02	10356	2141709856	5239130120	98780173	counts/measurement.I6dXYV/circsim-strict/rune/fresh.1
+circsim-strict	normal	rune:opt	O2	count	1	1	pass	3.04	3.38	0.00	11016	2141709856	5239130120	98780173	counts/measurement.I6dXYV/circsim-strict/rune-opt/fresh.1
+circsim-strict	normal	rune:new	O2	count	1	1	pass	6.64	7.01	0.02	10580	1041358780	5239130120	98780173	counts/measurement.I6dXYV/circsim-strict/rune-new/fresh.1
+circsim-strict	normal	rune:jit	O2	count	1	1	pass	5.16	2.82	0.02	11776	1041358780	5239130120	98780173	counts/measurement.I6dXYV/circsim-strict/rune-jit/fresh.1
+circsim-nofib-lazy	normal	rune	O2	count	1	1	pass	34.94	34.94	0.02	34804	6393614970	20089116768	585769336	counts/measurement.vcNrqF/circsim-nofib-lazy/rune/fresh.1
+circsim-nofib-lazy	normal	rune:opt	O2	count	1	1	pass	19.63	18.59	0.05	35684	6393614970	20089116768	585769336	counts/measurement.vcNrqF/circsim-nofib-lazy/rune-opt/fresh.1
+circsim-nofib-lazy	normal	rune:new	O2	count	1	1	pass	39.03	39.29	0.04	35052	3657463634	20089116768	585769336	counts/measurement.vcNrqF/circsim-nofib-lazy/rune-new/fresh.1
+circsim-nofib-lazy	normal	rune:jit	O2	count	1	1	pass	17.17	18.23	0.06	36620	3657463634	20089116768	585769336	counts/measurement.vcNrqF/circsim-nofib-lazy/rune-jit/fresh.1
+circsim-nofib-strict	normal	rune	O2	count	1	1	pass	7.01	7.45	0.00	10356	2145733230	5250965336	99132137	counts/measurement.Q6tJfE/circsim-nofib-strict/rune/fresh.1
+circsim-nofib-strict	normal	rune:opt	O2	count	1	1	pass	3.33	3.53	0.01	11024	2145733230	5250965336	99132137	counts/measurement.Q6tJfE/circsim-nofib-strict/rune-opt/fresh.1
+circsim-nofib-strict	normal	rune:new	O2	count	1	1	pass	8.58	6.89	0.00	10664	1043756459	5250965336	99132137	counts/measurement.Q6tJfE/circsim-nofib-strict/rune-new/fresh.1
+circsim-nofib-strict	normal	rune:jit	O2	count	1	1	pass	2.78	2.94	0.01	11840	1043756459	5250965336	99132137	counts/measurement.Q6tJfE/circsim-nofib-strict/rune-jit/fresh.1

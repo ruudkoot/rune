@@ -1,0 +1,4 @@
+RESULT 1:74:4944:74
+PASS circsim-nofib-strict
+SAMPLE 1 0.002892000
+SUMMARY 1 checks, 0 failed

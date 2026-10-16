@@ -1,0 +1,32 @@
+[
+  {
+    "bits": 1,
+    "cycles": 8,
+    "register_model": "output previous stored bits; load row payload when sto=T, hold when sto=F",
+    "source_xor_truth_table": "[T,F,F,T]"
+  },
+  {
+    "bits": 2,
+    "cycles": 8,
+    "register_model": "output previous stored bits; load row payload when sto=T, hold when sto=F",
+    "source_xor_truth_table": "[T,F,F,T]"
+  },
+  {
+    "bits": 3,
+    "cycles": 9,
+    "register_model": "output previous stored bits; load row payload when sto=T, hold when sto=F",
+    "source_xor_truth_table": "[T,F,F,T]"
+  },
+  {
+    "bits": 8,
+    "cycles": 12,
+    "register_model": "output previous stored bits; load row payload when sto=T, hold when sto=F",
+    "source_xor_truth_table": "[T,F,F,T]"
+  },
+  {
+    "bits": 16,
+    "cycles": 5,
+    "register_model": "output previous stored bits; load row payload when sto=T, hold when sto=F",
+    "source_xor_truth_table": "[T,F,F,T]"
+  }
+]

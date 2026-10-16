@@ -1,0 +1,1 @@
+circsim-strict	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/circsim.sml shared/circsim-driver.sml circsim-strict/benchmark.sml shared/main.sml	8 4 1 smoke.show	circsim-strict/smoke.expected	smoke.show

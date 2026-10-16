@@ -1,0 +1,4 @@
+{
+  "scope": "complete source equality after replacing only the GC main consumer/comment with the printed consumer",
+  "normalized_sha256": "ef0e5c997eca8f0d43760a41c8c90890670f9d5d67ca26674aaa7355e944a825"
+}

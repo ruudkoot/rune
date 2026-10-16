@@ -1,0 +1,12 @@
+--- gc/Main.lhs
++++ spectral/Main.lhs
+@@ -660,8 +660,7 @@
+ > main :: IO ()
+ > main = forM_ [1..97] $ const $ do
+ >   (num_bits:num_cycles:_) <- getArgs
+->   -- We save ourselfs some trouble and don't produce output in the gc variant
+->   return $! (length . show $ (run (read num_bits) (read num_cycles))) `seq` ()
++>   print (run (read num_bits) (read num_cycles))
+ 
+ 
+ > run :: Int -> Int -> [[Boolean]]

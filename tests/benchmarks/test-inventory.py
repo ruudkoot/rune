@@ -141,6 +141,22 @@ class InventoryTest(unittest.TestCase):
         rows = self.build("nofib")
         self.assertEqual([(r["path"], r["disposition"]) for r in rows], [("gc/hash", "import")])
 
+    def test_circuit_authorship_is_recorded_from_the_literate_heading(self):
+        self.nofib_roots()
+        self.file("gc/circsim/Makefile", "\n")
+        self.file("gc/circsim/Main.lhs",
+                  "The Circuit Simulator example\nDavid J. King & John O'Donnell\nJanuary, 1998\n\n> main = return ()\n")
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "David J. King;John O'Donnell")
+        self.assertIn("gc/circsim/Main.lhs:authorship-heading", row["evidence"])
+
+    def test_changed_circuit_heading_does_not_inherit_unverified_authors(self):
+        self.nofib_roots()
+        self.file("gc/circsim/Makefile", "\n")
+        self.file("gc/circsim/Main.lhs",
+                  "The Circuit Simulator example\nDifferent authors\nJanuary, 1998\n\n> main = return ()\n")
+        self.assertEqual(self.build("nofib")[0]["authors"], "not stated in scanned source headers")
+
     def test_nested_haskell_programs_are_not_an_aggregate_workload(self):
         self.nofib_roots()
         self.file("spectral/group/Makefile", "SUBDIRS = one\n")

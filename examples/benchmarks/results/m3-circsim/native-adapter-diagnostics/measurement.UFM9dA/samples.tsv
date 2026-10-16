@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+circsim-nofib-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	5.03	4.30	0.95	663284	-	-	-	circsim-nofib-strict/native-mlton/build/compile
+circsim-nofib-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.01	0.00	2840	-	-	-	circsim-nofib-strict/native-mlton/correctness.0
+circsim-nofib-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2756	-	-	-	circsim-nofib-strict/native-mlton/fresh.1
+circsim-nofib-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	1.00	1.02	0.06	47984	-	-	-	circsim-nofib-strict/native-smlnj-legacy/build/compile
+circsim-nofib-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.02	0.01	0.00	4740	-	-	-	circsim-nofib-strict/native-smlnj-legacy/correctness.0
+circsim-nofib-strict	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.02	0.02	0.00	4708	-	-	-	circsim-nofib-strict/native-smlnj-legacy/fresh.1
+circsim-nofib-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.54	0.38	0.11	48804	-	-	-	circsim-nofib-strict/native-polyml/build/compile
+circsim-nofib-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	8060	-	-	-	circsim-nofib-strict/native-polyml/correctness.0
+circsim-nofib-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	7864	-	-	-	circsim-nofib-strict/native-polyml/fresh.1

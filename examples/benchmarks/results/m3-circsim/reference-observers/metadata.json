@@ -1,0 +1,107 @@
+[
+  {
+    "source": "gc",
+    "profile": "smoke",
+    "bits": 8,
+    "cycles": 4,
+    "repetitions": 97,
+    "stdout_bytes": 0,
+    "observer_bytes": 84,
+    "runtime_options": [
+      "+RTS",
+      "-M1g",
+      "-RTS"
+    ],
+    "fixture": null,
+    "fixture_scope": "GC main returns unit without output; no upstream stdout fixture",
+    "source_sha256": "501aed9bfb3c632a6b96d9415f8d89da5044524da0ab861fc3164460884bf755"
+  },
+  {
+    "source": "gc",
+    "profile": "normal",
+    "bits": 8,
+    "cycles": 40,
+    "repetitions": 97,
+    "stdout_bytes": 0,
+    "observer_bytes": 733,
+    "runtime_options": [
+      "+RTS",
+      "-M1g",
+      "-RTS"
+    ],
+    "fixture": null,
+    "fixture_scope": "GC main returns unit without output; no upstream stdout fixture",
+    "source_sha256": "501aed9bfb3c632a6b96d9415f8d89da5044524da0ab861fc3164460884bf755"
+  },
+  {
+    "source": "gc",
+    "profile": "large",
+    "bits": 8,
+    "cycles": 200,
+    "repetitions": 97,
+    "stdout_bytes": 0,
+    "observer_bytes": 3614,
+    "runtime_options": [
+      "+RTS",
+      "-M1g",
+      "-RTS"
+    ],
+    "fixture": null,
+    "fixture_scope": "GC main returns unit without output; no upstream stdout fixture",
+    "source_sha256": "501aed9bfb3c632a6b96d9415f8d89da5044524da0ab861fc3164460884bf755"
+  },
+  {
+    "source": "spectral",
+    "profile": "smoke",
+    "bits": 8,
+    "cycles": 4,
+    "repetitions": 97,
+    "stdout_bytes": 7178,
+    "observer_bytes": 84,
+    "runtime_options": [
+      "+RTS",
+      "-M1g",
+      "-H30m",
+      "-RTS"
+    ],
+    "fixture": "circsim.faststdout",
+    "fixture_scope": "stored upstream bytes",
+    "source_sha256": "ef0e5c997eca8f0d43760a41c8c90890670f9d5d67ca26674aaa7355e944a825"
+  },
+  {
+    "source": "spectral",
+    "profile": "normal",
+    "bits": 8,
+    "cycles": 40,
+    "repetitions": 97,
+    "stdout_bytes": 70034,
+    "observer_bytes": 733,
+    "runtime_options": [
+      "+RTS",
+      "-M1g",
+      "-H30m",
+      "-RTS"
+    ],
+    "fixture": "circsim.stdout",
+    "fixture_scope": "stored upstream bytes",
+    "source_sha256": "ef0e5c997eca8f0d43760a41c8c90890670f9d5d67ca26674aaa7355e944a825"
+  },
+  {
+    "source": "spectral",
+    "profile": "large",
+    "bits": 8,
+    "cycles": 200,
+    "repetitions": 97,
+    "stdout_bytes": 349394,
+    "observer_bytes": 3614,
+    "runtime_options": [
+      "+RTS",
+      "-M1g",
+      "-H30m",
+      "-RTS"
+    ],
+    "fixture": "circsim.slowstdout",
+    "fixture_scope": "stored upstream bytes",
+    "source_sha256": "ef0e5c997eca8f0d43760a41c8c90890670f9d5d67ca26674aaa7355e944a825"
+  }
+]

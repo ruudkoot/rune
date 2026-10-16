@@ -1,0 +1,1 @@
+circsim-nofib-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/circsim.sml shared/circsim-driver.sml circsim-nofib-lazy/benchmark.sml shared/main.sml	8 4 1 smoke.show	circsim-nofib-lazy/smoke.expected	smoke.show

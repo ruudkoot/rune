@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+circsim-nofib-strict	normal	rune	O2	compile	0	0	pass	1.49	1.47	0.12	135388	-	-	-	circsim-nofib-strict/rune/build/compile
+circsim-nofib-strict	normal	rune	O2	correctness	0	0	pass	8.89	7.20	0.02	10352	2145733230	5250965336	99132137	circsim-nofib-strict/rune/correctness.0
+circsim-nofib-strict	normal	rune	O2	count	1	1	pass	7.01	7.45	0.00	10356	2145733230	5250965336	99132137	circsim-nofib-strict/rune/fresh.1
+circsim-nofib-strict	normal	rune:opt	O2	compile	0	0	pass	1.26	1.30	0.05	135480	-	-	-	circsim-nofib-strict/rune-opt/build/compile
+circsim-nofib-strict	normal	rune:opt	O2	native-compile	0	0	pass	0.28	0.14	0.04	15880	-	-	-	circsim-nofib-strict/rune-opt/build/native-compile
+circsim-nofib-strict	normal	rune:opt	O2	correctness	0	0	pass	3.11	3.29	0.01	11000	2145733230	5250965336	99132137	circsim-nofib-strict/rune-opt/correctness.0
+circsim-nofib-strict	normal	rune:opt	O2	count	1	1	pass	3.33	3.53	0.01	11024	2145733230	5250965336	99132137	circsim-nofib-strict/rune-opt/fresh.1
+circsim-nofib-strict	normal	rune:new	O2	compile	0	0	pass	1.45	1.46	0.08	135356	-	-	-	circsim-nofib-strict/rune-new/build/compile
+circsim-nofib-strict	normal	rune:new	O2	correctness	0	0	pass	7.20	7.64	0.03	10664	1043756459	5250965336	99132137	circsim-nofib-strict/rune-new/correctness.0
+circsim-nofib-strict	normal	rune:new	O2	count	1	1	pass	8.58	6.89	0.00	10664	1043756459	5250965336	99132137	circsim-nofib-strict/rune-new/fresh.1
+circsim-nofib-strict	normal	rune:jit	O2	compile	0	0	pass	1.55	1.61	0.04	135232	-	-	-	circsim-nofib-strict/rune-jit/build/compile
+circsim-nofib-strict	normal	rune:jit	O2	correctness	0	0	pass	2.87	3.05	0.00	11800	1043756459	5250965336	99132137	circsim-nofib-strict/rune-jit/correctness.0
+circsim-nofib-strict	normal	rune:jit	O2	count	1	1	pass	2.78	2.94	0.01	11840	1043756459	5250965336	99132137	circsim-nofib-strict/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

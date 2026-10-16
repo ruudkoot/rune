@@ -1,0 +1,14 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/inventory.tsv
+ M examples/benchmarks/manifest.tsv
+ M scripts/benchmark-inventory.py
+ M tests/benchmarks/test-inventory.py
+?? examples/benchmarks/circsim-lazy/
+?? examples/benchmarks/circsim-nofib-lazy/
+?? examples/benchmarks/circsim-nofib-strict/
+?? examples/benchmarks/circsim-strict/
+?? examples/benchmarks/shared/circsim-driver.sml
+?? examples/benchmarks/shared/circsim.sml
+?? tests/benchmarks/check-circsim.sh
+?? tests/benchmarks/circsim-tests.sml
+?? tests/benchmarks/data/circsim/

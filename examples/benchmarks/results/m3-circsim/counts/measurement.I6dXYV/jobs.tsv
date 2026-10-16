@@ -1,0 +1,1 @@
+circsim-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/circsim.sml shared/circsim-driver.sml circsim-strict/benchmark.sml shared/main.sml	8 40 97 normal.show	circsim-strict/normal.expected	normal.show

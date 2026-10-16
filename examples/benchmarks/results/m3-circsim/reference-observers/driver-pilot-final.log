@@ -1,0 +1,4 @@
+PASS gc lazy normal 97:721:0:0
+PASS gc strict normal 97:721:0:0
+PASS spectral lazy normal 97:722:49080:70034
+PASS spectral strict normal 97:722:49080:70034

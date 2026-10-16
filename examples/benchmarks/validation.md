@@ -2052,3 +2052,44 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 identical bytecode comparisons across seven builds. runedoc
 and runeopt also agree. [The complete transcript](validation/oct16-hartel-fft-937-acceptance.log)
 records the run. All 56 inventory regressions and all 861 inventory entries pass.
+
+## M3 circuit simulator wave — 2026-10-16
+
+Four variants bring the catalogue to 319 programs and 949 profiles. All [112
+canonical smoke/normal cases](results/m3-circsim/coverage.tsv) pass on Rune's four
+engines at O0/O2 and six native hosts at compiler defaults. All 79 semantic
+checks pass in every configuration in both invocations (1580 assertions).
+Sixteen normal count samples agree under execution-model rules, including
+allocation across all Rune engines. Existing budgets are unchanged. Twelve
+serial single fresh-process native smoke samples validate the adapters
+separately from instrumentation and headline comparisons.
+
+The GC and spectral sources share their complete simulator; only their main
+consumer/comment differs. Original spectral executions match all three complete
+97-line fixtures. The GC program has no stored stdout fixture and returns unit
+without output. Observers agree on full traces; an independent hold/load model
+agrees with five varied original traces. The measured code retains processor
+states, port/packet products, immutable updates and balanced-tree prefix routing.
+Both policies preserve source XNOR, extent-one empties, strict routing boundaries,
+depth guards, short circuiting and request restoration. Character streams remain
+lazy in both, keeping GC's unused heads distinct from printed consumption.
+Validation follows existing Show-spine demand points without a retained postpass.
+
+Tests cover source profiles and repetitions, varied widths/data, malformed and
+checksum-colliding traces, inactive gates, empty-input/label/root-summary demand,
+packet windows/payloads and transpose. Both normal Rune O2 policies/consumers
+retain all 97 repetitions. Smoke reduces only repetitions to one. Large complete
+and auxiliary-repeat checks have their recorded scope; whole original-repeat
+large validation is unrecorded. [Raw evidence and source identities](results/m3-circsim/README.md)
+include every accepted scope and resource guard. M3 remains in progress.
+
+The exact literate heading credits David J. King and John O'Donnell. Two inventory
+rows gain authors/evidence only; identities, names and dispositions remain. All
+58 inventory regressions pass and all five clean pinned trees reproduce 861
+entries. Complete original files, runtime flags and individual notices remain.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 949 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 identical bytecode comparisons across seven builds. runedoc
+and runeopt also agree. [The complete transcript](validation/oct16-circsim-949-acceptance.log)
+records the run.

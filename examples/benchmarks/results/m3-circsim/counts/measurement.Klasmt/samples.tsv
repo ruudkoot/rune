@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+circsim-lazy	normal	rune	O2	compile	0	0	pass	1.80	1.87	0.12	135384	-	-	-	circsim-lazy/rune/build/compile
+circsim-lazy	normal	rune	O2	correctness	0	0	pass	38.80	39.08	0.06	34888	6389591596	20077281552	585417372	circsim-lazy/rune/correctness.0
+circsim-lazy	normal	rune	O2	count	1	1	pass	35.97	35.99	0.05	34852	6389591596	20077281552	585417372	circsim-lazy/rune/fresh.1
+circsim-lazy	normal	rune:opt	O2	compile	0	0	pass	1.89	1.91	0.07	135452	-	-	-	circsim-lazy/rune-opt/build/compile
+circsim-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.46	0.28	0.04	14852	-	-	-	circsim-lazy/rune-opt/build/native-compile
+circsim-lazy	normal	rune:opt	O2	correctness	0	0	pass	22.12	21.28	0.04	35632	6389591596	20077281552	585417372	circsim-lazy/rune-opt/correctness.0
+circsim-lazy	normal	rune:opt	O2	count	1	1	pass	21.03	19.79	0.02	35708	6389591596	20077281552	585417372	circsim-lazy/rune-opt/fresh.1
+circsim-lazy	normal	rune:new	O2	compile	0	0	pass	1.70	1.73	0.06	135224	-	-	-	circsim-lazy/rune-new/build/compile
+circsim-lazy	normal	rune:new	O2	correctness	0	0	pass	35.84	36.01	0.04	35196	3655065955	20077281552	585417372	circsim-lazy/rune-new/correctness.0
+circsim-lazy	normal	rune:new	O2	count	1	1	pass	36.41	36.59	0.02	35216	3655065955	20077281552	585417372	circsim-lazy/rune-new/fresh.1
+circsim-lazy	normal	rune:jit	O2	compile	0	0	pass	1.55	1.63	0.09	135384	-	-	-	circsim-lazy/rune-jit/build/compile
+circsim-lazy	normal	rune:jit	O2	correctness	0	0	pass	19.43	20.65	0.05	36764	3655065955	20077281552	585417372	circsim-lazy/rune-jit/correctness.0
+circsim-lazy	normal	rune:jit	O2	count	1	1	pass	21.18	20.44	0.09	36784	3655065955	20077281552	585417372	circsim-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

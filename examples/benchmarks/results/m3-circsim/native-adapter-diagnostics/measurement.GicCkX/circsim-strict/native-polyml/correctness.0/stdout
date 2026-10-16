@@ -1,0 +1,4 @@
+RESULT 1:73:0:0
+PASS circsim-strict
+SAMPLE 1 0.003220000
+SUMMARY 1 checks, 0 failed

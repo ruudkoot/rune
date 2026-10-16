@@ -1,0 +1,5 @@
+COUNT unbudgeted circsim-strict normal rune
+COUNT unbudgeted circsim-strict normal rune:opt
+COUNT unbudgeted circsim-strict normal rune:new
+COUNT unbudgeted circsim-strict normal rune:jit
+COUNT comparisons agree
