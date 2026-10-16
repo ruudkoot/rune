@@ -256,6 +256,16 @@ inventory entry.
 | [fish-strict](#fish-strict) | [nofib fish](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/fish) | Compose integer fish geometry with eager vectors and preserve formatted-length observation. |
 | [spectralnorm2](#spectralnorm2) | [Sandmark spectralnorm2](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/benchmarksgame/spectralnorm2.ml) | Estimate a deterministic matrix norm with forty implicit matrix-vector passes. |
 | [game_of_life](#game_of_life) | [Sandmark game_of_life](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-numerical/game_of_life.ml) | Evolve seeded dense Life boards with zero boundaries, exception handling and two retained buffers. |
+| [zarith_fact](#zarith_fact) | [Sandmark zarith_fact](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/zarith/zarith_fact.ml) | Compute repeated recursive arbitrary-precision factorials and validate each result. |
+| [zarith_fib](#zarith_fib) | [Sandmark zarith_fib](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/zarith/zarith_fib.ml) | Evaluate naive Fibonacci using Z integer operations. |
+| [zarith_fib-int](#zarith_fib-int) | [Sandmark zarith_fib](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/zarith/zarith_fib.ml) | Evaluate naive Fibonacci using int integer operations. |
+| [zarith_fib-natint](#zarith_fib-natint) | [Sandmark zarith_fib](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/zarith/zarith_fib.ml) | Evaluate naive Fibonacci using natint integer operations. |
+| [zarith_fib-num](#zarith_fib-num) | [Sandmark zarith_fib](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/zarith/zarith_fib.ml) | Evaluate naive Fibonacci using num integer operations. |
+| [zarith_tak](#zarith_tak) | [Sandmark zarith_tak](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/zarith/zarith_tak.ml) | Evaluate repeated Takeuchi calls using Z integer operations. |
+| [zarith_tak-int](#zarith_tak-int) | [Sandmark zarith_tak](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/zarith/zarith_tak.ml) | Evaluate repeated Takeuchi calls using int integer operations. |
+| [zarith_tak-natint](#zarith_tak-natint) | [Sandmark zarith_tak](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/zarith/zarith_tak.ml) | Evaluate repeated Takeuchi calls using natint integer operations. |
+| [zarith_tak-num](#zarith_tak-num) | [Sandmark zarith_tak](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/zarith/zarith_tak.ml) | Evaluate repeated Takeuchi calls using num integer operations. |
+| [zarith_pi](#zarith_pi) | [Sandmark zarith_pi](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/zarith/zarith_pi.ml) | Generate and check streaming pi digits with full four-coefficient integer transformations. |
 
 ## Running and interpreting checks
 
@@ -8833,3 +8843,133 @@ The array representation, boundary handling and buffer lifetimes are established
 by this pinned program, rather than attributed to the historical article.
 
 [Complete provenance](game_of_life/PROVENANCE.md).
+
+## zarith_fact
+
+Compute repeated recursive arbitrary-precision factorials and validate each result.
+
+The recursive multiplication and decreasing machine-int argument remain intact.
+Smoke is 10/0, normal 40/10000, and large 40/1000000 (the published Sandmark
+configuration). Normal also matches the Zarith library's fact40 test count.
+For nonnegative counts there is one additional call. The original only prints
+the final result; the port checks each result against the reviewed exact integer
+and serializes the last once. Conversion from machine int to IntInf replaces
+Zarith's small-value conversion. Values above 31 bits are essential at n=40;
+the input and repetition controls themselves fit 31 bits.
+
+Numeric representations, evaluation order, adaptation costs, authorship, notices, inputs, checks and runtime hypotheses are detailed in [the workload provenance](zarith_fact/PROVENANCE.md).
+
+## zarith_fib
+
+Evaluate naive Fibonacci using Z integer operations.
+
+Naive Fibonacci uses f(0)=f(1)=1 and preserves right-first recursion.
+Smoke 10, normal 30 and large 40 select a recursion depth rather than a universal
+size. Large40 preserves the published Sandmark input and produces 165580141,
+which fits every supported default int. The original FAST/library32 inputs
+remain in provenance. This variant selects original mode `Z`.
+
+Numeric representations, evaluation order, adaptation costs, authorship, notices, inputs, checks and runtime hypotheses are detailed in [the workload provenance](zarith_fib/PROVENANCE.md).
+
+## zarith_fib-int
+
+Evaluate naive Fibonacci using int integer operations.
+
+Naive Fibonacci uses f(0)=f(1)=1 and preserves right-first recursion.
+Smoke 10, normal 30 and large 40 select a recursion depth rather than a universal
+size. Large40 preserves the published Sandmark input and produces 165580141,
+which fits every supported default int. The original FAST/library32 inputs
+remain in provenance. This variant selects original mode `int`.
+
+Numeric representations, evaluation order, adaptation costs, authorship, notices, inputs, checks and runtime hypotheses are detailed in [the workload provenance](zarith_fib-int/PROVENANCE.md).
+
+## zarith_fib-natint
+
+Evaluate naive Fibonacci using natint integer operations.
+
+Naive Fibonacci uses f(0)=f(1)=1 and preserves right-first recursion.
+Smoke 10, normal 30 and large 40 select a recursion depth rather than a universal
+size. Large40 preserves the published Sandmark input and produces 165580141,
+which fits every supported default int. The original FAST/library32 inputs
+remain in provenance. This variant selects original mode `natint`.
+
+Numeric representations, evaluation order, adaptation costs, authorship, notices, inputs, checks and runtime hypotheses are detailed in [the workload provenance](zarith_fib-natint/PROVENANCE.md).
+
+## zarith_fib-num
+
+Evaluate naive Fibonacci using num integer operations.
+
+Naive Fibonacci uses f(0)=f(1)=1 and preserves right-first recursion.
+Smoke 10, normal 30 and large 40 select a recursion depth rather than a universal
+size. Large40 preserves the published Sandmark input and produces 165580141,
+which fits every supported default int. The original FAST/library32 inputs
+remain in provenance. This variant selects original mode `num`.
+
+Numeric representations, evaluation order, adaptation costs, authorship, notices, inputs, checks and runtime hypotheses are detailed in [the workload provenance](zarith_fib-num/PROVENANCE.md).
+
+## zarith_tak
+
+Evaluate repeated Takeuchi calls using Z integer operations.
+
+Takeuchi retains the fixed tuple (18,12,6), three nested right-first calls
+and final result 7. Smoke 0 and normal 100 use the original repetition convention;
+large 2500 preserves the published Sandmark count, meaning 2501 kernel calls.
+The port checks every call before retaining the final decimal. This variant selects original mode `Z`.
+
+Numeric representations, evaluation order, adaptation costs, authorship, notices, inputs, checks and runtime hypotheses are detailed in [the workload provenance](zarith_tak/PROVENANCE.md).
+
+## zarith_tak-int
+
+Evaluate repeated Takeuchi calls using int integer operations.
+
+Takeuchi retains the fixed tuple (18,12,6), three nested right-first calls
+and final result 7. Smoke 0 and normal 100 use the original repetition convention;
+large 2500 preserves the published Sandmark count, meaning 2501 kernel calls.
+The port checks every call before retaining the final decimal. This variant selects original mode `int`.
+
+Numeric representations, evaluation order, adaptation costs, authorship, notices, inputs, checks and runtime hypotheses are detailed in [the workload provenance](zarith_tak-int/PROVENANCE.md).
+
+## zarith_tak-natint
+
+Evaluate repeated Takeuchi calls using natint integer operations.
+
+Takeuchi retains the fixed tuple (18,12,6), three nested right-first calls
+and final result 7. Smoke 0 and normal 100 use the original repetition convention;
+large 2500 preserves the published Sandmark count, meaning 2501 kernel calls.
+The port checks every call before retaining the final decimal. This variant selects original mode `natint`.
+
+Numeric representations, evaluation order, adaptation costs, authorship, notices, inputs, checks and runtime hypotheses are detailed in [the workload provenance](zarith_tak-natint/PROVENANCE.md).
+
+## zarith_tak-num
+
+Evaluate repeated Takeuchi calls using num integer operations.
+
+Takeuchi retains the fixed tuple (18,12,6), three nested right-first calls
+and final result 7. Smoke 0 and normal 100 use the original repetition convention;
+large 2500 preserves the published Sandmark count, meaning 2501 kernel calls.
+The port checks every call before retaining the final decimal. This variant selects original mode `num`.
+
+Numeric representations, evaluation order, adaptation costs, authorship, notices, inputs, checks and runtime hypotheses are detailed in [the workload provenance](zarith_tak-num/PROVENANCE.md).
+
+## zarith_pi
+
+Generate and check streaming pi digits with full four-coefficient integer transformations.
+
+The source cites Jeremy Gibbons's August 2004 Unbounded Spigot Algorithms
+for the Digits of Pi, pages 4/6/7. Preserve all four LFT coefficients and every
+matrix-composition product, including zero products; the triangular two-field
+specialization in other pidigits programs is not substituted. Z division
+truncates toward zero and maps to IntInf.quot (despite the source helper name
+floor_ev). Digit safety and production/consumption steps remain intact.
+
+Smoke 27 and normal 128 give fixed prefixes. Large 10000 preserves the published
+input. An independent Decimal Gauss-Legendre calculation agrees on every digit
+with the original Zarith program through 10000 digits. Original ten-column
+padding, tab/colon counts and final newline are preserved, including zero and
+partial/exact rows in semantic fixtures. A callback checks every generated
+output chunk against a reviewed complete file instead of writing digits to
+stdout. The driver reads that file during execution and checks full consumption,
+then returns a checked-count marker; checking/storage/IO costs are explicit.
+All internal arithmetic is arbitrary precision; small loop controls fit 31 bits.
+
+Numeric representations, evaluation order, adaptation costs, authorship, notices, inputs, checks and runtime hypotheses are detailed in [the workload provenance](zarith_pi/PROVENANCE.md).

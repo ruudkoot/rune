@@ -1,0 +1,2 @@
+# Preserve partial-row padding.
+expected/* -whitespace

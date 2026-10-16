@@ -1,0 +1,2 @@
+# Preserve original pi layout padding.
+*.expected -whitespace
