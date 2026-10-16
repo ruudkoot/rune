@@ -277,8 +277,6 @@ Posix.Process.pause/until-* | Poly/ML | a forked child that pauses is not ended 
 Posix.Process.exit/[szn]* | Poly/ML 5.9.2 | a forked child that calls Posix.Process.exit (or OS.Process.exit) never ends
 Posix.ProcEnv.time/* | SML/NJ 110.99.9 (64-bit) | time () is negative: the seconds since the Epoch overflow 32 bits
 Posix.ProcEnv.time/* | SML/NJ development 2026.2 | time () is negative: the seconds since the Epoch overflow 32 bits
-Posix.ProcEnv.times/not-negative | SML/NJ 110.99.9 (64-bit) | the elapsed time of times is negative
-Posix.ProcEnv.times/not-negative | SML/NJ development 2026.2 | the elapsed time of times is negative
 Posix.TTY.getlflag/sample | MLton | getlflag returns the output flags (those of getoflag)
 Posix.TTY.TC.getpgrp/not-a-terminal | SML/NJ | TC.getpgrp of a descriptor that is not a terminal raises no exception
 Unix.reap/status | MLton | Unix.fromStatus misreads the statuses that reap returns (exit 3 is W_SIGNALED; a process that term ended is W_SIGNALED of signal 1) (docs/bugreport/mlton/OS.Process.status/two-representations)

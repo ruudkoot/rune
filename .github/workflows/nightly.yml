@@ -46,6 +46,9 @@ jobs:
           path: ~/.local/rune-hosts
           key: rune-hosts-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/fetch-hosts.sh') }}
 
+      # fetch-hosts.sh puts SIGPIPE back at its default before SML/NJ links
+      # its heap. The heap records the disposition and restores it on
+      # startup, which would undo the flag on the run below.
       - name: make hosts
         run: make hosts
 

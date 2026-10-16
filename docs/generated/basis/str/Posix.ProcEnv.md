@@ -103,10 +103,9 @@ What each means is on [`POSIX_PROC_ENV`](../sig/POSIX_PROC_ENV.md); the types ar
 > knows but leaves unbounded is reported the same way as an unknown one --
 > the call gives `~1` and sets no `errno` \-- so this raises for both.
 
-<details><summary>Other implementations (2)</summary>
+<details><summary>Other implementations (1)</summary>
 
 - **SML/NJ 110.99.9 (64-bit), SML/NJ development 2026.2** &mdash; time () is negative: the seconds since the Epoch overflow 32 bits
-- **SML/NJ 110.99.9 (64-bit), SML/NJ development 2026.2** &mdash; the elapsed time of times is negative
 
 </details>
 

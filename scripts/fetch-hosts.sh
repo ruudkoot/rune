@@ -50,6 +50,18 @@
 # the builds run with a PATH on which mlton, sml, poly, polyc and mlkit fail.
 set -eu
 
+# SML/NJ links its heap in this process and records every signal disposition
+# it finds. The heap puts those dispositions back on every later startup,
+# and a program it executes inherits them. GitHub Actions starts a job with
+# SIGPIPE ignored, and a shell cannot restore the default, so a heap built
+# there ignores SIGPIPE: Posix.Signal.pipe/ends-shell then exits 7 instead
+# of dying, and `env --default-signal=PIPE` on the test step comes too late.
+# GNU env can put the default back; where it cannot, the build is left as it
+# was started.
+if [ -z "${RUNE_HOSTS_SIGPIPE:-}" ] && env --default-signal=PIPE true >/dev/null 2>&1; then
+  exec env --default-signal=PIPE RUNE_HOSTS_SIGPIPE=1 "$0" "$@"
+fi
+
 MLTON_VERSION=${MLTON_VERSION:-20241230}
 SMLNJ_VERSION=${SMLNJ_VERSION:-110.99.9}
 SMLNJ_DEV_VERSION=${SMLNJ_DEV_VERSION:-2026.2}
