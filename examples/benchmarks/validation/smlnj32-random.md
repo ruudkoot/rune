@@ -39,3 +39,11 @@ smoke and normal profiles. Its independent rule/buffer/checker tests pass on the
 32-bit host; the source generator call triggers the isolated threshold failure.
 [Both complete attempts](../results/m5-array-life/correctness-attempts.tsv) remain
 separate from 26 passing correctness cases on other configurations.
+
+The seeded sequential evolutionary import also reproduces this Overflow in
+both selected profiles. Its six semantic cases involving tournament selection
+fail, while the six Onemax/tie/mutation/nonselection cases pass. All other
+configurations pass the unchanged tests and full population references.
+[Complete coverage](../results/m5-evolutionary/coverage.tsv) and both-level
+semantic logs retain those failures. The RNG arithmetic and ordinary host
+configuration remain unchanged.
