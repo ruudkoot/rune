@@ -306,6 +306,43 @@ class InventoryTest(unittest.TestCase):
         self.sandmark_program("strings", 'let result = "' + "x" * 10000 + '"\n')
         self.assertEqual(self.build("sandmark")[0]["inputs"], "")
 
+    def test_nofib_profile_arguments_include_graph_dataset(self):
+        self.nofib_roots()
+        self.file("spectral/dom-lt/Main.hs", "main = return ()\n")
+        self.file("spectral/dom-lt/Makefile", "FAST_OPTS = ghc-examples.in 50\nNORM_OPTS = ghc-examples.in 400\n")
+        self.file("spectral/dom-lt/ghc-examples.in", "graph data\n")
+        self.assertEqual(self.build("nofib")[0]["inputs"], "spectral/dom-lt/ghc-examples.in")
+
+    def test_nofib_profile_paths_support_quotes_flags_and_continuations(self):
+        self.nofib_roots()
+        self.file("spectral/graphs/Main.hs", "main = return ()\n")
+        self.file("spectral/graphs/Makefile",
+                  'NORM_OPTS = "data/input graph.bin" \\\n --lookup=names.tbl 400 # decoy.bin\n')
+        self.file("spectral/graphs/data/input graph.bin", "graph\n")
+        self.file("spectral/graphs/names.tbl", "names\n")
+        self.file("spectral/graphs/decoy.bin", "not an argument\n")
+        self.assertEqual(self.build("nofib")[0]["inputs"],
+                         "spectral/graphs/data/input graph.bin;spectral/graphs/names.tbl")
+
+    def test_nofib_profile_paths_stay_inside_pinned_tree(self):
+        self.nofib_roots()
+        self.file("spectral/graphs/Main.hs", "main = return ()\n")
+        with tempfile.TemporaryDirectory() as outside:
+            dataset = Path(outside) / "external.bin"
+            dataset.write_text("external\n")
+            self.file("spectral/graphs/Makefile", "NORM_OPTS = " + str(dataset) + " 400\n")
+            self.assertEqual(self.build("nofib")[0]["inputs"], "")
+
+    def test_related_names_are_independent_of_discovery_order(self):
+        rows = [dict(source=source, path=path, name="fft") for source, path in
+                [("smlnj", "programs/fft"), ("sandmark", "benchmarks/fft.exe"), ("mlton", "fft.sml")]]
+        reversed_rows = copy.deepcopy(list(reversed(rows)))
+        AUDIT.related(rows)
+        AUDIT.related(reversed_rows)
+        self.assertEqual({r["source"]: r["related"] for r in rows},
+                         {r["source"]: r["related"] for r in reversed_rows})
+        self.assertEqual(rows[0]["related"], "mlton:fft.sml;sandmark:benchmarks/fft.exe")
+
     def test_digest_includes_member_identity_and_content(self):
         a = self.file("a.sml", "structure A = struct end\n")
         b = self.file("b.sml", a.read_text())

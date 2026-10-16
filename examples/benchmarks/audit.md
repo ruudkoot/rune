@@ -1,5 +1,10 @@
 # Initial source audit
 
+The [2026-10-16 profile-input review](validation/inventory-oct16-profile-inputs.md)
+records 22 additional input references across nine nofib entries and normalizes
+related-name ordering. All 861 entries reproduce from clean pinned trees and all 45
+inventory regressions pass. Dispositions and source identities are unchanged.
+
 The [2026-10-16 allocation/stack review](validation/sandmark-allocation-probes.md)
 adds four source-specific deferrals for unavailable optimization barriers.
 Current Sandmark dispositions are 61 import and 82 defer. The baseline table
