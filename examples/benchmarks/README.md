@@ -252,6 +252,10 @@ inventory entry.
 | [banner-strict](#banner-strict) | [nofib banner](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/banner) | Render repeated ASCII messages with eager glyph-picture sequences and exact byte checks. |
 | [sorting-lazy](#sorting-lazy) | [nofib sorting](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/sorting) | Run eight historical list/tree sorts and seven reversals with memoized structures. |
 | [sorting-strict](#sorting-strict) | [nofib sorting](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/sorting) | Run eight historical list/tree sorts and seven reversals with eager structures. |
+| [fish-lazy](#fish-lazy) | [nofib fish](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/fish) | Compose integer fish geometry with memoized vectors and preserve formatted-length observation. |
+| [fish-strict](#fish-strict) | [nofib fish](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/fish) | Compose integer fish geometry with eager vectors and preserve formatted-length observation. |
+| [spectralnorm2](#spectralnorm2) | [Sandmark spectralnorm2](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/benchmarksgame/spectralnorm2.ml) | Estimate a deterministic matrix norm with forty implicit matrix-vector passes. |
+| [game_of_life](#game_of_life) | [Sandmark game_of_life](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-numerical/game_of_life.ml) | Evolve seeded dense Life boards with zero boundaries, exception handling and two retained buffers. |
 
 ## Running and interpreting checks
 
@@ -5281,7 +5285,7 @@ Unused pretty-printers/unGraph helpers are retained in the original but not adde
 to the runnable kernel. The added check work is included.
 
 Profiles use6/120/30000 iterations; large preserves original FAST, and original
-normal300000/slow1500000 remain in Makefile. Large execution is not universally
+normal 300000/slow1500000 remain in Makefile. Large execution is not universally
 claimed. Closure specialization, state tuple representation, label renaming and
 shared graph objects are source-derived hypotheses until measured. References:
 original Jones explanation/example graphs and nofib survey.
@@ -8573,3 +8577,259 @@ sorting references and [the pinned modules](https://github.com/ghc/nofib/tree/b7
 No unread-thesis finding or historical timing result is transferred to this port.
 
 [Complete provenance](sorting-strict/PROVENANCE.md).
+
+## fish-lazy
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`,
+`spectral/fish/Main.hs` and `Makefile`. The functional-geometry pseudocorner and
+pseudolimit construction matches Henderson's published method; the particular
+Haskell port's author is unstated. The source credits SLPJ's November 1999
+formatter change and discusses earlier GHC behavior. Original program, embedded
+tile constants, notices, build settings and identities remain retained. An
+individual program/data grant is unstated. No external tile dataset is acquired.
+
+### Algorithm and known variants
+
+A picture maps an origin and two bounding-box vectors to ordered line segments.
+Preserve the four integer tile tables, rotations, weighted above/beside,
+quartets, cycles, side/corner hierarchy and Main's pseudolimit. The unused nonet
+and full squarelimit definitions remain source provenance, outside Main's
+selected workload. The source comment says floats, but its explicit Vec type
+is a pair of machine Int values. Every intermediate multiply/divide and negative
+floor division is preserved; collapsing transforms or substituting real affine
+arithmetic would change coordinates.
+
+Both ports share an SML97 functor. Need memoizes vector headers/components,
+segment fields and sequence spines/heads. Strict materializes finite structures.
+Picture closures remain functions; explicit cells and tuples replace Haskell's
+lazy representation. Second picture branches stay delayed in Need, and formatter
+segments are demanded after their prefix. scale_vec2 remains a distinct function.
+Its inlining/CPR comment is source history, not a measured Rune result.
+
+### Inputs, observation and result validation
+
+Smoke 1 is deliberately small; normal 300 and large 1,500 retain upstream NORM/SLOW
+repetitions. Original FAST 30 remains provenance. Main's i in1..count and
+min(0,i) offset remain explicit, producing the original 640 bounding box. Tile
+coordinates, intermediate operations, loop counts and largest summed length
+254,044,500 fit 31 bits on selected profiles. No modular/precision substitution
+is needed over that domain.
+
+Original Main forces length(fmt(pseudolimit ...)) and returns unit. The portable
+driver checks 169,363 each iteration and consumes it in a count/sum, preserving
+that length observation without forcing character payload. Decimal character
+heads are delayed separately from numeric/digit-spine work. Formatting retains
+tuple commas, newline separators, brackets and the explicit second showl argument.
+Empty pictures format as []. Driver argument parsing/validation happens once.
+Length has limited discrimination for wrong coordinates or glyphs; full data
+validation belongs to the separate semantic target.
+
+GHC and an independent integer-affine model agree on all 9,344 segments and exact
+formatted strings at sides 255,640,641, covering intermediate rounding differences.
+Ten semantic checks cover complete coordinates/format, variants, negative floor
+scaling, identity grid, segment count, empty output, deferred prefix and decimal
+spine length. Original bounded smoke/normal/large invocations also complete.
+Large SML execution is claimed only for recorded cases.
+
+### Runtime questions and references
+
+Higher-order picture composition, tuple/header sharing, field forcing, scale
+inlining, constructor representation and length-based optimization are diagnostic
+hypotheses until established by measurements or IR inspection. Every selected
+iteration describes the same scene; the source's min expression and observation
+may permit compiler specialization or hoisting. Comparison reports use identical
+SML sources; Haskell supplies correctness references.
+
+Algorithm background: Henderson, [Functional Geometry (1982)](https://worrydream.com/refs/Henderson_1982_-_Functional_Geometry.pdf),
+which describes compositional line pictures. Program-specific integer rounding
+and formatter behavior are established by the retained nofib source and observers,
+not assumed from the abstract geometric method. See the shared nofib/measurement
+survey; no historical timing result is transferred to this port.
+
+[Complete provenance](fish-lazy/PROVENANCE.md).
+
+## fish-strict
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`,
+`spectral/fish/Main.hs` and `Makefile`. The functional-geometry pseudocorner and
+pseudolimit construction matches Henderson's published method; the particular
+Haskell port's author is unstated. The source credits SLPJ's November 1999
+formatter change and discusses earlier GHC behavior. Original program, embedded
+tile constants, notices, build settings and identities remain retained. An
+individual program/data grant is unstated. No external tile dataset is acquired.
+
+### Algorithm and known variants
+
+A picture maps an origin and two bounding-box vectors to ordered line segments.
+Preserve the four integer tile tables, rotations, weighted above/beside,
+quartets, cycles, side/corner hierarchy and Main's pseudolimit. The unused nonet
+and full squarelimit definitions remain source provenance, outside Main's
+selected workload. The source comment says floats, but its explicit Vec type
+is a pair of machine Int values. Every intermediate multiply/divide and negative
+floor division is preserved; collapsing transforms or substituting real affine
+arithmetic would change coordinates.
+
+Both ports share an SML97 functor. Need memoizes vector headers/components,
+segment fields and sequence spines/heads. Strict materializes finite structures.
+Picture closures remain functions; explicit cells and tuples replace Haskell's
+lazy representation. Second picture branches stay delayed in Need, and formatter
+segments are demanded after their prefix. scale_vec2 remains a distinct function.
+Its inlining/CPR comment is source history, not a measured Rune result.
+
+### Inputs, observation and result validation
+
+Smoke 1 is deliberately small; normal 300 and large 1,500 retain upstream NORM/SLOW
+repetitions. Original FAST 30 remains provenance. Main's i in1..count and
+min(0,i) offset remain explicit, producing the original 640 bounding box. Tile
+coordinates, intermediate operations, loop counts and largest summed length
+254,044,500 fit 31 bits on selected profiles. No modular/precision substitution
+is needed over that domain.
+
+Original Main forces length(fmt(pseudolimit ...)) and returns unit. The portable
+driver checks 169,363 each iteration and consumes it in a count/sum, preserving
+that length observation without forcing character payload. Decimal character
+heads are delayed separately from numeric/digit-spine work. Formatting retains
+tuple commas, newline separators, brackets and the explicit second showl argument.
+Empty pictures format as []. Driver argument parsing/validation happens once.
+Length has limited discrimination for wrong coordinates or glyphs; full data
+validation belongs to the separate semantic target.
+
+GHC and an independent integer-affine model agree on all 9,344 segments and exact
+formatted strings at sides 255,640,641, covering intermediate rounding differences.
+Ten semantic checks cover complete coordinates/format, variants, negative floor
+scaling, identity grid, segment count, empty output, deferred prefix and decimal
+spine length. Original bounded smoke/normal/large invocations also complete.
+Large SML execution is claimed only for recorded cases.
+
+### Runtime questions and references
+
+Higher-order picture composition, tuple/header sharing, field forcing, scale
+inlining, constructor representation and length-based optimization are diagnostic
+hypotheses until established by measurements or IR inspection. Every selected
+iteration describes the same scene; the source's min expression and observation
+may permit compiler specialization or hoisting. Comparison reports use identical
+SML sources; Haskell supplies correctness references.
+
+Algorithm background: Henderson, [Functional Geometry (1982)](https://worrydream.com/refs/Henderson_1982_-_Functional_Geometry.pdf),
+which describes compositional line pictures. Program-specific integer rounding
+and formatter behavior are established by the retained nofib source and observers,
+not assumed from the abstract geometric method. See the shared nofib/measurement
+survey; no historical timing result is transferred to this port.
+
+[Complete provenance](fish-strict/PROVENANCE.md).
+
+## spectralnorm2
+
+Sandmark `5605805954a00497ed197c930641cddd580e1507`,
+benchmarks/benchmarksgame/spectralnorm2.ml. Header credits Sebastien Loisel,
+cleanup by Troestler Christophe and modifications by Mauricio Fernandez, with
+the Computer Language Benchmarks Game origin. Retain original header, source,
+build/configuration data, aggregate Unlicense and identities; no additional
+individual grant is invented.
+
+### Algorithm and variants
+
+Compute the norm by ten power-method cycles, each performing A-transpose-A from
+u to v and then v to u. Preserve all forty matrix-vector passes, row/column
+order, mutable row accumulators, a newly allocated temporary vector on EVERY
+AtA call, and the final vv/vBv accumulation order. Coefficients are recomputed
+from their integer formula inside each dot product; no dense coefficient cache
+replaces this workload. Arrays start with ones/zeros. Multiplication and
+transpose multiplication remain separate functions. Parallel executables have
+separate dispositions.
+
+### Portable translation and numerical validation
+
+SML97 loop helpers and generic real arrays replace OCaml loops/specialized float
+arrays. Compiler-dependent boxing, bounds checks and temporary liveness are
+explicit representation concerns. The largest selected denominator fits signed
+31 bits. Real operations retain source order and binary64 host assumptions.
+No external dataset or generator is involved.
+
+Smoke 8 and normal 256 are fixed portable profiles; large 5,500 preserves the
+published configuration and source fallback 2,000 remains provenance. The original
+prints nine decimals. An observer changes only formatting to seventeen digits
+for reviewed scalar references. The runtime checker requires finite values and
+abs(error)<=2e-12+2e-12*abs(reference), then returns a checked-size marker.
+Seven semantic checks include analytic one/two-dimensional cases, exact
+coefficients, rejected perturbation and NaN/infinity through the actual checker.
+
+Original bounded OCaml and independent fsum dot products agree on smoke/normal;
+original large reference is available. Validation is scalar, matching the source
+observation. Large SML execution is claimed only for recorded cases.
+
+### Runtime questions and references
+
+Floating operations, array representation, coefficient conversion/division,
+loop specialization and repeated temporary allocation are source-based
+hypotheses until measured or established by IR. Original OCaml is a correctness
+reference; compiler reports compare identical SML. See the retained Benchmark
+Game program, published attribution and shared numerical/measurement survey.
+
+
+The [official task description](https://benchmarksgame-team.pages.debian.net/benchmarksgame/description/spectralnorm.html)
+provides algorithm context. Each reference is specific to its finite matrix size;
+the tolerance does not assert a fixed error to the infinite-operator norm.
+
+[Complete provenance](spectralnorm2/PROVENANCE.md).
+
+## game_of_life
+
+Sandmark `5605805954a00497ed197c930641cddd580e1507`,
+benchmarks/multicore-numerical/game_of_life.ml. The individual author is unstated.
+Retain original source, build/configuration data, aggregate Unlicense and hashes.
+Sequential and parallel executables remain distinct.
+
+### Algorithm, inputs and variants
+
+Keep square arrays of rows, all eight neighbor reads, zero exterior, the exact
+live/birth/death cases, two buffers, row/column traversal and pointer swaps.
+The get helper catches out-of-bounds exceptions as in the original; an explicit
+bounds-branch implementation does not replace that diagnostic behavior. Original
+inline hints become ordinary SML functions, allowing each compiler's optimization.
+Both buffers remain live through complete output validation.
+
+Input is the original Random.int 2 default stream, reproduced by the shared
+pinned OCaml 4.14.1 helper. Full initial boards agree with an independent generator
+at all selected sizes. Retain original Random source, copyright and complete
+LGPL 2.1/OCaml linking exception. State setup/boxing differences are documented
+in the shared array ports. No external dataset is acquired.
+
+### Profiles, translation and correctness
+
+Arguments preserve generations and board side: smoke 2/8, normal 64/128 and
+large 256/1024. Large retains the published single argument 256 and original
+board-size fallback 1,024; source generation fallback 2 is retained in provenance.
+All cell, index, neighbor and count arithmetic fits 31 bits for these inputs.
+SML97 row arrays, two local references and standard Subscript handling replace
+OCaml arrays/refs. The generator is fresh on each driver invocation.
+
+Original Main discards boards. An observer saves initial/current/spare buffers.
+The driver checks EVERY cell of both final buffers against reviewed ASCII
+fixtures and consumes live counts plus a Word32 modulo 2^32 fingerprint. Returning
+both buffers preserves their original liveness during the added checks. Streaming
+fixture reads and full cell comparisons are measured validation additions.
+
+Bounded original OCaml and independent zero-boundary stencil calculations agree
+on smoke/normal current AND previous boards. Original large fixtures are
+available; large SML execution is claimed only for recorded cases. Ten semantic
+checks cover borders, single/block/blinker, zero generations, previous-buffer
+identity/isolation and deliberately perturbed checker input. The managed 32-bit
+SML/NJ generator arithmetic issue remains the same independently isolated
+[host failure](../validation/smlnj32-random.md); source/expected results are not
+rewritten for that host.
+
+### Runtime questions and references
+
+Row lookup, exception frequency at borders, loop inlining, buffer reuse,
+generator/checking cost and heap representation are source-based hypotheses
+until measured or established by IR. This dense bounded-buffer workload is
+distinct from the existing nofib list-based Life ports. See the retained source,
+shared OCaml generator provenance and cellular-automaton/measurement survey.
+
+
+Historical background: Gardner, [Mathematical Games, October 1970](https://www.scientificamerican.com/article/mathematical-games-1970-10/).
+The array representation, boundary handling and buffer lifetimes are established
+by this pinned program, rather than attributed to the historical article.
+
+[Complete provenance](game_of_life/PROVENANCE.md).

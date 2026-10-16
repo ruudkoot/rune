@@ -1,0 +1,15 @@
+[
+  {
+    "executable": "benchmarks/benchmarksgame/spectralnorm2.exe",
+    "name": "spectralnorm2",
+    "tags": [
+      "1s_10s",
+      "macro_bench"
+    ],
+    "runs": [
+      {
+        "params": "5_500"
+      }
+    ]
+  }
+]

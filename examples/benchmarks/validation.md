@@ -979,3 +979,27 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 matching bytecode comparisons across seven compiler builds.
 runedoc and runeopt also agree. [The complete transcript](validation/oct16-sorting-702-acceptance.log)
 records that run. All 38 inventory tests pass and all 861 entries validate.
+
+## M3 geometry and M5 numerical/grid workloads, 2026-10-16
+
+Four imports bring the catalogue to 240 programs and 714 profiles. The
+[fish pair](results/m3-fish/) passes 56 smoke/normal cases, [spectral norm](results/m5-spectralnorm/)
+passes 28, and [dense-array Life](results/m5-array-life/) passes 26. The two Life
+native32 attempts reproduce the independently isolated SML/NJ generator Overflow.
+All remaining selected host/engine cases pass with unchanged source/expected data.
+Ten geometry, seven numerical and ten Life semantic checks pass all ten
+configurations at both levels. Allocation and applicable instruction counts agree.
+
+Geometry preserves each integer division and source length observation; complete
+coordinates/format independently agree at three scales. Spectral norm retains all
+forty passes and per-call temporary vectors, with explicit scalar error bounds.
+Dense Life retains exception-based borders and both buffers; complete current,
+previous and initial-board references agree. Source-specific representation,
+forcing, initialization and validation costs remain documented. No universal
+large SML or headline timing claim is made. M3 and M5 remain in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 714 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 matching bytecode comparisons across seven compiler builds.
+runedoc and runeopt also agree. [The complete transcript](validation/oct16-geometry-arrays-714-acceptance.log)
+records the combined wave; all 38 inventory tests pass.

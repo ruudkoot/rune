@@ -205,3 +205,29 @@ PhD thesis, March 1985 (entry meir85). This is a bibliographic candidate for the
 abbreviated attribution; exact code ancestry remains an inference. No technical
 or timing finding is taken from the unread thesis. The retained source and tagged
 GHC observers establish the port's algorithms, ties and composition order.
+
+## Functional geometry
+
+Henderson's [*Functional Geometry* (1982)](https://worrydream.com/refs/Henderson_1982_-_Functional_Geometry.pdf)
+uses compositional line pictures. Its pseudocorner/pseudolimit definitions match
+the nofib fish hierarchy. The benchmark's particular integer rounding and
+length-only formatter observation come from its pinned Haskell source; they are
+preserved separately from the paper's abstract geometric account. Source comments
+about scale inlining and formatter arity identify hypotheses for current compiler
+analysis, rather than measurements of Rune.
+
+## Sequential norm and bounded-grid Life
+
+The [Benchmarks Game spectral-norm specification](https://benchmarksgame-team.pages.debian.net/benchmarksgame/description/spectralnorm.html)
+identifies the task and requires the contributed algorithm, including separate
+matrix procedures; it recommends 5,500 for performance runs. The retained OCaml
+source establishes forty passes and per-call temporary allocation. Per-N scalar
+references validate the finite truncation, rather than claiming a fixed error
+to the infinite operator's norm.
+
+Gardner's [*Mathematical Games*, October 1970](https://www.scientificamerican.com/article/mathematical-games-1970-10/)
+is a historical reference for Conway's Life. Program-specific dense row arrays,
+zero boundaries, exception handling and buffer swaps come from the pinned
+Sandmark implementation, independently of that historical attribution. The
+shared generator and complete original/reference boards establish input and
+result identity; performance effects remain hypotheses until measured.
