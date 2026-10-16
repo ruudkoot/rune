@@ -1,0 +1,8 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (756 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune:new BENCH_FILTER='=cryptarithm1-lazy' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.9PVKaS
+BENCH MEASURE cryptarithm1-lazy normal count
+COUNT unbudgeted cryptarithm1-lazy normal rune:new
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.9PVKaS/report.md

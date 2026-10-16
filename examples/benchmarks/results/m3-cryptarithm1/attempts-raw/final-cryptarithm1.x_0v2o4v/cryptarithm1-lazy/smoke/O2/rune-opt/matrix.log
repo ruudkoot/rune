@@ -1,0 +1,14 @@
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 1:24
+PASS cryptarithm1-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+PROGRAM FAIL rune:new (load 1, exit 2)
+PROGRAM LIMIT AS 1048576 KiB
+PROGRAM FAIL rune:jit (load 1, exit 2)
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 1:24
+PASS cryptarithm1-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt

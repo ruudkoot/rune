@@ -1,0 +1,20 @@
+[
+  {
+    "mode": "lazy",
+    "source_snapshot": "kernel-before-cursor.sml",
+    "original_source_key_matches": true,
+    "optimization": "O2",
+    "timeout": 30,
+    "memory_kib": 1048576,
+    "outcome": "memory-limit"
+  },
+  {
+    "mode": "strict",
+    "source_snapshot": "kernel-before-cursor.sml",
+    "original_source_key_matches": true,
+    "optimization": "O2",
+    "timeout": 30,
+    "memory_kib": 1048576,
+    "outcome": "memory-limit"
+  }
+]

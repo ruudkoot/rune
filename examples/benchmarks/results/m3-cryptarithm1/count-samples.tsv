@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+cryptarithm1-lazy	normal	rune	O2	count	1	1	pass	69.36	69.40	0.06	10412	13968966436	40937145272	1218529891	count-attempts/measurement.LxllQu/cryptarithm1-lazy/rune/fresh.1
+cryptarithm1-lazy	normal	rune:opt	O2	count	1	1	pass	28.31	27.95	0.06	10752	13968966436	40937145272	1218529891	count-attempts/measurement.LxllQu/cryptarithm1-lazy/rune-opt/fresh.1
+cryptarithm1-lazy	normal	rune:new	O2	count	1	1	pass	96.44	90.52	6.41	4196500	8042092347	40937145272	1218529891	count-attempts/measurement.9PVKaS/cryptarithm1-lazy/rune-new/fresh.1
+cryptarithm1-lazy	normal	rune:jit	O2	count	1	1	pass	33.69	28.89	4.69	4197512	8042092347	40937145272	1218529891	count-attempts/measurement.ApEDLj/cryptarithm1-lazy/rune-jit/fresh.1
+cryptarithm1-strict	normal	rune	O2	count	1	1	pass	40.17	28.70	10.53	8447492	4534143881	10984617568	274615474	count-attempts/measurement.uojEkq/cryptarithm1-strict/rune/fresh.1
+cryptarithm1-strict	normal	rune:opt	O2	count	1	1	pass	25.84	13.37	12.34	8448800	4534143881	10984617568	274615474	count-attempts/measurement.uojEkq/cryptarithm1-strict/rune-opt/fresh.1
+cryptarithm1-strict	normal	rune:new	O2	count	1	1	pass	41.43	28.60	11.89	8458788	2515085577	10984617568	274615474	count-attempts/measurement.uojEkq/cryptarithm1-strict/rune-new/fresh.1
+cryptarithm1-strict	normal	rune:jit	O2	count	1	1	pass	25.96	14.70	11.12	8459272	2515085577	10984617568	274615474	count-attempts/measurement.uojEkq/cryptarithm1-strict/rune-jit/fresh.1

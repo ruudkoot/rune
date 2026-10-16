@@ -1,0 +1,124 @@
+
+cmm:
+(data)
+(data
+ int 3063
+ "camlStress__4":
+ addr "camlStress__fun_496"
+ int 72057594037927941)
+(data
+ int 4087
+ "camlStress__3":
+ addr "caml_curry3"
+ int 216172782113783815
+ addr "camlStress__init_list_407")
+(data
+ int 3063
+ "camlStress__2":
+ addr "camlStress__allocate_412"
+ int 72057594037927941)
+(data
+ int 6912
+ global "camlStress"
+ "camlStress":
+ int 1
+ int 1
+ int 1
+ int 1
+ int 1
+ int 1)
+(data
+ global "camlStress__gc_roots"
+ "camlStress__gc_roots":
+ addr "camlStress"
+ int 0)
+(function{stress.ml:7,18-96} camlStress__init_list_407
+     (acc/408: val i/409: val n/410: val)
+ (if (>= i/409 n/410) acc/408
+   (app{stress.ml:9,9-47} "camlStress__init_list_407"
+     (alloc{stress.ml:9,19-39} 2048
+       (alloc{stress.ml:9,20-31} 1024 "camlStress__1") acc/408)
+     (+ i/409 2) n/410 val)))
+
+(function{stress.ml:13,13-212} camlStress__allocate_412 (param/479: val)
+ (let_mut _for/414: int 1
+   (catch
+     (if (> _for/414 2001) (exit 9)
+       (catch rec (exit 10) with(10)
+         (if
+           (<
+             (app{random.ml:216,16-39} "camlStdlib__Random__int_495"
+               (load_mut val (+a "camlStdlib__Random" 136)) 201 val)
+             (load_mut val (+a "camlStress" 8)))
+           (extcall "caml_modify"{stress.ml:17,6-54}
+             (load_mut val (+a "camlStress" 32))
+             (alloc{stress.ml:17,21-54} 2048
+               (alloc{stress.ml:17,21-28} 1024 "camlStress__1")
+               (let
+                 param/495 (load_mut val (load_mut val (+a "camlStress" 32)))
+                 (if (and param/495 1)
+                   (app{list.ml:34,10-23} "camlStdlib__failwith_7"
+                     "camlStdlib__List__2" val)
+                   (load_mut val (+a param/495 8)))))
+             ->unit)
+           (let fun/502 (opaque "camlStress__4")
+             (app{stress.ml:19,10-37} (load_mut val fun/502) "camlStress__1"
+               fun/502 unit)))
+         (let *id_prev*/501 _for/414 (assign _for/414 (+ _for/414 2))
+           (if (== *id_prev*/501 2001) (exit 9) []))
+         (exit 10)))
+   with(9) []))
+ 1)
+
+(function{stress.ml:19,31-34} camlStress__fun_496 (prim/489: val)
+ (alloc{stress.ml:19,31-34} 1024 prim/489))
+
+(data int 2816 "camlStress__1": int 1 int 1)
+(function camlStress__entry ()
+ (let
+   list_length/267
+     (extcall "caml_int_of_string"{stress.ml:1,18-44}
+       (let arr/500 (extcall "caml_sys_argv"{stress.ml:1,32-40} 1 int->val)
+         (checkbound{stress.ml:1,32-44} (load_mut int (+a arr/500 -8)) 2047)
+         (load_mut val (+a arr/500 8)))
+       int->val)
+   (store val(root-init) "camlStress" list_length/267))
+ (let
+   percent_retain/388
+     (extcall "caml_int_of_string"{stress.ml:2,21-47}
+       (let arr/499 (extcall "caml_sys_argv"{stress.ml:2,35-43} 1 int->val)
+         (checkbound{stress.ml:2,35-47} (load_mut int (+a arr/499 -8)) 3071)
+         (load_mut val (+a arr/499 16)))
+       int->val)
+   (store val(root-init) (+a "camlStress" 8) percent_retain/388))
+ (store val(root-init) (+a "camlStress" 16) 50001)
+ (let
+   *match*/488 (app{stress.ml:5,9-23} "camlStdlib__Random__init_731" 85 val)
+   [])
+ (let clos/493 "camlStress__3"
+   (store val(root-init) (+a "camlStress" 24) clos/493))
+ (let
+   retain_list/411
+     (alloc{stress.ml:11,18-50} 1024
+       (app{stress.ml:11,22-50} "camlStress__init_list_407" 1 1
+         (load_mut val "camlStress") val))
+   (store val(root-init) (+a "camlStress" 32) retain_list/411))
+ (let allocate/412 "camlStress__2"
+   (store val(root-init) (+a "camlStress" 40) allocate/412))
+ (let
+   *match*/491
+     (seq
+       (let_mut _for/480: int 1
+         (catch
+           (if (> _for/480 50001) (exit 7)
+             (catch rec (exit 8) with(8)
+               (app{stress.ml:23,2-12} "camlStress__allocate_412" 1 unit)
+               (let *id_prev*/498 _for/480 (assign _for/480 (+ _for/480 2))
+                 (if (== *id_prev*/498 50001) (exit 7) []))
+               (exit 8)))
+         with(7) []))
+       1)
+   [])
+ 1)
+
+(data)

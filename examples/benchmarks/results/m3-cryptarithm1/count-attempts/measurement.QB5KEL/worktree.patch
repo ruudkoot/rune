@@ -1,0 +1,374 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 9fcc8a6b..1a5a3b92 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -260,6 +260,8 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [zarith_pi](#zarith_pi) | [Sandmark zarith_pi](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/zarith/zarith_pi.ml) | Generate and check streaming pi digits with full four-coefficient integer transformations. |
+ | [cryptarithm2-lazy](#cryptarithm2-lazy) | [nofib cryptarithm2](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/cryptarithm2) | Solve a column-pruned cryptarithm with memoized state/list search and check the complete ordered mapping. |
+ | [cryptarithm2-strict](#cryptarithm2-strict) | [nofib cryptarithm2](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/cryptarithm2) | Solve a column-pruned cryptarithm with eager state/list search and check the complete ordered mapping. |
++| [cryptarithm1-lazy](#cryptarithm1-lazy) | [nofib cryptarithm1](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/cryptarithm1) | Enumerate and test all ten-digit permutations using memoized insertion lists. |
++| [cryptarithm1-strict](#cryptarithm1-strict) | [nofib cryptarithm1](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/cryptarithm1) | Enumerate and test all ten-digit permutations using eager insertion lists. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -8638,8 +8640,9 @@ Sandmark `5605805954a00497ed197c930641cddd580e1507`,
+ benchmarks/benchmarksgame/spectralnorm2.ml. Header credits Sebastien Loisel,
+ cleanup by Troestler Christophe and modifications by Mauricio Fernandez, with
+ the Computer Language Benchmarks Game origin. Retain original header, source,
+-build/configuration data, aggregate Unlicense and identities; no additional
+-individual grant is invented.
++build/configuration data, the directory Revised BSD notice (Brent Fulgham /
++Isaac Gouy), aggregate Unlicense and identities. The exact directory notice
++was added during the 2026-10-16 provenance reconciliation.
+ 
+ ### Algorithm and variants
+ 
+@@ -9043,3 +9046,175 @@ comparisons use identical SML; Haskell is a correctness reference. No historical
+ speed claim in a source comment is transferred to Rune.
+ 
+ [Complete provenance](cryptarithm2-strict/PROVENANCE.md).
++
++## cryptarithm1-lazy
++
++Enumerate and test all ten-digit permutations using memoized insertion lists.
++
++nofib revision `b7391df4540ac8b11b35e1b2e2c15819b5171798`,
++`spectral/cryptarithm1/Main.hs`, Makefile and all three stdout fixtures.
++The October 1999 correspondence in the source credits Sergey Mechveliani,
++Mark Engelberg's September 1999 question, and Fergus Henderson's suggestions.
++Preserve the complete history and commented C++ comparison; an individual
++license grant is unstated. Input digits and the equation are embedded program
++data, with no external dataset. Historical compiler/platform timings in that
++correspondence are not measurements of these ports.
++
++### Algorithm and variants
++
++Generate permutations recursively by inserting the current first element at
++all positions in each permutation of the tail. Preserve the original addj
++list-comprehension order, row sharing and full enumeration: every one of the
++10! candidates is tested against THIRTY + 5*TWELVE = NINETY. Do not stop after
++the unique answer. The commented C++ next_permutation order is not substituted.
++The column-pruned StateT search in cryptarithm2 is a distinct algorithm and
++remains separately named.
++
++One SML97 functor supplies memoized sequences/heads in Need and eager finite
++sequences in Strict. Both list representations and the original insertion
++recurrence remain explicit. Strict materializes the full intermediate permutation
++lists; Need streams through the filter. Sharing and allocation therefore differ
++materially, while complete output agrees. No mutable in-place permutation
++algorithm, pruning rule, memoized search result or new runtime feature is added.
++
++### Translation and demand
++
++Portable list/string operations replace comprehensions and Show. The filter
++uses a private cursor inside each memoized output-cell thunk. Advancing that
++cursor before its tail call releases the reference to skipped input nodes;
++the produced output cell and its tail still share the normal memoized result.
++Predicate order, first-output demand and exception memoization remain intact.
++The initial closure-based filter retained its original input pointer while
++seeking the first match and exceeded the tested 1 GiB cap. The cursor version
++passes that bounded -O2 probe. This is a documented representation/liveness
++adaptation; it does not establish a general compiler or GC diagnosis.
++
++The original p0 = take 10 [0..9+i] is preserved at each iteration. Every selected
++iteration uses digits 0..9, while eager range construction may evaluate its small
++unused suffix. Source arithmetic uses GHC Int; digit values, loop controls,
++six-place numbers and the largest six-term sum fit signed 31 bits. SML default int
++therefore preserves the selected arithmetic. The byte checker consumes the
++complete bracket/comma/newline output and checks every iteration before returning
++repetition/byte counts. This replaces repeated stdout IO and adds an exact
++string comparison; both costs are documented measurement adaptations.
++
++### Profiles and resource evidence
++
++Smoke 1, normal 3 and large 15 preserve FAST/NORM/SLOW parameters. One is the
++smallest nonempty source workload: even smoke searches all ten-digit assignments.
++Both variants use a recorded 16 GiB memory cap in all profiles. Need smoke
++uses 120 seconds and normal 600; Strict smoke uses 600 seconds and normal 1,200.
++Lower bounds exposed allocation limits in the register interpreter/JIT at -O2
++and time limits in SML/NJ. The original bounded attempts remain in the archive.
++These are maximum budgets: successful checks at tighter bounds remain identified
++in their transcripts, and fresh retries record every incomplete configuration.
++The source, inputs and expected results are unchanged by these resource choices.
++Memory-limit and timeout attempts remain separate from successful validation.
++The strict benchmark is outside the bounded routine set. Large SML execution
++is claimed only where explicitly recorded.
++
++### Correctness, references and diagnostic questions
++
++Original GHC, an independent exhaustive assignment search and all three pinned
++stdout fixtures agree on the unique solution. A GHC observer checks the exact
++four-element permutation order. Its Kernel module changes only the implicit
++Main export boundary so permutations can be observed; the original executable
++is built from unchanged Main.hs. A separate SML predicate counter verifies all
++3,628,800 candidates on Rune and MLton. Eight semantic checks cover the original
++order, all 720 unique six-element permutations, base cases, equation checking,
++perturbed assignments, unused digit heads and shared filter-prefix demand.
++
++The retained correspondence and pinned source provide benchmark-specific history;
++see also the shared nofib and measurement literature. Backtracking allocation,
++list materialization, closure specialization, memoization, stack depth and object
++retention are source-based questions until investigated with measurements or IR.
++Standard compiler comparisons use identical SML; Haskell supplies correctness
++references. Per-engine observed limits do not certify all hosts or large inputs.
++
++[Complete provenance](cryptarithm1-lazy/PROVENANCE.md).
++
++## cryptarithm1-strict
++
++Enumerate and test all ten-digit permutations using eager insertion lists.
++
++nofib revision `b7391df4540ac8b11b35e1b2e2c15819b5171798`,
++`spectral/cryptarithm1/Main.hs`, Makefile and all three stdout fixtures.
++The October 1999 correspondence in the source credits Sergey Mechveliani,
++Mark Engelberg's September 1999 question, and Fergus Henderson's suggestions.
++Preserve the complete history and commented C++ comparison; an individual
++license grant is unstated. Input digits and the equation are embedded program
++data, with no external dataset. Historical compiler/platform timings in that
++correspondence are not measurements of these ports.
++
++### Algorithm and variants
++
++Generate permutations recursively by inserting the current first element at
++all positions in each permutation of the tail. Preserve the original addj
++list-comprehension order, row sharing and full enumeration: every one of the
++10! candidates is tested against THIRTY + 5*TWELVE = NINETY. Do not stop after
++the unique answer. The commented C++ next_permutation order is not substituted.
++The column-pruned StateT search in cryptarithm2 is a distinct algorithm and
++remains separately named.
++
++One SML97 functor supplies memoized sequences/heads in Need and eager finite
++sequences in Strict. Both list representations and the original insertion
++recurrence remain explicit. Strict materializes the full intermediate permutation
++lists; Need streams through the filter. Sharing and allocation therefore differ
++materially, while complete output agrees. No mutable in-place permutation
++algorithm, pruning rule, memoized search result or new runtime feature is added.
++
++### Translation and demand
++
++Portable list/string operations replace comprehensions and Show. The filter
++uses a private cursor inside each memoized output-cell thunk. Advancing that
++cursor before its tail call releases the reference to skipped input nodes;
++the produced output cell and its tail still share the normal memoized result.
++Predicate order, first-output demand and exception memoization remain intact.
++The initial closure-based filter retained its original input pointer while
++seeking the first match and exceeded the tested 1 GiB cap. The cursor version
++passes that bounded -O2 probe. This is a documented representation/liveness
++adaptation; it does not establish a general compiler or GC diagnosis.
++
++The original p0 = take 10 [0..9+i] is preserved at each iteration. Every selected
++iteration uses digits 0..9, while eager range construction may evaluate its small
++unused suffix. Source arithmetic uses GHC Int; digit values, loop controls,
++six-place numbers and the largest six-term sum fit signed 31 bits. SML default int
++therefore preserves the selected arithmetic. The byte checker consumes the
++complete bracket/comma/newline output and checks every iteration before returning
++repetition/byte counts. This replaces repeated stdout IO and adds an exact
++string comparison; both costs are documented measurement adaptations.
++
++### Profiles and resource evidence
++
++Smoke 1, normal 3 and large 15 preserve FAST/NORM/SLOW parameters. One is the
++smallest nonempty source workload: even smoke searches all ten-digit assignments.
++Both variants use a recorded 16 GiB memory cap in all profiles. Need smoke
++uses 120 seconds and normal 600; Strict smoke uses 600 seconds and normal 1,200.
++Lower bounds exposed allocation limits in the register interpreter/JIT at -O2
++and time limits in SML/NJ. The original bounded attempts remain in the archive.
++These are maximum budgets: successful checks at tighter bounds remain identified
++in their transcripts, and fresh retries record every incomplete configuration.
++The source, inputs and expected results are unchanged by these resource choices.
++Memory-limit and timeout attempts remain separate from successful validation.
++The strict benchmark is outside the bounded routine set. Large SML execution
++is claimed only where explicitly recorded.
++
++### Correctness, references and diagnostic questions
++
++Original GHC, an independent exhaustive assignment search and all three pinned
++stdout fixtures agree on the unique solution. A GHC observer checks the exact
++four-element permutation order. Its Kernel module changes only the implicit
++Main export boundary so permutations can be observed; the original executable
++is built from unchanged Main.hs. A separate SML predicate counter verifies all
++3,628,800 candidates on Rune and MLton. Eight semantic checks cover the original
++order, all 720 unique six-element permutations, base cases, equation checking,
++perturbed assignments, unused digit heads and shared filter-prefix demand.
++
++The retained correspondence and pinned source provide benchmark-specific history;
++see also the shared nofib and measurement literature. Backtracking allocation,
++list materialization, closure specialization, memoization, stack depth and object
++retention are source-based questions until investigated with measurements or IR.
++Standard compiler comparisons use identical SML; Haskell supplies correctness
++references. Per-engine observed limits do not certify all hosts or large inputs.
++
++[Complete provenance](cryptarithm1-strict/PROVENANCE.md).
+diff --git a/examples/benchmarks/audit.md b/examples/benchmarks/audit.md
+index f51eec8f..ef487455 100644
+--- a/examples/benchmarks/audit.md
++++ b/examples/benchmarks/audit.md
+@@ -1,5 +1,11 @@
+ # Initial source audit
+ 
++The [2026-10-16 allocation/stack review](validation/sandmark-allocation-probes.md)
++adds four source-specific deferrals for unavailable optimization barriers.
++Current Sandmark dispositions are 61 import and 82 defer. The baseline table
++below records the initial audit; subsequent reviews preserve every inventory
++entry and record their changes explicitly.
++
+ Recorded 2026-10-01; classic review extended 2026-10-02, on the `benchmarks` worktree branching from
+ `origin/master` at `b30fba275d685600da4d64cf0d9f7288bed0663e`.
+ 
+diff --git a/examples/benchmarks/inventory.tsv b/examples/benchmarks/inventory.tsv
+index 5590bb5b..cbfd1ffb 100644
+--- a/examples/benchmarks/inventory.tsv
++++ b/examples/benchmarks/inventory.tsv
+@@ -774,17 +774,17 @@ sandmark	benchmarks/numerical-analysis/qr_decomposition.exe	qr-decomposition	qr-
+ sandmark	benchmarks/owl/owl_gc.exe	owl_gc	owl_gc	M5	defer	allocation-lifetimes		not stated in scanned source headers	f14b1f2e115ba07352b7bd03ce53e5dd5dbb0e3badd28ec146dbd0c912c66d97	benchmarks/owl/dune;benchmarks/owl/owl_gc.ml		LICENSE.md	benchmarks/owl/dune;run_config.json	requires the upstream application/package dependency graph (owl); reconsider with a portable implementation of those dependencies
+ sandmark	benchmarks/sauvola/contrast.exe	contrast	contrast	M5	import	application		not stated in scanned source headers	9bd8d4f5d5721c07a2ed80ab33dc6aa30c13f1465ae6186cbf24879cb8abbfa2	benchmarks/sauvola/contrast.ml;benchmarks/sauvola/dune		LICENSE.md;benchmarks/sauvola/LICENSE;benchmarks/sauvola/contrast.ml:header	benchmarks/sauvola/Makefile;benchmarks/sauvola/dune	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ sandmark	benchmarks/sequence/sequence_cps.exe	sequence_cps	sequence_cps	M5	import	kernel		not stated in scanned source headers	4c8cd9c4e2d337f34d2a00c6ef5ff83a516212bb4164dd78d4b78bd3f5db9061	benchmarks/sequence/dune;benchmarks/sequence/sequence_cps.ml		LICENSE.md	benchmarks/sequence/dune;run_config.json;run_config_byte.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-sandmark	benchmarks/simple-tests/alloc.exe	alloc	alloc	M5	import	allocation-lifetimes		not stated in scanned source headers	851c4d2bde60d027518fcbcae826c91994e8de2faaba212536b96ea70b3bf81f	benchmarks/simple-tests/alloc.ml;benchmarks/simple-tests/dune;benchmarks/simple-tests/finalise-dune.inc;benchmarks/simple-tests/lazy-dune.inc;benchmarks/simple-tests/lists-dune.inc;benchmarks/simple-tests/ocamlcapi-dune.inc;benchmarks/simple-tests/stacks-dune.inc;benchmarks/simple-tests/stress-dune.inc;benchmarks/simple-tests/weak-dune.inc		LICENSE.md	benchmarks/simple-tests/dune;run_config.json;run_config_byte.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++sandmark	benchmarks/simple-tests/alloc.exe	alloc	alloc	M5	defer	allocation-lifetimes		not stated in scanned source headers	851c4d2bde60d027518fcbcae826c91994e8de2faaba212536b96ea70b3bf81f	benchmarks/simple-tests/alloc.ml;benchmarks/simple-tests/dune;benchmarks/simple-tests/finalise-dune.inc;benchmarks/simple-tests/lazy-dune.inc;benchmarks/simple-tests/lists-dune.inc;benchmarks/simple-tests/ocamlcapi-dune.inc;benchmarks/simple-tests/stacks-dune.inc;benchmarks/simple-tests/stress-dune.inc;benchmarks/simple-tests/weak-dune.inc		LICENSE.md	benchmarks/simple-tests/dune;run_config.json;run_config_byte.json	pinned allocation microbenchmark relies on Sys.opaque_identity create to retain calls and otherwise discarded mutable-record allocations; portable SML97 has no equivalent optimization barrier; reconsider with a reviewed portable barrier protocol or observable upstream workload, without adding prerequisite compiler/runtime features through this roadmap
+ sandmark	benchmarks/simple-tests/alloc_multicore.exe	alloc_multicore	alloc_multicore	M5	defer	allocation-lifetimes		not stated in scanned source headers	00003795cde11af19f1657a01aa3257dd2800ea579c02d493cac30cea906e172	benchmarks/simple-tests/alloc_multicore.ml;benchmarks/simple-tests/dune;benchmarks/simple-tests/finalise-dune.inc;benchmarks/simple-tests/lazy-dune.inc;benchmarks/simple-tests/lists-dune.inc;benchmarks/simple-tests/ocamlcapi-dune.inc;benchmarks/simple-tests/stacks-dune.inc;benchmarks/simple-tests/stress-dune.inc;benchmarks/simple-tests/weak-dune.inc		LICENSE.md	benchmarks/simple-tests/dune;multicore_parallel_run_config.json	source uses OCaml-specific effects, concurrency, GC/weak-reference introspection, unsafe objects or C bindings; reconsider with equivalent runtime facilities
+ sandmark	benchmarks/simple-tests/capi.exe	capi	capi	M5	defer	kernel		not stated in scanned source headers	ffd022650ae8cf6014c7ce2511c881829ae801bb493183fc42e7d52563986e3e	benchmarks/simple-tests/capi.ml;benchmarks/simple-tests/dune;benchmarks/simple-tests/finalise-dune.inc;benchmarks/simple-tests/lazy-dune.inc;benchmarks/simple-tests/lists-dune.inc;benchmarks/simple-tests/ocamlcapi-dune.inc;benchmarks/simple-tests/stacks-dune.inc;benchmarks/simple-tests/stress-dune.inc;benchmarks/simple-tests/weak-dune.inc		LICENSE.md	benchmarks/simple-tests/ocamlcapi-dune.inc;run_config.json	source uses OCaml-specific effects, concurrency, GC/weak-reference introspection, unsafe objects or C bindings; reconsider with equivalent runtime facilities
+ sandmark	benchmarks/simple-tests/finalise.exe	finalise	finalise	M5	defer	allocation-lifetimes		not stated in scanned source headers	d57a8532768f80a9bf2b18a4dd092c41cf90201382b283a47e4231cc96a8fd9a	benchmarks/simple-tests/dune;benchmarks/simple-tests/finalise-dune.inc;benchmarks/simple-tests/finalise.ml;benchmarks/simple-tests/lazy-dune.inc;benchmarks/simple-tests/lists-dune.inc;benchmarks/simple-tests/ocamlcapi-dune.inc;benchmarks/simple-tests/stacks-dune.inc;benchmarks/simple-tests/stress-dune.inc;benchmarks/simple-tests/weak-dune.inc		LICENSE.md	benchmarks/simple-tests/finalise-dune.inc;micro_multicore.json;run_config.json;run_config_byte.json	source uses OCaml-specific effects, concurrency, GC/weak-reference introspection, unsafe objects or C bindings; reconsider with equivalent runtime facilities
+ sandmark	benchmarks/simple-tests/lazy_primes.exe	lazy_primes	lazy_primes	M5	import	lists-streams		not stated in scanned source headers	4d5fa1b84fcb7a8c3d9e83a43c7bb2861eb16cf0624d47f07115e59f4b4662de	benchmarks/simple-tests/dune;benchmarks/simple-tests/finalise-dune.inc;benchmarks/simple-tests/lazy-dune.inc;benchmarks/simple-tests/lazy_primes.ml;benchmarks/simple-tests/lists-dune.inc;benchmarks/simple-tests/ocamlcapi-dune.inc;benchmarks/simple-tests/stacks-dune.inc;benchmarks/simple-tests/stress-dune.inc;benchmarks/simple-tests/weak-dune.inc		LICENSE.md	benchmarks/simple-tests/lazy-dune.inc;micro_multicore.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ sandmark	benchmarks/simple-tests/lazylist.exe	lazylist	lazylist	M5	import	lists-streams		not stated in scanned source headers	c52dd237c6ef9d282493be23d8c46b4a1e1670f92773fd72a394957c6dd8f68b	benchmarks/simple-tests/dune;benchmarks/simple-tests/finalise-dune.inc;benchmarks/simple-tests/lazy-dune.inc;benchmarks/simple-tests/lazylist.ml;benchmarks/simple-tests/lists-dune.inc;benchmarks/simple-tests/ocamlcapi-dune.inc;benchmarks/simple-tests/stacks-dune.inc;benchmarks/simple-tests/stress-dune.inc;benchmarks/simple-tests/weak-dune.inc		LICENSE.md	benchmarks/simple-tests/lazy-dune.inc;run_config.json;run_config_byte.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-sandmark	benchmarks/simple-tests/lists.exe	lists	lists	M5	import	lists-streams		not stated in scanned source headers	311f0288001457bc125dd7b89cf9f29a7d96a39b3d41c75c5ab75b864ee97626	benchmarks/simple-tests/dune;benchmarks/simple-tests/finalise-dune.inc;benchmarks/simple-tests/lazy-dune.inc;benchmarks/simple-tests/lists-dune.inc;benchmarks/simple-tests/lists.ml;benchmarks/simple-tests/ocamlcapi-dune.inc;benchmarks/simple-tests/stacks-dune.inc;benchmarks/simple-tests/stress-dune.inc;benchmarks/simple-tests/weak-dune.inc		LICENSE.md	benchmarks/simple-tests/lists-dune.inc;run_config.json;run_config_byte.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++sandmark	benchmarks/simple-tests/lists.exe	lists	lists	M5	defer	lists-streams		not stated in scanned source headers	311f0288001457bc125dd7b89cf9f29a7d96a39b3d41c75c5ab75b864ee97626	benchmarks/simple-tests/dune;benchmarks/simple-tests/finalise-dune.inc;benchmarks/simple-tests/lazy-dune.inc;benchmarks/simple-tests/lists-dune.inc;benchmarks/simple-tests/lists.ml;benchmarks/simple-tests/ocamlcapi-dune.inc;benchmarks/simple-tests/stacks-dune.inc;benchmarks/simple-tests/stress-dune.inc;benchmarks/simple-tests/weak-dune.inc		LICENSE.md	benchmarks/simple-tests/lists-dune.inc;run_config.json;run_config_byte.json	pinned typed-list allocation microbenchmark relies on Sys.opaque_identity create_list to retain otherwise discarded list generation in all nine modes; portable SML97 has no equivalent optimization barrier; reconsider with a reviewed portable barrier protocol or observable upstream workload, without adding prerequisite compiler/runtime features through this roadmap
+ sandmark	benchmarks/simple-tests/morestacks.exe	morestacks	morestacks	M5	defer	calls-recursion		not stated in scanned source headers	e43fc674a58e161e597b0a01327ef4d6645080eae78402fee5366c12bfc9bda8	benchmarks/simple-tests/dune;benchmarks/simple-tests/finalise-dune.inc;benchmarks/simple-tests/lazy-dune.inc;benchmarks/simple-tests/lists-dune.inc;benchmarks/simple-tests/morestacks.ml;benchmarks/simple-tests/ocamlcapi-dune.inc;benchmarks/simple-tests/stacks-dune.inc;benchmarks/simple-tests/stress-dune.inc;benchmarks/simple-tests/weak-dune.inc		LICENSE.md	benchmarks/simple-tests/dune;run_config.json;run_config_byte.json	pinned call-overhead microbenchmark relies on Sys.opaque_identity to retain calls to the otherwise inlineable n+5 function; portable SML97 has no equivalent optimization barrier; reconsider with a reviewed portable barrier protocol or observable upstream workload, without adding prerequisite compiler/runtime features through this roadmap
+ sandmark	benchmarks/simple-tests/pingpong_multicore.exe	pingpong_multicore	pingpong_multicore	M5	defer	kernel		not stated in scanned source headers	89a531740389e25c0fc423b36ebe69030d341c6d549255abffce6ed580d2c1d4	benchmarks/simple-tests/dune;benchmarks/simple-tests/finalise-dune.inc;benchmarks/simple-tests/lazy-dune.inc;benchmarks/simple-tests/lists-dune.inc;benchmarks/simple-tests/ocamlcapi-dune.inc;benchmarks/simple-tests/pingpong_multicore.ml;benchmarks/simple-tests/stacks-dune.inc;benchmarks/simple-tests/stress-dune.inc;benchmarks/simple-tests/weak-dune.inc		LICENSE.md	benchmarks/simple-tests/dune;multicore_parallel_run_config.json	source uses OCaml-specific effects, concurrency, GC/weak-reference introspection, unsafe objects or C bindings; reconsider with equivalent runtime facilities
+-sandmark	benchmarks/simple-tests/stacks.exe	stacks	stacks	M5	import	calls-recursion		not stated in scanned source headers	3078d8da59f4aea9068eed95d7b2dc68f061fedc121f40984b6684a6bed3703b	benchmarks/simple-tests/dune;benchmarks/simple-tests/finalise-dune.inc;benchmarks/simple-tests/lazy-dune.inc;benchmarks/simple-tests/lists-dune.inc;benchmarks/simple-tests/ocamlcapi-dune.inc;benchmarks/simple-tests/stacks-dune.inc;benchmarks/simple-tests/stacks.ml;benchmarks/simple-tests/stress-dune.inc;benchmarks/simple-tests/weak-dune.inc		LICENSE.md	benchmarks/simple-tests/stacks-dune.inc;run_config.json;run_config_byte.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-sandmark	benchmarks/simple-tests/stress.exe	stress	stress	M5	import	allocation-lifetimes		not stated in scanned source headers	b1ce175ad45d9829de1ce2aec5ac797a84254d79be1250c373dc2faa3c740f73	benchmarks/simple-tests/dune;benchmarks/simple-tests/finalise-dune.inc;benchmarks/simple-tests/lazy-dune.inc;benchmarks/simple-tests/lists-dune.inc;benchmarks/simple-tests/ocamlcapi-dune.inc;benchmarks/simple-tests/stacks-dune.inc;benchmarks/simple-tests/stress-dune.inc;benchmarks/simple-tests/stress.ml;benchmarks/simple-tests/weak-dune.inc		LICENSE.md	benchmarks/simple-tests/stress-dune.inc;run_config.json;run_config_byte.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++sandmark	benchmarks/simple-tests/stacks.exe	stacks	stacks	M5	defer	calls-recursion		not stated in scanned source headers	3078d8da59f4aea9068eed95d7b2dc68f061fedc121f40984b6684a6bed3703b	benchmarks/simple-tests/dune;benchmarks/simple-tests/finalise-dune.inc;benchmarks/simple-tests/lazy-dune.inc;benchmarks/simple-tests/lists-dune.inc;benchmarks/simple-tests/ocamlcapi-dune.inc;benchmarks/simple-tests/stacks-dune.inc;benchmarks/simple-tests/stacks.ml;benchmarks/simple-tests/stress-dune.inc;benchmarks/simple-tests/weak-dune.inc		LICENSE.md	benchmarks/simple-tests/stacks-dune.inc;run_config.json;run_config_byte.json	pinned stack/argument microbenchmark relies on Sys.opaque_identity to retain repeated calls whose integer/real recursive results are discarded in all four modes; portable SML97 has no equivalent optimization barrier; reconsider with a reviewed portable barrier protocol or observable upstream workload, without adding prerequisite compiler/runtime features through this roadmap
++sandmark	benchmarks/simple-tests/stress.exe	stress	stress	M5	defer	allocation-lifetimes		not stated in scanned source headers	b1ce175ad45d9829de1ce2aec5ac797a84254d79be1250c373dc2faa3c740f73	benchmarks/simple-tests/dune;benchmarks/simple-tests/finalise-dune.inc;benchmarks/simple-tests/lazy-dune.inc;benchmarks/simple-tests/lists-dune.inc;benchmarks/simple-tests/ocamlcapi-dune.inc;benchmarks/simple-tests/stacks-dune.inc;benchmarks/simple-tests/stress-dune.inc;benchmarks/simple-tests/stress.ml;benchmarks/simple-tests/weak-dune.inc		LICENSE.md	benchmarks/simple-tests/stress-dune.inc;run_config.json;run_config_byte.json	pinned allocation/retention microbenchmark relies on Sys.opaque_identity ref to retain discarded references on its non-retaining branch; portable SML97 has no equivalent optimization barrier; reconsider with a reviewed portable barrier protocol or observable upstream workload, without adding prerequisite compiler/runtime features through this roadmap
+ sandmark	benchmarks/simple-tests/weak_htbl.exe	weak_htbl	weak_htbl	M5	defer	allocation-lifetimes		not stated in scanned source headers	210c603a37afa5222c01a2e1805906f762f57df00303b0456fc78dccab57063d	benchmarks/simple-tests/dune;benchmarks/simple-tests/finalise-dune.inc;benchmarks/simple-tests/lazy-dune.inc;benchmarks/simple-tests/lists-dune.inc;benchmarks/simple-tests/ocamlcapi-dune.inc;benchmarks/simple-tests/stacks-dune.inc;benchmarks/simple-tests/stress-dune.inc;benchmarks/simple-tests/weak-dune.inc;benchmarks/simple-tests/weak_htbl.ml		LICENSE.md	benchmarks/simple-tests/weak-dune.inc	source uses OCaml-specific effects, concurrency, GC/weak-reference introspection, unsafe objects or C bindings; reconsider with equivalent runtime facilities
+ sandmark	benchmarks/simple-tests/weakretain.exe	weakretain	weakretain	M5	defer	allocation-lifetimes		not stated in scanned source headers	f41f671f840937356d2d7b62df8d668695b5b0b231a12a6291e7aaf0eb3c4bd6	benchmarks/simple-tests/dune;benchmarks/simple-tests/finalise-dune.inc;benchmarks/simple-tests/lazy-dune.inc;benchmarks/simple-tests/lists-dune.inc;benchmarks/simple-tests/ocamlcapi-dune.inc;benchmarks/simple-tests/stacks-dune.inc;benchmarks/simple-tests/stress-dune.inc;benchmarks/simple-tests/weak-dune.inc;benchmarks/simple-tests/weakretain.ml		LICENSE.md	benchmarks/simple-tests/weak-dune.inc;micro_multicore.json;run_config.json;run_config_byte.json	source uses OCaml-specific effects, concurrency, GC/weak-reference introspection, unsafe objects or C bindings; reconsider with equivalent runtime facilities
+ sandmark	benchmarks/soli/soli.exe	soli	soli	M5	defer	kernel		not stated in scanned source headers	4b1ffe7e17f181487532712b46ceb2a1f0c57a59d3dc1ff33cef9e9a99809425	benchmarks/soli/dune;benchmarks/soli/soli.ml		LICENSE.md	benchmarks/soli/dune;run_config.json;run_config_byte.json	requires the upstream application/package dependency graph (soli); reconsider with a portable implementation of those dependencies
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 37370d98..9454df6e 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -749,3 +749,9 @@ cryptarithm2-lazy	large	nofib	spectral/cryptarithm2	1500 expected/mapping.txt	cr
+ cryptarithm2-strict	smoke	nofib	spectral/cryptarithm2	1 expected/mapping.txt	cryptarithm2-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-cryptarithm2.sml,cryptarithm2-strict/benchmark.sml,shared/main.sml	30	1048576	symbolic-search,backtracking,laziness,lists,allocation-lifetimes	expected/mapping.txt	exact	implemented
+ cryptarithm2-strict	normal	nofib	spectral/cryptarithm2	300 expected/mapping.txt	cryptarithm2-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-cryptarithm2.sml,cryptarithm2-strict/benchmark.sml,shared/main.sml	600	4194304	symbolic-search,backtracking,laziness,lists,allocation-lifetimes	expected/mapping.txt	exact	implemented
+ cryptarithm2-strict	large	nofib	spectral/cryptarithm2	1500 expected/mapping.txt	cryptarithm2-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-cryptarithm2.sml,cryptarithm2-strict/benchmark.sml,shared/main.sml	3600	8388608	symbolic-search,backtracking,laziness,lists,allocation-lifetimes	expected/mapping.txt	exact	implemented
++cryptarithm1-lazy	smoke	nofib	spectral/cryptarithm1	1	cryptarithm1-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-cryptarithm1.sml,cryptarithm1-lazy/benchmark.sml,shared/main.sml	120	16777216	permutations,symbolic-search,laziness,lists,allocation-lifetimes	-	exact	implemented
++cryptarithm1-lazy	normal	nofib	spectral/cryptarithm1	3	cryptarithm1-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-cryptarithm1.sml,cryptarithm1-lazy/benchmark.sml,shared/main.sml	600	16777216	permutations,symbolic-search,laziness,lists,allocation-lifetimes	-	exact	implemented
++cryptarithm1-lazy	large	nofib	spectral/cryptarithm1	15	cryptarithm1-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-cryptarithm1.sml,cryptarithm1-lazy/benchmark.sml,shared/main.sml	3600	16777216	permutations,symbolic-search,laziness,lists,allocation-lifetimes	-	exact	implemented
++cryptarithm1-strict	smoke	nofib	spectral/cryptarithm1	1	cryptarithm1-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-cryptarithm1.sml,cryptarithm1-strict/benchmark.sml,shared/main.sml	600	16777216	permutations,symbolic-search,laziness,lists,allocation-lifetimes	-	exact	implemented
++cryptarithm1-strict	normal	nofib	spectral/cryptarithm1	3	cryptarithm1-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-cryptarithm1.sml,cryptarithm1-strict/benchmark.sml,shared/main.sml	1200	16777216	permutations,symbolic-search,laziness,lists,allocation-lifetimes	-	exact	implemented
++cryptarithm1-strict	large	nofib	spectral/cryptarithm1	15	cryptarithm1-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/cell-sequence.sml,shared/nofib-cryptarithm1.sml,cryptarithm1-strict/benchmark.sml,shared/main.sml	3600	16777216	permutations,symbolic-search,laziness,lists,allocation-lifetimes	-	exact	implemented
+diff --git a/examples/benchmarks/spectralnorm2/PROVENANCE.md b/examples/benchmarks/spectralnorm2/PROVENANCE.md
+index 8c59e45e..67fd5eca 100644
+--- a/examples/benchmarks/spectralnorm2/PROVENANCE.md
++++ b/examples/benchmarks/spectralnorm2/PROVENANCE.md
+@@ -4,8 +4,9 @@ Sandmark `5605805954a00497ed197c930641cddd580e1507`,
+ benchmarks/benchmarksgame/spectralnorm2.ml. Header credits Sebastien Loisel,
+ cleanup by Troestler Christophe and modifications by Mauricio Fernandez, with
+ the Computer Language Benchmarks Game origin. Retain original header, source,
+-build/configuration data, aggregate Unlicense and identities; no additional
+-individual grant is invented.
++build/configuration data, the directory Revised BSD notice (Brent Fulgham /
++Isaac Gouy), aggregate Unlicense and identities. The exact directory notice
++was added during the 2026-10-16 provenance reconciliation.
+ 
+ ## Algorithm and variants
+ 
+diff --git a/examples/benchmarks/spectralnorm2/upstream/SHA256SUMS b/examples/benchmarks/spectralnorm2/upstream/SHA256SUMS
+index 467ec738..a3c8ce38 100644
+--- a/examples/benchmarks/spectralnorm2/upstream/SHA256SUMS
++++ b/examples/benchmarks/spectralnorm2/upstream/SHA256SUMS
+@@ -1,3 +1,4 @@
++7ee4321d2727cb62bec09d6bb12f3444cc30f60a33fb3259dc42cc6e2d962e71  LICENSE
+ 88d9b4eb60579c191ec391ca04c16130572d7eedc4a86daa58bf28c6e14c9bcd  LICENSE.md
+ 25125781b144855d73c3121b08692852ab4e391979df11793365bde5c6d5c99a  dune
+ 78be7b6e5131f068c9f81160cf627ac8cd2bbb6a67160bcffe1629073b92b03b  run_config.json
+diff --git a/scripts/benchmark-inventory.py b/scripts/benchmark-inventory.py
+index 6ba6949b..0c87cee7 100644
+--- a/scripts/benchmark-inventory.py
++++ b/scripts/benchmark-inventory.py
+@@ -382,15 +382,36 @@ def classify(source, root, item, files, text):
+             disposition, reason = "defer", "source uses OCaml-specific effects, concurrency, GC/weak-reference introspection, unsafe objects or C bindings; reconsider with equivalent runtime facilities"
+         elif "multicore" in name or "parallel" in name or "multiprocess" in name or group in {"mpl", "multicore-gcroots", "multicore-structures", "multicore-grammatrix"}:
+             disposition, reason = "defer", "parallel/runtime-specific executable; retain its original execution model"
+-        # This pinned microbenchmark measures calls held behind %opaque, not
+-        # an algorithm whose result validation can replace that barrier.
+-        if disposition == "import" and path == "benchmarks/simple-tests/morestacks.exe":
+-            kernel = root / "benchmarks/simple-tests/morestacks.ml"
+-            if (kernel.is_file() and hashlib.sha256(kernel.read_bytes()).hexdigest()
+-                    == "b4153c8f1a4c4e9ea948113ee300fe62a7aee31e1ae0b69d79e121d4232eb946"):
++        # Reviewed microprobes require %opaque to preserve their measured
++        # operation. Do not generalize this to algorithmic uses of opacity.
++        opaque_probes = {
++            "benchmarks/simple-tests/morestacks.exe": (
++                "b4153c8f1a4c4e9ea948113ee300fe62a7aee31e1ae0b69d79e121d4232eb946",
++                "call-overhead microbenchmark relies on Sys.opaque_identity to retain "
++                "calls to the otherwise inlineable n+5 function"),
++            "benchmarks/simple-tests/alloc.exe": (
++                "7649a3ae235416a6afc8e2f41297c51cf73fe8d40a6a573b5ea7ed7b24fea164",
++                "allocation microbenchmark relies on Sys.opaque_identity create to "
++                "retain calls and otherwise discarded mutable-record allocations"),
++            "benchmarks/simple-tests/lists.exe": (
++                "4a40532923d2fd783e47345740e64c9ec27f3305865d4e2730c80ba134d0e6e4",
++                "typed-list allocation microbenchmark relies on Sys.opaque_identity "
++                "create_list to retain otherwise discarded list generation in all nine modes"),
++            "benchmarks/simple-tests/stacks.exe": (
++                "6fcb3552d2efe34935766e5c13d6cd2b09b937d22a07e949855130bade0180f4",
++                "stack/argument microbenchmark relies on Sys.opaque_identity to retain "
++                "repeated calls whose integer/real recursive results are discarded in all four modes"),
++            "benchmarks/simple-tests/stress.exe": (
++                "dea8b3e283885c8bcbe468247fb923c4f488160688f40e44b5abbb055cd4ad70",
++                "allocation/retention microbenchmark relies on Sys.opaque_identity ref "
++                "to retain discarded references on its non-retaining branch"),
++        }
++        if disposition == "import" and path in opaque_probes:
++            digest, explanation = opaque_probes[path]
++            kernel = root / (path[:-4] + ".ml")
++            if kernel.is_file() and hashlib.sha256(kernel.read_bytes()).hexdigest() == digest:
+                 disposition, reason = "defer", (
+-                    "pinned call-overhead microbenchmark relies on Sys.opaque_identity to retain "
+-                    "calls to the otherwise inlineable n+5 function; portable SML97 has no "
++                    "pinned " + explanation + "; portable SML97 has no "
+                     "equivalent optimization barrier; reconsider with a reviewed portable "
+                     "barrier protocol or observable upstream workload, without adding "
+                     "prerequisite compiler/runtime features through this roadmap")
+diff --git a/tests/benchmarks/test-inventory.py b/tests/benchmarks/test-inventory.py
+index cceca4ef..c7823323 100644
+--- a/tests/benchmarks/test-inventory.py
++++ b/tests/benchmarks/test-inventory.py
+@@ -229,6 +229,38 @@ class InventoryTest(unittest.TestCase):
+         self.sandmark_program("kernel", "let f n = n * n\nlet result = Sys.opaque_identity f 13\n")
+         self.assertEqual(self.build("sandmark")[0]["disposition"], "import")
+ 
++    def allocation_probe(self, name, text):
++        self.file("benchmarks/simple-tests/" + name + ".ml", text)
++        self.file("benchmarks/simple-tests/dune",
++                  "(executable (name " + name + ") (modes native byte))\n")
++        return next(row for row in self.build("sandmark")
++                    if row["path"] == "benchmarks/simple-tests/" + name + ".exe")
++
++    def test_reviewed_allocation_probes_record_the_missing_barrier(self):
++        for name in ("alloc", "lists", "stacks", "stress"):
++            with self.subTest(name=name):
++                text = (ROOT / ("tests/benchmarks/data/sandmark-opaque/" + name + ".ml")).read_text()
++                row = self.allocation_probe(name, text)
++                self.assertEqual(row["disposition"], "defer")
++                self.assertIn("optimization barrier", row["reason"])
++                self.assertIn("reconsider", row["reason"])
++
++    def test_changed_allocation_probes_require_fresh_review(self):
++        for name in ("alloc", "lists", "stacks", "stress"):
++            with self.subTest(name=name):
++                text = (ROOT / ("tests/benchmarks/data/sandmark-opaque/" + name + ".ml")).read_text()
++                row = self.allocation_probe(name, text + "\n(* upstream changed *)\n")
++                self.assertEqual(row["disposition"], "import")
++
++    def test_reviewed_source_at_an_unreviewed_path_is_not_automatically_deferred(self):
++        for name in ("alloc", "lists", "stacks", "stress"):
++            with self.subTest(name=name):
++                text = (ROOT / ("tests/benchmarks/data/sandmark-opaque/" + name + ".ml")).read_text()
++                self.sandmark_program("algorithm_" + name, text)
++                row = next(row for row in self.build("sandmark")
++                           if row["path"] == "benchmarks/kernels/algorithm_" + name + ".exe")
++                self.assertEqual(row["disposition"], "import")
++
+     def test_nested_comments_do_not_invent_runtime_dependencies(self):
+         self.sandmark_program("trees", '(* Gc.set { (* nested *) } *)\nlet label = "Effect.perform x"\nlet result = 42\n')
+         self.assertEqual(self.build("sandmark")[0]["disposition"], "import")

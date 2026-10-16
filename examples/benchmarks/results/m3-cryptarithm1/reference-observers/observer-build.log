@@ -1,0 +1,9 @@
+[1 of 3] Compiling Main             ( tests/out/benchmarks/cryptarithm1-originals/Main.hs, tests/out/benchmarks/cryptarithm1-originals/observer-build/Main.o )
+[2 of 3] Compiling Observer         ( tests/out/benchmarks/cryptarithm1-originals/Observer.hs, tests/out/benchmarks/cryptarithm1-originals/observer-build/Observer.o )
+
+tests/out/benchmarks/cryptarithm1-originals/Observer.hs:4:28: error:
+    Not in scope: ‘Main.permutations’
+    NB: the module ‘Main’ does not export ‘permutations’.
+  |
+4 | main=do [n]<-getArgs;print(Main.permutations[0..read n-1])
+  |                            ^^^^^^^^^^^^^^^^^

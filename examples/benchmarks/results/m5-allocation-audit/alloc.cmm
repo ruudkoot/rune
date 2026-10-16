@@ -1,0 +1,63 @@
+
+cmm:
+(data)
+(data
+ int 4087
+ "camlAlloc__4":
+ addr "caml_curry2"
+ int 144115188075855879
+ addr "camlAlloc__create_392")
+(data
+ int 3063
+ "camlAlloc__3":
+ addr "camlAlloc__fun_406"
+ int 72057594037927941)
+(data int 2816 global "camlAlloc" "camlAlloc": int 1 int 1)
+(data
+ global "camlAlloc__gc_roots"
+ "camlAlloc__gc_roots":
+ addr "camlAlloc"
+ int 0)
+(function{alloc.ml:5,15-89} camlAlloc__create_392 (f/393: val n/394: val)
+ (if (!= n/394 1)
+   (seq (app{alloc.ml:8,17-20} (load_mut val f/393) 1 f/393 unit)
+     (app{alloc.ml:9,2-16} "camlAlloc__create_392" f/393 (+ n/394 -2) val))
+   1))
+
+(function{alloc.ml:12,29-88} camlAlloc__fun_406 (param/396: val)
+ (alloc{alloc.ml:12,40-87} 3072 11 "camlAlloc__1" "camlAlloc__2"))
+
+(data int 2045 "camlAlloc__2": double 0.1)
+(data int 2044 "camlAlloc__1": string "foo" skip 4 byte 4)
+(function camlAlloc__entry ()
+ (let
+   iterations/267
+     (try
+       (extcall "caml_int_of_string"{alloc.ml:1,22-57}
+         (let arr/410 (extcall "caml_sys_argv"{alloc.ml:1,46-54} 1 int->val)
+           (checkbound{alloc.ml:1,35-57} (load_mut int (+a arr/410 -8)) 2047)
+           (load_mut val (+a arr/410 8)))
+         int->val)
+     with exn/400 2000001)
+   (store val(root-init) "camlAlloc" iterations/267))
+ (let clos/405 "camlAlloc__4"
+   (store val(root-init) (+a "camlAlloc" 8) clos/405))
+ (let
+   *match*/403
+     (seq
+       (let_mut _for/395: int 1
+         (let bound/409 (load_mut val "camlAlloc")
+           (catch
+             (if (> _for/395 bound/409) (exit 6)
+               (catch rec (exit 7) with(7)
+                 (app{alloc.ml:12,2-93} "caml_apply2" "camlAlloc__3" 2001
+                   (opaque (load_mut val (+a "camlAlloc" 8))) unit)
+                 (let *id_prev*/408 _for/395 (assign _for/395 (+ _for/395 2))
+                   (if (== *id_prev*/408 bound/409) (exit 6) []))
+                 (exit 7)))
+           with(6) [])))
+       1)
+   [])
+ 1)
+
+(data)

@@ -4,8 +4,9 @@ Sandmark `5605805954a00497ed197c930641cddd580e1507`,
 benchmarks/benchmarksgame/spectralnorm2.ml. Header credits Sebastien Loisel,
 cleanup by Troestler Christophe and modifications by Mauricio Fernandez, with
 the Computer Language Benchmarks Game origin. Retain original header, source,
-build/configuration data, aggregate Unlicense and identities; no additional
-individual grant is invented.
+build/configuration data, the directory Revised BSD notice (Brent Fulgham /
+Isaac Gouy), aggregate Unlicense and identities. The exact directory notice
+was added during the 2026-10-16 provenance reconciliation.
 
 ## Algorithm and variants
 

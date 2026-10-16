@@ -1,0 +1,1 @@
+cryptarithm1-lazy	600	16777216	shared/input.sml shared/lazy.sml shared/suspend.sml shared/cell-sequence.sml shared/nofib-cryptarithm1.sml cryptarithm1-lazy/benchmark.sml shared/main.sml	3	cryptarithm1-lazy/normal.expected	-

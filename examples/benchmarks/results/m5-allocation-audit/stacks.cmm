@@ -1,0 +1,303 @@
+
+cmm:
+(data)
+(data
+ int 4087
+ "camlStacks__27":
+ addr "caml_curry2"
+ int 144115188075855879
+ addr "camlStacks__ints_small_389")
+(data
+ int 4087
+ "camlStacks__26":
+ addr "caml_curry17"
+ int 1224979098644774919
+ addr "camlStacks__ints_large_392")
+(data
+ int 4087
+ "camlStacks__25":
+ addr "caml_curry2"
+ int 144115188075855879
+ addr "camlStacks__floats_small_410")
+(data
+ int 4087
+ "camlStacks__24":
+ addr "caml_curry17"
+ int 1224979098644774919
+ addr "camlStacks__floats_large_413")
+(data
+ int 3063
+ "camlStacks__23":
+ addr "camlStacks__run_many_times_431"
+ int 72057594037927941)
+(data
+ int 3063
+ "camlStacks__22":
+ addr "camlStacks__fun_464"
+ int 72057594037927941)
+(data
+ int 3063
+ "camlStacks__21":
+ addr "camlStacks__fun_462"
+ int 72057594037927941)
+(data
+ int 3063
+ "camlStacks__20":
+ addr "camlStacks__fun_460"
+ int 72057594037927941)
+(data
+ int 3063
+ "camlStacks__19":
+ addr "camlStacks__fun_458"
+ int 72057594037927941)
+(data
+ int 7936
+ global "camlStacks"
+ "camlStacks":
+ int 1
+ int 1
+ int 1
+ int 1
+ int 1
+ int 1
+ int 1)
+(data
+ global "camlStacks__gc_roots"
+ "camlStacks__gc_roots":
+ addr "camlStacks"
+ int 0)
+(function{stacks.ml:4,19-85} camlStacks__ints_small_389
+     (a0/390: val n/391: val)
+ (if (== n/391 1) 3
+   (+ a0/390
+     (*
+       (+
+         (app{stacks.ml:7,7-30} "camlStacks__ints_small_389" a0/390
+           (+ n/391 -2) val)
+         -1)
+       (>>s a0/390 1)))))
+
+(function{stacks.ml:9,19-266} camlStacks__ints_large_392
+     (a0/393: val a1/394: val a2/395: val a3/396: val a4/397: val a5/398: val
+      a6/399: val a7/400: val a8/401: val a9/402: val a10/403: val
+      a11/404: val a12/405: val a13/406: val a14/407: val a15/408: val
+      n/409: val)
+ (if (== n/409 1) 3
+   (+
+     (+
+       (+
+         (+
+           (+
+             (+
+               (+
+                 (+
+                   (+
+                     (+
+                       (+
+                         (+
+                           (+
+                             (+ (+ (+ (+ a0/393 a1/394) a2/395) a3/396)
+                               a4/397)
+                             a5/398)
+                           a6/399)
+                         a7/400)
+                       a8/401)
+                     a9/402)
+                   a10/403)
+                 a11/404)
+               a12/405)
+             a13/406)
+           a14/407)
+         a15/408)
+       (*
+         (+
+           (app{stacks.ml:12,88-160} "camlStacks__ints_large_392" a0/393
+             a1/394 a2/395 a3/396 a4/397 a5/398 a6/399 a7/400 a8/401 a9/402
+             a10/403 a11/404 a12/405 a13/406 a14/407 a15/408 (+ n/409 -2)
+             val)
+           -1)
+         (>>s a0/393 1)))
+     -15)))
+
+(function{stacks.ml:14,21-93} camlStacks__floats_small_410
+     (a0/411: val n/412: val)
+ (if (== n/412 1) "camlStacks__1"
+   (alloc{stacks.ml:17,2-39} 1277
+     (+f (load float64 a0/411)
+       (*f
+         (load float64
+           (app{stacks.ml:17,8-33} "camlStacks__floats_small_410" a0/411
+             (+ n/412 -2) val))
+         (load float64 a0/411))))))
+
+(function{stacks.ml:19,21-289} camlStacks__floats_large_413
+     (a0/414: val a1/415: val a2/416: val a3/417: val a4/418: val a5/419: val
+      a6/420: val a7/421: val a8/422: val a9/423: val a10/424: val
+      a11/425: val a12/426: val a13/427: val a14/428: val a15/429: val
+      n/430: val)
+ (if (== n/430 1) "camlStacks__1"
+   (alloc{stacks.ml:22,2-184} 1277
+     (+f
+       (+f
+         (+f
+           (+f
+             (+f
+               (+f
+                 (+f
+                   (+f
+                     (+f
+                       (+f
+                         (+f
+                           (+f
+                             (+f
+                               (+f
+                                 (+f
+                                   (+f (load float64 a0/414)
+                                     (load float64 a1/415))
+                                   (load float64 a2/416))
+                                 (load float64 a3/417))
+                               (load float64 a4/418))
+                             (load float64 a5/419))
+                           (load float64 a6/420))
+                         (load float64 a7/421))
+                       (load float64 a8/422))
+                     (load float64 a9/423))
+                   (load float64 a10/424))
+                 (load float64 a11/425))
+               (load float64 a12/426))
+             (load float64 a13/427))
+           (load float64 a14/428))
+         (load float64 a15/429))
+       (*f
+         (load float64
+           (app{stacks.ml:22,104-178} "camlStacks__floats_large_413" a0/414
+             a1/415 a2/416 a3/417 a4/418 a5/419 a6/420 a7/421 a8/422 a9/423
+             a10/424 a11/425 a12/426 a13/427 a14/428 a15/429 (+ n/430 -2)
+             val))
+         (load float64 a0/414))))))
+
+(function{stacks.ml:24,19-90} camlStacks__run_many_times_431 (f/433: val)
+ (let_mut _for/434: int 3
+   (catch
+     (if (> _for/434 10001) (exit 5)
+       (catch rec (exit 6) with(6)
+         (let fun/476 (opaque f/433)
+           (app{stacks.ml:26,10-36} (load_mut val fun/476) 1 fun/476 unit))
+         (let *id_prev*/475 _for/434 (assign _for/434 (+ _for/434 2))
+           (if (== *id_prev*/475 10001) (exit 5) []))
+         (exit 6)))
+   with(5) []))
+ 1)
+
+(function{stacks.ml:30,37-68} camlStacks__fun_464 (param/436: val)
+ (app{stacks.ml:30,47-67} "camlStacks__ints_small_389" 201
+   (load_mut val "camlStacks") val))
+
+(function{stacks.ml:31,37-103} camlStacks__fun_462 (param/437: val)
+ (app{stacks.ml:31,47-102} "camlStacks__ints_large_392" 3 5 7 9 11 13 15 17
+   19 21 23 25 27 29 31 33 (load_mut val "camlStacks") val))
+
+(function{stacks.ml:32,39-74} camlStacks__fun_460 (param/438: val)
+ (app{stacks.ml:32,49-73} "camlStacks__floats_small_410" "camlStacks__17"
+   (load_mut val "camlStacks") val))
+
+(function{stacks.ml:33,39-139} camlStacks__fun_458 (param/439: val)
+ (app{stacks.ml:33,49-138} "camlStacks__floats_large_413" "camlStacks__1"
+   "camlStacks__2" "camlStacks__3" "camlStacks__4" "camlStacks__5"
+   "camlStacks__6" "camlStacks__7" "camlStacks__8" "camlStacks__9"
+   "camlStacks__10" "camlStacks__11" "camlStacks__12" "camlStacks__13"
+   "camlStacks__14" "camlStacks__15" "camlStacks__16"
+   (load_mut val "camlStacks") val))
+
+(data int 2045 "camlStacks__9": double 9.)
+(data int 2045 "camlStacks__8": double 8.)
+(data int 2045 "camlStacks__7": double 7.)
+(data int 2045 "camlStacks__6": double 6.)
+(data int 2045 "camlStacks__5": double 5.)
+(data int 2045 "camlStacks__4": double 4.)
+(data int 2045 "camlStacks__3": double 3.)
+(data int 2045 "camlStacks__2": double 2.)
+(data int 4092 "camlStacks__18": string "unexpected arguments" skip 3 byte 3)
+(data int 2045 "camlStacks__17": double 100.)
+(data int 2045 "camlStacks__16": double 16.)
+(data int 2045 "camlStacks__15": double 15.)
+(data int 2045 "camlStacks__14": double 14.)
+(data int 2045 "camlStacks__13": double 13.)
+(data int 2045 "camlStacks__12": double 12.)
+(data int 2045 "camlStacks__11": double 11.)
+(data int 2045 "camlStacks__10": double 10.)
+(data int 2045 "camlStacks__1": double 1.)
+(function camlStacks__entry ()
+ (let
+   depth/267
+     (extcall "caml_int_of_string"{stacks.ml:1,12-38}
+       (let arr/474 (extcall "caml_sys_argv"{stacks.ml:1,26-34} 1 int->val)
+         (checkbound{stacks.ml:1,26-38} (load_mut int (+a arr/474 -8)) 2047)
+         (load_mut val (+a arr/474 8)))
+       int->val)
+   (store val(root-init) "camlStacks" depth/267))
+ (let
+   arguments/388
+     (let arr/473 (extcall "caml_sys_argv"{stacks.ml:2,16-24} 1 int->val)
+       (checkbound{stacks.ml:2,16-28} (load_mut int (+a arr/473 -8)) 3071)
+       (load_mut val (+a arr/473 16)))
+   (store val(root-init) (+a "camlStacks" 8) arguments/388))
+ (let clos/450 "camlStacks__27"
+   (store val(root-init) (+a "camlStacks" 16) clos/450))
+ (let clos/452 "camlStacks__26"
+   (store val(root-init) (+a "camlStacks" 24) clos/452))
+ (let clos/454 "camlStacks__25"
+   (store val(root-init) (+a "camlStacks" 32) clos/454))
+ (let clos/456 "camlStacks__24"
+   (store val(root-init) (+a "camlStacks" 40) clos/456))
+ (let run_many_times/431 "camlStacks__23"
+   (store val(root-init) (+a "camlStacks" 48) run_many_times/431))
+ (let
+   *match*/448
+     (let
+       result/435
+         (catch
+           (let
+             (switch/466 (load_mut val (+a "camlStacks" 8))
+              size/472 (>>u (load_mut int (+a switch/466 -8)) 10))
+             (if (!= size/472 2) (exit 1)
+               (let cell/467 (load_mut int (+a switch/466 0))
+                 (if (< cell/467 8241987735531056745)
+                   (if (== cell/467 7020394033188204137)
+                     (let cell/471 (load_mut int (+a switch/466 8))
+                       (if (== cell/471 360287970189667436)
+                         (app{stacks.ml:30,22-68}
+                           "camlStacks__run_many_times_431" "camlStacks__22"
+                           val)
+                         (exit 1)))
+                     (if (== cell/467 7795013473736289382)
+                       (let cell/470 (load_mut int (+a switch/466 8))
+                         (if (== cell/470 216172783815062113)
+                           (app{stacks.ml:33,24-139}
+                             "camlStacks__run_many_times_431"
+                             "camlStacks__19" val)
+                           (exit 1)))
+                       (exit 1)))
+                   (if (== cell/467 8241987735531056745)
+                     (let cell/469 (load_mut int (+a switch/466 8))
+                       (if (== cell/469 360287970189665639)
+                         (app{stacks.ml:31,22-103}
+                           "camlStacks__run_many_times_431" "camlStacks__21"
+                           val)
+                         (exit 1)))
+                     (if (== cell/467 8299416632001784934)
+                       (let cell/468 (load_mut int (+a switch/466 8))
+                         (if (== cell/468 216172783932825965)
+                           (app{stacks.ml:32,24-74}
+                             "camlStacks__run_many_times_431"
+                             "camlStacks__20" val)
+                           (exit 1)))
+                       (exit 1)))))))
+         with(1)
+           (app{stacks.ml:34,11-42} "camlStdlib__failwith_7" "camlStacks__18"
+             val))
+       result/435 [] 1)
+   [])
+ 1)
+
+(data)

@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+cryptarithm1-lazy	normal	rune	O2	compile	0	0	pass	1.33	1.27	0.10	135340	-	-	-	cryptarithm1-lazy/rune/build/compile
+cryptarithm1-lazy	normal	rune	O2	correctness	0	0	pass	67.76	67.70	0.05	10356	13968966436	40937145272	1218529891	cryptarithm1-lazy/rune/correctness.0
+cryptarithm1-lazy	normal	rune	O2	count	1	1	pass	69.36	69.40	0.06	10412	13968966436	40937145272	1218529891	cryptarithm1-lazy/rune/fresh.1
+cryptarithm1-lazy	normal	rune:opt	O2	compile	0	0	pass	1.08	1.06	0.08	135236	-	-	-	cryptarithm1-lazy/rune-opt/build/compile
+cryptarithm1-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.25	0.11	0.03	12304	-	-	-	cryptarithm1-lazy/rune-opt/build/native-compile
+cryptarithm1-lazy	normal	rune:opt	O2	correctness	0	0	pass	26.24	25.93	0.04	10756	13968966436	40937145272	1218529891	cryptarithm1-lazy/rune-opt/correctness.0
+cryptarithm1-lazy	normal	rune:opt	O2	count	1	1	pass	28.31	27.95	0.06	10752	13968966436	40937145272	1218529891	cryptarithm1-lazy/rune-opt/fresh.1
+cryptarithm1-lazy	normal	rune:new	O2	compile	0	0	pass	1.07	1.06	0.05	135252	-	-	-	cryptarithm1-lazy/rune-new/build/compile
+cryptarithm1-lazy	normal	rune:new	O2	correctness	0	0	pass	98.34	92.07	5.97	4196636	8042092347	40937145272	1218529891	cryptarithm1-lazy/rune-new/correctness.0

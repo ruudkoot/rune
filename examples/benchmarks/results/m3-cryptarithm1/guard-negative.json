@@ -1,0 +1,14 @@
+{
+  "command": [
+    "python3",
+    "-c",
+    "import time; data=bytearray(64*1024*1024); time.sleep(5)"
+  ],
+  "exit": -9,
+  "guard_reason": "process-tree-rss-guard",
+  "rss_limit_kib": 32768,
+  "minimum_available_kib": 4194304,
+  "observed_peak_tree_rss_kib": 48212,
+  "observed_minimum_available_kib": 24972508,
+  "elapsed_seconds": 0.05931560700992122
+}

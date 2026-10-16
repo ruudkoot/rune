@@ -1,0 +1,2 @@
+# These classification fixtures retain exact upstream source bytes.
+*.ml -whitespace

@@ -1,0 +1,1 @@
+{"command": ["make", "bench-count"], "exit": 0, "guard_reason": null, "rss_limit_kib": 8388608, "minimum_available_kib": 4194304, "observed_peak_tree_rss_kib": 4210096, "observed_minimum_available_kib": 20803200, "elapsed_seconds": 67.49536451802123}

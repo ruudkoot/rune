@@ -1,0 +1,4 @@
+PASS compile-only opaque probe alloc
+PASS compile-only opaque probe lists
+PASS compile-only opaque probe stacks
+PASS compile-only opaque probe stress

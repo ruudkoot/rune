@@ -1,0 +1,20 @@
+PROGRAM LIMIT AS 16777216 KiB
+RESULT 1:24
+PASS cryptarithm1-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 16777216 KiB
+RESULT 1:24
+PASS cryptarithm1-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 16777216 KiB
+RESULT 1:24
+PASS cryptarithm1-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 16777216 KiB
+RESULT 1:24
+PASS cryptarithm1-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt

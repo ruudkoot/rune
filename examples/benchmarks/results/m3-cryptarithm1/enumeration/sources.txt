@@ -1,0 +1,7 @@
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-cryptarithm1.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/cryptarithm1-enumeration.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml

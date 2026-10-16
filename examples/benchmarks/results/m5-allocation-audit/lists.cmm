@@ -1,0 +1,256 @@
+
+cmm:
+(data)
+(data
+ int 3063
+ "camlLists__9":
+ addr "camlLists__fun_432"
+ int 72057594037927941)
+(data
+ int 3063
+ "camlLists__8":
+ addr "camlLists__fun_430"
+ int 72057594037927941)
+(data
+ int 3063
+ "camlLists__7":
+ addr "camlLists__fun_428"
+ int 72057594037927941)
+(data
+ int 3063
+ "camlLists__6":
+ addr "camlLists__fun_426"
+ int 72057594037927941)
+(data
+ int 3063
+ "camlLists__5":
+ addr "camlLists__fun_424"
+ int 72057594037927941)
+(data
+ int 3063
+ "camlLists__4":
+ addr "camlLists__fun_422"
+ int 72057594037927941)
+(data
+ int 4087
+ "camlLists__3":
+ addr "caml_curry2"
+ int 144115188075855879
+ addr "camlLists__create_list_394")
+(data
+ int 3063
+ "camlLists__2":
+ addr "camlLists__allocate_list_397"
+ int 72057594037927941)
+(data
+ int 3063
+ "camlLists__12":
+ addr "camlLists__fun_438"
+ int 72057594037927941)
+(data
+ int 3063
+ "camlLists__11":
+ addr "camlLists__fun_436"
+ int 72057594037927941)
+(data
+ int 3063
+ "camlLists__10":
+ addr "camlLists__fun_434"
+ int 72057594037927941)
+(data int 5888 global "camlLists" "camlLists": int 1 int 1 int 1 int 1 int 1)
+(data
+ global "camlLists__gc_roots"
+ "camlLists__gc_roots":
+ addr "camlLists"
+ int 0)
+(function{lists.ml:7,20-90} camlLists__create_list_394
+     (f/395: val n/396: val)
+ (if (!= n/396 1)
+   (alloc{lists.ml:9,9-39} 2048
+     (app{lists.ml:9,9-14} (load_mut val f/395) n/396 f/395 val)
+     (app{lists.ml:9,18-39} "camlLists__create_list_394" f/395 (+ n/396 -2)
+       val))
+   1))
+
+(function{lists.ml:11,18-1102} camlLists__allocate_list_397 (param/408: val)
+ (catch
+   (let
+     (switch/445 (load_mut val "camlLists")
+      size/455 (>>u (load_mut int (+a switch/445 -8)) 10))
+     (if (>= size/455 4) (exit 2)
+       (let switcher/456 (+ size/455 -1)
+         (switch switcher/456 
+         case 0:
+           (let cell/446 (load_mut int (+a switch/445 0))
+             (if (< cell/446 144115687926754406)
+               (if (== cell/446 72168036695762290)
+                 (seq
+                   (app{lists.ml:18,23-151} "caml_apply2" "camlLists__11"
+                     (load_mut val (+a "camlLists" 8))
+                     (opaque (load_mut val (+a "camlLists" 24))) unit)
+                   1)
+                 (if (== cell/446 72171317951100019)
+                   (seq
+                     (app{lists.ml:17,23-97} "caml_apply2" "camlLists__12"
+                       (load_mut val (+a "camlLists" 8))
+                       (opaque (load_mut val (+a "camlLists" 24))) unit)
+                     1)
+                   (exit 2)))
+               (if (== cell/446 144115687926754406)
+                 (seq
+                   (app{lists.ml:14,22-93} "caml_apply2" "camlLists__4"
+                     (load_mut val (+a "camlLists" 8))
+                     (opaque (load_mut val (+a "camlLists" 24))) unit)
+                   1)
+                 (if (== cell/446 288230376159342185)
+                   (seq
+                     (app{lists.ml:13,20-82} "caml_apply2" "camlLists__7"
+                       (load_mut val (+a "camlLists" 8))
+                       (opaque (load_mut val (+a "camlLists" 24))) unit)
+                     1)
+                   (exit 2)))))
+         case 1:
+           (let cell/447 (load_mut int (+a switch/445 0))
+             (if (< cell/447 8241918770938866790)
+               (if (== cell/447 7021800530724023913)
+                 (let cell/451 (load_mut int (+a switch/445 8))
+                   (if (== cell/451 432345564227567737)
+                     (seq
+                       (app{lists.ml:20,26-96} "caml_apply2" "camlLists__8"
+                         (load_mut val (+a "camlLists" 8))
+                         (opaque (load_mut val (+a "camlLists" 24))) unit)
+                       1)
+                     (exit 2)))
+                 (if (== cell/447 7813874495327071849)
+                   (let cell/450 (load_mut int (+a switch/445 8))
+                     (if (== cell/450 432345564227567717)
+                       (seq
+                         (app{lists.ml:15,26-92} "caml_apply2"
+                           "camlLists__10" (load_mut val (+a "camlLists" 8))
+                           (opaque (load_mut val (+a "camlLists" 24))) unit)
+                         1)
+                       (exit 2)))
+                   (exit 2)))
+               (if (== cell/447 8241918770938866790)
+                 (let cell/449 (load_mut int (+a switch/445 8))
+                   (if (== cell/449 288230376159666546)
+                     (seq
+                       (app{lists.ml:19,28-143} "caml_apply2" "camlLists__5"
+                         (load_mut val (+a "camlLists" 8))
+                         (opaque (load_mut val (+a "camlLists" 24))) unit)
+                       1)
+                     (exit 2)))
+                 (if (== cell/447 8463439577610153062)
+                   (let cell/448 (load_mut int (+a switch/445 8))
+                     (if (== cell/448 288230376158358640)
+                       (seq
+                         (app{lists.ml:16,28-129} "caml_apply2"
+                           "camlLists__6" (load_mut val (+a "camlLists" 8))
+                           (opaque (load_mut val (+a "camlLists" 24))) unit)
+                         1)
+                       (exit 2)))
+                   (exit 2)))))
+         case 2:
+           (let cell/452 (load_mut int (+a switch/445 0))
+             (if (== cell/452 7598822094087155305)
+               (let cell/453 (load_mut int (+a switch/445 8))
+                 (if (== cell/453 8746397786912419439)
+                   (let cell/454 (load_mut int (+a switch/445 16))
+                     (if (== cell/454 504403158265495552)
+                       (seq
+                         (app{lists.ml:21,33-124} "caml_apply2"
+                           "camlLists__9" (load_mut val (+a "camlLists" 8))
+                           (opaque (load_mut val (+a "camlLists" 24))) unit)
+                         1)
+                       (exit 2)))
+                   (exit 2)))
+               (exit 2)))))))
+ with(2) (app{lists.ml:22,9-40} "camlStdlib__failwith_7" "camlLists__1" val)))
+
+(function{lists.ml:13,53-69} camlLists__fun_428 (n/399: val) (+ n/399 2))
+
+(function{lists.ml:14,55-80} camlLists__fun_422 (n/400: val)
+ (alloc{lists.ml:14,65-79} 1277 (floatofint (>>s n/400 1))))
+
+(function{lists.ml:15,59-79} camlLists__fun_434 (n/401: val)
+ (alloc{lists.ml:15,69-78} 2048 (+ n/401 -2) (+ n/401 2)))
+
+(function{lists.ml:16,61-116} camlLists__fun_426 (n/402: val)
+ (alloc{lists.ml:16,71-115} 2048
+   (alloc{lists.ml:16,72-92} 1277 (floatofint (>>s (+ n/402 2) 1)))
+   (alloc{lists.ml:16,94-114} 1277 (floatofint (>>s (+ n/402 -2) 1)))))
+
+(function{lists.ml:17,56-84} camlLists__fun_438 (n/403: val)
+ (app{lists.ml:17,66-83} "camlStdlib__string_of_int_177" n/403 val))
+
+(function{lists.ml:18,56-138} camlLists__fun_436 (n/404: val)
+ (alloc{lists.ml:18,66-137} 3072 n/404
+   (app{lists.ml:18,91-108} "camlStdlib__string_of_int_177" n/404 val)
+   (alloc{lists.ml:18,120-136} 1277 (floatofint (>>s n/404 1)))))
+
+(function{lists.ml:19,61-130} camlLists__fun_424 (n/405: val)
+ (alloc{lists.ml:19,71-129} 1024
+   (alloc{lists.ml:19,74-126} 3072
+     (alloc{lists.ml:19,74-90} 1277 (floatofint (>>s n/405 1)))
+     (alloc{lists.ml:19,92-108} 1277 (floatofint (>>s n/405 1)))
+     (alloc{lists.ml:19,110-126} 1277 (floatofint (>>s n/405 1))))))
+
+(function{lists.ml:20,59-83} camlLists__fun_430 (n/406: val)
+ (alloc{lists.ml:20,69-82} 1024
+   (alloc{lists.ml:20,72-79} 3072 n/406 n/406 n/406)))
+
+(function{lists.ml:21,66-111} camlLists__fun_432 (n/407: val)
+ (alloc{lists.ml:21,76-110} 1024
+   (alloc{lists.ml:21,79-107} 4096 (alloc{lists.ml:21,79-85} 1024 n/407)
+     (alloc{lists.ml:21,87-93} 1024 n/407)
+     (alloc{lists.ml:21,95-101} 1024 n/407) 1)))
+
+(data int 4092 "camlLists__1": string "unexpected data type" skip 3 byte 3)
+(function camlLists__entry ()
+ (let
+   data_type/267
+     (let arr/444 (extcall "caml_sys_argv"{lists.ml:1,16-24} 1 int->val)
+       (checkbound{lists.ml:1,16-28} (load_mut int (+a arr/444 -8)) 2047)
+       (load_mut val (+a arr/444 8)))
+   (store val(root-init) "camlLists" data_type/267))
+ (let
+   list_length/388
+     (extcall "caml_int_of_string"{lists.ml:2,18-44}
+       (let arr/443 (extcall "caml_sys_argv"{lists.ml:2,32-40} 1 int->val)
+         (checkbound{lists.ml:2,32-44} (load_mut int (+a arr/443 -8)) 3071)
+         (load_mut val (+a arr/443 16)))
+       int->val)
+   (store val(root-init) (+a "camlLists" 8) list_length/388))
+ (let
+   iterations/389
+     (+
+       (<<
+         (let divisor/442 (>>s (load_mut val (+a "camlLists" 8)) 1)
+           (if divisor/442 (/ 5000000 divisor/442)
+             (raise{lists.ml:3,17-38} "caml_exn_Division_by_zero")))
+         1)
+       1)
+   (store val(root-init) (+a "camlLists" 16) iterations/389))
+ (let clos/420 "camlLists__3"
+   (store val(root-init) (+a "camlLists" 24) clos/420))
+ (let allocate_list/397 "camlLists__2"
+   (store val(root-init) (+a "camlLists" 32) allocate_list/397))
+ (let
+   *match*/418
+     (seq
+       (let_mut _for/409: int 1
+         (let bound/441 (load_mut val (+a "camlLists" 16))
+           (catch
+             (if (> _for/409 bound/441) (exit 6)
+               (catch rec (exit 7) with(7)
+                 (app{lists.ml:25,4-19} "camlLists__allocate_list_397" 1
+                   unit)
+                 (let *id_prev*/440 _for/409 (assign _for/409 (+ _for/409 2))
+                   (if (== *id_prev*/440 bound/441) (exit 6) []))
+                 (exit 7)))
+           with(6) [])))
+       1)
+   [])
+ 1)
+
+(data)

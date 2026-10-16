@@ -1,0 +1,3 @@
+rune	rune		/home/ruud/rune/.worktrees/benchmarks/bin/rune	/home/ruud/rune/.worktrees/benchmarks/bin/runevm
+rune:opt	rune	opt	/home/ruud/rune/.worktrees/benchmarks/bin/rune	/home/ruud/rune/.worktrees/benchmarks/bin/runevm-opt
+rune:new	rune	new	/home/ruud/rune/.worktrees/benchmarks/bin/rune-new	/home/ruud/rune/.worktrees/benchmarks/bin/runevm-new

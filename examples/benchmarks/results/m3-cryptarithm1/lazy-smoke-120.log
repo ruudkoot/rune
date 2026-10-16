@@ -1,0 +1,5 @@
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 1:24
+PASS cryptarithm1-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune

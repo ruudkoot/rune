@@ -1,0 +1,2 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+cryptarithm1-strict	normal	rune	O2	compile	0	0	pass	1.31	1.27	0.11	135256	-	-	-	cryptarithm1-strict/rune/build/compile

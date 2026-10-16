@@ -1,0 +1,10 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS cryptarithm1/visits-all-10-factorial-candidates
+PASS cryptarithm1/exhaustive-result
+SUMMARY 2 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+PASS cryptarithm1/visits-all-10-factorial-candidates
+PASS cryptarithm1/exhaustive-result
+SUMMARY 2 checks, 0 failed
+PROGRAM PASS native:mlton@20241230

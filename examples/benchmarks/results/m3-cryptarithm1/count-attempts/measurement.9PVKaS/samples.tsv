@@ -1,0 +1,5 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+cryptarithm1-lazy	normal	rune:new	O2	compile	0	0	pass	1.51	1.48	0.08	135352	-	-	-	cryptarithm1-lazy/rune-new/build/compile
+cryptarithm1-lazy	normal	rune:new	O2	correctness	0	0	pass	94.19	87.58	6.52	4196280	8042092347	40937145272	1218529891	cryptarithm1-lazy/rune-new/correctness.0
+cryptarithm1-lazy	normal	rune:new	O2	count	1	1	pass	96.44	90.52	6.41	4196500	8042092347	40937145272	1218529891	cryptarithm1-lazy/rune-new/fresh.1
+	normal	rune:new	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

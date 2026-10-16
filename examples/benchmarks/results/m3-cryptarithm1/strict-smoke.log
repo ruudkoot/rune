@@ -1,0 +1,2 @@
+PROGRAM LIMIT AS 1048576 KiB
+PROGRAM FAIL rune (load 1, exit 2)

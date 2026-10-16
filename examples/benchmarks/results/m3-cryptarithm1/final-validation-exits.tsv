@@ -1,0 +1,6 @@
+check	exit
+core-acceptance	0
+semantic-matrix	0
+full-enumeration-proof	0
+correctness-with-recorded-legacy-timeout	1
+combined-count-comparison	0

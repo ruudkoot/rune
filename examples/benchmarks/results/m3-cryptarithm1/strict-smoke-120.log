@@ -1,0 +1,7 @@
+PROGRAM LIMIT AS 8388608 KiB
+PROGRAM FAIL rune (load 1, exit 2)
+PROGRAM LIMIT AS 8388608 KiB
+RESULT 1:24
+PASS cryptarithm1-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230

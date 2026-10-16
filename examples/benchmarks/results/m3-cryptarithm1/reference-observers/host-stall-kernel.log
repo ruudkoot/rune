@@ -1,0 +1,4 @@
+[391076.414458] watchdog: BUG: soft lockup - CPU#3 stuck for 25s! [kworker/3:2:18806]
+[391215.301235] watchdog: BUG: soft lockup - CPU#7 stuck for 23s! [kworker/7:2:23929]
+[391215.301262] Workqueue: events netstamp_clear
+[391215.302256]  netstamp_clear+0x31/0x50

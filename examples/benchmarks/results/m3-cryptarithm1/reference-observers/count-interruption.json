@@ -1,0 +1,9 @@
+{
+  "reason": "shell commands stalled; operator stopped only owned count process tree",
+  "count_exit": 137,
+  "completed_count_samples": 2,
+  "partial_run": "measurement.LxllQu",
+  "host_monotonic_seconds": 379280.733159001,
+  "memory_info": "MemTotal:       32812680 kB\nMemFree:        10724800 kB\nMemAvailable:   25035404 kB\nBuffers:         4861864 kB\nCached:          7126004 kB\nSwapCached:        20128 kB\nActive:          8125620 kB\nInactive:       10180280 kB\nActive(anon):      35684 kB\nInactive(anon):  6438384 kB\nActive(file):    8089936 kB\nInactive(file):  3741896 kB\nUnevictable:           0 kB\nMlocked:               0 kB\nSwapTotal:       8388608 kB\nSwapFree:        8329052 kB\nDirty:              1460 kB\nWriteback:             0 kB\nAnonPages:       6311100 kB\nMapped:           740020 kB\nShmem:            156024 kB\nKReclaimable:    2870236 kB\nSlab:            3368360 kB\nSReclaimable:    2870236 kB\nSUnreclaim:       498124 kB\nKernelStack:       15424 kB\nPageTables:        53492 kB\nSecPageTables:         0 kB\nNFS_Unstable:          0 kB\nBounce:                0 kB\nWritebackTmp:          0 kB\nCommitLimit:    24794948 kB\nCommitted_AS:   10204592 kB\nVmallocTotal:   34359738367 kB\nVmallocUsed:       48316 kB\nVmallocChunk:          0 kB\nPercpu:             7360 kB\nHardwareCorrupted:     0 kB\nAnonHugePages:         0 kB\nShmemHugePages:        0 kB\nShmemPmdMapped:        0 kB\nFileHugePages:    401408 kB\nFilePmdMapped:         0 kB\nUnaccepted:            0 kB\nBalloon:               0 kB\nHugePages_Total:       0\nHugePages_Free:        0\nHugePages_Rsvd:        0\nHugePages_Surp:        0\nHugepagesize:       2048 kB\nHugetlb:               0 kB\nDirectMap4k:       68608 kB\nDirectMap2M:     9314304 kB\nDirectMap1G:    33554432 kB\n",
+  "cgroup_events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n"
+}

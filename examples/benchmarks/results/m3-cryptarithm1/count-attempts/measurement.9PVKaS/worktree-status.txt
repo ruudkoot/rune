@@ -1,0 +1,21 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/audit.md
+ M examples/benchmarks/inventory.tsv
+ M examples/benchmarks/manifest.tsv
+ M examples/benchmarks/spectralnorm2/PROVENANCE.md
+ M examples/benchmarks/spectralnorm2/upstream/SHA256SUMS
+ M scripts/benchmark-inventory.py
+ M tests/benchmarks/test-inventory.py
+?? examples/benchmarks/cryptarithm1-lazy/
+?? examples/benchmarks/cryptarithm1-strict/
+?? examples/benchmarks/results/m5-allocation-audit/
+?? examples/benchmarks/shared/nofib-cryptarithm1.sml
+?? examples/benchmarks/spectralnorm2/.gitattributes
+?? examples/benchmarks/spectralnorm2/upstream/LICENSE
+?? examples/benchmarks/validation/sandmark-allocation-probes.md
+?? tests/benchmarks/check-cryptarithm1-enumeration.sh
+?? tests/benchmarks/check-cryptarithm1.sh
+?? tests/benchmarks/cryptarithm1-enumeration.sml
+?? tests/benchmarks/cryptarithm1.sml
+?? tests/benchmarks/data/cryptarithm1/
+?? tests/benchmarks/data/sandmark-opaque/

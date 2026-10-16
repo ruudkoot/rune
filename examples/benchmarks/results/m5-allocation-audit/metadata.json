@@ -1,0 +1,39 @@
+{
+  "revision": "5605805954a00497ed197c930641cddd580e1507",
+  "compiler_version": "4.14.1",
+  "compiler_options": [
+    "-O2",
+    "-dcmm",
+    "-c"
+  ],
+  "programs": [
+    {
+      "name": "alloc",
+      "source": "benchmarks/simple-tests/alloc.ml",
+      "sha256": "7649a3ae235416a6afc8e2f41297c51cf73fe8d40a6a573b5ea7ed7b24fea164",
+      "timeout": 30,
+      "memory_bytes": 1073741824
+    },
+    {
+      "name": "lists",
+      "source": "benchmarks/simple-tests/lists.ml",
+      "sha256": "4a40532923d2fd783e47345740e64c9ec27f3305865d4e2730c80ba134d0e6e4",
+      "timeout": 30,
+      "memory_bytes": 1073741824
+    },
+    {
+      "name": "stacks",
+      "source": "benchmarks/simple-tests/stacks.ml",
+      "sha256": "6fcb3552d2efe34935766e5c13d6cd2b09b937d22a07e949855130bade0180f4",
+      "timeout": 30,
+      "memory_bytes": 1073741824
+    },
+    {
+      "name": "stress",
+      "source": "benchmarks/simple-tests/stress.ml",
+      "sha256": "dea8b3e283885c8bcbe468247fb923c4f488160688f40e44b5abbb055cd4ad70",
+      "timeout": 30,
+      "memory_bytes": 1073741824
+    }
+  ]
+}

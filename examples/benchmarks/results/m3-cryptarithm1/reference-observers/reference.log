@@ -1,0 +1,4 @@
+PASS independent full 10! cryptarithm assignment search
+PASS original, independent and pinned fixture smoke 1
+PASS original, independent and pinned fixture normal 3
+PASS original, independent and pinned fixture large 15
