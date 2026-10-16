@@ -1238,3 +1238,37 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 matching bytecode comparisons across seven compiler builds.
 runedoc and runeopt also agree. [The complete transcript](validation/oct16-puzzle-fft-789-acceptance.log)
 records the run. All 41 inventory tests pass and all 861 entries validate.
+
+## M5 structured numerical workloads, 2026-10-16
+
+Four imports bring the catalogue to 269 programs and 801 profiles. [All 112
+smoke/normal cases](results/m5-sequential-numerical/correctness.tsv) pass on Rune's
+four engines at both levels and all six managed native hosts. Forty semantic
+and negative checks pass all ten configurations at both levels. Sixteen normal
+count samples pass the combined comparison with unchanged budgets. Twelve
+serial native smoke samples additionally validate MLton, SML/NJ heap export,
+Poly/ML compilation and deferred runtime data loading. These single-sample
+adapter diagnostics and instrumented counts are separate from headline timings.
+
+Levinson-Durbin preserves correlations, mutable accumulators, fresh arrays and
+the source order offset. Every PCM conversion is exact; independent 80-digit
+dense solves validate complete smoke/normal results. Durand-Kerner preserves
+initialization, simultaneous updates, complex arithmetic, stopping and ten
+searches. Independent refinement and full coefficient reconstruction establish
+all reference root sets. QR retains dense Householder matrices, row aliasing,
+slices and signed-zero behavior, with orthogonality/triangular/reconstruction
+checks. Crout retains raw-column pivots, the pivot guard and dense permutation
+products. Its full original result differs from input by 10452/1195; exact
+rational replay reproduces every returned value to less than 1e-15. Reviewed
+source-result fixtures and a counterexample preserve that explicit limitation.
+
+Input caches, parsing/validation costs, reduced-input adapters, numerical budgets,
+source/library notices and the vowel attribution gap are documented. References,
+raw records and source identities are retained. No prerequisite compiler/runtime
+feature or universal large SML execution is claimed. M5 remains in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 801 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 matching bytecode comparisons across seven compiler builds.
+runedoc and runeopt also agree. [The complete transcript](validation/oct16-sequential-numerical-801-acceptance.log)
+records the run. All 41 inventory tests pass and all 861 entries validate.
