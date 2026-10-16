@@ -1,0 +1,6 @@
+{
+  "source_sha256": "0d685748797aab3d35ba730c3cd1690c7555f1b6c92cebd4be89bea3e2c3f96b",
+  "bytecode_sha256": "09fc5e9000d9673a4c632be35fe210e8a2f8e8acd09f8ec61223cc3f3db942a8",
+  "scope": "one complete image per variant/input through180; not 100-repetition large profile or all-host canonical large validation",
+  "exit": 0
+}

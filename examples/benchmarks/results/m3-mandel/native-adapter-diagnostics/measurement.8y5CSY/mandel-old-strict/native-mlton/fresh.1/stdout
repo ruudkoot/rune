@@ -1,0 +1,4 @@
+RESULT 1:checked
+PASS mandel-old-strict
+SAMPLE 1 0.000208000
+SUMMARY 1 checks, 0 failed

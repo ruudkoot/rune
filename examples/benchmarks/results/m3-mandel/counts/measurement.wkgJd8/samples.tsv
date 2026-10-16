@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+mandel-old-lazy	normal	rune	O2	compile	0	0	pass	1.49	1.48	0.06	135388	-	-	-	mandel-old-lazy/rune/build/compile
+mandel-old-lazy	normal	rune	O2	correctness	0	0	pass	1.15	1.19	0.00	10516	226287223	407669496	11823153	mandel-old-lazy/rune/correctness.0
+mandel-old-lazy	normal	rune	O2	count	1	1	pass	1.36	1.41	0.00	10380	226287223	407669496	11823153	mandel-old-lazy/rune/fresh.1
+mandel-old-lazy	normal	rune:opt	O2	compile	0	0	pass	3.42	1.76	0.06	135480	-	-	-	mandel-old-lazy/rune-opt/build/compile
+mandel-old-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.39	0.21	0.04	16016	-	-	-	mandel-old-lazy/rune-opt/build/native-compile
+mandel-old-lazy	normal	rune:opt	O2	correctness	0	0	pass	0.43	0.43	0.00	11060	226287223	407669496	11823153	mandel-old-lazy/rune-opt/correctness.0
+mandel-old-lazy	normal	rune:opt	O2	count	1	1	pass	0.41	0.40	0.00	11092	226287223	407669496	11823153	mandel-old-lazy/rune-opt/fresh.1
+mandel-old-lazy	normal	rune:new	O2	compile	0	0	pass	1.81	1.72	0.08	135248	-	-	-	mandel-old-lazy/rune-new/build/compile
+mandel-old-lazy	normal	rune:new	O2	correctness	0	0	pass	1.08	1.07	0.00	10604	134879862	407669496	11823153	mandel-old-lazy/rune-new/correctness.0
+mandel-old-lazy	normal	rune:new	O2	count	1	1	pass	0.93	0.93	0.01	10604	134879862	407669496	11823153	mandel-old-lazy/rune-new/fresh.1
+mandel-old-lazy	normal	rune:jit	O2	compile	0	0	pass	1.70	1.70	0.06	135352	-	-	-	mandel-old-lazy/rune-jit/build/compile
+mandel-old-lazy	normal	rune:jit	O2	correctness	0	0	pass	0.45	0.45	0.02	11968	134879862	407669496	11823153	mandel-old-lazy/rune-jit/correctness.0
+mandel-old-lazy	normal	rune:jit	O2	count	1	1	pass	0.37	0.38	0.01	11948	134879862	407669496	11823153	mandel-old-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

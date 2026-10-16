@@ -1,0 +1,4 @@
+[1 of 4] Compiling NofibUtils       ( NofibUtils.hs, NofibUtils.o )
+[2 of 4] Compiling Kernel           ( Kernel.hs, Kernel.o )
+[3 of 4] Compiling Main             ( TreeObserver.hs, TreeObserver.o )
+[4 of 4] Linking tree-observer

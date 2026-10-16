@@ -1,0 +1,1 @@
+mandel-old-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/stream.sml shared/nofib-mandel.sml shared/mandel-digest.sml shared/mandel-driver.sml mandel-old-lazy/benchmark.sml shared/main.sml	data/normal.params expected/normal.digest	mandel-old-lazy/normal.expected	data/normal.params expected/normal.digest

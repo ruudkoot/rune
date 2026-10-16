@@ -1552,3 +1552,55 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 matching bytecode comparisons across seven compiler builds.
 runedoc and runeopt also agree. [The complete transcript](validation/oct16-secretary-837-acceptance.log)
 records the run. All 41 inventory tests pass and all 861 entries validate.
+
+## M3 current, historical and tree Mandelbrot variants, 2026-10-16
+
+Six imports bring the catalogue to 287 programs and 855 profiles. All 168
+selected cases are accounted for: 162 pass, five reject incorrect results and
+one raises Domain. Only managed legacy64 SML/NJ fails. Every Rune engine passes
+both smoke/normal profiles at O0/O2; the other five native hosts pass all
+profiles. [Orbit coverage](results/m3-mandel/coverage.tsv) records 110/112 passes;
+[tree coverage](results/m3-mandel2/coverage.tsv) records 52/56. The historical
+orbit variants pass both profiles on every host.
+
+Twenty-six orbit and 132 tree semantic/negative checks run on all configurations
+twice, with Rune O0/O2 and native defaults. Legacy64 fails two orbit and three
+tree checks per pass; other configurations pass all checks. Its scalar binary32
+bit/demand checks pass. Twenty-four normal count samples agree across Rune
+engines. Existing budgets are unchanged; new profiles are unbudgeted. Seventeen
+serial native smoke diagnostics pass; one legacy64 lazy-tree correctness
+precheck is rejected and contributes no fresh timing. Counts and single-sample
+diagnostics remain separate from headline timings.
+
+The current and historical orbit ports preserve generic complex/scaled-norm
+versus explicit-squaring/raw-threshold behavior, boundary differences, Integer
+coordinates/metadata, cyclic sharing, lazy take and historical extra-head
+forcing. Strict variants materialize bounded orbits and pixel lists. Every
+channel contributes to exact metadata/count/digest/EOF validation. Complete
+original/independent RGB and digest references agree through 180x180, including
+zero/one-limit cases. Raw historical source remains unchanged; two modern-GHC
+syntax adaptations and library notices are explicit.
+
+The tree ports retain exact binary32 rounding, inclusive geometry, source
+perimeter inequalities/outward scans, memoized corners/children and right-first
+forcing. Original GHC and independent models agree on every tree row through
+full extent200. Scalar bit and injected-point demand tests distinguish numerical
+semantics from sharing/evaluation. Complete row/EOF checks reject changed
+colours/branches, truncation and extra data. Deterministic SML-generated runtime
+parameter/size rows preserve repeated input dependencies. Parsing, hashing,
+serialization and checking costs are documented.
+
+[Legacy diagnostics](validation/mandel-smlnj-legacy.md) preserve canonical
+categories and exact-source nursery replays. All six failing contexts pass
+with a 64 MiB nursery; default replays give four incorrect results, one Domain
+error and one pass. This is context-sensitive evidence, not a reduced cause
+or a kernel/default-setting workaround. Large preflights/reference executions
+remain explicitly distinct from canonical large validation on every host.
+No prerequisite compiler/runtime feature or universal large execution is
+introduced or claimed. M3 remains in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 855 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 matching bytecode comparisons across seven compiler builds.
+runedoc and runeopt also agree. [The complete transcript](validation/oct16-mandel-855-acceptance.log)
+records the run. All 41 inventory tests pass and all 861 entries validate.

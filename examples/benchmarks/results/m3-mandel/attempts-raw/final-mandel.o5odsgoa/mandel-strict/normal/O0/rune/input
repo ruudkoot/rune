@@ -1,0 +1,3 @@
+mandel-strict
+data/normal.params expected/normal.digest
+100:checked

@@ -1,0 +1,23 @@
+[1 of 4] Compiling PortablePixmap   ( PortablePixmap.lhs, build-old/PortablePixmap.o )
+
+PortablePixmap.lhs:106:1: warning: [-Wtabs]
+    Tab character found here, and in 22 further locations.
+    Suggested fix: Please use spaces instead.
+    |
+106 |         showsPrec prec (Pixmap x y z rgbs) = showHeader x y z . showRGB rgbs
+    | ^^^^^^^^
+[2 of 4] Compiling Mandel           ( MandelOldPort.lhs, build-old/Mandel.o )
+
+MandelOldPort.lhs:127:24: error:
+    Precedence parsing error
+        cannot mix ‘+’ [infixl 6] and ‘:+’ [infix 6] in the same infix expression
+    |
+127 |         initial s t = (x + (((coerce s) * (x' - x)) / (fromInteger screenX)) :+
+    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+
+MandelOldPort.lhs:127:24: error:
+    Precedence parsing error
+        cannot mix ‘:+’ [infix 6] and ‘+’ [infixl 6] in the same infix expression
+    |
+127 |         initial s t = (x + (((coerce s) * (x' - x)) / (fromInteger screenX)) :+
+    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...

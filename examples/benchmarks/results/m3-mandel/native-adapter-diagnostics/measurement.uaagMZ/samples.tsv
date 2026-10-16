@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+mandel-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	5.44	4.14	1.33	668688	-	-	-	mandel-lazy/native-mlton/build/compile
+mandel-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2404	-	-	-	mandel-lazy/native-mlton/correctness.0
+mandel-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2268	-	-	-	mandel-lazy/native-mlton/fresh.1
+mandel-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.48	0.46	0.04	33952	-	-	-	mandel-lazy/native-smlnj-legacy/build/compile
+mandel-lazy	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.01	0.00	4040	-	-	-	mandel-lazy/native-smlnj-legacy/correctness.0
+mandel-lazy	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.01	0.00	4072	-	-	-	mandel-lazy/native-smlnj-legacy/fresh.1
+mandel-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.30	0.18	0.06	40732	-	-	-	mandel-lazy/native-polyml/build/compile
+mandel-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	5684	-	-	-	mandel-lazy/native-polyml/correctness.0
+mandel-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	5736	-	-	-	mandel-lazy/native-polyml/fresh.1

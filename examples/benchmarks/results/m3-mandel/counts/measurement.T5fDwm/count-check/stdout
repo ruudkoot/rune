@@ -1,0 +1,5 @@
+COUNT unbudgeted mandel-lazy normal rune
+COUNT unbudgeted mandel-lazy normal rune:opt
+COUNT unbudgeted mandel-lazy normal rune:new
+COUNT unbudgeted mandel-lazy normal rune:jit
+COUNT comparisons agree

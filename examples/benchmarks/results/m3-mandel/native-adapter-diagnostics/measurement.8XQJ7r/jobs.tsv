@@ -1,0 +1,1 @@
+mandel-strict	30	1048576	shared/input.sml shared/lazy.sml shared/stream.sml shared/nofib-mandel.sml shared/mandel-digest.sml shared/mandel-driver.sml mandel-strict/benchmark.sml shared/main.sml	data/smoke.params expected/smoke.digest	mandel-strict/smoke.expected	data/smoke.params expected/smoke.digest

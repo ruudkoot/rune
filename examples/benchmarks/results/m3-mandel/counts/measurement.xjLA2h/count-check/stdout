@@ -1,0 +1,5 @@
+COUNT unbudgeted mandel-old-strict normal rune
+COUNT unbudgeted mandel-old-strict normal rune:opt
+COUNT unbudgeted mandel-old-strict normal rune:new
+COUNT unbudgeted mandel-old-strict normal rune:jit
+COUNT comparisons agree

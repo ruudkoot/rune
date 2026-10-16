@@ -1,0 +1,17 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+mandel-lazy	normal	rune	O2	count	1	1	pass	2.10	2.19	0.00	10544	289257559	541863080	15708353	counts/measurement.T5fDwm/mandel-lazy/rune/fresh.1
+mandel-lazy	normal	rune:opt	O2	count	1	1	pass	0.71	0.72	0.00	11124	289257559	541863080	15708353	counts/measurement.T5fDwm/mandel-lazy/rune-opt/fresh.1
+mandel-lazy	normal	rune:new	O2	count	1	1	pass	2.04	2.03	0.02	10704	167780118	541863080	15708353	counts/measurement.T5fDwm/mandel-lazy/rune-new/fresh.1
+mandel-lazy	normal	rune:jit	O2	count	1	1	pass	0.56	0.54	0.02	12016	167780118	541863080	15708353	counts/measurement.T5fDwm/mandel-lazy/rune-jit/fresh.1
+mandel-strict	normal	rune	O2	count	1	1	pass	2.17	2.41	0.00	10656	497729087	839495784	21173649	counts/measurement.KC79na/mandel-strict/rune/fresh.1
+mandel-strict	normal	rune:opt	O2	count	1	1	pass	0.72	0.75	0.00	11256	497729087	839495784	21173649	counts/measurement.KC79na/mandel-strict/rune-opt/fresh.1
+mandel-strict	normal	rune:new	O2	count	1	1	pass	2.02	2.11	0.00	10884	258481736	839495784	21173649	counts/measurement.KC79na/mandel-strict/rune-new/fresh.1
+mandel-strict	normal	rune:jit	O2	count	1	1	pass	0.62	0.63	0.01	11948	258481736	839495784	21173649	counts/measurement.KC79na/mandel-strict/rune-jit/fresh.1
+mandel-old-lazy	normal	rune	O2	count	1	1	pass	1.36	1.41	0.00	10380	226287223	407669496	11823153	counts/measurement.wkgJd8/mandel-old-lazy/rune/fresh.1
+mandel-old-lazy	normal	rune:opt	O2	count	1	1	pass	0.41	0.40	0.00	11092	226287223	407669496	11823153	counts/measurement.wkgJd8/mandel-old-lazy/rune-opt/fresh.1
+mandel-old-lazy	normal	rune:new	O2	count	1	1	pass	0.93	0.93	0.01	10604	134879862	407669496	11823153	counts/measurement.wkgJd8/mandel-old-lazy/rune-new/fresh.1
+mandel-old-lazy	normal	rune:jit	O2	count	1	1	pass	0.37	0.38	0.01	11948	134879862	407669496	11823153	counts/measurement.wkgJd8/mandel-old-lazy/rune-jit/fresh.1
+mandel-old-strict	normal	rune	O2	count	1	1	pass	1.48	1.52	0.02	10512	392616251	661995896	16736149	counts/measurement.xjLA2h/mandel-old-strict/rune/fresh.1
+mandel-old-strict	normal	rune:opt	O2	count	1	1	pass	0.53	0.56	0.02	11148	392616251	661995896	16736149	counts/measurement.xjLA2h/mandel-old-strict/rune-opt/fresh.1
+mandel-old-strict	normal	rune:new	O2	count	1	1	pass	1.33	1.39	0.00	10836	219218580	661995896	16736149	counts/measurement.xjLA2h/mandel-old-strict/rune-new/fresh.1
+mandel-old-strict	normal	rune:jit	O2	count	1	1	pass	0.46	0.47	0.00	11896	219218580	661995896	16736149	counts/measurement.xjLA2h/mandel-old-strict/rune-jit/fresh.1

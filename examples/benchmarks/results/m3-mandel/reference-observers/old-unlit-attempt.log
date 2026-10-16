@@ -1,0 +1,8 @@
+MandelOld.lhs line 133: unlit: spurious \end{code}
+
+
+MandelOld.lhs:1:1: error:
+    `unlit' failed in phase `Literate pre-processor'. (Exit code: 1)
+  |
+1 | \section{The Mandelbrot set: Serial}
+  | ^

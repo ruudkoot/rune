@@ -1,0 +1,3881 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS mandel2/coordinates-0,0
+PASS mandel2/point-colour-0,0
+PASS mandel2/binary32-orbit-0,0-1
+PASS mandel2/binary32-orbit-0,0-2
+PASS mandel2/coordinates-1,1
+PASS mandel2/point-colour-1,1
+PASS mandel2/binary32-orbit-1,1-1
+PASS mandel2/binary32-orbit-1,1-2
+PASS mandel2/coordinates-50,25
+PASS mandel2/point-colour-50,25
+PASS mandel2/binary32-orbit-50,25-1
+PASS mandel2/binary32-orbit-50,25-2
+PASS mandel2/binary32-orbit-50,25-3
+PASS mandel2/coordinates-100,50
+PASS mandel2/point-colour-100,50
+PASS mandel2/binary32-orbit-100,50-1
+PASS mandel2/binary32-orbit-100,50-2
+PASS mandel2/binary32-orbit-100,50-3
+PASS mandel2/binary32-orbit-100,50-4
+PASS mandel2/binary32-orbit-100,50-5
+PASS mandel2/coordinates-149,99
+PASS mandel2/point-colour-149,99
+PASS mandel2/binary32-orbit-149,99-1
+PASS mandel2/binary32-orbit-149,99-2
+PASS mandel2/binary32-orbit-149,99-3
+PASS mandel2/binary32-orbit-149,99-4
+PASS mandel2/binary32-orbit-149,99-5
+PASS mandel2/binary32-orbit-149,99-6
+PASS mandel2/binary32-orbit-149,99-7
+PASS mandel2/binary32-orbit-149,99-8
+PASS mandel2/binary32-orbit-149,99-9
+PASS mandel2/binary32-orbit-149,99-10
+PASS mandel2/binary32-orbit-149,99-11
+PASS mandel2/binary32-orbit-149,99-12
+PASS mandel2/binary32-orbit-149,99-13
+PASS mandel2/binary32-orbit-149,99-14
+PASS mandel2/binary32-orbit-149,99-15
+PASS mandel2/binary32-orbit-149,99-16
+PASS mandel2/binary32-orbit-149,99-17
+PASS mandel2/binary32-orbit-149,99-18
+PASS mandel2/binary32-orbit-149,99-19
+PASS mandel2/binary32-orbit-149,99-20
+PASS mandel2/binary32-orbit-149,99-21
+PASS mandel2/binary32-orbit-149,99-22
+PASS mandel2/binary32-orbit-149,99-23
+PASS mandel2/binary32-orbit-149,99-24
+PASS mandel2/binary32-orbit-149,99-25
+PASS mandel2/coordinates-150,99
+PASS mandel2/point-colour-150,99
+PASS mandel2/binary32-orbit-150,99-1
+PASS mandel2/binary32-orbit-150,99-2
+PASS mandel2/binary32-orbit-150,99-3
+PASS mandel2/binary32-orbit-150,99-4
+PASS mandel2/binary32-orbit-150,99-5
+PASS mandel2/binary32-orbit-150,99-6
+PASS mandel2/binary32-orbit-150,99-7
+PASS mandel2/binary32-orbit-150,99-8
+PASS mandel2/binary32-orbit-150,99-9
+PASS mandel2/binary32-orbit-150,99-10
+PASS mandel2/binary32-orbit-150,99-11
+PASS mandel2/binary32-orbit-150,99-12
+PASS mandel2/binary32-orbit-150,99-13
+PASS mandel2/binary32-orbit-150,99-14
+PASS mandel2/binary32-orbit-150,99-15
+PASS mandel2/binary32-orbit-150,99-16
+PASS mandel2/binary32-orbit-150,99-17
+PASS mandel2/binary32-orbit-150,99-18
+PASS mandel2/binary32-orbit-150,99-19
+PASS mandel2/binary32-orbit-150,99-20
+PASS mandel2/binary32-orbit-150,99-21
+PASS mandel2/binary32-orbit-150,99-22
+PASS mandel2/binary32-orbit-150,99-23
+PASS mandel2/binary32-orbit-150,99-24
+PASS mandel2/binary32-orbit-150,99-25
+PASS mandel2/coordinates-150,100
+PASS mandel2/point-colour-150,100
+PASS mandel2/binary32-orbit-150,100-1
+PASS mandel2/binary32-orbit-150,100-2
+PASS mandel2/binary32-orbit-150,100-3
+PASS mandel2/binary32-orbit-150,100-4
+PASS mandel2/binary32-orbit-150,100-5
+PASS mandel2/binary32-orbit-150,100-6
+PASS mandel2/binary32-orbit-150,100-7
+PASS mandel2/binary32-orbit-150,100-8
+PASS mandel2/binary32-orbit-150,100-9
+PASS mandel2/binary32-orbit-150,100-10
+PASS mandel2/binary32-orbit-150,100-11
+PASS mandel2/binary32-orbit-150,100-12
+PASS mandel2/binary32-orbit-150,100-13
+PASS mandel2/binary32-orbit-150,100-14
+PASS mandel2/binary32-orbit-150,100-15
+PASS mandel2/binary32-orbit-150,100-16
+PASS mandel2/binary32-orbit-150,100-17
+PASS mandel2/binary32-orbit-150,100-18
+PASS mandel2/binary32-orbit-150,100-19
+PASS mandel2/binary32-orbit-150,100-20
+PASS mandel2/binary32-orbit-150,100-21
+PASS mandel2/binary32-orbit-150,100-22
+PASS mandel2/binary32-orbit-150,100-23
+PASS mandel2/binary32-orbit-150,100-24
+PASS mandel2/binary32-orbit-150,100-25
+PASS mandel2/coordinates-200,100
+PASS mandel2/point-colour-200,100
+PASS mandel2/binary32-orbit-200,100-1
+PASS mandel2/binary32-orbit-200,100-2
+PASS mandel2/binary32-orbit-200,100-3
+PASS mandel2/binary32-orbit-200,100-4
+PASS mandel2/lazy-corner-short-circuit
+PASS mandel2/strict-corners-eager
+PASS mandel2/lazy-shared-colour-one
+PASS mandel2/single-point-no-unused-corners
+PASS mandel2/zero-height-source-outward-scan
+PASS mandel2/right-whnf-before-left-and-memoized
+PASS mandel2/strict-right-complete-before-left
+PASS mandel2/complete-lazy-tree-1
+PASS mandel2/complete-strict-tree-1
+PASS mandel2/complete-lazy-tree-2
+PASS mandel2/complete-strict-tree-2
+PASS mandel2/complete-lazy-tree-3
+PASS mandel2/complete-strict-tree-3
+PASS mandel2/complete-lazy-tree-8
+PASS mandel2/complete-strict-tree-8
+PASS mandel2/complete-lazy-tree-16
+PASS mandel2/complete-strict-tree-16
+PASS mandel2/complete-lazy-tree-64
+PASS mandel2/complete-strict-tree-64
+PASS mandel2/complete-lazy-tree-200
+PASS mandel2/complete-strict-tree-200
+PASS mandel2/wrong-colour-rejected
+PASS mandel2/truncated-tree-rejected
+PASS mandel2/extra-tree-rejected
+PASS mandel2/wrong-branch-rejected
+SUMMARY 132 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+PASS mandel2/coordinates-0,0
+PASS mandel2/point-colour-0,0
+PASS mandel2/binary32-orbit-0,0-1
+PASS mandel2/binary32-orbit-0,0-2
+PASS mandel2/coordinates-1,1
+PASS mandel2/point-colour-1,1
+PASS mandel2/binary32-orbit-1,1-1
+PASS mandel2/binary32-orbit-1,1-2
+PASS mandel2/coordinates-50,25
+PASS mandel2/point-colour-50,25
+PASS mandel2/binary32-orbit-50,25-1
+PASS mandel2/binary32-orbit-50,25-2
+PASS mandel2/binary32-orbit-50,25-3
+PASS mandel2/coordinates-100,50
+PASS mandel2/point-colour-100,50
+PASS mandel2/binary32-orbit-100,50-1
+PASS mandel2/binary32-orbit-100,50-2
+PASS mandel2/binary32-orbit-100,50-3
+PASS mandel2/binary32-orbit-100,50-4
+PASS mandel2/binary32-orbit-100,50-5
+PASS mandel2/coordinates-149,99
+PASS mandel2/point-colour-149,99
+PASS mandel2/binary32-orbit-149,99-1
+PASS mandel2/binary32-orbit-149,99-2
+PASS mandel2/binary32-orbit-149,99-3
+PASS mandel2/binary32-orbit-149,99-4
+PASS mandel2/binary32-orbit-149,99-5
+PASS mandel2/binary32-orbit-149,99-6
+PASS mandel2/binary32-orbit-149,99-7
+PASS mandel2/binary32-orbit-149,99-8
+PASS mandel2/binary32-orbit-149,99-9
+PASS mandel2/binary32-orbit-149,99-10
+PASS mandel2/binary32-orbit-149,99-11
+PASS mandel2/binary32-orbit-149,99-12
+PASS mandel2/binary32-orbit-149,99-13
+PASS mandel2/binary32-orbit-149,99-14
+PASS mandel2/binary32-orbit-149,99-15
+PASS mandel2/binary32-orbit-149,99-16
+PASS mandel2/binary32-orbit-149,99-17
+PASS mandel2/binary32-orbit-149,99-18
+PASS mandel2/binary32-orbit-149,99-19
+PASS mandel2/binary32-orbit-149,99-20
+PASS mandel2/binary32-orbit-149,99-21
+PASS mandel2/binary32-orbit-149,99-22
+PASS mandel2/binary32-orbit-149,99-23
+PASS mandel2/binary32-orbit-149,99-24
+PASS mandel2/binary32-orbit-149,99-25
+PASS mandel2/coordinates-150,99
+PASS mandel2/point-colour-150,99
+PASS mandel2/binary32-orbit-150,99-1
+PASS mandel2/binary32-orbit-150,99-2
+PASS mandel2/binary32-orbit-150,99-3
+PASS mandel2/binary32-orbit-150,99-4
+PASS mandel2/binary32-orbit-150,99-5
+PASS mandel2/binary32-orbit-150,99-6
+PASS mandel2/binary32-orbit-150,99-7
+PASS mandel2/binary32-orbit-150,99-8
+PASS mandel2/binary32-orbit-150,99-9
+PASS mandel2/binary32-orbit-150,99-10
+PASS mandel2/binary32-orbit-150,99-11
+PASS mandel2/binary32-orbit-150,99-12
+PASS mandel2/binary32-orbit-150,99-13
+PASS mandel2/binary32-orbit-150,99-14
+PASS mandel2/binary32-orbit-150,99-15
+PASS mandel2/binary32-orbit-150,99-16
+PASS mandel2/binary32-orbit-150,99-17
+PASS mandel2/binary32-orbit-150,99-18
+PASS mandel2/binary32-orbit-150,99-19
+PASS mandel2/binary32-orbit-150,99-20
+PASS mandel2/binary32-orbit-150,99-21
+PASS mandel2/binary32-orbit-150,99-22
+PASS mandel2/binary32-orbit-150,99-23
+PASS mandel2/binary32-orbit-150,99-24
+PASS mandel2/binary32-orbit-150,99-25
+PASS mandel2/coordinates-150,100
+PASS mandel2/point-colour-150,100
+PASS mandel2/binary32-orbit-150,100-1
+PASS mandel2/binary32-orbit-150,100-2
+PASS mandel2/binary32-orbit-150,100-3
+PASS mandel2/binary32-orbit-150,100-4
+PASS mandel2/binary32-orbit-150,100-5
+PASS mandel2/binary32-orbit-150,100-6
+PASS mandel2/binary32-orbit-150,100-7
+PASS mandel2/binary32-orbit-150,100-8
+PASS mandel2/binary32-orbit-150,100-9
+PASS mandel2/binary32-orbit-150,100-10
+PASS mandel2/binary32-orbit-150,100-11
+PASS mandel2/binary32-orbit-150,100-12
+PASS mandel2/binary32-orbit-150,100-13
+PASS mandel2/binary32-orbit-150,100-14
+PASS mandel2/binary32-orbit-150,100-15
+PASS mandel2/binary32-orbit-150,100-16
+PASS mandel2/binary32-orbit-150,100-17
+PASS mandel2/binary32-orbit-150,100-18
+PASS mandel2/binary32-orbit-150,100-19
+PASS mandel2/binary32-orbit-150,100-20
+PASS mandel2/binary32-orbit-150,100-21
+PASS mandel2/binary32-orbit-150,100-22
+PASS mandel2/binary32-orbit-150,100-23
+PASS mandel2/binary32-orbit-150,100-24
+PASS mandel2/binary32-orbit-150,100-25
+PASS mandel2/coordinates-200,100
+PASS mandel2/point-colour-200,100
+PASS mandel2/binary32-orbit-200,100-1
+PASS mandel2/binary32-orbit-200,100-2
+PASS mandel2/binary32-orbit-200,100-3
+PASS mandel2/binary32-orbit-200,100-4
+PASS mandel2/lazy-corner-short-circuit
+PASS mandel2/strict-corners-eager
+PASS mandel2/lazy-shared-colour-one
+PASS mandel2/single-point-no-unused-corners
+PASS mandel2/zero-height-source-outward-scan
+PASS mandel2/right-whnf-before-left-and-memoized
+PASS mandel2/strict-right-complete-before-left
+PASS mandel2/complete-lazy-tree-1
+PASS mandel2/complete-strict-tree-1
+PASS mandel2/complete-lazy-tree-2
+PASS mandel2/complete-strict-tree-2
+PASS mandel2/complete-lazy-tree-3
+PASS mandel2/complete-strict-tree-3
+PASS mandel2/complete-lazy-tree-8
+PASS mandel2/complete-strict-tree-8
+PASS mandel2/complete-lazy-tree-16
+PASS mandel2/complete-strict-tree-16
+PASS mandel2/complete-lazy-tree-64
+PASS mandel2/complete-strict-tree-64
+PASS mandel2/complete-lazy-tree-200
+PASS mandel2/complete-strict-tree-200
+PASS mandel2/wrong-colour-rejected
+PASS mandel2/truncated-tree-rejected
+PASS mandel2/extra-tree-rejected
+PASS mandel2/wrong-branch-rejected
+SUMMARY 132 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+PASS mandel2/coordinates-0,0
+PASS mandel2/point-colour-0,0
+PASS mandel2/binary32-orbit-0,0-1
+PASS mandel2/binary32-orbit-0,0-2
+PASS mandel2/coordinates-1,1
+PASS mandel2/point-colour-1,1
+PASS mandel2/binary32-orbit-1,1-1
+PASS mandel2/binary32-orbit-1,1-2
+PASS mandel2/coordinates-50,25
+PASS mandel2/point-colour-50,25
+PASS mandel2/binary32-orbit-50,25-1
+PASS mandel2/binary32-orbit-50,25-2
+PASS mandel2/binary32-orbit-50,25-3
+PASS mandel2/coordinates-100,50
+PASS mandel2/point-colour-100,50
+PASS mandel2/binary32-orbit-100,50-1
+PASS mandel2/binary32-orbit-100,50-2
+PASS mandel2/binary32-orbit-100,50-3
+PASS mandel2/binary32-orbit-100,50-4
+PASS mandel2/binary32-orbit-100,50-5
+PASS mandel2/coordinates-149,99
+PASS mandel2/point-colour-149,99
+PASS mandel2/binary32-orbit-149,99-1
+PASS mandel2/binary32-orbit-149,99-2
+PASS mandel2/binary32-orbit-149,99-3
+PASS mandel2/binary32-orbit-149,99-4
+PASS mandel2/binary32-orbit-149,99-5
+PASS mandel2/binary32-orbit-149,99-6
+PASS mandel2/binary32-orbit-149,99-7
+PASS mandel2/binary32-orbit-149,99-8
+PASS mandel2/binary32-orbit-149,99-9
+PASS mandel2/binary32-orbit-149,99-10
+PASS mandel2/binary32-orbit-149,99-11
+PASS mandel2/binary32-orbit-149,99-12
+PASS mandel2/binary32-orbit-149,99-13
+PASS mandel2/binary32-orbit-149,99-14
+PASS mandel2/binary32-orbit-149,99-15
+PASS mandel2/binary32-orbit-149,99-16
+PASS mandel2/binary32-orbit-149,99-17
+PASS mandel2/binary32-orbit-149,99-18
+PASS mandel2/binary32-orbit-149,99-19
+PASS mandel2/binary32-orbit-149,99-20
+PASS mandel2/binary32-orbit-149,99-21
+PASS mandel2/binary32-orbit-149,99-22
+PASS mandel2/binary32-orbit-149,99-23
+PASS mandel2/binary32-orbit-149,99-24
+PASS mandel2/binary32-orbit-149,99-25
+PASS mandel2/coordinates-150,99
+PASS mandel2/point-colour-150,99
+PASS mandel2/binary32-orbit-150,99-1
+PASS mandel2/binary32-orbit-150,99-2
+PASS mandel2/binary32-orbit-150,99-3
+PASS mandel2/binary32-orbit-150,99-4
+PASS mandel2/binary32-orbit-150,99-5
+PASS mandel2/binary32-orbit-150,99-6
+PASS mandel2/binary32-orbit-150,99-7
+PASS mandel2/binary32-orbit-150,99-8
+PASS mandel2/binary32-orbit-150,99-9
+PASS mandel2/binary32-orbit-150,99-10
+PASS mandel2/binary32-orbit-150,99-11
+PASS mandel2/binary32-orbit-150,99-12
+PASS mandel2/binary32-orbit-150,99-13
+PASS mandel2/binary32-orbit-150,99-14
+PASS mandel2/binary32-orbit-150,99-15
+PASS mandel2/binary32-orbit-150,99-16
+PASS mandel2/binary32-orbit-150,99-17
+PASS mandel2/binary32-orbit-150,99-18
+PASS mandel2/binary32-orbit-150,99-19
+PASS mandel2/binary32-orbit-150,99-20
+PASS mandel2/binary32-orbit-150,99-21
+PASS mandel2/binary32-orbit-150,99-22
+PASS mandel2/binary32-orbit-150,99-23
+PASS mandel2/binary32-orbit-150,99-24
+PASS mandel2/binary32-orbit-150,99-25
+PASS mandel2/coordinates-150,100
+PASS mandel2/point-colour-150,100
+PASS mandel2/binary32-orbit-150,100-1
+PASS mandel2/binary32-orbit-150,100-2
+PASS mandel2/binary32-orbit-150,100-3
+PASS mandel2/binary32-orbit-150,100-4
+PASS mandel2/binary32-orbit-150,100-5
+PASS mandel2/binary32-orbit-150,100-6
+PASS mandel2/binary32-orbit-150,100-7
+PASS mandel2/binary32-orbit-150,100-8
+PASS mandel2/binary32-orbit-150,100-9
+PASS mandel2/binary32-orbit-150,100-10
+PASS mandel2/binary32-orbit-150,100-11
+PASS mandel2/binary32-orbit-150,100-12
+PASS mandel2/binary32-orbit-150,100-13
+PASS mandel2/binary32-orbit-150,100-14
+PASS mandel2/binary32-orbit-150,100-15
+PASS mandel2/binary32-orbit-150,100-16
+PASS mandel2/binary32-orbit-150,100-17
+PASS mandel2/binary32-orbit-150,100-18
+PASS mandel2/binary32-orbit-150,100-19
+PASS mandel2/binary32-orbit-150,100-20
+PASS mandel2/binary32-orbit-150,100-21
+PASS mandel2/binary32-orbit-150,100-22
+PASS mandel2/binary32-orbit-150,100-23
+PASS mandel2/binary32-orbit-150,100-24
+PASS mandel2/binary32-orbit-150,100-25
+PASS mandel2/coordinates-200,100
+PASS mandel2/point-colour-200,100
+PASS mandel2/binary32-orbit-200,100-1
+PASS mandel2/binary32-orbit-200,100-2
+PASS mandel2/binary32-orbit-200,100-3
+PASS mandel2/binary32-orbit-200,100-4
+PASS mandel2/lazy-corner-short-circuit
+PASS mandel2/strict-corners-eager
+PASS mandel2/lazy-shared-colour-one
+PASS mandel2/single-point-no-unused-corners
+PASS mandel2/zero-height-source-outward-scan
+PASS mandel2/right-whnf-before-left-and-memoized
+PASS mandel2/strict-right-complete-before-left
+PASS mandel2/complete-lazy-tree-1
+PASS mandel2/complete-strict-tree-1
+PASS mandel2/complete-lazy-tree-2
+PASS mandel2/complete-strict-tree-2
+PASS mandel2/complete-lazy-tree-3
+PASS mandel2/complete-strict-tree-3
+PASS mandel2/complete-lazy-tree-8
+PASS mandel2/complete-strict-tree-8
+PASS mandel2/complete-lazy-tree-16
+PASS mandel2/complete-strict-tree-16
+PASS mandel2/complete-lazy-tree-64
+PASS mandel2/complete-strict-tree-64
+PASS mandel2/complete-lazy-tree-200
+PASS mandel2/complete-strict-tree-200
+PASS mandel2/wrong-colour-rejected
+PASS mandel2/truncated-tree-rejected
+PASS mandel2/extra-tree-rejected
+PASS mandel2/wrong-branch-rejected
+SUMMARY 132 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+PASS mandel2/coordinates-0,0
+PASS mandel2/point-colour-0,0
+PASS mandel2/binary32-orbit-0,0-1
+PASS mandel2/binary32-orbit-0,0-2
+PASS mandel2/coordinates-1,1
+PASS mandel2/point-colour-1,1
+PASS mandel2/binary32-orbit-1,1-1
+PASS mandel2/binary32-orbit-1,1-2
+PASS mandel2/coordinates-50,25
+PASS mandel2/point-colour-50,25
+PASS mandel2/binary32-orbit-50,25-1
+PASS mandel2/binary32-orbit-50,25-2
+PASS mandel2/binary32-orbit-50,25-3
+PASS mandel2/coordinates-100,50
+PASS mandel2/point-colour-100,50
+PASS mandel2/binary32-orbit-100,50-1
+PASS mandel2/binary32-orbit-100,50-2
+PASS mandel2/binary32-orbit-100,50-3
+PASS mandel2/binary32-orbit-100,50-4
+PASS mandel2/binary32-orbit-100,50-5
+PASS mandel2/coordinates-149,99
+PASS mandel2/point-colour-149,99
+PASS mandel2/binary32-orbit-149,99-1
+PASS mandel2/binary32-orbit-149,99-2
+PASS mandel2/binary32-orbit-149,99-3
+PASS mandel2/binary32-orbit-149,99-4
+PASS mandel2/binary32-orbit-149,99-5
+PASS mandel2/binary32-orbit-149,99-6
+PASS mandel2/binary32-orbit-149,99-7
+PASS mandel2/binary32-orbit-149,99-8
+PASS mandel2/binary32-orbit-149,99-9
+PASS mandel2/binary32-orbit-149,99-10
+PASS mandel2/binary32-orbit-149,99-11
+PASS mandel2/binary32-orbit-149,99-12
+PASS mandel2/binary32-orbit-149,99-13
+PASS mandel2/binary32-orbit-149,99-14
+PASS mandel2/binary32-orbit-149,99-15
+PASS mandel2/binary32-orbit-149,99-16
+PASS mandel2/binary32-orbit-149,99-17
+PASS mandel2/binary32-orbit-149,99-18
+PASS mandel2/binary32-orbit-149,99-19
+PASS mandel2/binary32-orbit-149,99-20
+PASS mandel2/binary32-orbit-149,99-21
+PASS mandel2/binary32-orbit-149,99-22
+PASS mandel2/binary32-orbit-149,99-23
+PASS mandel2/binary32-orbit-149,99-24
+PASS mandel2/binary32-orbit-149,99-25
+PASS mandel2/coordinates-150,99
+PASS mandel2/point-colour-150,99
+PASS mandel2/binary32-orbit-150,99-1
+PASS mandel2/binary32-orbit-150,99-2
+PASS mandel2/binary32-orbit-150,99-3
+PASS mandel2/binary32-orbit-150,99-4
+PASS mandel2/binary32-orbit-150,99-5
+PASS mandel2/binary32-orbit-150,99-6
+PASS mandel2/binary32-orbit-150,99-7
+PASS mandel2/binary32-orbit-150,99-8
+PASS mandel2/binary32-orbit-150,99-9
+PASS mandel2/binary32-orbit-150,99-10
+PASS mandel2/binary32-orbit-150,99-11
+PASS mandel2/binary32-orbit-150,99-12
+PASS mandel2/binary32-orbit-150,99-13
+PASS mandel2/binary32-orbit-150,99-14
+PASS mandel2/binary32-orbit-150,99-15
+PASS mandel2/binary32-orbit-150,99-16
+PASS mandel2/binary32-orbit-150,99-17
+PASS mandel2/binary32-orbit-150,99-18
+PASS mandel2/binary32-orbit-150,99-19
+PASS mandel2/binary32-orbit-150,99-20
+PASS mandel2/binary32-orbit-150,99-21
+PASS mandel2/binary32-orbit-150,99-22
+PASS mandel2/binary32-orbit-150,99-23
+PASS mandel2/binary32-orbit-150,99-24
+PASS mandel2/binary32-orbit-150,99-25
+PASS mandel2/coordinates-150,100
+PASS mandel2/point-colour-150,100
+PASS mandel2/binary32-orbit-150,100-1
+PASS mandel2/binary32-orbit-150,100-2
+PASS mandel2/binary32-orbit-150,100-3
+PASS mandel2/binary32-orbit-150,100-4
+PASS mandel2/binary32-orbit-150,100-5
+PASS mandel2/binary32-orbit-150,100-6
+PASS mandel2/binary32-orbit-150,100-7
+PASS mandel2/binary32-orbit-150,100-8
+PASS mandel2/binary32-orbit-150,100-9
+PASS mandel2/binary32-orbit-150,100-10
+PASS mandel2/binary32-orbit-150,100-11
+PASS mandel2/binary32-orbit-150,100-12
+PASS mandel2/binary32-orbit-150,100-13
+PASS mandel2/binary32-orbit-150,100-14
+PASS mandel2/binary32-orbit-150,100-15
+PASS mandel2/binary32-orbit-150,100-16
+PASS mandel2/binary32-orbit-150,100-17
+PASS mandel2/binary32-orbit-150,100-18
+PASS mandel2/binary32-orbit-150,100-19
+PASS mandel2/binary32-orbit-150,100-20
+PASS mandel2/binary32-orbit-150,100-21
+PASS mandel2/binary32-orbit-150,100-22
+PASS mandel2/binary32-orbit-150,100-23
+PASS mandel2/binary32-orbit-150,100-24
+PASS mandel2/binary32-orbit-150,100-25
+PASS mandel2/coordinates-200,100
+PASS mandel2/point-colour-200,100
+PASS mandel2/binary32-orbit-200,100-1
+PASS mandel2/binary32-orbit-200,100-2
+PASS mandel2/binary32-orbit-200,100-3
+PASS mandel2/binary32-orbit-200,100-4
+PASS mandel2/lazy-corner-short-circuit
+PASS mandel2/strict-corners-eager
+PASS mandel2/lazy-shared-colour-one
+PASS mandel2/single-point-no-unused-corners
+PASS mandel2/zero-height-source-outward-scan
+PASS mandel2/right-whnf-before-left-and-memoized
+PASS mandel2/strict-right-complete-before-left
+PASS mandel2/complete-lazy-tree-1
+PASS mandel2/complete-strict-tree-1
+PASS mandel2/complete-lazy-tree-2
+PASS mandel2/complete-strict-tree-2
+PASS mandel2/complete-lazy-tree-3
+PASS mandel2/complete-strict-tree-3
+PASS mandel2/complete-lazy-tree-8
+PASS mandel2/complete-strict-tree-8
+PASS mandel2/complete-lazy-tree-16
+PASS mandel2/complete-strict-tree-16
+PASS mandel2/complete-lazy-tree-64
+PASS mandel2/complete-strict-tree-64
+PASS mandel2/complete-lazy-tree-200
+PASS mandel2/complete-strict-tree-200
+PASS mandel2/wrong-colour-rejected
+PASS mandel2/truncated-tree-rejected
+PASS mandel2/extra-tree-rejected
+PASS mandel2/wrong-branch-rejected
+SUMMARY 132 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 1048576 KiB
+PASS mandel2/coordinates-0,0
+PASS mandel2/point-colour-0,0
+PASS mandel2/binary32-orbit-0,0-1
+PASS mandel2/binary32-orbit-0,0-2
+PASS mandel2/coordinates-1,1
+PASS mandel2/point-colour-1,1
+PASS mandel2/binary32-orbit-1,1-1
+PASS mandel2/binary32-orbit-1,1-2
+PASS mandel2/coordinates-50,25
+PASS mandel2/point-colour-50,25
+PASS mandel2/binary32-orbit-50,25-1
+PASS mandel2/binary32-orbit-50,25-2
+PASS mandel2/binary32-orbit-50,25-3
+PASS mandel2/coordinates-100,50
+PASS mandel2/point-colour-100,50
+PASS mandel2/binary32-orbit-100,50-1
+PASS mandel2/binary32-orbit-100,50-2
+PASS mandel2/binary32-orbit-100,50-3
+PASS mandel2/binary32-orbit-100,50-4
+PASS mandel2/binary32-orbit-100,50-5
+PASS mandel2/coordinates-149,99
+PASS mandel2/point-colour-149,99
+PASS mandel2/binary32-orbit-149,99-1
+PASS mandel2/binary32-orbit-149,99-2
+PASS mandel2/binary32-orbit-149,99-3
+PASS mandel2/binary32-orbit-149,99-4
+PASS mandel2/binary32-orbit-149,99-5
+PASS mandel2/binary32-orbit-149,99-6
+PASS mandel2/binary32-orbit-149,99-7
+PASS mandel2/binary32-orbit-149,99-8
+PASS mandel2/binary32-orbit-149,99-9
+PASS mandel2/binary32-orbit-149,99-10
+PASS mandel2/binary32-orbit-149,99-11
+PASS mandel2/binary32-orbit-149,99-12
+PASS mandel2/binary32-orbit-149,99-13
+PASS mandel2/binary32-orbit-149,99-14
+PASS mandel2/binary32-orbit-149,99-15
+PASS mandel2/binary32-orbit-149,99-16
+PASS mandel2/binary32-orbit-149,99-17
+PASS mandel2/binary32-orbit-149,99-18
+PASS mandel2/binary32-orbit-149,99-19
+PASS mandel2/binary32-orbit-149,99-20
+PASS mandel2/binary32-orbit-149,99-21
+PASS mandel2/binary32-orbit-149,99-22
+PASS mandel2/binary32-orbit-149,99-23
+PASS mandel2/binary32-orbit-149,99-24
+PASS mandel2/binary32-orbit-149,99-25
+PASS mandel2/coordinates-150,99
+PASS mandel2/point-colour-150,99
+PASS mandel2/binary32-orbit-150,99-1
+PASS mandel2/binary32-orbit-150,99-2
+PASS mandel2/binary32-orbit-150,99-3
+PASS mandel2/binary32-orbit-150,99-4
+PASS mandel2/binary32-orbit-150,99-5
+PASS mandel2/binary32-orbit-150,99-6
+PASS mandel2/binary32-orbit-150,99-7
+PASS mandel2/binary32-orbit-150,99-8
+PASS mandel2/binary32-orbit-150,99-9
+PASS mandel2/binary32-orbit-150,99-10
+PASS mandel2/binary32-orbit-150,99-11
+PASS mandel2/binary32-orbit-150,99-12
+PASS mandel2/binary32-orbit-150,99-13
+PASS mandel2/binary32-orbit-150,99-14
+PASS mandel2/binary32-orbit-150,99-15
+PASS mandel2/binary32-orbit-150,99-16
+PASS mandel2/binary32-orbit-150,99-17
+PASS mandel2/binary32-orbit-150,99-18
+PASS mandel2/binary32-orbit-150,99-19
+PASS mandel2/binary32-orbit-150,99-20
+PASS mandel2/binary32-orbit-150,99-21
+PASS mandel2/binary32-orbit-150,99-22
+PASS mandel2/binary32-orbit-150,99-23
+PASS mandel2/binary32-orbit-150,99-24
+PASS mandel2/binary32-orbit-150,99-25
+PASS mandel2/coordinates-150,100
+PASS mandel2/point-colour-150,100
+PASS mandel2/binary32-orbit-150,100-1
+PASS mandel2/binary32-orbit-150,100-2
+PASS mandel2/binary32-orbit-150,100-3
+PASS mandel2/binary32-orbit-150,100-4
+PASS mandel2/binary32-orbit-150,100-5
+PASS mandel2/binary32-orbit-150,100-6
+PASS mandel2/binary32-orbit-150,100-7
+PASS mandel2/binary32-orbit-150,100-8
+PASS mandel2/binary32-orbit-150,100-9
+PASS mandel2/binary32-orbit-150,100-10
+PASS mandel2/binary32-orbit-150,100-11
+PASS mandel2/binary32-orbit-150,100-12
+PASS mandel2/binary32-orbit-150,100-13
+PASS mandel2/binary32-orbit-150,100-14
+PASS mandel2/binary32-orbit-150,100-15
+PASS mandel2/binary32-orbit-150,100-16
+PASS mandel2/binary32-orbit-150,100-17
+PASS mandel2/binary32-orbit-150,100-18
+PASS mandel2/binary32-orbit-150,100-19
+PASS mandel2/binary32-orbit-150,100-20
+PASS mandel2/binary32-orbit-150,100-21
+PASS mandel2/binary32-orbit-150,100-22
+PASS mandel2/binary32-orbit-150,100-23
+PASS mandel2/binary32-orbit-150,100-24
+PASS mandel2/binary32-orbit-150,100-25
+PASS mandel2/coordinates-200,100
+PASS mandel2/point-colour-200,100
+PASS mandel2/binary32-orbit-200,100-1
+PASS mandel2/binary32-orbit-200,100-2
+PASS mandel2/binary32-orbit-200,100-3
+PASS mandel2/binary32-orbit-200,100-4
+PASS mandel2/lazy-corner-short-circuit
+PASS mandel2/strict-corners-eager
+PASS mandel2/lazy-shared-colour-one
+PASS mandel2/single-point-no-unused-corners
+PASS mandel2/zero-height-source-outward-scan
+PASS mandel2/right-whnf-before-left-and-memoized
+PASS mandel2/strict-right-complete-before-left
+PASS mandel2/complete-lazy-tree-1
+PASS mandel2/complete-strict-tree-1
+PASS mandel2/complete-lazy-tree-2
+PASS mandel2/complete-strict-tree-2
+PASS mandel2/complete-lazy-tree-3
+PASS mandel2/complete-strict-tree-3
+PASS mandel2/complete-lazy-tree-8
+PASS mandel2/complete-strict-tree-8
+PASS mandel2/complete-lazy-tree-16
+PASS mandel2/complete-strict-tree-16
+PASS mandel2/complete-lazy-tree-64
+PASS mandel2/complete-strict-tree-64
+PASS mandel2/complete-lazy-tree-200
+PASS mandel2/complete-strict-tree-200
+PASS mandel2/wrong-colour-rejected
+PASS mandel2/truncated-tree-rejected
+PASS mandel2/extra-tree-rejected
+PASS mandel2/wrong-branch-rejected
+SUMMARY 132 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/finite-binary32.sml]
+[autoloading]
+[autoloading done]
+structure BenchMandelSingle : sig
+  val round : real -> real
+  val add : real * real -> real
+  val sub : real * real -> real
+  val mul : real * real -> real
+  val divide : real * real -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mandel2-point.sml]
+structure BenchMandelTwoPoint : sig
+  structure F : <sig>
+  val deltaP : real
+  val deltaQ : real
+  val p : int -> real
+  val q : int -> real
+  val next : real * real * real * real -> real * real * real
+  val colour : int * int -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-mandel2.sml]
+functor BenchMandelTwoFn(<param>: sig
+  structure D : <sig>
+  structure P : <sig>
+end) :
+sig
+  type node
+  type tree
+  val perimeter : (int * int) * (int * int) -> int
+  val build : int * int -> int * int -> <BaseFct>.<resultStr>.node t
+  val write : int -> (string -> 'a) -> <BaseFct>.<resultStr>.node t -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mandel2-check.sml]
+[autoloading]
+[autoloading done]
+functor MandelTreeCheckFn(K: sig
+  type tree
+  val build : int * int -> int * int -> tree
+  val write : int -> (string -> unit) -> tree -> int
+end) :
+sig
+  val run : int -> string -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/mandel2-float-tests.sml]
+PASS mandel2/coordinates-0,0
+PASS mandel2/point-colour-0,0
+PASS mandel2/binary32-orbit-0,0-1
+PASS mandel2/binary32-orbit-0,0-2
+PASS mandel2/coordinates-1,1
+PASS mandel2/point-colour-1,1
+PASS mandel2/binary32-orbit-1,1-1
+PASS mandel2/binary32-orbit-1,1-2
+PASS mandel2/coordinates-50,25
+PASS mandel2/point-colour-50,25
+PASS mandel2/binary32-orbit-50,25-1
+PASS mandel2/binary32-orbit-50,25-2
+PASS mandel2/binary32-orbit-50,25-3
+PASS mandel2/coordinates-100,50
+PASS mandel2/point-colour-100,50
+PASS mandel2/binary32-orbit-100,50-1
+PASS mandel2/binary32-orbit-100,50-2
+PASS mandel2/binary32-orbit-100,50-3
+PASS mandel2/binary32-orbit-100,50-4
+PASS mandel2/binary32-orbit-100,50-5
+PASS mandel2/coordinates-149,99
+PASS mandel2/point-colour-149,99
+PASS mandel2/binary32-orbit-149,99-1
+PASS mandel2/binary32-orbit-149,99-2
+PASS mandel2/binary32-orbit-149,99-3
+PASS mandel2/binary32-orbit-149,99-4
+PASS mandel2/binary32-orbit-149,99-5
+PASS mandel2/binary32-orbit-149,99-6
+PASS mandel2/binary32-orbit-149,99-7
+PASS mandel2/binary32-orbit-149,99-8
+PASS mandel2/binary32-orbit-149,99-9
+PASS mandel2/binary32-orbit-149,99-10
+PASS mandel2/binary32-orbit-149,99-11
+PASS mandel2/binary32-orbit-149,99-12
+PASS mandel2/binary32-orbit-149,99-13
+PASS mandel2/binary32-orbit-149,99-14
+PASS mandel2/binary32-orbit-149,99-15
+PASS mandel2/binary32-orbit-149,99-16
+PASS mandel2/binary32-orbit-149,99-17
+PASS mandel2/binary32-orbit-149,99-18
+PASS mandel2/binary32-orbit-149,99-19
+PASS mandel2/binary32-orbit-149,99-20
+PASS mandel2/binary32-orbit-149,99-21
+PASS mandel2/binary32-orbit-149,99-22
+PASS mandel2/binary32-orbit-149,99-23
+PASS mandel2/binary32-orbit-149,99-24
+PASS mandel2/binary32-orbit-149,99-25
+PASS mandel2/coordinates-150,99
+PASS mandel2/point-colour-150,99
+PASS mandel2/binary32-orbit-150,99-1
+PASS mandel2/binary32-orbit-150,99-2
+PASS mandel2/binary32-orbit-150,99-3
+PASS mandel2/binary32-orbit-150,99-4
+PASS mandel2/binary32-orbit-150,99-5
+PASS mandel2/binary32-orbit-150,99-6
+PASS mandel2/binary32-orbit-150,99-7
+PASS mandel2/binary32-orbit-150,99-8
+PASS mandel2/binary32-orbit-150,99-9
+PASS mandel2/binary32-orbit-150,99-10
+PASS mandel2/binary32-orbit-150,99-11
+PASS mandel2/binary32-orbit-150,99-12
+PASS mandel2/binary32-orbit-150,99-13
+PASS mandel2/binary32-orbit-150,99-14
+PASS mandel2/binary32-orbit-150,99-15
+PASS mandel2/binary32-orbit-150,99-16
+PASS mandel2/binary32-orbit-150,99-17
+PASS mandel2/binary32-orbit-150,99-18
+PASS mandel2/binary32-orbit-150,99-19
+PASS mandel2/binary32-orbit-150,99-20
+PASS mandel2/binary32-orbit-150,99-21
+PASS mandel2/binary32-orbit-150,99-22
+PASS mandel2/binary32-orbit-150,99-23
+PASS mandel2/binary32-orbit-150,99-24
+PASS mandel2/binary32-orbit-150,99-25
+PASS mandel2/coordinates-150,100
+PASS mandel2/point-colour-150,100
+PASS mandel2/binary32-orbit-150,100-1
+PASS mandel2/binary32-orbit-150,100-2
+PASS mandel2/binary32-orbit-150,100-3
+PASS mandel2/binary32-orbit-150,100-4
+PASS mandel2/binary32-orbit-150,100-5
+PASS mandel2/binary32-orbit-150,100-6
+PASS mandel2/binary32-orbit-150,100-7
+PASS mandel2/binary32-orbit-150,100-8
+PASS mandel2/binary32-orbit-150,100-9
+PASS mandel2/binary32-orbit-150,100-10
+PASS mandel2/binary32-orbit-150,100-11
+PASS mandel2/binary32-orbit-150,100-12
+PASS mandel2/binary32-orbit-150,100-13
+PASS mandel2/binary32-orbit-150,100-14
+PASS mandel2/binary32-orbit-150,100-15
+PASS mandel2/binary32-orbit-150,100-16
+PASS mandel2/binary32-orbit-150,100-17
+PASS mandel2/binary32-orbit-150,100-18
+PASS mandel2/binary32-orbit-150,100-19
+PASS mandel2/binary32-orbit-150,100-20
+PASS mandel2/binary32-orbit-150,100-21
+PASS mandel2/binary32-orbit-150,100-22
+PASS mandel2/binary32-orbit-150,100-23
+PASS mandel2/binary32-orbit-150,100-24
+PASS mandel2/binary32-orbit-150,100-25
+PASS mandel2/coordinates-200,100
+PASS mandel2/point-colour-200,100
+PASS mandel2/binary32-orbit-200,100-1
+PASS mandel2/binary32-orbit-200,100-2
+PASS mandel2/binary32-orbit-200,100-3
+PASS mandel2/binary32-orbit-200,100-4
+structure MandelFloatTests : sig
+  structure W : <sig>
+  structure P : <sig>
+  val decode : string -> real
+  val same : real * string -> bool
+  val current : (real * real * real * real) ref
+  val label : string ref
+  val number : string -> int
+  val row : string -> unit
+  val input : TextIO.instream
+  val text : TextIO.vector
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/mandel2-demand-tests.sml]
+PASS mandel2/lazy-corner-short-circuit
+PASS mandel2/strict-corners-eager
+PASS mandel2/lazy-shared-colour-one
+PASS mandel2/single-point-no-unused-corners
+PASS mandel2/zero-height-source-outward-scan
+PASS mandel2/right-whnf-before-left-and-memoized
+PASS mandel2/strict-right-complete-before-left
+structure MandelDemandPoint : sig
+  val calls : (int * int) list ref
+  val mode : int ref
+  val colour : int * int -> int
+  val reset : int -> unit
+  val trace : unit -> (int * int) list
+end
+structure DemandNeed : sig
+  datatype node
+    = EW of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+    | Leaf of int
+    | NS of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+  type tree = node BenchNeed.t
+  val perimeter : (int * int) * (int * int) -> int
+  val build : int * int -> int * int -> <BaseFct>.<resultStr>.node t
+  val write : int -> (string -> 'a) -> <BaseFct>.<resultStr>.node t -> int
+end
+structure DemandStrict : sig
+  datatype node
+    = EW of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+    | Leaf of int
+    | NS of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+  type tree = node BenchStrict.t
+  val perimeter : (int * int) * (int * int) -> int
+  val build : int * int -> int * int -> <BaseFct>.<resultStr>.node t
+  val write : int -> (string -> 'a) -> <BaseFct>.<resultStr>.node t -> int
+end
+structure MandelDemandTests : sig
+  structure P : <sig>
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/mandel2-tree-tests.sml]
+PASS mandel2/complete-lazy-tree-1
+PASS mandel2/complete-strict-tree-1
+PASS mandel2/complete-lazy-tree-2
+PASS mandel2/complete-strict-tree-2
+PASS mandel2/complete-lazy-tree-3
+PASS mandel2/complete-strict-tree-3
+PASS mandel2/complete-lazy-tree-8
+PASS mandel2/complete-strict-tree-8
+FAIL mandel2/complete-lazy-tree-16 -- raised an exception
+PASS mandel2/complete-strict-tree-16
+PASS mandel2/complete-lazy-tree-64
+PASS mandel2/complete-strict-tree-64
+FAIL mandel2/complete-lazy-tree-200 -- raised an exception
+FAIL mandel2/complete-strict-tree-200 -- raised an exception
+PASS mandel2/wrong-colour-rejected
+PASS mandel2/truncated-tree-rejected
+PASS mandel2/extra-tree-rejected
+PASS mandel2/wrong-branch-rejected
+structure MandelTwoNeed : sig
+  datatype node
+    = EW of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+    | Leaf of int
+    | NS of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+  type tree = node BenchNeed.t
+  val perimeter : (int * int) * (int * int) -> int
+  val build : int * int -> int * int -> <BaseFct>.<resultStr>.node t
+  val write : int -> (string -> 'a) -> <BaseFct>.<resultStr>.node t -> int
+end
+structure MandelTwoStrict : sig
+  datatype node
+    = EW of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+    | Leaf of int
+    | NS of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+  type tree = node BenchStrict.t
+  val perimeter : (int * int) * (int * int) -> int
+  val build : int * int -> int * int -> <BaseFct>.<resultStr>.node t
+  val write : int -> (string -> 'a) -> <BaseFct>.<resultStr>.node t -> int
+end
+structure MandelTwoNeedCheck : sig
+  val run : int -> string -> int
+end
+structure MandelTwoStrictCheck : sig
+  val run : int -> string -> int
+end
+structure MandelTwoTreeTests : sig
+  val expected : (int * int) list
+  val rejects : string -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 132 checks, 3 failed
+PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 0, exit 1)
+FAIL mandel2/complete-lazy-tree-16 -- raised an exception
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/finite-binary32.sml]
+[autoloading]
+[autoloading done]
+structure BenchMandelSingle : sig
+  val round : real -> real
+  val add : real * real -> real
+  val sub : real * real -> real
+  val mul : real * real -> real
+  val divide : real * real -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mandel2-point.sml]
+structure BenchMandelTwoPoint : sig
+  structure F : <sig>
+  val deltaP : real
+  val deltaQ : real
+  val p : int -> real
+  val q : int -> real
+  val next : real * real * real * real -> real * real * real
+  val colour : int * int -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-mandel2.sml]
+functor BenchMandelTwoFn(<param>: sig
+  structure D : <sig>
+  structure P : <sig>
+end) :
+sig
+  type node
+  type tree
+  val perimeter : (int * int) * (int * int) -> int
+  val build : int * int -> int * int -> <BaseFct>.<resultStr>.node t
+  val write : int -> (string -> 'a) -> <BaseFct>.<resultStr>.node t -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mandel2-check.sml]
+[autoloading]
+[autoloading done]
+functor MandelTreeCheckFn(K: sig
+  type tree
+  val build : int * int -> int * int -> tree
+  val write : int -> (string -> unit) -> tree -> int
+end) :
+sig
+  val run : int -> string -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/mandel2-float-tests.sml]
+PASS mandel2/coordinates-0,0
+PASS mandel2/point-colour-0,0
+PASS mandel2/binary32-orbit-0,0-1
+PASS mandel2/binary32-orbit-0,0-2
+PASS mandel2/coordinates-1,1
+PASS mandel2/point-colour-1,1
+PASS mandel2/binary32-orbit-1,1-1
+PASS mandel2/binary32-orbit-1,1-2
+PASS mandel2/coordinates-50,25
+PASS mandel2/point-colour-50,25
+PASS mandel2/binary32-orbit-50,25-1
+PASS mandel2/binary32-orbit-50,25-2
+PASS mandel2/binary32-orbit-50,25-3
+PASS mandel2/coordinates-100,50
+PASS mandel2/point-colour-100,50
+PASS mandel2/binary32-orbit-100,50-1
+PASS mandel2/binary32-orbit-100,50-2
+PASS mandel2/binary32-orbit-100,50-3
+PASS mandel2/binary32-orbit-100,50-4
+PASS mandel2/binary32-orbit-100,50-5
+PASS mandel2/coordinates-149,99
+PASS mandel2/point-colour-149,99
+PASS mandel2/binary32-orbit-149,99-1
+PASS mandel2/binary32-orbit-149,99-2
+PASS mandel2/binary32-orbit-149,99-3
+PASS mandel2/binary32-orbit-149,99-4
+PASS mandel2/binary32-orbit-149,99-5
+PASS mandel2/binary32-orbit-149,99-6
+PASS mandel2/binary32-orbit-149,99-7
+PASS mandel2/binary32-orbit-149,99-8
+PASS mandel2/binary32-orbit-149,99-9
+PASS mandel2/binary32-orbit-149,99-10
+PASS mandel2/binary32-orbit-149,99-11
+PASS mandel2/binary32-orbit-149,99-12
+PASS mandel2/binary32-orbit-149,99-13
+PASS mandel2/binary32-orbit-149,99-14
+PASS mandel2/binary32-orbit-149,99-15
+PASS mandel2/binary32-orbit-149,99-16
+PASS mandel2/binary32-orbit-149,99-17
+PASS mandel2/binary32-orbit-149,99-18
+PASS mandel2/binary32-orbit-149,99-19
+PASS mandel2/binary32-orbit-149,99-20
+PASS mandel2/binary32-orbit-149,99-21
+PASS mandel2/binary32-orbit-149,99-22
+PASS mandel2/binary32-orbit-149,99-23
+PASS mandel2/binary32-orbit-149,99-24
+PASS mandel2/binary32-orbit-149,99-25
+PASS mandel2/coordinates-150,99
+PASS mandel2/point-colour-150,99
+PASS mandel2/binary32-orbit-150,99-1
+PASS mandel2/binary32-orbit-150,99-2
+PASS mandel2/binary32-orbit-150,99-3
+PASS mandel2/binary32-orbit-150,99-4
+PASS mandel2/binary32-orbit-150,99-5
+PASS mandel2/binary32-orbit-150,99-6
+PASS mandel2/binary32-orbit-150,99-7
+PASS mandel2/binary32-orbit-150,99-8
+PASS mandel2/binary32-orbit-150,99-9
+PASS mandel2/binary32-orbit-150,99-10
+PASS mandel2/binary32-orbit-150,99-11
+PASS mandel2/binary32-orbit-150,99-12
+PASS mandel2/binary32-orbit-150,99-13
+PASS mandel2/binary32-orbit-150,99-14
+PASS mandel2/binary32-orbit-150,99-15
+PASS mandel2/binary32-orbit-150,99-16
+PASS mandel2/binary32-orbit-150,99-17
+PASS mandel2/binary32-orbit-150,99-18
+PASS mandel2/binary32-orbit-150,99-19
+PASS mandel2/binary32-orbit-150,99-20
+PASS mandel2/binary32-orbit-150,99-21
+PASS mandel2/binary32-orbit-150,99-22
+PASS mandel2/binary32-orbit-150,99-23
+PASS mandel2/binary32-orbit-150,99-24
+PASS mandel2/binary32-orbit-150,99-25
+PASS mandel2/coordinates-150,100
+PASS mandel2/point-colour-150,100
+PASS mandel2/binary32-orbit-150,100-1
+PASS mandel2/binary32-orbit-150,100-2
+PASS mandel2/binary32-orbit-150,100-3
+PASS mandel2/binary32-orbit-150,100-4
+PASS mandel2/binary32-orbit-150,100-5
+PASS mandel2/binary32-orbit-150,100-6
+PASS mandel2/binary32-orbit-150,100-7
+PASS mandel2/binary32-orbit-150,100-8
+PASS mandel2/binary32-orbit-150,100-9
+PASS mandel2/binary32-orbit-150,100-10
+PASS mandel2/binary32-orbit-150,100-11
+PASS mandel2/binary32-orbit-150,100-12
+PASS mandel2/binary32-orbit-150,100-13
+PASS mandel2/binary32-orbit-150,100-14
+PASS mandel2/binary32-orbit-150,100-15
+PASS mandel2/binary32-orbit-150,100-16
+PASS mandel2/binary32-orbit-150,100-17
+PASS mandel2/binary32-orbit-150,100-18
+PASS mandel2/binary32-orbit-150,100-19
+PASS mandel2/binary32-orbit-150,100-20
+PASS mandel2/binary32-orbit-150,100-21
+PASS mandel2/binary32-orbit-150,100-22
+PASS mandel2/binary32-orbit-150,100-23
+PASS mandel2/binary32-orbit-150,100-24
+PASS mandel2/binary32-orbit-150,100-25
+PASS mandel2/coordinates-200,100
+PASS mandel2/point-colour-200,100
+PASS mandel2/binary32-orbit-200,100-1
+PASS mandel2/binary32-orbit-200,100-2
+PASS mandel2/binary32-orbit-200,100-3
+PASS mandel2/binary32-orbit-200,100-4
+structure MandelFloatTests : sig
+  structure W : <sig>
+  structure P : <sig>
+  val decode : string -> real
+  val same : real * string -> bool
+  val current : (real * real * real * real) ref
+  val label : string ref
+  val number : string -> int
+  val row : string -> unit
+  val input : TextIO.instream
+  val text : TextIO.vector
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/mandel2-demand-tests.sml]
+PASS mandel2/lazy-corner-short-circuit
+PASS mandel2/strict-corners-eager
+PASS mandel2/lazy-shared-colour-one
+PASS mandel2/single-point-no-unused-corners
+PASS mandel2/zero-height-source-outward-scan
+PASS mandel2/right-whnf-before-left-and-memoized
+PASS mandel2/strict-right-complete-before-left
+structure MandelDemandPoint : sig
+  val calls : (int * int) list ref
+  val mode : int ref
+  val colour : int * int -> int
+  val reset : int -> unit
+  val trace : unit -> (int * int) list
+end
+structure DemandNeed : sig
+  datatype node
+    = EW of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+    | Leaf of int
+    | NS of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+  type tree = node BenchNeed.t
+  val perimeter : (int * int) * (int * int) -> int
+  val build : int * int -> int * int -> <BaseFct>.<resultStr>.node t
+  val write : int -> (string -> 'a) -> <BaseFct>.<resultStr>.node t -> int
+end
+structure DemandStrict : sig
+  datatype node
+    = EW of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+    | Leaf of int
+    | NS of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+  type tree = node BenchStrict.t
+  val perimeter : (int * int) * (int * int) -> int
+  val build : int * int -> int * int -> <BaseFct>.<resultStr>.node t
+  val write : int -> (string -> 'a) -> <BaseFct>.<resultStr>.node t -> int
+end
+structure MandelDemandTests : sig
+  structure P : <sig>
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/mandel2-tree-tests.sml]
+PASS mandel2/complete-lazy-tree-1
+PASS mandel2/complete-strict-tree-1
+PASS mandel2/complete-lazy-tree-2
+PASS mandel2/complete-strict-tree-2
+PASS mandel2/complete-lazy-tree-3
+PASS mandel2/complete-strict-tree-3
+PASS mandel2/complete-lazy-tree-8
+PASS mandel2/complete-strict-tree-8
+PASS mandel2/complete-lazy-tree-16
+PASS mandel2/complete-strict-tree-16
+PASS mandel2/complete-lazy-tree-64
+PASS mandel2/complete-strict-tree-64
+PASS mandel2/complete-lazy-tree-200
+PASS mandel2/complete-strict-tree-200
+PASS mandel2/wrong-colour-rejected
+PASS mandel2/truncated-tree-rejected
+PASS mandel2/extra-tree-rejected
+PASS mandel2/wrong-branch-rejected
+structure MandelTwoNeed : sig
+  datatype node
+    = EW of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+    | Leaf of int
+    | NS of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+  type tree = node BenchNeed.t
+  val perimeter : (int * int) * (int * int) -> int
+  val build : int * int -> int * int -> <BaseFct>.<resultStr>.node t
+  val write : int -> (string -> 'a) -> <BaseFct>.<resultStr>.node t -> int
+end
+structure MandelTwoStrict : sig
+  datatype node
+    = EW of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+    | Leaf of int
+    | NS of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+  type tree = node BenchStrict.t
+  val perimeter : (int * int) * (int * int) -> int
+  val build : int * int -> int * int -> <BaseFct>.<resultStr>.node t
+  val write : int -> (string -> 'a) -> <BaseFct>.<resultStr>.node t -> int
+end
+structure MandelTwoNeedCheck : sig
+  val run : int -> string -> int
+end
+structure MandelTwoStrictCheck : sig
+  val run : int -> string -> int
+end
+structure MandelTwoTreeTests : sig
+  val expected : (int * int) list
+  val rejects : string -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 132 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/finite-binary32.sml]
+structure BenchMandelSingle : 
+  sig
+    val round : real -> real
+    val add : real * real -> real
+    val sub : real * real -> real
+    val mul : real * real -> real
+    val divide : real * real -> real
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mandel2-point.sml]
+structure BenchMandelTwoPoint : 
+  sig
+    structure F : <sig>
+    val deltaP : real
+    val deltaQ : real
+    val p : int -> real
+    val q : int -> real
+    val next : real * real * real * real -> real * real * real
+    val colour : int * int -> int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-mandel2.sml]
+functor BenchMandelTwoFn(<param>: sig
+                            structure D : <sig>
+                            structure P : <sig>
+                          end) :
+                        
+                          sig
+                            type node
+                            type tree
+                            val perimeter : (int * int) * (int * int) -> int
+                            val build : int * int -> int * int -> node t
+                            val write : int -> (string -> 'a) -> node t -> int
+                          end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mandel2-check.sml]
+functor MandelTreeCheckFn(K: sig
+                             type tree
+                             val build : int * int -> int * int -> tree
+                             val write : int
+                                          -> (string -> unit) -> tree -> int
+                           end) :
+                         sig val run : int -> string -> int end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/mandel2-float-tests.sml]
+PASS mandel2/coordinates-0,0
+PASS mandel2/point-colour-0,0
+PASS mandel2/binary32-orbit-0,0-1
+PASS mandel2/binary32-orbit-0,0-2
+PASS mandel2/coordinates-1,1
+PASS mandel2/point-colour-1,1
+PASS mandel2/binary32-orbit-1,1-1
+PASS mandel2/binary32-orbit-1,1-2
+PASS mandel2/coordinates-50,25
+PASS mandel2/point-colour-50,25
+PASS mandel2/binary32-orbit-50,25-1
+PASS mandel2/binary32-orbit-50,25-2
+PASS mandel2/binary32-orbit-50,25-3
+PASS mandel2/coordinates-100,50
+PASS mandel2/point-colour-100,50
+PASS mandel2/binary32-orbit-100,50-1
+PASS mandel2/binary32-orbit-100,50-2
+PASS mandel2/binary32-orbit-100,50-3
+PASS mandel2/binary32-orbit-100,50-4
+PASS mandel2/binary32-orbit-100,50-5
+PASS mandel2/coordinates-149,99
+PASS mandel2/point-colour-149,99
+PASS mandel2/binary32-orbit-149,99-1
+PASS mandel2/binary32-orbit-149,99-2
+PASS mandel2/binary32-orbit-149,99-3
+PASS mandel2/binary32-orbit-149,99-4
+PASS mandel2/binary32-orbit-149,99-5
+PASS mandel2/binary32-orbit-149,99-6
+PASS mandel2/binary32-orbit-149,99-7
+PASS mandel2/binary32-orbit-149,99-8
+PASS mandel2/binary32-orbit-149,99-9
+PASS mandel2/binary32-orbit-149,99-10
+PASS mandel2/binary32-orbit-149,99-11
+PASS mandel2/binary32-orbit-149,99-12
+PASS mandel2/binary32-orbit-149,99-13
+PASS mandel2/binary32-orbit-149,99-14
+PASS mandel2/binary32-orbit-149,99-15
+PASS mandel2/binary32-orbit-149,99-16
+PASS mandel2/binary32-orbit-149,99-17
+PASS mandel2/binary32-orbit-149,99-18
+PASS mandel2/binary32-orbit-149,99-19
+PASS mandel2/binary32-orbit-149,99-20
+PASS mandel2/binary32-orbit-149,99-21
+PASS mandel2/binary32-orbit-149,99-22
+PASS mandel2/binary32-orbit-149,99-23
+PASS mandel2/binary32-orbit-149,99-24
+PASS mandel2/binary32-orbit-149,99-25
+PASS mandel2/coordinates-150,99
+PASS mandel2/point-colour-150,99
+PASS mandel2/binary32-orbit-150,99-1
+PASS mandel2/binary32-orbit-150,99-2
+PASS mandel2/binary32-orbit-150,99-3
+PASS mandel2/binary32-orbit-150,99-4
+PASS mandel2/binary32-orbit-150,99-5
+PASS mandel2/binary32-orbit-150,99-6
+PASS mandel2/binary32-orbit-150,99-7
+PASS mandel2/binary32-orbit-150,99-8
+PASS mandel2/binary32-orbit-150,99-9
+PASS mandel2/binary32-orbit-150,99-10
+PASS mandel2/binary32-orbit-150,99-11
+PASS mandel2/binary32-orbit-150,99-12
+PASS mandel2/binary32-orbit-150,99-13
+PASS mandel2/binary32-orbit-150,99-14
+PASS mandel2/binary32-orbit-150,99-15
+PASS mandel2/binary32-orbit-150,99-16
+PASS mandel2/binary32-orbit-150,99-17
+PASS mandel2/binary32-orbit-150,99-18
+PASS mandel2/binary32-orbit-150,99-19
+PASS mandel2/binary32-orbit-150,99-20
+PASS mandel2/binary32-orbit-150,99-21
+PASS mandel2/binary32-orbit-150,99-22
+PASS mandel2/binary32-orbit-150,99-23
+PASS mandel2/binary32-orbit-150,99-24
+PASS mandel2/binary32-orbit-150,99-25
+PASS mandel2/coordinates-150,100
+PASS mandel2/point-colour-150,100
+PASS mandel2/binary32-orbit-150,100-1
+PASS mandel2/binary32-orbit-150,100-2
+PASS mandel2/binary32-orbit-150,100-3
+PASS mandel2/binary32-orbit-150,100-4
+PASS mandel2/binary32-orbit-150,100-5
+PASS mandel2/binary32-orbit-150,100-6
+PASS mandel2/binary32-orbit-150,100-7
+PASS mandel2/binary32-orbit-150,100-8
+PASS mandel2/binary32-orbit-150,100-9
+PASS mandel2/binary32-orbit-150,100-10
+PASS mandel2/binary32-orbit-150,100-11
+PASS mandel2/binary32-orbit-150,100-12
+PASS mandel2/binary32-orbit-150,100-13
+PASS mandel2/binary32-orbit-150,100-14
+PASS mandel2/binary32-orbit-150,100-15
+PASS mandel2/binary32-orbit-150,100-16
+PASS mandel2/binary32-orbit-150,100-17
+PASS mandel2/binary32-orbit-150,100-18
+PASS mandel2/binary32-orbit-150,100-19
+PASS mandel2/binary32-orbit-150,100-20
+PASS mandel2/binary32-orbit-150,100-21
+PASS mandel2/binary32-orbit-150,100-22
+PASS mandel2/binary32-orbit-150,100-23
+PASS mandel2/binary32-orbit-150,100-24
+PASS mandel2/binary32-orbit-150,100-25
+PASS mandel2/coordinates-200,100
+PASS mandel2/point-colour-200,100
+PASS mandel2/binary32-orbit-200,100-1
+PASS mandel2/binary32-orbit-200,100-2
+PASS mandel2/binary32-orbit-200,100-3
+PASS mandel2/binary32-orbit-200,100-4
+structure MandelFloatTests : 
+  sig
+    structure W : <sig>
+    structure P : <sig>
+    val decode : string -> real
+    val same : real * string -> bool
+    val current : (real * real * real * real) ref
+    val label : string ref
+    val number : string -> int
+    val row : string -> unit
+    val input : TextIO.instream
+    val text : TextIO.vector
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/mandel2-demand-tests.sml]
+PASS mandel2/lazy-corner-short-circuit
+PASS mandel2/strict-corners-eager
+PASS mandel2/lazy-shared-colour-one
+PASS mandel2/single-point-no-unused-corners
+PASS mandel2/zero-height-source-outward-scan
+PASS mandel2/right-whnf-before-left-and-memoized
+PASS mandel2/strict-right-complete-before-left
+structure MandelDemandPoint : 
+  sig
+    val calls : (int * int) list ref
+    val mode : int ref
+    val colour : int * int -> int
+    val reset : int -> unit
+    val trace : unit -> (int * int) list
+  end
+structure DemandNeed : 
+  sig
+    datatype node
+      = EW of node t * node t | Leaf of int | NS of node t * node t
+    type tree = node BenchNeed.t
+    val perimeter : (int * int) * (int * int) -> int
+    val build : int * int -> int * int -> node t
+    val write : int -> (string -> 'a) -> node t -> int
+  end
+structure DemandStrict : 
+  sig
+    datatype node
+      = EW of node t * node t | Leaf of int | NS of node t * node t
+    type tree = node BenchStrict.t
+    val perimeter : (int * int) * (int * int) -> int
+    val build : int * int -> int * int -> node t
+    val write : int -> (string -> 'a) -> node t -> int
+  end
+structure MandelDemandTests : 
+  sig
+    structure P : <sig>
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/mandel2-tree-tests.sml]
+PASS mandel2/complete-lazy-tree-1
+PASS mandel2/complete-strict-tree-1
+PASS mandel2/complete-lazy-tree-2
+PASS mandel2/complete-strict-tree-2
+PASS mandel2/complete-lazy-tree-3
+PASS mandel2/complete-strict-tree-3
+PASS mandel2/complete-lazy-tree-8
+PASS mandel2/complete-strict-tree-8
+PASS mandel2/complete-lazy-tree-16
+PASS mandel2/complete-strict-tree-16
+PASS mandel2/complete-lazy-tree-64
+PASS mandel2/complete-strict-tree-64
+PASS mandel2/complete-lazy-tree-200
+PASS mandel2/complete-strict-tree-200
+PASS mandel2/wrong-colour-rejected
+PASS mandel2/truncated-tree-rejected
+PASS mandel2/extra-tree-rejected
+PASS mandel2/wrong-branch-rejected
+structure MandelTwoNeed : 
+  sig
+    datatype node
+      = EW of node t * node t | Leaf of int | NS of node t * node t
+    type tree = node BenchNeed.t
+    val perimeter : (int * int) * (int * int) -> int
+    val build : int * int -> int * int -> node t
+    val write : int -> (string -> 'a) -> node t -> int
+  end
+structure MandelTwoStrict : 
+  sig
+    datatype node
+      = EW of node t * node t | Leaf of int | NS of node t * node t
+    type tree = node BenchStrict.t
+    val perimeter : (int * int) * (int * int) -> int
+    val build : int * int -> int * int -> node t
+    val write : int -> (string -> 'a) -> node t -> int
+  end
+structure MandelTwoNeedCheck : sig val run : int -> string -> int end
+structure MandelTwoStrictCheck : sig val run : int -> string -> int end
+structure MandelTwoTreeTests : 
+  sig
+    val expected : (int * int) list
+    val rejects : string -> bool
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 132 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS mandel2/coordinates-0,0
+PASS mandel2/point-colour-0,0
+PASS mandel2/binary32-orbit-0,0-1
+PASS mandel2/binary32-orbit-0,0-2
+PASS mandel2/coordinates-1,1
+PASS mandel2/point-colour-1,1
+PASS mandel2/binary32-orbit-1,1-1
+PASS mandel2/binary32-orbit-1,1-2
+PASS mandel2/coordinates-50,25
+PASS mandel2/point-colour-50,25
+PASS mandel2/binary32-orbit-50,25-1
+PASS mandel2/binary32-orbit-50,25-2
+PASS mandel2/binary32-orbit-50,25-3
+PASS mandel2/coordinates-100,50
+PASS mandel2/point-colour-100,50
+PASS mandel2/binary32-orbit-100,50-1
+PASS mandel2/binary32-orbit-100,50-2
+PASS mandel2/binary32-orbit-100,50-3
+PASS mandel2/binary32-orbit-100,50-4
+PASS mandel2/binary32-orbit-100,50-5
+PASS mandel2/coordinates-149,99
+PASS mandel2/point-colour-149,99
+PASS mandel2/binary32-orbit-149,99-1
+PASS mandel2/binary32-orbit-149,99-2
+PASS mandel2/binary32-orbit-149,99-3
+PASS mandel2/binary32-orbit-149,99-4
+PASS mandel2/binary32-orbit-149,99-5
+PASS mandel2/binary32-orbit-149,99-6
+PASS mandel2/binary32-orbit-149,99-7
+PASS mandel2/binary32-orbit-149,99-8
+PASS mandel2/binary32-orbit-149,99-9
+PASS mandel2/binary32-orbit-149,99-10
+PASS mandel2/binary32-orbit-149,99-11
+PASS mandel2/binary32-orbit-149,99-12
+PASS mandel2/binary32-orbit-149,99-13
+PASS mandel2/binary32-orbit-149,99-14
+PASS mandel2/binary32-orbit-149,99-15
+PASS mandel2/binary32-orbit-149,99-16
+PASS mandel2/binary32-orbit-149,99-17
+PASS mandel2/binary32-orbit-149,99-18
+PASS mandel2/binary32-orbit-149,99-19
+PASS mandel2/binary32-orbit-149,99-20
+PASS mandel2/binary32-orbit-149,99-21
+PASS mandel2/binary32-orbit-149,99-22
+PASS mandel2/binary32-orbit-149,99-23
+PASS mandel2/binary32-orbit-149,99-24
+PASS mandel2/binary32-orbit-149,99-25
+PASS mandel2/coordinates-150,99
+PASS mandel2/point-colour-150,99
+PASS mandel2/binary32-orbit-150,99-1
+PASS mandel2/binary32-orbit-150,99-2
+PASS mandel2/binary32-orbit-150,99-3
+PASS mandel2/binary32-orbit-150,99-4
+PASS mandel2/binary32-orbit-150,99-5
+PASS mandel2/binary32-orbit-150,99-6
+PASS mandel2/binary32-orbit-150,99-7
+PASS mandel2/binary32-orbit-150,99-8
+PASS mandel2/binary32-orbit-150,99-9
+PASS mandel2/binary32-orbit-150,99-10
+PASS mandel2/binary32-orbit-150,99-11
+PASS mandel2/binary32-orbit-150,99-12
+PASS mandel2/binary32-orbit-150,99-13
+PASS mandel2/binary32-orbit-150,99-14
+PASS mandel2/binary32-orbit-150,99-15
+PASS mandel2/binary32-orbit-150,99-16
+PASS mandel2/binary32-orbit-150,99-17
+PASS mandel2/binary32-orbit-150,99-18
+PASS mandel2/binary32-orbit-150,99-19
+PASS mandel2/binary32-orbit-150,99-20
+PASS mandel2/binary32-orbit-150,99-21
+PASS mandel2/binary32-orbit-150,99-22
+PASS mandel2/binary32-orbit-150,99-23
+PASS mandel2/binary32-orbit-150,99-24
+PASS mandel2/binary32-orbit-150,99-25
+PASS mandel2/coordinates-150,100
+PASS mandel2/point-colour-150,100
+PASS mandel2/binary32-orbit-150,100-1
+PASS mandel2/binary32-orbit-150,100-2
+PASS mandel2/binary32-orbit-150,100-3
+PASS mandel2/binary32-orbit-150,100-4
+PASS mandel2/binary32-orbit-150,100-5
+PASS mandel2/binary32-orbit-150,100-6
+PASS mandel2/binary32-orbit-150,100-7
+PASS mandel2/binary32-orbit-150,100-8
+PASS mandel2/binary32-orbit-150,100-9
+PASS mandel2/binary32-orbit-150,100-10
+PASS mandel2/binary32-orbit-150,100-11
+PASS mandel2/binary32-orbit-150,100-12
+PASS mandel2/binary32-orbit-150,100-13
+PASS mandel2/binary32-orbit-150,100-14
+PASS mandel2/binary32-orbit-150,100-15
+PASS mandel2/binary32-orbit-150,100-16
+PASS mandel2/binary32-orbit-150,100-17
+PASS mandel2/binary32-orbit-150,100-18
+PASS mandel2/binary32-orbit-150,100-19
+PASS mandel2/binary32-orbit-150,100-20
+PASS mandel2/binary32-orbit-150,100-21
+PASS mandel2/binary32-orbit-150,100-22
+PASS mandel2/binary32-orbit-150,100-23
+PASS mandel2/binary32-orbit-150,100-24
+PASS mandel2/binary32-orbit-150,100-25
+PASS mandel2/coordinates-200,100
+PASS mandel2/point-colour-200,100
+PASS mandel2/binary32-orbit-200,100-1
+PASS mandel2/binary32-orbit-200,100-2
+PASS mandel2/binary32-orbit-200,100-3
+PASS mandel2/binary32-orbit-200,100-4
+PASS mandel2/lazy-corner-short-circuit
+PASS mandel2/strict-corners-eager
+PASS mandel2/lazy-shared-colour-one
+PASS mandel2/single-point-no-unused-corners
+PASS mandel2/zero-height-source-outward-scan
+PASS mandel2/right-whnf-before-left-and-memoized
+PASS mandel2/strict-right-complete-before-left
+PASS mandel2/complete-lazy-tree-1
+PASS mandel2/complete-strict-tree-1
+PASS mandel2/complete-lazy-tree-2
+PASS mandel2/complete-strict-tree-2
+PASS mandel2/complete-lazy-tree-3
+PASS mandel2/complete-strict-tree-3
+PASS mandel2/complete-lazy-tree-8
+PASS mandel2/complete-strict-tree-8
+PASS mandel2/complete-lazy-tree-16
+PASS mandel2/complete-strict-tree-16
+PASS mandel2/complete-lazy-tree-64
+PASS mandel2/complete-strict-tree-64
+PASS mandel2/complete-lazy-tree-200
+PASS mandel2/complete-strict-tree-200
+PASS mandel2/wrong-colour-rejected
+PASS mandel2/truncated-tree-rejected
+PASS mandel2/extra-tree-rejected
+PASS mandel2/wrong-branch-rejected
+SUMMARY 132 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PASS mandel2/coordinates-0,0
+PASS mandel2/point-colour-0,0
+PASS mandel2/binary32-orbit-0,0-1
+PASS mandel2/binary32-orbit-0,0-2
+PASS mandel2/coordinates-1,1
+PASS mandel2/point-colour-1,1
+PASS mandel2/binary32-orbit-1,1-1
+PASS mandel2/binary32-orbit-1,1-2
+PASS mandel2/coordinates-50,25
+PASS mandel2/point-colour-50,25
+PASS mandel2/binary32-orbit-50,25-1
+PASS mandel2/binary32-orbit-50,25-2
+PASS mandel2/binary32-orbit-50,25-3
+PASS mandel2/coordinates-100,50
+PASS mandel2/point-colour-100,50
+PASS mandel2/binary32-orbit-100,50-1
+PASS mandel2/binary32-orbit-100,50-2
+PASS mandel2/binary32-orbit-100,50-3
+PASS mandel2/binary32-orbit-100,50-4
+PASS mandel2/binary32-orbit-100,50-5
+PASS mandel2/coordinates-149,99
+PASS mandel2/point-colour-149,99
+PASS mandel2/binary32-orbit-149,99-1
+PASS mandel2/binary32-orbit-149,99-2
+PASS mandel2/binary32-orbit-149,99-3
+PASS mandel2/binary32-orbit-149,99-4
+PASS mandel2/binary32-orbit-149,99-5
+PASS mandel2/binary32-orbit-149,99-6
+PASS mandel2/binary32-orbit-149,99-7
+PASS mandel2/binary32-orbit-149,99-8
+PASS mandel2/binary32-orbit-149,99-9
+PASS mandel2/binary32-orbit-149,99-10
+PASS mandel2/binary32-orbit-149,99-11
+PASS mandel2/binary32-orbit-149,99-12
+PASS mandel2/binary32-orbit-149,99-13
+PASS mandel2/binary32-orbit-149,99-14
+PASS mandel2/binary32-orbit-149,99-15
+PASS mandel2/binary32-orbit-149,99-16
+PASS mandel2/binary32-orbit-149,99-17
+PASS mandel2/binary32-orbit-149,99-18
+PASS mandel2/binary32-orbit-149,99-19
+PASS mandel2/binary32-orbit-149,99-20
+PASS mandel2/binary32-orbit-149,99-21
+PASS mandel2/binary32-orbit-149,99-22
+PASS mandel2/binary32-orbit-149,99-23
+PASS mandel2/binary32-orbit-149,99-24
+PASS mandel2/binary32-orbit-149,99-25
+PASS mandel2/coordinates-150,99
+PASS mandel2/point-colour-150,99
+PASS mandel2/binary32-orbit-150,99-1
+PASS mandel2/binary32-orbit-150,99-2
+PASS mandel2/binary32-orbit-150,99-3
+PASS mandel2/binary32-orbit-150,99-4
+PASS mandel2/binary32-orbit-150,99-5
+PASS mandel2/binary32-orbit-150,99-6
+PASS mandel2/binary32-orbit-150,99-7
+PASS mandel2/binary32-orbit-150,99-8
+PASS mandel2/binary32-orbit-150,99-9
+PASS mandel2/binary32-orbit-150,99-10
+PASS mandel2/binary32-orbit-150,99-11
+PASS mandel2/binary32-orbit-150,99-12
+PASS mandel2/binary32-orbit-150,99-13
+PASS mandel2/binary32-orbit-150,99-14
+PASS mandel2/binary32-orbit-150,99-15
+PASS mandel2/binary32-orbit-150,99-16
+PASS mandel2/binary32-orbit-150,99-17
+PASS mandel2/binary32-orbit-150,99-18
+PASS mandel2/binary32-orbit-150,99-19
+PASS mandel2/binary32-orbit-150,99-20
+PASS mandel2/binary32-orbit-150,99-21
+PASS mandel2/binary32-orbit-150,99-22
+PASS mandel2/binary32-orbit-150,99-23
+PASS mandel2/binary32-orbit-150,99-24
+PASS mandel2/binary32-orbit-150,99-25
+PASS mandel2/coordinates-150,100
+PASS mandel2/point-colour-150,100
+PASS mandel2/binary32-orbit-150,100-1
+PASS mandel2/binary32-orbit-150,100-2
+PASS mandel2/binary32-orbit-150,100-3
+PASS mandel2/binary32-orbit-150,100-4
+PASS mandel2/binary32-orbit-150,100-5
+PASS mandel2/binary32-orbit-150,100-6
+PASS mandel2/binary32-orbit-150,100-7
+PASS mandel2/binary32-orbit-150,100-8
+PASS mandel2/binary32-orbit-150,100-9
+PASS mandel2/binary32-orbit-150,100-10
+PASS mandel2/binary32-orbit-150,100-11
+PASS mandel2/binary32-orbit-150,100-12
+PASS mandel2/binary32-orbit-150,100-13
+PASS mandel2/binary32-orbit-150,100-14
+PASS mandel2/binary32-orbit-150,100-15
+PASS mandel2/binary32-orbit-150,100-16
+PASS mandel2/binary32-orbit-150,100-17
+PASS mandel2/binary32-orbit-150,100-18
+PASS mandel2/binary32-orbit-150,100-19
+PASS mandel2/binary32-orbit-150,100-20
+PASS mandel2/binary32-orbit-150,100-21
+PASS mandel2/binary32-orbit-150,100-22
+PASS mandel2/binary32-orbit-150,100-23
+PASS mandel2/binary32-orbit-150,100-24
+PASS mandel2/binary32-orbit-150,100-25
+PASS mandel2/coordinates-200,100
+PASS mandel2/point-colour-200,100
+PASS mandel2/binary32-orbit-200,100-1
+PASS mandel2/binary32-orbit-200,100-2
+PASS mandel2/binary32-orbit-200,100-3
+PASS mandel2/binary32-orbit-200,100-4
+PASS mandel2/lazy-corner-short-circuit
+PASS mandel2/strict-corners-eager
+PASS mandel2/lazy-shared-colour-one
+PASS mandel2/single-point-no-unused-corners
+PASS mandel2/zero-height-source-outward-scan
+PASS mandel2/right-whnf-before-left-and-memoized
+PASS mandel2/strict-right-complete-before-left
+PASS mandel2/complete-lazy-tree-1
+PASS mandel2/complete-strict-tree-1
+PASS mandel2/complete-lazy-tree-2
+PASS mandel2/complete-strict-tree-2
+PASS mandel2/complete-lazy-tree-3
+PASS mandel2/complete-strict-tree-3
+PASS mandel2/complete-lazy-tree-8
+PASS mandel2/complete-strict-tree-8
+PASS mandel2/complete-lazy-tree-16
+PASS mandel2/complete-strict-tree-16
+PASS mandel2/complete-lazy-tree-64
+PASS mandel2/complete-strict-tree-64
+PASS mandel2/complete-lazy-tree-200
+PASS mandel2/complete-strict-tree-200
+PASS mandel2/wrong-colour-rejected
+PASS mandel2/truncated-tree-rejected
+PASS mandel2/extra-tree-rejected
+PASS mandel2/wrong-branch-rejected
+SUMMARY 132 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23
+PROGRAM LIMIT AS 1048576 KiB
+PASS mandel2/coordinates-0,0
+PASS mandel2/point-colour-0,0
+PASS mandel2/binary32-orbit-0,0-1
+PASS mandel2/binary32-orbit-0,0-2
+PASS mandel2/coordinates-1,1
+PASS mandel2/point-colour-1,1
+PASS mandel2/binary32-orbit-1,1-1
+PASS mandel2/binary32-orbit-1,1-2
+PASS mandel2/coordinates-50,25
+PASS mandel2/point-colour-50,25
+PASS mandel2/binary32-orbit-50,25-1
+PASS mandel2/binary32-orbit-50,25-2
+PASS mandel2/binary32-orbit-50,25-3
+PASS mandel2/coordinates-100,50
+PASS mandel2/point-colour-100,50
+PASS mandel2/binary32-orbit-100,50-1
+PASS mandel2/binary32-orbit-100,50-2
+PASS mandel2/binary32-orbit-100,50-3
+PASS mandel2/binary32-orbit-100,50-4
+PASS mandel2/binary32-orbit-100,50-5
+PASS mandel2/coordinates-149,99
+PASS mandel2/point-colour-149,99
+PASS mandel2/binary32-orbit-149,99-1
+PASS mandel2/binary32-orbit-149,99-2
+PASS mandel2/binary32-orbit-149,99-3
+PASS mandel2/binary32-orbit-149,99-4
+PASS mandel2/binary32-orbit-149,99-5
+PASS mandel2/binary32-orbit-149,99-6
+PASS mandel2/binary32-orbit-149,99-7
+PASS mandel2/binary32-orbit-149,99-8
+PASS mandel2/binary32-orbit-149,99-9
+PASS mandel2/binary32-orbit-149,99-10
+PASS mandel2/binary32-orbit-149,99-11
+PASS mandel2/binary32-orbit-149,99-12
+PASS mandel2/binary32-orbit-149,99-13
+PASS mandel2/binary32-orbit-149,99-14
+PASS mandel2/binary32-orbit-149,99-15
+PASS mandel2/binary32-orbit-149,99-16
+PASS mandel2/binary32-orbit-149,99-17
+PASS mandel2/binary32-orbit-149,99-18
+PASS mandel2/binary32-orbit-149,99-19
+PASS mandel2/binary32-orbit-149,99-20
+PASS mandel2/binary32-orbit-149,99-21
+PASS mandel2/binary32-orbit-149,99-22
+PASS mandel2/binary32-orbit-149,99-23
+PASS mandel2/binary32-orbit-149,99-24
+PASS mandel2/binary32-orbit-149,99-25
+PASS mandel2/coordinates-150,99
+PASS mandel2/point-colour-150,99
+PASS mandel2/binary32-orbit-150,99-1
+PASS mandel2/binary32-orbit-150,99-2
+PASS mandel2/binary32-orbit-150,99-3
+PASS mandel2/binary32-orbit-150,99-4
+PASS mandel2/binary32-orbit-150,99-5
+PASS mandel2/binary32-orbit-150,99-6
+PASS mandel2/binary32-orbit-150,99-7
+PASS mandel2/binary32-orbit-150,99-8
+PASS mandel2/binary32-orbit-150,99-9
+PASS mandel2/binary32-orbit-150,99-10
+PASS mandel2/binary32-orbit-150,99-11
+PASS mandel2/binary32-orbit-150,99-12
+PASS mandel2/binary32-orbit-150,99-13
+PASS mandel2/binary32-orbit-150,99-14
+PASS mandel2/binary32-orbit-150,99-15
+PASS mandel2/binary32-orbit-150,99-16
+PASS mandel2/binary32-orbit-150,99-17
+PASS mandel2/binary32-orbit-150,99-18
+PASS mandel2/binary32-orbit-150,99-19
+PASS mandel2/binary32-orbit-150,99-20
+PASS mandel2/binary32-orbit-150,99-21
+PASS mandel2/binary32-orbit-150,99-22
+PASS mandel2/binary32-orbit-150,99-23
+PASS mandel2/binary32-orbit-150,99-24
+PASS mandel2/binary32-orbit-150,99-25
+PASS mandel2/coordinates-150,100
+PASS mandel2/point-colour-150,100
+PASS mandel2/binary32-orbit-150,100-1
+PASS mandel2/binary32-orbit-150,100-2
+PASS mandel2/binary32-orbit-150,100-3
+PASS mandel2/binary32-orbit-150,100-4
+PASS mandel2/binary32-orbit-150,100-5
+PASS mandel2/binary32-orbit-150,100-6
+PASS mandel2/binary32-orbit-150,100-7
+PASS mandel2/binary32-orbit-150,100-8
+PASS mandel2/binary32-orbit-150,100-9
+PASS mandel2/binary32-orbit-150,100-10
+PASS mandel2/binary32-orbit-150,100-11
+PASS mandel2/binary32-orbit-150,100-12
+PASS mandel2/binary32-orbit-150,100-13
+PASS mandel2/binary32-orbit-150,100-14
+PASS mandel2/binary32-orbit-150,100-15
+PASS mandel2/binary32-orbit-150,100-16
+PASS mandel2/binary32-orbit-150,100-17
+PASS mandel2/binary32-orbit-150,100-18
+PASS mandel2/binary32-orbit-150,100-19
+PASS mandel2/binary32-orbit-150,100-20
+PASS mandel2/binary32-orbit-150,100-21
+PASS mandel2/binary32-orbit-150,100-22
+PASS mandel2/binary32-orbit-150,100-23
+PASS mandel2/binary32-orbit-150,100-24
+PASS mandel2/binary32-orbit-150,100-25
+PASS mandel2/coordinates-200,100
+PASS mandel2/point-colour-200,100
+PASS mandel2/binary32-orbit-200,100-1
+PASS mandel2/binary32-orbit-200,100-2
+PASS mandel2/binary32-orbit-200,100-3
+PASS mandel2/binary32-orbit-200,100-4
+PASS mandel2/lazy-corner-short-circuit
+PASS mandel2/strict-corners-eager
+PASS mandel2/lazy-shared-colour-one
+PASS mandel2/single-point-no-unused-corners
+PASS mandel2/zero-height-source-outward-scan
+PASS mandel2/right-whnf-before-left-and-memoized
+PASS mandel2/strict-right-complete-before-left
+PASS mandel2/complete-lazy-tree-1
+PASS mandel2/complete-strict-tree-1
+PASS mandel2/complete-lazy-tree-2
+PASS mandel2/complete-strict-tree-2
+PASS mandel2/complete-lazy-tree-3
+PASS mandel2/complete-strict-tree-3
+PASS mandel2/complete-lazy-tree-8
+PASS mandel2/complete-strict-tree-8
+PASS mandel2/complete-lazy-tree-16
+PASS mandel2/complete-strict-tree-16
+PASS mandel2/complete-lazy-tree-64
+PASS mandel2/complete-strict-tree-64
+PASS mandel2/complete-lazy-tree-200
+PASS mandel2/complete-strict-tree-200
+PASS mandel2/wrong-colour-rejected
+PASS mandel2/truncated-tree-rejected
+PASS mandel2/extra-tree-rejected
+PASS mandel2/wrong-branch-rejected
+SUMMARY 132 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+PASS mandel2/coordinates-0,0
+PASS mandel2/point-colour-0,0
+PASS mandel2/binary32-orbit-0,0-1
+PASS mandel2/binary32-orbit-0,0-2
+PASS mandel2/coordinates-1,1
+PASS mandel2/point-colour-1,1
+PASS mandel2/binary32-orbit-1,1-1
+PASS mandel2/binary32-orbit-1,1-2
+PASS mandel2/coordinates-50,25
+PASS mandel2/point-colour-50,25
+PASS mandel2/binary32-orbit-50,25-1
+PASS mandel2/binary32-orbit-50,25-2
+PASS mandel2/binary32-orbit-50,25-3
+PASS mandel2/coordinates-100,50
+PASS mandel2/point-colour-100,50
+PASS mandel2/binary32-orbit-100,50-1
+PASS mandel2/binary32-orbit-100,50-2
+PASS mandel2/binary32-orbit-100,50-3
+PASS mandel2/binary32-orbit-100,50-4
+PASS mandel2/binary32-orbit-100,50-5
+PASS mandel2/coordinates-149,99
+PASS mandel2/point-colour-149,99
+PASS mandel2/binary32-orbit-149,99-1
+PASS mandel2/binary32-orbit-149,99-2
+PASS mandel2/binary32-orbit-149,99-3
+PASS mandel2/binary32-orbit-149,99-4
+PASS mandel2/binary32-orbit-149,99-5
+PASS mandel2/binary32-orbit-149,99-6
+PASS mandel2/binary32-orbit-149,99-7
+PASS mandel2/binary32-orbit-149,99-8
+PASS mandel2/binary32-orbit-149,99-9
+PASS mandel2/binary32-orbit-149,99-10
+PASS mandel2/binary32-orbit-149,99-11
+PASS mandel2/binary32-orbit-149,99-12
+PASS mandel2/binary32-orbit-149,99-13
+PASS mandel2/binary32-orbit-149,99-14
+PASS mandel2/binary32-orbit-149,99-15
+PASS mandel2/binary32-orbit-149,99-16
+PASS mandel2/binary32-orbit-149,99-17
+PASS mandel2/binary32-orbit-149,99-18
+PASS mandel2/binary32-orbit-149,99-19
+PASS mandel2/binary32-orbit-149,99-20
+PASS mandel2/binary32-orbit-149,99-21
+PASS mandel2/binary32-orbit-149,99-22
+PASS mandel2/binary32-orbit-149,99-23
+PASS mandel2/binary32-orbit-149,99-24
+PASS mandel2/binary32-orbit-149,99-25
+PASS mandel2/coordinates-150,99
+PASS mandel2/point-colour-150,99
+PASS mandel2/binary32-orbit-150,99-1
+PASS mandel2/binary32-orbit-150,99-2
+PASS mandel2/binary32-orbit-150,99-3
+PASS mandel2/binary32-orbit-150,99-4
+PASS mandel2/binary32-orbit-150,99-5
+PASS mandel2/binary32-orbit-150,99-6
+PASS mandel2/binary32-orbit-150,99-7
+PASS mandel2/binary32-orbit-150,99-8
+PASS mandel2/binary32-orbit-150,99-9
+PASS mandel2/binary32-orbit-150,99-10
+PASS mandel2/binary32-orbit-150,99-11
+PASS mandel2/binary32-orbit-150,99-12
+PASS mandel2/binary32-orbit-150,99-13
+PASS mandel2/binary32-orbit-150,99-14
+PASS mandel2/binary32-orbit-150,99-15
+PASS mandel2/binary32-orbit-150,99-16
+PASS mandel2/binary32-orbit-150,99-17
+PASS mandel2/binary32-orbit-150,99-18
+PASS mandel2/binary32-orbit-150,99-19
+PASS mandel2/binary32-orbit-150,99-20
+PASS mandel2/binary32-orbit-150,99-21
+PASS mandel2/binary32-orbit-150,99-22
+PASS mandel2/binary32-orbit-150,99-23
+PASS mandel2/binary32-orbit-150,99-24
+PASS mandel2/binary32-orbit-150,99-25
+PASS mandel2/coordinates-150,100
+PASS mandel2/point-colour-150,100
+PASS mandel2/binary32-orbit-150,100-1
+PASS mandel2/binary32-orbit-150,100-2
+PASS mandel2/binary32-orbit-150,100-3
+PASS mandel2/binary32-orbit-150,100-4
+PASS mandel2/binary32-orbit-150,100-5
+PASS mandel2/binary32-orbit-150,100-6
+PASS mandel2/binary32-orbit-150,100-7
+PASS mandel2/binary32-orbit-150,100-8
+PASS mandel2/binary32-orbit-150,100-9
+PASS mandel2/binary32-orbit-150,100-10
+PASS mandel2/binary32-orbit-150,100-11
+PASS mandel2/binary32-orbit-150,100-12
+PASS mandel2/binary32-orbit-150,100-13
+PASS mandel2/binary32-orbit-150,100-14
+PASS mandel2/binary32-orbit-150,100-15
+PASS mandel2/binary32-orbit-150,100-16
+PASS mandel2/binary32-orbit-150,100-17
+PASS mandel2/binary32-orbit-150,100-18
+PASS mandel2/binary32-orbit-150,100-19
+PASS mandel2/binary32-orbit-150,100-20
+PASS mandel2/binary32-orbit-150,100-21
+PASS mandel2/binary32-orbit-150,100-22
+PASS mandel2/binary32-orbit-150,100-23
+PASS mandel2/binary32-orbit-150,100-24
+PASS mandel2/binary32-orbit-150,100-25
+PASS mandel2/coordinates-200,100
+PASS mandel2/point-colour-200,100
+PASS mandel2/binary32-orbit-200,100-1
+PASS mandel2/binary32-orbit-200,100-2
+PASS mandel2/binary32-orbit-200,100-3
+PASS mandel2/binary32-orbit-200,100-4
+PASS mandel2/lazy-corner-short-circuit
+PASS mandel2/strict-corners-eager
+PASS mandel2/lazy-shared-colour-one
+PASS mandel2/single-point-no-unused-corners
+PASS mandel2/zero-height-source-outward-scan
+PASS mandel2/right-whnf-before-left-and-memoized
+PASS mandel2/strict-right-complete-before-left
+PASS mandel2/complete-lazy-tree-1
+PASS mandel2/complete-strict-tree-1
+PASS mandel2/complete-lazy-tree-2
+PASS mandel2/complete-strict-tree-2
+PASS mandel2/complete-lazy-tree-3
+PASS mandel2/complete-strict-tree-3
+PASS mandel2/complete-lazy-tree-8
+PASS mandel2/complete-strict-tree-8
+PASS mandel2/complete-lazy-tree-16
+PASS mandel2/complete-strict-tree-16
+PASS mandel2/complete-lazy-tree-64
+PASS mandel2/complete-strict-tree-64
+PASS mandel2/complete-lazy-tree-200
+PASS mandel2/complete-strict-tree-200
+PASS mandel2/wrong-colour-rejected
+PASS mandel2/truncated-tree-rejected
+PASS mandel2/extra-tree-rejected
+PASS mandel2/wrong-branch-rejected
+SUMMARY 132 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+PASS mandel2/coordinates-0,0
+PASS mandel2/point-colour-0,0
+PASS mandel2/binary32-orbit-0,0-1
+PASS mandel2/binary32-orbit-0,0-2
+PASS mandel2/coordinates-1,1
+PASS mandel2/point-colour-1,1
+PASS mandel2/binary32-orbit-1,1-1
+PASS mandel2/binary32-orbit-1,1-2
+PASS mandel2/coordinates-50,25
+PASS mandel2/point-colour-50,25
+PASS mandel2/binary32-orbit-50,25-1
+PASS mandel2/binary32-orbit-50,25-2
+PASS mandel2/binary32-orbit-50,25-3
+PASS mandel2/coordinates-100,50
+PASS mandel2/point-colour-100,50
+PASS mandel2/binary32-orbit-100,50-1
+PASS mandel2/binary32-orbit-100,50-2
+PASS mandel2/binary32-orbit-100,50-3
+PASS mandel2/binary32-orbit-100,50-4
+PASS mandel2/binary32-orbit-100,50-5
+PASS mandel2/coordinates-149,99
+PASS mandel2/point-colour-149,99
+PASS mandel2/binary32-orbit-149,99-1
+PASS mandel2/binary32-orbit-149,99-2
+PASS mandel2/binary32-orbit-149,99-3
+PASS mandel2/binary32-orbit-149,99-4
+PASS mandel2/binary32-orbit-149,99-5
+PASS mandel2/binary32-orbit-149,99-6
+PASS mandel2/binary32-orbit-149,99-7
+PASS mandel2/binary32-orbit-149,99-8
+PASS mandel2/binary32-orbit-149,99-9
+PASS mandel2/binary32-orbit-149,99-10
+PASS mandel2/binary32-orbit-149,99-11
+PASS mandel2/binary32-orbit-149,99-12
+PASS mandel2/binary32-orbit-149,99-13
+PASS mandel2/binary32-orbit-149,99-14
+PASS mandel2/binary32-orbit-149,99-15
+PASS mandel2/binary32-orbit-149,99-16
+PASS mandel2/binary32-orbit-149,99-17
+PASS mandel2/binary32-orbit-149,99-18
+PASS mandel2/binary32-orbit-149,99-19
+PASS mandel2/binary32-orbit-149,99-20
+PASS mandel2/binary32-orbit-149,99-21
+PASS mandel2/binary32-orbit-149,99-22
+PASS mandel2/binary32-orbit-149,99-23
+PASS mandel2/binary32-orbit-149,99-24
+PASS mandel2/binary32-orbit-149,99-25
+PASS mandel2/coordinates-150,99
+PASS mandel2/point-colour-150,99
+PASS mandel2/binary32-orbit-150,99-1
+PASS mandel2/binary32-orbit-150,99-2
+PASS mandel2/binary32-orbit-150,99-3
+PASS mandel2/binary32-orbit-150,99-4
+PASS mandel2/binary32-orbit-150,99-5
+PASS mandel2/binary32-orbit-150,99-6
+PASS mandel2/binary32-orbit-150,99-7
+PASS mandel2/binary32-orbit-150,99-8
+PASS mandel2/binary32-orbit-150,99-9
+PASS mandel2/binary32-orbit-150,99-10
+PASS mandel2/binary32-orbit-150,99-11
+PASS mandel2/binary32-orbit-150,99-12
+PASS mandel2/binary32-orbit-150,99-13
+PASS mandel2/binary32-orbit-150,99-14
+PASS mandel2/binary32-orbit-150,99-15
+PASS mandel2/binary32-orbit-150,99-16
+PASS mandel2/binary32-orbit-150,99-17
+PASS mandel2/binary32-orbit-150,99-18
+PASS mandel2/binary32-orbit-150,99-19
+PASS mandel2/binary32-orbit-150,99-20
+PASS mandel2/binary32-orbit-150,99-21
+PASS mandel2/binary32-orbit-150,99-22
+PASS mandel2/binary32-orbit-150,99-23
+PASS mandel2/binary32-orbit-150,99-24
+PASS mandel2/binary32-orbit-150,99-25
+PASS mandel2/coordinates-150,100
+PASS mandel2/point-colour-150,100
+PASS mandel2/binary32-orbit-150,100-1
+PASS mandel2/binary32-orbit-150,100-2
+PASS mandel2/binary32-orbit-150,100-3
+PASS mandel2/binary32-orbit-150,100-4
+PASS mandel2/binary32-orbit-150,100-5
+PASS mandel2/binary32-orbit-150,100-6
+PASS mandel2/binary32-orbit-150,100-7
+PASS mandel2/binary32-orbit-150,100-8
+PASS mandel2/binary32-orbit-150,100-9
+PASS mandel2/binary32-orbit-150,100-10
+PASS mandel2/binary32-orbit-150,100-11
+PASS mandel2/binary32-orbit-150,100-12
+PASS mandel2/binary32-orbit-150,100-13
+PASS mandel2/binary32-orbit-150,100-14
+PASS mandel2/binary32-orbit-150,100-15
+PASS mandel2/binary32-orbit-150,100-16
+PASS mandel2/binary32-orbit-150,100-17
+PASS mandel2/binary32-orbit-150,100-18
+PASS mandel2/binary32-orbit-150,100-19
+PASS mandel2/binary32-orbit-150,100-20
+PASS mandel2/binary32-orbit-150,100-21
+PASS mandel2/binary32-orbit-150,100-22
+PASS mandel2/binary32-orbit-150,100-23
+PASS mandel2/binary32-orbit-150,100-24
+PASS mandel2/binary32-orbit-150,100-25
+PASS mandel2/coordinates-200,100
+PASS mandel2/point-colour-200,100
+PASS mandel2/binary32-orbit-200,100-1
+PASS mandel2/binary32-orbit-200,100-2
+PASS mandel2/binary32-orbit-200,100-3
+PASS mandel2/binary32-orbit-200,100-4
+PASS mandel2/lazy-corner-short-circuit
+PASS mandel2/strict-corners-eager
+PASS mandel2/lazy-shared-colour-one
+PASS mandel2/single-point-no-unused-corners
+PASS mandel2/zero-height-source-outward-scan
+PASS mandel2/right-whnf-before-left-and-memoized
+PASS mandel2/strict-right-complete-before-left
+PASS mandel2/complete-lazy-tree-1
+PASS mandel2/complete-strict-tree-1
+PASS mandel2/complete-lazy-tree-2
+PASS mandel2/complete-strict-tree-2
+PASS mandel2/complete-lazy-tree-3
+PASS mandel2/complete-strict-tree-3
+PASS mandel2/complete-lazy-tree-8
+PASS mandel2/complete-strict-tree-8
+PASS mandel2/complete-lazy-tree-16
+PASS mandel2/complete-strict-tree-16
+PASS mandel2/complete-lazy-tree-64
+PASS mandel2/complete-strict-tree-64
+PASS mandel2/complete-lazy-tree-200
+PASS mandel2/complete-strict-tree-200
+PASS mandel2/wrong-colour-rejected
+PASS mandel2/truncated-tree-rejected
+PASS mandel2/extra-tree-rejected
+PASS mandel2/wrong-branch-rejected
+SUMMARY 132 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+PASS mandel2/coordinates-0,0
+PASS mandel2/point-colour-0,0
+PASS mandel2/binary32-orbit-0,0-1
+PASS mandel2/binary32-orbit-0,0-2
+PASS mandel2/coordinates-1,1
+PASS mandel2/point-colour-1,1
+PASS mandel2/binary32-orbit-1,1-1
+PASS mandel2/binary32-orbit-1,1-2
+PASS mandel2/coordinates-50,25
+PASS mandel2/point-colour-50,25
+PASS mandel2/binary32-orbit-50,25-1
+PASS mandel2/binary32-orbit-50,25-2
+PASS mandel2/binary32-orbit-50,25-3
+PASS mandel2/coordinates-100,50
+PASS mandel2/point-colour-100,50
+PASS mandel2/binary32-orbit-100,50-1
+PASS mandel2/binary32-orbit-100,50-2
+PASS mandel2/binary32-orbit-100,50-3
+PASS mandel2/binary32-orbit-100,50-4
+PASS mandel2/binary32-orbit-100,50-5
+PASS mandel2/coordinates-149,99
+PASS mandel2/point-colour-149,99
+PASS mandel2/binary32-orbit-149,99-1
+PASS mandel2/binary32-orbit-149,99-2
+PASS mandel2/binary32-orbit-149,99-3
+PASS mandel2/binary32-orbit-149,99-4
+PASS mandel2/binary32-orbit-149,99-5
+PASS mandel2/binary32-orbit-149,99-6
+PASS mandel2/binary32-orbit-149,99-7
+PASS mandel2/binary32-orbit-149,99-8
+PASS mandel2/binary32-orbit-149,99-9
+PASS mandel2/binary32-orbit-149,99-10
+PASS mandel2/binary32-orbit-149,99-11
+PASS mandel2/binary32-orbit-149,99-12
+PASS mandel2/binary32-orbit-149,99-13
+PASS mandel2/binary32-orbit-149,99-14
+PASS mandel2/binary32-orbit-149,99-15
+PASS mandel2/binary32-orbit-149,99-16
+PASS mandel2/binary32-orbit-149,99-17
+PASS mandel2/binary32-orbit-149,99-18
+PASS mandel2/binary32-orbit-149,99-19
+PASS mandel2/binary32-orbit-149,99-20
+PASS mandel2/binary32-orbit-149,99-21
+PASS mandel2/binary32-orbit-149,99-22
+PASS mandel2/binary32-orbit-149,99-23
+PASS mandel2/binary32-orbit-149,99-24
+PASS mandel2/binary32-orbit-149,99-25
+PASS mandel2/coordinates-150,99
+PASS mandel2/point-colour-150,99
+PASS mandel2/binary32-orbit-150,99-1
+PASS mandel2/binary32-orbit-150,99-2
+PASS mandel2/binary32-orbit-150,99-3
+PASS mandel2/binary32-orbit-150,99-4
+PASS mandel2/binary32-orbit-150,99-5
+PASS mandel2/binary32-orbit-150,99-6
+PASS mandel2/binary32-orbit-150,99-7
+PASS mandel2/binary32-orbit-150,99-8
+PASS mandel2/binary32-orbit-150,99-9
+PASS mandel2/binary32-orbit-150,99-10
+PASS mandel2/binary32-orbit-150,99-11
+PASS mandel2/binary32-orbit-150,99-12
+PASS mandel2/binary32-orbit-150,99-13
+PASS mandel2/binary32-orbit-150,99-14
+PASS mandel2/binary32-orbit-150,99-15
+PASS mandel2/binary32-orbit-150,99-16
+PASS mandel2/binary32-orbit-150,99-17
+PASS mandel2/binary32-orbit-150,99-18
+PASS mandel2/binary32-orbit-150,99-19
+PASS mandel2/binary32-orbit-150,99-20
+PASS mandel2/binary32-orbit-150,99-21
+PASS mandel2/binary32-orbit-150,99-22
+PASS mandel2/binary32-orbit-150,99-23
+PASS mandel2/binary32-orbit-150,99-24
+PASS mandel2/binary32-orbit-150,99-25
+PASS mandel2/coordinates-150,100
+PASS mandel2/point-colour-150,100
+PASS mandel2/binary32-orbit-150,100-1
+PASS mandel2/binary32-orbit-150,100-2
+PASS mandel2/binary32-orbit-150,100-3
+PASS mandel2/binary32-orbit-150,100-4
+PASS mandel2/binary32-orbit-150,100-5
+PASS mandel2/binary32-orbit-150,100-6
+PASS mandel2/binary32-orbit-150,100-7
+PASS mandel2/binary32-orbit-150,100-8
+PASS mandel2/binary32-orbit-150,100-9
+PASS mandel2/binary32-orbit-150,100-10
+PASS mandel2/binary32-orbit-150,100-11
+PASS mandel2/binary32-orbit-150,100-12
+PASS mandel2/binary32-orbit-150,100-13
+PASS mandel2/binary32-orbit-150,100-14
+PASS mandel2/binary32-orbit-150,100-15
+PASS mandel2/binary32-orbit-150,100-16
+PASS mandel2/binary32-orbit-150,100-17
+PASS mandel2/binary32-orbit-150,100-18
+PASS mandel2/binary32-orbit-150,100-19
+PASS mandel2/binary32-orbit-150,100-20
+PASS mandel2/binary32-orbit-150,100-21
+PASS mandel2/binary32-orbit-150,100-22
+PASS mandel2/binary32-orbit-150,100-23
+PASS mandel2/binary32-orbit-150,100-24
+PASS mandel2/binary32-orbit-150,100-25
+PASS mandel2/coordinates-200,100
+PASS mandel2/point-colour-200,100
+PASS mandel2/binary32-orbit-200,100-1
+PASS mandel2/binary32-orbit-200,100-2
+PASS mandel2/binary32-orbit-200,100-3
+PASS mandel2/binary32-orbit-200,100-4
+PASS mandel2/lazy-corner-short-circuit
+PASS mandel2/strict-corners-eager
+PASS mandel2/lazy-shared-colour-one
+PASS mandel2/single-point-no-unused-corners
+PASS mandel2/zero-height-source-outward-scan
+PASS mandel2/right-whnf-before-left-and-memoized
+PASS mandel2/strict-right-complete-before-left
+PASS mandel2/complete-lazy-tree-1
+PASS mandel2/complete-strict-tree-1
+PASS mandel2/complete-lazy-tree-2
+PASS mandel2/complete-strict-tree-2
+PASS mandel2/complete-lazy-tree-3
+PASS mandel2/complete-strict-tree-3
+PASS mandel2/complete-lazy-tree-8
+PASS mandel2/complete-strict-tree-8
+PASS mandel2/complete-lazy-tree-16
+PASS mandel2/complete-strict-tree-16
+PASS mandel2/complete-lazy-tree-64
+PASS mandel2/complete-strict-tree-64
+PASS mandel2/complete-lazy-tree-200
+PASS mandel2/complete-strict-tree-200
+PASS mandel2/wrong-colour-rejected
+PASS mandel2/truncated-tree-rejected
+PASS mandel2/extra-tree-rejected
+PASS mandel2/wrong-branch-rejected
+SUMMARY 132 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 1048576 KiB
+PASS mandel2/coordinates-0,0
+PASS mandel2/point-colour-0,0
+PASS mandel2/binary32-orbit-0,0-1
+PASS mandel2/binary32-orbit-0,0-2
+PASS mandel2/coordinates-1,1
+PASS mandel2/point-colour-1,1
+PASS mandel2/binary32-orbit-1,1-1
+PASS mandel2/binary32-orbit-1,1-2
+PASS mandel2/coordinates-50,25
+PASS mandel2/point-colour-50,25
+PASS mandel2/binary32-orbit-50,25-1
+PASS mandel2/binary32-orbit-50,25-2
+PASS mandel2/binary32-orbit-50,25-3
+PASS mandel2/coordinates-100,50
+PASS mandel2/point-colour-100,50
+PASS mandel2/binary32-orbit-100,50-1
+PASS mandel2/binary32-orbit-100,50-2
+PASS mandel2/binary32-orbit-100,50-3
+PASS mandel2/binary32-orbit-100,50-4
+PASS mandel2/binary32-orbit-100,50-5
+PASS mandel2/coordinates-149,99
+PASS mandel2/point-colour-149,99
+PASS mandel2/binary32-orbit-149,99-1
+PASS mandel2/binary32-orbit-149,99-2
+PASS mandel2/binary32-orbit-149,99-3
+PASS mandel2/binary32-orbit-149,99-4
+PASS mandel2/binary32-orbit-149,99-5
+PASS mandel2/binary32-orbit-149,99-6
+PASS mandel2/binary32-orbit-149,99-7
+PASS mandel2/binary32-orbit-149,99-8
+PASS mandel2/binary32-orbit-149,99-9
+PASS mandel2/binary32-orbit-149,99-10
+PASS mandel2/binary32-orbit-149,99-11
+PASS mandel2/binary32-orbit-149,99-12
+PASS mandel2/binary32-orbit-149,99-13
+PASS mandel2/binary32-orbit-149,99-14
+PASS mandel2/binary32-orbit-149,99-15
+PASS mandel2/binary32-orbit-149,99-16
+PASS mandel2/binary32-orbit-149,99-17
+PASS mandel2/binary32-orbit-149,99-18
+PASS mandel2/binary32-orbit-149,99-19
+PASS mandel2/binary32-orbit-149,99-20
+PASS mandel2/binary32-orbit-149,99-21
+PASS mandel2/binary32-orbit-149,99-22
+PASS mandel2/binary32-orbit-149,99-23
+PASS mandel2/binary32-orbit-149,99-24
+PASS mandel2/binary32-orbit-149,99-25
+PASS mandel2/coordinates-150,99
+PASS mandel2/point-colour-150,99
+PASS mandel2/binary32-orbit-150,99-1
+PASS mandel2/binary32-orbit-150,99-2
+PASS mandel2/binary32-orbit-150,99-3
+PASS mandel2/binary32-orbit-150,99-4
+PASS mandel2/binary32-orbit-150,99-5
+PASS mandel2/binary32-orbit-150,99-6
+PASS mandel2/binary32-orbit-150,99-7
+PASS mandel2/binary32-orbit-150,99-8
+PASS mandel2/binary32-orbit-150,99-9
+PASS mandel2/binary32-orbit-150,99-10
+PASS mandel2/binary32-orbit-150,99-11
+PASS mandel2/binary32-orbit-150,99-12
+PASS mandel2/binary32-orbit-150,99-13
+PASS mandel2/binary32-orbit-150,99-14
+PASS mandel2/binary32-orbit-150,99-15
+PASS mandel2/binary32-orbit-150,99-16
+PASS mandel2/binary32-orbit-150,99-17
+PASS mandel2/binary32-orbit-150,99-18
+PASS mandel2/binary32-orbit-150,99-19
+PASS mandel2/binary32-orbit-150,99-20
+PASS mandel2/binary32-orbit-150,99-21
+PASS mandel2/binary32-orbit-150,99-22
+PASS mandel2/binary32-orbit-150,99-23
+PASS mandel2/binary32-orbit-150,99-24
+PASS mandel2/binary32-orbit-150,99-25
+PASS mandel2/coordinates-150,100
+PASS mandel2/point-colour-150,100
+PASS mandel2/binary32-orbit-150,100-1
+PASS mandel2/binary32-orbit-150,100-2
+PASS mandel2/binary32-orbit-150,100-3
+PASS mandel2/binary32-orbit-150,100-4
+PASS mandel2/binary32-orbit-150,100-5
+PASS mandel2/binary32-orbit-150,100-6
+PASS mandel2/binary32-orbit-150,100-7
+PASS mandel2/binary32-orbit-150,100-8
+PASS mandel2/binary32-orbit-150,100-9
+PASS mandel2/binary32-orbit-150,100-10
+PASS mandel2/binary32-orbit-150,100-11
+PASS mandel2/binary32-orbit-150,100-12
+PASS mandel2/binary32-orbit-150,100-13
+PASS mandel2/binary32-orbit-150,100-14
+PASS mandel2/binary32-orbit-150,100-15
+PASS mandel2/binary32-orbit-150,100-16
+PASS mandel2/binary32-orbit-150,100-17
+PASS mandel2/binary32-orbit-150,100-18
+PASS mandel2/binary32-orbit-150,100-19
+PASS mandel2/binary32-orbit-150,100-20
+PASS mandel2/binary32-orbit-150,100-21
+PASS mandel2/binary32-orbit-150,100-22
+PASS mandel2/binary32-orbit-150,100-23
+PASS mandel2/binary32-orbit-150,100-24
+PASS mandel2/binary32-orbit-150,100-25
+PASS mandel2/coordinates-200,100
+PASS mandel2/point-colour-200,100
+PASS mandel2/binary32-orbit-200,100-1
+PASS mandel2/binary32-orbit-200,100-2
+PASS mandel2/binary32-orbit-200,100-3
+PASS mandel2/binary32-orbit-200,100-4
+PASS mandel2/lazy-corner-short-circuit
+PASS mandel2/strict-corners-eager
+PASS mandel2/lazy-shared-colour-one
+PASS mandel2/single-point-no-unused-corners
+PASS mandel2/zero-height-source-outward-scan
+PASS mandel2/right-whnf-before-left-and-memoized
+PASS mandel2/strict-right-complete-before-left
+PASS mandel2/complete-lazy-tree-1
+PASS mandel2/complete-strict-tree-1
+PASS mandel2/complete-lazy-tree-2
+PASS mandel2/complete-strict-tree-2
+PASS mandel2/complete-lazy-tree-3
+PASS mandel2/complete-strict-tree-3
+PASS mandel2/complete-lazy-tree-8
+PASS mandel2/complete-strict-tree-8
+PASS mandel2/complete-lazy-tree-16
+PASS mandel2/complete-strict-tree-16
+PASS mandel2/complete-lazy-tree-64
+PASS mandel2/complete-strict-tree-64
+PASS mandel2/complete-lazy-tree-200
+PASS mandel2/complete-strict-tree-200
+PASS mandel2/wrong-colour-rejected
+PASS mandel2/truncated-tree-rejected
+PASS mandel2/extra-tree-rejected
+PASS mandel2/wrong-branch-rejected
+SUMMARY 132 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/finite-binary32.sml]
+[autoloading]
+[autoloading done]
+structure BenchMandelSingle : sig
+  val round : real -> real
+  val add : real * real -> real
+  val sub : real * real -> real
+  val mul : real * real -> real
+  val divide : real * real -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mandel2-point.sml]
+structure BenchMandelTwoPoint : sig
+  structure F : <sig>
+  val deltaP : real
+  val deltaQ : real
+  val p : int -> real
+  val q : int -> real
+  val next : real * real * real * real -> real * real * real
+  val colour : int * int -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-mandel2.sml]
+functor BenchMandelTwoFn(<param>: sig
+  structure D : <sig>
+  structure P : <sig>
+end) :
+sig
+  type node
+  type tree
+  val perimeter : (int * int) * (int * int) -> int
+  val build : int * int -> int * int -> <BaseFct>.<resultStr>.node t
+  val write : int -> (string -> 'a) -> <BaseFct>.<resultStr>.node t -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mandel2-check.sml]
+[autoloading]
+[autoloading done]
+functor MandelTreeCheckFn(K: sig
+  type tree
+  val build : int * int -> int * int -> tree
+  val write : int -> (string -> unit) -> tree -> int
+end) :
+sig
+  val run : int -> string -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/mandel2-float-tests.sml]
+PASS mandel2/coordinates-0,0
+PASS mandel2/point-colour-0,0
+PASS mandel2/binary32-orbit-0,0-1
+PASS mandel2/binary32-orbit-0,0-2
+PASS mandel2/coordinates-1,1
+PASS mandel2/point-colour-1,1
+PASS mandel2/binary32-orbit-1,1-1
+PASS mandel2/binary32-orbit-1,1-2
+PASS mandel2/coordinates-50,25
+PASS mandel2/point-colour-50,25
+PASS mandel2/binary32-orbit-50,25-1
+PASS mandel2/binary32-orbit-50,25-2
+PASS mandel2/binary32-orbit-50,25-3
+PASS mandel2/coordinates-100,50
+PASS mandel2/point-colour-100,50
+PASS mandel2/binary32-orbit-100,50-1
+PASS mandel2/binary32-orbit-100,50-2
+PASS mandel2/binary32-orbit-100,50-3
+PASS mandel2/binary32-orbit-100,50-4
+PASS mandel2/binary32-orbit-100,50-5
+PASS mandel2/coordinates-149,99
+PASS mandel2/point-colour-149,99
+PASS mandel2/binary32-orbit-149,99-1
+PASS mandel2/binary32-orbit-149,99-2
+PASS mandel2/binary32-orbit-149,99-3
+PASS mandel2/binary32-orbit-149,99-4
+PASS mandel2/binary32-orbit-149,99-5
+PASS mandel2/binary32-orbit-149,99-6
+PASS mandel2/binary32-orbit-149,99-7
+PASS mandel2/binary32-orbit-149,99-8
+PASS mandel2/binary32-orbit-149,99-9
+PASS mandel2/binary32-orbit-149,99-10
+PASS mandel2/binary32-orbit-149,99-11
+PASS mandel2/binary32-orbit-149,99-12
+PASS mandel2/binary32-orbit-149,99-13
+PASS mandel2/binary32-orbit-149,99-14
+PASS mandel2/binary32-orbit-149,99-15
+PASS mandel2/binary32-orbit-149,99-16
+PASS mandel2/binary32-orbit-149,99-17
+PASS mandel2/binary32-orbit-149,99-18
+PASS mandel2/binary32-orbit-149,99-19
+PASS mandel2/binary32-orbit-149,99-20
+PASS mandel2/binary32-orbit-149,99-21
+PASS mandel2/binary32-orbit-149,99-22
+PASS mandel2/binary32-orbit-149,99-23
+PASS mandel2/binary32-orbit-149,99-24
+PASS mandel2/binary32-orbit-149,99-25
+PASS mandel2/coordinates-150,99
+PASS mandel2/point-colour-150,99
+PASS mandel2/binary32-orbit-150,99-1
+PASS mandel2/binary32-orbit-150,99-2
+PASS mandel2/binary32-orbit-150,99-3
+PASS mandel2/binary32-orbit-150,99-4
+PASS mandel2/binary32-orbit-150,99-5
+PASS mandel2/binary32-orbit-150,99-6
+PASS mandel2/binary32-orbit-150,99-7
+PASS mandel2/binary32-orbit-150,99-8
+PASS mandel2/binary32-orbit-150,99-9
+PASS mandel2/binary32-orbit-150,99-10
+PASS mandel2/binary32-orbit-150,99-11
+PASS mandel2/binary32-orbit-150,99-12
+PASS mandel2/binary32-orbit-150,99-13
+PASS mandel2/binary32-orbit-150,99-14
+PASS mandel2/binary32-orbit-150,99-15
+PASS mandel2/binary32-orbit-150,99-16
+PASS mandel2/binary32-orbit-150,99-17
+PASS mandel2/binary32-orbit-150,99-18
+PASS mandel2/binary32-orbit-150,99-19
+PASS mandel2/binary32-orbit-150,99-20
+PASS mandel2/binary32-orbit-150,99-21
+PASS mandel2/binary32-orbit-150,99-22
+PASS mandel2/binary32-orbit-150,99-23
+PASS mandel2/binary32-orbit-150,99-24
+PASS mandel2/binary32-orbit-150,99-25
+PASS mandel2/coordinates-150,100
+PASS mandel2/point-colour-150,100
+PASS mandel2/binary32-orbit-150,100-1
+PASS mandel2/binary32-orbit-150,100-2
+PASS mandel2/binary32-orbit-150,100-3
+PASS mandel2/binary32-orbit-150,100-4
+PASS mandel2/binary32-orbit-150,100-5
+PASS mandel2/binary32-orbit-150,100-6
+PASS mandel2/binary32-orbit-150,100-7
+PASS mandel2/binary32-orbit-150,100-8
+PASS mandel2/binary32-orbit-150,100-9
+PASS mandel2/binary32-orbit-150,100-10
+PASS mandel2/binary32-orbit-150,100-11
+PASS mandel2/binary32-orbit-150,100-12
+PASS mandel2/binary32-orbit-150,100-13
+PASS mandel2/binary32-orbit-150,100-14
+PASS mandel2/binary32-orbit-150,100-15
+PASS mandel2/binary32-orbit-150,100-16
+PASS mandel2/binary32-orbit-150,100-17
+PASS mandel2/binary32-orbit-150,100-18
+PASS mandel2/binary32-orbit-150,100-19
+PASS mandel2/binary32-orbit-150,100-20
+PASS mandel2/binary32-orbit-150,100-21
+PASS mandel2/binary32-orbit-150,100-22
+PASS mandel2/binary32-orbit-150,100-23
+PASS mandel2/binary32-orbit-150,100-24
+PASS mandel2/binary32-orbit-150,100-25
+PASS mandel2/coordinates-200,100
+PASS mandel2/point-colour-200,100
+PASS mandel2/binary32-orbit-200,100-1
+PASS mandel2/binary32-orbit-200,100-2
+PASS mandel2/binary32-orbit-200,100-3
+PASS mandel2/binary32-orbit-200,100-4
+structure MandelFloatTests : sig
+  structure W : <sig>
+  structure P : <sig>
+  val decode : string -> real
+  val same : real * string -> bool
+  val current : (real * real * real * real) ref
+  val label : string ref
+  val number : string -> int
+  val row : string -> unit
+  val input : TextIO.instream
+  val text : TextIO.vector
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/mandel2-demand-tests.sml]
+PASS mandel2/lazy-corner-short-circuit
+PASS mandel2/strict-corners-eager
+PASS mandel2/lazy-shared-colour-one
+PASS mandel2/single-point-no-unused-corners
+PASS mandel2/zero-height-source-outward-scan
+PASS mandel2/right-whnf-before-left-and-memoized
+PASS mandel2/strict-right-complete-before-left
+structure MandelDemandPoint : sig
+  val calls : (int * int) list ref
+  val mode : int ref
+  val colour : int * int -> int
+  val reset : int -> unit
+  val trace : unit -> (int * int) list
+end
+structure DemandNeed : sig
+  datatype node
+    = EW of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+    | Leaf of int
+    | NS of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+  type tree = node BenchNeed.t
+  val perimeter : (int * int) * (int * int) -> int
+  val build : int * int -> int * int -> <BaseFct>.<resultStr>.node t
+  val write : int -> (string -> 'a) -> <BaseFct>.<resultStr>.node t -> int
+end
+structure DemandStrict : sig
+  datatype node
+    = EW of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+    | Leaf of int
+    | NS of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+  type tree = node BenchStrict.t
+  val perimeter : (int * int) * (int * int) -> int
+  val build : int * int -> int * int -> <BaseFct>.<resultStr>.node t
+  val write : int -> (string -> 'a) -> <BaseFct>.<resultStr>.node t -> int
+end
+structure MandelDemandTests : sig
+  structure P : <sig>
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/mandel2-tree-tests.sml]
+PASS mandel2/complete-lazy-tree-1
+PASS mandel2/complete-strict-tree-1
+PASS mandel2/complete-lazy-tree-2
+PASS mandel2/complete-strict-tree-2
+PASS mandel2/complete-lazy-tree-3
+PASS mandel2/complete-strict-tree-3
+PASS mandel2/complete-lazy-tree-8
+PASS mandel2/complete-strict-tree-8
+PASS mandel2/complete-lazy-tree-16
+PASS mandel2/complete-strict-tree-16
+PASS mandel2/complete-lazy-tree-64
+FAIL mandel2/complete-strict-tree-64 -- raised an exception
+FAIL mandel2/complete-lazy-tree-200 -- raised an exception
+FAIL mandel2/complete-strict-tree-200 -- raised an exception
+PASS mandel2/wrong-colour-rejected
+PASS mandel2/truncated-tree-rejected
+PASS mandel2/extra-tree-rejected
+PASS mandel2/wrong-branch-rejected
+structure MandelTwoNeed : sig
+  datatype node
+    = EW of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+    | Leaf of int
+    | NS of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+  type tree = node BenchNeed.t
+  val perimeter : (int * int) * (int * int) -> int
+  val build : int * int -> int * int -> <BaseFct>.<resultStr>.node t
+  val write : int -> (string -> 'a) -> <BaseFct>.<resultStr>.node t -> int
+end
+structure MandelTwoStrict : sig
+  datatype node
+    = EW of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+    | Leaf of int
+    | NS of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+  type tree = node BenchStrict.t
+  val perimeter : (int * int) * (int * int) -> int
+  val build : int * int -> int * int -> <BaseFct>.<resultStr>.node t
+  val write : int -> (string -> 'a) -> <BaseFct>.<resultStr>.node t -> int
+end
+structure MandelTwoNeedCheck : sig
+  val run : int -> string -> int
+end
+structure MandelTwoStrictCheck : sig
+  val run : int -> string -> int
+end
+structure MandelTwoTreeTests : sig
+  val expected : (int * int) list
+  val rejects : string -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 132 checks, 3 failed
+PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 0, exit 1)
+FAIL mandel2/complete-strict-tree-64 -- raised an exception
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/finite-binary32.sml]
+[autoloading]
+[autoloading done]
+structure BenchMandelSingle : sig
+  val round : real -> real
+  val add : real * real -> real
+  val sub : real * real -> real
+  val mul : real * real -> real
+  val divide : real * real -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mandel2-point.sml]
+structure BenchMandelTwoPoint : sig
+  structure F : <sig>
+  val deltaP : real
+  val deltaQ : real
+  val p : int -> real
+  val q : int -> real
+  val next : real * real * real * real -> real * real * real
+  val colour : int * int -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-mandel2.sml]
+functor BenchMandelTwoFn(<param>: sig
+  structure D : <sig>
+  structure P : <sig>
+end) :
+sig
+  type node
+  type tree
+  val perimeter : (int * int) * (int * int) -> int
+  val build : int * int -> int * int -> <BaseFct>.<resultStr>.node t
+  val write : int -> (string -> 'a) -> <BaseFct>.<resultStr>.node t -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mandel2-check.sml]
+[autoloading]
+[autoloading done]
+functor MandelTreeCheckFn(K: sig
+  type tree
+  val build : int * int -> int * int -> tree
+  val write : int -> (string -> unit) -> tree -> int
+end) :
+sig
+  val run : int -> string -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/mandel2-float-tests.sml]
+PASS mandel2/coordinates-0,0
+PASS mandel2/point-colour-0,0
+PASS mandel2/binary32-orbit-0,0-1
+PASS mandel2/binary32-orbit-0,0-2
+PASS mandel2/coordinates-1,1
+PASS mandel2/point-colour-1,1
+PASS mandel2/binary32-orbit-1,1-1
+PASS mandel2/binary32-orbit-1,1-2
+PASS mandel2/coordinates-50,25
+PASS mandel2/point-colour-50,25
+PASS mandel2/binary32-orbit-50,25-1
+PASS mandel2/binary32-orbit-50,25-2
+PASS mandel2/binary32-orbit-50,25-3
+PASS mandel2/coordinates-100,50
+PASS mandel2/point-colour-100,50
+PASS mandel2/binary32-orbit-100,50-1
+PASS mandel2/binary32-orbit-100,50-2
+PASS mandel2/binary32-orbit-100,50-3
+PASS mandel2/binary32-orbit-100,50-4
+PASS mandel2/binary32-orbit-100,50-5
+PASS mandel2/coordinates-149,99
+PASS mandel2/point-colour-149,99
+PASS mandel2/binary32-orbit-149,99-1
+PASS mandel2/binary32-orbit-149,99-2
+PASS mandel2/binary32-orbit-149,99-3
+PASS mandel2/binary32-orbit-149,99-4
+PASS mandel2/binary32-orbit-149,99-5
+PASS mandel2/binary32-orbit-149,99-6
+PASS mandel2/binary32-orbit-149,99-7
+PASS mandel2/binary32-orbit-149,99-8
+PASS mandel2/binary32-orbit-149,99-9
+PASS mandel2/binary32-orbit-149,99-10
+PASS mandel2/binary32-orbit-149,99-11
+PASS mandel2/binary32-orbit-149,99-12
+PASS mandel2/binary32-orbit-149,99-13
+PASS mandel2/binary32-orbit-149,99-14
+PASS mandel2/binary32-orbit-149,99-15
+PASS mandel2/binary32-orbit-149,99-16
+PASS mandel2/binary32-orbit-149,99-17
+PASS mandel2/binary32-orbit-149,99-18
+PASS mandel2/binary32-orbit-149,99-19
+PASS mandel2/binary32-orbit-149,99-20
+PASS mandel2/binary32-orbit-149,99-21
+PASS mandel2/binary32-orbit-149,99-22
+PASS mandel2/binary32-orbit-149,99-23
+PASS mandel2/binary32-orbit-149,99-24
+PASS mandel2/binary32-orbit-149,99-25
+PASS mandel2/coordinates-150,99
+PASS mandel2/point-colour-150,99
+PASS mandel2/binary32-orbit-150,99-1
+PASS mandel2/binary32-orbit-150,99-2
+PASS mandel2/binary32-orbit-150,99-3
+PASS mandel2/binary32-orbit-150,99-4
+PASS mandel2/binary32-orbit-150,99-5
+PASS mandel2/binary32-orbit-150,99-6
+PASS mandel2/binary32-orbit-150,99-7
+PASS mandel2/binary32-orbit-150,99-8
+PASS mandel2/binary32-orbit-150,99-9
+PASS mandel2/binary32-orbit-150,99-10
+PASS mandel2/binary32-orbit-150,99-11
+PASS mandel2/binary32-orbit-150,99-12
+PASS mandel2/binary32-orbit-150,99-13
+PASS mandel2/binary32-orbit-150,99-14
+PASS mandel2/binary32-orbit-150,99-15
+PASS mandel2/binary32-orbit-150,99-16
+PASS mandel2/binary32-orbit-150,99-17
+PASS mandel2/binary32-orbit-150,99-18
+PASS mandel2/binary32-orbit-150,99-19
+PASS mandel2/binary32-orbit-150,99-20
+PASS mandel2/binary32-orbit-150,99-21
+PASS mandel2/binary32-orbit-150,99-22
+PASS mandel2/binary32-orbit-150,99-23
+PASS mandel2/binary32-orbit-150,99-24
+PASS mandel2/binary32-orbit-150,99-25
+PASS mandel2/coordinates-150,100
+PASS mandel2/point-colour-150,100
+PASS mandel2/binary32-orbit-150,100-1
+PASS mandel2/binary32-orbit-150,100-2
+PASS mandel2/binary32-orbit-150,100-3
+PASS mandel2/binary32-orbit-150,100-4
+PASS mandel2/binary32-orbit-150,100-5
+PASS mandel2/binary32-orbit-150,100-6
+PASS mandel2/binary32-orbit-150,100-7
+PASS mandel2/binary32-orbit-150,100-8
+PASS mandel2/binary32-orbit-150,100-9
+PASS mandel2/binary32-orbit-150,100-10
+PASS mandel2/binary32-orbit-150,100-11
+PASS mandel2/binary32-orbit-150,100-12
+PASS mandel2/binary32-orbit-150,100-13
+PASS mandel2/binary32-orbit-150,100-14
+PASS mandel2/binary32-orbit-150,100-15
+PASS mandel2/binary32-orbit-150,100-16
+PASS mandel2/binary32-orbit-150,100-17
+PASS mandel2/binary32-orbit-150,100-18
+PASS mandel2/binary32-orbit-150,100-19
+PASS mandel2/binary32-orbit-150,100-20
+PASS mandel2/binary32-orbit-150,100-21
+PASS mandel2/binary32-orbit-150,100-22
+PASS mandel2/binary32-orbit-150,100-23
+PASS mandel2/binary32-orbit-150,100-24
+PASS mandel2/binary32-orbit-150,100-25
+PASS mandel2/coordinates-200,100
+PASS mandel2/point-colour-200,100
+PASS mandel2/binary32-orbit-200,100-1
+PASS mandel2/binary32-orbit-200,100-2
+PASS mandel2/binary32-orbit-200,100-3
+PASS mandel2/binary32-orbit-200,100-4
+structure MandelFloatTests : sig
+  structure W : <sig>
+  structure P : <sig>
+  val decode : string -> real
+  val same : real * string -> bool
+  val current : (real * real * real * real) ref
+  val label : string ref
+  val number : string -> int
+  val row : string -> unit
+  val input : TextIO.instream
+  val text : TextIO.vector
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/mandel2-demand-tests.sml]
+PASS mandel2/lazy-corner-short-circuit
+PASS mandel2/strict-corners-eager
+PASS mandel2/lazy-shared-colour-one
+PASS mandel2/single-point-no-unused-corners
+PASS mandel2/zero-height-source-outward-scan
+PASS mandel2/right-whnf-before-left-and-memoized
+PASS mandel2/strict-right-complete-before-left
+structure MandelDemandPoint : sig
+  val calls : (int * int) list ref
+  val mode : int ref
+  val colour : int * int -> int
+  val reset : int -> unit
+  val trace : unit -> (int * int) list
+end
+structure DemandNeed : sig
+  datatype node
+    = EW of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+    | Leaf of int
+    | NS of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+  type tree = node BenchNeed.t
+  val perimeter : (int * int) * (int * int) -> int
+  val build : int * int -> int * int -> <BaseFct>.<resultStr>.node t
+  val write : int -> (string -> 'a) -> <BaseFct>.<resultStr>.node t -> int
+end
+structure DemandStrict : sig
+  datatype node
+    = EW of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+    | Leaf of int
+    | NS of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+  type tree = node BenchStrict.t
+  val perimeter : (int * int) * (int * int) -> int
+  val build : int * int -> int * int -> <BaseFct>.<resultStr>.node t
+  val write : int -> (string -> 'a) -> <BaseFct>.<resultStr>.node t -> int
+end
+structure MandelDemandTests : sig
+  structure P : <sig>
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/mandel2-tree-tests.sml]
+PASS mandel2/complete-lazy-tree-1
+PASS mandel2/complete-strict-tree-1
+PASS mandel2/complete-lazy-tree-2
+PASS mandel2/complete-strict-tree-2
+PASS mandel2/complete-lazy-tree-3
+PASS mandel2/complete-strict-tree-3
+PASS mandel2/complete-lazy-tree-8
+PASS mandel2/complete-strict-tree-8
+PASS mandel2/complete-lazy-tree-16
+PASS mandel2/complete-strict-tree-16
+PASS mandel2/complete-lazy-tree-64
+PASS mandel2/complete-strict-tree-64
+PASS mandel2/complete-lazy-tree-200
+PASS mandel2/complete-strict-tree-200
+PASS mandel2/wrong-colour-rejected
+PASS mandel2/truncated-tree-rejected
+PASS mandel2/extra-tree-rejected
+PASS mandel2/wrong-branch-rejected
+structure MandelTwoNeed : sig
+  datatype node
+    = EW of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+    | Leaf of int
+    | NS of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+  type tree = node BenchNeed.t
+  val perimeter : (int * int) * (int * int) -> int
+  val build : int * int -> int * int -> <BaseFct>.<resultStr>.node t
+  val write : int -> (string -> 'a) -> <BaseFct>.<resultStr>.node t -> int
+end
+structure MandelTwoStrict : sig
+  datatype node
+    = EW of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+    | Leaf of int
+    | NS of <BaseFct>.<resultStr>.node t * <BaseFct>.<resultStr>.node t
+  type tree = node BenchStrict.t
+  val perimeter : (int * int) * (int * int) -> int
+  val build : int * int -> int * int -> <BaseFct>.<resultStr>.node t
+  val write : int -> (string -> 'a) -> <BaseFct>.<resultStr>.node t -> int
+end
+structure MandelTwoNeedCheck : sig
+  val run : int -> string -> int
+end
+structure MandelTwoStrictCheck : sig
+  val run : int -> string -> int
+end
+structure MandelTwoTreeTests : sig
+  val expected : (int * int) list
+  val rejects : string -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 132 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/finite-binary32.sml]
+structure BenchMandelSingle : 
+  sig
+    val round : real -> real
+    val add : real * real -> real
+    val sub : real * real -> real
+    val mul : real * real -> real
+    val divide : real * real -> real
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mandel2-point.sml]
+structure BenchMandelTwoPoint : 
+  sig
+    structure F : <sig>
+    val deltaP : real
+    val deltaQ : real
+    val p : int -> real
+    val q : int -> real
+    val next : real * real * real * real -> real * real * real
+    val colour : int * int -> int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-mandel2.sml]
+functor BenchMandelTwoFn(<param>: sig
+                            structure D : <sig>
+                            structure P : <sig>
+                          end) :
+                        
+                          sig
+                            type node
+                            type tree
+                            val perimeter : (int * int) * (int * int) -> int
+                            val build : int * int -> int * int -> node t
+                            val write : int -> (string -> 'a) -> node t -> int
+                          end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mandel2-check.sml]
+functor MandelTreeCheckFn(K: sig
+                             type tree
+                             val build : int * int -> int * int -> tree
+                             val write : int
+                                          -> (string -> unit) -> tree -> int
+                           end) :
+                         sig val run : int -> string -> int end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/mandel2-float-tests.sml]
+PASS mandel2/coordinates-0,0
+PASS mandel2/point-colour-0,0
+PASS mandel2/binary32-orbit-0,0-1
+PASS mandel2/binary32-orbit-0,0-2
+PASS mandel2/coordinates-1,1
+PASS mandel2/point-colour-1,1
+PASS mandel2/binary32-orbit-1,1-1
+PASS mandel2/binary32-orbit-1,1-2
+PASS mandel2/coordinates-50,25
+PASS mandel2/point-colour-50,25
+PASS mandel2/binary32-orbit-50,25-1
+PASS mandel2/binary32-orbit-50,25-2
+PASS mandel2/binary32-orbit-50,25-3
+PASS mandel2/coordinates-100,50
+PASS mandel2/point-colour-100,50
+PASS mandel2/binary32-orbit-100,50-1
+PASS mandel2/binary32-orbit-100,50-2
+PASS mandel2/binary32-orbit-100,50-3
+PASS mandel2/binary32-orbit-100,50-4
+PASS mandel2/binary32-orbit-100,50-5
+PASS mandel2/coordinates-149,99
+PASS mandel2/point-colour-149,99
+PASS mandel2/binary32-orbit-149,99-1
+PASS mandel2/binary32-orbit-149,99-2
+PASS mandel2/binary32-orbit-149,99-3
+PASS mandel2/binary32-orbit-149,99-4
+PASS mandel2/binary32-orbit-149,99-5
+PASS mandel2/binary32-orbit-149,99-6
+PASS mandel2/binary32-orbit-149,99-7
+PASS mandel2/binary32-orbit-149,99-8
+PASS mandel2/binary32-orbit-149,99-9
+PASS mandel2/binary32-orbit-149,99-10
+PASS mandel2/binary32-orbit-149,99-11
+PASS mandel2/binary32-orbit-149,99-12
+PASS mandel2/binary32-orbit-149,99-13
+PASS mandel2/binary32-orbit-149,99-14
+PASS mandel2/binary32-orbit-149,99-15
+PASS mandel2/binary32-orbit-149,99-16
+PASS mandel2/binary32-orbit-149,99-17
+PASS mandel2/binary32-orbit-149,99-18
+PASS mandel2/binary32-orbit-149,99-19
+PASS mandel2/binary32-orbit-149,99-20
+PASS mandel2/binary32-orbit-149,99-21
+PASS mandel2/binary32-orbit-149,99-22
+PASS mandel2/binary32-orbit-149,99-23
+PASS mandel2/binary32-orbit-149,99-24
+PASS mandel2/binary32-orbit-149,99-25
+PASS mandel2/coordinates-150,99
+PASS mandel2/point-colour-150,99
+PASS mandel2/binary32-orbit-150,99-1
+PASS mandel2/binary32-orbit-150,99-2
+PASS mandel2/binary32-orbit-150,99-3
+PASS mandel2/binary32-orbit-150,99-4
+PASS mandel2/binary32-orbit-150,99-5
+PASS mandel2/binary32-orbit-150,99-6
+PASS mandel2/binary32-orbit-150,99-7
+PASS mandel2/binary32-orbit-150,99-8
+PASS mandel2/binary32-orbit-150,99-9
+PASS mandel2/binary32-orbit-150,99-10
+PASS mandel2/binary32-orbit-150,99-11
+PASS mandel2/binary32-orbit-150,99-12
+PASS mandel2/binary32-orbit-150,99-13
+PASS mandel2/binary32-orbit-150,99-14
+PASS mandel2/binary32-orbit-150,99-15
+PASS mandel2/binary32-orbit-150,99-16
+PASS mandel2/binary32-orbit-150,99-17
+PASS mandel2/binary32-orbit-150,99-18
+PASS mandel2/binary32-orbit-150,99-19
+PASS mandel2/binary32-orbit-150,99-20
+PASS mandel2/binary32-orbit-150,99-21
+PASS mandel2/binary32-orbit-150,99-22
+PASS mandel2/binary32-orbit-150,99-23
+PASS mandel2/binary32-orbit-150,99-24
+PASS mandel2/binary32-orbit-150,99-25
+PASS mandel2/coordinates-150,100
+PASS mandel2/point-colour-150,100
+PASS mandel2/binary32-orbit-150,100-1
+PASS mandel2/binary32-orbit-150,100-2
+PASS mandel2/binary32-orbit-150,100-3
+PASS mandel2/binary32-orbit-150,100-4
+PASS mandel2/binary32-orbit-150,100-5
+PASS mandel2/binary32-orbit-150,100-6
+PASS mandel2/binary32-orbit-150,100-7
+PASS mandel2/binary32-orbit-150,100-8
+PASS mandel2/binary32-orbit-150,100-9
+PASS mandel2/binary32-orbit-150,100-10
+PASS mandel2/binary32-orbit-150,100-11
+PASS mandel2/binary32-orbit-150,100-12
+PASS mandel2/binary32-orbit-150,100-13
+PASS mandel2/binary32-orbit-150,100-14
+PASS mandel2/binary32-orbit-150,100-15
+PASS mandel2/binary32-orbit-150,100-16
+PASS mandel2/binary32-orbit-150,100-17
+PASS mandel2/binary32-orbit-150,100-18
+PASS mandel2/binary32-orbit-150,100-19
+PASS mandel2/binary32-orbit-150,100-20
+PASS mandel2/binary32-orbit-150,100-21
+PASS mandel2/binary32-orbit-150,100-22
+PASS mandel2/binary32-orbit-150,100-23
+PASS mandel2/binary32-orbit-150,100-24
+PASS mandel2/binary32-orbit-150,100-25
+PASS mandel2/coordinates-200,100
+PASS mandel2/point-colour-200,100
+PASS mandel2/binary32-orbit-200,100-1
+PASS mandel2/binary32-orbit-200,100-2
+PASS mandel2/binary32-orbit-200,100-3
+PASS mandel2/binary32-orbit-200,100-4
+structure MandelFloatTests : 
+  sig
+    structure W : <sig>
+    structure P : <sig>
+    val decode : string -> real
+    val same : real * string -> bool
+    val current : (real * real * real * real) ref
+    val label : string ref
+    val number : string -> int
+    val row : string -> unit
+    val input : TextIO.instream
+    val text : TextIO.vector
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/mandel2-demand-tests.sml]
+PASS mandel2/lazy-corner-short-circuit
+PASS mandel2/strict-corners-eager
+PASS mandel2/lazy-shared-colour-one
+PASS mandel2/single-point-no-unused-corners
+PASS mandel2/zero-height-source-outward-scan
+PASS mandel2/right-whnf-before-left-and-memoized
+PASS mandel2/strict-right-complete-before-left
+structure MandelDemandPoint : 
+  sig
+    val calls : (int * int) list ref
+    val mode : int ref
+    val colour : int * int -> int
+    val reset : int -> unit
+    val trace : unit -> (int * int) list
+  end
+structure DemandNeed : 
+  sig
+    datatype node
+      = EW of node t * node t | Leaf of int | NS of node t * node t
+    type tree = node BenchNeed.t
+    val perimeter : (int * int) * (int * int) -> int
+    val build : int * int -> int * int -> node t
+    val write : int -> (string -> 'a) -> node t -> int
+  end
+structure DemandStrict : 
+  sig
+    datatype node
+      = EW of node t * node t | Leaf of int | NS of node t * node t
+    type tree = node BenchStrict.t
+    val perimeter : (int * int) * (int * int) -> int
+    val build : int * int -> int * int -> node t
+    val write : int -> (string -> 'a) -> node t -> int
+  end
+structure MandelDemandTests : 
+  sig
+    structure P : <sig>
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/mandel2-tree-tests.sml]
+PASS mandel2/complete-lazy-tree-1
+PASS mandel2/complete-strict-tree-1
+PASS mandel2/complete-lazy-tree-2
+PASS mandel2/complete-strict-tree-2
+PASS mandel2/complete-lazy-tree-3
+PASS mandel2/complete-strict-tree-3
+PASS mandel2/complete-lazy-tree-8
+PASS mandel2/complete-strict-tree-8
+PASS mandel2/complete-lazy-tree-16
+PASS mandel2/complete-strict-tree-16
+PASS mandel2/complete-lazy-tree-64
+PASS mandel2/complete-strict-tree-64
+PASS mandel2/complete-lazy-tree-200
+PASS mandel2/complete-strict-tree-200
+PASS mandel2/wrong-colour-rejected
+PASS mandel2/truncated-tree-rejected
+PASS mandel2/extra-tree-rejected
+PASS mandel2/wrong-branch-rejected
+structure MandelTwoNeed : 
+  sig
+    datatype node
+      = EW of node t * node t | Leaf of int | NS of node t * node t
+    type tree = node BenchNeed.t
+    val perimeter : (int * int) * (int * int) -> int
+    val build : int * int -> int * int -> node t
+    val write : int -> (string -> 'a) -> node t -> int
+  end
+structure MandelTwoStrict : 
+  sig
+    datatype node
+      = EW of node t * node t | Leaf of int | NS of node t * node t
+    type tree = node BenchStrict.t
+    val perimeter : (int * int) * (int * int) -> int
+    val build : int * int -> int * int -> node t
+    val write : int -> (string -> 'a) -> node t -> int
+  end
+structure MandelTwoNeedCheck : sig val run : int -> string -> int end
+structure MandelTwoStrictCheck : sig val run : int -> string -> int end
+structure MandelTwoTreeTests : 
+  sig
+    val expected : (int * int) list
+    val rejects : string -> bool
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 132 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS mandel2/coordinates-0,0
+PASS mandel2/point-colour-0,0
+PASS mandel2/binary32-orbit-0,0-1
+PASS mandel2/binary32-orbit-0,0-2
+PASS mandel2/coordinates-1,1
+PASS mandel2/point-colour-1,1
+PASS mandel2/binary32-orbit-1,1-1
+PASS mandel2/binary32-orbit-1,1-2
+PASS mandel2/coordinates-50,25
+PASS mandel2/point-colour-50,25
+PASS mandel2/binary32-orbit-50,25-1
+PASS mandel2/binary32-orbit-50,25-2
+PASS mandel2/binary32-orbit-50,25-3
+PASS mandel2/coordinates-100,50
+PASS mandel2/point-colour-100,50
+PASS mandel2/binary32-orbit-100,50-1
+PASS mandel2/binary32-orbit-100,50-2
+PASS mandel2/binary32-orbit-100,50-3
+PASS mandel2/binary32-orbit-100,50-4
+PASS mandel2/binary32-orbit-100,50-5
+PASS mandel2/coordinates-149,99
+PASS mandel2/point-colour-149,99
+PASS mandel2/binary32-orbit-149,99-1
+PASS mandel2/binary32-orbit-149,99-2
+PASS mandel2/binary32-orbit-149,99-3
+PASS mandel2/binary32-orbit-149,99-4
+PASS mandel2/binary32-orbit-149,99-5
+PASS mandel2/binary32-orbit-149,99-6
+PASS mandel2/binary32-orbit-149,99-7
+PASS mandel2/binary32-orbit-149,99-8
+PASS mandel2/binary32-orbit-149,99-9
+PASS mandel2/binary32-orbit-149,99-10
+PASS mandel2/binary32-orbit-149,99-11
+PASS mandel2/binary32-orbit-149,99-12
+PASS mandel2/binary32-orbit-149,99-13
+PASS mandel2/binary32-orbit-149,99-14
+PASS mandel2/binary32-orbit-149,99-15
+PASS mandel2/binary32-orbit-149,99-16
+PASS mandel2/binary32-orbit-149,99-17
+PASS mandel2/binary32-orbit-149,99-18
+PASS mandel2/binary32-orbit-149,99-19
+PASS mandel2/binary32-orbit-149,99-20
+PASS mandel2/binary32-orbit-149,99-21
+PASS mandel2/binary32-orbit-149,99-22
+PASS mandel2/binary32-orbit-149,99-23
+PASS mandel2/binary32-orbit-149,99-24
+PASS mandel2/binary32-orbit-149,99-25
+PASS mandel2/coordinates-150,99
+PASS mandel2/point-colour-150,99
+PASS mandel2/binary32-orbit-150,99-1
+PASS mandel2/binary32-orbit-150,99-2
+PASS mandel2/binary32-orbit-150,99-3
+PASS mandel2/binary32-orbit-150,99-4
+PASS mandel2/binary32-orbit-150,99-5
+PASS mandel2/binary32-orbit-150,99-6
+PASS mandel2/binary32-orbit-150,99-7
+PASS mandel2/binary32-orbit-150,99-8
+PASS mandel2/binary32-orbit-150,99-9
+PASS mandel2/binary32-orbit-150,99-10
+PASS mandel2/binary32-orbit-150,99-11
+PASS mandel2/binary32-orbit-150,99-12
+PASS mandel2/binary32-orbit-150,99-13
+PASS mandel2/binary32-orbit-150,99-14
+PASS mandel2/binary32-orbit-150,99-15
+PASS mandel2/binary32-orbit-150,99-16
+PASS mandel2/binary32-orbit-150,99-17
+PASS mandel2/binary32-orbit-150,99-18
+PASS mandel2/binary32-orbit-150,99-19
+PASS mandel2/binary32-orbit-150,99-20
+PASS mandel2/binary32-orbit-150,99-21
+PASS mandel2/binary32-orbit-150,99-22
+PASS mandel2/binary32-orbit-150,99-23
+PASS mandel2/binary32-orbit-150,99-24
+PASS mandel2/binary32-orbit-150,99-25
+PASS mandel2/coordinates-150,100
+PASS mandel2/point-colour-150,100
+PASS mandel2/binary32-orbit-150,100-1
+PASS mandel2/binary32-orbit-150,100-2
+PASS mandel2/binary32-orbit-150,100-3
+PASS mandel2/binary32-orbit-150,100-4
+PASS mandel2/binary32-orbit-150,100-5
+PASS mandel2/binary32-orbit-150,100-6
+PASS mandel2/binary32-orbit-150,100-7
+PASS mandel2/binary32-orbit-150,100-8
+PASS mandel2/binary32-orbit-150,100-9
+PASS mandel2/binary32-orbit-150,100-10
+PASS mandel2/binary32-orbit-150,100-11
+PASS mandel2/binary32-orbit-150,100-12
+PASS mandel2/binary32-orbit-150,100-13
+PASS mandel2/binary32-orbit-150,100-14
+PASS mandel2/binary32-orbit-150,100-15
+PASS mandel2/binary32-orbit-150,100-16
+PASS mandel2/binary32-orbit-150,100-17
+PASS mandel2/binary32-orbit-150,100-18
+PASS mandel2/binary32-orbit-150,100-19
+PASS mandel2/binary32-orbit-150,100-20
+PASS mandel2/binary32-orbit-150,100-21
+PASS mandel2/binary32-orbit-150,100-22
+PASS mandel2/binary32-orbit-150,100-23
+PASS mandel2/binary32-orbit-150,100-24
+PASS mandel2/binary32-orbit-150,100-25
+PASS mandel2/coordinates-200,100
+PASS mandel2/point-colour-200,100
+PASS mandel2/binary32-orbit-200,100-1
+PASS mandel2/binary32-orbit-200,100-2
+PASS mandel2/binary32-orbit-200,100-3
+PASS mandel2/binary32-orbit-200,100-4
+PASS mandel2/lazy-corner-short-circuit
+PASS mandel2/strict-corners-eager
+PASS mandel2/lazy-shared-colour-one
+PASS mandel2/single-point-no-unused-corners
+PASS mandel2/zero-height-source-outward-scan
+PASS mandel2/right-whnf-before-left-and-memoized
+PASS mandel2/strict-right-complete-before-left
+PASS mandel2/complete-lazy-tree-1
+PASS mandel2/complete-strict-tree-1
+PASS mandel2/complete-lazy-tree-2
+PASS mandel2/complete-strict-tree-2
+PASS mandel2/complete-lazy-tree-3
+PASS mandel2/complete-strict-tree-3
+PASS mandel2/complete-lazy-tree-8
+PASS mandel2/complete-strict-tree-8
+PASS mandel2/complete-lazy-tree-16
+PASS mandel2/complete-strict-tree-16
+PASS mandel2/complete-lazy-tree-64
+PASS mandel2/complete-strict-tree-64
+PASS mandel2/complete-lazy-tree-200
+PASS mandel2/complete-strict-tree-200
+PASS mandel2/wrong-colour-rejected
+PASS mandel2/truncated-tree-rejected
+PASS mandel2/extra-tree-rejected
+PASS mandel2/wrong-branch-rejected
+SUMMARY 132 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PASS mandel2/coordinates-0,0
+PASS mandel2/point-colour-0,0
+PASS mandel2/binary32-orbit-0,0-1
+PASS mandel2/binary32-orbit-0,0-2
+PASS mandel2/coordinates-1,1
+PASS mandel2/point-colour-1,1
+PASS mandel2/binary32-orbit-1,1-1
+PASS mandel2/binary32-orbit-1,1-2
+PASS mandel2/coordinates-50,25
+PASS mandel2/point-colour-50,25
+PASS mandel2/binary32-orbit-50,25-1
+PASS mandel2/binary32-orbit-50,25-2
+PASS mandel2/binary32-orbit-50,25-3
+PASS mandel2/coordinates-100,50
+PASS mandel2/point-colour-100,50
+PASS mandel2/binary32-orbit-100,50-1
+PASS mandel2/binary32-orbit-100,50-2
+PASS mandel2/binary32-orbit-100,50-3
+PASS mandel2/binary32-orbit-100,50-4
+PASS mandel2/binary32-orbit-100,50-5
+PASS mandel2/coordinates-149,99
+PASS mandel2/point-colour-149,99
+PASS mandel2/binary32-orbit-149,99-1
+PASS mandel2/binary32-orbit-149,99-2
+PASS mandel2/binary32-orbit-149,99-3
+PASS mandel2/binary32-orbit-149,99-4
+PASS mandel2/binary32-orbit-149,99-5
+PASS mandel2/binary32-orbit-149,99-6
+PASS mandel2/binary32-orbit-149,99-7
+PASS mandel2/binary32-orbit-149,99-8
+PASS mandel2/binary32-orbit-149,99-9
+PASS mandel2/binary32-orbit-149,99-10
+PASS mandel2/binary32-orbit-149,99-11
+PASS mandel2/binary32-orbit-149,99-12
+PASS mandel2/binary32-orbit-149,99-13
+PASS mandel2/binary32-orbit-149,99-14
+PASS mandel2/binary32-orbit-149,99-15
+PASS mandel2/binary32-orbit-149,99-16
+PASS mandel2/binary32-orbit-149,99-17
+PASS mandel2/binary32-orbit-149,99-18
+PASS mandel2/binary32-orbit-149,99-19
+PASS mandel2/binary32-orbit-149,99-20
+PASS mandel2/binary32-orbit-149,99-21
+PASS mandel2/binary32-orbit-149,99-22
+PASS mandel2/binary32-orbit-149,99-23
+PASS mandel2/binary32-orbit-149,99-24
+PASS mandel2/binary32-orbit-149,99-25
+PASS mandel2/coordinates-150,99
+PASS mandel2/point-colour-150,99
+PASS mandel2/binary32-orbit-150,99-1
+PASS mandel2/binary32-orbit-150,99-2
+PASS mandel2/binary32-orbit-150,99-3
+PASS mandel2/binary32-orbit-150,99-4
+PASS mandel2/binary32-orbit-150,99-5
+PASS mandel2/binary32-orbit-150,99-6
+PASS mandel2/binary32-orbit-150,99-7
+PASS mandel2/binary32-orbit-150,99-8
+PASS mandel2/binary32-orbit-150,99-9
+PASS mandel2/binary32-orbit-150,99-10
+PASS mandel2/binary32-orbit-150,99-11
+PASS mandel2/binary32-orbit-150,99-12
+PASS mandel2/binary32-orbit-150,99-13
+PASS mandel2/binary32-orbit-150,99-14
+PASS mandel2/binary32-orbit-150,99-15
+PASS mandel2/binary32-orbit-150,99-16
+PASS mandel2/binary32-orbit-150,99-17
+PASS mandel2/binary32-orbit-150,99-18
+PASS mandel2/binary32-orbit-150,99-19
+PASS mandel2/binary32-orbit-150,99-20
+PASS mandel2/binary32-orbit-150,99-21
+PASS mandel2/binary32-orbit-150,99-22
+PASS mandel2/binary32-orbit-150,99-23
+PASS mandel2/binary32-orbit-150,99-24
+PASS mandel2/binary32-orbit-150,99-25
+PASS mandel2/coordinates-150,100
+PASS mandel2/point-colour-150,100
+PASS mandel2/binary32-orbit-150,100-1
+PASS mandel2/binary32-orbit-150,100-2
+PASS mandel2/binary32-orbit-150,100-3
+PASS mandel2/binary32-orbit-150,100-4
+PASS mandel2/binary32-orbit-150,100-5
+PASS mandel2/binary32-orbit-150,100-6
+PASS mandel2/binary32-orbit-150,100-7
+PASS mandel2/binary32-orbit-150,100-8
+PASS mandel2/binary32-orbit-150,100-9
+PASS mandel2/binary32-orbit-150,100-10
+PASS mandel2/binary32-orbit-150,100-11
+PASS mandel2/binary32-orbit-150,100-12
+PASS mandel2/binary32-orbit-150,100-13
+PASS mandel2/binary32-orbit-150,100-14
+PASS mandel2/binary32-orbit-150,100-15
+PASS mandel2/binary32-orbit-150,100-16
+PASS mandel2/binary32-orbit-150,100-17
+PASS mandel2/binary32-orbit-150,100-18
+PASS mandel2/binary32-orbit-150,100-19
+PASS mandel2/binary32-orbit-150,100-20
+PASS mandel2/binary32-orbit-150,100-21
+PASS mandel2/binary32-orbit-150,100-22
+PASS mandel2/binary32-orbit-150,100-23
+PASS mandel2/binary32-orbit-150,100-24
+PASS mandel2/binary32-orbit-150,100-25
+PASS mandel2/coordinates-200,100
+PASS mandel2/point-colour-200,100
+PASS mandel2/binary32-orbit-200,100-1
+PASS mandel2/binary32-orbit-200,100-2
+PASS mandel2/binary32-orbit-200,100-3
+PASS mandel2/binary32-orbit-200,100-4
+PASS mandel2/lazy-corner-short-circuit
+PASS mandel2/strict-corners-eager
+PASS mandel2/lazy-shared-colour-one
+PASS mandel2/single-point-no-unused-corners
+PASS mandel2/zero-height-source-outward-scan
+PASS mandel2/right-whnf-before-left-and-memoized
+PASS mandel2/strict-right-complete-before-left
+PASS mandel2/complete-lazy-tree-1
+PASS mandel2/complete-strict-tree-1
+PASS mandel2/complete-lazy-tree-2
+PASS mandel2/complete-strict-tree-2
+PASS mandel2/complete-lazy-tree-3
+PASS mandel2/complete-strict-tree-3
+PASS mandel2/complete-lazy-tree-8
+PASS mandel2/complete-strict-tree-8
+PASS mandel2/complete-lazy-tree-16
+PASS mandel2/complete-strict-tree-16
+PASS mandel2/complete-lazy-tree-64
+PASS mandel2/complete-strict-tree-64
+PASS mandel2/complete-lazy-tree-200
+PASS mandel2/complete-strict-tree-200
+PASS mandel2/wrong-colour-rejected
+PASS mandel2/truncated-tree-rejected
+PASS mandel2/extra-tree-rejected
+PASS mandel2/wrong-branch-rejected
+SUMMARY 132 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23
+bench-mandel2: validation failures (/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/mandel2-checks.rSdrAE)

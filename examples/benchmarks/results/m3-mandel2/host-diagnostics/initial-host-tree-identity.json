@@ -1,0 +1,4 @@
+{
+  "tree_sha256": "0d4779415ab7875e7d2ef79fe35af08515af261a7d17df697694133a25089672",
+  "meaning": "initial scalar and tree host diagnostics before dependency injection for demand tests; not a compiler workaround"
+}

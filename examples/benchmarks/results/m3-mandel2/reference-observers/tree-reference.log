@@ -1,0 +1,10 @@
+PASS original finite forcing, 200x100 bounds, repetitions 2
+PASS original finite forcing, 200x100 bounds, repetitions 20
+PASS original finite forcing, 200x100 bounds, repetitions 100
+PASS complete tree source/independent 1 3 nodes; 18 outside points
+PASS complete tree source/independent 2 1 nodes; 0 outside points
+PASS complete tree source/independent 3 1 nodes; 0 outside points
+PASS complete tree source/independent 8 1 nodes; 0 outside points
+PASS complete tree source/independent 16 37 nodes; 0 outside points
+PASS complete tree source/independent 64 115 nodes; 36 outside points
+PASS complete tree source/independent 200 7993 nodes; 707 outside points

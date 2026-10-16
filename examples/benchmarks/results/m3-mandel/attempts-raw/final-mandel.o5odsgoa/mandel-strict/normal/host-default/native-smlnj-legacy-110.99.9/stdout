@@ -1,0 +1,176 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-mandel.sml]
+[autoloading]
+[autoloading done]
+structure BenchMandelDouble : sig
+  structure S : <sig>
+  structure L : <sig>
+  structure I : <sig>
+  val add : (real * real) * (real * real) -> real * real
+  val multiply : (real * real) * (real * real) -> real * real
+  val generic : real * real -> real * real -> real * real
+  val oldStep : real * real -> real * real -> real * real
+  val magnitude : real * real -> real
+  val orbit :
+      ('a -> 'a -> 'a)
+       -> 'a BenchLazy.state ref -> 'a BenchStream.node BenchLazy.state ref
+  val take :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val lazyNew :
+      (real * real -> real * real -> real * real)
+       -> int -> real -> (real * real) BenchLazy.state ref -> int
+  val lazyOld :
+      (real * real -> real * real -> real * real)
+       -> int -> real -> (real * real) BenchLazy.state ref -> int
+  val prefix : ('a -> 'b -> 'b) -> 'a -> int -> 'b -> 'b list
+  val strictNew :
+      (real * real -> real * real -> real * real)
+       -> int -> real -> real * real -> int
+  val strictOld :
+      (real * real -> real * real -> real * real)
+       -> int -> real -> real * real -> int
+  val range :
+      IntInf.int
+       -> IntInf.int -> IntInf.int BenchStream.node BenchLazy.state ref
+  val strictRange : IntInf.int -> IntInf.int -> IntInf.int list
+  val mapDelayed :
+      ('a BenchLazy.delay -> 'b)
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'b BenchStream.node BenchLazy.delay
+  val coordinate :
+      real * real * real * real
+       -> IntInf.int -> IntInf.int -> IntInf.int -> IntInf.int -> real * real
+  datatype 'a pixmap = Pixmap of IntInf.int * IntInf.int * int * 'a
+  val rgb : int -> int -> int * int * int
+  val makeLazy :
+      bool
+       -> real * real * real * real
+       -> IntInf.int
+       -> IntInf.int
+       -> int -> (int * int * int) BenchStream.node BenchLazy.delay pixmap
+  val makeStrict :
+      bool
+       -> real * real * real * real
+       -> IntInf.int -> IntInf.int -> int -> (int * int * int) list pixmap
+  val appLazy : ('a -> unit) -> 'a BenchStream.node BenchLazy.delay -> unit
+  val appStrict : ('a -> unit) -> 'a list -> unit
+  val render :
+      bool
+       -> bool
+       -> real * real * real * real
+       -> IntInf.int -> IntInf.int -> int -> (string -> unit) -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mandel-digest.sml]
+[autoloading]
+[autoloading done]
+functor MandelDigestFn(K: sig
+  type pixels
+  val make :
+      real * real * real * real
+       -> IntInf.int -> IntInf.int -> int -> pixels BenchMandelDouble.pixmap
+  val app : (int * int * int -> unit) -> pixels -> unit
+end) :
+sig
+  structure W : <sig>
+  val run : real * real * real * real -> int -> int -> int -> string -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mandel-driver.sml]
+functor BenchMandelDriverFn(K: sig
+  type pixels
+  val make :
+      real * real * real * real
+       -> IntInf.int -> IntInf.int -> int -> pixels BenchMandelDouble.pixmap
+  val app : (int * int * int -> unit) -> pixels -> unit
+end) :
+sig
+  structure Check : <sig>
+  val real : string -> real
+  val line : TextIO.instream -> string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/mandel-strict/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+FAIL mandel-strict -- Fail: incorrect result: Mandel metadata, count or digest differs
+SUMMARY 1 checks, 1 failed

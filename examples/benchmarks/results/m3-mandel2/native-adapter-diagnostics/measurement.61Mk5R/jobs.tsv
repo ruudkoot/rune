@@ -1,0 +1,1 @@
+mandel2-strict	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/finite-binary32.sml shared/mandel2-point.sml shared/nofib-mandel2.sml shared/mandel2-check.sml shared/mandel2-driver.sml mandel2-strict/benchmark.sml shared/main.sml	data/smoke.sizes expected/smoke.tree	mandel2-strict/smoke.expected	data/smoke.sizes expected/smoke.tree

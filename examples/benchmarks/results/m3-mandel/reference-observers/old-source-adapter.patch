@@ -1,0 +1,22 @@
+--- MandelOld.lhs
++++ MandelOldPort.lhs
+@@ -106,7 +106,7 @@
+ region of the complex plane.
+ 
+ \subsubsection{A sequential version}
+-\begin{code}[sequential]
++\begin{code}
+ 
+ mandelset::Double -> Double -> Double -> Double ->
+ 	   Integer -> Integer -> Int -> PixMap
+@@ -124,8 +124,8 @@
+ 	radiusSq = max (x'-x) (y'-y)
+ 
+ 	initial::Integer -> Integer -> Complex Double
+-	initial s t = (x + (((coerce s) * (x' - x)) / (fromInteger screenX)) :+
+-		       y + (((coerce t) * (y' - y)) / (fromInteger screenY)))
++	initial s t = ((x + (((coerce s) * (x' - x)) / (fromInteger screenX))) :+
++                       (y + (((coerce t) * (y' - y)) / (fromInteger screenY))))
+ 
+ 	coerce::Integer -> Double
+ 	coerce  s   = encodeFloat (toInteger s) 0

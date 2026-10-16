@@ -1,0 +1,98 @@
+[
+  {
+    "variant": "current",
+    "arguments": [
+      "-2.0",
+      "-2.0",
+      "2.0",
+      "2.0",
+      "25",
+      "25",
+      "75"
+    ],
+    "repetitions": 100,
+    "exit": 0,
+    "stdout_bytes": 0,
+    "stderr": ""
+  },
+  {
+    "variant": "current",
+    "arguments": [
+      "-2.0",
+      "-2.0",
+      "2.0",
+      "2.0",
+      "80",
+      "80",
+      "75"
+    ],
+    "repetitions": 100,
+    "exit": 0,
+    "stdout_bytes": 0,
+    "stderr": ""
+  },
+  {
+    "variant": "current",
+    "arguments": [
+      "-2.0",
+      "-2.0",
+      "2.0",
+      "2.0",
+      "180",
+      "180",
+      "75"
+    ],
+    "repetitions": 100,
+    "exit": 0,
+    "stdout_bytes": 0,
+    "stderr": ""
+  },
+  {
+    "variant": "historical-syntax-adapted",
+    "arguments": [
+      "-2.0",
+      "-2.0",
+      "2.0",
+      "2.0",
+      "25",
+      "25",
+      "75"
+    ],
+    "repetitions": 100,
+    "exit": 0,
+    "stdout_bytes": 0,
+    "stderr": ""
+  },
+  {
+    "variant": "historical-syntax-adapted",
+    "arguments": [
+      "-2.0",
+      "-2.0",
+      "2.0",
+      "2.0",
+      "80",
+      "80",
+      "75"
+    ],
+    "repetitions": 100,
+    "exit": 0,
+    "stdout_bytes": 0,
+    "stderr": ""
+  },
+  {
+    "variant": "historical-syntax-adapted",
+    "arguments": [
+      "-2.0",
+      "-2.0",
+      "2.0",
+      "2.0",
+      "180",
+      "180",
+      "75"
+    ],
+    "repetitions": 100,
+    "exit": 0,
+    "stdout_bytes": 0,
+    "stderr": ""
+  }
+]

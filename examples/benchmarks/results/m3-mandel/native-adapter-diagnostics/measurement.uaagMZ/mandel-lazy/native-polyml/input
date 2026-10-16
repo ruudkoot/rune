@@ -1,0 +1,4 @@
+mandel-lazy
+data/smoke.params expected/smoke.digest
+1:checked
+1

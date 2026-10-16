@@ -1,0 +1,11 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (855 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=mandel-lazy' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.T5fDwm
+BENCH MEASURE mandel-lazy normal count
+COUNT unbudgeted mandel-lazy normal rune
+COUNT unbudgeted mandel-lazy normal rune:opt
+COUNT unbudgeted mandel-lazy normal rune:new
+COUNT unbudgeted mandel-lazy normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.T5fDwm/report.md

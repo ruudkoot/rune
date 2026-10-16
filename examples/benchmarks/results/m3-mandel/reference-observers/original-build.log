@@ -1,0 +1,18 @@
+[1 of 4] Compiling PortablePixmap   ( PortablePixmap.lhs, PortablePixmap.o )
+
+PortablePixmap.lhs:106:1: warning: [-Wtabs]
+    Tab character found here, and in 22 further locations.
+    Suggested fix: Please use spaces instead.
+    |
+106 |         showsPrec prec (Pixmap x y z rgbs) = showHeader x y z . showRGB rgbs
+    | ^^^^^^^^
+[2 of 4] Compiling Mandel           ( Mandel.lhs, Mandel.o )
+
+Mandel.lhs:51:1: warning: [-Wtabs]
+    Tab character found here, and in 49 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+51 |                 infiniteMandel = c : (map (\z -> z*z +c) infiniteMandel)
+   | ^^^^^^^^
+[3 of 4] Compiling Main             ( Main.hs, Main.o )
+[4 of 4] Linking original

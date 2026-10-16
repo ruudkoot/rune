@@ -1,0 +1,40 @@
+[
+  {
+    "target": "host-pilot",
+    "nursery": "default",
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml",
+      "driver.sml"
+    ],
+    "exit": 1
+  },
+  {
+    "target": "host-pilot",
+    "nursery": "64m",
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml",
+      "@SMLalloc=64m",
+      "driver.sml"
+    ],
+    "exit": 0
+  },
+  {
+    "target": "diagnostic-diff",
+    "nursery": "default",
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml",
+      "driver.sml"
+    ],
+    "exit": 1
+  },
+  {
+    "target": "diagnostic-diff",
+    "nursery": "64m",
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml",
+      "@SMLalloc=64m",
+      "driver.sml"
+    ],
+    "exit": 0
+  }
+]

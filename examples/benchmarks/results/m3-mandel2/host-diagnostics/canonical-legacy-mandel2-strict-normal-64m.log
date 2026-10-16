@@ -1,0 +1,99 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/finite-binary32.sml]
+[autoloading]
+[autoloading done]
+structure BenchMandelSingle : sig
+  val round : real -> real
+  val add : real * real -> real
+  val sub : real * real -> real
+  val mul : real * real -> real
+  val divide : real * real -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mandel2-point.sml]
+structure BenchMandelTwoPoint : sig
+  structure F : <sig>
+  val deltaP : real
+  val deltaQ : real
+  val p : int -> real
+  val q : int -> real
+  val next : real * real * real * real -> real * real * real
+  val colour : int * int -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-mandel2.sml]
+functor BenchMandelTwoFn(<param>: sig
+  structure D : <sig>
+  structure P : <sig>
+end) :
+sig
+  type node
+  type tree
+  val perimeter : (int * int) * (int * int) -> int
+  val build : int * int -> int * int -> <BaseFct>.<resultStr>.node t
+  val write : int -> (string -> 'a) -> <BaseFct>.<resultStr>.node t -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mandel2-check.sml]
+[autoloading]
+[autoloading done]
+functor MandelTreeCheckFn(K: sig
+  type tree
+  val build : int * int -> int * int -> tree
+  val write : int -> (string -> unit) -> tree -> int
+end) :
+sig
+  val run : int -> string -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mandel2-driver.sml]
+functor BenchMandelTwoDriverFn(K: sig
+  type tree
+  val build : int * int -> int * int -> tree
+  val write : int -> (string -> unit) -> tree -> int
+end) :
+sig
+  structure Check : <sig>
+  val line : TextIO.instream -> string
+  val integer : string -> int
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/mandel2-strict/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 2:15986:checked
+PASS mandel2-strict
+SUMMARY 1 checks, 0 failed

@@ -1,0 +1,928 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS mandel/new-zero-limit-does-not-demand-coordinate
+PASS mandel/old-zero-limit-demands-coordinate
+PASS mandel/new-boundary-strict-greater
+PASS mandel/old-boundary-inclusive
+PASS mandel/new-limit-does-not-force-next-orbit
+PASS mandel/old-limit-forces-next-orbit
+PASS mandel/cyclic-orbit-heads-and-spines-share
+PASS mandel/strict-new-finite-prefix-exact-limit
+PASS mandel/strict-old-finite-prefix-extra-head
+PASS mandel/strict-work-after-escape-is-explicit
+PASS mandel/full-source-rgb-new-lazy
+PASS mandel/full-source-rgb-new-strict
+PASS mandel/full-source-rgb-old-lazy
+PASS mandel/full-source-rgb-old-strict
+PASS mandel/full-new-lazy-digest
+PASS mandel/full-new-strict-digest
+PASS mandel/full-old-lazy-digest
+PASS mandel/full-old-strict-digest
+PASS mandel/wrong-digest-rejected
+PASS mandel/wrong-metadata-rejected
+PASS mandel/wrong-count-rejected
+PASS mandel/extra-digest-rejected
+PASS mandel/empty-digest-rejected
+PASS mandel/wrong-rgb-rejected
+PASS mandel/truncated-rejected
+PASS mandel/extra-rejected
+SUMMARY 26 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+PASS mandel/new-zero-limit-does-not-demand-coordinate
+PASS mandel/old-zero-limit-demands-coordinate
+PASS mandel/new-boundary-strict-greater
+PASS mandel/old-boundary-inclusive
+PASS mandel/new-limit-does-not-force-next-orbit
+PASS mandel/old-limit-forces-next-orbit
+PASS mandel/cyclic-orbit-heads-and-spines-share
+PASS mandel/strict-new-finite-prefix-exact-limit
+PASS mandel/strict-old-finite-prefix-extra-head
+PASS mandel/strict-work-after-escape-is-explicit
+PASS mandel/full-source-rgb-new-lazy
+PASS mandel/full-source-rgb-new-strict
+PASS mandel/full-source-rgb-old-lazy
+PASS mandel/full-source-rgb-old-strict
+PASS mandel/full-new-lazy-digest
+PASS mandel/full-new-strict-digest
+PASS mandel/full-old-lazy-digest
+PASS mandel/full-old-strict-digest
+PASS mandel/wrong-digest-rejected
+PASS mandel/wrong-metadata-rejected
+PASS mandel/wrong-count-rejected
+PASS mandel/extra-digest-rejected
+PASS mandel/empty-digest-rejected
+PASS mandel/wrong-rgb-rejected
+PASS mandel/truncated-rejected
+PASS mandel/extra-rejected
+SUMMARY 26 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+PASS mandel/new-zero-limit-does-not-demand-coordinate
+PASS mandel/old-zero-limit-demands-coordinate
+PASS mandel/new-boundary-strict-greater
+PASS mandel/old-boundary-inclusive
+PASS mandel/new-limit-does-not-force-next-orbit
+PASS mandel/old-limit-forces-next-orbit
+PASS mandel/cyclic-orbit-heads-and-spines-share
+PASS mandel/strict-new-finite-prefix-exact-limit
+PASS mandel/strict-old-finite-prefix-extra-head
+PASS mandel/strict-work-after-escape-is-explicit
+PASS mandel/full-source-rgb-new-lazy
+PASS mandel/full-source-rgb-new-strict
+PASS mandel/full-source-rgb-old-lazy
+PASS mandel/full-source-rgb-old-strict
+PASS mandel/full-new-lazy-digest
+PASS mandel/full-new-strict-digest
+PASS mandel/full-old-lazy-digest
+PASS mandel/full-old-strict-digest
+PASS mandel/wrong-digest-rejected
+PASS mandel/wrong-metadata-rejected
+PASS mandel/wrong-count-rejected
+PASS mandel/extra-digest-rejected
+PASS mandel/empty-digest-rejected
+PASS mandel/wrong-rgb-rejected
+PASS mandel/truncated-rejected
+PASS mandel/extra-rejected
+SUMMARY 26 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+PASS mandel/new-zero-limit-does-not-demand-coordinate
+PASS mandel/old-zero-limit-demands-coordinate
+PASS mandel/new-boundary-strict-greater
+PASS mandel/old-boundary-inclusive
+PASS mandel/new-limit-does-not-force-next-orbit
+PASS mandel/old-limit-forces-next-orbit
+PASS mandel/cyclic-orbit-heads-and-spines-share
+PASS mandel/strict-new-finite-prefix-exact-limit
+PASS mandel/strict-old-finite-prefix-extra-head
+PASS mandel/strict-work-after-escape-is-explicit
+PASS mandel/full-source-rgb-new-lazy
+PASS mandel/full-source-rgb-new-strict
+PASS mandel/full-source-rgb-old-lazy
+PASS mandel/full-source-rgb-old-strict
+PASS mandel/full-new-lazy-digest
+PASS mandel/full-new-strict-digest
+PASS mandel/full-old-lazy-digest
+PASS mandel/full-old-strict-digest
+PASS mandel/wrong-digest-rejected
+PASS mandel/wrong-metadata-rejected
+PASS mandel/wrong-count-rejected
+PASS mandel/extra-digest-rejected
+PASS mandel/empty-digest-rejected
+PASS mandel/wrong-rgb-rejected
+PASS mandel/truncated-rejected
+PASS mandel/extra-rejected
+SUMMARY 26 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 1048576 KiB
+PASS mandel/new-zero-limit-does-not-demand-coordinate
+PASS mandel/old-zero-limit-demands-coordinate
+PASS mandel/new-boundary-strict-greater
+PASS mandel/old-boundary-inclusive
+PASS mandel/new-limit-does-not-force-next-orbit
+PASS mandel/old-limit-forces-next-orbit
+PASS mandel/cyclic-orbit-heads-and-spines-share
+PASS mandel/strict-new-finite-prefix-exact-limit
+PASS mandel/strict-old-finite-prefix-extra-head
+PASS mandel/strict-work-after-escape-is-explicit
+PASS mandel/full-source-rgb-new-lazy
+PASS mandel/full-source-rgb-new-strict
+PASS mandel/full-source-rgb-old-lazy
+PASS mandel/full-source-rgb-old-strict
+PASS mandel/full-new-lazy-digest
+PASS mandel/full-new-strict-digest
+PASS mandel/full-old-lazy-digest
+PASS mandel/full-old-strict-digest
+PASS mandel/wrong-digest-rejected
+PASS mandel/wrong-metadata-rejected
+PASS mandel/wrong-count-rejected
+PASS mandel/extra-digest-rejected
+PASS mandel/empty-digest-rejected
+PASS mandel/wrong-rgb-rejected
+PASS mandel/truncated-rejected
+PASS mandel/extra-rejected
+SUMMARY 26 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-mandel.sml]
+[autoloading]
+[autoloading done]
+structure BenchMandelDouble : sig
+  structure S : <sig>
+  structure L : <sig>
+  structure I : <sig>
+  val add : (real * real) * (real * real) -> real * real
+  val multiply : (real * real) * (real * real) -> real * real
+  val generic : real * real -> real * real -> real * real
+  val oldStep : real * real -> real * real -> real * real
+  val magnitude : real * real -> real
+  val orbit :
+      ('a -> 'a -> 'a)
+       -> 'a BenchLazy.state ref -> 'a BenchStream.node BenchLazy.state ref
+  val take :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val lazyNew :
+      (real * real -> real * real -> real * real)
+       -> int -> real -> (real * real) BenchLazy.state ref -> int
+  val lazyOld :
+      (real * real -> real * real -> real * real)
+       -> int -> real -> (real * real) BenchLazy.state ref -> int
+  val prefix : ('a -> 'b -> 'b) -> 'a -> int -> 'b -> 'b list
+  val strictNew :
+      (real * real -> real * real -> real * real)
+       -> int -> real -> real * real -> int
+  val strictOld :
+      (real * real -> real * real -> real * real)
+       -> int -> real -> real * real -> int
+  val range :
+      IntInf.int
+       -> IntInf.int -> IntInf.int BenchStream.node BenchLazy.state ref
+  val strictRange : IntInf.int -> IntInf.int -> IntInf.int list
+  val mapDelayed :
+      ('a BenchLazy.delay -> 'b)
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'b BenchStream.node BenchLazy.delay
+  val coordinate :
+      real * real * real * real
+       -> IntInf.int -> IntInf.int -> IntInf.int -> IntInf.int -> real * real
+  datatype 'a pixmap = Pixmap of IntInf.int * IntInf.int * int * 'a
+  val rgb : int -> int -> int * int * int
+  val makeLazy :
+      bool
+       -> real * real * real * real
+       -> IntInf.int
+       -> IntInf.int
+       -> int -> (int * int * int) BenchStream.node BenchLazy.delay pixmap
+  val makeStrict :
+      bool
+       -> real * real * real * real
+       -> IntInf.int -> IntInf.int -> int -> (int * int * int) list pixmap
+  val appLazy : ('a -> unit) -> 'a BenchStream.node BenchLazy.delay -> unit
+  val appStrict : ('a -> unit) -> 'a list -> unit
+  val render :
+      bool
+       -> bool
+       -> real * real * real * real
+       -> IntInf.int -> IntInf.int -> int -> (string -> unit) -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mandel-rgb-check.sml]
+[autoloading]
+[autoloading done]
+structure MandelDoubleCheck : sig
+  val run : bool -> bool -> int -> int -> int -> string -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mandel-digest.sml]
+functor MandelDigestFn(K: sig
+  type pixels
+  val make :
+      real * real * real * real
+       -> IntInf.int -> IntInf.int -> int -> pixels BenchMandelDouble.pixmap
+  val app : (int * int * int -> unit) -> pixels -> unit
+end) :
+sig
+  structure W : <sig>
+  val run : real * real * real * real -> int -> int -> int -> string -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/mandel-tests.sml]
+PASS mandel/new-zero-limit-does-not-demand-coordinate
+PASS mandel/old-zero-limit-demands-coordinate
+PASS mandel/new-boundary-strict-greater
+FAIL mandel/old-boundary-inclusive -- false
+PASS mandel/new-limit-does-not-force-next-orbit
+PASS mandel/old-limit-forces-next-orbit
+PASS mandel/cyclic-orbit-heads-and-spines-share
+PASS mandel/strict-new-finite-prefix-exact-limit
+PASS mandel/strict-old-finite-prefix-extra-head
+PASS mandel/strict-work-after-escape-is-explicit
+PASS mandel/full-source-rgb-new-lazy
+FAIL mandel/full-source-rgb-new-strict -- raised an exception
+PASS mandel/full-source-rgb-old-lazy
+PASS mandel/full-source-rgb-old-strict
+PASS mandel/full-new-lazy-digest
+PASS mandel/full-new-strict-digest
+PASS mandel/full-old-lazy-digest
+PASS mandel/full-old-strict-digest
+PASS mandel/wrong-digest-rejected
+PASS mandel/wrong-metadata-rejected
+PASS mandel/wrong-count-rejected
+PASS mandel/extra-digest-rejected
+PASS mandel/empty-digest-rejected
+PASS mandel/wrong-rgb-rejected
+PASS mandel/truncated-rejected
+PASS mandel/extra-rejected
+structure MandelDoubleTests : sig
+  structure B : <sig>
+  structure L : <sig>
+  structure NewLazyDigest : <sig>
+  structure NewStrictDigest : <sig>
+  structure OldLazyDigest : <sig>
+  structure OldStrictDigest : <sig>
+  val viewport : real * real * real * real
+  val rejectsDigest : string -> bool
+  val rejects : string -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 26 checks, 2 failed
+PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 0, exit 1)
+FAIL mandel/full-source-rgb-new-strict -- raised an exception
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-mandel.sml]
+[autoloading]
+[autoloading done]
+structure BenchMandelDouble : sig
+  structure S : <sig>
+  structure L : <sig>
+  structure I : <sig>
+  val add : (real * real) * (real * real) -> real * real
+  val multiply : (real * real) * (real * real) -> real * real
+  val generic : real * real -> real * real -> real * real
+  val oldStep : real * real -> real * real -> real * real
+  val magnitude : real * real -> real
+  val orbit :
+      ('a -> 'a -> 'a)
+       -> 'a BenchLazy.state ref -> 'a BenchStream.node BenchLazy.state ref
+  val take :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val lazyNew :
+      (real * real -> real * real -> real * real)
+       -> int -> real -> (real * real) BenchLazy.state ref -> int
+  val lazyOld :
+      (real * real -> real * real -> real * real)
+       -> int -> real -> (real * real) BenchLazy.state ref -> int
+  val prefix : ('a -> 'b -> 'b) -> 'a -> int -> 'b -> 'b list
+  val strictNew :
+      (real * real -> real * real -> real * real)
+       -> int -> real -> real * real -> int
+  val strictOld :
+      (real * real -> real * real -> real * real)
+       -> int -> real -> real * real -> int
+  val range :
+      IntInf.int
+       -> IntInf.int -> IntInf.int BenchStream.node BenchLazy.state ref
+  val strictRange : IntInf.int -> IntInf.int -> IntInf.int list
+  val mapDelayed :
+      ('a BenchLazy.delay -> 'b)
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'b BenchStream.node BenchLazy.delay
+  val coordinate :
+      real * real * real * real
+       -> IntInf.int -> IntInf.int -> IntInf.int -> IntInf.int -> real * real
+  datatype 'a pixmap = Pixmap of IntInf.int * IntInf.int * int * 'a
+  val rgb : int -> int -> int * int * int
+  val makeLazy :
+      bool
+       -> real * real * real * real
+       -> IntInf.int
+       -> IntInf.int
+       -> int -> (int * int * int) BenchStream.node BenchLazy.delay pixmap
+  val makeStrict :
+      bool
+       -> real * real * real * real
+       -> IntInf.int -> IntInf.int -> int -> (int * int * int) list pixmap
+  val appLazy : ('a -> unit) -> 'a BenchStream.node BenchLazy.delay -> unit
+  val appStrict : ('a -> unit) -> 'a list -> unit
+  val render :
+      bool
+       -> bool
+       -> real * real * real * real
+       -> IntInf.int -> IntInf.int -> int -> (string -> unit) -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mandel-rgb-check.sml]
+[autoloading]
+[autoloading done]
+structure MandelDoubleCheck : sig
+  val run : bool -> bool -> int -> int -> int -> string -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mandel-digest.sml]
+functor MandelDigestFn(K: sig
+  type pixels
+  val make :
+      real * real * real * real
+       -> IntInf.int -> IntInf.int -> int -> pixels BenchMandelDouble.pixmap
+  val app : (int * int * int -> unit) -> pixels -> unit
+end) :
+sig
+  structure W : <sig>
+  val run : real * real * real * real -> int -> int -> int -> string -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/mandel-tests.sml]
+PASS mandel/new-zero-limit-does-not-demand-coordinate
+PASS mandel/old-zero-limit-demands-coordinate
+PASS mandel/new-boundary-strict-greater
+PASS mandel/old-boundary-inclusive
+PASS mandel/new-limit-does-not-force-next-orbit
+PASS mandel/old-limit-forces-next-orbit
+PASS mandel/cyclic-orbit-heads-and-spines-share
+PASS mandel/strict-new-finite-prefix-exact-limit
+PASS mandel/strict-old-finite-prefix-extra-head
+PASS mandel/strict-work-after-escape-is-explicit
+PASS mandel/full-source-rgb-new-lazy
+PASS mandel/full-source-rgb-new-strict
+PASS mandel/full-source-rgb-old-lazy
+PASS mandel/full-source-rgb-old-strict
+PASS mandel/full-new-lazy-digest
+PASS mandel/full-new-strict-digest
+PASS mandel/full-old-lazy-digest
+PASS mandel/full-old-strict-digest
+PASS mandel/wrong-digest-rejected
+PASS mandel/wrong-metadata-rejected
+PASS mandel/wrong-count-rejected
+PASS mandel/extra-digest-rejected
+PASS mandel/empty-digest-rejected
+PASS mandel/wrong-rgb-rejected
+PASS mandel/truncated-rejected
+PASS mandel/extra-rejected
+structure MandelDoubleTests : sig
+  structure B : <sig>
+  structure L : <sig>
+  structure NewLazyDigest : <sig>
+  structure NewStrictDigest : <sig>
+  structure OldLazyDigest : <sig>
+  structure OldStrictDigest : <sig>
+  val viewport : real * real * real * real
+  val rejectsDigest : string -> bool
+  val rejects : string -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 26 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : 
+  sig
+    datatype 'a node
+      = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay | Nil
+    type 'a stream = 'a node BenchLazy.delay
+    val empty : unit -> 'a node BenchLazy.state ref
+    val cons : 'a BenchLazy.delay * 'a node BenchLazy.delay
+                -> 'a node BenchLazy.state ref
+    val singleton : 'a -> 'a node BenchLazy.state ref
+    val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+    val head : 'a node BenchLazy.state ref -> 'a
+    val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val iterate : ('a -> 'a)
+                   -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+    val fromList : 'a list -> 'a node BenchLazy.delay
+    val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+    val zipWith : ('a * 'b -> 'c)
+                   -> 'a node BenchLazy.delay
+                   -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+    val append : 'a node BenchLazy.delay
+                  -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val concatMap : ('a -> 'b node BenchLazy.delay)
+                     -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+    val filter : ('a -> bool)
+                  -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+    val dropWhile : ('a -> bool)
+                     -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+    val foldrStream : ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+                       -> 'b BenchLazy.state ref
+                       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+    val zipWith3 : ('a * 'b * 'c -> 'd)
+                    -> 'a node BenchLazy.delay
+                    -> 'b node BenchLazy.delay
+                    -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+    val span : ('a -> bool)
+                -> 'a node BenchLazy.delay
+                -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+    val nth : 'a node BenchLazy.delay -> int -> 'a
+    val take : int -> 'a node BenchLazy.delay -> 'a list
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+    val foldPrefix : ('a * 'b -> 'b)
+                      -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-mandel.sml]
+structure BenchMandelDouble : 
+  sig
+    structure S : <sig>
+    structure L : <sig>
+    structure I : <sig>
+    val add : (real * real) * (real * real) -> real * real
+    val multiply : (real * real) * (real * real) -> real * real
+    val generic : real * real -> real * real -> real * real
+    val oldStep : real * real -> real * real -> real * real
+    val magnitude : real * real -> real
+    val orbit : ('a -> 'a -> 'a)
+                 -> 'a BenchLazy.state ref
+                 -> 'a BenchStream.node BenchLazy.state ref
+    val take : int
+                -> 'a BenchStream.node BenchLazy.delay
+                -> 'a BenchStream.node BenchLazy.delay
+    val lazyNew : (real * real -> real * real -> real * real)
+                   -> int -> real -> (real * real) BenchLazy.state ref -> int
+    val lazyOld : (real * real -> real * real -> real * real)
+                   -> int -> real -> (real * real) BenchLazy.state ref -> int
+    val prefix : ('a -> 'b -> 'b) -> 'a -> int -> 'b -> 'b list
+    val strictNew : (real * real -> real * real -> real * real)
+                     -> int -> real -> real * real -> int
+    val strictOld : (real * real -> real * real -> real * real)
+                     -> int -> real -> real * real -> int
+    val range : IntInf.int
+                 -> IntInf.int
+                 -> IntInf.int BenchStream.node BenchLazy.state ref
+    val strictRange : IntInf.int -> IntInf.int -> IntInf.int list
+    val mapDelayed : ('a BenchLazy.delay -> 'b)
+                      -> 'a BenchStream.node BenchLazy.delay
+                      -> 'b BenchStream.node BenchLazy.delay
+    val coordinate : real * real * real * real
+                      -> IntInf.int
+                      -> IntInf.int -> IntInf.int -> IntInf.int -> real * real
+    datatype 'a pixmap = Pixmap of IntInf.int * IntInf.int * int * 'a
+    val rgb : int -> int -> int * int * int
+    val makeLazy : bool
+                    -> real * real * real * real
+                    -> IntInf.int
+                    -> IntInf.int
+                    -> int
+                    -> (int * int * int) BenchStream.node BenchLazy.delay 
+                      pixmap
+    val makeStrict : bool
+                      -> real * real * real * real
+                      -> IntInf.int
+                      -> IntInf.int -> int -> (int * int * int) list pixmap
+    val appLazy : ('a -> unit) -> 'a BenchStream.node BenchLazy.delay -> unit
+    val appStrict : ('a -> unit) -> 'a list -> unit
+    val render : bool
+                  -> bool
+                  -> real * real * real * real
+                  -> IntInf.int
+                  -> IntInf.int -> int -> (string -> unit) -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mandel-rgb-check.sml]
+structure MandelDoubleCheck : sig
+  val run : bool -> bool -> int -> int -> int -> string -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mandel-digest.sml]
+functor MandelDigestFn(K: sig
+                          type pixels
+                          val make : real * real * real * real
+                                      -> IntInf.int
+                                      -> IntInf.int
+                                      -> int
+                                      -> pixels BenchMandelDouble.pixmap
+                          val app : (int * int * int -> unit)
+                                     -> pixels -> unit
+                        end) :
+                      
+                        sig
+                          structure W : <sig>
+                          val run : real * real * real * real
+                                     -> int -> int -> int -> string -> unit
+                        end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/mandel-tests.sml]
+PASS mandel/new-zero-limit-does-not-demand-coordinate
+PASS mandel/old-zero-limit-demands-coordinate
+PASS mandel/new-boundary-strict-greater
+PASS mandel/old-boundary-inclusive
+PASS mandel/new-limit-does-not-force-next-orbit
+PASS mandel/old-limit-forces-next-orbit
+PASS mandel/cyclic-orbit-heads-and-spines-share
+PASS mandel/strict-new-finite-prefix-exact-limit
+PASS mandel/strict-old-finite-prefix-extra-head
+PASS mandel/strict-work-after-escape-is-explicit
+PASS mandel/full-source-rgb-new-lazy
+PASS mandel/full-source-rgb-new-strict
+PASS mandel/full-source-rgb-old-lazy
+PASS mandel/full-source-rgb-old-strict
+PASS mandel/full-new-lazy-digest
+PASS mandel/full-new-strict-digest
+PASS mandel/full-old-lazy-digest
+PASS mandel/full-old-strict-digest
+PASS mandel/wrong-digest-rejected
+PASS mandel/wrong-metadata-rejected
+PASS mandel/wrong-count-rejected
+PASS mandel/extra-digest-rejected
+PASS mandel/empty-digest-rejected
+PASS mandel/wrong-rgb-rejected
+PASS mandel/truncated-rejected
+PASS mandel/extra-rejected
+structure MandelDoubleTests : 
+  sig
+    structure B : <sig>
+    structure L : <sig>
+    structure NewLazyDigest : <sig>
+    structure NewStrictDigest : <sig>
+    structure OldLazyDigest : <sig>
+    structure OldStrictDigest : <sig>
+    val viewport : real * real * real * real
+    val rejectsDigest : string -> bool
+    val rejects : string -> bool
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 26 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS mandel/new-zero-limit-does-not-demand-coordinate
+PASS mandel/old-zero-limit-demands-coordinate
+PASS mandel/new-boundary-strict-greater
+PASS mandel/old-boundary-inclusive
+PASS mandel/new-limit-does-not-force-next-orbit
+PASS mandel/old-limit-forces-next-orbit
+PASS mandel/cyclic-orbit-heads-and-spines-share
+PASS mandel/strict-new-finite-prefix-exact-limit
+PASS mandel/strict-old-finite-prefix-extra-head
+PASS mandel/strict-work-after-escape-is-explicit
+PASS mandel/full-source-rgb-new-lazy
+PASS mandel/full-source-rgb-new-strict
+PASS mandel/full-source-rgb-old-lazy
+PASS mandel/full-source-rgb-old-strict
+PASS mandel/full-new-lazy-digest
+PASS mandel/full-new-strict-digest
+PASS mandel/full-old-lazy-digest
+PASS mandel/full-old-strict-digest
+PASS mandel/wrong-digest-rejected
+PASS mandel/wrong-metadata-rejected
+PASS mandel/wrong-count-rejected
+PASS mandel/extra-digest-rejected
+PASS mandel/empty-digest-rejected
+PASS mandel/wrong-rgb-rejected
+PASS mandel/truncated-rejected
+PASS mandel/extra-rejected
+SUMMARY 26 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PASS mandel/new-zero-limit-does-not-demand-coordinate
+PASS mandel/old-zero-limit-demands-coordinate
+PASS mandel/new-boundary-strict-greater
+PASS mandel/old-boundary-inclusive
+PASS mandel/new-limit-does-not-force-next-orbit
+PASS mandel/old-limit-forces-next-orbit
+PASS mandel/cyclic-orbit-heads-and-spines-share
+PASS mandel/strict-new-finite-prefix-exact-limit
+PASS mandel/strict-old-finite-prefix-extra-head
+PASS mandel/strict-work-after-escape-is-explicit
+PASS mandel/full-source-rgb-new-lazy
+PASS mandel/full-source-rgb-new-strict
+PASS mandel/full-source-rgb-old-lazy
+PASS mandel/full-source-rgb-old-strict
+PASS mandel/full-new-lazy-digest
+PASS mandel/full-new-strict-digest
+PASS mandel/full-old-lazy-digest
+PASS mandel/full-old-strict-digest
+PASS mandel/wrong-digest-rejected
+PASS mandel/wrong-metadata-rejected
+PASS mandel/wrong-count-rejected
+PASS mandel/extra-digest-rejected
+PASS mandel/empty-digest-rejected
+PASS mandel/wrong-rgb-rejected
+PASS mandel/truncated-rejected
+PASS mandel/extra-rejected
+SUMMARY 26 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

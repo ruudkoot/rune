@@ -1,0 +1,2 @@
+FAIL mandel2-lazy -- Fail: incorrect result: Mandel tree row differs
+SUMMARY 1 checks, 1 failed

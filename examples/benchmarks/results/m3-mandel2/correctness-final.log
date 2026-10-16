@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-mandel2.n2kbqtov
+PASS mandel2-lazy smoke O0
+PASS mandel2-lazy smoke O2
+FAIL mandel2-lazy smoke hosts
+PASS mandel2-lazy normal O0
+PASS mandel2-lazy normal O2
+FAIL mandel2-lazy normal hosts
+PASS mandel2-strict smoke O0
+PASS mandel2-strict smoke O2
+FAIL mandel2-strict smoke hosts
+PASS mandel2-strict normal O0
+PASS mandel2-strict normal O2
+FAIL mandel2-strict normal hosts

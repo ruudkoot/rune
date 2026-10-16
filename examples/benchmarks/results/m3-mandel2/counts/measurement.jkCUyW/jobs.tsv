@@ -1,0 +1,1 @@
+mandel2-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/finite-binary32.sml shared/mandel2-point.sml shared/nofib-mandel2.sml shared/mandel2-check.sml shared/mandel2-driver.sml mandel2-strict/benchmark.sml shared/main.sml	data/normal.sizes expected/normal.tree	mandel2-strict/normal.expected	data/normal.sizes expected/normal.tree

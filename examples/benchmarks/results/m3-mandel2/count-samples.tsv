@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+mandel2-lazy	normal	rune	O2	count	1	1	pass	1.35	1.38	0.02	10636	284960063	65372856	881363	counts/measurement.DmwKuw/mandel2-lazy/rune/fresh.1
+mandel2-lazy	normal	rune:opt	O2	count	1	1	pass	0.65	0.65	0.00	10984	284960063	65372856	881363	counts/measurement.DmwKuw/mandel2-lazy/rune-opt/fresh.1
+mandel2-lazy	normal	rune:new	O2	count	1	1	pass	1.64	1.63	0.02	10432	180763041	65372856	881363	counts/measurement.DmwKuw/mandel2-lazy/rune-new/fresh.1
+mandel2-lazy	normal	rune:jit	O2	count	1	1	pass	0.56	0.58	0.01	11616	180763041	65372856	881363	counts/measurement.DmwKuw/mandel2-lazy/rune-jit/fresh.1
+mandel2-strict	normal	rune	O2	count	1	1	pass	1.86	1.93	0.00	10668	354986415	57182472	659999	counts/measurement.jkCUyW/mandel2-strict/rune/fresh.1
+mandel2-strict	normal	rune:opt	O2	count	1	1	pass	1.01	0.93	0.00	10996	354986415	57182472	659999	counts/measurement.jkCUyW/mandel2-strict/rune-opt/fresh.1
+mandel2-strict	normal	rune:new	O2	count	1	1	pass	2.04	1.88	0.00	10540	225345731	57182472	659999	counts/measurement.jkCUyW/mandel2-strict/rune-new/fresh.1
+mandel2-strict	normal	rune:jit	O2	count	1	1	pass	0.79	0.71	0.02	11612	225345731	57182472	659999	counts/measurement.jkCUyW/mandel2-strict/rune-jit/fresh.1

@@ -1,0 +1,11 @@
+--- MandelOld.lhs
++++ MandelOldPort.lhs
+@@ -106,7 +106,7 @@
+ region of the complex plane.
+ 
+ \subsubsection{A sequential version}
+-\begin{code}[sequential]
++\begin{code}
+ 
+ mandelset::Double -> Double -> Double -> Double ->
+ 	   Integer -> Integer -> Int -> PixMap

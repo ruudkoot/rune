@@ -1,0 +1,25 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/mandel-lazy/
+?? examples/benchmarks/mandel-old-lazy/
+?? examples/benchmarks/mandel-old-strict/
+?? examples/benchmarks/mandel-strict/
+?? examples/benchmarks/mandel2-lazy/
+?? examples/benchmarks/mandel2-strict/
+?? examples/benchmarks/shared/finite-binary32.sml
+?? examples/benchmarks/shared/mandel-digest.sml
+?? examples/benchmarks/shared/mandel-driver.sml
+?? examples/benchmarks/shared/mandel-rgb-check.sml
+?? examples/benchmarks/shared/mandel2-check.sml
+?? examples/benchmarks/shared/mandel2-driver.sml
+?? examples/benchmarks/shared/mandel2-point.sml
+?? examples/benchmarks/shared/nofib-mandel.sml
+?? examples/benchmarks/shared/nofib-mandel2.sml
+?? tests/benchmarks/check-mandel.sh
+?? tests/benchmarks/check-mandel2.sh
+?? tests/benchmarks/data/mandel/
+?? tests/benchmarks/data/mandel2/
+?? tests/benchmarks/mandel-tests.sml
+?? tests/benchmarks/mandel2-demand-tests.sml
+?? tests/benchmarks/mandel2-float-tests.sml
+?? tests/benchmarks/mandel2-tree-tests.sml

@@ -1,0 +1,62 @@
+[
+  {
+    "fixture": "new-180-180-75.rgb",
+    "digest": "180 180 75 32400 9D7A1874038029AA",
+    "comparison": "original Haskell Word64 observer and independent Python rolling digest of complete reviewed RGB"
+  },
+  {
+    "fixture": "new-25-25-75.rgb",
+    "digest": "25 25 75 625 88D9B18B24A986B1",
+    "comparison": "original Haskell Word64 observer and independent Python rolling digest of complete reviewed RGB"
+  },
+  {
+    "fixture": "new-4-3-0.rgb",
+    "digest": "4 3 0 12 BB03B973FBF7E14F",
+    "comparison": "original Haskell Word64 observer and independent Python rolling digest of complete reviewed RGB"
+  },
+  {
+    "fixture": "new-4-3-1.rgb",
+    "digest": "4 3 1 12 ABF1B0B21CAA8CAC",
+    "comparison": "original Haskell Word64 observer and independent Python rolling digest of complete reviewed RGB"
+  },
+  {
+    "fixture": "new-7-5-75.rgb",
+    "digest": "7 5 75 35 9B476D8B6A9A231D",
+    "comparison": "original Haskell Word64 observer and independent Python rolling digest of complete reviewed RGB"
+  },
+  {
+    "fixture": "new-80-80-75.rgb",
+    "digest": "80 80 75 6400 4C6D71A2AE0615B1",
+    "comparison": "original Haskell Word64 observer and independent Python rolling digest of complete reviewed RGB"
+  },
+  {
+    "fixture": "old-180-180-75.rgb",
+    "digest": "180 180 75 32400 EEB7EC8BD1E7D22D",
+    "comparison": "original Haskell Word64 observer and independent Python rolling digest of complete reviewed RGB"
+  },
+  {
+    "fixture": "old-25-25-75.rgb",
+    "digest": "25 25 75 625 88D9B18B24A986B1",
+    "comparison": "original Haskell Word64 observer and independent Python rolling digest of complete reviewed RGB"
+  },
+  {
+    "fixture": "old-4-3-0.rgb",
+    "digest": "4 3 0 12 BB03B973FBF7E14F",
+    "comparison": "original Haskell Word64 observer and independent Python rolling digest of complete reviewed RGB"
+  },
+  {
+    "fixture": "old-4-3-1.rgb",
+    "digest": "4 3 1 12 2C2C1DBB5FE3F8A9",
+    "comparison": "original Haskell Word64 observer and independent Python rolling digest of complete reviewed RGB"
+  },
+  {
+    "fixture": "old-7-5-75.rgb",
+    "digest": "7 5 75 35 9B476D8B6A9A231D",
+    "comparison": "original Haskell Word64 observer and independent Python rolling digest of complete reviewed RGB"
+  },
+  {
+    "fixture": "old-80-80-75.rgb",
+    "digest": "80 80 75 6400 8F1E5838EDB20B98",
+    "comparison": "original Haskell Word64 observer and independent Python rolling digest of complete reviewed RGB"
+  }
+]

@@ -1,0 +1,208 @@
+[
+  {
+    "benchmark": "mandel-lazy",
+    "profile": "normal",
+    "nursery": "default",
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml",
+      "driver.sml"
+    ],
+    "exit": 1,
+    "status": "incorrect-result",
+    "log": "canonical-legacy-mandel-lazy-normal-default.log",
+    "working_directory": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-mandel.o5odsgoa/mandel-lazy/normal/hosts/matrix/native-smlnj-legacy-110.99.9/program",
+    "stdin_sha256": "4494113dcc7404f55f8cb921d17c52711e6424142b2342a1785f9462ded38cc9",
+    "memory_kib": 4194304,
+    "parent_timeout_seconds": 615,
+    "source_sha256": [
+      {
+        "path": "shared/input.sml",
+        "sha256": "b7f11e8957674b3de4686e2ff761727d91f4c4161452e4cb880700522a433c87"
+      },
+      {
+        "path": "shared/lazy.sml",
+        "sha256": "91c153ad3f9d7ef5385ebebc339c914edd53963c1768cccc0d3a8d7259f1e416"
+      },
+      {
+        "path": "shared/stream.sml",
+        "sha256": "45522b4689783a1cbf258b2e6bd457d450ecefa41ec6bac4d03546ae01683e51"
+      },
+      {
+        "path": "shared/nofib-mandel.sml",
+        "sha256": "0d685748797aab3d35ba730c3cd1690c7555f1b6c92cebd4be89bea3e2c3f96b"
+      },
+      {
+        "path": "shared/mandel-digest.sml",
+        "sha256": "92264651d310c3b0544962914e71762b99b183baff6176d1591c4c66327f8c7a"
+      },
+      {
+        "path": "shared/mandel-driver.sml",
+        "sha256": "9e9b27cea3f9c2597eedd6abcd0f02ee4abb0569dbcd9753a1a4f92a46d9ef78"
+      },
+      {
+        "path": "mandel-lazy/benchmark.sml",
+        "sha256": "3b1eaaf64879ca03f6485c21c7360e64bc2caec96a0ba263899216fff21b3b20"
+      },
+      {
+        "path": "shared/main.sml",
+        "sha256": "a3aaddee6fff78dc936bec211a708f712bad3bf8c9145ae13e363165e4432012"
+      }
+    ],
+    "compiler": "managed SML/NJ110.99.9 64-bit; same sources and profile files as canonical; diagnostic only"
+  },
+  {
+    "benchmark": "mandel-lazy",
+    "profile": "normal",
+    "nursery": "64m",
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml",
+      "@SMLalloc=64m",
+      "driver.sml"
+    ],
+    "exit": 0,
+    "status": "pass",
+    "log": "canonical-legacy-mandel-lazy-normal-64m.log",
+    "working_directory": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-mandel.o5odsgoa/mandel-lazy/normal/hosts/matrix/native-smlnj-legacy-110.99.9/program",
+    "stdin_sha256": "4494113dcc7404f55f8cb921d17c52711e6424142b2342a1785f9462ded38cc9",
+    "memory_kib": 4194304,
+    "parent_timeout_seconds": 615,
+    "source_sha256": [
+      {
+        "path": "shared/input.sml",
+        "sha256": "b7f11e8957674b3de4686e2ff761727d91f4c4161452e4cb880700522a433c87"
+      },
+      {
+        "path": "shared/lazy.sml",
+        "sha256": "91c153ad3f9d7ef5385ebebc339c914edd53963c1768cccc0d3a8d7259f1e416"
+      },
+      {
+        "path": "shared/stream.sml",
+        "sha256": "45522b4689783a1cbf258b2e6bd457d450ecefa41ec6bac4d03546ae01683e51"
+      },
+      {
+        "path": "shared/nofib-mandel.sml",
+        "sha256": "0d685748797aab3d35ba730c3cd1690c7555f1b6c92cebd4be89bea3e2c3f96b"
+      },
+      {
+        "path": "shared/mandel-digest.sml",
+        "sha256": "92264651d310c3b0544962914e71762b99b183baff6176d1591c4c66327f8c7a"
+      },
+      {
+        "path": "shared/mandel-driver.sml",
+        "sha256": "9e9b27cea3f9c2597eedd6abcd0f02ee4abb0569dbcd9753a1a4f92a46d9ef78"
+      },
+      {
+        "path": "mandel-lazy/benchmark.sml",
+        "sha256": "3b1eaaf64879ca03f6485c21c7360e64bc2caec96a0ba263899216fff21b3b20"
+      },
+      {
+        "path": "shared/main.sml",
+        "sha256": "a3aaddee6fff78dc936bec211a708f712bad3bf8c9145ae13e363165e4432012"
+      }
+    ],
+    "compiler": "managed SML/NJ110.99.9 64-bit; same sources and profile files as canonical; diagnostic only"
+  },
+  {
+    "benchmark": "mandel-strict",
+    "profile": "normal",
+    "nursery": "default",
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml",
+      "driver.sml"
+    ],
+    "exit": 1,
+    "status": "incorrect-result",
+    "log": "canonical-legacy-mandel-strict-normal-default.log",
+    "working_directory": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-mandel.o5odsgoa/mandel-strict/normal/hosts/matrix/native-smlnj-legacy-110.99.9/program",
+    "stdin_sha256": "ce56e54a0f4fcd710f1b578c2f158a494a21c976ad5f728efb75d94137506a45",
+    "memory_kib": 4194304,
+    "parent_timeout_seconds": 615,
+    "source_sha256": [
+      {
+        "path": "shared/input.sml",
+        "sha256": "b7f11e8957674b3de4686e2ff761727d91f4c4161452e4cb880700522a433c87"
+      },
+      {
+        "path": "shared/lazy.sml",
+        "sha256": "91c153ad3f9d7ef5385ebebc339c914edd53963c1768cccc0d3a8d7259f1e416"
+      },
+      {
+        "path": "shared/stream.sml",
+        "sha256": "45522b4689783a1cbf258b2e6bd457d450ecefa41ec6bac4d03546ae01683e51"
+      },
+      {
+        "path": "shared/nofib-mandel.sml",
+        "sha256": "0d685748797aab3d35ba730c3cd1690c7555f1b6c92cebd4be89bea3e2c3f96b"
+      },
+      {
+        "path": "shared/mandel-digest.sml",
+        "sha256": "92264651d310c3b0544962914e71762b99b183baff6176d1591c4c66327f8c7a"
+      },
+      {
+        "path": "shared/mandel-driver.sml",
+        "sha256": "9e9b27cea3f9c2597eedd6abcd0f02ee4abb0569dbcd9753a1a4f92a46d9ef78"
+      },
+      {
+        "path": "mandel-strict/benchmark.sml",
+        "sha256": "076c28068fcea8c1670159f9d27f4604d4b38f731e45edb328b973030214e0b0"
+      },
+      {
+        "path": "shared/main.sml",
+        "sha256": "a3aaddee6fff78dc936bec211a708f712bad3bf8c9145ae13e363165e4432012"
+      }
+    ],
+    "compiler": "managed SML/NJ110.99.9 64-bit; same sources and profile files as canonical; diagnostic only"
+  },
+  {
+    "benchmark": "mandel-strict",
+    "profile": "normal",
+    "nursery": "64m",
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml",
+      "@SMLalloc=64m",
+      "driver.sml"
+    ],
+    "exit": 0,
+    "status": "pass",
+    "log": "canonical-legacy-mandel-strict-normal-64m.log",
+    "working_directory": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-mandel.o5odsgoa/mandel-strict/normal/hosts/matrix/native-smlnj-legacy-110.99.9/program",
+    "stdin_sha256": "ce56e54a0f4fcd710f1b578c2f158a494a21c976ad5f728efb75d94137506a45",
+    "memory_kib": 4194304,
+    "parent_timeout_seconds": 615,
+    "source_sha256": [
+      {
+        "path": "shared/input.sml",
+        "sha256": "b7f11e8957674b3de4686e2ff761727d91f4c4161452e4cb880700522a433c87"
+      },
+      {
+        "path": "shared/lazy.sml",
+        "sha256": "91c153ad3f9d7ef5385ebebc339c914edd53963c1768cccc0d3a8d7259f1e416"
+      },
+      {
+        "path": "shared/stream.sml",
+        "sha256": "45522b4689783a1cbf258b2e6bd457d450ecefa41ec6bac4d03546ae01683e51"
+      },
+      {
+        "path": "shared/nofib-mandel.sml",
+        "sha256": "0d685748797aab3d35ba730c3cd1690c7555f1b6c92cebd4be89bea3e2c3f96b"
+      },
+      {
+        "path": "shared/mandel-digest.sml",
+        "sha256": "92264651d310c3b0544962914e71762b99b183baff6176d1591c4c66327f8c7a"
+      },
+      {
+        "path": "shared/mandel-driver.sml",
+        "sha256": "9e9b27cea3f9c2597eedd6abcd0f02ee4abb0569dbcd9753a1a4f92a46d9ef78"
+      },
+      {
+        "path": "mandel-strict/benchmark.sml",
+        "sha256": "076c28068fcea8c1670159f9d27f4604d4b38f731e45edb328b973030214e0b0"
+      },
+      {
+        "path": "shared/main.sml",
+        "sha256": "a3aaddee6fff78dc936bec211a708f712bad3bf8c9145ae13e363165e4432012"
+      }
+    ],
+    "compiler": "managed SML/NJ110.99.9 64-bit; same sources and profile files as canonical; diagnostic only"
+  }
+]

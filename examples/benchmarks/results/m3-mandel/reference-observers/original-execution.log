@@ -1,0 +1,6 @@
+PASS Main NFData forcing current 25 100 repetitions
+PASS Main NFData forcing current 80 100 repetitions
+PASS Main NFData forcing current 180 100 repetitions
+PASS Main NFData forcing historical-syntax-adapted 25 100 repetitions
+PASS Main NFData forcing historical-syntax-adapted 80 100 repetitions
+PASS Main NFData forcing historical-syntax-adapted 180 100 repetitions

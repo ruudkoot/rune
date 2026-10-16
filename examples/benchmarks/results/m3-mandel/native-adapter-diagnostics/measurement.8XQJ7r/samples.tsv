@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+mandel-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	4.73	3.66	1.21	666308	-	-	-	mandel-strict/native-mlton/build/compile
+mandel-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2360	-	-	-	mandel-strict/native-mlton/correctness.0
+mandel-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2344	-	-	-	mandel-strict/native-mlton/fresh.1
+mandel-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.42	0.41	0.03	37824	-	-	-	mandel-strict/native-smlnj-legacy/build/compile
+mandel-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.00	0.00	4120	-	-	-	mandel-strict/native-smlnj-legacy/correctness.0
+mandel-strict	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.01	0.00	4036	-	-	-	mandel-strict/native-smlnj-legacy/fresh.1
+mandel-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.29	0.14	0.08	39176	-	-	-	mandel-strict/native-polyml/build/compile
+mandel-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	5860	-	-	-	mandel-strict/native-polyml/correctness.0
+mandel-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	5776	-	-	-	mandel-strict/native-polyml/fresh.1

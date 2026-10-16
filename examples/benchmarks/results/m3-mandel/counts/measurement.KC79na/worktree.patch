@@ -1,0 +1,798 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 56a83301..0bbfae39 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -289,6 +289,12 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [integer-strict](#integer-strict) | [nofib integer](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/integer) | Evaluate all 14 arithmetic/comparison operations on machine-64 and arbitrary-precision Cartesian grids using eager finite lists. |
+ | [secretary-lazy](#secretary-lazy) | [nofib secretary](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/secretary) | Simulate threshold selection from distinct random rankings with memoized streams and demand-sensitive early stopping. |
+ | [secretary-strict](#secretary-strict) | [nofib secretary](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/secretary) | Simulate threshold selection from distinct random rankings with complete finite permutations before selection. |
++| [mandel-lazy](#mandel-lazy) | [nofib mandel](https://gitlab.haskell.org/ghc/nofib/-/blob/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/mandel/Mandel.lhs) | Count complex-orbit escapes with scaled magnitude and memoized cyclic streams. |
++| [mandel-strict](#mandel-strict) | [nofib mandel](https://gitlab.haskell.org/ghc/nofib/-/blob/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/mandel/Mandel.lhs) | Count complex-orbit escapes with scaled magnitude and eager finite lists. |
++| [mandel-old-lazy](#mandel-old-lazy) | [nofib MandelOld](https://gitlab.haskell.org/ghc/nofib/-/blob/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/mandel/MandelOld.lhs) | Count complex-orbit escapes with inclusive squared thresholds and memoized cyclic streams. |
++| [mandel-old-strict](#mandel-old-strict) | [nofib MandelOld](https://gitlab.haskell.org/ghc/nofib/-/blob/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/mandel/MandelOld.lhs) | Count complex-orbit escapes with inclusive squared thresholds and eager finite lists. |
++| [mandel2-lazy](#mandel2-lazy) | [nofib mandel2](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/mandel2) | Build and validate the adaptive binary32 Mandelbrot tree with memoized corners and children. |
++| [mandel2-strict](#mandel2-strict) | [nofib mandel2](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/mandel2) | Build and validate the adaptive binary32 Mandelbrot tree with eager corners and subtrees. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -403,6 +409,8 @@ sh tests/benchmarks/check-revcomp2.sh
+ sh tests/benchmarks/check-knucleotide.sh
+ sh tests/benchmarks/check-integer.sh
+ sh tests/benchmarks/check-secretary.sh
++sh tests/benchmarks/check-mandel.sh
++sh tests/benchmarks/check-mandel2.sh
+ python3 tests/benchmarks/test-inventory.py
+ python3 scripts/benchmark-inventory.py --check
+ ```
+@@ -11635,3 +11643,745 @@ workload's exact seeding/range rules; those papers do not establish its SML
+ performance or validate a changed RNG stream.
+ 
+ [Complete provenance](secretary-strict/PROVENANCE.md).
++
++## mandel-lazy
++
++Selected: current Mandel.lhs with memoized cyclic orbits, coordinates and pixel streams.
++
++## Algorithm and workload
++
++Construct a pixmap by mapping a complex orbit escape count across a rectangular
++viewport. Each orbit begins at c and applies z*z+c. Pixels enumerate Integer
++coordinates s=1..width and t=1..height, mapping both axes with multiply before
++divide. RGB is (count, limit-count, limit-count), sharing the latter value.
++The pixmap retains Integer dimensions, Int depth and a list/stream of RGB tuples.
++Force and consume every metadata field and colour; do not substitute a bitmap,
++zero-based sampling grid or a different Mandelbrot recurrence convention.
++
++## History, authorship, revision and names
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/mandel/Main.hs,
++Mandel.lhs, MandelOld.lhs, PortablePixmap.lhs and Makefile. The literate modules
++retain a report-style explanation and a Falconer citation. The format banner
++credits Jon.Hill, 28/5/92; the embedded PPM manual retains Jef Poskanzer's
++1989/1991 copyright. The individual workload modules state no separate grant;
++preserve their bytes and notices without inferring one from another component.
++
++GHC base's Data/Complex.hs and complete BASE LICENSE are separately pinned at
++GHC 9.4.7 revision 00920f176b0235d5bb52a8e054d89a664f8938fe. Retain its
++University of Glasgow and Haskell98 Report notices. Its multiplication and
++scaled magnitude define the selected generic variant's library operations.
++The source stem mandel is distinct from classic SML mandelbrot, nofib mandel2
++and Sandmark mandelbrot6. Explicit -lazy/-strict names record evaluation choices;
++mandel-old identifies the materially different historical module.
++
++## Known variants and exact numeric differences
++
++The current Mandel.lhs uses generic complex multiplication/addition and scaled
++magnitude. Its magnitude scales components by the maximum exponent, squares,
++sums, takes a square root and scales back. Divergence tests magnitude>radius,
++where radius=max(viewport spans)/2. Take limit orbit elements, then count the
++prefix before the first divergent element. A bounded orbit returns limit,
++not zero. At limit0, neither the initial complex coordinate nor the next orbit
++value is demanded by this consumer.
++
++MandelOld.lhs explicitly squares complex components, using 2*(r*i) for the
++imaginary product. It compares x*x+y*y>=max(viewport spans) directly; that
++quantity is the source's radiusSq, not a replacement derived formula. The
++predicate precedes the zero-limit test, forcing the current orbit head even
++at limit0 and one additional head at an exhausted positive limit. Inclusive
++boundary behavior differs from the current module. Preserve these algorithms,
++operation associations and data flows separately.
++
++The pinned Makefile excludes MandelOld.lhs from its default SRCS. Preserve it
++as a historical variant rather than silently dropping it. The reference needs
++two syntax-only adaptations for modern GHC: remove [sequential] from a literate
++code delimiter and parenthesize both operands of :+ against +. Original bytes,
++patches, failed compile attempts and adapted source remain recorded. No numeric
++formula is repaired or replaced by a dense rendering shortcut.
++
++## Portable SML translation and evaluation
++
++Specialize the selected complex operations to real pairs with explicit component
++types; preserve the separate generic multiply/add results and the historical
++scalar expressions. The runtime requires binary64 Real. Integer grid indices
++and pixmap dimensions remain IntInf. Bounded colour counts use the supported
++hosts' default Int. All selected counts/dimensions fit even 31-bit Int.
++
++Lazy variants retain explicit memoized orbit heads/spines and the feedback
++list knot. The current module also retains a lazy take spine. Coordinates are
++passed as delays so limit0 does not evaluate them. Historical zero-limit and
++boundary behavior are tested separately. Strict variants materialize finite
++orbits, with limit elements for the current module and limit+1 for the old
++consumer; a final-element case avoids an unintended additional step. They may
++compute unused post-escape IEEE infinities/NaNs before the consumer stops;
++those values are not reported as pixel results. Strict grid/pixel lists replace
++the lazy spines explicitly. Final integer RGB values must agree with the
++corresponding original variant.
++
++A polymorphic Pixmap wrapper retains metadata and either the stream or strict
++list. Full-image reference checks remain available, while the timed driver
++consumes every RGB channel into a checked 64-bit rolling digest and exact pixel
++count, then checks metadata and EOF. It reports repetitions:checked instead
++of the original empty stdout. The digest starts at 1013904223 and folds each
++r/g/b in order with h=h*1664525+value modulo 2^64. Hashing/checking costs are
++measured work; they are not original Haskell runtime timings.
++
++## Profiles, repeated work and compiler/runtime questions
++
++Smoke is 1 repetition of 7x5; normal preserves upstream FAST 25x25 for the
++source's 100 repetitions; large preserves SLOW 180x180 for 100. All use the
++original -2..2 viewport and depth75. Upstream NORM 80x80 remains a complete
++reference. Deterministic SML97 generation writes each repetition's seven
++parameters. The driver reads a fresh row each time, retaining the original
++Main's repeated getArgs dependency and preventing the entire render from
++becoming a loop-invariant value. It consolidates argument reading/parsing
++into one file row and uses SML negative spelling. File I/O and parsing are
++explicit driver adaptations. A parameter file starts with the repetition count,
++then exactly that many minX/minY/maxX/maxY/width/height/limit rows. The reviewed
++digest line contains width, height, depth, pixel count and uppercase hex hash. Width/height are limited to 1..180, depth to
++0..75, repetitions to 1..100, and finite viewports to the documented +/-2 box.
++No separately acquired dataset is needed.
++
++Source-based questions include complex boxing/unboxing, generic specialization,
++scaled-norm cost, lazy knot/take allocation, sharing, early escape, eager unused
++orbits, strict list retention and Integer-index conversion. These are hypotheses
++until established by compiler inspection or measurement. Ordinary comparisons
++use identical SML. No parallelism or runtime facility is required merely because
++the literate explanation discusses parallel mapping.
++
++## References and validation
++
++Complete original GHC RGB components and independent binary64 recurrence/scaled-
++norm models agree through 180x180, including rectangular and zero/one-limit
++cases. Separate original Word64 observers agree with independently derived
++full-image digests. Checks cover all channels/metadata, exact count/digest/EOF,
++boundary differences, zero-limit demand, extra historical orbit forcing,
++cyclic sharing and strict evaluation after escape. Wrong RGB, metadata, counts,
++digests, empty/truncated/extra references must fail. Final results are discrete
++integer colours and require exact agreement; no generic floating tolerance
++is applied to a changed escape decision. A mismatch alone is not a language-
++conformance proof. Large SML execution is claimed only when recorded.
++
++The retained modules explain their own implementation choices. Falconer's
++[Fractal Geometry](https://doi.org/10.1002/0470013850) provides broader mathematical
++background (the linked later edition is not claimed as the source's historical
++edition). The nofib literature and suite measurement survey provide benchmark
++context; they do not establish performance causes for this translation.
++
++[Complete provenance](mandel-lazy/PROVENANCE.md).
++
++## mandel-strict
++
++Selected: current Mandel.lhs with eager finite orbits and pixel lists.
++
++## Algorithm and workload
++
++Construct a pixmap by mapping a complex orbit escape count across a rectangular
++viewport. Each orbit begins at c and applies z*z+c. Pixels enumerate Integer
++coordinates s=1..width and t=1..height, mapping both axes with multiply before
++divide. RGB is (count, limit-count, limit-count), sharing the latter value.
++The pixmap retains Integer dimensions, Int depth and a list/stream of RGB tuples.
++Force and consume every metadata field and colour; do not substitute a bitmap,
++zero-based sampling grid or a different Mandelbrot recurrence convention.
++
++## History, authorship, revision and names
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/mandel/Main.hs,
++Mandel.lhs, MandelOld.lhs, PortablePixmap.lhs and Makefile. The literate modules
++retain a report-style explanation and a Falconer citation. The format banner
++credits Jon.Hill, 28/5/92; the embedded PPM manual retains Jef Poskanzer's
++1989/1991 copyright. The individual workload modules state no separate grant;
++preserve their bytes and notices without inferring one from another component.
++
++GHC base's Data/Complex.hs and complete BASE LICENSE are separately pinned at
++GHC 9.4.7 revision 00920f176b0235d5bb52a8e054d89a664f8938fe. Retain its
++University of Glasgow and Haskell98 Report notices. Its multiplication and
++scaled magnitude define the selected generic variant's library operations.
++The source stem mandel is distinct from classic SML mandelbrot, nofib mandel2
++and Sandmark mandelbrot6. Explicit -lazy/-strict names record evaluation choices;
++mandel-old identifies the materially different historical module.
++
++## Known variants and exact numeric differences
++
++The current Mandel.lhs uses generic complex multiplication/addition and scaled
++magnitude. Its magnitude scales components by the maximum exponent, squares,
++sums, takes a square root and scales back. Divergence tests magnitude>radius,
++where radius=max(viewport spans)/2. Take limit orbit elements, then count the
++prefix before the first divergent element. A bounded orbit returns limit,
++not zero. At limit0, neither the initial complex coordinate nor the next orbit
++value is demanded by this consumer.
++
++MandelOld.lhs explicitly squares complex components, using 2*(r*i) for the
++imaginary product. It compares x*x+y*y>=max(viewport spans) directly; that
++quantity is the source's radiusSq, not a replacement derived formula. The
++predicate precedes the zero-limit test, forcing the current orbit head even
++at limit0 and one additional head at an exhausted positive limit. Inclusive
++boundary behavior differs from the current module. Preserve these algorithms,
++operation associations and data flows separately.
++
++The pinned Makefile excludes MandelOld.lhs from its default SRCS. Preserve it
++as a historical variant rather than silently dropping it. The reference needs
++two syntax-only adaptations for modern GHC: remove [sequential] from a literate
++code delimiter and parenthesize both operands of :+ against +. Original bytes,
++patches, failed compile attempts and adapted source remain recorded. No numeric
++formula is repaired or replaced by a dense rendering shortcut.
++
++## Portable SML translation and evaluation
++
++Specialize the selected complex operations to real pairs with explicit component
++types; preserve the separate generic multiply/add results and the historical
++scalar expressions. The runtime requires binary64 Real. Integer grid indices
++and pixmap dimensions remain IntInf. Bounded colour counts use the supported
++hosts' default Int. All selected counts/dimensions fit even 31-bit Int.
++
++Lazy variants retain explicit memoized orbit heads/spines and the feedback
++list knot. The current module also retains a lazy take spine. Coordinates are
++passed as delays so limit0 does not evaluate them. Historical zero-limit and
++boundary behavior are tested separately. Strict variants materialize finite
++orbits, with limit elements for the current module and limit+1 for the old
++consumer; a final-element case avoids an unintended additional step. They may
++compute unused post-escape IEEE infinities/NaNs before the consumer stops;
++those values are not reported as pixel results. Strict grid/pixel lists replace
++the lazy spines explicitly. Final integer RGB values must agree with the
++corresponding original variant.
++
++A polymorphic Pixmap wrapper retains metadata and either the stream or strict
++list. Full-image reference checks remain available, while the timed driver
++consumes every RGB channel into a checked 64-bit rolling digest and exact pixel
++count, then checks metadata and EOF. It reports repetitions:checked instead
++of the original empty stdout. The digest starts at 1013904223 and folds each
++r/g/b in order with h=h*1664525+value modulo 2^64. Hashing/checking costs are
++measured work; they are not original Haskell runtime timings.
++
++## Profiles, repeated work and compiler/runtime questions
++
++Smoke is 1 repetition of 7x5; normal preserves upstream FAST 25x25 for the
++source's 100 repetitions; large preserves SLOW 180x180 for 100. All use the
++original -2..2 viewport and depth75. Upstream NORM 80x80 remains a complete
++reference. Deterministic SML97 generation writes each repetition's seven
++parameters. The driver reads a fresh row each time, retaining the original
++Main's repeated getArgs dependency and preventing the entire render from
++becoming a loop-invariant value. It consolidates argument reading/parsing
++into one file row and uses SML negative spelling. File I/O and parsing are
++explicit driver adaptations. A parameter file starts with the repetition count,
++then exactly that many minX/minY/maxX/maxY/width/height/limit rows. The reviewed
++digest line contains width, height, depth, pixel count and uppercase hex hash. Width/height are limited to 1..180, depth to
++0..75, repetitions to 1..100, and finite viewports to the documented +/-2 box.
++No separately acquired dataset is needed.
++
++Source-based questions include complex boxing/unboxing, generic specialization,
++scaled-norm cost, lazy knot/take allocation, sharing, early escape, eager unused
++orbits, strict list retention and Integer-index conversion. These are hypotheses
++until established by compiler inspection or measurement. Ordinary comparisons
++use identical SML. No parallelism or runtime facility is required merely because
++the literate explanation discusses parallel mapping.
++
++## References and validation
++
++Complete original GHC RGB components and independent binary64 recurrence/scaled-
++norm models agree through 180x180, including rectangular and zero/one-limit
++cases. Separate original Word64 observers agree with independently derived
++full-image digests. Checks cover all channels/metadata, exact count/digest/EOF,
++boundary differences, zero-limit demand, extra historical orbit forcing,
++cyclic sharing and strict evaluation after escape. Wrong RGB, metadata, counts,
++digests, empty/truncated/extra references must fail. Final results are discrete
++integer colours and require exact agreement; no generic floating tolerance
++is applied to a changed escape decision. A mismatch alone is not a language-
++conformance proof. Large SML execution is claimed only when recorded.
++
++The retained modules explain their own implementation choices. Falconer's
++[Fractal Geometry](https://doi.org/10.1002/0470013850) provides broader mathematical
++background (the linked later edition is not claimed as the source's historical
++edition). The nofib literature and suite measurement survey provide benchmark
++context; they do not establish performance causes for this translation.
++
++[Complete provenance](mandel-strict/PROVENANCE.md).
++
++## mandel-old-lazy
++
++Selected: historical MandelOld.lhs with memoized cyclic orbits, coordinates and pixel streams.
++
++## Algorithm and workload
++
++Construct a pixmap by mapping a complex orbit escape count across a rectangular
++viewport. Each orbit begins at c and applies z*z+c. Pixels enumerate Integer
++coordinates s=1..width and t=1..height, mapping both axes with multiply before
++divide. RGB is (count, limit-count, limit-count), sharing the latter value.
++The pixmap retains Integer dimensions, Int depth and a list/stream of RGB tuples.
++Force and consume every metadata field and colour; do not substitute a bitmap,
++zero-based sampling grid or a different Mandelbrot recurrence convention.
++
++## History, authorship, revision and names
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/mandel/Main.hs,
++Mandel.lhs, MandelOld.lhs, PortablePixmap.lhs and Makefile. The literate modules
++retain a report-style explanation and a Falconer citation. The format banner
++credits Jon.Hill, 28/5/92; the embedded PPM manual retains Jef Poskanzer's
++1989/1991 copyright. The individual workload modules state no separate grant;
++preserve their bytes and notices without inferring one from another component.
++
++GHC base's Data/Complex.hs and complete BASE LICENSE are separately pinned at
++GHC 9.4.7 revision 00920f176b0235d5bb52a8e054d89a664f8938fe. Retain its
++University of Glasgow and Haskell98 Report notices. Its multiplication and
++scaled magnitude define the selected generic variant's library operations.
++The source stem mandel is distinct from classic SML mandelbrot, nofib mandel2
++and Sandmark mandelbrot6. Explicit -lazy/-strict names record evaluation choices;
++mandel-old identifies the materially different historical module.
++
++## Known variants and exact numeric differences
++
++The current Mandel.lhs uses generic complex multiplication/addition and scaled
++magnitude. Its magnitude scales components by the maximum exponent, squares,
++sums, takes a square root and scales back. Divergence tests magnitude>radius,
++where radius=max(viewport spans)/2. Take limit orbit elements, then count the
++prefix before the first divergent element. A bounded orbit returns limit,
++not zero. At limit0, neither the initial complex coordinate nor the next orbit
++value is demanded by this consumer.
++
++MandelOld.lhs explicitly squares complex components, using 2*(r*i) for the
++imaginary product. It compares x*x+y*y>=max(viewport spans) directly; that
++quantity is the source's radiusSq, not a replacement derived formula. The
++predicate precedes the zero-limit test, forcing the current orbit head even
++at limit0 and one additional head at an exhausted positive limit. Inclusive
++boundary behavior differs from the current module. Preserve these algorithms,
++operation associations and data flows separately.
++
++The pinned Makefile excludes MandelOld.lhs from its default SRCS. Preserve it
++as a historical variant rather than silently dropping it. The reference needs
++two syntax-only adaptations for modern GHC: remove [sequential] from a literate
++code delimiter and parenthesize both operands of :+ against +. Original bytes,
++patches, failed compile attempts and adapted source remain recorded. No numeric
++formula is repaired or replaced by a dense rendering shortcut.
++
++## Portable SML translation and evaluation
++
++Specialize the selected complex operations to real pairs with explicit component
++types; preserve the separate generic multiply/add results and the historical
++scalar expressions. The runtime requires binary64 Real. Integer grid indices
++and pixmap dimensions remain IntInf. Bounded colour counts use the supported
++hosts' default Int. All selected counts/dimensions fit even 31-bit Int.
++
++Lazy variants retain explicit memoized orbit heads/spines and the feedback
++list knot. The current module also retains a lazy take spine. Coordinates are
++passed as delays so limit0 does not evaluate them. Historical zero-limit and
++boundary behavior are tested separately. Strict variants materialize finite
++orbits, with limit elements for the current module and limit+1 for the old
++consumer; a final-element case avoids an unintended additional step. They may
++compute unused post-escape IEEE infinities/NaNs before the consumer stops;
++those values are not reported as pixel results. Strict grid/pixel lists replace
++the lazy spines explicitly. Final integer RGB values must agree with the
++corresponding original variant.
++
++A polymorphic Pixmap wrapper retains metadata and either the stream or strict
++list. Full-image reference checks remain available, while the timed driver
++consumes every RGB channel into a checked 64-bit rolling digest and exact pixel
++count, then checks metadata and EOF. It reports repetitions:checked instead
++of the original empty stdout. The digest starts at 1013904223 and folds each
++r/g/b in order with h=h*1664525+value modulo 2^64. Hashing/checking costs are
++measured work; they are not original Haskell runtime timings.
++
++## Profiles, repeated work and compiler/runtime questions
++
++Smoke is 1 repetition of 7x5; normal preserves upstream FAST 25x25 for the
++source's 100 repetitions; large preserves SLOW 180x180 for 100. All use the
++original -2..2 viewport and depth75. Upstream NORM 80x80 remains a complete
++reference. Deterministic SML97 generation writes each repetition's seven
++parameters. The driver reads a fresh row each time, retaining the original
++Main's repeated getArgs dependency and preventing the entire render from
++becoming a loop-invariant value. It consolidates argument reading/parsing
++into one file row and uses SML negative spelling. File I/O and parsing are
++explicit driver adaptations. A parameter file starts with the repetition count,
++then exactly that many minX/minY/maxX/maxY/width/height/limit rows. The reviewed
++digest line contains width, height, depth, pixel count and uppercase hex hash. Width/height are limited to 1..180, depth to
++0..75, repetitions to 1..100, and finite viewports to the documented +/-2 box.
++No separately acquired dataset is needed.
++
++Source-based questions include complex boxing/unboxing, generic specialization,
++scaled-norm cost, lazy knot/take allocation, sharing, early escape, eager unused
++orbits, strict list retention and Integer-index conversion. These are hypotheses
++until established by compiler inspection or measurement. Ordinary comparisons
++use identical SML. No parallelism or runtime facility is required merely because
++the literate explanation discusses parallel mapping.
++
++## References and validation
++
++Complete original GHC RGB components and independent binary64 recurrence/scaled-
++norm models agree through 180x180, including rectangular and zero/one-limit
++cases. Separate original Word64 observers agree with independently derived
++full-image digests. Checks cover all channels/metadata, exact count/digest/EOF,
++boundary differences, zero-limit demand, extra historical orbit forcing,
++cyclic sharing and strict evaluation after escape. Wrong RGB, metadata, counts,
++digests, empty/truncated/extra references must fail. Final results are discrete
++integer colours and require exact agreement; no generic floating tolerance
++is applied to a changed escape decision. A mismatch alone is not a language-
++conformance proof. Large SML execution is claimed only when recorded.
++
++The retained modules explain their own implementation choices. Falconer's
++[Fractal Geometry](https://doi.org/10.1002/0470013850) provides broader mathematical
++background (the linked later edition is not claimed as the source's historical
++edition). The nofib literature and suite measurement survey provide benchmark
++context; they do not establish performance causes for this translation.
++
++[Complete provenance](mandel-old-lazy/PROVENANCE.md).
++
++## mandel-old-strict
++
++Selected: historical MandelOld.lhs with eager finite orbits and pixel lists.
++
++## Algorithm and workload
++
++Construct a pixmap by mapping a complex orbit escape count across a rectangular
++viewport. Each orbit begins at c and applies z*z+c. Pixels enumerate Integer
++coordinates s=1..width and t=1..height, mapping both axes with multiply before
++divide. RGB is (count, limit-count, limit-count), sharing the latter value.
++The pixmap retains Integer dimensions, Int depth and a list/stream of RGB tuples.
++Force and consume every metadata field and colour; do not substitute a bitmap,
++zero-based sampling grid or a different Mandelbrot recurrence convention.
++
++## History, authorship, revision and names
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/mandel/Main.hs,
++Mandel.lhs, MandelOld.lhs, PortablePixmap.lhs and Makefile. The literate modules
++retain a report-style explanation and a Falconer citation. The format banner
++credits Jon.Hill, 28/5/92; the embedded PPM manual retains Jef Poskanzer's
++1989/1991 copyright. The individual workload modules state no separate grant;
++preserve their bytes and notices without inferring one from another component.
++
++GHC base's Data/Complex.hs and complete BASE LICENSE are separately pinned at
++GHC 9.4.7 revision 00920f176b0235d5bb52a8e054d89a664f8938fe. Retain its
++University of Glasgow and Haskell98 Report notices. Its multiplication and
++scaled magnitude define the selected generic variant's library operations.
++The source stem mandel is distinct from classic SML mandelbrot, nofib mandel2
++and Sandmark mandelbrot6. Explicit -lazy/-strict names record evaluation choices;
++mandel-old identifies the materially different historical module.
++
++## Known variants and exact numeric differences
++
++The current Mandel.lhs uses generic complex multiplication/addition and scaled
++magnitude. Its magnitude scales components by the maximum exponent, squares,
++sums, takes a square root and scales back. Divergence tests magnitude>radius,
++where radius=max(viewport spans)/2. Take limit orbit elements, then count the
++prefix before the first divergent element. A bounded orbit returns limit,
++not zero. At limit0, neither the initial complex coordinate nor the next orbit
++value is demanded by this consumer.
++
++MandelOld.lhs explicitly squares complex components, using 2*(r*i) for the
++imaginary product. It compares x*x+y*y>=max(viewport spans) directly; that
++quantity is the source's radiusSq, not a replacement derived formula. The
++predicate precedes the zero-limit test, forcing the current orbit head even
++at limit0 and one additional head at an exhausted positive limit. Inclusive
++boundary behavior differs from the current module. Preserve these algorithms,
++operation associations and data flows separately.
++
++The pinned Makefile excludes MandelOld.lhs from its default SRCS. Preserve it
++as a historical variant rather than silently dropping it. The reference needs
++two syntax-only adaptations for modern GHC: remove [sequential] from a literate
++code delimiter and parenthesize both operands of :+ against +. Original bytes,
++patches, failed compile attempts and adapted source remain recorded. No numeric
++formula is repaired or replaced by a dense rendering shortcut.
++
++## Portable SML translation and evaluation
++
++Specialize the selected complex operations to real pairs with explicit component
++types; preserve the separate generic multiply/add results and the historical
++scalar expressions. The runtime requires binary64 Real. Integer grid indices
++and pixmap dimensions remain IntInf. Bounded colour counts use the supported
++hosts' default Int. All selected counts/dimensions fit even 31-bit Int.
++
++Lazy variants retain explicit memoized orbit heads/spines and the feedback
++list knot. The current module also retains a lazy take spine. Coordinates are
++passed as delays so limit0 does not evaluate them. Historical zero-limit and
++boundary behavior are tested separately. Strict variants materialize finite
++orbits, with limit elements for the current module and limit+1 for the old
++consumer; a final-element case avoids an unintended additional step. They may
++compute unused post-escape IEEE infinities/NaNs before the consumer stops;
++those values are not reported as pixel results. Strict grid/pixel lists replace
++the lazy spines explicitly. Final integer RGB values must agree with the
++corresponding original variant.
++
++A polymorphic Pixmap wrapper retains metadata and either the stream or strict
++list. Full-image reference checks remain available, while the timed driver
++consumes every RGB channel into a checked 64-bit rolling digest and exact pixel
++count, then checks metadata and EOF. It reports repetitions:checked instead
++of the original empty stdout. The digest starts at 1013904223 and folds each
++r/g/b in order with h=h*1664525+value modulo 2^64. Hashing/checking costs are
++measured work; they are not original Haskell runtime timings.
++
++## Profiles, repeated work and compiler/runtime questions
++
++Smoke is 1 repetition of 7x5; normal preserves upstream FAST 25x25 for the
++source's 100 repetitions; large preserves SLOW 180x180 for 100. All use the
++original -2..2 viewport and depth75. Upstream NORM 80x80 remains a complete
++reference. Deterministic SML97 generation writes each repetition's seven
++parameters. The driver reads a fresh row each time, retaining the original
++Main's repeated getArgs dependency and preventing the entire render from
++becoming a loop-invariant value. It consolidates argument reading/parsing
++into one file row and uses SML negative spelling. File I/O and parsing are
++explicit driver adaptations. A parameter file starts with the repetition count,
++then exactly that many minX/minY/maxX/maxY/width/height/limit rows. The reviewed
++digest line contains width, height, depth, pixel count and uppercase hex hash. Width/height are limited to 1..180, depth to
++0..75, repetitions to 1..100, and finite viewports to the documented +/-2 box.
++No separately acquired dataset is needed.
++
++Source-based questions include complex boxing/unboxing, generic specialization,
++scaled-norm cost, lazy knot/take allocation, sharing, early escape, eager unused
++orbits, strict list retention and Integer-index conversion. These are hypotheses
++until established by compiler inspection or measurement. Ordinary comparisons
++use identical SML. No parallelism or runtime facility is required merely because
++the literate explanation discusses parallel mapping.
++
++## References and validation
++
++Complete original GHC RGB components and independent binary64 recurrence/scaled-
++norm models agree through 180x180, including rectangular and zero/one-limit
++cases. Separate original Word64 observers agree with independently derived
++full-image digests. Checks cover all channels/metadata, exact count/digest/EOF,
++boundary differences, zero-limit demand, extra historical orbit forcing,
++cyclic sharing and strict evaluation after escape. Wrong RGB, metadata, counts,
++digests, empty/truncated/extra references must fail. Final results are discrete
++integer colours and require exact agreement; no generic floating tolerance
++is applied to a changed escape decision. A mismatch alone is not a language-
++conformance proof. Large SML execution is claimed only when recorded.
++
++The retained modules explain their own implementation choices. Falconer's
++[Fractal Geometry](https://doi.org/10.1002/0470013850) provides broader mathematical
++background (the linked later edition is not claimed as the source's historical
++edition). The nofib literature and suite measurement survey provide benchmark
++context; they do not establish performance causes for this translation.
++
++[Complete provenance](mandel-old-strict/PROVENANCE.md).
++
++## mandel2-lazy
++
++Selected: memoized corner colours and children with source right-spine forcing.
++
++## Algorithm and workload
++
++Build an adaptive binary MandTree with NS/EW children and integer-colour leaves.
++Check rectangle corners and selected perimeter points; retain a leaf when the
++source considers them uniform, otherwise split the longer axis (x on ties).
++The default root is inclusive (0,0)..(200,100); coordinate scaling still uses
++the source size constant 200 and denominator199. It is not a 200x200 image.
++Each point uses binary32 arithmetic, initial z=0, escape radius-squared20 and
++26 colour levels. Test k+1==26 before demanding the next coordinate/radius.
++
++## History, authorship, revision and aliases
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/mandel2/Main.hs,
++Makefile and the NofibUtils.hs symlink to common/NofibUtils.hs. The header
++credits David Hanley and is dated 11/03/1992; it cites The Beauty of Fractals,
++page121. Preserve the exact date and source text. These individual files
++state no separate redistribution notice; do not invent a grant from another
++program's license. Record the symlink bytes, resolved source and original path.
++The explicit names mandel2-lazy/mandel2-strict distinguish evaluation variants
++from mandel's complex-orbit pixmaps and other Mandelbrot programs.
++
++## Exact source quirks and evaluation variants
++
++Preserve the original perimeter direction conditions. Positive-height vertical
++checks usually stop immediately; zero-height rectangles can scan above/below
++their bounds until colours differ. Do not repair the inequalities or clamp
++coordinates. The complete independent 200-root model observes 707 distinct
++outside coordinates; this is a model observation, not an instrumented GHC call
++count. The resulting tree is the specified workload, not a claim of equivalence
++to evaluating every interior pixel.
++
++The source's par is locally defined as a sequential no-op. Its right child is
++forced to WHNF before a node is constructed, while the left stays lazy; this
++recursively forces a right spine. The lazy port preserves memoized children,
++corner-colour sharing and short circuiting. The strict variant evaluates all
++four corner bindings and completes the right subtree before the left. Those
++costs and retention differences are intentional; complete tree results agree.
++Counting point-function tests cover unused corners, one shared col1, the
++single-point case, outward scans, right-first forcing and memoized children.
++
++## Portable SML translation and numerical semantics
++
++A finite-normal binary32 helper represents selected values exactly in binary64
++and rounds every source add/subtract/multiply/divide to 24 significand bits,
++nearest-even. It preserves signed zero. Source coefficients are dyadic except
++the fixed 3/199 step; original bit fixtures validate coordinates, every selected
++orbit step, radius and colour. Preserve left association in 2*x*y+q. SML97
++Real is required to have binary64 representation; no new compiler/runtime
++Float32 feature or native-host Real32 substitution is introduced.
++
++This is a workload-specific helper, not general support for binary32 NaNs,
++subnormals or overflow. Active selected orbits remain in its finite-normal/zero
++domain; unsupported values raise Domain rather than silently widening the
++workload. Complete tree comparisons and per-operation bit checks exercise
++all selected paths. Final tree tags/bounds/colours require exact agreement;
++no floating tolerance accepts a different split or colour.
++
++Tree nodes retain delayed or strict children and the source NS/EW/Leaf shapes.
++Default Int represents bounded geometry, colours and counts, all within signed
++31-bit limits. A point-function module parameter permits direct demand tests;
++it does not change the numerical function. Complete preorder validation
++reconstructs bounds and checks every node, colour and EOF. Serialization,
++checking and reference I/O are measured work. The final result reports checked
++repetitions and node count rather than the source's empty stdout.
++
++## Inputs, optimizer barrier and runtime questions
++
++Smoke uses one root extent64 via the original build_tree API, with the global
++coordinate scale left at200. Normal uses the full200 extent and upstream FAST
++2 repetitions. Selected large uses full200 and upstream NORM20; source SLOW100
++is retained as an original execution/reference, not silently relabeled.
++
++The original salt is pure with NOINLINE, preventing invariant-input floating.
++A deterministic SML97-generated size file supplies one runtime extent per
++repetition as a portable input dependency. It preserves the fixed size values,
++while adding documented one-line input/parsing work. The driver bounds extents
++to1..200 and repetitions to1..100, validates each complete tree and requires
++EOF in the size file. Its first line is the repetition count, followed by
++exactly that many integer extents. Expected preorder rows contain NS/EW plus
++four bounds, or L plus bounds and the leaf colour. No exact-value guard before construction exposes a
++constant extent to the optimizer. No FFI, effects or parallel runtime is needed.
++
++Source-based performance questions include emulated binary32 cost, corner
++sharing/short circuiting, source outward scans, tree allocation/retention,
++right-spine forcing, specialization and GC interaction. These remain hypotheses
++unless supported by source analysis or measurements. Standard reports compare
++identical SML; original Haskell supplies correctness evidence.
++
++## References and recorded limits
++
++Original executions terminate at2/20/100 repetitions. Complete GHC trees agree
++with an independent struct-packed binary32/perimeter model for extents
++1/2/3/8/16/64/200. Golden bit patterns and full-tree checks preserve the source's
++unusual boundaries and arithmetic. Negative fixtures change colour/branch,
++truncate or append rows. Large SML execution is claimed only when recorded.
++
++A preliminary full-tree host run shows default-nursery differences on managed
++legacy64 SML/NJ despite its passing scalar bit checks. The same original-source
++contexts pass with a 64 MiB nursery. Diagnostic callback changes move the first
++mismatch. This is nursery/context-sensitive evidence consistent with existing
++GC reports; its first corrupt operation is not reduced. Preserve failed
++outputs, source identities and diagnostic settings; do not change the kernel,
++expectation or default configuration to hide the result. Final profile outcomes
++must be recorded separately from these preliminary contexts.
++
++[Peitgen and Richter, The Beauty of Fractals](https://doi.org/10.1007/978-3-642-61717-1)
++provides the cited mathematical background; page121 is an upstream attribution,
++not a claim that the page was independently audited here. The suite's nofib
++and measurement references supply context. Neither the book nor these source
++observations establishes the relative speed of the SML variants.
++
++[Complete provenance](mandel2-lazy/PROVENANCE.md).
++
++## mandel2-strict
++
++Selected: eager corner bindings and complete right-before-left subtrees.
++
++## Algorithm and workload
++
++Build an adaptive binary MandTree with NS/EW children and integer-colour leaves.
++Check rectangle corners and selected perimeter points; retain a leaf when the
++source considers them uniform, otherwise split the longer axis (x on ties).
++The default root is inclusive (0,0)..(200,100); coordinate scaling still uses
++the source size constant 200 and denominator199. It is not a 200x200 image.
++Each point uses binary32 arithmetic, initial z=0, escape radius-squared20 and
++26 colour levels. Test k+1==26 before demanding the next coordinate/radius.
++
++## History, authorship, revision and aliases
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/mandel2/Main.hs,
++Makefile and the NofibUtils.hs symlink to common/NofibUtils.hs. The header
++credits David Hanley and is dated 11/03/1992; it cites The Beauty of Fractals,
++page121. Preserve the exact date and source text. These individual files
++state no separate redistribution notice; do not invent a grant from another
++program's license. Record the symlink bytes, resolved source and original path.
++The explicit names mandel2-lazy/mandel2-strict distinguish evaluation variants
++from mandel's complex-orbit pixmaps and other Mandelbrot programs.
++
++## Exact source quirks and evaluation variants
++
++Preserve the original perimeter direction conditions. Positive-height vertical
++checks usually stop immediately; zero-height rectangles can scan above/below
++their bounds until colours differ. Do not repair the inequalities or clamp
++coordinates. The complete independent 200-root model observes 707 distinct
++outside coordinates; this is a model observation, not an instrumented GHC call
++count. The resulting tree is the specified workload, not a claim of equivalence
++to evaluating every interior pixel.
++
++The source's par is locally defined as a sequential no-op. Its right child is
++forced to WHNF before a node is constructed, while the left stays lazy; this
++recursively forces a right spine. The lazy port preserves memoized children,
++corner-colour sharing and short circuiting. The strict variant evaluates all
++four corner bindings and completes the right subtree before the left. Those
++costs and retention differences are intentional; complete tree results agree.
++Counting point-function tests cover unused corners, one shared col1, the
++single-point case, outward scans, right-first forcing and memoized children.
++
++## Portable SML translation and numerical semantics
++
++A finite-normal binary32 helper represents selected values exactly in binary64
++and rounds every source add/subtract/multiply/divide to 24 significand bits,
++nearest-even. It preserves signed zero. Source coefficients are dyadic except
++the fixed 3/199 step; original bit fixtures validate coordinates, every selected
++orbit step, radius and colour. Preserve left association in 2*x*y+q. SML97
++Real is required to have binary64 representation; no new compiler/runtime
++Float32 feature or native-host Real32 substitution is introduced.
++
++This is a workload-specific helper, not general support for binary32 NaNs,
++subnormals or overflow. Active selected orbits remain in its finite-normal/zero
++domain; unsupported values raise Domain rather than silently widening the
++workload. Complete tree comparisons and per-operation bit checks exercise
++all selected paths. Final tree tags/bounds/colours require exact agreement;
++no floating tolerance accepts a different split or colour.
++
++Tree nodes retain delayed or strict children and the source NS/EW/Leaf shapes.
++Default Int represents bounded geometry, colours and counts, all within signed
++31-bit limits. A point-function module parameter permits direct demand tests;
++it does not change the numerical function. Complete preorder validation
++reconstructs bounds and checks every node, colour and EOF. Serialization,
++checking and reference I/O are measured work. The final result reports checked
++repetitions and node count rather than the source's empty stdout.
++
++## Inputs, optimizer barrier and runtime questions
++
++Smoke uses one root extent64 via the original build_tree API, with the global
++coordinate scale left at200. Normal uses the full200 extent and upstream FAST
++2 repetitions. Selected large uses full200 and upstream NORM20; source SLOW100
++is retained as an original execution/reference, not silently relabeled.
++
++The original salt is pure with NOINLINE, preventing invariant-input floating.
++A deterministic SML97-generated size file supplies one runtime extent per
++repetition as a portable input dependency. It preserves the fixed size values,
++while adding documented one-line input/parsing work. The driver bounds extents
++to1..200 and repetitions to1..100, validates each complete tree and requires
++EOF in the size file. Its first line is the repetition count, followed by
++exactly that many integer extents. Expected preorder rows contain NS/EW plus
++four bounds, or L plus bounds and the leaf colour. No exact-value guard before construction exposes a
++constant extent to the optimizer. No FFI, effects or parallel runtime is needed.
++
++Source-based performance questions include emulated binary32 cost, corner
++sharing/short circuiting, source outward scans, tree allocation/retention,
++right-spine forcing, specialization and GC interaction. These remain hypotheses
++unless supported by source analysis or measurements. Standard reports compare
++identical SML; original Haskell supplies correctness evidence.
++
++## References and recorded limits
++
++Original executions terminate at2/20/100 repetitions. Complete GHC trees agree
++with an independent struct-packed binary32/perimeter model for extents
++1/2/3/8/16/64/200. Golden bit patterns and full-tree checks preserve the source's
++unusual boundaries and arithmetic. Negative fixtures change colour/branch,
++truncate or append rows. Large SML execution is claimed only when recorded.
++
++A preliminary full-tree host run shows default-nursery differences on managed
++legacy64 SML/NJ despite its passing scalar bit checks. The same original-source
++contexts pass with a 64 MiB nursery. Diagnostic callback changes move the first
++mismatch. This is nursery/context-sensitive evidence consistent with existing
++GC reports; its first corrupt operation is not reduced. Preserve failed
++outputs, source identities and diagnostic settings; do not change the kernel,
++expectation or default configuration to hide the result. Final profile outcomes
++must be recorded separately from these preliminary contexts.
++
++[Peitgen and Richter, The Beauty of Fractals](https://doi.org/10.1007/978-3-642-61717-1)
++provides the cited mathematical background; page121 is an upstream attribution,
++not a claim that the page was independently audited here. The suite's nofib
++and measurement references supply context. Neither the book nor these source
++observations establishes the relative speed of the SML variants.
++
++[Complete provenance](mandel2-strict/PROVENANCE.md).
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 4108a73d..21be1a28 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -836,3 +836,21 @@ secretary-lazy	large	nofib	spectral/secretary	5000 expected/large.results	secret
+ secretary-strict	smoke	nofib	spectral/secretary	50 expected/smoke.results	secretary-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/haskell-random1.sml,shared/nofib-secretary.sml,shared/secretary-check.sml,shared/secretary-driver.sml,secretary-strict/benchmark.sml,shared/main.sml	30	1048576	probability,deterministic-rng,integer-arithmetic,list-membership,sharing,strict	expected/smoke.results	checked-numerical	implemented
+ secretary-strict	normal	nofib	spectral/secretary	500 expected/normal.results	secretary-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/haskell-random1.sml,shared/nofib-secretary.sml,shared/secretary-check.sml,shared/secretary-driver.sml,secretary-strict/benchmark.sml,shared/main.sml	600	4194304	probability,deterministic-rng,integer-arithmetic,list-membership,sharing,strict	expected/normal.results	checked-numerical	implemented
+ secretary-strict	large	nofib	spectral/secretary	5000 expected/large.results	secretary-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/haskell-random1.sml,shared/nofib-secretary.sml,shared/secretary-check.sml,shared/secretary-driver.sml,secretary-strict/benchmark.sml,shared/main.sml	3600	8388608	probability,deterministic-rng,integer-arithmetic,list-membership,sharing,strict	expected/large.results	checked-numerical	implemented
++mandel-lazy	smoke	nofib	spectral/mandel	data/smoke.params expected/smoke.digest	mandel-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-mandel.sml,shared/mandel-digest.sml,shared/mandel-driver.sml,mandel-lazy/benchmark.sml,shared/main.sml	30	1048576	rendering,floating-point,binary64,complex-numbers,lazy	data/smoke.params,expected/smoke.digest	exact	implemented
++mandel-lazy	normal	nofib	spectral/mandel	data/normal.params expected/normal.digest	mandel-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-mandel.sml,shared/mandel-digest.sml,shared/mandel-driver.sml,mandel-lazy/benchmark.sml,shared/main.sml	600	4194304	rendering,floating-point,binary64,complex-numbers,lazy	data/normal.params,expected/normal.digest	exact	implemented
++mandel-lazy	large	nofib	spectral/mandel	data/large.params expected/large.digest	mandel-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-mandel.sml,shared/mandel-digest.sml,shared/mandel-driver.sml,mandel-lazy/benchmark.sml,shared/main.sml	3600	8388608	rendering,floating-point,binary64,complex-numbers,lazy	data/large.params,expected/large.digest	exact	implemented
++mandel-strict	smoke	nofib	spectral/mandel	data/smoke.params expected/smoke.digest	mandel-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-mandel.sml,shared/mandel-digest.sml,shared/mandel-driver.sml,mandel-strict/benchmark.sml,shared/main.sml	30	1048576	rendering,floating-point,binary64,complex-numbers,strict	data/smoke.params,expected/smoke.digest	exact	implemented
++mandel-strict	normal	nofib	spectral/mandel	data/normal.params expected/normal.digest	mandel-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-mandel.sml,shared/mandel-digest.sml,shared/mandel-driver.sml,mandel-strict/benchmark.sml,shared/main.sml	600	4194304	rendering,floating-point,binary64,complex-numbers,strict	data/normal.params,expected/normal.digest	exact	implemented
++mandel-strict	large	nofib	spectral/mandel	data/large.params expected/large.digest	mandel-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-mandel.sml,shared/mandel-digest.sml,shared/mandel-driver.sml,mandel-strict/benchmark.sml,shared/main.sml	3600	8388608	rendering,floating-point,binary64,complex-numbers,strict	data/large.params,expected/large.digest	exact	implemented
++mandel-old-lazy	smoke	nofib	spectral/mandel	data/smoke.params expected/smoke.digest	mandel-old-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-mandel.sml,shared/mandel-digest.sml,shared/mandel-driver.sml,mandel-old-lazy/benchmark.sml,shared/main.sml	30	1048576	rendering,floating-point,binary64,complex-numbers,lazy	data/smoke.params,expected/smoke.digest	exact	implemented
++mandel-old-lazy	normal	nofib	spectral/mandel	data/normal.params expected/normal.digest	mandel-old-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-mandel.sml,shared/mandel-digest.sml,shared/mandel-driver.sml,mandel-old-lazy/benchmark.sml,shared/main.sml	600	4194304	rendering,floating-point,binary64,complex-numbers,lazy	data/normal.params,expected/normal.digest	exact	implemented
++mandel-old-lazy	large	nofib	spectral/mandel	data/large.params expected/large.digest	mandel-old-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-mandel.sml,shared/mandel-digest.sml,shared/mandel-driver.sml,mandel-old-lazy/benchmark.sml,shared/main.sml	3600	8388608	rendering,floating-point,binary64,complex-numbers,lazy	data/large.params,expected/large.digest	exact	implemented
++mandel-old-strict	smoke	nofib	spectral/mandel	data/smoke.params expected/smoke.digest	mandel-old-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-mandel.sml,shared/mandel-digest.sml,shared/mandel-driver.sml,mandel-old-strict/benchmark.sml,shared/main.sml	30	1048576	rendering,floating-point,binary64,complex-numbers,strict	data/smoke.params,expected/smoke.digest	exact	implemented
++mandel-old-strict	normal	nofib	spectral/mandel	data/normal.params expected/normal.digest	mandel-old-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-mandel.sml,shared/mandel-digest.sml,shared/mandel-driver.sml,mandel-old-strict/benchmark.sml,shared/main.sml	600	4194304	rendering,floating-point,binary64,complex-numbers,strict	data/normal.params,expected/normal.digest	exact	implemented
++mandel-old-strict	large	nofib	spectral/mandel	data/large.params expected/large.digest	mandel-old-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-mandel.sml,shared/mandel-digest.sml,shared/mandel-driver.sml,mandel-old-strict/benchmark.sml,shared/main.sml	3600	8388608	rendering,floating-point,binary64,complex-numbers,strict	data/large.params,expected/large.digest	exact	implemented
++mandel2-lazy	smoke	nofib	spectral/mandel2	data/smoke.sizes expected/smoke.tree	mandel2-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/finite-binary32.sml,shared/mandel2-point.sml,shared/nofib-mandel2.sml,shared/mandel2-check.sml,shared/mandel2-driver.sml,mandel2-lazy/benchmark.sml,shared/main.sml	30	1048576	rendering,floating-point,binary32-emulation,adaptive-tree,lazy	data/smoke.sizes,expected/smoke.tree	exact	implemented
++mandel2-lazy	normal	nofib	spectral/mandel2	data/normal.sizes expected/normal.tree	mandel2-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/finite-binary32.sml,shared/mandel2-point.sml,shared/nofib-mandel2.sml,shared/mandel2-check.sml,shared/mandel2-driver.sml,mandel2-lazy/benchmark.sml,shared/main.sml	600	4194304	rendering,floating-point,binary32-emulation,adaptive-tree,lazy	data/normal.sizes,expected/normal.tree	exact	implemented
++mandel2-lazy	large	nofib	spectral/mandel2	data/large.sizes expected/large.tree	mandel2-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/finite-binary32.sml,shared/mandel2-point.sml,shared/nofib-mandel2.sml,shared/mandel2-check.sml,shared/mandel2-driver.sml,mandel2-lazy/benchmark.sml,shared/main.sml	3600	8388608	rendering,floating-point,binary32-emulation,adaptive-tree,lazy	data/large.sizes,expected/large.tree	exact	implemented
++mandel2-strict	smoke	nofib	spectral/mandel2	data/smoke.sizes expected/smoke.tree	mandel2-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/finite-binary32.sml,shared/mandel2-point.sml,shared/nofib-mandel2.sml,shared/mandel2-check.sml,shared/mandel2-driver.sml,mandel2-strict/benchmark.sml,shared/main.sml	30	1048576	rendering,floating-point,binary32-emulation,adaptive-tree,strict	data/smoke.sizes,expected/smoke.tree	exact	implemented
++mandel2-strict	normal	nofib	spectral/mandel2	data/normal.sizes expected/normal.tree	mandel2-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/finite-binary32.sml,shared/mandel2-point.sml,shared/nofib-mandel2.sml,shared/mandel2-check.sml,shared/mandel2-driver.sml,mandel2-strict/benchmark.sml,shared/main.sml	600	4194304	rendering,floating-point,binary32-emulation,adaptive-tree,strict	data/normal.sizes,expected/normal.tree	exact	implemented
++mandel2-strict	large	nofib	spectral/mandel2	data/large.sizes expected/large.tree	mandel2-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/finite-binary32.sml,shared/mandel2-point.sml,shared/nofib-mandel2.sml,shared/mandel2-check.sml,shared/mandel2-driver.sml,mandel2-strict/benchmark.sml,shared/main.sml	3600	8388608	rendering,floating-point,binary32-emulation,adaptive-tree,strict	data/large.sizes,expected/large.tree	exact	implemented
