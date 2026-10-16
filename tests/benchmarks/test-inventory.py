@@ -229,6 +229,38 @@ class InventoryTest(unittest.TestCase):
         self.sandmark_program("kernel", "let f n = n * n\nlet result = Sys.opaque_identity f 13\n")
         self.assertEqual(self.build("sandmark")[0]["disposition"], "import")
 
+    def allocation_probe(self, name, text):
+        self.file("benchmarks/simple-tests/" + name + ".ml", text)
+        self.file("benchmarks/simple-tests/dune",
+                  "(executable (name " + name + ") (modes native byte))\n")
+        return next(row for row in self.build("sandmark")
+                    if row["path"] == "benchmarks/simple-tests/" + name + ".exe")
+
+    def test_reviewed_allocation_probes_record_the_missing_barrier(self):
+        for name in ("alloc", "lists", "stacks", "stress"):
+            with self.subTest(name=name):
+                text = (ROOT / ("tests/benchmarks/data/sandmark-opaque/" + name + ".ml")).read_text()
+                row = self.allocation_probe(name, text)
+                self.assertEqual(row["disposition"], "defer")
+                self.assertIn("optimization barrier", row["reason"])
+                self.assertIn("reconsider", row["reason"])
+
+    def test_changed_allocation_probes_require_fresh_review(self):
+        for name in ("alloc", "lists", "stacks", "stress"):
+            with self.subTest(name=name):
+                text = (ROOT / ("tests/benchmarks/data/sandmark-opaque/" + name + ".ml")).read_text()
+                row = self.allocation_probe(name, text + "\n(* upstream changed *)\n")
+                self.assertEqual(row["disposition"], "import")
+
+    def test_reviewed_source_at_an_unreviewed_path_is_not_automatically_deferred(self):
+        for name in ("alloc", "lists", "stacks", "stress"):
+            with self.subTest(name=name):
+                text = (ROOT / ("tests/benchmarks/data/sandmark-opaque/" + name + ".ml")).read_text()
+                self.sandmark_program("algorithm_" + name, text)
+                row = next(row for row in self.build("sandmark")
+                           if row["path"] == "benchmarks/kernels/algorithm_" + name + ".exe")
+                self.assertEqual(row["disposition"], "import")
+
     def test_nested_comments_do_not_invent_runtime_dependencies(self):
         self.sandmark_program("trees", '(* Gc.set { (* nested *) } *)\nlet label = "Effect.perform x"\nlet result = 42\n')
         self.assertEqual(self.build("sandmark")[0]["disposition"], "import")

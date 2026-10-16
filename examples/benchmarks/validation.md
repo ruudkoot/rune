@@ -1061,3 +1061,42 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 matching bytecode comparisons across seven compiler builds.
 runedoc and runeopt also agree. [The complete transcript](validation/oct16-cryptarithm2-750-acceptance.log)
 records the run. All 38 inventory tests pass and all 861 entries validate.
+
+## M3 exhaustive permutations and M5 source review, 2026-10-16
+
+Two imports bring the catalogue to 254 programs and 756 profiles. [All 56
+requested smoke/normal cases](results/m3-cryptarithm1/coverage.tsv) are accounted
+for: 55 pass, and strict normal on legacy64 SML/NJ 110.99.9 reaches its
+1,200-second cap without a result. That full-size host check remains incomplete.
+Native32 and SML/NJ 2026.2 complete it; every Rune engine passes both profiles at
+both levels. Eight semantic checks pass all ten configurations at both levels.
+A separate Rune/MLton counter verifies all 3,628,800 candidates. Eight complete
+normal count samples pass the combined comparison, with matching source identities
+and unchanged budgets. These instrumented samples are not headline timings.
+
+Original GHC, independent exhaustive assignment search and all pinned fixtures
+agree. Insertion order, full enumeration and source repetition settings remain
+intact. Memoization/cursor representation, output checking and the recorded
+resource overrides are documented. Earlier limited attempts and stricter-budget
+successes remain explicit. A count run interrupted during a host stall retains
+its complete samples; only completed guarded retries contribute the remaining
+counts. No cause is assigned to the host stall, and no universal large SML
+execution is claimed. M3 remains in progress.
+
+The [allocation/stack review](validation/sandmark-allocation-probes.md) records
+four exact-source deferrals for unavailable optimization barriers. All 143
+Sandmark entries were rebuilt; only four dispositions/reasons changed and every
+other inventory field/alias order is preserved. All 861 entries validate and
+all 41 discovery tests, including twelve new subcases, pass. The retained Cmm
+reproduces byte for byte. No prerequisite runtime/compiler feature is added.
+M5 remains in progress.
+
+A provenance reconciliation also adds the omitted directory Revised BSD notice
+for spectralnorm2, retaining its exact CRLF bytes and refreshing source identities.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 756 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 matching bytecode comparisons across seven compiler builds.
+runedoc and runeopt also agree. [The complete transcript](validation/oct16-cryptarithm1-756-acceptance.log)
+records the run. Later resource-budget adjustments pass catalogue validation;
+benchmark sources and expected results remain the validated implementations.

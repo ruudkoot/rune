@@ -1,5 +1,11 @@
 # Initial source audit
 
+The [2026-10-16 allocation/stack review](validation/sandmark-allocation-probes.md)
+adds four source-specific deferrals for unavailable optimization barriers.
+Current Sandmark dispositions are 61 import and 82 defer. The baseline table
+below records the initial audit; subsequent reviews preserve every inventory
+entry and record their changes explicitly.
+
 Recorded 2026-10-01; classic review extended 2026-10-02, on the `benchmarks` worktree branching from
 `origin/master` at `b30fba275d685600da4d64cf0d9f7288bed0663e`.
 

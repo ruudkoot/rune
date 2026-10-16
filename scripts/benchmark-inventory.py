@@ -382,15 +382,36 @@ def classify(source, root, item, files, text):
             disposition, reason = "defer", "source uses OCaml-specific effects, concurrency, GC/weak-reference introspection, unsafe objects or C bindings; reconsider with equivalent runtime facilities"
         elif "multicore" in name or "parallel" in name or "multiprocess" in name or group in {"mpl", "multicore-gcroots", "multicore-structures", "multicore-grammatrix"}:
             disposition, reason = "defer", "parallel/runtime-specific executable; retain its original execution model"
-        # This pinned microbenchmark measures calls held behind %opaque, not
-        # an algorithm whose result validation can replace that barrier.
-        if disposition == "import" and path == "benchmarks/simple-tests/morestacks.exe":
-            kernel = root / "benchmarks/simple-tests/morestacks.ml"
-            if (kernel.is_file() and hashlib.sha256(kernel.read_bytes()).hexdigest()
-                    == "b4153c8f1a4c4e9ea948113ee300fe62a7aee31e1ae0b69d79e121d4232eb946"):
+        # Reviewed microprobes require %opaque to preserve their measured
+        # operation. Do not generalize this to algorithmic uses of opacity.
+        opaque_probes = {
+            "benchmarks/simple-tests/morestacks.exe": (
+                "b4153c8f1a4c4e9ea948113ee300fe62a7aee31e1ae0b69d79e121d4232eb946",
+                "call-overhead microbenchmark relies on Sys.opaque_identity to retain "
+                "calls to the otherwise inlineable n+5 function"),
+            "benchmarks/simple-tests/alloc.exe": (
+                "7649a3ae235416a6afc8e2f41297c51cf73fe8d40a6a573b5ea7ed7b24fea164",
+                "allocation microbenchmark relies on Sys.opaque_identity create to "
+                "retain calls and otherwise discarded mutable-record allocations"),
+            "benchmarks/simple-tests/lists.exe": (
+                "4a40532923d2fd783e47345740e64c9ec27f3305865d4e2730c80ba134d0e6e4",
+                "typed-list allocation microbenchmark relies on Sys.opaque_identity "
+                "create_list to retain otherwise discarded list generation in all nine modes"),
+            "benchmarks/simple-tests/stacks.exe": (
+                "6fcb3552d2efe34935766e5c13d6cd2b09b937d22a07e949855130bade0180f4",
+                "stack/argument microbenchmark relies on Sys.opaque_identity to retain "
+                "repeated calls whose integer/real recursive results are discarded in all four modes"),
+            "benchmarks/simple-tests/stress.exe": (
+                "dea8b3e283885c8bcbe468247fb923c4f488160688f40e44b5abbb055cd4ad70",
+                "allocation/retention microbenchmark relies on Sys.opaque_identity ref "
+                "to retain discarded references on its non-retaining branch"),
+        }
+        if disposition == "import" and path in opaque_probes:
+            digest, explanation = opaque_probes[path]
+            kernel = root / (path[:-4] + ".ml")
+            if kernel.is_file() and hashlib.sha256(kernel.read_bytes()).hexdigest() == digest:
                 disposition, reason = "defer", (
-                    "pinned call-overhead microbenchmark relies on Sys.opaque_identity to retain "
-                    "calls to the otherwise inlineable n+5 function; portable SML97 has no "
+                    "pinned " + explanation + "; portable SML97 has no "
                     "equivalent optimization barrier; reconsider with a reviewed portable "
                     "barrier protocol or observable upstream workload, without adding "
                     "prerequisite compiler/runtime features through this roadmap")
