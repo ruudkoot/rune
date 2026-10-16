@@ -293,3 +293,31 @@ result identity; performance effects remain hypotheses until measured.
   That paper is a historical reference here. The imported sequential variant's
   bounds repair and correctness evidence come from the retained source,
   checked OCaml reference and independent SML implementation.
+
+## Probability selection and fractal workloads
+
+Ferguson's [*Who Solved the Secretary Problem?*](https://doi.org/10.1214/ss/1177012493)
+provides historical/mathematical context for threshold selection. The nofib
+secretary workload's exact nub/demand pattern, seeded trials and expected
+probabilities come from its pinned program and random-1.1 dependency, rather
+than an asymptotic optimal-stopping claim. That dependency credits L'Ecuyer's
+[*Efficient and Portable Combined Random Number Generators*](https://doi.org/10.1145/62959.62969)
+and Augustsson's transliteration. Full source/independent state, permutation
+and trial checks establish the selected inputs; the paper does not measure
+this SML port.
+
+The literate Mandel sources cite Falconer. The publisher's later edition of
+[*Fractal Geometry*](https://doi.org/10.1002/0470013850) provides background;
+it is not identified as the historical edition cited by the source. Exact
+current/historical thresholds, scaled magnitude, cyclic lists and boundary
+behavior come from the retained modules and GHC Data.Complex. They are not
+interchangeable implementations of an abstract Mandelbrot task.
+
+Mandel2 cites Peitgen and Richter's [*The Beauty of Fractals*](https://doi.org/10.1007/978-3-642-61717-1),
+page121. The page attribution is retained from the source; no independent audit
+of that page is claimed. The source defines this workload's particular binary32
+steps, perimeter heuristic and direction conditions. Complete tree references
+preserve those conditions, including outward scans. Neither book establishes
+performance causes for the SML variants. Boxing, laziness, strict retention,
+normalization and validation costs remain source-based diagnostic questions
+until supported by measurements or compiler inspection.
