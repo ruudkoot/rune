@@ -1809,3 +1809,48 @@ bootstrap and 498 identical bytecode comparisons across seven builds. runedoc an
 runeopt also agree. [The complete transcript](validation/oct16-infer-895-acceptance.log)
 records the run. All 45 inventory fixtures pass and all 861 entries validate;
 the preceding full clean pinned-tree replay remains recorded separately.
+
+## M3 Cichelli perfect-hash search, 2026-10-16
+
+Two imports bring the catalogue to 303 programs and 901 profiles. [All 56 smoke/
+normal cases](results/m3-cichelli/correctness.tsv) pass across Rune's four engines
+at O0/O2 and all six managed native hosts. All 36 semantic/negative checks pass all
+ten configurations twice, with Rune O0/O2 and native defaults. Eight normal count
+samples agree under the execution-model rules, including allocation across all
+four engines. Existing budgets are unchanged; new profiles remain unbudgeted.
+Six serial native smoke samples validate MLton, SML/NJ and Poly/ML adapters.
+Counts, bounded preflights and one-sample diagnostics remain separate from
+headline timings.
+
+The unmodified original matches complete FAST 6/NORM 60/SLOW 300 outputs of
+507/5070/25350 bytes without added line separators. Original and independent
+set-based searches agree on data/order, both parity problems and seven key-prefix
+cases. Odd indices add a duplicate first keyword and fail with 324 leaves; even
+indices find the first full assignment with 113994 leaves. The independent model
+visits 631/116083 states respectively. The successful 17-letter witness maps 22
+keywords to the interval 4..25. Source feedback counts leaves rather than all
+recursive states.
+
+Identity frequency ordering, right-fold histogram/partition order, original-left
+union membership, association precedence, inclusive weights 0..17 and fixed range
+bound 22 remain. Both variants short circuit on first success and memoize result
+spines; count fields and finite candidate construction use lazy or strict
+semantics. Finite key setup uses strict lists in both. All selected values fit
+signed 31-bit Int, with positive count sums bounded by the recorded final result.
+These are explicit translation choices rather than a new hashing algorithm.
+
+SML-generated runtime index files preserve exactly 1..n with work counts 6/60/300.
+Every index recomputes its search; prior parity results are not reused as repeated-
+run answers. Complete bytes and EOF are checked before accepting a summary or
+measurement. Large preserves repetitions of the fixed dictionary; large SML
+validation is claimed only where recorded. Notices, primary bibliographic
+metadata, originals, independent models, raw results and exact identities are
+retained. No compiler/runtime feature prerequisite is introduced. M3 remains
+in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 901 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 identical bytecode comparisons across seven builds. runedoc and
+runeopt also agree. [The complete transcript](validation/oct16-cichelli-901-acceptance.log)
+records the run. All 45 inventory fixtures pass and all 861 entries validate;
+the preceding full clean pinned-tree replay remains separately recorded.

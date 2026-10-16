@@ -317,6 +317,8 @@ inventory entry.
 | [eliza-strict](#eliza-strict) | [nofib Eliza](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/eliza) | Recompute keyword-driven conversations with shared cyclic replies and strict finite candidates/output. |
 | [infer-lazy](#infer-lazy) | [nofib infer](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/infer) | Parse lambda/let programs and infer/render polymorphic types with lazy value fields and memoized parser pruning. |
 | [infer-strict](#infer-strict) | [nofib infer](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/infer) | Parse lambda/let programs and infer/render polymorphic types with strict value fields and memoized parser pruning. |
+| [cichelli-strict](#cichelli-strict) | [nofib Cichelli](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/cichelli) | Search first perfect-hash assignments with original pruning and strict candidate/count fields. |
+| [cichelli-lazy](#cichelli-lazy) | [nofib Cichelli](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/cichelli) | Search first perfect-hash assignments with original pruning and lazy candidate/count fields. |
 
 ## Running and interpreting checks
 
@@ -440,6 +442,7 @@ sh tests/benchmarks/check-last-piece.sh
 sh tests/benchmarks/check-typed-boyer.sh
 sh tests/benchmarks/check-eliza.sh
 sh tests/benchmarks/check-infer.sh
+sh tests/benchmarks/check-cichelli.sh
 python3 tests/benchmarks/test-inventory.py
 python3 scripts/benchmark-inventory.py --check
 python3 tests/benchmarks/latency-oracle.py --check
@@ -13957,3 +13960,233 @@ the paper does not establish current compiler rankings. The suite's nofib and
 measurement survey supplies experimental context.
 
 [Complete provenance](infer-strict/PROVENANCE.md).
+
+## cichelli-lazy
+
+Selected count/candidate evaluation: lazy; search-result spines remain memoized.
+
+## Algorithm and workload
+
+Search for character weights whose word hash is length + weight(first) +
+weight(last). Assign previously unknown end characters in lexicographic order,
+reject duplicate hashes and partial ranges wider than 22, and stop at the first
+complete solution. Preserve persistent character associations, optional range
+bounds and list-based used hashes. Feedback counts terminal leaves, not all
+recursive states. Emit every original status/count/witness byte without adding
+line separators.
+
+The source loops over indices 1..n. Even indices search the original 22 keywords;
+odd indices append a duplicate first keyword. blocked brings determined keys
+forward while preserving partition order. The duplicate makes odd searches fail
+with 324 leaves; even searches succeed with 113994 leaves. The successful 17-letter
+assignment maps all 22 words to the contiguous interval 4..25.
+
+## History, revision, authorship and aliases
+
+nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/cichelli/Main.hs,
+Prog.hs, Auxil.hs, Key.lhs, Interval.hs, Makefile and stdout fixtures. Prog labels
+its implementation strictly serial search; the unused Interval constants do not
+introduce polling, parallelism or a stopping threshold. Preserve the complete
+literate Key file, including inactive alternative datasets, while importing only
+its active 22-key definition. Comments include partain adaptation markers; they
+state no full program author or separate redistribution notice. No grant or
+attribution from another component is substituted.
+
+Names cichelli-lazy/strict preserve meaningful evaluation variants of this nofib
+program. The historical algorithm name is retained without attributing this
+particular Haskell implementation to the paper's author.
+
+## Exact source behavior and evaluation variants
+
+freqsorted is the active identity function; its commented frequency sort remains
+disabled. Histogram/right-fold order and maximum 17 distinct end characters are
+retained. Candidate weights include both endpoints 0..17. The range bound stays 22,
+even for correctness calls on key prefixes. union tests both new end characters
+against the original left list, preserving duplicate characters when appropriate.
+Associations prepend new bindings; successful witness order is unchanged.
+
+Both variants memoize candidate-result/control spines and keep firstSuccess's
+short circuiting. The lazy variant memoizes arithmetic feedback fields and
+constructs candidate arguments on demand. Strict evaluation materializes finite
+candidate argument lists and combines counts eagerly. Unvisited result searches
+remain unexecuted in both. The source's association lists, range pruning, visited
+leaf counts, first solution and output agree; allocation/retention differ.
+
+## Portable SML97 translation
+
+SML keeps the immutable key/hash-set/association representations and source
+right-fold histogram/partition algorithms. Attributed-key and blocked-key
+preparation use strict finite lists in both variants; the source's lazy library
+spines are not reproduced throughout this small setup. Mutable memoization
+supports demand-sensitive search/result/count cells. No alternative perfect-hash
+construction, bitset occupancy kernel or mutable character table replaces the
+source algorithm. The independent reference model uses a set for a separate
+correctness implementation.
+
+All selected indices, weights, hashes and counts fit signed 31-bit Int. Hashes
+are at most 43. Counts are nonnegative sums of visited leaves; every intermediate
+sum is bounded by the recorded final 113994 maximum for these fixed problems.
+Native Int therefore preserves the source 64-bit arithmetic on this domain.
+No arbitrary-precision or modular arithmetic is silently introduced.
+
+A fixed SML-generated index file replaces the implicit loop with an opaque input
+dependency: first n, then the exact source indices 1..n. Each index invokes a fresh
+search, with no previous parity result reused. Input parsing/checking adds driver
+cost. The driver consumes complete status/witness text and validates every byte
+and EOF before reporting n:bytes:checked. It bounds n to 0..300 and indices to 1..300.
+Immutable key/frequency setup may be shared, lifted or exported by a compiler;
+input-dependent searches occur inside Benchmark.run.
+
+## Profiles and diagnostic questions
+
+Smoke retains FAST 6, normal NORM 60, and selected large SLOW 300. Inputs alternate
+odd failures and even successes in source order. Complete outputs have
+507/5070/25350 bytes. Large increases repetitions of the same fixed key problems,
+preserving the original profile rather than inventing a larger dictionary.
+There is no separately acquired dataset or random seed. Default resource limits
+apply. Input generation, kernel and checking remain portable SML97.
+
+Source-based questions concern higher-order search, pruning, repeated association
+lookup, count thunks, candidate construction, persistent data lifetimes and
+immutable setup placement. They remain hypotheses until supported by analysis
+or measurements. Standard reports compare identical SML; Haskell is a correctness
+reference. Counters/instrumentation stay separate from headline timings.
+
+## References and validation
+
+The unmodified original agrees with all three complete stdout fixtures. Export-
+only observers record exact data/histogram/block order, both parity statuses and
+key-prefix 0/1/2/5/10/15/22 results. An independent set-based search agrees on all
+leaf counts, first witnesses and profile outputs; it visits 116083 states for the
+full even search and 631 for the odd failure. These state counts are distinct
+from source feedback leaf counts.
+
+Both SML variants reproduce the exact parity outputs and full 60-run normal
+profile in bounded Rune preflights. Semantic tests cover all source prefixes,
+full witnesses, histogram/block order, original union behavior, range pruning,
+first-success demand, count sharing and changed/truncated/extra output rejection.
+Broader or large SML validation is claimed only where recorded.
+
+Richard J. Cichelli, [Minimal perfect hash functions made simple](https://doi.org/10.1145/358808.358813),
+Communications of the ACM 23(1), January 1980, pp. 17–19, provides historical context.
+The DOI registration metadata is retained. The exact nofib modules specify this
+variant's ordering, disabled sorting and counters; the paper is not evidence of
+current compiler performance. The suite's nofib/measurement survey supplies
+experimental context.
+
+[Complete provenance](cichelli-lazy/PROVENANCE.md).
+
+## cichelli-strict
+
+Selected count/candidate evaluation: strict; search-result spines remain memoized.
+
+## Algorithm and workload
+
+Search for character weights whose word hash is length + weight(first) +
+weight(last). Assign previously unknown end characters in lexicographic order,
+reject duplicate hashes and partial ranges wider than 22, and stop at the first
+complete solution. Preserve persistent character associations, optional range
+bounds and list-based used hashes. Feedback counts terminal leaves, not all
+recursive states. Emit every original status/count/witness byte without adding
+line separators.
+
+The source loops over indices 1..n. Even indices search the original 22 keywords;
+odd indices append a duplicate first keyword. blocked brings determined keys
+forward while preserving partition order. The duplicate makes odd searches fail
+with 324 leaves; even searches succeed with 113994 leaves. The successful 17-letter
+assignment maps all 22 words to the contiguous interval 4..25.
+
+## History, revision, authorship and aliases
+
+nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/cichelli/Main.hs,
+Prog.hs, Auxil.hs, Key.lhs, Interval.hs, Makefile and stdout fixtures. Prog labels
+its implementation strictly serial search; the unused Interval constants do not
+introduce polling, parallelism or a stopping threshold. Preserve the complete
+literate Key file, including inactive alternative datasets, while importing only
+its active 22-key definition. Comments include partain adaptation markers; they
+state no full program author or separate redistribution notice. No grant or
+attribution from another component is substituted.
+
+Names cichelli-lazy/strict preserve meaningful evaluation variants of this nofib
+program. The historical algorithm name is retained without attributing this
+particular Haskell implementation to the paper's author.
+
+## Exact source behavior and evaluation variants
+
+freqsorted is the active identity function; its commented frequency sort remains
+disabled. Histogram/right-fold order and maximum 17 distinct end characters are
+retained. Candidate weights include both endpoints 0..17. The range bound stays 22,
+even for correctness calls on key prefixes. union tests both new end characters
+against the original left list, preserving duplicate characters when appropriate.
+Associations prepend new bindings; successful witness order is unchanged.
+
+Both variants memoize candidate-result/control spines and keep firstSuccess's
+short circuiting. The lazy variant memoizes arithmetic feedback fields and
+constructs candidate arguments on demand. Strict evaluation materializes finite
+candidate argument lists and combines counts eagerly. Unvisited result searches
+remain unexecuted in both. The source's association lists, range pruning, visited
+leaf counts, first solution and output agree; allocation/retention differ.
+
+## Portable SML97 translation
+
+SML keeps the immutable key/hash-set/association representations and source
+right-fold histogram/partition algorithms. Attributed-key and blocked-key
+preparation use strict finite lists in both variants; the source's lazy library
+spines are not reproduced throughout this small setup. Mutable memoization
+supports demand-sensitive search/result/count cells. No alternative perfect-hash
+construction, bitset occupancy kernel or mutable character table replaces the
+source algorithm. The independent reference model uses a set for a separate
+correctness implementation.
+
+All selected indices, weights, hashes and counts fit signed 31-bit Int. Hashes
+are at most 43. Counts are nonnegative sums of visited leaves; every intermediate
+sum is bounded by the recorded final 113994 maximum for these fixed problems.
+Native Int therefore preserves the source 64-bit arithmetic on this domain.
+No arbitrary-precision or modular arithmetic is silently introduced.
+
+A fixed SML-generated index file replaces the implicit loop with an opaque input
+dependency: first n, then the exact source indices 1..n. Each index invokes a fresh
+search, with no previous parity result reused. Input parsing/checking adds driver
+cost. The driver consumes complete status/witness text and validates every byte
+and EOF before reporting n:bytes:checked. It bounds n to 0..300 and indices to 1..300.
+Immutable key/frequency setup may be shared, lifted or exported by a compiler;
+input-dependent searches occur inside Benchmark.run.
+
+## Profiles and diagnostic questions
+
+Smoke retains FAST 6, normal NORM 60, and selected large SLOW 300. Inputs alternate
+odd failures and even successes in source order. Complete outputs have
+507/5070/25350 bytes. Large increases repetitions of the same fixed key problems,
+preserving the original profile rather than inventing a larger dictionary.
+There is no separately acquired dataset or random seed. Default resource limits
+apply. Input generation, kernel and checking remain portable SML97.
+
+Source-based questions concern higher-order search, pruning, repeated association
+lookup, count thunks, candidate construction, persistent data lifetimes and
+immutable setup placement. They remain hypotheses until supported by analysis
+or measurements. Standard reports compare identical SML; Haskell is a correctness
+reference. Counters/instrumentation stay separate from headline timings.
+
+## References and validation
+
+The unmodified original agrees with all three complete stdout fixtures. Export-
+only observers record exact data/histogram/block order, both parity statuses and
+key-prefix 0/1/2/5/10/15/22 results. An independent set-based search agrees on all
+leaf counts, first witnesses and profile outputs; it visits 116083 states for the
+full even search and 631 for the odd failure. These state counts are distinct
+from source feedback leaf counts.
+
+Both SML variants reproduce the exact parity outputs and full 60-run normal
+profile in bounded Rune preflights. Semantic tests cover all source prefixes,
+full witnesses, histogram/block order, original union behavior, range pruning,
+first-success demand, count sharing and changed/truncated/extra output rejection.
+Broader or large SML validation is claimed only where recorded.
+
+Richard J. Cichelli, [Minimal perfect hash functions made simple](https://doi.org/10.1145/358808.358813),
+Communications of the ACM 23(1), January 1980, pp. 17–19, provides historical context.
+The DOI registration metadata is retained. The exact nofib modules specify this
+variant's ordering, disabled sorting and counters; the paper is not evidence of
+current compiler performance. The suite's nofib/measurement survey supplies
+experimental context.
+
+[Complete provenance](cichelli-strict/PROVENANCE.md).
