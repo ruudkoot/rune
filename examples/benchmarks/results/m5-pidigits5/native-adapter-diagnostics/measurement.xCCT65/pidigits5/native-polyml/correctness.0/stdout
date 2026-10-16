@@ -1,0 +1,4 @@
+RESULT 27:checked
+PASS pidigits5
+SAMPLE 1 0.000187000
+SUMMARY 1 checks, 0 failed

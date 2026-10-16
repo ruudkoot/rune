@@ -1,0 +1,4 @@
+PASS original/independent complete digits and layout 0
+Traceback (most recent call last):
+  File "<stdin>", line 18, in <module>
+AssertionError: (1, b'3         \t:1\n', '3141592653\t:1\n')

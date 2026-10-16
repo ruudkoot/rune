@@ -1,0 +1,10 @@
+{
+  "ocamlopt": "4.14.1",
+  "zarith": "1.14",
+  "options": [
+    "-O2"
+  ],
+  "sandmark_revision": "5605805954a00497ed197c930641cddd580e1507",
+  "normal_profile": "128digits;calibrationonly,nocomparativeclaim",
+  "incomplete_attempts": "largersequencesreachedresourcecaps;notacceptedmeasurements"
+}

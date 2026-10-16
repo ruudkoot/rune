@@ -1,0 +1,5 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+pidigits5	normal	rune	O2	count	1	1	pass	24.87	24.40	0.01	10484	5581335620	5997830320	149945654	counts/measurement.OeqSuE/pidigits5/rune/fresh.1
+pidigits5	normal	rune:opt	O2	count	1	1	pass	9.21	9.57	0.00	10836	5581335620	5997830320	149945654	counts/measurement.OeqSuE/pidigits5/rune-opt/fresh.1
+pidigits5	normal	rune:new	O2	count	1	1	pass	19.51	19.15	0.00	10460	3132865964	5997830320	149945654	counts/measurement.OeqSuE/pidigits5/rune-new/fresh.1
+pidigits5	normal	rune:jit	O2	count	1	1	pass	9.12	7.75	0.02	11492	3132865964	5997830320	149945654	counts/measurement.OeqSuE/pidigits5/rune-jit/fresh.1

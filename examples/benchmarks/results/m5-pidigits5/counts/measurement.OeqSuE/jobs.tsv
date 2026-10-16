@@ -1,0 +1,1 @@
+pidigits5	600	4194304	shared/input.sml shared/sandmark-pidigits5.sml pidigits5/benchmark.sml shared/main.sml	128 expected/normal.txt	pidigits5/normal.expected	expected/normal.txt

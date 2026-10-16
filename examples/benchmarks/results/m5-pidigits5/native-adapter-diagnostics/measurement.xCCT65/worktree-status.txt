@@ -1,0 +1,7 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/pidigits5/
+?? examples/benchmarks/shared/sandmark-pidigits5.sml
+?? tests/benchmarks/check-pidigits5.sh
+?? tests/benchmarks/data/pidigits5/
+?? tests/benchmarks/pidigits5-tests.sml

@@ -1,0 +1,36 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-pidigits5.sml]
+structure BenchPiDigitsFive : 
+  sig
+    type state = IntInf.int * IntInf.int * IntInf.int
+    val three : IntInf.int
+    val four : IntInf.int
+    val ten : IntInf.int
+    val initial : state
+    val extract : IntInf.int * IntInf.int * IntInf.int -> IntInf.int -> int
+    val produce : IntInf.int * IntInf.int * IntInf.int
+                   -> int -> IntInf.int * IntInf.int * IntInf.int
+    val consume : IntInf.int * IntInf.int * IntInf.int
+                   -> int -> IntInf.int * IntInf.int * IntInf.int
+    val run : int -> (string -> 'a) -> 'a
+    val check : int -> string -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/pidigits5/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 128:checked
+PASS pidigits5
+SUMMARY 1 checks, 0 failed

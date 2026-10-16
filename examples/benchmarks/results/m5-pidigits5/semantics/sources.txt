@@ -1,0 +1,4 @@
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-pidigits5.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/pidigits5-tests.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml

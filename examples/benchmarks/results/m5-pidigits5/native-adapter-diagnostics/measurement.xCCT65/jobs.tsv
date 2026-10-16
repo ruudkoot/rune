@@ -1,0 +1,1 @@
+pidigits5	30	1048576	shared/input.sml shared/sandmark-pidigits5.sml pidigits5/benchmark.sml shared/main.sml	27 expected/smoke.txt	pidigits5/smoke.expected	expected/smoke.txt

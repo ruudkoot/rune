@@ -1,0 +1,7 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-pidigits5.p_bie4ai
+PASS pidigits5 smoke O0
+PASS pidigits5 smoke O2
+PASS pidigits5 smoke hosts
+PASS pidigits5 normal O0
+PASS pidigits5 normal O2
+PASS pidigits5 normal hosts
