@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-clausify.nc7ndeol
+PASS clausify-lazy smoke O0
+PASS clausify-lazy smoke O2
+PASS clausify-lazy smoke hosts
+PASS clausify-lazy normal O0
+PASS clausify-lazy normal O2
+PASS clausify-lazy normal hosts
+PASS clausify-strict smoke O0
+PASS clausify-strict smoke O2
+PASS clausify-strict smoke hosts
+PASS clausify-strict normal O0
+PASS clausify-strict normal O2
+PASS clausify-strict normal hosts

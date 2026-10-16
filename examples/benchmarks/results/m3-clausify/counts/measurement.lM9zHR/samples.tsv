@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+clausify-lazy	normal	rune	O2	compile	0	0	pass	1.25	1.23	0.06	135232	-	-	-	clausify-lazy/rune/build/compile
+clausify-lazy	normal	rune	O2	correctness	0	0	pass	50.11	49.31	0.05	68528	9736845055	23679833296	775763082	clausify-lazy/rune/correctness.0
+clausify-lazy	normal	rune	O2	count	1	1	pass	46.24	46.93	0.06	68388	9736845055	23679833296	775763082	clausify-lazy/rune/fresh.1
+clausify-lazy	normal	rune:opt	O2	compile	0	0	pass	1.11	1.11	0.06	135248	-	-	-	clausify-lazy/rune-opt/build/compile
+clausify-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.28	0.15	0.03	12392	-	-	-	clausify-lazy/rune-opt/build/native-compile
+clausify-lazy	normal	rune:opt	O2	correctness	0	0	pass	24.25	23.63	0.05	69188	9736845055	23679833296	775763082	clausify-lazy/rune-opt/correctness.0
+clausify-lazy	normal	rune:opt	O2	count	1	1	pass	25.14	24.64	0.05	69312	9736845055	23679833296	775763082	clausify-lazy/rune-opt/fresh.1
+clausify-lazy	normal	rune:new	O2	compile	0	0	pass	1.20	1.19	0.06	135208	-	-	-	clausify-lazy/rune-new/build/compile
+clausify-lazy	normal	rune:new	O2	correctness	0	0	pass	44.62	44.94	0.07	69032	5536679167	23679833296	775763082	clausify-lazy/rune-new/correctness.0
+clausify-lazy	normal	rune:new	O2	count	1	1	pass	45.01	45.34	0.07	69040	5536679167	23679833296	775763082	clausify-lazy/rune-new/fresh.1
+clausify-lazy	normal	rune:jit	O2	compile	0	0	pass	1.25	1.23	0.06	135260	-	-	-	clausify-lazy/rune-jit/build/compile
+clausify-lazy	normal	rune:jit	O2	correctness	0	0	pass	23.24	22.27	0.04	70232	5536679167	23679833296	775763082	clausify-lazy/rune-jit/correctness.0
+clausify-lazy	normal	rune:jit	O2	count	1	1	pass	22.66	23.37	0.07	70216	5536679167	23679833296	775763082	clausify-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

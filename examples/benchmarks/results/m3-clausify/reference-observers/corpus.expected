@@ -1,0 +1,181 @@
+0
+a <= 
+END
+1
+<= a 
+END
+2
+END
+3
+a <= 
+END
+4
+a b <= 
+END
+5
+a <= 
+b <= 
+END
+6
+b <= a 
+END
+7
+a <= b 
+b <= a 
+END
+8
+a <= b c 
+a b c <= 
+b <= a c 
+c <= a b 
+END
+9
+c <= a b 
+END
+10
+<= a 
+<= b 
+END
+11
+<= a b 
+END
+12
+a <= 
+END
+13
+a c <= 
+a d <= 
+b c <= 
+b d <= 
+END
+14
+a <= b c 
+a b <= c 
+b c <= a 
+c <= a b 
+END
+15
+a <= 
+END
+16
+a <= b c 
+a b c <= 
+b <= a c 
+c <= a b 
+END
+17
+a b c <= 
+c <= a b 
+END
+18
+a c <= b 
+b c <= a 
+END
+19
+a <= b 
+b <= a 
+c <= 
+END
+20
+a c <= 
+b <= a c 
+c <= b 
+END
+21
+a c <= 
+c <= b 
+END
+22
+b c <= a 
+END
+23
+b <= a 
+c <= 
+END
+24
+a b <= c 
+c <= a 
+c <= b 
+END
+25
+c <= a 
+c <= b 
+END
+26
+a b c <= 
+END
+27
+a b <= 
+c <= 
+END
+28
+a <= c 
+b <= c 
+c <= a b 
+END
+29
+c <= a b 
+END
+30
+a c <= 
+b c <= 
+END
+31
+a <= 
+b <= 
+c <= 
+END
+32
+a b <= 
+b <= a 
+END
+33
+a b <= 
+b <= a 
+END
+34
+END
+35
+b <= 
+END
+36
+a b <= 
+b <= a 
+END
+37
+a b <= 
+b <= a 
+END
+38
+END
+39
+b <= 
+END
+40
+a <= b 
+b <= a 
+END
+41
+b <= a 
+END
+42
+a b <= 
+END
+43
+a <= 
+b <= 
+END
+44
+a <= b 
+b <= a 
+END
+45
+b <= a 
+END
+46
+a b <= 
+END
+47
+a <= 
+b <= 
+END

@@ -1183,3 +1183,29 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 matching bytecode comparisons across seven compiler builds.
 runedoc and runeopt also agree. [The complete transcript](validation/oct16-compress2-774-acceptance.log)
 records the run. All 41 inventory tests pass and all 861 entries validate.
+
+## M3 propositional rewriting, 2026-10-16
+
+Two imports bring the catalogue to 262 programs and 780 profiles. [All 56
+smoke/normal cases](results/m3-clausify/correctness.tsv) pass on Rune's four
+engines at both levels and all six managed native hosts. Fifty-nine semantic
+and negative checks pass all ten configurations at both levels. Eight normal
+count samples pass the combined comparison with unchanged budgets. These
+instrumented samples remain separate from headline timings.
+
+Both variants preserve the parser, elimination/negation/distribution pipeline,
+ordered clauses, exact spacing, FAST/NORM/SLOW sizes and all 67 repetitions.
+Need retains formula/list/field sharing and short-circuit demand; Strict
+materializes finite structures. Eager parser stacks, finite spacing, absent
+SML97 NOINLINE pragma and full character comparison are documented. Original
+GHC matches all pinned stdout bytes; an independent CNF converter and complete
+truth tables agree with 48 original observer outputs. Notices, source identities,
+reference reconstruction and raw correctness/count records are retained. No
+prerequisite compiler/runtime feature or universal large SML execution is
+claimed. M3 remains in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 780 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 matching bytecode comparisons across seven compiler builds.
+runedoc and runeopt also agree. [The complete transcript](validation/oct16-clausify-780-acceptance.log)
+records the run. All 41 inventory tests pass and all 861 entries validate.

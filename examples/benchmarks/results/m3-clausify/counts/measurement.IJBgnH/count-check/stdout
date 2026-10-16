@@ -1,0 +1,5 @@
+COUNT unbudgeted clausify-strict normal rune
+COUNT unbudgeted clausify-strict normal rune:opt
+COUNT unbudgeted clausify-strict normal rune:new
+COUNT unbudgeted clausify-strict normal rune:jit
+COUNT comparisons agree

@@ -1,0 +1,242 @@
+[
+  {
+    "formula": "a",
+    "output": "a <= \n",
+    "sha256": "f0858b6314153323423ba3ced9eb078ea1136a4b3a8ca0263a3ebf314b2221dc"
+  },
+  {
+    "formula": "~a",
+    "output": "<= a \n",
+    "sha256": "f71105b54df016440f7665dac734de99029b722fecf04e3f322997bd463f5a2a"
+  },
+  {
+    "formula": "a|~a",
+    "output": "",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "formula": "a&a",
+    "output": "a <= \n",
+    "sha256": "f0858b6314153323423ba3ced9eb078ea1136a4b3a8ca0263a3ebf314b2221dc"
+  },
+  {
+    "formula": "a|b",
+    "output": "a b <= \n",
+    "sha256": "e6d1327dfdf0e2e6872fc298feff43a6d6fc9eeeeaf896709492491406699f15"
+  },
+  {
+    "formula": "a&b",
+    "output": "a <= \nb <= \n",
+    "sha256": "9d76e45e43afd3611c4adcce4d053c69eb772a118b496b0b6479cda1065a5be5"
+  },
+  {
+    "formula": "a>b",
+    "output": "b <= a \n",
+    "sha256": "fb5b90895a79605ff04b11366d40d627b00124c6fbca6924940404c61c78250e"
+  },
+  {
+    "formula": "a=b",
+    "output": "a <= b \nb <= a \n",
+    "sha256": "a08b596e06aa007160718ff9578e4b0fb745ed102d1474da1a07ca75f397d448"
+  },
+  {
+    "formula": "a=b=c",
+    "output": "a <= b c \na b c <= \nb <= a c \nc <= a b \n",
+    "sha256": "6ba5c5f9492351f3497a51d0a6ed5b0fe40250a7bc851075224c5d736bce8467"
+  },
+  {
+    "formula": "a>b>c",
+    "output": "c <= a b \n",
+    "sha256": "a4a1dc9f963ac976fbd5348dcb0fa7bab8a382ef131060fb204d0b9e4e0ebcf4"
+  },
+  {
+    "formula": "~(a|b)",
+    "output": "<= a \n<= b \n",
+    "sha256": "8e5a00e4df7c1105da2f6b133d725c0c89dfc1fbf52d4f6d09777abadda7dfad"
+  },
+  {
+    "formula": "~(a&b)",
+    "output": "<= a b \n",
+    "sha256": "0797c8b730d1bf10d577ba6be7908e82b32fb777fd81ac1e73acead80fed2f23"
+  },
+  {
+    "formula": "~~a",
+    "output": "a <= \n",
+    "sha256": "f0858b6314153323423ba3ced9eb078ea1136a4b3a8ca0263a3ebf314b2221dc"
+  },
+  {
+    "formula": "(a&b)|(c&d)",
+    "output": "a c <= \na d <= \nb c <= \nb d <= \n",
+    "sha256": "9f9b56df73a841e9c939f84c1fa2bf6b39dbee0f55836cfd287b5ef062fe165e"
+  },
+  {
+    "formula": "(a=b)=(b=c)",
+    "output": "a <= b c \na b <= c \nb c <= a \nc <= a b \n",
+    "sha256": "8ccb95e89d5d7a5e5d2f8c0c8d20249d2b3024f374d3767a7d086d13f61f8603"
+  },
+  {
+    "formula": "(a = a = a) = (a = a = a) = (a = a = a)",
+    "output": "a <= \n",
+    "sha256": "f0858b6314153323423ba3ced9eb078ea1136a4b3a8ca0263a3ebf314b2221dc"
+  },
+  {
+    "formula": "(a=b)=c",
+    "output": "a <= b c \na b c <= \nb <= a c \nc <= a b \n",
+    "sha256": "6ba5c5f9492351f3497a51d0a6ed5b0fe40250a7bc851075224c5d736bce8467"
+  },
+  {
+    "formula": "(a=b)>c",
+    "output": "a b c <= \nc <= a b \n",
+    "sha256": "a8f171354c9bd1cfaa0e276ab1c2c674b170780e6404c725ae36a1b2f3ec5e96"
+  },
+  {
+    "formula": "(a=b)|c",
+    "output": "a c <= b \nb c <= a \n",
+    "sha256": "641c8febfa9f3ffe104d2c811476d40de5db5b02cea72317f79ed487182f997d"
+  },
+  {
+    "formula": "(a=b)&c",
+    "output": "a <= b \nb <= a \nc <= \n",
+    "sha256": "4d3d07e3d9b67f948bc68323bd1e52ec9971b216ea269a4c7346537ced0144cf"
+  },
+  {
+    "formula": "(a>b)=c",
+    "output": "a c <= \nb <= a c \nc <= b \n",
+    "sha256": "d2730c153cfe98f7950b900cb635f9c1c6e26c61730dff96d21856ee69e7a99d"
+  },
+  {
+    "formula": "(a>b)>c",
+    "output": "a c <= \nc <= b \n",
+    "sha256": "52ea226ed9e828c4ce841d57380a736008576323a109cca6280279f417469c66"
+  },
+  {
+    "formula": "(a>b)|c",
+    "output": "b c <= a \n",
+    "sha256": "386c2a37c53cbc98f2b5ac7a6ad75aed049923fae11af07e8a258f07a715c4ec"
+  },
+  {
+    "formula": "(a>b)&c",
+    "output": "b <= a \nc <= \n",
+    "sha256": "d84aeffe149422a9c68f9d337460cfc7c88df34126b99f505c35799d3f54a505"
+  },
+  {
+    "formula": "(a|b)=c",
+    "output": "a b <= c \nc <= a \nc <= b \n",
+    "sha256": "5f75814c761b78e119738ebce4b74b548fd3adbf89195f206a0758dce5ec4d71"
+  },
+  {
+    "formula": "(a|b)>c",
+    "output": "c <= a \nc <= b \n",
+    "sha256": "369d48369155d9fe3dd95d80b2b5d2b4986a7a98bb6edb7b21f3940f7c87bda0"
+  },
+  {
+    "formula": "(a|b)|c",
+    "output": "a b c <= \n",
+    "sha256": "9ff667623a51ebc676b9df4c09aa33f54a4d1c946c971d3aa15a2d8f2520c847"
+  },
+  {
+    "formula": "(a|b)&c",
+    "output": "a b <= \nc <= \n",
+    "sha256": "4b695519aa08b5769636cae2abab3e868c708daf7aaf07d720ef3806657acc89"
+  },
+  {
+    "formula": "(a&b)=c",
+    "output": "a <= c \nb <= c \nc <= a b \n",
+    "sha256": "ff19bef7d580c0e3a9125d536d1a29d1371e7ed980732f0b8a23a00a571311dd"
+  },
+  {
+    "formula": "(a&b)>c",
+    "output": "c <= a b \n",
+    "sha256": "a4a1dc9f963ac976fbd5348dcb0fa7bab8a382ef131060fb204d0b9e4e0ebcf4"
+  },
+  {
+    "formula": "(a&b)|c",
+    "output": "a c <= \nb c <= \n",
+    "sha256": "4cdd2b882294aa906ff61851c92832d93ef41ebcc4d82789d4046760b106bd15"
+  },
+  {
+    "formula": "(a&b)&c",
+    "output": "a <= \nb <= \nc <= \n",
+    "sha256": "188701331f64dee9c0255d12a06b1beb4e1c795735797a91c2524f46ee126458"
+  },
+  {
+    "formula": "(a=a)=b",
+    "output": "a b <= \nb <= a \n",
+    "sha256": "cc071420a23a842f1073b6ff5458e0a5f91199c89f7cf8d50773d092e9b54a3a"
+  },
+  {
+    "formula": "(a=a)>b",
+    "output": "a b <= \nb <= a \n",
+    "sha256": "cc071420a23a842f1073b6ff5458e0a5f91199c89f7cf8d50773d092e9b54a3a"
+  },
+  {
+    "formula": "(a=a)|b",
+    "output": "",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "formula": "(a=a)&b",
+    "output": "b <= \n",
+    "sha256": "d7a8b78c909eadd60f1d0637c1bb40028792dc8b9286f8be2cf59707449ced93"
+  },
+  {
+    "formula": "(a>a)=b",
+    "output": "a b <= \nb <= a \n",
+    "sha256": "cc071420a23a842f1073b6ff5458e0a5f91199c89f7cf8d50773d092e9b54a3a"
+  },
+  {
+    "formula": "(a>a)>b",
+    "output": "a b <= \nb <= a \n",
+    "sha256": "cc071420a23a842f1073b6ff5458e0a5f91199c89f7cf8d50773d092e9b54a3a"
+  },
+  {
+    "formula": "(a>a)|b",
+    "output": "",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "formula": "(a>a)&b",
+    "output": "b <= \n",
+    "sha256": "d7a8b78c909eadd60f1d0637c1bb40028792dc8b9286f8be2cf59707449ced93"
+  },
+  {
+    "formula": "(a|a)=b",
+    "output": "a <= b \nb <= a \n",
+    "sha256": "a08b596e06aa007160718ff9578e4b0fb745ed102d1474da1a07ca75f397d448"
+  },
+  {
+    "formula": "(a|a)>b",
+    "output": "b <= a \n",
+    "sha256": "fb5b90895a79605ff04b11366d40d627b00124c6fbca6924940404c61c78250e"
+  },
+  {
+    "formula": "(a|a)|b",
+    "output": "a b <= \n",
+    "sha256": "e6d1327dfdf0e2e6872fc298feff43a6d6fc9eeeeaf896709492491406699f15"
+  },
+  {
+    "formula": "(a|a)&b",
+    "output": "a <= \nb <= \n",
+    "sha256": "9d76e45e43afd3611c4adcce4d053c69eb772a118b496b0b6479cda1065a5be5"
+  },
+  {
+    "formula": "(a&a)=b",
+    "output": "a <= b \nb <= a \n",
+    "sha256": "a08b596e06aa007160718ff9578e4b0fb745ed102d1474da1a07ca75f397d448"
+  },
+  {
+    "formula": "(a&a)>b",
+    "output": "b <= a \n",
+    "sha256": "fb5b90895a79605ff04b11366d40d627b00124c6fbca6924940404c61c78250e"
+  },
+  {
+    "formula": "(a&a)|b",
+    "output": "a b <= \n",
+    "sha256": "e6d1327dfdf0e2e6872fc298feff43a6d6fc9eeeeaf896709492491406699f15"
+  },
+  {
+    "formula": "(a&a)&b",
+    "output": "a <= \nb <= \n",
+    "sha256": "9d76e45e43afd3611c4adcce4d053c69eb772a118b496b0b6479cda1065a5be5"
+  }
+]

@@ -1,0 +1,1 @@
+clausify-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/cell-sequence.sml shared/nofib-clausify.sml shared/clausify-driver.sml clausify-lazy/benchmark.sml shared/main.sml	7 expected/one.txt	clausify-lazy/normal.expected	expected/one.txt

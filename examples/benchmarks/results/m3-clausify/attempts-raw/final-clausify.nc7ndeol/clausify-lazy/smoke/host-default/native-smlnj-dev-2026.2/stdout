@@ -1,0 +1,156 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml]
+functor BenchCellSequenceFn(D: sig
+                               type 'a t
+                               val delay : (unit -> 'a) -> 'a t
+                               val force : 'a t -> 'a
+                             end) :
+                           
+                             sig
+                               type 'a node
+                               type 'a sequence
+                               val value : 'a -> 'a D.t
+                               val empty : unit -> 'a node D.t
+                               val cons : 'a D.t -> 'a node D.t -> 'a node D.t
+                               val fromList : 'a list -> 'a node D.t
+                               val head : 'a node D.t -> 'a
+                               val tail : 'a node D.t -> 'a node D.t
+                               val delayedTail : 'a node D.t -> 'a node D.t
+                               val fromCell : 'a D.t D.t -> 'a D.t
+                               val map : ('a -> 'b)
+                                          -> 'a node D.t -> 'b node D.t
+                               val append : 'a node D.t
+                                             -> 'a node D.t -> 'a node D.t
+                               val take : int -> 'a node D.t -> 'a node D.t
+                               val replicate : int -> 'a D.t -> 'a node D.t
+                               val init : 'a node D.t -> 'a node D.t
+                               val zipWith3 : ('a * 'b * 'c -> 'd)
+                                               -> 'a node D.t
+                                               -> 'b node D.t
+                                               -> 'c node D.t -> 'd node D.t
+                               val zip3 : 'a node D.t
+                                           -> 'b node D.t
+                                           -> 'c node D.t
+                                           -> ('a D.t * 'b D.t * 'c D.t) node 
+                                             D.t
+                               val equal : ('a * 'b -> bool)
+                                            -> 'a node D.t
+                                            -> 'b node D.t -> bool
+                               val toList : 'a node D.t -> 'a list
+                             end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-clausify.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-clausify.sml:85.27 Warning: calling polyEqual
+functor BenchClausifyFn(D: sig
+                           type 'a t
+                           val delay : (unit -> 'a) -> 'a t
+                           val force : 'a t -> 'a
+                         end) :
+                       
+                         sig
+                           structure Q : <sig>
+                           type formula
+                           type frame
+                           val value : 'a -> 'a D.t
+                           val symbol : char -> formula D.t
+                           val negate : formula D.t -> formula D.t
+                           val disjoin : formula D.t
+                                          -> formula D.t -> formula D.t
+                           val conjoin : formula D.t
+                                          -> formula D.t -> formula D.t
+                           val priority : char -> int
+                           val stackPriority : frame list -> int
+                           val reduce : frame list -> frame list
+                           val reduceAll : frame list -> frame list
+                           val parse : char list -> formula D.t
+                           val elim : formula D.t -> formula D.t
+                           val negin : formula D.t -> formula D.t
+                           val conjunct : formula D.t -> bool
+                           val disin : formula D.t -> formula D.t
+                           val splitInto : formula D.t
+                                            -> formula Q.node D.t
+                                            -> formula Q.node D.t
+                           val split : formula D.t -> formula Q.node D.t
+                           val insert : ('a * 'a -> order)
+                                         -> 'a D.t
+                                         -> 'a Q.node D.t -> 'a Q.node D.t
+                           val clauseInto : formula D.t
+                                             -> (char Q.node D.t
+                                                * char Q.node D.t) D.t
+                                             -> (char Q.node D.t
+                                                * char Q.node D.t) D.t
+                           val clause : formula D.t
+                                         -> (char Q.node D.t * char Q.node D.t)
+                                           D.t
+                           val member : ''a -> ''a Q.node D.t -> bool
+                           val tautology : (''a Q.node D.t * ''a Q.node D.t) 
+                                              D.t
+                                            -> bool
+                           val compareChars : char Q.node D.t
+                                               * char Q.node D.t
+                                               -> order
+                           val compareClause : (char Q.node D.t
+                                                 * char Q.node D.t)
+                                                * (char Q.node D.t
+                                                 * char Q.node D.t)
+                                                -> order
+                           val unique : formula Q.node D.t
+                                         -> (char Q.node D.t * char Q.node D.t)
+                                             Q.node D.t
+                           val leftDisplay : char Q.node D.t
+                                              -> char Q.node D.t
+                           val arrow : char Q.node D.t
+                           val newline : char Q.node D.t
+                           val display : (char Q.node D.t * char Q.node D.t) 
+                                            D.t
+                                          -> char Q.node D.t
+                           val concatMap : ('a D.t -> 'b Q.node D.t)
+                                            -> 'a Q.node D.t -> 'b Q.node D.t
+                           val clauses : char list -> char Q.node D.t
+                           val sample : char list
+                           val result : int -> char Q.node D.t
+                           val text : char Q.node D.t -> string
+                           val validate : string -> char Q.node D.t -> int
+                           val checked : string -> int -> int
+                         end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/clausify-driver.sml]
+functor BenchClausifyDriverFn(K: sig val checked : string -> int -> int end) :
+                             sig val run : string list -> string end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/clausify-lazy/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Kernel : <sig>
+    structure Driver : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 67:1:402
+PASS clausify-lazy
+SUMMARY 1 checks, 0 failed

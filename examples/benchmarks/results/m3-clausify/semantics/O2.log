@@ -1,0 +1,1322 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS clausify/corpus-000
+PASS clausify/corpus-001
+PASS clausify/corpus-002
+PASS clausify/corpus-003
+PASS clausify/corpus-004
+PASS clausify/corpus-005
+PASS clausify/corpus-006
+PASS clausify/corpus-007
+PASS clausify/corpus-008
+PASS clausify/corpus-009
+PASS clausify/corpus-010
+PASS clausify/corpus-011
+PASS clausify/corpus-012
+PASS clausify/corpus-013
+PASS clausify/corpus-014
+PASS clausify/corpus-015
+PASS clausify/corpus-016
+PASS clausify/corpus-017
+PASS clausify/corpus-018
+PASS clausify/corpus-019
+PASS clausify/corpus-020
+PASS clausify/corpus-021
+PASS clausify/corpus-022
+PASS clausify/corpus-023
+PASS clausify/corpus-024
+PASS clausify/corpus-025
+PASS clausify/corpus-026
+PASS clausify/corpus-027
+PASS clausify/corpus-028
+PASS clausify/corpus-029
+PASS clausify/corpus-030
+PASS clausify/corpus-031
+PASS clausify/corpus-032
+PASS clausify/corpus-033
+PASS clausify/corpus-034
+PASS clausify/corpus-035
+PASS clausify/corpus-036
+PASS clausify/corpus-037
+PASS clausify/corpus-038
+PASS clausify/corpus-039
+PASS clausify/corpus-040
+PASS clausify/corpus-041
+PASS clausify/corpus-042
+PASS clausify/corpus-043
+PASS clausify/corpus-044
+PASS clausify/corpus-045
+PASS clausify/corpus-046
+PASS clausify/corpus-047
+PASS clausify/full-sample-and-empty
+PASS clausify/reject-perturbed-result
+PASS clausify/reject-short-result
+PASS clausify/reject-long-result
+PASS clausify/right-distribution-defers-left
+PASS clausify/split-prefix-defers-right
+PASS clausify/tautology-short-circuits
+PASS clausify/lexicographic-second-field-undemanded
+PASS clausify/ordered-insertion-defers-tail
+PASS clausify/shared-elimination
+PASS clausify/strict-materialization
+SUMMARY 59 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+PASS clausify/corpus-000
+PASS clausify/corpus-001
+PASS clausify/corpus-002
+PASS clausify/corpus-003
+PASS clausify/corpus-004
+PASS clausify/corpus-005
+PASS clausify/corpus-006
+PASS clausify/corpus-007
+PASS clausify/corpus-008
+PASS clausify/corpus-009
+PASS clausify/corpus-010
+PASS clausify/corpus-011
+PASS clausify/corpus-012
+PASS clausify/corpus-013
+PASS clausify/corpus-014
+PASS clausify/corpus-015
+PASS clausify/corpus-016
+PASS clausify/corpus-017
+PASS clausify/corpus-018
+PASS clausify/corpus-019
+PASS clausify/corpus-020
+PASS clausify/corpus-021
+PASS clausify/corpus-022
+PASS clausify/corpus-023
+PASS clausify/corpus-024
+PASS clausify/corpus-025
+PASS clausify/corpus-026
+PASS clausify/corpus-027
+PASS clausify/corpus-028
+PASS clausify/corpus-029
+PASS clausify/corpus-030
+PASS clausify/corpus-031
+PASS clausify/corpus-032
+PASS clausify/corpus-033
+PASS clausify/corpus-034
+PASS clausify/corpus-035
+PASS clausify/corpus-036
+PASS clausify/corpus-037
+PASS clausify/corpus-038
+PASS clausify/corpus-039
+PASS clausify/corpus-040
+PASS clausify/corpus-041
+PASS clausify/corpus-042
+PASS clausify/corpus-043
+PASS clausify/corpus-044
+PASS clausify/corpus-045
+PASS clausify/corpus-046
+PASS clausify/corpus-047
+PASS clausify/full-sample-and-empty
+PASS clausify/reject-perturbed-result
+PASS clausify/reject-short-result
+PASS clausify/reject-long-result
+PASS clausify/right-distribution-defers-left
+PASS clausify/split-prefix-defers-right
+PASS clausify/tautology-short-circuits
+PASS clausify/lexicographic-second-field-undemanded
+PASS clausify/ordered-insertion-defers-tail
+PASS clausify/shared-elimination
+PASS clausify/strict-materialization
+SUMMARY 59 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+PASS clausify/corpus-000
+PASS clausify/corpus-001
+PASS clausify/corpus-002
+PASS clausify/corpus-003
+PASS clausify/corpus-004
+PASS clausify/corpus-005
+PASS clausify/corpus-006
+PASS clausify/corpus-007
+PASS clausify/corpus-008
+PASS clausify/corpus-009
+PASS clausify/corpus-010
+PASS clausify/corpus-011
+PASS clausify/corpus-012
+PASS clausify/corpus-013
+PASS clausify/corpus-014
+PASS clausify/corpus-015
+PASS clausify/corpus-016
+PASS clausify/corpus-017
+PASS clausify/corpus-018
+PASS clausify/corpus-019
+PASS clausify/corpus-020
+PASS clausify/corpus-021
+PASS clausify/corpus-022
+PASS clausify/corpus-023
+PASS clausify/corpus-024
+PASS clausify/corpus-025
+PASS clausify/corpus-026
+PASS clausify/corpus-027
+PASS clausify/corpus-028
+PASS clausify/corpus-029
+PASS clausify/corpus-030
+PASS clausify/corpus-031
+PASS clausify/corpus-032
+PASS clausify/corpus-033
+PASS clausify/corpus-034
+PASS clausify/corpus-035
+PASS clausify/corpus-036
+PASS clausify/corpus-037
+PASS clausify/corpus-038
+PASS clausify/corpus-039
+PASS clausify/corpus-040
+PASS clausify/corpus-041
+PASS clausify/corpus-042
+PASS clausify/corpus-043
+PASS clausify/corpus-044
+PASS clausify/corpus-045
+PASS clausify/corpus-046
+PASS clausify/corpus-047
+PASS clausify/full-sample-and-empty
+PASS clausify/reject-perturbed-result
+PASS clausify/reject-short-result
+PASS clausify/reject-long-result
+PASS clausify/right-distribution-defers-left
+PASS clausify/split-prefix-defers-right
+PASS clausify/tautology-short-circuits
+PASS clausify/lexicographic-second-field-undemanded
+PASS clausify/ordered-insertion-defers-tail
+PASS clausify/shared-elimination
+PASS clausify/strict-materialization
+SUMMARY 59 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+PASS clausify/corpus-000
+PASS clausify/corpus-001
+PASS clausify/corpus-002
+PASS clausify/corpus-003
+PASS clausify/corpus-004
+PASS clausify/corpus-005
+PASS clausify/corpus-006
+PASS clausify/corpus-007
+PASS clausify/corpus-008
+PASS clausify/corpus-009
+PASS clausify/corpus-010
+PASS clausify/corpus-011
+PASS clausify/corpus-012
+PASS clausify/corpus-013
+PASS clausify/corpus-014
+PASS clausify/corpus-015
+PASS clausify/corpus-016
+PASS clausify/corpus-017
+PASS clausify/corpus-018
+PASS clausify/corpus-019
+PASS clausify/corpus-020
+PASS clausify/corpus-021
+PASS clausify/corpus-022
+PASS clausify/corpus-023
+PASS clausify/corpus-024
+PASS clausify/corpus-025
+PASS clausify/corpus-026
+PASS clausify/corpus-027
+PASS clausify/corpus-028
+PASS clausify/corpus-029
+PASS clausify/corpus-030
+PASS clausify/corpus-031
+PASS clausify/corpus-032
+PASS clausify/corpus-033
+PASS clausify/corpus-034
+PASS clausify/corpus-035
+PASS clausify/corpus-036
+PASS clausify/corpus-037
+PASS clausify/corpus-038
+PASS clausify/corpus-039
+PASS clausify/corpus-040
+PASS clausify/corpus-041
+PASS clausify/corpus-042
+PASS clausify/corpus-043
+PASS clausify/corpus-044
+PASS clausify/corpus-045
+PASS clausify/corpus-046
+PASS clausify/corpus-047
+PASS clausify/full-sample-and-empty
+PASS clausify/reject-perturbed-result
+PASS clausify/reject-short-result
+PASS clausify/reject-long-result
+PASS clausify/right-distribution-defers-left
+PASS clausify/split-prefix-defers-right
+PASS clausify/tautology-short-circuits
+PASS clausify/lexicographic-second-field-undemanded
+PASS clausify/ordered-insertion-defers-tail
+PASS clausify/shared-elimination
+PASS clausify/strict-materialization
+SUMMARY 59 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 1048576 KiB
+PASS clausify/corpus-000
+PASS clausify/corpus-001
+PASS clausify/corpus-002
+PASS clausify/corpus-003
+PASS clausify/corpus-004
+PASS clausify/corpus-005
+PASS clausify/corpus-006
+PASS clausify/corpus-007
+PASS clausify/corpus-008
+PASS clausify/corpus-009
+PASS clausify/corpus-010
+PASS clausify/corpus-011
+PASS clausify/corpus-012
+PASS clausify/corpus-013
+PASS clausify/corpus-014
+PASS clausify/corpus-015
+PASS clausify/corpus-016
+PASS clausify/corpus-017
+PASS clausify/corpus-018
+PASS clausify/corpus-019
+PASS clausify/corpus-020
+PASS clausify/corpus-021
+PASS clausify/corpus-022
+PASS clausify/corpus-023
+PASS clausify/corpus-024
+PASS clausify/corpus-025
+PASS clausify/corpus-026
+PASS clausify/corpus-027
+PASS clausify/corpus-028
+PASS clausify/corpus-029
+PASS clausify/corpus-030
+PASS clausify/corpus-031
+PASS clausify/corpus-032
+PASS clausify/corpus-033
+PASS clausify/corpus-034
+PASS clausify/corpus-035
+PASS clausify/corpus-036
+PASS clausify/corpus-037
+PASS clausify/corpus-038
+PASS clausify/corpus-039
+PASS clausify/corpus-040
+PASS clausify/corpus-041
+PASS clausify/corpus-042
+PASS clausify/corpus-043
+PASS clausify/corpus-044
+PASS clausify/corpus-045
+PASS clausify/corpus-046
+PASS clausify/corpus-047
+PASS clausify/full-sample-and-empty
+PASS clausify/reject-perturbed-result
+PASS clausify/reject-short-result
+PASS clausify/reject-long-result
+PASS clausify/right-distribution-defers-left
+PASS clausify/split-prefix-defers-right
+PASS clausify/tautology-short-circuits
+PASS clausify/lexicographic-second-field-undemanded
+PASS clausify/ordered-insertion-defers-tail
+PASS clausify/shared-elimination
+PASS clausify/strict-materialization
+SUMMARY 59 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml]
+functor BenchCellSequenceFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a sequence
+  val value : 'a -> 'a D.t
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val head : 'a <BaseFct>.<resultStr>.node D.t -> 'a
+  val tail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val delayedTail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromCell : 'a D.t D.t -> 'a D.t
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val replicate : int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val init :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> 'd <BaseFct>.<resultStr>.node D.t
+  val zip3 :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> ('a D.t * 'b D.t * 'c D.t) <BaseFct>.<resultStr>.node D.t
+  val equal :
+      ('a * 'b -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t -> bool
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-clausify.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-clausify.sml:85.27 Warning: calling polyEqual
+functor BenchClausifyFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure Q : <sig>
+  type formula
+  type frame
+  val value : 'a -> 'a D.t
+  val symbol : char -> <BaseFct>.<resultStr>.formula D.t
+  val negate :
+      <BaseFct>.<resultStr>.formula D.t -> <BaseFct>.<resultStr>.formula D.t
+  val disjoin :
+      <BaseFct>.<resultStr>.formula D.t
+       -> <BaseFct>.<resultStr>.formula D.t
+       -> <BaseFct>.<resultStr>.formula D.t
+  val conjoin :
+      <BaseFct>.<resultStr>.formula D.t
+       -> <BaseFct>.<resultStr>.formula D.t
+       -> <BaseFct>.<resultStr>.formula D.t
+  val priority : char -> int
+  val stackPriority : <BaseFct>.<resultStr>.frame list -> int
+  val reduce :
+      <BaseFct>.<resultStr>.frame list -> <BaseFct>.<resultStr>.frame list
+  val reduceAll :
+      <BaseFct>.<resultStr>.frame list -> <BaseFct>.<resultStr>.frame list
+  val parse : char list -> <BaseFct>.<resultStr>.formula D.t
+  val elim :
+      <BaseFct>.<resultStr>.formula D.t -> <BaseFct>.<resultStr>.formula D.t
+  val negin :
+      <BaseFct>.<resultStr>.formula D.t -> <BaseFct>.<resultStr>.formula D.t
+  val conjunct : <BaseFct>.<resultStr>.formula D.t -> bool
+  val disin :
+      <BaseFct>.<resultStr>.formula D.t -> <BaseFct>.<resultStr>.formula D.t
+  val splitInto :
+      <BaseFct>.<resultStr>.formula D.t
+       -> <BaseFct>.<resultStr>.formula 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.formula 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val split :
+      <BaseFct>.<resultStr>.formula D.t
+       -> <BaseFct>.<resultStr>.formula 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val insert :
+      ('a * 'a -> order)
+       -> 'a D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val clauseInto :
+      <BaseFct>.<resultStr>.formula D.t
+       -> (char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+          * char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t) D.t
+       -> (char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+          * char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t) D.t
+  val clause :
+      <BaseFct>.<resultStr>.formula D.t
+       -> (char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+          * char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t) D.t
+  val member : ''a -> ''a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t -> bool
+  val tautology :
+      (''a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+          * ''a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t) D.t
+       -> bool
+  val compareChars :
+      char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       * char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> order
+  val compareClause :
+      (char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+        * char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       * (char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+        * char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> order
+  val unique :
+      <BaseFct>.<resultStr>.formula <BaseFct>.<resultStr>.Q.<returnStr>.node 
+         D.t
+       -> (char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+            * char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val leftDisplay :
+      char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val arrow : char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val newline : char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val display :
+      (char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+          * char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t) D.t
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val concatMap :
+      ('a D.t -> 'b <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val clauses : char list -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val sample : char list
+  val result : int -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val text : char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t -> string
+  val validate :
+      string -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t -> int
+  val checked : string -> int -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/clausify-tests.sml]
+[autoloading]
+[autoloading done]
+PASS clausify/corpus-000
+PASS clausify/corpus-001
+PASS clausify/corpus-002
+PASS clausify/corpus-003
+PASS clausify/corpus-004
+PASS clausify/corpus-005
+PASS clausify/corpus-006
+PASS clausify/corpus-007
+PASS clausify/corpus-008
+PASS clausify/corpus-009
+PASS clausify/corpus-010
+PASS clausify/corpus-011
+PASS clausify/corpus-012
+PASS clausify/corpus-013
+PASS clausify/corpus-014
+PASS clausify/corpus-015
+PASS clausify/corpus-016
+PASS clausify/corpus-017
+PASS clausify/corpus-018
+PASS clausify/corpus-019
+PASS clausify/corpus-020
+PASS clausify/corpus-021
+PASS clausify/corpus-022
+PASS clausify/corpus-023
+PASS clausify/corpus-024
+PASS clausify/corpus-025
+PASS clausify/corpus-026
+PASS clausify/corpus-027
+PASS clausify/corpus-028
+PASS clausify/corpus-029
+PASS clausify/corpus-030
+PASS clausify/corpus-031
+PASS clausify/corpus-032
+PASS clausify/corpus-033
+PASS clausify/corpus-034
+PASS clausify/corpus-035
+PASS clausify/corpus-036
+PASS clausify/corpus-037
+PASS clausify/corpus-038
+PASS clausify/corpus-039
+PASS clausify/corpus-040
+PASS clausify/corpus-041
+PASS clausify/corpus-042
+PASS clausify/corpus-043
+PASS clausify/corpus-044
+PASS clausify/corpus-045
+PASS clausify/corpus-046
+PASS clausify/corpus-047
+PASS clausify/full-sample-and-empty
+PASS clausify/reject-perturbed-result
+PASS clausify/reject-short-result
+PASS clausify/reject-long-result
+PASS clausify/right-distribution-defers-left
+PASS clausify/split-prefix-defers-right
+PASS clausify/tautology-short-circuits
+PASS clausify/lexicographic-second-field-undemanded
+PASS clausify/ordered-insertion-defers-tail
+PASS clausify/shared-elimination
+PASS clausify/strict-materialization
+structure ClausifyTests : sig
+  structure L : <sig>
+  structure E : <sig>
+  val file : string -> TextIO.vector
+  val lazyText : string -> string
+  val strictText : string -> string
+  val cases : (string * string) list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 59 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml]
+functor BenchCellSequenceFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a sequence
+  val value : 'a -> 'a D.t
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val head : 'a <BaseFct>.<resultStr>.node D.t -> 'a
+  val tail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val delayedTail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromCell : 'a D.t D.t -> 'a D.t
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val replicate : int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val init :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> 'd <BaseFct>.<resultStr>.node D.t
+  val zip3 :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> ('a D.t * 'b D.t * 'c D.t) <BaseFct>.<resultStr>.node D.t
+  val equal :
+      ('a * 'b -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t -> bool
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-clausify.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-clausify.sml:85.27 Warning: calling polyEqual
+functor BenchClausifyFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure Q : <sig>
+  type formula
+  type frame
+  val value : 'a -> 'a D.t
+  val symbol : char -> <BaseFct>.<resultStr>.formula D.t
+  val negate :
+      <BaseFct>.<resultStr>.formula D.t -> <BaseFct>.<resultStr>.formula D.t
+  val disjoin :
+      <BaseFct>.<resultStr>.formula D.t
+       -> <BaseFct>.<resultStr>.formula D.t
+       -> <BaseFct>.<resultStr>.formula D.t
+  val conjoin :
+      <BaseFct>.<resultStr>.formula D.t
+       -> <BaseFct>.<resultStr>.formula D.t
+       -> <BaseFct>.<resultStr>.formula D.t
+  val priority : char -> int
+  val stackPriority : <BaseFct>.<resultStr>.frame list -> int
+  val reduce :
+      <BaseFct>.<resultStr>.frame list -> <BaseFct>.<resultStr>.frame list
+  val reduceAll :
+      <BaseFct>.<resultStr>.frame list -> <BaseFct>.<resultStr>.frame list
+  val parse : char list -> <BaseFct>.<resultStr>.formula D.t
+  val elim :
+      <BaseFct>.<resultStr>.formula D.t -> <BaseFct>.<resultStr>.formula D.t
+  val negin :
+      <BaseFct>.<resultStr>.formula D.t -> <BaseFct>.<resultStr>.formula D.t
+  val conjunct : <BaseFct>.<resultStr>.formula D.t -> bool
+  val disin :
+      <BaseFct>.<resultStr>.formula D.t -> <BaseFct>.<resultStr>.formula D.t
+  val splitInto :
+      <BaseFct>.<resultStr>.formula D.t
+       -> <BaseFct>.<resultStr>.formula 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.formula 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val split :
+      <BaseFct>.<resultStr>.formula D.t
+       -> <BaseFct>.<resultStr>.formula 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val insert :
+      ('a * 'a -> order)
+       -> 'a D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val clauseInto :
+      <BaseFct>.<resultStr>.formula D.t
+       -> (char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+          * char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t) D.t
+       -> (char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+          * char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t) D.t
+  val clause :
+      <BaseFct>.<resultStr>.formula D.t
+       -> (char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+          * char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t) D.t
+  val member : ''a -> ''a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t -> bool
+  val tautology :
+      (''a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+          * ''a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t) D.t
+       -> bool
+  val compareChars :
+      char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       * char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> order
+  val compareClause :
+      (char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+        * char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       * (char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+        * char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> order
+  val unique :
+      <BaseFct>.<resultStr>.formula <BaseFct>.<resultStr>.Q.<returnStr>.node 
+         D.t
+       -> (char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+            * char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val leftDisplay :
+      char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val arrow : char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val newline : char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val display :
+      (char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+          * char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t) D.t
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val concatMap :
+      ('a D.t -> 'b <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val clauses : char list -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val sample : char list
+  val result : int -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val text : char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t -> string
+  val validate :
+      string -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t -> int
+  val checked : string -> int -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/clausify-tests.sml]
+[autoloading]
+[autoloading done]
+PASS clausify/corpus-000
+PASS clausify/corpus-001
+PASS clausify/corpus-002
+PASS clausify/corpus-003
+PASS clausify/corpus-004
+PASS clausify/corpus-005
+PASS clausify/corpus-006
+PASS clausify/corpus-007
+PASS clausify/corpus-008
+PASS clausify/corpus-009
+PASS clausify/corpus-010
+PASS clausify/corpus-011
+PASS clausify/corpus-012
+PASS clausify/corpus-013
+PASS clausify/corpus-014
+PASS clausify/corpus-015
+PASS clausify/corpus-016
+PASS clausify/corpus-017
+PASS clausify/corpus-018
+PASS clausify/corpus-019
+PASS clausify/corpus-020
+PASS clausify/corpus-021
+PASS clausify/corpus-022
+PASS clausify/corpus-023
+PASS clausify/corpus-024
+PASS clausify/corpus-025
+PASS clausify/corpus-026
+PASS clausify/corpus-027
+PASS clausify/corpus-028
+PASS clausify/corpus-029
+PASS clausify/corpus-030
+PASS clausify/corpus-031
+PASS clausify/corpus-032
+PASS clausify/corpus-033
+PASS clausify/corpus-034
+PASS clausify/corpus-035
+PASS clausify/corpus-036
+PASS clausify/corpus-037
+PASS clausify/corpus-038
+PASS clausify/corpus-039
+PASS clausify/corpus-040
+PASS clausify/corpus-041
+PASS clausify/corpus-042
+PASS clausify/corpus-043
+PASS clausify/corpus-044
+PASS clausify/corpus-045
+PASS clausify/corpus-046
+PASS clausify/corpus-047
+PASS clausify/full-sample-and-empty
+PASS clausify/reject-perturbed-result
+PASS clausify/reject-short-result
+PASS clausify/reject-long-result
+PASS clausify/right-distribution-defers-left
+PASS clausify/split-prefix-defers-right
+PASS clausify/tautology-short-circuits
+PASS clausify/lexicographic-second-field-undemanded
+PASS clausify/ordered-insertion-defers-tail
+PASS clausify/shared-elimination
+PASS clausify/strict-materialization
+structure ClausifyTests : sig
+  structure L : <sig>
+  structure E : <sig>
+  val file : string -> TextIO.vector
+  val lazyText : string -> string
+  val strictText : string -> string
+  val cases : (string * string) list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 59 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml]
+functor BenchCellSequenceFn(D: sig
+                               type 'a t
+                               val delay : (unit -> 'a) -> 'a t
+                               val force : 'a t -> 'a
+                             end) :
+                           
+                             sig
+                               type 'a node
+                               type 'a sequence
+                               val value : 'a -> 'a D.t
+                               val empty : unit -> 'a node D.t
+                               val cons : 'a D.t -> 'a node D.t -> 'a node D.t
+                               val fromList : 'a list -> 'a node D.t
+                               val head : 'a node D.t -> 'a
+                               val tail : 'a node D.t -> 'a node D.t
+                               val delayedTail : 'a node D.t -> 'a node D.t
+                               val fromCell : 'a D.t D.t -> 'a D.t
+                               val map : ('a -> 'b)
+                                          -> 'a node D.t -> 'b node D.t
+                               val append : 'a node D.t
+                                             -> 'a node D.t -> 'a node D.t
+                               val take : int -> 'a node D.t -> 'a node D.t
+                               val replicate : int -> 'a D.t -> 'a node D.t
+                               val init : 'a node D.t -> 'a node D.t
+                               val zipWith3 : ('a * 'b * 'c -> 'd)
+                                               -> 'a node D.t
+                                               -> 'b node D.t
+                                               -> 'c node D.t -> 'd node D.t
+                               val zip3 : 'a node D.t
+                                           -> 'b node D.t
+                                           -> 'c node D.t
+                                           -> ('a D.t * 'b D.t * 'c D.t) node 
+                                             D.t
+                               val equal : ('a * 'b -> bool)
+                                            -> 'a node D.t
+                                            -> 'b node D.t -> bool
+                               val toList : 'a node D.t -> 'a list
+                             end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-clausify.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-clausify.sml:85.27 Warning: calling polyEqual
+functor BenchClausifyFn(D: sig
+                           type 'a t
+                           val delay : (unit -> 'a) -> 'a t
+                           val force : 'a t -> 'a
+                         end) :
+                       
+                         sig
+                           structure Q : <sig>
+                           type formula
+                           type frame
+                           val value : 'a -> 'a D.t
+                           val symbol : char -> formula D.t
+                           val negate : formula D.t -> formula D.t
+                           val disjoin : formula D.t
+                                          -> formula D.t -> formula D.t
+                           val conjoin : formula D.t
+                                          -> formula D.t -> formula D.t
+                           val priority : char -> int
+                           val stackPriority : frame list -> int
+                           val reduce : frame list -> frame list
+                           val reduceAll : frame list -> frame list
+                           val parse : char list -> formula D.t
+                           val elim : formula D.t -> formula D.t
+                           val negin : formula D.t -> formula D.t
+                           val conjunct : formula D.t -> bool
+                           val disin : formula D.t -> formula D.t
+                           val splitInto : formula D.t
+                                            -> formula Q.node D.t
+                                            -> formula Q.node D.t
+                           val split : formula D.t -> formula Q.node D.t
+                           val insert : ('a * 'a -> order)
+                                         -> 'a D.t
+                                         -> 'a Q.node D.t -> 'a Q.node D.t
+                           val clauseInto : formula D.t
+                                             -> (char Q.node D.t
+                                                * char Q.node D.t) D.t
+                                             -> (char Q.node D.t
+                                                * char Q.node D.t) D.t
+                           val clause : formula D.t
+                                         -> (char Q.node D.t * char Q.node D.t)
+                                           D.t
+                           val member : ''a -> ''a Q.node D.t -> bool
+                           val tautology : (''a Q.node D.t * ''a Q.node D.t) 
+                                              D.t
+                                            -> bool
+                           val compareChars : char Q.node D.t
+                                               * char Q.node D.t
+                                               -> order
+                           val compareClause : (char Q.node D.t
+                                                 * char Q.node D.t)
+                                                * (char Q.node D.t
+                                                 * char Q.node D.t)
+                                                -> order
+                           val unique : formula Q.node D.t
+                                         -> (char Q.node D.t * char Q.node D.t)
+                                             Q.node D.t
+                           val leftDisplay : char Q.node D.t
+                                              -> char Q.node D.t
+                           val arrow : char Q.node D.t
+                           val newline : char Q.node D.t
+                           val display : (char Q.node D.t * char Q.node D.t) 
+                                            D.t
+                                          -> char Q.node D.t
+                           val concatMap : ('a D.t -> 'b Q.node D.t)
+                                            -> 'a Q.node D.t -> 'b Q.node D.t
+                           val clauses : char list -> char Q.node D.t
+                           val sample : char list
+                           val result : int -> char Q.node D.t
+                           val text : char Q.node D.t -> string
+                           val validate : string -> char Q.node D.t -> int
+                           val checked : string -> int -> int
+                         end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/clausify-tests.sml]
+PASS clausify/corpus-000
+PASS clausify/corpus-001
+PASS clausify/corpus-002
+PASS clausify/corpus-003
+PASS clausify/corpus-004
+PASS clausify/corpus-005
+PASS clausify/corpus-006
+PASS clausify/corpus-007
+PASS clausify/corpus-008
+PASS clausify/corpus-009
+PASS clausify/corpus-010
+PASS clausify/corpus-011
+PASS clausify/corpus-012
+PASS clausify/corpus-013
+PASS clausify/corpus-014
+PASS clausify/corpus-015
+PASS clausify/corpus-016
+PASS clausify/corpus-017
+PASS clausify/corpus-018
+PASS clausify/corpus-019
+PASS clausify/corpus-020
+PASS clausify/corpus-021
+PASS clausify/corpus-022
+PASS clausify/corpus-023
+PASS clausify/corpus-024
+PASS clausify/corpus-025
+PASS clausify/corpus-026
+PASS clausify/corpus-027
+PASS clausify/corpus-028
+PASS clausify/corpus-029
+PASS clausify/corpus-030
+PASS clausify/corpus-031
+PASS clausify/corpus-032
+PASS clausify/corpus-033
+PASS clausify/corpus-034
+PASS clausify/corpus-035
+PASS clausify/corpus-036
+PASS clausify/corpus-037
+PASS clausify/corpus-038
+PASS clausify/corpus-039
+PASS clausify/corpus-040
+PASS clausify/corpus-041
+PASS clausify/corpus-042
+PASS clausify/corpus-043
+PASS clausify/corpus-044
+PASS clausify/corpus-045
+PASS clausify/corpus-046
+PASS clausify/corpus-047
+PASS clausify/full-sample-and-empty
+PASS clausify/reject-perturbed-result
+PASS clausify/reject-short-result
+PASS clausify/reject-long-result
+PASS clausify/right-distribution-defers-left
+PASS clausify/split-prefix-defers-right
+PASS clausify/tautology-short-circuits
+PASS clausify/lexicographic-second-field-undemanded
+PASS clausify/ordered-insertion-defers-tail
+PASS clausify/shared-elimination
+PASS clausify/strict-materialization
+structure ClausifyTests : 
+  sig
+    structure L : <sig>
+    structure E : <sig>
+    val file : string -> TextIO.vector
+    val lazyText : string -> string
+    val strictText : string -> string
+    val cases : (string * string) list
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 59 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS clausify/corpus-000
+PASS clausify/corpus-001
+PASS clausify/corpus-002
+PASS clausify/corpus-003
+PASS clausify/corpus-004
+PASS clausify/corpus-005
+PASS clausify/corpus-006
+PASS clausify/corpus-007
+PASS clausify/corpus-008
+PASS clausify/corpus-009
+PASS clausify/corpus-010
+PASS clausify/corpus-011
+PASS clausify/corpus-012
+PASS clausify/corpus-013
+PASS clausify/corpus-014
+PASS clausify/corpus-015
+PASS clausify/corpus-016
+PASS clausify/corpus-017
+PASS clausify/corpus-018
+PASS clausify/corpus-019
+PASS clausify/corpus-020
+PASS clausify/corpus-021
+PASS clausify/corpus-022
+PASS clausify/corpus-023
+PASS clausify/corpus-024
+PASS clausify/corpus-025
+PASS clausify/corpus-026
+PASS clausify/corpus-027
+PASS clausify/corpus-028
+PASS clausify/corpus-029
+PASS clausify/corpus-030
+PASS clausify/corpus-031
+PASS clausify/corpus-032
+PASS clausify/corpus-033
+PASS clausify/corpus-034
+PASS clausify/corpus-035
+PASS clausify/corpus-036
+PASS clausify/corpus-037
+PASS clausify/corpus-038
+PASS clausify/corpus-039
+PASS clausify/corpus-040
+PASS clausify/corpus-041
+PASS clausify/corpus-042
+PASS clausify/corpus-043
+PASS clausify/corpus-044
+PASS clausify/corpus-045
+PASS clausify/corpus-046
+PASS clausify/corpus-047
+PASS clausify/full-sample-and-empty
+PASS clausify/reject-perturbed-result
+PASS clausify/reject-short-result
+PASS clausify/reject-long-result
+PASS clausify/right-distribution-defers-left
+PASS clausify/split-prefix-defers-right
+PASS clausify/tautology-short-circuits
+PASS clausify/lexicographic-second-field-undemanded
+PASS clausify/ordered-insertion-defers-tail
+PASS clausify/shared-elimination
+PASS clausify/strict-materialization
+SUMMARY 59 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PASS clausify/corpus-000
+PASS clausify/corpus-001
+PASS clausify/corpus-002
+PASS clausify/corpus-003
+PASS clausify/corpus-004
+PASS clausify/corpus-005
+PASS clausify/corpus-006
+PASS clausify/corpus-007
+PASS clausify/corpus-008
+PASS clausify/corpus-009
+PASS clausify/corpus-010
+PASS clausify/corpus-011
+PASS clausify/corpus-012
+PASS clausify/corpus-013
+PASS clausify/corpus-014
+PASS clausify/corpus-015
+PASS clausify/corpus-016
+PASS clausify/corpus-017
+PASS clausify/corpus-018
+PASS clausify/corpus-019
+PASS clausify/corpus-020
+PASS clausify/corpus-021
+PASS clausify/corpus-022
+PASS clausify/corpus-023
+PASS clausify/corpus-024
+PASS clausify/corpus-025
+PASS clausify/corpus-026
+PASS clausify/corpus-027
+PASS clausify/corpus-028
+PASS clausify/corpus-029
+PASS clausify/corpus-030
+PASS clausify/corpus-031
+PASS clausify/corpus-032
+PASS clausify/corpus-033
+PASS clausify/corpus-034
+PASS clausify/corpus-035
+PASS clausify/corpus-036
+PASS clausify/corpus-037
+PASS clausify/corpus-038
+PASS clausify/corpus-039
+PASS clausify/corpus-040
+PASS clausify/corpus-041
+PASS clausify/corpus-042
+PASS clausify/corpus-043
+PASS clausify/corpus-044
+PASS clausify/corpus-045
+PASS clausify/corpus-046
+PASS clausify/corpus-047
+PASS clausify/full-sample-and-empty
+PASS clausify/reject-perturbed-result
+PASS clausify/reject-short-result
+PASS clausify/reject-long-result
+PASS clausify/right-distribution-defers-left
+PASS clausify/split-prefix-defers-right
+PASS clausify/tautology-short-circuits
+PASS clausify/lexicographic-second-field-undemanded
+PASS clausify/ordered-insertion-defers-tail
+PASS clausify/shared-elimination
+PASS clausify/strict-materialization
+SUMMARY 59 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

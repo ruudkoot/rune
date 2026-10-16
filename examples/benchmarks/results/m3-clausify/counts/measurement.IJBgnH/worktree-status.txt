@@ -1,0 +1,10 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/literature.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/clausify-lazy/
+?? examples/benchmarks/clausify-strict/
+?? examples/benchmarks/shared/clausify-driver.sml
+?? examples/benchmarks/shared/nofib-clausify.sml
+?? tests/benchmarks/check-clausify.sh
+?? tests/benchmarks/clausify-tests.sml
+?? tests/benchmarks/data/clausify/

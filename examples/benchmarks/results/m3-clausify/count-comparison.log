@@ -1,0 +1,9 @@
+COUNT unbudgeted clausify-lazy normal rune
+COUNT unbudgeted clausify-lazy normal rune:opt
+COUNT unbudgeted clausify-lazy normal rune:new
+COUNT unbudgeted clausify-lazy normal rune:jit
+COUNT unbudgeted clausify-strict normal rune
+COUNT unbudgeted clausify-strict normal rune:opt
+COUNT unbudgeted clausify-strict normal rune:new
+COUNT unbudgeted clausify-strict normal rune:jit
+COUNT comparisons agree

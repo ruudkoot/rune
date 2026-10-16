@@ -1,0 +1,56 @@
+{
+  "command": [
+    "sh",
+    "-c",
+    "for benchmark in clausify-lazy clausify-strict; do BENCH_FILTER=\"=$benchmark\" make bench-count || exit 1; done"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 149372,
+  "observed_minimum_available_kib": 22360028,
+  "peak_processes": [
+    {
+      "pid": 3636289,
+      "name": "sh",
+      "rss_kib": 1680
+    },
+    {
+      "pid": 3673479,
+      "name": "make",
+      "rss_kib": 4836
+    },
+    {
+      "pid": 3674312,
+      "name": "sh",
+      "rss_kib": 1680
+    },
+    {
+      "pid": 3674313,
+      "name": "sh",
+      "rss_kib": 1808
+    },
+    {
+      "pid": 3675255,
+      "name": "sh",
+      "rss_kib": 1236
+    },
+    {
+      "pid": 3675257,
+      "name": "time",
+      "rss_kib": 1460
+    },
+    {
+      "pid": 3675258,
+      "name": "timeout",
+      "rss_kib": 1532
+    },
+    {
+      "pid": 3675259,
+      "name": "runevm-new",
+      "rss_kib": 135140
+    }
+  ],
+  "elapsed_seconds": 325.57569022401003
+}

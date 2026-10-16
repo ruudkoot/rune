@@ -1,0 +1,211 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml]
+functor BenchCellSequenceFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a sequence
+  val value : 'a -> 'a D.t
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val head : 'a <BaseFct>.<resultStr>.node D.t -> 'a
+  val tail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val delayedTail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromCell : 'a D.t D.t -> 'a D.t
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val replicate : int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val init :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> 'd <BaseFct>.<resultStr>.node D.t
+  val zip3 :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> ('a D.t * 'b D.t * 'c D.t) <BaseFct>.<resultStr>.node D.t
+  val equal :
+      ('a * 'b -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t -> bool
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-clausify.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-clausify.sml:85.27 Warning: calling polyEqual
+functor BenchClausifyFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure Q : <sig>
+  type formula
+  type frame
+  val value : 'a -> 'a D.t
+  val symbol : char -> <BaseFct>.<resultStr>.formula D.t
+  val negate :
+      <BaseFct>.<resultStr>.formula D.t -> <BaseFct>.<resultStr>.formula D.t
+  val disjoin :
+      <BaseFct>.<resultStr>.formula D.t
+       -> <BaseFct>.<resultStr>.formula D.t
+       -> <BaseFct>.<resultStr>.formula D.t
+  val conjoin :
+      <BaseFct>.<resultStr>.formula D.t
+       -> <BaseFct>.<resultStr>.formula D.t
+       -> <BaseFct>.<resultStr>.formula D.t
+  val priority : char -> int
+  val stackPriority : <BaseFct>.<resultStr>.frame list -> int
+  val reduce :
+      <BaseFct>.<resultStr>.frame list -> <BaseFct>.<resultStr>.frame list
+  val reduceAll :
+      <BaseFct>.<resultStr>.frame list -> <BaseFct>.<resultStr>.frame list
+  val parse : char list -> <BaseFct>.<resultStr>.formula D.t
+  val elim :
+      <BaseFct>.<resultStr>.formula D.t -> <BaseFct>.<resultStr>.formula D.t
+  val negin :
+      <BaseFct>.<resultStr>.formula D.t -> <BaseFct>.<resultStr>.formula D.t
+  val conjunct : <BaseFct>.<resultStr>.formula D.t -> bool
+  val disin :
+      <BaseFct>.<resultStr>.formula D.t -> <BaseFct>.<resultStr>.formula D.t
+  val splitInto :
+      <BaseFct>.<resultStr>.formula D.t
+       -> <BaseFct>.<resultStr>.formula 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.formula 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val split :
+      <BaseFct>.<resultStr>.formula D.t
+       -> <BaseFct>.<resultStr>.formula 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val insert :
+      ('a * 'a -> order)
+       -> 'a D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val clauseInto :
+      <BaseFct>.<resultStr>.formula D.t
+       -> (char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+          * char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t) D.t
+       -> (char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+          * char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t) D.t
+  val clause :
+      <BaseFct>.<resultStr>.formula D.t
+       -> (char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+          * char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t) D.t
+  val member : ''a -> ''a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t -> bool
+  val tautology :
+      (''a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+          * ''a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t) D.t
+       -> bool
+  val compareChars :
+      char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       * char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> order
+  val compareClause :
+      (char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+        * char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       * (char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+        * char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> order
+  val unique :
+      <BaseFct>.<resultStr>.formula <BaseFct>.<resultStr>.Q.<returnStr>.node 
+         D.t
+       -> (char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+            * char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val leftDisplay :
+      char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val arrow : char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val newline : char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val display :
+      (char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+          * char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t) D.t
+       -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val concatMap :
+      ('a D.t -> 'b <BaseFct>.<resultStr>.Q.<returnStr>.node D.t)
+       -> 'a <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val clauses : char list -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val sample : char list
+  val result : int -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t
+  val text : char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t -> string
+  val validate :
+      string -> char <BaseFct>.<resultStr>.Q.<returnStr>.node D.t -> int
+  val checked : string -> int -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/clausify-driver.sml]
+[autoloading]
+[autoloading done]
+functor BenchClausifyDriverFn(K: sig
+  val checked : string -> int -> int
+end) :
+sig
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/clausify-strict/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 67:7:2814
+PASS clausify-strict
+SUMMARY 1 checks, 0 failed
