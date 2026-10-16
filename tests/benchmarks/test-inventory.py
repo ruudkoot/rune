@@ -157,6 +157,22 @@ class InventoryTest(unittest.TestCase):
                   "The Circuit Simulator example\nDifferent authors\nJanuary, 1998\n\n> main = return ()\n")
         self.assertEqual(self.build("nofib")[0]["authors"], "not stated in scanned source headers")
 
+    def test_atom_multiline_attribution_is_recorded(self):
+        self.nofib_roots()
+        self.file("spectral/atom/Makefile", "\n")
+        self.file("spectral/atom/Main.hs",
+                  "{- A kernel fragment from a program written by\n\t\tRon Legere\n-}\nmain = print 1\n")
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "Ron Legere")
+        self.assertIn("spectral/atom/Main.hs:attribution-header", row["evidence"])
+
+    def test_changed_atom_attribution_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/atom/Makefile", "\n")
+        self.file("spectral/atom/Main.hs",
+                  "{- A kernel fragment from a program written by\n\t\tDifferent Person\n-}\nmain = print 1\n")
+        self.assertNotIn("Ron Legere", self.build("nofib")[0]["authors"])
+
     def test_nested_haskell_programs_are_not_an_aggregate_workload(self):
         self.nofib_roots()
         self.file("spectral/group/Makefile", "SUBDIRS = one\n")
