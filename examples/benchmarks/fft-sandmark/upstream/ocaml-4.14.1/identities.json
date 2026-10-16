@@ -1,0 +1,9 @@
+{
+  "revision": "99cb5d93fc30f1a6f3e69f5aa5d2063994d33a93",
+  "version": "4.14.1",
+  "sha256": {
+    "stdlib/complex.ml": "302c88eaa4c332db8d47717134e3dff3a6c42d5ee4fea9c4fb80e8caec0f9f67",
+    "stdlib/complex.mli": "2207eba58c7103f48d9a7c8e81606f7e6b2f09b1e327696c0d55d72d20cf982e",
+    "LICENSE": "65f47d3bf5a921011ac7fa30f23d54f9dffbe7683921eeb116d5ce8dc26ff0c1"
+  }
+}
