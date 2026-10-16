@@ -1,0 +1,1 @@
+cichelli-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/cichelli-data.sml shared/nofib-cichelli.sml shared/cichelli-driver.sml cichelli-strict/benchmark.sml shared/main.sml	data/normal.indices data/normal.output	cichelli-strict/normal.expected	data/normal.indices data/normal.output

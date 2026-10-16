@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+cichelli-lazy	normal	rune	O2	count	1	1	pass	15.75	16.50	0.13	133200	3891701890	5255398800	155016074	counts/measurement.RJkVOB/cichelli-lazy/rune/fresh.1
+cichelli-lazy	normal	rune:opt	O2	count	1	1	pass	6.36	6.56	0.16	133904	3891701890	5255398800	155016074	counts/measurement.RJkVOB/cichelli-lazy/rune-opt/fresh.1
+cichelli-lazy	normal	rune:new	O2	count	1	1	pass	15.24	14.04	0.13	133628	2059989775	5255398800	155016074	counts/measurement.RJkVOB/cichelli-lazy/rune-new/fresh.1
+cichelli-lazy	normal	rune:jit	O2	count	1	1	pass	6.02	6.22	0.13	134808	2059989775	5255398800	155016074	counts/measurement.RJkVOB/cichelli-lazy/rune-jit/fresh.1
+cichelli-strict	normal	rune	O2	count	1	1	pass	11.47	12.10	0.01	10484	3715856916	4537240968	134318471	counts/measurement.7BqL7W/cichelli-strict/rune/fresh.1
+cichelli-strict	normal	rune:opt	O2	count	1	1	pass	4.47	4.71	0.01	10964	3715856916	4537240968	134318471	counts/measurement.7BqL7W/cichelli-strict/rune-opt/fresh.1
+cichelli-strict	normal	rune:new	O2	count	1	1	pass	9.47	10.10	0.00	10564	1935830351	4537240968	134318471	counts/measurement.7BqL7W/cichelli-strict/rune-new/fresh.1
+cichelli-strict	normal	rune:jit	O2	count	1	1	pass	3.57	3.78	0.02	11920	1935830351	4537240968	134318471	counts/measurement.7BqL7W/cichelli-strict/rune-jit/fresh.1

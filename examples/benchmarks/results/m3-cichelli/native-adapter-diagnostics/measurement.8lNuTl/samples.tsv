@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+cichelli-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	7.48	4.59	1.25	671420	-	-	-	cichelli-lazy/native-mlton/build/compile
+cichelli-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.28	0.19	0.10	123116	-	-	-	cichelli-lazy/native-mlton/correctness.0
+cichelli-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.30	0.20	0.11	123224	-	-	-	cichelli-lazy/native-mlton/fresh.1
+cichelli-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.37	0.36	0.02	35356	-	-	-	cichelli-lazy/native-smlnj-legacy/build/compile
+cichelli-lazy	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.66	0.65	0.04	41992	-	-	-	cichelli-lazy/native-smlnj-legacy/correctness.0
+cichelli-lazy	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.76	0.70	0.09	41948	-	-	-	cichelli-lazy/native-smlnj-legacy/fresh.1
+cichelli-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.33	0.17	0.08	38188	-	-	-	cichelli-lazy/native-polyml/build/compile
+cichelli-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.21	0.45	0.12	45936	-	-	-	cichelli-lazy/native-polyml/correctness.0
+cichelli-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.22	0.38	0.17	40156	-	-	-	cichelli-lazy/native-polyml/fresh.1

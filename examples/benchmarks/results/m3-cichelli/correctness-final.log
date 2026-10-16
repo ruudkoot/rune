@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-cichelli.ufj1a237
+PASS cichelli-lazy smoke O0
+PASS cichelli-lazy smoke O2
+PASS cichelli-lazy smoke hosts
+PASS cichelli-lazy normal O0
+PASS cichelli-lazy normal O2
+PASS cichelli-lazy normal hosts
+PASS cichelli-strict smoke O0
+PASS cichelli-strict smoke O2
+PASS cichelli-strict smoke hosts
+PASS cichelli-strict normal O0
+PASS cichelli-strict normal O2
+PASS cichelli-strict normal hosts

@@ -1,0 +1,5 @@
+COUNT unbudgeted cichelli-lazy normal rune
+COUNT unbudgeted cichelli-lazy normal rune:opt
+COUNT unbudgeted cichelli-lazy normal rune:new
+COUNT unbudgeted cichelli-lazy normal rune:jit
+COUNT comparisons agree

@@ -1,0 +1,27 @@
+{
+  "command": [
+    "timeout",
+    "180",
+    "bin/runevm",
+    "tests/out/benchmarks/cichelli-originals/pilot.rbc"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 1048576,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 135024,
+  "observed_minimum_available_kib": 20303052,
+  "peak_processes": [
+    {
+      "pid": 3,
+      "name": "timeout",
+      "rss_kib": 1796
+    },
+    {
+      "pid": 4,
+      "name": "runevm",
+      "rss_kib": 133228
+    }
+  ],
+  "elapsed_seconds": 1.1379848669748753
+}

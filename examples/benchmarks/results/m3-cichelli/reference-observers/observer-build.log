@@ -1,0 +1,19 @@
+[1 of 5] Compiling Key              ( Key.lhs, Key.o )
+[2 of 5] Compiling Auxil            ( Auxil.hs, Auxil.o )
+
+Auxil.hs:84:1: warning: [-Wtabs]
+    Tab character found here.
+    Suggested fix: Please use spaces instead.
+   |
+84 |         \x->x
+   | ^^^^^^^^
+[3 of 5] Compiling RichProg         ( RichProg.hs, RichProg.o )
+
+RichProg.hs:20:1: warning: [-Wtabs]
+    Tab character found here, and in 33 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+20 |         showStr = showString "NotEver" . showChar ' ' . showsPrec 10 i
+   | ^^^^^^^^
+[4 of 5] Compiling Main             ( Observer.hs, Observer.o )
+[5 of 5] Linking observer

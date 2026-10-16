@@ -1,0 +1,1 @@
+cichelli-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/cichelli-data.sml shared/nofib-cichelli.sml shared/cichelli-driver.sml cichelli-lazy/benchmark.sml shared/main.sml	data/smoke.indices data/smoke.output	cichelli-lazy/smoke.expected	data/smoke.indices data/smoke.output

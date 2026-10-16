@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+cichelli-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	5.35	4.15	1.37	672124	-	-	-	cichelli-strict/native-mlton/build/compile
+cichelli-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.06	0.07	0.00	4052	-	-	-	cichelli-strict/native-mlton/correctness.0
+cichelli-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.06	0.06	0.00	4076	-	-	-	cichelli-strict/native-mlton/fresh.1
+cichelli-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.44	0.42	0.04	37228	-	-	-	cichelli-strict/native-smlnj-legacy/build/compile
+cichelli-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.33	0.31	0.03	9440	-	-	-	cichelli-strict/native-smlnj-legacy/correctness.0
+cichelli-strict	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.32	0.33	0.01	9436	-	-	-	cichelli-strict/native-smlnj-legacy/fresh.1
+cichelli-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.30	0.17	0.06	38860	-	-	-	cichelli-strict/native-polyml/build/compile
+cichelli-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.12	0.08	0.07	34380	-	-	-	cichelli-strict/native-polyml/correctness.0
+cichelli-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.12	0.11	0.04	34988	-	-	-	cichelli-strict/native-polyml/fresh.1

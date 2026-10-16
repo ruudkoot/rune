@@ -1,0 +1,149 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : 
+  sig
+    datatype 'a node
+      = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay | Nil
+    type 'a stream = 'a node BenchLazy.delay
+    val empty : unit -> 'a node BenchLazy.state ref
+    val cons : 'a BenchLazy.delay * 'a node BenchLazy.delay
+                -> 'a node BenchLazy.state ref
+    val singleton : 'a -> 'a node BenchLazy.state ref
+    val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+    val head : 'a node BenchLazy.state ref -> 'a
+    val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val iterate : ('a -> 'a)
+                   -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+    val fromList : 'a list -> 'a node BenchLazy.delay
+    val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+    val zipWith : ('a * 'b -> 'c)
+                   -> 'a node BenchLazy.delay
+                   -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+    val append : 'a node BenchLazy.delay
+                  -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val concatMap : ('a -> 'b node BenchLazy.delay)
+                     -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+    val filter : ('a -> bool)
+                  -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+    val dropWhile : ('a -> bool)
+                     -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+    val foldrStream : ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+                       -> 'b BenchLazy.state ref
+                       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+    val zipWith3 : ('a * 'b * 'c -> 'd)
+                    -> 'a node BenchLazy.delay
+                    -> 'b node BenchLazy.delay
+                    -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+    val span : ('a -> bool)
+                -> 'a node BenchLazy.delay
+                -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+    val nth : 'a node BenchLazy.delay -> int -> 'a
+    val take : int -> 'a node BenchLazy.delay -> 'a list
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+    val foldPrefix : ('a * 'b -> 'b)
+                      -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cichelli-data.sml]
+structure BenchCichelliData : sig val keys : string list end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-cichelli.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-cichelli.sml:15.46 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-cichelli.sml:21.40 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-cichelli.sml:13.43 Warning: calling polyEqual
+functor BenchCichelliFn(Config: sig
+                           structure Eval : <sig>
+                           val strictCandidates : bool
+                         end) :
+                       
+                         sig
+                           structure D : <sig>
+                           structure L : <sig>
+                           structure S : <sig>
+                           type key
+                           type hashSet
+                           type hashFun
+                           type feedback
+                           val member : ''a -> ''a list -> bool
+                           val assoc : ''a -> (''a * 'b) list -> 'b option
+                           val required : ''a -> (''a * 'b) list -> 'b
+                           val attribute : string list -> key list
+                           val ends : key -> char list
+                           val histInsert : ''a
+                                             -> (''a * int) list
+                                             -> (''a * int) list
+                           val attributed : key list
+                           val frequency : (char * int) list
+                           val maximum : int
+                           val numberOfKeys : int
+                           val union : ''a list -> ''a list -> ''a list
+                           val partition : ('a -> bool)
+                                            -> 'a list -> 'a list * 'a list
+                           val blocked : key list -> key list
+                           val insert : int -> hashSet -> hashSet option
+                           val hash : (char * int) list -> key -> int
+                           val first : int Config.t
+                                        -> feedback BenchStream.node 
+                                          BenchLazy.delay
+                                        -> feedback
+                           val firstSuccess : ('a -> feedback)
+                                               -> 'a BenchStream.node 
+                                                 BenchLazy.delay
+                                               -> feedback
+                           val choices : int
+                                          -> (int -> 'a)
+                                          -> 'a BenchStream.node 
+                                            BenchLazy.delay
+                           val find : hashSet
+                                       -> (char * int) list
+                                       -> key list -> feedback
+                           val solve : key list -> feedback
+                           val cichelli : int -> feedback
+                           val emitFeedback : (string -> unit)
+                                               -> feedback -> unit
+                         end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cichelli-driver.sml]
+functor BenchCichelliDriverFn(K: sig
+                                 type feedback
+                                 val cichelli : int -> feedback
+                                 val emitFeedback : (string -> unit)
+                                                     -> feedback -> unit
+                               end) :
+                             sig val run : string list -> string end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/cichelli-strict/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Kernel : <sig>
+    structure Driver : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 60:5070:checked
+PASS cichelli-strict
+SUMMARY 1 checks, 0 failed

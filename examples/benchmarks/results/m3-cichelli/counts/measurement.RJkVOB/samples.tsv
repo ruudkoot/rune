@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+cichelli-lazy	normal	rune	O2	compile	0	0	pass	1.61	1.59	0.11	135248	-	-	-	cichelli-lazy/rune/build/compile
+cichelli-lazy	normal	rune	O2	correctness	0	0	pass	19.56	18.50	0.23	133344	3891701890	5255398800	155016074	cichelli-lazy/rune/correctness.0
+cichelli-lazy	normal	rune	O2	count	1	1	pass	15.75	16.50	0.13	133200	3891701890	5255398800	155016074	cichelli-lazy/rune/fresh.1
+cichelli-lazy	normal	rune:opt	O2	compile	0	0	pass	1.45	1.47	0.05	135220	-	-	-	cichelli-lazy/rune-opt/build/compile
+cichelli-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.31	0.16	0.05	12564	-	-	-	cichelli-lazy/rune-opt/build/native-compile
+cichelli-lazy	normal	rune:opt	O2	correctness	0	0	pass	6.73	6.94	0.17	133916	3891701890	5255398800	155016074	cichelli-lazy/rune-opt/correctness.0
+cichelli-lazy	normal	rune:opt	O2	count	1	1	pass	6.36	6.56	0.16	133904	3891701890	5255398800	155016074	cichelli-lazy/rune-opt/fresh.1
+cichelli-lazy	normal	rune:new	O2	compile	0	0	pass	1.63	1.61	0.10	135256	-	-	-	cichelli-lazy/rune-new/build/compile
+cichelli-lazy	normal	rune:new	O2	correctness	0	0	pass	12.99	13.59	0.13	133580	2059989775	5255398800	155016074	cichelli-lazy/rune-new/correctness.0
+cichelli-lazy	normal	rune:new	O2	count	1	1	pass	15.24	14.04	0.13	133628	2059989775	5255398800	155016074	cichelli-lazy/rune-new/fresh.1
+cichelli-lazy	normal	rune:jit	O2	compile	0	0	pass	1.53	1.51	0.10	135248	-	-	-	cichelli-lazy/rune-jit/build/compile
+cichelli-lazy	normal	rune:jit	O2	correctness	0	0	pass	6.23	6.45	0.13	134700	2059989775	5255398800	155016074	cichelli-lazy/rune-jit/correctness.0
+cichelli-lazy	normal	rune:jit	O2	count	1	1	pass	6.02	6.22	0.13	134808	2059989775	5255398800	155016074	cichelli-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

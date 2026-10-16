@@ -1,0 +1,5 @@
+COUNT unbudgeted cichelli-strict normal rune
+COUNT unbudgeted cichelli-strict normal rune:opt
+COUNT unbudgeted cichelli-strict normal rune:new
+COUNT unbudgeted cichelli-strict normal rune:jit
+COUNT comparisons agree

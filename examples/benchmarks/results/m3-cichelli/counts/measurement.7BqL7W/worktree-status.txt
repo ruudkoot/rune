@@ -1,0 +1,11 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/cichelli-lazy/
+?? examples/benchmarks/cichelli-strict/
+?? examples/benchmarks/shared/cichelli-data.sml
+?? examples/benchmarks/shared/cichelli-driver.sml
+?? examples/benchmarks/shared/nofib-cichelli.sml
+?? tests/benchmarks/check-cichelli.sh
+?? tests/benchmarks/cichelli-prefixes.sml
+?? tests/benchmarks/cichelli-tests.sml
+?? tests/benchmarks/data/cichelli/

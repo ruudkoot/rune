@@ -1,0 +1,9 @@
+PASS independent odd 324 631
+PASS independent even 113994 116083
+PASS prefix 0 1
+PASS prefix 1 1
+PASS prefix 2 1
+PASS prefix 5 3
+PASS prefix 10 94
+PASS prefix 15 116
+PASS prefix 22 113994

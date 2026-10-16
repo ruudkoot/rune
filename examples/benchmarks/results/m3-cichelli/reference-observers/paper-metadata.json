@@ -1,0 +1,39 @@
+{
+  "DOI": "10.1145/358808.358813",
+  "title": [
+    "Minimal perfect hash functions made simple"
+  ],
+  "author": [
+    {
+      "given": "Richard J.",
+      "family": "Cichelli",
+      "sequence": "first",
+      "affiliation": [
+        {
+          "name": "Software Consulting Services, Allentown, PA"
+        }
+      ],
+      "role": [
+        {
+          "vocabulary": "crossref",
+          "role": "author"
+        }
+      ]
+    }
+  ],
+  "publisher": "Association for Computing Machinery (ACM)",
+  "container-title": [
+    "Communications of the ACM"
+  ],
+  "volume": "23",
+  "issue": "1",
+  "page": "17-19",
+  "published": {
+    "date-parts": [
+      [
+        1980,
+        1
+      ]
+    ]
+  }
+}
