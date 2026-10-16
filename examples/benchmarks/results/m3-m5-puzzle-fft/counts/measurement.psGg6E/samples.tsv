@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+fft-sandmark	normal	rune	O2	compile	0	0	pass	1.21	1.19	0.06	135260	-	-	-	fft-sandmark/rune/build/compile
+fft-sandmark	normal	rune	O2	correctness	0	0	pass	0.21	0.21	0.01	20616	50775204	47338824	1098265	fft-sandmark/rune/correctness.0
+fft-sandmark	normal	rune	O2	count	1	1	pass	0.23	0.22	0.01	20632	50775204	47338824	1098265	fft-sandmark/rune/fresh.1
+fft-sandmark	normal	rune:opt	O2	compile	0	0	pass	1.17	1.11	0.10	135240	-	-	-	fft-sandmark/rune-opt/build/compile
+fft-sandmark	normal	rune:opt	O2	native-compile	0	0	pass	0.24	0.12	0.02	12256	-	-	-	fft-sandmark/rune-opt/build/native-compile
+fft-sandmark	normal	rune:opt	O2	correctness	0	0	pass	0.10	0.08	0.02	20788	50775204	47338824	1098265	fft-sandmark/rune-opt/correctness.0
+fft-sandmark	normal	rune:opt	O2	count	1	1	pass	0.08	0.08	0.00	20956	50775204	47338824	1098265	fft-sandmark/rune-opt/fresh.1
+fft-sandmark	normal	rune:new	O2	compile	0	0	pass	1.18	1.12	0.10	135352	-	-	-	fft-sandmark/rune-new/build/compile
+fft-sandmark	normal	rune:new	O2	correctness	0	0	pass	0.15	0.15	0.00	22292	27520604	47338824	1098265	fft-sandmark/rune-new/correctness.0
+fft-sandmark	normal	rune:new	O2	count	1	1	pass	0.15	0.16	0.00	22296	27520604	47338824	1098265	fft-sandmark/rune-new/fresh.1
+fft-sandmark	normal	rune:jit	O2	compile	0	0	pass	1.12	1.09	0.07	135256	-	-	-	fft-sandmark/rune-jit/build/compile
+fft-sandmark	normal	rune:jit	O2	correctness	0	0	pass	0.09	0.07	0.01	22932	27520604	47338824	1098265	fft-sandmark/rune-jit/correctness.0
+fft-sandmark	normal	rune:jit	O2	count	1	1	pass	0.08	0.08	0.00	22932	27520604	47338824	1098265	fft-sandmark/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

@@ -1,0 +1,17 @@
+[
+  {
+    "repetitions": 2,
+    "seconds": 0.1652393059921451,
+    "stdout_bytes": 0
+  },
+  {
+    "repetitions": 16,
+    "seconds": 1.6165433209971525,
+    "stdout_bytes": 0
+  },
+  {
+    "repetitions": 80,
+    "seconds": 6.835694907989819,
+    "stdout_bytes": 0
+  }
+]

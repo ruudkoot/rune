@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+puzzle-lazy	normal	rune	O2	compile	0	0	pass	1.26	1.24	0.06	135352	-	-	-	puzzle-lazy/rune/build/compile
+puzzle-lazy	normal	rune	O2	correctness	0	0	pass	27.67	27.26	0.18	133252	5038881692	15234790712	408351891	puzzle-lazy/rune/correctness.0
+puzzle-lazy	normal	rune	O2	count	1	1	pass	23.00	23.71	0.17	133280	5038881692	15234790712	408351891	puzzle-lazy/rune/fresh.1
+puzzle-lazy	normal	rune:opt	O2	compile	0	0	pass	2.42	1.16	0.06	135248	-	-	-	puzzle-lazy/rune-opt/build/compile
+puzzle-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.26	0.13	0.02	12348	-	-	-	puzzle-lazy/rune-opt/build/native-compile
+puzzle-lazy	normal	rune:opt	O2	correctness	0	0	pass	12.14	12.49	0.12	133656	5038881692	15234790712	408351891	puzzle-lazy/rune-opt/correctness.0
+puzzle-lazy	normal	rune:opt	O2	count	1	1	pass	13.53	14.00	0.14	133744	5038881692	15234790712	408351891	puzzle-lazy/rune-opt/fresh.1
+puzzle-lazy	normal	rune:new	O2	compile	0	0	pass	1.28	1.24	0.06	135256	-	-	-	puzzle-lazy/rune-new/build/compile
+puzzle-lazy	normal	rune:new	O2	correctness	0	0	pass	24.89	24.27	0.12	133304	3068055688	15234790712	408351891	puzzle-lazy/rune-new/correctness.0
+puzzle-lazy	normal	rune:new	O2	count	1	1	pass	23.24	22.95	0.08	133324	3068055688	15234790712	408351891	puzzle-lazy/rune-new/fresh.1
+puzzle-lazy	normal	rune:jit	O2	compile	0	0	pass	1.51	1.48	0.09	135316	-	-	-	puzzle-lazy/rune-jit/build/compile
+puzzle-lazy	normal	rune:jit	O2	correctness	0	0	pass	11.49	11.82	0.11	134332	3068055688	15234790712	408351891	puzzle-lazy/rune-jit/correctness.0
+puzzle-lazy	normal	rune:jit	O2	count	1	1	pass	12.71	11.68	0.10	134452	3068055688	15234790712	408351891	puzzle-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

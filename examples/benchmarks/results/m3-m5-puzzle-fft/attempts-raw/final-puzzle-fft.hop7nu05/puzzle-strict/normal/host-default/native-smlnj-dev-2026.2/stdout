@@ -1,0 +1,143 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml]
+functor BenchCellSequenceFn(D: sig
+                               type 'a t
+                               val delay : (unit -> 'a) -> 'a t
+                               val force : 'a t -> 'a
+                             end) :
+                           
+                             sig
+                               type 'a node
+                               type 'a sequence
+                               val value : 'a -> 'a D.t
+                               val empty : unit -> 'a node D.t
+                               val cons : 'a D.t -> 'a node D.t -> 'a node D.t
+                               val fromList : 'a list -> 'a node D.t
+                               val head : 'a node D.t -> 'a
+                               val tail : 'a node D.t -> 'a node D.t
+                               val delayedTail : 'a node D.t -> 'a node D.t
+                               val fromCell : 'a D.t D.t -> 'a D.t
+                               val map : ('a -> 'b)
+                                          -> 'a node D.t -> 'b node D.t
+                               val append : 'a node D.t
+                                             -> 'a node D.t -> 'a node D.t
+                               val take : int -> 'a node D.t -> 'a node D.t
+                               val replicate : int -> 'a D.t -> 'a node D.t
+                               val init : 'a node D.t -> 'a node D.t
+                               val zipWith3 : ('a * 'b * 'c -> 'd)
+                                               -> 'a node D.t
+                                               -> 'b node D.t
+                                               -> 'c node D.t -> 'd node D.t
+                               val zip3 : 'a node D.t
+                                           -> 'b node D.t
+                                           -> 'c node D.t
+                                           -> ('a D.t * 'b D.t * 'c D.t) node 
+                                             D.t
+                               val equal : ('a * 'b -> bool)
+                                            -> 'a node D.t
+                                            -> 'b node D.t -> bool
+                               val toList : 'a node D.t -> 'a list
+                             end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-puzzle.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-puzzle.sml:26.17-26.19 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-puzzle.sml:30.14 Warning: calling polyEqual
+functor BenchPuzzleFn(D: sig
+                         type 'a t
+                         val delay : (unit -> 'a) -> 'a t
+                         val force : 'a t -> 'a
+                       end) :
+                     
+                       sig
+                         structure Q : <sig>
+                         type item
+                         type bank
+                         type state
+                         val value : 'a -> 'a D.t
+                         val initial : state
+                         val final : state
+                         val position : item -> state -> bank
+                         val update : state -> item -> bank -> state
+                         val opposite : bank -> bank
+                         val next : item -> item
+                         val range : item -> item -> item Q.node D.t
+                         val crossing : item -> int
+                         val notSeen : ''a -> ('b * ''a) Q.node D.t -> bool
+                         val concatMap : ('a D.t -> 'b Q.node D.t)
+                                          -> 'a Q.node D.t -> 'b Q.node D.t
+                         val transfer : state
+                                         -> state
+                                         -> bank
+                                         -> int D.t
+                                         -> (int D.t * state) Q.node D.t
+                                         -> (int D.t * state) Q.node D.t 
+                                             Q.node D.t
+                         val totalTime : ('a D.t * 'b) Q.node D.t -> 'a
+                         val reverse : 'a Q.node D.t -> 'a Q.node D.t
+                         val minimum : (int D.t * 'a) Q.node D.t Q.node D.t
+                                        -> (int D.t * 'a) Q.node D.t Q.node 
+                                          D.t
+                         val chars : string -> char Q.node D.t
+                         val line0 : char Q.node D.t
+                         val line1 : char Q.node D.t
+                         val line2 : char Q.node D.t
+                         val line3 : char Q.node D.t
+                         val line4 : char Q.node D.t
+                         val line5 : char Q.node D.t
+                         val line6 : char Q.node D.t
+                         val line7 : char Q.node D.t
+                         val itemText : item -> bank -> char Q.node D.t
+                         val border : char Q.node D.t
+                         val showState : state -> char Q.node D.t
+                         val showHistory : (int D.t * state) Q.node D.t
+                                            -> char Q.node D.t
+                         val showSolutions : (int D.t * state) Q.node D.t 
+                                                  Q.node D.t
+                                              -> int -> char Q.node D.t
+                         val all : unit
+                                    -> (int D.t * state) Q.node D.t Q.node D.t
+                         val result : unit -> char Q.node D.t
+                         val text : char Q.node D.t -> string
+                         val checked : string -> int
+                       end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/puzzle-driver.sml]
+functor BenchPuzzleDriverFn(K: sig val checked : string -> int end) :
+                           sig val run : string list -> string end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/puzzle-strict/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Kernel : <sig>
+    structure Driver : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 16:44704
+PASS puzzle-strict
+SUMMARY 1 checks, 0 failed

@@ -1209,3 +1209,32 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 matching bytecode comparisons across seven compiler builds.
 runedoc and runeopt also agree. [The complete transcript](validation/oct16-clausify-780-acceptance.log)
 records the run. All 41 inventory tests pass and all 861 entries validate.
+
+## M3 exhaustive histories and M5 sequential FFT, 2026-10-16
+
+Three imports bring the catalogue to 265 programs and 789 profiles. [All 84
+smoke/normal cases](results/m3-m5-puzzle-fft/correctness.tsv) pass on Rune's four
+engines at both levels and all six managed native hosts. Twelve puzzle and
+twelve FFT semantic/negative checks pass all ten configurations at both levels.
+Twelve normal count samples pass the combined comparison with unchanged budgets.
+These instrumented samples remain separate from headline timings.
+
+Puzzle preserves exhaustive backwards enumeration, prior-state-history pruning,
+source order and costs, persistent histories, delayed countdowns, stable equal
+minima and full rendering. Original GHC and independent enumeration agree on
+21,924 solutions, the entire time histogram, two 17-unit minima and 2,794 bytes;
+a separate shortest-path traversal confirms the optimum. FFT preserves source
+pi, twiddles, repeated products, array writes and the conjugated-inverse
+convention. Every frequency and roundtrip component is checked with documented
+length-dependent budgets. Complete original reference outputs agree with an
+independent closed-form ramp DFT at all sizes; small quadratic/complex cases
+also agree. Original large output is fully checked before disposal, retaining
+its digest and maximum errors. Sources, notices, adaptations and all references
+are retained. No prerequisite compiler/runtime feature or universal large SML
+execution is claimed. M3 and M5 remain in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 789 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 matching bytecode comparisons across seven compiler builds.
+runedoc and runeopt also agree. [The complete transcript](validation/oct16-puzzle-fft-789-acceptance.log)
+records the run. All 41 inventory tests pass and all 861 entries validate.

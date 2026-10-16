@@ -1,0 +1,435 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS sandmark-fft/complete-ramp
+PASS sandmark-fft/complex-direct-dft
+PASS sandmark-fft/source-inverse-convention
+PASS sandmark-fft/input-remains-unmodified
+PASS sandmark-fft/bit-reversal
+PASS sandmark-fft/reject-nonpower-lengths
+PASS sandmark-fft/reject-identity-transform
+PASS sandmark-fft/reject-forward-perturbation
+PASS sandmark-fft/reject-roundtrip-perturbation
+PASS sandmark-fft/error-boundary
+PASS sandmark-fft/reject-infinite-result
+PASS sandmark-fft/reject-incomplete-array
+SUMMARY 12 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+PASS sandmark-fft/complete-ramp
+PASS sandmark-fft/complex-direct-dft
+PASS sandmark-fft/source-inverse-convention
+PASS sandmark-fft/input-remains-unmodified
+PASS sandmark-fft/bit-reversal
+PASS sandmark-fft/reject-nonpower-lengths
+PASS sandmark-fft/reject-identity-transform
+PASS sandmark-fft/reject-forward-perturbation
+PASS sandmark-fft/reject-roundtrip-perturbation
+PASS sandmark-fft/error-boundary
+PASS sandmark-fft/reject-infinite-result
+PASS sandmark-fft/reject-incomplete-array
+SUMMARY 12 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+PASS sandmark-fft/complete-ramp
+PASS sandmark-fft/complex-direct-dft
+PASS sandmark-fft/source-inverse-convention
+PASS sandmark-fft/input-remains-unmodified
+PASS sandmark-fft/bit-reversal
+PASS sandmark-fft/reject-nonpower-lengths
+PASS sandmark-fft/reject-identity-transform
+PASS sandmark-fft/reject-forward-perturbation
+PASS sandmark-fft/reject-roundtrip-perturbation
+PASS sandmark-fft/error-boundary
+PASS sandmark-fft/reject-infinite-result
+PASS sandmark-fft/reject-incomplete-array
+SUMMARY 12 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+PASS sandmark-fft/complete-ramp
+PASS sandmark-fft/complex-direct-dft
+PASS sandmark-fft/source-inverse-convention
+PASS sandmark-fft/input-remains-unmodified
+PASS sandmark-fft/bit-reversal
+PASS sandmark-fft/reject-nonpower-lengths
+PASS sandmark-fft/reject-identity-transform
+PASS sandmark-fft/reject-forward-perturbation
+PASS sandmark-fft/reject-roundtrip-perturbation
+PASS sandmark-fft/error-boundary
+PASS sandmark-fft/reject-infinite-result
+PASS sandmark-fft/reject-incomplete-array
+SUMMARY 12 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 1048576 KiB
+PASS sandmark-fft/complete-ramp
+PASS sandmark-fft/complex-direct-dft
+PASS sandmark-fft/source-inverse-convention
+PASS sandmark-fft/input-remains-unmodified
+PASS sandmark-fft/bit-reversal
+PASS sandmark-fft/reject-nonpower-lengths
+PASS sandmark-fft/reject-identity-transform
+PASS sandmark-fft/reject-forward-perturbation
+PASS sandmark-fft/reject-roundtrip-perturbation
+PASS sandmark-fft/error-boundary
+PASS sandmark-fft/reject-infinite-result
+PASS sandmark-fft/reject-incomplete-array
+SUMMARY 12 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-fft.sml]
+[autoloading]
+[autoloading done]
+structure BenchSandmarkFFT : sig
+  type complex = real * real
+  val add : complex * complex -> real * real
+  val sub : complex * complex -> real * real
+  val mul : complex * complex -> real * real
+  val for : int -> int -> (int -> 'a) -> unit
+  val bits : int -> int
+  val bitrev : int -> int -> int
+  val pow2 : int -> int
+  val twiddles : int -> (real * real) array
+  val fft : complex array -> complex array
+  val ifft : complex array -> complex array
+  val ramp : int -> (real * real) array
+  val frequencyBound : int -> real
+  val roundtripBound : int -> real
+  val near : real -> real * real -> bool
+  val frequency : int -> int -> real * real
+  val checkFrequencies : int -> (real * real) array -> unit
+  val checkRoundtrip : int -> (real * real) array -> unit
+  val run : int -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sandmark-fft-tests.sml]
+PASS sandmark-fft/complete-ramp
+PASS sandmark-fft/complex-direct-dft
+PASS sandmark-fft/source-inverse-convention
+PASS sandmark-fft/input-remains-unmodified
+PASS sandmark-fft/bit-reversal
+PASS sandmark-fft/reject-nonpower-lengths
+PASS sandmark-fft/reject-identity-transform
+PASS sandmark-fft/reject-forward-perturbation
+PASS sandmark-fft/reject-roundtrip-perturbation
+PASS sandmark-fft/error-boundary
+PASS sandmark-fft/reject-infinite-result
+PASS sandmark-fft/reject-incomplete-array
+structure FFTTests : sig
+  structure F : <sig>
+  val input : (real * real) array
+  val same : real -> (real * real) * (real * real) -> bool
+  val arrays : real -> (real * real) array -> (real * real) array -> bool
+  val direct :
+      BenchSandmarkFFT.complex array -> BenchSandmarkFFT.complex array
+  val rejects : (unit -> 'a) -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 12 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-fft.sml]
+[autoloading]
+[autoloading done]
+structure BenchSandmarkFFT : sig
+  type complex = real * real
+  val add : complex * complex -> real * real
+  val sub : complex * complex -> real * real
+  val mul : complex * complex -> real * real
+  val for : int -> int -> (int -> 'a) -> unit
+  val bits : int -> int
+  val bitrev : int -> int -> int
+  val pow2 : int -> int
+  val twiddles : int -> (real * real) array
+  val fft : complex array -> complex array
+  val ifft : complex array -> complex array
+  val ramp : int -> (real * real) array
+  val frequencyBound : int -> real
+  val roundtripBound : int -> real
+  val near : real -> real * real -> bool
+  val frequency : int -> int -> real * real
+  val checkFrequencies : int -> (real * real) array -> unit
+  val checkRoundtrip : int -> (real * real) array -> unit
+  val run : int -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sandmark-fft-tests.sml]
+PASS sandmark-fft/complete-ramp
+PASS sandmark-fft/complex-direct-dft
+PASS sandmark-fft/source-inverse-convention
+PASS sandmark-fft/input-remains-unmodified
+PASS sandmark-fft/bit-reversal
+PASS sandmark-fft/reject-nonpower-lengths
+PASS sandmark-fft/reject-identity-transform
+PASS sandmark-fft/reject-forward-perturbation
+PASS sandmark-fft/reject-roundtrip-perturbation
+PASS sandmark-fft/error-boundary
+PASS sandmark-fft/reject-infinite-result
+PASS sandmark-fft/reject-incomplete-array
+structure FFTTests : sig
+  structure F : <sig>
+  val input : (real * real) array
+  val same : real -> (real * real) * (real * real) -> bool
+  val arrays : real -> (real * real) array -> (real * real) array -> bool
+  val direct :
+      BenchSandmarkFFT.complex array -> BenchSandmarkFFT.complex array
+  val rejects : (unit -> 'a) -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 12 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-fft.sml]
+structure BenchSandmarkFFT : 
+  sig
+    type complex = real * real
+    val add : complex * complex -> real * real
+    val sub : complex * complex -> real * real
+    val mul : complex * complex -> real * real
+    val for : int -> int -> (int -> 'a) -> unit
+    val bits : int -> int
+    val bitrev : int -> int -> int
+    val pow2 : int -> int
+    val twiddles : int -> (real * real) array
+    val fft : complex array -> complex array
+    val ifft : complex array -> complex array
+    val ramp : int -> (real * real) array
+    val frequencyBound : int -> real
+    val roundtripBound : int -> real
+    val near : real -> real * real -> bool
+    val frequency : int -> int -> real * real
+    val checkFrequencies : int -> (real * real) array -> unit
+    val checkRoundtrip : int -> (real * real) array -> unit
+    val run : int -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/sandmark-fft-tests.sml]
+PASS sandmark-fft/complete-ramp
+PASS sandmark-fft/complex-direct-dft
+PASS sandmark-fft/source-inverse-convention
+PASS sandmark-fft/input-remains-unmodified
+PASS sandmark-fft/bit-reversal
+PASS sandmark-fft/reject-nonpower-lengths
+PASS sandmark-fft/reject-identity-transform
+PASS sandmark-fft/reject-forward-perturbation
+PASS sandmark-fft/reject-roundtrip-perturbation
+PASS sandmark-fft/error-boundary
+PASS sandmark-fft/reject-infinite-result
+PASS sandmark-fft/reject-incomplete-array
+structure FFTTests : 
+  sig
+    structure F : <sig>
+    val input : (real * real) array
+    val same : real -> (real * real) * (real * real) -> bool
+    val arrays : real -> (real * real) array -> (real * real) array -> bool
+    val direct : BenchSandmarkFFT.complex array
+                  -> BenchSandmarkFFT.complex array
+    val rejects : (unit -> 'a) -> bool
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 12 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS sandmark-fft/complete-ramp
+PASS sandmark-fft/complex-direct-dft
+PASS sandmark-fft/source-inverse-convention
+PASS sandmark-fft/input-remains-unmodified
+PASS sandmark-fft/bit-reversal
+PASS sandmark-fft/reject-nonpower-lengths
+PASS sandmark-fft/reject-identity-transform
+PASS sandmark-fft/reject-forward-perturbation
+PASS sandmark-fft/reject-roundtrip-perturbation
+PASS sandmark-fft/error-boundary
+PASS sandmark-fft/reject-infinite-result
+PASS sandmark-fft/reject-incomplete-array
+SUMMARY 12 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PASS sandmark-fft/complete-ramp
+PASS sandmark-fft/complex-direct-dft
+PASS sandmark-fft/source-inverse-convention
+PASS sandmark-fft/input-remains-unmodified
+PASS sandmark-fft/bit-reversal
+PASS sandmark-fft/reject-nonpower-lengths
+PASS sandmark-fft/reject-identity-transform
+PASS sandmark-fft/reject-forward-perturbation
+PASS sandmark-fft/reject-roundtrip-perturbation
+PASS sandmark-fft/error-boundary
+PASS sandmark-fft/reject-infinite-result
+PASS sandmark-fft/reject-incomplete-array
+SUMMARY 12 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

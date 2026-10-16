@@ -1,0 +1,85 @@
+benchmark	profile	optimization	configuration	arguments	status	artifact_directory
+puzzle-lazy	smoke	O0	rune-jit	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/smoke/O0/rune-jit
+puzzle-lazy	smoke	O0	rune	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/smoke/O0/rune
+puzzle-lazy	smoke	O0	rune-opt	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/smoke/O0/rune-opt
+puzzle-lazy	smoke	O0	rune-new	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/smoke/O0/rune-new
+puzzle-lazy	smoke	O2	rune-jit	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/smoke/O2/rune-jit
+puzzle-lazy	smoke	O2	rune	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/smoke/O2/rune
+puzzle-lazy	smoke	O2	rune-opt	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/smoke/O2/rune-opt
+puzzle-lazy	smoke	O2	rune-new	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/smoke/O2/rune-new
+puzzle-lazy	smoke	host-default	native-mlkit-4.7.23	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/smoke/host-default/native-mlkit-4.7.23
+puzzle-lazy	smoke	host-default	native-polyml-5.9.2	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/smoke/host-default/native-polyml-5.9.2
+puzzle-lazy	smoke	host-default	native-smlnj-legacy-110.99.9	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/smoke/host-default/native-smlnj-legacy-110.99.9
+puzzle-lazy	smoke	host-default	native-smlnj-dev-2026.2	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/smoke/host-default/native-smlnj-dev-2026.2
+puzzle-lazy	smoke	host-default	native-mlton-20241230	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/smoke/host-default/native-mlton-20241230
+puzzle-lazy	smoke	host-default	native-smlnj32-110.99.9	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/smoke/host-default/native-smlnj32-110.99.9
+puzzle-lazy	normal	O0	rune-jit	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/normal/O0/rune-jit
+puzzle-lazy	normal	O0	rune	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/normal/O0/rune
+puzzle-lazy	normal	O0	rune-opt	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/normal/O0/rune-opt
+puzzle-lazy	normal	O0	rune-new	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/normal/O0/rune-new
+puzzle-lazy	normal	O2	rune-jit	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/normal/O2/rune-jit
+puzzle-lazy	normal	O2	rune	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/normal/O2/rune
+puzzle-lazy	normal	O2	rune-opt	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/normal/O2/rune-opt
+puzzle-lazy	normal	O2	rune-new	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/normal/O2/rune-new
+puzzle-lazy	normal	host-default	native-mlkit-4.7.23	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/normal/host-default/native-mlkit-4.7.23
+puzzle-lazy	normal	host-default	native-polyml-5.9.2	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/normal/host-default/native-polyml-5.9.2
+puzzle-lazy	normal	host-default	native-smlnj-legacy-110.99.9	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/normal/host-default/native-smlnj-legacy-110.99.9
+puzzle-lazy	normal	host-default	native-smlnj-dev-2026.2	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/normal/host-default/native-smlnj-dev-2026.2
+puzzle-lazy	normal	host-default	native-mlton-20241230	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/normal/host-default/native-mlton-20241230
+puzzle-lazy	normal	host-default	native-smlnj32-110.99.9	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-lazy/normal/host-default/native-smlnj32-110.99.9
+puzzle-strict	smoke	O0	rune-jit	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/smoke/O0/rune-jit
+puzzle-strict	smoke	O0	rune	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/smoke/O0/rune
+puzzle-strict	smoke	O0	rune-opt	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/smoke/O0/rune-opt
+puzzle-strict	smoke	O0	rune-new	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/smoke/O0/rune-new
+puzzle-strict	smoke	O2	rune-jit	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/smoke/O2/rune-jit
+puzzle-strict	smoke	O2	rune	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/smoke/O2/rune
+puzzle-strict	smoke	O2	rune-opt	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/smoke/O2/rune-opt
+puzzle-strict	smoke	O2	rune-new	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/smoke/O2/rune-new
+puzzle-strict	smoke	host-default	native-mlkit-4.7.23	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/smoke/host-default/native-mlkit-4.7.23
+puzzle-strict	smoke	host-default	native-polyml-5.9.2	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/smoke/host-default/native-polyml-5.9.2
+puzzle-strict	smoke	host-default	native-smlnj-legacy-110.99.9	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/smoke/host-default/native-smlnj-legacy-110.99.9
+puzzle-strict	smoke	host-default	native-smlnj-dev-2026.2	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/smoke/host-default/native-smlnj-dev-2026.2
+puzzle-strict	smoke	host-default	native-mlton-20241230	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/smoke/host-default/native-mlton-20241230
+puzzle-strict	smoke	host-default	native-smlnj32-110.99.9	2 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/smoke/host-default/native-smlnj32-110.99.9
+puzzle-strict	normal	O0	rune-jit	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/normal/O0/rune-jit
+puzzle-strict	normal	O0	rune	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/normal/O0/rune
+puzzle-strict	normal	O0	rune-opt	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/normal/O0/rune-opt
+puzzle-strict	normal	O0	rune-new	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/normal/O0/rune-new
+puzzle-strict	normal	O2	rune-jit	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/normal/O2/rune-jit
+puzzle-strict	normal	O2	rune	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/normal/O2/rune
+puzzle-strict	normal	O2	rune-opt	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/normal/O2/rune-opt
+puzzle-strict	normal	O2	rune-new	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/normal/O2/rune-new
+puzzle-strict	normal	host-default	native-mlkit-4.7.23	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/normal/host-default/native-mlkit-4.7.23
+puzzle-strict	normal	host-default	native-polyml-5.9.2	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/normal/host-default/native-polyml-5.9.2
+puzzle-strict	normal	host-default	native-smlnj-legacy-110.99.9	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/normal/host-default/native-smlnj-legacy-110.99.9
+puzzle-strict	normal	host-default	native-smlnj-dev-2026.2	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/normal/host-default/native-smlnj-dev-2026.2
+puzzle-strict	normal	host-default	native-mlton-20241230	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/normal/host-default/native-mlton-20241230
+puzzle-strict	normal	host-default	native-smlnj32-110.99.9	16 expected/minimum.txt	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/puzzle-strict/normal/host-default/native-smlnj32-110.99.9
+fft-sandmark	smoke	O0	rune-jit	16	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/smoke/O0/rune-jit
+fft-sandmark	smoke	O0	rune	16	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/smoke/O0/rune
+fft-sandmark	smoke	O0	rune-opt	16	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/smoke/O0/rune-opt
+fft-sandmark	smoke	O0	rune-new	16	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/smoke/O0/rune-new
+fft-sandmark	smoke	O2	rune-jit	16	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/smoke/O2/rune-jit
+fft-sandmark	smoke	O2	rune	16	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/smoke/O2/rune
+fft-sandmark	smoke	O2	rune-opt	16	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/smoke/O2/rune-opt
+fft-sandmark	smoke	O2	rune-new	16	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/smoke/O2/rune-new
+fft-sandmark	smoke	host-default	native-mlkit-4.7.23	16	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/smoke/host-default/native-mlkit-4.7.23
+fft-sandmark	smoke	host-default	native-polyml-5.9.2	16	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/smoke/host-default/native-polyml-5.9.2
+fft-sandmark	smoke	host-default	native-smlnj-legacy-110.99.9	16	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/smoke/host-default/native-smlnj-legacy-110.99.9
+fft-sandmark	smoke	host-default	native-smlnj-dev-2026.2	16	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/smoke/host-default/native-smlnj-dev-2026.2
+fft-sandmark	smoke	host-default	native-mlton-20241230	16	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/smoke/host-default/native-mlton-20241230
+fft-sandmark	smoke	host-default	native-smlnj32-110.99.9	16	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/smoke/host-default/native-smlnj32-110.99.9
+fft-sandmark	normal	O0	rune-jit	16384	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/normal/O0/rune-jit
+fft-sandmark	normal	O0	rune	16384	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/normal/O0/rune
+fft-sandmark	normal	O0	rune-opt	16384	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/normal/O0/rune-opt
+fft-sandmark	normal	O0	rune-new	16384	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/normal/O0/rune-new
+fft-sandmark	normal	O2	rune-jit	16384	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/normal/O2/rune-jit
+fft-sandmark	normal	O2	rune	16384	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/normal/O2/rune
+fft-sandmark	normal	O2	rune-opt	16384	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/normal/O2/rune-opt
+fft-sandmark	normal	O2	rune-new	16384	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/normal/O2/rune-new
+fft-sandmark	normal	host-default	native-mlkit-4.7.23	16384	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/normal/host-default/native-mlkit-4.7.23
+fft-sandmark	normal	host-default	native-polyml-5.9.2	16384	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/normal/host-default/native-polyml-5.9.2
+fft-sandmark	normal	host-default	native-smlnj-legacy-110.99.9	16384	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/normal/host-default/native-smlnj-legacy-110.99.9
+fft-sandmark	normal	host-default	native-smlnj-dev-2026.2	16384	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/normal/host-default/native-smlnj-dev-2026.2
+fft-sandmark	normal	host-default	native-mlton-20241230	16384	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/normal/host-default/native-mlton-20241230
+fft-sandmark	normal	host-default	native-smlnj32-110.99.9	16384	pass	results/m3-m5-puzzle-fft/attempts-raw/final-puzzle-fft.hop7nu05/fft-sandmark/normal/host-default/native-smlnj32-110.99.9

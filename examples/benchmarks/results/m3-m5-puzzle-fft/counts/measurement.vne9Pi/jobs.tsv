@@ -1,0 +1,1 @@
+puzzle-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/cell-sequence.sml shared/nofib-puzzle.sml shared/puzzle-driver.sml puzzle-lazy/benchmark.sml shared/main.sml	16 expected/minimum.txt	puzzle-lazy/normal.expected	expected/minimum.txt

@@ -1,0 +1,13 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+puzzle-lazy	normal	rune	O2	count	1	1	pass	23.00	23.71	0.17	133280	5038881692	15234790712	408351891	counts/measurement.vne9Pi/puzzle-lazy/rune/fresh.1
+puzzle-lazy	normal	rune:opt	O2	count	1	1	pass	13.53	14.00	0.14	133744	5038881692	15234790712	408351891	counts/measurement.vne9Pi/puzzle-lazy/rune-opt/fresh.1
+puzzle-lazy	normal	rune:new	O2	count	1	1	pass	23.24	22.95	0.08	133324	3068055688	15234790712	408351891	counts/measurement.vne9Pi/puzzle-lazy/rune-new/fresh.1
+puzzle-lazy	normal	rune:jit	O2	count	1	1	pass	12.71	11.68	0.10	134452	3068055688	15234790712	408351891	counts/measurement.vne9Pi/puzzle-lazy/rune-jit/fresh.1
+puzzle-strict	normal	rune	O2	count	1	1	pass	5.25	5.38	0.06	68796	1424731525	2223288384	36553340	counts/measurement.fPomrf/puzzle-strict/rune/fresh.1
+puzzle-strict	normal	rune:opt	O2	count	1	1	pass	2.81	2.86	0.05	69180	1424731525	2223288384	36553340	counts/measurement.fPomrf/puzzle-strict/rune-opt/fresh.1
+puzzle-strict	normal	rune:new	O2	count	1	1	pass	6.79	5.65	0.11	134904	825388066	2223288384	36553340	counts/measurement.fPomrf/puzzle-strict/rune-new/fresh.1
+puzzle-strict	normal	rune:jit	O2	count	1	1	pass	2.73	2.73	0.10	135660	825388066	2223288384	36553340	counts/measurement.fPomrf/puzzle-strict/rune-jit/fresh.1
+fft-sandmark	normal	rune	O2	count	1	1	pass	0.23	0.22	0.01	20632	50775204	47338824	1098265	counts/measurement.psGg6E/fft-sandmark/rune/fresh.1
+fft-sandmark	normal	rune:opt	O2	count	1	1	pass	0.08	0.08	0.00	20956	50775204	47338824	1098265	counts/measurement.psGg6E/fft-sandmark/rune-opt/fresh.1
+fft-sandmark	normal	rune:new	O2	count	1	1	pass	0.15	0.16	0.00	22296	27520604	47338824	1098265	counts/measurement.psGg6E/fft-sandmark/rune-new/fresh.1
+fft-sandmark	normal	rune:jit	O2	count	1	1	pass	0.08	0.08	0.00	22932	27520604	47338824	1098265	counts/measurement.psGg6E/fft-sandmark/rune-jit/fresh.1

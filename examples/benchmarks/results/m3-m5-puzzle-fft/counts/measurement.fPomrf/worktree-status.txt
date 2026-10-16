@@ -1,0 +1,13 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/fft-sandmark/
+?? examples/benchmarks/puzzle-lazy/
+?? examples/benchmarks/puzzle-strict/
+?? examples/benchmarks/shared/nofib-puzzle.sml
+?? examples/benchmarks/shared/puzzle-driver.sml
+?? examples/benchmarks/shared/sandmark-fft.sml
+?? tests/benchmarks/check-puzzle.sh
+?? tests/benchmarks/check-sandmark-fft.sh
+?? tests/benchmarks/data/puzzle/
+?? tests/benchmarks/puzzle-tests.sml
+?? tests/benchmarks/sandmark-fft-tests.sml

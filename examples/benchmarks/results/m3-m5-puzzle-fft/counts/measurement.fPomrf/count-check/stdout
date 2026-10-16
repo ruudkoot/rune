@@ -1,0 +1,5 @@
+COUNT unbudgeted puzzle-strict normal rune
+COUNT unbudgeted puzzle-strict normal rune:opt
+COUNT unbudgeted puzzle-strict normal rune:new
+COUNT unbudgeted puzzle-strict normal rune:jit
+COUNT comparisons agree

@@ -1,0 +1,16 @@
+{
+  "ghc": "9.4.7",
+  "options": [
+    "-O2"
+  ],
+  "upstream_revision": "b7391df4540ac8b11b35e1b2e2c15819b5171798",
+  "source_path": "spectral/puzzle",
+  "observer_change": "export-only module rename and separate observers; kernel unchanged",
+  "sha256": {
+    "Main.hs": "6e68e179216d1c6b87d909d95a65badc3ee85b3fab1cf6f417fc12b0f2a26f41",
+    "Makefile": "e7ca15a585dbf5d1ecca02017479552df55186910e8cb4d247d2e9709702ea6a",
+    "Kernel.hs": "582c32ada00ce0b958dd6695caf3faaf9c5424ed56a0c9f6ecc3cd087efe0091",
+    "Observer.hs": "748493d8bfb68dc25e7e83fa60bfda1bbfab45c264a10e5677d038b8746093f4",
+    "independent.py": "1cf2789cc81fb0706a509b20267b52a42d7dc4b91ae910dc8f0682572f6ab4b0"
+  }
+}

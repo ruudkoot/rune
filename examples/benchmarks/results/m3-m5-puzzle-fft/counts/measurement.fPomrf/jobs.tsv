@@ -1,0 +1,1 @@
+puzzle-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/cell-sequence.sml shared/nofib-puzzle.sml shared/puzzle-driver.sml puzzle-strict/benchmark.sml shared/main.sml	16 expected/minimum.txt	puzzle-strict/normal.expected	expected/minimum.txt

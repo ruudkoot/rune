@@ -278,6 +278,9 @@ inventory entry.
 | [compress2-strict](#compress2-strict) | [nofib compress2](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/compress2) | Compress binary text with variable-width codes and eager dictionary updates over a causal feedback stream. |
 | [clausify-lazy](#clausify-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/clausify) | Use memoized formula fields and ordered streams to rewrite propositions into unique clauses. |
 | [clausify-strict](#clausify-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/clausify) | Materialize finite formula rewrites and ordered clause lists eagerly. |
+| [puzzle-lazy](#puzzle-lazy) | [nofib puzzle](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/puzzle) | Stream exhaustive bridge histories through stable minimum selection using memoized delays. |
+| [puzzle-strict](#puzzle-strict) | [nofib puzzle](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/puzzle) | Materialize exhaustive bridge histories before stable minimum selection and rendering. |
+| [fft-sandmark](#fft-sandmark) | [Sandmark FFT](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/numerical-analysis/fft.ml) | Compute a radix-two complex FFT and source-convention inverse, checking every ramp coefficient and recovered sample. |
 
 ## Running and interpreting checks
 
@@ -377,6 +380,8 @@ sh tests/benchmarks/check-compress.sh
 sh tests/benchmarks/check-rsa.sh
 sh tests/benchmarks/check-nofib-life.sh
 sh tests/benchmarks/check-clausify.sh
+sh tests/benchmarks/check-puzzle.sh
+sh tests/benchmarks/check-sandmark-fft.sh
 python3 tests/benchmarks/test-inventory.py
 python3 scripts/benchmark-inventory.py --check
 python3 tests/benchmarks/latency-oracle.py --check
@@ -10114,3 +10119,204 @@ or historical compiler ranking is transferred. Standard comparisons use
 identical SML; Haskell supplies correctness references.
 
 [Complete provenance](clausify-strict/PROVENANCE.md).
+
+## puzzle-lazy
+
+nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/puzzle/Main.hs
+and Makefile. The header says the brute-force solution was sent by Stephen
+Eldridge; it does not identify a separate author or redistribution grant.
+Retain that distinction and the unmodified sources/identities. The embedded
+Bono/Edge/Larry/Adam constants are program data, with no acquired dataset.
+
+## Algorithm and variants
+
+Search backwards from all four people on the right bank to all on the left.
+Enumerate single crossings before pairs, in the source's item order. Preserve
+crossing costs 10, 5, 2, 1 and pair cost of the first (slower) item. Reject states
+already present in the prior history; the current destination is prepended to
+newHistory separately. Do not replace this enumeration with shortest-path
+search, torch-inclusive cycle pruning, or a predetermined solution.
+
+Each branch returns a persistent history of countdown/state pairs. Scan every
+solution, accumulate every equal minimum, and reverse the accumulator to retain
+source order. Render the complete histories with the same labels, times,
+spaces, borders and line endings. Need memoizes solution/history spines, heads
+and countdown fields; Strict materializes the corresponding finite structures.
+The four bank fields are atomic constructors in an eager immutable SML tuple;
+record updates rebuild that tuple. Branch guards still control recursion.
+
+The source's derived Eq/Enum become SML datatype equality and explicit item
+successors/ranges. ShowS functions become ordered finite character sequences;
+constant lines are shared. Decimal labels use Int.toString over nonnegative
+values. The longest simple path has at most 15 crossings and total cost at most
+150, so selected counters and summed byte totals fit signed 31 bits.
+
+## Inputs and observation
+
+Smoke 2, normal 16 and large 80 preserve FAST/NORM/SLOW repetition counts.
+The original reads the same command arguments inside each repetition and sets
+time to zero after confirming exactly one argument. The portable driver reads
+and validates arguments once, starts each search with zero and reads its reviewed
+result fixture once. Original forcing consumes every rendered character and
+emits no output; the suite compares every character and sums checked bytes.
+The final result reports repetitions:total-bytes. Validation and fixture I/O
+are observable additions. No search result is substituted by its known length.
+
+Original GHC runs complete all three profiles. An export-only observer finds
+21,924 solutions and two ordered minima of 17, rendering 2,794 bytes. A separate
+bit-state enumeration agrees on the complete solution-time histogram, ordered
+minimal histories and every rendered byte. An independent Dijkstra traversal,
+which includes torch position and omits history pruning, confirms the global
+minimum. This reference traversal does not replace the benchmark's algorithm.
+Semantic checks cover these results, complete minimum scanning, equal-order
+stability, unused times/tails, shared countdowns, empty output and perturbations.
+Large execution of the SML ports is claimed only where explicitly recorded.
+
+## Diagnostic questions and references
+
+The retained program is the benchmark-specific algorithm/history reference;
+Partain's [nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) supplies
+suite context. Search branching, tuple equality, persistent-history sharing,
+streamed versus retained solutions, allocation lifetimes, min accumulation and
+formatter specialization are source-based questions until supported by compiler
+inspection or measurements. Standard comparisons use identical SML. Haskell
+and the independent traversals supply correctness references.
+
+[Complete provenance](puzzle-lazy/PROVENANCE.md).
+
+## puzzle-strict
+
+nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/puzzle/Main.hs
+and Makefile. The header says the brute-force solution was sent by Stephen
+Eldridge; it does not identify a separate author or redistribution grant.
+Retain that distinction and the unmodified sources/identities. The embedded
+Bono/Edge/Larry/Adam constants are program data, with no acquired dataset.
+
+## Algorithm and variants
+
+Search backwards from all four people on the right bank to all on the left.
+Enumerate single crossings before pairs, in the source's item order. Preserve
+crossing costs 10, 5, 2, 1 and pair cost of the first (slower) item. Reject states
+already present in the prior history; the current destination is prepended to
+newHistory separately. Do not replace this enumeration with shortest-path
+search, torch-inclusive cycle pruning, or a predetermined solution.
+
+Each branch returns a persistent history of countdown/state pairs. Scan every
+solution, accumulate every equal minimum, and reverse the accumulator to retain
+source order. Render the complete histories with the same labels, times,
+spaces, borders and line endings. Need memoizes solution/history spines, heads
+and countdown fields; Strict materializes the corresponding finite structures.
+The four bank fields are atomic constructors in an eager immutable SML tuple;
+record updates rebuild that tuple. Branch guards still control recursion.
+
+The source's derived Eq/Enum become SML datatype equality and explicit item
+successors/ranges. ShowS functions become ordered finite character sequences;
+constant lines are shared. Decimal labels use Int.toString over nonnegative
+values. The longest simple path has at most 15 crossings and total cost at most
+150, so selected counters and summed byte totals fit signed 31 bits.
+
+## Inputs and observation
+
+Smoke 2, normal 16 and large 80 preserve FAST/NORM/SLOW repetition counts.
+The original reads the same command arguments inside each repetition and sets
+time to zero after confirming exactly one argument. The portable driver reads
+and validates arguments once, starts each search with zero and reads its reviewed
+result fixture once. Original forcing consumes every rendered character and
+emits no output; the suite compares every character and sums checked bytes.
+The final result reports repetitions:total-bytes. Validation and fixture I/O
+are observable additions. No search result is substituted by its known length.
+
+Original GHC runs complete all three profiles. An export-only observer finds
+21,924 solutions and two ordered minima of 17, rendering 2,794 bytes. A separate
+bit-state enumeration agrees on the complete solution-time histogram, ordered
+minimal histories and every rendered byte. An independent Dijkstra traversal,
+which includes torch position and omits history pruning, confirms the global
+minimum. This reference traversal does not replace the benchmark's algorithm.
+Semantic checks cover these results, complete minimum scanning, equal-order
+stability, unused times/tails, shared countdowns, empty output and perturbations.
+Large execution of the SML ports is claimed only where explicitly recorded.
+
+## Diagnostic questions and references
+
+The retained program is the benchmark-specific algorithm/history reference;
+Partain's [nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) supplies
+suite context. Search branching, tuple equality, persistent-history sharing,
+streamed versus retained solutions, allocation lifetimes, min accumulation and
+formatter specialization are source-based questions until supported by compiler
+inspection or measurements. Standard comparisons use identical SML. Haskell
+and the independent traversals supply correctness references.
+
+[Complete provenance](puzzle-strict/PROVENANCE.md).
+
+## fft-sandmark
+
+Sandmark 5605805954a00497ed197c930641cddd580e1507,
+benchmarks/numerical-analysis/fft.ml and dune. Retain the directory MIT license,
+Copyright 2015 Akinori ABE, and Dune's OCamlPro ocamlbench-repo adaptation credit.
+There is no acquired input dataset: Main creates complex values (i,0).
+OCaml 4.14.1 Complex sources and library notice are retained at
+99cb5d93fc30f1a6f3e69f5aa5d2063994d33a93 for the imported arithmetic semantics.
+
+## Algorithm and variants
+
+Preserve bit-reversed input copying, stage/butterfly order, the half-size twiddle
+array, both source complex multiplications per butterfly, cached original a/b,
+and the exact 3.14159265358979 pi literal. Complex.exp retains exp(re) times
+cos/sin(im). The inverse routine scales and conjugates its input, then calls
+forward FFT without a final conjugation. Thus it returns the conjugate of a
+general inverse; the selected real ramp still returns the original real signal.
+Preserve and test that source convention. This is distinct from the classic
+SML FFT implementation and from nofib's FFT variants; retain the -sandmark name.
+
+Complex records become SML real pairs and OCaml arrays become SML Array. This
+allows host-specific real boxing/unboxing and should not be described as a
+portable copy of OCaml's float-record layout. Positive bit shifts/masks become
+bounded integer doubling/division/remainder. The selected power-of-two lengths
+are at most 1,048,576, and all indices fit 31 bits. No evaluation-order change
+moves a y array read past a butterfly write. No arbitrary precision is needed.
+
+## Inputs, validation and adapters
+
+Smoke 16 and normal 16,384 are deterministic reduced lengths; large preserves
+the original default 1,048,576. Input remains the same i+0i ramp distribution.
+Source Main initializes its array once at process startup. The portable driver
+initializes a fresh array per run, including repeated in-process calls; document
+this allocation difference when using that measurement mode. The unused Unix
+times gather helper, unused Format import, commented GC settings and top-level
+launcher move out of the portable kernel. The selected algorithm has no clock
+or OS dependence and no replacement timing loop.
+
+Check every forward coefficient against the closed-form ramp DFT before running
+the inverse, then check every roundtrip component against (i,0). Checking the
+forward transform before the inverse avoids retaining its array after the
+inverse merely for validation. Validation adds an O(n) trigonometric pass and
+one linear roundtrip pass to measured execution; no checksum substitutes for
+checking actual values. Length, finite values and both complex components matter.
+
+Absolute error budgets are 2e-14*(log2(n)+1)*n^2 for forward components and
+4e-14*(log2(n)+1)*n for roundtrip components. They allow stage accumulation,
+the source pi approximation and host math variation, with separate scaling for
+frequency magnitudes and recovered data. They are conservative budgets for these
+selected inputs, not a general proof about every FFT input or libm. Reflect k
+to min(k,n-k) in the cotangent oracle to avoid cancellation near pi. Original
+OCaml complete results at all profile lengths, independent quadratic DFTs on
+small inputs and a genuinely complex input agree within these budgets. Retain
+maximum errors and raw-output hashes. Large reference binaries are checked in
+full before disposal; their digest and error summary remain recorded.
+
+Negative checks reject identity transforms, coefficient/roundtrip perturbations,
+wrong lengths and infinity, and test the acceptance boundary. Separate tests
+cover bit reversal, input preservation and the general inverse convention.
+Large SML execution is claimed only where explicitly recorded.
+
+## References and runtime questions
+
+Cooley and Tukey's [1965 FFT paper](https://www.cs.jhu.edu/~misha/ReadingSeminar/Papers/Cooley65.pdf)
+anchors the algorithm family. The retained Sandmark and Complex sources define
+this particular representation, arithmetic and inverse convention. Twiddle
+creation, complex record representation, repeated products, stage locality,
+copying, math-library calls and validation overhead are diagnostic hypotheses
+until established by inspection or measurements. Standard comparisons use
+identical SML; OCaml supplies a correctness reference.
+
+[Complete provenance](fft-sandmark/PROVENANCE.md).

@@ -1,0 +1,8 @@
+PASS complete ramp 1 forward error 0.0 roundtrip error 0.0
+PASS complete ramp 2 forward error 6.123233995736766e-17 roundtrip error 0.0
+PASS complete ramp 8 forward error 2.4424906541753444e-14 roundtrip error 4.440892098500626e-16
+PASS complete ramp 16 forward error 1.4832579608992091e-13 roundtrip error 9.877583447104214e-16
+PASS complete ramp 1024 forward error 2.166473223041976e-09 roundtrip error 3.126388037344441e-13
+PASS complete ramp 16384 forward error 8.291617632494308e-07 roundtrip error 8.185452315956354e-12
+PASS complete ramp 1048576 forward error 0.005096824490465224 roundtrip error 9.89530235528946e-10
+PASS independent complex DFT and source inverse convention

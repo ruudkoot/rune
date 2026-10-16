@@ -1,0 +1,5 @@
+COUNT unbudgeted fft-sandmark normal rune
+COUNT unbudgeted fft-sandmark normal rune:opt
+COUNT unbudgeted fft-sandmark normal rune:new
+COUNT unbudgeted fft-sandmark normal rune:jit
+COUNT comparisons agree

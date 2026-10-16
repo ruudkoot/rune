@@ -1,0 +1,13 @@
+COUNT unbudgeted puzzle-lazy normal rune
+COUNT unbudgeted puzzle-lazy normal rune:opt
+COUNT unbudgeted puzzle-lazy normal rune:new
+COUNT unbudgeted puzzle-lazy normal rune:jit
+COUNT unbudgeted puzzle-strict normal rune
+COUNT unbudgeted puzzle-strict normal rune:opt
+COUNT unbudgeted puzzle-strict normal rune:new
+COUNT unbudgeted puzzle-strict normal rune:jit
+COUNT unbudgeted fft-sandmark normal rune
+COUNT unbudgeted fft-sandmark normal rune:opt
+COUNT unbudgeted fft-sandmark normal rune:new
+COUNT unbudgeted fft-sandmark normal rune:jit
+COUNT comparisons agree

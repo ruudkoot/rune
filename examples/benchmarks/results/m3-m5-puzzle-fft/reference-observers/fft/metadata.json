@@ -1,0 +1,93 @@
+{
+  "compiler": "4.14.1",
+  "options": [
+    "-O2"
+  ],
+  "profiles": [
+    {
+      "size": 1,
+      "bytes": 32,
+      "sha256": "63794a3bf8875ac2c32ba6238d27e7e15e56a3b794b8d2d6aec82faef2360e3a",
+      "frequency_max_error": 0.0,
+      "frequency_bound": 2e-14,
+      "roundtrip_max_error": 0.0,
+      "roundtrip_bound": 4e-14,
+      "seconds": 0.005510891031008214,
+      "raw_retained": true
+    },
+    {
+      "size": 2,
+      "bytes": 64,
+      "sha256": "1d51e793479ce530afefce5f6b30a368bd7cefc1b8067141a92273dc45b9b5f1",
+      "frequency_max_error": 6.123233995736766e-17,
+      "frequency_bound": 1.6e-13,
+      "roundtrip_max_error": 0.0,
+      "roundtrip_bound": 1.6e-13,
+      "seconds": 0.0052984480280429125,
+      "raw_retained": true
+    },
+    {
+      "size": 8,
+      "bytes": 256,
+      "sha256": "2a0c5f45d07fbd7c7186a7212b51ed2e90a5950d8c86b69c7084264f186241bf",
+      "frequency_max_error": 2.4424906541753444e-14,
+      "frequency_bound": 5.12e-12,
+      "roundtrip_max_error": 4.440892098500626e-16,
+      "roundtrip_bound": 1.28e-12,
+      "seconds": 0.005213089985772967,
+      "raw_retained": true
+    },
+    {
+      "size": 16,
+      "bytes": 512,
+      "sha256": "3147a6a34333f99f2e46b483b9846e559e3cd8606aad99524eaf0bc9af4f0682",
+      "frequency_max_error": 1.4832579608992091e-13,
+      "frequency_bound": 2.56e-11,
+      "roundtrip_max_error": 9.877583447104214e-16,
+      "roundtrip_bound": 3.2e-12,
+      "seconds": 0.0051409449661150575,
+      "raw_retained": true
+    },
+    {
+      "size": 1024,
+      "bytes": 32768,
+      "sha256": "9f4e5dee5d9c6516bc70ad3edb4b386588ac2fb157fac503caa9c572ea91ceae",
+      "frequency_max_error": 2.166473223041976e-09,
+      "frequency_bound": 2.3068672e-07,
+      "roundtrip_max_error": 3.126388037344441e-13,
+      "roundtrip_bound": 4.5056e-10,
+      "seconds": 0.011156568012665957,
+      "raw_retained": true
+    },
+    {
+      "size": 16384,
+      "bytes": 524288,
+      "sha256": "c7afa1ce6ebc1df04f68afafe72e06e8d9ff5fa449d2a35d4ff3d9e0c964a916",
+      "frequency_max_error": 8.291617632494308e-07,
+      "frequency_bound": 8.05306368e-05,
+      "roundtrip_max_error": 8.185452315956354e-12,
+      "roundtrip_bound": 9.8304e-09,
+      "seconds": 0.10423670895397663,
+      "raw_retained": true
+    },
+    {
+      "size": 1048576,
+      "bytes": 33554432,
+      "sha256": "dcc6a6cd093271086f5d3f0d68d446d83a0d1621fc94eb28864e1d175b97fe9e",
+      "frequency_max_error": 0.005096824490465224,
+      "frequency_bound": 0.46179488366592,
+      "roundtrip_max_error": 9.89530235528946e-10,
+      "roundtrip_bound": 8.8080384e-07,
+      "seconds": 11.783868819009513,
+      "raw_retained": false
+    }
+  ],
+  "sha256": {
+    "fft.ml": "1597d1ebf7483ed9a70577f4b20fb0d7616e23b4f69ec0c11bf16efa78e3f58f",
+    "fft_observer.ml": "a2559789e403e941a75a721484dd1110f5d3376e8f10f2eb92e3042734df7379"
+  },
+  "complex_case": {
+    "sha256": "3f857514e8c7c5e3f22759e81ae4cde5c488bf8aba04f89a49d97a3331829854",
+    "ifft_convention": "conjugate of general inverse"
+  }
+}

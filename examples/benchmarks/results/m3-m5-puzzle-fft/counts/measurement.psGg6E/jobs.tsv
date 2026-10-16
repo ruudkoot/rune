@@ -1,0 +1,1 @@
+fft-sandmark	600	4194304	shared/input.sml shared/sandmark-fft.sml fft-sandmark/benchmark.sml shared/main.sml	16384	fft-sandmark/normal.expected	-
