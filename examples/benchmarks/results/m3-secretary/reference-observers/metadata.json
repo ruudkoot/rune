@@ -1,0 +1,56 @@
+[
+  {
+    "trials": 50,
+    "ks": [
+      35,
+      36,
+      37,
+      38,
+      39
+    ],
+    "counts": [
+      14,
+      15,
+      15,
+      14,
+      14
+    ],
+    "comparison": "complete original processing expression versus independent full-permutation/set model"
+  },
+  {
+    "trials": 5000,
+    "ks": [
+      35,
+      36,
+      37,
+      38,
+      39
+    ],
+    "counts": [
+      1780,
+      1780,
+      1790,
+      1798,
+      1797
+    ],
+    "comparison": "complete original processing expression versus independent full-permutation/set model"
+  },
+  {
+    "trials": 50000,
+    "ks": [
+      35,
+      36,
+      37,
+      38,
+      39
+    ],
+    "counts": [
+      18140,
+      18140,
+      18140,
+      18117,
+      18039
+    ],
+    "comparison": "complete original processing expression versus independent full-permutation/set model"
+  }
+]

@@ -1,0 +1,10 @@
+[1 of 3] Compiling System.Random    ( random-1.1/Random.hs, random-1.1/Random.o )
+
+random-1.1/Random.hs:43:1: warning: [-Wtabs]
+    Tab character found here, and in 74 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+43 |         (
+   | ^^^^^^^^
+[2 of 3] Compiling Main             ( RangeObserver.hs, RangeObserver.o )
+[3 of 3] Linking range-observer

@@ -1,0 +1,1 @@
+secretary-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/stream.sml shared/haskell-random1.sml shared/nofib-secretary.sml shared/secretary-check.sml shared/secretary-driver.sml secretary-lazy/benchmark.sml shared/main.sml	50 expected/smoke.results	secretary-lazy/smoke.expected	expected/smoke.results

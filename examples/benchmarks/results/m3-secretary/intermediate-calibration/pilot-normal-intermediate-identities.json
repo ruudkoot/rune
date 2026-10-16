@@ -1,0 +1,5 @@
+{
+  "random_sha256": "93391bb25b0235f107e17034df7e092b8435ca352e8f4ec95e37ac5d65a5876d",
+  "bytecode_sha256": "2df26305116ce3939581dde97dc8e8480d9349f02887962bb5c678055b8d25be",
+  "meaning": "preliminary IntInf-state calibration; final port retains the original fixed-width 32-bit states"
+}

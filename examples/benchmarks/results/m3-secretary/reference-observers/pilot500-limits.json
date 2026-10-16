@@ -1,0 +1,12 @@
+[
+  {
+    "variant": "lazy",
+    "exit": 0,
+    "elapsed": 31.5866007200093
+  },
+  {
+    "variant": "strict",
+    "exit": 0,
+    "elapsed": 51.04678287397837
+  }
+]

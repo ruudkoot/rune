@@ -1,0 +1,7 @@
+{
+  "owned_pids": [
+    1677207
+  ],
+  "reason": "stop preliminary IntInf-state resource calibration; final translation retains source 32-bit states",
+  "accepted_measurements": false
+}

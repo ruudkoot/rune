@@ -1,0 +1,4 @@
+RESULT 50:checked
+PASS secretary-strict
+SAMPLE 1 0.342238000
+SUMMARY 1 checks, 0 failed

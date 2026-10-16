@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+secretary-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	5.64	4.32	1.38	672840	-	-	-	secretary-strict/native-mlton/build/compile
+secretary-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.04	0.03	0.00	2296	-	-	-	secretary-strict/native-mlton/correctness.0
+secretary-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.02	0.02	0.00	2428	-	-	-	secretary-strict/native-mlton/fresh.1
+secretary-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.45	0.42	0.05	36080	-	-	-	secretary-strict/native-smlnj-legacy/build/compile
+secretary-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.35	0.36	0.00	4876	-	-	-	secretary-strict/native-smlnj-legacy/correctness.0
+secretary-strict	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.40	0.41	0.01	4876	-	-	-	secretary-strict/native-smlnj-legacy/fresh.1
+secretary-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.32	0.19	0.04	36416	-	-	-	secretary-strict/native-polyml/build/compile
+secretary-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.06	0.06	0.00	13620	-	-	-	secretary-strict/native-polyml/correctness.0
+secretary-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.05	0.04	0.01	13720	-	-	-	secretary-strict/native-polyml/fresh.1

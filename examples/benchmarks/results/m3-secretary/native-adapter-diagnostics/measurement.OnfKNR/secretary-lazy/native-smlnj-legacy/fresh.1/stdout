@@ -1,0 +1,4 @@
+RESULT 50:checked
+PASS secretary-lazy
+SAMPLE 1 0.250532000
+SUMMARY 1 checks, 0 failed

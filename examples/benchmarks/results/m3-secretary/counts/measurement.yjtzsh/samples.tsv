@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+secretary-lazy	normal	rune	O2	compile	0	0	pass	1.47	1.46	0.07	135356	-	-	-	secretary-lazy/rune/build/compile
+secretary-lazy	normal	rune	O2	correctness	0	0	pass	34.15	34.21	0.02	10516	6711738827	9158171456	262998474	secretary-lazy/rune/correctness.0
+secretary-lazy	normal	rune	O2	count	1	1	pass	32.05	31.88	0.03	10360	6711738827	9158171456	262998474	secretary-lazy/rune/fresh.1
+secretary-lazy	normal	rune:opt	O2	compile	0	0	pass	1.46	1.44	0.07	135220	-	-	-	secretary-lazy/rune-opt/build/compile
+secretary-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.38	0.21	0.06	12568	-	-	-	secretary-lazy/rune-opt/build/native-compile
+secretary-lazy	normal	rune:opt	O2	correctness	0	0	pass	11.79	12.28	0.00	11032	6711738827	9158171456	262998474	secretary-lazy/rune-opt/correctness.0
+secretary-lazy	normal	rune:opt	O2	count	1	1	pass	13.58	12.73	0.02	10964	6711738827	9158171456	262998474	secretary-lazy/rune-opt/fresh.1
+secretary-lazy	normal	rune:new	O2	compile	0	0	pass	1.44	1.41	0.08	135312	-	-	-	secretary-lazy/rune-new/build/compile
+secretary-lazy	normal	rune:new	O2	correctness	0	0	pass	23.52	24.48	0.01	10772	3912580675	9158171456	262998474	secretary-lazy/rune-new/correctness.0
+secretary-lazy	normal	rune:new	O2	count	1	1	pass	25.72	25.41	0.02	10644	3912580675	9158171456	262998474	secretary-lazy/rune-new/fresh.1
+secretary-lazy	normal	rune:jit	O2	compile	0	0	pass	1.38	1.34	0.10	135352	-	-	-	secretary-lazy/rune-jit/build/compile
+secretary-lazy	normal	rune:jit	O2	correctness	0	0	pass	10.39	9.36	0.03	11924	3912580675	9158171456	262998474	secretary-lazy/rune-jit/correctness.0
+secretary-lazy	normal	rune:jit	O2	count	1	1	pass	9.95	10.33	0.03	12052	3912580675	9158171456	262998474	secretary-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

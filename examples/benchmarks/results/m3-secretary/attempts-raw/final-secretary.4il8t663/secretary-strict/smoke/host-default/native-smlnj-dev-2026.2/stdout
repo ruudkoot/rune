@@ -1,0 +1,123 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : 
+  sig
+    datatype 'a node
+      = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay | Nil
+    type 'a stream = 'a node BenchLazy.delay
+    val empty : unit -> 'a node BenchLazy.state ref
+    val cons : 'a BenchLazy.delay * 'a node BenchLazy.delay
+                -> 'a node BenchLazy.state ref
+    val singleton : 'a -> 'a node BenchLazy.state ref
+    val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+    val head : 'a node BenchLazy.state ref -> 'a
+    val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val iterate : ('a -> 'a)
+                   -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+    val fromList : 'a list -> 'a node BenchLazy.delay
+    val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+    val zipWith : ('a * 'b -> 'c)
+                   -> 'a node BenchLazy.delay
+                   -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+    val append : 'a node BenchLazy.delay
+                  -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val concatMap : ('a -> 'b node BenchLazy.delay)
+                     -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+    val filter : ('a -> bool)
+                  -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+    val dropWhile : ('a -> bool)
+                     -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+    val foldrStream : ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+                       -> 'b BenchLazy.state ref
+                       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+    val zipWith3 : ('a * 'b * 'c -> 'd)
+                    -> 'a node BenchLazy.delay
+                    -> 'b node BenchLazy.delay
+                    -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+    val span : ('a -> bool)
+                -> 'a node BenchLazy.delay
+                -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+    val nth : 'a node BenchLazy.delay -> int -> 'a
+    val take : int -> 'a node BenchLazy.delay -> 'a list
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+    val foldPrefix : ('a * 'b -> 'b)
+                      -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/haskell-random1.sml]
+structure BenchHaskellRandomOne : 
+  sig
+    structure I : <sig>
+    structure W : <sig>
+    type state = Word32.word * Word32.word
+    val negative : Word32.word -> bool
+    val seed : int -> state
+    val next : Word32.word * Word32.word
+                -> IntInf.int * (Word32.word * Word32.word)
+    val range : IntInf.int * IntInf.int
+                 -> Word32.word * Word32.word
+                 -> IntInf.int * (Word32.word * Word32.word)
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-secretary.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-secretary.sml:13.44 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-secretary.sml:29.50 Warning: calling polyEqual
+structure BenchSecretary : 
+  sig
+    structure S : <sig>
+    structure L : <sig>
+    structure R : <sig>
+    structure I : <sig>
+    val randoms : Word32.word * Word32.word
+                   -> IntInf.int BenchStream.node BenchLazy.delay
+    val nub : ''a list
+               -> ''a BenchStream.node BenchLazy.delay
+               -> ''a BenchStream.node BenchLazy.state ref
+    val take : int
+                -> 'a BenchStream.node BenchLazy.delay
+                -> 'a BenchStream.node BenchLazy.delay
+    val drop : int
+                -> 'a BenchStream.node BenchLazy.delay
+                -> 'a BenchStream.node BenchLazy.state ref
+    val lazyTrial : int -> IntInf.int BenchStream.node BenchLazy.delay -> bool
+    val strictPermutation : ('a -> ''b * 'a) -> 'a -> ''b list
+    val strictTrial : int -> IntInf.int list -> bool
+    val seeds : int -> int -> int BenchStream.node BenchLazy.delay
+    val lazy : int -> int -> int * real
+    val strict : int -> int -> int * real
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/secretary-check.sml]
+structure SecretaryCheck : sig
+  val validate : int -> (int * real) list -> string -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/secretary-driver.sml]
+functor BenchSecretaryDriverFn(K: sig val run : int -> int -> int * real end) :
+                              sig val run : string list -> string end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/secretary-strict/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Kernel : <sig>
+    structure Driver : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 50:checked
+PASS secretary-strict
+SUMMARY 1 checks, 0 failed

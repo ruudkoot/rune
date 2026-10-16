@@ -1,0 +1,19 @@
+{
+  "trials": 500,
+  "ks": [
+    35,
+    36,
+    37,
+    38,
+    39
+  ],
+  "counts": [
+    173,
+    175,
+    179,
+    177,
+    170
+  ],
+  "reason": "bounded comparative normal; original5000isexplicitlarge;larger50000retainedreference",
+  "comparison": "complete original count expression and independent full-permutation model"
+}

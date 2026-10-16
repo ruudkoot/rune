@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-secretary.4il8t663
+PASS secretary-lazy smoke O0
+PASS secretary-lazy smoke O2
+PASS secretary-lazy smoke hosts
+PASS secretary-lazy normal O0
+PASS secretary-lazy normal O2
+PASS secretary-lazy normal hosts
+PASS secretary-strict smoke O0
+PASS secretary-strict smoke O2
+PASS secretary-strict smoke hosts
+PASS secretary-strict normal O0
+PASS secretary-strict normal O2
+PASS secretary-strict normal hosts

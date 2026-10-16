@@ -1,0 +1,11 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (837 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=secretary-lazy' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.yjtzsh
+BENCH MEASURE secretary-lazy normal count
+COUNT unbudgeted secretary-lazy normal rune
+COUNT unbudgeted secretary-lazy normal rune:opt
+COUNT unbudgeted secretary-lazy normal rune:new
+COUNT unbudgeted secretary-lazy normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.yjtzsh/report.md

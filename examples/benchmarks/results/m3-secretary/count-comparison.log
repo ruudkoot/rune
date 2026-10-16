@@ -1,0 +1,9 @@
+COUNT unbudgeted secretary-lazy normal rune
+COUNT unbudgeted secretary-lazy normal rune:opt
+COUNT unbudgeted secretary-lazy normal rune:new
+COUNT unbudgeted secretary-lazy normal rune:jit
+COUNT unbudgeted secretary-strict normal rune
+COUNT unbudgeted secretary-strict normal rune:opt
+COUNT unbudgeted secretary-strict normal rune:new
+COUNT unbudgeted secretary-strict normal rune:jit
+COUNT comparisons agree

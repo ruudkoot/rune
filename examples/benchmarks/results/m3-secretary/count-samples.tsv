@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+secretary-lazy	normal	rune	O2	count	1	1	pass	32.05	31.88	0.03	10360	6711738827	9158171456	262998474	counts/measurement.yjtzsh/secretary-lazy/rune/fresh.1
+secretary-lazy	normal	rune:opt	O2	count	1	1	pass	13.58	12.73	0.02	10964	6711738827	9158171456	262998474	counts/measurement.yjtzsh/secretary-lazy/rune-opt/fresh.1
+secretary-lazy	normal	rune:new	O2	count	1	1	pass	25.72	25.41	0.02	10644	3912580675	9158171456	262998474	counts/measurement.yjtzsh/secretary-lazy/rune-new/fresh.1
+secretary-lazy	normal	rune:jit	O2	count	1	1	pass	9.95	10.33	0.03	12052	3912580675	9158171456	262998474	counts/measurement.yjtzsh/secretary-lazy/rune-jit/fresh.1
+secretary-strict	normal	rune	O2	count	1	1	pass	50.79	49.86	0.07	10508	11537535229	14846196920	421928301	counts/measurement.ctsTWt/secretary-strict/rune/fresh.1
+secretary-strict	normal	rune:opt	O2	count	1	1	pass	18.24	19.22	0.02	10960	11537535229	14846196920	421928301	counts/measurement.ctsTWt/secretary-strict/rune-opt/fresh.1
+secretary-strict	normal	rune:new	O2	count	1	1	pass	42.30	40.86	0.03	10632	6694205012	14846196920	421928301	counts/measurement.ctsTWt/secretary-strict/rune-new/fresh.1
+secretary-strict	normal	rune:jit	O2	count	1	1	pass	16.89	15.96	0.02	11808	6694205012	14846196920	421928301	counts/measurement.ctsTWt/secretary-strict/rune-jit/fresh.1
