@@ -1,0 +1,132 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-random.sml]
+[autoloading]
+[autoloading done]
+structure BenchOCamlRandom : sig
+  type state = {index:int ref, words:Word32.word array}
+  val defaultWords : Word32.word vector
+  val seed42Words : Word32.word vector
+  val seed512Words : Word32.word vector
+  val make : Word32.word vector -> state
+  val default : unit -> state
+  val seed42 : unit -> state
+  val seed512 : unit -> state
+  val bits : state -> int
+  val integer : state -> int -> int
+  val real : state -> real -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-multilayer.sml]
+[autoloading]
+[autoloading done]
+structure BenchMultilayer : sig
+  type vector = Real64Array.array
+  type matrix = vector array
+  type sample = vector * vector
+  datatype layer
+    = Layer of {activate:vector -> vector, bias:vector,
+                 derivative:vector -> matrix, weight:matrix}
+  val for : int -> int -> (int -> 'a) -> unit
+  val initMatrix :
+      int
+       -> int -> (int -> int -> Real64Array.elem) -> Real64Array.array array
+  val map :
+      (Real64Array.elem -> Real64Array.elem)
+       -> Real64Array.array -> Real64Array.array
+  val map2 :
+      (Real64Array.elem -> Real64Array.elem -> Real64Array.elem)
+       -> Real64Array.array -> Real64Array.array -> Real64Array.array
+  val mapSum : (Real64Array.elem -> real) -> Real64Array.array -> real
+  val map2Sum :
+      (Real64Array.elem -> Real64Array.elem -> real)
+       -> Real64Array.array -> Real64Array.array -> real
+  val dot : Real64Array.array -> Real64Array.array -> real
+  val axpy : real -> Real64Array.array -> Real64Array.array -> unit
+  val gemv :
+      Real64Array.array array
+       -> Real64Array.array -> Real64Array.array -> Real64Array.array
+  val gemvT :
+      Real64Array.array array -> Real64Array.array -> Real64Array.array
+  val ger : Real64Array.array -> Real64Array.array -> Real64Array.array array
+  val forward : layer list -> Real64Array.array -> Real64Array.array
+  val error : Real64Array.array -> Real64Array.array -> real
+  val errorPrime : Real64Array.array -> Real64Array.array -> Real64Array.array
+  val backprop :
+      layer list
+       -> vector -> Real64Array.array -> (vector * Real64Array.array) list
+  val train : real -> layer list -> vector -> Real64Array.array -> unit
+  val tanh : Real64Array.array -> Real64Array.array
+  val tanhPrime : Real64Array.array -> Real64Array.array array
+  val softmax : Real64Array.array -> Real64Array.array
+  val softmaxPrime : Real64Array.array -> Real64Array.array array
+  val makeLayer :
+      (unit -> Real64Array.elem)
+       -> (vector -> vector) -> (vector -> matrix) -> int -> int -> layer
+  val initialize : (unit -> Real64Array.elem) -> int -> int -> layer list
+  val fit :
+      int
+       -> (Real64Array.array * Real64Array.array) array
+       -> (unit -> Real64Array.elem) -> layer list
+  val evaluate :
+      layer list -> (Real64Array.array * Real64Array.array) array -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/multilayer-files.sml]
+[autoloading]
+[autoloading done]
+structure BenchMultilayerFiles : sig
+  structure K : <sig>
+  type snapshot = {bias:BenchMultilayer.vector, weight:BenchMultilayer.matrix}
+  type reference =
+    {error:real, layers:snapshot list,
+      predictions:BenchMultilayer.vector array}
+  val tokens : string -> string list
+  val real : string -> real
+  val numbers : int -> string list -> Real64Array.array * string list
+  val data : string -> (Real64Array.array * Real64Array.array) array
+  val reference :
+      string
+       -> {error:real,
+        layers:{bias:Real64Array.array, weight:Real64Array.array array} list,
+        predictions:Real64Array.array array}
+  val checkVector :
+      real -> real -> Real64Array.array -> Real64Array.array -> unit
+  val checkParameters : snapshot list -> BenchMultilayer.layer list -> unit
+  val check :
+      reference
+       -> BenchMultilayer.layer list
+       -> (Real64Array.array * Real64Array.array) array -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/naive-multilayer/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure K : <sig>
+  structure F : <sig>
+  val inputs :
+      (Real64Array.array * Real64Array.array) array BenchLazy.state ref
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+FAIL naive-multilayer -- Fail: incorrect result: network value differs
+SUMMARY 1 checks, 1 failed

@@ -1,0 +1,7 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-multilayer.tqvhw7tz
+PASS naive-multilayer smoke O0
+PASS naive-multilayer smoke O2
+PASS naive-multilayer smoke hosts
+PASS naive-multilayer normal O0
+PASS naive-multilayer normal O2
+FAIL naive-multilayer normal hosts

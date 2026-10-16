@@ -1,0 +1,1 @@
+naive-multilayer	30	1048576	shared/input.sml shared/lazy.sml shared/ocaml-random.sml shared/sandmark-multilayer.sml shared/multilayer-files.sml naive-multilayer/benchmark.sml shared/main.sml	1 expected/smoke.txt	naive-multilayer/smoke.expected	data/samples.txt expected/smoke.txt

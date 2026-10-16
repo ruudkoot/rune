@@ -1,0 +1,217 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index f39b6433..f0ea7a01 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -277,6 +277,7 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [durand-kerner-aberth](#durand-kerner-aberth) | [Sandmark durand_kerner_aberth](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/numerical-analysis/durand_kerner_aberth.ml) | Find polynomial roots with simultaneous Durand-Kerner updates and the source circle initialization. |
+ | [qr-decomposition](#qr-decomposition) | [Sandmark qr_decomposition](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/numerical-analysis/qr_decomposition.ml) | Build dense Householder QR factors and check orthogonality and complete reconstruction. |
+ | [crout-decomposition](#crout-decomposition) | [Sandmark crout_decomposition](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/numerical-analysis/crout_decomposition.ml) | Run source-specific Crout updates and dense permutation reconstruction with reviewed numerical outputs. |
++| [naive-multilayer](#naive-multilayer) | [Sandmark neural network](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/numerical-analysis/naive_multilayer.ml) | Train a sequential multilayer classifier using dense Jacobian backpropagation on the complete Ionosphere dataset. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -379,6 +380,7 @@ sh tests/benchmarks/check-clausify.sh
+ sh tests/benchmarks/check-puzzle.sh
+ sh tests/benchmarks/check-sandmark-fft.sh
+ sh tests/benchmarks/check-sandmark-numerical.sh
++sh tests/benchmarks/check-multilayer.sh
+ python3 tests/benchmarks/test-inventory.py
+ python3 scripts/benchmark-inventory.py --check
+ ```
+@@ -10548,3 +10550,82 @@ Standard comparisons use identical SML; OCaml and rational arithmetic supply
+ correctness references for the actual source behavior.
+ 
+ [Complete provenance](crout-decomposition/PROVENANCE.md).
++
++## naive-multilayer
++
++Sandmark 5605805954a00497ed197c930641cddd580e1507,
++benchmarks/numerical-analysis/naive_multilayer.ml,
++naive_multilayer_dataset.ml and dune. Retain the MIT notice, Copyright 2015
++Akinori ABE, and OCamlPro adaptation credit. The deterministic default RNG is
++OCaml 4.14.1's generator; the existing shared SML port retains its default state
++and draw operations, with original source and LGPL 2.1/linking-exception notice.
++
++## Algorithm and variants
++
++Train a 34-input, 10/5-hidden-unit, 2-output network with tanh hidden activations,
++softmax output and sequential stochastic gradient descent at eta 0.01. Preserve
++all 351 samples in source order, full activation Jacobian matrices, recursive
++backpropagation, explicit gradient outer-product matrices and scalar parameter
++updates. Compute every layer's delta before mutating any layer's parameters.
++Do not simplify the softmax/cross-entropy delta or replace dense Jacobians by
++diagonal-vector operations in the measured program. Source gradient diagnostics
++and unused/shadowed linear activation definitions are not selected by Main.
++
++OCaml's observed initialization builds the output layer, second hidden layer,
++then first hidden layer; each layer draws bias values before weight values.
++The SML port makes that order explicit. All 417 initial parameter values agree
++bit for bit with the original observer, verifying RNG and evaluation order.
++Gradient/error arrays are also constructed before their paired Jacobian
++arguments, retaining the source's argument evaluation/allocation order.
++This imperative sequential program has no separately meaningful lazy variant.
++
++Float arrays become RealArray rows under outer Arrays. Higher-order activation
++and derivative fields remain functions; mutable accumulators and fresh arrays
++are retained. For loops become portable tail loops. Selected dimensions/counters
++fit 31 bits and supported hosts use binary64 real arithmetic. No parallelism,
++effect handler, external linear-algebra library or new runtime feature is needed.
++
++## Data, profiles and result checks
++
++Use the complete UCI Ionosphere dataset: 351 rows, 34 features and two classes.
++Every source value, label and row position agrees exactly with the downloaded
++canonical data. Preserve shared one-hot good/bad target vectors. Retain the raw
++upstream module, original UCI data/names files, data identities, CC BY 4.0 notice
++and attribution to Sigillito, Wing, Hutton and Baker. Numeric text conversion
++preserves the source decimal values; no normalization, shuffle or split is added.
++
++Smoke 1 epoch and normal 20 are reduced iteration settings. Large preserves
++Main's 1,000 epochs. Every invocation constructs a fresh model from the original
++default RNG state; this reproduces the source's first process invocation.
++Repeated in-process calls reset the model/RNG explicitly, rather than advancing
++the source's global Random state. Read-only sample data load once on the first
++run through a memoized SML delay, keeping file I/O out of host export. Input
++parsing, initialization and per-run reference checking are measured work.
++
++The original discards its trained network. The suite checks all 417 weights/
++biases, all 702 prediction components and total cross-entropy before reporting
++epochs:samples:checked. Parameter/prediction bounds are 2e-8+2e-7*abs(reference);
++loss bounds are 1e-7+1e-7*abs(reference). Also check finite values, dimensions,
++probability range and sums within 1e-12. These are selected-profile budgets,
++not convergence/generalization guarantees. Predictions use the training data.
++
++All original 1,000-epoch execution and 0/1/20/1,000 observer runs complete with
++reviewed outputs. Independent structured-derivative SGD validates smoke/normal
++without the source's dense Jacobians: parameter differences below 2.6e-15,
++predictions below 1.7e-15 and loss below 2.9e-14. Finite differences independently
++check every parameter gradient in a small network. Negative checks cover
++wrong/missing/nonfinite parameters and tolerance boundaries. Large SML
++execution is claimed only where separately recorded.
++
++## References and diagnostic questions
++
++[UCI Ionosphere](https://doi.org/10.24432/C5W01B) records the dataset and source
++study. [Rumelhart, Hinton and Williams (1986)](https://doi.org/10.1038/323533a0)
++anchors backpropagation. The retained program specifies this particular dense
++Jacobian implementation, initialization and updates. Function-field
++specialization, real boxing, temporary matrices, mutable refs, data initialization,
++math-library calls and allocation lifetimes are diagnostic questions until
++supported by compiler inspection or measurement. Standard comparisons use
++identical SML; OCaml and independent training supply correctness references.
++
++[Complete provenance](naive-multilayer/PROVENANCE.md).
+diff --git a/examples/benchmarks/literature.md b/examples/benchmarks/literature.md
+index 746c14ce..5519f844 100644
+--- a/examples/benchmarks/literature.md
++++ b/examples/benchmarks/literature.md
+@@ -102,6 +102,17 @@ high-precision refinement/coefficient reconstruction and one-to-one root matchin
+ validate selected outputs. Convergence variation, boxing and allocation require
+ separate investigation before assigning performance causes.
+ 
++The [sequential multilayer workload](naive-multilayer/PROVENANCE.md) adds
++mutable model parameters, higher-order activation fields and dense Jacobian
++allocation. Rumelhart, Hinton and Williams's
++[backpropagation paper](https://doi.org/10.1038/323533a0) (1986) supplies method
++context. The [Ionosphere dataset record](https://doi.org/10.24432/C5W01B)
++provides provenance, citation and licensing. Gradient finite differences and
++independent structured-derivative training check the selected model results;
++training-set predictions are correctness observations. They do not establish
++generalization performance. Compiler specialization, temporary arrays and
++input/model initialization need separate investigation.
++
+ ## Decision diagrams and closure lifetimes
+ 
+ Welch's [*A Technique for High-Performance Data Compression*](https://doi.org/10.1109/MC.1984.1659158)
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 5c3f92bb..0008d392 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -800,3 +800,6 @@ qr-decomposition	large	sandmark	benchmarks/numerical-analysis/qr_decomposition.e
+ crout-decomposition	smoke	sandmark	benchmarks/numerical-analysis/crout_decomposition.exe	6 expected/smoke.txt	crout-decomposition/smoke.expected	shared/input.sml,shared/lazy.sml,shared/sandmark-crout.sml,shared/numerical-matrix-files.sml,crout-decomposition/benchmark.sml,shared/main.sml	30	1048576	numerical,floating-point,arrays,scalar-references,source-pivot-limitation	data/matrix.txt,expected/smoke.txt	exact	implemented
+ crout-decomposition	normal	sandmark	benchmarks/numerical-analysis/crout_decomposition.exe	128 expected/normal.txt	crout-decomposition/normal.expected	shared/input.sml,shared/lazy.sml,shared/sandmark-crout.sml,shared/numerical-matrix-files.sml,crout-decomposition/benchmark.sml,shared/main.sml	600	4194304	numerical,floating-point,arrays,scalar-references,source-pivot-limitation	data/matrix.txt,expected/normal.txt	exact	implemented
+ crout-decomposition	large	sandmark	benchmarks/numerical-analysis/crout_decomposition.exe	2730 expected/large.txt	crout-decomposition/large.expected	shared/input.sml,shared/lazy.sml,shared/sandmark-crout.sml,shared/numerical-matrix-files.sml,crout-decomposition/benchmark.sml,shared/main.sml	3600	8388608	numerical,floating-point,arrays,scalar-references,source-pivot-limitation	data/matrix.txt,expected/large.txt	exact	implemented
++naive-multilayer	smoke	sandmark	benchmarks/numerical-analysis/naive_multilayer.exe	1 expected/smoke.txt	naive-multilayer/smoke.expected	shared/input.sml,shared/lazy.sml,shared/ocaml-random.sml,shared/sandmark-multilayer.sml,shared/multilayer-files.sml,naive-multilayer/benchmark.sml,shared/main.sml	30	1048576	numerical,neural-network,higher-order,arrays,floating-point,allocation-lifetimes	data/samples.txt,expected/smoke.txt	exact	implemented
++naive-multilayer	normal	sandmark	benchmarks/numerical-analysis/naive_multilayer.exe	20 expected/normal.txt	naive-multilayer/normal.expected	shared/input.sml,shared/lazy.sml,shared/ocaml-random.sml,shared/sandmark-multilayer.sml,shared/multilayer-files.sml,naive-multilayer/benchmark.sml,shared/main.sml	600	4194304	numerical,neural-network,higher-order,arrays,floating-point,allocation-lifetimes	data/samples.txt,expected/normal.txt	exact	implemented
++naive-multilayer	large	sandmark	benchmarks/numerical-analysis/naive_multilayer.exe	1000 expected/large.txt	naive-multilayer/large.expected	shared/input.sml,shared/lazy.sml,shared/ocaml-random.sml,shared/sandmark-multilayer.sml,shared/multilayer-files.sml,naive-multilayer/benchmark.sml,shared/main.sml	3600	8388608	numerical,neural-network,higher-order,arrays,floating-point,allocation-lifetimes	data/samples.txt,expected/large.txt	exact	implemented
+diff --git a/scripts/measure-benchmarks.sh b/scripts/measure-benchmarks.sh
+index 37123316..d07794f7 100644
+--- a/scripts/measure-benchmarks.sh
++++ b/scripts/measure-benchmarks.sh
+@@ -73,7 +73,7 @@ git diff --binary HEAD > "$out/worktree.patch"
+ git status --porcelain > "$out/worktree-status.txt"
+ cp examples/benchmarks/manifest.tsv examples/benchmarks/upstreams.tsv "$out/"
+ mkdir -p "$out/tool-sources"
+-for path in scripts/measure-benchmarks.sh tests/basis/run-matrix.sh examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/catalog-main.sml examples/benchmarks/shared/report.sml examples/benchmarks/shared/report-main.sml examples/benchmarks/shared/counts.sml examples/benchmarks/shared/counts-main.sml; do
++for path in scripts/measure-benchmarks.sh scripts/benchmark-result.sh tests/basis/run-matrix.sh examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/catalog-main.sml examples/benchmarks/shared/report.sml examples/benchmarks/shared/report-main.sml examples/benchmarks/shared/counts.sml examples/benchmarks/shared/counts-main.sml; do
+   destination=$out/tool-sources/$path
+   mkdir -p "$(dirname "$destination")"
+   cp "$path" "$destination"
+@@ -96,14 +96,8 @@ execute() {
+       bench-limit "$quota" "$memory" "$@" < "$phase_input" > "$phase_dir/stdout" 2> "$phase_dir/stderr" || phase_exit=$?
+   printf '%s\n' "$phase_exit" > "$phase_dir/exit"
+ }
+-classify() {
+-  category=pass
+-  if [ "$phase_exit" = 124 ]; then category=timeout
+-  elif [ "$phase_exit" = 125 ]; then category=limit-setup-failure
+-  elif grep -Eiq 'out of memory|allocation failed|cannot allocate memory|heap limit|insufficient memory|unable to reserve' "$phase_dir/stderr" "$phase_dir/stdout"; then category=memory-limit
+-  elif [ "$phase_exit" != 0 ]; then category=$1
+-  fi
+-}
++. "$root/scripts/benchmark-result.sh"
++
+ record() {
+   record_phase=$1; record_process=$2; record_round=$3; record_category=$4; record_seconds=${5:-}
+   metrics=$(tail -1 "$phase_dir/os.tsv" 2>/dev/null || true)
+@@ -114,16 +108,7 @@ record() {
+     "$name" "$profile" "$id" "$level" "$record_phase" "$record_process" "$record_round" "$record_category" \
+     "$record_seconds" "$(printf '%s\n' "$metrics" | cut -f2-)" "$counters" "${phase_dir#"$out"/}" >> "$out/samples.tsv"
+ }
+-validate() {
+-  classify runtime-failure
+-  if grep -Eq '^FAIL .* -- (incorrect result|expected )' "$phase_dir/stdout"; then category=incorrect-result; fi
+-  if [ "$category" = pass ]; then
+-    if ! grep -q "^SUMMARY $rounds checks, 0 failed$" "$phase_dir/stdout" || \
+-       grep -q '^FAIL ' "$phase_dir/stdout" || \
+-       [ "$(grep -c '^PASS ' "$phase_dir/stdout")" != "$rounds" ]; then category=incorrect-result; fi
+-  fi
+-  [ "$category" = pass ] || status=1
+-}
++
+ stage_data() {
+   destination=$1
+   mkdir -p "$destination"
+diff --git a/tests/benchmarks/check-measurement.sh b/tests/benchmarks/check-measurement.sh
+index e8bc0b13..e4c84f84 100644
+--- a/tests/benchmarks/check-measurement.sh
++++ b/tests/benchmarks/check-measurement.sh
+@@ -19,6 +19,28 @@ if bin/runevm "$out/negative.rbc" < "$out/input" > "$out/negative.out"; then ech
+ ! grep -q '^SAMPLE ' "$out/negative.out"
+ grep -q '^FAIL ' "$out/negative.out"
+ echo 'bench-measurement: wrong results supply no repeated timing samples'
++# Numerical validators raise an explicit correctness exception; classify its
++# actual portable-driver output separately from an ordinary runtime exception.
++. "$root/scripts/benchmark-result.sh"
++for failure in numeric runtime; do
++  phase_dir=$out/$failure-error
++  mkdir -p "$phase_dir"
++  case $failure in
++    numeric) expression='raise Fail "incorrect result: perturbed numerical value"'; expected_category=incorrect-result ;;
++    runtime) expression='raise Div'; expected_category=runtime-failure ;;
++  esac
++  printf 'structure Benchmark = struct val name="negative" fun run (_:string list):string = %s end\n' "$expression" > "$phase_dir/benchmark.sml"
++  bin/rune --lint "$phase_dir/benchmark.sml" examples/benchmarks/shared/measure.sml "$out/launch.sml" -o "$phase_dir/prog.rbc"
++  printf 'negative\nunused\nunused\n1\n' > "$phase_dir/input"
++  phase_exit=0
++  bin/runevm "$phase_dir/prog.rbc" < "$phase_dir/input" > "$phase_dir/stdout" 2> "$phase_dir/stderr" || phase_exit=$?
++  [ "$phase_exit" != 0 ] || { echo 'exception accepted as a successful measurement' >&2; exit 1; }
++  rounds=1; status=0
++  validate
++  [ "$category" = "$expected_category" ] && [ "$status" = 1 ] || { echo 'measurement exception category differs' >&2; exit 1; }
++  ! grep -q '^SAMPLE ' "$phase_dir/stdout"
++done
++echo 'bench-measurement: numerical correctness and runtime exceptions have distinct failure categories'
+ if RUNEVM_OPTIONS=--count sh scripts/measure-benchmarks.sh time --filter tak > "$out/instrumented.log" 2>&1; then
+   echo 'instrumented run accepted as headline timing' >&2; exit 1
+ fi

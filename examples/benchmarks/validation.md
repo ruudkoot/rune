@@ -1272,3 +1272,41 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 matching bytecode comparisons across seven compiler builds.
 runedoc and runeopt also agree. [The complete transcript](validation/oct16-sequential-numerical-801-acceptance.log)
 records the run. All 41 inventory tests pass and all 861 entries validate.
+
+## M5 sequential neural network and M6 failure categories, 2026-10-16
+
+One import brings the catalogue to 270 programs and 804 profiles. [All 28
+smoke/normal cases](results/m5-multilayer/coverage.tsv) are accounted for: 27 pass;
+legacy64 SML/NJ normal produces an incorrect numerical result. Every Rune engine
+passes both profiles at both levels, and all other native hosts pass. Twelve
+semantic/negative checks run on all ten configurations at both levels. All pass
+except native32's strict decimal initialization comparison, once per level.
+Four normal Rune count samples agree with unchanged budgets. Instrumented
+samples and the initial native adapter diagnostics are separate from headline timings.
+
+The port retains complete Ionosphere data, RNG/evaluation order, full Jacobian
+and gradient matrices, SGD and the original large iteration count. All source
+input values/labels/order match UCI data with retained CC BY 4.0 attribution.
+Rune/MLton match all 417 initial parameters exactly. Independent structured
+training agrees on complete smoke/normal parameters, predictions and loss;
+finite differences check all parameters in a small network. Original large
+outputs are retained; universal large SML execution is not claimed.
+
+[Host findings](validation/multilayer-smlnj.md) separate GC-sensitive legacy64
+NaNs from native32 decimal reading. Nursery diagnostics are consistent with the
+existing GC report without reducing the exact failing entry. Exact dyadic
+references verify all 417 generated parameters; native32 misreads 62 decimal
+references by one ulp. Benchmark arithmetic, fixtures and standard configurations
+remain unchanged. Failed results supply no accepted timing samples.
+
+M6's shared classifier now recognizes explicit numerical-check exceptions with
+the portable Fail prefix, separating incorrect results from runtime failures.
+Compiled negative-result/Div probes and the existing four-host measurement
+checks pass, including instrumentation rejection and worker isolation. Tool
+snapshots include the classifier. M5 remains in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 804 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 matching bytecode comparisons across seven compiler builds.
+runedoc and runeopt also agree. [The complete transcript](validation/oct16-multilayer-804-acceptance.log)
+records the run. All 41 inventory tests pass and all 861 entries validate.

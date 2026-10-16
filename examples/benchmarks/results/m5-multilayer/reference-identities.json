@@ -1,0 +1,8 @@
+{
+  "ocamlopt": "4.14.1",
+  "options": [
+    "-O2"
+  ],
+  "sandmark_revision": "5605805954a00497ed197c930641cddd580e1507",
+  "reference_role": "original model outputs and independent structured-derivative training"
+}

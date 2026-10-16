@@ -1,0 +1,3 @@
+bench-measurement: statistics, execution-model comparisons and budget failures passed on four compilers
+bench-measurement: wrong results supply no repeated timing samples
+examples/benchmarks/shared/measure.sml:20:21: error: unbound variable or constructor: BenchInput.between

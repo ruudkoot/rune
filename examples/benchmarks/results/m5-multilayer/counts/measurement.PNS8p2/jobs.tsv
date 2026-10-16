@@ -1,0 +1,1 @@
+naive-multilayer	600	4194304	shared/input.sml shared/lazy.sml shared/ocaml-random.sml shared/sandmark-multilayer.sml shared/multilayer-files.sml naive-multilayer/benchmark.sml shared/main.sml	20 expected/normal.txt	naive-multilayer/normal.expected	data/samples.txt expected/normal.txt

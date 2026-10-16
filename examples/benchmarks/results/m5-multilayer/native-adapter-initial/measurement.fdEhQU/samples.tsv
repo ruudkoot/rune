@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+naive-multilayer	smoke	native:mlton@20241230	O2	compile	0	0	pass	4.86	4.13	0.82	667984	-	-	-	naive-multilayer/native-mlton/build/compile
+naive-multilayer	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.01	0.01	0.00	12336	-	-	-	naive-multilayer/native-mlton/correctness.0
+naive-multilayer	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.01	0.01	0.00	12448	-	-	-	naive-multilayer/native-mlton/fresh.1
+naive-multilayer	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.33	0.30	0.02	36552	-	-	-	naive-multilayer/native-smlnj-legacy/build/compile
+naive-multilayer	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	runtime-failure	0.03	0.02	0.01	6544	-	-	-	naive-multilayer/native-smlnj-legacy/correctness.0
+naive-multilayer	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.32	0.18	0.07	42244	-	-	-	naive-multilayer/native-polyml/build/compile
+naive-multilayer	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.04	0.04	0.00	14688	-	-	-	naive-multilayer/native-polyml/correctness.0
+naive-multilayer	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.06	0.04	0.02	14076	-	-	-	naive-multilayer/native-polyml/fresh.1

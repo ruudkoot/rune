@@ -19,6 +19,28 @@ if bin/runevm-stack "$out/negative.rbc" < "$out/input" > "$out/negative.out"; th
 ! grep -q '^SAMPLE ' "$out/negative.out"
 grep -q '^FAIL ' "$out/negative.out"
 echo 'bench-measurement: wrong results supply no repeated timing samples'
+# Numerical validators raise an explicit correctness exception; classify its
+# actual portable-driver output separately from an ordinary runtime exception.
+. "$root/scripts/benchmark-result.sh"
+for failure in numeric runtime; do
+  phase_dir=$out/$failure-error
+  mkdir -p "$phase_dir"
+  case $failure in
+    numeric) expression='raise Fail "incorrect result: perturbed numerical value"'; expected_category=incorrect-result ;;
+    runtime) expression='raise Div'; expected_category=runtime-failure ;;
+  esac
+  printf 'structure Benchmark = struct val name="negative" fun run (_:string list):string = %s end\n' "$expression" > "$phase_dir/benchmark.sml"
+  bin/rune --lint examples/benchmarks/shared/input.sml "$phase_dir/benchmark.sml" examples/benchmarks/shared/measure.sml "$out/launch.sml" -o "$phase_dir/prog.rbc"
+  printf 'negative\nunused\nunused\n1\n' > "$phase_dir/input"
+  phase_exit=0
+  bin/runevm "$phase_dir/prog.rbc" < "$phase_dir/input" > "$phase_dir/stdout" 2> "$phase_dir/stderr" || phase_exit=$?
+  [ "$phase_exit" != 0 ] || { echo 'exception accepted as a successful measurement' >&2; exit 1; }
+  rounds=1; status=0
+  validate
+  [ "$category" = "$expected_category" ] && [ "$status" = 1 ] || { echo 'measurement exception category differs' >&2; exit 1; }
+  ! grep -q '^SAMPLE ' "$phase_dir/stdout"
+done
+echo 'bench-measurement: numerical correctness and runtime exceptions have distinct failure categories'
 if RUNEVM_OPTIONS=--count sh scripts/measure-benchmarks.sh time --filter tak > "$out/instrumented.log" 2>&1; then
   echo 'instrumented run accepted as headline timing' >&2; exit 1
 fi

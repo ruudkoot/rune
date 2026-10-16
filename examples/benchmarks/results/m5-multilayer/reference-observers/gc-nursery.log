@@ -1,0 +1,2 @@
+{'nursery': '128k', 'exit': 1, 'passed_profiles': 2, 'complete': False}
+{'nursery': '64m', 'exit': 0, 'passed_profiles': 3, 'complete': True}

@@ -1,0 +1,5 @@
+COUNT unbudgeted naive-multilayer normal rune
+COUNT unbudgeted naive-multilayer normal rune:opt
+COUNT unbudgeted naive-multilayer normal rune:new
+COUNT unbudgeted naive-multilayer normal rune:jit
+COUNT comparisons agree
