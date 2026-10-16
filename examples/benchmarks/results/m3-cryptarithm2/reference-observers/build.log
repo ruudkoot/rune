@@ -1,0 +1,9 @@
+[1 of 2] Compiling Main             ( tests/out/benchmarks/cryptarithm2-originals/Main.hs, tests/out/benchmarks/cryptarithm2-originals/build/Main.o )
+
+tests/out/benchmarks/cryptarithm2-originals/Main.hs:36:1: warning: [-Wtabs]
+    Tab character found here, and in 55 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+36 |                 digits :: [Int],
+   | ^^^^^^^^
+[2 of 2] Linking tests/out/benchmarks/cryptarithm2-originals/original

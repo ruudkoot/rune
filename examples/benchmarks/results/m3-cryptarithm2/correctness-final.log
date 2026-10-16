@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-cryptarithm2.fss9fq2e
+PASS cryptarithm2-lazy smoke O0
+PASS cryptarithm2-lazy smoke O2
+PASS cryptarithm2-lazy smoke hosts
+PASS cryptarithm2-lazy normal O0
+PASS cryptarithm2-lazy normal O2
+PASS cryptarithm2-lazy normal hosts
+PASS cryptarithm2-strict smoke O0
+PASS cryptarithm2-strict smoke O2
+PASS cryptarithm2-strict smoke hosts
+PASS cryptarithm2-strict normal O0
+PASS cryptarithm2-strict normal O2
+PASS cryptarithm2-strict normal hosts

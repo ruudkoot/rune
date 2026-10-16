@@ -1,0 +1,2 @@
+cryptarithm2-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/cell-sequence.sml shared/nofib-cryptarithm2.sml cryptarithm2-lazy/benchmark.sml shared/main.sml	300 expected/mapping.txt	cryptarithm2-lazy/normal.expected	expected/mapping.txt
+cryptarithm2-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/cell-sequence.sml shared/nofib-cryptarithm2.sml cryptarithm2-strict/benchmark.sml shared/main.sml	300 expected/mapping.txt	cryptarithm2-strict/normal.expected	expected/mapping.txt

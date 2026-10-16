@@ -1,0 +1,34 @@
+[
+  {
+    "profile": "smoke",
+    "count": 1,
+    "timeout": 30,
+    "memory_bytes": 1073741824,
+    "output_bytes": 70,
+    "output_sha256": "7eeed23975c072e9d04353909024287a15e433c22587656f410add836c7f4224"
+  },
+  {
+    "profile": "normal",
+    "count": 300,
+    "timeout": 600,
+    "memory_bytes": 4294967296,
+    "output_bytes": 21000,
+    "output_sha256": "dedadaa89bea5f44c8f8c6d643f0508a451343a155c2408efff5c52cd508704f"
+  },
+  {
+    "profile": "large",
+    "count": 1500,
+    "timeout": 3600,
+    "memory_bytes": 8589934592,
+    "output_bytes": 105000,
+    "output_sha256": "df274b1cea530ede8ef69dde0565fece36230568f1e6613a202e802ddc75bd42"
+  },
+  {
+    "profile": "upstream-fast",
+    "count": 30,
+    "timeout": 30,
+    "memory_bytes": 1073741824,
+    "output_bytes": 2100,
+    "output_sha256": "ca231636d962bbb49a9e362a5be77c84d9b67ade3629b7d726c46a8e17ec2ad9"
+  }
+]

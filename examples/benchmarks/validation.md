@@ -1035,3 +1035,29 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 matching bytecode comparisons across seven compiler builds.
 runedoc and runeopt also agree. [The complete transcript](validation/oct16-zarith-744-acceptance.log)
 records the run. All 38 inventory tests pass and all 861 entries validate.
+
+## M3 column-pruned cryptarithm search, 2026-10-16
+
+Two imports bring the catalogue to 252 programs and 750 profiles. [All 56
+smoke/normal cases](results/m3-cryptarithm2/correctness.tsv) pass on Rune's four
+engines at both levels and all six managed native hosts. Ten semantic checks
+pass all ten configurations at both levels. Eight normal count samples pass
+and applicable comparisons agree; these unbudgeted instrumented samples remain
+separate from headline timings.
+
+The shared state/list-search functor preserves digit allocation and environment
+order, lookup, mapM selection, column pruning and carry propagation. Need uses
+memoized value/state cells and first-answer demand; strict evaluation retains
+finite alternatives. Original GHC, independent exhaustive assignment search,
+full solution-state observers and every pinned stdout fixture agree. Normal
+300/large 1,500 repetitions and source-dependent input construction remain intact.
+Input preprocessing, suspension representation and output-checking adaptations
+are documented with individual program/library notices and source identities.
+No universal large SML execution or historical speed claim is introduced.
+M3 remains in progress.
+
+Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 750 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 matching bytecode comparisons across seven compiler builds.
+runedoc and runeopt also agree. [The complete transcript](validation/oct16-cryptarithm2-750-acceptance.log)
+records the run. All 38 inventory tests pass and all 861 entries validate.

@@ -1,0 +1,5 @@
+PASS independent exhaustive 10! assignment search: unique solution
+PASS original, independent mapping and available pinned fixture smoke 1
+PASS original, independent mapping and available pinned fixture normal 300
+PASS original, independent mapping and available pinned fixture large 1500
+PASS original, independent mapping and available pinned fixture upstream-fast 30

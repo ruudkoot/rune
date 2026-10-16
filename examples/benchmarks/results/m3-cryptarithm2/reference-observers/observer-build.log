@@ -1,0 +1,10 @@
+[1 of 3] Compiling Main             ( tests/out/benchmarks/cryptarithm2-originals/Main.hs, tests/out/benchmarks/cryptarithm2-originals/observer-build/Main.o )
+
+tests/out/benchmarks/cryptarithm2-originals/Main.hs:36:1: warning: [-Wtabs]
+    Tab character found here, and in 55 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+36 |                 digits :: [Int],
+   | ^^^^^^^^
+[2 of 3] Compiling Observer         ( tests/out/benchmarks/cryptarithm2-originals/Observer.hs, tests/out/benchmarks/cryptarithm2-originals/observer-build/Observer.o )
+[3 of 3] Linking tests/out/benchmarks/cryptarithm2-originals/observer

@@ -266,6 +266,8 @@ inventory entry.
 | [zarith_tak-natint](#zarith_tak-natint) | [Sandmark zarith_tak](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/zarith/zarith_tak.ml) | Evaluate repeated Takeuchi calls using natint integer operations. |
 | [zarith_tak-num](#zarith_tak-num) | [Sandmark zarith_tak](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/zarith/zarith_tak.ml) | Evaluate repeated Takeuchi calls using num integer operations. |
 | [zarith_pi](#zarith_pi) | [Sandmark zarith_pi](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/zarith/zarith_pi.ml) | Generate and check streaming pi digits with full four-coefficient integer transformations. |
+| [cryptarithm2-lazy](#cryptarithm2-lazy) | [nofib cryptarithm2](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/cryptarithm2) | Solve a column-pruned cryptarithm with memoized state/list search and check the complete ordered mapping. |
+| [cryptarithm2-strict](#cryptarithm2-strict) | [nofib cryptarithm2](https://github.com/ghc/nofib/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/cryptarithm2) | Solve a column-pruned cryptarithm with eager state/list search and check the complete ordered mapping. |
 
 ## Running and interpreting checks
 
@@ -8973,3 +8975,169 @@ then returns a checked-count marker; checking/storage/IO costs are explicit.
 All internal arithmetic is arbitrary precision; small loop controls fit 31 bits.
 
 Numeric representations, evaluation order, adaptation costs, authorship, notices, inputs, checks and runtime hypotheses are detailed in [the workload provenance](zarith_pi/PROVENANCE.md).
+
+## cryptarithm2-lazy
+
+Solve a column-pruned cryptarithm with memoized state/list search and check the complete ordered mapping.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, spectral/cryptarithm2,
+Main.hs/Makefile and all three upstream stdout fixtures. Andy Gill's October 1999
+header identifies the author and explains the column-pruning guard. Retain the
+full header; an individual license grant for the program is unstated. Puzzle
+words are embedded program data, with no external dataset. Original source
+imports transformers; the reference uses GHC 9.4.7 / transformers 0.5.6.2. Retained
+State/State.Lazy/Class sources are pinned to transformers commit
+0fe761c9287111373ae64ab39b67fbcde212b3f7 (release 0.5.6.2), with complete BSD notices
+and authorship headers. The State re-export selects the lazy module.
+
+### Algorithm, variants and translation
+
+Preserve the ordered list-of-successes state search, remaining-digit deletion,
+reverse-chronological association list, lookup-before-allocation, mapM selection,
+column summation, units-digit guard and carry propagation. The main puzzle is
+THIRTY + five TWELVEs = NINETY. Leading zero assignments remain legal; no extra
+pruning rule or mutable in-place permutation algorithm is substituted.
+`cryptarithm1` exhaustively filters a different permutation enumeration and is
+separately scheduled, rather than identified as a duplicate by puzzle name.
+
+SML97 translates the used StateT operations into functions from state to
+memoized sequences of delayed value/state pairs. Record fields, remaining-digit
+lists and environment cells stay delayed/shared in Need. Branch dispatch
+inspects a result-pair constructor; values and state remain independently delayed.
+This is the program's state/list search, not a general-purpose Haskell typeclass
+library port. Shared initial digits are built once per functor instance.
+The strict policy uses the same code and fully materializes finite branches;
+it can evaluate alternatives past the first solution. Need retains the original
+first-answer demand. Explicit suspension cells, closures and generic SML types
+change representation/allocation and are documented translation costs.
+
+Input word strings, reversing and ragged transpose use ordinary finite SML
+lists prepared once per puzzle call. Search-result and state sequences remain
+explicitly lazy in Need. These small input spines are acquired eagerly rather
+than using Haskell character-list demand; every selected complete solution needs
+all columns. Symbol counting, dictionary ordering, final arithmetic verification
+and map formatting remain intact. Integer arithmetic uses default int: digit,
+carry, six-place expanded values and six-word sums all fit signed 31 bits for the
+fixed profiles, preserving GHC Int arithmetic without overflow.
+
+### Profiles and correctness
+
+Smoke 1 is bounded for routine correctness; normal 300 and large 1500 preserve
+published NORM/SLOW repetitions, and original FAST 30 is also checked as a
+reference. Each iteration constructs the original word list with its i>999999
+conditional; no selected iteration takes the extra-symbol branch. Each puzzle
+call performs fresh search with the shared initial digit list. It validates the
+sum, renders the complete mapping in original environment order, and compares
+all bytes to a reviewed 70-byte original fixture. The driver consumes output
+lengths and returns repetition/byte counts rather than printing repeated maps.
+The fixture read and byte comparisons replace original stdout IO; their cost
+is part of suite execution and is explicit.
+
+An independent exhaustive 10! assignment search establishes a unique mapping.
+GHC observers compare the full solution state and first-answer text. Original
+smoke/FAST/normal/large runs match the independent mapping and all available
+pinned stdout fixtures byte for byte. Semantic checks cover both full searches,
+rendering, ragged transpose, deletion of only the first occurrence, variant
+agreement on smaller puzzles, carry rejection, leading-zero acceptance and
+non-demand of unused digits/choice tails. Large SML execution is claimed only
+for recorded cases.
+
+### References and runtime questions
+
+The source cites [Jones, Functional Programming with Overloading and Higher-Order
+Polymorphism](https://web.cecs.pdx.edu/~mpj/pubs/springschool.html), Advanced
+Functional Programming, LNCS 925, 1995, as its monad-library background. The
+[retained program](https://github.com/ghc/nofib/blob/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/cryptarithm2/Main.hs)
+and pinned library definitions establish this implementation's actual search.
+Jones's paper supplies background, not performance measurements of this port.
+
+Branch ordering, state lookup/extension, backtracking allocation, pruning,
+closure specialization and suspension sharing are source-based hypotheses
+until investigated with measurements or compiler inspection. Standard compiler
+comparisons use identical SML; Haskell is a correctness reference. No historical
+speed claim in a source comment is transferred to Rune.
+
+[Complete provenance](cryptarithm2-lazy/PROVENANCE.md).
+
+## cryptarithm2-strict
+
+Solve a column-pruned cryptarithm with eager state/list search and check the complete ordered mapping.
+
+nofib `b7391df4540ac8b11b35e1b2e2c15819b5171798`, spectral/cryptarithm2,
+Main.hs/Makefile and all three upstream stdout fixtures. Andy Gill's October 1999
+header identifies the author and explains the column-pruning guard. Retain the
+full header; an individual license grant for the program is unstated. Puzzle
+words are embedded program data, with no external dataset. Original source
+imports transformers; the reference uses GHC 9.4.7 / transformers 0.5.6.2. Retained
+State/State.Lazy/Class sources are pinned to transformers commit
+0fe761c9287111373ae64ab39b67fbcde212b3f7 (release 0.5.6.2), with complete BSD notices
+and authorship headers. The State re-export selects the lazy module.
+
+### Algorithm, variants and translation
+
+Preserve the ordered list-of-successes state search, remaining-digit deletion,
+reverse-chronological association list, lookup-before-allocation, mapM selection,
+column summation, units-digit guard and carry propagation. The main puzzle is
+THIRTY + five TWELVEs = NINETY. Leading zero assignments remain legal; no extra
+pruning rule or mutable in-place permutation algorithm is substituted.
+`cryptarithm1` exhaustively filters a different permutation enumeration and is
+separately scheduled, rather than identified as a duplicate by puzzle name.
+
+SML97 translates the used StateT operations into functions from state to
+memoized sequences of delayed value/state pairs. Record fields, remaining-digit
+lists and environment cells stay delayed/shared in Need. Branch dispatch
+inspects a result-pair constructor; values and state remain independently delayed.
+This is the program's state/list search, not a general-purpose Haskell typeclass
+library port. Shared initial digits are built once per functor instance.
+The strict policy uses the same code and fully materializes finite branches;
+it can evaluate alternatives past the first solution. Need retains the original
+first-answer demand. Explicit suspension cells, closures and generic SML types
+change representation/allocation and are documented translation costs.
+
+Input word strings, reversing and ragged transpose use ordinary finite SML
+lists prepared once per puzzle call. Search-result and state sequences remain
+explicitly lazy in Need. These small input spines are acquired eagerly rather
+than using Haskell character-list demand; every selected complete solution needs
+all columns. Symbol counting, dictionary ordering, final arithmetic verification
+and map formatting remain intact. Integer arithmetic uses default int: digit,
+carry, six-place expanded values and six-word sums all fit signed 31 bits for the
+fixed profiles, preserving GHC Int arithmetic without overflow.
+
+### Profiles and correctness
+
+Smoke 1 is bounded for routine correctness; normal 300 and large 1500 preserve
+published NORM/SLOW repetitions, and original FAST 30 is also checked as a
+reference. Each iteration constructs the original word list with its i>999999
+conditional; no selected iteration takes the extra-symbol branch. Each puzzle
+call performs fresh search with the shared initial digit list. It validates the
+sum, renders the complete mapping in original environment order, and compares
+all bytes to a reviewed 70-byte original fixture. The driver consumes output
+lengths and returns repetition/byte counts rather than printing repeated maps.
+The fixture read and byte comparisons replace original stdout IO; their cost
+is part of suite execution and is explicit.
+
+An independent exhaustive 10! assignment search establishes a unique mapping.
+GHC observers compare the full solution state and first-answer text. Original
+smoke/FAST/normal/large runs match the independent mapping and all available
+pinned stdout fixtures byte for byte. Semantic checks cover both full searches,
+rendering, ragged transpose, deletion of only the first occurrence, variant
+agreement on smaller puzzles, carry rejection, leading-zero acceptance and
+non-demand of unused digits/choice tails. Large SML execution is claimed only
+for recorded cases.
+
+### References and runtime questions
+
+The source cites [Jones, Functional Programming with Overloading and Higher-Order
+Polymorphism](https://web.cecs.pdx.edu/~mpj/pubs/springschool.html), Advanced
+Functional Programming, LNCS 925, 1995, as its monad-library background. The
+[retained program](https://github.com/ghc/nofib/blob/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/cryptarithm2/Main.hs)
+and pinned library definitions establish this implementation's actual search.
+Jones's paper supplies background, not performance measurements of this port.
+
+Branch ordering, state lookup/extension, backtracking allocation, pruning,
+closure specialization and suspension sharing are source-based hypotheses
+until investigated with measurements or compiler inspection. Standard compiler
+comparisons use identical SML; Haskell is a correctness reference. No historical
+speed claim in a source comment is transferred to Rune.
+
+[Complete provenance](cryptarithm2-strict/PROVENANCE.md).

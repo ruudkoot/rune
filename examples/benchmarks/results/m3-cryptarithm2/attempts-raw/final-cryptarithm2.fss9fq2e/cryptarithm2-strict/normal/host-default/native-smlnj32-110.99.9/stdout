@@ -1,0 +1,159 @@
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cell-sequence.sml]
+functor BenchCellSequenceFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a sequence
+  val value : 'a -> 'a D.t
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val head : 'a <BaseFct>.<resultStr>.node D.t -> 'a
+  val tail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val delayedTail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromCell : 'a D.t D.t -> 'a D.t
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val replicate : int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val init :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> 'd <BaseFct>.<resultStr>.node D.t
+  val zip3 :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> ('a D.t * 'b D.t * 'c D.t) <BaseFct>.<resultStr>.node D.t
+  val equal :
+      ('a * 'b -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t -> bool
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-cryptarithm2.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-cryptarithm2.sml:67.67 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-cryptarithm2.sml:16.35 Warning: calling polyEqual
+functor BenchCryptarithmFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure S : <sig>
+  type digits
+  type state
+  val ret : 'a -> 'b -> ('a * 'b) <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val concatMap :
+      ('a -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t)
+       -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val bind :
+      ('a -> ('b * 'c) <BaseFct>.<resultStr>.S.<returnStr>.node D.t)
+       -> ('b -> 'c -> 'd <BaseFct>.<resultStr>.S.<returnStr>.node D.t)
+       -> 'a -> 'd <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val delete :
+      ''a
+       -> ''a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> ''a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val initState : <BaseFct>.<resultStr>.digits D.t
+  val permute :
+      char
+       -> <BaseFct>.<resultStr>.digits D.t
+       -> (int D.t * <BaseFct>.<resultStr>.digits D.t) 
+           <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val select :
+      char
+       -> <BaseFct>.<resultStr>.digits D.t
+       -> (int D.t * <BaseFct>.<resultStr>.digits D.t) 
+           <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val mapSelect :
+      char list
+       -> <BaseFct>.<resultStr>.digits D.t
+       -> (int D.t list D.t * <BaseFct>.<resultStr>.digits D.t) 
+           <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val solve :
+      char list list
+       -> char list
+       -> int
+       -> <BaseFct>.<resultStr>.digits D.t
+       -> (unit D.t * <BaseFct>.<resultStr>.digits D.t) 
+           <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val transpose : 'a list list -> 'a list list
+  val environment : <BaseFct>.<resultStr>.digits D.t -> (char * int) list
+  val solutions :
+      string list
+       -> string
+       -> (unit D.t * <BaseFct>.<resultStr>.digits D.t) 
+           <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val all : string list -> string -> (char * int) list list
+  val puzzle : string list -> string -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/cryptarithm2-strict/benchmark.sml]
+[autoloading]
+[autoloading done]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 300:21000
+PASS cryptarithm2-strict
+SUMMARY 1 checks, 0 failed

@@ -1,0 +1,7 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/cryptarithm2-lazy/
+?? examples/benchmarks/cryptarithm2-strict/
+?? examples/benchmarks/shared/nofib-cryptarithm2.sml
+?? tests/benchmarks/check-cryptarithm2.sh
+?? tests/benchmarks/cryptarithm2.sml
