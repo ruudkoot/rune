@@ -582,6 +582,12 @@ def build(source, root, lock):
                         "*END*THE SMALL PRINT! FOR PUBLIC DOMAIN ETEXTS*Ver.04.29.93*END*" in text):
                     notices.append("spectral/para/runtime_files/input-data:Project-Gutenberg-1993-notice")
                     item["evidence"].append("spectral/para/runtime_files/input-data:individual-dataset-notice")
+        if source == "nofib" and path == "spectral/sphere" and (parent / "Main.lhs").is_file():
+            header = (parent / "Main.lhs").read_text(errors="replace")
+            if ("16 July, 1998, David J. King" in header and
+                    "This is a Haskell port of the Id version from the Impala" in header):
+                authors.add("David J. King")
+                item["evidence"].append("spectral/sphere/Main.lhs:authorship-and-port-history")
         item["evidence"].extend(str(p.relative_to(root)) for p in context)
         for p in files + context:
             header = p.read_text(errors="replace")[:8000]

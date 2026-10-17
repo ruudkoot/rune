@@ -379,6 +379,11 @@ inventory entry.
 | [lambda-monad-strict](#lambda-monad-strict) | [nofib lambda interpreters](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/lambda) | Evaluate the fixed-point summation term using the monad interpreter and strict finite syntax/result payloads. |
 | [para-lazy](#para-lazy) | [nofib paragraph formatter](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/para) | Format fixed text using the source symmetric-list candidate algorithm with lazy numeric summaries. |
 | [para-strict](#para-strict) | [nofib paragraph formatter](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/para) | Format fixed text using the source symmetric-list candidate algorithm with strict numeric summaries. |
+| [sphere-lazy](#sphere-lazy) | [nofib sphere tracer](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/sphere) | Trace the Impala-derived sphere scene with lazy numeric coordinates and validate every color and source hash. |
+| [sphere-strict](#sphere-strict) | [nofib sphere tracer](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/sphere) | Trace the Impala-derived sphere scene with strict numeric coordinates and validate every color and source hash. |
+| [almabench](#almabench) | [Sandmark ALMABENCH](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/almabench) | Compute daily planetary state vectors and sky positions using mutable real arrays and validate their numerical moments. |
+| [kb](#kb) | [Sandmark Knuth–Bendix](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/kb) | Complete the source geometric group rules using exception-based matching and validate the full canonical system. |
+| [kb_no_exc](#kb_no_exc) | [Sandmark Knuth–Bendix](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/kb) | Complete the source geometric group rules using optional matching and validate the full canonical system. |
 
 ## Running and interpreting checks
 
@@ -20738,3 +20743,499 @@ context. Investigate summary-field demand, symmetric-list sharing/rebalancing,
 candidate pruning, paragraph lifetimes, text parsing and output consumption.
 These are source-based diagnostic questions; current-host performance claims
 need separate measurements.
+
+## sphere-lazy
+
+Numeric policy: lazy.
+
+### Algorithm and workload
+
+Trace a square image of ten source spheres with point lights, shadows, diffuse
+and specular shading and recursive reflection. Retain vector/scalar operation
+order, the source intersection-list construction, right-associated vector sums,
+fold-right nearest-hit selection and contribution-based recursion cutoff.
+
+### History, authorship and variants
+
+David J. King, July 16, 1998, Haskell port of the Impala Id sphere tracer.
+The retained October 1 correspondence explicitly supplies a sequential program
+for the SCOFPIG challenge. No Impala runtime or parallel facility is needed.
+Pinned nofib revision b7391df4540ac8b11b35e1b2e2c15819b5171798,
+spectral/sphere. The individual source/correspondence states no separate
+redistribution grant; retain its complete attribution without inferring another
+benchmark's license or inventing the earlier Id author's identity.
+
+This program differs from the other ray tracers in scene, camera, surfaces,
+intersection selection and recursive shading. Keep its established sphere name.
+Lazy and strict numeric payload policies have separate names. The original
+source is retained under sphere-lazy/upstream; the scene and lights are generated
+constants, with no external dataset or image-file dependency.
+
+### Translation and source behavior
+
+All kernels, drivers, scene generation and checks use SML97. Memoized control
+streams and vector nodes preserve demand and sharing; numeric coordinate
+payloads are memoized in lazy and eager in strict. The finite source scene,
+surface and light constant lists use immutable SML lists. Fresh camera/image
+computation occurs on every repetition; no rendered image is cached.
+
+Both policies retain lazy branch selection and recursive ray controls. Unused
+numeric coordinates can remain unforced in lazy. Source integer indices fit
+portable int. Floating operations use Double-compatible real arithmetic.
+The source signed machine-Int hash is made explicit modulo 2^64 with Word64;
+selected quantized colors fit portable signed int. Round color*255 to nearest
+with ties to even. Preserve negative/out-of-range colors rather than clamp them.
+
+Preserve historical quirks: the zero-vector cutoff tests signed components
+against epsilon instead of absolute values; shadow intersection is not bounded
+by light distance; nearest-hit folding has the source tie order; transmitted
+rays return a false TIR flag even though refractray computes one.
+The selected scene has zero transmission, so transmission behavior is a
+source-inspection observation, separate from measured standard profiles.
+
+### Inputs and result checks
+
+| Profile | Repetitions | Square image size |
+|---|---:|---:|
+| Smoke | 1 | 30 |
+| Normal | 100 | 100 |
+| Large | 100 | 250 |
+
+Smoke reduces source FAST's 100 repetitions to one. Normal/large retain the
+source dimensions and counts. Every pixel checks its coordinates, all three
+raw color channels and exact quantized colors against reviewed reference rows.
+Use absolute 1e-9 plus relative 1e-9 for each finite raw channel. These are
+source-agreement bounds, not a formal proof for all host math libraries.
+Quantized colors remain exact, including ties-to-even controls.
+
+A streaming forward weighted polynomial reproduces the source right-fold hash
+modulo 2^64 while validating the complete image. Report repetitions:checked-pixels
+and the final hexadecimal Word64 hash instead of repeated signed decimal hashes.
+No early stopping, random seed or source algorithm change is introduced.
+
+Unmodified GHC reproduces every 100-line profile fixture. An export-only observer
+records all 73400 pixels across the three image sizes; an independent eager
+tracer agrees on every quantized channel, with maximum raw difference below
+5.7e-12. The independent model computes camera normalization and closest-hit
+selection separately rather than duplicate the stream implementation.
+
+The 69-check target covers original vector/shader fixtures, complete smoke
+images, intersections/tangency, surface defaults, TIR, source cutoff/tie/sum
+quirks, numeric perturbations, quantization, invalid reference data and sharing.
+All six native hosts and Rune pass private semantic checks. Both full normal
+SML profiles pass guarded final-source calibration. Canonical matrices/counts
+are recorded with the import wave. Full SML large repetition runs remain
+unrecorded, separately from their complete reference pixels and source fixtures.
+
+### Literature and diagnostic questions
+
+The retained source and correspondence establish algorithm and translation
+history. The refractray comment cites Foley and van Dam, page 757; retain that
+limited source attribution without inferring an edition or a reviewed passage.
+[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) provides suite
+context. Investigate coordinate demand, recursive-ray allocation, scene-list
+traversal, nearest-hit sharing, shading math and the pixel/hash consumer.
+These are source-based hypotheses until supported by measurements.
+
+## sphere-strict
+
+Numeric policy: strict.
+
+### Algorithm and workload
+
+Trace a square image of ten source spheres with point lights, shadows, diffuse
+and specular shading and recursive reflection. Retain vector/scalar operation
+order, the source intersection-list construction, right-associated vector sums,
+fold-right nearest-hit selection and contribution-based recursion cutoff.
+
+### History, authorship and variants
+
+David J. King, July 16, 1998, Haskell port of the Impala Id sphere tracer.
+The retained October 1 correspondence explicitly supplies a sequential program
+for the SCOFPIG challenge. No Impala runtime or parallel facility is needed.
+Pinned nofib revision b7391df4540ac8b11b35e1b2e2c15819b5171798,
+spectral/sphere. The individual source/correspondence states no separate
+redistribution grant; retain its complete attribution without inferring another
+benchmark's license or inventing the earlier Id author's identity.
+
+This program differs from the other ray tracers in scene, camera, surfaces,
+intersection selection and recursive shading. Keep its established sphere name.
+Lazy and strict numeric payload policies have separate names. The original
+source is retained under sphere-lazy/upstream; the scene and lights are generated
+constants, with no external dataset or image-file dependency.
+
+### Translation and source behavior
+
+All kernels, drivers, scene generation and checks use SML97. Memoized control
+streams and vector nodes preserve demand and sharing; numeric coordinate
+payloads are memoized in lazy and eager in strict. The finite source scene,
+surface and light constant lists use immutable SML lists. Fresh camera/image
+computation occurs on every repetition; no rendered image is cached.
+
+Both policies retain lazy branch selection and recursive ray controls. Unused
+numeric coordinates can remain unforced in lazy. Source integer indices fit
+portable int. Floating operations use Double-compatible real arithmetic.
+The source signed machine-Int hash is made explicit modulo 2^64 with Word64;
+selected quantized colors fit portable signed int. Round color*255 to nearest
+with ties to even. Preserve negative/out-of-range colors rather than clamp them.
+
+Preserve historical quirks: the zero-vector cutoff tests signed components
+against epsilon instead of absolute values; shadow intersection is not bounded
+by light distance; nearest-hit folding has the source tie order; transmitted
+rays return a false TIR flag even though refractray computes one.
+The selected scene has zero transmission, so transmission behavior is a
+source-inspection observation, separate from measured standard profiles.
+
+### Inputs and result checks
+
+| Profile | Repetitions | Square image size |
+|---|---:|---:|
+| Smoke | 1 | 30 |
+| Normal | 100 | 100 |
+| Large | 100 | 250 |
+
+Smoke reduces source FAST's 100 repetitions to one. Normal/large retain the
+source dimensions and counts. Every pixel checks its coordinates, all three
+raw color channels and exact quantized colors against reviewed reference rows.
+Use absolute 1e-9 plus relative 1e-9 for each finite raw channel. These are
+source-agreement bounds, not a formal proof for all host math libraries.
+Quantized colors remain exact, including ties-to-even controls.
+
+A streaming forward weighted polynomial reproduces the source right-fold hash
+modulo 2^64 while validating the complete image. Report repetitions:checked-pixels
+and the final hexadecimal Word64 hash instead of repeated signed decimal hashes.
+No early stopping, random seed or source algorithm change is introduced.
+
+Unmodified GHC reproduces every 100-line profile fixture. An export-only observer
+records all 73400 pixels across the three image sizes; an independent eager
+tracer agrees on every quantized channel, with maximum raw difference below
+5.7e-12. The independent model computes camera normalization and closest-hit
+selection separately rather than duplicate the stream implementation.
+
+The 69-check target covers original vector/shader fixtures, complete smoke
+images, intersections/tangency, surface defaults, TIR, source cutoff/tie/sum
+quirks, numeric perturbations, quantization, invalid reference data and sharing.
+All six native hosts and Rune pass private semantic checks. Both full normal
+SML profiles pass guarded final-source calibration. Canonical matrices/counts
+are recorded with the import wave. Full SML large repetition runs remain
+unrecorded, separately from their complete reference pixels and source fixtures.
+
+### Literature and diagnostic questions
+
+The retained source and correspondence establish algorithm and translation
+history. The refractray comment cites Foley and van Dam, page 757; retain that
+limited source attribution without inferring an edition or a reviewed passage.
+[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) provides suite
+context. Investigate coordinate demand, recursive-ray allocation, scene-list
+traversal, nearest-hit sharing, shading math and the pixel/hash consumer.
+These are source-based hypotheses until supported by measurements.
+
+## almabench
+
+### Algorithm and workload
+
+Calculate heliocentric planetary positions/velocities and derive right ascension,
+declination and distance for eight planets at daily Julian epochs. Retain the
+source nested loops, mutable epoch/state/result arrays, mean-element coefficient
+tables, trigonometric corrections and iterative Kepler solver.
+
+### History, authorship and source
+
+ALMABENCH 1.0.1 OCaml version by Shawn Wagner, from Scott Robert Ladd's C++/Java
+versions. Its individual header explicitly dedicates the program to the public
+domain with no rights reserved. Retain that complete notice and attribution.
+Pinned Sandmark revision 5605805954a00497ed197c930641cddd580e1507,
+benchmarks/almabench/almabench.ml. The runnable name has no collision and is
+almabench. There are no external datasets; all coefficients and epochs are
+source constants. No foreign implementation is bundled in this upstream folder.
+
+The source cites J. L. Simon, P. Bretagnon, J. Chapront, M. Chapront-Touze,
+G. Francou and J. Laskar, Astronomy & Astrophysics 282, 663 (1994).
+The comments' year-range descriptions differ; the executable epoch loop
+actually starts at J2000 and advances 36525 days. Describe that concrete loop.
+
+### Portable implementation and numerical choices
+
+All computation, state generation and result checks use SML97. Leaf floating
+arrays use RealArray and nested arrays use Array, retaining mutable unboxed
+real storage and the original two-by-three state shape. Fixed coefficient
+tables retain the same values and nesting; index bounds and integer counters
+fit portable signed int for the selected profiles.
+
+Preserve arithmetic association, Real.rem as the source mod_float operation,
+Math.atan2 argument order and floating constants. The angle-normalizer comment
+claims a half-open range, but exact negative pi maps to positive pi while
+positive pi maps to negative pi. Preserve and explicitly test those endpoints.
+
+Keep the Kepler loop's original OR condition: perform at least ten corrections
+and continue until the residual condition also holds. Do not replace it with a
+maximum-iteration interpretation. The independent reference has its own stopping
+rule; agreement on selected states does not justify changing the benchmark.
+
+The source initially computes all eight planets at J2000+1 before timing loops.
+Keep and validate those calls too. Reuse the original state/output arrays across
+all calls; no ephemeris/result cache is introduced. The optional OCaml GC-stat
+file hook is outside the computation contract; OS/runtime statistics belong to
+the suite's separate adapters.
+
+### Profiles, consumption and correctness
+
+| Profile | Outer repetitions | Days per repetition | Planet calls |
+|---|---:|---:|---:|
+| Smoke | 1 | 32 | 264 |
+| Normal | 5 | 36525 | 1461008 |
+| Large | 20 | 36525 | 5844008 |
+
+Normal retains the complete source workload. Smoke reduces days/repetitions.
+Large selects twenty repetitions, the historical count mentioned in the source,
+while retaining the same epoch domain. Each profile includes the eight initial
+test calls. Parameters are explicit instead of a universal size argument.
+
+The original mutates arrays and prints nothing. Consume all six state coordinates
+and three derived values on every call. For each of nine components accumulate
+sum, sum of absolute values and sum of squares, preserving accumulation order.
+All values must be finite. Compare all 27 moments to export-only original OCaml
+references using absolute 1e-6 plus relative 1e-10 bounds. These are conservative
+source-agreement bounds, not an astronomical accuracy guarantee or formal
+floating-point error proof. Report planet-calls:27. The added moment consumer
+is an explicit adaptation and prevents unused-result elimination.
+
+Original OCaml completes its unmodified full workload with empty stdout.
+Its observer produces all profile moments and 64 complete state/result samples
+across eight epochs and eight planets. The separate ERFA Plan94 implementation
+at revision 9915ba38c9365f8b0738269b8c2ac1fdd5f8dee3 (v2.0.1) agrees exactly
+with all 384 sampled state coordinates. ERFA is a reference-only C program:
+its complete source notices, pinned files and observer remain in the evidence
+archive; the SML benchmark has no C/FFI dependency.
+
+The 163-check target compares 64 original states, 64 independent states,
+angle/remainder semantics, smoke moments, every individually perturbed moment,
+nonfinite values and malformed/short references. Point comparisons use absolute
+and relative 1e-11. Full normal final-source Rune calibration passes; canonical
+host/count checks are recorded as they finish. Full large SML repetition checks
+remain unrecorded, separately from the original observer's complete large
+moments. Incorrect results cannot supply accepted measurements.
+
+### Literature and diagnostic coverage
+
+[Simon et al. (1994)](https://articles.adsabs.harvard.edu/full/1994A%26A...282..663S)
+is the original algorithm citation retained in the source. The historical paper
+link was unavailable during this import; detailed claims are based on the
+reviewed benchmark and independent
+[ERFA Plan94 source](https://github.com/liberfa/erfa/blob/9915ba38c9365f8b0738269b8c2ac1fdd5f8dee3/src/plan94.c).
+Its limitations and stopping conditions remain distinct from ALMABENCH's.
+Investigate scalar math calls, mutable real-array access, bounds elimination,
+coefficient reuse, correction loops and result-consumer cost. These are
+source-based hypotheses until supported by recorded measurements.
+
+## kb
+
+### Algorithm and workload
+
+Complete the seven source equations for a geometric group using term matching,
+substitution, unification, recursive path ordering, critical-pair generation,
+rule deletion and normalization. Retain association lists, immutable term trees,
+rule numbering, list concatenation/order and the improved completion recursion.
+Both source programs produce the same ordered 24-rule canonical system.
+
+### History, authorship, notices and naming
+
+Xavier Leroy, projet Cristal, INRIA Rocquencourt. Individual headers state
+Copyright 1996 INRIA and Q Public License version 1.0, with terms/equations/
+orderings/kb source revisions dated 1999 and kbmain dated 2005.
+Pinned Sandmark revision 5605805954a00497ed197c930641cddd580e1507,
+benchmarks/kb/kb.ml and kb_no_exc.ml. These individual notices take precedence
+over assumptions based on the collection's top-level license.
+
+Keep both original files unchanged under kb/upstream. The Rune SML97 translation
+is distributed in separate files with original authorship/notices retained.
+The canonical QPL-1.0 text is included; its official SPDX source revision and
+identity are recorded in the evidence. Historical compiler licensing is retained
+only as context; no additional compiler-specific exception is inferred.
+
+The established upstream names kb and kb_no_exc are distinct from the classic
+knuth-bendix and knuth-bendix-smlnj programs. Document their related algorithm,
+without claiming identical source workloads or replacing the classic names.
+No external dataset is required; the geometric group equations are source data.
+
+### Differences between the executable variants
+
+kb uses Failure exceptions for matching and top-level reduction; its pretty_term
+and pretty_close are complete stubs. kb_no_exc returns option values from matching
+and top-level reduction, while retaining exceptions in deeper rewriting,
+unification and completion. Its name does not mean all exception use is removed.
+
+The second source also traverses term structure in its printer despite stub
+print functions. Preserve that separate traversal and its infix-arity checks.
+Do not attribute every performance difference solely to exceptions versus
+options. The exact original output remains empty for both programs.
+
+### Portable translation and runtime behavior
+
+All computation, fixed equations, checks and consumers use SML97.
+Shared term/unification, ordering, completion and input modules retain a single
+implementation. Separate rewriting modules preserve ordinary versus optional
+matching and reduction, including the source membership-then-association lookup
+rather than silently combine two traversals into one.
+
+A shared completion functor receives the selected rewriting/printer module.
+This module boundary is a translation choice: compiler specialization/inlining
+can affect its runtime cost. Record it when interpreting comparisons.
+The code retains the source fold-left paired traversal, right-recursive
+partition, nested handler scopes, list ordering, variable standardization,
+critical-pair namespace offsets and failure categories.
+
+Source integer fields and selected rule/variable counters fit portable signed
+int. There is no arbitrary precision substitution, floating arithmetic, random
+input, parallel facility or FFI. Optional OCaml GC-stat output belongs to
+measurement adapters rather than the portable kernel.
+
+Original kb_complete returns unit after printing the completed rules. The port
+returns the already-computed list after preserving the same printer traversal.
+Validate its complete canonical serialization, including every rule number,
+variable count and term. This is an explicit additional result consumer; it
+does not replace completion with a cached rule set.
+
+### Profiles and correctness
+
+| Profile | Completion repetitions |
+|---|---:|
+| Smoke | 1 |
+| Normal | 100 |
+| Large | 1000 |
+
+Normal retains the source count; smoke reduces it and large selects ten times
+the source repetitions. Every iteration computes a fresh completion over the
+source's shared immutable input equations, validates all completed rules and
+reports repetitions:checked-rules. No completed-result cache is used.
+
+Unmodified OCaml runs finish both 100-iteration programs with empty stdout.
+Export-only observers expose all completed records; their complete canonical
+text is byte-identical across variants. Final-source normal Rune calibration
+passes both variants. Full SML large repetitions remain unrecorded.
+
+The 1285-check target compares full original rule text and count, checks every
+final rule's orientation and irreducible right side, normalizes every input
+equation, and verifies all 576 ordered final critical-pair combinations for each
+variant. It also covers substitution/unification, occurs/arity checks, path
+replacement, repeated/conflicting variables, source standardization, zero
+iterations and corrupted-result rejection. Rune and all six native hosts pass
+the private target; canonical matrices/counts are recorded with the import wave.
+
+### Literature and diagnostic questions
+
+[Knuth and Bendix, Simple Word Problems in Universal Algebras (1970)](https://doi.org/10.1016/B978-0-08-012975-4.50028-X)
+provides completion context.
+[Dershowitz, Orderings for Term-Rewriting Systems (1982)](https://www.math.tau.ac.il/~nachumd/papers/Orderings4TRS.pdf)
+describes recursive path orderings and termination criteria.
+The retained Leroy source establishes this benchmark's concrete algorithm.
+Investigate structural equality, association-list lookup, exception/option
+propagation, printer traversal, list allocation and higher-order specialization.
+These are source-based questions; the finite critical-pair checks and measured
+configurations do not establish a general theorem or a performance explanation.
+
+## kb_no_exc
+
+### Algorithm and workload
+
+Complete the seven source equations for a geometric group using term matching,
+substitution, unification, recursive path ordering, critical-pair generation,
+rule deletion and normalization. Retain association lists, immutable term trees,
+rule numbering, list concatenation/order and the improved completion recursion.
+Both source programs produce the same ordered 24-rule canonical system.
+
+### History, authorship, notices and naming
+
+Xavier Leroy, projet Cristal, INRIA Rocquencourt. Individual headers state
+Copyright 1996 INRIA and Q Public License version 1.0, with terms/equations/
+orderings/kb source revisions dated 1999 and kbmain dated 2005.
+Pinned Sandmark revision 5605805954a00497ed197c930641cddd580e1507,
+benchmarks/kb/kb.ml and kb_no_exc.ml. These individual notices take precedence
+over assumptions based on the collection's top-level license.
+
+Keep both original files unchanged under kb/upstream. The Rune SML97 translation
+is distributed in separate files with original authorship/notices retained.
+The canonical QPL-1.0 text is included; its official SPDX source revision and
+identity are recorded in the evidence. Historical compiler licensing is retained
+only as context; no additional compiler-specific exception is inferred.
+
+The established upstream names kb and kb_no_exc are distinct from the classic
+knuth-bendix and knuth-bendix-smlnj programs. Document their related algorithm,
+without claiming identical source workloads or replacing the classic names.
+No external dataset is required; the geometric group equations are source data.
+
+### Differences between the executable variants
+
+kb uses Failure exceptions for matching and top-level reduction; its pretty_term
+and pretty_close are complete stubs. kb_no_exc returns option values from matching
+and top-level reduction, while retaining exceptions in deeper rewriting,
+unification and completion. Its name does not mean all exception use is removed.
+
+The second source also traverses term structure in its printer despite stub
+print functions. Preserve that separate traversal and its infix-arity checks.
+Do not attribute every performance difference solely to exceptions versus
+options. The exact original output remains empty for both programs.
+
+### Portable translation and runtime behavior
+
+All computation, fixed equations, checks and consumers use SML97.
+Shared term/unification, ordering, completion and input modules retain a single
+implementation. Separate rewriting modules preserve ordinary versus optional
+matching and reduction, including the source membership-then-association lookup
+rather than silently combine two traversals into one.
+
+A shared completion functor receives the selected rewriting/printer module.
+This module boundary is a translation choice: compiler specialization/inlining
+can affect its runtime cost. Record it when interpreting comparisons.
+The code retains the source fold-left paired traversal, right-recursive
+partition, nested handler scopes, list ordering, variable standardization,
+critical-pair namespace offsets and failure categories.
+
+Source integer fields and selected rule/variable counters fit portable signed
+int. There is no arbitrary precision substitution, floating arithmetic, random
+input, parallel facility or FFI. Optional OCaml GC-stat output belongs to
+measurement adapters rather than the portable kernel.
+
+Original kb_complete returns unit after printing the completed rules. The port
+returns the already-computed list after preserving the same printer traversal.
+Validate its complete canonical serialization, including every rule number,
+variable count and term. This is an explicit additional result consumer; it
+does not replace completion with a cached rule set.
+
+### Profiles and correctness
+
+| Profile | Completion repetitions |
+|---|---:|
+| Smoke | 1 |
+| Normal | 100 |
+| Large | 1000 |
+
+Normal retains the source count; smoke reduces it and large selects ten times
+the source repetitions. Every iteration computes a fresh completion over the
+source's shared immutable input equations, validates all completed rules and
+reports repetitions:checked-rules. No completed-result cache is used.
+
+Unmodified OCaml runs finish both 100-iteration programs with empty stdout.
+Export-only observers expose all completed records; their complete canonical
+text is byte-identical across variants. Final-source normal Rune calibration
+passes both variants. Full SML large repetitions remain unrecorded.
+
+The 1285-check target compares full original rule text and count, checks every
+final rule's orientation and irreducible right side, normalizes every input
+equation, and verifies all 576 ordered final critical-pair combinations for each
+variant. It also covers substitution/unification, occurs/arity checks, path
+replacement, repeated/conflicting variables, source standardization, zero
+iterations and corrupted-result rejection. Rune and all six native hosts pass
+the private target; canonical matrices/counts are recorded with the import wave.
+
+### Literature and diagnostic questions
+
+[Knuth and Bendix, Simple Word Problems in Universal Algebras (1970)](https://doi.org/10.1016/B978-0-08-012975-4.50028-X)
+provides completion context.
+[Dershowitz, Orderings for Term-Rewriting Systems (1982)](https://www.math.tau.ac.il/~nachumd/papers/Orderings4TRS.pdf)
+describes recursive path orderings and termination criteria.
+The retained Leroy source establishes this benchmark's concrete algorithm.
+Investigate structural equality, association-list lookup, exception/option
+propagation, printer traversal, list allocation and higher-order specialization.
+These are source-based questions; the finite critical-pair checks and measured
+configurations do not establish a general theorem or a performance explanation.

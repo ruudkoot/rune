@@ -2537,3 +2537,48 @@ Full DEBUGINFOD_URLS= make JOBS=4 check exits zero with 1078 catalogue profiles,
 498-program bytecode agreement and matching runedoc/runeopt builds.
 [The complete transcript](validation/oct17-fft2-lambda-para-1078-acceptance.log)
 records acceptance of this combined wave. M3 remains in progress.
+
+## Sphere tracing and sequential numerical/symbolic workloads, 2026-10-17
+
+Five imports bring the catalogue to 367 programs and 1093 profiles.
+[Sphere coverage](results/m3-sphere/coverage.tsv) records 55 of 56 primary cases
+passing. Only lazy normal on legacy 64-bit SML/NJ fails pixel validation.
+All Rune cases pass, and all 1380 semantic assertions pass. A diagnostic
+reproduces a substantial wrong color at (33,74), while the separate pixel passes
+a smaller control on legacy SML/NJ. Development SML/NJ does not load that smaller
+context. [The host note](validation/sphere-host-results.md) preserves all findings
+without asserting a compiler cause or changing the canonical source.
+
+[ALMABENCH coverage](results/m5-almabench/coverage.tsv) records all 28 primary
+cases passing. Its semantic target records 3254 passes and six auxiliary
+exact-remainder failures with no unreached checks. All original and independent
+state vectors pass. [The host note](validation/almabench-host-results.md)
+separates known SML/NJ Real.rem inexactness from corrected private harness errors.
+Pinned ERFA Plan94 agrees exactly on all 384 sampled state coordinates.
+Full source normal profiles and 27-moment numerical checks are validated.
+
+[Knuth–Bendix coverage](results/m5-kb/coverage.tsv) records all 56 primary cases
+and all 25700 semantic assertions passing. Both original programs give the same
+complete 24-rule system. Checks cover all 576 ordered final critical-pair
+combinations under each variant, rule orientation and normalization, input
+equations, term operations and wrong-result rejection. Distinct exception/option
+matching and source printer traversal remain. QPL notices, unchanged originals
+and pinned canonical license text are preserved.
+
+Twenty full normal Rune count samples agree under the execution-model rules.
+Fifteen serial single fresh-process native smoke adapter samples pass, separately
+from instrumentation. Default sampling and count-budget policies remain.
+Every full normal Rune calibration passes; full large SML repetition runs remain
+unrecorded. [Sphere](results/m3-sphere/README.md),
+[ALMABENCH](results/m5-almabench/README.md) and [KB](results/m5-kb/README.md)
+retain complete raw evidence, source identities and notices.
+
+All 90 inventory tests pass, and five clean pins reproduce 861 primary entries.
+The reviewed sphere attribution is recorded. There remain 21 M3, thirteen M4 and
+thirteen M5 scheduled primary source entries, plus planned standard-library cases;
+these are unfinished work, not passing ports.
+
+Full DEBUGINFOD_URLS= make JOBS=4 check exits zero with 1093 profiles, 498-program
+bytecode agreement and matching runedoc/runeopt builds.
+[The complete transcript](validation/oct17-sphere-almabench-kb-1093-acceptance.log)
+records acceptance. M3, M4 and M5 remain in progress; M8 remains planned.
