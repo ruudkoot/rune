@@ -1,0 +1,40 @@
+pow-0 1.0 -> 1
+PASS graph-probe/pow-size-0
+pow-1 2.0 -> 2
+PASS graph-probe/pow-size-1
+pow-2 4.0 -> 4
+PASS graph-probe/pow-size-2
+pow-3 8.0 -> 8
+PASS graph-probe/pow-size-3
+pow-8 256.0 -> 256
+PASS graph-probe/pow-size-8
+pow-10 1024.0 -> 1024
+PASS graph-probe/pow-size-10
+integer-4503599627370495 4503599627370495.0 nearest 4503599627370495 trunc 4503599627370495
+PASS graph-probe/nearest-4503599627370495
+PASS graph-probe/trunc-4503599627370495
+integer-4503599627370496 4503599627370496.0 nearest 4503599627370496 trunc 4503599627370496
+PASS graph-probe/nearest-4503599627370496
+PASS graph-probe/trunc-4503599627370496
+integer-4503599627370497 4503599627370497.0 nearest 4503599627370498 trunc 4503599627370497
+FAIL graph-probe/nearest-4503599627370497 -- false
+PASS graph-probe/trunc-4503599627370497
+integer-9007199254740990 9007199254740990.0 nearest 9007199254740990 trunc 9007199254740990
+PASS graph-probe/nearest-9007199254740990
+PASS graph-probe/trunc-9007199254740990
+integer-9007199254740991 9007199254740991.0 nearest 9007199254740992 trunc 9007199254740991
+FAIL graph-probe/nearest-9007199254740991 -- false
+PASS graph-probe/trunc-9007199254740991
+literal 8495A6BE top 132
+PASS graph-probe/literal/top-byte
+PASS graph-probe/literal/whole-word
+parsed 8495A6BE top 132
+PASS graph-probe/parsed/top-byte
+PASS graph-probe/parsed/whole-word
+converted 8495A6BE top 132
+PASS graph-probe/converted/top-byte
+PASS graph-probe/converted/whole-word
+shifted 8495A6BE top 132
+PASS graph-probe/shifted/top-byte
+PASS graph-probe/shifted/whole-word
+SUMMARY 24 checks, 2 failed

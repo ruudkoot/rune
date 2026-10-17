@@ -1,0 +1,30 @@
+{
+  "ocaml": "4.14.1",
+  "revision": "99cb5d93fc30f1a6f3e69f5aa5d2063994d33a93",
+  "files": [
+    {
+      "path": "ocaml-stdlib/LICENSE",
+      "sha256": "65f47d3bf5a921011ac7fa30f23d54f9dffbe7683921eeb116d5ce8dc26ff0c1"
+    },
+    {
+      "path": "ocaml-stdlib/array.ml",
+      "sha256": "723a7b54f50bbd9a751d5f89eefb1600c3187d1c9fe5a548d4c9035ade8418cb"
+    },
+    {
+      "path": "ocaml-stdlib/intext.h",
+      "sha256": "710077d649901c6cef8de9ac5107415ac6d2f8aeda251398588428caa4fd4c2b"
+    },
+    {
+      "path": "ocaml-stdlib/list.ml",
+      "sha256": "adf8c83d98cbcfce45beef6de8bbdc88b671d7070e29b15ec244e81a2829093a"
+    },
+    {
+      "path": "ocaml-stdlib/random.ml",
+      "sha256": "4668306098b6a29adbad07f42be7a70dd5279aa0436ef8b98889ece461b48e67"
+    },
+    {
+      "path": "ocaml-stdlib/stdlib.mli",
+      "sha256": "81a879fd428fff1a7d90af822c94b130ca2a7742d2c68200eaf6b7e24380cc1a"
+    }
+  ]
+}

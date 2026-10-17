@@ -1,0 +1,63 @@
+{
+  "ocaml": "4.14.1",
+  "seed_policy": "fresh default Random state; gen self_init removed only in seeded fixture adapter; prototype retains its original default",
+  "runs": [
+    {
+      "mode": "generateSeq",
+      "profile": "smoke",
+      "scale": 6,
+      "edge_factor": 4,
+      "bytes": 3097,
+      "sha256": "d5ba6fb9625e1c75cc1080fa4133b9bbf36692bacc4d6c841be27b7b7a9ea29a",
+      "header_hex": "8495a6be00000c050000020100000801000007010800040000",
+      "elapsed_seconds": 0.004280899011064321
+    },
+    {
+      "mode": "generateSeq",
+      "profile": "normal",
+      "scale": 12,
+      "edge_factor": 16,
+      "bytes": 1042167,
+      "sha256": "faac76a69466de04bd9183cde1ac8252b6e0d85e361edcceaf45a15dc909e15f",
+      "header_hex": "8495a6be000fe6e30002000100080001000700010804000000",
+      "elapsed_seconds": 0.11593316600192338
+    },
+    {
+      "mode": "generateSeq",
+      "profile": "large",
+      "scale": 14,
+      "edge_factor": 16,
+      "bytes": 4188506,
+      "sha256": "c9bb9be565dd744e170b60eb31311a8fb8f33309bdf7b8930e6770b20c7134c9",
+      "header_hex": "8495a6be003fe9460008000100200001001c00010810000000",
+      "elapsed_seconds": 0.5439895360032097
+    },
+    {
+      "mode": "prototype",
+      "profile": "smoke",
+      "scale": 3,
+      "edge_factor": 1,
+      "bytes": 243,
+      "sha256": "52b835018f98c66fcfa393a9e3b35fa99cdd76223dd7c4b95786abc8a1041321",
+      "elapsed_seconds": 0.005083499010652304
+    },
+    {
+      "mode": "prototype",
+      "profile": "normal",
+      "scale": 8,
+      "edge_factor": 4,
+      "bytes": 32790,
+      "sha256": "78c0ab91587f4c99b3ac8f814d1b0d01d7a8abd3283973545f21e94409c238d5",
+      "elapsed_seconds": 0.050526784965768456
+    },
+    {
+      "mode": "prototype",
+      "profile": "large",
+      "scale": 10,
+      "edge_factor": 4,
+      "bytes": 134441,
+      "sha256": "255ebb786940bd8789eb531d99be74970d81a8def5b3655d05e788d4f1399bce",
+      "elapsed_seconds": 1.0502030749921687
+    }
+  ]
+}

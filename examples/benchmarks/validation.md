@@ -2582,3 +2582,35 @@ Full DEBUGINFOD_URLS= make JOBS=4 check exits zero with 1093 profiles, 498-progr
 bytecode agreement and matching runedoc/runeopt builds.
 [The complete transcript](validation/oct17-sphere-almabench-kb-1093-acceptance.log)
 records acceptance. M3, M4 and M5 remain in progress; M8 remains planned.
+
+## Sequential Graph500 generation and construction, 2026-10-17
+
+Three imports bring the catalogue to 370 programs and 1102 profiles.
+[Primary coverage](results/m5-graph500/coverage.tsv) records 70 passes and
+fourteen failures across 84 cases. Every Rune, MLton and ML Kit primary case
+passes. The [semantic ledger](results/m5-graph500/semantic-summary.tsv) records
+5606 passing assertions, twelve failures and 622 unreached checks.
+
+Original binary generation and prototype CSV outputs match selected normal and
+large portable Rune pilots byte-for-byte. Original adjacency observations agree
+with an independent decoder and append/reverse model. The 312-check target
+covers original edge weights, binary/CSV fixtures, malformed data, sorting
+stability, forced key ties, duplicate edges and source graph extents.
+
+Twelve normal count samples agree. Seven serial single fresh-process native
+adapter samples pass; two rejected prechecks supply no accepted timing.
+The [host note](validation/graph500-host-results.md) distinguishes source power
+rounding sensitivity, large integral conversion differences, word construction
+and unresolved legacy compilation-context findings. Raw measurement statuses
+remain; a reviewed table classifies the quoted incorrect-result message that
+the old classifier labelled runtime failure. A tooling regression follows.
+
+Data origins, fixed random state, three executable aliases, distinct algorithms,
+individual stdlib notices and binary fixture identities are recorded with
+[complete evidence](results/m5-graph500/README.md). Larger published parameters
+remain explicitly separate candidates. All 90 inventory tests pass.
+
+Full DEBUGINFOD_URLS= make JOBS=4 check exits zero with 1102 profiles and all
+compiler/runedoc/runeopt cross-build comparisons.
+[The complete transcript](validation/oct17-graph500-1102-acceptance.log)
+records acceptance. M3, M4 and M5 remain in progress; M8 remains planned.

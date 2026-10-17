@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+graph500-gen	normal	rune	O2	compile	0	0	pass	4.08	2.65	1.41	266452	-	-	-	graph500-gen/rune/build/compile
+graph500-gen	normal	rune	O2	correctness	0	0	pass	3.39	3.09	0.30	140208	519284279	354665920	7771996	graph500-gen/rune/correctness.0
+graph500-gen	normal	rune	O2	count	1	1	pass	4.02	3.36	0.66	140160	519284279	354665920	7771996	graph500-gen/rune/fresh.1
+graph500-gen	normal	rune:opt	O2	compile	0	0	pass	3.51	3.07	0.44	266532	-	-	-	graph500-gen/rune-opt/build/compile
+graph500-gen	normal	rune:opt	O2	native-compile	0	0	pass	0.56	0.30	0.08	15768	-	-	-	graph500-gen/rune-opt/build/native-compile
+graph500-gen	normal	rune:opt	O2	correctness	0	0	pass	1.23	1.07	0.15	140812	519284279	354665920	7771996	graph500-gen/rune-opt/correctness.0
+graph500-gen	normal	rune:opt	O2	count	1	1	pass	1.43	1.27	0.15	140932	519284279	354665920	7771996	graph500-gen/rune-opt/fresh.1
+graph500-gen	normal	rune:new	O2	compile	0	0	pass	3.09	2.76	0.32	266292	-	-	-	graph500-gen/rune-new/build/compile
+graph500-gen	normal	rune:new	O2	correctness	0	0	pass	2.62	2.54	0.08	81004	303505863	354665920	7771996	graph500-gen/rune-new/correctness.0
+graph500-gen	normal	rune:new	O2	count	1	1	pass	2.76	2.66	0.09	80960	303505863	354665920	7771996	graph500-gen/rune-new/fresh.1
+graph500-gen	normal	rune:jit	O2	compile	0	0	pass	2.93	2.51	0.42	266408	-	-	-	graph500-gen/rune-jit/build/compile
+graph500-gen	normal	rune:jit	O2	correctness	0	0	pass	0.95	0.84	0.10	82932	303505863	354665920	7771996	graph500-gen/rune-jit/correctness.0
+graph500-gen	normal	rune:jit	O2	count	1	1	pass	1.12	0.86	0.26	83012	303505863	354665920	7771996	graph500-gen/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

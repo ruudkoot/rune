@@ -1,0 +1,3 @@
+RESULT 256 3097 2EFB45FB73420030
+FAIL graph500-gen -- Fail "incorrect result"
+SUMMARY 1 checks, 1 failed

@@ -1,0 +1,6 @@
+{'profile': 'smoke', 'scale': 6, 'edge_factor': 4, 'edges': 256, 'vertices': 64, 'selfloops': 16, 'adjacency_edges': 480, 'marshal_bytes': 3097, 'marshal_hash': '70DE620AF60537CD', 'adjacency_hash': 'E24F6A0768BB404D'}
+{'profile': 'normal', 'scale': 12, 'edge_factor': 16, 'edges': 65536, 'vertices': 4095, 'selfloops': 210, 'adjacency_edges': 130652, 'marshal_bytes': 1042167, 'marshal_hash': 'CA204D1260904818', 'adjacency_hash': '36994B27E0FDE3A4'}
+{'profile': 'large', 'scale': 14, 'edge_factor': 16, 'edges': 262144, 'vertices': 16384, 'selfloops': 287, 'adjacency_edges': 523714, 'marshal_bytes': 4188506, 'marshal_hash': 'F4F5566EF745AB13', 'adjacency_hash': '81B6E7445DE394E4'}
+prototype smoke 243 4729F13DD846E9C8
+prototype normal 32790 817FF4E8689B10D3
+prototype large 134441 607782AB5AAA231

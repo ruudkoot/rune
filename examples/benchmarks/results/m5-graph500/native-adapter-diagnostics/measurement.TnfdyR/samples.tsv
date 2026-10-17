@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+graph500-gen	smoke	native:mlton@20241230	O2	compile	0	0	pass	5.87	4.18	1.57	666744	-	-	-	graph500-gen/native-mlton/build/compile
+graph500-gen	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2232	-	-	-	graph500-gen/native-mlton/correctness.0
+graph500-gen	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2240	-	-	-	graph500-gen/native-mlton/fresh.1
+graph500-gen	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.49	0.43	0.05	40320	-	-	-	graph500-gen/native-smlnj-legacy/build/compile
+graph500-gen	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.02	0.01	0.01	4392	-	-	-	graph500-gen/native-smlnj-legacy/correctness.0
+graph500-gen	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.02	0.01	0.00	4300	-	-	-	graph500-gen/native-smlnj-legacy/fresh.1
+graph500-gen	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.39	0.26	0.06	44748	-	-	-	graph500-gen/native-polyml/build/compile
+graph500-gen	smoke	native:polyml@5.9.2	O2	correctness	0	0	runtime-failure	0.01	0.00	0.00	5712	-	-	-	graph500-gen/native-polyml/correctness.0

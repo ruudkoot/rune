@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+graph500-kernel1	smoke	native:mlton@20241230	O2	compile	0	0	pass	5.87	4.18	1.56	672460	-	-	-	graph500-kernel1/native-mlton/build/compile
+graph500-kernel1	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2320	-	-	-	graph500-kernel1/native-mlton/correctness.0
+graph500-kernel1	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2316	-	-	-	graph500-kernel1/native-mlton/fresh.1
+graph500-kernel1	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.47	0.41	0.05	39608	-	-	-	graph500-kernel1/native-smlnj-legacy/build/compile
+graph500-kernel1	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.00	0.00	4032	-	-	-	graph500-kernel1/native-smlnj-legacy/correctness.0
+graph500-kernel1	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.01	0.00	4180	-	-	-	graph500-kernel1/native-smlnj-legacy/fresh.1
+graph500-kernel1	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.45	0.28	0.09	45224	-	-	-	graph500-kernel1/native-polyml/build/compile
+graph500-kernel1	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	5704	-	-	-	graph500-kernel1/native-polyml/correctness.0
+graph500-kernel1	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	5544	-	-	-	graph500-kernel1/native-polyml/fresh.1

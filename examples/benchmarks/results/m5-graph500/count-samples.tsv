@@ -1,0 +1,13 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+graph500-gen	normal	rune	O2	count	1	1	pass	4.02	3.36	0.66	140160	519284279	354665920	7771996	counts/measurement.6imvWr/graph500-gen/rune/fresh.1
+graph500-gen	normal	rune:opt	O2	count	1	1	pass	1.43	1.27	0.15	140932	519284279	354665920	7771996	counts/measurement.6imvWr/graph500-gen/rune-opt/fresh.1
+graph500-gen	normal	rune:new	O2	count	1	1	pass	2.76	2.66	0.09	80960	303505863	354665920	7771996	counts/measurement.6imvWr/graph500-gen/rune-new/fresh.1
+graph500-gen	normal	rune:jit	O2	count	1	1	pass	1.12	0.86	0.26	83012	303505863	354665920	7771996	counts/measurement.6imvWr/graph500-gen/rune-jit/fresh.1
+graph500-kernel1	normal	rune	O2	count	1	1	pass	1.05	0.84	0.21	42004	136824198	80398528	1850156	counts/measurement.TVGwTx/graph500-kernel1/rune/fresh.1
+graph500-kernel1	normal	rune:opt	O2	count	1	1	pass	0.34	0.29	0.05	42664	136824198	80398528	1850156	counts/measurement.TVGwTx/graph500-kernel1/rune-opt/fresh.1
+graph500-kernel1	normal	rune:new	O2	count	1	1	pass	0.74	0.69	0.05	48000	91456480	80398528	1850156	counts/measurement.TVGwTx/graph500-kernel1/rune-new/fresh.1
+graph500-kernel1	normal	rune:jit	O2	count	1	1	pass	0.40	0.31	0.08	49708	91456480	80398528	1850156	counts/measurement.TVGwTx/graph500-kernel1/rune-jit/fresh.1
+kronecker	normal	rune	O2	count	1	1	pass	3.47	3.45	0.00	11020	615808189	1676615944	34996605	counts/measurement.aC25xb/kronecker/rune/fresh.1
+kronecker	normal	rune:opt	O2	count	1	1	pass	1.48	1.47	0.00	11512	615808189	1676615944	34996605	counts/measurement.aC25xb/kronecker/rune-opt/fresh.1
+kronecker	normal	rune:new	O2	count	1	1	pass	3.26	3.26	0.00	10932	404191667	1676615944	34996605	counts/measurement.aC25xb/kronecker/rune-new/fresh.1
+kronecker	normal	rune:jit	O2	count	1	1	pass	1.41	1.39	0.01	12428	404191667	1676615944	34996605	counts/measurement.aC25xb/kronecker/rune-jit/fresh.1

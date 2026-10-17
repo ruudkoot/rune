@@ -1,0 +1,12 @@
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/marshal.sml:48: error: Structure (PackReal64Little) has not been declared
+Found near (byte 176; integer a; integer b; byte 12; ... ...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/marshal.sml:88: error: Structure (PackReal64Little) has not been declared
+Found near
+  if code = 12 then PackReal64Little.fromBytes payload else
+  if code = 11 then PackReal64Big.fromBytes payload else
+  raise Fail "unsupported graph Marshal real"
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/marshal.sml:89: error: Structure (PackReal64Big) has not been declared
+Found near
+  if code = 11 then PackReal64Big.fromBytes payload else
+  raise Fail "unsupported graph Marshal real"
+uncaught exception Fail [Fail "Static Errors"]

@@ -1,0 +1,85 @@
+benchmark	profile	optimization	configuration	arguments	status	artifact_directory
+graph500-gen	smoke	O0	rune-jit	6 4	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/smoke/O0/rune-jit
+graph500-gen	smoke	O0	rune	6 4	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/smoke/O0/rune
+graph500-gen	smoke	O0	rune-opt	6 4	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/smoke/O0/rune-opt
+graph500-gen	smoke	O0	rune-new	6 4	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/smoke/O0/rune-new
+graph500-gen	smoke	O2	rune-jit	6 4	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/smoke/O2/rune-jit
+graph500-gen	smoke	O2	rune	6 4	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/smoke/O2/rune
+graph500-gen	smoke	O2	rune-opt	6 4	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/smoke/O2/rune-opt
+graph500-gen	smoke	O2	rune-new	6 4	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/smoke/O2/rune-new
+graph500-gen	smoke	host-default	native-mlkit-4.7.23	6 4	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/smoke/host-default/native-mlkit-4.7.23
+graph500-gen	smoke	host-default	native-polyml-5.9.2	6 4	incorrect-result	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/smoke/host-default/native-polyml-5.9.2
+graph500-gen	smoke	host-default	native-smlnj-legacy-110.99.9	6 4	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/smoke/host-default/native-smlnj-legacy-110.99.9
+graph500-gen	smoke	host-default	native-smlnj-dev-2026.2	6 4	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/smoke/host-default/native-smlnj-dev-2026.2
+graph500-gen	smoke	host-default	native-mlton-20241230	6 4	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/smoke/host-default/native-mlton-20241230
+graph500-gen	smoke	host-default	native-smlnj32-110.99.9	6 4	incorrect-result	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/smoke/host-default/native-smlnj32-110.99.9
+graph500-gen	normal	O0	rune-jit	12 16	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/normal/O0/rune-jit
+graph500-gen	normal	O0	rune	12 16	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/normal/O0/rune
+graph500-gen	normal	O0	rune-opt	12 16	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/normal/O0/rune-opt
+graph500-gen	normal	O0	rune-new	12 16	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/normal/O0/rune-new
+graph500-gen	normal	O2	rune-jit	12 16	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/normal/O2/rune-jit
+graph500-gen	normal	O2	rune	12 16	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/normal/O2/rune
+graph500-gen	normal	O2	rune-opt	12 16	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/normal/O2/rune-opt
+graph500-gen	normal	O2	rune-new	12 16	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/normal/O2/rune-new
+graph500-gen	normal	host-default	native-mlkit-4.7.23	12 16	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/normal/host-default/native-mlkit-4.7.23
+graph500-gen	normal	host-default	native-polyml-5.9.2	12 16	incorrect-result	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/normal/host-default/native-polyml-5.9.2
+graph500-gen	normal	host-default	native-smlnj-legacy-110.99.9	12 16	incorrect-result	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/normal/host-default/native-smlnj-legacy-110.99.9
+graph500-gen	normal	host-default	native-smlnj-dev-2026.2	12 16	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/normal/host-default/native-smlnj-dev-2026.2
+graph500-gen	normal	host-default	native-mlton-20241230	12 16	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/normal/host-default/native-mlton-20241230
+graph500-gen	normal	host-default	native-smlnj32-110.99.9	12 16	incorrect-result	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-gen/normal/host-default/native-smlnj32-110.99.9
+graph500-kernel1	smoke	O0	rune-jit	smoke.marshal	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/smoke/O0/rune-jit
+graph500-kernel1	smoke	O0	rune	smoke.marshal	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/smoke/O0/rune
+graph500-kernel1	smoke	O0	rune-opt	smoke.marshal	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/smoke/O0/rune-opt
+graph500-kernel1	smoke	O0	rune-new	smoke.marshal	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/smoke/O0/rune-new
+graph500-kernel1	smoke	O2	rune-jit	smoke.marshal	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/smoke/O2/rune-jit
+graph500-kernel1	smoke	O2	rune	smoke.marshal	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/smoke/O2/rune
+graph500-kernel1	smoke	O2	rune-opt	smoke.marshal	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/smoke/O2/rune-opt
+graph500-kernel1	smoke	O2	rune-new	smoke.marshal	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/smoke/O2/rune-new
+graph500-kernel1	smoke	host-default	native-mlkit-4.7.23	smoke.marshal	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/smoke/host-default/native-mlkit-4.7.23
+graph500-kernel1	smoke	host-default	native-polyml-5.9.2	smoke.marshal	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/smoke/host-default/native-polyml-5.9.2
+graph500-kernel1	smoke	host-default	native-smlnj-legacy-110.99.9	smoke.marshal	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/smoke/host-default/native-smlnj-legacy-110.99.9
+graph500-kernel1	smoke	host-default	native-smlnj-dev-2026.2	smoke.marshal	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/smoke/host-default/native-smlnj-dev-2026.2
+graph500-kernel1	smoke	host-default	native-mlton-20241230	smoke.marshal	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/smoke/host-default/native-mlton-20241230
+graph500-kernel1	smoke	host-default	native-smlnj32-110.99.9	smoke.marshal	runtime-failure	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/smoke/host-default/native-smlnj32-110.99.9
+graph500-kernel1	normal	O0	rune-jit	normal.marshal	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/normal/O0/rune-jit
+graph500-kernel1	normal	O0	rune	normal.marshal	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/normal/O0/rune
+graph500-kernel1	normal	O0	rune-opt	normal.marshal	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/normal/O0/rune-opt
+graph500-kernel1	normal	O0	rune-new	normal.marshal	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/normal/O0/rune-new
+graph500-kernel1	normal	O2	rune-jit	normal.marshal	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/normal/O2/rune-jit
+graph500-kernel1	normal	O2	rune	normal.marshal	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/normal/O2/rune
+graph500-kernel1	normal	O2	rune-opt	normal.marshal	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/normal/O2/rune-opt
+graph500-kernel1	normal	O2	rune-new	normal.marshal	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/normal/O2/rune-new
+graph500-kernel1	normal	host-default	native-mlkit-4.7.23	normal.marshal	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/normal/host-default/native-mlkit-4.7.23
+graph500-kernel1	normal	host-default	native-polyml-5.9.2	normal.marshal	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/normal/host-default/native-polyml-5.9.2
+graph500-kernel1	normal	host-default	native-smlnj-legacy-110.99.9	normal.marshal	incorrect-result	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/normal/host-default/native-smlnj-legacy-110.99.9
+graph500-kernel1	normal	host-default	native-smlnj-dev-2026.2	normal.marshal	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/normal/host-default/native-smlnj-dev-2026.2
+graph500-kernel1	normal	host-default	native-mlton-20241230	normal.marshal	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/normal/host-default/native-mlton-20241230
+graph500-kernel1	normal	host-default	native-smlnj32-110.99.9	normal.marshal	runtime-failure	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/graph500-kernel1/normal/host-default/native-smlnj32-110.99.9
+kronecker	smoke	O0	rune-jit	3 1	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/smoke/O0/rune-jit
+kronecker	smoke	O0	rune	3 1	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/smoke/O0/rune
+kronecker	smoke	O0	rune-opt	3 1	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/smoke/O0/rune-opt
+kronecker	smoke	O0	rune-new	3 1	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/smoke/O0/rune-new
+kronecker	smoke	O2	rune-jit	3 1	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/smoke/O2/rune-jit
+kronecker	smoke	O2	rune	3 1	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/smoke/O2/rune
+kronecker	smoke	O2	rune-opt	3 1	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/smoke/O2/rune-opt
+kronecker	smoke	O2	rune-new	3 1	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/smoke/O2/rune-new
+kronecker	smoke	host-default	native-mlkit-4.7.23	3 1	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/smoke/host-default/native-mlkit-4.7.23
+kronecker	smoke	host-default	native-polyml-5.9.2	3 1	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/smoke/host-default/native-polyml-5.9.2
+kronecker	smoke	host-default	native-smlnj-legacy-110.99.9	3 1	incorrect-result	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/smoke/host-default/native-smlnj-legacy-110.99.9
+kronecker	smoke	host-default	native-smlnj-dev-2026.2	3 1	incorrect-result	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/smoke/host-default/native-smlnj-dev-2026.2
+kronecker	smoke	host-default	native-mlton-20241230	3 1	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/smoke/host-default/native-mlton-20241230
+kronecker	smoke	host-default	native-smlnj32-110.99.9	3 1	incorrect-result	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/smoke/host-default/native-smlnj32-110.99.9
+kronecker	normal	O0	rune-jit	8 4	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/normal/O0/rune-jit
+kronecker	normal	O0	rune	8 4	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/normal/O0/rune
+kronecker	normal	O0	rune-opt	8 4	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/normal/O0/rune-opt
+kronecker	normal	O0	rune-new	8 4	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/normal/O0/rune-new
+kronecker	normal	O2	rune-jit	8 4	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/normal/O2/rune-jit
+kronecker	normal	O2	rune	8 4	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/normal/O2/rune
+kronecker	normal	O2	rune-opt	8 4	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/normal/O2/rune-opt
+kronecker	normal	O2	rune-new	8 4	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/normal/O2/rune-new
+kronecker	normal	host-default	native-mlkit-4.7.23	8 4	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/normal/host-default/native-mlkit-4.7.23
+kronecker	normal	host-default	native-polyml-5.9.2	8 4	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/normal/host-default/native-polyml-5.9.2
+kronecker	normal	host-default	native-smlnj-legacy-110.99.9	8 4	incorrect-result	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/normal/host-default/native-smlnj-legacy-110.99.9
+kronecker	normal	host-default	native-smlnj-dev-2026.2	8 4	incorrect-result	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/normal/host-default/native-smlnj-dev-2026.2
+kronecker	normal	host-default	native-mlton-20241230	8 4	pass	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/normal/host-default/native-mlton-20241230
+kronecker	normal	host-default	native-smlnj32-110.99.9	8 4	incorrect-result	results/m5-graph500/attempts-raw/final-graph500-parallel.xda6vugn/kronecker/normal/host-default/native-smlnj32-110.99.9

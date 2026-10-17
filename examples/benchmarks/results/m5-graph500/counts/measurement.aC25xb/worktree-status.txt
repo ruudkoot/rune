@@ -1,0 +1,12 @@
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/graph500-gen/
+?? examples/benchmarks/graph500-kernel1/
+?? examples/benchmarks/kronecker/
+?? examples/benchmarks/shared/sandmark-graph500-driver.sml
+?? examples/benchmarks/shared/sandmark-graph500-kernel.sml
+?? examples/benchmarks/shared/sandmark-graph500-marshal.sml
+?? examples/benchmarks/shared/sandmark-graph500-prototype.sml
+?? examples/benchmarks/shared/sandmark-graph500-sort.sml
+?? tests/benchmarks/check-graph500.sh
+?? tests/benchmarks/data/graph500/
+?? tests/benchmarks/graph500-tests.sml

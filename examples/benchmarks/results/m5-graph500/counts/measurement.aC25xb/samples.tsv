@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+kronecker	normal	rune	O2	compile	0	0	pass	2.65	2.42	0.22	260316	-	-	-	kronecker/rune/build/compile
+kronecker	normal	rune	O2	correctness	0	0	pass	3.24	3.21	0.01	10956	615808189	1676615944	34996605	kronecker/rune/correctness.0
+kronecker	normal	rune	O2	count	1	1	pass	3.47	3.45	0.00	11020	615808189	1676615944	34996605	kronecker/rune/fresh.1
+kronecker	normal	rune:opt	O2	compile	0	0	pass	2.30	2.11	0.18	260436	-	-	-	kronecker/rune-opt/build/compile
+kronecker	normal	rune:opt	O2	native-compile	0	0	pass	0.39	0.21	0.04	15504	-	-	-	kronecker/rune-opt/build/native-compile
+kronecker	normal	rune:opt	O2	correctness	0	0	pass	1.68	1.65	0.02	11400	615808189	1676615944	34996605	kronecker/rune-opt/correctness.0
+kronecker	normal	rune:opt	O2	count	1	1	pass	1.48	1.47	0.00	11512	615808189	1676615944	34996605	kronecker/rune-opt/fresh.1
+kronecker	normal	rune:new	O2	compile	0	0	pass	2.50	2.25	0.25	266472	-	-	-	kronecker/rune-new/build/compile
+kronecker	normal	rune:new	O2	correctness	0	0	pass	3.23	3.22	0.00	10944	404191667	1676615944	34996605	kronecker/rune-new/correctness.0
+kronecker	normal	rune:new	O2	count	1	1	pass	3.26	3.26	0.00	10932	404191667	1676615944	34996605	kronecker/rune-new/fresh.1
+kronecker	normal	rune:jit	O2	compile	0	0	pass	2.21	1.99	0.21	266316	-	-	-	kronecker/rune-jit/build/compile
+kronecker	normal	rune:jit	O2	correctness	0	0	pass	1.46	1.44	0.02	12428	404191667	1676615944	34996605	kronecker/rune-jit/correctness.0
+kronecker	normal	rune:jit	O2	count	1	1	pass	1.41	1.39	0.01	12428	404191667	1676615944	34996605	kronecker/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

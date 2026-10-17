@@ -1,0 +1,10 @@
+benchmark	configuration	recorded_status	reviewed_status	stdout
+graph500-gen	native:mlton@20241230	pass	pass	native-adapter-diagnostics/measurement.TnfdyR/graph500-gen/native-mlton/correctness.0/stdout
+graph500-gen	native:smlnj-legacy@110.99.9	pass	pass	native-adapter-diagnostics/measurement.TnfdyR/graph500-gen/native-smlnj-legacy/correctness.0/stdout
+graph500-gen	native:polyml@5.9.2	runtime-failure	incorrect-result	native-adapter-diagnostics/measurement.TnfdyR/graph500-gen/native-polyml/correctness.0/stdout
+graph500-kernel1	native:mlton@20241230	pass	pass	native-adapter-diagnostics/measurement.mPEqil/graph500-kernel1/native-mlton/correctness.0/stdout
+graph500-kernel1	native:smlnj-legacy@110.99.9	pass	pass	native-adapter-diagnostics/measurement.mPEqil/graph500-kernel1/native-smlnj-legacy/correctness.0/stdout
+graph500-kernel1	native:polyml@5.9.2	pass	pass	native-adapter-diagnostics/measurement.mPEqil/graph500-kernel1/native-polyml/correctness.0/stdout
+kronecker	native:mlton@20241230	pass	pass	native-adapter-diagnostics/measurement.Spv7bY/kronecker/native-mlton/correctness.0/stdout
+kronecker	native:smlnj-legacy@110.99.9	incorrect-result	incorrect-result	native-adapter-diagnostics/measurement.Spv7bY/kronecker/native-smlnj-legacy/correctness.0/stdout
+kronecker	native:polyml@5.9.2	pass	pass	native-adapter-diagnostics/measurement.Spv7bY/kronecker/native-polyml/correctness.0/stdout

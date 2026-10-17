@@ -1,0 +1,117 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-random.sml]
+[autoloading]
+[autoloading done]
+structure BenchOCamlRandom : sig
+  type state = {index:int ref, words:Word32.word array}
+  val defaultWords : Word32.word vector
+  val seed42Words : Word32.word vector
+  val seed512Words : Word32.word vector
+  val make : Word32.word vector -> state
+  val default : unit -> state
+  val seed42 : unit -> state
+  val seed512 : unit -> state
+  val bits : state -> int
+  val integer : state -> int -> int
+  val real : state -> real -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-graph500-sort.sml]
+[autoloading]
+[autoloading done]
+structure BenchGraphSort : sig
+  val array : ('a * 'a -> order) -> 'a array -> unit
+  val list : ('a * 'a -> order) -> 'a list -> 'a list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-graph500-kernel.sml]
+structure BenchGraph500 : sig
+  structure R : <sig>
+  type edge = int * int * real
+  val loop : int -> (int -> 'a) -> unit
+  val power : int -> int
+  val computeIJW :
+      BenchOCamlRandom.state
+       -> int -> int -> int array * int array * Real64Array.array
+  val permutation : BenchOCamlRandom.state -> int -> int -> int
+  val permute : BenchOCamlRandom.state -> 'a array -> 'a array
+  val generate :
+      BenchOCamlRandom.state
+       -> int -> int -> (int * int * Real64Array.elem) array
+  val maxVertex : edge array -> int
+  val sparse : edge array -> (int * real) list array
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-graph500-marshal.sml]
+[autoloading]
+[autoloading done]
+structure BenchGraphMarshal : sig
+  structure W : <sig>
+  type edge = int * int * real
+  val magic : Word64.word
+  val fractionUnit : IntInf.int
+  val signMask : Word64.word
+  val realBits : real -> Word64.word
+  val bitsReal : Word64.word -> real
+  val realBytes : real -> Word8Vector.vector
+  val bytesReal : bool -> Word8Vector.vector -> real
+  val intLength : int -> int
+  val headerLength : int -> int
+  val write : string -> edge array -> int * Word64.word
+  val read : string -> (int * int * real) array
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-graph500-prototype.sml]
+[autoloading]
+[autoloading done]
+structure BenchKroneckerPrototype : sig
+  structure R : <sig>
+  val loop : int -> (int -> 'a) -> unit
+  val append : Real64Array.array -> Real64Array.array -> Real64Array.array
+  val addArray : 'a array -> 'a array -> 'a array
+  val empty : unit -> Real64Array.array
+  val appendOne : Real64Array.array -> Real64Array.elem -> Real64Array.array
+  val weights : BenchOCamlRandom.state -> int -> Real64Array.array
+  val iiBits : BenchOCamlRandom.state -> int -> real -> Real64Array.array
+  val jjBits :
+      BenchOCamlRandom.state
+       -> Real64Array.array -> int -> real -> real -> Real64Array.array
+  val modify :
+      Real64Array.array
+       -> int -> Real64Array.array -> int -> Real64Array.array
+  val permute :
+      ('a * 'a -> order) -> BenchOCamlRandom.state -> 'a list -> 'a list
+  val toList : Real64Array.array -> Real64Array.elem list
+  val compareRow : Real64Array.array * Real64Array.array -> order
+  val transpose :
+      Real64Array.array array
+       -> Real64Array.array array ref -> Real64Array.array array
+  val generate :
+      BenchOCamlRandom.state -> int -> int -> Real64Array.array array
+  val write : string -> Real64Array.array array -> int * Word64.word
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-graph500-driver.sml]
+structure BenchGraph500Driver : sig
+  val parameters : string list -> int * int
+  val generate : string list -> string
+  val sparseSummary : BenchGraph500.edge array -> string
+  val kernel : string list -> string
+  val prototype : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/graph500-kernel1/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 256 64 480 E24F6A0768BB404D
+PASS graph500-kernel1
+SUMMARY 1 checks, 0 failed

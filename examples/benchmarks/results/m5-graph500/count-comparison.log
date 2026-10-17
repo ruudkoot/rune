@@ -1,0 +1,13 @@
+COUNT unbudgeted graph500-gen normal rune
+COUNT unbudgeted graph500-gen normal rune:opt
+COUNT unbudgeted graph500-gen normal rune:new
+COUNT unbudgeted graph500-gen normal rune:jit
+COUNT unbudgeted graph500-kernel1 normal rune
+COUNT unbudgeted graph500-kernel1 normal rune:opt
+COUNT unbudgeted graph500-kernel1 normal rune:new
+COUNT unbudgeted graph500-kernel1 normal rune:jit
+COUNT unbudgeted kronecker normal rune
+COUNT unbudgeted kronecker normal rune:opt
+COUNT unbudgeted kronecker normal rune:new
+COUNT unbudgeted kronecker normal rune:jit
+COUNT comparisons agree

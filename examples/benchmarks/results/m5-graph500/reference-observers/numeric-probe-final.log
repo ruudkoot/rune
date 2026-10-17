@@ -1,0 +1,499 @@
+PROGRAM LIMIT AS 1048576 KiB
+pow-0 1 -> 1
+PASS graph-probe/pow-size-0
+pow-1 2 -> 2
+PASS graph-probe/pow-size-1
+pow-2 4 -> 4
+PASS graph-probe/pow-size-2
+pow-3 8 -> 8
+PASS graph-probe/pow-size-3
+pow-8 256 -> 256
+PASS graph-probe/pow-size-8
+pow-10 1024 -> 1024
+PASS graph-probe/pow-size-10
+integer-4503599627370495 4503599627370495 nearest 4503599627370495 trunc 4503599627370495
+PASS graph-probe/nearest-4503599627370495
+PASS graph-probe/trunc-4503599627370495
+integer-4503599627370496 4503599627370496 nearest 4503599627370496 trunc 4503599627370496
+PASS graph-probe/nearest-4503599627370496
+PASS graph-probe/trunc-4503599627370496
+integer-4503599627370497 4503599627370497 nearest 4503599627370497 trunc 4503599627370497
+PASS graph-probe/nearest-4503599627370497
+PASS graph-probe/trunc-4503599627370497
+integer-9007199254740990 9007199254740990 nearest 9007199254740990 trunc 9007199254740990
+PASS graph-probe/nearest-9007199254740990
+PASS graph-probe/trunc-9007199254740990
+integer-9007199254740991 9007199254740991 nearest 9007199254740991 trunc 9007199254740991
+PASS graph-probe/nearest-9007199254740991
+PASS graph-probe/trunc-9007199254740991
+literal 8495A6BE top 132
+PASS graph-probe/literal/top-byte
+PASS graph-probe/literal/whole-word
+parsed 8495A6BE top 132
+PASS graph-probe/parsed/top-byte
+PASS graph-probe/parsed/whole-word
+converted 8495A6BE top 132
+PASS graph-probe/converted/top-byte
+PASS graph-probe/converted/whole-word
+shifted 8495A6BE top 132
+PASS graph-probe/shifted/top-byte
+PASS graph-probe/shifted/whole-word
+SUMMARY 24 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+pow-0 1 -> 1
+PASS graph-probe/pow-size-0
+pow-1 2 -> 2
+PASS graph-probe/pow-size-1
+pow-2 4 -> 4
+PASS graph-probe/pow-size-2
+pow-3 8 -> 8
+PASS graph-probe/pow-size-3
+pow-8 256 -> 256
+PASS graph-probe/pow-size-8
+pow-10 1024 -> 1024
+PASS graph-probe/pow-size-10
+integer-4503599627370495 4503599627370495 nearest 4503599627370495 trunc 4503599627370495
+PASS graph-probe/nearest-4503599627370495
+PASS graph-probe/trunc-4503599627370495
+integer-4503599627370496 4503599627370496 nearest 4503599627370496 trunc 4503599627370496
+PASS graph-probe/nearest-4503599627370496
+PASS graph-probe/trunc-4503599627370496
+integer-4503599627370497 4503599627370497 nearest 4503599627370497 trunc 4503599627370497
+PASS graph-probe/nearest-4503599627370497
+PASS graph-probe/trunc-4503599627370497
+integer-9007199254740990 9007199254740990 nearest 9007199254740990 trunc 9007199254740990
+PASS graph-probe/nearest-9007199254740990
+PASS graph-probe/trunc-9007199254740990
+integer-9007199254740991 9007199254740991 nearest 9007199254740991 trunc 9007199254740991
+PASS graph-probe/nearest-9007199254740991
+PASS graph-probe/trunc-9007199254740991
+literal 8495A6BE top 132
+PASS graph-probe/literal/top-byte
+PASS graph-probe/literal/whole-word
+parsed 8495A6BE top 132
+PASS graph-probe/parsed/top-byte
+PASS graph-probe/parsed/whole-word
+converted 8495A6BE top 132
+PASS graph-probe/converted/top-byte
+PASS graph-probe/converted/whole-word
+shifted 8495A6BE top 132
+PASS graph-probe/shifted/top-byte
+PASS graph-probe/shifted/whole-word
+SUMMARY 24 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/numeric-probe-final.sml]
+[autoloading]
+[autoloading done]
+pow-0 1 -> 1
+PASS graph-probe/pow-size-0
+pow-1 2 -> 2
+PASS graph-probe/pow-size-1
+pow-2 4 -> 4
+PASS graph-probe/pow-size-2
+pow-3 7.999999999999998 -> 7
+FAIL graph-probe/pow-size-3 -- false
+pow-8 255.99999999999994 -> 255
+FAIL graph-probe/pow-size-8 -- false
+pow-10 1024 -> 1024
+PASS graph-probe/pow-size-10
+integer-4503599627370495 4503599627370495 nearest 4503599627370495 trunc 4503599627370495
+PASS graph-probe/nearest-4503599627370495
+PASS graph-probe/trunc-4503599627370495
+integer-4503599627370496 4503599627370496 nearest 4503599627370496 trunc 4503599627370496
+PASS graph-probe/nearest-4503599627370496
+PASS graph-probe/trunc-4503599627370496
+integer-4503599627370497 4503599627370497 nearest 4503599627370497 trunc 4503599627370497
+PASS graph-probe/nearest-4503599627370497
+PASS graph-probe/trunc-4503599627370497
+integer-9007199254740990 9007199254740990 nearest 9007199254740990 trunc 9007199254740990
+PASS graph-probe/nearest-9007199254740990
+PASS graph-probe/trunc-9007199254740990
+integer-9007199254740991 9007199254740991 nearest 9007199254740991 trunc 9007199254740991
+PASS graph-probe/nearest-9007199254740991
+PASS graph-probe/trunc-9007199254740991
+literal 8495A6BE top 132
+PASS graph-probe/literal/top-byte
+PASS graph-probe/literal/whole-word
+parsed 8495A6BE top 132
+PASS graph-probe/parsed/top-byte
+PASS graph-probe/parsed/whole-word
+converted 8495A6BE top 132
+PASS graph-probe/converted/top-byte
+PASS graph-probe/converted/whole-word
+shifted 8495A6BE top 132
+PASS graph-probe/shifted/top-byte
+PASS graph-probe/shifted/whole-word
+val report = fn : string -> string -> unit
+val literal = 0wx8495A6BE : Word64.word
+val parsed = 0wx8495A6BE : Word64.word
+val converted = 0wx8495A6BE : Word64.word
+val shifted = 0wx8495A6BE : Word64.word
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 24 checks, 2 failed
+PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 0, exit 1)
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/numeric-probe-final.sml]
+[autoloading]
+[autoloading done]
+pow-0 1 -> 1
+PASS graph-probe/pow-size-0
+pow-1 2 -> 2
+PASS graph-probe/pow-size-1
+pow-2 4 -> 4
+PASS graph-probe/pow-size-2
+pow-3 7.999999999999998 -> 7
+FAIL graph-probe/pow-size-3 -- false
+pow-8 255.99999999999994 -> 255
+FAIL graph-probe/pow-size-8 -- false
+pow-10 1024 -> 1024
+PASS graph-probe/pow-size-10
+integer-4503599627370495 4503599627370495 nearest 4503599627370495 trunc 4503599627370495
+PASS graph-probe/nearest-4503599627370495
+PASS graph-probe/trunc-4503599627370495
+integer-4503599627370496 4503599627370496 nearest 4503599627370496 trunc 4503599627370496
+PASS graph-probe/nearest-4503599627370496
+PASS graph-probe/trunc-4503599627370496
+integer-4503599627370497 4503599627370497 nearest 4503599627370497 trunc 4503599627370497
+PASS graph-probe/nearest-4503599627370497
+PASS graph-probe/trunc-4503599627370497
+integer-9007199254740990 9007199254740990 nearest 9007199254740990 trunc 9007199254740990
+PASS graph-probe/nearest-9007199254740990
+PASS graph-probe/trunc-9007199254740990
+integer-9007199254740991 9007199254740991 nearest 9007199254740991 trunc 9007199254740991
+PASS graph-probe/nearest-9007199254740991
+PASS graph-probe/trunc-9007199254740991
+literal 495A6BE top 4
+FAIL graph-probe/literal/top-byte -- false
+FAIL graph-probe/literal/whole-word -- false
+parsed 8495A6BE top 132
+PASS graph-probe/parsed/top-byte
+PASS graph-probe/parsed/whole-word
+converted 8495A6BE top 132
+PASS graph-probe/converted/top-byte
+PASS graph-probe/converted/whole-word
+shifted 495A6BE top 4
+FAIL graph-probe/shifted/top-byte -- false
+FAIL graph-probe/shifted/whole-word -- false
+val report = fn : string -> string -> unit
+val literal = 0wx495A6BE : Word64.word
+val parsed = 0wx8495A6BE : Word64.word
+val converted = 0wx8495A6BE : Word64.word
+val shifted = 0wx495A6BE : Word64.word
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 24 checks, 6 failed
+PROGRAM FAIL native:smlnj32@110.99.9 (load 0, exit 1)
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/numeric-probe-final.sml]
+pow-0 1 -> 1
+PASS graph-probe/pow-size-0
+pow-1 2 -> 2
+PASS graph-probe/pow-size-1
+pow-2 4 -> 4
+PASS graph-probe/pow-size-2
+pow-3 7.999999999999998 -> 7
+FAIL graph-probe/pow-size-3 -- false
+pow-8 255.99999999999994 -> 255
+FAIL graph-probe/pow-size-8 -- false
+pow-10 1024 -> 1024
+PASS graph-probe/pow-size-10
+integer-4503599627370495 4503599627370495 nearest 4503599627370495 trunc 4503599627370495
+PASS graph-probe/nearest-4503599627370495
+PASS graph-probe/trunc-4503599627370495
+integer-4503599627370496 4503599627370496 nearest 4503599627370496 trunc 4503599627370496
+PASS graph-probe/nearest-4503599627370496
+PASS graph-probe/trunc-4503599627370496
+integer-4503599627370497 4503599627370497 nearest 4503599627370497 trunc 4503599627370497
+PASS graph-probe/nearest-4503599627370497
+PASS graph-probe/trunc-4503599627370497
+integer-9007199254740990 9007199254740990 nearest 9007199254740990 trunc 9007199254740990
+PASS graph-probe/nearest-9007199254740990
+PASS graph-probe/trunc-9007199254740990
+integer-9007199254740991 9007199254740991 nearest 9007199254740991 trunc 9007199254740991
+PASS graph-probe/nearest-9007199254740991
+PASS graph-probe/trunc-9007199254740991
+literal 8495A6BE top 132
+PASS graph-probe/literal/top-byte
+PASS graph-probe/literal/whole-word
+parsed 8495A6BE top 132
+PASS graph-probe/parsed/top-byte
+PASS graph-probe/parsed/whole-word
+converted 8495A6BE top 132
+PASS graph-probe/converted/top-byte
+PASS graph-probe/converted/whole-word
+shifted 8495A6BE top 132
+PASS graph-probe/shifted/top-byte
+PASS graph-probe/shifted/whole-word
+val report = <fn> : string -> string -> unit
+val literal = 0wx8495A6BE : Word64.word
+val parsed = 0wx8495A6BE : Word64.word
+val converted = 0wx8495A6BE : Word64.word
+val shifted = 0wx8495A6BE : Word64.word
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 24 checks, 2 failed
+PROGRAM FAIL native:smlnj-dev@2026.2 (load 0, exit 1)
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+pow-0 1.0 -> 1
+PASS graph-probe/pow-size-0
+pow-1 2.0 -> 2
+PASS graph-probe/pow-size-1
+pow-2 4.0 -> 4
+PASS graph-probe/pow-size-2
+pow-3 8.0 -> 8
+PASS graph-probe/pow-size-3
+pow-8 256.0 -> 256
+PASS graph-probe/pow-size-8
+pow-10 1024.0 -> 1024
+PASS graph-probe/pow-size-10
+integer-4503599627370495 4503599627370495.0 nearest 4503599627370495 trunc 4503599627370495
+PASS graph-probe/nearest-4503599627370495
+PASS graph-probe/trunc-4503599627370495
+integer-4503599627370496 4503599627370496.0 nearest 4503599627370496 trunc 4503599627370496
+PASS graph-probe/nearest-4503599627370496
+PASS graph-probe/trunc-4503599627370496
+integer-4503599627370497 4503599627370497.0 nearest 4503599627370498 trunc 4503599627370497
+FAIL graph-probe/nearest-4503599627370497 -- false
+PASS graph-probe/trunc-4503599627370497
+integer-9007199254740990 9007199254740990.0 nearest 9007199254740990 trunc 9007199254740990
+PASS graph-probe/nearest-9007199254740990
+PASS graph-probe/trunc-9007199254740990
+integer-9007199254740991 9007199254740991.0 nearest 9007199254740992 trunc 9007199254740991
+FAIL graph-probe/nearest-9007199254740991 -- false
+PASS graph-probe/trunc-9007199254740991
+literal 8495A6BE top 132
+PASS graph-probe/literal/top-byte
+PASS graph-probe/literal/whole-word
+parsed 8495A6BE top 132
+PASS graph-probe/parsed/top-byte
+PASS graph-probe/parsed/whole-word
+converted 8495A6BE top 132
+PASS graph-probe/converted/top-byte
+PASS graph-probe/converted/whole-word
+shifted 8495A6BE top 132
+PASS graph-probe/shifted/top-byte
+PASS graph-probe/shifted/whole-word
+SUMMARY 24 checks, 2 failed
+PROGRAM FAIL native:polyml@5.9.2 (load 0, exit 1)
+PROGRAM LIMIT AS 1048576 KiB
+pow-0 1.0 -> 1
+PASS graph-probe/pow-size-0
+pow-1 2.0 -> 2
+PASS graph-probe/pow-size-1
+pow-2 4.0 -> 4
+PASS graph-probe/pow-size-2
+pow-3 8.0 -> 8
+PASS graph-probe/pow-size-3
+pow-8 256.0 -> 256
+PASS graph-probe/pow-size-8
+pow-10 1024.0 -> 1024
+PASS graph-probe/pow-size-10
+integer-4503599627370495 4503599627370495.0 nearest 4503599627370495 trunc 4503599627370495
+PASS graph-probe/nearest-4503599627370495
+PASS graph-probe/trunc-4503599627370495
+integer-4503599627370496 4503599627370496.0 nearest 4503599627370496 trunc 4503599627370496
+PASS graph-probe/nearest-4503599627370496
+PASS graph-probe/trunc-4503599627370496
+integer-4503599627370497 4503599627370497.0 nearest 4503599627370497 trunc 4503599627370497
+PASS graph-probe/nearest-4503599627370497
+PASS graph-probe/trunc-4503599627370497
+integer-9007199254740990 9007199254740990.0 nearest 9007199254740990 trunc 9007199254740990
+PASS graph-probe/nearest-9007199254740990
+PASS graph-probe/trunc-9007199254740990
+integer-9007199254740991 9007199254740991.0 nearest 9007199254740991 trunc 9007199254740991
+PASS graph-probe/nearest-9007199254740991
+PASS graph-probe/trunc-9007199254740991
+literal 8495A6BE top 132
+PASS graph-probe/literal/top-byte
+PASS graph-probe/literal/whole-word
+parsed 8495A6BE top 132
+PASS graph-probe/parsed/top-byte
+PASS graph-probe/parsed/whole-word
+converted 8495A6BE top 132
+PASS graph-probe/converted/top-byte
+PASS graph-probe/converted/whole-word
+shifted 8495A6BE top 132
+PASS graph-probe/shifted/top-byte
+PASS graph-probe/shifted/whole-word
+SUMMARY 24 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

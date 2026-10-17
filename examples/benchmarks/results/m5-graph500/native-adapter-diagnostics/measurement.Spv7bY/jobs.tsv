@@ -1,0 +1,1 @@
+kronecker	30	1048576	shared/input.sml shared/ocaml-random.sml shared/sandmark-graph500-sort.sml shared/sandmark-graph500-kernel.sml shared/sandmark-graph500-marshal.sml shared/sandmark-graph500-prototype.sml shared/sandmark-graph500-driver.sml kronecker/benchmark.sml shared/main.sml	3 1	kronecker/smoke.expected	-

@@ -1,0 +1,5 @@
+COUNT unbudgeted graph500-kernel1 normal rune
+COUNT unbudgeted graph500-kernel1 normal rune:opt
+COUNT unbudgeted graph500-kernel1 normal rune:new
+COUNT unbudgeted graph500-kernel1 normal rune:jit
+COUNT comparisons agree

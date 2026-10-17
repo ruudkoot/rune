@@ -1,0 +1,32 @@
+[
+  {
+    "path": "examples/benchmarks/graph500-kernel1/smoke.marshal",
+    "bytes": 3097,
+    "sha256": "d5ba6fb9625e1c75cc1080fa4133b9bbf36692bacc4d6c841be27b7b7a9ea29a",
+    "kind": "generated Graph500 edge-array source data",
+    "source_revision": "5605805954a00497ed197c930641cddd580e1507",
+    "source": "benchmarks/graph500seq/generateSeq.ml",
+    "origin": "OCaml 4.14.1 original serializer with fresh default Random state; seeded gen fixture adapter removes self_init",
+    "magic_hex": "8495a6be"
+  },
+  {
+    "path": "examples/benchmarks/graph500-kernel1/normal.marshal",
+    "bytes": 1042167,
+    "sha256": "faac76a69466de04bd9183cde1ac8252b6e0d85e361edcceaf45a15dc909e15f",
+    "kind": "generated Graph500 edge-array source data",
+    "source_revision": "5605805954a00497ed197c930641cddd580e1507",
+    "source": "benchmarks/graph500seq/generateSeq.ml",
+    "origin": "OCaml 4.14.1 original serializer with fresh default Random state; seeded gen fixture adapter removes self_init",
+    "magic_hex": "8495a6be"
+  },
+  {
+    "path": "examples/benchmarks/graph500-kernel1/large.marshal",
+    "bytes": 4188506,
+    "sha256": "c9bb9be565dd744e170b60eb31311a8fb8f33309bdf7b8930e6770b20c7134c9",
+    "kind": "generated Graph500 edge-array source data",
+    "source_revision": "5605805954a00497ed197c930641cddd580e1507",
+    "source": "benchmarks/graph500seq/generateSeq.ml",
+    "origin": "OCaml 4.14.1 original serializer with fresh default Random state; seeded gen fixture adapter removes self_init",
+    "magic_hex": "8495a6be"
+  }
+]

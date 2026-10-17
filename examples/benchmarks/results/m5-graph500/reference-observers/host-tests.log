@@ -1,0 +1,1811 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS graph500/generation-full-marshal-bytes
+PASS graph500/edge-0
+PASS graph500/edge-1
+PASS graph500/edge-2
+PASS graph500/edge-3
+PASS graph500/edge-4
+PASS graph500/edge-5
+PASS graph500/edge-6
+PASS graph500/edge-7
+PASS graph500/edge-8
+PASS graph500/edge-9
+PASS graph500/edge-10
+PASS graph500/edge-11
+PASS graph500/edge-12
+PASS graph500/edge-13
+PASS graph500/edge-14
+PASS graph500/edge-15
+PASS graph500/edge-16
+PASS graph500/edge-17
+PASS graph500/edge-18
+PASS graph500/edge-19
+PASS graph500/edge-20
+PASS graph500/edge-21
+PASS graph500/edge-22
+PASS graph500/edge-23
+PASS graph500/edge-24
+PASS graph500/edge-25
+PASS graph500/edge-26
+PASS graph500/edge-27
+PASS graph500/edge-28
+PASS graph500/edge-29
+PASS graph500/edge-30
+PASS graph500/edge-31
+PASS graph500/edge-32
+PASS graph500/edge-33
+PASS graph500/edge-34
+PASS graph500/edge-35
+PASS graph500/edge-36
+PASS graph500/edge-37
+PASS graph500/edge-38
+PASS graph500/edge-39
+PASS graph500/edge-40
+PASS graph500/edge-41
+PASS graph500/edge-42
+PASS graph500/edge-43
+PASS graph500/edge-44
+PASS graph500/edge-45
+PASS graph500/edge-46
+PASS graph500/edge-47
+PASS graph500/edge-48
+PASS graph500/edge-49
+PASS graph500/edge-50
+PASS graph500/edge-51
+PASS graph500/edge-52
+PASS graph500/edge-53
+PASS graph500/edge-54
+PASS graph500/edge-55
+PASS graph500/edge-56
+PASS graph500/edge-57
+PASS graph500/edge-58
+PASS graph500/edge-59
+PASS graph500/edge-60
+PASS graph500/edge-61
+PASS graph500/edge-62
+PASS graph500/edge-63
+PASS graph500/edge-64
+PASS graph500/edge-65
+PASS graph500/edge-66
+PASS graph500/edge-67
+PASS graph500/edge-68
+PASS graph500/edge-69
+PASS graph500/edge-70
+PASS graph500/edge-71
+PASS graph500/edge-72
+PASS graph500/edge-73
+PASS graph500/edge-74
+PASS graph500/edge-75
+PASS graph500/edge-76
+PASS graph500/edge-77
+PASS graph500/edge-78
+PASS graph500/edge-79
+PASS graph500/edge-80
+PASS graph500/edge-81
+PASS graph500/edge-82
+PASS graph500/edge-83
+PASS graph500/edge-84
+PASS graph500/edge-85
+PASS graph500/edge-86
+PASS graph500/edge-87
+PASS graph500/edge-88
+PASS graph500/edge-89
+PASS graph500/edge-90
+PASS graph500/edge-91
+PASS graph500/edge-92
+PASS graph500/edge-93
+PASS graph500/edge-94
+PASS graph500/edge-95
+PASS graph500/edge-96
+PASS graph500/edge-97
+PASS graph500/edge-98
+PASS graph500/edge-99
+PASS graph500/edge-100
+PASS graph500/edge-101
+PASS graph500/edge-102
+PASS graph500/edge-103
+PASS graph500/edge-104
+PASS graph500/edge-105
+PASS graph500/edge-106
+PASS graph500/edge-107
+PASS graph500/edge-108
+PASS graph500/edge-109
+PASS graph500/edge-110
+PASS graph500/edge-111
+PASS graph500/edge-112
+PASS graph500/edge-113
+PASS graph500/edge-114
+PASS graph500/edge-115
+PASS graph500/edge-116
+PASS graph500/edge-117
+PASS graph500/edge-118
+PASS graph500/edge-119
+PASS graph500/edge-120
+PASS graph500/edge-121
+PASS graph500/edge-122
+PASS graph500/edge-123
+PASS graph500/edge-124
+PASS graph500/edge-125
+PASS graph500/edge-126
+PASS graph500/edge-127
+PASS graph500/edge-128
+PASS graph500/edge-129
+PASS graph500/edge-130
+PASS graph500/edge-131
+PASS graph500/edge-132
+PASS graph500/edge-133
+PASS graph500/edge-134
+PASS graph500/edge-135
+PASS graph500/edge-136
+PASS graph500/edge-137
+PASS graph500/edge-138
+PASS graph500/edge-139
+PASS graph500/edge-140
+PASS graph500/edge-141
+PASS graph500/edge-142
+PASS graph500/edge-143
+PASS graph500/edge-144
+PASS graph500/edge-145
+PASS graph500/edge-146
+PASS graph500/edge-147
+PASS graph500/edge-148
+PASS graph500/edge-149
+PASS graph500/edge-150
+PASS graph500/edge-151
+PASS graph500/edge-152
+PASS graph500/edge-153
+PASS graph500/edge-154
+PASS graph500/edge-155
+PASS graph500/edge-156
+PASS graph500/edge-157
+PASS graph500/edge-158
+PASS graph500/edge-159
+PASS graph500/edge-160
+PASS graph500/edge-161
+PASS graph500/edge-162
+PASS graph500/edge-163
+PASS graph500/edge-164
+PASS graph500/edge-165
+PASS graph500/edge-166
+PASS graph500/edge-167
+PASS graph500/edge-168
+PASS graph500/edge-169
+PASS graph500/edge-170
+PASS graph500/edge-171
+PASS graph500/edge-172
+PASS graph500/edge-173
+PASS graph500/edge-174
+PASS graph500/edge-175
+PASS graph500/edge-176
+PASS graph500/edge-177
+PASS graph500/edge-178
+PASS graph500/edge-179
+PASS graph500/edge-180
+PASS graph500/edge-181
+PASS graph500/edge-182
+PASS graph500/edge-183
+PASS graph500/edge-184
+PASS graph500/edge-185
+PASS graph500/edge-186
+PASS graph500/edge-187
+PASS graph500/edge-188
+PASS graph500/edge-189
+PASS graph500/edge-190
+PASS graph500/edge-191
+PASS graph500/edge-192
+PASS graph500/edge-193
+PASS graph500/edge-194
+PASS graph500/edge-195
+PASS graph500/edge-196
+PASS graph500/edge-197
+PASS graph500/edge-198
+PASS graph500/edge-199
+PASS graph500/edge-200
+PASS graph500/edge-201
+PASS graph500/edge-202
+PASS graph500/edge-203
+PASS graph500/edge-204
+PASS graph500/edge-205
+PASS graph500/edge-206
+PASS graph500/edge-207
+PASS graph500/edge-208
+PASS graph500/edge-209
+PASS graph500/edge-210
+PASS graph500/edge-211
+PASS graph500/edge-212
+PASS graph500/edge-213
+PASS graph500/edge-214
+PASS graph500/edge-215
+PASS graph500/edge-216
+PASS graph500/edge-217
+PASS graph500/edge-218
+PASS graph500/edge-219
+PASS graph500/edge-220
+PASS graph500/edge-221
+PASS graph500/edge-222
+PASS graph500/edge-223
+PASS graph500/edge-224
+PASS graph500/edge-225
+PASS graph500/edge-226
+PASS graph500/edge-227
+PASS graph500/edge-228
+PASS graph500/edge-229
+PASS graph500/edge-230
+PASS graph500/edge-231
+PASS graph500/edge-232
+PASS graph500/edge-233
+PASS graph500/edge-234
+PASS graph500/edge-235
+PASS graph500/edge-236
+PASS graph500/edge-237
+PASS graph500/edge-238
+PASS graph500/edge-239
+PASS graph500/edge-240
+PASS graph500/edge-241
+PASS graph500/edge-242
+PASS graph500/edge-243
+PASS graph500/edge-244
+PASS graph500/edge-245
+PASS graph500/edge-246
+PASS graph500/edge-247
+PASS graph500/edge-248
+PASS graph500/edge-249
+PASS graph500/edge-250
+PASS graph500/edge-251
+PASS graph500/edge-252
+PASS graph500/edge-253
+PASS graph500/edge-254
+PASS graph500/edge-255
+PASS graph500/adjacency-full-order-and-weights
+PASS graph500/codec-roundtrip-empty
+PASS graph500/codec-roundtrip-boundary
+PASS graph500/boundary-semantic-half
+PASS graph500/boundary-negative-zero-sign
+PASS graph500/empty-graph-summary
+PASS graph500/malformed-magic
+PASS graph500/malformed-body-length
+PASS graph500/malformed-object-count
+PASS graph500/malformed-heap32
+PASS graph500/malformed-heap64
+PASS graph500/malformed-short-header
+PASS graph500/malformed-short-data
+PASS graph500/malformed-extra-data
+PASS graph500/malformed-outer-tag
+PASS graph500/malformed-edge-shape
+PASS graph500/sparse-selfloops
+PASS graph500/sparse-duplicates-and-order-forward
+PASS graph500/sparse-duplicates-and-order-backward
+PASS graph500/observed-max-label
+PASS graph500/generator-empty-sort
+PASS graph500/sort-0
+PASS graph500/sort-1
+PASS graph500/sort-2
+PASS graph500/sort-3
+PASS graph500/sort-4
+PASS graph500/sort-5
+PASS graph500/sort-6
+PASS graph500/sort-7
+PASS graph500/sort-8
+PASS graph500/sort-9
+PASS graph500/sort-10
+PASS graph500/sort-11
+PASS graph500/sort-12
+PASS graph500/sort-13
+PASS graph500/sort-14
+PASS graph500/sort-15
+PASS graph500/sort-16
+PASS graph500/sort-17
+PASS graph500/sort-18
+PASS graph500/sort-19
+PASS graph500/sort-20
+PASS graph500/sort-21
+PASS graph500/sort-22
+PASS graph500/sort-23
+PASS graph500/sort-24
+PASS graph500/sort-25
+PASS graph500/sort-26
+PASS graph500/sort-27
+PASS graph500/sort-28
+PASS graph500/sort-29
+PASS graph500/sort-30
+PASS graph500/array-permutation-key-ties-stay-stable
+PASS graph500/prototype-key-ties-compare-payload
+PASS graph500/prototype-full-csv-bytes
+SUMMARY 312 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-random.sml]
+[autoloading]
+[autoloading done]
+structure BenchOCamlRandom : sig
+  type state = {index:int ref, words:Word32.word array}
+  val defaultWords : Word32.word vector
+  val seed42Words : Word32.word vector
+  val seed512Words : Word32.word vector
+  val make : Word32.word vector -> state
+  val default : unit -> state
+  val seed42 : unit -> state
+  val seed512 : unit -> state
+  val bits : state -> int
+  val integer : state -> int -> int
+  val real : state -> real -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/sort.sml]
+[autoloading]
+[autoloading done]
+structure BenchGraphSort : sig
+  val array : ('a * 'a -> order) -> 'a array -> unit
+  val list : ('a * 'a -> order) -> 'a list -> 'a list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/kernel.sml]
+structure BenchGraph500 : sig
+  structure R : <sig>
+  type edge = int * int * real
+  val loop : int -> (int -> 'a) -> unit
+  val power : int -> int
+  val computeIJW :
+      BenchOCamlRandom.state
+       -> int -> int -> int array * int array * Real64Array.array
+  val permutation : BenchOCamlRandom.state -> int -> int -> int
+  val permute : BenchOCamlRandom.state -> 'a array -> 'a array
+  val generate :
+      BenchOCamlRandom.state
+       -> int -> int -> (int * int * Real64Array.elem) array
+  val maxVertex : edge array -> int
+  val sparse : edge array -> (int * real) list array
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/marshal.sml]
+[autoloading]
+[autoloading done]
+structure BenchGraphMarshal : sig
+  structure W : <sig>
+  type edge = int * int * real
+  val magic : Word64.word
+  val intLength : int -> int
+  val headerLength : int -> int
+  val write : string -> edge array -> int * Word64.word
+  val read : string -> (int * int * real) array
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/prototype.sml]
+[autoloading]
+[autoloading done]
+structure BenchKroneckerPrototype : sig
+  structure R : <sig>
+  val loop : int -> (int -> 'a) -> unit
+  val append : Real64Array.array -> Real64Array.array -> Real64Array.array
+  val addArray : 'a array -> 'a array -> 'a array
+  val empty : unit -> Real64Array.array
+  val appendOne : Real64Array.array -> Real64Array.elem -> Real64Array.array
+  val weights : BenchOCamlRandom.state -> int -> Real64Array.array
+  val iiBits : BenchOCamlRandom.state -> int -> real -> Real64Array.array
+  val jjBits :
+      BenchOCamlRandom.state
+       -> Real64Array.array -> int -> real -> real -> Real64Array.array
+  val modify :
+      Real64Array.array
+       -> int -> Real64Array.array -> int -> Real64Array.array
+  val permute :
+      ('a * 'a -> order) -> BenchOCamlRandom.state -> 'a list -> 'a list
+  val toList : Real64Array.array -> Real64Array.elem list
+  val compareRow : Real64Array.array * Real64Array.array -> order
+  val transpose :
+      Real64Array.array array
+       -> Real64Array.array array ref -> Real64Array.array array
+  val generate :
+      BenchOCamlRandom.state -> int -> int -> Real64Array.array array
+  val write : string -> Real64Array.array array -> int * Word64.word
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/driver.sml]
+structure BenchGraph500Driver : sig
+  val parameters : string list -> int * int
+  val generate : string list -> string
+  val sparseSummary : BenchGraph500.edge array -> string
+  val kernel : string list -> string
+  val prototype : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/tests.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/tests.sml:76.26 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/tests.sml:76.72 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/tests.sml:64.50 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/tests.sml:39.34 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/tests.sml:22.36 Warning: calling polyEqual
+FAIL graph500/generation-full-marshal-bytes -- false
+FAIL graph500/edge-0 -- false
+FAIL graph500/edge-1 -- false
+FAIL graph500/edge-2 -- false
+FAIL graph500/edge-3 -- false
+FAIL graph500/edge-4 -- false
+FAIL graph500/edge-5 -- false
+FAIL graph500/edge-6 -- false
+FAIL graph500/edge-7 -- false
+FAIL graph500/edge-8 -- false
+FAIL graph500/edge-9 -- false
+FAIL graph500/edge-10 -- false
+FAIL graph500/edge-11 -- false
+FAIL graph500/edge-12 -- false
+FAIL graph500/edge-13 -- false
+FAIL graph500/edge-14 -- false
+FAIL graph500/edge-15 -- false
+FAIL graph500/edge-16 -- false
+FAIL graph500/edge-17 -- false
+FAIL graph500/edge-18 -- false
+FAIL graph500/edge-19 -- false
+FAIL graph500/edge-20 -- false
+FAIL graph500/edge-21 -- false
+FAIL graph500/edge-22 -- false
+FAIL graph500/edge-23 -- false
+FAIL graph500/edge-24 -- false
+FAIL graph500/edge-25 -- false
+FAIL graph500/edge-26 -- false
+FAIL graph500/edge-27 -- false
+FAIL graph500/edge-28 -- false
+FAIL graph500/edge-29 -- false
+FAIL graph500/edge-30 -- false
+FAIL graph500/edge-31 -- false
+FAIL graph500/edge-32 -- false
+FAIL graph500/edge-33 -- false
+FAIL graph500/edge-34 -- false
+FAIL graph500/edge-35 -- false
+FAIL graph500/edge-36 -- false
+FAIL graph500/edge-37 -- false
+FAIL graph500/edge-38 -- false
+FAIL graph500/edge-39 -- false
+FAIL graph500/edge-40 -- false
+FAIL graph500/edge-41 -- false
+FAIL graph500/edge-42 -- false
+FAIL graph500/edge-43 -- false
+FAIL graph500/edge-44 -- false
+FAIL graph500/edge-45 -- false
+FAIL graph500/edge-46 -- false
+FAIL graph500/edge-47 -- false
+FAIL graph500/edge-48 -- false
+FAIL graph500/edge-49 -- false
+FAIL graph500/edge-50 -- false
+FAIL graph500/edge-51 -- false
+FAIL graph500/edge-52 -- false
+FAIL graph500/edge-53 -- false
+FAIL graph500/edge-54 -- false
+FAIL graph500/edge-55 -- false
+FAIL graph500/edge-56 -- false
+FAIL graph500/edge-57 -- false
+FAIL graph500/edge-58 -- false
+FAIL graph500/edge-59 -- false
+FAIL graph500/edge-60 -- false
+FAIL graph500/edge-61 -- false
+FAIL graph500/edge-62 -- false
+FAIL graph500/edge-63 -- false
+FAIL graph500/edge-64 -- false
+FAIL graph500/edge-65 -- false
+FAIL graph500/edge-66 -- false
+FAIL graph500/edge-67 -- false
+FAIL graph500/edge-68 -- false
+FAIL graph500/edge-69 -- false
+FAIL graph500/edge-70 -- false
+FAIL graph500/edge-71 -- false
+FAIL graph500/edge-72 -- false
+FAIL graph500/edge-73 -- false
+FAIL graph500/edge-74 -- false
+FAIL graph500/edge-75 -- false
+FAIL graph500/edge-76 -- false
+FAIL graph500/edge-77 -- false
+FAIL graph500/edge-78 -- false
+FAIL graph500/edge-79 -- false
+FAIL graph500/edge-80 -- false
+FAIL graph500/edge-81 -- false
+FAIL graph500/edge-82 -- false
+FAIL graph500/edge-83 -- false
+FAIL graph500/edge-84 -- false
+FAIL graph500/edge-85 -- false
+FAIL graph500/edge-86 -- false
+FAIL graph500/edge-87 -- false
+FAIL graph500/edge-88 -- false
+FAIL graph500/edge-89 -- false
+FAIL graph500/edge-90 -- false
+FAIL graph500/edge-91 -- false
+FAIL graph500/edge-92 -- false
+FAIL graph500/edge-93 -- false
+FAIL graph500/edge-94 -- false
+FAIL graph500/edge-95 -- false
+FAIL graph500/edge-96 -- false
+FAIL graph500/edge-97 -- false
+FAIL graph500/edge-98 -- false
+FAIL graph500/edge-99 -- false
+FAIL graph500/edge-100 -- false
+FAIL graph500/edge-101 -- false
+FAIL graph500/edge-102 -- false
+FAIL graph500/edge-103 -- false
+FAIL graph500/edge-104 -- false
+FAIL graph500/edge-105 -- false
+FAIL graph500/edge-106 -- false
+FAIL graph500/edge-107 -- false
+FAIL graph500/edge-108 -- false
+FAIL graph500/edge-109 -- false
+FAIL graph500/edge-110 -- false
+FAIL graph500/edge-111 -- false
+FAIL graph500/edge-112 -- false
+FAIL graph500/edge-113 -- false
+FAIL graph500/edge-114 -- false
+FAIL graph500/edge-115 -- false
+FAIL graph500/edge-116 -- false
+FAIL graph500/edge-117 -- false
+FAIL graph500/edge-118 -- false
+FAIL graph500/edge-119 -- false
+FAIL graph500/edge-120 -- false
+FAIL graph500/edge-121 -- false
+FAIL graph500/edge-122 -- false
+FAIL graph500/edge-123 -- false
+FAIL graph500/edge-124 -- false
+FAIL graph500/edge-125 -- false
+FAIL graph500/edge-126 -- false
+FAIL graph500/edge-127 -- false
+FAIL graph500/edge-128 -- false
+FAIL graph500/edge-129 -- false
+FAIL graph500/edge-130 -- false
+FAIL graph500/edge-131 -- false
+FAIL graph500/edge-132 -- false
+FAIL graph500/edge-133 -- false
+FAIL graph500/edge-134 -- false
+FAIL graph500/edge-135 -- false
+FAIL graph500/edge-136 -- false
+FAIL graph500/edge-137 -- false
+FAIL graph500/edge-138 -- false
+FAIL graph500/edge-139 -- false
+FAIL graph500/edge-140 -- false
+FAIL graph500/edge-141 -- false
+FAIL graph500/edge-142 -- false
+FAIL graph500/edge-143 -- false
+FAIL graph500/edge-144 -- false
+FAIL graph500/edge-145 -- false
+FAIL graph500/edge-146 -- false
+FAIL graph500/edge-147 -- false
+FAIL graph500/edge-148 -- false
+FAIL graph500/edge-149 -- false
+FAIL graph500/edge-150 -- false
+FAIL graph500/edge-151 -- false
+FAIL graph500/edge-152 -- false
+FAIL graph500/edge-153 -- false
+FAIL graph500/edge-154 -- false
+FAIL graph500/edge-155 -- false
+FAIL graph500/edge-156 -- false
+FAIL graph500/edge-157 -- false
+FAIL graph500/edge-158 -- false
+FAIL graph500/edge-159 -- false
+FAIL graph500/edge-160 -- false
+FAIL graph500/edge-161 -- false
+FAIL graph500/edge-162 -- false
+FAIL graph500/edge-163 -- false
+FAIL graph500/edge-164 -- false
+FAIL graph500/edge-165 -- false
+FAIL graph500/edge-166 -- false
+FAIL graph500/edge-167 -- false
+FAIL graph500/edge-168 -- false
+FAIL graph500/edge-169 -- false
+FAIL graph500/edge-170 -- false
+FAIL graph500/edge-171 -- false
+FAIL graph500/edge-172 -- false
+FAIL graph500/edge-173 -- false
+FAIL graph500/edge-174 -- false
+FAIL graph500/edge-175 -- false
+FAIL graph500/edge-176 -- false
+FAIL graph500/edge-177 -- false
+FAIL graph500/edge-178 -- false
+FAIL graph500/edge-179 -- false
+FAIL graph500/edge-180 -- false
+FAIL graph500/edge-181 -- false
+FAIL graph500/edge-182 -- false
+FAIL graph500/edge-183 -- false
+FAIL graph500/edge-184 -- false
+FAIL graph500/edge-185 -- false
+FAIL graph500/edge-186 -- false
+FAIL graph500/edge-187 -- false
+FAIL graph500/edge-188 -- false
+FAIL graph500/edge-189 -- false
+FAIL graph500/edge-190 -- false
+FAIL graph500/edge-191 -- false
+FAIL graph500/edge-192 -- false
+FAIL graph500/edge-193 -- false
+FAIL graph500/edge-194 -- false
+FAIL graph500/edge-195 -- false
+FAIL graph500/edge-196 -- false
+FAIL graph500/edge-197 -- false
+FAIL graph500/edge-198 -- false
+FAIL graph500/edge-199 -- false
+FAIL graph500/edge-200 -- false
+FAIL graph500/edge-201 -- false
+FAIL graph500/edge-202 -- false
+FAIL graph500/edge-203 -- false
+FAIL graph500/edge-204 -- false
+FAIL graph500/edge-205 -- false
+FAIL graph500/edge-206 -- false
+FAIL graph500/edge-207 -- false
+FAIL graph500/edge-208 -- false
+FAIL graph500/edge-209 -- false
+FAIL graph500/edge-210 -- false
+FAIL graph500/edge-211 -- false
+FAIL graph500/edge-212 -- false
+FAIL graph500/edge-213 -- false
+FAIL graph500/edge-214 -- false
+FAIL graph500/edge-215 -- false
+FAIL graph500/edge-216 -- false
+FAIL graph500/edge-217 -- false
+FAIL graph500/edge-218 -- false
+FAIL graph500/edge-219 -- false
+FAIL graph500/edge-220 -- false
+FAIL graph500/edge-221 -- false
+FAIL graph500/edge-222 -- false
+FAIL graph500/edge-223 -- false
+FAIL graph500/edge-224 -- false
+FAIL graph500/edge-225 -- false
+FAIL graph500/edge-226 -- false
+FAIL graph500/edge-227 -- false
+FAIL graph500/edge-228 -- false
+FAIL graph500/edge-229 -- false
+FAIL graph500/edge-230 -- false
+FAIL graph500/edge-231 -- false
+FAIL graph500/edge-232 -- false
+FAIL graph500/edge-233 -- false
+FAIL graph500/edge-234 -- false
+FAIL graph500/edge-235 -- false
+FAIL graph500/edge-236 -- false
+FAIL graph500/edge-237 -- false
+FAIL graph500/edge-238 -- false
+FAIL graph500/edge-239 -- false
+FAIL graph500/edge-240 -- false
+FAIL graph500/edge-241 -- false
+FAIL graph500/edge-242 -- false
+FAIL graph500/edge-243 -- false
+FAIL graph500/edge-244 -- false
+FAIL graph500/edge-245 -- false
+FAIL graph500/edge-246 -- false
+FAIL graph500/edge-247 -- false
+FAIL graph500/edge-248 -- false
+FAIL graph500/edge-249 -- false
+FAIL graph500/edge-250 -- false
+FAIL graph500/edge-251 -- false
+FAIL graph500/edge-252 -- false
+FAIL graph500/edge-253 -- false
+FAIL graph500/edge-254 -- false
+FAIL graph500/edge-255 -- false
+FAIL graph500/adjacency-full-order-and-weights -- raised an exception
+PASS graph500/codec-roundtrip-empty
+PASS graph500/codec-roundtrip-boundary
+FAIL graph500/boundary-semantic-half -- false
+FAIL graph500/boundary-negative-zero-sign -- false
+PASS graph500/empty-graph-summary
+PASS graph500/malformed-magic
+PASS graph500/malformed-body-length
+PASS graph500/malformed-object-count
+PASS graph500/malformed-heap32
+PASS graph500/malformed-heap64
+PASS graph500/malformed-short-header
+PASS graph500/malformed-short-data
+PASS graph500/malformed-extra-data
+PASS graph500/malformed-outer-tag
+PASS graph500/malformed-edge-shape
+PASS graph500/sparse-selfloops
+PASS graph500/sparse-duplicates-and-order-forward
+PASS graph500/sparse-duplicates-and-order-backward
+PASS graph500/observed-max-label
+PASS graph500/generator-empty-sort
+PASS graph500/sort-0
+PASS graph500/sort-1
+PASS graph500/sort-2
+PASS graph500/sort-3
+PASS graph500/sort-4
+PASS graph500/sort-5
+PASS graph500/sort-6
+PASS graph500/sort-7
+PASS graph500/sort-8
+PASS graph500/sort-9
+PASS graph500/sort-10
+PASS graph500/sort-11
+PASS graph500/sort-12
+PASS graph500/sort-13
+PASS graph500/sort-14
+PASS graph500/sort-15
+PASS graph500/sort-16
+PASS graph500/sort-17
+PASS graph500/sort-18
+PASS graph500/sort-19
+PASS graph500/sort-20
+PASS graph500/sort-21
+PASS graph500/sort-22
+PASS graph500/sort-23
+PASS graph500/sort-24
+PASS graph500/sort-25
+PASS graph500/sort-26
+PASS graph500/sort-27
+PASS graph500/sort-28
+PASS graph500/sort-29
+PASS graph500/sort-30
+PASS graph500/array-permutation-key-ties-stay-stable
+PASS graph500/prototype-key-ties-compare-payload
+FAIL graph500/prototype-full-csv-bytes -- false
+structure Graph500Tests : sig
+  val base : string
+  val label : string -> string
+  val read : string -> TextIO.vector
+  val bytes : string -> BinIO.vector
+  val save : string -> BinIO.vector -> unit
+  val hex : string -> Word8Vector.vector
+  val fixture : string -> Word8Vector.vector
+  val smoke : Word8Vector.vector
+  val generated : (int * int * Real64Array.elem) array
+  val decoded : (int * int * real) array
+  val wanted : string -> int * int * real
+  val expected : (int * int * real) list
+  val boundary : (int * int * real) array
+  val malformed : string -> (Word8Vector.vector -> BinIO.vector) -> unit
+  val change : int -> int -> Word8Vector.vector -> Word8Vector.vector
+  val small : (int * int * real) array
+  val graph : (int * real) list array
+  val same : (''a * real) list * (''a * real) list -> bool
+  val zeros : unit -> BenchOCamlRandom.state
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 312 checks, 261 failed
+PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 0, exit 1)
+FAIL graph500/adjacency-full-order-and-weights -- raised an exception
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-random.sml]
+[autoloading]
+[autoloading done]
+structure BenchOCamlRandom : sig
+  type state = {index:int ref, words:Word32.word array}
+  val defaultWords : Word32.word vector
+  val seed42Words : Word32.word vector
+  val seed512Words : Word32.word vector
+  val make : Word32.word vector -> state
+  val default : unit -> state
+  val seed42 : unit -> state
+  val seed512 : unit -> state
+  val bits : state -> int
+  val integer : state -> int -> int
+  val real : state -> real -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/sort.sml]
+[autoloading]
+[autoloading done]
+structure BenchGraphSort : sig
+  val array : ('a * 'a -> order) -> 'a array -> unit
+  val list : ('a * 'a -> order) -> 'a list -> 'a list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/kernel.sml]
+structure BenchGraph500 : sig
+  structure R : <sig>
+  type edge = int * int * real
+  val loop : int -> (int -> 'a) -> unit
+  val power : int -> int
+  val computeIJW :
+      BenchOCamlRandom.state
+       -> int -> int -> int array * int array * Real64Array.array
+  val permutation : BenchOCamlRandom.state -> int -> int -> int
+  val permute : BenchOCamlRandom.state -> 'a array -> 'a array
+  val generate :
+      BenchOCamlRandom.state
+       -> int -> int -> (int * int * Real64Array.elem) array
+  val maxVertex : edge array -> int
+  val sparse : edge array -> (int * real) list array
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/marshal.sml]
+[autoloading]
+[autoloading done]
+structure BenchGraphMarshal : sig
+  structure W : <sig>
+  type edge = int * int * real
+  val magic : Word64.word
+  val intLength : int -> int
+  val headerLength : int -> int
+  val write : string -> edge array -> int * Word64.word
+  val read : string -> (int * int * real) array
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/prototype.sml]
+[autoloading]
+[autoloading done]
+structure BenchKroneckerPrototype : sig
+  structure R : <sig>
+  val loop : int -> (int -> 'a) -> unit
+  val append : Real64Array.array -> Real64Array.array -> Real64Array.array
+  val addArray : 'a array -> 'a array -> 'a array
+  val empty : unit -> Real64Array.array
+  val appendOne : Real64Array.array -> Real64Array.elem -> Real64Array.array
+  val weights : BenchOCamlRandom.state -> int -> Real64Array.array
+  val iiBits : BenchOCamlRandom.state -> int -> real -> Real64Array.array
+  val jjBits :
+      BenchOCamlRandom.state
+       -> Real64Array.array -> int -> real -> real -> Real64Array.array
+  val modify :
+      Real64Array.array
+       -> int -> Real64Array.array -> int -> Real64Array.array
+  val permute :
+      ('a * 'a -> order) -> BenchOCamlRandom.state -> 'a list -> 'a list
+  val toList : Real64Array.array -> Real64Array.elem list
+  val compareRow : Real64Array.array * Real64Array.array -> order
+  val transpose :
+      Real64Array.array array
+       -> Real64Array.array array ref -> Real64Array.array array
+  val generate :
+      BenchOCamlRandom.state -> int -> int -> Real64Array.array array
+  val write : string -> Real64Array.array array -> int * Word64.word
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/driver.sml]
+structure BenchGraph500Driver : sig
+  val parameters : string list -> int * int
+  val generate : string list -> string
+  val sparseSummary : BenchGraph500.edge array -> string
+  val kernel : string list -> string
+  val prototype : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/tests.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/tests.sml:76.26 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/tests.sml:76.72 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/tests.sml:64.50 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/tests.sml:39.34 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/tests.sml:22.36 Warning: calling polyEqual
+FAIL graph500/generation-full-marshal-bytes -- false
+uncaught exception ExnDuringExecution [ExnDuringExecution]
+PROGRAM FAIL native:smlnj32@110.99.9 (load 1, exit 1)
+uncaught exception ExnDuringExecution [ExnDuringExecution]
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-random.sml]
+structure BenchOCamlRandom : 
+  sig
+    type state = {index:int ref, words:Word32.word array}
+    val defaultWords : Word32.word vector
+    val seed42Words : Word32.word vector
+    val seed512Words : Word32.word vector
+    val make : Word32.word vector -> state
+    val default : unit -> state
+    val seed42 : unit -> state
+    val seed512 : unit -> state
+    val bits : state -> int
+    val integer : state -> int -> int
+    val real : state -> real -> real
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/sort.sml]
+structure BenchGraphSort : 
+  sig
+    val array : ('a * 'a -> order) -> 'a array -> unit
+    val list : ('a * 'a -> order) -> 'a list -> 'a list
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/kernel.sml]
+structure BenchGraph500 : 
+  sig
+    structure R : <sig>
+    type edge = int * int * real
+    val loop : int -> (int -> 'a) -> unit
+    val power : int -> int
+    val computeIJW : BenchOCamlRandom.state
+                      -> int
+                      -> int -> int array * int array * Real64Array.array
+    val permutation : BenchOCamlRandom.state -> int -> int -> int
+    val permute : BenchOCamlRandom.state -> 'a array -> 'a array
+    val generate : BenchOCamlRandom.state
+                    -> int -> int -> (int * int * Real64Array.elem) array
+    val maxVertex : edge array -> int
+    val sparse : edge array -> (int * real) list array
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/marshal.sml]
+structure BenchGraphMarshal : 
+  sig
+    structure W : <sig>
+    type edge = int * int * real
+    val magic : Word64.word
+    val intLength : int -> int
+    val headerLength : int -> int
+    val write : string -> edge array -> int * Word64.word
+    val read : string -> (int * int * real) array
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/prototype.sml]
+structure BenchKroneckerPrototype : 
+  sig
+    structure R : <sig>
+    val loop : int -> (int -> 'a) -> unit
+    val append : Real64Array.array -> Real64Array.array -> Real64Array.array
+    val addArray : 'a array -> 'a array -> 'a array
+    val empty : unit -> Real64Array.array
+    val appendOne : Real64Array.array -> Real64Array.elem -> Real64Array.array
+    val weights : BenchOCamlRandom.state -> int -> Real64Array.array
+    val iiBits : BenchOCamlRandom.state -> int -> real -> Real64Array.array
+    val jjBits : BenchOCamlRandom.state
+                  -> Real64Array.array
+                  -> int -> real -> real -> Real64Array.array
+    val modify : Real64Array.array
+                  -> int -> Real64Array.array -> int -> Real64Array.array
+    val permute : ('a * 'a -> order)
+                   -> BenchOCamlRandom.state -> 'a list -> 'a list
+    val toList : Real64Array.array -> Real64Array.elem list
+    val compareRow : Real64Array.array * Real64Array.array -> order
+    val transpose : Real64Array.array array
+                     -> Real64Array.array array ref -> Real64Array.array array
+    val generate : BenchOCamlRandom.state
+                    -> int -> int -> Real64Array.array array
+    val write : string -> Real64Array.array array -> int * Word64.word
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/driver.sml]
+structure BenchGraph500Driver : 
+  sig
+    val parameters : string list -> int * int
+    val generate : string list -> string
+    val sparseSummary : BenchGraph500.edge array -> string
+    val kernel : string list -> string
+    val prototype : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/tests.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/tests.sml:76.26 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/tests.sml:76.72 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/tests.sml:64.50 Warning: calling polyEqual
+FAIL graph500/generation-full-marshal-bytes -- false
+FAIL graph500/edge-0 -- false
+FAIL graph500/edge-1 -- false
+FAIL graph500/edge-2 -- false
+FAIL graph500/edge-3 -- false
+FAIL graph500/edge-4 -- false
+FAIL graph500/edge-5 -- false
+FAIL graph500/edge-6 -- false
+FAIL graph500/edge-7 -- false
+FAIL graph500/edge-8 -- false
+FAIL graph500/edge-9 -- false
+FAIL graph500/edge-10 -- false
+FAIL graph500/edge-11 -- false
+FAIL graph500/edge-12 -- false
+FAIL graph500/edge-13 -- false
+FAIL graph500/edge-14 -- false
+FAIL graph500/edge-15 -- false
+FAIL graph500/edge-16 -- false
+FAIL graph500/edge-17 -- false
+FAIL graph500/edge-18 -- false
+FAIL graph500/edge-19 -- false
+FAIL graph500/edge-20 -- false
+FAIL graph500/edge-21 -- false
+FAIL graph500/edge-22 -- false
+FAIL graph500/edge-23 -- false
+FAIL graph500/edge-24 -- false
+FAIL graph500/edge-25 -- false
+FAIL graph500/edge-26 -- false
+FAIL graph500/edge-27 -- false
+FAIL graph500/edge-28 -- false
+FAIL graph500/edge-29 -- false
+FAIL graph500/edge-30 -- false
+FAIL graph500/edge-31 -- false
+FAIL graph500/edge-32 -- false
+FAIL graph500/edge-33 -- false
+FAIL graph500/edge-34 -- false
+FAIL graph500/edge-35 -- false
+FAIL graph500/edge-36 -- false
+FAIL graph500/edge-37 -- false
+FAIL graph500/edge-38 -- false
+FAIL graph500/edge-39 -- false
+FAIL graph500/edge-40 -- false
+FAIL graph500/edge-41 -- false
+FAIL graph500/edge-42 -- false
+FAIL graph500/edge-43 -- false
+FAIL graph500/edge-44 -- false
+FAIL graph500/edge-45 -- false
+FAIL graph500/edge-46 -- false
+FAIL graph500/edge-47 -- false
+FAIL graph500/edge-48 -- false
+FAIL graph500/edge-49 -- false
+FAIL graph500/edge-50 -- false
+FAIL graph500/edge-51 -- false
+FAIL graph500/edge-52 -- false
+FAIL graph500/edge-53 -- false
+FAIL graph500/edge-54 -- false
+FAIL graph500/edge-55 -- false
+FAIL graph500/edge-56 -- false
+FAIL graph500/edge-57 -- false
+FAIL graph500/edge-58 -- false
+FAIL graph500/edge-59 -- false
+FAIL graph500/edge-60 -- false
+FAIL graph500/edge-61 -- false
+FAIL graph500/edge-62 -- false
+FAIL graph500/edge-63 -- false
+FAIL graph500/edge-64 -- false
+FAIL graph500/edge-65 -- false
+FAIL graph500/edge-66 -- false
+FAIL graph500/edge-67 -- false
+FAIL graph500/edge-68 -- false
+FAIL graph500/edge-69 -- false
+FAIL graph500/edge-70 -- false
+FAIL graph500/edge-71 -- false
+FAIL graph500/edge-72 -- false
+FAIL graph500/edge-73 -- false
+FAIL graph500/edge-74 -- false
+FAIL graph500/edge-75 -- false
+FAIL graph500/edge-76 -- false
+FAIL graph500/edge-77 -- false
+FAIL graph500/edge-78 -- false
+FAIL graph500/edge-79 -- false
+FAIL graph500/edge-80 -- false
+FAIL graph500/edge-81 -- false
+FAIL graph500/edge-82 -- false
+FAIL graph500/edge-83 -- false
+FAIL graph500/edge-84 -- false
+FAIL graph500/edge-85 -- false
+FAIL graph500/edge-86 -- false
+FAIL graph500/edge-87 -- false
+FAIL graph500/edge-88 -- false
+FAIL graph500/edge-89 -- false
+FAIL graph500/edge-90 -- false
+FAIL graph500/edge-91 -- false
+FAIL graph500/edge-92 -- false
+FAIL graph500/edge-93 -- false
+FAIL graph500/edge-94 -- false
+FAIL graph500/edge-95 -- false
+FAIL graph500/edge-96 -- false
+FAIL graph500/edge-97 -- false
+FAIL graph500/edge-98 -- false
+FAIL graph500/edge-99 -- false
+FAIL graph500/edge-100 -- false
+FAIL graph500/edge-101 -- false
+FAIL graph500/edge-102 -- false
+FAIL graph500/edge-103 -- false
+FAIL graph500/edge-104 -- false
+FAIL graph500/edge-105 -- false
+FAIL graph500/edge-106 -- false
+FAIL graph500/edge-107 -- false
+FAIL graph500/edge-108 -- false
+FAIL graph500/edge-109 -- false
+FAIL graph500/edge-110 -- false
+FAIL graph500/edge-111 -- false
+FAIL graph500/edge-112 -- false
+FAIL graph500/edge-113 -- false
+FAIL graph500/edge-114 -- false
+FAIL graph500/edge-115 -- false
+FAIL graph500/edge-116 -- false
+FAIL graph500/edge-117 -- false
+FAIL graph500/edge-118 -- false
+FAIL graph500/edge-119 -- false
+FAIL graph500/edge-120 -- false
+FAIL graph500/edge-121 -- false
+FAIL graph500/edge-122 -- false
+FAIL graph500/edge-123 -- false
+FAIL graph500/edge-124 -- false
+FAIL graph500/edge-125 -- false
+FAIL graph500/edge-126 -- false
+FAIL graph500/edge-127 -- false
+FAIL graph500/edge-128 -- false
+FAIL graph500/edge-129 -- false
+FAIL graph500/edge-130 -- false
+FAIL graph500/edge-131 -- false
+FAIL graph500/edge-132 -- false
+FAIL graph500/edge-133 -- false
+FAIL graph500/edge-134 -- false
+FAIL graph500/edge-135 -- false
+FAIL graph500/edge-136 -- false
+FAIL graph500/edge-137 -- false
+FAIL graph500/edge-138 -- false
+FAIL graph500/edge-139 -- false
+FAIL graph500/edge-140 -- false
+FAIL graph500/edge-141 -- false
+FAIL graph500/edge-142 -- false
+FAIL graph500/edge-143 -- false
+FAIL graph500/edge-144 -- false
+FAIL graph500/edge-145 -- false
+FAIL graph500/edge-146 -- false
+FAIL graph500/edge-147 -- false
+FAIL graph500/edge-148 -- false
+FAIL graph500/edge-149 -- false
+FAIL graph500/edge-150 -- false
+FAIL graph500/edge-151 -- false
+FAIL graph500/edge-152 -- false
+FAIL graph500/edge-153 -- false
+FAIL graph500/edge-154 -- false
+FAIL graph500/edge-155 -- false
+FAIL graph500/edge-156 -- false
+FAIL graph500/edge-157 -- false
+FAIL graph500/edge-158 -- false
+FAIL graph500/edge-159 -- false
+FAIL graph500/edge-160 -- false
+FAIL graph500/edge-161 -- false
+FAIL graph500/edge-162 -- false
+FAIL graph500/edge-163 -- false
+FAIL graph500/edge-164 -- false
+FAIL graph500/edge-165 -- false
+FAIL graph500/edge-166 -- false
+FAIL graph500/edge-167 -- false
+FAIL graph500/edge-168 -- false
+FAIL graph500/edge-169 -- false
+FAIL graph500/edge-170 -- false
+FAIL graph500/edge-171 -- false
+FAIL graph500/edge-172 -- false
+FAIL graph500/edge-173 -- false
+FAIL graph500/edge-174 -- false
+FAIL graph500/edge-175 -- false
+FAIL graph500/edge-176 -- false
+FAIL graph500/edge-177 -- false
+FAIL graph500/edge-178 -- false
+FAIL graph500/edge-179 -- false
+FAIL graph500/edge-180 -- false
+FAIL graph500/edge-181 -- false
+FAIL graph500/edge-182 -- false
+FAIL graph500/edge-183 -- false
+FAIL graph500/edge-184 -- false
+FAIL graph500/edge-185 -- false
+FAIL graph500/edge-186 -- false
+FAIL graph500/edge-187 -- false
+FAIL graph500/edge-188 -- false
+FAIL graph500/edge-189 -- false
+FAIL graph500/edge-190 -- false
+FAIL graph500/edge-191 -- false
+FAIL graph500/edge-192 -- false
+FAIL graph500/edge-193 -- false
+FAIL graph500/edge-194 -- false
+FAIL graph500/edge-195 -- false
+FAIL graph500/edge-196 -- false
+FAIL graph500/edge-197 -- false
+FAIL graph500/edge-198 -- false
+FAIL graph500/edge-199 -- false
+FAIL graph500/edge-200 -- false
+FAIL graph500/edge-201 -- false
+FAIL graph500/edge-202 -- false
+FAIL graph500/edge-203 -- false
+FAIL graph500/edge-204 -- false
+FAIL graph500/edge-205 -- false
+FAIL graph500/edge-206 -- false
+FAIL graph500/edge-207 -- false
+FAIL graph500/edge-208 -- false
+FAIL graph500/edge-209 -- false
+FAIL graph500/edge-210 -- false
+FAIL graph500/edge-211 -- false
+FAIL graph500/edge-212 -- false
+FAIL graph500/edge-213 -- false
+FAIL graph500/edge-214 -- false
+FAIL graph500/edge-215 -- false
+FAIL graph500/edge-216 -- false
+FAIL graph500/edge-217 -- false
+FAIL graph500/edge-218 -- false
+FAIL graph500/edge-219 -- false
+FAIL graph500/edge-220 -- false
+FAIL graph500/edge-221 -- false
+FAIL graph500/edge-222 -- false
+FAIL graph500/edge-223 -- false
+FAIL graph500/edge-224 -- false
+FAIL graph500/edge-225 -- false
+FAIL graph500/edge-226 -- false
+FAIL graph500/edge-227 -- false
+FAIL graph500/edge-228 -- false
+FAIL graph500/edge-229 -- false
+FAIL graph500/edge-230 -- false
+FAIL graph500/edge-231 -- false
+FAIL graph500/edge-232 -- false
+FAIL graph500/edge-233 -- false
+FAIL graph500/edge-234 -- false
+FAIL graph500/edge-235 -- false
+FAIL graph500/edge-236 -- false
+FAIL graph500/edge-237 -- false
+FAIL graph500/edge-238 -- false
+FAIL graph500/edge-239 -- false
+FAIL graph500/edge-240 -- false
+FAIL graph500/edge-241 -- false
+FAIL graph500/edge-242 -- false
+FAIL graph500/edge-243 -- false
+FAIL graph500/edge-244 -- false
+FAIL graph500/edge-245 -- false
+FAIL graph500/edge-246 -- false
+FAIL graph500/edge-247 -- false
+FAIL graph500/edge-248 -- false
+FAIL graph500/edge-249 -- false
+FAIL graph500/edge-250 -- false
+FAIL graph500/edge-251 -- false
+FAIL graph500/edge-252 -- false
+FAIL graph500/edge-253 -- false
+FAIL graph500/edge-254 -- false
+FAIL graph500/edge-255 -- false
+FAIL graph500/adjacency-full-order-and-weights -- raised an exception
+PASS graph500/codec-roundtrip-empty
+PASS graph500/codec-roundtrip-boundary
+FAIL graph500/boundary-semantic-half -- false
+FAIL graph500/boundary-negative-zero-sign -- false
+PASS graph500/empty-graph-summary
+PASS graph500/malformed-magic
+PASS graph500/malformed-body-length
+PASS graph500/malformed-object-count
+PASS graph500/malformed-heap32
+PASS graph500/malformed-heap64
+PASS graph500/malformed-short-header
+PASS graph500/malformed-short-data
+PASS graph500/malformed-extra-data
+PASS graph500/malformed-outer-tag
+PASS graph500/malformed-edge-shape
+PASS graph500/sparse-selfloops
+PASS graph500/sparse-duplicates-and-order-forward
+PASS graph500/sparse-duplicates-and-order-backward
+PASS graph500/observed-max-label
+PASS graph500/generator-empty-sort
+PASS graph500/sort-0
+PASS graph500/sort-1
+PASS graph500/sort-2
+PASS graph500/sort-3
+PASS graph500/sort-4
+PASS graph500/sort-5
+PASS graph500/sort-6
+PASS graph500/sort-7
+PASS graph500/sort-8
+PASS graph500/sort-9
+PASS graph500/sort-10
+PASS graph500/sort-11
+PASS graph500/sort-12
+PASS graph500/sort-13
+PASS graph500/sort-14
+PASS graph500/sort-15
+PASS graph500/sort-16
+PASS graph500/sort-17
+PASS graph500/sort-18
+PASS graph500/sort-19
+PASS graph500/sort-20
+PASS graph500/sort-21
+PASS graph500/sort-22
+PASS graph500/sort-23
+PASS graph500/sort-24
+PASS graph500/sort-25
+PASS graph500/sort-26
+PASS graph500/sort-27
+PASS graph500/sort-28
+PASS graph500/sort-29
+PASS graph500/sort-30
+PASS graph500/array-permutation-key-ties-stay-stable
+PASS graph500/prototype-key-ties-compare-payload
+FAIL graph500/prototype-full-csv-bytes -- false
+structure Graph500Tests : 
+  sig
+    val base : string
+    val label : string -> string
+    val read : string -> TextIO.vector
+    val bytes : string -> BinIO.vector
+    val save : string -> BinIO.vector -> unit
+    val hex : string -> Word8Vector.vector
+    val fixture : string -> Word8Vector.vector
+    val smoke : Word8Vector.vector
+    val generated : (int * int * Real64Array.elem) array
+    val decoded : (int * int * real) array
+    val wanted : string -> int * int * real
+    val expected : (int * int * real) list
+    val boundary : (int * int * real) array
+    val malformed : string -> (Word8Vector.vector -> BinIO.vector) -> unit
+    val change : int -> int -> Word8Vector.vector -> Word8Vector.vector
+    val small : (int * int * real) array
+    val graph : (int * real) list array
+    val same : (''a * real) list * (''a * real) list -> bool
+    val zeros : unit -> BenchOCamlRandom.state
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 312 checks, 261 failed
+PROGRAM FAIL native:smlnj-dev@2026.2 (load 0, exit 1)
+FAIL graph500/adjacency-full-order-and-weights -- raised an exception
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/marshal.sml:48: error: Structure (PackReal64Little) has not been declared
+Found near (byte 176; integer a; integer b; byte 12; ... ...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/marshal.sml:88: error: Structure (PackReal64Little) has not been declared
+Found near
+  if code = 12 then PackReal64Little.fromBytes payload else
+  if code = 11 then PackReal64Big.fromBytes payload else
+  raise Fail "unsupported graph Marshal real"
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/marshal.sml:89: error: Structure (PackReal64Big) has not been declared
+Found near
+  if code = 11 then PackReal64Big.fromBytes payload else
+  raise Fail "unsupported graph Marshal real"
+uncaught exception Fail [Fail "Static Errors"]
+PROGRAM FAIL native:polyml@5.9.2 (load 1, exit 1)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/graph500-originals/marshal.sml:48: error: Structure (PackReal64Little) has not been declared
+PROGRAM LIMIT AS 1048576 KiB
+PASS graph500/generation-full-marshal-bytes
+PASS graph500/edge-0
+PASS graph500/edge-1
+PASS graph500/edge-2
+PASS graph500/edge-3
+PASS graph500/edge-4
+PASS graph500/edge-5
+PASS graph500/edge-6
+PASS graph500/edge-7
+PASS graph500/edge-8
+PASS graph500/edge-9
+PASS graph500/edge-10
+PASS graph500/edge-11
+PASS graph500/edge-12
+PASS graph500/edge-13
+PASS graph500/edge-14
+PASS graph500/edge-15
+PASS graph500/edge-16
+PASS graph500/edge-17
+PASS graph500/edge-18
+PASS graph500/edge-19
+PASS graph500/edge-20
+PASS graph500/edge-21
+PASS graph500/edge-22
+PASS graph500/edge-23
+PASS graph500/edge-24
+PASS graph500/edge-25
+PASS graph500/edge-26
+PASS graph500/edge-27
+PASS graph500/edge-28
+PASS graph500/edge-29
+PASS graph500/edge-30
+PASS graph500/edge-31
+PASS graph500/edge-32
+PASS graph500/edge-33
+PASS graph500/edge-34
+PASS graph500/edge-35
+PASS graph500/edge-36
+PASS graph500/edge-37
+PASS graph500/edge-38
+PASS graph500/edge-39
+PASS graph500/edge-40
+PASS graph500/edge-41
+PASS graph500/edge-42
+PASS graph500/edge-43
+PASS graph500/edge-44
+PASS graph500/edge-45
+PASS graph500/edge-46
+PASS graph500/edge-47
+PASS graph500/edge-48
+PASS graph500/edge-49
+PASS graph500/edge-50
+PASS graph500/edge-51
+PASS graph500/edge-52
+PASS graph500/edge-53
+PASS graph500/edge-54
+PASS graph500/edge-55
+PASS graph500/edge-56
+PASS graph500/edge-57
+PASS graph500/edge-58
+PASS graph500/edge-59
+PASS graph500/edge-60
+PASS graph500/edge-61
+PASS graph500/edge-62
+PASS graph500/edge-63
+PASS graph500/edge-64
+PASS graph500/edge-65
+PASS graph500/edge-66
+PASS graph500/edge-67
+PASS graph500/edge-68
+PASS graph500/edge-69
+PASS graph500/edge-70
+PASS graph500/edge-71
+PASS graph500/edge-72
+PASS graph500/edge-73
+PASS graph500/edge-74
+PASS graph500/edge-75
+PASS graph500/edge-76
+PASS graph500/edge-77
+PASS graph500/edge-78
+PASS graph500/edge-79
+PASS graph500/edge-80
+PASS graph500/edge-81
+PASS graph500/edge-82
+PASS graph500/edge-83
+PASS graph500/edge-84
+PASS graph500/edge-85
+PASS graph500/edge-86
+PASS graph500/edge-87
+PASS graph500/edge-88
+PASS graph500/edge-89
+PASS graph500/edge-90
+PASS graph500/edge-91
+PASS graph500/edge-92
+PASS graph500/edge-93
+PASS graph500/edge-94
+PASS graph500/edge-95
+PASS graph500/edge-96
+PASS graph500/edge-97
+PASS graph500/edge-98
+PASS graph500/edge-99
+PASS graph500/edge-100
+PASS graph500/edge-101
+PASS graph500/edge-102
+PASS graph500/edge-103
+PASS graph500/edge-104
+PASS graph500/edge-105
+PASS graph500/edge-106
+PASS graph500/edge-107
+PASS graph500/edge-108
+PASS graph500/edge-109
+PASS graph500/edge-110
+PASS graph500/edge-111
+PASS graph500/edge-112
+PASS graph500/edge-113
+PASS graph500/edge-114
+PASS graph500/edge-115
+PASS graph500/edge-116
+PASS graph500/edge-117
+PASS graph500/edge-118
+PASS graph500/edge-119
+PASS graph500/edge-120
+PASS graph500/edge-121
+PASS graph500/edge-122
+PASS graph500/edge-123
+PASS graph500/edge-124
+PASS graph500/edge-125
+PASS graph500/edge-126
+PASS graph500/edge-127
+PASS graph500/edge-128
+PASS graph500/edge-129
+PASS graph500/edge-130
+PASS graph500/edge-131
+PASS graph500/edge-132
+PASS graph500/edge-133
+PASS graph500/edge-134
+PASS graph500/edge-135
+PASS graph500/edge-136
+PASS graph500/edge-137
+PASS graph500/edge-138
+PASS graph500/edge-139
+PASS graph500/edge-140
+PASS graph500/edge-141
+PASS graph500/edge-142
+PASS graph500/edge-143
+PASS graph500/edge-144
+PASS graph500/edge-145
+PASS graph500/edge-146
+PASS graph500/edge-147
+PASS graph500/edge-148
+PASS graph500/edge-149
+PASS graph500/edge-150
+PASS graph500/edge-151
+PASS graph500/edge-152
+PASS graph500/edge-153
+PASS graph500/edge-154
+PASS graph500/edge-155
+PASS graph500/edge-156
+PASS graph500/edge-157
+PASS graph500/edge-158
+PASS graph500/edge-159
+PASS graph500/edge-160
+PASS graph500/edge-161
+PASS graph500/edge-162
+PASS graph500/edge-163
+PASS graph500/edge-164
+PASS graph500/edge-165
+PASS graph500/edge-166
+PASS graph500/edge-167
+PASS graph500/edge-168
+PASS graph500/edge-169
+PASS graph500/edge-170
+PASS graph500/edge-171
+PASS graph500/edge-172
+PASS graph500/edge-173
+PASS graph500/edge-174
+PASS graph500/edge-175
+PASS graph500/edge-176
+PASS graph500/edge-177
+PASS graph500/edge-178
+PASS graph500/edge-179
+PASS graph500/edge-180
+PASS graph500/edge-181
+PASS graph500/edge-182
+PASS graph500/edge-183
+PASS graph500/edge-184
+PASS graph500/edge-185
+PASS graph500/edge-186
+PASS graph500/edge-187
+PASS graph500/edge-188
+PASS graph500/edge-189
+PASS graph500/edge-190
+PASS graph500/edge-191
+PASS graph500/edge-192
+PASS graph500/edge-193
+PASS graph500/edge-194
+PASS graph500/edge-195
+PASS graph500/edge-196
+PASS graph500/edge-197
+PASS graph500/edge-198
+PASS graph500/edge-199
+PASS graph500/edge-200
+PASS graph500/edge-201
+PASS graph500/edge-202
+PASS graph500/edge-203
+PASS graph500/edge-204
+PASS graph500/edge-205
+PASS graph500/edge-206
+PASS graph500/edge-207
+PASS graph500/edge-208
+PASS graph500/edge-209
+PASS graph500/edge-210
+PASS graph500/edge-211
+PASS graph500/edge-212
+PASS graph500/edge-213
+PASS graph500/edge-214
+PASS graph500/edge-215
+PASS graph500/edge-216
+PASS graph500/edge-217
+PASS graph500/edge-218
+PASS graph500/edge-219
+PASS graph500/edge-220
+PASS graph500/edge-221
+PASS graph500/edge-222
+PASS graph500/edge-223
+PASS graph500/edge-224
+PASS graph500/edge-225
+PASS graph500/edge-226
+PASS graph500/edge-227
+PASS graph500/edge-228
+PASS graph500/edge-229
+PASS graph500/edge-230
+PASS graph500/edge-231
+PASS graph500/edge-232
+PASS graph500/edge-233
+PASS graph500/edge-234
+PASS graph500/edge-235
+PASS graph500/edge-236
+PASS graph500/edge-237
+PASS graph500/edge-238
+PASS graph500/edge-239
+PASS graph500/edge-240
+PASS graph500/edge-241
+PASS graph500/edge-242
+PASS graph500/edge-243
+PASS graph500/edge-244
+PASS graph500/edge-245
+PASS graph500/edge-246
+PASS graph500/edge-247
+PASS graph500/edge-248
+PASS graph500/edge-249
+PASS graph500/edge-250
+PASS graph500/edge-251
+PASS graph500/edge-252
+PASS graph500/edge-253
+PASS graph500/edge-254
+PASS graph500/edge-255
+PASS graph500/adjacency-full-order-and-weights
+PASS graph500/codec-roundtrip-empty
+PASS graph500/codec-roundtrip-boundary
+PASS graph500/boundary-semantic-half
+PASS graph500/boundary-negative-zero-sign
+PASS graph500/empty-graph-summary
+PASS graph500/malformed-magic
+PASS graph500/malformed-body-length
+PASS graph500/malformed-object-count
+PASS graph500/malformed-heap32
+PASS graph500/malformed-heap64
+PASS graph500/malformed-short-header
+PASS graph500/malformed-short-data
+PASS graph500/malformed-extra-data
+PASS graph500/malformed-outer-tag
+PASS graph500/malformed-edge-shape
+PASS graph500/sparse-selfloops
+PASS graph500/sparse-duplicates-and-order-forward
+PASS graph500/sparse-duplicates-and-order-backward
+PASS graph500/observed-max-label
+PASS graph500/generator-empty-sort
+PASS graph500/sort-0
+PASS graph500/sort-1
+PASS graph500/sort-2
+PASS graph500/sort-3
+PASS graph500/sort-4
+PASS graph500/sort-5
+PASS graph500/sort-6
+PASS graph500/sort-7
+PASS graph500/sort-8
+PASS graph500/sort-9
+PASS graph500/sort-10
+PASS graph500/sort-11
+PASS graph500/sort-12
+PASS graph500/sort-13
+PASS graph500/sort-14
+PASS graph500/sort-15
+PASS graph500/sort-16
+PASS graph500/sort-17
+PASS graph500/sort-18
+PASS graph500/sort-19
+PASS graph500/sort-20
+PASS graph500/sort-21
+PASS graph500/sort-22
+PASS graph500/sort-23
+PASS graph500/sort-24
+PASS graph500/sort-25
+PASS graph500/sort-26
+PASS graph500/sort-27
+PASS graph500/sort-28
+PASS graph500/sort-29
+PASS graph500/sort-30
+PASS graph500/array-permutation-key-ties-stay-stable
+PASS graph500/prototype-key-ties-compare-payload
+PASS graph500/prototype-full-csv-bytes
+SUMMARY 312 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

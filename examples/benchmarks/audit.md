@@ -318,3 +318,16 @@ for reconsideration; the two call graphs are excluded as documentation.
 They are not runnable benchmarks or declared duplicates of the Haskell program.
 The Haskell copying notice is retained on the derivative kernel and independent
 model; no notice is inferred for a different historical component.
+
+## Sequential Graph500 naming and variants
+
+| Original executable | Run-plan aliases | Rune name | Disposition |
+|---|---|---|---|
+| graph500seq/gen.exe | graph500_gen | graph500-gen | Import efficient integer-row generation and original binary output. |
+| graph500seq/kernel1_run.exe | graph500_kernel1, graph500_seq_kernel1 | graph500-kernel1 | Import list-array adjacency construction over original deterministic Marshal fixtures. |
+| graph500seq/kronecker.exe | kronecker | kronecker | Import the distinct floating-array append/permutation prototype. |
+
+The shared GraphTypes interface in graph500par contains only numeric type
+aliases. Sequential ports require no parallel runtime. Their profile choices,
+larger configured parameter candidates, source notices, numeric differences
+and every driver/data adaptation are recorded in their provenance sections.
