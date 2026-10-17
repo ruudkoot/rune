@@ -7,7 +7,8 @@
 #   mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit   the SML system behind
 #           bin/rune-<scope>: the release that scripts/fetch-hosts.sh
 #           installed (`make hosts`)
-#   check   the test runners (tests/run-tests.sh, scripts/check-*.sh)
+#   check   the test runners (tests/run-tests.sh, scripts/check-*.sh),
+#           and Pillow, which make test-dist uses to convert share/rune.png
 #   asan    make vm-asan
 #   sys     POSIX headers of the VM's system layer (runtime/sys/sys_posix.c)
 #   matrix  fetching and building the host compilers (scripts/fetch-hosts.sh)
@@ -92,6 +93,8 @@ pkg() {
     pacman:cmake) echo cmake ;;           brew:cmake) echo cmake ;;
     apt:python3) echo python3 ;;          dnf:python3) echo python3 ;;
     pacman:python3) echo python ;;        brew:python3) echo python ;;
+    apt:pillow) echo python3-pil ;;       dnf:pillow) echo python3-pillow ;;
+    pacman:pillow) echo python-pillow ;;  brew:pillow) echo pillow ;;
     pacman:cxx) echo base-devel ;;        brew:cxx) echo gcc ;;
     apt:asan) echo libasan8 libubsan1 ;;  dnf:asan) echo libasan libubsan ;;
     apt:gmp) echo libgmp-dev ;;           dnf:gmp) echo gmp-devel ;;
@@ -307,6 +310,14 @@ fi
 if in_scope check; then
   section "test runners"
   have python3 python3
+  # make test-dist packs share/rune.ico from share/rune.png (scripts/make-dist.py).
+  if ! command -v python3 > /dev/null 2>&1; then
+    skipped pillow "python3 is missing, so the icon conversion was not checked"
+  elif python3 -c 'import PIL.Image' > /dev/null 2>&1; then
+    ok pillow "$(python3 -c 'import PIL; print(PIL.__version__)' 2> /dev/null)"
+  else
+    bad pillow "not installed: make test-dist converts share/rune.png" pillow
+  fi
   if [ "$(printf 'a\nb\n' | xargs -n 1 -P 2 echo 2> /dev/null | sort | tr -d '\n')" = ab ]; then ok xargs "supports -P"
   else bad xargs "xargs -n 1 -P N does not work" findutils
   fi

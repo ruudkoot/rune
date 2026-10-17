@@ -36,6 +36,11 @@ Required by `make hosts`:
 
     apt-get install -y libgmp-dev gcc-multilib cmake g++ python3
 
+`make test-dist` (part of `make check`) converts `share/rune.png` into the
+Windows icon and needs Pillow:
+
+    apt-get install -y python3-pil
+
 Optional (the debug-information checks of the native code generator):
 
     apt-get install -y dwarfdump linux-tools-generic

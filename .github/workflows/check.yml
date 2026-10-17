@@ -32,8 +32,9 @@ jobs:
       - name: Packages
         run: |
           sudo apt-get update -q
+          # python3-pil: make test-dist converts share/rune.png into the Windows icon.
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q \
-            libgmp-dev gcc-multilib cmake g++ python3 gdb lldb dwarfdump valgrind
+            libgmp-dev gcc-multilib cmake g++ python3 python3-pil gdb lldb dwarfdump valgrind
 
       - name: Host SML systems (cache)
         uses: actions/cache@v4
