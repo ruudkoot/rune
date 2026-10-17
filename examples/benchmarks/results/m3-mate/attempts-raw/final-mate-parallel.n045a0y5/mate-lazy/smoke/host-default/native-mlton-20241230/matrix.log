@@ -1,0 +1,1418 @@
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 212
+PASS mate-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-mate-board.sml]
+[autoloading]
+[autoloading done]
+functor BenchMateBoardFn(P: sig
+  val eagerMoves : bool
+end) :
+sig
+  structure L : <sig>
+  structure S : <sig>
+  type kind
+  type colour
+  type piece
+  type square
+  type boardNode
+  type board
+  val emptyBoard : <BaseFct>.<resultStr>.boardNode BenchLazy.state ref
+  val opponent : <BaseFct>.<resultStr>.colour -> <BaseFct>.<resultStr>.colour
+  val colourOf : 'a * 'b -> 'a
+  val kindOf : 'a * 'b -> 'b
+  val forcesColoured :
+      <BaseFct>.<resultStr>.colour
+       -> <BaseFct>.<resultStr>.boardNode BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.kind * <BaseFct>.<resultStr>.square) 
+         BenchStream.stream
+  val pieceAt :
+      <BaseFct>.<resultStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.square
+       -> (<BaseFct>.<resultStr>.colour * <BaseFct>.<resultStr>.kind) option
+  val emptyAtAll :
+      <BaseFct>.<resultStr>.boardNode BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.square -> bool) -> bool
+  val rPa :
+      <BaseFct>.<resultStr>.square
+       -> (<BaseFct>.<resultStr>.kind * <BaseFct>.<resultStr>.square) 
+           BenchStream.node BenchLazy.delay
+       -> (<BaseFct>.<resultStr>.kind * <BaseFct>.<resultStr>.square) 
+           BenchStream.node BenchLazy.delay
+  val rmPieceAt :
+      <BaseFct>.<resultStr>.colour
+       -> <BaseFct>.<resultStr>.square
+       -> <BaseFct>.<resultStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.boardNode BenchLazy.state ref
+  val putPieceAt :
+      <BaseFct>.<resultStr>.square
+       -> <BaseFct>.<resultStr>.colour * <BaseFct>.<resultStr>.kind
+       -> <BaseFct>.<resultStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.boardNode BenchLazy.state ref
+  val kingSquare :
+      <BaseFct>.<resultStr>.colour
+       -> <BaseFct>.<resultStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.square
+  val onboard : int * int -> bool
+  val kindToChar : <BaseFct>.<resultStr>.kind -> char
+  val pieceToChar :
+      <BaseFct>.<resultStr>.colour * <BaseFct>.<resultStr>.kind -> char
+  val showPiece : 'a * <BaseFct>.<resultStr>.kind -> string
+  val showSquare : <BaseFct>.<resultStr>.colour -> int * int -> string
+  val showBoard :
+      <BaseFct>.<resultStr>.boardNode BenchLazy.state ref -> string
+  val lines : string -> string list
+  val readProblem :
+      string
+       -> <BaseFct>.<resultStr>.boardNode BenchLazy.state ref
+       * (<BaseFct>.<resultStr>.colour * int)
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-mate-move.sml]
+functor BenchMateMoveFn(P: sig
+  val eagerMoves : bool
+end) :
+sig
+  structure B : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  type kind
+  type colour
+  type piece
+  type square
+  type boardNode
+  type board
+  val emptyBoard :
+      <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+  val opponent :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> <BaseFct>.<resultStr>.B.<returnStr>.colour
+  val colourOf : 'a * 'b -> 'a
+  val kindOf : 'a * 'b -> 'b
+  val forcesColoured :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.B.<returnStr>.kind
+          * <BaseFct>.<resultStr>.B.<returnStr>.square) BenchStream.stream
+  val pieceAt :
+      <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.square
+       -> (<BaseFct>.<resultStr>.B.<returnStr>.colour
+          * <BaseFct>.<resultStr>.B.<returnStr>.kind) option
+  val emptyAtAll :
+      <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.B.<returnStr>.square -> bool) -> bool
+  val rPa :
+      <BaseFct>.<resultStr>.B.<returnStr>.square
+       -> (<BaseFct>.<resultStr>.B.<returnStr>.kind
+            * <BaseFct>.<resultStr>.B.<returnStr>.square) BenchStream.node 
+         BenchLazy.delay
+       -> (<BaseFct>.<resultStr>.B.<returnStr>.kind
+            * <BaseFct>.<resultStr>.B.<returnStr>.square) BenchStream.node 
+         BenchLazy.delay
+  val rmPieceAt :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> <BaseFct>.<resultStr>.B.<returnStr>.square
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+  val putPieceAt :
+      <BaseFct>.<resultStr>.B.<returnStr>.square
+       -> <BaseFct>.<resultStr>.B.<returnStr>.colour
+       * <BaseFct>.<resultStr>.B.<returnStr>.kind
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+  val kingSquare :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.square
+  val onboard : int * int -> bool
+  val kindToChar : <BaseFct>.<resultStr>.B.<returnStr>.kind -> char
+  val pieceToChar :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       * <BaseFct>.<resultStr>.B.<returnStr>.kind
+       -> char
+  val showPiece : 'a * <BaseFct>.<resultStr>.B.<returnStr>.kind -> string
+  val showSquare :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour -> int * int -> string
+  val showBoard :
+      <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> string
+  val lines : string -> string list
+  val readProblem :
+      string
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       * (<BaseFct>.<resultStr>.B.<returnStr>.colour * int)
+  type move
+  type moveInFull
+  val showMove : bool -> <BaseFct>.<resultStr>.moveInFull -> string
+  val showMoveInFull : <BaseFct>.<resultStr>.moveInFull -> string
+  val showMoves : <BaseFct>.<resultStr>.moveInFull list -> string
+  val kingincheck :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> bool
+  val tryMove :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> <BaseFct>.<resultStr>.B.<returnStr>.kind
+       * <BaseFct>.<resultStr>.B.<returnStr>.square
+       -> <BaseFct>.<resultStr>.move
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.moveInFull
+          * <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref) 
+         option
+  val moveLine :
+      <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> int * int
+       -> (int * int -> int * int)
+       -> (<BaseFct>.<resultStr>.move list -> 'a)
+       -> <BaseFct>.<resultStr>.move list -> 'a
+  val bishopmoves :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> int * int
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.move list
+  val rookmoves :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> int * int
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.move list
+  val sift :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.move list
+       -> (int * int) list -> <BaseFct>.<resultStr>.move list
+  val kingmoves :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> int * int
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.move list
+  val knightmoves :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> int * int
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.move list
+  val pawnmoves :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> int * int
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.move BenchStream.node BenchLazy.delay
+  val rawmoves :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> <BaseFct>.<resultStr>.B.<returnStr>.kind * (int * int)
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.move BenchStream.node BenchLazy.delay
+  val moveDetailsFor :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.moveInFull
+              * <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state 
+                ref) BenchStream.node BenchLazy.state ref
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-mate-solution.sml]
+[autoloading]
+[autoloading done]
+functor BenchMateFn(P: sig
+  val eagerMoves : bool
+end) :
+sig
+  structure M : <sig>
+  structure B : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  type kind
+  type colour
+  type piece
+  type square
+  type boardNode
+  type board
+  val emptyBoard :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+  val opponent :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+  val colourOf : 'a * 'b -> 'a
+  val kindOf : 'a * 'b -> 'b
+  val forcesColoured :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.B.kind
+          * <BaseFct>.<resultStr>.M.<returnStr>.B.square) BenchStream.stream
+  val pieceAt :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.square
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.B.colour
+          * <BaseFct>.<resultStr>.M.<returnStr>.B.kind) option
+  val emptyAtAll :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.B.square -> bool) -> bool
+  val rPa :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.square
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.B.kind
+            * <BaseFct>.<resultStr>.M.<returnStr>.B.square) BenchStream.node 
+         BenchLazy.delay
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.B.kind
+            * <BaseFct>.<resultStr>.M.<returnStr>.B.square) BenchStream.node 
+         BenchLazy.delay
+  val rmPieceAt :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.square
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+  val putPieceAt :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.square
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       * <BaseFct>.<resultStr>.M.<returnStr>.B.kind
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+  val kingSquare :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.square
+  val onboard : int * int -> bool
+  val kindToChar : <BaseFct>.<resultStr>.M.<returnStr>.B.kind -> char
+  val pieceToChar :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       * <BaseFct>.<resultStr>.M.<returnStr>.B.kind
+       -> char
+  val showPiece : 'a * <BaseFct>.<resultStr>.M.<returnStr>.B.kind -> string
+  val showSquare :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour -> int * int -> string
+  val showBoard :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> string
+  val lines : string -> string list
+  val readProblem :
+      string
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       * (<BaseFct>.<resultStr>.M.<returnStr>.B.colour * int)
+  type move
+  type moveInFull
+  val showMove :
+      bool -> <BaseFct>.<resultStr>.M.<returnStr>.moveInFull -> string
+  val showMoveInFull :
+      <BaseFct>.<resultStr>.M.<returnStr>.moveInFull -> string
+  val showMoves :
+      <BaseFct>.<resultStr>.M.<returnStr>.moveInFull list -> string
+  val kingincheck :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> bool
+  val tryMove :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.kind
+       * <BaseFct>.<resultStr>.M.<returnStr>.B.square
+       -> <BaseFct>.<resultStr>.M.<returnStr>.move
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.moveInFull
+          * <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state 
+            ref) option
+  val moveLine :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> int * int
+       -> (int * int -> int * int)
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.move list -> 'a)
+       -> <BaseFct>.<resultStr>.M.<returnStr>.move list -> 'a
+  val bishopmoves :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> int * int
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.move list
+  val rookmoves :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> int * int
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.move list
+  val sift :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.move list
+       -> (int * int) list -> <BaseFct>.<resultStr>.M.<returnStr>.move list
+  val kingmoves :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> int * int
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.move list
+  val knightmoves :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> int * int
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.move list
+  val pawnmoves :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> int * int
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.move BenchStream.node 
+         BenchLazy.delay
+  val rawmoves :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.kind * (int * int)
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.move BenchStream.node 
+         BenchLazy.delay
+  val moveDetailsFor :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.moveInFull
+              * <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode 
+                  BenchLazy.state ref) BenchStream.node BenchLazy.state ref
+  type solution
+  val choose :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> int
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.moveInFull
+              * <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode 
+                  BenchLazy.state ref) BenchStream.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.solution option
+  val solution :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> int -> <BaseFct>.<resultStr>.solution option
+  val replies :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> int
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.moveInFull
+                * <BaseFct>.<resultStr>.solution) BenchStream.node 
+             BenchLazy.state ref option
+  type soln
+  val cmpKind :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.kind
+       * <BaseFct>.<resultStr>.M.<returnStr>.B.kind
+       -> order
+  val thenOrder : order -> (unit -> order) -> order
+  val cmpColour :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       * <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> order
+  val cmpPiece :
+      (<BaseFct>.<resultStr>.M.<returnStr>.B.colour
+        * <BaseFct>.<resultStr>.M.<returnStr>.B.kind)
+       * (<BaseFct>.<resultStr>.M.<returnStr>.B.colour
+        * <BaseFct>.<resultStr>.M.<returnStr>.B.kind)
+       -> order
+  val cmpSquare : (int * int) * (int * int) -> order
+  val cmpOption : ('a * 'b -> order) -> 'a option * 'b option -> order
+  val cmpMove :
+      <BaseFct>.<resultStr>.M.<returnStr>.move
+       * <BaseFct>.<resultStr>.M.<returnStr>.move
+       -> order
+  val cmpFull :
+      <BaseFct>.<resultStr>.M.<returnStr>.moveInFull
+       * <BaseFct>.<resultStr>.M.<returnStr>.moveInFull
+       -> order
+  val sortBy : ('a * 'a -> order) -> 'a list -> 'a list
+  val showSoln : <BaseFct>.<resultStr>.soln -> int -> string
+  val showReplies :
+      (<BaseFct>.<resultStr>.M.<returnStr>.moveInFull list
+          * <BaseFct>.<resultStr>.soln) list
+       -> int -> string
+  val compact : <BaseFct>.<resultStr>.solution -> <BaseFct>.<resultStr>.soln
+  val solve :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.colour -> int -> string
+  val problem : string -> string -> string
+  val read : string -> TextIO.vector
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/mate-lazy/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Program : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 212
+PASS mate-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-mate-board.sml]
+[autoloading]
+[autoloading done]
+functor BenchMateBoardFn(P: sig
+  val eagerMoves : bool
+end) :
+sig
+  structure L : <sig>
+  structure S : <sig>
+  type kind
+  type colour
+  type piece
+  type square
+  type boardNode
+  type board
+  val emptyBoard : <BaseFct>.<resultStr>.boardNode BenchLazy.state ref
+  val opponent : <BaseFct>.<resultStr>.colour -> <BaseFct>.<resultStr>.colour
+  val colourOf : 'a * 'b -> 'a
+  val kindOf : 'a * 'b -> 'b
+  val forcesColoured :
+      <BaseFct>.<resultStr>.colour
+       -> <BaseFct>.<resultStr>.boardNode BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.kind * <BaseFct>.<resultStr>.square) 
+         BenchStream.stream
+  val pieceAt :
+      <BaseFct>.<resultStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.square
+       -> (<BaseFct>.<resultStr>.colour * <BaseFct>.<resultStr>.kind) option
+  val emptyAtAll :
+      <BaseFct>.<resultStr>.boardNode BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.square -> bool) -> bool
+  val rPa :
+      <BaseFct>.<resultStr>.square
+       -> (<BaseFct>.<resultStr>.kind * <BaseFct>.<resultStr>.square) 
+           BenchStream.node BenchLazy.delay
+       -> (<BaseFct>.<resultStr>.kind * <BaseFct>.<resultStr>.square) 
+           BenchStream.node BenchLazy.delay
+  val rmPieceAt :
+      <BaseFct>.<resultStr>.colour
+       -> <BaseFct>.<resultStr>.square
+       -> <BaseFct>.<resultStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.boardNode BenchLazy.state ref
+  val putPieceAt :
+      <BaseFct>.<resultStr>.square
+       -> <BaseFct>.<resultStr>.colour * <BaseFct>.<resultStr>.kind
+       -> <BaseFct>.<resultStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.boardNode BenchLazy.state ref
+  val kingSquare :
+      <BaseFct>.<resultStr>.colour
+       -> <BaseFct>.<resultStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.square
+  val onboard : int * int -> bool
+  val kindToChar : <BaseFct>.<resultStr>.kind -> char
+  val pieceToChar :
+      <BaseFct>.<resultStr>.colour * <BaseFct>.<resultStr>.kind -> char
+  val showPiece : 'a * <BaseFct>.<resultStr>.kind -> string
+  val showSquare : <BaseFct>.<resultStr>.colour -> int * int -> string
+  val showBoard :
+      <BaseFct>.<resultStr>.boardNode BenchLazy.state ref -> string
+  val lines : string -> string list
+  val readProblem :
+      string
+       -> <BaseFct>.<resultStr>.boardNode BenchLazy.state ref
+       * (<BaseFct>.<resultStr>.colour * int)
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-mate-move.sml]
+functor BenchMateMoveFn(P: sig
+  val eagerMoves : bool
+end) :
+sig
+  structure B : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  type kind
+  type colour
+  type piece
+  type square
+  type boardNode
+  type board
+  val emptyBoard :
+      <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+  val opponent :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> <BaseFct>.<resultStr>.B.<returnStr>.colour
+  val colourOf : 'a * 'b -> 'a
+  val kindOf : 'a * 'b -> 'b
+  val forcesColoured :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.B.<returnStr>.kind
+          * <BaseFct>.<resultStr>.B.<returnStr>.square) BenchStream.stream
+  val pieceAt :
+      <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.square
+       -> (<BaseFct>.<resultStr>.B.<returnStr>.colour
+          * <BaseFct>.<resultStr>.B.<returnStr>.kind) option
+  val emptyAtAll :
+      <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.B.<returnStr>.square -> bool) -> bool
+  val rPa :
+      <BaseFct>.<resultStr>.B.<returnStr>.square
+       -> (<BaseFct>.<resultStr>.B.<returnStr>.kind
+            * <BaseFct>.<resultStr>.B.<returnStr>.square) BenchStream.node 
+         BenchLazy.delay
+       -> (<BaseFct>.<resultStr>.B.<returnStr>.kind
+            * <BaseFct>.<resultStr>.B.<returnStr>.square) BenchStream.node 
+         BenchLazy.delay
+  val rmPieceAt :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> <BaseFct>.<resultStr>.B.<returnStr>.square
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+  val putPieceAt :
+      <BaseFct>.<resultStr>.B.<returnStr>.square
+       -> <BaseFct>.<resultStr>.B.<returnStr>.colour
+       * <BaseFct>.<resultStr>.B.<returnStr>.kind
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+  val kingSquare :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.square
+  val onboard : int * int -> bool
+  val kindToChar : <BaseFct>.<resultStr>.B.<returnStr>.kind -> char
+  val pieceToChar :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       * <BaseFct>.<resultStr>.B.<returnStr>.kind
+       -> char
+  val showPiece : 'a * <BaseFct>.<resultStr>.B.<returnStr>.kind -> string
+  val showSquare :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour -> int * int -> string
+  val showBoard :
+      <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> string
+  val lines : string -> string list
+  val readProblem :
+      string
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       * (<BaseFct>.<resultStr>.B.<returnStr>.colour * int)
+  type move
+  type moveInFull
+  val showMove : bool -> <BaseFct>.<resultStr>.moveInFull -> string
+  val showMoveInFull : <BaseFct>.<resultStr>.moveInFull -> string
+  val showMoves : <BaseFct>.<resultStr>.moveInFull list -> string
+  val kingincheck :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> bool
+  val tryMove :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> <BaseFct>.<resultStr>.B.<returnStr>.kind
+       * <BaseFct>.<resultStr>.B.<returnStr>.square
+       -> <BaseFct>.<resultStr>.move
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.moveInFull
+          * <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref) 
+         option
+  val moveLine :
+      <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> int * int
+       -> (int * int -> int * int)
+       -> (<BaseFct>.<resultStr>.move list -> 'a)
+       -> <BaseFct>.<resultStr>.move list -> 'a
+  val bishopmoves :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> int * int
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.move list
+  val rookmoves :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> int * int
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.move list
+  val sift :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.move list
+       -> (int * int) list -> <BaseFct>.<resultStr>.move list
+  val kingmoves :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> int * int
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.move list
+  val knightmoves :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> int * int
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.move list
+  val pawnmoves :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> int * int
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.move BenchStream.node BenchLazy.delay
+  val rawmoves :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> <BaseFct>.<resultStr>.B.<returnStr>.kind * (int * int)
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.move BenchStream.node BenchLazy.delay
+  val moveDetailsFor :
+      <BaseFct>.<resultStr>.B.<returnStr>.colour
+       -> <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.moveInFull
+              * <BaseFct>.<resultStr>.B.<returnStr>.boardNode BenchLazy.state 
+                ref) BenchStream.node BenchLazy.state ref
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-mate-solution.sml]
+[autoloading]
+[autoloading done]
+functor BenchMateFn(P: sig
+  val eagerMoves : bool
+end) :
+sig
+  structure M : <sig>
+  structure B : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  type kind
+  type colour
+  type piece
+  type square
+  type boardNode
+  type board
+  val emptyBoard :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+  val opponent :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+  val colourOf : 'a * 'b -> 'a
+  val kindOf : 'a * 'b -> 'b
+  val forcesColoured :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.B.kind
+          * <BaseFct>.<resultStr>.M.<returnStr>.B.square) BenchStream.stream
+  val pieceAt :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.square
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.B.colour
+          * <BaseFct>.<resultStr>.M.<returnStr>.B.kind) option
+  val emptyAtAll :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.B.square -> bool) -> bool
+  val rPa :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.square
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.B.kind
+            * <BaseFct>.<resultStr>.M.<returnStr>.B.square) BenchStream.node 
+         BenchLazy.delay
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.B.kind
+            * <BaseFct>.<resultStr>.M.<returnStr>.B.square) BenchStream.node 
+         BenchLazy.delay
+  val rmPieceAt :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.square
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+  val putPieceAt :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.square
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       * <BaseFct>.<resultStr>.M.<returnStr>.B.kind
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+  val kingSquare :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.square
+  val onboard : int * int -> bool
+  val kindToChar : <BaseFct>.<resultStr>.M.<returnStr>.B.kind -> char
+  val pieceToChar :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       * <BaseFct>.<resultStr>.M.<returnStr>.B.kind
+       -> char
+  val showPiece : 'a * <BaseFct>.<resultStr>.M.<returnStr>.B.kind -> string
+  val showSquare :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour -> int * int -> string
+  val showBoard :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> string
+  val lines : string -> string list
+  val readProblem :
+      string
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       * (<BaseFct>.<resultStr>.M.<returnStr>.B.colour * int)
+  type move
+  type moveInFull
+  val showMove :
+      bool -> <BaseFct>.<resultStr>.M.<returnStr>.moveInFull -> string
+  val showMoveInFull :
+      <BaseFct>.<resultStr>.M.<returnStr>.moveInFull -> string
+  val showMoves :
+      <BaseFct>.<resultStr>.M.<returnStr>.moveInFull list -> string
+  val kingincheck :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> bool
+  val tryMove :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.kind
+       * <BaseFct>.<resultStr>.M.<returnStr>.B.square
+       -> <BaseFct>.<resultStr>.M.<returnStr>.move
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.moveInFull
+          * <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state 
+            ref) option
+  val moveLine :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> int * int
+       -> (int * int -> int * int)
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.move list -> 'a)
+       -> <BaseFct>.<resultStr>.M.<returnStr>.move list -> 'a
+  val bishopmoves :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> int * int
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.move list
+  val rookmoves :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> int * int
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.move list
+  val sift :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.move list
+       -> (int * int) list -> <BaseFct>.<resultStr>.M.<returnStr>.move list
+  val kingmoves :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> int * int
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.move list
+  val knightmoves :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> int * int
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.move list
+  val pawnmoves :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> int * int
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.move BenchStream.node 
+         BenchLazy.delay
+  val rawmoves :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.kind * (int * int)
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.move BenchStream.node 
+         BenchLazy.delay
+  val moveDetailsFor :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.moveInFull
+              * <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode 
+                  BenchLazy.state ref) BenchStream.node BenchLazy.state ref
+  type solution
+  val choose :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> int
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.moveInFull
+              * <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode 
+                  BenchLazy.state ref) BenchStream.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.solution option
+  val solution :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> int -> <BaseFct>.<resultStr>.solution option
+  val replies :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> int
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.moveInFull
+                * <BaseFct>.<resultStr>.solution) BenchStream.node 
+             BenchLazy.state ref option
+  type soln
+  val cmpKind :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.kind
+       * <BaseFct>.<resultStr>.M.<returnStr>.B.kind
+       -> order
+  val thenOrder : order -> (unit -> order) -> order
+  val cmpColour :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       * <BaseFct>.<resultStr>.M.<returnStr>.B.colour
+       -> order
+  val cmpPiece :
+      (<BaseFct>.<resultStr>.M.<returnStr>.B.colour
+        * <BaseFct>.<resultStr>.M.<returnStr>.B.kind)
+       * (<BaseFct>.<resultStr>.M.<returnStr>.B.colour
+        * <BaseFct>.<resultStr>.M.<returnStr>.B.kind)
+       -> order
+  val cmpSquare : (int * int) * (int * int) -> order
+  val cmpOption : ('a * 'b -> order) -> 'a option * 'b option -> order
+  val cmpMove :
+      <BaseFct>.<resultStr>.M.<returnStr>.move
+       * <BaseFct>.<resultStr>.M.<returnStr>.move
+       -> order
+  val cmpFull :
+      <BaseFct>.<resultStr>.M.<returnStr>.moveInFull
+       * <BaseFct>.<resultStr>.M.<returnStr>.moveInFull
+       -> order
+  val sortBy : ('a * 'a -> order) -> 'a list -> 'a list
+  val showSoln : <BaseFct>.<resultStr>.soln -> int -> string
+  val showReplies :
+      (<BaseFct>.<resultStr>.M.<returnStr>.moveInFull list
+          * <BaseFct>.<resultStr>.soln) list
+       -> int -> string
+  val compact : <BaseFct>.<resultStr>.solution -> <BaseFct>.<resultStr>.soln
+  val solve :
+      <BaseFct>.<resultStr>.M.<returnStr>.B.boardNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.B.colour -> int -> string
+  val problem : string -> string -> string
+  val read : string -> TextIO.vector
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/mate-lazy/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Program : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 212
+PASS mate-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : 
+  sig
+    datatype 'a node
+      = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay | Nil
+    type 'a stream = 'a node BenchLazy.delay
+    val empty : unit -> 'a node BenchLazy.state ref
+    val cons : 'a BenchLazy.delay * 'a node BenchLazy.delay
+                -> 'a node BenchLazy.state ref
+    val singleton : 'a -> 'a node BenchLazy.state ref
+    val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+    val head : 'a node BenchLazy.state ref -> 'a
+    val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val iterate : ('a -> 'a)
+                   -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+    val fromList : 'a list -> 'a node BenchLazy.delay
+    val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+    val zipWith : ('a * 'b -> 'c)
+                   -> 'a node BenchLazy.delay
+                   -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+    val append : 'a node BenchLazy.delay
+                  -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val concatMap : ('a -> 'b node BenchLazy.delay)
+                     -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+    val filter : ('a -> bool)
+                  -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+    val dropWhile : ('a -> bool)
+                     -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+    val foldrStream : ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+                       -> 'b BenchLazy.state ref
+                       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+    val zipWith3 : ('a * 'b * 'c -> 'd)
+                    -> 'a node BenchLazy.delay
+                    -> 'b node BenchLazy.delay
+                    -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+    val span : ('a -> bool)
+                -> 'a node BenchLazy.delay
+                -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+    val nth : 'a node BenchLazy.delay -> int -> 'a
+    val take : int -> 'a node BenchLazy.delay -> 'a list
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+    val foldPrefix : ('a * 'b -> 'b)
+                      -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-mate-board.sml]
+functor BenchMateBoardFn(P: sig val eagerMoves : bool end) :
+                        
+                          sig
+                            structure L : <sig>
+                            structure S : <sig>
+                            type kind
+                            type colour
+                            type piece
+                            type square
+                            type boardNode
+                            type board
+                            val emptyBoard : boardNode BenchLazy.state ref
+                            val opponent : colour -> colour
+                            val colourOf : 'a * 'b -> 'a
+                            val kindOf : 'a * 'b -> 'b
+                            val forcesColoured : colour
+                                                  -> boardNode BenchLazy.state 
+                                                    ref
+                                                  -> (kind * square) 
+                                                    BenchStream.stream
+                            val pieceAt : boardNode BenchLazy.state ref
+                                           -> square -> (colour * kind) option
+                            val emptyAtAll : boardNode BenchLazy.state ref
+                                              -> (square -> bool) -> bool
+                            val rPa : square
+                                       -> (kind * square) BenchStream.node 
+                                         BenchLazy.delay
+                                       -> (kind * square) BenchStream.node 
+                                         BenchLazy.delay
+                            val rmPieceAt : colour
+                                             -> square
+                                             -> boardNode BenchLazy.state ref
+                                             -> boardNode BenchLazy.state ref
+                            val putPieceAt : square
+                                              -> colour * kind
+                                              -> boardNode BenchLazy.state ref
+                                              -> boardNode BenchLazy.state ref
+                            val kingSquare : colour
+                                              -> boardNode BenchLazy.state ref
+                                              -> square
+                            val onboard : int * int -> bool
+                            val kindToChar : kind -> char
+                            val pieceToChar : colour * kind -> char
+                            val showPiece : 'a * kind -> string
+                            val showSquare : colour -> int * int -> string
+                            val showBoard : boardNode BenchLazy.state ref
+                                             -> string
+                            val lines : string -> string list
+                            val readProblem : string
+                                               -> boardNode BenchLazy.state 
+                                                 ref * (colour * int)
+                          end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-mate-move.sml]
+functor BenchMateMoveFn(P: sig val eagerMoves : bool end) :
+                       
+                         sig
+                           structure B : <sig>
+                           structure L : <sig>
+                           structure S : <sig>
+                           type kind
+                           type colour
+                           type piece
+                           type square
+                           type boardNode
+                           type board
+                           val emptyBoard : B.boardNode BenchLazy.state ref
+                           val opponent : B.colour -> B.colour
+                           val colourOf : 'a * 'b -> 'a
+                           val kindOf : 'a * 'b -> 'b
+                           val forcesColoured : B.colour
+                                                 -> B.boardNode 
+                                                     BenchLazy.state ref
+                                                 -> (B.kind * B.square) 
+                                                   BenchStream.stream
+                           val pieceAt : B.boardNode BenchLazy.state ref
+                                          -> B.square
+                                          -> (B.colour * B.kind) option
+                           val emptyAtAll : B.boardNode BenchLazy.state ref
+                                             -> (B.square -> bool) -> bool
+                           val rPa : B.square
+                                      -> (B.kind * B.square) BenchStream.node 
+                                        BenchLazy.delay
+                                      -> (B.kind * B.square) BenchStream.node 
+                                        BenchLazy.delay
+                           val rmPieceAt : B.colour
+                                            -> B.square
+                                            -> B.boardNode BenchLazy.state ref
+                                            -> B.boardNode BenchLazy.state ref
+                           val putPieceAt : B.square
+                                             -> B.colour * B.kind
+                                             -> B.boardNode BenchLazy.state 
+                                               ref
+                                             -> B.boardNode BenchLazy.state 
+                                               ref
+                           val kingSquare : B.colour
+                                             -> B.boardNode BenchLazy.state 
+                                               ref
+                                             -> B.square
+                           val onboard : int * int -> bool
+                           val kindToChar : B.kind -> char
+                           val pieceToChar : B.colour * B.kind -> char
+                           val showPiece : 'a * B.kind -> string
+                           val showSquare : B.colour -> int * int -> string
+                           val showBoard : B.boardNode BenchLazy.state ref
+                                            -> string
+                           val lines : string -> string list
+                           val readProblem : string
+                                              -> B.boardNode BenchLazy.state 
+                                                ref * (B.colour * int)
+                           type move
+                           type moveInFull
+                           val showMove : bool -> moveInFull -> string
+                           val showMoveInFull : moveInFull -> string
+                           val showMoves : moveInFull list -> string
+                           val kingincheck : B.colour
+                                              -> B.boardNode BenchLazy.state 
+                                                ref
+                                              -> bool
+                           val tryMove : B.colour
+                                          -> B.kind * B.square
+                                          -> move
+                                          -> B.boardNode BenchLazy.state ref
+                                          -> (moveInFull
+                                             * B.boardNode BenchLazy.state ref)
+                                            option
+                           val moveLine : B.boardNode BenchLazy.state ref
+                                           -> B.colour
+                                           -> int * int
+                                           -> (int * int -> int * int)
+                                           -> (move list -> 'a)
+                                           -> move list -> 'a
+                           val bishopmoves : B.colour
+                                              -> int * int
+                                              -> B.boardNode BenchLazy.state 
+                                                ref
+                                              -> move list
+                           val rookmoves : B.colour
+                                            -> int * int
+                                            -> B.boardNode BenchLazy.state ref
+                                            -> move list
+                           val sift : B.colour
+                                       -> B.boardNode BenchLazy.state ref
+                                       -> move list
+                                       -> (int * int) list -> move list
+                           val kingmoves : B.colour
+                                            -> int * int
+                                            -> B.boardNode BenchLazy.state ref
+                                            -> move list
+                           val knightmoves : B.colour
+                                              -> int * int
+                                              -> B.boardNode BenchLazy.state 
+                                                ref
+                                              -> move list
+                           val pawnmoves : B.colour
+                                            -> int * int
+                                            -> B.boardNode BenchLazy.state ref
+                                            -> move BenchStream.node 
+                                              BenchLazy.delay
+                           val rawmoves : B.colour
+                                           -> B.kind * (int * int)
+                                           -> B.boardNode BenchLazy.state ref
+                                           -> move BenchStream.node 
+                                             BenchLazy.delay
+                           val moveDetailsFor : B.colour
+                                                 -> B.boardNode 
+                                                     BenchLazy.state ref
+                                                 -> (moveInFull
+                                                        * B.boardNode 
+                                                            BenchLazy.state 
+                                                          ref) 
+                                                       BenchStream.node 
+                                                     BenchLazy.state ref
+                         end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-mate-solution.sml]
+functor BenchMateFn(P: sig val eagerMoves : bool end) :
+                   
+                     sig
+                       structure M : <sig>
+                       structure B : <sig>
+                       structure L : <sig>
+                       structure S : <sig>
+                       type kind
+                       type colour
+                       type piece
+                       type square
+                       type boardNode
+                       type board
+                       val emptyBoard : M.B.boardNode BenchLazy.state ref
+                       val opponent : M.B.colour -> M.B.colour
+                       val colourOf : 'a * 'b -> 'a
+                       val kindOf : 'a * 'b -> 'b
+                       val forcesColoured : M.B.colour
+                                             -> M.B.boardNode BenchLazy.state 
+                                               ref
+                                             -> (M.B.kind * M.B.square) 
+                                               BenchStream.stream
+                       val pieceAt : M.B.boardNode BenchLazy.state ref
+                                      -> M.B.square
+                                      -> (M.B.colour * M.B.kind) option
+                       val emptyAtAll : M.B.boardNode BenchLazy.state ref
+                                         -> (M.B.square -> bool) -> bool
+                       val rPa : M.B.square
+                                  -> (M.B.kind * M.B.square) BenchStream.node 
+                                    BenchLazy.delay
+                                  -> (M.B.kind * M.B.square) BenchStream.node 
+                                    BenchLazy.delay
+                       val rmPieceAt : M.B.colour
+                                        -> M.B.square
+                                        -> M.B.boardNode BenchLazy.state ref
+                                        -> M.B.boardNode BenchLazy.state ref
+                       val putPieceAt : M.B.square
+                                         -> M.B.colour * M.B.kind
+                                         -> M.B.boardNode BenchLazy.state ref
+                                         -> M.B.boardNode BenchLazy.state ref
+                       val kingSquare : M.B.colour
+                                         -> M.B.boardNode BenchLazy.state ref
+                                         -> M.B.square
+                       val onboard : int * int -> bool
+                       val kindToChar : M.B.kind -> char
+                       val pieceToChar : M.B.colour * M.B.kind -> char
+                       val showPiece : 'a * M.B.kind -> string
+                       val showSquare : M.B.colour -> int * int -> string
+                       val showBoard : M.B.boardNode BenchLazy.state ref
+                                        -> string
+                       val lines : string -> string list
+                       val readProblem : string
+                                          -> M.B.boardNode BenchLazy.state ref
+                                          * (M.B.colour * int)
+                       type move
+                       type moveInFull
+                       val showMove : bool -> M.moveInFull -> string
+                       val showMoveInFull : M.moveInFull -> string
+                       val showMoves : M.moveInFull list -> string
+                       val kingincheck : M.B.colour
+                                          -> M.B.boardNode BenchLazy.state ref
+                                          -> bool
+                       val tryMove : M.B.colour
+                                      -> M.B.kind * M.B.square
+                                      -> M.move
+                                      -> M.B.boardNode BenchLazy.state ref
+                                      -> (M.moveInFull
+                                         * M.B.boardNode BenchLazy.state ref) 
+                                        option
+                       val moveLine : M.B.boardNode BenchLazy.state ref
+                                       -> M.B.colour
+                                       -> int * int
+                                       -> (int * int -> int * int)
+                                       -> (M.move list -> 'a)
+                                       -> M.move list -> 'a
+                       val bishopmoves : M.B.colour
+                                          -> int * int
+                                          -> M.B.boardNode BenchLazy.state ref
+                                          -> M.move list
+                       val rookmoves : M.B.colour
+                                        -> int * int
+                                        -> M.B.boardNode BenchLazy.state ref
+                                        -> M.move list
+                       val sift : M.B.colour
+                                   -> M.B.boardNode BenchLazy.state ref
+                                   -> M.move list
+                                   -> (int * int) list -> M.move list
+                       val kingmoves : M.B.colour
+                                        -> int * int
+                                        -> M.B.boardNode BenchLazy.state ref
+                                        -> M.move list
+                       val knightmoves : M.B.colour
+                                          -> int * int
+                                          -> M.B.boardNode BenchLazy.state ref
+                                          -> M.move list
+                       val pawnmoves : M.B.colour
+                                        -> int * int
+                                        -> M.B.boardNode BenchLazy.state ref
+                                        -> M.move BenchStream.node 
+                                          BenchLazy.delay
+                       val rawmoves : M.B.colour
+                                       -> M.B.kind * (int * int)
+                                       -> M.B.boardNode BenchLazy.state ref
+                                       -> M.move BenchStream.node 
+                                         BenchLazy.delay
+                       val moveDetailsFor : M.B.colour
+                                             -> M.B.boardNode BenchLazy.state 
+                                               ref
+                                             -> (M.moveInFull
+                                                    * M.B.boardNode 
+                                                        BenchLazy.state ref) 
+                                                   BenchStream.node 
+                                                 BenchLazy.state ref
+                       type solution
+                       val replies : M.B.boardNode BenchLazy.state ref
+                                      -> M.B.colour
+                                      -> int
+                                      -> (M.moveInFull * solution) 
+                                              BenchStream.node BenchLazy.state 
+                                          ref option
+                       val solution : M.B.boardNode BenchLazy.state ref
+                                       -> M.B.colour -> int -> solution option
+                       val choose : M.B.colour
+                                     -> int
+                                     -> (M.moveInFull
+                                            * M.B.boardNode BenchLazy.state 
+                                              ref) BenchStream.node 
+                                         BenchLazy.state ref
+                                     -> solution option
+                       type soln
+                       val cmpKind : M.B.kind * M.B.kind -> order
+                       val thenOrder : order -> (unit -> order) -> order
+                       val cmpColour : M.B.colour * M.B.colour -> order
+                       val cmpPiece : (M.B.colour * M.B.kind)
+                                       * (M.B.colour * M.B.kind)
+                                       -> order
+                       val cmpSquare : (int * int) * (int * int) -> order
+                       val cmpOption : ('a * 'b -> order)
+                                        -> 'a option * 'b option -> order
+                       val cmpMove : M.move * M.move -> order
+                       val cmpFull : M.moveInFull * M.moveInFull -> order
+                       val sortBy : ('a * 'a -> order) -> 'a list -> 'a list
+                       val showReplies : (M.moveInFull list * soln) list
+                                          -> int -> string
+                       val showSoln : soln -> int -> string
+                       val compact : solution -> soln
+                       val solve : M.B.boardNode BenchLazy.state ref
+                                    -> M.B.colour -> int -> string
+                       val problem : string -> string -> string
+                       val read : string -> TextIO.vector
+                       val run : string list -> string
+                     end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/mate-lazy/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Program : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 212
+PASS mate-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+RESULT 212
+PASS mate-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 212
+PASS mate-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

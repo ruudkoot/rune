@@ -1,0 +1,7 @@
+{
+  "status": "exit",
+  "exit_code": 2,
+  "stdout": "",
+  "stderr": "array-observer: Stack space overflow: current size 33624 bytes.\narray-observer: Use `+RTS -Ksize -RTS' to increase it.\n",
+  "elapsed_seconds": 0.10940821398980916
+}

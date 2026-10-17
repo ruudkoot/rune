@@ -1,0 +1,1 @@
+mate-strict	600	4194304	shared/input.sml shared/lazy.sml shared/stream.sml shared/nofib-mate-board.sml shared/nofib-mate-move.sml shared/nofib-mate-solution.sml mate-strict/benchmark.sml shared/main.sml	runtime_files/kohtz.prob normal.solution	mate-strict/normal.expected	runtime_files/kohtz.prob normal.solution

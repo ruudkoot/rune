@@ -1,0 +1,18 @@
+[1 of 4] Compiling Sort             ( Sort.lhs, Sort.o )
+
+Sort.lhs:27:1: warning: [-Wtabs]
+    Tab character found here, and in 32 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+27 |         | x <= y    = x:y:ys
+   | ^^^^^^^^
+[2 of 4] Compiling ChessSetArray    ( ChessSetArray.lhs, ChessSetArray.o )
+
+ChessSetArray.lhs:13:1: warning: [-Wtabs]
+    Tab character found here, and in 54 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+13 |                     ChessSet,
+   | ^^^^^^^^
+[3 of 4] Compiling Main             ( ArrayObserver.hs, ArrayObserver.o )
+[4 of 4] Linking array-observer

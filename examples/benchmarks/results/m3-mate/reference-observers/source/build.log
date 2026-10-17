@@ -1,0 +1,41 @@
+[1 of 6] Compiling Board            ( Board.hs, Board.o )
+
+Board.hs:19:1: warning: [-Wtabs]
+    Tab character found here, and in 45 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+19 |                 [(Kind,Square)] -- white
+   | ^^^^^^^^
+[2 of 6] Compiling Move             ( Move.hs, Move.o )
+
+Move.hs:8:1: warning: [-Wtabs]
+    Tab character found here, and in 210 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+8 |                 Square          -- to here
+  | ^^^^^^^^
+[3 of 6] Compiling Problem          ( Problem.hs, Problem.o )
+
+Problem.hs:13:1: warning: [-Wtabs]
+    Tab character found here, and in 14 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+13 |         where
+   | ^^^^^^^^
+[4 of 6] Compiling Solution         ( Solution.hs, Solution.o )
+
+Solution.hs:14:1: warning: [-Wtabs]
+    Tab character found here, and in 79 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+14 |         let mds = moveDetailsFor c bd in
+   | ^^^^^^^^
+[5 of 6] Compiling Main             ( Main.hs, Main.o )
+
+Main.hs:8:1: warning: [-Wtabs]
+    Tab character found here, and in 24 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+8 |             mapM mateInN files }
+  | ^^^^^^^^
+[6 of 6] Linking original

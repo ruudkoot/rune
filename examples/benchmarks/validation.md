@@ -2676,3 +2676,30 @@ consumer adaptations, source identities and unrecorded SML large checks.
 [Full make JOBS=4 check](validation/oct17-bspt-1120-acceptance.log) exits zero
 with 1120 profiles and all compiler/runedoc/runeopt cross-build comparisons.
 M3, M4 and M5 remain in progress; M8 remains planned.
+
+## Knight tours and mating search, 2026-10-17
+
+Six ports bring the catalogue to 382 programs and 1138 profiles.
+[Knights coverage](results/m3-knights/coverage.tsv) records 112/112 passing
+primary cases; [mate coverage](results/m3-mate/coverage.tsv) records 56/56.
+All Rune O0/O2 engines and all six managed native hosts pass. The semantic
+ledgers record 1720 passing knight-tour assertions and 960 mating-search
+assertions, with no failed or unreached checks.
+
+All 24 normal count samples agree, and 18 serial single fresh-process native
+smoke adapter samples pass separately. Complete original tour/solution text,
+independent closed-tour legality, legal-move fixtures and demand/persistence
+controls validate both evaluation styles. The inactive array board remains a
+separate representation with its reviewed formatter repair and original bounded
+failure; exact output validation adds work to the original length consumer.
+
+All 96 inventory regressions and the five-pin 861-entry replay pass, recording
+Jonathan Hill's attribution and the twenty-seventh supplementary variant.
+[Knights evidence](results/m3-knights/README.md) and
+[mate evidence](results/m3-mate/README.md) retain original notices, input origins,
+source identities, complete attempts, development failures and unrecorded final
+large-profile runs.
+
+[Full make JOBS=4 check](validation/oct17-chess-1138-acceptance.log) exits zero
+with 1138 profiles and all compiler/runedoc/runeopt cross-build comparisons.
+M3, M4 and M5 remain in progress; M8 remains planned.

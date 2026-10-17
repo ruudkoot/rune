@@ -1,0 +1,4 @@
+RESULT 1 245
+PASS knights-array-lazy
+SAMPLE 1 0.002483000
+SUMMARY 1 checks, 0 failed

@@ -1,0 +1,17 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+knights-lazy	normal	rune	O2	count	1	1	pass	23.64	23.64	0.02	10348	3987997860	3661462688	118030898	counts/measurement.v0KqVP/knights-lazy/rune/fresh.1
+knights-lazy	normal	rune:opt	O2	count	1	1	pass	10.51	10.53	0.02	10920	3987997860	3661462688	118030898	counts/measurement.v0KqVP/knights-lazy/rune-opt/fresh.1
+knights-lazy	normal	rune:new	O2	count	1	1	pass	22.53	22.45	0.02	10628	2271850636	3661462688	118030898	counts/measurement.v0KqVP/knights-lazy/rune-new/fresh.1
+knights-lazy	normal	rune:jit	O2	count	1	1	pass	8.82	8.81	0.00	11840	2271850636	3661462688	118030898	counts/measurement.v0KqVP/knights-lazy/rune-jit/fresh.1
+knights-strict	normal	rune	O2	count	1	1	pass	22.06	22.00	0.00	10348	3960922190	3619021864	116547197	counts/measurement.9jOT0t/knights-strict/rune/fresh.1
+knights-strict	normal	rune:opt	O2	count	1	1	pass	12.83	12.74	0.02	10992	3960922190	3619021864	116547197	counts/measurement.9jOT0t/knights-strict/rune-opt/fresh.1
+knights-strict	normal	rune:new	O2	count	1	1	pass	23.56	23.64	0.02	10548	2254972556	3619021864	116547197	counts/measurement.9jOT0t/knights-strict/rune-new/fresh.1
+knights-strict	normal	rune:jit	O2	count	1	1	pass	10.58	10.58	0.03	11696	2254972556	3619021864	116547197	counts/measurement.9jOT0t/knights-strict/rune-jit/fresh.1
+knights-array-lazy	normal	rune	O2	count	1	1	pass	13.25	13.21	0.02	18516	2090039054	4671853232	100310696	counts/measurement.S49fQY/knights-array-lazy/rune/fresh.1
+knights-array-lazy	normal	rune:opt	O2	count	1	1	pass	5.08	5.07	0.03	19176	2090039054	4671853232	100310696	counts/measurement.S49fQY/knights-array-lazy/rune-opt/fresh.1
+knights-array-lazy	normal	rune:new	O2	count	1	1	pass	11.65	11.66	0.02	18828	1310869700	4671853232	100310696	counts/measurement.S49fQY/knights-array-lazy/rune-new/fresh.1
+knights-array-lazy	normal	rune:jit	O2	count	1	1	pass	4.88	4.84	0.02	20032	1310869700	4671853232	100310696	counts/measurement.S49fQY/knights-array-lazy/rune-jit/fresh.1
+knights-array-strict	normal	rune	O2	count	1	1	pass	10.50	10.54	0.02	18496	2036258178	4637276336	98981392	counts/measurement.EcEfEo/knights-array-strict/rune/fresh.1
+knights-array-strict	normal	rune:opt	O2	count	1	1	pass	4.54	4.42	0.03	19072	2036258178	4637276336	98981392	counts/measurement.EcEfEo/knights-array-strict/rune-opt/fresh.1
+knights-array-strict	normal	rune:new	O2	count	1	1	pass	8.71	8.71	0.03	18704	1279365014	4637276336	98981392	counts/measurement.EcEfEo/knights-array-strict/rune-new/fresh.1
+knights-array-strict	normal	rune:jit	O2	count	1	1	pass	4.42	4.35	0.03	19856	1279365014	4637276336	98981392	counts/measurement.EcEfEo/knights-array-strict/rune-jit/fresh.1

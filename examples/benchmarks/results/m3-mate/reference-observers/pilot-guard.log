@@ -1,0 +1,1 @@
+{"command": ["bin/runevm", "tests/out/benchmarks/mate-originals/pilot.rbc"], "exit": 0, "guard_reason": null, "rss_limit_kib": 2097152, "minimum_available_kib": 8388608, "observed_peak_tree_rss_kib": 35084, "observed_minimum_available_kib": 17012060, "peak_processes": [{"pid": 921324, "name": "runevm", "rss_kib": 35084}], "elapsed_seconds": 509.5707565979683}

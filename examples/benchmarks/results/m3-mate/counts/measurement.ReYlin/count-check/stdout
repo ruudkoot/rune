@@ -1,0 +1,5 @@
+COUNT unbudgeted mate-strict normal rune
+COUNT unbudgeted mate-strict normal rune:opt
+COUNT unbudgeted mate-strict normal rune:new
+COUNT unbudgeted mate-strict normal rune:jit
+COUNT comparisons agree

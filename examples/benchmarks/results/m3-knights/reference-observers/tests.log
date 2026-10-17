@@ -1,0 +1,41 @@
+PASS knights/lazy/original 6/1
+PASS knights/lazy/original 8/1
+PASS knights/lazy/original 8/3
+PASS knights/lazy/original 14/1
+PASS knights/lazy/original 20/1
+PASS knights/lazy/original 4/1
+PASS knights/lazy/original 8/0
+PASS knights/lazy/independent closed tour 6
+PASS knights/lazy/independent closed tour 8
+PASS knights/lazy/independent closed tour 14
+PASS knights/lazy/independent closed tour 20
+PASS knights/lazy/zero solutions do not demand odd-board error
+PASS knights/lazy/odd board rejected when demanded
+PASS knights/lazy/empty first field stays unused
+PASS knights/lazy/deleted singleton first raises when demanded
+PASS knights/lazy/source direction order
+PASS knights/lazy/stable equal degree partition order
+PASS knights/lazy/recorded consumer
+PASS knights/lazy/zero repetitions
+PASS knights/lazy/wrong tour rejected
+PASS knights/strict/original 6/1
+PASS knights/strict/original 8/1
+PASS knights/strict/original 8/3
+PASS knights/strict/original 14/1
+PASS knights/strict/original 20/1
+PASS knights/strict/original 4/1
+PASS knights/strict/original 8/0
+PASS knights/strict/independent closed tour 6
+PASS knights/strict/independent closed tour 8
+PASS knights/strict/independent closed tour 14
+PASS knights/strict/independent closed tour 20
+PASS knights/strict/zero solutions do not demand odd-board error
+PASS knights/strict/odd board rejected when demanded
+PASS knights/strict/empty first field stays unused
+PASS knights/strict/deleted singleton first raises when demanded
+PASS knights/strict/source direction order
+PASS knights/strict/stable equal degree partition order
+PASS knights/strict/recorded consumer
+PASS knights/strict/zero repetitions
+PASS knights/strict/wrong tour rejected
+SUMMARY 40 checks, 0 failed

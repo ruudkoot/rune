@@ -1,0 +1,1 @@
+mate-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/stream.sml shared/nofib-mate-board.sml shared/nofib-mate-move.sml shared/nofib-mate-solution.sml mate-lazy/benchmark.sml shared/main.sml	runtime_files/simple.prob smoke.solution	mate-lazy/smoke.expected	runtime_files/simple.prob smoke.solution

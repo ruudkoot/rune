@@ -1,0 +1,10 @@
+[4 of 6] Compiling Solution         ( Solution.hs, Solution.o )
+
+Solution.hs:14:1: warning: [-Wtabs]
+    Tab character found here, and in 79 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+14 |         let mds = moveDetailsFor c bd in
+   | ^^^^^^^^
+[5 of 6] Compiling Main             ( SolveObserver.hs, SolveObserver.o )
+[6 of 6] Linking solve-observer

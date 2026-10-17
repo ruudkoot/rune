@@ -1,0 +1,9 @@
+PROGRAM LIMIT AS 1048576 KiB
+smoke lazy PASS
+smoke strict PASS
+normal lazy PASS
+normal strict PASS
+large lazy PASS
+large strict PASS
+SUMMARY 6 checks, 0 failed
+PROGRAM PASS native:mlton@20241230

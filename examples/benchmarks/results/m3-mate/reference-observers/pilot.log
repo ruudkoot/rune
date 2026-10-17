@@ -1,0 +1,6 @@
+smoke lazy PASS
+smoke strict PASS
+normal lazy PASS
+normal strict PASS
+large lazy PASS
+large strict PASS

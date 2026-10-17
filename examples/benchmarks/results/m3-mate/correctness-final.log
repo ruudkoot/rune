@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-mate-parallel.n045a0y5
+PASS mate-lazy smoke O2
+PASS mate-lazy smoke O0
+PASS mate-lazy smoke hosts
+PASS mate-lazy normal O2
+PASS mate-lazy normal O0
+PASS mate-lazy normal hosts
+PASS mate-strict smoke O0
+PASS mate-strict smoke O2
+PASS mate-strict smoke hosts
+PASS mate-strict normal O2
+PASS mate-strict normal hosts
+PASS mate-strict normal O0

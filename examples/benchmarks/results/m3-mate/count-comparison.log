@@ -1,0 +1,9 @@
+COUNT unbudgeted mate-lazy normal rune
+COUNT unbudgeted mate-lazy normal rune:opt
+COUNT unbudgeted mate-lazy normal rune:new
+COUNT unbudgeted mate-lazy normal rune:jit
+COUNT unbudgeted mate-strict normal rune
+COUNT unbudgeted mate-strict normal rune:opt
+COUNT unbudgeted mate-strict normal rune:new
+COUNT unbudgeted mate-strict normal rune:jit
+COUNT comparisons agree

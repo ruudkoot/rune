@@ -1,0 +1,49 @@
+PASS mate/lazy/original moves mate
+PASS mate/lazy/original moves stalemate
+PASS mate/lazy/original moves promotion
+PASS mate/lazy/original moves pinned-rook
+PASS mate/lazy/original moves black-pawn-check
+PASS mate/lazy/original moves heathcote3
+PASS mate/lazy/original moves kohtz
+PASS mate/lazy/original moves holzhausen
+PASS mate/lazy/original moves simple
+PASS mate/lazy/original solve mate
+PASS mate/lazy/original solve stalemate
+PASS mate/lazy/original solve promotion
+PASS mate/lazy/original solve pinned-rook
+PASS mate/lazy/original solve black-pawn-check
+PASS mate/lazy/original solve simple
+PASS mate/lazy/stable source sort
+PASS mate/lazy/source data constructor order
+PASS mate/lazy/piece lookup avoids unused opponent
+FAIL mate/lazy/check avoids unused attacker tail -- raised an exception
+FAIL mate/lazy/source stopping at first legal reply -- raised an exception
+PASS mate/lazy/persistent board predecessor
+PASS mate/lazy/four promotion choices
+PASS mate/lazy/checked consumer
+PASS mate/lazy/incorrect output rejected
+PASS mate/strict/original moves mate
+PASS mate/strict/original moves stalemate
+PASS mate/strict/original moves promotion
+PASS mate/strict/original moves pinned-rook
+PASS mate/strict/original moves black-pawn-check
+PASS mate/strict/original moves heathcote3
+PASS mate/strict/original moves kohtz
+PASS mate/strict/original moves holzhausen
+PASS mate/strict/original moves simple
+PASS mate/strict/original solve mate
+PASS mate/strict/original solve stalemate
+PASS mate/strict/original solve promotion
+PASS mate/strict/original solve pinned-rook
+PASS mate/strict/original solve black-pawn-check
+PASS mate/strict/original solve simple
+PASS mate/strict/stable source sort
+PASS mate/strict/source data constructor order
+PASS mate/strict/piece lookup avoids unused opponent
+FAIL mate/strict/check avoids unused attacker tail -- raised an exception
+PASS mate/strict/source stopping at first legal reply
+PASS mate/strict/persistent board predecessor
+PASS mate/strict/four promotion choices
+PASS mate/strict/checked consumer
+PASS mate/strict/incorrect output rejected
+SUMMARY 48 checks, 3 failed

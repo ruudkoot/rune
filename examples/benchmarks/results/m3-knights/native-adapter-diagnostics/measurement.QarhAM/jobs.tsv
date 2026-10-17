@@ -1,0 +1,1 @@
+knights-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/nofib-knights-list.sml knights-lazy/benchmark.sml shared/main.sml	1 8 1 smoke.tour	knights-lazy/smoke.expected	smoke.tour

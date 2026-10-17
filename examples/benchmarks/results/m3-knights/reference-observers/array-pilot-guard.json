@@ -1,0 +1,27 @@
+{
+  "command": [
+    "timeout",
+    "600",
+    "bin/runevm",
+    "tests/out/benchmarks/knights-originals/array-pilot.rbc"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 69576,
+  "observed_minimum_available_kib": 17629048,
+  "peak_processes": [
+    {
+      "pid": 943956,
+      "name": "timeout",
+      "rss_kib": 1796
+    },
+    {
+      "pid": 943957,
+      "name": "runevm",
+      "rss_kib": 67780
+    }
+  ],
+  "elapsed_seconds": 2.594882506004069
+}

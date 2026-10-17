@@ -1,0 +1,8 @@
+error: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/mate-originals/host-tests/native-mlkit-4.7.23/program/src/4/board.sml, line 27, column 24: Overloading not resolved in record containing the record wildcard (...).
+
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/mate-originals/host-tests/native-mlkit-4.7.23/program/src/4/board.sml, line 27, column 24:
+      |S.Cons(x,rest)=>if #2(L.force x)=sq then L.force rest else S.Cons(x,rPa sq rest))
+                          ^^
+Overloading not resolved in record containing the record wildcard (...).
+Stopping compilation of MLB-file due to error (code 1).

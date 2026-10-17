@@ -1,0 +1,26 @@
+[1 of 5] Compiling Board            ( Board.hs, Board.o )
+
+Board.hs:19:1: warning: [-Wtabs]
+    Tab character found here, and in 45 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+19 |                 [(Kind,Square)] -- white
+   | ^^^^^^^^
+[2 of 5] Compiling Move             ( Move.hs, Move.o )
+
+Move.hs:8:1: warning: [-Wtabs]
+    Tab character found here, and in 210 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+8 |                 Square          -- to here
+  | ^^^^^^^^
+[3 of 5] Compiling Problem          ( Problem.hs, Problem.o )
+
+Problem.hs:13:1: warning: [-Wtabs]
+    Tab character found here, and in 14 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+13 |         where
+   | ^^^^^^^^
+[4 of 5] Compiling Main             ( Observer.hs, Observer.o )
+[5 of 5] Linking observer

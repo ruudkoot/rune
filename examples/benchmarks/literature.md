@@ -361,3 +361,19 @@ paper authorship for nofib's two-dimensional modeller or claim its algorithms
 are identical. The pinned program and GHC interface establish the specific
 wrapped rational semantics, local par stub, seq demand and global batch sharing.
 Compiler performance explanations remain hypotheses until separately measured.
+
+## Knight tours and mating search
+
+The pinned knights KnightHeuristic commentary credits Bornat's Programming from
+First Principles, Positively the last flourish. Its functional.bib gives a 1986
+Prentice-Hall reference; this records the program's attribution without claiming
+a separate review of the book. The source's Eq/Ord board conventions, quicksort,
+degree recomputation and list/array variants define the measured algorithms.
+
+The mate README describes AND–OR search of depth 2*N-1. Puzzle headers separately
+credit composers and publications, including Heathcote (Reading Observer, 1904),
+Kohtz and Kockelkorn (Schachaufgaben, 1875) and von Holzhausen (Deutsches
+Wochenschach, 1913). These are input origins, not program authorship or proof of
+full modern chess rules. Source-specific move ordering, pruning and printed
+subtree compaction are established by source and original output observations.
+Performance explanations remain diagnostic hypotheses.

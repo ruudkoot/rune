@@ -331,3 +331,19 @@ The shared GraphTypes interface in graph500par contains only numeric type
 aliases. Sequential ports require no parallel runtime. Their profile choices,
 larger configured parameter candidates, source notices, numeric differences
 and every driver/data adaptation are recorded in their provenance sections.
+
+## Knights representations and authorship, 2026-10-17
+
+The exact README heading declares Jonathan Hill as author. Discovery records
+that heading with two positive/changed-heading regressions: all 96 inventory
+tests pass, and five clean pinned trees reproduce 861 primary entries.
+
+The [supplementary variants](source-variants.tsv) separately record the inactive
+ChessSetArray representation, bringing that map to 27 entries. Its immutable
+arrays, layout, metadata and source indexTile quirk differ from ChessSetList.
+The original array spaces 64 1 recurses forever after reaching zero and produces
+a bounded stack-overflow diagnostic. Imported array variants apply the reviewed
+single formatter base-case repair logTen 0, select the array module in the
+original observer, and match its complete tours. The original module remains
+unchanged in provenance. This is an import with an explicit repair, not a duplicate
+or an unsupported-runtime deferral.

@@ -1,0 +1,27 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/audit.md
+ M examples/benchmarks/inventory.tsv
+ M examples/benchmarks/literature.md
+ M examples/benchmarks/manifest.tsv
+ M examples/benchmarks/source-variants.tsv
+ M scripts/benchmark-inventory.py
+ M tests/benchmarks/test-inventory.py
+?? examples/benchmarks/knights-array-lazy/
+?? examples/benchmarks/knights-array-strict/
+?? examples/benchmarks/knights-lazy/
+?? examples/benchmarks/knights-strict/
+?? examples/benchmarks/mate-lazy/
+?? examples/benchmarks/mate-strict/
+?? examples/benchmarks/shared/nofib-knights-array.sml
+?? examples/benchmarks/shared/nofib-knights-list.sml
+?? examples/benchmarks/shared/nofib-mate-board.sml
+?? examples/benchmarks/shared/nofib-mate-move.sml
+?? examples/benchmarks/shared/nofib-mate-solution.sml
+?? tests/benchmarks/check-knights-array.sh
+?? tests/benchmarks/check-knights.sh
+?? tests/benchmarks/check-mate.sh
+?? tests/benchmarks/data/knights/
+?? tests/benchmarks/data/mate/
+?? tests/benchmarks/knights-array-tests.sml
+?? tests/benchmarks/knights-tests.sml
+?? tests/benchmarks/mate-tests.sml

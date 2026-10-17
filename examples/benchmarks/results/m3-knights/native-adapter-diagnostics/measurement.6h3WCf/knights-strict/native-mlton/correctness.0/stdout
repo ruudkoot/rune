@@ -1,0 +1,4 @@
+RESULT 1 232
+PASS knights-strict
+SAMPLE 1 0.003289000
+SUMMARY 1 checks, 0 failed

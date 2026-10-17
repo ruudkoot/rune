@@ -1,0 +1,4 @@
+RESULT 1 232
+PASS knights-lazy
+SAMPLE 1 0.002324000
+SUMMARY 1 checks, 0 failed

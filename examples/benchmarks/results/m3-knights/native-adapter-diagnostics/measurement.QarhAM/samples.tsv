@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+knights-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	5.62	4.31	1.18	668500	-	-	-	knights-lazy/native-mlton/build/compile
+knights-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2556	-	-	-	knights-lazy/native-mlton/correctness.0
+knights-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2524	-	-	-	knights-lazy/native-mlton/fresh.1
+knights-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.52	0.47	0.04	35456	-	-	-	knights-lazy/native-smlnj-legacy/build/compile
+knights-lazy	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.01	0.00	4220	-	-	-	knights-lazy/native-smlnj-legacy/correctness.0
+knights-lazy	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.01	0.00	4156	-	-	-	knights-lazy/native-smlnj-legacy/fresh.1
+knights-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.39	0.22	0.10	42496	-	-	-	knights-lazy/native-polyml/build/compile
+knights-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.01	0.01	0.00	9108	-	-	-	knights-lazy/native-polyml/correctness.0
+knights-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	9088	-	-	-	knights-lazy/native-polyml/fresh.1

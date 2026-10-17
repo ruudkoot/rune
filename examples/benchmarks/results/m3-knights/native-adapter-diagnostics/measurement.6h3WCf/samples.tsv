@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+knights-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	5.95	4.53	1.27	666732	-	-	-	knights-strict/native-mlton/build/compile
+knights-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2384	-	-	-	knights-strict/native-mlton/correctness.0
+knights-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2388	-	-	-	knights-strict/native-mlton/fresh.1
+knights-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.51	0.44	0.06	36028	-	-	-	knights-strict/native-smlnj-legacy/build/compile
+knights-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.01	0.00	4128	-	-	-	knights-strict/native-smlnj-legacy/correctness.0
+knights-strict	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.00	0.01	4072	-	-	-	knights-strict/native-smlnj-legacy/fresh.1
+knights-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.38	0.30	0.05	46616	-	-	-	knights-strict/native-polyml/build/compile
+knights-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	8924	-	-	-	knights-strict/native-polyml/correctness.0
+knights-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	8892	-	-	-	knights-strict/native-polyml/fresh.1

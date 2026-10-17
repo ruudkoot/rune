@@ -1,0 +1,212 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : 
+  sig
+    datatype 'a node
+      = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay | Nil
+    type 'a stream = 'a node BenchLazy.delay
+    val empty : unit -> 'a node BenchLazy.state ref
+    val cons : 'a BenchLazy.delay * 'a node BenchLazy.delay
+                -> 'a node BenchLazy.state ref
+    val singleton : 'a -> 'a node BenchLazy.state ref
+    val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+    val head : 'a node BenchLazy.state ref -> 'a
+    val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val iterate : ('a -> 'a)
+                   -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+    val fromList : 'a list -> 'a node BenchLazy.delay
+    val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+    val zipWith : ('a * 'b -> 'c)
+                   -> 'a node BenchLazy.delay
+                   -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+    val append : 'a node BenchLazy.delay
+                  -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val concatMap : ('a -> 'b node BenchLazy.delay)
+                     -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+    val filter : ('a -> bool)
+                  -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+    val dropWhile : ('a -> bool)
+                     -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+    val foldrStream : ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+                       -> 'b BenchLazy.state ref
+                       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+    val zipWith3 : ('a * 'b * 'c -> 'd)
+                    -> 'a node BenchLazy.delay
+                    -> 'b node BenchLazy.delay
+                    -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+    val span : ('a -> bool)
+                -> 'a node BenchLazy.delay
+                -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+    val nth : 'a node BenchLazy.delay -> int -> 'a
+    val take : int -> 'a node BenchLazy.delay -> 'a list
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+    val foldPrefix : ('a * 'b -> 'b)
+                      -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-knights-list.sml]
+functor BenchKnightsFn(D: sig
+                          type 'a t
+                          val delay : (unit -> 'a) -> 'a t
+                          val force : 'a t -> 'a
+                        end) :
+                      
+                        sig
+                          structure L : <sig>
+                          structure S : <sig>
+                          type tile
+                          type boardNode
+                          type board
+                          type direction
+                          val move : direction -> int * int -> int * int
+                          val createBoard : int
+                                             -> tile
+                                             -> boardNode BenchLazy.state ref
+                          val sizeBoard : boardNode BenchLazy.state ref -> int
+                          val noPieces : boardNode BenchLazy.state ref -> int
+                          val firstPiece : boardNode BenchLazy.state ref
+                                            -> tile
+                          val lastPiece : boardNode BenchLazy.state ref
+                                           -> tile
+                          val addPiece : tile BenchLazy.delay
+                                          -> boardNode BenchLazy.state ref
+                                          -> boardNode BenchLazy.state ref
+                          val init : 'a BenchStream.node BenchLazy.state ref
+                                      -> 'a BenchStream.node BenchLazy.delay
+                          val last : 'a BenchStream.node BenchLazy.state ref
+                                      -> 'a
+                          val deleteFirst : boardNode BenchLazy.state ref
+                                             -> boardNode BenchLazy.state ref
+                          val positionPiece : int
+                                               -> boardNode BenchLazy.state 
+                                                 ref
+                                               -> tile
+                          val pieceAtTile : tile
+                                             -> boardNode BenchLazy.state ref
+                                             -> int
+                          val isSquareFree : tile
+                                              -> boardNode BenchLazy.state ref
+                                              -> bool
+                          val canMoveTo : int * int
+                                           -> boardNode BenchLazy.state ref
+                                           -> bool
+                          val canMove : boardNode BenchLazy.state ref
+                                         -> direction -> bool
+                          val moveKnight : boardNode BenchLazy.state ref
+                                            -> direction
+                                            -> boardNode BenchLazy.state ref
+                          val possibleMoves : boardNode BenchLazy.state ref
+                                               -> direction BenchStream.node 
+                                                 BenchLazy.delay
+                          val allDescend : boardNode BenchLazy.state ref
+                                            -> boardNode BenchLazy.state ref 
+                                                BenchStream.node 
+                                              BenchLazy.delay
+                          val length : 'a BenchStream.node BenchLazy.delay
+                                        -> int
+                          val descAndNo : boardNode BenchLazy.state ref
+                                           -> (int D.t
+                                                * boardNode BenchLazy.state 
+                                                  ref) BenchStream.node 
+                                             BenchLazy.delay
+                          val singleDescend : boardNode BenchLazy.state ref
+                                               -> boardNode BenchLazy.state 
+                                                     ref BenchStream.node 
+                                                 BenchLazy.delay
+                          val canJumpFirst : boardNode BenchLazy.state ref
+                                              -> bool
+                          val deadEnd : boardNode BenchLazy.state ref -> bool
+                          val quickSort : ('a * 'a -> bool)
+                                           -> 'a BenchStream.node 
+                                             BenchLazy.delay
+                                           -> 'a BenchStream.node 
+                                             BenchLazy.delay
+                          val descendents : boardNode BenchLazy.state ref
+                                             -> boardNode BenchLazy.state ref 
+                                                   BenchStream.node 
+                                                 BenchLazy.state ref
+                          val tourFinished : boardNode BenchLazy.state ref
+                                              -> bool
+                          val startTour : tile
+                                           -> int
+                                           -> boardNode BenchLazy.state ref
+                          val range : int
+                                       -> int
+                                       -> int BenchStream.node BenchLazy.delay
+                          val root : int
+                                      -> (int D.t
+                                           * boardNode BenchLazy.state ref) 
+                                          BenchStream.node BenchLazy.delay
+                          val grow : int D.t * boardNode BenchLazy.state ref
+                                      -> (int D.t
+                                           * boardNode BenchLazy.state ref) 
+                                          BenchStream.node BenchLazy.delay
+                          val isFinished : 'a * boardNode BenchLazy.state ref
+                                            -> bool
+                          val depthSearch : 'a BenchStream.node 
+                                               BenchLazy.delay
+                                             -> ('a
+                                              -> 'a BenchStream.node 
+                                                BenchLazy.delay)
+                                             -> ('a -> bool)
+                                             -> 'a BenchStream.node 
+                                               BenchLazy.delay
+                          val take : int
+                                      -> 'a BenchStream.node BenchLazy.delay
+                                      -> 'a BenchStream.node BenchLazy.delay
+                          val tours : int
+                                       -> int
+                                       -> (int D.t
+                                            * boardNode BenchLazy.state ref) 
+                                           BenchStream.node BenchLazy.delay
+                          val logTen : int -> int
+                          val spaces : int -> int -> string
+                          val text : string
+                                      -> char BenchStream.node BenchLazy.delay
+                          val integer : int -> string
+                          val showBoard : boardNode BenchLazy.state ref
+                                           -> char BenchStream.node 
+                                               BenchLazy.state ref
+                          val printTour : int
+                                           -> int
+                                           -> char BenchStream.node 
+                                               BenchLazy.state ref
+                          val run : string list -> string
+                        end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/knights-strict/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Program : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 100 81300
+PASS knights-strict
+SUMMARY 1 checks, 0 failed

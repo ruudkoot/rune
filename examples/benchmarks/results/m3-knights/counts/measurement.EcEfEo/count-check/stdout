@@ -1,0 +1,5 @@
+COUNT unbudgeted knights-array-strict normal rune
+COUNT unbudgeted knights-array-strict normal rune:opt
+COUNT unbudgeted knights-array-strict normal rune:new
+COUNT unbudgeted knights-array-strict normal rune:jit
+COUNT comparisons agree

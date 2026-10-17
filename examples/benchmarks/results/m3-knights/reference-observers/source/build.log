@@ -1,0 +1,41 @@
+[1 of 6] Compiling Queue            ( Queue.lhs, Queue.o )
+
+Queue.lhs:9:1: warning: [-Wtabs]
+    Tab character found here, and in 7 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+9 |                 Queue, createQueue, addFront, addBack,
+  | ^^^^^^^^
+[2 of 6] Compiling Sort             ( Sort.lhs, Sort.o )
+
+Sort.lhs:27:1: warning: [-Wtabs]
+    Tab character found here, and in 32 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+27 |         | x <= y    = x:y:ys
+   | ^^^^^^^^
+[3 of 6] Compiling ChessSetList     ( ChessSetList.lhs, ChessSetList.o )
+
+ChessSetList.lhs:13:1: warning: [-Wtabs]
+    Tab character found here, and in 42 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+13 |                     ChessSet,
+   | ^^^^^^^^
+[4 of 6] Compiling KnightHeuristic  ( KnightHeuristic.lhs, KnightHeuristic.o )
+
+KnightHeuristic.lhs:8:1: warning: [-Wtabs]
+    Tab character found here, and in 20 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+8 |         ChessSet,
+  | ^^^^^^^^
+[5 of 6] Compiling Main             ( Main.lhs, Main.o )
+
+Main.lhs:49:1: warning: [-Wtabs]
+    Tab character found here, and in 32 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+49 |         argsOk ss = (length ss == 2) && (foldr ((&&) . all_digits) True ss)
+   | ^^^^^^^^
+[6 of 6] Linking original

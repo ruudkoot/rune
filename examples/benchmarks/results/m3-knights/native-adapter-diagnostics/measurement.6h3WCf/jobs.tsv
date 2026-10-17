@@ -1,0 +1,1 @@
+knights-strict	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/nofib-knights-list.sml knights-strict/benchmark.sml shared/main.sml	1 8 1 smoke.tour	knights-strict/smoke.expected	smoke.tour

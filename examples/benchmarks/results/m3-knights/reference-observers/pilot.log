@@ -1,0 +1,9 @@
+1 147 lazy
+runevm: uncaught exception Empty
+  in BenchLazy.force at /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml:14:62
+  in Strict.check at /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/knights-originals/kernel.sml:114:35
+  in Strict.loop at /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/knights-originals/kernel.sml:118:84
+  in Strict.run at /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/knights-originals/kernel.sml:119:49
+  in check at /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/knights-originals/pilot.sml:7:43
+  in app at bin/../lib/basis/pervasive.sml:58:24
+  in <toplevel> at /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/knights-originals/pilot.sml:8:74

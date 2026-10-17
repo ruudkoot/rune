@@ -1,0 +1,43 @@
+PASS knights-array/lazy/original 6/1
+PASS knights-array/lazy/original 8/1
+PASS knights-array/lazy/original 8/3
+PASS knights-array/lazy/original 14/1
+PASS knights-array/lazy/original 20/1
+PASS knights-array/lazy/original 4/1
+PASS knights-array/lazy/original 8/0
+PASS knights-array/lazy/independent closed tour 6
+PASS knights-array/lazy/independent closed tour 8
+PASS knights-array/lazy/independent closed tour 14
+PASS knights-array/lazy/independent closed tour 20
+PASS knights-array/lazy/zero solutions do not demand odd-board error
+PASS knights-array/lazy/odd board rejected when demanded
+PASS knights-array/lazy/empty first field stays unused
+PASS knights-array/lazy/array deletion preserves count and resets first to last
+PASS knights-array/lazy/source indexTile quirk retained
+PASS knights-array/lazy/source direction order
+PASS knights-array/lazy/stable equal degree partition order
+FAIL knights-array/lazy/recorded consumer -- false
+PASS knights-array/lazy/zero repetitions
+PASS knights-array/lazy/wrong tour rejected
+PASS knights-array/strict/original 6/1
+PASS knights-array/strict/original 8/1
+PASS knights-array/strict/original 8/3
+PASS knights-array/strict/original 14/1
+PASS knights-array/strict/original 20/1
+PASS knights-array/strict/original 4/1
+PASS knights-array/strict/original 8/0
+PASS knights-array/strict/independent closed tour 6
+PASS knights-array/strict/independent closed tour 8
+PASS knights-array/strict/independent closed tour 14
+PASS knights-array/strict/independent closed tour 20
+PASS knights-array/strict/zero solutions do not demand odd-board error
+PASS knights-array/strict/odd board rejected when demanded
+PASS knights-array/strict/empty first field stays unused
+PASS knights-array/strict/array deletion preserves count and resets first to last
+PASS knights-array/strict/source indexTile quirk retained
+PASS knights-array/strict/source direction order
+PASS knights-array/strict/stable equal degree partition order
+FAIL knights-array/strict/recorded consumer -- false
+PASS knights-array/strict/zero repetitions
+PASS knights-array/strict/wrong tour rejected
+SUMMARY 42 checks, 2 failed

@@ -1,0 +1,1 @@
+knights-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/nofib-knights-list.sml knights-strict/benchmark.sml shared/main.sml	100 14 1 normal.tour	knights-strict/normal.expected	normal.tour

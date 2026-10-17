@@ -1,0 +1,1 @@
+knights-array-strict	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/nofib-knights-array.sml knights-array-strict/benchmark.sml shared/main.sml	1 8 1 smoke.tour	knights-array-strict/smoke.expected	smoke.tour

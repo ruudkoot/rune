@@ -1,0 +1,1 @@
+knights-array-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/nofib-knights-array.sml knights-array-lazy/benchmark.sml shared/main.sml	100 14 1 normal.tour	knights-array-lazy/normal.expected	normal.tour
