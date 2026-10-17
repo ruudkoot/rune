@@ -1,0 +1,27 @@
+{
+  "command": [
+    "timeout",
+    "600",
+    "bin/runevm",
+    "tests/out/benchmarks/gamteb-originals/driver-pilot.rbc"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 1048576,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 136296,
+  "observed_minimum_available_kib": 20103156,
+  "peak_processes": [
+    {
+      "pid": 8,
+      "name": "timeout",
+      "rss_kib": 1792
+    },
+    {
+      "pid": 9,
+      "name": "runevm",
+      "rss_kib": 134504
+    }
+  ],
+  "elapsed_seconds": 1.7881461000069976
+}

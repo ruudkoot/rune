@@ -196,6 +196,38 @@ class InventoryTest(unittest.TestCase):
                   "-- Another author November 1990\nmain = print 0\n")
         self.assertNotIn("Mark P. Jones", self.build("nofib")[0]["authors"])
 
+    def test_gamteb_author_heading_is_recorded(self):
+        self.nofib_roots()
+        self.file("real/gamteb/Makefile", "\n")
+        self.file("real/gamteb/Main.hs",
+                  "--      Patricia Fasel\n--      Los Alamos National Laboratory\nmain = print 0\n")
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "Patricia Fasel")
+        self.assertIn("real/gamteb/Main.hs:author-heading", row["evidence"])
+
+    def test_changed_gamteb_author_heading_requires_review(self):
+        self.nofib_roots()
+        self.file("real/gamteb/Makefile", "\n")
+        self.file("real/gamteb/Main.hs",
+                  "--      Another author\n--      Another laboratory\nmain = print 0\n")
+        self.assertNotIn("Patricia Fasel", self.build("nofib")[0]["authors"])
+
+    def test_mkhprog_literate_author_heading_is_recorded(self):
+        self.nofib_roots()
+        self.file("real/mkhprog/Makefile", "\n")
+        self.file("real/mkhprog/Main.lhs",
+                  "% Crown Copyright 1992\n\\author{N D North\\\\\n\n> main = print 0\n")
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "N. D. North")
+        self.assertIn("real/mkhprog/Main.lhs:author-and-crown-heading", row["evidence"])
+
+    def test_changed_mkhprog_author_heading_requires_review(self):
+        self.nofib_roots()
+        self.file("real/mkhprog/Makefile", "\n")
+        self.file("real/mkhprog/Main.lhs",
+                  "% Crown Copyright 1992\n\\author{Another author\\\\\n\n> main = print 0\n")
+        self.assertNotIn("N. D. North", self.build("nofib")[0]["authors"])
+
     def test_pic_author_heading_is_recorded(self):
         self.nofib_roots()
         self.file("real/pic/Makefile", "\n")

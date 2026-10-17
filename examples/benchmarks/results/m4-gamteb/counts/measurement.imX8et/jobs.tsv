@@ -1,0 +1,1 @@
+gamteb-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/nofib-gamteb-math.sml shared/nofib-gamteb-tables.sml shared/nofib-gamteb.sml shared/nofib-gamteb-driver.sml gamteb-lazy/benchmark.sml shared/main.sml	200 1000 normal.reference	gamteb-lazy/normal.expected	normal.reference

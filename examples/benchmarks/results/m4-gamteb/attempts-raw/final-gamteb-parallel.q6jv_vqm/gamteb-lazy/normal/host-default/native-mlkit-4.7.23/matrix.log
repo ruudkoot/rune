@@ -1,0 +1,899 @@
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 200:246200
+PASS gamteb-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-gamteb-math.sml]
+[autoloading]
+[autoloading done]
+functor BenchGamtebMathFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type number
+  type point
+  val value : <BaseFct>.<resultStr>.number -> real
+  val eval : (unit -> 'a) -> 'a D.t
+  val literal : 'a -> 'a D.t
+  val small : real
+  val random : <BaseFct>.<resultStr>.number -> real D.t * real D.t
+  val distance :
+      <BaseFct>.<resultStr>.point
+       -> <BaseFct>.<resultStr>.point -> real D.t * int
+  val isotropic :
+      <BaseFct>.<resultStr>.number -> real D.t * real D.t * real D.t
+  val rotate :
+      <BaseFct>.<resultStr>.point
+       -> <BaseFct>.<resultStr>.number
+       -> real D.t -> real D.t * real D.t * real D.t
+  val klein :
+      <BaseFct>.<resultStr>.number -> <BaseFct>.<resultStr>.number -> real D.t
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-gamteb-tables.sml]
+[autoloading]
+[autoloading done]
+functor BenchGamtebTablesFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  val table : bool -> real list -> real D.t vector
+  val erg : real D.t vector
+  val xc : real D.t vector
+  val xp : real D.t vector
+  val xpe : real D.t vector
+  val at : 'a D.t vector -> int -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-gamteb.sml]
+functor BenchGamtebFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure M : <sig>
+  structure T : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  type number
+  type point
+  val value : <BaseFct>.<resultStr>.M.<returnStr>.number -> real
+  val eval : (unit -> 'a) -> 'a D.t
+  val literal : 'a -> 'a D.t
+  val small : real
+  val random :
+      <BaseFct>.<resultStr>.M.<returnStr>.number -> real D.t * real D.t
+  val distance :
+      <BaseFct>.<resultStr>.M.<returnStr>.point
+       -> <BaseFct>.<resultStr>.M.<returnStr>.point -> real D.t * int
+  val isotropic :
+      <BaseFct>.<resultStr>.M.<returnStr>.number
+       -> real D.t * real D.t * real D.t
+  val rotate :
+      <BaseFct>.<resultStr>.M.<returnStr>.point
+       -> <BaseFct>.<resultStr>.M.<returnStr>.number
+       -> real D.t -> real D.t * real D.t * real D.t
+  val klein :
+      <BaseFct>.<resultStr>.M.<returnStr>.number
+       -> <BaseFct>.<resultStr>.M.<returnStr>.number -> real D.t
+  type probability
+  type particle
+  type result
+  type stat
+  type outcome
+  val pointValue :
+      <BaseFct>.<resultStr>.M.<returnStr>.number
+       * <BaseFct>.<resultStr>.M.<returnStr>.number
+       * <BaseFct>.<resultStr>.M.<returnStr>.number
+       -> real * real * real
+  val particle :
+      (<BaseFct>.<resultStr>.M.<returnStr>.number
+            * <BaseFct>.<resultStr>.M.<returnStr>.number
+            * <BaseFct>.<resultStr>.M.<returnStr>.number) BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.number
+            * <BaseFct>.<resultStr>.M.<returnStr>.number
+            * <BaseFct>.<resultStr>.M.<returnStr>.number) BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.number
+       -> <BaseFct>.<resultStr>.M.<returnStr>.number
+       -> int BenchLazy.state ref
+       -> int
+       -> <BaseFct>.<resultStr>.M.<returnStr>.number
+       -> <BaseFct>.<resultStr>.particle
+  val xsect :
+      <BaseFct>.<resultStr>.M.<returnStr>.number
+       -> int BenchLazy.state ref
+       * (real D.t * real D.t * real D.t * real D.t) BenchLazy.state ref
+  val lazyXsect :
+      <BaseFct>.<resultStr>.M.<returnStr>.number
+       -> int BenchLazy.state ref
+       * (real D.t * real D.t * real D.t * real D.t) BenchLazy.state ref
+  val first :
+      <BaseFct>.<resultStr>.outcome
+       -> <BaseFct>.<resultStr>.result BenchStream.node BenchLazy.state ref
+  val second :
+      <BaseFct>.<resultStr>.outcome
+       -> <BaseFct>.<resultStr>.stat BenchStream.node BenchLazy.state ref
+  val oneStat : 'a -> ('a * real D.t) BenchStream.node BenchLazy.state ref
+  val photo :
+      <BaseFct>.<resultStr>.particle
+       -> ('a * 'b * <BaseFct>.<resultStr>.M.<returnStr>.number
+            * <BaseFct>.<resultStr>.M.<returnStr>.number) BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.particle * real D.t * bool) BenchLazy.state 
+         ref
+  val compton :
+      <BaseFct>.<resultStr>.particle
+       -> (<BaseFct>.<resultStr>.particle
+            * (real D.t * real D.t * real D.t * real D.t) BenchLazy.state ref
+            * bool) BenchLazy.state ref
+  val pairProduction :
+      <BaseFct>.<resultStr>.particle
+       -> (<BaseFct>.<resultStr>.particle
+            * (real D.t * real D.t * real D.t * real D.t) BenchLazy.state ref
+            * bool) BenchLazy.state ref
+  val roulette :
+      <BaseFct>.<resultStr>.particle
+       -> (<BaseFct>.<resultStr>.particle
+            * (int * real D.t) BenchStream.node BenchLazy.delay * bool) 
+           BenchLazy.state ref
+  val split :
+      <BaseFct>.<resultStr>.particle
+       -> <BaseFct>.<resultStr>.particle * <BaseFct>.<resultStr>.particle
+  val translate :
+      (<BaseFct>.<resultStr>.M.<returnStr>.number
+            * <BaseFct>.<resultStr>.M.<returnStr>.number
+            * <BaseFct>.<resultStr>.M.<returnStr>.number) BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.number
+            * <BaseFct>.<resultStr>.M.<returnStr>.number
+            * <BaseFct>.<resultStr>.M.<returnStr>.number) BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.number
+       -> (real D.t * real D.t * real D.t) BenchLazy.state ref
+  val transport :
+      <BaseFct>.<resultStr>.particle
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.number * real D.t
+            * <BaseFct>.<resultStr>.M.<returnStr>.number
+            * <BaseFct>.<resultStr>.M.<returnStr>.number) BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.outcome
+  val noCollision :
+      <BaseFct>.<resultStr>.particle
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.number * real D.t
+            * <BaseFct>.<resultStr>.M.<returnStr>.number
+            * <BaseFct>.<resultStr>.M.<returnStr>.number) BenchLazy.state ref
+       -> int -> <BaseFct>.<resultStr>.outcome
+  val collision :
+      <BaseFct>.<resultStr>.particle
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.number * real D.t
+            * <BaseFct>.<resultStr>.M.<returnStr>.number
+            * <BaseFct>.<resultStr>.M.<returnStr>.number) BenchLazy.state ref
+       -> bool D.t -> <BaseFct>.<resultStr>.outcome
+  val sources :
+      real D.t
+       -> int
+       -> <BaseFct>.<resultStr>.M.<returnStr>.number
+       -> <BaseFct>.<resultStr>.outcome
+  val run : int -> <BaseFct>.<resultStr>.outcome
+  val resultValue :
+      ('a * 'b BenchLazy.state ref)
+       * <BaseFct>.<resultStr>.M.<returnStr>.number
+       -> 'a * 'b * real
+  val statValue : 'a * <BaseFct>.<resultStr>.M.<returnStr>.number -> 'a * real
+  val tableHeads : unit -> real list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-gamteb-driver.sml]
+[autoloading]
+[autoloading done]
+functor BenchGamtebDriverFn(K: sig
+  type outcome
+  type result
+  type stat
+  val run : int -> outcome
+  val first : outcome -> result BenchStream.stream
+  val second : outcome -> stat BenchStream.stream
+  val resultValue : result -> int * int * real
+  val statValue : stat -> int * real
+  val tableHeads : unit -> real list
+end) :
+sig
+  structure L : <sig>
+  structure S : <sig>
+  structure W : <sig>
+  type reference
+  val read : string -> TextIO.vector
+  val real : string -> real
+  val reference : string -> <BaseFct>.<resultStr>.reference
+  val close : real * real -> bool
+  val accumulatedClose : real * real -> bool
+  val number : real -> string
+  val hash : string -> Word64.word
+  val reverseHash : string -> Word64.word
+  val headings : string list
+  val tableValues : real list BenchLazy.state ref
+  val tableText : string BenchLazy.state ref
+  val checked : int -> <BaseFct>.<resultStr>.reference -> int
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/gamteb-lazy/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+FAIL gamteb-lazy -- Fail: incorrect result: GAMTEB particle result
+SUMMARY 1 checks, 1 failed
+PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 0, exit 1)
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-gamteb-math.sml]
+[autoloading]
+[autoloading done]
+functor BenchGamtebMathFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type number
+  type point
+  val value : <BaseFct>.<resultStr>.number -> real
+  val eval : (unit -> 'a) -> 'a D.t
+  val literal : 'a -> 'a D.t
+  val small : real
+  val random : <BaseFct>.<resultStr>.number -> real D.t * real D.t
+  val distance :
+      <BaseFct>.<resultStr>.point
+       -> <BaseFct>.<resultStr>.point -> real D.t * int
+  val isotropic :
+      <BaseFct>.<resultStr>.number -> real D.t * real D.t * real D.t
+  val rotate :
+      <BaseFct>.<resultStr>.point
+       -> <BaseFct>.<resultStr>.number
+       -> real D.t -> real D.t * real D.t * real D.t
+  val klein :
+      <BaseFct>.<resultStr>.number -> <BaseFct>.<resultStr>.number -> real D.t
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-gamteb-tables.sml]
+[autoloading]
+[autoloading done]
+functor BenchGamtebTablesFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  val table : bool -> real list -> real D.t vector
+  val erg : real D.t vector
+  val xc : real D.t vector
+  val xp : real D.t vector
+  val xpe : real D.t vector
+  val at : 'a D.t vector -> int -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-gamteb.sml]
+functor BenchGamtebFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure M : <sig>
+  structure T : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  type number
+  type point
+  val value : <BaseFct>.<resultStr>.M.<returnStr>.number -> real
+  val eval : (unit -> 'a) -> 'a D.t
+  val literal : 'a -> 'a D.t
+  val small : real
+  val random :
+      <BaseFct>.<resultStr>.M.<returnStr>.number -> real D.t * real D.t
+  val distance :
+      <BaseFct>.<resultStr>.M.<returnStr>.point
+       -> <BaseFct>.<resultStr>.M.<returnStr>.point -> real D.t * int
+  val isotropic :
+      <BaseFct>.<resultStr>.M.<returnStr>.number
+       -> real D.t * real D.t * real D.t
+  val rotate :
+      <BaseFct>.<resultStr>.M.<returnStr>.point
+       -> <BaseFct>.<resultStr>.M.<returnStr>.number
+       -> real D.t -> real D.t * real D.t * real D.t
+  val klein :
+      <BaseFct>.<resultStr>.M.<returnStr>.number
+       -> <BaseFct>.<resultStr>.M.<returnStr>.number -> real D.t
+  type probability
+  type particle
+  type result
+  type stat
+  type outcome
+  val pointValue :
+      <BaseFct>.<resultStr>.M.<returnStr>.number
+       * <BaseFct>.<resultStr>.M.<returnStr>.number
+       * <BaseFct>.<resultStr>.M.<returnStr>.number
+       -> real * real * real
+  val particle :
+      (<BaseFct>.<resultStr>.M.<returnStr>.number
+            * <BaseFct>.<resultStr>.M.<returnStr>.number
+            * <BaseFct>.<resultStr>.M.<returnStr>.number) BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.number
+            * <BaseFct>.<resultStr>.M.<returnStr>.number
+            * <BaseFct>.<resultStr>.M.<returnStr>.number) BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.number
+       -> <BaseFct>.<resultStr>.M.<returnStr>.number
+       -> int BenchLazy.state ref
+       -> int
+       -> <BaseFct>.<resultStr>.M.<returnStr>.number
+       -> <BaseFct>.<resultStr>.particle
+  val xsect :
+      <BaseFct>.<resultStr>.M.<returnStr>.number
+       -> int BenchLazy.state ref
+       * (real D.t * real D.t * real D.t * real D.t) BenchLazy.state ref
+  val lazyXsect :
+      <BaseFct>.<resultStr>.M.<returnStr>.number
+       -> int BenchLazy.state ref
+       * (real D.t * real D.t * real D.t * real D.t) BenchLazy.state ref
+  val first :
+      <BaseFct>.<resultStr>.outcome
+       -> <BaseFct>.<resultStr>.result BenchStream.node BenchLazy.state ref
+  val second :
+      <BaseFct>.<resultStr>.outcome
+       -> <BaseFct>.<resultStr>.stat BenchStream.node BenchLazy.state ref
+  val oneStat : 'a -> ('a * real D.t) BenchStream.node BenchLazy.state ref
+  val photo :
+      <BaseFct>.<resultStr>.particle
+       -> ('a * 'b * <BaseFct>.<resultStr>.M.<returnStr>.number
+            * <BaseFct>.<resultStr>.M.<returnStr>.number) BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.particle * real D.t * bool) BenchLazy.state 
+         ref
+  val compton :
+      <BaseFct>.<resultStr>.particle
+       -> (<BaseFct>.<resultStr>.particle
+            * (real D.t * real D.t * real D.t * real D.t) BenchLazy.state ref
+            * bool) BenchLazy.state ref
+  val pairProduction :
+      <BaseFct>.<resultStr>.particle
+       -> (<BaseFct>.<resultStr>.particle
+            * (real D.t * real D.t * real D.t * real D.t) BenchLazy.state ref
+            * bool) BenchLazy.state ref
+  val roulette :
+      <BaseFct>.<resultStr>.particle
+       -> (<BaseFct>.<resultStr>.particle
+            * (int * real D.t) BenchStream.node BenchLazy.delay * bool) 
+           BenchLazy.state ref
+  val split :
+      <BaseFct>.<resultStr>.particle
+       -> <BaseFct>.<resultStr>.particle * <BaseFct>.<resultStr>.particle
+  val translate :
+      (<BaseFct>.<resultStr>.M.<returnStr>.number
+            * <BaseFct>.<resultStr>.M.<returnStr>.number
+            * <BaseFct>.<resultStr>.M.<returnStr>.number) BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.number
+            * <BaseFct>.<resultStr>.M.<returnStr>.number
+            * <BaseFct>.<resultStr>.M.<returnStr>.number) BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.M.<returnStr>.number
+       -> (real D.t * real D.t * real D.t) BenchLazy.state ref
+  val transport :
+      <BaseFct>.<resultStr>.particle
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.number * real D.t
+            * <BaseFct>.<resultStr>.M.<returnStr>.number
+            * <BaseFct>.<resultStr>.M.<returnStr>.number) BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.outcome
+  val noCollision :
+      <BaseFct>.<resultStr>.particle
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.number * real D.t
+            * <BaseFct>.<resultStr>.M.<returnStr>.number
+            * <BaseFct>.<resultStr>.M.<returnStr>.number) BenchLazy.state ref
+       -> int -> <BaseFct>.<resultStr>.outcome
+  val collision :
+      <BaseFct>.<resultStr>.particle
+       -> (<BaseFct>.<resultStr>.M.<returnStr>.number * real D.t
+            * <BaseFct>.<resultStr>.M.<returnStr>.number
+            * <BaseFct>.<resultStr>.M.<returnStr>.number) BenchLazy.state ref
+       -> bool D.t -> <BaseFct>.<resultStr>.outcome
+  val sources :
+      real D.t
+       -> int
+       -> <BaseFct>.<resultStr>.M.<returnStr>.number
+       -> <BaseFct>.<resultStr>.outcome
+  val run : int -> <BaseFct>.<resultStr>.outcome
+  val resultValue :
+      ('a * 'b BenchLazy.state ref)
+       * <BaseFct>.<resultStr>.M.<returnStr>.number
+       -> 'a * 'b * real
+  val statValue : 'a * <BaseFct>.<resultStr>.M.<returnStr>.number -> 'a * real
+  val tableHeads : unit -> real list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-gamteb-driver.sml]
+[autoloading]
+[autoloading done]
+functor BenchGamtebDriverFn(K: sig
+  type outcome
+  type result
+  type stat
+  val run : int -> outcome
+  val first : outcome -> result BenchStream.stream
+  val second : outcome -> stat BenchStream.stream
+  val resultValue : result -> int * int * real
+  val statValue : stat -> int * real
+  val tableHeads : unit -> real list
+end) :
+sig
+  structure L : <sig>
+  structure S : <sig>
+  structure W : <sig>
+  type reference
+  val read : string -> TextIO.vector
+  val real : string -> real
+  val reference : string -> <BaseFct>.<resultStr>.reference
+  val close : real * real -> bool
+  val accumulatedClose : real * real -> bool
+  val number : real -> string
+  val hash : string -> Word64.word
+  val reverseHash : string -> Word64.word
+  val headings : string list
+  val tableValues : real list BenchLazy.state ref
+  val tableText : string BenchLazy.state ref
+  val checked : int -> <BaseFct>.<resultStr>.reference -> int
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/gamteb-lazy/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+FAIL gamteb-lazy -- Fail: incorrect result: GAMTEB numeric rendering
+SUMMARY 1 checks, 1 failed
+PROGRAM FAIL native:smlnj32@110.99.9 (load 0, exit 1)
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : 
+  sig
+    datatype 'a node
+      = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay | Nil
+    type 'a stream = 'a node BenchLazy.delay
+    val empty : unit -> 'a node BenchLazy.state ref
+    val cons : 'a BenchLazy.delay * 'a node BenchLazy.delay
+                -> 'a node BenchLazy.state ref
+    val singleton : 'a -> 'a node BenchLazy.state ref
+    val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+    val head : 'a node BenchLazy.state ref -> 'a
+    val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val iterate : ('a -> 'a)
+                   -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+    val fromList : 'a list -> 'a node BenchLazy.delay
+    val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+    val zipWith : ('a * 'b -> 'c)
+                   -> 'a node BenchLazy.delay
+                   -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+    val append : 'a node BenchLazy.delay
+                  -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val concatMap : ('a -> 'b node BenchLazy.delay)
+                     -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+    val filter : ('a -> bool)
+                  -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+    val dropWhile : ('a -> bool)
+                     -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+    val foldrStream : ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+                       -> 'b BenchLazy.state ref
+                       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+    val zipWith3 : ('a * 'b * 'c -> 'd)
+                    -> 'a node BenchLazy.delay
+                    -> 'b node BenchLazy.delay
+                    -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+    val span : ('a -> bool)
+                -> 'a node BenchLazy.delay
+                -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+    val nth : 'a node BenchLazy.delay -> int -> 'a
+    val take : int -> 'a node BenchLazy.delay -> 'a list
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+    val foldPrefix : ('a * 'b -> 'b)
+                      -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-gamteb-math.sml]
+functor BenchGamtebMathFn(D: sig
+                             type 'a t
+                             val delay : (unit -> 'a) -> 'a t
+                             val force : 'a t -> 'a
+                           end) :
+                         
+                           sig
+                             type number
+                             type point
+                             val value : number -> real
+                             val eval : (unit -> 'a) -> 'a D.t
+                             val literal : 'a -> 'a D.t
+                             val small : real
+                             val random : number -> real D.t * real D.t
+                             val distance : point -> point -> real D.t * int
+                             val isotropic : number
+                                              -> real D.t * real D.t
+                                              * real D.t
+                             val rotate : point
+                                           -> number
+                                           -> real D.t
+                                           -> real D.t * real D.t * real D.t
+                             val klein : number -> number -> real D.t
+                           end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-gamteb-tables.sml]
+functor BenchGamtebTablesFn(D: sig
+                               type 'a t
+                               val delay : (unit -> 'a) -> 'a t
+                               val force : 'a t -> 'a
+                             end) :
+                           
+                             sig
+                               val table : bool -> real list -> real D.t vector
+                               val erg : real D.t vector
+                               val xc : real D.t vector
+                               val xp : real D.t vector
+                               val xpe : real D.t vector
+                               val at : 'a D.t vector -> int -> 'a
+                             end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-gamteb.sml]
+functor BenchGamtebFn(D: sig
+                         type 'a t
+                         val delay : (unit -> 'a) -> 'a t
+                         val force : 'a t -> 'a
+                       end) :
+                     
+                       sig
+                         structure M : <sig>
+                         structure T : <sig>
+                         structure L : <sig>
+                         structure S : <sig>
+                         type number
+                         type point
+                         val value : M.number -> real
+                         val eval : (unit -> 'a) -> 'a D.t
+                         val literal : 'a -> 'a D.t
+                         val small : real
+                         val random : M.number -> real D.t * real D.t
+                         val distance : M.point -> M.point -> real D.t * int
+                         val isotropic : M.number
+                                          -> real D.t * real D.t * real D.t
+                         val rotate : M.point
+                                       -> M.number
+                                       -> real D.t
+                                       -> real D.t * real D.t * real D.t
+                         val klein : M.number -> M.number -> real D.t
+                         type probability
+                         type particle
+                         type result
+                         type stat
+                         type outcome
+                         val pointValue : M.number * M.number * M.number
+                                           -> real * real * real
+                         val particle : (M.number * M.number * M.number) 
+                                             BenchLazy.state ref
+                                         -> (M.number * M.number * M.number) 
+                                             BenchLazy.state ref
+                                         -> M.number
+                                         -> M.number
+                                         -> int BenchLazy.state ref
+                                         -> int -> M.number -> particle
+                         val xsect : M.number
+                                      -> int BenchLazy.state ref
+                                      * (real D.t * real D.t * real D.t
+                                           * real D.t) BenchLazy.state ref
+                         val lazyXsect : M.number
+                                          -> int BenchLazy.state ref
+                                          * (real D.t * real D.t * real D.t
+                                               * real D.t) BenchLazy.state ref
+                         val first : outcome
+                                      -> result BenchStream.node 
+                                          BenchLazy.state ref
+                         val second : outcome
+                                       -> stat BenchStream.node 
+                                           BenchLazy.state ref
+                         val oneStat : 'a
+                                        -> ('a * real D.t) BenchStream.node 
+                                            BenchLazy.state ref
+                         val photo : particle
+                                      -> ('a * 'b * M.number * M.number) 
+                                          BenchLazy.state ref
+                                      -> (particle * real D.t * bool) 
+                                          BenchLazy.state ref
+                         val compton : particle
+                                        -> (particle
+                                             * (real D.t * real D.t * real D.t
+                                                  * real D.t) BenchLazy.state 
+                                               ref * bool) BenchLazy.state ref
+                         val pairProduction : particle
+                                               -> (particle
+                                                    * (real D.t * real D.t
+                                                         * real D.t * real D.t)
+                                                        BenchLazy.state ref
+                                                    * bool) BenchLazy.state 
+                                                 ref
+                         val roulette : particle
+                                         -> (particle
+                                              * (int * real D.t) 
+                                                  BenchStream.node 
+                                                BenchLazy.delay * bool) 
+                                             BenchLazy.state ref
+                         val split : particle -> particle * particle
+                         val translate : (M.number * M.number * M.number) 
+                                              BenchLazy.state ref
+                                          -> (M.number * M.number * M.number) 
+                                              BenchLazy.state ref
+                                          -> M.number
+                                          -> (real D.t * real D.t * real D.t) 
+                                              BenchLazy.state ref
+                         val collision : particle
+                                          -> (M.number * real D.t * M.number
+                                               * M.number) BenchLazy.state ref
+                                          -> bool D.t -> outcome
+                         val noCollision : particle
+                                            -> (M.number * real D.t * M.number
+                                                 * M.number) BenchLazy.state 
+                                              ref
+                                            -> int -> outcome
+                         val transport : particle
+                                          -> (M.number * real D.t * M.number
+                                               * M.number) BenchLazy.state ref
+                                          -> outcome
+                         val sources : real D.t -> int -> M.number -> outcome
+                         val run : int -> outcome
+                         val resultValue : ('a * 'b BenchLazy.state ref)
+                                            * M.number
+                                            -> 'a * 'b * real
+                         val statValue : 'a * M.number -> 'a * real
+                         val tableHeads : unit -> real list
+                       end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-gamteb-driver.sml]
+functor BenchGamtebDriverFn(K: sig
+                               type outcome
+                               type result
+                               type stat
+                               val run : int -> outcome
+                               val first : outcome
+                                            -> result BenchStream.stream
+                               val second : outcome -> stat BenchStream.stream
+                               val resultValue : result -> int * int * real
+                               val statValue : stat -> int * real
+                               val tableHeads : unit -> real list
+                             end) :
+                           
+                             sig
+                               structure L : <sig>
+                               structure S : <sig>
+                               structure W : <sig>
+                               type reference
+                               val read : string -> TextIO.vector
+                               val real : string -> real
+                               val reference : string -> reference
+                               val close : real * real -> bool
+                               val accumulatedClose : real * real -> bool
+                               val number : real -> string
+                               val hash : string -> Word64.word
+                               val reverseHash : string -> Word64.word
+                               val headings : string list
+                               val tableValues : real list BenchLazy.state ref
+                               val tableText : string BenchLazy.state ref
+                               val checked : int -> reference -> int
+                               val run : string list -> string
+                             end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/gamteb-lazy/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Kernel : <sig>
+    structure Driver : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 200:246200
+PASS gamteb-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+RESULT 200:246200
+PASS gamteb-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 200:246200
+PASS gamteb-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

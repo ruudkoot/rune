@@ -1,0 +1,26 @@
+main :: IO ()
+main  =  getArgs >>= (parse_args defaultArgs . unlines)
+
+readbool :: (String -> IO ()) -> String -> IO ()
+readbool f ""         =  f ""
+readbool f ('\n':cs)  =  f cs
+readbool f _          =  usage
+
+readstring :: (String -> String -> IO ()) -> String -> IO ()
+readstring f ""  =  f "" ""
+readstring f cs@(c:cs')
+    =  f s t
+       where
+       st      =  if c == '\n' then cs' else cs
+       (s,t1)  =  span ((/=) '\n') st
+       t       =  if t1 == "" then t1 else (tail t1)
+
+readval :: (Read a) => ReadS a -> (a -> String -> IO ()) -> String
+                       -> IO ()
+readval readsfn f str
+    =  case thing of
+           []    -> usage
+           (_:_) -> f val (if str' == "" then str' else (tail str'))
+       where
+       thing        =  readsfn str
+       (val, str')  =  head thing

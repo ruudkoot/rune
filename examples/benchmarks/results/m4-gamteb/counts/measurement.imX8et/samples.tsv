@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+gamteb-lazy	normal	rune	O2	compile	0	0	pass	1.89	1.80	0.21	135560	-	-	-	gamteb-lazy/rune/build/compile
+gamteb-lazy	normal	rune	O2	correctness	0	0	pass	22.82	21.94	0.03	35500	3702968401	8153046392	229878465	gamteb-lazy/rune/correctness.0
+gamteb-lazy	normal	rune	O2	count	1	1	pass	20.69	22.14	0.03	35532	3702968401	8153046392	229878465	gamteb-lazy/rune/fresh.1
+gamteb-lazy	normal	rune:opt	O2	compile	0	0	pass	4.13	1.87	0.10	135564	-	-	-	gamteb-lazy/rune-opt/build/compile
+gamteb-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.42	0.27	0.05	17792	-	-	-	gamteb-lazy/rune-opt/build/native-compile
+gamteb-lazy	normal	rune:opt	O2	correctness	0	0	pass	9.86	10.52	0.02	36392	3702968401	8153046392	229878465	gamteb-lazy/rune-opt/correctness.0
+gamteb-lazy	normal	rune:opt	O2	count	1	1	pass	9.67	10.38	0.03	36428	3702968401	8153046392	229878465	gamteb-lazy/rune-opt/fresh.1
+gamteb-lazy	normal	rune:new	O2	compile	0	0	pass	1.87	1.92	0.08	135324	-	-	-	gamteb-lazy/rune-new/build/compile
+gamteb-lazy	normal	rune:new	O2	correctness	0	0	pass	21.02	19.92	0.02	35720	2312964491	8153046392	229878465	gamteb-lazy/rune-new/correctness.0
+gamteb-lazy	normal	rune:new	O2	count	1	1	pass	18.44	19.73	0.04	35688	2312964491	8153046392	229878465	gamteb-lazy/rune-new/fresh.1
+gamteb-lazy	normal	rune:jit	O2	compile	0	0	pass	1.83	1.86	0.07	135380	-	-	-	gamteb-lazy/rune-jit/build/compile
+gamteb-lazy	normal	rune:jit	O2	correctness	0	0	pass	12.18	10.59	0.05	37568	2312964491	8153046392	229878465	gamteb-lazy/rune-jit/correctness.0
+gamteb-lazy	normal	rune:jit	O2	count	1	1	pass	9.59	10.38	0.06	37504	2312964491	8153046392	229878465	gamteb-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

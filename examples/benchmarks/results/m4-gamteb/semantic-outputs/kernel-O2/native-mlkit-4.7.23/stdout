@@ -1,0 +1,43 @@
+PASS gamteb/Need/results-1
+PASS gamteb/Need/stats-1
+Need 1 2 8 checked
+PASS gamteb/Need/results-2
+PASS gamteb/Need/stats-2
+Need 2 2 7 checked
+PASS gamteb/Need/results-3
+PASS gamteb/Need/stats-3
+Need 3 3 10 checked
+PASS gamteb/Need/results-10
+PASS gamteb/Need/stats-10
+Need 10 11 37 checked
+PASS gamteb/Need/results-100
+PASS gamteb/Need/stats-100
+Need 100 118 382 checked
+PASS gamteb/Need/results-1000
+PASS gamteb/Need/stats-1000
+Need 1000 1231 4020 checked
+PASS gamteb/Need/results-5000
+PASS gamteb/Need/stats-5000
+Need 5000 5913 19247 checked
+PASS gamteb/Strict/results-1
+PASS gamteb/Strict/stats-1
+Strict 1 2 8 checked
+PASS gamteb/Strict/results-2
+PASS gamteb/Strict/stats-2
+Strict 2 2 7 checked
+PASS gamteb/Strict/results-3
+PASS gamteb/Strict/stats-3
+Strict 3 3 10 checked
+PASS gamteb/Strict/results-10
+PASS gamteb/Strict/stats-10
+Strict 10 11 37 checked
+PASS gamteb/Strict/results-100
+PASS gamteb/Strict/stats-100
+Strict 100 118 382 checked
+PASS gamteb/Strict/results-1000
+PASS gamteb/Strict/stats-1000
+Strict 1000 1231 4020 checked
+PASS gamteb/Strict/results-5000
+PASS gamteb/Strict/stats-5000
+Strict 5000 5913 19247 checked
+SUMMARY 28 checks, 0 failed

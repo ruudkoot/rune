@@ -1,0 +1,42 @@
+[1 of 7] Compiling Consts           ( Consts.hs, Consts.o )
+
+Consts.hs:7:1: warning: [-Wtabs]
+    Tab character found here, and in 51 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+7 |                big,small,nothing,
+  | ^^^^^^^^
+[2 of 7] Compiling GamtebType       ( GamtebType.hs, GamtebType.o )
+
+GamtebType.hs:8:1: warning: [-Wtabs]
+    Tab character found here, and in 78 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+8 |                  Random, StatType, Weight, Value, Result, Stat,
+  | ^^^^^^^^
+[3 of 7] Compiling InitTable        ( InitTable.hs, InitTable.o )
+
+InitTable.hs:18:1: warning: [-Wtabs]
+    Tab character found here, and in 49 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+18 |         where erg =
+   | ^^^^^^^^
+[4 of 7] Compiling Utils            ( Utils.hs, Utils.o )
+
+Utils.hs:18:1: warning: [-Wtabs]
+    Tab character found here, and in 14 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+18 |         where
+   | ^^^^^^^^
+[5 of 7] Compiling Pair             ( Pair.hs, Pair.o )
+
+Pair.hs:16:1: warning: [-Wtabs]
+    Tab character found here, and in 63 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+16 |         if (e' <= ergCut)
+   | ^^^^^^^^
+[6 of 7] Compiling Main             ( IsosProbe.hs, IsosProbe.o )
+[7 of 7] Linking isos

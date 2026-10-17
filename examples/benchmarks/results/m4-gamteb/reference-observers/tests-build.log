@@ -1,0 +1,2 @@
+tests/out/benchmarks/gamteb-originals/tests.sml:98:12: warning: binding is not exhaustive (missing case: nil)
+tests/out/benchmarks/gamteb-originals/tests.sml:205:12: warning: binding is not exhaustive (missing case: nil)

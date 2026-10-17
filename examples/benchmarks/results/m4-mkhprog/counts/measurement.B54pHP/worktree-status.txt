@@ -1,0 +1,25 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/inventory.tsv
+ M examples/benchmarks/manifest.tsv
+ M examples/benchmarks/source-variants.tsv
+ M scripts/benchmark-inventory.py
+ M tests/benchmarks/test-inventory.py
+?? examples/benchmarks/gamteb-lazy/
+?? examples/benchmarks/gamteb-strict/
+?? examples/benchmarks/mkhprog-lazy/
+?? examples/benchmarks/mkhprog-strict/
+?? examples/benchmarks/shared/mkhprog-driver.sml
+?? examples/benchmarks/shared/mkhprog-templates.sml
+?? examples/benchmarks/shared/mkhprog.sml
+?? examples/benchmarks/shared/nofib-gamteb-driver.sml
+?? examples/benchmarks/shared/nofib-gamteb-math.sml
+?? examples/benchmarks/shared/nofib-gamteb-tables.sml
+?? examples/benchmarks/shared/nofib-gamteb.sml
+?? examples/benchmarks/validation/gamteb-host-results.md
+?? tests/benchmarks/check-gamteb.sh
+?? tests/benchmarks/check-mkhprog.sh
+?? tests/benchmarks/data/gamteb/
+?? tests/benchmarks/data/mkhprog/
+?? tests/benchmarks/gamteb-kernel-tests.sml
+?? tests/benchmarks/gamteb-tests.sml
+?? tests/benchmarks/mkhprog-tests.sml

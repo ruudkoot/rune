@@ -1,0 +1,5 @@
+[1 of 5] Compiling NofibUtils       ( NofibUtils.hs, NofibUtils.o )
+[2 of 5] Compiling Recorder         ( Recorder.hs, Recorder.o )
+[3 of 5] Compiling Program          ( Program.lhs, Program.o )
+[4 of 5] Compiling Main             ( Observer.hs, Observer.o )
+[5 of 5] Linking observer

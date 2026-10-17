@@ -1,0 +1,53 @@
+> module Example (main) where
+> 
+> import System (getArgs)
+
+> defaultArgs :: Args
+> defaultArgs  =  MkArgs ?? False False ""
+
+> usage :: IO ()
+> usage  =  hPutStr stderr "Usage: prog [-a Int] [-b] [(+|-)c] [-s String]"
+
+> data Args  =  MkArgs Int Bool Bool String deriving ()
+
+> parse_args :: Args -> String -> IO ()
+> parse_args (MkArgs x1 x2 x3 x4) ('-':'a':rest)
+>     =  readval reads (\val -> parse_args (MkArgs val x2 x3 x4)) rest
+> parse_args (MkArgs x1 x2 x3 x4) ('-':'b':rest)
+>     =  readbool (parse_args (MkArgs x1 True x3 x4)) rest
+> parse_args (MkArgs x1 x2 x3 x4) ('-':'c':rest)
+>     =  readbool (parse_args (MkArgs x1 x2 False x4)) rest
+> parse_args (MkArgs x1 x2 x3 x4) ('+':'c':rest)
+>     =  readbool (parse_args (MkArgs x1 x2 True x4)) rest
+> parse_args (MkArgs x1 x2 x3 x4) ('-':'s':rest)
+>     =  readstring (\str -> parse_args (MkArgs x1 x2 x3 str)) rest
+> parse_args (MkArgs x1 x2 x3 x4) ('-': _ :rest)
+>     =  usage
+> parse_args (MkArgs x1 x2 x3 x4)  rest  =  prog x1 x2 x3 x4 (lines rest)
+
+> main :: IO ()
+> main  =  getArgs >>= (parse_args defaultArgs . unlines)
+
+> readbool :: (String -> IO ()) -> String -> IO ()
+> readbool f ""         =  f ""
+> readbool f ('\n':cs)  =  f cs
+> readbool f _          =  usage
+
+> readstring :: (String -> String -> IO ()) -> String -> IO ()
+> readstring f ""  =  f "" ""
+> readstring f cs@(c:cs')
+>     =  f s t
+>        where
+>        st      =  if c == '\n' then cs' else cs
+>        (s,t1)  =  span ((/=) '\n') st
+>        t       =  if t1 == "" then t1 else (tail t1)
+
+> readval :: (Read a) => ReadS a -> (a -> String -> IO ()) -> String
+>                        -> IO ()
+> readval readsfn f str
+>     =  case thing of
+>            []    -> usage
+>            (_:_) -> f val (if str' == "" then str' else (tail str'))
+>        where
+>        thing        =  readsfn str
+>        (val, str')  =  head thing

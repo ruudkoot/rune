@@ -1,0 +1,5 @@
+COUNT unbudgeted mkhprog-lazy normal rune
+COUNT unbudgeted mkhprog-lazy normal rune:opt
+COUNT unbudgeted mkhprog-lazy normal rune:new
+COUNT unbudgeted mkhprog-lazy normal rune:jit
+COUNT comparisons agree

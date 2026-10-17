@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-mkhprog-parallel.r2icz2rh
+PASS mkhprog-lazy smoke O2
+PASS mkhprog-lazy smoke O0
+PASS mkhprog-lazy smoke hosts
+PASS mkhprog-lazy normal O2
+PASS mkhprog-lazy normal O0
+PASS mkhprog-strict smoke O0
+PASS mkhprog-strict smoke O2
+PASS mkhprog-strict smoke hosts
+PASS mkhprog-lazy normal hosts
+PASS mkhprog-strict normal O2
+PASS mkhprog-strict normal O0
+PASS mkhprog-strict normal hosts

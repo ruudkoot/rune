@@ -1,0 +1,38 @@
+[
+  {
+    "before": {
+      "source": "nofib",
+      "path": "real/gamteb",
+      "name": "gamteb",
+      "rune_name": "gamteb",
+      "milestone": "M4",
+      "disposition": "import",
+      "family": "application",
+      "related": "",
+      "authors": "not stated in scanned source headers",
+      "sha256": "59954bb60ebde5c8b56c62aacdb4f252c9647f5d2689bec1147933efce5f5d19",
+      "members": "real/gamteb/Compton.hs;real/gamteb/Consts.hs;real/gamteb/Distance.hs;real/gamteb/GamtebMain.hs;real/gamteb/GamtebType.hs;real/gamteb/InitTable.hs;real/gamteb/Main.hs;real/gamteb/NofibUtils.hs;real/gamteb/Output.hs;real/gamteb/Pair.hs;real/gamteb/PhotoElec.hs;real/gamteb/RoulSplit.hs;real/gamteb/TransPort.hs;real/gamteb/Utils.hs",
+      "inputs": "real/gamteb/gamteb.faststdout;real/gamteb/gamteb.slowstdout;real/gamteb/gamteb.stdout",
+      "notices": "real/gamteb/GamtebMain.hs:header",
+      "evidence": "real/gamteb/Makefile",
+      "reason": "portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import"
+    },
+    "after": {
+      "source": "nofib",
+      "path": "real/gamteb",
+      "name": "gamteb",
+      "rune_name": "gamteb",
+      "milestone": "M4",
+      "disposition": "import",
+      "family": "application",
+      "related": "",
+      "authors": "Patricia Fasel",
+      "sha256": "59954bb60ebde5c8b56c62aacdb4f252c9647f5d2689bec1147933efce5f5d19",
+      "members": "real/gamteb/Compton.hs;real/gamteb/Consts.hs;real/gamteb/Distance.hs;real/gamteb/GamtebMain.hs;real/gamteb/GamtebType.hs;real/gamteb/InitTable.hs;real/gamteb/Main.hs;real/gamteb/NofibUtils.hs;real/gamteb/Output.hs;real/gamteb/Pair.hs;real/gamteb/PhotoElec.hs;real/gamteb/RoulSplit.hs;real/gamteb/TransPort.hs;real/gamteb/Utils.hs",
+      "inputs": "real/gamteb/gamteb.faststdout;real/gamteb/gamteb.slowstdout;real/gamteb/gamteb.stdout",
+      "notices": "real/gamteb/GamtebMain.hs:header",
+      "evidence": "real/gamteb/Compton.hs:author-heading;real/gamteb/Consts.hs:author-heading;real/gamteb/Distance.hs:author-heading;real/gamteb/GamtebMain.hs:author-heading;real/gamteb/GamtebType.hs:author-heading;real/gamteb/InitTable.hs:author-heading;real/gamteb/Main.hs:author-heading;real/gamteb/Makefile;real/gamteb/Output.hs:author-heading;real/gamteb/Pair.hs:author-heading;real/gamteb/PhotoElec.hs:author-heading;real/gamteb/RoulSplit.hs:author-heading;real/gamteb/TransPort.hs:author-heading;real/gamteb/Utils.hs:author-heading",
+      "reason": "portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import"
+    }
+  }
+]

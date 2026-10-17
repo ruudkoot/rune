@@ -1,0 +1,1 @@
+Usage: mkhprog [-l] [-m module_name] [-o file_name] [[-flag type] ...]

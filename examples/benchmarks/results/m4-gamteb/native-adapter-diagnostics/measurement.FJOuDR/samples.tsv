@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+gamteb-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	6.05	4.81	1.55	660148	-	-	-	gamteb-lazy/native-mlton/build/compile
+gamteb-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	3408	-	-	-	gamteb-lazy/native-mlton/correctness.0
+gamteb-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	3344	-	-	-	gamteb-lazy/native-mlton/fresh.1
+gamteb-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.63	0.62	0.05	37396	-	-	-	gamteb-lazy/native-smlnj-legacy/build/compile
+gamteb-lazy	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.03	0.02	0.01	4876	-	-	-	gamteb-lazy/native-smlnj-legacy/correctness.0
+gamteb-lazy	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.02	0.01	0.01	4864	-	-	-	gamteb-lazy/native-smlnj-legacy/fresh.1
+gamteb-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.47	0.39	0.11	57216	-	-	-	gamteb-lazy/native-polyml/build/compile
+gamteb-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	9176	-	-	-	gamteb-lazy/native-polyml/correctness.0
+gamteb-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	9240	-	-	-	gamteb-lazy/native-polyml/fresh.1

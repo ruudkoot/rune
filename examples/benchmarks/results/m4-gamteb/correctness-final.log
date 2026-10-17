@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-gamteb-parallel.q6jv_vqm
+PASS gamteb-lazy smoke O2
+PASS gamteb-lazy smoke O0
+FAIL gamteb-lazy smoke hosts
+PASS gamteb-lazy normal O2
+PASS gamteb-lazy normal O0
+PASS gamteb-strict smoke O0
+PASS gamteb-strict smoke O2
+FAIL gamteb-strict smoke hosts
+FAIL gamteb-lazy normal hosts
+PASS gamteb-strict normal O2
+PASS gamteb-strict normal O0
+FAIL gamteb-strict normal hosts

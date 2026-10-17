@@ -1,0 +1,58 @@
+[1 of 9] Compiling Consts           ( Consts.hs, Consts.o )
+
+Consts.hs:7:1: warning: [-Wtabs]
+    Tab character found here, and in 51 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+7 |                big,small,nothing,
+  | ^^^^^^^^
+[2 of 9] Compiling GamtebType       ( GamtebType.hs, GamtebType.o )
+
+GamtebType.hs:8:1: warning: [-Wtabs]
+    Tab character found here, and in 78 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+8 |                  Random, StatType, Weight, Value, Result, Stat,
+  | ^^^^^^^^
+[3 of 9] Compiling Distance         ( Distance.hs, Distance.o )
+
+Distance.hs:15:1: warning: [-Wtabs]
+    Tab character found here, and in 77 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+15 |         (dSurf+small, surf)
+   | ^^^^^^^^
+[4 of 9] Compiling InitTable        ( InitTable.hs, InitTable.o )
+
+InitTable.hs:18:1: warning: [-Wtabs]
+    Tab character found here, and in 49 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+18 |         where erg =
+   | ^^^^^^^^
+[5 of 9] Compiling Utils            ( Utils.hs, Utils.o )
+
+Utils.hs:18:1: warning: [-Wtabs]
+    Tab character found here, and in 14 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+18 |         where
+   | ^^^^^^^^
+[6 of 9] Compiling Pair             ( Pair.hs, Pair.o )
+
+Pair.hs:16:1: warning: [-Wtabs]
+    Tab character found here, and in 63 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+16 |         if (e' <= ergCut)
+   | ^^^^^^^^
+[7 of 9] Compiling Compton          ( Compton.hs, Compton.o )
+
+Compton.hs:16:1: warning: [-Wtabs]
+    Tab character found here, and in 108 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+16 |         if (e' <= ergCut)
+   | ^^^^^^^^
+[8 of 9] Compiling Main             ( MathObserver.hs, MathObserver.o )
+[9 of 9] Linking math-observer

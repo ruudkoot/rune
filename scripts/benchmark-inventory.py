@@ -570,7 +570,7 @@ def build(source, root, lock):
                     and '-- Taken from "The worlds shortest correct exact real arithmetic program?"\n-- David Lester, Information and Computation 216, pp39-46, 2012, Elsevier' in header):
                 authors.add("David Lester")
                 item["evidence"].append(str(p.relative_to(root)) + ":paper-attribution")
-            if (source == "nofib" and path == "real/pic"
+            if (source == "nofib" and path in {"real/pic", "real/gamteb"}
                     and re.search(r"(?m)^--[ \t]+Patricia Fasel\n--[ \t]+Los Alamos National Laboratory", header)):
                 authors.add("Patricia Fasel")
                 item["evidence"].append(str(p.relative_to(root)) + ":author-heading")
@@ -578,6 +578,11 @@ def build(source, root, lock):
                     and re.search(r"(?m)^-- Mark P\. Jones November 1990$", header)):
                 authors.add("Mark P. Jones")
                 item["evidence"].append(str(p.relative_to(root)) + ":author-heading")
+            if (source == "nofib" and path == "real/mkhprog"
+                    and r"\author{N D North\\" in header.splitlines()
+                    and "% Crown Copyright 1992" in header.splitlines()):
+                authors.add("N. D. North")
+                item["evidence"].append(str(p.relative_to(root)) + ":author-and-crown-heading")
             reviewed_prime_author = (
                 source == "nofib" and path == "spectral/primetest"
                 and r"\def\author{David Lester}" in header.splitlines())

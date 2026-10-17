@@ -1,0 +1,354 @@
+[
+  {
+    "kind": "random",
+    "args": [
+      0.0
+    ]
+  },
+  {
+    "kind": "random",
+    "args": [
+      0.1
+    ]
+  },
+  {
+    "kind": "random",
+    "args": [
+      0.5
+    ]
+  },
+  {
+    "kind": "random",
+    "args": [
+      1.0
+    ]
+  },
+  {
+    "kind": "distance",
+    "args": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  {
+    "kind": "distance",
+    "args": [
+      0,
+      0,
+      0,
+      1,
+      0,
+      0
+    ]
+  },
+  {
+    "kind": "distance",
+    "args": [
+      0,
+      25,
+      0,
+      0,
+      -1,
+      0
+    ]
+  },
+  {
+    "kind": "distance",
+    "args": [
+      0,
+      0,
+      0.5,
+      0,
+      1,
+      1
+    ]
+  },
+  {
+    "kind": "distance",
+    "args": [
+      0.5,
+      0,
+      0,
+      0,
+      0,
+      1
+    ]
+  },
+  {
+    "kind": "distance",
+    "args": [
+      0.5,
+      0,
+      0,
+      0,
+      0,
+      -1
+    ]
+  },
+  {
+    "kind": "distance",
+    "args": [
+      0.9,
+      5,
+      0.1,
+      0.3,
+      0.4,
+      0.5
+    ]
+  },
+  {
+    "kind": "distance",
+    "args": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "kind": "isotropic",
+    "args": [
+      0.0
+    ]
+  },
+  {
+    "kind": "isotropic",
+    "args": [
+      0.5
+    ]
+  },
+  {
+    "kind": "isotropic",
+    "args": [
+      0.999
+    ]
+  },
+  {
+    "kind": "rotate",
+    "args": [
+      0,
+      0,
+      1,
+      0.25,
+      0.5
+    ]
+  },
+  {
+    "kind": "rotate",
+    "args": [
+      0,
+      1,
+      0,
+      0.25,
+      0.5
+    ]
+  },
+  {
+    "kind": "rotate",
+    "args": [
+      1,
+      0,
+      0,
+      -0.5,
+      0.1
+    ]
+  },
+  {
+    "kind": "rotate",
+    "args": [
+      0.3,
+      0.4,
+      0.5,
+      0.9,
+      0.9
+    ]
+  },
+  {
+    "kind": "xsect",
+    "args": [
+      0.0005
+    ]
+  },
+  {
+    "kind": "xsect",
+    "args": [
+      0.001
+    ]
+  },
+  {
+    "kind": "xsect",
+    "args": [
+      0.511008
+    ]
+  },
+  {
+    "kind": "xsect",
+    "args": [
+      1.0
+    ]
+  },
+  {
+    "kind": "xsect",
+    "args": [
+      6.0
+    ]
+  },
+  {
+    "kind": "xsect",
+    "args": [
+      20.0
+    ]
+  },
+  {
+    "kind": "xsect",
+    "args": [
+      25.0
+    ]
+  },
+  {
+    "kind": "klein",
+    "args": [
+      0.1,
+      0.0
+    ]
+  },
+  {
+    "kind": "klein",
+    "args": [
+      0.1,
+      0.1
+    ]
+  },
+  {
+    "kind": "klein",
+    "args": [
+      0.1,
+      0.5
+    ]
+  },
+  {
+    "kind": "klein",
+    "args": [
+      0.1,
+      0.999
+    ]
+  },
+  {
+    "kind": "klein",
+    "args": [
+      1.0,
+      0.0
+    ]
+  },
+  {
+    "kind": "klein",
+    "args": [
+      1.0,
+      0.1
+    ]
+  },
+  {
+    "kind": "klein",
+    "args": [
+      1.0,
+      0.5
+    ]
+  },
+  {
+    "kind": "klein",
+    "args": [
+      1.0,
+      0.999
+    ]
+  },
+  {
+    "kind": "klein",
+    "args": [
+      1.16666667,
+      0.0
+    ]
+  },
+  {
+    "kind": "klein",
+    "args": [
+      1.16666667,
+      0.1
+    ]
+  },
+  {
+    "kind": "klein",
+    "args": [
+      1.16666667,
+      0.5
+    ]
+  },
+  {
+    "kind": "klein",
+    "args": [
+      1.16666667,
+      0.999
+    ]
+  },
+  {
+    "kind": "klein",
+    "args": [
+      2.0,
+      0.0
+    ]
+  },
+  {
+    "kind": "klein",
+    "args": [
+      2.0,
+      0.1
+    ]
+  },
+  {
+    "kind": "klein",
+    "args": [
+      2.0,
+      0.5
+    ]
+  },
+  {
+    "kind": "klein",
+    "args": [
+      2.0,
+      0.999
+    ]
+  },
+  {
+    "kind": "klein",
+    "args": [
+      6.0,
+      0.0
+    ]
+  },
+  {
+    "kind": "klein",
+    "args": [
+      6.0,
+      0.1
+    ]
+  },
+  {
+    "kind": "klein",
+    "args": [
+      6.0,
+      0.5
+    ]
+  },
+  {
+    "kind": "klein",
+    "args": [
+      6.0,
+      0.999
+    ]
+  }
+]

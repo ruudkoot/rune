@@ -1,0 +1,9 @@
+ *** Warnings ***
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/gamteb-checks.WAvYGd/checker-O2/native-mlkit-4.7.23/program/src/10/gamteb-tests.sml, line 115, column 11:
+      let val[a,b,c]=actualPoint(M.isotropic(n 0.5))
+             ^^^^^^^
+Pattern not exhaustive.
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/gamteb-checks.WAvYGd/checker-O2/native-mlkit-4.7.23/program/src/10/gamteb-tests.sml, line 222, column 11:
+      let val[a,b,c]=actualPoint(M.isotropic(n 0.5))
+             ^^^^^^^
+Pattern not exhaustive.

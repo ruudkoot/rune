@@ -1,0 +1,1 @@
+mkhprog-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/mkhprog-templates.sml shared/mkhprog.sml shared/mkhprog-driver.sml mkhprog-lazy/benchmark.sml shared/main.sml	1 specification.input blocks.hashes	mkhprog-lazy/smoke.expected	specification.input blocks.hashes

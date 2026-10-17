@@ -1,0 +1,56 @@
+[
+  {
+    "name": "default",
+    "chunks": 62,
+    "characters": 18794,
+    "observation": "(62,18794)"
+  },
+  {
+    "name": "aux",
+    "chunks": 7,
+    "characters": 810,
+    "observation": "(7,810)"
+  },
+  {
+    "name": "empty",
+    "chunks": 21,
+    "characters": 1129,
+    "observation": "(21,1129)"
+  },
+  {
+    "name": "one-int",
+    "chunks": 22,
+    "characters": 1252,
+    "observation": "(22,1252)"
+  },
+  {
+    "name": "boolean",
+    "chunks": 24,
+    "characters": 1460,
+    "observation": "(24,1460)"
+  },
+  {
+    "name": "string",
+    "chunks": 22,
+    "characters": 1255,
+    "observation": "(22,1255)"
+  },
+  {
+    "name": "literate",
+    "chunks": 26,
+    "characters": 1874,
+    "observation": "(26,1874)"
+  },
+  {
+    "name": "module-inline",
+    "chunks": 22,
+    "characters": 1255,
+    "observation": "(22,1255)"
+  },
+  {
+    "name": "file",
+    "chunks": 22,
+    "characters": 1257,
+    "observation": "(22,1257)"
+  }
+]

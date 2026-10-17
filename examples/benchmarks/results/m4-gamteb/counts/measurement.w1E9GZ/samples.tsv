@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+gamteb-strict	normal	rune	O2	compile	0	0	pass	1.86	1.95	0.05	135372	-	-	-	gamteb-strict/rune/build/compile
+gamteb-strict	normal	rune	O2	correctness	0	0	pass	18.51	17.04	0.04	35508	2779187057	5658662600	154663193	gamteb-strict/rune/correctness.0
+gamteb-strict	normal	rune	O2	count	1	1	pass	16.13	17.52	0.04	35524	2779187057	5658662600	154663193	gamteb-strict/rune/fresh.1
+gamteb-strict	normal	rune:opt	O2	compile	0	0	pass	1.65	1.69	0.09	135484	-	-	-	gamteb-strict/rune-opt/build/compile
+gamteb-strict	normal	rune:opt	O2	native-compile	0	0	pass	0.37	0.21	0.06	16384	-	-	-	gamteb-strict/rune-opt/build/native-compile
+gamteb-strict	normal	rune:opt	O2	correctness	0	0	pass	6.76	7.22	0.01	36312	2779187057	5658662600	154663193	gamteb-strict/rune-opt/correctness.0
+gamteb-strict	normal	rune:opt	O2	count	1	1	pass	9.10	6.92	0.03	36384	2779187057	5658662600	154663193	gamteb-strict/rune-opt/fresh.1
+gamteb-strict	normal	rune:new	O2	compile	0	0	pass	1.77	1.78	0.08	135384	-	-	-	gamteb-strict/rune-new/build/compile
+gamteb-strict	normal	rune:new	O2	correctness	0	0	pass	12.81	13.71	0.03	35912	1729580165	5658662600	154663193	gamteb-strict/rune-new/correctness.0
+gamteb-strict	normal	rune:new	O2	count	1	1	pass	15.07	13.74	0.03	35864	1729580165	5658662600	154663193	gamteb-strict/rune-new/fresh.1
+gamteb-strict	normal	rune:jit	O2	compile	0	0	pass	1.74	1.78	0.07	135424	-	-	-	gamteb-strict/rune-jit/build/compile
+gamteb-strict	normal	rune:jit	O2	correctness	0	0	pass	6.00	6.37	0.05	37268	1729580165	5658662600	154663193	gamteb-strict/rune-jit/correctness.0
+gamteb-strict	normal	rune:jit	O2	count	1	1	pass	6.29	6.75	0.03	37224	1729580165	5658662600	154663193	gamteb-strict/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

@@ -1,0 +1,5 @@
+{'repetitions': 1, 'exit': 0, 'stdout_empty': True, 'allocated_bytes': 3060112}
+{'repetitions': 10, 'exit': 0, 'stdout_empty': True, 'allocated_bytes': 28672632}
+{'repetitions': 350, 'exit': 0, 'stdout_empty': True, 'allocated_bytes': 996236808}
+{'repetitions': 3800, 'exit': 0, 'stdout_empty': True, 'allocated_bytes': 10814164312}
+{'repetitions': 18000, 'exit': 0, 'stdout_empty': True, 'allocated_bytes': 51224183800}

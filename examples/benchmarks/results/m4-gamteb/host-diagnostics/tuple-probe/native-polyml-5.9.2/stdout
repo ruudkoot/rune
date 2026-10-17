@@ -1,0 +1,9 @@
+tuple/Need/internal 1.25 2.5 3.75 5.0
+PASS tuple/Need/internal
+tuple/Need/external 1.25 2.5 3.75 5.0
+PASS tuple/Need/external
+tuple/Strict/internal 1.25 2.5 3.75 5.0
+PASS tuple/Strict/internal
+tuple/Strict/external 1.25 2.5 3.75 5.0
+PASS tuple/Strict/external
+SUMMARY 4 checks, 0 failed

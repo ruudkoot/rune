@@ -1,0 +1,37 @@
+{
+  "revision": "b7391df4540ac8b11b35e1b2e2c15819b5171798",
+  "ghc": "9.4.7",
+  "profiles": [
+    {
+      "repetitions": 1,
+      "exit": 0,
+      "stdout_empty": true,
+      "allocated_bytes": 3060112
+    },
+    {
+      "repetitions": 10,
+      "exit": 0,
+      "stdout_empty": true,
+      "allocated_bytes": 28672632
+    },
+    {
+      "repetitions": 350,
+      "exit": 0,
+      "stdout_empty": true,
+      "allocated_bytes": 996236808
+    },
+    {
+      "repetitions": 3800,
+      "exit": 0,
+      "stdout_empty": true,
+      "allocated_bytes": 10814164312
+    },
+    {
+      "repetitions": 18000,
+      "exit": 0,
+      "stdout_empty": true,
+      "allocated_bytes": 51224183800
+    }
+  ],
+  "scope": "Unmodified nofib program; RTS allocation diagnostics investigate sharing across repetitions, not headline timing"
+}

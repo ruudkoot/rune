@@ -1,0 +1,10 @@
+Warning: /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/gamteb-tests.sml 115.12-115.18.
+  Declaration is not exhaustive.
+    missing pattern: :: ((_, :: (_, :: (_, :: _))) | (_, :: (_, nil)) | (_, nil))
+                     | nil
+    in: val [a, b, c] = actualPoint (M.isotropic (n 0.5))
+Warning: /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/gamteb-tests.sml 222.12-222.18.
+  Declaration is not exhaustive.
+    missing pattern: :: ((_, :: (_, :: (_, :: _))) | (_, :: (_, nil)) | (_, nil))
+                     | nil
+    in: val [a, b, c] = actualPoint (M.isotropic (n 0.5))

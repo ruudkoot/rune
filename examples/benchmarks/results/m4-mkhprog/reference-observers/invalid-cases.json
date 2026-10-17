@@ -1,0 +1,37 @@
+[
+  {
+    "name": "duplicate",
+    "exit": 0,
+    "usage_bytes": 70
+  },
+  {
+    "name": "toggle-duplicate",
+    "exit": 0,
+    "usage_bytes": 70
+  },
+  {
+    "name": "odd",
+    "exit": 0,
+    "usage_bytes": 70
+  },
+  {
+    "name": "plus-non-bool",
+    "exit": 0,
+    "usage_bytes": 70
+  },
+  {
+    "name": "short-flag",
+    "exit": 0,
+    "usage_bytes": 70
+  },
+  {
+    "name": "long-flag",
+    "exit": 0,
+    "usage_bytes": 70
+  },
+  {
+    "name": "bad-literate",
+    "exit": 0,
+    "usage_bytes": 70
+  }
+]

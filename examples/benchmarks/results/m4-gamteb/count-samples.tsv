@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+gamteb-lazy	normal	rune	O2	count	1	1	pass	20.69	22.14	0.03	35532	3702968401	8153046392	229878465	counts/measurement.imX8et/gamteb-lazy/rune/fresh.1
+gamteb-lazy	normal	rune:opt	O2	count	1	1	pass	9.67	10.38	0.03	36428	3702968401	8153046392	229878465	counts/measurement.imX8et/gamteb-lazy/rune-opt/fresh.1
+gamteb-lazy	normal	rune:new	O2	count	1	1	pass	18.44	19.73	0.04	35688	2312964491	8153046392	229878465	counts/measurement.imX8et/gamteb-lazy/rune-new/fresh.1
+gamteb-lazy	normal	rune:jit	O2	count	1	1	pass	9.59	10.38	0.06	37504	2312964491	8153046392	229878465	counts/measurement.imX8et/gamteb-lazy/rune-jit/fresh.1
+gamteb-strict	normal	rune	O2	count	1	1	pass	16.13	17.52	0.04	35524	2779187057	5658662600	154663193	counts/measurement.w1E9GZ/gamteb-strict/rune/fresh.1
+gamteb-strict	normal	rune:opt	O2	count	1	1	pass	9.10	6.92	0.03	36384	2779187057	5658662600	154663193	counts/measurement.w1E9GZ/gamteb-strict/rune-opt/fresh.1
+gamteb-strict	normal	rune:new	O2	count	1	1	pass	15.07	13.74	0.03	35864	1729580165	5658662600	154663193	counts/measurement.w1E9GZ/gamteb-strict/rune-new/fresh.1
+gamteb-strict	normal	rune:jit	O2	count	1	1	pass	6.29	6.75	0.03	37224	1729580165	5658662600	154663193	counts/measurement.w1E9GZ/gamteb-strict/rune-jit/fresh.1

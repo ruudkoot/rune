@@ -1,0 +1,69 @@
+{
+  "profiles": [
+    {
+      "particles": 1,
+      "results": 2,
+      "stats": 8,
+      "exact_results": true,
+      "exact_stats": true,
+      "maximum_error": 0.0
+    },
+    {
+      "particles": 2,
+      "results": 2,
+      "stats": 7,
+      "exact_results": true,
+      "exact_stats": true,
+      "maximum_error": 0.0
+    },
+    {
+      "particles": 3,
+      "results": 3,
+      "stats": 10,
+      "exact_results": true,
+      "exact_stats": true,
+      "maximum_error": 0.0
+    },
+    {
+      "particles": 10,
+      "results": 11,
+      "stats": 37,
+      "exact_results": true,
+      "exact_stats": true,
+      "maximum_error": 0.0
+    },
+    {
+      "particles": 100,
+      "results": 118,
+      "stats": 382,
+      "exact_results": true,
+      "exact_stats": true,
+      "maximum_error": 0.0
+    },
+    {
+      "particles": 1000,
+      "results": 1231,
+      "stats": 4020,
+      "exact_results": true,
+      "exact_stats": true,
+      "maximum_error": 0.0
+    },
+    {
+      "particles": 5000,
+      "results": 5913,
+      "stats": 19247,
+      "exact_results": true,
+      "exact_stats": true,
+      "maximum_error": 0.0
+    }
+  ],
+  "audit": {
+    "transport_events": 15267,
+    "collisions": 6823,
+    "pair_events": 0,
+    "isos_rejections": 0,
+    "rotation_rejections": 0,
+    "max_random_integer": 317267
+  },
+  "scope": "Independent eager LIFO event queue and separate result/stat logs; source self-referential rejection arm raises explicitly if demanded"
+}

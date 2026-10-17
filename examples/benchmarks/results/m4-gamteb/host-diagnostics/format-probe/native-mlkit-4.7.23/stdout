@@ -1,0 +1,11 @@
+Need value=~6.9077552789821368 text=-6.9077552789821368 parsed=~6.9077552789821368 equal=true
+Need value=~3.4112477175156566 text=-3.4112477175156566 parsed=~3.4112477175156566 equal=true
+Need value=~30.0 text=-30.0 parsed=~30.0 equal=true
+Need value=8.3943473614173918 text=8.3943473614173918 parsed=8.3943473614173918 equal=true
+Strict value=~6.9077552789821368 text=-6.9077552789821368 parsed=~6.9077552789821368 equal=true
+Strict value=~3.4112477175156566 text=-3.4112477175156566 parsed=~3.4112477175156566 equal=true
+Strict value=~30.0 text=-30.0 parsed=~30.0 equal=true
+Strict value=8.3943473614173918 text=8.3943473614173918 parsed=8.3943473614173918 equal=true
+PASS gamma-prefix/need
+PASS gamma-prefix/strict
+SUMMARY 2 checks, 0 failed

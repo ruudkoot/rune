@@ -1,0 +1,2279 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS mkhprog/Need/default-full-text
+PASS mkhprog/Need/default-block-hashes
+PASS mkhprog/Need/default-channels
+PASS mkhprog/Need/aux-full-text
+PASS mkhprog/Need/aux-block-hashes
+PASS mkhprog/Need/aux-channels
+PASS mkhprog/Need/empty-full-text
+PASS mkhprog/Need/empty-block-hashes
+PASS mkhprog/Need/empty-channels
+PASS mkhprog/Need/one-int-full-text
+PASS mkhprog/Need/one-int-block-hashes
+PASS mkhprog/Need/one-int-channels
+PASS mkhprog/Need/boolean-full-text
+PASS mkhprog/Need/boolean-block-hashes
+PASS mkhprog/Need/boolean-channels
+PASS mkhprog/Need/string-full-text
+PASS mkhprog/Need/string-block-hashes
+PASS mkhprog/Need/string-channels
+PASS mkhprog/Need/literate-full-text
+PASS mkhprog/Need/literate-block-hashes
+PASS mkhprog/Need/literate-channels
+PASS mkhprog/Need/module-inline-full-text
+PASS mkhprog/Need/module-inline-block-hashes
+PASS mkhprog/Need/module-inline-channels
+PASS mkhprog/Need/file-full-text
+PASS mkhprog/Need/file-block-hashes
+PASS mkhprog/Need/file-channels
+PASS mkhprog/Need/duplicate-usage
+PASS mkhprog/Need/toggle-duplicate-usage
+PASS mkhprog/Need/odd-usage
+PASS mkhprog/Need/plus-non-bool-usage
+PASS mkhprog/Need/short-flag-usage
+PASS mkhprog/Need/long-flag-usage
+PASS mkhprog/Need/bad-literate-usage
+PASS mkhprog/Need/normalized-input-keeps-word-order
+PASS mkhprog/Need/input-normalization-is-idempotent
+PASS mkhprog/Need/all-62-blocks-are-consumed
+PASS mkhprog/Need/corrupt-block-reference-is-rejected
+PASS mkhprog/Need/missing-block-reference-is-rejected
+PASS mkhprog/Need/extra-block-reference-is-rejected
+PASS mkhprog/Need/usage-cannot-supply-timings
+PASS mkhprog/Need/file-output-is-outside-hashed-stdout-profile
+PASS mkhprog/Need/bad-reference--1
+PASS mkhprog/Need/bad-reference-18446744073709551616
+PASS mkhprog/Need/bad-reference-not-a-word
+PASS mkhprog/Need/hash-
+PASS mkhprog/Need/hash-a
+PASS mkhprog/Need/hash-abc
+PASS mkhprog/Need/empty-argument-range
+PASS mkhprog/Need/argument-range-is-inclusive
+PASS mkhprog/Need/literal-prefix-includes-each-line
+PASS mkhprog/Need/zero-repetitions
+PASS mkhprog/Need/repetition-reset
+PASS mkhprog/Need/continuation-output-can-stop-at-first-block
+PASS mkhprog/Strict/default-full-text
+PASS mkhprog/Strict/default-block-hashes
+PASS mkhprog/Strict/default-channels
+PASS mkhprog/Strict/aux-full-text
+PASS mkhprog/Strict/aux-block-hashes
+PASS mkhprog/Strict/aux-channels
+PASS mkhprog/Strict/empty-full-text
+PASS mkhprog/Strict/empty-block-hashes
+PASS mkhprog/Strict/empty-channels
+PASS mkhprog/Strict/one-int-full-text
+PASS mkhprog/Strict/one-int-block-hashes
+PASS mkhprog/Strict/one-int-channels
+PASS mkhprog/Strict/boolean-full-text
+PASS mkhprog/Strict/boolean-block-hashes
+PASS mkhprog/Strict/boolean-channels
+PASS mkhprog/Strict/string-full-text
+PASS mkhprog/Strict/string-block-hashes
+PASS mkhprog/Strict/string-channels
+PASS mkhprog/Strict/literate-full-text
+PASS mkhprog/Strict/literate-block-hashes
+PASS mkhprog/Strict/literate-channels
+PASS mkhprog/Strict/module-inline-full-text
+PASS mkhprog/Strict/module-inline-block-hashes
+PASS mkhprog/Strict/module-inline-channels
+PASS mkhprog/Strict/file-full-text
+PASS mkhprog/Strict/file-block-hashes
+PASS mkhprog/Strict/file-channels
+PASS mkhprog/Strict/duplicate-usage
+PASS mkhprog/Strict/toggle-duplicate-usage
+PASS mkhprog/Strict/odd-usage
+PASS mkhprog/Strict/plus-non-bool-usage
+PASS mkhprog/Strict/short-flag-usage
+PASS mkhprog/Strict/long-flag-usage
+PASS mkhprog/Strict/bad-literate-usage
+PASS mkhprog/Strict/normalized-input-keeps-word-order
+PASS mkhprog/Strict/input-normalization-is-idempotent
+PASS mkhprog/Strict/all-62-blocks-are-consumed
+PASS mkhprog/Strict/corrupt-block-reference-is-rejected
+PASS mkhprog/Strict/missing-block-reference-is-rejected
+PASS mkhprog/Strict/extra-block-reference-is-rejected
+PASS mkhprog/Strict/usage-cannot-supply-timings
+PASS mkhprog/Strict/file-output-is-outside-hashed-stdout-profile
+PASS mkhprog/Strict/bad-reference--1
+PASS mkhprog/Strict/bad-reference-18446744073709551616
+PASS mkhprog/Strict/bad-reference-not-a-word
+PASS mkhprog/Strict/hash-
+PASS mkhprog/Strict/hash-a
+PASS mkhprog/Strict/hash-abc
+PASS mkhprog/Strict/empty-argument-range
+PASS mkhprog/Strict/argument-range-is-inclusive
+PASS mkhprog/Strict/literal-prefix-includes-each-line
+PASS mkhprog/Strict/zero-repetitions
+PASS mkhprog/Strict/repetition-reset
+PASS mkhprog/Strict/continuation-output-can-stop-at-first-block
+PASS mkhprog/lazy-type-text-is-not-demanded-by-header
+PASS mkhprog/strict-type-text-is-materialized-before-output
+PASS mkhprog/literal-comparison-does-not-force-mismatching-tail
+PASS mkhprog/lazy-text-is-shared-by-two-consumers
+SUMMARY 112 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+PASS mkhprog/Need/default-full-text
+PASS mkhprog/Need/default-block-hashes
+PASS mkhprog/Need/default-channels
+PASS mkhprog/Need/aux-full-text
+PASS mkhprog/Need/aux-block-hashes
+PASS mkhprog/Need/aux-channels
+PASS mkhprog/Need/empty-full-text
+PASS mkhprog/Need/empty-block-hashes
+PASS mkhprog/Need/empty-channels
+PASS mkhprog/Need/one-int-full-text
+PASS mkhprog/Need/one-int-block-hashes
+PASS mkhprog/Need/one-int-channels
+PASS mkhprog/Need/boolean-full-text
+PASS mkhprog/Need/boolean-block-hashes
+PASS mkhprog/Need/boolean-channels
+PASS mkhprog/Need/string-full-text
+PASS mkhprog/Need/string-block-hashes
+PASS mkhprog/Need/string-channels
+PASS mkhprog/Need/literate-full-text
+PASS mkhprog/Need/literate-block-hashes
+PASS mkhprog/Need/literate-channels
+PASS mkhprog/Need/module-inline-full-text
+PASS mkhprog/Need/module-inline-block-hashes
+PASS mkhprog/Need/module-inline-channels
+PASS mkhprog/Need/file-full-text
+PASS mkhprog/Need/file-block-hashes
+PASS mkhprog/Need/file-channels
+PASS mkhprog/Need/duplicate-usage
+PASS mkhprog/Need/toggle-duplicate-usage
+PASS mkhprog/Need/odd-usage
+PASS mkhprog/Need/plus-non-bool-usage
+PASS mkhprog/Need/short-flag-usage
+PASS mkhprog/Need/long-flag-usage
+PASS mkhprog/Need/bad-literate-usage
+PASS mkhprog/Need/normalized-input-keeps-word-order
+PASS mkhprog/Need/input-normalization-is-idempotent
+PASS mkhprog/Need/all-62-blocks-are-consumed
+PASS mkhprog/Need/corrupt-block-reference-is-rejected
+PASS mkhprog/Need/missing-block-reference-is-rejected
+PASS mkhprog/Need/extra-block-reference-is-rejected
+PASS mkhprog/Need/usage-cannot-supply-timings
+PASS mkhprog/Need/file-output-is-outside-hashed-stdout-profile
+PASS mkhprog/Need/bad-reference--1
+PASS mkhprog/Need/bad-reference-18446744073709551616
+PASS mkhprog/Need/bad-reference-not-a-word
+PASS mkhprog/Need/hash-
+PASS mkhprog/Need/hash-a
+PASS mkhprog/Need/hash-abc
+PASS mkhprog/Need/empty-argument-range
+PASS mkhprog/Need/argument-range-is-inclusive
+PASS mkhprog/Need/literal-prefix-includes-each-line
+PASS mkhprog/Need/zero-repetitions
+PASS mkhprog/Need/repetition-reset
+PASS mkhprog/Need/continuation-output-can-stop-at-first-block
+PASS mkhprog/Strict/default-full-text
+PASS mkhprog/Strict/default-block-hashes
+PASS mkhprog/Strict/default-channels
+PASS mkhprog/Strict/aux-full-text
+PASS mkhprog/Strict/aux-block-hashes
+PASS mkhprog/Strict/aux-channels
+PASS mkhprog/Strict/empty-full-text
+PASS mkhprog/Strict/empty-block-hashes
+PASS mkhprog/Strict/empty-channels
+PASS mkhprog/Strict/one-int-full-text
+PASS mkhprog/Strict/one-int-block-hashes
+PASS mkhprog/Strict/one-int-channels
+PASS mkhprog/Strict/boolean-full-text
+PASS mkhprog/Strict/boolean-block-hashes
+PASS mkhprog/Strict/boolean-channels
+PASS mkhprog/Strict/string-full-text
+PASS mkhprog/Strict/string-block-hashes
+PASS mkhprog/Strict/string-channels
+PASS mkhprog/Strict/literate-full-text
+PASS mkhprog/Strict/literate-block-hashes
+PASS mkhprog/Strict/literate-channels
+PASS mkhprog/Strict/module-inline-full-text
+PASS mkhprog/Strict/module-inline-block-hashes
+PASS mkhprog/Strict/module-inline-channels
+PASS mkhprog/Strict/file-full-text
+PASS mkhprog/Strict/file-block-hashes
+PASS mkhprog/Strict/file-channels
+PASS mkhprog/Strict/duplicate-usage
+PASS mkhprog/Strict/toggle-duplicate-usage
+PASS mkhprog/Strict/odd-usage
+PASS mkhprog/Strict/plus-non-bool-usage
+PASS mkhprog/Strict/short-flag-usage
+PASS mkhprog/Strict/long-flag-usage
+PASS mkhprog/Strict/bad-literate-usage
+PASS mkhprog/Strict/normalized-input-keeps-word-order
+PASS mkhprog/Strict/input-normalization-is-idempotent
+PASS mkhprog/Strict/all-62-blocks-are-consumed
+PASS mkhprog/Strict/corrupt-block-reference-is-rejected
+PASS mkhprog/Strict/missing-block-reference-is-rejected
+PASS mkhprog/Strict/extra-block-reference-is-rejected
+PASS mkhprog/Strict/usage-cannot-supply-timings
+PASS mkhprog/Strict/file-output-is-outside-hashed-stdout-profile
+PASS mkhprog/Strict/bad-reference--1
+PASS mkhprog/Strict/bad-reference-18446744073709551616
+PASS mkhprog/Strict/bad-reference-not-a-word
+PASS mkhprog/Strict/hash-
+PASS mkhprog/Strict/hash-a
+PASS mkhprog/Strict/hash-abc
+PASS mkhprog/Strict/empty-argument-range
+PASS mkhprog/Strict/argument-range-is-inclusive
+PASS mkhprog/Strict/literal-prefix-includes-each-line
+PASS mkhprog/Strict/zero-repetitions
+PASS mkhprog/Strict/repetition-reset
+PASS mkhprog/Strict/continuation-output-can-stop-at-first-block
+PASS mkhprog/lazy-type-text-is-not-demanded-by-header
+PASS mkhprog/strict-type-text-is-materialized-before-output
+PASS mkhprog/literal-comparison-does-not-force-mismatching-tail
+PASS mkhprog/lazy-text-is-shared-by-two-consumers
+SUMMARY 112 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+PASS mkhprog/Need/default-full-text
+PASS mkhprog/Need/default-block-hashes
+PASS mkhprog/Need/default-channels
+PASS mkhprog/Need/aux-full-text
+PASS mkhprog/Need/aux-block-hashes
+PASS mkhprog/Need/aux-channels
+PASS mkhprog/Need/empty-full-text
+PASS mkhprog/Need/empty-block-hashes
+PASS mkhprog/Need/empty-channels
+PASS mkhprog/Need/one-int-full-text
+PASS mkhprog/Need/one-int-block-hashes
+PASS mkhprog/Need/one-int-channels
+PASS mkhprog/Need/boolean-full-text
+PASS mkhprog/Need/boolean-block-hashes
+PASS mkhprog/Need/boolean-channels
+PASS mkhprog/Need/string-full-text
+PASS mkhprog/Need/string-block-hashes
+PASS mkhprog/Need/string-channels
+PASS mkhprog/Need/literate-full-text
+PASS mkhprog/Need/literate-block-hashes
+PASS mkhprog/Need/literate-channels
+PASS mkhprog/Need/module-inline-full-text
+PASS mkhprog/Need/module-inline-block-hashes
+PASS mkhprog/Need/module-inline-channels
+PASS mkhprog/Need/file-full-text
+PASS mkhprog/Need/file-block-hashes
+PASS mkhprog/Need/file-channels
+PASS mkhprog/Need/duplicate-usage
+PASS mkhprog/Need/toggle-duplicate-usage
+PASS mkhprog/Need/odd-usage
+PASS mkhprog/Need/plus-non-bool-usage
+PASS mkhprog/Need/short-flag-usage
+PASS mkhprog/Need/long-flag-usage
+PASS mkhprog/Need/bad-literate-usage
+PASS mkhprog/Need/normalized-input-keeps-word-order
+PASS mkhprog/Need/input-normalization-is-idempotent
+PASS mkhprog/Need/all-62-blocks-are-consumed
+PASS mkhprog/Need/corrupt-block-reference-is-rejected
+PASS mkhprog/Need/missing-block-reference-is-rejected
+PASS mkhprog/Need/extra-block-reference-is-rejected
+PASS mkhprog/Need/usage-cannot-supply-timings
+PASS mkhprog/Need/file-output-is-outside-hashed-stdout-profile
+PASS mkhprog/Need/bad-reference--1
+PASS mkhprog/Need/bad-reference-18446744073709551616
+PASS mkhprog/Need/bad-reference-not-a-word
+PASS mkhprog/Need/hash-
+PASS mkhprog/Need/hash-a
+PASS mkhprog/Need/hash-abc
+PASS mkhprog/Need/empty-argument-range
+PASS mkhprog/Need/argument-range-is-inclusive
+PASS mkhprog/Need/literal-prefix-includes-each-line
+PASS mkhprog/Need/zero-repetitions
+PASS mkhprog/Need/repetition-reset
+PASS mkhprog/Need/continuation-output-can-stop-at-first-block
+PASS mkhprog/Strict/default-full-text
+PASS mkhprog/Strict/default-block-hashes
+PASS mkhprog/Strict/default-channels
+PASS mkhprog/Strict/aux-full-text
+PASS mkhprog/Strict/aux-block-hashes
+PASS mkhprog/Strict/aux-channels
+PASS mkhprog/Strict/empty-full-text
+PASS mkhprog/Strict/empty-block-hashes
+PASS mkhprog/Strict/empty-channels
+PASS mkhprog/Strict/one-int-full-text
+PASS mkhprog/Strict/one-int-block-hashes
+PASS mkhprog/Strict/one-int-channels
+PASS mkhprog/Strict/boolean-full-text
+PASS mkhprog/Strict/boolean-block-hashes
+PASS mkhprog/Strict/boolean-channels
+PASS mkhprog/Strict/string-full-text
+PASS mkhprog/Strict/string-block-hashes
+PASS mkhprog/Strict/string-channels
+PASS mkhprog/Strict/literate-full-text
+PASS mkhprog/Strict/literate-block-hashes
+PASS mkhprog/Strict/literate-channels
+PASS mkhprog/Strict/module-inline-full-text
+PASS mkhprog/Strict/module-inline-block-hashes
+PASS mkhprog/Strict/module-inline-channels
+PASS mkhprog/Strict/file-full-text
+PASS mkhprog/Strict/file-block-hashes
+PASS mkhprog/Strict/file-channels
+PASS mkhprog/Strict/duplicate-usage
+PASS mkhprog/Strict/toggle-duplicate-usage
+PASS mkhprog/Strict/odd-usage
+PASS mkhprog/Strict/plus-non-bool-usage
+PASS mkhprog/Strict/short-flag-usage
+PASS mkhprog/Strict/long-flag-usage
+PASS mkhprog/Strict/bad-literate-usage
+PASS mkhprog/Strict/normalized-input-keeps-word-order
+PASS mkhprog/Strict/input-normalization-is-idempotent
+PASS mkhprog/Strict/all-62-blocks-are-consumed
+PASS mkhprog/Strict/corrupt-block-reference-is-rejected
+PASS mkhprog/Strict/missing-block-reference-is-rejected
+PASS mkhprog/Strict/extra-block-reference-is-rejected
+PASS mkhprog/Strict/usage-cannot-supply-timings
+PASS mkhprog/Strict/file-output-is-outside-hashed-stdout-profile
+PASS mkhprog/Strict/bad-reference--1
+PASS mkhprog/Strict/bad-reference-18446744073709551616
+PASS mkhprog/Strict/bad-reference-not-a-word
+PASS mkhprog/Strict/hash-
+PASS mkhprog/Strict/hash-a
+PASS mkhprog/Strict/hash-abc
+PASS mkhprog/Strict/empty-argument-range
+PASS mkhprog/Strict/argument-range-is-inclusive
+PASS mkhprog/Strict/literal-prefix-includes-each-line
+PASS mkhprog/Strict/zero-repetitions
+PASS mkhprog/Strict/repetition-reset
+PASS mkhprog/Strict/continuation-output-can-stop-at-first-block
+PASS mkhprog/lazy-type-text-is-not-demanded-by-header
+PASS mkhprog/strict-type-text-is-materialized-before-output
+PASS mkhprog/literal-comparison-does-not-force-mismatching-tail
+PASS mkhprog/lazy-text-is-shared-by-two-consumers
+SUMMARY 112 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+PASS mkhprog/Need/default-full-text
+PASS mkhprog/Need/default-block-hashes
+PASS mkhprog/Need/default-channels
+PASS mkhprog/Need/aux-full-text
+PASS mkhprog/Need/aux-block-hashes
+PASS mkhprog/Need/aux-channels
+PASS mkhprog/Need/empty-full-text
+PASS mkhprog/Need/empty-block-hashes
+PASS mkhprog/Need/empty-channels
+PASS mkhprog/Need/one-int-full-text
+PASS mkhprog/Need/one-int-block-hashes
+PASS mkhprog/Need/one-int-channels
+PASS mkhprog/Need/boolean-full-text
+PASS mkhprog/Need/boolean-block-hashes
+PASS mkhprog/Need/boolean-channels
+PASS mkhprog/Need/string-full-text
+PASS mkhprog/Need/string-block-hashes
+PASS mkhprog/Need/string-channels
+PASS mkhprog/Need/literate-full-text
+PASS mkhprog/Need/literate-block-hashes
+PASS mkhprog/Need/literate-channels
+PASS mkhprog/Need/module-inline-full-text
+PASS mkhprog/Need/module-inline-block-hashes
+PASS mkhprog/Need/module-inline-channels
+PASS mkhprog/Need/file-full-text
+PASS mkhprog/Need/file-block-hashes
+PASS mkhprog/Need/file-channels
+PASS mkhprog/Need/duplicate-usage
+PASS mkhprog/Need/toggle-duplicate-usage
+PASS mkhprog/Need/odd-usage
+PASS mkhprog/Need/plus-non-bool-usage
+PASS mkhprog/Need/short-flag-usage
+PASS mkhprog/Need/long-flag-usage
+PASS mkhprog/Need/bad-literate-usage
+PASS mkhprog/Need/normalized-input-keeps-word-order
+PASS mkhprog/Need/input-normalization-is-idempotent
+PASS mkhprog/Need/all-62-blocks-are-consumed
+PASS mkhprog/Need/corrupt-block-reference-is-rejected
+PASS mkhprog/Need/missing-block-reference-is-rejected
+PASS mkhprog/Need/extra-block-reference-is-rejected
+PASS mkhprog/Need/usage-cannot-supply-timings
+PASS mkhprog/Need/file-output-is-outside-hashed-stdout-profile
+PASS mkhprog/Need/bad-reference--1
+PASS mkhprog/Need/bad-reference-18446744073709551616
+PASS mkhprog/Need/bad-reference-not-a-word
+PASS mkhprog/Need/hash-
+PASS mkhprog/Need/hash-a
+PASS mkhprog/Need/hash-abc
+PASS mkhprog/Need/empty-argument-range
+PASS mkhprog/Need/argument-range-is-inclusive
+PASS mkhprog/Need/literal-prefix-includes-each-line
+PASS mkhprog/Need/zero-repetitions
+PASS mkhprog/Need/repetition-reset
+PASS mkhprog/Need/continuation-output-can-stop-at-first-block
+PASS mkhprog/Strict/default-full-text
+PASS mkhprog/Strict/default-block-hashes
+PASS mkhprog/Strict/default-channels
+PASS mkhprog/Strict/aux-full-text
+PASS mkhprog/Strict/aux-block-hashes
+PASS mkhprog/Strict/aux-channels
+PASS mkhprog/Strict/empty-full-text
+PASS mkhprog/Strict/empty-block-hashes
+PASS mkhprog/Strict/empty-channels
+PASS mkhprog/Strict/one-int-full-text
+PASS mkhprog/Strict/one-int-block-hashes
+PASS mkhprog/Strict/one-int-channels
+PASS mkhprog/Strict/boolean-full-text
+PASS mkhprog/Strict/boolean-block-hashes
+PASS mkhprog/Strict/boolean-channels
+PASS mkhprog/Strict/string-full-text
+PASS mkhprog/Strict/string-block-hashes
+PASS mkhprog/Strict/string-channels
+PASS mkhprog/Strict/literate-full-text
+PASS mkhprog/Strict/literate-block-hashes
+PASS mkhprog/Strict/literate-channels
+PASS mkhprog/Strict/module-inline-full-text
+PASS mkhprog/Strict/module-inline-block-hashes
+PASS mkhprog/Strict/module-inline-channels
+PASS mkhprog/Strict/file-full-text
+PASS mkhprog/Strict/file-block-hashes
+PASS mkhprog/Strict/file-channels
+PASS mkhprog/Strict/duplicate-usage
+PASS mkhprog/Strict/toggle-duplicate-usage
+PASS mkhprog/Strict/odd-usage
+PASS mkhprog/Strict/plus-non-bool-usage
+PASS mkhprog/Strict/short-flag-usage
+PASS mkhprog/Strict/long-flag-usage
+PASS mkhprog/Strict/bad-literate-usage
+PASS mkhprog/Strict/normalized-input-keeps-word-order
+PASS mkhprog/Strict/input-normalization-is-idempotent
+PASS mkhprog/Strict/all-62-blocks-are-consumed
+PASS mkhprog/Strict/corrupt-block-reference-is-rejected
+PASS mkhprog/Strict/missing-block-reference-is-rejected
+PASS mkhprog/Strict/extra-block-reference-is-rejected
+PASS mkhprog/Strict/usage-cannot-supply-timings
+PASS mkhprog/Strict/file-output-is-outside-hashed-stdout-profile
+PASS mkhprog/Strict/bad-reference--1
+PASS mkhprog/Strict/bad-reference-18446744073709551616
+PASS mkhprog/Strict/bad-reference-not-a-word
+PASS mkhprog/Strict/hash-
+PASS mkhprog/Strict/hash-a
+PASS mkhprog/Strict/hash-abc
+PASS mkhprog/Strict/empty-argument-range
+PASS mkhprog/Strict/argument-range-is-inclusive
+PASS mkhprog/Strict/literal-prefix-includes-each-line
+PASS mkhprog/Strict/zero-repetitions
+PASS mkhprog/Strict/repetition-reset
+PASS mkhprog/Strict/continuation-output-can-stop-at-first-block
+PASS mkhprog/lazy-type-text-is-not-demanded-by-header
+PASS mkhprog/strict-type-text-is-materialized-before-output
+PASS mkhprog/literal-comparison-does-not-force-mismatching-tail
+PASS mkhprog/lazy-text-is-shared-by-two-consumers
+SUMMARY 112 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 1048576 KiB
+PASS mkhprog/Need/default-full-text
+PASS mkhprog/Need/default-block-hashes
+PASS mkhprog/Need/default-channels
+PASS mkhprog/Need/aux-full-text
+PASS mkhprog/Need/aux-block-hashes
+PASS mkhprog/Need/aux-channels
+PASS mkhprog/Need/empty-full-text
+PASS mkhprog/Need/empty-block-hashes
+PASS mkhprog/Need/empty-channels
+PASS mkhprog/Need/one-int-full-text
+PASS mkhprog/Need/one-int-block-hashes
+PASS mkhprog/Need/one-int-channels
+PASS mkhprog/Need/boolean-full-text
+PASS mkhprog/Need/boolean-block-hashes
+PASS mkhprog/Need/boolean-channels
+PASS mkhprog/Need/string-full-text
+PASS mkhprog/Need/string-block-hashes
+PASS mkhprog/Need/string-channels
+PASS mkhprog/Need/literate-full-text
+PASS mkhprog/Need/literate-block-hashes
+PASS mkhprog/Need/literate-channels
+PASS mkhprog/Need/module-inline-full-text
+PASS mkhprog/Need/module-inline-block-hashes
+PASS mkhprog/Need/module-inline-channels
+PASS mkhprog/Need/file-full-text
+PASS mkhprog/Need/file-block-hashes
+PASS mkhprog/Need/file-channels
+PASS mkhprog/Need/duplicate-usage
+PASS mkhprog/Need/toggle-duplicate-usage
+PASS mkhprog/Need/odd-usage
+PASS mkhprog/Need/plus-non-bool-usage
+PASS mkhprog/Need/short-flag-usage
+PASS mkhprog/Need/long-flag-usage
+PASS mkhprog/Need/bad-literate-usage
+PASS mkhprog/Need/normalized-input-keeps-word-order
+PASS mkhprog/Need/input-normalization-is-idempotent
+PASS mkhprog/Need/all-62-blocks-are-consumed
+PASS mkhprog/Need/corrupt-block-reference-is-rejected
+PASS mkhprog/Need/missing-block-reference-is-rejected
+PASS mkhprog/Need/extra-block-reference-is-rejected
+PASS mkhprog/Need/usage-cannot-supply-timings
+PASS mkhprog/Need/file-output-is-outside-hashed-stdout-profile
+PASS mkhprog/Need/bad-reference--1
+PASS mkhprog/Need/bad-reference-18446744073709551616
+PASS mkhprog/Need/bad-reference-not-a-word
+PASS mkhprog/Need/hash-
+PASS mkhprog/Need/hash-a
+PASS mkhprog/Need/hash-abc
+PASS mkhprog/Need/empty-argument-range
+PASS mkhprog/Need/argument-range-is-inclusive
+PASS mkhprog/Need/literal-prefix-includes-each-line
+PASS mkhprog/Need/zero-repetitions
+PASS mkhprog/Need/repetition-reset
+PASS mkhprog/Need/continuation-output-can-stop-at-first-block
+PASS mkhprog/Strict/default-full-text
+PASS mkhprog/Strict/default-block-hashes
+PASS mkhprog/Strict/default-channels
+PASS mkhprog/Strict/aux-full-text
+PASS mkhprog/Strict/aux-block-hashes
+PASS mkhprog/Strict/aux-channels
+PASS mkhprog/Strict/empty-full-text
+PASS mkhprog/Strict/empty-block-hashes
+PASS mkhprog/Strict/empty-channels
+PASS mkhprog/Strict/one-int-full-text
+PASS mkhprog/Strict/one-int-block-hashes
+PASS mkhprog/Strict/one-int-channels
+PASS mkhprog/Strict/boolean-full-text
+PASS mkhprog/Strict/boolean-block-hashes
+PASS mkhprog/Strict/boolean-channels
+PASS mkhprog/Strict/string-full-text
+PASS mkhprog/Strict/string-block-hashes
+PASS mkhprog/Strict/string-channels
+PASS mkhprog/Strict/literate-full-text
+PASS mkhprog/Strict/literate-block-hashes
+PASS mkhprog/Strict/literate-channels
+PASS mkhprog/Strict/module-inline-full-text
+PASS mkhprog/Strict/module-inline-block-hashes
+PASS mkhprog/Strict/module-inline-channels
+PASS mkhprog/Strict/file-full-text
+PASS mkhprog/Strict/file-block-hashes
+PASS mkhprog/Strict/file-channels
+PASS mkhprog/Strict/duplicate-usage
+PASS mkhprog/Strict/toggle-duplicate-usage
+PASS mkhprog/Strict/odd-usage
+PASS mkhprog/Strict/plus-non-bool-usage
+PASS mkhprog/Strict/short-flag-usage
+PASS mkhprog/Strict/long-flag-usage
+PASS mkhprog/Strict/bad-literate-usage
+PASS mkhprog/Strict/normalized-input-keeps-word-order
+PASS mkhprog/Strict/input-normalization-is-idempotent
+PASS mkhprog/Strict/all-62-blocks-are-consumed
+PASS mkhprog/Strict/corrupt-block-reference-is-rejected
+PASS mkhprog/Strict/missing-block-reference-is-rejected
+PASS mkhprog/Strict/extra-block-reference-is-rejected
+PASS mkhprog/Strict/usage-cannot-supply-timings
+PASS mkhprog/Strict/file-output-is-outside-hashed-stdout-profile
+PASS mkhprog/Strict/bad-reference--1
+PASS mkhprog/Strict/bad-reference-18446744073709551616
+PASS mkhprog/Strict/bad-reference-not-a-word
+PASS mkhprog/Strict/hash-
+PASS mkhprog/Strict/hash-a
+PASS mkhprog/Strict/hash-abc
+PASS mkhprog/Strict/empty-argument-range
+PASS mkhprog/Strict/argument-range-is-inclusive
+PASS mkhprog/Strict/literal-prefix-includes-each-line
+PASS mkhprog/Strict/zero-repetitions
+PASS mkhprog/Strict/repetition-reset
+PASS mkhprog/Strict/continuation-output-can-stop-at-first-block
+PASS mkhprog/lazy-type-text-is-not-demanded-by-header
+PASS mkhprog/strict-type-text-is-materialized-before-output
+PASS mkhprog/literal-comparison-does-not-force-mismatching-tail
+PASS mkhprog/lazy-text-is-shared-by-two-consumers
+SUMMARY 112 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mkhprog-templates.sml]
+structure BenchMkhprogTemplates : sig
+  val strings : string list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mkhprog.sml]
+functor BenchMkhprogFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure W : <sig>
+  type node
+  type text
+  val empty : <BaseFct>.<resultStr>.node D.t
+  val literal : string -> <BaseFct>.<resultStr>.text
+  val delay : (unit -> 'a D.t) -> 'a D.t
+  val append :
+      <BaseFct>.<resultStr>.text
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.text
+  val concat :
+      <BaseFct>.<resultStr>.text list -> <BaseFct>.<resultStr>.node D.t
+  val fold : (char * 'a -> 'a) -> 'a -> <BaseFct>.<resultStr>.text -> 'a
+  val toString : <BaseFct>.<resultStr>.text -> string
+  val hash : <BaseFct>.<resultStr>.text -> Word64.word
+  val equalConstant : <BaseFct>.<resultStr>.text -> string -> bool
+  val lit : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.text
+  val convert :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  type target
+  type env
+  type cont
+  val stop : <BaseFct>.<resultStr>.env -> unit
+  val writeln :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val newline :
+      <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val header : <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val defaultArg :
+      <BaseFct>.<resultStr>.text -> <BaseFct>.<resultStr>.node D.t
+  val defaults :
+      <BaseFct>.<resultStr>.text list
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  type flag
+  val usageItem :
+      string * <BaseFct>.<resultStr>.text -> <BaseFct>.<resultStr>.node D.t
+  val usage :
+      (string * <BaseFct>.<resultStr>.text) list
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val datadecl :
+      <BaseFct>.<resultStr>.node D.t list
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val args : int -> int -> <BaseFct>.<resultStr>.node D.t
+  val phead : int -> <BaseFct>.<resultStr>.node D.t
+  val match : char -> char -> <BaseFct>.<resultStr>.text
+  val wildmatch : char -> <BaseFct>.<resultStr>.text
+  val bits :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val readValue : int -> int -> <BaseFct>.<resultStr>.text
+  val readString : int -> int -> <BaseFct>.<resultStr>.text
+  val readBool : int -> int -> bool -> <BaseFct>.<resultStr>.text
+  val oneFlag :
+      int
+       -> int
+       -> string * <BaseFct>.<resultStr>.text
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val parser :
+      (string * <BaseFct>.<resultStr>.text) list
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val templates : string list
+  val templateTexts : <BaseFct>.<resultStr>.text list
+  val aux : <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val generate :
+      (string * <BaseFct>.<resultStr>.text) list
+       -> <BaseFct>.<resultStr>.env -> unit
+  val usageText : string
+  val normalized : string -> string
+  val pairs : string list -> (string * <BaseFct>.<resultStr>.text) list
+  val check : (string * <BaseFct>.<resultStr>.text) list -> bool
+  val lines : string -> string list
+  val run :
+      string
+       -> (<BaseFct>.<resultStr>.target * <BaseFct>.<resultStr>.text -> unit)
+       -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mkhprog-driver.sml]
+[autoloading]
+[autoloading done]
+functor BenchMkhprogDriverFn(K: sig
+  type text
+  datatype target = File of string | Hashed | Usage
+  val normalized : string -> string
+  val run : string -> (target * text -> unit) -> unit
+  val hash : text -> Word64.word
+end) :
+sig
+  structure W : <sig>
+  val read : string -> TextIO.vector
+  val reference : string -> Word64.word vector
+  val checked : string -> Word64.word vector -> int * ?.word64
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/mkhprog-tests.sml]
+PASS mkhprog/Need/default-full-text
+PASS mkhprog/Need/default-block-hashes
+PASS mkhprog/Need/default-channels
+PASS mkhprog/Need/aux-full-text
+PASS mkhprog/Need/aux-block-hashes
+PASS mkhprog/Need/aux-channels
+PASS mkhprog/Need/empty-full-text
+PASS mkhprog/Need/empty-block-hashes
+PASS mkhprog/Need/empty-channels
+PASS mkhprog/Need/one-int-full-text
+PASS mkhprog/Need/one-int-block-hashes
+PASS mkhprog/Need/one-int-channels
+PASS mkhprog/Need/boolean-full-text
+PASS mkhprog/Need/boolean-block-hashes
+PASS mkhprog/Need/boolean-channels
+PASS mkhprog/Need/string-full-text
+PASS mkhprog/Need/string-block-hashes
+PASS mkhprog/Need/string-channels
+PASS mkhprog/Need/literate-full-text
+PASS mkhprog/Need/literate-block-hashes
+PASS mkhprog/Need/literate-channels
+PASS mkhprog/Need/module-inline-full-text
+PASS mkhprog/Need/module-inline-block-hashes
+PASS mkhprog/Need/module-inline-channels
+PASS mkhprog/Need/file-full-text
+PASS mkhprog/Need/file-block-hashes
+PASS mkhprog/Need/file-channels
+PASS mkhprog/Need/duplicate-usage
+PASS mkhprog/Need/toggle-duplicate-usage
+PASS mkhprog/Need/odd-usage
+PASS mkhprog/Need/plus-non-bool-usage
+PASS mkhprog/Need/short-flag-usage
+PASS mkhprog/Need/long-flag-usage
+PASS mkhprog/Need/bad-literate-usage
+PASS mkhprog/Need/normalized-input-keeps-word-order
+PASS mkhprog/Need/input-normalization-is-idempotent
+PASS mkhprog/Need/all-62-blocks-are-consumed
+PASS mkhprog/Need/corrupt-block-reference-is-rejected
+PASS mkhprog/Need/missing-block-reference-is-rejected
+PASS mkhprog/Need/extra-block-reference-is-rejected
+PASS mkhprog/Need/usage-cannot-supply-timings
+PASS mkhprog/Need/file-output-is-outside-hashed-stdout-profile
+PASS mkhprog/Need/bad-reference--1
+PASS mkhprog/Need/bad-reference-18446744073709551616
+PASS mkhprog/Need/bad-reference-not-a-word
+PASS mkhprog/Need/hash-
+PASS mkhprog/Need/hash-a
+PASS mkhprog/Need/hash-abc
+PASS mkhprog/Need/empty-argument-range
+PASS mkhprog/Need/argument-range-is-inclusive
+PASS mkhprog/Need/literal-prefix-includes-each-line
+PASS mkhprog/Need/zero-repetitions
+PASS mkhprog/Need/repetition-reset
+PASS mkhprog/Need/continuation-output-can-stop-at-first-block
+PASS mkhprog/Strict/default-full-text
+PASS mkhprog/Strict/default-block-hashes
+PASS mkhprog/Strict/default-channels
+PASS mkhprog/Strict/aux-full-text
+PASS mkhprog/Strict/aux-block-hashes
+PASS mkhprog/Strict/aux-channels
+PASS mkhprog/Strict/empty-full-text
+PASS mkhprog/Strict/empty-block-hashes
+PASS mkhprog/Strict/empty-channels
+PASS mkhprog/Strict/one-int-full-text
+PASS mkhprog/Strict/one-int-block-hashes
+PASS mkhprog/Strict/one-int-channels
+PASS mkhprog/Strict/boolean-full-text
+PASS mkhprog/Strict/boolean-block-hashes
+PASS mkhprog/Strict/boolean-channels
+PASS mkhprog/Strict/string-full-text
+PASS mkhprog/Strict/string-block-hashes
+PASS mkhprog/Strict/string-channels
+PASS mkhprog/Strict/literate-full-text
+PASS mkhprog/Strict/literate-block-hashes
+PASS mkhprog/Strict/literate-channels
+PASS mkhprog/Strict/module-inline-full-text
+PASS mkhprog/Strict/module-inline-block-hashes
+PASS mkhprog/Strict/module-inline-channels
+PASS mkhprog/Strict/file-full-text
+PASS mkhprog/Strict/file-block-hashes
+PASS mkhprog/Strict/file-channels
+PASS mkhprog/Strict/duplicate-usage
+PASS mkhprog/Strict/toggle-duplicate-usage
+PASS mkhprog/Strict/odd-usage
+PASS mkhprog/Strict/plus-non-bool-usage
+PASS mkhprog/Strict/short-flag-usage
+PASS mkhprog/Strict/long-flag-usage
+PASS mkhprog/Strict/bad-literate-usage
+PASS mkhprog/Strict/normalized-input-keeps-word-order
+PASS mkhprog/Strict/input-normalization-is-idempotent
+PASS mkhprog/Strict/all-62-blocks-are-consumed
+PASS mkhprog/Strict/corrupt-block-reference-is-rejected
+PASS mkhprog/Strict/missing-block-reference-is-rejected
+PASS mkhprog/Strict/extra-block-reference-is-rejected
+PASS mkhprog/Strict/usage-cannot-supply-timings
+PASS mkhprog/Strict/file-output-is-outside-hashed-stdout-profile
+PASS mkhprog/Strict/bad-reference--1
+PASS mkhprog/Strict/bad-reference-18446744073709551616
+PASS mkhprog/Strict/bad-reference-not-a-word
+PASS mkhprog/Strict/hash-
+PASS mkhprog/Strict/hash-a
+PASS mkhprog/Strict/hash-abc
+PASS mkhprog/Strict/empty-argument-range
+PASS mkhprog/Strict/argument-range-is-inclusive
+PASS mkhprog/Strict/literal-prefix-includes-each-line
+PASS mkhprog/Strict/zero-repetitions
+PASS mkhprog/Strict/repetition-reset
+PASS mkhprog/Strict/continuation-output-can-stop-at-first-block
+PASS mkhprog/lazy-type-text-is-not-demanded-by-header
+PASS mkhprog/strict-type-text-is-materialized-before-output
+PASS mkhprog/literal-comparison-does-not-force-mismatching-tail
+PASS mkhprog/lazy-text-is-shared-by-two-consumers
+structure KernelNeed : sig
+  structure W : <sig>
+  datatype node = Cons of char * <BaseFct>.<resultStr>.text | Nil
+  type text = node BenchNeed.t
+  val empty : <BaseFct>.<resultStr>.node D.t
+  val literal : string -> <BaseFct>.<resultStr>.text
+  val delay : (unit -> 'a D.t) -> 'a D.t
+  val append :
+      <BaseFct>.<resultStr>.text
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.text
+  val concat :
+      <BaseFct>.<resultStr>.text list -> <BaseFct>.<resultStr>.node D.t
+  val fold : (char * 'a -> 'a) -> 'a -> <BaseFct>.<resultStr>.text -> 'a
+  val toString : <BaseFct>.<resultStr>.text -> string
+  val hash : <BaseFct>.<resultStr>.text -> Word64.word
+  val equalConstant : <BaseFct>.<resultStr>.text -> string -> bool
+  val lit : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.text
+  val convert :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  datatype target = File of string | Hashed | Usage
+  type env =
+    {emit:target * text -> unit, literate:bool, moduleName:string,
+      target:target}
+  type cont = env -> unit
+  val stop : <BaseFct>.<resultStr>.env -> unit
+  val writeln :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val newline :
+      <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val header : <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val defaultArg :
+      <BaseFct>.<resultStr>.text -> <BaseFct>.<resultStr>.node D.t
+  val defaults :
+      <BaseFct>.<resultStr>.text list
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  type flag = string * text
+  val usageItem :
+      string * <BaseFct>.<resultStr>.text -> <BaseFct>.<resultStr>.node D.t
+  val usage :
+      (string * <BaseFct>.<resultStr>.text) list
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val datadecl :
+      <BaseFct>.<resultStr>.node D.t list
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val args : int -> int -> <BaseFct>.<resultStr>.node D.t
+  val phead : int -> <BaseFct>.<resultStr>.node D.t
+  val match : char -> char -> <BaseFct>.<resultStr>.text
+  val wildmatch : char -> <BaseFct>.<resultStr>.text
+  val bits :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val readValue : int -> int -> <BaseFct>.<resultStr>.text
+  val readString : int -> int -> <BaseFct>.<resultStr>.text
+  val readBool : int -> int -> bool -> <BaseFct>.<resultStr>.text
+  val oneFlag :
+      int
+       -> int
+       -> string * <BaseFct>.<resultStr>.text
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val parser :
+      (string * <BaseFct>.<resultStr>.text) list
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val templates : string list
+  val templateTexts : <BaseFct>.<resultStr>.text list
+  val aux : <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val generate :
+      (string * <BaseFct>.<resultStr>.text) list
+       -> <BaseFct>.<resultStr>.env -> unit
+  val usageText : string
+  val normalized : string -> string
+  val pairs : string list -> (string * <BaseFct>.<resultStr>.text) list
+  val check : (string * <BaseFct>.<resultStr>.text) list -> bool
+  val lines : string -> string list
+  val run :
+      string
+       -> (<BaseFct>.<resultStr>.target * <BaseFct>.<resultStr>.text -> unit)
+       -> unit
+end
+structure DriverNeed : sig
+  structure W : <sig>
+  val read : string -> TextIO.vector
+  val reference : string -> Word64.word vector
+  val checked : string -> Word64.word vector -> int * ?.word64
+  val run : string list -> string
+end
+structure TestsNeed : sig
+  structure K : <sig>
+  structure Driver : <sig>
+  structure D : <sig>
+  structure W : <sig>
+  val base : string
+  val read : string -> TextIO.vector
+  val label : string -> string
+  val collect : string -> (string * string * Word64.word) list
+  val check : string -> unit
+  val wanted : Word64.word vector
+  val input : string
+  exception Stop
+end
+structure KernelStrict : sig
+  structure W : <sig>
+  datatype node = Cons of char * <BaseFct>.<resultStr>.text | Nil
+  type text = node BenchStrict.t
+  val empty : <BaseFct>.<resultStr>.node D.t
+  val literal : string -> <BaseFct>.<resultStr>.text
+  val delay : (unit -> 'a D.t) -> 'a D.t
+  val append :
+      <BaseFct>.<resultStr>.text
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.text
+  val concat :
+      <BaseFct>.<resultStr>.text list -> <BaseFct>.<resultStr>.node D.t
+  val fold : (char * 'a -> 'a) -> 'a -> <BaseFct>.<resultStr>.text -> 'a
+  val toString : <BaseFct>.<resultStr>.text -> string
+  val hash : <BaseFct>.<resultStr>.text -> Word64.word
+  val equalConstant : <BaseFct>.<resultStr>.text -> string -> bool
+  val lit : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.text
+  val convert :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  datatype target = File of string | Hashed | Usage
+  type env =
+    {emit:target * text -> unit, literate:bool, moduleName:string,
+      target:target}
+  type cont = env -> unit
+  val stop : <BaseFct>.<resultStr>.env -> unit
+  val writeln :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val newline :
+      <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val header : <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val defaultArg :
+      <BaseFct>.<resultStr>.text -> <BaseFct>.<resultStr>.node D.t
+  val defaults :
+      <BaseFct>.<resultStr>.text list
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  type flag = string * text
+  val usageItem :
+      string * <BaseFct>.<resultStr>.text -> <BaseFct>.<resultStr>.node D.t
+  val usage :
+      (string * <BaseFct>.<resultStr>.text) list
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val datadecl :
+      <BaseFct>.<resultStr>.node D.t list
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val args : int -> int -> <BaseFct>.<resultStr>.node D.t
+  val phead : int -> <BaseFct>.<resultStr>.node D.t
+  val match : char -> char -> <BaseFct>.<resultStr>.text
+  val wildmatch : char -> <BaseFct>.<resultStr>.text
+  val bits :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val readValue : int -> int -> <BaseFct>.<resultStr>.text
+  val readString : int -> int -> <BaseFct>.<resultStr>.text
+  val readBool : int -> int -> bool -> <BaseFct>.<resultStr>.text
+  val oneFlag :
+      int
+       -> int
+       -> string * <BaseFct>.<resultStr>.text
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val parser :
+      (string * <BaseFct>.<resultStr>.text) list
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val templates : string list
+  val templateTexts : <BaseFct>.<resultStr>.text list
+  val aux : <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val generate :
+      (string * <BaseFct>.<resultStr>.text) list
+       -> <BaseFct>.<resultStr>.env -> unit
+  val usageText : string
+  val normalized : string -> string
+  val pairs : string list -> (string * <BaseFct>.<resultStr>.text) list
+  val check : (string * <BaseFct>.<resultStr>.text) list -> bool
+  val lines : string -> string list
+  val run :
+      string
+       -> (<BaseFct>.<resultStr>.target * <BaseFct>.<resultStr>.text -> unit)
+       -> unit
+end
+structure DriverStrict : sig
+  structure W : <sig>
+  val read : string -> TextIO.vector
+  val reference : string -> Word64.word vector
+  val checked : string -> Word64.word vector -> int * ?.word64
+  val run : string list -> string
+end
+structure TestsStrict : sig
+  structure K : <sig>
+  structure Driver : <sig>
+  structure D : <sig>
+  structure W : <sig>
+  val base : string
+  val read : string -> TextIO.vector
+  val label : string -> string
+  val collect : string -> (string * string * Word64.word) list
+  val check : string -> unit
+  val wanted : Word64.word vector
+  val input : string
+  exception Stop
+end
+structure Demand : sig
+  structure K : <sig>
+  structure Q : <sig>
+  exception Stop
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 112 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mkhprog-templates.sml]
+structure BenchMkhprogTemplates : sig
+  val strings : string list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mkhprog.sml]
+functor BenchMkhprogFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure W : <sig>
+  type node
+  type text
+  val empty : <BaseFct>.<resultStr>.node D.t
+  val literal : string -> <BaseFct>.<resultStr>.text
+  val delay : (unit -> 'a D.t) -> 'a D.t
+  val append :
+      <BaseFct>.<resultStr>.text
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.text
+  val concat :
+      <BaseFct>.<resultStr>.text list -> <BaseFct>.<resultStr>.node D.t
+  val fold : (char * 'a -> 'a) -> 'a -> <BaseFct>.<resultStr>.text -> 'a
+  val toString : <BaseFct>.<resultStr>.text -> string
+  val hash : <BaseFct>.<resultStr>.text -> Word64.word
+  val equalConstant : <BaseFct>.<resultStr>.text -> string -> bool
+  val lit : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.text
+  val convert :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  type target
+  type env
+  type cont
+  val stop : <BaseFct>.<resultStr>.env -> unit
+  val writeln :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val newline :
+      <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val header : <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val defaultArg :
+      <BaseFct>.<resultStr>.text -> <BaseFct>.<resultStr>.node D.t
+  val defaults :
+      <BaseFct>.<resultStr>.text list
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  type flag
+  val usageItem :
+      string * <BaseFct>.<resultStr>.text -> <BaseFct>.<resultStr>.node D.t
+  val usage :
+      (string * <BaseFct>.<resultStr>.text) list
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val datadecl :
+      <BaseFct>.<resultStr>.node D.t list
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val args : int -> int -> <BaseFct>.<resultStr>.node D.t
+  val phead : int -> <BaseFct>.<resultStr>.node D.t
+  val match : char -> char -> <BaseFct>.<resultStr>.text
+  val wildmatch : char -> <BaseFct>.<resultStr>.text
+  val bits :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val readValue : int -> int -> <BaseFct>.<resultStr>.text
+  val readString : int -> int -> <BaseFct>.<resultStr>.text
+  val readBool : int -> int -> bool -> <BaseFct>.<resultStr>.text
+  val oneFlag :
+      int
+       -> int
+       -> string * <BaseFct>.<resultStr>.text
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val parser :
+      (string * <BaseFct>.<resultStr>.text) list
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val templates : string list
+  val templateTexts : <BaseFct>.<resultStr>.text list
+  val aux : <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val generate :
+      (string * <BaseFct>.<resultStr>.text) list
+       -> <BaseFct>.<resultStr>.env -> unit
+  val usageText : string
+  val normalized : string -> string
+  val pairs : string list -> (string * <BaseFct>.<resultStr>.text) list
+  val check : (string * <BaseFct>.<resultStr>.text) list -> bool
+  val lines : string -> string list
+  val run :
+      string
+       -> (<BaseFct>.<resultStr>.target * <BaseFct>.<resultStr>.text -> unit)
+       -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mkhprog-driver.sml]
+[autoloading]
+[autoloading done]
+functor BenchMkhprogDriverFn(K: sig
+  type text
+  datatype target = File of string | Hashed | Usage
+  val normalized : string -> string
+  val run : string -> (target * text -> unit) -> unit
+  val hash : text -> Word64.word
+end) :
+sig
+  structure W : <sig>
+  val read : string -> TextIO.vector
+  val reference : string -> Word64.word vector
+  val checked : string -> Word64.word vector -> int * ?.word64
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/mkhprog-tests.sml]
+PASS mkhprog/Need/default-full-text
+PASS mkhprog/Need/default-block-hashes
+PASS mkhprog/Need/default-channels
+PASS mkhprog/Need/aux-full-text
+PASS mkhprog/Need/aux-block-hashes
+PASS mkhprog/Need/aux-channels
+PASS mkhprog/Need/empty-full-text
+PASS mkhprog/Need/empty-block-hashes
+PASS mkhprog/Need/empty-channels
+PASS mkhprog/Need/one-int-full-text
+PASS mkhprog/Need/one-int-block-hashes
+PASS mkhprog/Need/one-int-channels
+PASS mkhprog/Need/boolean-full-text
+PASS mkhprog/Need/boolean-block-hashes
+PASS mkhprog/Need/boolean-channels
+PASS mkhprog/Need/string-full-text
+PASS mkhprog/Need/string-block-hashes
+PASS mkhprog/Need/string-channels
+PASS mkhprog/Need/literate-full-text
+PASS mkhprog/Need/literate-block-hashes
+PASS mkhprog/Need/literate-channels
+PASS mkhprog/Need/module-inline-full-text
+PASS mkhprog/Need/module-inline-block-hashes
+PASS mkhprog/Need/module-inline-channels
+PASS mkhprog/Need/file-full-text
+PASS mkhprog/Need/file-block-hashes
+PASS mkhprog/Need/file-channels
+PASS mkhprog/Need/duplicate-usage
+PASS mkhprog/Need/toggle-duplicate-usage
+PASS mkhprog/Need/odd-usage
+PASS mkhprog/Need/plus-non-bool-usage
+PASS mkhprog/Need/short-flag-usage
+PASS mkhprog/Need/long-flag-usage
+PASS mkhprog/Need/bad-literate-usage
+PASS mkhprog/Need/normalized-input-keeps-word-order
+PASS mkhprog/Need/input-normalization-is-idempotent
+PASS mkhprog/Need/all-62-blocks-are-consumed
+PASS mkhprog/Need/corrupt-block-reference-is-rejected
+PASS mkhprog/Need/missing-block-reference-is-rejected
+PASS mkhprog/Need/extra-block-reference-is-rejected
+PASS mkhprog/Need/usage-cannot-supply-timings
+PASS mkhprog/Need/file-output-is-outside-hashed-stdout-profile
+PASS mkhprog/Need/bad-reference--1
+PASS mkhprog/Need/bad-reference-18446744073709551616
+PASS mkhprog/Need/bad-reference-not-a-word
+PASS mkhprog/Need/hash-
+PASS mkhprog/Need/hash-a
+PASS mkhprog/Need/hash-abc
+PASS mkhprog/Need/empty-argument-range
+PASS mkhprog/Need/argument-range-is-inclusive
+PASS mkhprog/Need/literal-prefix-includes-each-line
+PASS mkhprog/Need/zero-repetitions
+PASS mkhprog/Need/repetition-reset
+PASS mkhprog/Need/continuation-output-can-stop-at-first-block
+PASS mkhprog/Strict/default-full-text
+PASS mkhprog/Strict/default-block-hashes
+PASS mkhprog/Strict/default-channels
+PASS mkhprog/Strict/aux-full-text
+PASS mkhprog/Strict/aux-block-hashes
+PASS mkhprog/Strict/aux-channels
+PASS mkhprog/Strict/empty-full-text
+PASS mkhprog/Strict/empty-block-hashes
+PASS mkhprog/Strict/empty-channels
+PASS mkhprog/Strict/one-int-full-text
+PASS mkhprog/Strict/one-int-block-hashes
+PASS mkhprog/Strict/one-int-channels
+PASS mkhprog/Strict/boolean-full-text
+PASS mkhprog/Strict/boolean-block-hashes
+PASS mkhprog/Strict/boolean-channels
+PASS mkhprog/Strict/string-full-text
+PASS mkhprog/Strict/string-block-hashes
+PASS mkhprog/Strict/string-channels
+PASS mkhprog/Strict/literate-full-text
+PASS mkhprog/Strict/literate-block-hashes
+PASS mkhprog/Strict/literate-channels
+PASS mkhprog/Strict/module-inline-full-text
+PASS mkhprog/Strict/module-inline-block-hashes
+PASS mkhprog/Strict/module-inline-channels
+PASS mkhprog/Strict/file-full-text
+PASS mkhprog/Strict/file-block-hashes
+PASS mkhprog/Strict/file-channels
+PASS mkhprog/Strict/duplicate-usage
+PASS mkhprog/Strict/toggle-duplicate-usage
+PASS mkhprog/Strict/odd-usage
+PASS mkhprog/Strict/plus-non-bool-usage
+PASS mkhprog/Strict/short-flag-usage
+PASS mkhprog/Strict/long-flag-usage
+PASS mkhprog/Strict/bad-literate-usage
+PASS mkhprog/Strict/normalized-input-keeps-word-order
+PASS mkhprog/Strict/input-normalization-is-idempotent
+PASS mkhprog/Strict/all-62-blocks-are-consumed
+PASS mkhprog/Strict/corrupt-block-reference-is-rejected
+PASS mkhprog/Strict/missing-block-reference-is-rejected
+PASS mkhprog/Strict/extra-block-reference-is-rejected
+PASS mkhprog/Strict/usage-cannot-supply-timings
+PASS mkhprog/Strict/file-output-is-outside-hashed-stdout-profile
+PASS mkhprog/Strict/bad-reference--1
+PASS mkhprog/Strict/bad-reference-18446744073709551616
+PASS mkhprog/Strict/bad-reference-not-a-word
+PASS mkhprog/Strict/hash-
+PASS mkhprog/Strict/hash-a
+PASS mkhprog/Strict/hash-abc
+PASS mkhprog/Strict/empty-argument-range
+PASS mkhprog/Strict/argument-range-is-inclusive
+PASS mkhprog/Strict/literal-prefix-includes-each-line
+PASS mkhprog/Strict/zero-repetitions
+PASS mkhprog/Strict/repetition-reset
+PASS mkhprog/Strict/continuation-output-can-stop-at-first-block
+PASS mkhprog/lazy-type-text-is-not-demanded-by-header
+PASS mkhprog/strict-type-text-is-materialized-before-output
+PASS mkhprog/literal-comparison-does-not-force-mismatching-tail
+PASS mkhprog/lazy-text-is-shared-by-two-consumers
+structure KernelNeed : sig
+  structure W : <sig>
+  datatype node = Cons of char * <BaseFct>.<resultStr>.text | Nil
+  type text = node BenchNeed.t
+  val empty : <BaseFct>.<resultStr>.node D.t
+  val literal : string -> <BaseFct>.<resultStr>.text
+  val delay : (unit -> 'a D.t) -> 'a D.t
+  val append :
+      <BaseFct>.<resultStr>.text
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.text
+  val concat :
+      <BaseFct>.<resultStr>.text list -> <BaseFct>.<resultStr>.node D.t
+  val fold : (char * 'a -> 'a) -> 'a -> <BaseFct>.<resultStr>.text -> 'a
+  val toString : <BaseFct>.<resultStr>.text -> string
+  val hash : <BaseFct>.<resultStr>.text -> Word64.word
+  val equalConstant : <BaseFct>.<resultStr>.text -> string -> bool
+  val lit : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.text
+  val convert :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  datatype target = File of string | Hashed | Usage
+  type env =
+    {emit:target * text -> unit, literate:bool, moduleName:string,
+      target:target}
+  type cont = env -> unit
+  val stop : <BaseFct>.<resultStr>.env -> unit
+  val writeln :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val newline :
+      <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val header : <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val defaultArg :
+      <BaseFct>.<resultStr>.text -> <BaseFct>.<resultStr>.node D.t
+  val defaults :
+      <BaseFct>.<resultStr>.text list
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  type flag = string * text
+  val usageItem :
+      string * <BaseFct>.<resultStr>.text -> <BaseFct>.<resultStr>.node D.t
+  val usage :
+      (string * <BaseFct>.<resultStr>.text) list
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val datadecl :
+      <BaseFct>.<resultStr>.node D.t list
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val args : int -> int -> <BaseFct>.<resultStr>.node D.t
+  val phead : int -> <BaseFct>.<resultStr>.node D.t
+  val match : char -> char -> <BaseFct>.<resultStr>.text
+  val wildmatch : char -> <BaseFct>.<resultStr>.text
+  val bits :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val readValue : int -> int -> <BaseFct>.<resultStr>.text
+  val readString : int -> int -> <BaseFct>.<resultStr>.text
+  val readBool : int -> int -> bool -> <BaseFct>.<resultStr>.text
+  val oneFlag :
+      int
+       -> int
+       -> string * <BaseFct>.<resultStr>.text
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val parser :
+      (string * <BaseFct>.<resultStr>.text) list
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val templates : string list
+  val templateTexts : <BaseFct>.<resultStr>.text list
+  val aux : <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val generate :
+      (string * <BaseFct>.<resultStr>.text) list
+       -> <BaseFct>.<resultStr>.env -> unit
+  val usageText : string
+  val normalized : string -> string
+  val pairs : string list -> (string * <BaseFct>.<resultStr>.text) list
+  val check : (string * <BaseFct>.<resultStr>.text) list -> bool
+  val lines : string -> string list
+  val run :
+      string
+       -> (<BaseFct>.<resultStr>.target * <BaseFct>.<resultStr>.text -> unit)
+       -> unit
+end
+structure DriverNeed : sig
+  structure W : <sig>
+  val read : string -> TextIO.vector
+  val reference : string -> Word64.word vector
+  val checked : string -> Word64.word vector -> int * ?.word64
+  val run : string list -> string
+end
+structure TestsNeed : sig
+  structure K : <sig>
+  structure Driver : <sig>
+  structure D : <sig>
+  structure W : <sig>
+  val base : string
+  val read : string -> TextIO.vector
+  val label : string -> string
+  val collect : string -> (string * string * Word64.word) list
+  val check : string -> unit
+  val wanted : Word64.word vector
+  val input : string
+  exception Stop
+end
+structure KernelStrict : sig
+  structure W : <sig>
+  datatype node = Cons of char * <BaseFct>.<resultStr>.text | Nil
+  type text = node BenchStrict.t
+  val empty : <BaseFct>.<resultStr>.node D.t
+  val literal : string -> <BaseFct>.<resultStr>.text
+  val delay : (unit -> 'a D.t) -> 'a D.t
+  val append :
+      <BaseFct>.<resultStr>.text
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.text
+  val concat :
+      <BaseFct>.<resultStr>.text list -> <BaseFct>.<resultStr>.node D.t
+  val fold : (char * 'a -> 'a) -> 'a -> <BaseFct>.<resultStr>.text -> 'a
+  val toString : <BaseFct>.<resultStr>.text -> string
+  val hash : <BaseFct>.<resultStr>.text -> Word64.word
+  val equalConstant : <BaseFct>.<resultStr>.text -> string -> bool
+  val lit : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.text
+  val convert :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  datatype target = File of string | Hashed | Usage
+  type env =
+    {emit:target * text -> unit, literate:bool, moduleName:string,
+      target:target}
+  type cont = env -> unit
+  val stop : <BaseFct>.<resultStr>.env -> unit
+  val writeln :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val newline :
+      <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val header : <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val defaultArg :
+      <BaseFct>.<resultStr>.text -> <BaseFct>.<resultStr>.node D.t
+  val defaults :
+      <BaseFct>.<resultStr>.text list
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  type flag = string * text
+  val usageItem :
+      string * <BaseFct>.<resultStr>.text -> <BaseFct>.<resultStr>.node D.t
+  val usage :
+      (string * <BaseFct>.<resultStr>.text) list
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val datadecl :
+      <BaseFct>.<resultStr>.node D.t list
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val args : int -> int -> <BaseFct>.<resultStr>.node D.t
+  val phead : int -> <BaseFct>.<resultStr>.node D.t
+  val match : char -> char -> <BaseFct>.<resultStr>.text
+  val wildmatch : char -> <BaseFct>.<resultStr>.text
+  val bits :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val readValue : int -> int -> <BaseFct>.<resultStr>.text
+  val readString : int -> int -> <BaseFct>.<resultStr>.text
+  val readBool : int -> int -> bool -> <BaseFct>.<resultStr>.text
+  val oneFlag :
+      int
+       -> int
+       -> string * <BaseFct>.<resultStr>.text
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val parser :
+      (string * <BaseFct>.<resultStr>.text) list
+       -> <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val templates : string list
+  val templateTexts : <BaseFct>.<resultStr>.text list
+  val aux : <BaseFct>.<resultStr>.cont -> <BaseFct>.<resultStr>.env -> unit
+  val generate :
+      (string * <BaseFct>.<resultStr>.text) list
+       -> <BaseFct>.<resultStr>.env -> unit
+  val usageText : string
+  val normalized : string -> string
+  val pairs : string list -> (string * <BaseFct>.<resultStr>.text) list
+  val check : (string * <BaseFct>.<resultStr>.text) list -> bool
+  val lines : string -> string list
+  val run :
+      string
+       -> (<BaseFct>.<resultStr>.target * <BaseFct>.<resultStr>.text -> unit)
+       -> unit
+end
+structure DriverStrict : sig
+  structure W : <sig>
+  val read : string -> TextIO.vector
+  val reference : string -> Word64.word vector
+  val checked : string -> Word64.word vector -> int * ?.word64
+  val run : string list -> string
+end
+structure TestsStrict : sig
+  structure K : <sig>
+  structure Driver : <sig>
+  structure D : <sig>
+  structure W : <sig>
+  val base : string
+  val read : string -> TextIO.vector
+  val label : string -> string
+  val collect : string -> (string * string * Word64.word) list
+  val check : string -> unit
+  val wanted : Word64.word vector
+  val input : string
+  exception Stop
+end
+structure Demand : sig
+  structure K : <sig>
+  structure Q : <sig>
+  exception Stop
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 112 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mkhprog-templates.sml]
+structure BenchMkhprogTemplates : sig val strings : string list end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mkhprog.sml]
+functor BenchMkhprogFn(D: sig
+                          type 'a t
+                          val delay : (unit -> 'a) -> 'a t
+                          val force : 'a t -> 'a
+                        end) :
+                      
+                        sig
+                          structure W : <sig>
+                          type node
+                          type text
+                          val empty : node D.t
+                          val literal : string -> text
+                          val delay : (unit -> 'a D.t) -> 'a D.t
+                          val append : text -> node D.t -> text
+                          val concat : text list -> node D.t
+                          val fold : (char * 'a -> 'a) -> 'a -> text -> 'a
+                          val toString : text -> string
+                          val hash : text -> Word64.word
+                          val equalConstant : text -> string -> bool
+                          val convert : node D.t -> node D.t
+                          val lit : node D.t -> text
+                          type target
+                          type env
+                          type cont
+                          val stop : env -> unit
+                          val writeln : node D.t -> cont -> env -> unit
+                          val newline : cont -> env -> unit
+                          val header : cont -> env -> unit
+                          val defaultArg : text -> node D.t
+                          val defaults : text list -> cont -> env -> unit
+                          type flag
+                          val usageItem : string * text -> node D.t
+                          val usage : (string * text) list
+                                       -> cont -> env -> unit
+                          val datadecl : node D.t list -> cont -> env -> unit
+                          val args : int -> int -> node D.t
+                          val phead : int -> node D.t
+                          val match : char -> char -> text
+                          val wildmatch : char -> text
+                          val bits : int -> int -> node D.t -> node D.t
+                          val readValue : int -> int -> text
+                          val readString : int -> int -> text
+                          val readBool : int -> int -> bool -> text
+                          val oneFlag : int
+                                         -> int
+                                         -> string * text
+                                         -> cont -> env -> unit
+                          val parser : (string * text) list
+                                        -> cont -> env -> unit
+                          val templates : string list
+                          val templateTexts : text list
+                          val aux : cont -> env -> unit
+                          val generate : (string * text) list -> env -> unit
+                          val usageText : string
+                          val normalized : string -> string
+                          val pairs : string list -> (string * text) list
+                          val check : (string * text) list -> bool
+                          val lines : string -> string list
+                          val run : string -> (target * text -> unit) -> unit
+                        end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/mkhprog-driver.sml]
+functor BenchMkhprogDriverFn(K: sig
+                                type text
+                                datatype target
+                                  = File of string | Hashed | Usage
+                                val normalized : string -> string
+                                val run : string
+                                           -> (target * text -> unit) -> unit
+                                val hash : text -> Word64.word
+                              end) :
+                            
+                              sig
+                                structure W : <sig>
+                                val read : string -> TextIO.vector
+                                val reference : string -> Word64.word vector
+                                val checked : string
+                                               -> Word64.word vector
+                                               -> int * ?.word64
+                                val run : string list -> string
+                              end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/mkhprog-tests.sml]
+PASS mkhprog/Need/default-full-text
+PASS mkhprog/Need/default-block-hashes
+PASS mkhprog/Need/default-channels
+PASS mkhprog/Need/aux-full-text
+PASS mkhprog/Need/aux-block-hashes
+PASS mkhprog/Need/aux-channels
+PASS mkhprog/Need/empty-full-text
+PASS mkhprog/Need/empty-block-hashes
+PASS mkhprog/Need/empty-channels
+PASS mkhprog/Need/one-int-full-text
+PASS mkhprog/Need/one-int-block-hashes
+PASS mkhprog/Need/one-int-channels
+PASS mkhprog/Need/boolean-full-text
+PASS mkhprog/Need/boolean-block-hashes
+PASS mkhprog/Need/boolean-channels
+PASS mkhprog/Need/string-full-text
+PASS mkhprog/Need/string-block-hashes
+PASS mkhprog/Need/string-channels
+PASS mkhprog/Need/literate-full-text
+PASS mkhprog/Need/literate-block-hashes
+PASS mkhprog/Need/literate-channels
+PASS mkhprog/Need/module-inline-full-text
+PASS mkhprog/Need/module-inline-block-hashes
+PASS mkhprog/Need/module-inline-channels
+PASS mkhprog/Need/file-full-text
+PASS mkhprog/Need/file-block-hashes
+PASS mkhprog/Need/file-channels
+PASS mkhprog/Need/duplicate-usage
+PASS mkhprog/Need/toggle-duplicate-usage
+PASS mkhprog/Need/odd-usage
+PASS mkhprog/Need/plus-non-bool-usage
+PASS mkhprog/Need/short-flag-usage
+PASS mkhprog/Need/long-flag-usage
+PASS mkhprog/Need/bad-literate-usage
+PASS mkhprog/Need/normalized-input-keeps-word-order
+PASS mkhprog/Need/input-normalization-is-idempotent
+PASS mkhprog/Need/all-62-blocks-are-consumed
+PASS mkhprog/Need/corrupt-block-reference-is-rejected
+PASS mkhprog/Need/missing-block-reference-is-rejected
+PASS mkhprog/Need/extra-block-reference-is-rejected
+PASS mkhprog/Need/usage-cannot-supply-timings
+PASS mkhprog/Need/file-output-is-outside-hashed-stdout-profile
+PASS mkhprog/Need/bad-reference--1
+PASS mkhprog/Need/bad-reference-18446744073709551616
+PASS mkhprog/Need/bad-reference-not-a-word
+PASS mkhprog/Need/hash-
+PASS mkhprog/Need/hash-a
+PASS mkhprog/Need/hash-abc
+PASS mkhprog/Need/empty-argument-range
+PASS mkhprog/Need/argument-range-is-inclusive
+PASS mkhprog/Need/literal-prefix-includes-each-line
+PASS mkhprog/Need/zero-repetitions
+PASS mkhprog/Need/repetition-reset
+PASS mkhprog/Need/continuation-output-can-stop-at-first-block
+PASS mkhprog/Strict/default-full-text
+PASS mkhprog/Strict/default-block-hashes
+PASS mkhprog/Strict/default-channels
+PASS mkhprog/Strict/aux-full-text
+PASS mkhprog/Strict/aux-block-hashes
+PASS mkhprog/Strict/aux-channels
+PASS mkhprog/Strict/empty-full-text
+PASS mkhprog/Strict/empty-block-hashes
+PASS mkhprog/Strict/empty-channels
+PASS mkhprog/Strict/one-int-full-text
+PASS mkhprog/Strict/one-int-block-hashes
+PASS mkhprog/Strict/one-int-channels
+PASS mkhprog/Strict/boolean-full-text
+PASS mkhprog/Strict/boolean-block-hashes
+PASS mkhprog/Strict/boolean-channels
+PASS mkhprog/Strict/string-full-text
+PASS mkhprog/Strict/string-block-hashes
+PASS mkhprog/Strict/string-channels
+PASS mkhprog/Strict/literate-full-text
+PASS mkhprog/Strict/literate-block-hashes
+PASS mkhprog/Strict/literate-channels
+PASS mkhprog/Strict/module-inline-full-text
+PASS mkhprog/Strict/module-inline-block-hashes
+PASS mkhprog/Strict/module-inline-channels
+PASS mkhprog/Strict/file-full-text
+PASS mkhprog/Strict/file-block-hashes
+PASS mkhprog/Strict/file-channels
+PASS mkhprog/Strict/duplicate-usage
+PASS mkhprog/Strict/toggle-duplicate-usage
+PASS mkhprog/Strict/odd-usage
+PASS mkhprog/Strict/plus-non-bool-usage
+PASS mkhprog/Strict/short-flag-usage
+PASS mkhprog/Strict/long-flag-usage
+PASS mkhprog/Strict/bad-literate-usage
+PASS mkhprog/Strict/normalized-input-keeps-word-order
+PASS mkhprog/Strict/input-normalization-is-idempotent
+PASS mkhprog/Strict/all-62-blocks-are-consumed
+PASS mkhprog/Strict/corrupt-block-reference-is-rejected
+PASS mkhprog/Strict/missing-block-reference-is-rejected
+PASS mkhprog/Strict/extra-block-reference-is-rejected
+PASS mkhprog/Strict/usage-cannot-supply-timings
+PASS mkhprog/Strict/file-output-is-outside-hashed-stdout-profile
+PASS mkhprog/Strict/bad-reference--1
+PASS mkhprog/Strict/bad-reference-18446744073709551616
+PASS mkhprog/Strict/bad-reference-not-a-word
+PASS mkhprog/Strict/hash-
+PASS mkhprog/Strict/hash-a
+PASS mkhprog/Strict/hash-abc
+PASS mkhprog/Strict/empty-argument-range
+PASS mkhprog/Strict/argument-range-is-inclusive
+PASS mkhprog/Strict/literal-prefix-includes-each-line
+PASS mkhprog/Strict/zero-repetitions
+PASS mkhprog/Strict/repetition-reset
+PASS mkhprog/Strict/continuation-output-can-stop-at-first-block
+PASS mkhprog/lazy-type-text-is-not-demanded-by-header
+PASS mkhprog/strict-type-text-is-materialized-before-output
+PASS mkhprog/literal-comparison-does-not-force-mismatching-tail
+PASS mkhprog/lazy-text-is-shared-by-two-consumers
+structure KernelNeed : 
+  sig
+    structure W : <sig>
+    datatype node = Cons of char * text | Nil
+    type text = node BenchNeed.t
+    val empty : node D.t
+    val literal : string -> text
+    val delay : (unit -> 'a D.t) -> 'a D.t
+    val append : text -> node D.t -> text
+    val concat : text list -> node D.t
+    val fold : (char * 'a -> 'a) -> 'a -> text -> 'a
+    val toString : text -> string
+    val hash : text -> Word64.word
+    val equalConstant : text -> string -> bool
+    val convert : node D.t -> node D.t
+    val lit : node D.t -> text
+    datatype target = File of string | Hashed | Usage
+    type env =
+      {emit:target * text -> unit, literate:bool, moduleName:string,
+        target:target}
+    type cont = env -> unit
+    val stop : env -> unit
+    val writeln : node D.t -> cont -> env -> unit
+    val newline : cont -> env -> unit
+    val header : cont -> env -> unit
+    val defaultArg : text -> node D.t
+    val defaults : text list -> cont -> env -> unit
+    type flag = string * text
+    val usageItem : string * text -> node D.t
+    val usage : (string * text) list -> cont -> env -> unit
+    val datadecl : node D.t list -> cont -> env -> unit
+    val args : int -> int -> node D.t
+    val phead : int -> node D.t
+    val match : char -> char -> text
+    val wildmatch : char -> text
+    val bits : int -> int -> node D.t -> node D.t
+    val readValue : int -> int -> text
+    val readString : int -> int -> text
+    val readBool : int -> int -> bool -> text
+    val oneFlag : int -> int -> string * text -> cont -> env -> unit
+    val parser : (string * text) list -> cont -> env -> unit
+    val templates : string list
+    val templateTexts : text list
+    val aux : cont -> env -> unit
+    val generate : (string * text) list -> env -> unit
+    val usageText : string
+    val normalized : string -> string
+    val pairs : string list -> (string * text) list
+    val check : (string * text) list -> bool
+    val lines : string -> string list
+    val run : string -> (target * text -> unit) -> unit
+  end
+structure DriverNeed : 
+  sig
+    structure W : <sig>
+    val read : string -> TextIO.vector
+    val reference : string -> Word64.word vector
+    val checked : string -> Word64.word vector -> int * ?.word64
+    val run : string list -> string
+  end
+structure TestsNeed : 
+  sig
+    structure K : <sig>
+    structure Driver : <sig>
+    structure D : <sig>
+    structure W : <sig>
+    val base : string
+    val read : string -> TextIO.vector
+    val label : string -> string
+    val collect : string -> (string * string * Word64.word) list
+    val check : string -> unit
+    val wanted : Word64.word vector
+    val input : string
+    exception Stop
+  end
+structure KernelStrict : 
+  sig
+    structure W : <sig>
+    datatype node = Cons of char * text | Nil
+    type text = node BenchStrict.t
+    val empty : node D.t
+    val literal : string -> text
+    val delay : (unit -> 'a D.t) -> 'a D.t
+    val append : text -> node D.t -> text
+    val concat : text list -> node D.t
+    val fold : (char * 'a -> 'a) -> 'a -> text -> 'a
+    val toString : text -> string
+    val hash : text -> Word64.word
+    val equalConstant : text -> string -> bool
+    val convert : node D.t -> node D.t
+    val lit : node D.t -> text
+    datatype target = File of string | Hashed | Usage
+    type env =
+      {emit:target * text -> unit, literate:bool, moduleName:string,
+        target:target}
+    type cont = env -> unit
+    val stop : env -> unit
+    val writeln : node D.t -> cont -> env -> unit
+    val newline : cont -> env -> unit
+    val header : cont -> env -> unit
+    val defaultArg : text -> node D.t
+    val defaults : text list -> cont -> env -> unit
+    type flag = string * text
+    val usageItem : string * text -> node D.t
+    val usage : (string * text) list -> cont -> env -> unit
+    val datadecl : node D.t list -> cont -> env -> unit
+    val args : int -> int -> node D.t
+    val phead : int -> node D.t
+    val match : char -> char -> text
+    val wildmatch : char -> text
+    val bits : int -> int -> node D.t -> node D.t
+    val readValue : int -> int -> text
+    val readString : int -> int -> text
+    val readBool : int -> int -> bool -> text
+    val oneFlag : int -> int -> string * text -> cont -> env -> unit
+    val parser : (string * text) list -> cont -> env -> unit
+    val templates : string list
+    val templateTexts : text list
+    val aux : cont -> env -> unit
+    val generate : (string * text) list -> env -> unit
+    val usageText : string
+    val normalized : string -> string
+    val pairs : string list -> (string * text) list
+    val check : (string * text) list -> bool
+    val lines : string -> string list
+    val run : string -> (target * text -> unit) -> unit
+  end
+structure DriverStrict : 
+  sig
+    structure W : <sig>
+    val read : string -> TextIO.vector
+    val reference : string -> Word64.word vector
+    val checked : string -> Word64.word vector -> int * ?.word64
+    val run : string list -> string
+  end
+structure TestsStrict : 
+  sig
+    structure K : <sig>
+    structure Driver : <sig>
+    structure D : <sig>
+    structure W : <sig>
+    val base : string
+    val read : string -> TextIO.vector
+    val label : string -> string
+    val collect : string -> (string * string * Word64.word) list
+    val check : string -> unit
+    val wanted : Word64.word vector
+    val input : string
+    exception Stop
+  end
+structure Demand : 
+  sig
+    structure K : <sig>
+    structure Q : <sig>
+    exception Stop
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 112 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS mkhprog/Need/default-full-text
+PASS mkhprog/Need/default-block-hashes
+PASS mkhprog/Need/default-channels
+PASS mkhprog/Need/aux-full-text
+PASS mkhprog/Need/aux-block-hashes
+PASS mkhprog/Need/aux-channels
+PASS mkhprog/Need/empty-full-text
+PASS mkhprog/Need/empty-block-hashes
+PASS mkhprog/Need/empty-channels
+PASS mkhprog/Need/one-int-full-text
+PASS mkhprog/Need/one-int-block-hashes
+PASS mkhprog/Need/one-int-channels
+PASS mkhprog/Need/boolean-full-text
+PASS mkhprog/Need/boolean-block-hashes
+PASS mkhprog/Need/boolean-channels
+PASS mkhprog/Need/string-full-text
+PASS mkhprog/Need/string-block-hashes
+PASS mkhprog/Need/string-channels
+PASS mkhprog/Need/literate-full-text
+PASS mkhprog/Need/literate-block-hashes
+PASS mkhprog/Need/literate-channels
+PASS mkhprog/Need/module-inline-full-text
+PASS mkhprog/Need/module-inline-block-hashes
+PASS mkhprog/Need/module-inline-channels
+PASS mkhprog/Need/file-full-text
+PASS mkhprog/Need/file-block-hashes
+PASS mkhprog/Need/file-channels
+PASS mkhprog/Need/duplicate-usage
+PASS mkhprog/Need/toggle-duplicate-usage
+PASS mkhprog/Need/odd-usage
+PASS mkhprog/Need/plus-non-bool-usage
+PASS mkhprog/Need/short-flag-usage
+PASS mkhprog/Need/long-flag-usage
+PASS mkhprog/Need/bad-literate-usage
+PASS mkhprog/Need/normalized-input-keeps-word-order
+PASS mkhprog/Need/input-normalization-is-idempotent
+PASS mkhprog/Need/all-62-blocks-are-consumed
+PASS mkhprog/Need/corrupt-block-reference-is-rejected
+PASS mkhprog/Need/missing-block-reference-is-rejected
+PASS mkhprog/Need/extra-block-reference-is-rejected
+PASS mkhprog/Need/usage-cannot-supply-timings
+PASS mkhprog/Need/file-output-is-outside-hashed-stdout-profile
+PASS mkhprog/Need/bad-reference--1
+PASS mkhprog/Need/bad-reference-18446744073709551616
+PASS mkhprog/Need/bad-reference-not-a-word
+PASS mkhprog/Need/hash-
+PASS mkhprog/Need/hash-a
+PASS mkhprog/Need/hash-abc
+PASS mkhprog/Need/empty-argument-range
+PASS mkhprog/Need/argument-range-is-inclusive
+PASS mkhprog/Need/literal-prefix-includes-each-line
+PASS mkhprog/Need/zero-repetitions
+PASS mkhprog/Need/repetition-reset
+PASS mkhprog/Need/continuation-output-can-stop-at-first-block
+PASS mkhprog/Strict/default-full-text
+PASS mkhprog/Strict/default-block-hashes
+PASS mkhprog/Strict/default-channels
+PASS mkhprog/Strict/aux-full-text
+PASS mkhprog/Strict/aux-block-hashes
+PASS mkhprog/Strict/aux-channels
+PASS mkhprog/Strict/empty-full-text
+PASS mkhprog/Strict/empty-block-hashes
+PASS mkhprog/Strict/empty-channels
+PASS mkhprog/Strict/one-int-full-text
+PASS mkhprog/Strict/one-int-block-hashes
+PASS mkhprog/Strict/one-int-channels
+PASS mkhprog/Strict/boolean-full-text
+PASS mkhprog/Strict/boolean-block-hashes
+PASS mkhprog/Strict/boolean-channels
+PASS mkhprog/Strict/string-full-text
+PASS mkhprog/Strict/string-block-hashes
+PASS mkhprog/Strict/string-channels
+PASS mkhprog/Strict/literate-full-text
+PASS mkhprog/Strict/literate-block-hashes
+PASS mkhprog/Strict/literate-channels
+PASS mkhprog/Strict/module-inline-full-text
+PASS mkhprog/Strict/module-inline-block-hashes
+PASS mkhprog/Strict/module-inline-channels
+PASS mkhprog/Strict/file-full-text
+PASS mkhprog/Strict/file-block-hashes
+PASS mkhprog/Strict/file-channels
+PASS mkhprog/Strict/duplicate-usage
+PASS mkhprog/Strict/toggle-duplicate-usage
+PASS mkhprog/Strict/odd-usage
+PASS mkhprog/Strict/plus-non-bool-usage
+PASS mkhprog/Strict/short-flag-usage
+PASS mkhprog/Strict/long-flag-usage
+PASS mkhprog/Strict/bad-literate-usage
+PASS mkhprog/Strict/normalized-input-keeps-word-order
+PASS mkhprog/Strict/input-normalization-is-idempotent
+PASS mkhprog/Strict/all-62-blocks-are-consumed
+PASS mkhprog/Strict/corrupt-block-reference-is-rejected
+PASS mkhprog/Strict/missing-block-reference-is-rejected
+PASS mkhprog/Strict/extra-block-reference-is-rejected
+PASS mkhprog/Strict/usage-cannot-supply-timings
+PASS mkhprog/Strict/file-output-is-outside-hashed-stdout-profile
+PASS mkhprog/Strict/bad-reference--1
+PASS mkhprog/Strict/bad-reference-18446744073709551616
+PASS mkhprog/Strict/bad-reference-not-a-word
+PASS mkhprog/Strict/hash-
+PASS mkhprog/Strict/hash-a
+PASS mkhprog/Strict/hash-abc
+PASS mkhprog/Strict/empty-argument-range
+PASS mkhprog/Strict/argument-range-is-inclusive
+PASS mkhprog/Strict/literal-prefix-includes-each-line
+PASS mkhprog/Strict/zero-repetitions
+PASS mkhprog/Strict/repetition-reset
+PASS mkhprog/Strict/continuation-output-can-stop-at-first-block
+PASS mkhprog/lazy-type-text-is-not-demanded-by-header
+PASS mkhprog/strict-type-text-is-materialized-before-output
+PASS mkhprog/literal-comparison-does-not-force-mismatching-tail
+PASS mkhprog/lazy-text-is-shared-by-two-consumers
+SUMMARY 112 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PASS mkhprog/Need/default-full-text
+PASS mkhprog/Need/default-block-hashes
+PASS mkhprog/Need/default-channels
+PASS mkhprog/Need/aux-full-text
+PASS mkhprog/Need/aux-block-hashes
+PASS mkhprog/Need/aux-channels
+PASS mkhprog/Need/empty-full-text
+PASS mkhprog/Need/empty-block-hashes
+PASS mkhprog/Need/empty-channels
+PASS mkhprog/Need/one-int-full-text
+PASS mkhprog/Need/one-int-block-hashes
+PASS mkhprog/Need/one-int-channels
+PASS mkhprog/Need/boolean-full-text
+PASS mkhprog/Need/boolean-block-hashes
+PASS mkhprog/Need/boolean-channels
+PASS mkhprog/Need/string-full-text
+PASS mkhprog/Need/string-block-hashes
+PASS mkhprog/Need/string-channels
+PASS mkhprog/Need/literate-full-text
+PASS mkhprog/Need/literate-block-hashes
+PASS mkhprog/Need/literate-channels
+PASS mkhprog/Need/module-inline-full-text
+PASS mkhprog/Need/module-inline-block-hashes
+PASS mkhprog/Need/module-inline-channels
+PASS mkhprog/Need/file-full-text
+PASS mkhprog/Need/file-block-hashes
+PASS mkhprog/Need/file-channels
+PASS mkhprog/Need/duplicate-usage
+PASS mkhprog/Need/toggle-duplicate-usage
+PASS mkhprog/Need/odd-usage
+PASS mkhprog/Need/plus-non-bool-usage
+PASS mkhprog/Need/short-flag-usage
+PASS mkhprog/Need/long-flag-usage
+PASS mkhprog/Need/bad-literate-usage
+PASS mkhprog/Need/normalized-input-keeps-word-order
+PASS mkhprog/Need/input-normalization-is-idempotent
+PASS mkhprog/Need/all-62-blocks-are-consumed
+PASS mkhprog/Need/corrupt-block-reference-is-rejected
+PASS mkhprog/Need/missing-block-reference-is-rejected
+PASS mkhprog/Need/extra-block-reference-is-rejected
+PASS mkhprog/Need/usage-cannot-supply-timings
+PASS mkhprog/Need/file-output-is-outside-hashed-stdout-profile
+PASS mkhprog/Need/bad-reference--1
+PASS mkhprog/Need/bad-reference-18446744073709551616
+PASS mkhprog/Need/bad-reference-not-a-word
+PASS mkhprog/Need/hash-
+PASS mkhprog/Need/hash-a
+PASS mkhprog/Need/hash-abc
+PASS mkhprog/Need/empty-argument-range
+PASS mkhprog/Need/argument-range-is-inclusive
+PASS mkhprog/Need/literal-prefix-includes-each-line
+PASS mkhprog/Need/zero-repetitions
+PASS mkhprog/Need/repetition-reset
+PASS mkhprog/Need/continuation-output-can-stop-at-first-block
+PASS mkhprog/Strict/default-full-text
+PASS mkhprog/Strict/default-block-hashes
+PASS mkhprog/Strict/default-channels
+PASS mkhprog/Strict/aux-full-text
+PASS mkhprog/Strict/aux-block-hashes
+PASS mkhprog/Strict/aux-channels
+PASS mkhprog/Strict/empty-full-text
+PASS mkhprog/Strict/empty-block-hashes
+PASS mkhprog/Strict/empty-channels
+PASS mkhprog/Strict/one-int-full-text
+PASS mkhprog/Strict/one-int-block-hashes
+PASS mkhprog/Strict/one-int-channels
+PASS mkhprog/Strict/boolean-full-text
+PASS mkhprog/Strict/boolean-block-hashes
+PASS mkhprog/Strict/boolean-channels
+PASS mkhprog/Strict/string-full-text
+PASS mkhprog/Strict/string-block-hashes
+PASS mkhprog/Strict/string-channels
+PASS mkhprog/Strict/literate-full-text
+PASS mkhprog/Strict/literate-block-hashes
+PASS mkhprog/Strict/literate-channels
+PASS mkhprog/Strict/module-inline-full-text
+PASS mkhprog/Strict/module-inline-block-hashes
+PASS mkhprog/Strict/module-inline-channels
+PASS mkhprog/Strict/file-full-text
+PASS mkhprog/Strict/file-block-hashes
+PASS mkhprog/Strict/file-channels
+PASS mkhprog/Strict/duplicate-usage
+PASS mkhprog/Strict/toggle-duplicate-usage
+PASS mkhprog/Strict/odd-usage
+PASS mkhprog/Strict/plus-non-bool-usage
+PASS mkhprog/Strict/short-flag-usage
+PASS mkhprog/Strict/long-flag-usage
+PASS mkhprog/Strict/bad-literate-usage
+PASS mkhprog/Strict/normalized-input-keeps-word-order
+PASS mkhprog/Strict/input-normalization-is-idempotent
+PASS mkhprog/Strict/all-62-blocks-are-consumed
+PASS mkhprog/Strict/corrupt-block-reference-is-rejected
+PASS mkhprog/Strict/missing-block-reference-is-rejected
+PASS mkhprog/Strict/extra-block-reference-is-rejected
+PASS mkhprog/Strict/usage-cannot-supply-timings
+PASS mkhprog/Strict/file-output-is-outside-hashed-stdout-profile
+PASS mkhprog/Strict/bad-reference--1
+PASS mkhprog/Strict/bad-reference-18446744073709551616
+PASS mkhprog/Strict/bad-reference-not-a-word
+PASS mkhprog/Strict/hash-
+PASS mkhprog/Strict/hash-a
+PASS mkhprog/Strict/hash-abc
+PASS mkhprog/Strict/empty-argument-range
+PASS mkhprog/Strict/argument-range-is-inclusive
+PASS mkhprog/Strict/literal-prefix-includes-each-line
+PASS mkhprog/Strict/zero-repetitions
+PASS mkhprog/Strict/repetition-reset
+PASS mkhprog/Strict/continuation-output-can-stop-at-first-block
+PASS mkhprog/lazy-type-text-is-not-demanded-by-header
+PASS mkhprog/strict-type-text-is-materialized-before-output
+PASS mkhprog/literal-comparison-does-not-force-mismatching-tail
+PASS mkhprog/lazy-text-is-shared-by-two-consumers
+SUMMARY 112 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

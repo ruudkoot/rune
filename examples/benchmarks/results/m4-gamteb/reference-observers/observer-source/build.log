@@ -1,0 +1,99 @@
+[ 1 of 15] Compiling Consts           ( Consts.hs, Consts.o )
+
+Consts.hs:7:1: warning: [-Wtabs]
+    Tab character found here, and in 51 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+7 |                big,small,nothing,
+  | ^^^^^^^^
+[ 2 of 15] Compiling GamtebType       ( GamtebType.hs, GamtebType.o )
+
+GamtebType.hs:8:1: warning: [-Wtabs]
+    Tab character found here, and in 78 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+8 |                  Random, StatType, Weight, Value, Result, Stat,
+  | ^^^^^^^^
+[ 3 of 15] Compiling Distance         ( Distance.hs, Distance.o )
+
+Distance.hs:15:1: warning: [-Wtabs]
+    Tab character found here, and in 77 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+15 |         (dSurf+small, surf)
+   | ^^^^^^^^
+[ 4 of 15] Compiling InitTable        ( InitTable.hs, InitTable.o )
+
+InitTable.hs:18:1: warning: [-Wtabs]
+    Tab character found here, and in 49 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+18 |         where erg =
+   | ^^^^^^^^
+[ 5 of 15] Compiling NofibUtils       ( NofibUtils.hs, NofibUtils.o )
+[ 6 of 15] Compiling Utils            ( Utils.hs, Utils.o )
+
+Utils.hs:18:1: warning: [-Wtabs]
+    Tab character found here, and in 14 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+18 |         where
+   | ^^^^^^^^
+[ 7 of 15] Compiling RoulSplit        ( RoulSplit.hs, RoulSplit.o )
+
+RoulSplit.hs:17:1: warning: [-Wtabs]
+    Tab character found here, and in 17 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+17 |         if (r1 < 0.5)
+   | ^^^^^^^^
+[ 8 of 15] Compiling PhotoElec        ( PhotoElec.hs, PhotoElec.o )
+
+PhotoElec.hs:14:1: warning: [-Wtabs]
+    Tab character found here, and in 14 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+14 |         if (w' > wgtCut2)
+   | ^^^^^^^^
+[ 9 of 15] Compiling Pair             ( Pair.hs, Pair.o )
+
+Pair.hs:16:1: warning: [-Wtabs]
+    Tab character found here, and in 63 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+16 |         if (e' <= ergCut)
+   | ^^^^^^^^
+[10 of 15] Compiling Output           ( Output.hs, Output.o )
+
+Output.hs:8:7: warning: [-Wtabs]
+    Tab character found here, and in 44 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+8 | import  GamtebType
+  |       ^^
+[11 of 15] Compiling Compton          ( Compton.hs, Compton.o )
+
+Compton.hs:16:1: warning: [-Wtabs]
+    Tab character found here, and in 108 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+16 |         if (e' <= ergCut)
+   | ^^^^^^^^
+[12 of 15] Compiling TransPort        ( TransPort.hs, TransPort.o )
+
+TransPort.hs:22:1: warning: [-Wtabs]
+    Tab character found here, and in 128 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+22 |         if (dColl < dSurf)
+   | ^^^^^^^^
+[13 of 15] Compiling GamtebMain       ( GamtebMain.hs, GamtebMain.o )
+
+GamtebMain.hs:28:1: warning: [-Wtabs]
+    Tab character found here, and in 18 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+28 |         transPort p prob
+   | ^^^^^^^^
+[14 of 15] Compiling Main             ( Main.hs, Main.o )
+[15 of 15] Linking original

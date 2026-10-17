@@ -1,0 +1,14 @@
+Need 1 2 8 OK
+Need 2 2 7 OK
+Need 3 3 10 OK
+Need 10 11 37 OK
+Need 100 118 382 OK
+Need 1000 1231 4020 OK
+Need 5000 5913 19247 OK
+Strict 1 2 8 OK
+Strict 2 2 7 OK
+Strict 3 3 10 OK
+Strict 10 11 37 OK
+Strict 100 118 382 OK
+Strict 1000 1231 4020 OK
+Strict 5000 5913 19247 OK

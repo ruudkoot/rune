@@ -1,0 +1,20 @@
+[
+  {
+    "nursery": "128k",
+    "exit": 1,
+    "passed": 24,
+    "failed": 4,
+    "summary": [
+      "SUMMARY 28 checks, 4 failed"
+    ]
+  },
+  {
+    "nursery": "64m",
+    "exit": 0,
+    "passed": 28,
+    "failed": 0,
+    "summary": [
+      "SUMMARY 28 checks, 0 failed"
+    ]
+  }
+]

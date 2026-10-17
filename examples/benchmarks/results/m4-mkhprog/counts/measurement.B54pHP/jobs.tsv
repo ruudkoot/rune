@@ -1,0 +1,1 @@
+mkhprog-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/mkhprog-templates.sml shared/mkhprog.sml shared/mkhprog-driver.sml mkhprog-strict/benchmark.sml shared/main.sml	3800 specification.input blocks.hashes	mkhprog-strict/normal.expected	specification.input blocks.hashes

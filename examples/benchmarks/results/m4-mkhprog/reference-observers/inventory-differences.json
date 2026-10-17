@@ -1,0 +1,38 @@
+[
+  {
+    "before": {
+      "source": "nofib",
+      "path": "real/mkhprog",
+      "name": "mkhprog",
+      "rune_name": "mkhprog",
+      "milestone": "M4",
+      "disposition": "import",
+      "family": "application",
+      "related": "",
+      "authors": "not stated in scanned source headers",
+      "sha256": "05613206770d88d6334b1092b1a5fc49271a78438212f4b743d4607183c71c1b",
+      "members": "real/mkhprog/Main.lhs;real/mkhprog/NofibUtils.hs",
+      "inputs": "real/mkhprog/mkhprog.stdin",
+      "notices": "real/mkhprog/Main.lhs:header",
+      "evidence": "real/mkhprog/Makefile",
+      "reason": "portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import"
+    },
+    "after": {
+      "source": "nofib",
+      "path": "real/mkhprog",
+      "name": "mkhprog",
+      "rune_name": "mkhprog",
+      "milestone": "M4",
+      "disposition": "import",
+      "family": "application",
+      "related": "",
+      "authors": "N. D. North",
+      "sha256": "05613206770d88d6334b1092b1a5fc49271a78438212f4b743d4607183c71c1b",
+      "members": "real/mkhprog/Main.lhs;real/mkhprog/NofibUtils.hs",
+      "inputs": "real/mkhprog/mkhprog.stdin",
+      "notices": "real/mkhprog/Main.lhs:header",
+      "evidence": "real/mkhprog/Main.lhs:author-and-crown-heading;real/mkhprog/Makefile",
+      "reason": "portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import"
+    }
+  }
+]

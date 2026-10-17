@@ -1,0 +1,1 @@
+gamteb-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/nofib-gamteb-math.sml shared/nofib-gamteb-tables.sml shared/nofib-gamteb.sml shared/nofib-gamteb-driver.sml gamteb-lazy/benchmark.sml shared/main.sml	1 100 smoke.reference	gamteb-lazy/smoke.expected	smoke.reference

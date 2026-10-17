@@ -1,0 +1,9 @@
+COUNT unbudgeted gamteb-lazy normal rune
+COUNT unbudgeted gamteb-lazy normal rune:opt
+COUNT unbudgeted gamteb-lazy normal rune:new
+COUNT unbudgeted gamteb-lazy normal rune:jit
+COUNT unbudgeted gamteb-strict normal rune
+COUNT unbudgeted gamteb-strict normal rune:opt
+COUNT unbudgeted gamteb-strict normal rune:new
+COUNT unbudgeted gamteb-strict normal rune:jit
+COUNT comparisons agree

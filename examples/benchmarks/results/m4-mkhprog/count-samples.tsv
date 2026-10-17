@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+mkhprog-lazy	normal	rune	O2	count	1	1	pass	81.33	81.15	0.15	10420	17203626051	60319332232	1768231169	counts/measurement.vJQ9Di/mkhprog-lazy/rune/fresh.1
+mkhprog-lazy	normal	rune:opt	O2	count	1	1	pass	43.61	43.51	0.09	10948	17203626051	60319332232	1768231169	counts/measurement.vJQ9Di/mkhprog-lazy/rune-opt/fresh.1
+mkhprog-lazy	normal	rune:new	O2	count	1	1	pass	82.86	82.71	0.14	10612	10529587001	60319332232	1768231169	counts/measurement.vJQ9Di/mkhprog-lazy/rune-new/fresh.1
+mkhprog-lazy	normal	rune:jit	O2	count	1	1	pass	48.21	48.04	0.16	11784	10529587001	60319332232	1768231169	counts/measurement.vJQ9Di/mkhprog-lazy/rune-jit/fresh.1
+mkhprog-strict	normal	rune	O2	count	1	1	pass	28.62	28.58	0.03	10376	5434717082	13733891064	354194735	counts/measurement.B54pHP/mkhprog-strict/rune/fresh.1
+mkhprog-strict	normal	rune:opt	O2	count	1	1	pass	12.81	12.75	0.04	11012	5434717082	13733891064	354194735	counts/measurement.B54pHP/mkhprog-strict/rune-opt/fresh.1
+mkhprog-strict	normal	rune:new	O2	count	1	1	pass	28.13	28.08	0.04	10552	3179021886	13733891064	354194735	counts/measurement.B54pHP/mkhprog-strict/rune-new/fresh.1
+mkhprog-strict	normal	rune:jit	O2	count	1	1	pass	14.69	14.55	0.08	12004	3179021886	13733891064	354194735	counts/measurement.B54pHP/mkhprog-strict/rune-jit/fresh.1
