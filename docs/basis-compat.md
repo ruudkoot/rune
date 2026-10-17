@@ -352,8 +352,15 @@ documentation has every line under the member it is about, in a block
   negative count raises `Subscript`. On a loaded machine it sometimes gets a
   floating-point result wrong (about one run in ten of 32 at once, never
   alone): those are the `HOST-FLAKY` lines, which need not match.
+  `Posix.ProcEnv.setpgid` with `SOME` for the process or the group is one
+  too: the parent raised an exception on the nightly of 2026-10-17, and the
+  check passed on the nightly of 2026-10-16, on `xc1:smlnj-legacy`,
+  `native:smlnj32` and `native:smlnj-dev` of the failing run, and on a quiet
+  machine.
 * **SML/NJ 2026.2, 64-bit** (`smlnj-dev`). The failures are those of the
-  64-bit 110.99.9 library. Matching an exception value built under one name
+  64-bit 110.99.9 library, apart from `Posix.ProcEnv.setpgid` with `SOME`,
+  which passed on 2026.2 in the nightly that failed it for 110.99.9.
+  Matching an exception value built under one name
   of an exception against another name of it takes the right rule
   (`General.*/as-value`, in the native configuration and in `xc1`).
 * **SML/NJ 110.99.9, 32-bit** (160 lines). Everything of the 64-bit 110.99.9
