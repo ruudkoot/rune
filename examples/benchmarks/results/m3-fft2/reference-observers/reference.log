@@ -1,0 +1,3 @@
+{'profile': 'smoke', 'base': 70, 'iterations': 100, 'fixture_match': True, 'printed_lines': 300}
+{'profile': 'normal', 'base': 245, 'iterations': 100, 'fixture_match': True, 'printed_lines': 300}
+{'profile': 'large', 'base': 490, 'iterations': 100, 'fixture_match': True, 'printed_lines': 300}

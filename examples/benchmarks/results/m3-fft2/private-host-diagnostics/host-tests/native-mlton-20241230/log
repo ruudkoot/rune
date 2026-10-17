@@ -1,0 +1,20 @@
+Warning: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/fft2-originals/tests.sml 52.11-52.17.
+  Declaration is not exhaustive.
+    missing pattern: :: ((_, :: (_, :: (_, :: _))) | (_, :: (_, nil)) | (_, nil))
+                     | nil
+    in: val [a, _, _] = K.run (70.0 + 1.0 / 15.0)
+Warning: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/fft2-originals/tests.sml 63.11-63.29.
+  Declaration is not exhaustive.
+    missing pattern: :: ((_, :: (_, :: (_, :: _))) | (_, :: (_, nil)) | (_, nil))
+                     | nil
+    in: val [(a, r), (b, _), (c, _)] = Driver.bounds 245
+Warning: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/fft2-originals/tests.sml 121.11-121.17.
+  Declaration is not exhaustive.
+    missing pattern: :: ((_, :: (_, :: (_, :: _))) | (_, :: (_, nil)) | (_, nil))
+                     | nil
+    in: val [a, _, _] = K.run (70.0 + 1.0 / 15.0)
+Warning: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/fft2-originals/tests.sml 132.11-132.29.
+  Declaration is not exhaustive.
+    missing pattern: :: ((_, :: (_, :: (_, :: _))) | (_, :: (_, nil)) | (_, nil))
+                     | nil
+    in: val [(a, r), (b, _), (c, _)] = Driver.bounds 245

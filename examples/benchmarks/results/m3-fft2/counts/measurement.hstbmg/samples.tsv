@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+fft2-lazy	normal	rune	O2	compile	0	0	pass	1.99	1.71	0.28	135448	-	-	-	fft2-lazy/rune/build/compile
+fft2-lazy	normal	rune	O2	correctness	0	0	pass	85.38	84.75	0.61	526788	13232018406	21093409776	641090466	fft2-lazy/rune/correctness.0
+fft2-lazy	normal	rune	O2	count	1	1	pass	82.97	82.29	0.65	526784	13232018406	21093409776	641090466	fft2-lazy/rune/fresh.1
+fft2-lazy	normal	rune:opt	O2	compile	0	0	pass	1.79	1.70	0.09	135452	-	-	-	fft2-lazy/rune-opt/build/compile
+fft2-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.43	0.23	0.07	15200	-	-	-	fft2-lazy/rune-opt/build/native-compile
+fft2-lazy	normal	rune:opt	O2	correctness	0	0	pass	41.39	40.68	0.70	527476	13232018406	21093409776	641090466	fft2-lazy/rune-opt/correctness.0
+fft2-lazy	normal	rune:opt	O2	count	1	1	pass	37.98	37.47	0.50	527568	13232018406	21093409776	641090466	fft2-lazy/rune-opt/fresh.1
+fft2-lazy	normal	rune:new	O2	compile	0	0	pass	1.63	1.56	0.06	135432	-	-	-	fft2-lazy/rune-new/build/compile
+fft2-lazy	normal	rune:new	O2	correctness	0	0	pass	70.35	69.76	0.58	527084	7960361425	21093409776	641090466	fft2-lazy/rune-new/correctness.0
+fft2-lazy	normal	rune:new	O2	count	1	1	pass	65.63	65.14	0.48	527196	7960361425	21093409776	641090466	fft2-lazy/rune-new/fresh.1
+fft2-lazy	normal	rune:jit	O2	compile	0	0	pass	1.56	1.48	0.08	135444	-	-	-	fft2-lazy/rune-jit/build/compile
+fft2-lazy	normal	rune:jit	O2	correctness	0	0	pass	34.51	33.91	0.58	528340	7960361425	21093409776	641090466	fft2-lazy/rune-jit/correctness.0
+fft2-lazy	normal	rune:jit	O2	count	1	1	pass	52.72	51.31	0.92	528452	7960361425	21093409776	641090466	fft2-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

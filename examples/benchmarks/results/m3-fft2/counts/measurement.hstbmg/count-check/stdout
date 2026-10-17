@@ -1,0 +1,5 @@
+COUNT unbudgeted fft2-lazy normal rune
+COUNT unbudgeted fft2-lazy normal rune:opt
+COUNT unbudgeted fft2-lazy normal rune:new
+COUNT unbudgeted fft2-lazy normal rune:jit
+COUNT comparisons agree

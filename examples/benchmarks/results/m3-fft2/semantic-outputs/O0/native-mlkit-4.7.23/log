@@ -1,0 +1,17 @@
+ *** Warnings ***
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/fft2-checks.ALfVo1/O0/native-mlkit-4.7.23/program/src/8/fft2-tests.sml, line 52, column 10:
+     let val[a,_,_]=K.run(70.0+1.0/15.0)in a>200.0 end)
+            ^^^^^^^
+Pattern not exhaustive.
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/fft2-checks.ALfVo1/O0/native-mlkit-4.7.23/program/src/8/fft2-tests.sml, line 63, column 10:
+     let val[(a,r),(b,_),(c,_)]=Driver.bounds 245
+            ^^^^^^^^^^^^^^^^^^^
+Pattern not exhaustive.
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/fft2-checks.ALfVo1/O0/native-mlkit-4.7.23/program/src/8/fft2-tests.sml, line 121, column 10:
+     let val[a,_,_]=K.run(70.0+1.0/15.0)in a>200.0 end)
+            ^^^^^^^
+Pattern not exhaustive.
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/fft2-checks.ALfVo1/O0/native-mlkit-4.7.23/program/src/8/fft2-tests.sml, line 132, column 10:
+     let val[(a,r),(b,_),(c,_)]=Driver.bounds 245
+            ^^^^^^^^^^^^^^^^^^^
+Pattern not exhaustive.

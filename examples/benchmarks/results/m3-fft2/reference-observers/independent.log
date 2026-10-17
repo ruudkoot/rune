@@ -1,0 +1,3 @@
+{'profile': 'smoke', 'base': 70, 'rows': 100, 'distinct_lengths': [70, 71, 72, 73, 74, 75, 76, 77], 'maximum_source_difference': [5.684341886080802e-14, 0.0, 0.0]}
+{'profile': 'normal', 'base': 245, 'rows': 100, 'distinct_lengths': [245, 246, 247, 248, 249, 250, 251, 252], 'maximum_source_difference': [0.0, 0.0, 0.0]}
+{'profile': 'large', 'base': 490, 'rows': 100, 'distinct_lengths': [490, 491, 492, 493, 494, 495, 496, 497], 'maximum_source_difference': [4.547473508864641e-13, 0.0, 0.0]}

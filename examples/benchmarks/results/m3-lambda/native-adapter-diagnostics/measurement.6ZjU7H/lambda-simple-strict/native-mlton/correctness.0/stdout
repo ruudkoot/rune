@@ -1,0 +1,4 @@
+RESULT 1:9
+PASS lambda-simple-strict
+SAMPLE 1 0.000156000
+SUMMARY 1 checks, 0 failed

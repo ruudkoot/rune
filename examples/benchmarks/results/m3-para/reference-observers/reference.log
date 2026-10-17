@@ -1,0 +1,3 @@
+{'profile': 'smoke', 'iterations': 1, 'empty_stdout': True, 'upstream_fixture_present': False}
+{'profile': 'normal', 'iterations': 8, 'empty_stdout': True, 'upstream_fixture_present': False}
+{'profile': 'large', 'iterations': 40, 'empty_stdout': True, 'upstream_fixture_present': False}

@@ -1,0 +1,17 @@
+COUNT unbudgeted lambda-simple-lazy normal rune
+COUNT unbudgeted lambda-simple-lazy normal rune:opt
+COUNT unbudgeted lambda-simple-lazy normal rune:new
+COUNT unbudgeted lambda-simple-lazy normal rune:jit
+COUNT unbudgeted lambda-simple-strict normal rune
+COUNT unbudgeted lambda-simple-strict normal rune:opt
+COUNT unbudgeted lambda-simple-strict normal rune:new
+COUNT unbudgeted lambda-simple-strict normal rune:jit
+COUNT unbudgeted lambda-monad-lazy normal rune
+COUNT unbudgeted lambda-monad-lazy normal rune:opt
+COUNT unbudgeted lambda-monad-lazy normal rune:new
+COUNT unbudgeted lambda-monad-lazy normal rune:jit
+COUNT unbudgeted lambda-monad-strict normal rune
+COUNT unbudgeted lambda-monad-strict normal rune:opt
+COUNT unbudgeted lambda-monad-strict normal rune:new
+COUNT unbudgeted lambda-monad-strict normal rune:jit
+COUNT comparisons agree

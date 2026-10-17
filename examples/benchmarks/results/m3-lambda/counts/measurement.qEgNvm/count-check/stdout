@@ -1,0 +1,5 @@
+COUNT unbudgeted lambda-simple-strict normal rune
+COUNT unbudgeted lambda-simple-strict normal rune:opt
+COUNT unbudgeted lambda-simple-strict normal rune:new
+COUNT unbudgeted lambda-simple-strict normal rune:jit
+COUNT comparisons agree

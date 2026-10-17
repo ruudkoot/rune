@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+fft2-lazy	normal	rune	O2	count	1	1	pass	82.97	82.29	0.65	526784	13232018406	21093409776	641090466	counts/measurement.hstbmg/fft2-lazy/rune/fresh.1
+fft2-lazy	normal	rune:opt	O2	count	1	1	pass	37.98	37.47	0.50	527568	13232018406	21093409776	641090466	counts/measurement.hstbmg/fft2-lazy/rune-opt/fresh.1
+fft2-lazy	normal	rune:new	O2	count	1	1	pass	65.63	65.14	0.48	527196	7960361425	21093409776	641090466	counts/measurement.hstbmg/fft2-lazy/rune-new/fresh.1
+fft2-lazy	normal	rune:jit	O2	count	1	1	pass	52.72	51.31	0.92	528452	7960361425	21093409776	641090466	counts/measurement.hstbmg/fft2-lazy/rune-jit/fresh.1
+fft2-strict	normal	rune	O2	count	1	1	pass	69.95	69.81	0.10	67892	11528719466	15526652656	475038906	counts/measurement.jy5d7u/fft2-strict/rune/fresh.1
+fft2-strict	normal	rune:opt	O2	count	1	1	pass	32.25	32.11	0.12	68852	11528719466	15526652656	475038906	counts/measurement.jy5d7u/fft2-strict/rune-opt/fresh.1
+fft2-strict	normal	rune:new	O2	count	1	1	pass	72.35	72.22	0.08	68468	6896149741	15526652656	475038906	counts/measurement.jy5d7u/fft2-strict/rune-new/fresh.1
+fft2-strict	normal	rune:jit	O2	count	1	1	pass	28.51	28.40	0.11	69768	6896149741	15526652656	475038906	counts/measurement.jy5d7u/fft2-strict/rune-jit/fresh.1

@@ -1,0 +1,24 @@
+[
+  {
+    "profile": "smoke",
+    "iterations": 1,
+    "empty_stdout": true,
+    "upstream_fixture_present": false
+  },
+  {
+    "profile": "normal",
+    "iterations": 8,
+    "empty_stdout": true,
+    "upstream_fixture_present": false
+  },
+  {
+    "profile": "large",
+    "iterations": 40,
+    "empty_stdout": true,
+    "upstream_fixture_present": false
+  },
+  {
+    "formatted_bytes": 784213,
+    "input_bytes": 789112
+  }
+]

@@ -1,0 +1,8 @@
+error: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/lambda-originals/host-tests/native-mlkit-4.7.23/program/src/5/kernel.sml, line 51, column 55: Overloading not resolved in record containing the record wildcard (...).
+
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/lambda-originals/host-tests/native-mlkit-4.7.23/program/src/5/kernel.sml, line 51, column 55:
+    fun withEnv tmp computation env=(delay(fn()=>D.force(#1(computation tmp))),env)
+                                                         ^^
+Overloading not resolved in record containing the record wildcard (...).
+Stopping compilation of MLB-file due to error (code 1).

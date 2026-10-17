@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+lambda-monad-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	4.50	3.56	0.80	666256	-	-	-	lambda-monad-lazy/native-mlton/build/compile
+lambda-monad-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2736	-	-	-	lambda-monad-lazy/native-mlton/correctness.0
+lambda-monad-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2708	-	-	-	lambda-monad-lazy/native-mlton/fresh.1
+lambda-monad-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.28	0.24	0.04	36164	-	-	-	lambda-monad-lazy/native-smlnj-legacy/build/compile
+lambda-monad-lazy	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.01	0.00	4208	-	-	-	lambda-monad-lazy/native-smlnj-legacy/correctness.0
+lambda-monad-lazy	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.02	0.01	0.00	4204	-	-	-	lambda-monad-lazy/native-smlnj-legacy/fresh.1
+lambda-monad-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.32	0.16	0.06	36496	-	-	-	lambda-monad-lazy/native-polyml/build/compile
+lambda-monad-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	9472	-	-	-	lambda-monad-lazy/native-polyml/correctness.0
+lambda-monad-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	9392	-	-	-	lambda-monad-lazy/native-polyml/fresh.1

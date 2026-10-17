@@ -1,0 +1,3 @@
+{'paragraphs': 3574, 'words': 141164, 'lines': 13680, 'cost': 34726, 'all_widths_valid': True, 'all_words_preserved': True, 'optimal_cost_agreements': 3573, 'source_suboptimal_paragraphs': [{'paragraph': 483, 'source_cost': 5, 'optimal_cost': 1, 'word_prefix': ['"Why,', 'Joseph', 'Poorgrass,', 'ye', "han't"]}]}
+observer 23 3 cost 5
+quadratic 23 2 cost 1

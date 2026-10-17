@@ -1,0 +1,10 @@
+{
+  "source": "spectral/para/runtime_files/input-data",
+  "start_byte": 10661,
+  "end_byte": 20666,
+  "bytes": 10005,
+  "sha256": "3a8f3dd2ca62276b27840b9844a5756acf35478e0a379db2fcfa47ebf2f7fa80",
+  "selection": "complete body paragraphs after the full historical header; no Project Gutenberg references retained",
+  "source_sha256": "a2b3b01bfbbc6e29bb457d7bdfeb4d5c16a889f33797beab4a9677612cff4163",
+  "formatted_sha256": "7b38f2f3239db6d9c59608b8e28c3e8d9411c4b8ad58d600b4ce8bb9354eeba5"
+}

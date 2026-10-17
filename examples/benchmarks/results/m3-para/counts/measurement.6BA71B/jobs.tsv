@@ -1,0 +1,1 @@
+para-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/nofib-para.sml shared/nofib-para-driver.sml para-lazy/benchmark.sml shared/main.sml	8 full.input full.reference	para-lazy/normal.expected	full.input full.reference

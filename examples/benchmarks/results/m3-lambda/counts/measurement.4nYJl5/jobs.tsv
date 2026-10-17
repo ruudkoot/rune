@@ -1,0 +1,1 @@
+lambda-monad-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/nofib-lambda.sml shared/nofib-lambda-driver.sml lambda-monad-lazy/benchmark.sml shared/main.sml	100 260	lambda-monad-lazy/normal.expected	-

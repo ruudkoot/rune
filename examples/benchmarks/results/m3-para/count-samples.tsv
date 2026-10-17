@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+para-lazy	normal	rune	O2	count	1	1	pass	58.91	58.09	0.77	526148	7696436940	18678174568	594663175	counts/measurement.6BA71B/para-lazy/rune/fresh.1
+para-lazy	normal	rune:opt	O2	count	1	1	pass	23.18	22.70	0.48	527196	7696436940	18678174568	594663175	counts/measurement.6BA71B/para-lazy/rune-opt/fresh.1
+para-lazy	normal	rune:new	O2	count	1	1	pass	55.61	54.15	1.45	1051056	4595487461	18678174568	594663175	counts/measurement.6BA71B/para-lazy/rune-new/fresh.1
+para-lazy	normal	rune:jit	O2	count	1	1	pass	23.23	21.99	1.23	1052344	4595487461	18678174568	594663175	counts/measurement.6BA71B/para-lazy/rune-jit/fresh.1
+para-strict	normal	rune	O2	count	1	1	pass	37.38	36.89	0.48	526580	7027735784	18091422872	576451677	counts/measurement.L3sjGx/para-strict/rune/fresh.1
+para-strict	normal	rune:opt	O2	count	1	1	pass	21.21	20.69	0.52	527268	7027735784	18091422872	576451677	counts/measurement.L3sjGx/para-strict/rune-opt/fresh.1
+para-strict	normal	rune:new	O2	count	1	1	pass	42.67	41.73	0.93	1051184	4172224503	18091422872	576451677	counts/measurement.L3sjGx/para-strict/rune-new/fresh.1
+para-strict	normal	rune:jit	O2	count	1	1	pass	25.88	24.60	1.28	1052228	4172224503	18091422872	576451677	counts/measurement.L3sjGx/para-strict/rune-jit/fresh.1

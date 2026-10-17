@@ -1,0 +1,482 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/lambda-originals/kernel.sml]
+functor BenchLambdaFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type term
+  type environment
+  type 'a action
+  val delay : (unit -> 'a) -> 'a D.t
+  val node : 'a -> 'a D.t
+  val con : int -> <BaseFct>.<resultStr>.term D.t
+  val variable : string -> <BaseFct>.<resultStr>.term D.t
+  val add :
+      <BaseFct>.<resultStr>.term D.t * <BaseFct>.<resultStr>.term D.t
+       -> <BaseFct>.<resultStr>.term D.t
+  val lam :
+      string * <BaseFct>.<resultStr>.term D.t
+       -> <BaseFct>.<resultStr>.term D.t
+  val app :
+      <BaseFct>.<resultStr>.term D.t * <BaseFct>.<resultStr>.term D.t
+       -> <BaseFct>.<resultStr>.term D.t
+  val zero :
+      <BaseFct>.<resultStr>.term D.t * <BaseFct>.<resultStr>.term D.t
+       * <BaseFct>.<resultStr>.term D.t
+       -> <BaseFct>.<resultStr>.term D.t
+  val empty : <BaseFct>.<resultStr>.environment D.t
+  val lookup :
+      string
+       -> <BaseFct>.<resultStr>.environment D.t
+       -> <BaseFct>.<resultStr>.term D.t
+  val integer : <BaseFct>.<resultStr>.term D.t -> int
+  val isZero : <BaseFct>.<resultStr>.term D.t -> bool
+  val simple :
+      <BaseFct>.<resultStr>.environment D.t
+       -> <BaseFct>.<resultStr>.term D.t -> <BaseFct>.<resultStr>.term D.t
+  val simpleApply :
+      <BaseFct>.<resultStr>.environment D.t
+       -> <BaseFct>.<resultStr>.term D.t
+       -> <BaseFct>.<resultStr>.term D.t -> <BaseFct>.<resultStr>.term D.t
+  val return : 'a -> 'b -> 'a * 'b
+  val bind : ('a -> 'b * 'c) -> ('b -> 'c -> 'd) -> 'a -> 'd
+  val current : 'a -> 'a * 'a
+  val lookupAction :
+      string
+       -> <BaseFct>.<resultStr>.environment D.t
+       -> <BaseFct>.<resultStr>.term D.t
+       * <BaseFct>.<resultStr>.environment D.t
+  val withEnv :
+      <BaseFct>.<resultStr>.environment D.t
+       -> <BaseFct>.<resultStr>.term D.t <BaseFct>.<resultStr>.action
+       -> 'a -> <BaseFct>.<resultStr>.term D.t * 'a
+  val push :
+      string
+       -> <BaseFct>.<resultStr>.term D.t
+       -> <BaseFct>.<resultStr>.term D.t <BaseFct>.<resultStr>.action
+       -> <BaseFct>.<resultStr>.environment D.t
+       -> <BaseFct>.<resultStr>.term D.t
+       * <BaseFct>.<resultStr>.environment D.t
+  val traverse :
+      <BaseFct>.<resultStr>.term D.t
+       -> <BaseFct>.<resultStr>.environment D.t
+       -> <BaseFct>.<resultStr>.term D.t
+       * <BaseFct>.<resultStr>.environment D.t
+  val traverseCon :
+      <BaseFct>.<resultStr>.term D.t
+       -> <BaseFct>.<resultStr>.environment D.t
+       -> int D.t * <BaseFct>.<resultStr>.environment D.t
+  val apply :
+      <BaseFct>.<resultStr>.term D.t
+       -> <BaseFct>.<resultStr>.term D.t
+       -> <BaseFct>.<resultStr>.environment D.t
+       -> <BaseFct>.<resultStr>.term D.t
+       * <BaseFct>.<resultStr>.environment D.t
+  val bracket : int -> int -> string -> string
+  val showInt : int -> string
+  val pretty : int -> <BaseFct>.<resultStr>.term D.t -> string
+  val prettyEnv : <BaseFct>.<resultStr>.environment D.t -> string
+  val simpleShow : <BaseFct>.<resultStr>.term D.t -> string
+  val minusOne : <BaseFct>.<resultStr>.term D.t
+  val partialSum : <BaseFct>.<resultStr>.term D.t
+  val lfxx : <BaseFct>.<resultStr>.term D.t
+  val fix : <BaseFct>.<resultStr>.term D.t
+  val sum0 : <BaseFct>.<resultStr>.term D.t
+  val evaluate : string -> int -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/lambda-originals/driver.sml]
+functor BenchLambdaDriverFn(K: sig
+  val evaluate : string -> int -> string
+end) :
+sig
+  val run : string -> string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/lambda-originals/tests.sml]
+[autoloading]
+[autoloading done]
+PASS lambda/lazy/0/direct
+PASS lambda/lazy/0/state
+PASS lambda/lazy/0/caller-environment
+PASS lambda/lazy/1/direct
+PASS lambda/lazy/1/state
+PASS lambda/lazy/1/caller-environment
+PASS lambda/lazy/2/direct
+PASS lambda/lazy/2/state
+PASS lambda/lazy/2/caller-environment
+PASS lambda/lazy/3/direct
+PASS lambda/lazy/3/state
+PASS lambda/lazy/3/caller-environment
+PASS lambda/lazy/4/direct
+PASS lambda/lazy/4/state
+PASS lambda/lazy/4/caller-environment
+PASS lambda/lazy/5/direct
+PASS lambda/lazy/5/state
+PASS lambda/lazy/5/caller-environment
+PASS lambda/lazy/6/direct
+PASS lambda/lazy/6/state
+PASS lambda/lazy/6/caller-environment
+PASS lambda/lazy/7/direct
+PASS lambda/lazy/7/state
+PASS lambda/lazy/7/caller-environment
+PASS lambda/lazy/8/direct
+PASS lambda/lazy/8/state
+PASS lambda/lazy/8/caller-environment
+PASS lambda/lazy/9/direct
+PASS lambda/lazy/9/state
+PASS lambda/lazy/9/caller-environment
+PASS lambda/lazy/10/direct
+PASS lambda/lazy/10/state
+PASS lambda/lazy/10/caller-environment
+PASS lambda/lazy/11/direct
+PASS lambda/lazy/11/state
+PASS lambda/lazy/11/caller-environment
+PASS lambda/lazy/12/direct
+PASS lambda/lazy/12/state
+PASS lambda/lazy/12/caller-environment
+PASS lambda/lazy/13/direct
+PASS lambda/lazy/13/state
+PASS lambda/lazy/13/caller-environment
+PASS lambda/lazy/14/direct
+PASS lambda/lazy/14/state
+PASS lambda/lazy/14/caller-environment
+PASS lambda/lazy/15/direct
+PASS lambda/lazy/15/state
+PASS lambda/lazy/15/caller-environment
+PASS lambda/lazy/16/direct
+PASS lambda/lazy/16/state
+PASS lambda/lazy/16/caller-environment
+PASS lambda/lazy/17/direct
+PASS lambda/lazy/17/state
+PASS lambda/lazy/17/caller-environment
+PASS lambda/lazy/18/direct
+PASS lambda/lazy/18/state
+PASS lambda/lazy/18/caller-environment
+PASS lambda/lazy/19/direct
+PASS lambda/lazy/19/state
+PASS lambda/lazy/19/caller-environment
+PASS lambda/lazy/20/direct
+PASS lambda/lazy/20/state
+PASS lambda/lazy/20/caller-environment
+PASS lambda/lazy/21/direct
+PASS lambda/lazy/21/state
+PASS lambda/lazy/21/caller-environment
+PASS lambda/lazy/22/direct
+PASS lambda/lazy/22/state
+PASS lambda/lazy/22/caller-environment
+PASS lambda/lazy/23/direct
+PASS lambda/lazy/23/state
+PASS lambda/lazy/23/caller-environment
+PASS lambda/lazy/24/direct
+PASS lambda/lazy/24/state
+PASS lambda/lazy/24/caller-environment
+PASS lambda/lazy/25/direct
+PASS lambda/lazy/25/state
+PASS lambda/lazy/25/caller-environment
+PASS lambda/lazy/26/direct
+PASS lambda/lazy/26/state
+PASS lambda/lazy/26/caller-environment
+PASS lambda/lazy/27/direct
+PASS lambda/lazy/27/state
+PASS lambda/lazy/27/caller-environment
+PASS lambda/lazy/28/direct
+PASS lambda/lazy/28/state
+PASS lambda/lazy/28/caller-environment
+PASS lambda/lazy/29/direct
+PASS lambda/lazy/29/state
+PASS lambda/lazy/29/caller-environment
+PASS lambda/lazy/30/direct
+PASS lambda/lazy/30/state
+PASS lambda/lazy/30/caller-environment
+PASS lambda/lazy/31/direct
+PASS lambda/lazy/31/state
+PASS lambda/lazy/31/caller-environment
+PASS lambda/lazy/32/direct
+PASS lambda/lazy/32/state
+PASS lambda/lazy/32/caller-environment
+PASS lambda/lazy/simple/independent-sum-0
+PASS lambda/lazy/monad/independent-sum-0
+PASS lambda/lazy/simple/independent-sum-1
+PASS lambda/lazy/monad/independent-sum-1
+PASS lambda/lazy/simple/independent-sum-2
+PASS lambda/lazy/monad/independent-sum-2
+PASS lambda/lazy/simple/independent-sum-3
+PASS lambda/lazy/monad/independent-sum-3
+PASS lambda/lazy/simple/independent-sum-7
+PASS lambda/lazy/monad/independent-sum-7
+PASS lambda/lazy/simple/independent-sum-15
+PASS lambda/lazy/monad/independent-sum-15
+PASS lambda/lazy/simple/independent-sum-31
+PASS lambda/lazy/monad/independent-sum-31
+PASS lambda/lazy/simple/driver-profile
+PASS lambda/lazy/monad/driver-profile
+PASS lambda/lazy/zero-repetitions
+PASS lambda/lazy/undefined-variable-is-rejected
+PASS lambda/lazy/bad-application-is-rejected
+PASS lambda/lazy/pretty-bracketing
+PASS lambda/strict/0/direct
+PASS lambda/strict/0/state
+PASS lambda/strict/0/caller-environment
+PASS lambda/strict/1/direct
+PASS lambda/strict/1/state
+PASS lambda/strict/1/caller-environment
+PASS lambda/strict/2/direct
+PASS lambda/strict/2/state
+PASS lambda/strict/2/caller-environment
+PASS lambda/strict/3/direct
+PASS lambda/strict/3/state
+PASS lambda/strict/3/caller-environment
+PASS lambda/strict/4/direct
+PASS lambda/strict/4/state
+PASS lambda/strict/4/caller-environment
+PASS lambda/strict/5/direct
+PASS lambda/strict/5/state
+PASS lambda/strict/5/caller-environment
+PASS lambda/strict/6/direct
+PASS lambda/strict/6/state
+PASS lambda/strict/6/caller-environment
+PASS lambda/strict/7/direct
+PASS lambda/strict/7/state
+PASS lambda/strict/7/caller-environment
+PASS lambda/strict/8/direct
+PASS lambda/strict/8/state
+PASS lambda/strict/8/caller-environment
+PASS lambda/strict/9/direct
+PASS lambda/strict/9/state
+PASS lambda/strict/9/caller-environment
+PASS lambda/strict/10/direct
+PASS lambda/strict/10/state
+PASS lambda/strict/10/caller-environment
+PASS lambda/strict/11/direct
+PASS lambda/strict/11/state
+PASS lambda/strict/11/caller-environment
+PASS lambda/strict/12/direct
+PASS lambda/strict/12/state
+PASS lambda/strict/12/caller-environment
+PASS lambda/strict/13/direct
+PASS lambda/strict/13/state
+PASS lambda/strict/13/caller-environment
+PASS lambda/strict/14/direct
+PASS lambda/strict/14/state
+PASS lambda/strict/14/caller-environment
+PASS lambda/strict/15/direct
+PASS lambda/strict/15/state
+PASS lambda/strict/15/caller-environment
+PASS lambda/strict/16/direct
+PASS lambda/strict/16/state
+PASS lambda/strict/16/caller-environment
+PASS lambda/strict/17/direct
+PASS lambda/strict/17/state
+PASS lambda/strict/17/caller-environment
+PASS lambda/strict/18/direct
+PASS lambda/strict/18/state
+PASS lambda/strict/18/caller-environment
+PASS lambda/strict/19/direct
+PASS lambda/strict/19/state
+PASS lambda/strict/19/caller-environment
+PASS lambda/strict/20/direct
+PASS lambda/strict/20/state
+PASS lambda/strict/20/caller-environment
+PASS lambda/strict/21/direct
+PASS lambda/strict/21/state
+PASS lambda/strict/21/caller-environment
+PASS lambda/strict/22/direct
+PASS lambda/strict/22/state
+PASS lambda/strict/22/caller-environment
+PASS lambda/strict/23/direct
+PASS lambda/strict/23/state
+PASS lambda/strict/23/caller-environment
+PASS lambda/strict/24/direct
+PASS lambda/strict/24/state
+PASS lambda/strict/24/caller-environment
+PASS lambda/strict/25/direct
+PASS lambda/strict/25/state
+PASS lambda/strict/25/caller-environment
+PASS lambda/strict/26/direct
+PASS lambda/strict/26/state
+PASS lambda/strict/26/caller-environment
+PASS lambda/strict/27/direct
+PASS lambda/strict/27/state
+PASS lambda/strict/27/caller-environment
+PASS lambda/strict/28/direct
+PASS lambda/strict/28/state
+PASS lambda/strict/28/caller-environment
+PASS lambda/strict/29/direct
+PASS lambda/strict/29/state
+PASS lambda/strict/29/caller-environment
+PASS lambda/strict/30/direct
+PASS lambda/strict/30/state
+PASS lambda/strict/30/caller-environment
+PASS lambda/strict/31/direct
+PASS lambda/strict/31/state
+PASS lambda/strict/31/caller-environment
+PASS lambda/strict/32/direct
+PASS lambda/strict/32/state
+PASS lambda/strict/32/caller-environment
+PASS lambda/strict/simple/independent-sum-0
+PASS lambda/strict/monad/independent-sum-0
+PASS lambda/strict/simple/independent-sum-1
+PASS lambda/strict/monad/independent-sum-1
+PASS lambda/strict/simple/independent-sum-2
+PASS lambda/strict/monad/independent-sum-2
+PASS lambda/strict/simple/independent-sum-3
+PASS lambda/strict/monad/independent-sum-3
+PASS lambda/strict/simple/independent-sum-7
+PASS lambda/strict/monad/independent-sum-7
+PASS lambda/strict/simple/independent-sum-15
+PASS lambda/strict/monad/independent-sum-15
+PASS lambda/strict/simple/independent-sum-31
+PASS lambda/strict/monad/independent-sum-31
+PASS lambda/strict/simple/driver-profile
+PASS lambda/strict/monad/driver-profile
+PASS lambda/strict/zero-repetitions
+PASS lambda/strict/undefined-variable-is-rejected
+PASS lambda/strict/bad-application-is-rejected
+PASS lambda/strict/pretty-bracketing
+PASS lambda/demand/unused-AST-child
+PASS lambda/demand/shared-argument-AST
+PASS lambda/checker/modified-output
+functor LambdaTestsFn(P: sig
+  structure D : <sig>
+  val policy : string
+end) :
+sig
+  structure D : <sig>
+  val policy : string
+  structure K : <sig>
+  structure Driver : <sig>
+  val label : string -> string
+  val env : <BaseFct>.<resultStr>.K.<returnStr>.environment P.t
+  val xenv : <BaseFct>.<resultStr>.K.<returnStr>.environment P.t
+  val cases :
+      (<BaseFct>.<resultStr>.K.<returnStr>.environment P.t
+          * <BaseFct>.<resultStr>.K.<returnStr>.term P.t) list
+  val base : string
+  val f : TextIO.instream
+  val reference : string list
+end
+structure NeedTests : sig
+  structure D : <sig>
+  val policy : string
+  structure K : <sig>
+  structure Driver : <sig>
+  val label : string -> string
+  val env : <BaseFct>.<resultStr>.K.<returnStr>.environment P.t
+  val xenv : <BaseFct>.<resultStr>.K.<returnStr>.environment P.t
+  val cases :
+      (<BaseFct>.<resultStr>.K.<returnStr>.environment P.t
+          * <BaseFct>.<resultStr>.K.<returnStr>.term P.t) list
+  val base : string
+  val f : TextIO.instream
+  val reference : string list
+end
+structure StrictTests : sig
+  structure D : <sig>
+  val policy : string
+  structure K : <sig>
+  structure Driver : <sig>
+  val label : string -> string
+  val env : <BaseFct>.<resultStr>.K.<returnStr>.environment P.t
+  val xenv : <BaseFct>.<resultStr>.K.<returnStr>.environment P.t
+  val cases :
+      (<BaseFct>.<resultStr>.K.<returnStr>.environment P.t
+          * <BaseFct>.<resultStr>.K.<returnStr>.term P.t) list
+  val base : string
+  val f : TextIO.instream
+  val reference : string list
+end
+structure LambdaDemandTests : sig
+  structure K : <sig>
+  structure Wrong : <sig>
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 241 checks, 0 failed

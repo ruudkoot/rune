@@ -1,0 +1,17 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+lambda-simple-lazy	normal	rune	O2	count	1	1	pass	20.50	20.45	0.01	10544	2712266227	6342007496	199747177	counts/measurement.3nzPGj/lambda-simple-lazy/rune/fresh.1
+lambda-simple-lazy	normal	rune:opt	O2	count	1	1	pass	9.26	9.19	0.05	11004	2712266227	6342007496	199747177	counts/measurement.3nzPGj/lambda-simple-lazy/rune-opt/fresh.1
+lambda-simple-lazy	normal	rune:new	O2	count	1	1	pass	21.17	21.13	0.02	10712	1574137424	6342007496	199747177	counts/measurement.3nzPGj/lambda-simple-lazy/rune-new/fresh.1
+lambda-simple-lazy	normal	rune:jit	O2	count	1	1	pass	8.56	8.49	0.06	11760	1574137424	6342007496	199747177	counts/measurement.3nzPGj/lambda-simple-lazy/rune-jit/fresh.1
+lambda-simple-strict	normal	rune	O2	count	1	1	pass	3.41	3.39	0.01	10676	629286626	173561616	7022280	counts/measurement.qEgNvm/lambda-simple-strict/rune/fresh.1
+lambda-simple-strict	normal	rune:opt	O2	count	1	1	pass	1.44	1.42	0.01	11128	629286626	173561616	7022280	counts/measurement.qEgNvm/lambda-simple-strict/rune-opt/fresh.1
+lambda-simple-strict	normal	rune:new	O2	count	1	1	pass	2.76	2.75	0.00	10944	309138020	173561616	7022280	counts/measurement.qEgNvm/lambda-simple-strict/rune-new/fresh.1
+lambda-simple-strict	normal	rune:jit	O2	count	1	1	pass	1.19	1.18	0.00	11924	309138020	173561616	7022280	counts/measurement.qEgNvm/lambda-simple-strict/rune-jit/fresh.1
+lambda-monad-lazy	normal	rune	O2	count	1	1	pass	15.43	15.42	0.01	10696	2684296633	7449975496	224387377	counts/measurement.4nYJl5/lambda-monad-lazy/rune/fresh.1
+lambda-monad-lazy	normal	rune:opt	O2	count	1	1	pass	10.01	9.94	0.04	11044	2684296633	7449975496	224387377	counts/measurement.4nYJl5/lambda-monad-lazy/rune-opt/fresh.1
+lambda-monad-lazy	normal	rune:new	O2	count	1	1	pass	20.39	20.35	0.02	10840	1497932125	7449975496	224387377	counts/measurement.4nYJl5/lambda-monad-lazy/rune-new/fresh.1
+lambda-monad-lazy	normal	rune:jit	O2	count	1	1	pass	7.73	7.67	0.05	11760	1497932125	7449975496	224387377	counts/measurement.4nYJl5/lambda-monad-lazy/rune-jit/fresh.1
+lambda-monad-strict	normal	rune	O2	count	1	1	pass	5.37	5.37	0.00	10576	977626812	2378963192	59328079	counts/measurement.LUEmOm/lambda-monad-strict/rune/fresh.1
+lambda-monad-strict	normal	rune:opt	O2	count	1	1	pass	2.17	2.17	0.00	10952	977626812	2378963192	59328079	counts/measurement.LUEmOm/lambda-monad-strict/rune-opt/fresh.1
+lambda-monad-strict	normal	rune:new	O2	count	1	1	pass	6.68	6.63	0.01	10884	481143510	2378963192	59328079	counts/measurement.LUEmOm/lambda-monad-strict/rune-new/fresh.1
+lambda-monad-strict	normal	rune:jit	O2	count	1	1	pass	2.69	2.64	0.03	11664	481143510	2378963192	59328079	counts/measurement.LUEmOm/lambda-monad-strict/rune-jit/fresh.1

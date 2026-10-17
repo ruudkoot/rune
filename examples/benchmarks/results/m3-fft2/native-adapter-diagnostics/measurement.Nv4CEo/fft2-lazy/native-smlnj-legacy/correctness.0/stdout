@@ -1,0 +1,4 @@
+RESULT 1:1
+PASS fft2-lazy
+SAMPLE 1 0.016831000
+SUMMARY 1 checks, 0 failed

@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-para-parallel.2yl82wz2
+PASS para-lazy smoke O2
+PASS para-lazy smoke O0
+PASS para-lazy smoke hosts
+PASS para-lazy normal O2
+PASS para-lazy normal O0
+PASS para-strict smoke O0
+PASS para-strict smoke O2
+PASS para-strict smoke hosts
+PASS para-lazy normal hosts
+PASS para-strict normal O0
+PASS para-strict normal O2
+PASS para-strict normal hosts

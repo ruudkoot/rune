@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+lambda-monad-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	4.87	3.79	0.90	666512	-	-	-	lambda-monad-strict/native-mlton/build/compile
+lambda-monad-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2080	-	-	-	lambda-monad-strict/native-mlton/correctness.0
+lambda-monad-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2020	-	-	-	lambda-monad-strict/native-mlton/fresh.1
+lambda-monad-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.34	0.29	0.04	37640	-	-	-	lambda-monad-strict/native-smlnj-legacy/build/compile
+lambda-monad-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.01	0.00	4076	-	-	-	lambda-monad-strict/native-smlnj-legacy/correctness.0
+lambda-monad-strict	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.00	0.01	4104	-	-	-	lambda-monad-strict/native-smlnj-legacy/fresh.1
+lambda-monad-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.31	0.16	0.05	34460	-	-	-	lambda-monad-strict/native-polyml/build/compile
+lambda-monad-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	5644	-	-	-	lambda-monad-strict/native-polyml/correctness.0
+lambda-monad-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	5528	-	-	-	lambda-monad-strict/native-polyml/fresh.1

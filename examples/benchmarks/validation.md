@@ -2494,3 +2494,46 @@ script exclusions are recorded. Full DEBUGINFOD_URLS= make JOBS=4 check exits
 zero with 1054 profiles, 498-program cross-build agreement and matching runedoc
 and runeopt builds. [The complete transcript](validation/oct17-gg-1054-acceptance.log)
 records the acceptance check. M4 remains in progress.
+
+## Fourier, interpreter and paragraph workloads, 2026-10-17
+
+Eight imports bring the catalogue to 362 programs and 1078 profiles.
+[FFT2 primary coverage](results/m3-fft2/coverage.tsv) records 54 passes and two
+legacy 64-bit SML/NJ normal-profile failures. All Rune cases pass. Its
+[semantic ledger](results/m3-fft2/semantic-summary.tsv) records 2236 passing
+assertions, two failed assertions and 402 unreached checks from incomplete
+SML/NJ invocations. The [host note](validation/fft2-host-results.md) separates
+the observed contexts without assigning a compiler cause.
+
+All [112 lambda primary cases](results/m3-lambda/coverage.tsv) and 4820 semantic
+assertions pass. Separate direct/state-monadic names retain each source count,
+call-by-name closures and caller environment restoration. All
+[56 paragraph primary cases](results/m3-para/coverage.tsv) and 2240 semantic
+assertions pass. Source queue representation, pruning and text consumers remain.
+
+Thirty-two complete normal count samples agree under Rune's engine rules.
+Twenty-four serial single fresh-process native smoke adapter samples pass,
+separately from count instrumentation. Default sampling policy and existing
+budgets remain unchanged. All full normal Rune calibrations pass; full large
+SML repetition runs remain unrecorded.
+
+Original GHC fixtures and independent references cover mixed-factor transforms,
+non-power-of-two source FFT errors, interpreted terms/environments and paragraph
+layout. The independent formatter finds optimum costs for 3573 of 3574 source
+paragraphs. Source linear par3 gives cost 5 for paragraph 483; both independent
+dynamic programming and original quadratic par1 give cost 1. Retain par3's
+exact layout and counterexample. [FFT2](results/m3-fft2/README.md),
+[lambda](results/m3-lambda/README.md) and [para](results/m3-para/README.md)
+retain full raw evidence and program-specific limits.
+
+All 88 inventory regressions pass; clean five-pin replay retains 861 primary
+entries. Three source author headings, the individual historical text notice,
+foreign implementation/fragment dispositions and the excluded pinned i386
+executable are recorded. Full original text/notices remain unchanged.
+The bounded smoke input uses complete novel-body paragraphs with exact byte
+origins. No executable artifacts are imported.
+
+Full DEBUGINFOD_URLS= make JOBS=4 check exits zero with 1078 catalogue profiles,
+498-program bytecode agreement and matching runedoc/runeopt builds.
+[The complete transcript](validation/oct17-fft2-lambda-para-1078-acceptance.log)
+records acceptance of this combined wave. M3 remains in progress.

@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+para-lazy	normal	rune	O2	compile	0	0	pass	2.42	2.26	0.13	135200	-	-	-	para-lazy/rune/build/compile
+para-lazy	normal	rune	O2	correctness	0	0	pass	68.56	67.42	1.04	526276	7696436940	18678174568	594663175	para-lazy/rune/correctness.0
+para-lazy	normal	rune	O2	count	1	1	pass	58.91	58.09	0.77	526148	7696436940	18678174568	594663175	para-lazy/rune/fresh.1
+para-lazy	normal	rune:opt	O2	compile	0	0	pass	2.42	2.29	0.12	135440	-	-	-	para-lazy/rune-opt/build/compile
+para-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.57	0.30	0.05	12688	-	-	-	para-lazy/rune-opt/build/native-compile
+para-lazy	normal	rune:opt	O2	correctness	0	0	pass	27.51	26.85	0.64	527176	7696436940	18678174568	594663175	para-lazy/rune-opt/correctness.0
+para-lazy	normal	rune:opt	O2	count	1	1	pass	23.18	22.70	0.48	527196	7696436940	18678174568	594663175	para-lazy/rune-opt/fresh.1
+para-lazy	normal	rune:new	O2	compile	0	0	pass	1.90	1.83	0.06	135452	-	-	-	para-lazy/rune-new/build/compile
+para-lazy	normal	rune:new	O2	correctness	0	0	pass	49.71	48.57	1.14	1051208	4595487461	18678174568	594663175	para-lazy/rune-new/correctness.0
+para-lazy	normal	rune:new	O2	count	1	1	pass	55.61	54.15	1.45	1051056	4595487461	18678174568	594663175	para-lazy/rune-new/fresh.1
+para-lazy	normal	rune:jit	O2	compile	0	0	pass	1.71	1.63	0.08	135392	-	-	-	para-lazy/rune-jit/build/compile
+para-lazy	normal	rune:jit	O2	correctness	0	0	pass	25.01	23.61	1.39	1052356	4595487461	18678174568	594663175	para-lazy/rune-jit/correctness.0
+para-lazy	normal	rune:jit	O2	count	1	1	pass	23.23	21.99	1.23	1052344	4595487461	18678174568	594663175	para-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

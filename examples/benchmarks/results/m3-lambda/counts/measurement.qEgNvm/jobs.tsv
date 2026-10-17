@@ -1,0 +1,1 @@
+lambda-simple-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/nofib-lambda.sml shared/nofib-lambda-driver.sml lambda-simple-strict/benchmark.sml shared/main.sml	100 260	lambda-simple-strict/normal.expected	-

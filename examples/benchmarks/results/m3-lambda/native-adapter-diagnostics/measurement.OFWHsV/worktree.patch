@@ -1,0 +1,999 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 925d5ce3..58dfe4be 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -363,6 +363,14 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [gg-spark-strict](#gg-spark-strict) | [nofib GRIP graphs](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/gg) | Render the source spark graph from fixed GRIP logs with strict numeric payloads and validate the complete PostScript. |
+ | [gg-pool-lazy](#gg-pool-lazy) | [nofib GRIP graphs](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/gg) | Render the source pool graph from fixed GRIP logs with lazy numeric payloads and validate the complete PostScript. |
+ | [gg-pool-strict](#gg-pool-strict) | [nofib GRIP graphs](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/gg) | Render the source pool graph from fixed GRIP logs with strict numeric payloads and validate the complete PostScript. |
++| [fft2-lazy](#fft2-lazy) | [nofib Fourier transforms](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/fft2) | Compute source FFT, mixed-factor DFT and cosine ramp checks with lazy numeric payloads. |
++| [fft2-strict](#fft2-strict) | [nofib Fourier transforms](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/fft2) | Compute source FFT, mixed-factor DFT and cosine ramp checks with strict numeric payloads. |
++| [lambda-simple-lazy](#lambda-simple-lazy) | [nofib lambda interpreters](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/lambda) | Evaluate the fixed-point summation term using the simple interpreter and lazy finite syntax/result payloads. |
++| [lambda-simple-strict](#lambda-simple-strict) | [nofib lambda interpreters](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/lambda) | Evaluate the fixed-point summation term using the simple interpreter and strict finite syntax/result payloads. |
++| [lambda-monad-lazy](#lambda-monad-lazy) | [nofib lambda interpreters](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/lambda) | Evaluate the fixed-point summation term using the monad interpreter and lazy finite syntax/result payloads. |
++| [lambda-monad-strict](#lambda-monad-strict) | [nofib lambda interpreters](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/lambda) | Evaluate the fixed-point summation term using the monad interpreter and strict finite syntax/result payloads. |
++| [para-lazy](#para-lazy) | [nofib paragraph formatter](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/para) | Format fixed text using the source symmetric-list candidate algorithm with lazy numeric summaries. |
++| [para-strict](#para-strict) | [nofib paragraph formatter](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/para) | Format fixed text using the source symmetric-list candidate algorithm with strict numeric summaries. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -19832,3 +19840,803 @@ Investigate delayed numeric parsing, insertion shape, selected-field forcing,
+ state/trace retention, outline transposition, Float32 versus Double operations
+ and streaming text/hash consumers. These are source-based questions. Reference
+ agreement and measured configurations are separate from architectural hypotheses.
++
++## fft2-lazy
++
++Numeric policy: lazy.
++
++### Algorithm and workload
++
++Compute fast FFT/inverse distance, general mixed-factor DFT/inverse distance
++and the sum of a slow cosine transform over independent ramps. Retain list
++algorithms, cyclic roots, the factor sieve, transpose/zip structure, numeric
++operation order and separate signal generation for the three measurements.
++No result cache or replacement transform is used in the benchmark.
++
++### History, authorship and variants
++
++Rex Page, Amoco Production Research, September 1992. Pinned nofib revision
++b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/fft2. Retain fft2 as distinct
++from classic FFT, spectral/hartel/fft and Sandmark FFT, with explicit lazy/strict
++suffixes. Complete original modules, MAIL, README.nofib, old platform fixtures
++and foreign-language references are retained under fft2-lazy/upstream.
++
++Individual files state no separate redistribution grant; retain all attribution
++and do not infer a license from another benchmark. The supplementary inventory
++records Rex Page's Miranda and fixed-array Fortran programs as distinct
++historical references outside the initial executable language-family set.
++Matt Donadio's iterative bit-reversal C FFT is a library fragment without a
++standalone workload. No foreign reference is called an exact duplicate.
++There are no external datasets; ramp inputs are generated deterministically.
++Old platform-specific numeric fixtures remain historical evidence.
++
++### Portable translation and evaluation
++
++All computation and checking uses SML97. Complex coordinates use real arithmetic,
++with memoized numeric delays in lazy and eager finite payloads in strict.
++Both preserve memoized control streams, shared even-root subsequences, periodic
++cyclic lists, the global prime stream and separately delayed transform metrics.
++Unused complex coordinates remain demand-sensitive in the lazy policy.
++
++Magnitude/division retain the installed GHC base-4.17.2.0 Data.Complex exponent
++scaling and zero-exponent behavior, inspected in its installed interface.
++Extreme-value references include the underflow of a tiny coordinate paired with
++zero. Integer indices and factors fit portable int in the bounded profile domain.
++Floating enumeration retains Haskell's half-step endpoint convention.
++
++For i from one through 100, the source generates base+i/15 and consequently
++eight different lengths. Compute each iteration anew. The fast transform assumes
++powers of two but source profiles include other lengths: preserve and check its
++large nonzero errors instead of silently correcting the source algorithm.
++
++Retain the demand for the length of the quoted result string. GEN17 replaces
++shortest decimal spelling; parsed values, escape roundtrips and an independently
++computed escaped length validate the consumer. Stable samples:checked output
++replaces empty stdout. No hash replaces the formatted-result consumer.
++
++### Profiles and result checks
++
++| Profile | Samples | Base |
++|---|---:|---:|
++| Smoke | 1 | 70 |
++| Normal | 100 | 245 |
++| Large | 100 | 490 |
++
++Normal and large retain source counts; smoke reduces FAST's 100 to one.
++Original GHC runs match the empty stdout fixture for all full profiles; print
++mode supplies all 300 numeric values per profile. An independent eager Python
++model agrees on all 300 triples, including non-power-of-two fast-transform errors.
++Its reference-only caching of repeated sizes is absent from the SML workload.
++
++For actual length n, fast-transform distance allows absolute 1e-9 plus relative
++1e-10. The general-transform residual allows absolute 128*epsilon*n^2*sqrt(n);
++the cosine sum allows 128*epsilon*n^3, with binary64 machine epsilon.
++These are conservative source-agreement budgets, not a formal proof for all math
++libraries. Reject nonfinite values, malformed triples and deliberate perturbations
++of each metric; also test an accepted interior point near the bound.
++Auxiliary transform vectors use absolute and relative 1e-11.
++
++The semantic target checks all five complex transforms and cosine vectors at
++lengths 2,3,4,5,8,16, magnitudes, cyclic lists, factors, floating enumeration,
++quoted output, coordinate demand and sharing. Both full normal SML profiles
++pass calibration. Full large SML repetition checks remain unrecorded, separately
++from validated large fixtures and first-sample checks.
++
++Private Rune, MLton, Poly/ML and ML Kit runs pass 132 checks. Private SML/NJ
++runs terminate with bus/segmentation faults or a fatal bogus-overflow diagnostic.
++Retain valid source and canonical host settings; the compiler mechanism is
++unresolved. Failed correctness checks cannot supply accepted timing samples.
++Canonical primary, count and semantic results are recorded as they finish.
++
++### Literature and diagnostic questions
++
++[Cooley and Tukey (1965)](https://doi.org/10.1090/S0025-5718-1965-0178586-1)
++provides FFT context; this source's Fourier.lhs and Complex_Vectors.lhs define
++the actual algorithms and MAIL records numerical investigations.
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) supplies suite
++context. Investigate higher-order streams, periodic sharing, complex-coordinate
++demand, numeric operation order, transform assumptions and formatting cost.
++These are source-based hypotheses until supported by measurements.
++
++## fft2-strict
++
++Numeric policy: strict.
++
++### Algorithm and workload
++
++Compute fast FFT/inverse distance, general mixed-factor DFT/inverse distance
++and the sum of a slow cosine transform over independent ramps. Retain list
++algorithms, cyclic roots, the factor sieve, transpose/zip structure, numeric
++operation order and separate signal generation for the three measurements.
++No result cache or replacement transform is used in the benchmark.
++
++### History, authorship and variants
++
++Rex Page, Amoco Production Research, September 1992. Pinned nofib revision
++b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/fft2. Retain fft2 as distinct
++from classic FFT, spectral/hartel/fft and Sandmark FFT, with explicit lazy/strict
++suffixes. Complete original modules, MAIL, README.nofib, old platform fixtures
++and foreign-language references are retained under fft2-lazy/upstream.
++
++Individual files state no separate redistribution grant; retain all attribution
++and do not infer a license from another benchmark. The supplementary inventory
++records Rex Page's Miranda and fixed-array Fortran programs as distinct
++historical references outside the initial executable language-family set.
++Matt Donadio's iterative bit-reversal C FFT is a library fragment without a
++standalone workload. No foreign reference is called an exact duplicate.
++There are no external datasets; ramp inputs are generated deterministically.
++Old platform-specific numeric fixtures remain historical evidence.
++
++### Portable translation and evaluation
++
++All computation and checking uses SML97. Complex coordinates use real arithmetic,
++with memoized numeric delays in lazy and eager finite payloads in strict.
++Both preserve memoized control streams, shared even-root subsequences, periodic
++cyclic lists, the global prime stream and separately delayed transform metrics.
++Unused complex coordinates remain demand-sensitive in the lazy policy.
++
++Magnitude/division retain the installed GHC base-4.17.2.0 Data.Complex exponent
++scaling and zero-exponent behavior, inspected in its installed interface.
++Extreme-value references include the underflow of a tiny coordinate paired with
++zero. Integer indices and factors fit portable int in the bounded profile domain.
++Floating enumeration retains Haskell's half-step endpoint convention.
++
++For i from one through 100, the source generates base+i/15 and consequently
++eight different lengths. Compute each iteration anew. The fast transform assumes
++powers of two but source profiles include other lengths: preserve and check its
++large nonzero errors instead of silently correcting the source algorithm.
++
++Retain the demand for the length of the quoted result string. GEN17 replaces
++shortest decimal spelling; parsed values, escape roundtrips and an independently
++computed escaped length validate the consumer. Stable samples:checked output
++replaces empty stdout. No hash replaces the formatted-result consumer.
++
++### Profiles and result checks
++
++| Profile | Samples | Base |
++|---|---:|---:|
++| Smoke | 1 | 70 |
++| Normal | 100 | 245 |
++| Large | 100 | 490 |
++
++Normal and large retain source counts; smoke reduces FAST's 100 to one.
++Original GHC runs match the empty stdout fixture for all full profiles; print
++mode supplies all 300 numeric values per profile. An independent eager Python
++model agrees on all 300 triples, including non-power-of-two fast-transform errors.
++Its reference-only caching of repeated sizes is absent from the SML workload.
++
++For actual length n, fast-transform distance allows absolute 1e-9 plus relative
++1e-10. The general-transform residual allows absolute 128*epsilon*n^2*sqrt(n);
++the cosine sum allows 128*epsilon*n^3, with binary64 machine epsilon.
++These are conservative source-agreement budgets, not a formal proof for all math
++libraries. Reject nonfinite values, malformed triples and deliberate perturbations
++of each metric; also test an accepted interior point near the bound.
++Auxiliary transform vectors use absolute and relative 1e-11.
++
++The semantic target checks all five complex transforms and cosine vectors at
++lengths 2,3,4,5,8,16, magnitudes, cyclic lists, factors, floating enumeration,
++quoted output, coordinate demand and sharing. Both full normal SML profiles
++pass calibration. Full large SML repetition checks remain unrecorded, separately
++from validated large fixtures and first-sample checks.
++
++Private Rune, MLton, Poly/ML and ML Kit runs pass 132 checks. Private SML/NJ
++runs terminate with bus/segmentation faults or a fatal bogus-overflow diagnostic.
++Retain valid source and canonical host settings; the compiler mechanism is
++unresolved. Failed correctness checks cannot supply accepted timing samples.
++Canonical primary, count and semantic results are recorded as they finish.
++
++### Literature and diagnostic questions
++
++[Cooley and Tukey (1965)](https://doi.org/10.1090/S0025-5718-1965-0178586-1)
++provides FFT context; this source's Fourier.lhs and Complex_Vectors.lhs define
++the actual algorithms and MAIL records numerical investigations.
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) supplies suite
++context. Investigate higher-order streams, periodic sharing, complex-coordinate
++demand, numeric operation order, transform assumptions and formatting cost.
++These are source-based hypotheses until supported by measurements.
++
++## lambda-simple-lazy
++
++Interpreter: simple. Numeric/syntax policy: lazy.
++
++### Algorithm and workload
++
++Evaluate a lambda-calculus program that sums zero through n using an explicit
++fixed-point combinator, closures, variable lookup, integer addition and a
++zero conditional. Compare a directly recursive interpreter with a state-monadic
++interpreter. Preserve both implementations and their original environments,
++call-by-name argument closures, association-list lookup and pretty printers.
++
++### History, authorship and variants
++
++The source says From Mark: marku@cs.waikato.ac.nz, November 2001; no surname
++is inferred from the address. Pinned nofib revision
++b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/lambda. Individual source
++and generated fixture files state no separate redistribution notice. Retain
++their complete attribution and historical observations under
++lambda-simple-lazy/upstream; do not infer a grant from another benchmark.
++
++Original main runs direct and monadic evaluation, each 100 times, interleaving
++their output. The suite splits the styles into separately named simple and monad
++workloads so each comparison measures one implementation. Each retains its
++individual source repetition count. Explicit lazy/strict variants retain
++materially different finite syntax/result evaluation and allocation behavior.
++No external datasets are required; all selected syntax is source-generated.
++
++The source's historical timing comments concern old Hugs/GHC implementations.
++They explain the comparison's motivation and are not measurements of Rune.
++
++### Translation and runtime behavior
++
++Kernel, generators, consumers and checks use SML97. The lazy policy memoizes
++term fields, numeric payloads, closure environments and delayed results.
++The strict policy evaluates finite payloads eagerly. Both retain the interpreted
++language's explicit call-by-name closures: a strict host policy does not turn the
++interpreted program into call-by-value or memoize interpreted variable results.
++
++Translate erased Identity directly and keep the direct interpreter's recursive
++calls. The other interpreter retains explicit state computations, return/bind,
++lookup, current environment, push and withEnv. withEnv evaluates a computation
++in a supplied environment while returning the caller's environment; its result
++can remain delayed. The source Incr is intentionally a no-op returning zero.
++
++Preserve the fixed-point and partial-sum syntax as shared global source terms.
++Construct each selected application anew per repetition. No result cache,
++algebraic replacement of evaluation or source transformation eliminates the
++interpreted recursion. Indices and source Int arithmetic fit even 31-bit signed
++ints for selected sizes; the driver bounds n at 20000 to keep the independent
++triangular-number checker portable.
++
++Retain the source direct Con output and monadic pretty-printed value plus final
++environment, including its two spaces and trailing newline. Selected source
++terms always return Con; the direct derived-Show adapter documents that bounded
++domain instead of pretending to implement every unused Read/Show operation.
++Full text equality consumes and validates every selected result. Stable
++repetitions:checked-characters output replaces repetitive stdout.
++
++### Inputs and correctness
++
++| Profile | Repetitions of each selected style | Summation bound |
++|---|---:|---:|
++| Smoke | 1 | 80 |
++| Normal | 100 | 260 |
++| Large | 100 | 550 |
++
++Smoke reduces source FAST's 100 repetitions to one; normal/large retain their
++upstream bounds and counts. Independent n*(n+1)/2 arithmetic checks every result,
++while the original GHC program reproduces all three complete 200-line fixtures.
++
++An export-only original observer checks 33 term/environment cases: arithmetic,
++zero branches, nonnumeric tests, unused arguments, shadowing, captured lexical
++environments, explicit Thunk environments, fixed-point recursion and caller
++state restoration. The 241-check target additionally covers independent sums,
++formatting/brackets, invalid applications, modified output, zero repetitions,
++syntax-field demand and sharing.
++
++All six native hosts and Rune pass the private semantic target. Final canonical
++matrices/counts are recorded with the import wave. Full normal calibration
++covers both styles and both policies; large fixtures are checked independently,
++while full SML large repetition runs remain unrecorded. No failing correctness
++case can supply accepted measurements.
++
++### Literature and diagnostic questions
++
++The retained source gives the direct-versus-state-monadic experiment and
++historical observations. [Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
++supplies suite context. Investigate closure allocation, environment traversal,
++higher-order state composition, restored lexical scope, evaluation/sharing and
++pretty-print consumers. These questions follow source inspection; host-specific
++performance conclusions require measurements of the selected implementation.
++
++## lambda-simple-strict
++
++Interpreter: simple. Numeric/syntax policy: strict.
++
++### Algorithm and workload
++
++Evaluate a lambda-calculus program that sums zero through n using an explicit
++fixed-point combinator, closures, variable lookup, integer addition and a
++zero conditional. Compare a directly recursive interpreter with a state-monadic
++interpreter. Preserve both implementations and their original environments,
++call-by-name argument closures, association-list lookup and pretty printers.
++
++### History, authorship and variants
++
++The source says From Mark: marku@cs.waikato.ac.nz, November 2001; no surname
++is inferred from the address. Pinned nofib revision
++b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/lambda. Individual source
++and generated fixture files state no separate redistribution notice. Retain
++their complete attribution and historical observations under
++lambda-simple-lazy/upstream; do not infer a grant from another benchmark.
++
++Original main runs direct and monadic evaluation, each 100 times, interleaving
++their output. The suite splits the styles into separately named simple and monad
++workloads so each comparison measures one implementation. Each retains its
++individual source repetition count. Explicit lazy/strict variants retain
++materially different finite syntax/result evaluation and allocation behavior.
++No external datasets are required; all selected syntax is source-generated.
++
++The source's historical timing comments concern old Hugs/GHC implementations.
++They explain the comparison's motivation and are not measurements of Rune.
++
++### Translation and runtime behavior
++
++Kernel, generators, consumers and checks use SML97. The lazy policy memoizes
++term fields, numeric payloads, closure environments and delayed results.
++The strict policy evaluates finite payloads eagerly. Both retain the interpreted
++language's explicit call-by-name closures: a strict host policy does not turn the
++interpreted program into call-by-value or memoize interpreted variable results.
++
++Translate erased Identity directly and keep the direct interpreter's recursive
++calls. The other interpreter retains explicit state computations, return/bind,
++lookup, current environment, push and withEnv. withEnv evaluates a computation
++in a supplied environment while returning the caller's environment; its result
++can remain delayed. The source Incr is intentionally a no-op returning zero.
++
++Preserve the fixed-point and partial-sum syntax as shared global source terms.
++Construct each selected application anew per repetition. No result cache,
++algebraic replacement of evaluation or source transformation eliminates the
++interpreted recursion. Indices and source Int arithmetic fit even 31-bit signed
++ints for selected sizes; the driver bounds n at 20000 to keep the independent
++triangular-number checker portable.
++
++Retain the source direct Con output and monadic pretty-printed value plus final
++environment, including its two spaces and trailing newline. Selected source
++terms always return Con; the direct derived-Show adapter documents that bounded
++domain instead of pretending to implement every unused Read/Show operation.
++Full text equality consumes and validates every selected result. Stable
++repetitions:checked-characters output replaces repetitive stdout.
++
++### Inputs and correctness
++
++| Profile | Repetitions of each selected style | Summation bound |
++|---|---:|---:|
++| Smoke | 1 | 80 |
++| Normal | 100 | 260 |
++| Large | 100 | 550 |
++
++Smoke reduces source FAST's 100 repetitions to one; normal/large retain their
++upstream bounds and counts. Independent n*(n+1)/2 arithmetic checks every result,
++while the original GHC program reproduces all three complete 200-line fixtures.
++
++An export-only original observer checks 33 term/environment cases: arithmetic,
++zero branches, nonnumeric tests, unused arguments, shadowing, captured lexical
++environments, explicit Thunk environments, fixed-point recursion and caller
++state restoration. The 241-check target additionally covers independent sums,
++formatting/brackets, invalid applications, modified output, zero repetitions,
++syntax-field demand and sharing.
++
++All six native hosts and Rune pass the private semantic target. Final canonical
++matrices/counts are recorded with the import wave. Full normal calibration
++covers both styles and both policies; large fixtures are checked independently,
++while full SML large repetition runs remain unrecorded. No failing correctness
++case can supply accepted measurements.
++
++### Literature and diagnostic questions
++
++The retained source gives the direct-versus-state-monadic experiment and
++historical observations. [Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
++supplies suite context. Investigate closure allocation, environment traversal,
++higher-order state composition, restored lexical scope, evaluation/sharing and
++pretty-print consumers. These questions follow source inspection; host-specific
++performance conclusions require measurements of the selected implementation.
++
++## lambda-monad-lazy
++
++Interpreter: monad. Numeric/syntax policy: lazy.
++
++### Algorithm and workload
++
++Evaluate a lambda-calculus program that sums zero through n using an explicit
++fixed-point combinator, closures, variable lookup, integer addition and a
++zero conditional. Compare a directly recursive interpreter with a state-monadic
++interpreter. Preserve both implementations and their original environments,
++call-by-name argument closures, association-list lookup and pretty printers.
++
++### History, authorship and variants
++
++The source says From Mark: marku@cs.waikato.ac.nz, November 2001; no surname
++is inferred from the address. Pinned nofib revision
++b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/lambda. Individual source
++and generated fixture files state no separate redistribution notice. Retain
++their complete attribution and historical observations under
++lambda-simple-lazy/upstream; do not infer a grant from another benchmark.
++
++Original main runs direct and monadic evaluation, each 100 times, interleaving
++their output. The suite splits the styles into separately named simple and monad
++workloads so each comparison measures one implementation. Each retains its
++individual source repetition count. Explicit lazy/strict variants retain
++materially different finite syntax/result evaluation and allocation behavior.
++No external datasets are required; all selected syntax is source-generated.
++
++The source's historical timing comments concern old Hugs/GHC implementations.
++They explain the comparison's motivation and are not measurements of Rune.
++
++### Translation and runtime behavior
++
++Kernel, generators, consumers and checks use SML97. The lazy policy memoizes
++term fields, numeric payloads, closure environments and delayed results.
++The strict policy evaluates finite payloads eagerly. Both retain the interpreted
++language's explicit call-by-name closures: a strict host policy does not turn the
++interpreted program into call-by-value or memoize interpreted variable results.
++
++Translate erased Identity directly and keep the direct interpreter's recursive
++calls. The other interpreter retains explicit state computations, return/bind,
++lookup, current environment, push and withEnv. withEnv evaluates a computation
++in a supplied environment while returning the caller's environment; its result
++can remain delayed. The source Incr is intentionally a no-op returning zero.
++
++Preserve the fixed-point and partial-sum syntax as shared global source terms.
++Construct each selected application anew per repetition. No result cache,
++algebraic replacement of evaluation or source transformation eliminates the
++interpreted recursion. Indices and source Int arithmetic fit even 31-bit signed
++ints for selected sizes; the driver bounds n at 20000 to keep the independent
++triangular-number checker portable.
++
++Retain the source direct Con output and monadic pretty-printed value plus final
++environment, including its two spaces and trailing newline. Selected source
++terms always return Con; the direct derived-Show adapter documents that bounded
++domain instead of pretending to implement every unused Read/Show operation.
++Full text equality consumes and validates every selected result. Stable
++repetitions:checked-characters output replaces repetitive stdout.
++
++### Inputs and correctness
++
++| Profile | Repetitions of each selected style | Summation bound |
++|---|---:|---:|
++| Smoke | 1 | 80 |
++| Normal | 100 | 260 |
++| Large | 100 | 550 |
++
++Smoke reduces source FAST's 100 repetitions to one; normal/large retain their
++upstream bounds and counts. Independent n*(n+1)/2 arithmetic checks every result,
++while the original GHC program reproduces all three complete 200-line fixtures.
++
++An export-only original observer checks 33 term/environment cases: arithmetic,
++zero branches, nonnumeric tests, unused arguments, shadowing, captured lexical
++environments, explicit Thunk environments, fixed-point recursion and caller
++state restoration. The 241-check target additionally covers independent sums,
++formatting/brackets, invalid applications, modified output, zero repetitions,
++syntax-field demand and sharing.
++
++All six native hosts and Rune pass the private semantic target. Final canonical
++matrices/counts are recorded with the import wave. Full normal calibration
++covers both styles and both policies; large fixtures are checked independently,
++while full SML large repetition runs remain unrecorded. No failing correctness
++case can supply accepted measurements.
++
++### Literature and diagnostic questions
++
++The retained source gives the direct-versus-state-monadic experiment and
++historical observations. [Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
++supplies suite context. Investigate closure allocation, environment traversal,
++higher-order state composition, restored lexical scope, evaluation/sharing and
++pretty-print consumers. These questions follow source inspection; host-specific
++performance conclusions require measurements of the selected implementation.
++
++## lambda-monad-strict
++
++Interpreter: monad. Numeric/syntax policy: strict.
++
++### Algorithm and workload
++
++Evaluate a lambda-calculus program that sums zero through n using an explicit
++fixed-point combinator, closures, variable lookup, integer addition and a
++zero conditional. Compare a directly recursive interpreter with a state-monadic
++interpreter. Preserve both implementations and their original environments,
++call-by-name argument closures, association-list lookup and pretty printers.
++
++### History, authorship and variants
++
++The source says From Mark: marku@cs.waikato.ac.nz, November 2001; no surname
++is inferred from the address. Pinned nofib revision
++b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/lambda. Individual source
++and generated fixture files state no separate redistribution notice. Retain
++their complete attribution and historical observations under
++lambda-simple-lazy/upstream; do not infer a grant from another benchmark.
++
++Original main runs direct and monadic evaluation, each 100 times, interleaving
++their output. The suite splits the styles into separately named simple and monad
++workloads so each comparison measures one implementation. Each retains its
++individual source repetition count. Explicit lazy/strict variants retain
++materially different finite syntax/result evaluation and allocation behavior.
++No external datasets are required; all selected syntax is source-generated.
++
++The source's historical timing comments concern old Hugs/GHC implementations.
++They explain the comparison's motivation and are not measurements of Rune.
++
++### Translation and runtime behavior
++
++Kernel, generators, consumers and checks use SML97. The lazy policy memoizes
++term fields, numeric payloads, closure environments and delayed results.
++The strict policy evaluates finite payloads eagerly. Both retain the interpreted
++language's explicit call-by-name closures: a strict host policy does not turn the
++interpreted program into call-by-value or memoize interpreted variable results.
++
++Translate erased Identity directly and keep the direct interpreter's recursive
++calls. The other interpreter retains explicit state computations, return/bind,
++lookup, current environment, push and withEnv. withEnv evaluates a computation
++in a supplied environment while returning the caller's environment; its result
++can remain delayed. The source Incr is intentionally a no-op returning zero.
++
++Preserve the fixed-point and partial-sum syntax as shared global source terms.
++Construct each selected application anew per repetition. No result cache,
++algebraic replacement of evaluation or source transformation eliminates the
++interpreted recursion. Indices and source Int arithmetic fit even 31-bit signed
++ints for selected sizes; the driver bounds n at 20000 to keep the independent
++triangular-number checker portable.
++
++Retain the source direct Con output and monadic pretty-printed value plus final
++environment, including its two spaces and trailing newline. Selected source
++terms always return Con; the direct derived-Show adapter documents that bounded
++domain instead of pretending to implement every unused Read/Show operation.
++Full text equality consumes and validates every selected result. Stable
++repetitions:checked-characters output replaces repetitive stdout.
++
++### Inputs and correctness
++
++| Profile | Repetitions of each selected style | Summation bound |
++|---|---:|---:|
++| Smoke | 1 | 80 |
++| Normal | 100 | 260 |
++| Large | 100 | 550 |
++
++Smoke reduces source FAST's 100 repetitions to one; normal/large retain their
++upstream bounds and counts. Independent n*(n+1)/2 arithmetic checks every result,
++while the original GHC program reproduces all three complete 200-line fixtures.
++
++An export-only original observer checks 33 term/environment cases: arithmetic,
++zero branches, nonnumeric tests, unused arguments, shadowing, captured lexical
++environments, explicit Thunk environments, fixed-point recursion and caller
++state restoration. The 241-check target additionally covers independent sums,
++formatting/brackets, invalid applications, modified output, zero repetitions,
++syntax-field demand and sharing.
++
++All six native hosts and Rune pass the private semantic target. Final canonical
++matrices/counts are recorded with the import wave. Full normal calibration
++covers both styles and both policies; large fixtures are checked independently,
++while full SML large repetition runs remain unrecorded. No failing correctness
++case can supply accepted measurements.
++
++### Literature and diagnostic questions
++
++The retained source gives the direct-versus-state-monadic experiment and
++historical observations. [Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
++supplies suite context. Investigate closure allocation, environment traversal,
++higher-order state composition, restored lexical scope, evaluation/sharing and
++pretty-print consumers. These questions follow source inspection; host-specific
++performance conclusions require measurements of the selected implementation.
++
++## para-lazy
++
++Finite numeric policy: lazy.
++
++### Algorithm and workload
++
++Format paragraphs at maximum width 70 and preferred width 63 using the source
++linear-time par3. Retain right-fold scan1, candidate cost/width/length summaries,
++symmetric lists as two lists, both rebalance operations, add/breakpoint pruning,
++drop_nofit, trim, tile and source parse/unparse. The implementation does not
++replace candidate maintenance with dynamic programming or a mutable queue.
++
++### History, authorship and known variants
++
++Oege de Moor and Jeremy Gibbons, 1995--1999; the article header dates its benchmark
++program September 1999. Pinned nofib revision
++b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/para. This is paragraph
++formatting, with no parallel runtime requirement.
++
++The literate source contains its paper, experiments and intermediate algorithms:
++exhaustive par0, quadratic par1, cached/pruned par1'/par2 forms, final linear par3
++and greedy parg. Original main selects par3. Preserve all definitions as upstream
++source; quadratic par1 is an independent original-language reference for a
++documented counterexample, not a substituted timed algorithm. No separate
++redistribution grant is stated in the Haskell/C++ sources.
++
++The C++ Part2.C comparison has its own bounded buffers, command-line width and
++Para/Queue/Thin modules. It remains a distinct future candidate outside the
++initial SML/Haskell/OCaml executable set. Retain its source and data; omit the
++pinned precompiled i386 part2 executable and record its SHA-256/disposition.
++No original executable is imported or executed. The complete article warns
++against treating its clarity-first historical comparison as modern performance
++evidence.
++
++### Dataset origins and notices
++
++The full input is the supplied Project Gutenberg February 1994 e-text #107,
++Far From the Madding Crowd by Thomas Hardy, named crowd10a.txt in its header.
++Its individual historical notice includes Charles B. Kramer's Small Print
++version 04.29.93, the public-domain statement and distribution terms.
++Retain the entire original text/header/notice byte-for-byte in full.input and
++upstream/runtime_files/input-data. Preserve the separate CRLF C++ crowd/cout
++copies unchanged; do not silently equate their raw identities.
++
++Formatted references retain all original words, including the complete historical
++header/notice, with only the benchmark's line wrapping and blank-line formatting.
++The original ASCII file is supplied alongside them. Smoke selects complete
++novel-body paragraphs after the historical header, with no Gutenberg references;
++its exact byte range, source identity and adaptation are recorded. Synthetic
++auxiliary cases have deterministic origins. The novel-body counterexample keeps
++its original author/source attribution here.
++
++### SML97 translation and evaluation
++
++Lazy and strict names identify memoized versus eager finite numeric summaries
++and state/candidate payloads. Both retain memoized list spines, head sharing,
++queue shape, scanning order, candidate selection and source right-fold grouping.
++The lazy policy can inspect a candidate length without forcing unrelated fields.
++No input, formatted output or parsed paragraph is cached across repetitions.
++
++The driver reopens the input each iteration. Portable TextIO.inputAll replaces
++hGetContents and produces a memoized character stream; record this eager file
++read separately from the source's lazy file IO. Reading fixed ASCII data keeps
++word/character classification within the reviewed common domain.
++All selected integer widths, costs and lengths fit signed 31-bit int; no
++arbitrary-precision or modular-arithmetic substitution is introduced.
++
++The original consumes length of the formatted string and prints nothing. The
++driver consumes the same output stream while comparing every character against
++the reviewed fixture, then reports repetitions:checked-characters. It buffers
++neither an extra full output list nor a parsed-result cache. This validation adds
++character comparison to the source length consumer; document it in comparisons.
++
++### Profiles and correctness
++
++| Profile | Repetitions | Text |
++|---|---:|---|
++| Smoke | 1 | 10005-byte complete body-paragraph selection |
++| Normal | 8 | original 789112-byte text |
++| Large | 40 | original 789112-byte text |
++
++Normal/large retain source inputs and counts. Smoke keeps FAST's one repetition
++and reduces its dataset for bounded routine checks. Original GHC runs finish
++all source profiles with empty stdout; there is no supplied para.stdout fixture.
++An export-only original formatter produces complete reviewed formatted text:
++784213 bytes for the original input and 9969 bytes for smoke.
++
++An independent quadratic dynamic-programming reference verifies preserved word
++order, maximum widths and layout costs for all 3574 original paragraphs.
++Source costs agree with the optimum on 3573. Paragraph 483, a 23-word quotation,
++has source par3 cost 5 versus optimum 1. Original quadratic par1 confirms cost 1.
++Preserve par3's three-line layout exactly; this is an established property of
++the pinned source, not evidence against the paper's general algorithm.
++Partial source behavior on whitespace-only input and overlong words is retained.
++
++The 112-check target compares 41 complete original cases under both policies,
++small full text, the source counterexample, output corruption/length rejection,
++zero iterations, front/back queue rebalancing and unused-field demand.
++Both policies agree with the complete original text in a guarded streaming
++pilot. Full normal calibration and canonical primary/count/semantic runs are
++recorded separately as they finish. Full large SML repetition checks remain
++unrecorded. An earlier development consumer materialized an extra full output
++list and exceeded a private 1-GiB guard; retain that development observation
++separately from the final streaming consumer's checks.
++
++### Literature and diagnostic questions
++
++[De Moor and Gibbons, Bridging the Algorithm Gap: A Linear-Time Functional
++Program for Paragraph Formatting (1999)](https://www.cs.ox.ac.uk/publications/publication2361-abstract.html)
++is the source article; the full literate text is preserved. It motivates the
++functional derivation and concrete queue representation.
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) supplies suite
++context. Investigate summary-field demand, symmetric-list sharing/rebalancing,
++candidate pruning, paragraph lifetimes, text parsing and output consumption.
++These are source-based diagnostic questions; current-host performance claims
++need separate measurements.
++
++## para-strict
++
++Finite numeric policy: strict.
++
++### Algorithm and workload
++
++Format paragraphs at maximum width 70 and preferred width 63 using the source
++linear-time par3. Retain right-fold scan1, candidate cost/width/length summaries,
++symmetric lists as two lists, both rebalance operations, add/breakpoint pruning,
++drop_nofit, trim, tile and source parse/unparse. The implementation does not
++replace candidate maintenance with dynamic programming or a mutable queue.
++
++### History, authorship and known variants
++
++Oege de Moor and Jeremy Gibbons, 1995--1999; the article header dates its benchmark
++program September 1999. Pinned nofib revision
++b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/para. This is paragraph
++formatting, with no parallel runtime requirement.
++
++The literate source contains its paper, experiments and intermediate algorithms:
++exhaustive par0, quadratic par1, cached/pruned par1'/par2 forms, final linear par3
++and greedy parg. Original main selects par3. Preserve all definitions as upstream
++source; quadratic par1 is an independent original-language reference for a
++documented counterexample, not a substituted timed algorithm. No separate
++redistribution grant is stated in the Haskell/C++ sources.
++
++The C++ Part2.C comparison has its own bounded buffers, command-line width and
++Para/Queue/Thin modules. It remains a distinct future candidate outside the
++initial SML/Haskell/OCaml executable set. Retain its source and data; omit the
++pinned precompiled i386 part2 executable and record its SHA-256/disposition.
++No original executable is imported or executed. The complete article warns
++against treating its clarity-first historical comparison as modern performance
++evidence.
++
++### Dataset origins and notices
++
++The full input is the supplied Project Gutenberg February 1994 e-text #107,
++Far From the Madding Crowd by Thomas Hardy, named crowd10a.txt in its header.
++Its individual historical notice includes Charles B. Kramer's Small Print
++version 04.29.93, the public-domain statement and distribution terms.
++Retain the entire original text/header/notice byte-for-byte in full.input and
++upstream/runtime_files/input-data. Preserve the separate CRLF C++ crowd/cout
++copies unchanged; do not silently equate their raw identities.
++
++Formatted references retain all original words, including the complete historical
++header/notice, with only the benchmark's line wrapping and blank-line formatting.
++The original ASCII file is supplied alongside them. Smoke selects complete
++novel-body paragraphs after the historical header, with no Gutenberg references;
++its exact byte range, source identity and adaptation are recorded. Synthetic
++auxiliary cases have deterministic origins. The novel-body counterexample keeps
++its original author/source attribution here.
++
++### SML97 translation and evaluation
++
++Lazy and strict names identify memoized versus eager finite numeric summaries
++and state/candidate payloads. Both retain memoized list spines, head sharing,
++queue shape, scanning order, candidate selection and source right-fold grouping.
++The lazy policy can inspect a candidate length without forcing unrelated fields.
++No input, formatted output or parsed paragraph is cached across repetitions.
++
++The driver reopens the input each iteration. Portable TextIO.inputAll replaces
++hGetContents and produces a memoized character stream; record this eager file
++read separately from the source's lazy file IO. Reading fixed ASCII data keeps
++word/character classification within the reviewed common domain.
++All selected integer widths, costs and lengths fit signed 31-bit int; no
++arbitrary-precision or modular-arithmetic substitution is introduced.
++
++The original consumes length of the formatted string and prints nothing. The
++driver consumes the same output stream while comparing every character against
++the reviewed fixture, then reports repetitions:checked-characters. It buffers
++neither an extra full output list nor a parsed-result cache. This validation adds
++character comparison to the source length consumer; document it in comparisons.
++
++### Profiles and correctness
++
++| Profile | Repetitions | Text |
++|---|---:|---|
++| Smoke | 1 | 10005-byte complete body-paragraph selection |
++| Normal | 8 | original 789112-byte text |
++| Large | 40 | original 789112-byte text |
++
++Normal/large retain source inputs and counts. Smoke keeps FAST's one repetition
++and reduces its dataset for bounded routine checks. Original GHC runs finish
++all source profiles with empty stdout; there is no supplied para.stdout fixture.
++An export-only original formatter produces complete reviewed formatted text:
++784213 bytes for the original input and 9969 bytes for smoke.
++
++An independent quadratic dynamic-programming reference verifies preserved word
++order, maximum widths and layout costs for all 3574 original paragraphs.
++Source costs agree with the optimum on 3573. Paragraph 483, a 23-word quotation,
++has source par3 cost 5 versus optimum 1. Original quadratic par1 confirms cost 1.
++Preserve par3's three-line layout exactly; this is an established property of
++the pinned source, not evidence against the paper's general algorithm.
++Partial source behavior on whitespace-only input and overlong words is retained.
++
++The 112-check target compares 41 complete original cases under both policies,
++small full text, the source counterexample, output corruption/length rejection,
++zero iterations, front/back queue rebalancing and unused-field demand.
++Both policies agree with the complete original text in a guarded streaming
++pilot. Full normal calibration and canonical primary/count/semantic runs are
++recorded separately as they finish. Full large SML repetition checks remain
++unrecorded. An earlier development consumer materialized an extra full output
++list and exceeded a private 1-GiB guard; retain that development observation
++separately from the final streaming consumer's checks.
++
++### Literature and diagnostic questions
++
++[De Moor and Gibbons, Bridging the Algorithm Gap: A Linear-Time Functional
++Program for Paragraph Formatting (1999)](https://www.cs.ox.ac.uk/publications/publication2361-abstract.html)
++is the source article; the full literate text is preserved. It motivates the
++functional derivation and concrete queue representation.
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) supplies suite
++context. Investigate summary-field demand, symmetric-list sharing/rebalancing,
++candidate pruning, paragraph lifetimes, text parsing and output consumption.
++These are source-based diagnostic questions; current-host performance claims
++need separate measurements.
+diff --git a/examples/benchmarks/inventory.tsv b/examples/benchmarks/inventory.tsv
+index 7e3ffd3f..466aba60 100644
+--- a/examples/benchmarks/inventory.tsv
++++ b/examples/benchmarks/inventory.tsv
+@@ -628,7 +628,7 @@ nofib	spectral/dom-lt	dom-lt	dom-lt	M3	import	application		not stated in scanned
+ nofib	spectral/eliza	eliza	eliza	M3	import	kernel		not stated in scanned source headers	371aff2ffa2e38b65ad6340b9994b1c8e7615ce1b5985e9e9a757f5922a21309	spectral/eliza/Main.hs	spectral/eliza/eliza.faststdout;spectral/eliza/eliza.slowstdout;spectral/eliza/eliza.stdin;spectral/eliza/eliza.stdout		spectral/eliza/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/exact-reals	exact-reals	exact-reals	M3	import	integer-arithmetic		David Lester	e0adfd0a7cbe5beb68562bfd5396f5ac886968481c69d7c6540957772bf1a1c3	spectral/exact-reals/Main.hs	spectral/exact-reals/exact-reals.stdout		spectral/exact-reals/Main.hs:paper-attribution;spectral/exact-reals/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/expert	expert	expert	M3	import	application		not stated in scanned source headers	7980aaeaf37783fb72671dc2be4ac2bc1019cc696d7020ddfdd70dec6ec599bb	spectral/expert/Knowledge.hs;spectral/expert/Main.hs;spectral/expert/Match.hs;spectral/expert/Result.hs;spectral/expert/Search.hs;spectral/expert/Table.hs	spectral/expert/expert.faststdout;spectral/expert/expert.slowstdout;spectral/expert/expert.stdin;spectral/expert/expert.stdout;spectral/expert/runtime_files/animals	spectral/expert/README:header	spectral/expert/Makefile;spectral/expert/README	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	spectral/fft2	fft2	fft2	M3	import	numerical		not stated in scanned source headers	06a7d5f0e9b649234a3ef2ab749138d15e7b537c72d4fc75791e8202aa410c65	spectral/fft2/Complex_Vectors.lhs;spectral/fft2/Fourier.lhs;spectral/fft2/Main.lhs;spectral/fft2/fft.c	spectral/fft2/fft2.stdout;spectral/fft2/old/fft2.slowstdout;spectral/fft2/old/fft2.stdout		spectral/fft2/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	spectral/fft2	fft2	fft2	M3	import	numerical		Rex Page	06a7d5f0e9b649234a3ef2ab749138d15e7b537c72d4fc75791e8202aa410c65	spectral/fft2/Complex_Vectors.lhs;spectral/fft2/Fourier.lhs;spectral/fft2/Main.lhs;spectral/fft2/fft.c	spectral/fft2/fft2.stdout;spectral/fft2/old/fft2.slowstdout;spectral/fft2/old/fft2.stdout		spectral/fft2/Main.lhs:author-header;spectral/fft2/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/fft2/old	old	old	-	exclude	kernel		not stated in scanned source headers	e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855				spectral/fft2/old/Makefile	aggregate, support directory, or old source fragment without a standalone Main entrypoint
+ nofib	spectral/fibheaps	fibheaps	fibheaps-nofib	M3	import	calls-recursion	nofib:gc/fibheaps	not stated in scanned source headers	03e81472c734a535c08620bfd9923e951b25afad278f8df40a099d8c3bd87a28	spectral/fibheaps/Main.lhs		spectral/fibheaps/Main.lhs:header	spectral/fibheaps/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/fish	fish	fish	M3	import	kernel		not stated in scanned source headers	93f41032710c5119ce7dca30341e62ed8520d5789cca762de8b538ae92168993	spectral/fish/Main.hs			spectral/fish/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+@@ -651,7 +651,7 @@ nofib	spectral/hartel/wang	wang	wang	M3	import	application		not stated in scanne
+ nofib	spectral/hartel/wave4main	wave4main	wave4main	M3	import	application		not stated in scanned source headers	f4713b576472e975102554d9c18746bd704ebfd19d493bfda1a0f4549834dd3c	spectral/hartel/Fast2haskell.hs;spectral/hartel/wave4main/Main.hs	spectral/hartel/wave4main/wave4main.faststdout;spectral/hartel/wave4main/wave4main.slowstdout;spectral/hartel/wave4main/wave4main.stdout		spectral/hartel/wave4main/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/integer	integer	integer	M3	import	integer-arithmetic		not stated in scanned source headers	d162e967535db76216b423c7777645c0f101702960a6f21d3f1f41b74ebe717b	spectral/integer/Main.hs			spectral/integer/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/knights	knights	knights	M3	import	application		not stated in scanned source headers	c8b5322132f1a050c11c71e4d99c0b2db73e5b4a73edfe7cf1c78ec38afb1450	spectral/knights/ChessSetArray.lhs;spectral/knights/ChessSetList.lhs;spectral/knights/KnightHeuristic.lhs;spectral/knights/Main.lhs;spectral/knights/Queue.lhs;spectral/knights/Sort.lhs	spectral/knights/knights.faststdout;spectral/knights/knights.slowstdout;spectral/knights/knights.stdout		spectral/knights/Makefile;spectral/knights/README	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	spectral/lambda	lambda	lambda	M3	import	kernel		not stated in scanned source headers	aa31f12344bd29737784641b929e2d35239e1be47b088b2f4721322a22faa6e5	spectral/lambda/Main.hs	spectral/lambda/lambda.faststdout;spectral/lambda/lambda.slowstdout;spectral/lambda/lambda.stdout		spectral/lambda/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	spectral/lambda	lambda	lambda	M3	import	kernel		Mark (marku@cs.waikato.ac.nz)	aa31f12344bd29737784641b929e2d35239e1be47b088b2f4721322a22faa6e5	spectral/lambda/Main.hs	spectral/lambda/lambda.faststdout;spectral/lambda/lambda.slowstdout;spectral/lambda/lambda.stdout		spectral/lambda/Main.hs:author-header;spectral/lambda/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/last-piece	last-piece	last-piece	M3	import	kernel		not stated in scanned source headers	0cd30e18a417fcd286bc281b5529129ee1629e4edff8f7ee992d0d6e2a056ffa	spectral/last-piece/Main.hs	spectral/last-piece/last-piece.stdout		spectral/last-piece/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/lcss	lcss	lcss-nofib	M3	import	kernel	nofib:gc/lcss	not stated in scanned source headers	3740b10ded1e92dad2371cdb3cdc890c09286285570d87d0b1894d2040e73839	spectral/lcss/Main.hs	spectral/lcss/lcss.faststdout;spectral/lcss/lcss.slowstdout;spectral/lcss/lcss.stdout		spectral/lcss/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/life	life	life-nofib	M3	import	kernel	mlkit:test/life.sml;mlkit:test_dev/life.sml;mlton:benchmark/tests/life.sml;smlnj:programs/life	not stated in scanned source headers	86a8e72f36e2fc3014879c55d8af7a1b862bd99c3099fbc2e040d359c4b5c476	spectral/life/Main.hs	spectral/life/life.faststdout;spectral/life/life.slowstdout;spectral/life/life.stdout		spectral/life/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+@@ -660,7 +660,7 @@ nofib	spectral/mandel2	mandel2	mandel2	M3	import	numerical		not stated in scanne
+ nofib	spectral/mate	mate	mate	M3	import	kernel		not stated in scanned source headers	82375c77c35542a2eea499bef40b963614253068f0a12823ad0ecc4b46217857	spectral/mate/Board.hs;spectral/mate/Main.hs;spectral/mate/Move.hs;spectral/mate/Problem.hs;spectral/mate/Solution.hs	spectral/mate/mate.faststdout;spectral/mate/mate.slowstdout;spectral/mate/mate.stdout;spectral/mate/runtime_files/heathcote3.prob;spectral/mate/runtime_files/holzhausen.prob;spectral/mate/runtime_files/kohtz.prob		spectral/mate/Makefile;spectral/mate/README	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/minimax	minimax	minimax-nofib	M3	import	symbolic-search	nofib:parallel/minimax;smlnj:programs/minimax	not stated in scanned source headers	efe234c33e6eab0b9d6e5273dc8abc96c55f6367e2bb3ca7fa688ee4c815e0e6	spectral/minimax/Board.hs;spectral/minimax/Game.hs;spectral/minimax/Main.hs;spectral/minimax/Prog.hs;spectral/minimax/Tree.hs;spectral/minimax/Wins.hs			spectral/minimax/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/multiplier	multiplier	multiplier	M3	import	kernel		not stated in scanned source headers	90e874aa93dd491d263367d8edc31f7209b0993a9e31c156a672bba7b1b6e9a1	spectral/multiplier/Main.hs	spectral/multiplier/multiplier.faststdout;spectral/multiplier/multiplier.slowstdout;spectral/multiplier/multiplier.stdout	spectral/multiplier/Main.hs:header	spectral/multiplier/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	spectral/para	para	para	M3	import	application		not stated in scanned source headers	2c9525a59278dfae1c4f7df3d2fad20797ff29427db7d347fbca187d64a4ab17	spectral/para/Main.lhs;spectral/para/c++/Para.h;spectral/para/c++/Queue.h;spectral/para/c++/Thin.h	spectral/para/runtime_files/input-data		spectral/para/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	spectral/para	para	para	M3	import	application		Jeremy Gibbons;Oege de Moor	2c9525a59278dfae1c4f7df3d2fad20797ff29427db7d347fbca187d64a4ab17	spectral/para/Main.lhs;spectral/para/c++/Para.h;spectral/para/c++/Queue.h;spectral/para/c++/Thin.h	spectral/para/runtime_files/input-data	spectral/para/runtime_files/input-data:Project-Gutenberg-1993-notice	spectral/para/Main.lhs:author-heading;spectral/para/Makefile;spectral/para/runtime_files/input-data:individual-dataset-notice	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/power	power	power-nofib	M3	import	integer-arithmetic	nofib:gc/power	not stated in scanned source headers	f1843f7270f6850c2830355484fe4b6a064174fdfa4e9b3732f19e6daaad1a8c	spectral/power/Main.hs			spectral/power/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/pretty	pretty	pretty	M3	import	integer-arithmetic		not stated in scanned source headers	0b3e89f295c950d26e0c23e197b9c22f04515939fd5549a74e29e12febdea1f0	spectral/pretty/CharSeq.hs;spectral/pretty/Main.hs;spectral/pretty/Pretty.hs	spectral/pretty/pretty.stdout		spectral/pretty/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/primetest	primetest	primetest	M3	import	integer-arithmetic		David Lester	91ad428340db8f6cb126455dfe55a33e2f8c9acf8043beac98cc79b6a8415a81	spectral/primetest/IntLib.lhs;spectral/primetest/Main.lhs;spectral/primetest/MyRandom.lhs;spectral/primetest/Prime.lhs	spectral/primetest/primetest.faststdin;spectral/primetest/primetest.faststdout;spectral/primetest/primetest.slowstdin;spectral/primetest/primetest.slowstdout;spectral/primetest/primetest.stdin;spectral/primetest/primetest.stdout	spectral/primetest/Main.lhs:header	spectral/primetest/Main.lhs:author-macro;spectral/primetest/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 78cc0a47..8998379f 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -1053,3 +1053,27 @@ gg-pool-lazy	large	nofib	real/gg	1500 gg.slowstdin large.ps landscape -	gg-pool-
+ gg-pool-strict	smoke	nofib	real/gg	1 gg.faststdin smoke.ps landscape -	gg-pool-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-gg-core.sml,shared/nofib-gg-graphics.sml,shared/nofib-gg.sml,shared/nofib-gg-check.sml,shared/nofib-gg-driver.sml,gg-pool-strict/benchmark.sml,shared/main.sml	30	1048576	parsing,graphs,numerical,higher-order,lists-streams,strict	gg.faststdin,smoke.ps	checked-numerical	implemented
+ gg-pool-strict	normal	nofib	real/gg	500 gg.stdin normal.ps landscape -	gg-pool-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-gg-core.sml,shared/nofib-gg-graphics.sml,shared/nofib-gg.sml,shared/nofib-gg-check.sml,shared/nofib-gg-driver.sml,gg-pool-strict/benchmark.sml,shared/main.sml	600	4194304	parsing,graphs,numerical,higher-order,lists-streams,strict	gg.stdin,normal.ps	checked-numerical	implemented
+ gg-pool-strict	large	nofib	real/gg	1500 gg.slowstdin large.ps landscape -	gg-pool-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-gg-core.sml,shared/nofib-gg-graphics.sml,shared/nofib-gg.sml,shared/nofib-gg-check.sml,shared/nofib-gg-driver.sml,gg-pool-strict/benchmark.sml,shared/main.sml	3600	8388608	parsing,graphs,numerical,higher-order,lists-streams,strict	gg.slowstdin,large.ps	checked-numerical	implemented
++fft2-lazy	smoke	nofib	spectral/fft2	1 70 smoke.reference	fft2-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-fft2.sml,shared/nofib-fft2-driver.sml,fft2-lazy/benchmark.sml,shared/main.sml	30	1048576	numerical,higher-order,lists-streams,lazy	smoke.reference	checked-numerical	implemented
++fft2-lazy	normal	nofib	spectral/fft2	100 245 normal.reference	fft2-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-fft2.sml,shared/nofib-fft2-driver.sml,fft2-lazy/benchmark.sml,shared/main.sml	600	4194304	numerical,higher-order,lists-streams,lazy	normal.reference	checked-numerical	implemented
++fft2-lazy	large	nofib	spectral/fft2	100 490 large.reference	fft2-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-fft2.sml,shared/nofib-fft2-driver.sml,fft2-lazy/benchmark.sml,shared/main.sml	3600	8388608	numerical,higher-order,lists-streams,lazy	large.reference	checked-numerical	implemented
++fft2-strict	smoke	nofib	spectral/fft2	1 70 smoke.reference	fft2-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-fft2.sml,shared/nofib-fft2-driver.sml,fft2-strict/benchmark.sml,shared/main.sml	30	1048576	numerical,higher-order,lists-streams,strict	smoke.reference	checked-numerical	implemented
++fft2-strict	normal	nofib	spectral/fft2	100 245 normal.reference	fft2-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-fft2.sml,shared/nofib-fft2-driver.sml,fft2-strict/benchmark.sml,shared/main.sml	600	4194304	numerical,higher-order,lists-streams,strict	normal.reference	checked-numerical	implemented
++fft2-strict	large	nofib	spectral/fft2	100 490 large.reference	fft2-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-fft2.sml,shared/nofib-fft2-driver.sml,fft2-strict/benchmark.sml,shared/main.sml	3600	8388608	numerical,higher-order,lists-streams,strict	large.reference	checked-numerical	implemented
++lambda-simple-lazy	smoke	nofib	spectral/lambda	1 80	lambda-simple-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/nofib-lambda.sml,shared/nofib-lambda-driver.sml,lambda-simple-lazy/benchmark.sml,shared/main.sml	30	1048576	symbolic-search,higher-order,parsing,lazy	-	exact	implemented
++lambda-simple-lazy	normal	nofib	spectral/lambda	100 260	lambda-simple-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/nofib-lambda.sml,shared/nofib-lambda-driver.sml,lambda-simple-lazy/benchmark.sml,shared/main.sml	600	4194304	symbolic-search,higher-order,parsing,lazy	-	exact	implemented
++lambda-simple-lazy	large	nofib	spectral/lambda	100 550	lambda-simple-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/nofib-lambda.sml,shared/nofib-lambda-driver.sml,lambda-simple-lazy/benchmark.sml,shared/main.sml	3600	8388608	symbolic-search,higher-order,parsing,lazy	-	exact	implemented
++lambda-simple-strict	smoke	nofib	spectral/lambda	1 80	lambda-simple-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/nofib-lambda.sml,shared/nofib-lambda-driver.sml,lambda-simple-strict/benchmark.sml,shared/main.sml	30	1048576	symbolic-search,higher-order,parsing,strict	-	exact	implemented
++lambda-simple-strict	normal	nofib	spectral/lambda	100 260	lambda-simple-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/nofib-lambda.sml,shared/nofib-lambda-driver.sml,lambda-simple-strict/benchmark.sml,shared/main.sml	600	4194304	symbolic-search,higher-order,parsing,strict	-	exact	implemented
++lambda-simple-strict	large	nofib	spectral/lambda	100 550	lambda-simple-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/nofib-lambda.sml,shared/nofib-lambda-driver.sml,lambda-simple-strict/benchmark.sml,shared/main.sml	3600	8388608	symbolic-search,higher-order,parsing,strict	-	exact	implemented
++lambda-monad-lazy	smoke	nofib	spectral/lambda	1 80	lambda-monad-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/nofib-lambda.sml,shared/nofib-lambda-driver.sml,lambda-monad-lazy/benchmark.sml,shared/main.sml	30	1048576	symbolic-search,higher-order,parsing,lazy	-	exact	implemented
++lambda-monad-lazy	normal	nofib	spectral/lambda	100 260	lambda-monad-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/nofib-lambda.sml,shared/nofib-lambda-driver.sml,lambda-monad-lazy/benchmark.sml,shared/main.sml	600	4194304	symbolic-search,higher-order,parsing,lazy	-	exact	implemented
++lambda-monad-lazy	large	nofib	spectral/lambda	100 550	lambda-monad-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/nofib-lambda.sml,shared/nofib-lambda-driver.sml,lambda-monad-lazy/benchmark.sml,shared/main.sml	3600	8388608	symbolic-search,higher-order,parsing,lazy	-	exact	implemented
++lambda-monad-strict	smoke	nofib	spectral/lambda	1 80	lambda-monad-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/nofib-lambda.sml,shared/nofib-lambda-driver.sml,lambda-monad-strict/benchmark.sml,shared/main.sml	30	1048576	symbolic-search,higher-order,parsing,strict	-	exact	implemented
++lambda-monad-strict	normal	nofib	spectral/lambda	100 260	lambda-monad-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/nofib-lambda.sml,shared/nofib-lambda-driver.sml,lambda-monad-strict/benchmark.sml,shared/main.sml	600	4194304	symbolic-search,higher-order,parsing,strict	-	exact	implemented
++lambda-monad-strict	large	nofib	spectral/lambda	100 550	lambda-monad-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/nofib-lambda.sml,shared/nofib-lambda-driver.sml,lambda-monad-strict/benchmark.sml,shared/main.sml	3600	8388608	symbolic-search,higher-order,parsing,strict	-	exact	implemented
++para-lazy	smoke	nofib	spectral/para	1 smoke.input smoke.reference	para-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-para.sml,shared/nofib-para-driver.sml,para-lazy/benchmark.sml,shared/main.sml	30	1048576	parsing,higher-order,lists-streams,lazy	smoke.input,smoke.reference	exact	implemented
++para-lazy	normal	nofib	spectral/para	8 full.input full.reference	para-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-para.sml,shared/nofib-para-driver.sml,para-lazy/benchmark.sml,shared/main.sml	600	4194304	parsing,higher-order,lists-streams,lazy	full.input,full.reference	exact	implemented
++para-lazy	large	nofib	spectral/para	40 full.input full.reference	para-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-para.sml,shared/nofib-para-driver.sml,para-lazy/benchmark.sml,shared/main.sml	3600	8388608	parsing,higher-order,lists-streams,lazy	full.input,full.reference	exact	implemented
++para-strict	smoke	nofib	spectral/para	1 smoke.input smoke.reference	para-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-para.sml,shared/nofib-para-driver.sml,para-strict/benchmark.sml,shared/main.sml	30	1048576	parsing,higher-order,lists-streams,strict	smoke.input,smoke.reference	exact	implemented
++para-strict	normal	nofib	spectral/para	8 full.input full.reference	para-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-para.sml,shared/nofib-para-driver.sml,para-strict/benchmark.sml,shared/main.sml	600	4194304	parsing,higher-order,lists-streams,strict	full.input,full.reference	exact	implemented
++para-strict	large	nofib	spectral/para	40 full.input full.reference	para-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-para.sml,shared/nofib-para-driver.sml,para-strict/benchmark.sml,shared/main.sml	3600	8388608	parsing,higher-order,lists-streams,strict	full.input,full.reference	exact	implemented
+diff --git a/examples/benchmarks/source-variants.tsv b/examples/benchmarks/source-variants.tsv
+index 3a255b2d..a1cb94ec 100644
+--- a/examples/benchmarks/source-variants.tsv
++++ b/examples/benchmarks/source-variants.tsv
+@@ -18,3 +18,8 @@ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/gamteb	real/gamteb/inLML/gam
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/gamteb	real/gamteb/inLML/libroutines	gamteb-lml-symbol-list	text	historical library symbol listing	not stated	a4b14afd9e7388dfb5adddbbb162dd94f1c06a2abc9365eb666bd94b6713d65d	exclude	archive member-name listing rather than library implementations; records primitive names but supplies no numeric semantics or executable workload	no separate notice stated
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/gg	real/gg/report	gg-report	shell	historical report orchestration	not separately stated	27f7d94a672c787d1d7d4fb9866f6b4f611be23470e0f4669ee1b61879f397b5	exclude	byte-identical report scripts invoke activity, spark and pool modes then latex/dvips and remove temporary products; those three computational modes are imported separately, while document orchestration is outside the runnable benchmark kernels	no separate individual notice stated; retain as provenance
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/gg	real/gg/example/report	gg-report-example	shell	historical report orchestration	not separately stated	27f7d94a672c787d1d7d4fb9866f6b4f611be23470e0f4669ee1b61879f397b5	exclude	byte-identical report scripts invoke activity, spark and pool modes then latex/dvips and remove temporary products; those three computational modes are imported separately, while document orchestration is outside the runnable benchmark kernels	no separate individual notice stated; retain as provenance
++nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/fft2	spectral/fft2/fourier.m	fourier	Miranda	historical implementation	Rex Page	943d8c4955b587ef22a9c840f44463a822138cbedc1d0b6715ceb15eb31f7e9d	exclude	distinct Miranda functional reference remains outside the initial SML/Haskell/OCaml executable set; retain as a future candidate with its original environment and numeric semantics	no separate redistribution notice stated in the individual file; preserve its complete attribution and correspondence
++nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/fft2	spectral/fft2/fourier.f	fourier	Fortran	historical implementation	Rex Page	aef1a49b33f78f03e5040a3b575e21e2ba5483b26c970b653002ff48b0e4f22d	exclude	distinct fixed-array Fortran program with default real/complex kinds and interactive size remains outside the initial SML/Haskell/OCaml executable set; retain as a future reference candidate	no separate redistribution notice stated in the individual file; preserve its complete attribution and correspondence
++nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/fft2	spectral/fft2/fft.c	fft	C	library fragment	Matt Donadio	f33567f2ed4479cd6a2224e602cfbf5ae732a5f86a8d782b4e582937f8669eb7	exclude	iterative bit-reversal FFT fragment has no standalone driver, benchmark profiles or fixture; retain its distinct algorithm as contextual source rather than claim an exact duplicate	no separate redistribution notice stated in the individual file; preserve its complete attribution and correspondence
++nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/para	spectral/para/c++/Part2.C	Part2	C++	historical implementation	Oege de Moor;Jeremy Gibbons	94ffa149dacb0cae8ee206ffc0def85cd09d3794a370bd052590581f773ed253	exclude	distinct sequential C++ formatter with bounded word buffers and command-line line width remains outside the initial SML/Haskell/OCaml executable set; retain source and companion Para/Queue/Thin modules as a future candidate; historical headers require a reviewed build adaptation	no separate source redistribution notice stated; author attribution comes from the parent article
++nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/para	spectral/para/c++/part2	part2	ELF i386	compiled artifact	Oege de Moor;Jeremy Gibbons	3c4fcf86676e0bde4af5a5df52f146939bcf14cd3591d390904e713fa9fd8da9	exclude	exclude pinned compiled executable from imported sources and never execute it; retain this identity and its C++ sources instead of allowing executable artifacts	no separate executable notice stated
+diff --git a/scripts/benchmark-inventory.py b/scripts/benchmark-inventory.py
+index c74c25e5..70ec69e7 100644
+--- a/scripts/benchmark-inventory.py
++++ b/scripts/benchmark-inventory.py
+@@ -560,6 +560,28 @@ def build(source, root, lock):
+             if ".SH AUTHOR\nIain Checkland, University of York." in manual:
+                 authors.add("Iain Checkland")
+                 item["evidence"].append("real/gg/gg.1:author-section")
++        if source == "nofib" and path == "spectral/fft2" and (parent / "Main.lhs").is_file():
++            header = (parent / "Main.lhs").read_text(errors="replace")
++            if "Rex Page (rpage@trc.amoco.com)" in header and "Amoco Production Research, Sep 1992" in header:
++                authors.add("Rex Page")
++                item["evidence"].append("spectral/fft2/Main.lhs:author-header")
++        if source == "nofib" and path == "spectral/lambda" and (parent / "Main.hs").is_file():
++            header = (parent / "Main.hs").read_text(errors="replace")
++            if "-- From Mark: marku@cs.waikato.ac.nz [Nov 2001]" in header:
++                authors.add("Mark (marku@cs.waikato.ac.nz)")
++                item["evidence"].append("spectral/lambda/Main.hs:author-header")
++        if source == "nofib" and path == "spectral/para" and (parent / "Main.lhs").is_file():
++            header = (parent / "Main.lhs").read_text(errors="replace")
++            if "% \tA program by Oege de Moor and Jeremy Gibbons" in header:
++                authors.update(("Oege de Moor", "Jeremy Gibbons"))
++                item["evidence"].append("spectral/para/Main.lhs:author-heading")
++            data = parent / "runtime_files/input-data"
++            if data.is_file():
++                text = data.read_text(errors="replace")
++                if ("Far From The Madding Crowd, by Thomas Hardy" in text and
++                        "*END*THE SMALL PRINT! FOR PUBLIC DOMAIN ETEXTS*Ver.04.29.93*END*" in text):
++                    notices.append("spectral/para/runtime_files/input-data:Project-Gutenberg-1993-notice")
++                    item["evidence"].append("spectral/para/runtime_files/input-data:individual-dataset-notice")
+         item["evidence"].extend(str(p.relative_to(root)) for p in context)
+         for p in files + context:
+             header = p.read_text(errors="replace")[:8000]
+diff --git a/tests/benchmarks/test-inventory.py b/tests/benchmarks/test-inventory.py
+index 4bd84e42..2c9384bb 100644
+--- a/tests/benchmarks/test-inventory.py
++++ b/tests/benchmarks/test-inventory.py
+@@ -228,6 +228,62 @@ class InventoryTest(unittest.TestCase):
+                   "% Crown Copyright 1992\n\\author{Another author\\\\\n\n> main = print 0\n")
+         self.assertNotIn("N. D. North", self.build("nofib")[0]["authors"])
+ 
++    def test_para_article_authors_are_recorded(self):
++        self.nofib_roots()
++        self.file("spectral/para/Makefile", "\n")
++        self.file("spectral/para/Main.lhs", "% \tA program by Oege de Moor and Jeremy Gibbons\n> module Main where\n> main = print 0\n")
++        row = self.build("nofib")[0]
++        self.assertIn("Oege de Moor", row["authors"])
++        self.assertIn("Jeremy Gibbons", row["authors"])
++
++    def test_changed_para_article_author_requires_review(self):
++        self.nofib_roots()
++        self.file("spectral/para/Makefile", "\n")
++        self.file("spectral/para/Main.lhs", "% A program by Another author\n> module Main where\n> main = print 0\n")
++        self.assertNotIn("Oege de Moor", self.build("nofib")[0]["authors"])
++
++    def test_para_individual_data_notice_is_recorded(self):
++        self.nofib_roots()
++        self.file("spectral/para/Makefile", "\n")
++        self.file("spectral/para/Main.lhs", "> module Main where\n> main = print 0\n")
++        self.file("spectral/para/runtime_files/input-data", "Far From The Madding Crowd, by Thomas Hardy\n*END*THE SMALL PRINT! FOR PUBLIC DOMAIN ETEXTS*Ver.04.29.93*END*\n")
++        self.assertIn("spectral/para/runtime_files/input-data:Project-Gutenberg-1993-notice", self.build("nofib")[0]["notices"])
++
++    def test_incomplete_para_notice_requires_review(self):
++        self.nofib_roots()
++        self.file("spectral/para/Makefile", "\n")
++        self.file("spectral/para/Main.lhs", "> module Main where\n> main = print 0\n")
++        self.file("spectral/para/runtime_files/input-data", "Far From The Madding Crowd, by Thomas Hardy\n")
++        self.assertNotIn("spectral/para/runtime_files/input-data:Project-Gutenberg-1993-notice", self.build("nofib")[0]["notices"])
++
++    def test_lambda_source_author_header_is_recorded(self):
++        self.nofib_roots()
++        self.file("spectral/lambda/Makefile", "\n")
++        self.file("spectral/lambda/Main.hs", "module Main where\n-- From Mark: marku@cs.waikato.ac.nz [Nov 2001]\nmain = print 0\n")
++        row = self.build("nofib")[0]
++        self.assertIn("Mark (marku@cs.waikato.ac.nz)", row["authors"])
++        self.assertIn("spectral/lambda/Main.hs:author-header", row["evidence"])
++
++    def test_changed_lambda_source_author_requires_review(self):
++        self.nofib_roots()
++        self.file("spectral/lambda/Makefile", "\n")
++        self.file("spectral/lambda/Main.hs", "module Main where\n-- From Another author\nmain = print 0\n")
++        self.assertNotIn("Mark (marku@cs.waikato.ac.nz)", self.build("nofib")[0]["authors"])
++
++    def test_fft2_source_author_header_is_recorded(self):
++        self.nofib_roots()
++        self.file("spectral/fft2/Makefile", "\n")
++        self.file("spectral/fft2/Main.lhs", "> module Main where\n> main = print 0\n> -- Rex Page (rpage@trc.amoco.com)\n> -- Amoco Production Research, Sep 1992\n")
++        row = self.build("nofib")[0]
++        self.assertEqual(row["authors"], "Rex Page")
++        self.assertIn("spectral/fft2/Main.lhs:author-header", row["evidence"])
++
++    def test_changed_fft2_author_header_requires_review(self):
++        self.nofib_roots()
++        self.file("spectral/fft2/Makefile", "\n")
++        self.file("spectral/fft2/Main.lhs", "> module Main where\n> main = print 0\n> -- Another author\n")
++        self.assertNotIn("Rex Page", self.build("nofib")[0]["authors"])
++
+     def test_gg_manual_author_section_is_recorded(self):
+         self.nofib_roots()
+         self.file("real/gg/Makefile", "\n")

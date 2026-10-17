@@ -1,0 +1,1 @@
+fft2-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/nofib-fft2.sml shared/nofib-fft2-driver.sml fft2-lazy/benchmark.sml shared/main.sml	1 70 smoke.reference	fft2-lazy/smoke.expected	smoke.reference

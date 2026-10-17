@@ -1,0 +1,1 @@
+para-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/nofib-para.sml shared/nofib-para-driver.sml para-lazy/benchmark.sml shared/main.sml	1 smoke.input smoke.reference	para-lazy/smoke.expected	smoke.input smoke.reference

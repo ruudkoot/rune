@@ -1,0 +1,29 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/inventory.tsv
+ M examples/benchmarks/manifest.tsv
+ M examples/benchmarks/source-variants.tsv
+ M scripts/benchmark-inventory.py
+ M tests/benchmarks/test-inventory.py
+?? examples/benchmarks/fft2-lazy/
+?? examples/benchmarks/fft2-strict/
+?? examples/benchmarks/lambda-monad-lazy/
+?? examples/benchmarks/lambda-monad-strict/
+?? examples/benchmarks/lambda-simple-lazy/
+?? examples/benchmarks/lambda-simple-strict/
+?? examples/benchmarks/para-lazy/
+?? examples/benchmarks/para-strict/
+?? examples/benchmarks/shared/nofib-fft2-driver.sml
+?? examples/benchmarks/shared/nofib-fft2.sml
+?? examples/benchmarks/shared/nofib-lambda-driver.sml
+?? examples/benchmarks/shared/nofib-lambda.sml
+?? examples/benchmarks/shared/nofib-para-driver.sml
+?? examples/benchmarks/shared/nofib-para.sml
+?? tests/benchmarks/check-fft2.sh
+?? tests/benchmarks/check-lambda.sh
+?? tests/benchmarks/check-para.sh
+?? tests/benchmarks/data/fft2/
+?? tests/benchmarks/data/lambda/
+?? tests/benchmarks/data/para/
+?? tests/benchmarks/fft2-tests.sml
+?? tests/benchmarks/lambda-tests.sml
+?? tests/benchmarks/para-tests.sml

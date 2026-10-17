@@ -1,0 +1,9 @@
+[1 of 2] Compiling Main             ( Main.hs, Main.o )
+
+Main.hs:52:1: warning: [-Wtabs]
+    Tab character found here, and in 40 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+52 |         if null args
+   | ^^^^^^^^
+[2 of 2] Linking original

@@ -1,0 +1,1 @@
+fft2-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/nofib-fft2.sml shared/nofib-fft2-driver.sml fft2-lazy/benchmark.sml shared/main.sml	100 245 normal.reference	fft2-lazy/normal.expected	normal.reference

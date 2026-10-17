@@ -1,0 +1,107 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-lambda.sml]
+functor BenchLambdaFn(D: sig
+                         type 'a t
+                         val delay : (unit -> 'a) -> 'a t
+                         val force : 'a t -> 'a
+                       end) :
+                     
+                       sig
+                         type term
+                         type environment
+                         type 'a action
+                         val delay : (unit -> 'a) -> 'a D.t
+                         val node : 'a -> 'a D.t
+                         val con : int -> term D.t
+                         val variable : string -> term D.t
+                         val add : term D.t * term D.t -> term D.t
+                         val lam : string * term D.t -> term D.t
+                         val app : term D.t * term D.t -> term D.t
+                         val zero : term D.t * term D.t * term D.t -> term D.t
+                         val empty : environment D.t
+                         val lookup : string -> environment D.t -> term D.t
+                         val integer : term D.t -> int
+                         val isZero : term D.t -> bool
+                         val simpleApply : environment D.t
+                                            -> term D.t
+                                            -> term D.t -> term D.t
+                         val simple : environment D.t -> term D.t -> term D.t
+                         val return : 'a -> 'b -> 'a * 'b
+                         val bind : ('a -> 'b * 'c)
+                                     -> ('b -> 'c -> 'd) -> 'a -> 'd
+                         val current : 'a -> 'a * 'a
+                         val lookupAction : string
+                                             -> environment D.t
+                                             -> term D.t * environment D.t
+                         val withEnv : environment D.t
+                                        -> term D.t action
+                                        -> 'a -> term D.t * 'a
+                         val push : string
+                                     -> term D.t
+                                     -> term D.t action
+                                     -> environment D.t
+                                     -> term D.t * environment D.t
+                         val apply : term D.t
+                                      -> term D.t
+                                      -> environment D.t
+                                      -> term D.t * environment D.t
+                         val traverseCon : term D.t
+                                            -> environment D.t
+                                            -> int D.t * environment D.t
+                         val traverse : term D.t
+                                         -> environment D.t
+                                         -> term D.t * environment D.t
+                         val bracket : int -> int -> string -> string
+                         val showInt : int -> string
+                         val prettyEnv : environment D.t -> string
+                         val pretty : int -> term D.t -> string
+                         val simpleShow : term D.t -> string
+                         val minusOne : term D.t
+                         val partialSum : term D.t
+                         val lfxx : term D.t
+                         val fix : term D.t
+                         val sum0 : term D.t
+                         val evaluate : string -> int -> string
+                       end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-lambda-driver.sml]
+functor BenchLambdaDriverFn(K: sig val evaluate : string -> int -> string end) :
+                           sig val run : string -> string list -> string end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/lambda-monad-strict/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Kernel : <sig>
+    structure Driver : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 100:1000
+PASS lambda-monad-strict
+SUMMARY 1 checks, 0 failed

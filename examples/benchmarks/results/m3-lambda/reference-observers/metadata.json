@@ -1,0 +1,26 @@
+{
+  "ghc": "9.4.7",
+  "runs": [
+    {
+      "profile": "smoke",
+      "n": 80,
+      "iterations": 100,
+      "result": 3240,
+      "fixture_match": true
+    },
+    {
+      "profile": "normal",
+      "n": 260,
+      "iterations": 100,
+      "result": 33930,
+      "fixture_match": true
+    },
+    {
+      "profile": "large",
+      "n": 550,
+      "iterations": 100,
+      "result": 151525,
+      "fixture_match": true
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+[1 of 4] Compiling Complex_Vectors  ( Complex_Vectors.lhs, Complex_Vectors.o )
+[2 of 4] Compiling Fourier          ( Fourier.lhs, Fourier.o )
+[3 of 4] Compiling Main             ( Observer.hs, Observer.o )
+[4 of 4] Linking observer

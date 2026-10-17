@@ -1,0 +1,10 @@
+[1 of 3] Compiling Kernel           ( Kernel.hs, Kernel.o )
+
+Kernel.hs:52:1: warning: [-Wtabs]
+    Tab character found here, and in 40 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+52 |         if null args
+   | ^^^^^^^^
+[2 of 3] Compiling Main             ( Observer.hs, Observer.o )
+[3 of 3] Linking observer

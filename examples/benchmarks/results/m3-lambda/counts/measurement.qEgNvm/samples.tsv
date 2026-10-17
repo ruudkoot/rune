@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+lambda-simple-strict	normal	rune	O2	compile	0	0	pass	1.85	1.73	0.11	135220	-	-	-	lambda-simple-strict/rune/build/compile
+lambda-simple-strict	normal	rune	O2	correctness	0	0	pass	3.78	3.77	0.00	10676	629286626	173561616	7022280	lambda-simple-strict/rune/correctness.0
+lambda-simple-strict	normal	rune	O2	count	1	1	pass	3.41	3.39	0.01	10676	629286626	173561616	7022280	lambda-simple-strict/rune/fresh.1
+lambda-simple-strict	normal	rune:opt	O2	compile	0	0	pass	1.80	1.72	0.07	135300	-	-	-	lambda-simple-strict/rune-opt/build/compile
+lambda-simple-strict	normal	rune:opt	O2	native-compile	0	0	pass	0.38	0.18	0.04	12332	-	-	-	lambda-simple-strict/rune-opt/build/native-compile
+lambda-simple-strict	normal	rune:opt	O2	correctness	0	0	pass	1.49	1.48	0.00	11052	629286626	173561616	7022280	lambda-simple-strict/rune-opt/correctness.0
+lambda-simple-strict	normal	rune:opt	O2	count	1	1	pass	1.44	1.42	0.01	11128	629286626	173561616	7022280	lambda-simple-strict/rune-opt/fresh.1
+lambda-simple-strict	normal	rune:new	O2	compile	0	0	pass	1.83	1.71	0.11	135356	-	-	-	lambda-simple-strict/rune-new/build/compile
+lambda-simple-strict	normal	rune:new	O2	correctness	0	0	pass	3.52	3.51	0.00	11012	309138020	173561616	7022280	lambda-simple-strict/rune-new/correctness.0
+lambda-simple-strict	normal	rune:new	O2	count	1	1	pass	2.76	2.75	0.00	10944	309138020	173561616	7022280	lambda-simple-strict/rune-new/fresh.1
+lambda-simple-strict	normal	rune:jit	O2	compile	0	0	pass	1.45	1.37	0.07	135340	-	-	-	lambda-simple-strict/rune-jit/build/compile
+lambda-simple-strict	normal	rune:jit	O2	correctness	0	0	pass	1.16	1.14	0.02	11932	309138020	173561616	7022280	lambda-simple-strict/rune-jit/correctness.0
+lambda-simple-strict	normal	rune:jit	O2	count	1	1	pass	1.19	1.18	0.00	11924	309138020	173561616	7022280	lambda-simple-strict/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

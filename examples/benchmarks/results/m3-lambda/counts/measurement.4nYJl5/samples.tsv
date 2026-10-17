@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+lambda-monad-lazy	normal	rune	O2	compile	0	0	pass	1.82	1.72	0.09	135360	-	-	-	lambda-monad-lazy/rune/build/compile
+lambda-monad-lazy	normal	rune	O2	correctness	0	0	pass	15.73	15.69	0.03	10536	2684296633	7449975496	224387377	lambda-monad-lazy/rune/correctness.0
+lambda-monad-lazy	normal	rune	O2	count	1	1	pass	15.43	15.42	0.01	10696	2684296633	7449975496	224387377	lambda-monad-lazy/rune/fresh.1
+lambda-monad-lazy	normal	rune:opt	O2	compile	0	0	pass	1.47	1.39	0.07	135320	-	-	-	lambda-monad-lazy/rune-opt/build/compile
+lambda-monad-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.36	0.18	0.03	12356	-	-	-	lambda-monad-lazy/rune-opt/build/native-compile
+lambda-monad-lazy	normal	rune:opt	O2	correctness	0	0	pass	8.83	8.80	0.02	11100	2684296633	7449975496	224387377	lambda-monad-lazy/rune-opt/correctness.0
+lambda-monad-lazy	normal	rune:opt	O2	count	1	1	pass	10.01	9.94	0.04	11044	2684296633	7449975496	224387377	lambda-monad-lazy/rune-opt/fresh.1
+lambda-monad-lazy	normal	rune:new	O2	compile	0	0	pass	2.30	2.15	0.14	135304	-	-	-	lambda-monad-lazy/rune-new/build/compile
+lambda-monad-lazy	normal	rune:new	O2	correctness	0	0	pass	22.24	22.19	0.03	10868	1497932125	7449975496	224387377	lambda-monad-lazy/rune-new/correctness.0
+lambda-monad-lazy	normal	rune:new	O2	count	1	1	pass	20.39	20.35	0.02	10840	1497932125	7449975496	224387377	lambda-monad-lazy/rune-new/fresh.1
+lambda-monad-lazy	normal	rune:jit	O2	compile	0	0	pass	1.82	1.72	0.09	135244	-	-	-	lambda-monad-lazy/rune-jit/build/compile
+lambda-monad-lazy	normal	rune:jit	O2	correctness	0	0	pass	7.68	7.63	0.05	11868	1497932125	7449975496	224387377	lambda-monad-lazy/rune-jit/correctness.0
+lambda-monad-lazy	normal	rune:jit	O2	count	1	1	pass	7.73	7.67	0.05	11760	1497932125	7449975496	224387377	lambda-monad-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

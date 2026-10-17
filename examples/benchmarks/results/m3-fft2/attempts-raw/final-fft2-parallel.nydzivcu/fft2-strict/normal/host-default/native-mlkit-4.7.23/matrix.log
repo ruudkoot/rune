@@ -1,0 +1,674 @@
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 100:100
+PASS fft2-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-fft2.sml]
+[autoloading]
+[autoloading done]
+functor BenchFFT2Fn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure L : <sig>
+  structure S : <sig>
+  type number
+  type complex
+  val value : <BaseFct>.<resultStr>.number -> real
+  val number : real -> real D.t
+  val addNum :
+      <BaseFct>.<resultStr>.number * <BaseFct>.<resultStr>.number -> real D.t
+  val mulNum :
+      <BaseFct>.<resultStr>.number * <BaseFct>.<resultStr>.number -> real D.t
+  val zero : real D.t
+  val one : real D.t
+  val realPart : <BaseFct>.<resultStr>.complex -> <BaseFct>.<resultStr>.number
+  val imagPart : <BaseFct>.<resultStr>.complex -> <BaseFct>.<resultStr>.number
+  val complexAdd :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> <BaseFct>.<resultStr>.complex
+  val complexSub :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> <BaseFct>.<resultStr>.complex
+  val complexMul :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> <BaseFct>.<resultStr>.complex
+  val conjugate :
+      <BaseFct>.<resultStr>.complex -> <BaseFct>.<resultStr>.complex
+  val exponent : real -> int
+  val scaled : int -> real -> real
+  val divide :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> <BaseFct>.<resultStr>.complex
+  val magnitude : <BaseFct>.<resultStr>.complex -> real D.t
+  val length : 'a BenchStream.node BenchLazy.delay -> int
+  val drop :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.state ref
+  val takeWhile :
+      ('a -> bool)
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val every :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val cycle :
+      'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.state ref
+  val repeat :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.state ref
+  val numbers : int -> int BenchStream.node BenchLazy.delay
+  val thetas : int -> real D.t BenchStream.node BenchLazy.delay
+  val roots :
+      int -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+  val norm :
+      <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> real D.t
+  val distance :
+      <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> real D.t
+  val ffth :
+      <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+  val fft :
+      <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+  val fftinv :
+      <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+  val primes : int BenchStream.node BenchLazy.delay
+  val factors : int -> int BenchStream.node BenchLazy.delay
+  val sumComplex :
+      <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex
+  val sfth :
+      int
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+  val transpose :
+      'a BenchStream.node BenchLazy.state ref BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay BenchStream.node BenchLazy.delay
+  val dfth :
+      int BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+  val dft :
+      <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+  val dftinv :
+      <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+  val sft :
+      <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+  val sct :
+      <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay
+  val ramp : real -> real D.t BenchStream.node BenchLazy.delay
+  val run : real -> real list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-fft2-driver.sml]
+[autoloading]
+[autoloading done]
+functor BenchFFT2DriverFn(K: sig
+  val run : real -> real list
+end) :
+sig
+  val read : string -> TextIO.vector
+  val real : string -> real
+  val reference : string -> real list list
+  val epsilon : real
+  val bounds : int -> (real * real) list
+  val valid : int -> real list -> real list -> bool
+  val number : real -> string
+  val quote : string -> string
+  val unquote : string -> string
+  val consume : int -> real list -> unit
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/fft2-strict/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+FAIL fft2-strict -- Fail: incorrect result: fft2 transform results
+SUMMARY 1 checks, 1 failed
+PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 0, exit 1)
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-fft2.sml]
+[autoloading]
+[autoloading done]
+functor BenchFFT2Fn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure L : <sig>
+  structure S : <sig>
+  type number
+  type complex
+  val value : <BaseFct>.<resultStr>.number -> real
+  val number : real -> real D.t
+  val addNum :
+      <BaseFct>.<resultStr>.number * <BaseFct>.<resultStr>.number -> real D.t
+  val mulNum :
+      <BaseFct>.<resultStr>.number * <BaseFct>.<resultStr>.number -> real D.t
+  val zero : real D.t
+  val one : real D.t
+  val realPart : <BaseFct>.<resultStr>.complex -> <BaseFct>.<resultStr>.number
+  val imagPart : <BaseFct>.<resultStr>.complex -> <BaseFct>.<resultStr>.number
+  val complexAdd :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> <BaseFct>.<resultStr>.complex
+  val complexSub :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> <BaseFct>.<resultStr>.complex
+  val complexMul :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> <BaseFct>.<resultStr>.complex
+  val conjugate :
+      <BaseFct>.<resultStr>.complex -> <BaseFct>.<resultStr>.complex
+  val exponent : real -> int
+  val scaled : int -> real -> real
+  val divide :
+      <BaseFct>.<resultStr>.complex * <BaseFct>.<resultStr>.complex
+       -> <BaseFct>.<resultStr>.complex
+  val magnitude : <BaseFct>.<resultStr>.complex -> real D.t
+  val length : 'a BenchStream.node BenchLazy.delay -> int
+  val drop :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.state ref
+  val takeWhile :
+      ('a -> bool)
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val every :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val cycle :
+      'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.state ref
+  val repeat :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.state ref
+  val numbers : int -> int BenchStream.node BenchLazy.delay
+  val thetas : int -> real D.t BenchStream.node BenchLazy.delay
+  val roots :
+      int -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+  val norm :
+      <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> real D.t
+  val distance :
+      <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> real D.t
+  val ffth :
+      <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+  val fft :
+      <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+  val fftinv :
+      <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+  val primes : int BenchStream.node BenchLazy.delay
+  val factors : int -> int BenchStream.node BenchLazy.delay
+  val sumComplex :
+      <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex
+  val sfth :
+      int
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+  val transpose :
+      'a BenchStream.node BenchLazy.state ref BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay BenchStream.node BenchLazy.delay
+  val dfth :
+      int BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+  val dft :
+      <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+  val dftinv :
+      <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+  val sft :
+      <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.complex BenchStream.node BenchLazy.delay
+  val sct :
+      <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay
+  val ramp : real -> real D.t BenchStream.node BenchLazy.delay
+  val run : real -> real list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-fft2-driver.sml]
+[autoloading]
+[autoloading done]
+functor BenchFFT2DriverFn(K: sig
+  val run : real -> real list
+end) :
+sig
+  val read : string -> TextIO.vector
+  val real : string -> real
+  val reference : string -> real list list
+  val epsilon : real
+  val bounds : int -> (real * real) list
+  val valid : int -> real list -> real list -> bool
+  val number : real -> string
+  val quote : string -> string
+  val unquote : string -> string
+  val consume : int -> real list -> unit
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/fft2-strict/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 100:100
+PASS fft2-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : 
+  sig
+    datatype 'a node
+      = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay | Nil
+    type 'a stream = 'a node BenchLazy.delay
+    val empty : unit -> 'a node BenchLazy.state ref
+    val cons : 'a BenchLazy.delay * 'a node BenchLazy.delay
+                -> 'a node BenchLazy.state ref
+    val singleton : 'a -> 'a node BenchLazy.state ref
+    val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+    val head : 'a node BenchLazy.state ref -> 'a
+    val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val iterate : ('a -> 'a)
+                   -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+    val fromList : 'a list -> 'a node BenchLazy.delay
+    val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+    val zipWith : ('a * 'b -> 'c)
+                   -> 'a node BenchLazy.delay
+                   -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+    val append : 'a node BenchLazy.delay
+                  -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val concatMap : ('a -> 'b node BenchLazy.delay)
+                     -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+    val filter : ('a -> bool)
+                  -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+    val dropWhile : ('a -> bool)
+                     -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+    val foldrStream : ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+                       -> 'b BenchLazy.state ref
+                       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+    val zipWith3 : ('a * 'b * 'c -> 'd)
+                    -> 'a node BenchLazy.delay
+                    -> 'b node BenchLazy.delay
+                    -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+    val span : ('a -> bool)
+                -> 'a node BenchLazy.delay
+                -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+    val nth : 'a node BenchLazy.delay -> int -> 'a
+    val take : int -> 'a node BenchLazy.delay -> 'a list
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+    val foldPrefix : ('a * 'b -> 'b)
+                      -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-fft2.sml]
+functor BenchFFT2Fn(D: sig
+                       type 'a t
+                       val delay : (unit -> 'a) -> 'a t
+                       val force : 'a t -> 'a
+                     end) :
+                   
+                     sig
+                       structure L : <sig>
+                       structure S : <sig>
+                       type number
+                       type complex
+                       val value : number -> real
+                       val number : real -> real D.t
+                       val addNum : number * number -> real D.t
+                       val mulNum : number * number -> real D.t
+                       val zero : real D.t
+                       val one : real D.t
+                       val realPart : complex -> number
+                       val imagPart : complex -> number
+                       val complexAdd : complex * complex -> complex
+                       val complexSub : complex * complex -> complex
+                       val complexMul : complex * complex -> complex
+                       val conjugate : complex -> complex
+                       val exponent : real -> int
+                       val scaled : int -> real -> real
+                       val divide : complex * complex -> complex
+                       val magnitude : complex -> real D.t
+                       val length : 'a BenchStream.node BenchLazy.delay -> int
+                       val drop : int
+                                   -> 'a BenchStream.node BenchLazy.delay
+                                   -> 'a BenchStream.node BenchLazy.state ref
+                       val takeWhile : ('a -> bool)
+                                        -> 'a BenchStream.node BenchLazy.delay
+                                        -> 'a BenchStream.node BenchLazy.delay
+                       val every : int
+                                    -> 'a BenchStream.node BenchLazy.delay
+                                    -> 'a BenchStream.node BenchLazy.delay
+                       val cycle : 'a BenchStream.node BenchLazy.delay
+                                    -> 'a BenchStream.node BenchLazy.state ref
+                       val repeat : int
+                                     -> 'a BenchStream.node BenchLazy.delay
+                                     -> 'a BenchStream.node BenchLazy.state 
+                                       ref
+                       val numbers : int
+                                      -> int BenchStream.node BenchLazy.delay
+                       val thetas : int
+                                     -> real D.t BenchStream.node 
+                                       BenchLazy.delay
+                       val roots : int
+                                    -> complex BenchStream.node 
+                                      BenchLazy.delay
+                       val norm : complex BenchStream.node BenchLazy.delay
+                                   -> real D.t
+                       val distance : complex BenchStream.node BenchLazy.delay
+                                       -> complex BenchStream.node 
+                                         BenchLazy.delay
+                                       -> real D.t
+                       val ffth : complex BenchStream.node BenchLazy.delay
+                                   -> complex BenchStream.node BenchLazy.delay
+                                   -> complex BenchStream.node BenchLazy.delay
+                       val fft : complex BenchStream.node BenchLazy.delay
+                                  -> complex BenchStream.node BenchLazy.delay
+                       val fftinv : complex BenchStream.node BenchLazy.delay
+                                     -> complex BenchStream.node 
+                                       BenchLazy.delay
+                       val primes : int BenchStream.node BenchLazy.delay
+                       val factors : int
+                                      -> int BenchStream.node BenchLazy.delay
+                       val sumComplex : complex BenchStream.node 
+                                           BenchLazy.delay
+                                         -> complex
+                       val sfth : int
+                                   -> complex BenchStream.node BenchLazy.delay
+                                   -> complex BenchStream.node BenchLazy.delay
+                                   -> complex BenchStream.node BenchLazy.delay
+                       val transpose : 'a BenchStream.node BenchLazy.state ref 
+                                            BenchStream.node BenchLazy.delay
+                                        -> 'a BenchStream.node BenchLazy.delay 
+                                            BenchStream.node BenchLazy.delay
+                       val dfth : int BenchStream.node BenchLazy.delay
+                                   -> complex BenchStream.node BenchLazy.delay
+                                   -> complex BenchStream.node BenchLazy.delay
+                                   -> complex BenchStream.node BenchLazy.delay
+                       val dft : complex BenchStream.node BenchLazy.delay
+                                  -> complex BenchStream.node BenchLazy.delay
+                       val dftinv : complex BenchStream.node BenchLazy.delay
+                                     -> complex BenchStream.node 
+                                       BenchLazy.delay
+                       val sft : complex BenchStream.node BenchLazy.delay
+                                  -> complex BenchStream.node BenchLazy.delay
+                       val sct : number BenchStream.node BenchLazy.delay
+                                  -> number BenchStream.node BenchLazy.delay
+                       val ramp : real
+                                   -> real D.t BenchStream.node 
+                                     BenchLazy.delay
+                       val run : real -> real list
+                     end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-fft2-driver.sml]
+functor BenchFFT2DriverFn(K: sig val run : real -> real list end) :
+                         
+                           sig
+                             val read : string -> TextIO.vector
+                             val real : string -> real
+                             val reference : string -> real list list
+                             val epsilon : real
+                             val bounds : int -> (real * real) list
+                             val valid : int -> real list -> real list -> bool
+                             val number : real -> string
+                             val quote : string -> string
+                             val unquote : string -> string
+                             val consume : int -> real list -> unit
+                             val run : string list -> string
+                           end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/fft2-strict/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Kernel : <sig>
+    structure Driver : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 100:100
+PASS fft2-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+RESULT 100:100
+PASS fft2-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 100:100
+PASS fft2-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

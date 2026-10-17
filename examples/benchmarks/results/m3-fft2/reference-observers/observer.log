@@ -1,0 +1,12 @@
+2 source transforms observed
+3 source transforms observed
+4 source transforms observed
+5 source transforms observed
+8 source transforms observed
+16 source transforms observed
+3.0 4.0 5.0
+0.0 4.0 4.0
+1.0e200 1.0e200 1.414213562373095e200
+1.0e-200 1.0e-200 1.414213562373095e-200
+1.0e-200 0.0 0.0
+
