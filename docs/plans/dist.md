@@ -1,0 +1,10 @@
+- add a make dist that creates distribution archives
+- a zip file for windows and a tar.gz for linux
+- each contains the executables for all the supported platforms
+- an installer shell script for linux and installed batch file for windows
+  - installed detect the right variant (32-bit/63-bit, x86/arm/ppc) to install
+- when run as root/admin should install globally, otherwise locally
+- the distribution archives should contain all required to rune rune and no more
+- on windows it should created a Rune start menu entry that launches the rune repl
+- on windows it should register that uninstalls rune
+- archive name should be something like rune-{version}-{windows/linux}.{zip,tar.gz}
