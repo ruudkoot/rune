@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+gg-spark-lazy	normal	rune	O2	compile	0	0	pass	2.61	2.35	0.25	266960	-	-	-	gg-spark-lazy/rune/build/compile
+gg-spark-lazy	normal	rune	O2	correctness	0	0	pass	42.35	42.32	0.03	35280	7206379650	16063340496	466161992	gg-spark-lazy/rune/correctness.0
+gg-spark-lazy	normal	rune	O2	count	1	1	pass	41.39	41.33	0.05	35384	7206379650	16063340496	466161992	gg-spark-lazy/rune/fresh.1
+gg-spark-lazy	normal	rune:opt	O2	compile	0	0	pass	2.89	2.64	0.24	266972	-	-	-	gg-spark-lazy/rune-opt/build/compile
+gg-spark-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.65	0.45	0.06	26940	-	-	-	gg-spark-lazy/rune-opt/build/native-compile
+gg-spark-lazy	normal	rune:opt	O2	correctness	0	0	pass	18.90	18.85	0.04	36932	7206379650	16063340496	466161992	gg-spark-lazy/rune-opt/correctness.0
+gg-spark-lazy	normal	rune:opt	O2	count	1	1	pass	17.58	17.53	0.05	36784	7206379650	16063340496	466161992	gg-spark-lazy/rune-opt/fresh.1
+gg-spark-lazy	normal	rune:new	O2	compile	0	0	pass	2.45	2.25	0.20	266952	-	-	-	gg-spark-lazy/rune-new/build/compile
+gg-spark-lazy	normal	rune:new	O2	correctness	0	0	pass	39.46	39.42	0.03	36100	4162622438	16063340496	466161992	gg-spark-lazy/rune-new/correctness.0
+gg-spark-lazy	normal	rune:new	O2	count	1	1	pass	39.89	39.83	0.05	36224	4162622438	16063340496	466161992	gg-spark-lazy/rune-new/fresh.1
+gg-spark-lazy	normal	rune:jit	O2	compile	0	0	pass	2.98	2.74	0.23	266896	-	-	-	gg-spark-lazy/rune-jit/build/compile
+gg-spark-lazy	normal	rune:jit	O2	correctness	0	0	pass	17.91	17.84	0.06	38640	4162622438	16063340496	466161992	gg-spark-lazy/rune-jit/correctness.0
+gg-spark-lazy	normal	rune:jit	O2	count	1	1	pass	18.67	18.62	0.05	38780	4162622438	16063340496	466161992	gg-spark-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

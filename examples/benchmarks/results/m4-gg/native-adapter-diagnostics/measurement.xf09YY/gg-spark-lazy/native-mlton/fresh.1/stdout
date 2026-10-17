@@ -1,0 +1,4 @@
+RESULT 1:868
+PASS gg-spark-lazy
+SAMPLE 1 0.006640000
+SUMMARY 1 checks, 0 failed

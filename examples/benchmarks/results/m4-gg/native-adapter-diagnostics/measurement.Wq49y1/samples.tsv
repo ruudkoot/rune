@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+gg-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	6.79	5.60	1.03	659452	-	-	-	gg-strict/native-mlton/build/compile
+gg-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	7292	-	-	-	gg-strict/native-mlton/correctness.0
+gg-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.01	0.00	0.00	7280	-	-	-	gg-strict/native-mlton/fresh.1
+gg-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	1.22	1.18	0.03	38592	-	-	-	gg-strict/native-smlnj-legacy/build/compile
+gg-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	incorrect-result	0.03	0.02	0.01	8832	-	-	-	gg-strict/native-smlnj-legacy/correctness.0
+gg-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.60	0.58	0.11	73160	-	-	-	gg-strict/native-polyml/build/compile
+gg-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.01	0.01	0.00	13520	-	-	-	gg-strict/native-polyml/correctness.0
+gg-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.01	0.00	0.01	13504	-	-	-	gg-strict/native-polyml/fresh.1

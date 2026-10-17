@@ -1,0 +1,46 @@
+{
+  "command": [
+    "make",
+    "bench-count",
+    "BENCH_FILTER==gg-spark-lazy"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 278228,
+  "observed_minimum_available_kib": 18829196,
+  "peak_processes": [
+    {
+      "pid": 3864389,
+      "name": "make",
+      "rss_kib": 4840
+    },
+    {
+      "pid": 3864598,
+      "name": "sh",
+      "rss_kib": 1680
+    },
+    {
+      "pid": 3864600,
+      "name": "sh",
+      "rss_kib": 1808
+    },
+    {
+      "pid": 3879325,
+      "name": "time",
+      "rss_kib": 1396
+    },
+    {
+      "pid": 3879326,
+      "name": "timeout",
+      "rss_kib": 1532
+    },
+    {
+      "pid": 3879327,
+      "name": "runevm",
+      "rss_kib": 266972
+    }
+  ],
+  "elapsed_seconds": 250.34936653799377
+}

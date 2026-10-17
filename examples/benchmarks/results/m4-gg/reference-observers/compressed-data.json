@@ -1,0 +1,10 @@
+{
+  "source": "real/gg/gg.stdin-2.Z",
+  "revision": "b7391df4540ac8b11b35e1b2e2c15819b5171798",
+  "compressed_bytes": 24293,
+  "compressed_sha256": "fcd509bc47a3fe15c198d76dcbcacc0e5d03d5396d38293071655d2920ef3a94",
+  "decoded_bytes": 133193,
+  "decoded_sha256": "f85df0b0fcd749bc0ea4c740a6a705d2e85852beb2c5494de2f07f168e14feea",
+  "decode_command": "gzip -cd gg.stdin-2.Z",
+  "source_notice": "No separate dataset authorship or notice stated in the supplied trace file"
+}

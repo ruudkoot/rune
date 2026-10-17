@@ -1,0 +1,27 @@
+{
+  "command": [
+    "timeout",
+    "600",
+    "bin/runevm",
+    "tests/out/benchmarks/gg-originals/tests-extra.rbc"
+  ],
+  "exit": 1,
+  "guard_reason": null,
+  "rss_limit_kib": 1048576,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 70636,
+  "observed_minimum_available_kib": 20677720,
+  "peak_processes": [
+    {
+      "pid": 8,
+      "name": "timeout",
+      "rss_kib": 1796
+    },
+    {
+      "pid": 9,
+      "name": "runevm",
+      "rss_kib": 68840
+    }
+  ],
+  "elapsed_seconds": 4.715357684995979
+}

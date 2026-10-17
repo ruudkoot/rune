@@ -1,0 +1,923 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index b876e907..925d5ce3 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -357,6 +357,12 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [gamteb-strict](#gamteb-strict) | [nofib GAMTEB](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/gamteb) | Transport deterministic photons through the source cylinder with strict finite payloads and validate raw results and accumulated statistics. |
+ | [mkhprog-lazy](#mkhprog-lazy) | [nofib mkhprog](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/mkhprog) | Generate a Haskell command-line parser skeleton with lazy character lists and validate each output block. |
+ | [mkhprog-strict](#mkhprog-strict) | [nofib mkhprog](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/mkhprog) | Generate a Haskell command-line parser skeleton with strict character lists and validate each output block. |
++| [gg-lazy](#gg-lazy) | [nofib GRIP graphs](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/gg) | Render the source activity graph from fixed GRIP logs with lazy numeric payloads and validate the complete PostScript. |
++| [gg-strict](#gg-strict) | [nofib GRIP graphs](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/gg) | Render the source activity graph from fixed GRIP logs with strict numeric payloads and validate the complete PostScript. |
++| [gg-spark-lazy](#gg-spark-lazy) | [nofib GRIP graphs](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/gg) | Render the source spark graph from fixed GRIP logs with lazy numeric payloads and validate the complete PostScript. |
++| [gg-spark-strict](#gg-spark-strict) | [nofib GRIP graphs](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/gg) | Render the source spark graph from fixed GRIP logs with strict numeric payloads and validate the complete PostScript. |
++| [gg-pool-lazy](#gg-pool-lazy) | [nofib GRIP graphs](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/gg) | Render the source pool graph from fixed GRIP logs with lazy numeric payloads and validate the complete PostScript. |
++| [gg-pool-strict](#gg-pool-strict) | [nofib GRIP graphs](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/gg) | Render the source pool graph from fixed GRIP logs with strict numeric payloads and validate the complete PostScript. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -19016,3 +19022,813 @@ Investigate higher-order continuation specialization, character-list constructio
+ string sharing, append shape, literal pattern demand, closure lifetimes and
+ per-block hash consumption. Treat these source-based questions separately from
+ recorded allocation/count observations and eventual timing reports.
++
++## gg-lazy
++
++Graph mode: activity. Finite numeric evaluation: lazy.
++
++### Algorithm and workload
++
++Parse supplied GRIP runtime logs, collect processor metadata and timing records,
++insert records in bucket order, gather activity or spark counters and generate
++PostScript graphs. The activity, spark-activity and spark-pool algorithms have
++separate benchmark names; each has lazy and strict finite numeric policies.
++
++### History, authorship, revision and variants
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, real/gg.
++The gg.1 manual, dated August 13, 1992, explicitly credits Iain Checkland,
++University of York. Retain all nine original modules, manual, report templates,
++input/output fixtures, example files and orchestration scripts under gg-lazy/
++upstream. No separate individual redistribution notice is stated in these files;
++do not infer a grant from another benchmark.
++
++The source report script invokes three computations: -A activity, -S spark
++activity and -P spark pool. The scripts in the root and example directories are
++byte-identical. Their supplementary exclusions identify report orchestration,
++LaTeX/dvips dependencies and temporary-file removal, while the three actual
++graph computations are imported separately. The old scripts are retained as
++provenance and are not used as suite adapters.
++
++GRIP itself is a parallel graph-reduction machine, but gg is a sequential
++postprocessor of existing data. The benchmark neither runs a parallel program
++nor requires a GRIP runtime. Supplied traces have no separate dataset authorship
++or notice; processor names/times remain unchanged.
++
++The extra gg.stdin-2.Z is a compressed historical trace. Preserve its pinned
++compressed identity and a decoded auxiliary fixture. The recorded gzip -cd
++adaptation yields 133193 bytes, independently checked against all three source
++graph modes. The compressed file is an explicitly reviewed source-data exception
++to executable-artifact scans, never a generic binary exemption.
++
++### Portable translation and evaluation
++
++Use SML97 for parsing, insertion, accumulation, plotting, validation and hashing.
++Input character lists are read once, then parsed for each interpretation.
++Preserve the positional-power strToInt definition, source line splitting,
++list insertion rather than a replacement sort, record equality/order behavior,
++grouping and recursive outline transposition.
++
++All source counters use explicit IntInf payloads; the recorded profiles stay
++within the source integer range. This removes dependence on a host's default
++int width without introducing modular changes. Lazy payloads defer unused
++numeric fields; strict finite payloads evaluate them. Control streams and the
++paired trace/final-state results remain memoized in both policies.
++
++Retain the source's structural equality check before its bucket-order test.
++Equal buckets retain insertion order. Activity/spark gathering retains zero
++buckets and the source closing sample. Pool accumulation preserves its distinct
++bucket sharing, post-update levels and final closing trace. Outline conversion
++uses the original recursive transposition and zip structure.
++
++Default filters do not inspect an ignored processor value. Constant PostScript
++prefixes, boxes and title can be produced before unrelated input. Processor
++configuration, axes, legend percentages and curves retain their source demand
++order. The final aggregate is shared with trace generation rather than recomputed.
++
++Percentage and tick labels use the source Float32 arithmetic and custom
++printFloat function. Bare scale/moveto operands and centimetre conversion use
++the source's defaulted Double arithmetic. Record those widths separately.
++The finite binary32 helper handles the selected label domain; it is not a
++general floating-point library.
++
++Preserve historical source behavior instead of repairing graphs. FAST and NORM
++have only one processor-header entry, so length(pes)-1 is zero and activity
++scaling emits positive Infinity. The reference category is checked explicitly.
++The larger supplementary trace also exposes the source's finite configuration
++position list, which omits a final processor label at sixteen entries.
++Those are documented source results.
++
++GEN17 replaces GHC shortest Double spelling only for bare numeric operands.
++All commands, literal text, colors, integer coordinates, labels, ordering and
++line endings must match exactly. Integer operands remain exact; finite Double
++operands use absolute 1e-12 plus relative 1e-12 bounds. Nonfinite operands must
++match class and sign. Numeric comparison does not permit whitespace changes.
++
++A streaming checker buffers one line, validates it and combines independently
++computed per-line reverse polynomial hashes. The actual character stream also
++computes the source forward Word64 hash; both whole-output hashes must agree.
++Modified numeric spellings are checked before their actual line hash is used.
++The driver emits stable repetitions:checked-lines output instead of source
++compiler-dependent decimal hash lines.
++
++### Profiles and correctness
++
++| Profile | Original trace | Repetitions |
++|---|---|---:|
++| Smoke | gg.faststdin | 1 |
++| Normal | gg.stdin | 500 |
++| Large | gg.slowstdin | 1500 |
++
++Smoke reduces FAST's 150 repetitions to one. Normal and large retain their source
++counts. Each mode uses its own original PostScript reference and the suite's
++default resource limits. Landscape is the comparative profile; portrait and
++encapsulated output are auxiliary correctness cases.
++
++Unmodified GHC runs match every stdout/stderr fixture. Export-only observers
++supply sorted records, parameters and complete output for three graph modes,
++portrait, EPS and selected-processor cases. Thirty complete SML outputs agree
++under both policies across the three standard traces and five formats, allowing
++only equivalent bare numeric operand spelling.
++
++Tests compare all ordered records and full outputs, validate the decoded
++supplementary trace, reject modified commands/points/colors/text/line counts/
++numeric operands/nonfinite categories, exercise source rounding/scaling quirks,
++and verify paired-state sharing and demand. Whole normal profiles are calibrated
++under both payload policies. Full SML large repetition validation is recorded
++separately when run.
++
++[The host-result note](../validation/gg-host-results.md) retains the reduced
++SML/NJ Word64 checker discrepancy. Valid source/checker code and canonical host
++settings remain; failing configurations cannot supply accepted timing results.
++
++### Literature and diagnostic questions
++
++The retained [manual](../gg-lazy/upstream/gg.1) documents the interface and modes.
++The report templates and README identify the historical application.
++[Peyton Jones, Clack, Salkild and Hardie, GRIP: a high-performance architecture
++for parallel graph reduction (1987)](https://www.microsoft.com/en-us/research/publication/grip-a-high-performance-architecture-for-parallel-graph-reduction/)
++provides machine context. Its abstract and introduction were reviewed; it
++describes the parallel machine, not this sequential SML postprocessor.
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
++provides suite context.
++
++Investigate delayed numeric parsing, insertion shape, selected-field forcing,
++state/trace retention, outline transposition, Float32 versus Double operations
++and streaming text/hash consumers. These are source-based questions. Reference
++agreement and measured configurations are separate from architectural hypotheses.
++
++## gg-strict
++
++Graph mode: activity. Finite numeric evaluation: strict.
++
++### Algorithm and workload
++
++Parse supplied GRIP runtime logs, collect processor metadata and timing records,
++insert records in bucket order, gather activity or spark counters and generate
++PostScript graphs. The activity, spark-activity and spark-pool algorithms have
++separate benchmark names; each has lazy and strict finite numeric policies.
++
++### History, authorship, revision and variants
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, real/gg.
++The gg.1 manual, dated August 13, 1992, explicitly credits Iain Checkland,
++University of York. Retain all nine original modules, manual, report templates,
++input/output fixtures, example files and orchestration scripts under gg-lazy/
++upstream. No separate individual redistribution notice is stated in these files;
++do not infer a grant from another benchmark.
++
++The source report script invokes three computations: -A activity, -S spark
++activity and -P spark pool. The scripts in the root and example directories are
++byte-identical. Their supplementary exclusions identify report orchestration,
++LaTeX/dvips dependencies and temporary-file removal, while the three actual
++graph computations are imported separately. The old scripts are retained as
++provenance and are not used as suite adapters.
++
++GRIP itself is a parallel graph-reduction machine, but gg is a sequential
++postprocessor of existing data. The benchmark neither runs a parallel program
++nor requires a GRIP runtime. Supplied traces have no separate dataset authorship
++or notice; processor names/times remain unchanged.
++
++The extra gg.stdin-2.Z is a compressed historical trace. Preserve its pinned
++compressed identity and a decoded auxiliary fixture. The recorded gzip -cd
++adaptation yields 133193 bytes, independently checked against all three source
++graph modes. The compressed file is an explicitly reviewed source-data exception
++to executable-artifact scans, never a generic binary exemption.
++
++### Portable translation and evaluation
++
++Use SML97 for parsing, insertion, accumulation, plotting, validation and hashing.
++Input character lists are read once, then parsed for each interpretation.
++Preserve the positional-power strToInt definition, source line splitting,
++list insertion rather than a replacement sort, record equality/order behavior,
++grouping and recursive outline transposition.
++
++All source counters use explicit IntInf payloads; the recorded profiles stay
++within the source integer range. This removes dependence on a host's default
++int width without introducing modular changes. Lazy payloads defer unused
++numeric fields; strict finite payloads evaluate them. Control streams and the
++paired trace/final-state results remain memoized in both policies.
++
++Retain the source's structural equality check before its bucket-order test.
++Equal buckets retain insertion order. Activity/spark gathering retains zero
++buckets and the source closing sample. Pool accumulation preserves its distinct
++bucket sharing, post-update levels and final closing trace. Outline conversion
++uses the original recursive transposition and zip structure.
++
++Default filters do not inspect an ignored processor value. Constant PostScript
++prefixes, boxes and title can be produced before unrelated input. Processor
++configuration, axes, legend percentages and curves retain their source demand
++order. The final aggregate is shared with trace generation rather than recomputed.
++
++Percentage and tick labels use the source Float32 arithmetic and custom
++printFloat function. Bare scale/moveto operands and centimetre conversion use
++the source's defaulted Double arithmetic. Record those widths separately.
++The finite binary32 helper handles the selected label domain; it is not a
++general floating-point library.
++
++Preserve historical source behavior instead of repairing graphs. FAST and NORM
++have only one processor-header entry, so length(pes)-1 is zero and activity
++scaling emits positive Infinity. The reference category is checked explicitly.
++The larger supplementary trace also exposes the source's finite configuration
++position list, which omits a final processor label at sixteen entries.
++Those are documented source results.
++
++GEN17 replaces GHC shortest Double spelling only for bare numeric operands.
++All commands, literal text, colors, integer coordinates, labels, ordering and
++line endings must match exactly. Integer operands remain exact; finite Double
++operands use absolute 1e-12 plus relative 1e-12 bounds. Nonfinite operands must
++match class and sign. Numeric comparison does not permit whitespace changes.
++
++A streaming checker buffers one line, validates it and combines independently
++computed per-line reverse polynomial hashes. The actual character stream also
++computes the source forward Word64 hash; both whole-output hashes must agree.
++Modified numeric spellings are checked before their actual line hash is used.
++The driver emits stable repetitions:checked-lines output instead of source
++compiler-dependent decimal hash lines.
++
++### Profiles and correctness
++
++| Profile | Original trace | Repetitions |
++|---|---|---:|
++| Smoke | gg.faststdin | 1 |
++| Normal | gg.stdin | 500 |
++| Large | gg.slowstdin | 1500 |
++
++Smoke reduces FAST's 150 repetitions to one. Normal and large retain their source
++counts. Each mode uses its own original PostScript reference and the suite's
++default resource limits. Landscape is the comparative profile; portrait and
++encapsulated output are auxiliary correctness cases.
++
++Unmodified GHC runs match every stdout/stderr fixture. Export-only observers
++supply sorted records, parameters and complete output for three graph modes,
++portrait, EPS and selected-processor cases. Thirty complete SML outputs agree
++under both policies across the three standard traces and five formats, allowing
++only equivalent bare numeric operand spelling.
++
++Tests compare all ordered records and full outputs, validate the decoded
++supplementary trace, reject modified commands/points/colors/text/line counts/
++numeric operands/nonfinite categories, exercise source rounding/scaling quirks,
++and verify paired-state sharing and demand. Whole normal profiles are calibrated
++under both payload policies. Full SML large repetition validation is recorded
++separately when run.
++
++[The host-result note](../validation/gg-host-results.md) retains the reduced
++SML/NJ Word64 checker discrepancy. Valid source/checker code and canonical host
++settings remain; failing configurations cannot supply accepted timing results.
++
++### Literature and diagnostic questions
++
++The retained [manual](../gg-lazy/upstream/gg.1) documents the interface and modes.
++The report templates and README identify the historical application.
++[Peyton Jones, Clack, Salkild and Hardie, GRIP: a high-performance architecture
++for parallel graph reduction (1987)](https://www.microsoft.com/en-us/research/publication/grip-a-high-performance-architecture-for-parallel-graph-reduction/)
++provides machine context. Its abstract and introduction were reviewed; it
++describes the parallel machine, not this sequential SML postprocessor.
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
++provides suite context.
++
++Investigate delayed numeric parsing, insertion shape, selected-field forcing,
++state/trace retention, outline transposition, Float32 versus Double operations
++and streaming text/hash consumers. These are source-based questions. Reference
++agreement and measured configurations are separate from architectural hypotheses.
++
++## gg-spark-lazy
++
++Graph mode: spark. Finite numeric evaluation: lazy.
++
++### Algorithm and workload
++
++Parse supplied GRIP runtime logs, collect processor metadata and timing records,
++insert records in bucket order, gather activity or spark counters and generate
++PostScript graphs. The activity, spark-activity and spark-pool algorithms have
++separate benchmark names; each has lazy and strict finite numeric policies.
++
++### History, authorship, revision and variants
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, real/gg.
++The gg.1 manual, dated August 13, 1992, explicitly credits Iain Checkland,
++University of York. Retain all nine original modules, manual, report templates,
++input/output fixtures, example files and orchestration scripts under gg-lazy/
++upstream. No separate individual redistribution notice is stated in these files;
++do not infer a grant from another benchmark.
++
++The source report script invokes three computations: -A activity, -S spark
++activity and -P spark pool. The scripts in the root and example directories are
++byte-identical. Their supplementary exclusions identify report orchestration,
++LaTeX/dvips dependencies and temporary-file removal, while the three actual
++graph computations are imported separately. The old scripts are retained as
++provenance and are not used as suite adapters.
++
++GRIP itself is a parallel graph-reduction machine, but gg is a sequential
++postprocessor of existing data. The benchmark neither runs a parallel program
++nor requires a GRIP runtime. Supplied traces have no separate dataset authorship
++or notice; processor names/times remain unchanged.
++
++The extra gg.stdin-2.Z is a compressed historical trace. Preserve its pinned
++compressed identity and a decoded auxiliary fixture. The recorded gzip -cd
++adaptation yields 133193 bytes, independently checked against all three source
++graph modes. The compressed file is an explicitly reviewed source-data exception
++to executable-artifact scans, never a generic binary exemption.
++
++### Portable translation and evaluation
++
++Use SML97 for parsing, insertion, accumulation, plotting, validation and hashing.
++Input character lists are read once, then parsed for each interpretation.
++Preserve the positional-power strToInt definition, source line splitting,
++list insertion rather than a replacement sort, record equality/order behavior,
++grouping and recursive outline transposition.
++
++All source counters use explicit IntInf payloads; the recorded profiles stay
++within the source integer range. This removes dependence on a host's default
++int width without introducing modular changes. Lazy payloads defer unused
++numeric fields; strict finite payloads evaluate them. Control streams and the
++paired trace/final-state results remain memoized in both policies.
++
++Retain the source's structural equality check before its bucket-order test.
++Equal buckets retain insertion order. Activity/spark gathering retains zero
++buckets and the source closing sample. Pool accumulation preserves its distinct
++bucket sharing, post-update levels and final closing trace. Outline conversion
++uses the original recursive transposition and zip structure.
++
++Default filters do not inspect an ignored processor value. Constant PostScript
++prefixes, boxes and title can be produced before unrelated input. Processor
++configuration, axes, legend percentages and curves retain their source demand
++order. The final aggregate is shared with trace generation rather than recomputed.
++
++Percentage and tick labels use the source Float32 arithmetic and custom
++printFloat function. Bare scale/moveto operands and centimetre conversion use
++the source's defaulted Double arithmetic. Record those widths separately.
++The finite binary32 helper handles the selected label domain; it is not a
++general floating-point library.
++
++Preserve historical source behavior instead of repairing graphs. FAST and NORM
++have only one processor-header entry, so length(pes)-1 is zero and activity
++scaling emits positive Infinity. The reference category is checked explicitly.
++The larger supplementary trace also exposes the source's finite configuration
++position list, which omits a final processor label at sixteen entries.
++Those are documented source results.
++
++GEN17 replaces GHC shortest Double spelling only for bare numeric operands.
++All commands, literal text, colors, integer coordinates, labels, ordering and
++line endings must match exactly. Integer operands remain exact; finite Double
++operands use absolute 1e-12 plus relative 1e-12 bounds. Nonfinite operands must
++match class and sign. Numeric comparison does not permit whitespace changes.
++
++A streaming checker buffers one line, validates it and combines independently
++computed per-line reverse polynomial hashes. The actual character stream also
++computes the source forward Word64 hash; both whole-output hashes must agree.
++Modified numeric spellings are checked before their actual line hash is used.
++The driver emits stable repetitions:checked-lines output instead of source
++compiler-dependent decimal hash lines.
++
++### Profiles and correctness
++
++| Profile | Original trace | Repetitions |
++|---|---|---:|
++| Smoke | gg.faststdin | 1 |
++| Normal | gg.stdin | 500 |
++| Large | gg.slowstdin | 1500 |
++
++Smoke reduces FAST's 150 repetitions to one. Normal and large retain their source
++counts. Each mode uses its own original PostScript reference and the suite's
++default resource limits. Landscape is the comparative profile; portrait and
++encapsulated output are auxiliary correctness cases.
++
++Unmodified GHC runs match every stdout/stderr fixture. Export-only observers
++supply sorted records, parameters and complete output for three graph modes,
++portrait, EPS and selected-processor cases. Thirty complete SML outputs agree
++under both policies across the three standard traces and five formats, allowing
++only equivalent bare numeric operand spelling.
++
++Tests compare all ordered records and full outputs, validate the decoded
++supplementary trace, reject modified commands/points/colors/text/line counts/
++numeric operands/nonfinite categories, exercise source rounding/scaling quirks,
++and verify paired-state sharing and demand. Whole normal profiles are calibrated
++under both payload policies. Full SML large repetition validation is recorded
++separately when run.
++
++[The host-result note](../validation/gg-host-results.md) retains the reduced
++SML/NJ Word64 checker discrepancy. Valid source/checker code and canonical host
++settings remain; failing configurations cannot supply accepted timing results.
++
++### Literature and diagnostic questions
++
++The retained [manual](../gg-lazy/upstream/gg.1) documents the interface and modes.
++The report templates and README identify the historical application.
++[Peyton Jones, Clack, Salkild and Hardie, GRIP: a high-performance architecture
++for parallel graph reduction (1987)](https://www.microsoft.com/en-us/research/publication/grip-a-high-performance-architecture-for-parallel-graph-reduction/)
++provides machine context. Its abstract and introduction were reviewed; it
++describes the parallel machine, not this sequential SML postprocessor.
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
++provides suite context.
++
++Investigate delayed numeric parsing, insertion shape, selected-field forcing,
++state/trace retention, outline transposition, Float32 versus Double operations
++and streaming text/hash consumers. These are source-based questions. Reference
++agreement and measured configurations are separate from architectural hypotheses.
++
++## gg-spark-strict
++
++Graph mode: spark. Finite numeric evaluation: strict.
++
++### Algorithm and workload
++
++Parse supplied GRIP runtime logs, collect processor metadata and timing records,
++insert records in bucket order, gather activity or spark counters and generate
++PostScript graphs. The activity, spark-activity and spark-pool algorithms have
++separate benchmark names; each has lazy and strict finite numeric policies.
++
++### History, authorship, revision and variants
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, real/gg.
++The gg.1 manual, dated August 13, 1992, explicitly credits Iain Checkland,
++University of York. Retain all nine original modules, manual, report templates,
++input/output fixtures, example files and orchestration scripts under gg-lazy/
++upstream. No separate individual redistribution notice is stated in these files;
++do not infer a grant from another benchmark.
++
++The source report script invokes three computations: -A activity, -S spark
++activity and -P spark pool. The scripts in the root and example directories are
++byte-identical. Their supplementary exclusions identify report orchestration,
++LaTeX/dvips dependencies and temporary-file removal, while the three actual
++graph computations are imported separately. The old scripts are retained as
++provenance and are not used as suite adapters.
++
++GRIP itself is a parallel graph-reduction machine, but gg is a sequential
++postprocessor of existing data. The benchmark neither runs a parallel program
++nor requires a GRIP runtime. Supplied traces have no separate dataset authorship
++or notice; processor names/times remain unchanged.
++
++The extra gg.stdin-2.Z is a compressed historical trace. Preserve its pinned
++compressed identity and a decoded auxiliary fixture. The recorded gzip -cd
++adaptation yields 133193 bytes, independently checked against all three source
++graph modes. The compressed file is an explicitly reviewed source-data exception
++to executable-artifact scans, never a generic binary exemption.
++
++### Portable translation and evaluation
++
++Use SML97 for parsing, insertion, accumulation, plotting, validation and hashing.
++Input character lists are read once, then parsed for each interpretation.
++Preserve the positional-power strToInt definition, source line splitting,
++list insertion rather than a replacement sort, record equality/order behavior,
++grouping and recursive outline transposition.
++
++All source counters use explicit IntInf payloads; the recorded profiles stay
++within the source integer range. This removes dependence on a host's default
++int width without introducing modular changes. Lazy payloads defer unused
++numeric fields; strict finite payloads evaluate them. Control streams and the
++paired trace/final-state results remain memoized in both policies.
++
++Retain the source's structural equality check before its bucket-order test.
++Equal buckets retain insertion order. Activity/spark gathering retains zero
++buckets and the source closing sample. Pool accumulation preserves its distinct
++bucket sharing, post-update levels and final closing trace. Outline conversion
++uses the original recursive transposition and zip structure.
++
++Default filters do not inspect an ignored processor value. Constant PostScript
++prefixes, boxes and title can be produced before unrelated input. Processor
++configuration, axes, legend percentages and curves retain their source demand
++order. The final aggregate is shared with trace generation rather than recomputed.
++
++Percentage and tick labels use the source Float32 arithmetic and custom
++printFloat function. Bare scale/moveto operands and centimetre conversion use
++the source's defaulted Double arithmetic. Record those widths separately.
++The finite binary32 helper handles the selected label domain; it is not a
++general floating-point library.
++
++Preserve historical source behavior instead of repairing graphs. FAST and NORM
++have only one processor-header entry, so length(pes)-1 is zero and activity
++scaling emits positive Infinity. The reference category is checked explicitly.
++The larger supplementary trace also exposes the source's finite configuration
++position list, which omits a final processor label at sixteen entries.
++Those are documented source results.
++
++GEN17 replaces GHC shortest Double spelling only for bare numeric operands.
++All commands, literal text, colors, integer coordinates, labels, ordering and
++line endings must match exactly. Integer operands remain exact; finite Double
++operands use absolute 1e-12 plus relative 1e-12 bounds. Nonfinite operands must
++match class and sign. Numeric comparison does not permit whitespace changes.
++
++A streaming checker buffers one line, validates it and combines independently
++computed per-line reverse polynomial hashes. The actual character stream also
++computes the source forward Word64 hash; both whole-output hashes must agree.
++Modified numeric spellings are checked before their actual line hash is used.
++The driver emits stable repetitions:checked-lines output instead of source
++compiler-dependent decimal hash lines.
++
++### Profiles and correctness
++
++| Profile | Original trace | Repetitions |
++|---|---|---:|
++| Smoke | gg.faststdin | 1 |
++| Normal | gg.stdin | 500 |
++| Large | gg.slowstdin | 1500 |
++
++Smoke reduces FAST's 150 repetitions to one. Normal and large retain their source
++counts. Each mode uses its own original PostScript reference and the suite's
++default resource limits. Landscape is the comparative profile; portrait and
++encapsulated output are auxiliary correctness cases.
++
++Unmodified GHC runs match every stdout/stderr fixture. Export-only observers
++supply sorted records, parameters and complete output for three graph modes,
++portrait, EPS and selected-processor cases. Thirty complete SML outputs agree
++under both policies across the three standard traces and five formats, allowing
++only equivalent bare numeric operand spelling.
++
++Tests compare all ordered records and full outputs, validate the decoded
++supplementary trace, reject modified commands/points/colors/text/line counts/
++numeric operands/nonfinite categories, exercise source rounding/scaling quirks,
++and verify paired-state sharing and demand. Whole normal profiles are calibrated
++under both payload policies. Full SML large repetition validation is recorded
++separately when run.
++
++[The host-result note](../validation/gg-host-results.md) retains the reduced
++SML/NJ Word64 checker discrepancy. Valid source/checker code and canonical host
++settings remain; failing configurations cannot supply accepted timing results.
++
++### Literature and diagnostic questions
++
++The retained [manual](../gg-lazy/upstream/gg.1) documents the interface and modes.
++The report templates and README identify the historical application.
++[Peyton Jones, Clack, Salkild and Hardie, GRIP: a high-performance architecture
++for parallel graph reduction (1987)](https://www.microsoft.com/en-us/research/publication/grip-a-high-performance-architecture-for-parallel-graph-reduction/)
++provides machine context. Its abstract and introduction were reviewed; it
++describes the parallel machine, not this sequential SML postprocessor.
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
++provides suite context.
++
++Investigate delayed numeric parsing, insertion shape, selected-field forcing,
++state/trace retention, outline transposition, Float32 versus Double operations
++and streaming text/hash consumers. These are source-based questions. Reference
++agreement and measured configurations are separate from architectural hypotheses.
++
++## gg-pool-lazy
++
++Graph mode: pool. Finite numeric evaluation: lazy.
++
++### Algorithm and workload
++
++Parse supplied GRIP runtime logs, collect processor metadata and timing records,
++insert records in bucket order, gather activity or spark counters and generate
++PostScript graphs. The activity, spark-activity and spark-pool algorithms have
++separate benchmark names; each has lazy and strict finite numeric policies.
++
++### History, authorship, revision and variants
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, real/gg.
++The gg.1 manual, dated August 13, 1992, explicitly credits Iain Checkland,
++University of York. Retain all nine original modules, manual, report templates,
++input/output fixtures, example files and orchestration scripts under gg-lazy/
++upstream. No separate individual redistribution notice is stated in these files;
++do not infer a grant from another benchmark.
++
++The source report script invokes three computations: -A activity, -S spark
++activity and -P spark pool. The scripts in the root and example directories are
++byte-identical. Their supplementary exclusions identify report orchestration,
++LaTeX/dvips dependencies and temporary-file removal, while the three actual
++graph computations are imported separately. The old scripts are retained as
++provenance and are not used as suite adapters.
++
++GRIP itself is a parallel graph-reduction machine, but gg is a sequential
++postprocessor of existing data. The benchmark neither runs a parallel program
++nor requires a GRIP runtime. Supplied traces have no separate dataset authorship
++or notice; processor names/times remain unchanged.
++
++The extra gg.stdin-2.Z is a compressed historical trace. Preserve its pinned
++compressed identity and a decoded auxiliary fixture. The recorded gzip -cd
++adaptation yields 133193 bytes, independently checked against all three source
++graph modes. The compressed file is an explicitly reviewed source-data exception
++to executable-artifact scans, never a generic binary exemption.
++
++### Portable translation and evaluation
++
++Use SML97 for parsing, insertion, accumulation, plotting, validation and hashing.
++Input character lists are read once, then parsed for each interpretation.
++Preserve the positional-power strToInt definition, source line splitting,
++list insertion rather than a replacement sort, record equality/order behavior,
++grouping and recursive outline transposition.
++
++All source counters use explicit IntInf payloads; the recorded profiles stay
++within the source integer range. This removes dependence on a host's default
++int width without introducing modular changes. Lazy payloads defer unused
++numeric fields; strict finite payloads evaluate them. Control streams and the
++paired trace/final-state results remain memoized in both policies.
++
++Retain the source's structural equality check before its bucket-order test.
++Equal buckets retain insertion order. Activity/spark gathering retains zero
++buckets and the source closing sample. Pool accumulation preserves its distinct
++bucket sharing, post-update levels and final closing trace. Outline conversion
++uses the original recursive transposition and zip structure.
++
++Default filters do not inspect an ignored processor value. Constant PostScript
++prefixes, boxes and title can be produced before unrelated input. Processor
++configuration, axes, legend percentages and curves retain their source demand
++order. The final aggregate is shared with trace generation rather than recomputed.
++
++Percentage and tick labels use the source Float32 arithmetic and custom
++printFloat function. Bare scale/moveto operands and centimetre conversion use
++the source's defaulted Double arithmetic. Record those widths separately.
++The finite binary32 helper handles the selected label domain; it is not a
++general floating-point library.
++
++Preserve historical source behavior instead of repairing graphs. FAST and NORM
++have only one processor-header entry, so length(pes)-1 is zero and activity
++scaling emits positive Infinity. The reference category is checked explicitly.
++The larger supplementary trace also exposes the source's finite configuration
++position list, which omits a final processor label at sixteen entries.
++Those are documented source results.
++
++GEN17 replaces GHC shortest Double spelling only for bare numeric operands.
++All commands, literal text, colors, integer coordinates, labels, ordering and
++line endings must match exactly. Integer operands remain exact; finite Double
++operands use absolute 1e-12 plus relative 1e-12 bounds. Nonfinite operands must
++match class and sign. Numeric comparison does not permit whitespace changes.
++
++A streaming checker buffers one line, validates it and combines independently
++computed per-line reverse polynomial hashes. The actual character stream also
++computes the source forward Word64 hash; both whole-output hashes must agree.
++Modified numeric spellings are checked before their actual line hash is used.
++The driver emits stable repetitions:checked-lines output instead of source
++compiler-dependent decimal hash lines.
++
++### Profiles and correctness
++
++| Profile | Original trace | Repetitions |
++|---|---|---:|
++| Smoke | gg.faststdin | 1 |
++| Normal | gg.stdin | 500 |
++| Large | gg.slowstdin | 1500 |
++
++Smoke reduces FAST's 150 repetitions to one. Normal and large retain their source
++counts. Each mode uses its own original PostScript reference and the suite's
++default resource limits. Landscape is the comparative profile; portrait and
++encapsulated output are auxiliary correctness cases.
++
++Unmodified GHC runs match every stdout/stderr fixture. Export-only observers
++supply sorted records, parameters and complete output for three graph modes,
++portrait, EPS and selected-processor cases. Thirty complete SML outputs agree
++under both policies across the three standard traces and five formats, allowing
++only equivalent bare numeric operand spelling.
++
++Tests compare all ordered records and full outputs, validate the decoded
++supplementary trace, reject modified commands/points/colors/text/line counts/
++numeric operands/nonfinite categories, exercise source rounding/scaling quirks,
++and verify paired-state sharing and demand. Whole normal profiles are calibrated
++under both payload policies. Full SML large repetition validation is recorded
++separately when run.
++
++[The host-result note](../validation/gg-host-results.md) retains the reduced
++SML/NJ Word64 checker discrepancy. Valid source/checker code and canonical host
++settings remain; failing configurations cannot supply accepted timing results.
++
++### Literature and diagnostic questions
++
++The retained [manual](../gg-lazy/upstream/gg.1) documents the interface and modes.
++The report templates and README identify the historical application.
++[Peyton Jones, Clack, Salkild and Hardie, GRIP: a high-performance architecture
++for parallel graph reduction (1987)](https://www.microsoft.com/en-us/research/publication/grip-a-high-performance-architecture-for-parallel-graph-reduction/)
++provides machine context. Its abstract and introduction were reviewed; it
++describes the parallel machine, not this sequential SML postprocessor.
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
++provides suite context.
++
++Investigate delayed numeric parsing, insertion shape, selected-field forcing,
++state/trace retention, outline transposition, Float32 versus Double operations
++and streaming text/hash consumers. These are source-based questions. Reference
++agreement and measured configurations are separate from architectural hypotheses.
++
++## gg-pool-strict
++
++Graph mode: pool. Finite numeric evaluation: strict.
++
++### Algorithm and workload
++
++Parse supplied GRIP runtime logs, collect processor metadata and timing records,
++insert records in bucket order, gather activity or spark counters and generate
++PostScript graphs. The activity, spark-activity and spark-pool algorithms have
++separate benchmark names; each has lazy and strict finite numeric policies.
++
++### History, authorship, revision and variants
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, real/gg.
++The gg.1 manual, dated August 13, 1992, explicitly credits Iain Checkland,
++University of York. Retain all nine original modules, manual, report templates,
++input/output fixtures, example files and orchestration scripts under gg-lazy/
++upstream. No separate individual redistribution notice is stated in these files;
++do not infer a grant from another benchmark.
++
++The source report script invokes three computations: -A activity, -S spark
++activity and -P spark pool. The scripts in the root and example directories are
++byte-identical. Their supplementary exclusions identify report orchestration,
++LaTeX/dvips dependencies and temporary-file removal, while the three actual
++graph computations are imported separately. The old scripts are retained as
++provenance and are not used as suite adapters.
++
++GRIP itself is a parallel graph-reduction machine, but gg is a sequential
++postprocessor of existing data. The benchmark neither runs a parallel program
++nor requires a GRIP runtime. Supplied traces have no separate dataset authorship
++or notice; processor names/times remain unchanged.
++
++The extra gg.stdin-2.Z is a compressed historical trace. Preserve its pinned
++compressed identity and a decoded auxiliary fixture. The recorded gzip -cd
++adaptation yields 133193 bytes, independently checked against all three source
++graph modes. The compressed file is an explicitly reviewed source-data exception
++to executable-artifact scans, never a generic binary exemption.
++
++### Portable translation and evaluation
++
++Use SML97 for parsing, insertion, accumulation, plotting, validation and hashing.
++Input character lists are read once, then parsed for each interpretation.
++Preserve the positional-power strToInt definition, source line splitting,
++list insertion rather than a replacement sort, record equality/order behavior,
++grouping and recursive outline transposition.
++
++All source counters use explicit IntInf payloads; the recorded profiles stay
++within the source integer range. This removes dependence on a host's default
++int width without introducing modular changes. Lazy payloads defer unused
++numeric fields; strict finite payloads evaluate them. Control streams and the
++paired trace/final-state results remain memoized in both policies.
++
++Retain the source's structural equality check before its bucket-order test.
++Equal buckets retain insertion order. Activity/spark gathering retains zero
++buckets and the source closing sample. Pool accumulation preserves its distinct
++bucket sharing, post-update levels and final closing trace. Outline conversion
++uses the original recursive transposition and zip structure.
++
++Default filters do not inspect an ignored processor value. Constant PostScript
++prefixes, boxes and title can be produced before unrelated input. Processor
++configuration, axes, legend percentages and curves retain their source demand
++order. The final aggregate is shared with trace generation rather than recomputed.
++
++Percentage and tick labels use the source Float32 arithmetic and custom
++printFloat function. Bare scale/moveto operands and centimetre conversion use
++the source's defaulted Double arithmetic. Record those widths separately.
++The finite binary32 helper handles the selected label domain; it is not a
++general floating-point library.
++
++Preserve historical source behavior instead of repairing graphs. FAST and NORM
++have only one processor-header entry, so length(pes)-1 is zero and activity
++scaling emits positive Infinity. The reference category is checked explicitly.
++The larger supplementary trace also exposes the source's finite configuration
++position list, which omits a final processor label at sixteen entries.
++Those are documented source results.
++
++GEN17 replaces GHC shortest Double spelling only for bare numeric operands.
++All commands, literal text, colors, integer coordinates, labels, ordering and
++line endings must match exactly. Integer operands remain exact; finite Double
++operands use absolute 1e-12 plus relative 1e-12 bounds. Nonfinite operands must
++match class and sign. Numeric comparison does not permit whitespace changes.
++
++A streaming checker buffers one line, validates it and combines independently
++computed per-line reverse polynomial hashes. The actual character stream also
++computes the source forward Word64 hash; both whole-output hashes must agree.
++Modified numeric spellings are checked before their actual line hash is used.
++The driver emits stable repetitions:checked-lines output instead of source
++compiler-dependent decimal hash lines.
++
++### Profiles and correctness
++
++| Profile | Original trace | Repetitions |
++|---|---|---:|
++| Smoke | gg.faststdin | 1 |
++| Normal | gg.stdin | 500 |
++| Large | gg.slowstdin | 1500 |
++
++Smoke reduces FAST's 150 repetitions to one. Normal and large retain their source
++counts. Each mode uses its own original PostScript reference and the suite's
++default resource limits. Landscape is the comparative profile; portrait and
++encapsulated output are auxiliary correctness cases.
++
++Unmodified GHC runs match every stdout/stderr fixture. Export-only observers
++supply sorted records, parameters and complete output for three graph modes,
++portrait, EPS and selected-processor cases. Thirty complete SML outputs agree
++under both policies across the three standard traces and five formats, allowing
++only equivalent bare numeric operand spelling.
++
++Tests compare all ordered records and full outputs, validate the decoded
++supplementary trace, reject modified commands/points/colors/text/line counts/
++numeric operands/nonfinite categories, exercise source rounding/scaling quirks,
++and verify paired-state sharing and demand. Whole normal profiles are calibrated
++under both payload policies. Full SML large repetition validation is recorded
++separately when run.
++
++[The host-result note](../validation/gg-host-results.md) retains the reduced
++SML/NJ Word64 checker discrepancy. Valid source/checker code and canonical host
++settings remain; failing configurations cannot supply accepted timing results.
++
++### Literature and diagnostic questions
++
++The retained [manual](../gg-lazy/upstream/gg.1) documents the interface and modes.
++The report templates and README identify the historical application.
++[Peyton Jones, Clack, Salkild and Hardie, GRIP: a high-performance architecture
++for parallel graph reduction (1987)](https://www.microsoft.com/en-us/research/publication/grip-a-high-performance-architecture-for-parallel-graph-reduction/)
++provides machine context. Its abstract and introduction were reviewed; it
++describes the parallel machine, not this sequential SML postprocessor.
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
++provides suite context.
++
++Investigate delayed numeric parsing, insertion shape, selected-field forcing,
++state/trace retention, outline transposition, Float32 versus Double operations
++and streaming text/hash consumers. These are source-based questions. Reference
++agreement and measured configurations are separate from architectural hypotheses.
+diff --git a/examples/benchmarks/inventory.tsv b/examples/benchmarks/inventory.tsv
+index f39a3096..7e3ffd3f 100644
+--- a/examples/benchmarks/inventory.tsv
++++ b/examples/benchmarks/inventory.tsv
+@@ -570,7 +570,7 @@ nofib	real/fluid	fluid	fluid	M4	import	numerical		not stated in scanned source h
+ nofib	real/fulsom/Bah.hs	Bah	Bah	-	exclude	application	nofib:gc/fulsom/Bah.hs	not stated in scanned source headers	09bfd257e0a8c5886cdc5de12fef19f0a67a6f0bc68b00f93eb7d4c2489f4dc3	real/fulsom/Bah.hs;real/fulsom/Csg.hs;real/fulsom/Interval.hs;real/fulsom/Kolor.hs;real/fulsom/Matrix.hs;real/fulsom/Oct.hs;real/fulsom/Quad.hs;real/fulsom/Raster.hs;real/fulsom/Shapes.hs;real/fulsom/Types.hs;real/fulsom/Vector.hs	real/fulsom/fulsom.faststdout;real/fulsom/fulsom.slowstdout;real/fulsom/fulsom.stdout	real/fulsom/Bah.hs:header;real/fulsom/Csg.hs:header;real/fulsom/Interval.hs:header;real/fulsom/Kolor.hs:header;real/fulsom/Matrix.hs:header;real/fulsom/Oct.hs:header;real/fulsom/Quad.hs:header;real/fulsom/Raster.hs:header;real/fulsom/Shapes.hs:header;real/fulsom/Types.hs:header;real/fulsom/Vector.hs:header	real/fulsom/Makefile	auxiliary test or alternate entrypoint; the directory Makefile excludes it or selects the Main driver, not a separate benchmark invocation
+ nofib	real/fulsom/Main.hs	fulsom	fulsom-nofib	M4	import	application	nofib:gc/fulsom/Main.hs	not stated in scanned source headers	ba2d312f27a9fe76c2daaf885309207f2702902e4cb4d73669575f4068774443	real/fulsom/Csg.hs;real/fulsom/Interval.hs;real/fulsom/Kolor.hs;real/fulsom/Main.hs;real/fulsom/Matrix.hs;real/fulsom/NofibUtils.hs;real/fulsom/Oct.hs;real/fulsom/Patchlevel.hs;real/fulsom/Quad.hs;real/fulsom/Raster.hs;real/fulsom/Shapes.hs;real/fulsom/Types.hs;real/fulsom/Vector.hs	real/fulsom/fulsom.faststdout;real/fulsom/fulsom.slowstdout;real/fulsom/fulsom.stdout	real/fulsom/Csg.hs:header;real/fulsom/Interval.hs:header;real/fulsom/Kolor.hs:header;real/fulsom/Main.hs:header;real/fulsom/Matrix.hs:header;real/fulsom/Oct.hs:header;real/fulsom/Patchlevel.hs:header;real/fulsom/Quad.hs:header;real/fulsom/Raster.hs:header;real/fulsom/Shapes.hs:header;real/fulsom/Types.hs:header;real/fulsom/Vector.hs:header	real/fulsom/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/gamteb	gamteb	gamteb	M4	import	application		Patricia Fasel	59954bb60ebde5c8b56c62aacdb4f252c9647f5d2689bec1147933efce5f5d19	real/gamteb/Compton.hs;real/gamteb/Consts.hs;real/gamteb/Distance.hs;real/gamteb/GamtebMain.hs;real/gamteb/GamtebType.hs;real/gamteb/InitTable.hs;real/gamteb/Main.hs;real/gamteb/NofibUtils.hs;real/gamteb/Output.hs;real/gamteb/Pair.hs;real/gamteb/PhotoElec.hs;real/gamteb/RoulSplit.hs;real/gamteb/TransPort.hs;real/gamteb/Utils.hs	real/gamteb/gamteb.faststdout;real/gamteb/gamteb.slowstdout;real/gamteb/gamteb.stdout	real/gamteb/GamtebMain.hs:header	real/gamteb/Compton.hs:author-heading;real/gamteb/Consts.hs:author-heading;real/gamteb/Distance.hs:author-heading;real/gamteb/GamtebMain.hs:author-heading;real/gamteb/GamtebType.hs:author-heading;real/gamteb/InitTable.hs:author-heading;real/gamteb/Main.hs:author-heading;real/gamteb/Makefile;real/gamteb/Output.hs:author-heading;real/gamteb/Pair.hs:author-heading;real/gamteb/PhotoElec.hs:author-heading;real/gamteb/RoulSplit.hs:author-heading;real/gamteb/TransPort.hs:author-heading;real/gamteb/Utils.hs:author-heading	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	real/gg	gg	gg	M4	import	application		not stated in scanned source headers	e670c250f14ce0d26a61f15ab0286d106b24059fb7421b811c658e7fbfc2b434	real/gg/Activity.hs;real/gg/GRIP.hs;real/gg/Graph.hs;real/gg/Main.hs;real/gg/NofibUtils.hs;real/gg/PSlib.hs;real/gg/Parse.hs;real/gg/Pool.hs;real/gg/Spark.hs;real/gg/StdLib.hs	real/gg/gg.faststdin;real/gg/gg.faststdout;real/gg/gg.slowstdin;real/gg/gg.slowstdout;real/gg/gg.stdin;real/gg/gg.stdout		real/gg/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	real/gg	gg	gg	M4	import	application		Iain Checkland	e670c250f14ce0d26a61f15ab0286d106b24059fb7421b811c658e7fbfc2b434	real/gg/Activity.hs;real/gg/GRIP.hs;real/gg/Graph.hs;real/gg/Main.hs;real/gg/NofibUtils.hs;real/gg/PSlib.hs;real/gg/Parse.hs;real/gg/Pool.hs;real/gg/Spark.hs;real/gg/StdLib.hs	real/gg/gg.faststdin;real/gg/gg.faststdout;real/gg/gg.slowstdin;real/gg/gg.slowstdout;real/gg/gg.stdin;real/gg/gg.stdout		real/gg/Makefile;real/gg/gg.1:author-section	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/grep	grep	grep	M4	import	kernel		not stated in scanned source headers	d9dadbddd22cc3db52c300d393d12485206db6731c78dcc12a5c0b846d08e4db	real/grep/Main.lhs;real/grep/NofibUtils.hs;real/grep/Parsers.hs;real/grep/StringMatch.hs	real/grep/grep.faststdin;real/grep/grep.faststdout;real/grep/grep.slowstdin;real/grep/grep.slowstdout;real/grep/grep.stdin;real/grep/grep.stdout		real/grep/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/hidden	hidden	hidden	M4	import	application		Mark Ramaer;Stef Joosten	0e1040d3cc5da5880e37c19df57a31156894a845c07a936466cabf56384bafd1	real/hidden/Comparing.hs;real/hidden/Cross.hs;real/hidden/EdgePlate.hs;real/hidden/Geometric.hs;real/hidden/Hide.hs;real/hidden/Main.hs;real/hidden/Matrices.hs;real/hidden/Memo.hs;real/hidden/MyIO.hs;real/hidden/NofibUtils.hs;real/hidden/Numbers.hs;real/hidden/Postscript.hs;real/hidden/Preds.hs;real/hidden/Rotate.lhs;real/hidden/Solve.hs;real/hidden/Vectors.hs;real/hidden/etc/nbpip.c	real/hidden/hidden.stdin;real/hidden/runtime_files/four.plate;real/hidden/runtime_files/houses.plate;real/hidden/runtime_files/rad.plate	real/hidden/MAIL:nofib-permission	real/hidden/MAIL:authorship-and-nofib-permission;real/hidden/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/hpg	hpg	hpg	M4	import	integer-arithmetic		not stated in scanned source headers	b241e65bac3ced5d134bcb5be065c2b815957a9122949c6ef7f8cd80d007a309	real/hpg/Config.lhs;real/hpg/Env.lhs;real/hpg/GenExp.lhs;real/hpg/GenType.lhs;real/hpg/GenVal.lhs;real/hpg/Main.lhs;real/hpg/NofibUtils.hs;real/hpg/Types.lhs;real/hpg/Utils.lhs	real/hpg/hpg.faststdout;real/hpg/hpg.slowstdout;real/hpg/hpg.stdout	real/hpg/Config.lhs:header;real/hpg/Env.lhs:header;real/hpg/GenExp.lhs:header;real/hpg/GenType.lhs:header;real/hpg/GenVal.lhs:header;real/hpg/Main.lhs:header;real/hpg/Types.lhs:header;real/hpg/Utils.lhs:header	real/hpg/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 65546f9b..78cc0a47 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -1035,3 +1035,21 @@ mkhprog-lazy	large	nofib	real/mkhprog	18000 specification.input blocks.hashes	mk
+ mkhprog-strict	smoke	nofib	real/mkhprog	1 specification.input blocks.hashes	mkhprog-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/mkhprog-templates.sml,shared/mkhprog.sml,shared/mkhprog-driver.sml,mkhprog-strict/benchmark.sml,shared/main.sml	30	1048576	parsing,higher-order,code-generation,lists-streams,allocation-lifetimes,strict	specification.input,blocks.hashes	exact	implemented
+ mkhprog-strict	normal	nofib	real/mkhprog	3800 specification.input blocks.hashes	mkhprog-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/mkhprog-templates.sml,shared/mkhprog.sml,shared/mkhprog-driver.sml,mkhprog-strict/benchmark.sml,shared/main.sml	600	4194304	parsing,higher-order,code-generation,lists-streams,allocation-lifetimes,strict	specification.input,blocks.hashes	exact	implemented
+ mkhprog-strict	large	nofib	real/mkhprog	18000 specification.input blocks.hashes	mkhprog-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/mkhprog-templates.sml,shared/mkhprog.sml,shared/mkhprog-driver.sml,mkhprog-strict/benchmark.sml,shared/main.sml	3600	8388608	parsing,higher-order,code-generation,lists-streams,allocation-lifetimes,strict	specification.input,blocks.hashes	exact	implemented
++gg-lazy	smoke	nofib	real/gg	1 gg.faststdin smoke.ps landscape -	gg-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-gg-core.sml,shared/nofib-gg-graphics.sml,shared/nofib-gg.sml,shared/nofib-gg-check.sml,shared/nofib-gg-driver.sml,gg-lazy/benchmark.sml,shared/main.sml	30	1048576	parsing,graphs,numerical,higher-order,lists-streams,lazy	gg.faststdin,smoke.ps	checked-numerical	implemented
++gg-lazy	normal	nofib	real/gg	500 gg.stdin normal.ps landscape -	gg-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-gg-core.sml,shared/nofib-gg-graphics.sml,shared/nofib-gg.sml,shared/nofib-gg-check.sml,shared/nofib-gg-driver.sml,gg-lazy/benchmark.sml,shared/main.sml	600	4194304	parsing,graphs,numerical,higher-order,lists-streams,lazy	gg.stdin,normal.ps	checked-numerical	implemented
++gg-lazy	large	nofib	real/gg	1500 gg.slowstdin large.ps landscape -	gg-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-gg-core.sml,shared/nofib-gg-graphics.sml,shared/nofib-gg.sml,shared/nofib-gg-check.sml,shared/nofib-gg-driver.sml,gg-lazy/benchmark.sml,shared/main.sml	3600	8388608	parsing,graphs,numerical,higher-order,lists-streams,lazy	gg.slowstdin,large.ps	checked-numerical	implemented
++gg-strict	smoke	nofib	real/gg	1 gg.faststdin smoke.ps landscape -	gg-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-gg-core.sml,shared/nofib-gg-graphics.sml,shared/nofib-gg.sml,shared/nofib-gg-check.sml,shared/nofib-gg-driver.sml,gg-strict/benchmark.sml,shared/main.sml	30	1048576	parsing,graphs,numerical,higher-order,lists-streams,strict	gg.faststdin,smoke.ps	checked-numerical	implemented
++gg-strict	normal	nofib	real/gg	500 gg.stdin normal.ps landscape -	gg-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-gg-core.sml,shared/nofib-gg-graphics.sml,shared/nofib-gg.sml,shared/nofib-gg-check.sml,shared/nofib-gg-driver.sml,gg-strict/benchmark.sml,shared/main.sml	600	4194304	parsing,graphs,numerical,higher-order,lists-streams,strict	gg.stdin,normal.ps	checked-numerical	implemented
++gg-strict	large	nofib	real/gg	1500 gg.slowstdin large.ps landscape -	gg-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-gg-core.sml,shared/nofib-gg-graphics.sml,shared/nofib-gg.sml,shared/nofib-gg-check.sml,shared/nofib-gg-driver.sml,gg-strict/benchmark.sml,shared/main.sml	3600	8388608	parsing,graphs,numerical,higher-order,lists-streams,strict	gg.slowstdin,large.ps	checked-numerical	implemented
++gg-spark-lazy	smoke	nofib	real/gg	1 gg.faststdin smoke.ps landscape -	gg-spark-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-gg-core.sml,shared/nofib-gg-graphics.sml,shared/nofib-gg.sml,shared/nofib-gg-check.sml,shared/nofib-gg-driver.sml,gg-spark-lazy/benchmark.sml,shared/main.sml	30	1048576	parsing,graphs,numerical,higher-order,lists-streams,lazy	gg.faststdin,smoke.ps	checked-numerical	implemented
++gg-spark-lazy	normal	nofib	real/gg	500 gg.stdin normal.ps landscape -	gg-spark-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-gg-core.sml,shared/nofib-gg-graphics.sml,shared/nofib-gg.sml,shared/nofib-gg-check.sml,shared/nofib-gg-driver.sml,gg-spark-lazy/benchmark.sml,shared/main.sml	600	4194304	parsing,graphs,numerical,higher-order,lists-streams,lazy	gg.stdin,normal.ps	checked-numerical	implemented
++gg-spark-lazy	large	nofib	real/gg	1500 gg.slowstdin large.ps landscape -	gg-spark-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-gg-core.sml,shared/nofib-gg-graphics.sml,shared/nofib-gg.sml,shared/nofib-gg-check.sml,shared/nofib-gg-driver.sml,gg-spark-lazy/benchmark.sml,shared/main.sml	3600	8388608	parsing,graphs,numerical,higher-order,lists-streams,lazy	gg.slowstdin,large.ps	checked-numerical	implemented
++gg-spark-strict	smoke	nofib	real/gg	1 gg.faststdin smoke.ps landscape -	gg-spark-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-gg-core.sml,shared/nofib-gg-graphics.sml,shared/nofib-gg.sml,shared/nofib-gg-check.sml,shared/nofib-gg-driver.sml,gg-spark-strict/benchmark.sml,shared/main.sml	30	1048576	parsing,graphs,numerical,higher-order,lists-streams,strict	gg.faststdin,smoke.ps	checked-numerical	implemented
++gg-spark-strict	normal	nofib	real/gg	500 gg.stdin normal.ps landscape -	gg-spark-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-gg-core.sml,shared/nofib-gg-graphics.sml,shared/nofib-gg.sml,shared/nofib-gg-check.sml,shared/nofib-gg-driver.sml,gg-spark-strict/benchmark.sml,shared/main.sml	600	4194304	parsing,graphs,numerical,higher-order,lists-streams,strict	gg.stdin,normal.ps	checked-numerical	implemented
++gg-spark-strict	large	nofib	real/gg	1500 gg.slowstdin large.ps landscape -	gg-spark-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-gg-core.sml,shared/nofib-gg-graphics.sml,shared/nofib-gg.sml,shared/nofib-gg-check.sml,shared/nofib-gg-driver.sml,gg-spark-strict/benchmark.sml,shared/main.sml	3600	8388608	parsing,graphs,numerical,higher-order,lists-streams,strict	gg.slowstdin,large.ps	checked-numerical	implemented
++gg-pool-lazy	smoke	nofib	real/gg	1 gg.faststdin smoke.ps landscape -	gg-pool-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-gg-core.sml,shared/nofib-gg-graphics.sml,shared/nofib-gg.sml,shared/nofib-gg-check.sml,shared/nofib-gg-driver.sml,gg-pool-lazy/benchmark.sml,shared/main.sml	30	1048576	parsing,graphs,numerical,higher-order,lists-streams,lazy	gg.faststdin,smoke.ps	checked-numerical	implemented
++gg-pool-lazy	normal	nofib	real/gg	500 gg.stdin normal.ps landscape -	gg-pool-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-gg-core.sml,shared/nofib-gg-graphics.sml,shared/nofib-gg.sml,shared/nofib-gg-check.sml,shared/nofib-gg-driver.sml,gg-pool-lazy/benchmark.sml,shared/main.sml	600	4194304	parsing,graphs,numerical,higher-order,lists-streams,lazy	gg.stdin,normal.ps	checked-numerical	implemented
++gg-pool-lazy	large	nofib	real/gg	1500 gg.slowstdin large.ps landscape -	gg-pool-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-gg-core.sml,shared/nofib-gg-graphics.sml,shared/nofib-gg.sml,shared/nofib-gg-check.sml,shared/nofib-gg-driver.sml,gg-pool-lazy/benchmark.sml,shared/main.sml	3600	8388608	parsing,graphs,numerical,higher-order,lists-streams,lazy	gg.slowstdin,large.ps	checked-numerical	implemented
++gg-pool-strict	smoke	nofib	real/gg	1 gg.faststdin smoke.ps landscape -	gg-pool-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-gg-core.sml,shared/nofib-gg-graphics.sml,shared/nofib-gg.sml,shared/nofib-gg-check.sml,shared/nofib-gg-driver.sml,gg-pool-strict/benchmark.sml,shared/main.sml	30	1048576	parsing,graphs,numerical,higher-order,lists-streams,strict	gg.faststdin,smoke.ps	checked-numerical	implemented
++gg-pool-strict	normal	nofib	real/gg	500 gg.stdin normal.ps landscape -	gg-pool-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-gg-core.sml,shared/nofib-gg-graphics.sml,shared/nofib-gg.sml,shared/nofib-gg-check.sml,shared/nofib-gg-driver.sml,gg-pool-strict/benchmark.sml,shared/main.sml	600	4194304	parsing,graphs,numerical,higher-order,lists-streams,strict	gg.stdin,normal.ps	checked-numerical	implemented
++gg-pool-strict	large	nofib	real/gg	1500 gg.slowstdin large.ps landscape -	gg-pool-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-gg-core.sml,shared/nofib-gg-graphics.sml,shared/nofib-gg.sml,shared/nofib-gg-check.sml,shared/nofib-gg-driver.sml,gg-pool-strict/benchmark.sml,shared/main.sml	3600	8388608	parsing,graphs,numerical,higher-order,lists-streams,strict	gg.slowstdin,large.ps	checked-numerical	implemented
+diff --git a/examples/benchmarks/source-variants.tsv b/examples/benchmarks/source-variants.tsv
+index b915a15e..3a255b2d 100644
+--- a/examples/benchmarks/source-variants.tsv
++++ b/examples/benchmarks/source-variants.tsv
+@@ -16,3 +16,5 @@ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/gamteb	real/gamteb/inLML/gam
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/gamteb	real/gamteb/inFortran/fact.f	fact-fortran	Fortran	fixed recursion experiment	not stated	d8d8c46d8d201714c6e943bca8f8fd8be076b5412524cfbbfdab2230548d201e	exclude	standalone fixed n=5 recursive factorial experiment without a nofib workload/build entry; not part of photon transport; retain source as historical support	no separate notice stated
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/gamteb	real/gamteb/inLML/gamteb.doc	gamteb-lml-callgraph	text	historical call graph	not stated	c7acc19d718857f212f97bc539a473e91fc322ba403c79d6f8e9d62b160425c0	exclude	documentation of source call relationships, not an executable workload	no separate notice stated
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/gamteb	real/gamteb/inLML/libroutines	gamteb-lml-symbol-list	text	historical library symbol listing	not stated	a4b14afd9e7388dfb5adddbbb162dd94f1c06a2abc9365eb666bd94b6713d65d	exclude	archive member-name listing rather than library implementations; records primitive names but supplies no numeric semantics or executable workload	no separate notice stated
++nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/gg	real/gg/report	gg-report	shell	historical report orchestration	not separately stated	27f7d94a672c787d1d7d4fb9866f6b4f611be23470e0f4669ee1b61879f397b5	exclude	byte-identical report scripts invoke activity, spark and pool modes then latex/dvips and remove temporary products; those three computational modes are imported separately, while document orchestration is outside the runnable benchmark kernels	no separate individual notice stated; retain as provenance
++nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/gg	real/gg/example/report	gg-report-example	shell	historical report orchestration	not separately stated	27f7d94a672c787d1d7d4fb9866f6b4f611be23470e0f4669ee1b61879f397b5	exclude	byte-identical report scripts invoke activity, spark and pool modes then latex/dvips and remove temporary products; those three computational modes are imported separately, while document orchestration is outside the runnable benchmark kernels	no separate individual notice stated; retain as provenance
+diff --git a/scripts/benchmark-inventory.py b/scripts/benchmark-inventory.py
+index 0e807276..c74c25e5 100644
+--- a/scripts/benchmark-inventory.py
++++ b/scripts/benchmark-inventory.py
+@@ -555,6 +555,11 @@ def build(source, root, lock):
+                 authors.update(["Stef Joosten", "Mark Ramaer"])
+                 item["evidence"].append("real/hidden/MAIL:authorship-and-nofib-permission")
+                 notices.append("real/hidden/MAIL:nofib-permission")
++        if source == "nofib" and path == "real/gg" and (parent / "gg.1").is_file():
++            manual = (parent / "gg.1").read_text(errors="replace")
++            if ".SH AUTHOR\nIain Checkland, University of York." in manual:
++                authors.add("Iain Checkland")
++                item["evidence"].append("real/gg/gg.1:author-section")
+         item["evidence"].extend(str(p.relative_to(root)) for p in context)
+         for p in files + context:
+             header = p.read_text(errors="replace")[:8000]
+diff --git a/tests/benchmarks/test-inventory.py b/tests/benchmarks/test-inventory.py
+index 3a4b3ff7..4bd84e42 100644
+--- a/tests/benchmarks/test-inventory.py
++++ b/tests/benchmarks/test-inventory.py
+@@ -228,6 +228,22 @@ class InventoryTest(unittest.TestCase):
+                   "% Crown Copyright 1992\n\\author{Another author\\\\\n\n> main = print 0\n")
+         self.assertNotIn("N. D. North", self.build("nofib")[0]["authors"])
+ 
++    def test_gg_manual_author_section_is_recorded(self):
++        self.nofib_roots()
++        self.file("real/gg/Makefile", "\n")
++        self.file("real/gg/Main.hs", "main = print 0\n")
++        self.file("real/gg/gg.1", ".SH AUTHOR\nIain Checkland, University of York.\n")
++        row = self.build("nofib")[0]
++        self.assertEqual(row["authors"], "Iain Checkland")
++        self.assertIn("real/gg/gg.1:author-section", row["evidence"])
++
++    def test_changed_gg_manual_author_requires_review(self):
++        self.nofib_roots()
++        self.file("real/gg/Makefile", "\n")
++        self.file("real/gg/Main.hs", "main = print 0\n")
++        self.file("real/gg/gg.1", ".SH AUTHOR\nAnother author.\n")
++        self.assertNotIn("Iain Checkland", self.build("nofib")[0]["authors"])
++
+     def test_pic_author_heading_is_recorded(self):
+         self.nofib_roots()
+         self.file("real/pic/Makefile", "\n")

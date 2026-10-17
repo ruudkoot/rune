@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+gg-lazy	normal	rune	O2	compile	0	0	pass	3.19	2.89	0.29	266944	-	-	-	gg-lazy/rune/build/compile
+gg-lazy	normal	rune	O2	correctness	0	0	pass	37.47	37.38	0.07	35380	6901170846	15669080480	454752492	gg-lazy/rune/correctness.0
+gg-lazy	normal	rune	O2	count	1	1	pass	34.98	34.92	0.05	35396	6901170846	15669080480	454752492	gg-lazy/rune/fresh.1
+gg-lazy	normal	rune:opt	O2	compile	0	0	pass	2.65	2.46	0.18	266964	-	-	-	gg-lazy/rune-opt/build/compile
+gg-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.80	0.58	0.06	27056	-	-	-	gg-lazy/rune-opt/build/native-compile
+gg-lazy	normal	rune:opt	O2	correctness	0	0	pass	20.66	20.59	0.06	36868	6901170846	15669080480	454752492	gg-lazy/rune-opt/correctness.0
+gg-lazy	normal	rune:opt	O2	count	1	1	pass	18.18	18.12	0.05	36896	6901170846	15669080480	454752492	gg-lazy/rune-opt/fresh.1
+gg-lazy	normal	rune:new	O2	compile	0	0	pass	2.84	2.59	0.24	266836	-	-	-	gg-lazy/rune-new/build/compile
+gg-lazy	normal	rune:new	O2	correctness	0	0	pass	32.76	32.73	0.02	36192	3977567725	15669080480	454752492	gg-lazy/rune-new/correctness.0
+gg-lazy	normal	rune:new	O2	count	1	1	pass	32.16	32.11	0.04	36216	3977567725	15669080480	454752492	gg-lazy/rune-new/fresh.1
+gg-lazy	normal	rune:jit	O2	compile	0	0	pass	2.60	2.40	0.19	266956	-	-	-	gg-lazy/rune-jit/build/compile
+gg-lazy	normal	rune:jit	O2	correctness	0	0	pass	16.17	16.10	0.05	38720	3977567725	15669080480	454752492	gg-lazy/rune-jit/correctness.0
+gg-lazy	normal	rune:jit	O2	count	1	1	pass	15.75	15.72	0.02	38748	3977567725	15669080480	454752492	gg-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

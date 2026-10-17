@@ -1,0 +1,242 @@
+[
+  {
+    "policy": "Need",
+    "profile": "smoke",
+    "mode": "activity",
+    "exact": true,
+    "numeric_spelling_lines": 0,
+    "unexpected": 0
+  },
+  {
+    "policy": "Need",
+    "profile": "smoke",
+    "mode": "spark",
+    "exact": false,
+    "numeric_spelling_lines": 1,
+    "unexpected": 0
+  },
+  {
+    "policy": "Need",
+    "profile": "smoke",
+    "mode": "pool",
+    "exact": false,
+    "numeric_spelling_lines": 1,
+    "unexpected": 0
+  },
+  {
+    "policy": "Need",
+    "profile": "smoke",
+    "mode": "eps",
+    "exact": false,
+    "numeric_spelling_lines": 1,
+    "unexpected": 0
+  },
+  {
+    "policy": "Need",
+    "profile": "smoke",
+    "mode": "portrait",
+    "exact": true,
+    "numeric_spelling_lines": 0,
+    "unexpected": 0
+  },
+  {
+    "policy": "Need",
+    "profile": "normal",
+    "mode": "activity",
+    "exact": true,
+    "numeric_spelling_lines": 0,
+    "unexpected": 0
+  },
+  {
+    "policy": "Need",
+    "profile": "normal",
+    "mode": "spark",
+    "exact": false,
+    "numeric_spelling_lines": 1,
+    "unexpected": 0
+  },
+  {
+    "policy": "Need",
+    "profile": "normal",
+    "mode": "pool",
+    "exact": false,
+    "numeric_spelling_lines": 1,
+    "unexpected": 0
+  },
+  {
+    "policy": "Need",
+    "profile": "normal",
+    "mode": "eps",
+    "exact": false,
+    "numeric_spelling_lines": 1,
+    "unexpected": 0
+  },
+  {
+    "policy": "Need",
+    "profile": "normal",
+    "mode": "portrait",
+    "exact": true,
+    "numeric_spelling_lines": 0,
+    "unexpected": 0
+  },
+  {
+    "policy": "Need",
+    "profile": "large",
+    "mode": "activity",
+    "exact": true,
+    "numeric_spelling_lines": 0,
+    "unexpected": 0
+  },
+  {
+    "policy": "Need",
+    "profile": "large",
+    "mode": "spark",
+    "exact": false,
+    "numeric_spelling_lines": 1,
+    "unexpected": 0
+  },
+  {
+    "policy": "Need",
+    "profile": "large",
+    "mode": "pool",
+    "exact": false,
+    "numeric_spelling_lines": 1,
+    "unexpected": 0
+  },
+  {
+    "policy": "Need",
+    "profile": "large",
+    "mode": "eps",
+    "exact": false,
+    "numeric_spelling_lines": 1,
+    "unexpected": 0
+  },
+  {
+    "policy": "Need",
+    "profile": "large",
+    "mode": "portrait",
+    "exact": true,
+    "numeric_spelling_lines": 0,
+    "unexpected": 0
+  },
+  {
+    "policy": "Strict",
+    "profile": "smoke",
+    "mode": "activity",
+    "exact": true,
+    "numeric_spelling_lines": 0,
+    "unexpected": 0
+  },
+  {
+    "policy": "Strict",
+    "profile": "smoke",
+    "mode": "spark",
+    "exact": false,
+    "numeric_spelling_lines": 1,
+    "unexpected": 0
+  },
+  {
+    "policy": "Strict",
+    "profile": "smoke",
+    "mode": "pool",
+    "exact": false,
+    "numeric_spelling_lines": 1,
+    "unexpected": 0
+  },
+  {
+    "policy": "Strict",
+    "profile": "smoke",
+    "mode": "eps",
+    "exact": false,
+    "numeric_spelling_lines": 1,
+    "unexpected": 0
+  },
+  {
+    "policy": "Strict",
+    "profile": "smoke",
+    "mode": "portrait",
+    "exact": true,
+    "numeric_spelling_lines": 0,
+    "unexpected": 0
+  },
+  {
+    "policy": "Strict",
+    "profile": "normal",
+    "mode": "activity",
+    "exact": true,
+    "numeric_spelling_lines": 0,
+    "unexpected": 0
+  },
+  {
+    "policy": "Strict",
+    "profile": "normal",
+    "mode": "spark",
+    "exact": false,
+    "numeric_spelling_lines": 1,
+    "unexpected": 0
+  },
+  {
+    "policy": "Strict",
+    "profile": "normal",
+    "mode": "pool",
+    "exact": false,
+    "numeric_spelling_lines": 1,
+    "unexpected": 0
+  },
+  {
+    "policy": "Strict",
+    "profile": "normal",
+    "mode": "eps",
+    "exact": false,
+    "numeric_spelling_lines": 1,
+    "unexpected": 0
+  },
+  {
+    "policy": "Strict",
+    "profile": "normal",
+    "mode": "portrait",
+    "exact": true,
+    "numeric_spelling_lines": 0,
+    "unexpected": 0
+  },
+  {
+    "policy": "Strict",
+    "profile": "large",
+    "mode": "activity",
+    "exact": true,
+    "numeric_spelling_lines": 0,
+    "unexpected": 0
+  },
+  {
+    "policy": "Strict",
+    "profile": "large",
+    "mode": "spark",
+    "exact": false,
+    "numeric_spelling_lines": 1,
+    "unexpected": 0
+  },
+  {
+    "policy": "Strict",
+    "profile": "large",
+    "mode": "pool",
+    "exact": false,
+    "numeric_spelling_lines": 1,
+    "unexpected": 0
+  },
+  {
+    "policy": "Strict",
+    "profile": "large",
+    "mode": "eps",
+    "exact": false,
+    "numeric_spelling_lines": 1,
+    "unexpected": 0
+  },
+  {
+    "policy": "Strict",
+    "profile": "large",
+    "mode": "portrait",
+    "exact": true,
+    "numeric_spelling_lines": 0,
+    "unexpected": 0
+  }
+]

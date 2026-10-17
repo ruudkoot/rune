@@ -1,0 +1,27 @@
+{
+  "command": [
+    "timeout",
+    "600",
+    "bin/runevm",
+    "tests/out/benchmarks/gg-originals/render-lazy.rbc"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 1048576,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 37200,
+  "observed_minimum_available_kib": 20516500,
+  "peak_processes": [
+    {
+      "pid": 8,
+      "name": "runevm",
+      "rss_kib": 35412
+    },
+    {
+      "pid": 7,
+      "name": "timeout",
+      "rss_kib": 1788
+    }
+  ],
+  "elapsed_seconds": 2.0515151899890043
+}

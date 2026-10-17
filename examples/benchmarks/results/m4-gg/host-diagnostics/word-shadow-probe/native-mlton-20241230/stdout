@@ -1,0 +1,8 @@
+plain-zero 0
+shadow-zero 0
+tuple-zero 0
+tuple-branch-zero 1
+plain-large 0
+shadow-large 0
+PASS word-probe/completed
+SUMMARY 1 checks, 0 failed

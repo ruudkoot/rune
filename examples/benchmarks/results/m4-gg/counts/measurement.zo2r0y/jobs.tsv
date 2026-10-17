@@ -1,0 +1,1 @@
+gg-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/finite-binary32.sml shared/nofib-gg-core.sml shared/nofib-gg-graphics.sml shared/nofib-gg.sml shared/nofib-gg-check.sml shared/nofib-gg-driver.sml gg-lazy/benchmark.sml shared/main.sml	500 gg.stdin normal.ps landscape -	gg-lazy/normal.expected	gg.stdin normal.ps

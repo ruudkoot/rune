@@ -1,0 +1,3 @@
+{'profile': 'smoke', 'repetitions': 150, 'fixture_match': True, 'stderr_match': True, 'stdout_bytes': 3000}
+{'profile': 'normal', 'repetitions': 500, 'fixture_match': True, 'stderr_match': True, 'stdout_bytes': 10500}
+{'profile': 'large', 'repetitions': 1500, 'fixture_match': True, 'stderr_match': True, 'stdout_bytes': 31500}

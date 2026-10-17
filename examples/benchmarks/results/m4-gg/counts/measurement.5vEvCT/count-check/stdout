@@ -1,0 +1,5 @@
+COUNT unbudgeted gg-pool-strict normal rune
+COUNT unbudgeted gg-pool-strict normal rune:opt
+COUNT unbudgeted gg-pool-strict normal rune:new
+COUNT unbudgeted gg-pool-strict normal rune:jit
+COUNT comparisons agree

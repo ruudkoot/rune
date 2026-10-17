@@ -1,0 +1,25 @@
+COUNT unbudgeted gg-lazy normal rune
+COUNT unbudgeted gg-lazy normal rune:opt
+COUNT unbudgeted gg-lazy normal rune:new
+COUNT unbudgeted gg-lazy normal rune:jit
+COUNT unbudgeted gg-strict normal rune
+COUNT unbudgeted gg-strict normal rune:opt
+COUNT unbudgeted gg-strict normal rune:new
+COUNT unbudgeted gg-strict normal rune:jit
+COUNT unbudgeted gg-spark-lazy normal rune
+COUNT unbudgeted gg-spark-lazy normal rune:opt
+COUNT unbudgeted gg-spark-lazy normal rune:new
+COUNT unbudgeted gg-spark-lazy normal rune:jit
+COUNT unbudgeted gg-spark-strict normal rune
+COUNT unbudgeted gg-spark-strict normal rune:opt
+COUNT unbudgeted gg-spark-strict normal rune:new
+COUNT unbudgeted gg-spark-strict normal rune:jit
+COUNT unbudgeted gg-pool-lazy normal rune
+COUNT unbudgeted gg-pool-lazy normal rune:opt
+COUNT unbudgeted gg-pool-lazy normal rune:new
+COUNT unbudgeted gg-pool-lazy normal rune:jit
+COUNT unbudgeted gg-pool-strict normal rune
+COUNT unbudgeted gg-pool-strict normal rune:opt
+COUNT unbudgeted gg-pool-strict normal rune:new
+COUNT unbudgeted gg-pool-strict normal rune:jit
+COUNT comparisons agree

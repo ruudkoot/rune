@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+gg-pool-lazy	normal	rune	O2	compile	0	0	pass	2.83	2.60	0.22	266792	-	-	-	gg-pool-lazy/rune/build/compile
+gg-pool-lazy	normal	rune	O2	correctness	0	0	pass	36.27	36.22	0.04	35380	6628051852	14482885184	419861688	gg-pool-lazy/rune/correctness.0
+gg-pool-lazy	normal	rune	O2	count	1	1	pass	35.93	35.90	0.02	35432	6628051852	14482885184	419861688	gg-pool-lazy/rune/fresh.1
+gg-pool-lazy	normal	rune:opt	O2	compile	0	0	pass	3.08	2.87	0.20	266900	-	-	-	gg-pool-lazy/rune-opt/build/compile
+gg-pool-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.73	0.51	0.07	27092	-	-	-	gg-pool-lazy/rune-opt/build/native-compile
+gg-pool-lazy	normal	rune:opt	O2	correctness	0	0	pass	18.11	18.05	0.04	36836	6628051852	14482885184	419861688	gg-pool-lazy/rune-opt/correctness.0
+gg-pool-lazy	normal	rune:opt	O2	count	1	1	pass	16.31	16.26	0.04	36920	6628051852	14482885184	419861688	gg-pool-lazy/rune-opt/fresh.1
+gg-pool-lazy	normal	rune:new	O2	compile	0	0	pass	2.37	2.17	0.19	266864	-	-	-	gg-pool-lazy/rune-new/build/compile
+gg-pool-lazy	normal	rune:new	O2	correctness	0	0	pass	33.58	33.54	0.04	35820	3817614689	14482885184	419861688	gg-pool-lazy/rune-new/correctness.0
+gg-pool-lazy	normal	rune:new	O2	count	1	1	pass	31.78	31.73	0.04	35816	3817614689	14482885184	419861688	gg-pool-lazy/rune-new/fresh.1
+gg-pool-lazy	normal	rune:jit	O2	compile	0	0	pass	2.50	2.34	0.15	266756	-	-	-	gg-pool-lazy/rune-jit/build/compile
+gg-pool-lazy	normal	rune:jit	O2	correctness	0	0	pass	14.53	14.47	0.06	38380	3817614689	14482885184	419861688	gg-pool-lazy/rune-jit/correctness.0
+gg-pool-lazy	normal	rune:jit	O2	count	1	1	pass	13.17	13.13	0.03	38448	3817614689	14482885184	419861688	gg-pool-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

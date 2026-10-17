@@ -1,0 +1,956 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS gg/Need/activity-smoke
+PASS gg/Need/spark-smoke
+PASS gg/Need/pool-smoke
+PASS gg/Need/eps-smoke
+PASS gg/Need/portrait-smoke
+PASS gg/Need/activity-normal
+PASS gg/Need/spark-normal
+PASS gg/Need/pool-normal
+PASS gg/Need/eps-normal
+PASS gg/Need/portrait-normal
+PASS gg/Need/activity-large
+PASS gg/Need/spark-large
+PASS gg/Need/pool-large
+PASS gg/Need/eps-large
+PASS gg/Need/portrait-large
+PASS gg/Need/ordered-records-smoke
+PASS gg/Need/ordered-records-normal
+PASS gg/Need/ordered-records-large
+PASS gg/Need/source-integer-parser-preserves-positional-value
+PASS gg/Need/source-integer-parser-empty-prefix-is-zero
+PASS gg/Need/source-processor-splits-name-and-number
+PASS gg/Need/source-null-lines-are-ignored
+PASS gg/Need/source-partial-PE-header-yields-zero-active
+PASS gg/Need/source-infinite-scaling-is-preserved
+PASS gg/Need/selected-inactive-processor-is-rejected
+PASS gg/Need/postscript-integer-format-uses-minus
+PASS gg/Need/source-float-label-below-one
+PASS gg/Need/source-float-label-nearest-even
+PASS gg/Need/source-float-label-removes-zero-tenth
+PASS gg/Need/source-float-label-rounds-large-values
+PASS gg/Need/source-axis-scale-125-sequence
+PASS gg/Need/source-calibration-preserves-division
+PASS gg/Need/zero-repetitions
+PASS gg/Need/repetitions-reset-source-state
+PASS gg/Need/unknown-mode-is-rejected
+PASS gg/Need/unknown-format-is-rejected
+PASS gg/Strict/activity-smoke
+PASS gg/Strict/spark-smoke
+PASS gg/Strict/pool-smoke
+PASS gg/Strict/eps-smoke
+PASS gg/Strict/portrait-smoke
+PASS gg/Strict/activity-normal
+PASS gg/Strict/spark-normal
+PASS gg/Strict/pool-normal
+PASS gg/Strict/eps-normal
+PASS gg/Strict/portrait-normal
+PASS gg/Strict/activity-large
+PASS gg/Strict/spark-large
+PASS gg/Strict/pool-large
+PASS gg/Strict/eps-large
+PASS gg/Strict/portrait-large
+PASS gg/Strict/ordered-records-smoke
+PASS gg/Strict/ordered-records-normal
+PASS gg/Strict/ordered-records-large
+PASS gg/Strict/source-integer-parser-preserves-positional-value
+PASS gg/Strict/source-integer-parser-empty-prefix-is-zero
+PASS gg/Strict/source-processor-splits-name-and-number
+PASS gg/Strict/source-null-lines-are-ignored
+PASS gg/Strict/source-partial-PE-header-yields-zero-active
+PASS gg/Strict/source-infinite-scaling-is-preserved
+PASS gg/Strict/selected-inactive-processor-is-rejected
+PASS gg/Strict/postscript-integer-format-uses-minus
+PASS gg/Strict/source-float-label-below-one
+PASS gg/Strict/source-float-label-nearest-even
+PASS gg/Strict/source-float-label-removes-zero-tenth
+PASS gg/Strict/source-float-label-rounds-large-values
+PASS gg/Strict/source-axis-scale-125-sequence
+PASS gg/Strict/source-calibration-preserves-division
+PASS gg/Strict/zero-repetitions
+PASS gg/Strict/repetitions-reset-source-state
+PASS gg/Strict/unknown-mode-is-rejected
+PASS gg/Strict/unknown-format-is-rejected
+PASS gg/checker/equivalent-double-spelling
+PASS gg/checker/nearby-double-inside-bound
+PASS gg/checker/perturbed-double
+PASS gg/checker/changed-integer-point
+PASS gg/checker/integer-point-cannot-be-rounded
+PASS gg/checker/changed-command
+PASS gg/checker/changed-title
+PASS gg/checker/changed-color
+PASS gg/checker/extra-line
+PASS gg/checker/missing-line
+PASS gg/checker/missing-numeric-newline
+PASS gg/checker/numeric-whitespace-is-not-an-output-change
+PASS gg/checker/infinity-cannot-replace-finite
+PASS gg/checker/finite-cannot-replace-infinity
+PASS gg/checker/infinity-sign-is-preserved
+PASS gg/checker/NaN-does-not-match-infinity
+PASS gg/checker/matching-NaN-category
+PASS gg/checker/zero-lines-are-consumed
+PASS gg/checker/hash-
+PASS gg/checker/hash-a
+PASS gg/checker/hash-abc
+PASS gg/checker/multi-line-polynomial-composition
+PASS gg/demand/global-postscript-prefix-before-input
+PASS gg/demand/body-boxes-before-processor-data
+PASS gg/demand/default-activity-filter-ignores-processor-value
+PASS gg/demand/default-spark-filter-ignores-processor-value
+PASS gg/demand/unused-spark-integers-stay-lazy
+SUMMARY 99 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/finite-binary32.sml]
+[autoloading]
+[autoloading done]
+structure BenchMandelSingle : sig
+  val round : real -> real
+  val add : real * real -> real
+  val sub : real * real -> real
+  val mul : real * real -> real
+  val divide : real * real -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/gg-originals/core.sml]
+functor BenchGGCoreFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure I : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  type number
+  type pe
+  type activities
+  type sparks
+  type line
+  val value : <BaseFct>.<resultStr>.number -> IntInf.int
+  val number : IntInf.int -> IntInf.int D.t
+  val zero : IntInf.int D.t
+  val add :
+      <BaseFct>.<resultStr>.number * <BaseFct>.<resultStr>.number
+       -> IntInf.int D.t
+  val maximum :
+      <BaseFct>.<resultStr>.number * <BaseFct>.<resultStr>.number
+       -> IntInf.int D.t
+  val span : ('a -> bool) -> 'a list -> 'a list * 'a list
+  val white : char list -> char list
+  val lines : char list -> char list list
+  val integer : char list -> IntInf.int D.t * char list
+  val processor : char list -> <BaseFct>.<resultStr>.pe * char list
+  val colon : char list -> char list
+  val line : char list -> <BaseFct>.<resultStr>.line
+  val parseFile :
+      char list -> <BaseFct>.<resultStr>.line BenchStream.node BenchLazy.delay
+  val peEqual : <BaseFct>.<resultStr>.pe * <BaseFct>.<resultStr>.pe -> bool
+  val listEqual : ('a * 'b -> bool) -> 'a list -> 'b list -> bool
+  val actValues :
+      <BaseFct>.<resultStr>.activities -> <BaseFct>.<resultStr>.number list
+  val sparkValues :
+      <BaseFct>.<resultStr>.sparks -> <BaseFct>.<resultStr>.number list
+  val numEqual :
+      <BaseFct>.<resultStr>.number * <BaseFct>.<resultStr>.number -> bool
+  val lineEqual :
+      <BaseFct>.<resultStr>.line * <BaseFct>.<resultStr>.line -> bool
+  val bucket : <BaseFct>.<resultStr>.line -> <BaseFct>.<resultStr>.number
+  val total : <BaseFct>.<resultStr>.activities -> <BaseFct>.<resultStr>.number
+  val insert :
+      <BaseFct>.<resultStr>.line
+       -> <BaseFct>.<resultStr>.line BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.line BenchStream.node BenchLazy.delay
+  type parameters
+  val parameters :
+      <BaseFct>.<resultStr>.line BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.parameters
+  val selected :
+      <BaseFct>.<resultStr>.pe list -> <BaseFct>.<resultStr>.pe -> bool
+  val getActs :
+      <BaseFct>.<resultStr>.pe list
+       -> <BaseFct>.<resultStr>.line BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.activities BenchStream.node BenchLazy.state 
+         ref
+  val getSparks :
+      <BaseFct>.<resultStr>.pe list
+       -> <BaseFct>.<resultStr>.line BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.sparks BenchStream.node BenchLazy.state ref
+  val scaleAct :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.activities -> <BaseFct>.<resultStr>.activities
+  val addAct :
+      <BaseFct>.<resultStr>.activities * <BaseFct>.<resultStr>.activities
+       -> <BaseFct>.<resultStr>.activities
+  val addSpark :
+      <BaseFct>.<resultStr>.sparks * <BaseFct>.<resultStr>.sparks
+       -> <BaseFct>.<resultStr>.sparks
+  val addPoolSpark :
+      <BaseFct>.<resultStr>.sparks * <BaseFct>.<resultStr>.sparks
+       -> <BaseFct>.<resultStr>.sparks
+  val actNumber :
+      <BaseFct>.<resultStr>.activities -> <BaseFct>.<resultStr>.number
+  val sparkNumber :
+      <BaseFct>.<resultStr>.sparks -> <BaseFct>.<resultStr>.number
+  val gatherAct :
+      <BaseFct>.<resultStr>.activities
+       -> <BaseFct>.<resultStr>.activities BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.activities BenchStream.node BenchLazy.state 
+         ref
+  val gatherSpark :
+      bool
+       -> <BaseFct>.<resultStr>.sparks
+       -> <BaseFct>.<resultStr>.sparks BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.sparks BenchStream.node BenchLazy.state ref
+  val accumulate :
+      ('a -> 'b -> 'c * 'a)
+       -> 'a
+       -> 'b BenchStream.stream
+       -> ('c BenchStream.node BenchLazy.state ref * 'a BenchLazy.state ref) 
+           BenchLazy.state ref
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/gg-originals/graphics.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/gg-originals/graphics.sml:114.21-116.32 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: int
+  operand:         ?.intinf
+  in expression:
+    inv color
+uncaught exception CompileError [CompileError]
+PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 1, exit 1)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/gg-originals/graphics.sml:114.21-116.32 Error: operator and operand do not agree [tycon mismatch]
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/finite-binary32.sml]
+[autoloading]
+[autoloading done]
+structure BenchMandelSingle : sig
+  val round : real -> real
+  val add : real * real -> real
+  val sub : real * real -> real
+  val mul : real * real -> real
+  val divide : real * real -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/gg-originals/core.sml]
+functor BenchGGCoreFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure I : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  type number
+  type pe
+  type activities
+  type sparks
+  type line
+  val value : <BaseFct>.<resultStr>.number -> IntInf.int
+  val number : IntInf.int -> IntInf.int D.t
+  val zero : IntInf.int D.t
+  val add :
+      <BaseFct>.<resultStr>.number * <BaseFct>.<resultStr>.number
+       -> IntInf.int D.t
+  val maximum :
+      <BaseFct>.<resultStr>.number * <BaseFct>.<resultStr>.number
+       -> IntInf.int D.t
+  val span : ('a -> bool) -> 'a list -> 'a list * 'a list
+  val white : char list -> char list
+  val lines : char list -> char list list
+  val integer : char list -> IntInf.int D.t * char list
+  val processor : char list -> <BaseFct>.<resultStr>.pe * char list
+  val colon : char list -> char list
+  val line : char list -> <BaseFct>.<resultStr>.line
+  val parseFile :
+      char list -> <BaseFct>.<resultStr>.line BenchStream.node BenchLazy.delay
+  val peEqual : <BaseFct>.<resultStr>.pe * <BaseFct>.<resultStr>.pe -> bool
+  val listEqual : ('a * 'b -> bool) -> 'a list -> 'b list -> bool
+  val actValues :
+      <BaseFct>.<resultStr>.activities -> <BaseFct>.<resultStr>.number list
+  val sparkValues :
+      <BaseFct>.<resultStr>.sparks -> <BaseFct>.<resultStr>.number list
+  val numEqual :
+      <BaseFct>.<resultStr>.number * <BaseFct>.<resultStr>.number -> bool
+  val lineEqual :
+      <BaseFct>.<resultStr>.line * <BaseFct>.<resultStr>.line -> bool
+  val bucket : <BaseFct>.<resultStr>.line -> <BaseFct>.<resultStr>.number
+  val total : <BaseFct>.<resultStr>.activities -> <BaseFct>.<resultStr>.number
+  val insert :
+      <BaseFct>.<resultStr>.line
+       -> <BaseFct>.<resultStr>.line BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.line BenchStream.node BenchLazy.delay
+  type parameters
+  val parameters :
+      <BaseFct>.<resultStr>.line BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.parameters
+  val selected :
+      <BaseFct>.<resultStr>.pe list -> <BaseFct>.<resultStr>.pe -> bool
+  val getActs :
+      <BaseFct>.<resultStr>.pe list
+       -> <BaseFct>.<resultStr>.line BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.activities BenchStream.node BenchLazy.state 
+         ref
+  val getSparks :
+      <BaseFct>.<resultStr>.pe list
+       -> <BaseFct>.<resultStr>.line BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.sparks BenchStream.node BenchLazy.state ref
+  val scaleAct :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.activities -> <BaseFct>.<resultStr>.activities
+  val addAct :
+      <BaseFct>.<resultStr>.activities * <BaseFct>.<resultStr>.activities
+       -> <BaseFct>.<resultStr>.activities
+  val addSpark :
+      <BaseFct>.<resultStr>.sparks * <BaseFct>.<resultStr>.sparks
+       -> <BaseFct>.<resultStr>.sparks
+  val addPoolSpark :
+      <BaseFct>.<resultStr>.sparks * <BaseFct>.<resultStr>.sparks
+       -> <BaseFct>.<resultStr>.sparks
+  val actNumber :
+      <BaseFct>.<resultStr>.activities -> <BaseFct>.<resultStr>.number
+  val sparkNumber :
+      <BaseFct>.<resultStr>.sparks -> <BaseFct>.<resultStr>.number
+  val gatherAct :
+      <BaseFct>.<resultStr>.activities
+       -> <BaseFct>.<resultStr>.activities BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.activities BenchStream.node BenchLazy.state 
+         ref
+  val gatherSpark :
+      bool
+       -> <BaseFct>.<resultStr>.sparks
+       -> <BaseFct>.<resultStr>.sparks BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.sparks BenchStream.node BenchLazy.state ref
+  val accumulate :
+      ('a -> 'b -> 'c * 'a)
+       -> 'a
+       -> 'b BenchStream.stream
+       -> ('c BenchStream.node BenchLazy.state ref * 'a BenchLazy.state ref) 
+           BenchLazy.state ref
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/gg-originals/graphics.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/gg-originals/graphics.sml:114.21-116.32 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: int
+  operand:         ?.intinf
+  in expression:
+    inv color
+uncaught exception CompileError [CompileError]
+PROGRAM FAIL native:smlnj32@110.99.9 (load 1, exit 1)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/gg-originals/graphics.sml:114.21-116.32 Error: operator and operand do not agree [tycon mismatch]
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : 
+  sig
+    datatype 'a node
+      = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay | Nil
+    type 'a stream = 'a node BenchLazy.delay
+    val empty : unit -> 'a node BenchLazy.state ref
+    val cons : 'a BenchLazy.delay * 'a node BenchLazy.delay
+                -> 'a node BenchLazy.state ref
+    val singleton : 'a -> 'a node BenchLazy.state ref
+    val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+    val head : 'a node BenchLazy.state ref -> 'a
+    val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val iterate : ('a -> 'a)
+                   -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+    val fromList : 'a list -> 'a node BenchLazy.delay
+    val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+    val zipWith : ('a * 'b -> 'c)
+                   -> 'a node BenchLazy.delay
+                   -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+    val append : 'a node BenchLazy.delay
+                  -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val concatMap : ('a -> 'b node BenchLazy.delay)
+                     -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+    val filter : ('a -> bool)
+                  -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+    val dropWhile : ('a -> bool)
+                     -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+    val foldrStream : ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+                       -> 'b BenchLazy.state ref
+                       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+    val zipWith3 : ('a * 'b * 'c -> 'd)
+                    -> 'a node BenchLazy.delay
+                    -> 'b node BenchLazy.delay
+                    -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+    val span : ('a -> bool)
+                -> 'a node BenchLazy.delay
+                -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+    val nth : 'a node BenchLazy.delay -> int -> 'a
+    val take : int -> 'a node BenchLazy.delay -> 'a list
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+    val foldPrefix : ('a * 'b -> 'b)
+                      -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/finite-binary32.sml]
+structure BenchMandelSingle : 
+  sig
+    val round : real -> real
+    val add : real * real -> real
+    val sub : real * real -> real
+    val mul : real * real -> real
+    val divide : real * real -> real
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/gg-originals/core.sml]
+functor BenchGGCoreFn(D: sig
+                         type 'a t
+                         val delay : (unit -> 'a) -> 'a t
+                         val force : 'a t -> 'a
+                       end) :
+                     
+                       sig
+                         structure I : <sig>
+                         structure L : <sig>
+                         structure S : <sig>
+                         type number
+                         type pe
+                         type activities
+                         type sparks
+                         type line
+                         val value : number -> IntInf.int
+                         val number : IntInf.int -> IntInf.int D.t
+                         val zero : IntInf.int D.t
+                         val add : number * number -> IntInf.int D.t
+                         val maximum : number * number -> IntInf.int D.t
+                         val span : ('a -> bool)
+                                     -> 'a list -> 'a list * 'a list
+                         val white : char list -> char list
+                         val lines : char list -> char list list
+                         val integer : char list -> IntInf.int D.t * char list
+                         val processor : char list -> pe * char list
+                         val colon : char list -> char list
+                         val line : char list -> line
+                         val parseFile : char list
+                                          -> line BenchStream.node 
+                                            BenchLazy.delay
+                         val peEqual : pe * pe -> bool
+                         val listEqual : ('a * 'b -> bool)
+                                          -> 'a list -> 'b list -> bool
+                         val actValues : activities -> number list
+                         val sparkValues : sparks -> number list
+                         val numEqual : number * number -> bool
+                         val lineEqual : line * line -> bool
+                         val bucket : line -> number
+                         val total : activities -> number
+                         val insert : line
+                                       -> line BenchStream.node 
+                                         BenchLazy.delay
+                                       -> line BenchStream.node 
+                                         BenchLazy.delay
+                         type parameters
+                         val parameters : line BenchStream.node 
+                                             BenchLazy.delay
+                                           -> parameters
+                         val selected : pe list -> pe -> bool
+                         val getActs : pe list
+                                        -> line BenchStream.node 
+                                          BenchLazy.delay
+                                        -> activities BenchStream.node 
+                                            BenchLazy.state ref
+                         val getSparks : pe list
+                                          -> line BenchStream.node 
+                                            BenchLazy.delay
+                                          -> sparks BenchStream.node 
+                                              BenchLazy.state ref
+                         val scaleAct : number -> activities -> activities
+                         val addAct : activities * activities -> activities
+                         val addSpark : sparks * sparks -> sparks
+                         val addPoolSpark : sparks * sparks -> sparks
+                         val actNumber : activities -> number
+                         val sparkNumber : sparks -> number
+                         val gatherAct : activities
+                                          -> activities BenchStream.node 
+                                            BenchLazy.delay
+                                          -> activities BenchStream.node 
+                                              BenchLazy.state ref
+                         val gatherSpark : bool
+                                            -> sparks
+                                            -> sparks BenchStream.node 
+                                              BenchLazy.delay
+                                            -> sparks BenchStream.node 
+                                                BenchLazy.state ref
+                         val accumulate : ('a -> 'b -> 'c * 'a)
+                                           -> 'a
+                                           -> 'b BenchStream.stream
+                                           -> ('c BenchStream.node 
+                                                    BenchLazy.state ref
+                                                * 'a BenchLazy.state ref) 
+                                               BenchLazy.state ref
+                       end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/gg-originals/graphics.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/gg-originals/graphics.sml:114.21-116.32 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: int
+  operand:         ?.intinf
+  in expression:
+    inv color
+uncaught exception CompileError [CompileError]
+PROGRAM FAIL native:smlnj-dev@2026.2 (load 1, exit 1)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/gg-originals/graphics.sml:114.21-116.32 Error: operator and operand do not agree [tycon mismatch]
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS gg/Need/activity-smoke
+PASS gg/Need/spark-smoke
+PASS gg/Need/pool-smoke
+PASS gg/Need/eps-smoke
+PASS gg/Need/portrait-smoke
+PASS gg/Need/activity-normal
+PASS gg/Need/spark-normal
+PASS gg/Need/pool-normal
+PASS gg/Need/eps-normal
+PASS gg/Need/portrait-normal
+PASS gg/Need/activity-large
+PASS gg/Need/spark-large
+PASS gg/Need/pool-large
+PASS gg/Need/eps-large
+PASS gg/Need/portrait-large
+PASS gg/Need/ordered-records-smoke
+PASS gg/Need/ordered-records-normal
+PASS gg/Need/ordered-records-large
+PASS gg/Need/source-integer-parser-preserves-positional-value
+PASS gg/Need/source-integer-parser-empty-prefix-is-zero
+PASS gg/Need/source-processor-splits-name-and-number
+PASS gg/Need/source-null-lines-are-ignored
+PASS gg/Need/source-partial-PE-header-yields-zero-active
+PASS gg/Need/source-infinite-scaling-is-preserved
+PASS gg/Need/selected-inactive-processor-is-rejected
+PASS gg/Need/postscript-integer-format-uses-minus
+PASS gg/Need/source-float-label-below-one
+PASS gg/Need/source-float-label-nearest-even
+PASS gg/Need/source-float-label-removes-zero-tenth
+PASS gg/Need/source-float-label-rounds-large-values
+PASS gg/Need/source-axis-scale-125-sequence
+PASS gg/Need/source-calibration-preserves-division
+PASS gg/Need/zero-repetitions
+PASS gg/Need/repetitions-reset-source-state
+PASS gg/Need/unknown-mode-is-rejected
+PASS gg/Need/unknown-format-is-rejected
+PASS gg/Strict/activity-smoke
+PASS gg/Strict/spark-smoke
+PASS gg/Strict/pool-smoke
+PASS gg/Strict/eps-smoke
+PASS gg/Strict/portrait-smoke
+PASS gg/Strict/activity-normal
+PASS gg/Strict/spark-normal
+PASS gg/Strict/pool-normal
+PASS gg/Strict/eps-normal
+PASS gg/Strict/portrait-normal
+PASS gg/Strict/activity-large
+PASS gg/Strict/spark-large
+PASS gg/Strict/pool-large
+PASS gg/Strict/eps-large
+PASS gg/Strict/portrait-large
+PASS gg/Strict/ordered-records-smoke
+PASS gg/Strict/ordered-records-normal
+PASS gg/Strict/ordered-records-large
+PASS gg/Strict/source-integer-parser-preserves-positional-value
+PASS gg/Strict/source-integer-parser-empty-prefix-is-zero
+PASS gg/Strict/source-processor-splits-name-and-number
+PASS gg/Strict/source-null-lines-are-ignored
+PASS gg/Strict/source-partial-PE-header-yields-zero-active
+PASS gg/Strict/source-infinite-scaling-is-preserved
+PASS gg/Strict/selected-inactive-processor-is-rejected
+PASS gg/Strict/postscript-integer-format-uses-minus
+PASS gg/Strict/source-float-label-below-one
+PASS gg/Strict/source-float-label-nearest-even
+PASS gg/Strict/source-float-label-removes-zero-tenth
+PASS gg/Strict/source-float-label-rounds-large-values
+PASS gg/Strict/source-axis-scale-125-sequence
+PASS gg/Strict/source-calibration-preserves-division
+PASS gg/Strict/zero-repetitions
+PASS gg/Strict/repetitions-reset-source-state
+PASS gg/Strict/unknown-mode-is-rejected
+PASS gg/Strict/unknown-format-is-rejected
+PASS gg/checker/equivalent-double-spelling
+PASS gg/checker/nearby-double-inside-bound
+PASS gg/checker/perturbed-double
+PASS gg/checker/changed-integer-point
+PASS gg/checker/integer-point-cannot-be-rounded
+PASS gg/checker/changed-command
+PASS gg/checker/changed-title
+PASS gg/checker/changed-color
+PASS gg/checker/extra-line
+PASS gg/checker/missing-line
+PASS gg/checker/missing-numeric-newline
+PASS gg/checker/numeric-whitespace-is-not-an-output-change
+PASS gg/checker/infinity-cannot-replace-finite
+PASS gg/checker/finite-cannot-replace-infinity
+PASS gg/checker/infinity-sign-is-preserved
+PASS gg/checker/NaN-does-not-match-infinity
+PASS gg/checker/matching-NaN-category
+PASS gg/checker/zero-lines-are-consumed
+PASS gg/checker/hash-
+PASS gg/checker/hash-a
+PASS gg/checker/hash-abc
+PASS gg/checker/multi-line-polynomial-composition
+PASS gg/demand/global-postscript-prefix-before-input
+PASS gg/demand/body-boxes-before-processor-data
+PASS gg/demand/default-activity-filter-ignores-processor-value
+PASS gg/demand/default-spark-filter-ignores-processor-value
+PASS gg/demand/unused-spark-integers-stay-lazy
+SUMMARY 99 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PROGRAM FAIL native:mlkit@4.7.23 (load 1, exit 0)
+error: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/gg-originals/host-tests/native-mlkit-4.7.23/program/src/8/graphics.sml, line 115, column 39: Type clash,

@@ -1,0 +1,4 @@
+PASS word-recursive-tuple/plain
+PASS word-recursive-tuple/empty
+PASS word-recursive-tuple/line
+SUMMARY 3 checks, 0 failed

@@ -1,0 +1,5 @@
+COUNT unbudgeted gg-pool-lazy normal rune
+COUNT unbudgeted gg-pool-lazy normal rune:opt
+COUNT unbudgeted gg-pool-lazy normal rune:new
+COUNT unbudgeted gg-pool-lazy normal rune:jit
+COUNT comparisons agree

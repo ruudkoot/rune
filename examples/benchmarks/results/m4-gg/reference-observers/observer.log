@@ -1,0 +1,18 @@
+{'mode': 'activity', 'profile': 'smoke', 'exit': 0, 'observation': 'activity 10808 -607345513066876905', 'stderr': ''}
+{'mode': 'spark', 'profile': 'smoke', 'exit': 0, 'observation': 'spark 10828 4764209685295301919', 'stderr': ''}
+{'mode': 'pool', 'profile': 'smoke', 'exit': 0, 'observation': 'pool 9059 1094346016227560689', 'stderr': ''}
+{'mode': 'eps', 'profile': 'smoke', 'exit': 0, 'observation': 'eps 10837 6779298474229618627', 'stderr': ''}
+{'mode': 'portrait', 'profile': 'smoke', 'exit': 0, 'observation': 'portrait 10751 463650268911491119', 'stderr': ''}
+{'mode': 'selected', 'profile': 'smoke', 'exit': 1, 'observation': '', 'stderr': 'observer: Attempt to gather information from inactive PE - 14.1\nCallStack (from HasCallStack):\n  error, called at ./Graph.hs:91:35 in main:Graph\n'}
+{'mode': 'activity', 'profile': 'normal', 'exit': 0, 'observation': 'activity 13202 -8194668633261186372', 'stderr': ''}
+{'mode': 'spark', 'profile': 'normal', 'exit': 0, 'observation': 'spark 13206 1942666259679308198', 'stderr': ''}
+{'mode': 'pool', 'profile': 'normal', 'exit': 0, 'observation': 'pool 12169 6639447898145552990', 'stderr': ''}
+{'mode': 'eps', 'profile': 'normal', 'exit': 0, 'observation': 'eps 13231 6028369822121962942', 'stderr': ''}
+{'mode': 'portrait', 'profile': 'normal', 'exit': 0, 'observation': 'portrait 13145 -1804882024104633132', 'stderr': ''}
+{'mode': 'selected', 'profile': 'normal', 'exit': 1, 'observation': '', 'stderr': 'observer: Attempt to gather information from inactive PE - 14.1\nCallStack (from HasCallStack):\n  error, called at ./Graph.hs:91:35 in main:Graph\n'}
+{'mode': 'activity', 'profile': 'large', 'exit': 0, 'observation': 'activity 15532 -3622688988824446630', 'stderr': ''}
+{'mode': 'spark', 'profile': 'large', 'exit': 0, 'observation': 'spark 15613 6459110885939714792', 'stderr': ''}
+{'mode': 'pool', 'profile': 'large', 'exit': 0, 'observation': 'pool 15423 -7101230393449498612', 'stderr': ''}
+{'mode': 'eps', 'profile': 'large', 'exit': 0, 'observation': 'eps 15561 4190701738093068000', 'stderr': ''}
+{'mode': 'portrait', 'profile': 'large', 'exit': 0, 'observation': 'portrait 15475 -7925768101753035406', 'stderr': ''}
+{'mode': 'selected', 'profile': 'large', 'exit': 0, 'observation': 'selected 15414 -784558042100689430', 'stderr': ''}

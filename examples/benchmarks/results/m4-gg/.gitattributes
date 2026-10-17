@@ -1,0 +1,8 @@
+reference-observers/** -text -whitespace
+semantics/** -whitespace
+semantics-final.log -whitespace
+semantic-outputs/** -whitespace
+counts/** -whitespace
+native-adapter-diagnostics/** -whitespace
+attempts-raw/** -whitespace
+host-diagnostics/** -whitespace

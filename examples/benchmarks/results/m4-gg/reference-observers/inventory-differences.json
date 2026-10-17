@@ -1,0 +1,38 @@
+[
+  {
+    "before": {
+      "source": "nofib",
+      "path": "real/gg",
+      "name": "gg",
+      "rune_name": "gg",
+      "milestone": "M4",
+      "disposition": "import",
+      "family": "application",
+      "related": "",
+      "authors": "not stated in scanned source headers",
+      "sha256": "e670c250f14ce0d26a61f15ab0286d106b24059fb7421b811c658e7fbfc2b434",
+      "members": "real/gg/Activity.hs;real/gg/GRIP.hs;real/gg/Graph.hs;real/gg/Main.hs;real/gg/NofibUtils.hs;real/gg/PSlib.hs;real/gg/Parse.hs;real/gg/Pool.hs;real/gg/Spark.hs;real/gg/StdLib.hs",
+      "inputs": "real/gg/gg.faststdin;real/gg/gg.faststdout;real/gg/gg.slowstdin;real/gg/gg.slowstdout;real/gg/gg.stdin;real/gg/gg.stdout",
+      "notices": "",
+      "evidence": "real/gg/Makefile",
+      "reason": "portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import"
+    },
+    "after": {
+      "source": "nofib",
+      "path": "real/gg",
+      "name": "gg",
+      "rune_name": "gg",
+      "milestone": "M4",
+      "disposition": "import",
+      "family": "application",
+      "related": "",
+      "authors": "Iain Checkland",
+      "sha256": "e670c250f14ce0d26a61f15ab0286d106b24059fb7421b811c658e7fbfc2b434",
+      "members": "real/gg/Activity.hs;real/gg/GRIP.hs;real/gg/Graph.hs;real/gg/Main.hs;real/gg/NofibUtils.hs;real/gg/PSlib.hs;real/gg/Parse.hs;real/gg/Pool.hs;real/gg/Spark.hs;real/gg/StdLib.hs",
+      "inputs": "real/gg/gg.faststdin;real/gg/gg.faststdout;real/gg/gg.slowstdin;real/gg/gg.slowstdout;real/gg/gg.stdin;real/gg/gg.stdout",
+      "notices": "",
+      "evidence": "real/gg/Makefile;real/gg/gg.1:author-section",
+      "reason": "portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import"
+    }
+  }
+]

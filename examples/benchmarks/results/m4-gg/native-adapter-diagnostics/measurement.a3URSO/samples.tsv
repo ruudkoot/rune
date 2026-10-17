@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+gg-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	7.20	5.84	1.15	659300	-	-	-	gg-lazy/native-mlton/build/compile
+gg-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.01	0.00	0.00	8944	-	-	-	gg-lazy/native-mlton/correctness.0
+gg-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.01	0.00	0.00	8800	-	-	-	gg-lazy/native-mlton/fresh.1
+gg-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	1.45	1.38	0.06	39052	-	-	-	gg-lazy/native-smlnj-legacy/build/compile
+gg-lazy	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	incorrect-result	0.05	0.03	0.02	7832	-	-	-	gg-lazy/native-smlnj-legacy/correctness.0
+gg-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.82	0.79	0.17	83364	-	-	-	gg-lazy/native-polyml/build/compile
+gg-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.01	0.00	0.01	13644	-	-	-	gg-lazy/native-polyml/correctness.0
+gg-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.02	0.01	0.02	14012	-	-	-	gg-lazy/native-polyml/fresh.1

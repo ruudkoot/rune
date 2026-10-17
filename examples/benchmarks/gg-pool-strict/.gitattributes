@@ -1,0 +1,4 @@
+upstream/** -text -whitespace
+gg.*stdin -text -whitespace
+expected/** -text -whitespace
+*.ps -text -whitespace

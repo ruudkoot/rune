@@ -1,0 +1,20 @@
+[
+  {
+    "mode": "activity",
+    "exit": 0,
+    "observation": "activity 15846 4145063413019405033",
+    "stderr": ""
+  },
+  {
+    "mode": "spark",
+    "exit": 0,
+    "observation": "spark 14621 8591106532682537635",
+    "stderr": ""
+  },
+  {
+    "mode": "pool",
+    "exit": 0,
+    "observation": "pool 16868 2665282183281405557",
+    "stderr": ""
+  }
+]

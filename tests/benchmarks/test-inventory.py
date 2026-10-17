@@ -228,6 +228,22 @@ class InventoryTest(unittest.TestCase):
                   "% Crown Copyright 1992\n\\author{Another author\\\\\n\n> main = print 0\n")
         self.assertNotIn("N. D. North", self.build("nofib")[0]["authors"])
 
+    def test_gg_manual_author_section_is_recorded(self):
+        self.nofib_roots()
+        self.file("real/gg/Makefile", "\n")
+        self.file("real/gg/Main.hs", "main = print 0\n")
+        self.file("real/gg/gg.1", ".SH AUTHOR\nIain Checkland, University of York.\n")
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "Iain Checkland")
+        self.assertIn("real/gg/gg.1:author-section", row["evidence"])
+
+    def test_changed_gg_manual_author_requires_review(self):
+        self.nofib_roots()
+        self.file("real/gg/Makefile", "\n")
+        self.file("real/gg/Main.hs", "main = print 0\n")
+        self.file("real/gg/gg.1", ".SH AUTHOR\nAnother author.\n")
+        self.assertNotIn("Iain Checkland", self.build("nofib")[0]["authors"])
+
     def test_pic_author_heading_is_recorded(self):
         self.nofib_roots()
         self.file("real/pic/Makefile", "\n")

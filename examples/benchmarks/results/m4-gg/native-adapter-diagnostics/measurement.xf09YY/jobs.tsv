@@ -1,0 +1,1 @@
+gg-spark-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/finite-binary32.sml shared/nofib-gg-core.sml shared/nofib-gg-graphics.sml shared/nofib-gg.sml shared/nofib-gg-check.sml shared/nofib-gg-driver.sml gg-spark-lazy/benchmark.sml shared/main.sml	1 gg.faststdin smoke.ps landscape -	gg-spark-lazy/smoke.expected	gg.faststdin smoke.ps

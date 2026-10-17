@@ -1,0 +1,3 @@
+observer: Attempt to gather information from inactive PE - 14.1
+CallStack (from HasCallStack):
+  error, called at ./Graph.hs:91:35 in main:Graph

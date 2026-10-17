@@ -1,0 +1,5 @@
+COUNT unbudgeted gg-spark-lazy normal rune
+COUNT unbudgeted gg-spark-lazy normal rune:opt
+COUNT unbudgeted gg-spark-lazy normal rune:new
+COUNT unbudgeted gg-spark-lazy normal rune:jit
+COUNT comparisons agree

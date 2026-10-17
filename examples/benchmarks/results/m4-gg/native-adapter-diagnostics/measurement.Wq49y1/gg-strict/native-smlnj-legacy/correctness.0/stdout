@@ -1,0 +1,2 @@
+FAIL gg-strict -- Fail: incorrect result: GRIP output hash
+SUMMARY 1 checks, 1 failed

@@ -1,6 +1,6 @@
 # Benchmark suite roadmap
 
-Status: **in progress**, 2026-10-16. M0, M1 and M2 are complete with
+Status: **in progress**, 2026-10-17. M0, M1 and M2 are complete with
 [recorded validation](../../examples/benchmarks/validation.md). M3 and M5 are in progress; M6 and M7 are complete with recorded evidence; M4 is in progress and M8 remains planned. Source inventory entries are scheduled work, not passing ports.
 
 ## Goal and current baseline

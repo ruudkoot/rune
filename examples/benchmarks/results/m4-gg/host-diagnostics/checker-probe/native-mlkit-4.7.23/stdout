@@ -1,0 +1,6 @@
+empty 0
+line 1
+numeric 1
+zero-equality true
+PASS probe/completed
+SUMMARY 1 checks, 0 failed

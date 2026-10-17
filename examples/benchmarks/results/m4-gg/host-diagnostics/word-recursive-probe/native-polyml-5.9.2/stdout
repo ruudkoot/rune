@@ -1,0 +1,6 @@
+PASS word-recursive/pair-zero
+PASS word-recursive/pair-large
+PASS word-recursive/interleaved-zero
+PASS word-recursive/many-zero
+PASS word-recursive/many-large
+SUMMARY 5 checks, 0 failed
