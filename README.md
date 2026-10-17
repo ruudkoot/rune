@@ -84,4 +84,5 @@ slower on `IntInf`. The compiler compiles itself in 3.0 s, MLton's build in
 * [native.md](docs/native.md): translating bytecode to machine code.
 * [performance.md](docs/performance.md): timings against the SML systems, and why.
 * [basis-compat.md](docs/basis-compat.md): running Rune's Basis Library on the other SML systems.
+* [unicode.md](docs/unicode.md): Unicode, wide characters, and the Basis Library's wide text specification.
 * [doc-comments.md](docs/doc-comments.md): the language of the comments that generate the library's documentation.
