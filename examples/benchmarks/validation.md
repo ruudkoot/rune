@@ -2470,3 +2470,27 @@ samples, guards, references and initial-versus-final checks.
 Full DEBUGINFOD_URLS= make JOBS=4 check exits 0 with 1036 catalogue profiles.
 [The full transcript](validation/oct17-gamteb-mkhprog-1036-acceptance.log) records
 acceptance. M4 remains in progress.
+
+## GRIP graph utilities, 2026-10-17
+
+Six imports bring the catalogue to 354 programs and 1054 profiles.
+[Primary coverage](results/m4-gg/coverage.tsv) records 144 passes and 24 failing
+64-bit SML/NJ checker cases across 168 attempts. All Rune configurations pass.
+The [semantic ledger](results/m4-gg/semantic-summary.tsv) records 1976 passing
+assertions, 164 failures and no unreached checks. The
+[host-result note](validation/gg-host-results.md) and reduced source/control
+transcripts preserve the observed discrepancy without asserting its cause.
+
+Twenty-four normal count samples agree across the four Rune engines.
+Twelve serial fresh-process native adapter samples pass; six failed SML/NJ
+prechecks supply no accepted timings. GHC fixture agreement, thirty complete
+PostScript comparisons, supplementary trace checks and final normal-profile
+calibration are retained with [raw evidence](results/m4-gg/README.md).
+Large repetition profiles remain unrecorded.
+
+All 80 inventory tests and the five-pin 861-entry replay pass. Individual source
+and data notices, the author's manual heading, graph-mode variants and report
+script exclusions are recorded. Full DEBUGINFOD_URLS= make JOBS=4 check exits
+zero with 1054 profiles, 498-program cross-build agreement and matching runedoc
+and runeopt builds. [The complete transcript](validation/oct17-gg-1054-acceptance.log)
+records the acceptance check. M4 remains in progress.

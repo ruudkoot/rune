@@ -555,6 +555,11 @@ def build(source, root, lock):
                 authors.update(["Stef Joosten", "Mark Ramaer"])
                 item["evidence"].append("real/hidden/MAIL:authorship-and-nofib-permission")
                 notices.append("real/hidden/MAIL:nofib-permission")
+        if source == "nofib" and path == "real/gg" and (parent / "gg.1").is_file():
+            manual = (parent / "gg.1").read_text(errors="replace")
+            if ".SH AUTHOR\nIain Checkland, University of York." in manual:
+                authors.add("Iain Checkland")
+                item["evidence"].append("real/gg/gg.1:author-section")
         item["evidence"].extend(str(p.relative_to(root)) for p in context)
         for p in files + context:
             header = p.read_text(errors="replace")[:8000]
