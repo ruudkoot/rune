@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+regexredux2	normal	rune	O2	compile	0	0	pass	1.25	1.17	0.07	135352	-	-	-	regexredux2/rune/build/compile
+regexredux2	normal	rune	O2	correctness	0	0	pass	5.49	5.46	0.05	35080	1554288238	130994216	2559765	regexredux2/rune/correctness.0
+regexredux2	normal	rune	O2	count	1	1	pass	5.48	5.48	0.02	35000	1554288238	130994216	2559765	regexredux2/rune/fresh.1
+regexredux2	normal	rune:opt	O2	compile	0	0	pass	1.34	1.28	0.06	135312	-	-	-	regexredux2/rune-opt/build/compile
+regexredux2	normal	rune:opt	O2	native-compile	0	0	pass	0.28	0.13	0.02	12096	-	-	-	regexredux2/rune-opt/build/native-compile
+regexredux2	normal	rune:opt	O2	correctness	0	0	pass	1.60	1.58	0.02	35408	1554288238	130994216	2559765	regexredux2/rune-opt/correctness.0
+regexredux2	normal	rune:opt	O2	count	1	1	pass	1.50	1.49	0.02	35460	1554288238	130994216	2559765	regexredux2/rune-opt/fresh.1
+regexredux2	normal	rune:new	O2	compile	0	0	pass	1.24	1.17	0.08	135312	-	-	-	regexredux2/rune-new/build/compile
+regexredux2	normal	rune:new	O2	correctness	0	0	pass	4.72	4.66	0.02	35084	847310956	130994216	2559765	regexredux2/rune-new/correctness.0
+regexredux2	normal	rune:new	O2	count	1	1	pass	4.63	4.56	0.01	34952	847310956	130994216	2559765	regexredux2/rune-new/fresh.1
+regexredux2	normal	rune:jit	O2	compile	0	0	pass	2.38	2.21	0.16	135300	-	-	-	regexredux2/rune-jit/build/compile
+regexredux2	normal	rune:jit	O2	correctness	0	0	pass	1.61	1.55	0.05	36140	847310956	130994216	2559765	regexredux2/rune-jit/correctness.0
+regexredux2	normal	rune:jit	O2	count	1	1	pass	1.44	1.37	0.06	36148	847310956	130994216	2559765	regexredux2/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

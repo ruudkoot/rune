@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+multiplier-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	5.82	4.50	1.17	667636	-	-	-	multiplier-lazy/native-mlton/build/compile
+multiplier-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	5092	-	-	-	multiplier-lazy/native-mlton/correctness.0
+multiplier-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	5088	-	-	-	multiplier-lazy/native-mlton/fresh.1
+multiplier-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	1.01	0.94	0.05	39664	-	-	-	multiplier-lazy/native-smlnj-legacy/build/compile
+multiplier-lazy	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.03	0.02	0.00	8620	-	-	-	multiplier-lazy/native-smlnj-legacy/correctness.0
+multiplier-lazy	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.02	0.01	0.01	8436	-	-	-	multiplier-lazy/native-smlnj-legacy/fresh.1
+multiplier-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.50	0.33	0.09	46792	-	-	-	multiplier-lazy/native-polyml/build/compile
+multiplier-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.01	0.00	0.01	13328	-	-	-	multiplier-lazy/native-polyml/correctness.0
+multiplier-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.01	0.00	0.01	13336	-	-	-	multiplier-lazy/native-polyml/fresh.1

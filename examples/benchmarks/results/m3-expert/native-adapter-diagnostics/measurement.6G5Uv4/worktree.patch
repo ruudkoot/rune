@@ -1,0 +1,880 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 5336fe39..f1be4660 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -391,6 +391,13 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [knights-array-strict](#knights-array-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/knights) | Search closed knight tours with a persistent array board and strict numeric metadata. |
+ | [mate-lazy](#mate-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/mate) | Solve chess mating problems by AND–OR search with lazy legal-move generation and compact printed replies. |
+ | [mate-strict](#mate-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/mate) | Solve chess mating problems by AND–OR search with strict legal-move generation and compact printed replies. |
++| [expert-lazy](#expert-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/expert) | Infer animal identities through unification and a lazy question/answer feedback table with lazy finite phrase fields. |
++| [expert-strict](#expert-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/expert) | Infer animal identities through unification and a lazy question/answer feedback table with strict finite phrase fields. |
++| [regexredux2](#regexredux2) | [Sandmark](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/benchmarksgame/regexredux2.ml) | Count DNA regex motifs and apply the ordered regex-redux substitutions over fixed FASTA data. |
++| [multiplier-lazy](#multiplier-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/multiplier) | Simulate a bit-stream shift/add multiplier and validate its full trace with lazy binary gate heads. |
++| [multiplier-strict](#multiplier-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/multiplier) | Simulate a bit-stream shift/add multiplier and validate its full trace with strict binary gate heads. |
++| [multiplier-count-lazy](#multiplier-count-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/multiplier) | Sum ready signals while leaving the multiplier product path undemanded with lazy binary gate heads. |
++| [multiplier-count-strict](#multiplier-count-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/multiplier) | Sum ready signals while leaving the multiplier product path undemanded with strict binary gate heads. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -22855,3 +22862,707 @@ allocation, continuation specialization, repeated printing during compaction and
+ stable sorting. These are source-based diagnostic questions. Exact agreement
+ with original outputs establishes results for the selected inputs; timing/count
+ records are measured evidence and do not alone identify performance causes.
++
++## expert-lazy
++
++### Algorithm and workload
++
++Run the source animal-identification expert system: parse relations and rules,
++rename variables, unify phrases with an occurs check, search and/or goals and
++request answers as part of the result stream. Keep the binary-search-tree
++knowledge/environment tables, lazy information table, fresh-variable stream,
++duplicate-question filtering and solution/environment display. The information
++table is built from the questions produced by the same inference computation;
++this feedback is part of the workload, not ordinary eager input lookup.
++
++### History, authorship and input origins
++
++[Ian Holyer's expert source](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/expert), pinned at
++b7391df4540ac8b11b35e1b2e2c15819b5171798, declares a March 1993 translation and
++adaptation from his Functional programming with Miranda (Pitman, 1991).
++Preserve all six Haskell modules and the README under expert-lazy/upstream.
++Search.hs also records S. L. Peyton Jones's November 1999 extraction of shared
++question text to avoid dependence on accidental compiler common-subexpression
++elimination. Preserve that shared value explicitly.
++
++The source runtime_files/animals and expert.stdin provide the fixed knowledge
++and answer data. Retain their contents and source paths; no separate individual
++dataset notice is stated. The supplied answer No is intentionally positive:
++only a line whose words are exactly lowercase no is negative. Do not normalize
++case or substitute a different interpretation of yes/no.
++
++### Variants and translation decisions
++
++-lazy memoizes phrase trees and child streams. -strict eagerly traverses each
++finite phrase's children when its term is demanded. Both preserve lazy search,
++question/answer feedback, table roots and delayed answer values: eager feedback
++would force a question's answer before that question can be emitted. Explicit
++control delays also preserve unused replies after a negative More answer.
++The two policies have separate names and count records, with a poison-child
++check demonstrating their intended evaluation difference.
++
++The generic source table's key domain is specialized to the String keys used by
++this program; retain lexical comparison and its binary tree, rather than replace
++it with a host map/hash table. enterList remains lazy and first duplicate wins;
++updateList retains insertion sorting, last-new-duplicate selection, sorted merge
++and median balancing. Single updates, lookup, delete and entry enumeration are
++also translated and checked. Retain unification's source zip truncation for
++mismatched term arities; do not silently impose a new arity check.
++
++Source strings are portable SML strings where bounded words/question formatting
++need a complete value. Character, rule, answer and result streams retain explicit
++memoized spines. Knowledge lines and answer words use their ASCII fixture
++semantics. The driver builds one shared input-character stream and takes the
++source i+9999 prefix separately for each repetition. Line splitting and answer
++values remain delayed; no per-iteration full input conversion forces unused
++answers. Each repetition rebuilds inference and its feedback table as in Main.
++The question string is shared between display and information lookup.
++
++### Inputs, profiles and result checks
++
++Smoke uses one repetition instead of source FAST's 1000. Normal retains 10000
++repetitions and large retains 50000. Preserve the source per-repetition prefix
++parameter i+9999, fixed animal knowledge and exact answer bytes. This input is
++shorter than every selected prefix, but the prefix computation is still present.
++Selected indices and generated variable suffixes fit signed 31-bit arithmetic;
++the total checked-character report uses IntInf as validation metadata.
++
++The source prints length(process ...) each repetition: 526 for the supplied
++answers. The port instead compares all 526 dialog characters on every repetition
++and reports repetitions plus their total. This adds exact character validation
++to the source length consumer and explicitly forces character values as well as
++spines. Original GHC 9.4.7 matches every supplied FAST/NORM/SLOW length fixture;
++an export-only observer provides the complete original dialog and five additional
++answer scenarios. All checks are exact, with no numerical tolerance.
++
++The 45-check target covers those six original dialogs, positive/negative answer
++case, first/last duplicate behavior, update/lookup/delete/order, substitution,
++occurs rejection, source arity behavior, question-before-answer demand, unused
++answers, policy-specific phrase forcing, repetition and corrupt-dialog rejection.
++Normal pilots use the original repetition count under explicit resource guards.
++See the validation archive for actual compiler/engine results; full SML large
++repetitions remain unrecorded unless listed explicitly.
++
++### Literature and diagnostic questions
++
++The source README credits Holyer's Functional programming with Miranda (1991).
++Record this as its stated ancestry; the source, not an assumed textbook algorithm,
++defines the exact unification, table and feedback behavior.
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) provides suite
++context. Search.hs's dated shared-string comment is source evidence for that
++adaptation; it does not establish a current compiler performance cause.
++
++Investigate phrase traversal, repeated substitution, table balance, delayed
++input, knot tying, string sharing and stream allocation. These are source-based
++hypotheses. Original-dialog agreement and explicit demand checks establish
++correctness for the recorded cases. Runtime/count measurements are separate
++observations, and fresh versus repeated execution retains its recorded mode.
++
++## expert-strict
++
++### Algorithm and workload
++
++Run the source animal-identification expert system: parse relations and rules,
++rename variables, unify phrases with an occurs check, search and/or goals and
++request answers as part of the result stream. Keep the binary-search-tree
++knowledge/environment tables, lazy information table, fresh-variable stream,
++duplicate-question filtering and solution/environment display. The information
++table is built from the questions produced by the same inference computation;
++this feedback is part of the workload, not ordinary eager input lookup.
++
++### History, authorship and input origins
++
++[Ian Holyer's expert source](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/expert), pinned at
++b7391df4540ac8b11b35e1b2e2c15819b5171798, declares a March 1993 translation and
++adaptation from his Functional programming with Miranda (Pitman, 1991).
++Preserve all six Haskell modules and the README under expert-lazy/upstream.
++Search.hs also records S. L. Peyton Jones's November 1999 extraction of shared
++question text to avoid dependence on accidental compiler common-subexpression
++elimination. Preserve that shared value explicitly.
++
++The source runtime_files/animals and expert.stdin provide the fixed knowledge
++and answer data. Retain their contents and source paths; no separate individual
++dataset notice is stated. The supplied answer No is intentionally positive:
++only a line whose words are exactly lowercase no is negative. Do not normalize
++case or substitute a different interpretation of yes/no.
++
++### Variants and translation decisions
++
++-lazy memoizes phrase trees and child streams. -strict eagerly traverses each
++finite phrase's children when its term is demanded. Both preserve lazy search,
++question/answer feedback, table roots and delayed answer values: eager feedback
++would force a question's answer before that question can be emitted. Explicit
++control delays also preserve unused replies after a negative More answer.
++The two policies have separate names and count records, with a poison-child
++check demonstrating their intended evaluation difference.
++
++The generic source table's key domain is specialized to the String keys used by
++this program; retain lexical comparison and its binary tree, rather than replace
++it with a host map/hash table. enterList remains lazy and first duplicate wins;
++updateList retains insertion sorting, last-new-duplicate selection, sorted merge
++and median balancing. Single updates, lookup, delete and entry enumeration are
++also translated and checked. Retain unification's source zip truncation for
++mismatched term arities; do not silently impose a new arity check.
++
++Source strings are portable SML strings where bounded words/question formatting
++need a complete value. Character, rule, answer and result streams retain explicit
++memoized spines. Knowledge lines and answer words use their ASCII fixture
++semantics. The driver builds one shared input-character stream and takes the
++source i+9999 prefix separately for each repetition. Line splitting and answer
++values remain delayed; no per-iteration full input conversion forces unused
++answers. Each repetition rebuilds inference and its feedback table as in Main.
++The question string is shared between display and information lookup.
++
++### Inputs, profiles and result checks
++
++Smoke uses one repetition instead of source FAST's 1000. Normal retains 10000
++repetitions and large retains 50000. Preserve the source per-repetition prefix
++parameter i+9999, fixed animal knowledge and exact answer bytes. This input is
++shorter than every selected prefix, but the prefix computation is still present.
++Selected indices and generated variable suffixes fit signed 31-bit arithmetic;
++the total checked-character report uses IntInf as validation metadata.
++
++The source prints length(process ...) each repetition: 526 for the supplied
++answers. The port instead compares all 526 dialog characters on every repetition
++and reports repetitions plus their total. This adds exact character validation
++to the source length consumer and explicitly forces character values as well as
++spines. Original GHC 9.4.7 matches every supplied FAST/NORM/SLOW length fixture;
++an export-only observer provides the complete original dialog and five additional
++answer scenarios. All checks are exact, with no numerical tolerance.
++
++The 45-check target covers those six original dialogs, positive/negative answer
++case, first/last duplicate behavior, update/lookup/delete/order, substitution,
++occurs rejection, source arity behavior, question-before-answer demand, unused
++answers, policy-specific phrase forcing, repetition and corrupt-dialog rejection.
++Normal pilots use the original repetition count under explicit resource guards.
++See the validation archive for actual compiler/engine results; full SML large
++repetitions remain unrecorded unless listed explicitly.
++
++### Literature and diagnostic questions
++
++The source README credits Holyer's Functional programming with Miranda (1991).
++Record this as its stated ancestry; the source, not an assumed textbook algorithm,
++defines the exact unification, table and feedback behavior.
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) provides suite
++context. Search.hs's dated shared-string comment is source evidence for that
++adaptation; it does not establish a current compiler performance cause.
++
++Investigate phrase traversal, repeated substitution, table balance, delayed
++input, knot tying, string sharing and stream allocation. These are source-based
++hypotheses. Original-dialog agreement and explicit demand checks establish
++correctness for the recorded cases. Runtime/count measurements are separate
++observations, and fresh versus repeated execution retains its recorded mode.
++
++## regexredux2
++
++### Algorithm and workload
++
++Run the regex-redux pipeline: strip FASTA headers/newlines, count nine DNA motif
++patterns one at a time and apply the five source substitutions in order. Print
++all pattern/count pairs and the original, stripped and final lengths. Preserve
++case-folded motif counting, case-sensitive substitutions and the source count
++loop's next search position at match-start+1, including overlapping matches.
++Global substitution resumes at the previous match end.
++
++### History, names and notices
++
++Source [Sandmark benchmarksgame/regexredux2.ml](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/benchmarksgame/regexredux2.ml), pinned
++at 5605805954a00497ed197c930641cddd580e1507. Christophe Troestler contributed the
++regex-dna ancestor; Roman Kashitsyn adapted mutation to Bytes. The established
++workload is regex-redux; retain regexredux2 as the pinned executable variant name
++and document regex-dna as ancestry rather than an exact duplicate. The required
++source pipeline differs from other historical regex-dna substitution programs.
++
++The pinned fasta3 generator credits Troestler, Mauricio Fernandez and Tony
++Tavener. Preserve both original programs, Dune, README, Revised BSD LICENSE and
++the Sandmark root notice. The individual BSD notice names Brent Fulgham and
++Isaac Gouy. All input profiles are generated from the pinned fasta3 source with
++its fixed initial random state and original probability tables. Record full
++file hashes and byte lengths in DATA-IDENTITIES.json; these are generated text
++data, not embedded executable artifacts.
++
++### Portable library replacement
++
++The original uses OCaml Str's native library. A portable SML97 adapter implements
++the precise fragment used here: literal characters, enumerated/negated character
++sets, dot excluding newline, greedy star with backtracking, ordered escaped
++alternatives, line anchors, ASCII case folding, forward search and constant
++replacement. It preserves regular-expression matching instead of replacing
++motif searches with direct nucleotide counts or a combined scan. Compile each
++motif at its source call site and run one pattern at a time. This adapter is
++scoped to these fixed expressions; it does not claim the full Str API, grouping,
++backreferences, ranges or empty-match replacement support.
++
++The engine uses immutable expression lists and explicit substring indices;
++OCaml Str's internal engine/representation is not reproduced. Record this
++library replacement when interpreting measurements. Read the selected fixed
++file with portable TextIO.inputAll rather than the original incremental
++Bytes/Buffer input loop. Preserve complete input materialization, strict
++pipeline order, original replacement strings and immutable intermediate text.
++The driver suppresses repetitive stdout, compares the complete report exactly
++and returns its checked length. All byte lengths and counts fit signed 31-bit
++integers for these profiles. No numerical tolerance applies.
++
++### Inputs and profiles
++
++Smoke generates FASTA with N=100 (1095 bytes). Normal uses N=50000 (508411 bytes),
++and large uses N=500000 (5083411 bytes). The pinned program expects an input
++named input5000000.txt generated with N=5000000. These are explicit smaller
++profile selections, retaining the generator, seed, sequence proportions and
++line widths; they do not claim to measure the published 50 MB input. Profile
++filenames are manifest parameters rather than a hardcoded working-directory
++filename. The source is processed as a whole file, with no universal size loop.
++
++Expected complete reports contain 259, 274 and 286 characters respectively.
++Original OCaml 4.14.1 supplies all three results. A private full large SML pilot
++also matches its original; canonical smoke/normal checks and configurations
++are recorded separately. Further edge cases include empty input, case changes,
++adjacent substitutions, an unterminated header and overlapping motifs.
++
++### Validation
++
++The 23-check target compares twelve original Str-library observations and five
++full original program reports, plus the smoke fixture, bad-output rejection,
++negative indices, literal/escaped pipe distinction, malformed classes and empty
++replacement rejection. Library cases cover ordered alternatives, greediness,
++backtracking, line/end anchors, negated sets, overlapping counts and ASCII
++case folding. The original executable and its generator remain correctness
++references. Measurements compare identical SML sources across SML compilers.
++
++### Literature and diagnostic interpretation
++
++[The Benchmarks Game description](https://benchmarksgame-team.pages.debian.net/benchmarksgame/description/regexredux.html)
++defines the motif/replacement sequence and notes that regex libraries can use
++different algorithms. [The OCaml 4.14 Str manual](https://ocaml.org/manual/4.14/api/Str.html)
++documents the matching, anchors and replacement interface used for the adapter;
++actual original-library observations establish the selected edge cases.
++
++Investigate regex compilation, literal/class scanning, greedy backtracking,
++intermediate string allocation and buffered input. These are source-based
++questions. Exact original report agreement establishes the selected results;
++current timings or allocations alone do not attribute differences to a regex
++engine, library implementation or compiler transformation.
++
++## multiplier-lazy
++
++### Algorithm and workload
++
++Simulate the source binary shift/add multiplier as streams of bit signals.
++Preserve combinational gates, balanced wide gates, full-adder carry chains,
++word multiplexors, latches, shifting registers and the ready-driven input
++interface. Inputs are the infinite pairs (2+3*i,11+2*i), starting at i=1,
++truncated to the selected input width. The product register has twice that
++width. Do not replace the bit-level circuit with arithmetic multiplication.
++
++### History, authorship and consumers
++
++[John T. O'Donnell's July 1992 multiplier source](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/multiplier/Main.hs), University
++of Glasgow, is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. Preserve the
++Copyright (c) 1992 header and original Main/Makefile/fixtures under
++multiplier-lazy/upstream. No separate individual redistribution grant is stated.
++This is a sequential functional stream simulation; no hardware or parallel
++runtime is required.
++
++The active go function selects verbose traceMult. Its inactive runMult driver
++instead sums the ready signal and prints the count. Preserve that materially
++different consumer as multiplier-count-lazy/strict, with a supplementary source
++inventory entry. It does not demand the product register/adder; source inspection
++and a pending-product test establish that boundary. It is a ready/control-path
++workload, not a claim to force the complete product calculation. Generic component
++utilities without a selected simulation driver remain in the original snapshot;
++they are support code rather than additional executable workloads.
++
++### Evaluation and translation
++
++-lazy preserves the active source lift21: its two input spines are matched but
++its output bit is delayed. -strict adds output-head forcing at that binary
++combinator, corresponding to the source's commented strict alternative. Both
++retain source headstrict on unary and three-/four-input lifting. Truth-table
++gates inspect both input bits; AND/OR are not replaced by short-circuit boolean
++operators. The source forceBit predicate and strictness points remain explicit.
++
++Use memoized bit and word spines, paired adder outputs and the original mutually
++recursive signals. Word combinators delay both tail access and wire arguments;
++forcing either while constructing a future word node creates an invalid circular
++demand. wideGate's length traverses only outer spines. Carry-chain matching and
++zero-width adder base-case demand follow the source. The independent clock model
++is a correctness oracle and is not the measured circuit implementation.
++
++Word-to-integer display uses modular Word64 accumulation and signed conversion,
++preserving the source's 64-bit Int behavior for long bit vectors. The fixed
++input generator, cycle counters and observed register values fit signed 31-bit
++integers in the selected profiles. Preserve explicit wire widths even where
++leading zeros make the output identical across widths. Numeric validation is
++exact; no floating-point tolerance applies.
++
++### Inputs and profiles
++
++| Profile | Input bit width | Clock cycles |
++|---|---:|---:|
++| Smoke | 32 | 16 |
++| Normal | 256 | 2000 |
++| Large | 512 | 2000 |
++
++Normal and large retain the original width/cycle parameters. Smoke reduces
++FAST's 2000 cycles to sixteen, using its exact header and trace prefix. Every
++trace result is compared character by character with the original full output:
++1093 bytes for smoke, 132037 for normal/large. The stable report gives width,
++cycles and checked characters. Buffer each bounded formatted row before lazy
++character assembly, replacing repetitive stdout with exact validation.
++
++Count variants preserve runMult's sum of the first requested ready bits. The
++original and independent model give three for smoke and 222 for normal/large.
++The report gives width, cycles and that validated sum. The source count consumer's
++limited demand is intentional and differs from the full trace contract. The
++driver rejects nonpositive widths and bounds selected cycles to 2000, making
++the original valid-input precondition explicit rather than entering its empty
++wide-gate recursion on zero width.
++
++### Correctness and recorded scope
++
++Unmodified GHC 9.4.7 matches every supplied FAST/NORM/SLOW fixture. Export-only
++observers expose complete traces and count results at eight width/cycle choices.
++An independent masked shift/add state machine matches all those original outputs,
++including small-width truncation and all published 2000-cycle profiles.
++
++The 56-check target covers five small original traces/counts under both policies,
++truth tables, unary/binary strictness, non-short-circuit AND, latch delay, lazy
++word callbacks/tails, spine-only length, zero-width adder demand, signed 64-bit
++wrap, incorrect output, memoization and the count consumer's unforced product.
++Native host checks and canonical matrices are recorded separately. Earlier
++recursive-forcing failures and snapshots are translation-development evidence,
++not compiler bugs. Full normal trace pilots match original text under resource
++guards; final canonical source identities remain distinct from older pilots.
++Full SML large traces are unrecorded unless explicitly listed in validation.
++
++### Literature and diagnostic questions
++
++[O'Donnell's research bibliography](https://www.dcs.gla.ac.uk/~jtod/research/)
++lists Hardware description with recursion equations (1987), providing functional
++circuit-simulation context. It is not an exact specification of this benchmark.
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) supplies suite
++context. The pinned program defines the actual circuit and strictness points.
++
++Investigate higher-order gate specialization, memoized feedback, bit-stream
++allocation, carry propagation, wide-gate traversal and the consumer's forcing.
++These are source-based diagnostic questions. Original/model agreement and demand
++controls establish recorded behavior; allocation or timing differences alone do
++not identify a compiler or collector cause.
++
++## multiplier-strict
++
++### Algorithm and workload
++
++Simulate the source binary shift/add multiplier as streams of bit signals.
++Preserve combinational gates, balanced wide gates, full-adder carry chains,
++word multiplexors, latches, shifting registers and the ready-driven input
++interface. Inputs are the infinite pairs (2+3*i,11+2*i), starting at i=1,
++truncated to the selected input width. The product register has twice that
++width. Do not replace the bit-level circuit with arithmetic multiplication.
++
++### History, authorship and consumers
++
++[John T. O'Donnell's July 1992 multiplier source](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/multiplier/Main.hs), University
++of Glasgow, is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. Preserve the
++Copyright (c) 1992 header and original Main/Makefile/fixtures under
++multiplier-lazy/upstream. No separate individual redistribution grant is stated.
++This is a sequential functional stream simulation; no hardware or parallel
++runtime is required.
++
++The active go function selects verbose traceMult. Its inactive runMult driver
++instead sums the ready signal and prints the count. Preserve that materially
++different consumer as multiplier-count-lazy/strict, with a supplementary source
++inventory entry. It does not demand the product register/adder; source inspection
++and a pending-product test establish that boundary. It is a ready/control-path
++workload, not a claim to force the complete product calculation. Generic component
++utilities without a selected simulation driver remain in the original snapshot;
++they are support code rather than additional executable workloads.
++
++### Evaluation and translation
++
++-lazy preserves the active source lift21: its two input spines are matched but
++its output bit is delayed. -strict adds output-head forcing at that binary
++combinator, corresponding to the source's commented strict alternative. Both
++retain source headstrict on unary and three-/four-input lifting. Truth-table
++gates inspect both input bits; AND/OR are not replaced by short-circuit boolean
++operators. The source forceBit predicate and strictness points remain explicit.
++
++Use memoized bit and word spines, paired adder outputs and the original mutually
++recursive signals. Word combinators delay both tail access and wire arguments;
++forcing either while constructing a future word node creates an invalid circular
++demand. wideGate's length traverses only outer spines. Carry-chain matching and
++zero-width adder base-case demand follow the source. The independent clock model
++is a correctness oracle and is not the measured circuit implementation.
++
++Word-to-integer display uses modular Word64 accumulation and signed conversion,
++preserving the source's 64-bit Int behavior for long bit vectors. The fixed
++input generator, cycle counters and observed register values fit signed 31-bit
++integers in the selected profiles. Preserve explicit wire widths even where
++leading zeros make the output identical across widths. Numeric validation is
++exact; no floating-point tolerance applies.
++
++### Inputs and profiles
++
++| Profile | Input bit width | Clock cycles |
++|---|---:|---:|
++| Smoke | 32 | 16 |
++| Normal | 256 | 2000 |
++| Large | 512 | 2000 |
++
++Normal and large retain the original width/cycle parameters. Smoke reduces
++FAST's 2000 cycles to sixteen, using its exact header and trace prefix. Every
++trace result is compared character by character with the original full output:
++1093 bytes for smoke, 132037 for normal/large. The stable report gives width,
++cycles and checked characters. Buffer each bounded formatted row before lazy
++character assembly, replacing repetitive stdout with exact validation.
++
++Count variants preserve runMult's sum of the first requested ready bits. The
++original and independent model give three for smoke and 222 for normal/large.
++The report gives width, cycles and that validated sum. The source count consumer's
++limited demand is intentional and differs from the full trace contract. The
++driver rejects nonpositive widths and bounds selected cycles to 2000, making
++the original valid-input precondition explicit rather than entering its empty
++wide-gate recursion on zero width.
++
++### Correctness and recorded scope
++
++Unmodified GHC 9.4.7 matches every supplied FAST/NORM/SLOW fixture. Export-only
++observers expose complete traces and count results at eight width/cycle choices.
++An independent masked shift/add state machine matches all those original outputs,
++including small-width truncation and all published 2000-cycle profiles.
++
++The 56-check target covers five small original traces/counts under both policies,
++truth tables, unary/binary strictness, non-short-circuit AND, latch delay, lazy
++word callbacks/tails, spine-only length, zero-width adder demand, signed 64-bit
++wrap, incorrect output, memoization and the count consumer's unforced product.
++Native host checks and canonical matrices are recorded separately. Earlier
++recursive-forcing failures and snapshots are translation-development evidence,
++not compiler bugs. Full normal trace pilots match original text under resource
++guards; final canonical source identities remain distinct from older pilots.
++Full SML large traces are unrecorded unless explicitly listed in validation.
++
++### Literature and diagnostic questions
++
++[O'Donnell's research bibliography](https://www.dcs.gla.ac.uk/~jtod/research/)
++lists Hardware description with recursion equations (1987), providing functional
++circuit-simulation context. It is not an exact specification of this benchmark.
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) supplies suite
++context. The pinned program defines the actual circuit and strictness points.
++
++Investigate higher-order gate specialization, memoized feedback, bit-stream
++allocation, carry propagation, wide-gate traversal and the consumer's forcing.
++These are source-based diagnostic questions. Original/model agreement and demand
++controls establish recorded behavior; allocation or timing differences alone do
++not identify a compiler or collector cause.
++
++## multiplier-count-lazy
++
++### Algorithm and workload
++
++Simulate the source binary shift/add multiplier as streams of bit signals.
++Preserve combinational gates, balanced wide gates, full-adder carry chains,
++word multiplexors, latches, shifting registers and the ready-driven input
++interface. Inputs are the infinite pairs (2+3*i,11+2*i), starting at i=1,
++truncated to the selected input width. The product register has twice that
++width. Do not replace the bit-level circuit with arithmetic multiplication.
++
++### History, authorship and consumers
++
++[John T. O'Donnell's July 1992 multiplier source](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/multiplier/Main.hs), University
++of Glasgow, is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. Preserve the
++Copyright (c) 1992 header and original Main/Makefile/fixtures under
++multiplier-lazy/upstream. No separate individual redistribution grant is stated.
++This is a sequential functional stream simulation; no hardware or parallel
++runtime is required.
++
++The active go function selects verbose traceMult. Its inactive runMult driver
++instead sums the ready signal and prints the count. Preserve that materially
++different consumer as multiplier-count-lazy/strict, with a supplementary source
++inventory entry. It does not demand the product register/adder; source inspection
++and a pending-product test establish that boundary. It is a ready/control-path
++workload, not a claim to force the complete product calculation. Generic component
++utilities without a selected simulation driver remain in the original snapshot;
++they are support code rather than additional executable workloads.
++
++### Evaluation and translation
++
++-lazy preserves the active source lift21: its two input spines are matched but
++its output bit is delayed. -strict adds output-head forcing at that binary
++combinator, corresponding to the source's commented strict alternative. Both
++retain source headstrict on unary and three-/four-input lifting. Truth-table
++gates inspect both input bits; AND/OR are not replaced by short-circuit boolean
++operators. The source forceBit predicate and strictness points remain explicit.
++
++Use memoized bit and word spines, paired adder outputs and the original mutually
++recursive signals. Word combinators delay both tail access and wire arguments;
++forcing either while constructing a future word node creates an invalid circular
++demand. wideGate's length traverses only outer spines. Carry-chain matching and
++zero-width adder base-case demand follow the source. The independent clock model
++is a correctness oracle and is not the measured circuit implementation.
++
++Word-to-integer display uses modular Word64 accumulation and signed conversion,
++preserving the source's 64-bit Int behavior for long bit vectors. The fixed
++input generator, cycle counters and observed register values fit signed 31-bit
++integers in the selected profiles. Preserve explicit wire widths even where
++leading zeros make the output identical across widths. Numeric validation is
++exact; no floating-point tolerance applies.
++
++### Inputs and profiles
++
++| Profile | Input bit width | Clock cycles |
++|---|---:|---:|
++| Smoke | 32 | 16 |
++| Normal | 256 | 2000 |
++| Large | 512 | 2000 |
++
++Normal and large retain the original width/cycle parameters. Smoke reduces
++FAST's 2000 cycles to sixteen, using its exact header and trace prefix. Every
++trace result is compared character by character with the original full output:
++1093 bytes for smoke, 132037 for normal/large. The stable report gives width,
++cycles and checked characters. Buffer each bounded formatted row before lazy
++character assembly, replacing repetitive stdout with exact validation.
++
++Count variants preserve runMult's sum of the first requested ready bits. The
++original and independent model give three for smoke and 222 for normal/large.
++The report gives width, cycles and that validated sum. The source count consumer's
++limited demand is intentional and differs from the full trace contract. The
++driver rejects nonpositive widths and bounds selected cycles to 2000, making
++the original valid-input precondition explicit rather than entering its empty
++wide-gate recursion on zero width.
++
++### Correctness and recorded scope
++
++Unmodified GHC 9.4.7 matches every supplied FAST/NORM/SLOW fixture. Export-only
++observers expose complete traces and count results at eight width/cycle choices.
++An independent masked shift/add state machine matches all those original outputs,
++including small-width truncation and all published 2000-cycle profiles.
++
++The 56-check target covers five small original traces/counts under both policies,
++truth tables, unary/binary strictness, non-short-circuit AND, latch delay, lazy
++word callbacks/tails, spine-only length, zero-width adder demand, signed 64-bit
++wrap, incorrect output, memoization and the count consumer's unforced product.
++Native host checks and canonical matrices are recorded separately. Earlier
++recursive-forcing failures and snapshots are translation-development evidence,
++not compiler bugs. Full normal trace pilots match original text under resource
++guards; final canonical source identities remain distinct from older pilots.
++Full SML large traces are unrecorded unless explicitly listed in validation.
++
++### Literature and diagnostic questions
++
++[O'Donnell's research bibliography](https://www.dcs.gla.ac.uk/~jtod/research/)
++lists Hardware description with recursion equations (1987), providing functional
++circuit-simulation context. It is not an exact specification of this benchmark.
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) supplies suite
++context. The pinned program defines the actual circuit and strictness points.
++
++Investigate higher-order gate specialization, memoized feedback, bit-stream
++allocation, carry propagation, wide-gate traversal and the consumer's forcing.
++These are source-based diagnostic questions. Original/model agreement and demand
++controls establish recorded behavior; allocation or timing differences alone do
++not identify a compiler or collector cause.
++
++## multiplier-count-strict
++
++### Algorithm and workload
++
++Simulate the source binary shift/add multiplier as streams of bit signals.
++Preserve combinational gates, balanced wide gates, full-adder carry chains,
++word multiplexors, latches, shifting registers and the ready-driven input
++interface. Inputs are the infinite pairs (2+3*i,11+2*i), starting at i=1,
++truncated to the selected input width. The product register has twice that
++width. Do not replace the bit-level circuit with arithmetic multiplication.
++
++### History, authorship and consumers
++
++[John T. O'Donnell's July 1992 multiplier source](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/multiplier/Main.hs), University
++of Glasgow, is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. Preserve the
++Copyright (c) 1992 header and original Main/Makefile/fixtures under
++multiplier-lazy/upstream. No separate individual redistribution grant is stated.
++This is a sequential functional stream simulation; no hardware or parallel
++runtime is required.
++
++The active go function selects verbose traceMult. Its inactive runMult driver
++instead sums the ready signal and prints the count. Preserve that materially
++different consumer as multiplier-count-lazy/strict, with a supplementary source
++inventory entry. It does not demand the product register/adder; source inspection
++and a pending-product test establish that boundary. It is a ready/control-path
++workload, not a claim to force the complete product calculation. Generic component
++utilities without a selected simulation driver remain in the original snapshot;
++they are support code rather than additional executable workloads.
++
++### Evaluation and translation
++
++-lazy preserves the active source lift21: its two input spines are matched but
++its output bit is delayed. -strict adds output-head forcing at that binary
++combinator, corresponding to the source's commented strict alternative. Both
++retain source headstrict on unary and three-/four-input lifting. Truth-table
++gates inspect both input bits; AND/OR are not replaced by short-circuit boolean
++operators. The source forceBit predicate and strictness points remain explicit.
++
++Use memoized bit and word spines, paired adder outputs and the original mutually
++recursive signals. Word combinators delay both tail access and wire arguments;
++forcing either while constructing a future word node creates an invalid circular
++demand. wideGate's length traverses only outer spines. Carry-chain matching and
++zero-width adder base-case demand follow the source. The independent clock model
++is a correctness oracle and is not the measured circuit implementation.
++
++Word-to-integer display uses modular Word64 accumulation and signed conversion,
++preserving the source's 64-bit Int behavior for long bit vectors. The fixed
++input generator, cycle counters and observed register values fit signed 31-bit
++integers in the selected profiles. Preserve explicit wire widths even where
++leading zeros make the output identical across widths. Numeric validation is
++exact; no floating-point tolerance applies.
++
++### Inputs and profiles
++
++| Profile | Input bit width | Clock cycles |
++|---|---:|---:|
++| Smoke | 32 | 16 |
++| Normal | 256 | 2000 |
++| Large | 512 | 2000 |
++
++Normal and large retain the original width/cycle parameters. Smoke reduces
++FAST's 2000 cycles to sixteen, using its exact header and trace prefix. Every
++trace result is compared character by character with the original full output:
++1093 bytes for smoke, 132037 for normal/large. The stable report gives width,
++cycles and checked characters. Buffer each bounded formatted row before lazy
++character assembly, replacing repetitive stdout with exact validation.
++
++Count variants preserve runMult's sum of the first requested ready bits. The
++original and independent model give three for smoke and 222 for normal/large.
++The report gives width, cycles and that validated sum. The source count consumer's
++limited demand is intentional and differs from the full trace contract. The
++driver rejects nonpositive widths and bounds selected cycles to 2000, making
++the original valid-input precondition explicit rather than entering its empty
++wide-gate recursion on zero width.
++
++### Correctness and recorded scope
++
++Unmodified GHC 9.4.7 matches every supplied FAST/NORM/SLOW fixture. Export-only
++observers expose complete traces and count results at eight width/cycle choices.
++An independent masked shift/add state machine matches all those original outputs,
++including small-width truncation and all published 2000-cycle profiles.
++
++The 56-check target covers five small original traces/counts under both policies,
++truth tables, unary/binary strictness, non-short-circuit AND, latch delay, lazy
++word callbacks/tails, spine-only length, zero-width adder demand, signed 64-bit
++wrap, incorrect output, memoization and the count consumer's unforced product.
++Native host checks and canonical matrices are recorded separately. Earlier
++recursive-forcing failures and snapshots are translation-development evidence,
++not compiler bugs. Full normal trace pilots match original text under resource
++guards; final canonical source identities remain distinct from older pilots.
++Full SML large traces are unrecorded unless explicitly listed in validation.
++
++### Literature and diagnostic questions
++
++[O'Donnell's research bibliography](https://www.dcs.gla.ac.uk/~jtod/research/)
++lists Hardware description with recursion equations (1987), providing functional
++circuit-simulation context. It is not an exact specification of this benchmark.
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) supplies suite
++context. The pinned program defines the actual circuit and strictness points.
++
++Investigate higher-order gate specialization, memoized feedback, bit-stream
++allocation, carry propagation, wide-gate traversal and the consumer's forcing.
++These are source-based diagnostic questions. Original/model agreement and demand
++controls establish recorded behavior; allocation or timing differences alone do
++not identify a compiler or collector cause.
+diff --git a/examples/benchmarks/inventory.tsv b/examples/benchmarks/inventory.tsv
+index 077c9e0c..9f53dc3d 100644
+--- a/examples/benchmarks/inventory.tsv
++++ b/examples/benchmarks/inventory.tsv
+@@ -627,7 +627,7 @@ nofib	spectral/cse	cse	cse	M3	import	kernel		not stated in scanned source header
+ nofib	spectral/dom-lt	dom-lt	dom-lt	M3	import	application		not stated in scanned source headers	a57dfb8d506ec26451ee4fbc400a65baa6b4ca57e9929a0b10da1f0859385de0	spectral/dom-lt/Dom.hs;spectral/dom-lt/Main.hs	spectral/dom-lt/dom-lt.faststdout;spectral/dom-lt/dom-lt.slowstdout;spectral/dom-lt/dom-lt.stdout;spectral/dom-lt/ghc-examples.in	spectral/dom-lt/Dom.hs:header	spectral/dom-lt/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/eliza	eliza	eliza	M3	import	kernel		not stated in scanned source headers	371aff2ffa2e38b65ad6340b9994b1c8e7615ce1b5985e9e9a757f5922a21309	spectral/eliza/Main.hs	spectral/eliza/eliza.faststdout;spectral/eliza/eliza.slowstdout;spectral/eliza/eliza.stdin;spectral/eliza/eliza.stdout		spectral/eliza/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/exact-reals	exact-reals	exact-reals	M3	import	integer-arithmetic		David Lester	e0adfd0a7cbe5beb68562bfd5396f5ac886968481c69d7c6540957772bf1a1c3	spectral/exact-reals/Main.hs	spectral/exact-reals/exact-reals.stdout		spectral/exact-reals/Main.hs:paper-attribution;spectral/exact-reals/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	spectral/expert	expert	expert	M3	import	application		not stated in scanned source headers	7980aaeaf37783fb72671dc2be4ac2bc1019cc696d7020ddfdd70dec6ec599bb	spectral/expert/Knowledge.hs;spectral/expert/Main.hs;spectral/expert/Match.hs;spectral/expert/Result.hs;spectral/expert/Search.hs;spectral/expert/Table.hs	spectral/expert/expert.faststdout;spectral/expert/expert.slowstdout;spectral/expert/expert.stdin;spectral/expert/expert.stdout;spectral/expert/runtime_files/animals	spectral/expert/README:header	spectral/expert/Makefile;spectral/expert/README	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	spectral/expert	expert	expert	M3	import	application		Ian Holyer	7980aaeaf37783fb72671dc2be4ac2bc1019cc696d7020ddfdd70dec6ec599bb	spectral/expert/Knowledge.hs;spectral/expert/Main.hs;spectral/expert/Match.hs;spectral/expert/Result.hs;spectral/expert/Search.hs;spectral/expert/Table.hs	spectral/expert/expert.faststdout;spectral/expert/expert.slowstdout;spectral/expert/expert.stdin;spectral/expert/expert.stdout;spectral/expert/runtime_files/animals	spectral/expert/README:header	spectral/expert/Makefile;spectral/expert/README;spectral/expert/README:authorship-and-adaptation-heading	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/fft2	fft2	fft2	M3	import	numerical		Rex Page	06a7d5f0e9b649234a3ef2ab749138d15e7b537c72d4fc75791e8202aa410c65	spectral/fft2/Complex_Vectors.lhs;spectral/fft2/Fourier.lhs;spectral/fft2/Main.lhs;spectral/fft2/fft.c	spectral/fft2/fft2.stdout;spectral/fft2/old/fft2.slowstdout;spectral/fft2/old/fft2.stdout		spectral/fft2/Main.lhs:author-header;spectral/fft2/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/fft2/old	old	old	-	exclude	kernel		not stated in scanned source headers	e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855				spectral/fft2/old/Makefile	aggregate, support directory, or old source fragment without a standalone Main entrypoint
+ nofib	spectral/fibheaps	fibheaps	fibheaps-nofib	M3	import	calls-recursion	nofib:gc/fibheaps	not stated in scanned source headers	03e81472c734a535c08620bfd9923e951b25afad278f8df40a099d8c3bd87a28	spectral/fibheaps/Main.lhs		spectral/fibheaps/Main.lhs:header	spectral/fibheaps/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+@@ -659,7 +659,7 @@ nofib	spectral/mandel	mandel	mandel	M3	import	numerical	nofib:parallel/mandel	no
+ nofib	spectral/mandel2	mandel2	mandel2	M3	import	numerical		not stated in scanned source headers	cb73824f8e275065462d30d4084c246bfebb21f9b1661c23c311b9c8ceabc6d1	spectral/mandel2/Main.hs;spectral/mandel2/NofibUtils.hs			spectral/mandel2/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/mate	mate	mate	M3	import	kernel		not stated in scanned source headers	82375c77c35542a2eea499bef40b963614253068f0a12823ad0ecc4b46217857	spectral/mate/Board.hs;spectral/mate/Main.hs;spectral/mate/Move.hs;spectral/mate/Problem.hs;spectral/mate/Solution.hs	spectral/mate/mate.faststdout;spectral/mate/mate.slowstdout;spectral/mate/mate.stdout;spectral/mate/runtime_files/heathcote3.prob;spectral/mate/runtime_files/holzhausen.prob;spectral/mate/runtime_files/kohtz.prob		spectral/mate/Makefile;spectral/mate/README	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/minimax	minimax	minimax-nofib	M3	import	symbolic-search	nofib:parallel/minimax;smlnj:programs/minimax	not stated in scanned source headers	efe234c33e6eab0b9d6e5273dc8abc96c55f6367e2bb3ca7fa688ee4c815e0e6	spectral/minimax/Board.hs;spectral/minimax/Game.hs;spectral/minimax/Main.hs;spectral/minimax/Prog.hs;spectral/minimax/Tree.hs;spectral/minimax/Wins.hs			spectral/minimax/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	spectral/multiplier	multiplier	multiplier	M3	import	kernel		not stated in scanned source headers	90e874aa93dd491d263367d8edc31f7209b0993a9e31c156a672bba7b1b6e9a1	spectral/multiplier/Main.hs	spectral/multiplier/multiplier.faststdout;spectral/multiplier/multiplier.slowstdout;spectral/multiplier/multiplier.stdout	spectral/multiplier/Main.hs:header	spectral/multiplier/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	spectral/multiplier	multiplier	multiplier	M3	import	kernel		John T. O'Donnell	90e874aa93dd491d263367d8edc31f7209b0993a9e31c156a672bba7b1b6e9a1	spectral/multiplier/Main.hs	spectral/multiplier/multiplier.faststdout;spectral/multiplier/multiplier.slowstdout;spectral/multiplier/multiplier.stdout	spectral/multiplier/Main.hs:header	spectral/multiplier/Main.hs:author-and-copyright-heading;spectral/multiplier/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/para	para	para	M3	import	application		Jeremy Gibbons;Oege de Moor	2c9525a59278dfae1c4f7df3d2fad20797ff29427db7d347fbca187d64a4ab17	spectral/para/Main.lhs;spectral/para/c++/Para.h;spectral/para/c++/Queue.h;spectral/para/c++/Thin.h	spectral/para/runtime_files/input-data	spectral/para/runtime_files/input-data:Project-Gutenberg-1993-notice	spectral/para/Main.lhs:author-heading;spectral/para/Makefile;spectral/para/runtime_files/input-data:individual-dataset-notice	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/power	power	power-nofib	M3	import	integer-arithmetic	nofib:gc/power	not stated in scanned source headers	f1843f7270f6850c2830355484fe4b6a064174fdfa4e9b3732f19e6daaad1a8c	spectral/power/Main.hs			spectral/power/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/pretty	pretty	pretty	M3	import	integer-arithmetic		not stated in scanned source headers	0b3e89f295c950d26e0c23e197b9c22f04515939fd5549a74e29e12febdea1f0	spectral/pretty/CharSeq.hs;spectral/pretty/Main.hs;spectral/pretty/Pretty.hs	spectral/pretty/pretty.stdout		spectral/pretty/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+@@ -684,7 +684,7 @@ sandmark	benchmarks/benchmarksgame/knucleotide3.exe	knucleotide3	knucleotide3	M5
+ sandmark	benchmarks/benchmarksgame/mandelbrot6.exe	mandelbrot6	mandelbrot6	M5	import	numerical		Paolo Ribeca	2ea12e3b55c654ad840c03717569ea7ef7580549e85df2b6acc495857aadd2ca	benchmarks/benchmarksgame/dune;benchmarks/benchmarksgame/mandelbrot6.ml		LICENSE.md;benchmarks/benchmarksgame/LICENSE	benchmarks/benchmarksgame/README.md;benchmarks/benchmarksgame/dune;multicore_parallel_navajo_run_config.json;multicore_parallel_run_config.json;run_config.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ sandmark	benchmarks/benchmarksgame/nbody.exe	nbody	nbody-sandmark	M5	import	numerical	nofib:parallel/nbody;sandmark:benchmarks/multicore-numerical/nbody.exe;smlnj:programs/nbody	Troestler Christophe	4c19f9c87a9f6c69660351a1990ac943ec26624592d8c13c73d57c989f0ffd94	benchmarks/benchmarksgame/dune;benchmarks/benchmarksgame/nbody.ml		LICENSE.md;benchmarks/benchmarksgame/LICENSE	benchmarks/benchmarksgame/README.md;benchmarks/benchmarksgame/dune;run_config.json;run_config_byte.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ sandmark	benchmarks/benchmarksgame/pidigits5.exe	pidigits5	pidigits5	M5	import	integer-arithmetic		Christophe TROESTLER	a34b0b5d75e09fd63178e496937ebfcd31d387d20a76bb7218b88c0aa5ae6a71	benchmarks/benchmarksgame/dune;benchmarks/benchmarksgame/pidigits5.ml		LICENSE.md;benchmarks/benchmarksgame/LICENSE	benchmarks/benchmarksgame/README.md;benchmarks/benchmarksgame/dune;run_config.json;run_config_byte.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-sandmark	benchmarks/benchmarksgame/regexredux2.exe	regexredux2	regexredux2	M5	import	kernel		Christophe TROESTLER	4f208c23bf92edc987781c3e5b2ee86956dbf24cdc636ad1b79f017163b19a04	benchmarks/benchmarksgame/dune;benchmarks/benchmarksgame/regexredux2.ml		LICENSE.md;benchmarks/benchmarksgame/LICENSE	benchmarks/benchmarksgame/README.md;benchmarks/benchmarksgame/dune;run_config.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++sandmark	benchmarks/benchmarksgame/regexredux2.exe	regexredux2	regexredux2	M5	import	kernel		Christophe TROESTLER;Roman Kashitsyn	4f208c23bf92edc987781c3e5b2ee86956dbf24cdc636ad1b79f017163b19a04	benchmarks/benchmarksgame/dune;benchmarks/benchmarksgame/regexredux2.ml		LICENSE.md;benchmarks/benchmarksgame/LICENSE	benchmarks/benchmarksgame/README.md;benchmarks/benchmarksgame/dune;benchmarks/benchmarksgame/regexredux2.ml:Bytes-adaptation-credit;run_config.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ sandmark	benchmarks/benchmarksgame/revcomp2.exe	revcomp2	revcomp2	M5	import	lists-streams		Ingo Bormuth <ibormuth@efil.de>	aebd479838d2d5fc33222d7f7a0c56243139bd516c20c9d210d12eb7337d665b	benchmarks/benchmarksgame/dune;benchmarks/benchmarksgame/revcomp2.ml		LICENSE.md;benchmarks/benchmarksgame/LICENSE	benchmarks/benchmarksgame/README.md;benchmarks/benchmarksgame/dune;run_config.json;run_config_byte.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ sandmark	benchmarks/benchmarksgame/spectralnorm2.exe	spectralnorm2	spectralnorm2	M5	import	kernel		Sebastien Loisel	ed75de47336eb039e418fb30c21978228da8c4cb842d1a568ccd3e32699a84a7	benchmarks/benchmarksgame/dune;benchmarks/benchmarksgame/spectralnorm2.ml		LICENSE.md;benchmarks/benchmarksgame/LICENSE	benchmarks/benchmarksgame/README.md;benchmarks/benchmarksgame/dune;multicore_parallel_navajo_run_config.json;multicore_parallel_run_config.json;run_config.json;run_config_byte.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ sandmark	benchmarks/chameneos/chameneos_redux_lwt.exe	chameneos_redux_lwt	chameneos_redux_lwt	M5	defer	kernel		Milan Stanojevic, Jul 12 2009	e103b26c2ad0873000493ee6afedce0bc6a9c8b41c0ed34c3568259183a0f685	benchmarks/chameneos/chameneos_redux_lwt.ml;benchmarks/chameneos/dune		LICENSE.md	benchmarks/chameneos/dune;run_config.json;run_config_byte.json	source uses OCaml-specific effects, concurrency, GC/weak-reference introspection, unsafe objects or C bindings; reconsider with equivalent runtime facilities
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 84be6b59..89472976 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -1137,3 +1137,24 @@ mate-lazy	large	nofib	spectral/mate	runtime_files/holzhausen.prob large.solution
+ mate-strict	smoke	nofib	spectral/mate	runtime_files/simple.prob smoke.solution	mate-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-mate-board.sml,shared/nofib-mate-move.sml,shared/nofib-mate-solution.sml,mate-strict/benchmark.sml,shared/main.sml	30	1048576	search,graphs,lists-streams,strict	runtime_files/simple.prob,smoke.solution	exact	implemented
+ mate-strict	normal	nofib	spectral/mate	runtime_files/kohtz.prob normal.solution	mate-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-mate-board.sml,shared/nofib-mate-move.sml,shared/nofib-mate-solution.sml,mate-strict/benchmark.sml,shared/main.sml	600	4194304	search,graphs,lists-streams,strict	runtime_files/kohtz.prob,normal.solution	exact	implemented
+ mate-strict	large	nofib	spectral/mate	runtime_files/holzhausen.prob large.solution	mate-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-mate-board.sml,shared/nofib-mate-move.sml,shared/nofib-mate-solution.sml,mate-strict/benchmark.sml,shared/main.sml	3600	8388608	search,graphs,lists-streams,strict	runtime_files/holzhausen.prob,large.solution	exact	implemented
++expert-lazy	smoke	nofib	spectral/expert	1 animals.txt answers.txt dialog.txt	expert-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-expert-table.sml,shared/nofib-expert-phrase.sml,shared/nofib-expert-program.sml,shared/nofib-expert-driver.sml,expert-lazy/benchmark.sml,shared/main.sml	30	1048576	symbolic,search,graphs,lists-streams,lazy	animals.txt,answers.txt,dialog.txt	exact	implemented
++expert-lazy	normal	nofib	spectral/expert	10000 animals.txt answers.txt dialog.txt	expert-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-expert-table.sml,shared/nofib-expert-phrase.sml,shared/nofib-expert-program.sml,shared/nofib-expert-driver.sml,expert-lazy/benchmark.sml,shared/main.sml	600	4194304	symbolic,search,graphs,lists-streams,lazy	animals.txt,answers.txt,dialog.txt	exact	implemented
++expert-lazy	large	nofib	spectral/expert	50000 animals.txt answers.txt dialog.txt	expert-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-expert-table.sml,shared/nofib-expert-phrase.sml,shared/nofib-expert-program.sml,shared/nofib-expert-driver.sml,expert-lazy/benchmark.sml,shared/main.sml	3600	8388608	symbolic,search,graphs,lists-streams,lazy	animals.txt,answers.txt,dialog.txt	exact	implemented
++expert-strict	smoke	nofib	spectral/expert	1 animals.txt answers.txt dialog.txt	expert-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-expert-table.sml,shared/nofib-expert-phrase.sml,shared/nofib-expert-program.sml,shared/nofib-expert-driver.sml,expert-strict/benchmark.sml,shared/main.sml	30	1048576	symbolic,search,graphs,lists-streams,strict	animals.txt,answers.txt,dialog.txt	exact	implemented
++expert-strict	normal	nofib	spectral/expert	10000 animals.txt answers.txt dialog.txt	expert-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-expert-table.sml,shared/nofib-expert-phrase.sml,shared/nofib-expert-program.sml,shared/nofib-expert-driver.sml,expert-strict/benchmark.sml,shared/main.sml	600	4194304	symbolic,search,graphs,lists-streams,strict	animals.txt,answers.txt,dialog.txt	exact	implemented
++expert-strict	large	nofib	spectral/expert	50000 animals.txt answers.txt dialog.txt	expert-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-expert-table.sml,shared/nofib-expert-phrase.sml,shared/nofib-expert-program.sml,shared/nofib-expert-driver.sml,expert-strict/benchmark.sml,shared/main.sml	3600	8388608	symbolic,search,graphs,lists-streams,strict	animals.txt,answers.txt,dialog.txt	exact	implemented
++regexredux2	smoke	sandmark	benchmarks/benchmarksgame/regexredux2.exe	smoke.fasta smoke.output	regexredux2/smoke.expected	shared/input.sml,shared/sandmark-regexredux-str.sml,shared/sandmark-regexredux2.sml,regexredux2/benchmark.sml,shared/main.sml	30	1048576	strings,search,dna	smoke.fasta,smoke.output	exact	implemented
++regexredux2	normal	sandmark	benchmarks/benchmarksgame/regexredux2.exe	normal.fasta normal.output	regexredux2/normal.expected	shared/input.sml,shared/sandmark-regexredux-str.sml,shared/sandmark-regexredux2.sml,regexredux2/benchmark.sml,shared/main.sml	600	4194304	strings,search,dna	normal.fasta,normal.output	exact	implemented
++regexredux2	large	sandmark	benchmarks/benchmarksgame/regexredux2.exe	large.fasta large.output	regexredux2/large.expected	shared/input.sml,shared/sandmark-regexredux-str.sml,shared/sandmark-regexredux2.sml,regexredux2/benchmark.sml,shared/main.sml	3600	8388608	strings,search,dna	large.fasta,large.output	exact	implemented
++multiplier-lazy	smoke	nofib	spectral/multiplier	32 16 smoke.trace	multiplier-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-multiplier-kernel.sml,shared/nofib-multiplier-driver.sml,multiplier-lazy/benchmark.sml,shared/main.sml	30	1048576	circuits,higher-order,lists-streams,word64,lazy	smoke.trace	exact	implemented
++multiplier-lazy	normal	nofib	spectral/multiplier	256 2000 normal.trace	multiplier-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-multiplier-kernel.sml,shared/nofib-multiplier-driver.sml,multiplier-lazy/benchmark.sml,shared/main.sml	600	4194304	circuits,higher-order,lists-streams,word64,lazy	normal.trace	exact	implemented
++multiplier-lazy	large	nofib	spectral/multiplier	512 2000 large.trace	multiplier-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-multiplier-kernel.sml,shared/nofib-multiplier-driver.sml,multiplier-lazy/benchmark.sml,shared/main.sml	3600	8388608	circuits,higher-order,lists-streams,word64,lazy	large.trace	exact	implemented
++multiplier-strict	smoke	nofib	spectral/multiplier	32 16 smoke.trace	multiplier-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-multiplier-kernel.sml,shared/nofib-multiplier-driver.sml,multiplier-strict/benchmark.sml,shared/main.sml	30	1048576	circuits,higher-order,lists-streams,word64,strict	smoke.trace	exact	implemented
++multiplier-strict	normal	nofib	spectral/multiplier	256 2000 normal.trace	multiplier-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-multiplier-kernel.sml,shared/nofib-multiplier-driver.sml,multiplier-strict/benchmark.sml,shared/main.sml	600	4194304	circuits,higher-order,lists-streams,word64,strict	normal.trace	exact	implemented
++multiplier-strict	large	nofib	spectral/multiplier	512 2000 large.trace	multiplier-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-multiplier-kernel.sml,shared/nofib-multiplier-driver.sml,multiplier-strict/benchmark.sml,shared/main.sml	3600	8388608	circuits,higher-order,lists-streams,word64,strict	large.trace	exact	implemented
++multiplier-count-lazy	smoke	nofib	spectral/multiplier	32 16 smoke.count	multiplier-count-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-multiplier-kernel.sml,shared/nofib-multiplier-driver.sml,multiplier-count-lazy/benchmark.sml,shared/main.sml	30	1048576	circuits,higher-order,lists-streams,word64,lazy	smoke.count	exact	implemented
++multiplier-count-lazy	normal	nofib	spectral/multiplier	256 2000 normal.count	multiplier-count-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-multiplier-kernel.sml,shared/nofib-multiplier-driver.sml,multiplier-count-lazy/benchmark.sml,shared/main.sml	600	4194304	circuits,higher-order,lists-streams,word64,lazy	normal.count	exact	implemented
++multiplier-count-lazy	large	nofib	spectral/multiplier	512 2000 large.count	multiplier-count-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-multiplier-kernel.sml,shared/nofib-multiplier-driver.sml,multiplier-count-lazy/benchmark.sml,shared/main.sml	3600	8388608	circuits,higher-order,lists-streams,word64,lazy	large.count	exact	implemented
++multiplier-count-strict	smoke	nofib	spectral/multiplier	32 16 smoke.count	multiplier-count-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-multiplier-kernel.sml,shared/nofib-multiplier-driver.sml,multiplier-count-strict/benchmark.sml,shared/main.sml	30	1048576	circuits,higher-order,lists-streams,word64,strict	smoke.count	exact	implemented
++multiplier-count-strict	normal	nofib	spectral/multiplier	256 2000 normal.count	multiplier-count-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-multiplier-kernel.sml,shared/nofib-multiplier-driver.sml,multiplier-count-strict/benchmark.sml,shared/main.sml	600	4194304	circuits,higher-order,lists-streams,word64,strict	normal.count	exact	implemented
++multiplier-count-strict	large	nofib	spectral/multiplier	512 2000 large.count	multiplier-count-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-multiplier-kernel.sml,shared/nofib-multiplier-driver.sml,multiplier-count-strict/benchmark.sml,shared/main.sml	3600	8388608	circuits,higher-order,lists-streams,word64,strict	large.count	exact	implemented
+diff --git a/examples/benchmarks/source-variants.tsv b/examples/benchmarks/source-variants.tsv
+index 8441a960..4b2f6aa0 100644
+--- a/examples/benchmarks/source-variants.tsv
++++ b/examples/benchmarks/source-variants.tsv
+@@ -26,3 +26,4 @@ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/para	spectral/para/c++/p
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	gc/linear	gc/linear/Input.lhs	gc-linear-gcomp-data	Haskell	documented inactive reservoir-data mode	Roger L. Wainwright;Dan Vasicek	fcce6ad751b041adcf6321fe5f13d5647c1b27fc411c7142833cdb4e4343931c	defer	reservoir readers return literal abc and referenced Data/gcomp.mat*.one/.twoa/.twob/.twoc/.three/.four/.soln/.well fixtures are absent; reconsider with deterministically versioned/licensed datasets and a reviewed reader; default executable uses generated hard_data	individual source credit headers retained; no separate dataset notice or dataset files supplied
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/linear	real/linear/Input.lhs	real-linear-gcomp-data	Haskell	documented inactive reservoir-data mode	Roger L. Wainwright;Dan Vasicek	fcce6ad751b041adcf6321fe5f13d5647c1b27fc411c7142833cdb4e4343931c	defer	reservoir readers return literal abc and referenced Data/gcomp.mat*.one/.twoa/.twob/.twoc/.three/.four/.soln/.well fixtures are absent; reconsider with deterministically versioned/licensed datasets and a reviewed reader; default executable uses generated hard_data	individual source credit headers retained; no separate dataset notice or dataset files supplied
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/knights	spectral/knights/ChessSetArray.lhs	knights-array	Haskell	inactive persistent-array board representation	Jonathan Hill (program README)	c0383ed40d3127220ea53671ecb1ea1c9e302ba78775caf19a0fd50b500ab905	import	ported as knights-array-lazy/strict with immutable boxed arrays; original renderer logTen 1 base loops at zero; one-line formatting repair logTen 0 is reviewed against an adapted original, with bounded failing-original evidence; retain distinct layout, deletion metadata and indexTile quirk	no separate individual redistribution grant stated; retain original module, README and bibliography
++nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/multiplier	spectral/multiplier/Main.hs	multiplier-count	Haskell	inactive count-only simulation driver	John T. O'Donnell	a92974cefa647671a21b441e9affb21afd7ae3208a38de603b161931c4e96489	import	ported separately as multiplier-count-lazy/strict; runMult sums ready without observing product registers, so its demand excludes the product adder; preserve this source consumer and all provenance rather than silently replacing verbose traceMult	Copyright (c) 1992 John T. O'Donnell; full original notice retained
+diff --git a/scripts/benchmark-inventory.py b/scripts/benchmark-inventory.py
+index b4961487..55971349 100644
+--- a/scripts/benchmark-inventory.py
++++ b/scripts/benchmark-inventory.py
+@@ -588,6 +588,27 @@ def build(source, root, lock):
+                     "This is a Haskell port of the Id version from the Impala" in header):
+                 authors.add("David J. King")
+                 item["evidence"].append("spectral/sphere/Main.lhs:authorship-and-port-history")
++        if source == "nofib" and path == "spectral/multiplier":
++            main = parent / "Main.hs"
++            if main.is_file():
++                heading = main.read_text(errors="replace")
++                if ("-- John O'Donnell, University of Glasgow. jtod@dcs.glasgow.ac.uk" in heading
++                        and "-- Copyright (c) 1992 by John T. O'Donnell" in heading):
++                    authors.add("John T. O'Donnell")
++                    item["evidence"].append("spectral/multiplier/Main.hs:author-and-copyright-heading")
++        if source == "sandmark" and path == "benchmarks/benchmarksgame/regexredux2.exe":
++            main = parent / "regexredux2.ml"
++            if main.is_file():
++                heading = main.read_text(errors="replace")
++                if ("regex-dna program contributed by Christophe TROESTLER" in heading
++                        and "updated by Roman Kashitsyn: use Bytes instead of String" in heading):
++                    authors.add("Roman Kashitsyn")
++                    item["evidence"].append("benchmarks/benchmarksgame/regexredux2.ml:Bytes-adaptation-credit")
++        if source == "nofib" and path == "spectral/expert":
++            readme = parent / "README"
++            if readme.is_file() and "Ian Holyer\nMarch 1993" in readme.read_text(errors="replace"):
++                authors.add("Ian Holyer")
++                item["evidence"].append("spectral/expert/README:authorship-and-adaptation-heading")
+         if source == "nofib" and path == "spectral/knights":
+             readme = parent / "README"
+             if readme.is_file() and "The Knights Tour in Haskell\n---------------------------\n\nJonathan Hill\n" in readme.read_text(errors="replace"):
+diff --git a/tests/benchmarks/test-inventory.py b/tests/benchmarks/test-inventory.py
+index 7573f49f..3c799250 100644
+--- a/tests/benchmarks/test-inventory.py
++++ b/tests/benchmarks/test-inventory.py
+@@ -228,6 +228,48 @@ class InventoryTest(unittest.TestCase):
+                   "% Crown Copyright 1992\n\\author{Another author\\\\\n\n> main = print 0\n")
+         self.assertNotIn("N. D. North", self.build("nofib")[0]["authors"])
+ 
++    def test_multiplier_author_and_copyright_are_recorded(self):
++        self.nofib_roots()
++        self.file("spectral/multiplier/Makefile", "\n")
++        self.file("spectral/multiplier/Main.hs", "-- John O'Donnell, University of Glasgow. jtod@dcs.glasgow.ac.uk\n-- Copyright (c) 1992 by John T. O'Donnell\nmain = print 0\n")
++        row = self.build("nofib")[0]
++        self.assertIn("John T. O'Donnell", row["authors"])
++        self.assertIn("spectral/multiplier/Main.hs:author-and-copyright-heading", row["evidence"])
++
++    def test_changed_multiplier_author_requires_review(self):
++        self.nofib_roots()
++        self.file("spectral/multiplier/Makefile", "\n")
++        self.file("spectral/multiplier/Main.hs", "-- Another multiplier author\nmain = print 0\n")
++        self.assertNotIn("John T. O'Donnell", self.build("nofib")[0]["authors"])
++
++    def test_regexredux_bytes_adaptation_credit_is_recorded(self):
++        self.file("benchmarks/benchmarksgame/dune", "(executable (name regexredux2))\n")
++        self.file("benchmarks/benchmarksgame/regexredux2.ml", "(* regex-dna program contributed by Christophe TROESTLER\nupdated by Roman Kashitsyn: use Bytes instead of String *)\nlet () = ()\n")
++        row = self.build("sandmark")[0]
++        self.assertIn("Roman Kashitsyn", row["authors"])
++        self.assertIn("benchmarks/benchmarksgame/regexredux2.ml:Bytes-adaptation-credit", row["evidence"])
++
++    def test_changed_regexredux_adaptation_credit_requires_review(self):
++        self.file("benchmarks/benchmarksgame/dune", "(executable (name regexredux2))\n")
++        self.file("benchmarks/benchmarksgame/regexredux2.ml", "(* Another regex adaptation *)\nlet () = ()\n")
++        self.assertNotIn("Roman Kashitsyn", self.build("sandmark")[0]["authors"])
++
++    def test_expert_readme_author_is_recorded(self):
++        self.nofib_roots()
++        self.file("spectral/expert/Makefile", "\n")
++        self.file("spectral/expert/Main.hs", "main = print 0\n")
++        self.file("spectral/expert/README", "Ian Holyer\nMarch 1993\n")
++        row = self.build("nofib")[0]
++        self.assertIn("Ian Holyer", row["authors"])
++        self.assertIn("spectral/expert/README:authorship-and-adaptation-heading", row["evidence"])
++
++    def test_changed_expert_readme_credit_requires_review(self):
++        self.nofib_roots()
++        self.file("spectral/expert/Makefile", "\n")
++        self.file("spectral/expert/Main.hs", "main = print 0\n")
++        self.file("spectral/expert/README", "Another adaptation\n")
++        self.assertNotIn("Ian Holyer", self.build("nofib")[0]["authors"])
++
+     def test_knights_readme_author_is_recorded(self):
+         self.nofib_roots()
+         self.file("spectral/knights/Makefile", "\n")

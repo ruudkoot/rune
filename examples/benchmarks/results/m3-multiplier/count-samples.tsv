@@ -1,0 +1,17 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+multiplier-lazy	normal	rune	O2	count	1	1	pass	40.17	40.16	0.05	35724	4807849598	12841520000	374553042	counts/measurement.WEYo33/multiplier-lazy/rune/fresh.1
+multiplier-lazy	normal	rune:opt	O2	count	1	1	pass	20.83	20.73	0.05	36352	4807849598	12841520000	374553042	counts/measurement.WEYo33/multiplier-lazy/rune-opt/fresh.1
+multiplier-lazy	normal	rune:new	O2	count	1	1	pass	37.25	35.72	1.55	1051636	2876574838	12841520000	374553042	counts/measurement.WEYo33/multiplier-lazy/rune-new/fresh.1
+multiplier-lazy	normal	rune:jit	O2	count	1	1	pass	27.56	25.47	2.06	1053372	2876574838	12841520000	374553042	counts/measurement.WEYo33/multiplier-lazy/rune-jit/fresh.1
+multiplier-strict	normal	rune	O2	count	1	1	pass	33.56	33.47	0.08	35672	4999162367	12841520112	374553042	counts/measurement.b0Eh0b/multiplier-strict/rune/fresh.1
+multiplier-strict	normal	rune:opt	O2	count	1	1	pass	20.73	20.61	0.06	36156	4999162367	12841520112	374553042	counts/measurement.b0Eh0b/multiplier-strict/rune-opt/fresh.1
+multiplier-strict	normal	rune:new	O2	count	1	1	pass	40.58	39.44	1.18	1051716	2980927262	12841520112	374553042	counts/measurement.b0Eh0b/multiplier-strict/rune-new/fresh.1
+multiplier-strict	normal	rune:jit	O2	count	1	1	pass	22.75	21.53	1.15	1053392	2980927262	12841520112	374553042	counts/measurement.b0Eh0b/multiplier-strict/rune-jit/fresh.1
+multiplier-count-lazy	normal	rune	O2	count	1	1	pass	16.07	14.73	1.31	1050552	1798051172	5176370544	151144838	counts/measurement.3XyJdt/multiplier-count-lazy/rune/fresh.1
+multiplier-count-lazy	normal	rune:opt	O2	count	1	1	pass	10.59	8.84	1.67	1051260	1798051172	5176370544	151144838	counts/measurement.3XyJdt/multiplier-count-lazy/rune-opt/fresh.1
+multiplier-count-lazy	normal	rune:new	O2	count	1	1	pass	14.67	13.21	1.35	1050868	1085372803	5176370544	151144838	counts/measurement.3XyJdt/multiplier-count-lazy/rune-new/fresh.1
+multiplier-count-lazy	normal	rune:jit	O2	count	1	1	pass	9.37	8.05	1.39	1052160	1085372803	5176370544	151144838	counts/measurement.3XyJdt/multiplier-count-lazy/rune-jit/fresh.1
+multiplier-count-strict	normal	rune	O2	count	1	1	pass	14.07	12.94	1.21	1050812	1865587860	5176370544	151144838	counts/measurement.mf8qUS/multiplier-count-strict/rune/fresh.1
+multiplier-count-strict	normal	rune:opt	O2	count	1	1	pass	8.13	6.95	1.19	1051308	1865587860	5176370544	151144838	counts/measurement.mf8qUS/multiplier-count-strict/rune-opt/fresh.1
+multiplier-count-strict	normal	rune:new	O2	count	1	1	pass	13.48	12.27	1.16	1050768	1122211001	5176370544	151144838	counts/measurement.mf8qUS/multiplier-count-strict/rune-new/fresh.1
+multiplier-count-strict	normal	rune:jit	O2	count	1	1	pass	8.30	7.16	1.15	1052040	1122211001	5176370544	151144838	counts/measurement.mf8qUS/multiplier-count-strict/rune-jit/fresh.1

@@ -228,6 +228,48 @@ class InventoryTest(unittest.TestCase):
                   "% Crown Copyright 1992\n\\author{Another author\\\\\n\n> main = print 0\n")
         self.assertNotIn("N. D. North", self.build("nofib")[0]["authors"])
 
+    def test_multiplier_author_and_copyright_are_recorded(self):
+        self.nofib_roots()
+        self.file("spectral/multiplier/Makefile", "\n")
+        self.file("spectral/multiplier/Main.hs", "-- John O'Donnell, University of Glasgow. jtod@dcs.glasgow.ac.uk\n-- Copyright (c) 1992 by John T. O'Donnell\nmain = print 0\n")
+        row = self.build("nofib")[0]
+        self.assertIn("John T. O'Donnell", row["authors"])
+        self.assertIn("spectral/multiplier/Main.hs:author-and-copyright-heading", row["evidence"])
+
+    def test_changed_multiplier_author_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/multiplier/Makefile", "\n")
+        self.file("spectral/multiplier/Main.hs", "-- Another multiplier author\nmain = print 0\n")
+        self.assertNotIn("John T. O'Donnell", self.build("nofib")[0]["authors"])
+
+    def test_regexredux_bytes_adaptation_credit_is_recorded(self):
+        self.file("benchmarks/benchmarksgame/dune", "(executable (name regexredux2))\n")
+        self.file("benchmarks/benchmarksgame/regexredux2.ml", "(* regex-dna program contributed by Christophe TROESTLER\nupdated by Roman Kashitsyn: use Bytes instead of String *)\nlet () = ()\n")
+        row = self.build("sandmark")[0]
+        self.assertIn("Roman Kashitsyn", row["authors"])
+        self.assertIn("benchmarks/benchmarksgame/regexredux2.ml:Bytes-adaptation-credit", row["evidence"])
+
+    def test_changed_regexredux_adaptation_credit_requires_review(self):
+        self.file("benchmarks/benchmarksgame/dune", "(executable (name regexredux2))\n")
+        self.file("benchmarks/benchmarksgame/regexredux2.ml", "(* Another regex adaptation *)\nlet () = ()\n")
+        self.assertNotIn("Roman Kashitsyn", self.build("sandmark")[0]["authors"])
+
+    def test_expert_readme_author_is_recorded(self):
+        self.nofib_roots()
+        self.file("spectral/expert/Makefile", "\n")
+        self.file("spectral/expert/Main.hs", "main = print 0\n")
+        self.file("spectral/expert/README", "Ian Holyer\nMarch 1993\n")
+        row = self.build("nofib")[0]
+        self.assertIn("Ian Holyer", row["authors"])
+        self.assertIn("spectral/expert/README:authorship-and-adaptation-heading", row["evidence"])
+
+    def test_changed_expert_readme_credit_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/expert/Makefile", "\n")
+        self.file("spectral/expert/Main.hs", "main = print 0\n")
+        self.file("spectral/expert/README", "Another adaptation\n")
+        self.assertNotIn("Ian Holyer", self.build("nofib")[0]["authors"])
+
     def test_knights_readme_author_is_recorded(self):
         self.nofib_roots()
         self.file("spectral/knights/Makefile", "\n")

@@ -1,0 +1,124 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/regexredux2-originals/regex.sml]
+structure BenchRegexReduxStr : sig
+  datatype atom
+    = Any
+    | Class of bool * char list
+    | Finish
+    | Literal of char
+    | Repeat of atom
+    | Start
+  type regexp = atom list list
+  val compile : string -> atom list list
+  val matchesChar : bool -> atom -> char -> bool
+  val match : bool -> atom list list -> string -> int -> int option
+  val search : bool -> atom list list -> string -> int -> (int * int) option
+  val count : atom list list -> string -> int
+  val replace : atom list list -> string -> string -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/regexredux2-originals/program.sml]
+[autoloading]
+[autoloading done]
+structure BenchRegexRedux2 : sig
+  structure R : <sig>
+  val variants : string list
+  val substitutions : (string * string) list
+  val displayPattern : string -> string
+  val calculate : string -> string
+  val read : string -> TextIO.vector
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/regexredux2-originals/tests.sml]
+PASS regexredux2/original Str overlap
+PASS regexredux2/original Str alternative-left
+PASS regexredux2/original Str alternative-right
+PASS regexredux2/original Str greedy
+PASS regexredux2/original Str backtracking
+PASS regexredux2/original Str line-anchors
+PASS regexredux2/original Str tags
+PASS regexredux2/original Str pipes
+PASS regexredux2/original Str folded-class
+PASS regexredux2/original Str class-exclusion
+PASS regexredux2/original Str no-match
+PASS regexredux2/original Str finish-eof
+PASS regexredux2/original program empty
+PASS regexredux2/original program mixed-case
+PASS regexredux2/original program adjacent-tags
+PASS regexredux2/original program unterminated-header
+PASS regexredux2/original program overlapping-motifs
+PASS regexredux2/original smoke FASTA
+PASS regexredux2/wrong output rejected
+PASS regexredux2/negative search index rejected
+PASS regexredux2/literal pipe is distinct from escaped alternation
+PASS regexredux2/malformed class rejected
+PASS regexredux2/empty replacement match rejected
+structure RegexReduxTests : sig
+  structure R : <sig>
+  structure B : <sig>
+  val base : string
+  val label : string -> string
+  val read : string -> TextIO.vector
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 23 checks, 0 failed

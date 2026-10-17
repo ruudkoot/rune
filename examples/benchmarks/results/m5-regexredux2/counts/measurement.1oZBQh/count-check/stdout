@@ -1,0 +1,5 @@
+COUNT unbudgeted regexredux2 normal rune
+COUNT unbudgeted regexredux2 normal rune:opt
+COUNT unbudgeted regexredux2 normal rune:new
+COUNT unbudgeted regexredux2 normal rune:jit
+COUNT comparisons agree

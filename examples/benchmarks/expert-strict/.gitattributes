@@ -1,0 +1,2 @@
+upstream/** -text -whitespace
+dialog.txt -text -whitespace

@@ -1,0 +1,17 @@
+cases/1-16.count
+cases/1-16.trace
+cases/2-32.count
+cases/2-32.trace
+cases/256-2000.count
+cases/256-2000.trace
+cases/32-16.count
+cases/32-16.trace
+cases/32-2000.count
+cases/32-2000.trace
+cases/4-32.count
+cases/4-32.trace
+cases/512-2000.count
+cases/512-2000.trace
+cases/8-64.count
+cases/8-64.trace
+smoke-short.trace

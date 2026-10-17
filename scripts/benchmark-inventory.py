@@ -588,6 +588,27 @@ def build(source, root, lock):
                     "This is a Haskell port of the Id version from the Impala" in header):
                 authors.add("David J. King")
                 item["evidence"].append("spectral/sphere/Main.lhs:authorship-and-port-history")
+        if source == "nofib" and path == "spectral/multiplier":
+            main = parent / "Main.hs"
+            if main.is_file():
+                heading = main.read_text(errors="replace")
+                if ("-- John O'Donnell, University of Glasgow. jtod@dcs.glasgow.ac.uk" in heading
+                        and "-- Copyright (c) 1992 by John T. O'Donnell" in heading):
+                    authors.add("John T. O'Donnell")
+                    item["evidence"].append("spectral/multiplier/Main.hs:author-and-copyright-heading")
+        if source == "sandmark" and path == "benchmarks/benchmarksgame/regexredux2.exe":
+            main = parent / "regexredux2.ml"
+            if main.is_file():
+                heading = main.read_text(errors="replace")
+                if ("regex-dna program contributed by Christophe TROESTLER" in heading
+                        and "updated by Roman Kashitsyn: use Bytes instead of String" in heading):
+                    authors.add("Roman Kashitsyn")
+                    item["evidence"].append("benchmarks/benchmarksgame/regexredux2.ml:Bytes-adaptation-credit")
+        if source == "nofib" and path == "spectral/expert":
+            readme = parent / "README"
+            if readme.is_file() and "Ian Holyer\nMarch 1993" in readme.read_text(errors="replace"):
+                authors.add("Ian Holyer")
+                item["evidence"].append("spectral/expert/README:authorship-and-adaptation-heading")
         if source == "nofib" and path == "spectral/knights":
             readme = parent / "README"
             if readme.is_file() and "The Knights Tour in Haskell\n---------------------------\n\nJonathan Hill\n" in readme.read_text(errors="replace"):

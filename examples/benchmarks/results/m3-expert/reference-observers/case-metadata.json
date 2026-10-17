@@ -1,0 +1,32 @@
+[
+  {
+    "name": "source",
+    "exit_code": 0,
+    "bytes": 526
+  },
+  {
+    "name": "lower-no",
+    "exit_code": 0,
+    "bytes": 273
+  },
+  {
+    "name": "uppercase-no",
+    "exit_code": 0,
+    "bytes": 729
+  },
+  {
+    "name": "all-yes",
+    "exit_code": 0,
+    "bytes": 729
+  },
+  {
+    "name": "stop-first",
+    "exit_code": 0,
+    "bytes": 133
+  },
+  {
+    "name": "mixed",
+    "exit_code": 0,
+    "bytes": 171
+  }
+]

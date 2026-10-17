@@ -1,0 +1,26 @@
+{
+  "ocaml": "4.14.1",
+  "runs": [
+    {
+      "profile": "smoke",
+      "fasta_parameter": 100,
+      "bytes": 1095,
+      "original_result_bytes": 259,
+      "elapsed_seconds": 0.0034207639982923865
+    },
+    {
+      "profile": "normal",
+      "fasta_parameter": 50000,
+      "bytes": 508411,
+      "original_result_bytes": 274,
+      "elapsed_seconds": 0.14773343299748376
+    },
+    {
+      "profile": "large",
+      "fasta_parameter": 500000,
+      "bytes": 5083411,
+      "original_result_bytes": 286,
+      "elapsed_seconds": 1.6926051170448773
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+COUNT unbudgeted multiplier-lazy normal rune
+COUNT unbudgeted multiplier-lazy normal rune:opt
+COUNT unbudgeted multiplier-lazy normal rune:new
+COUNT unbudgeted multiplier-lazy normal rune:jit
+COUNT comparisons agree

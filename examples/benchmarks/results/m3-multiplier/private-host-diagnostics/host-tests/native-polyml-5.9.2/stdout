@@ -1,0 +1,55 @@
+PASS multiplier/lazy/original and independent trace 1
+PASS multiplier/lazy/original and independent trace 2
+PASS multiplier/lazy/original and independent trace 4
+PASS multiplier/lazy/original and independent trace 8
+PASS multiplier/lazy/original and independent trace 32
+PASS multiplier/lazy/original ready count 1
+PASS multiplier/lazy/original ready count 2
+PASS multiplier/lazy/original ready count 4
+PASS multiplier/lazy/original ready count 8
+PASS multiplier/lazy/original ready count 32
+PASS multiplier/lazy/both-input AND truth table
+PASS multiplier/lazy/OR truth table
+PASS multiplier/lazy/XOR truth table
+PASS multiplier/lazy/inverter truth table
+PASS multiplier/lazy/source unary headstrict
+PASS multiplier/lazy/binary head policy
+PASS multiplier/lazy/AND does not short circuit zero input
+PASS multiplier/lazy/latch output precedes input
+PASS multiplier/lazy/word combinator tail keeps arguments delayed
+PASS multiplier/lazy/wide gate length does not force signal constructors
+PASS multiplier/lazy/zero-width adder leaves operands unused
+PASS multiplier/lazy/signed 64-bit conversion wraps
+PASS multiplier/lazy/trace consumer
+PASS multiplier/lazy/count consumer
+PASS multiplier/lazy/incorrect trace rejected
+PASS multiplier/lazy/incorrect count rejected
+PASS multiplier/lazy/memoized wire head
+PASS multiplier/strict/original and independent trace 1
+PASS multiplier/strict/original and independent trace 2
+PASS multiplier/strict/original and independent trace 4
+PASS multiplier/strict/original and independent trace 8
+PASS multiplier/strict/original and independent trace 32
+PASS multiplier/strict/original ready count 1
+PASS multiplier/strict/original ready count 2
+PASS multiplier/strict/original ready count 4
+PASS multiplier/strict/original ready count 8
+PASS multiplier/strict/original ready count 32
+PASS multiplier/strict/both-input AND truth table
+PASS multiplier/strict/OR truth table
+PASS multiplier/strict/XOR truth table
+PASS multiplier/strict/inverter truth table
+PASS multiplier/strict/source unary headstrict
+PASS multiplier/strict/binary head policy
+PASS multiplier/strict/AND does not short circuit zero input
+PASS multiplier/strict/latch output precedes input
+PASS multiplier/strict/word combinator tail keeps arguments delayed
+PASS multiplier/strict/wide gate length does not force signal constructors
+PASS multiplier/strict/zero-width adder leaves operands unused
+PASS multiplier/strict/signed 64-bit conversion wraps
+PASS multiplier/strict/trace consumer
+PASS multiplier/strict/count consumer
+PASS multiplier/strict/incorrect trace rejected
+PASS multiplier/strict/incorrect count rejected
+PASS multiplier/strict/memoized wire head
+SUMMARY 54 checks, 0 failed

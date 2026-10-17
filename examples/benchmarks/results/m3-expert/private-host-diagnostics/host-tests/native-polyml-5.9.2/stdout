@@ -1,0 +1,43 @@
+PASS expert/lazy/original dialog source
+PASS expert/lazy/original dialog lower-no
+PASS expert/lazy/original dialog uppercase-no
+PASS expert/lazy/original dialog all-yes
+PASS expert/lazy/original dialog stop-first
+PASS expert/lazy/original dialog mixed
+PASS expert/lazy/lazy table first duplicate wins
+PASS expert/lazy/updateList last new duplicate wins
+PASS expert/lazy/single update replaces value
+PASS expert/lazy/enter retains old value
+PASS expert/lazy/lookup avoids unused table branch
+PASS expert/lazy/unification and substitution
+PASS expert/lazy/occurs check rejects self reference
+PASS expert/lazy/term mismatch fails
+PASS expert/lazy/source zip truncates unmatched phrase arity
+PASS expert/lazy/question precedes missing answer
+PASS expert/lazy/lookup only when answer demanded
+PASS expert/lazy/unused answer stream remains unforced
+PASS expert/lazy/driver repeats source prefix and dialog
+PASS expert/lazy/zero repetitions
+PASS expert/lazy/incorrect dialog rejected
+PASS expert/strict/original dialog source
+PASS expert/strict/original dialog lower-no
+PASS expert/strict/original dialog uppercase-no
+PASS expert/strict/original dialog all-yes
+PASS expert/strict/original dialog stop-first
+PASS expert/strict/original dialog mixed
+PASS expert/strict/lazy table first duplicate wins
+PASS expert/strict/updateList last new duplicate wins
+PASS expert/strict/single update replaces value
+PASS expert/strict/enter retains old value
+PASS expert/strict/lookup avoids unused table branch
+PASS expert/strict/unification and substitution
+PASS expert/strict/occurs check rejects self reference
+PASS expert/strict/term mismatch fails
+PASS expert/strict/source zip truncates unmatched phrase arity
+PASS expert/strict/question precedes missing answer
+PASS expert/strict/lookup only when answer demanded
+PASS expert/strict/unused answer stream remains unforced
+PASS expert/strict/driver repeats source prefix and dialog
+PASS expert/strict/zero repetitions
+PASS expert/strict/incorrect dialog rejected
+SUMMARY 42 checks, 0 failed

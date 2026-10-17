@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+expert-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	6.17	4.85	1.09	662948	-	-	-	expert-lazy/native-mlton/build/compile
+expert-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2268	-	-	-	expert-lazy/native-mlton/correctness.0
+expert-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2316	-	-	-	expert-lazy/native-mlton/fresh.1
+expert-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	1.05	0.97	0.07	34928	-	-	-	expert-lazy/native-smlnj-legacy/build/compile
+expert-lazy	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.02	0.01	0.01	4256	-	-	-	expert-lazy/native-smlnj-legacy/correctness.0
+expert-lazy	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.02	0.01	0.01	4164	-	-	-	expert-lazy/native-smlnj-legacy/fresh.1
+expert-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.55	0.37	0.13	47456	-	-	-	expert-lazy/native-polyml/build/compile
+expert-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.01	0.00	0.00	5960	-	-	-	expert-lazy/native-polyml/correctness.0
+expert-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	5960	-	-	-	expert-lazy/native-polyml/fresh.1

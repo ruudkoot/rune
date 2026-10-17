@@ -1,0 +1,20 @@
+[
+  {
+    "profile": "smoke",
+    "repetitions": 1,
+    "expected_length": 526,
+    "elapsed_seconds": 0.01610967901069671
+  },
+  {
+    "profile": "normal",
+    "repetitions": 10000,
+    "expected_length": 526,
+    "elapsed_seconds": 1.6094636369962245
+  },
+  {
+    "profile": "large",
+    "repetitions": 50000,
+    "expected_length": 526,
+    "elapsed_seconds": 8.239989549969323
+  }
+]

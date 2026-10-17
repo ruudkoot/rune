@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+multiplier-count-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	5.74	4.34	1.27	666712	-	-	-	multiplier-count-strict/native-mlton/build/compile
+multiplier-count-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	3000	-	-	-	multiplier-count-strict/native-mlton/correctness.0
+multiplier-count-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	3028	-	-	-	multiplier-count-strict/native-mlton/fresh.1
+multiplier-count-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	1.01	0.94	0.07	39644	-	-	-	multiplier-count-strict/native-smlnj-legacy/build/compile
+multiplier-count-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.02	0.01	0.00	5740	-	-	-	multiplier-count-strict/native-smlnj-legacy/correctness.0
+multiplier-count-strict	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.01	0.00	5740	-	-	-	multiplier-count-strict/native-smlnj-legacy/fresh.1
+multiplier-count-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.40	0.24	0.06	42564	-	-	-	multiplier-count-strict/native-polyml/build/compile
+multiplier-count-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	9164	-	-	-	multiplier-count-strict/native-polyml/correctness.0
+multiplier-count-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.01	0.00	0.00	9252	-	-	-	multiplier-count-strict/native-polyml/fresh.1

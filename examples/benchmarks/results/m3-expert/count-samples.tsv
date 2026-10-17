@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+expert-lazy	normal	rune	O2	count	1	1	pass	15.48	15.54	0.02	10388	2484829442	7033173280	219821408	counts/measurement.ZZQQP3/expert-lazy/rune/fresh.1
+expert-lazy	normal	rune:opt	O2	count	1	1	pass	6.92	6.86	0.03	11180	2484829442	7033173280	219821408	counts/measurement.ZZQQP3/expert-lazy/rune-opt/fresh.1
+expert-lazy	normal	rune:new	O2	count	1	1	pass	17.43	17.28	0.03	10560	1479531795	7033173280	219821408	counts/measurement.ZZQQP3/expert-lazy/rune-new/fresh.1
+expert-lazy	normal	rune:jit	O2	count	1	1	pass	6.67	6.69	0.03	12132	1479531795	7033173280	219821408	counts/measurement.ZZQQP3/expert-lazy/rune-jit/fresh.1
+expert-strict	normal	rune	O2	count	1	1	pass	18.65	18.62	0.00	10408	2863859474	8050053296	252911408	counts/measurement.bUdVD6/expert-strict/rune/fresh.1
+expert-strict	normal	rune:opt	O2	count	1	1	pass	7.77	7.79	0.02	11088	2863859474	8050053296	252911408	counts/measurement.bUdVD6/expert-strict/rune-opt/fresh.1
+expert-strict	normal	rune:new	O2	count	1	1	pass	15.55	15.59	0.02	10624	1704631817	8050053296	252911408	counts/measurement.bUdVD6/expert-strict/rune-new/fresh.1
+expert-strict	normal	rune:jit	O2	count	1	1	pass	6.82	6.71	0.03	12180	1704631817	8050053296	252911408	counts/measurement.bUdVD6/expert-strict/rune-jit/fresh.1

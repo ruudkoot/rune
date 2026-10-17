@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+regexredux2	smoke	native:mlton@20241230	O2	compile	0	0	pass	5.37	4.02	1.19	673500	-	-	-	regexredux2/native-mlton/build/compile
+regexredux2	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2184	-	-	-	regexredux2/native-mlton/correctness.0
+regexredux2	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2176	-	-	-	regexredux2/native-mlton/fresh.1
+regexredux2	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.18	0.15	0.03	35400	-	-	-	regexredux2/native-smlnj-legacy/build/compile
+regexredux2	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.00	0.01	3900	-	-	-	regexredux2/native-smlnj-legacy/correctness.0
+regexredux2	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.01	0.00	4020	-	-	-	regexredux2/native-smlnj-legacy/fresh.1
+regexredux2	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.29	0.09	0.08	29992	-	-	-	regexredux2/native-polyml/build/compile
+regexredux2	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	5500	-	-	-	regexredux2/native-polyml/correctness.0
+regexredux2	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	5580	-	-	-	regexredux2/native-polyml/fresh.1

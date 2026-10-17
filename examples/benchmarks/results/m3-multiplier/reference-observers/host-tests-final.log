@@ -1,0 +1,1774 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS multiplier/lazy/original and independent trace 1
+PASS multiplier/lazy/original and independent trace 2
+PASS multiplier/lazy/original and independent trace 4
+PASS multiplier/lazy/original and independent trace 8
+PASS multiplier/lazy/original and independent trace 32
+PASS multiplier/lazy/original ready count 1
+PASS multiplier/lazy/original ready count 2
+PASS multiplier/lazy/original ready count 4
+PASS multiplier/lazy/original ready count 8
+PASS multiplier/lazy/original ready count 32
+PASS multiplier/lazy/both-input AND truth table
+PASS multiplier/lazy/OR truth table
+PASS multiplier/lazy/XOR truth table
+PASS multiplier/lazy/inverter truth table
+PASS multiplier/lazy/source unary headstrict
+PASS multiplier/lazy/binary head policy
+PASS multiplier/lazy/AND does not short circuit zero input
+PASS multiplier/lazy/latch output precedes input
+PASS multiplier/lazy/word combinator tail keeps arguments delayed
+PASS multiplier/lazy/wide gate length does not force signal constructors
+PASS multiplier/lazy/zero-width adder leaves operands unused
+PASS multiplier/lazy/signed 64-bit conversion wraps
+PASS multiplier/lazy/trace consumer
+PASS multiplier/lazy/count consumer
+PASS multiplier/lazy/incorrect trace rejected
+PASS multiplier/lazy/incorrect count rejected
+PASS multiplier/lazy/ready-only consumer leaves product undemanded
+PASS multiplier/lazy/memoized wire head
+PASS multiplier/strict/original and independent trace 1
+PASS multiplier/strict/original and independent trace 2
+PASS multiplier/strict/original and independent trace 4
+PASS multiplier/strict/original and independent trace 8
+PASS multiplier/strict/original and independent trace 32
+PASS multiplier/strict/original ready count 1
+PASS multiplier/strict/original ready count 2
+PASS multiplier/strict/original ready count 4
+PASS multiplier/strict/original ready count 8
+PASS multiplier/strict/original ready count 32
+PASS multiplier/strict/both-input AND truth table
+PASS multiplier/strict/OR truth table
+PASS multiplier/strict/XOR truth table
+PASS multiplier/strict/inverter truth table
+PASS multiplier/strict/source unary headstrict
+PASS multiplier/strict/binary head policy
+PASS multiplier/strict/AND does not short circuit zero input
+PASS multiplier/strict/latch output precedes input
+PASS multiplier/strict/word combinator tail keeps arguments delayed
+PASS multiplier/strict/wide gate length does not force signal constructors
+PASS multiplier/strict/zero-width adder leaves operands unused
+PASS multiplier/strict/signed 64-bit conversion wraps
+PASS multiplier/strict/trace consumer
+PASS multiplier/strict/count consumer
+PASS multiplier/strict/incorrect trace rejected
+PASS multiplier/strict/incorrect count rejected
+PASS multiplier/strict/ready-only consumer leaves product undemanded
+PASS multiplier/strict/memoized wire head
+SUMMARY 56 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/multiplier-originals/kernel.sml]
+functor BenchMultiplierFn(P: sig
+  val eagerBinary : bool
+end) :
+sig
+  structure L : <sig>
+  structure S : <sig>
+  type bit
+  type word
+  val constant : 'a -> 'a BenchStream.node BenchLazy.state ref
+  val zero : int BenchStream.node BenchLazy.state ref
+  val one : int BenchStream.node BenchLazy.state ref
+  val latch :
+      int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref
+  val forceBit : int -> bool
+  val headstrict :
+      ('a -> 'b)
+       -> 'a BenchStream.node BenchLazy.state ref
+       -> 'a BenchStream.node BenchLazy.state ref
+  val lift11 :
+      ('a -> 'b)
+       -> ('c -> 'a)
+       -> 'c BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val lift21 :
+      ('a -> 'b)
+       -> ('c -> 'd -> 'a)
+       -> 'c BenchStream.node BenchLazy.delay
+       -> 'd BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val lift31 :
+      ('a -> 'b)
+       -> ('c -> 'd -> 'e -> 'a)
+       -> 'c BenchStream.node BenchLazy.delay
+       -> 'd BenchStream.node BenchLazy.delay
+       -> 'e BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val lift41 :
+      ('a -> 'b)
+       -> ('c -> 'd -> 'e -> 'f -> 'a)
+       -> 'c BenchStream.node BenchLazy.delay
+       -> 'd BenchStream.node BenchLazy.delay
+       -> 'e BenchStream.node BenchLazy.delay
+       -> 'f BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val bit1 : (int -> 'a) -> int -> 'a
+  val bit2 : (int * int -> 'a) -> int -> int -> 'a
+  val inv :
+      int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+  val and2 :
+      int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+  val nand2 :
+      int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+  val or2 :
+      int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+  val nor2 :
+      int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+  val xor :
+      int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+  val or3 :
+      int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+  val bmux1 :
+      int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+  val word11 :
+      int
+       -> ('a BenchLazy.state ref -> 'b)
+       -> 'a BenchLazy.state ref BenchStream.node BenchLazy.state ref
+       -> 'b BenchStream.node BenchLazy.state ref
+  val word21 :
+      int
+       -> ('a BenchLazy.state ref -> 'b BenchLazy.state ref -> 'c)
+       -> 'a BenchLazy.state ref BenchStream.node BenchLazy.state ref
+       -> 'b BenchLazy.state ref BenchStream.node BenchLazy.state ref
+       -> 'c BenchStream.node BenchLazy.state ref
+  val word31 :
+      int
+       -> ('a BenchLazy.state ref
+        -> 'b BenchLazy.state ref -> 'c BenchLazy.state ref -> 'd)
+       -> 'a BenchLazy.state ref BenchStream.node BenchLazy.state ref
+       -> 'b BenchLazy.state ref BenchStream.node BenchLazy.state ref
+       -> 'c BenchLazy.state ref BenchStream.node BenchLazy.state ref
+       -> 'd BenchStream.node BenchLazy.state ref
+  val wmux1 :
+      int
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+       -> int BenchStream.node BenchLazy.delay BenchStream.node 
+           BenchLazy.state ref
+  val wlat :
+      int
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+         BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+         BenchLazy.delay
+  val rept : int -> 'a -> 'a BenchStream.node BenchLazy.delay
+  val take :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val drop :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.state ref
+  val length : 'a BenchStream.node BenchLazy.delay -> int
+  val wideGate :
+      ('a BenchLazy.state ref
+        -> 'a BenchLazy.state ref -> 'a BenchLazy.state ref)
+       -> 'a BenchLazy.state ref BenchStream.node BenchLazy.delay
+       -> 'a BenchLazy.state ref
+  val wideAnd :
+      int BenchStream.node BenchLazy.state ref BenchStream.node 
+         BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref
+  val wideOr :
+      int BenchStream.node BenchLazy.state ref BenchStream.node 
+         BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref
+  val wideNand :
+      int BenchStream.node BenchLazy.state ref BenchStream.node 
+         BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref
+  val wideNor :
+      int BenchStream.node BenchLazy.state ref BenchStream.node 
+         BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref
+  val regIs0 :
+      'a
+       -> int BenchStream.node BenchLazy.delay BenchStream.node 
+         BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref
+  val shl :
+      'a
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+         BenchLazy.delay
+  val shr :
+      int
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+         BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+  val halfadd :
+      int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       * int BenchStream.node BenchLazy.delay
+  val fulladd :
+      int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       * int BenchStream.node BenchLazy.delay
+  val add :
+      int
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+         BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+         BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref
+       -> int BenchStream.node BenchLazy.state ref
+       * int BenchStream.node BenchLazy.delay BenchStream.node BenchLazy.state 
+         ref
+  val ibits : int -> int -> int BenchStream.node BenchLazy.delay
+  val ntrans :
+      int
+       -> 'a BenchStream.node BenchLazy.delay BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay BenchStream.node BenchLazy.delay
+  val gated :
+      int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref
+       -> int BenchStream.node BenchLazy.delay
+  val multiplier :
+      int
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+       -> int BenchStream.node BenchLazy.delay
+       * int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+       * int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+       * int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+  val multsys :
+      int
+       -> (int * int) BenchStream.stream
+       -> int BenchStream.node BenchLazy.delay BenchStream.node 
+         BenchLazy.delay
+       * int BenchStream.node BenchLazy.delay BenchStream.node BenchLazy.delay
+       * int BenchStream.node BenchLazy.delay
+       * int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+       * int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+       * int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+  val trans :
+      'a BenchStream.node BenchLazy.state ref BenchStream.node BenchLazy.state 
+         ref
+       -> 'a BenchStream.node BenchLazy.delay BenchStream.node BenchLazy.delay
+  val bitsi : int BenchStream.node BenchLazy.delay -> Word64.word
+  val intrep :
+      int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+       -> Word64.word BenchStream.node BenchLazy.delay
+  val signed : Word64.word -> string
+  val dec : int -> string -> string
+  val fmtW :
+      int
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+       -> string BenchStream.node BenchLazy.delay
+  val fmtB :
+      int BenchStream.node BenchLazy.delay
+       -> string BenchStream.node BenchLazy.delay
+  val fmtStr : 'a -> 'a BenchStream.node BenchLazy.state ref
+  val inputs : int -> (int * int) BenchStream.node BenchLazy.state ref
+  val indexes : int -> int BenchStream.node BenchLazy.state ref
+  val trace : int -> int -> char BenchStream.node BenchLazy.delay
+  val runMult : int -> int -> (int * int) BenchStream.stream -> int
+  val readyCount : int -> int -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/multiplier-originals/driver.sml]
+[autoloading]
+[autoloading done]
+functor BenchMultiplierDriverFn(P: sig
+  val trace : int -> int -> char BenchStream.stream
+  val readyCount : int -> int -> int
+end) :
+sig
+  val read : string -> TextIO.vector
+  val consume : string -> char BenchStream.node BenchLazy.delay -> int
+  val run : string list -> string
+  val runCount : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/multiplier-originals/tests.sml]
+PASS multiplier/lazy/original and independent trace 1
+PASS multiplier/lazy/original and independent trace 2
+PASS multiplier/lazy/original and independent trace 4
+PASS multiplier/lazy/original and independent trace 8
+PASS multiplier/lazy/original and independent trace 32
+PASS multiplier/lazy/original ready count 1
+PASS multiplier/lazy/original ready count 2
+PASS multiplier/lazy/original ready count 4
+PASS multiplier/lazy/original ready count 8
+PASS multiplier/lazy/original ready count 32
+PASS multiplier/lazy/both-input AND truth table
+PASS multiplier/lazy/OR truth table
+PASS multiplier/lazy/XOR truth table
+PASS multiplier/lazy/inverter truth table
+PASS multiplier/lazy/source unary headstrict
+PASS multiplier/lazy/binary head policy
+PASS multiplier/lazy/AND does not short circuit zero input
+PASS multiplier/lazy/latch output precedes input
+PASS multiplier/lazy/word combinator tail keeps arguments delayed
+PASS multiplier/lazy/wide gate length does not force signal constructors
+PASS multiplier/lazy/zero-width adder leaves operands unused
+PASS multiplier/lazy/signed 64-bit conversion wraps
+PASS multiplier/lazy/trace consumer
+PASS multiplier/lazy/count consumer
+PASS multiplier/lazy/incorrect trace rejected
+PASS multiplier/lazy/incorrect count rejected
+PASS multiplier/lazy/ready-only consumer leaves product undemanded
+PASS multiplier/lazy/memoized wire head
+PASS multiplier/strict/original and independent trace 1
+PASS multiplier/strict/original and independent trace 2
+PASS multiplier/strict/original and independent trace 4
+PASS multiplier/strict/original and independent trace 8
+PASS multiplier/strict/original and independent trace 32
+PASS multiplier/strict/original ready count 1
+PASS multiplier/strict/original ready count 2
+PASS multiplier/strict/original ready count 4
+PASS multiplier/strict/original ready count 8
+PASS multiplier/strict/original ready count 32
+PASS multiplier/strict/both-input AND truth table
+PASS multiplier/strict/OR truth table
+PASS multiplier/strict/XOR truth table
+PASS multiplier/strict/inverter truth table
+PASS multiplier/strict/source unary headstrict
+PASS multiplier/strict/binary head policy
+PASS multiplier/strict/AND does not short circuit zero input
+PASS multiplier/strict/latch output precedes input
+PASS multiplier/strict/word combinator tail keeps arguments delayed
+PASS multiplier/strict/wide gate length does not force signal constructors
+PASS multiplier/strict/zero-width adder leaves operands unused
+PASS multiplier/strict/signed 64-bit conversion wraps
+PASS multiplier/strict/trace consumer
+PASS multiplier/strict/count consumer
+PASS multiplier/strict/incorrect trace rejected
+PASS multiplier/strict/incorrect count rejected
+PASS multiplier/strict/ready-only consumer leaves product undemanded
+PASS multiplier/strict/memoized wire head
+functor MultiplierTestsFn(P: sig
+  val eagerBinary : bool
+  val policy : string
+end) :
+sig
+  structure K : <sig>
+  structure Driver : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  val base : string
+  val label : string -> string
+  val read : string -> TextIO.vector
+  val render : char BenchStream.node BenchLazy.delay -> string
+  val bits : 'a list -> 'a BenchStream.node BenchLazy.delay
+  val poison : unit -> int BenchStream.node BenchLazy.state ref
+end
+structure LazyMultiplierTests : sig
+  structure K : <sig>
+  structure Driver : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  val base : string
+  val label : string -> string
+  val read : string -> TextIO.vector
+  val render : char BenchStream.node BenchLazy.delay -> string
+  val bits : 'a list -> 'a BenchStream.node BenchLazy.delay
+  val poison : unit -> int BenchStream.node BenchLazy.state ref
+end
+structure StrictMultiplierTests : sig
+  structure K : <sig>
+  structure Driver : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  val base : string
+  val label : string -> string
+  val read : string -> TextIO.vector
+  val render : char BenchStream.node BenchLazy.delay -> string
+  val bits : 'a list -> 'a BenchStream.node BenchLazy.delay
+  val poison : unit -> int BenchStream.node BenchLazy.state ref
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 56 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/multiplier-originals/kernel.sml]
+functor BenchMultiplierFn(P: sig
+  val eagerBinary : bool
+end) :
+sig
+  structure L : <sig>
+  structure S : <sig>
+  type bit
+  type word
+  val constant : 'a -> 'a BenchStream.node BenchLazy.state ref
+  val zero : int BenchStream.node BenchLazy.state ref
+  val one : int BenchStream.node BenchLazy.state ref
+  val latch :
+      int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref
+  val forceBit : int -> bool
+  val headstrict :
+      ('a -> 'b)
+       -> 'a BenchStream.node BenchLazy.state ref
+       -> 'a BenchStream.node BenchLazy.state ref
+  val lift11 :
+      ('a -> 'b)
+       -> ('c -> 'a)
+       -> 'c BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val lift21 :
+      ('a -> 'b)
+       -> ('c -> 'd -> 'a)
+       -> 'c BenchStream.node BenchLazy.delay
+       -> 'd BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val lift31 :
+      ('a -> 'b)
+       -> ('c -> 'd -> 'e -> 'a)
+       -> 'c BenchStream.node BenchLazy.delay
+       -> 'd BenchStream.node BenchLazy.delay
+       -> 'e BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val lift41 :
+      ('a -> 'b)
+       -> ('c -> 'd -> 'e -> 'f -> 'a)
+       -> 'c BenchStream.node BenchLazy.delay
+       -> 'd BenchStream.node BenchLazy.delay
+       -> 'e BenchStream.node BenchLazy.delay
+       -> 'f BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val bit1 : (int -> 'a) -> int -> 'a
+  val bit2 : (int * int -> 'a) -> int -> int -> 'a
+  val inv :
+      int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+  val and2 :
+      int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+  val nand2 :
+      int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+  val or2 :
+      int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+  val nor2 :
+      int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+  val xor :
+      int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+  val or3 :
+      int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+  val bmux1 :
+      int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+  val word11 :
+      int
+       -> ('a BenchLazy.state ref -> 'b)
+       -> 'a BenchLazy.state ref BenchStream.node BenchLazy.state ref
+       -> 'b BenchStream.node BenchLazy.state ref
+  val word21 :
+      int
+       -> ('a BenchLazy.state ref -> 'b BenchLazy.state ref -> 'c)
+       -> 'a BenchLazy.state ref BenchStream.node BenchLazy.state ref
+       -> 'b BenchLazy.state ref BenchStream.node BenchLazy.state ref
+       -> 'c BenchStream.node BenchLazy.state ref
+  val word31 :
+      int
+       -> ('a BenchLazy.state ref
+        -> 'b BenchLazy.state ref -> 'c BenchLazy.state ref -> 'd)
+       -> 'a BenchLazy.state ref BenchStream.node BenchLazy.state ref
+       -> 'b BenchLazy.state ref BenchStream.node BenchLazy.state ref
+       -> 'c BenchLazy.state ref BenchStream.node BenchLazy.state ref
+       -> 'd BenchStream.node BenchLazy.state ref
+  val wmux1 :
+      int
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+       -> int BenchStream.node BenchLazy.delay BenchStream.node 
+           BenchLazy.state ref
+  val wlat :
+      int
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+         BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+         BenchLazy.delay
+  val rept : int -> 'a -> 'a BenchStream.node BenchLazy.delay
+  val take :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val drop :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.state ref
+  val length : 'a BenchStream.node BenchLazy.delay -> int
+  val wideGate :
+      ('a BenchLazy.state ref
+        -> 'a BenchLazy.state ref -> 'a BenchLazy.state ref)
+       -> 'a BenchLazy.state ref BenchStream.node BenchLazy.delay
+       -> 'a BenchLazy.state ref
+  val wideAnd :
+      int BenchStream.node BenchLazy.state ref BenchStream.node 
+         BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref
+  val wideOr :
+      int BenchStream.node BenchLazy.state ref BenchStream.node 
+         BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref
+  val wideNand :
+      int BenchStream.node BenchLazy.state ref BenchStream.node 
+         BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref
+  val wideNor :
+      int BenchStream.node BenchLazy.state ref BenchStream.node 
+         BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref
+  val regIs0 :
+      'a
+       -> int BenchStream.node BenchLazy.delay BenchStream.node 
+         BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref
+  val shl :
+      'a
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+         BenchLazy.delay
+  val shr :
+      int
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+         BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+  val halfadd :
+      int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       * int BenchStream.node BenchLazy.delay
+  val fulladd :
+      int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       * int BenchStream.node BenchLazy.delay
+  val add :
+      int
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+         BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+         BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref
+       -> int BenchStream.node BenchLazy.state ref
+       * int BenchStream.node BenchLazy.delay BenchStream.node BenchLazy.state 
+         ref
+  val ibits : int -> int -> int BenchStream.node BenchLazy.delay
+  val ntrans :
+      int
+       -> 'a BenchStream.node BenchLazy.delay BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay BenchStream.node BenchLazy.delay
+  val gated :
+      int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref
+       -> int BenchStream.node BenchLazy.delay
+  val multiplier :
+      int
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+       -> int BenchStream.node BenchLazy.delay
+       * int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+       * int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+       * int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+  val multsys :
+      int
+       -> (int * int) BenchStream.stream
+       -> int BenchStream.node BenchLazy.delay BenchStream.node 
+         BenchLazy.delay
+       * int BenchStream.node BenchLazy.delay BenchStream.node BenchLazy.delay
+       * int BenchStream.node BenchLazy.delay
+       * int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+       * int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+       * int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+  val trans :
+      'a BenchStream.node BenchLazy.state ref BenchStream.node BenchLazy.state 
+         ref
+       -> 'a BenchStream.node BenchLazy.delay BenchStream.node BenchLazy.delay
+  val bitsi : int BenchStream.node BenchLazy.delay -> Word64.word
+  val intrep :
+      int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+       -> Word64.word BenchStream.node BenchLazy.delay
+  val signed : Word64.word -> string
+  val dec : int -> string -> string
+  val fmtW :
+      int
+       -> int BenchStream.node BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+       -> string BenchStream.node BenchLazy.delay
+  val fmtB :
+      int BenchStream.node BenchLazy.delay
+       -> string BenchStream.node BenchLazy.delay
+  val fmtStr : 'a -> 'a BenchStream.node BenchLazy.state ref
+  val inputs : int -> (int * int) BenchStream.node BenchLazy.state ref
+  val indexes : int -> int BenchStream.node BenchLazy.state ref
+  val trace : int -> int -> char BenchStream.node BenchLazy.delay
+  val runMult : int -> int -> (int * int) BenchStream.stream -> int
+  val readyCount : int -> int -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/multiplier-originals/driver.sml]
+[autoloading]
+[autoloading done]
+functor BenchMultiplierDriverFn(P: sig
+  val trace : int -> int -> char BenchStream.stream
+  val readyCount : int -> int -> int
+end) :
+sig
+  val read : string -> TextIO.vector
+  val consume : string -> char BenchStream.node BenchLazy.delay -> int
+  val run : string list -> string
+  val runCount : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/multiplier-originals/tests.sml]
+PASS multiplier/lazy/original and independent trace 1
+PASS multiplier/lazy/original and independent trace 2
+PASS multiplier/lazy/original and independent trace 4
+PASS multiplier/lazy/original and independent trace 8
+PASS multiplier/lazy/original and independent trace 32
+PASS multiplier/lazy/original ready count 1
+PASS multiplier/lazy/original ready count 2
+PASS multiplier/lazy/original ready count 4
+PASS multiplier/lazy/original ready count 8
+PASS multiplier/lazy/original ready count 32
+PASS multiplier/lazy/both-input AND truth table
+PASS multiplier/lazy/OR truth table
+PASS multiplier/lazy/XOR truth table
+PASS multiplier/lazy/inverter truth table
+PASS multiplier/lazy/source unary headstrict
+PASS multiplier/lazy/binary head policy
+PASS multiplier/lazy/AND does not short circuit zero input
+PASS multiplier/lazy/latch output precedes input
+PASS multiplier/lazy/word combinator tail keeps arguments delayed
+PASS multiplier/lazy/wide gate length does not force signal constructors
+PASS multiplier/lazy/zero-width adder leaves operands unused
+PASS multiplier/lazy/signed 64-bit conversion wraps
+PASS multiplier/lazy/trace consumer
+PASS multiplier/lazy/count consumer
+PASS multiplier/lazy/incorrect trace rejected
+PASS multiplier/lazy/incorrect count rejected
+PASS multiplier/lazy/ready-only consumer leaves product undemanded
+PASS multiplier/lazy/memoized wire head
+PASS multiplier/strict/original and independent trace 1
+PASS multiplier/strict/original and independent trace 2
+PASS multiplier/strict/original and independent trace 4
+PASS multiplier/strict/original and independent trace 8
+PASS multiplier/strict/original and independent trace 32
+PASS multiplier/strict/original ready count 1
+PASS multiplier/strict/original ready count 2
+PASS multiplier/strict/original ready count 4
+PASS multiplier/strict/original ready count 8
+PASS multiplier/strict/original ready count 32
+PASS multiplier/strict/both-input AND truth table
+PASS multiplier/strict/OR truth table
+PASS multiplier/strict/XOR truth table
+PASS multiplier/strict/inverter truth table
+PASS multiplier/strict/source unary headstrict
+PASS multiplier/strict/binary head policy
+PASS multiplier/strict/AND does not short circuit zero input
+PASS multiplier/strict/latch output precedes input
+PASS multiplier/strict/word combinator tail keeps arguments delayed
+PASS multiplier/strict/wide gate length does not force signal constructors
+PASS multiplier/strict/zero-width adder leaves operands unused
+PASS multiplier/strict/signed 64-bit conversion wraps
+PASS multiplier/strict/trace consumer
+PASS multiplier/strict/count consumer
+PASS multiplier/strict/incorrect trace rejected
+PASS multiplier/strict/incorrect count rejected
+PASS multiplier/strict/ready-only consumer leaves product undemanded
+PASS multiplier/strict/memoized wire head
+functor MultiplierTestsFn(P: sig
+  val eagerBinary : bool
+  val policy : string
+end) :
+sig
+  structure K : <sig>
+  structure Driver : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  val base : string
+  val label : string -> string
+  val read : string -> TextIO.vector
+  val render : char BenchStream.node BenchLazy.delay -> string
+  val bits : 'a list -> 'a BenchStream.node BenchLazy.delay
+  val poison : unit -> int BenchStream.node BenchLazy.state ref
+end
+structure LazyMultiplierTests : sig
+  structure K : <sig>
+  structure Driver : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  val base : string
+  val label : string -> string
+  val read : string -> TextIO.vector
+  val render : char BenchStream.node BenchLazy.delay -> string
+  val bits : 'a list -> 'a BenchStream.node BenchLazy.delay
+  val poison : unit -> int BenchStream.node BenchLazy.state ref
+end
+structure StrictMultiplierTests : sig
+  structure K : <sig>
+  structure Driver : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  val base : string
+  val label : string -> string
+  val read : string -> TextIO.vector
+  val render : char BenchStream.node BenchLazy.delay -> string
+  val bits : 'a list -> 'a BenchStream.node BenchLazy.delay
+  val poison : unit -> int BenchStream.node BenchLazy.state ref
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 56 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : 
+  sig
+    datatype 'a node
+      = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay | Nil
+    type 'a stream = 'a node BenchLazy.delay
+    val empty : unit -> 'a node BenchLazy.state ref
+    val cons : 'a BenchLazy.delay * 'a node BenchLazy.delay
+                -> 'a node BenchLazy.state ref
+    val singleton : 'a -> 'a node BenchLazy.state ref
+    val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+    val head : 'a node BenchLazy.state ref -> 'a
+    val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val iterate : ('a -> 'a)
+                   -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+    val fromList : 'a list -> 'a node BenchLazy.delay
+    val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+    val zipWith : ('a * 'b -> 'c)
+                   -> 'a node BenchLazy.delay
+                   -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+    val append : 'a node BenchLazy.delay
+                  -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val concatMap : ('a -> 'b node BenchLazy.delay)
+                     -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+    val filter : ('a -> bool)
+                  -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+    val dropWhile : ('a -> bool)
+                     -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+    val foldrStream : ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+                       -> 'b BenchLazy.state ref
+                       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+    val zipWith3 : ('a * 'b * 'c -> 'd)
+                    -> 'a node BenchLazy.delay
+                    -> 'b node BenchLazy.delay
+                    -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+    val span : ('a -> bool)
+                -> 'a node BenchLazy.delay
+                -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+    val nth : 'a node BenchLazy.delay -> int -> 'a
+    val take : int -> 'a node BenchLazy.delay -> 'a list
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+    val foldPrefix : ('a * 'b -> 'b)
+                      -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/multiplier-originals/kernel.sml]
+functor BenchMultiplierFn(P: sig val eagerBinary : bool end) :
+                         
+                           sig
+                             structure L : <sig>
+                             structure S : <sig>
+                             type bit
+                             type word
+                             val constant : 'a
+                                             -> 'a BenchStream.node 
+                                                 BenchLazy.state ref
+                             val zero : int BenchStream.node BenchLazy.state 
+                                           ref
+                             val one : int BenchStream.node BenchLazy.state 
+                                          ref
+                             val latch : int BenchStream.node BenchLazy.delay
+                                          -> int BenchStream.node 
+                                              BenchLazy.state ref
+                             val forceBit : int -> bool
+                             val headstrict : ('a -> 'b)
+                                               -> 'a BenchStream.node 
+                                                   BenchLazy.state ref
+                                               -> 'a BenchStream.node 
+                                                   BenchLazy.state ref
+                             val lift11 : ('a -> 'b)
+                                           -> ('c -> 'a)
+                                           -> 'c BenchStream.node 
+                                             BenchLazy.delay
+                                           -> 'a BenchStream.node 
+                                             BenchLazy.delay
+                             val lift21 : ('a -> 'b)
+                                           -> ('c -> 'd -> 'a)
+                                           -> 'c BenchStream.node 
+                                             BenchLazy.delay
+                                           -> 'd BenchStream.node 
+                                             BenchLazy.delay
+                                           -> 'a BenchStream.node 
+                                             BenchLazy.delay
+                             val lift31 : ('a -> 'b)
+                                           -> ('c -> 'd -> 'e -> 'a)
+                                           -> 'c BenchStream.node 
+                                             BenchLazy.delay
+                                           -> 'd BenchStream.node 
+                                             BenchLazy.delay
+                                           -> 'e BenchStream.node 
+                                             BenchLazy.delay
+                                           -> 'a BenchStream.node 
+                                             BenchLazy.delay
+                             val lift41 : ('a -> 'b)
+                                           -> ('c -> 'd -> 'e -> 'f -> 'a)
+                                           -> 'c BenchStream.node 
+                                             BenchLazy.delay
+                                           -> 'd BenchStream.node 
+                                             BenchLazy.delay
+                                           -> 'e BenchStream.node 
+                                             BenchLazy.delay
+                                           -> 'f BenchStream.node 
+                                             BenchLazy.delay
+                                           -> 'a BenchStream.node 
+                                             BenchLazy.delay
+                             val bit1 : (int -> 'a) -> int -> 'a
+                             val bit2 : (int * int -> 'a) -> int -> int -> 'a
+                             val inv : int BenchStream.node BenchLazy.delay
+                                        -> int BenchStream.node 
+                                          BenchLazy.delay
+                             val and2 : int BenchStream.node BenchLazy.delay
+                                         -> int BenchStream.node 
+                                           BenchLazy.delay
+                                         -> int BenchStream.node 
+                                           BenchLazy.delay
+                             val nand2 : int BenchStream.node BenchLazy.delay
+                                          -> int BenchStream.node 
+                                            BenchLazy.delay
+                                          -> int BenchStream.node 
+                                            BenchLazy.delay
+                             val or2 : int BenchStream.node BenchLazy.delay
+                                        -> int BenchStream.node 
+                                          BenchLazy.delay
+                                        -> int BenchStream.node 
+                                          BenchLazy.delay
+                             val nor2 : int BenchStream.node BenchLazy.delay
+                                         -> int BenchStream.node 
+                                           BenchLazy.delay
+                                         -> int BenchStream.node 
+                                           BenchLazy.delay
+                             val xor : int BenchStream.node BenchLazy.delay
+                                        -> int BenchStream.node 
+                                          BenchLazy.delay
+                                        -> int BenchStream.node 
+                                          BenchLazy.delay
+                             val or3 : int BenchStream.node BenchLazy.delay
+                                        -> int BenchStream.node 
+                                          BenchLazy.delay
+                                        -> int BenchStream.node 
+                                          BenchLazy.delay
+                                        -> int BenchStream.node 
+                                          BenchLazy.delay
+                             val bmux1 : int BenchStream.node BenchLazy.delay
+                                          -> int BenchStream.node 
+                                            BenchLazy.delay
+                                          -> int BenchStream.node 
+                                            BenchLazy.delay
+                                          -> int BenchStream.node 
+                                            BenchLazy.delay
+                             val word11 : int
+                                           -> ('a BenchLazy.state ref -> 'b)
+                                           -> 'a BenchLazy.state ref 
+                                                 BenchStream.node 
+                                               BenchLazy.state ref
+                                           -> 'b BenchStream.node 
+                                               BenchLazy.state ref
+                             val word21 : int
+                                           -> ('a BenchLazy.state ref
+                                            -> 'b BenchLazy.state ref -> 'c)
+                                           -> 'a BenchLazy.state ref 
+                                                 BenchStream.node 
+                                               BenchLazy.state ref
+                                           -> 'b BenchLazy.state ref 
+                                                 BenchStream.node 
+                                               BenchLazy.state ref
+                                           -> 'c BenchStream.node 
+                                               BenchLazy.state ref
+                             val word31 : int
+                                           -> ('a BenchLazy.state ref
+                                            -> 'b BenchLazy.state ref
+                                            -> 'c BenchLazy.state ref -> 'd)
+                                           -> 'a BenchLazy.state ref 
+                                                 BenchStream.node 
+                                               BenchLazy.state ref
+                                           -> 'b BenchLazy.state ref 
+                                                 BenchStream.node 
+                                               BenchLazy.state ref
+                                           -> 'c BenchLazy.state ref 
+                                                 BenchStream.node 
+                                               BenchLazy.state ref
+                                           -> 'd BenchStream.node 
+                                               BenchLazy.state ref
+                             val wmux1 : int
+                                          -> int BenchStream.node 
+                                            BenchLazy.delay
+                                          -> int BenchStream.node 
+                                                    BenchLazy.state ref 
+                                                BenchStream.node 
+                                              BenchLazy.state ref
+                                          -> int BenchStream.node 
+                                                    BenchLazy.state ref 
+                                                BenchStream.node 
+                                              BenchLazy.state ref
+                                          -> int BenchStream.node 
+                                                  BenchLazy.delay 
+                                                BenchStream.node 
+                                              BenchLazy.state ref
+                             val wlat : int
+                                         -> int BenchStream.node 
+                                                 BenchLazy.state ref 
+                                             BenchStream.node BenchLazy.delay
+                                         -> int BenchStream.node 
+                                                 BenchLazy.state ref 
+                                             BenchStream.node BenchLazy.delay
+                             val rept : int
+                                         -> 'a
+                                         -> 'a BenchStream.node 
+                                           BenchLazy.delay
+                             val take : int
+                                         -> 'a BenchStream.node 
+                                           BenchLazy.delay
+                                         -> 'a BenchStream.node 
+                                           BenchLazy.delay
+                             val drop : int
+                                         -> 'a BenchStream.node 
+                                           BenchLazy.delay
+                                         -> 'a BenchStream.node 
+                                             BenchLazy.state ref
+                             val length : 'a BenchStream.node BenchLazy.delay
+                                           -> int
+                             val wideGate : ('a BenchLazy.state ref
+                                              -> 'a BenchLazy.state ref
+                                              -> 'a BenchLazy.state ref)
+                                             -> 'a BenchLazy.state ref 
+                                                 BenchStream.node 
+                                               BenchLazy.delay
+                                             -> 'a BenchLazy.state ref
+                             val wideAnd : int BenchStream.node 
+                                                    BenchLazy.state ref 
+                                                BenchStream.node 
+                                              BenchLazy.delay
+                                            -> int BenchStream.node 
+                                                BenchLazy.state ref
+                             val wideOr : int BenchStream.node BenchLazy.state 
+                                                 ref BenchStream.node 
+                                             BenchLazy.delay
+                                           -> int BenchStream.node 
+                                               BenchLazy.state ref
+                             val wideNand : int BenchStream.node 
+                                                     BenchLazy.state ref 
+                                                 BenchStream.node 
+                                               BenchLazy.delay
+                                             -> int BenchStream.node 
+                                                 BenchLazy.state ref
+                             val wideNor : int BenchStream.node 
+                                                    BenchLazy.state ref 
+                                                BenchStream.node 
+                                              BenchLazy.delay
+                                            -> int BenchStream.node 
+                                                BenchLazy.state ref
+                             val regIs0 : 'a
+                                           -> int BenchStream.node 
+                                                 BenchLazy.delay 
+                                               BenchStream.node 
+                                             BenchLazy.delay
+                                           -> int BenchStream.node 
+                                               BenchLazy.state ref
+                             val shl : 'a
+                                        -> int BenchStream.node 
+                                                  BenchLazy.state ref 
+                                              BenchStream.node BenchLazy.state 
+                                          ref
+                                        -> int BenchStream.node 
+                                                BenchLazy.state ref 
+                                            BenchStream.node BenchLazy.delay
+                             val shr : int
+                                        -> int BenchStream.node 
+                                                BenchLazy.state ref 
+                                            BenchStream.node BenchLazy.delay
+                                        -> int BenchStream.node 
+                                                  BenchLazy.state ref 
+                                              BenchStream.node BenchLazy.state 
+                                          ref
+                             val halfadd : int BenchStream.node 
+                                              BenchLazy.delay
+                                            -> int BenchStream.node 
+                                              BenchLazy.delay
+                                            -> int BenchStream.node 
+                                              BenchLazy.delay
+                                            * int BenchStream.node 
+                                              BenchLazy.delay
+                             val fulladd : int BenchStream.node 
+                                              BenchLazy.delay
+                                            -> int BenchStream.node 
+                                              BenchLazy.delay
+                                            -> int BenchStream.node 
+                                              BenchLazy.delay
+                                            -> int BenchStream.node 
+                                              BenchLazy.delay
+                                            * int BenchStream.node 
+                                              BenchLazy.delay
+                             val add : int
+                                        -> int BenchStream.node 
+                                                BenchLazy.state ref 
+                                            BenchStream.node BenchLazy.delay
+                                        -> int BenchStream.node 
+                                                BenchLazy.state ref 
+                                            BenchStream.node BenchLazy.delay
+                                        -> int BenchStream.node 
+                                            BenchLazy.state ref
+                                        -> int BenchStream.node 
+                                            BenchLazy.state ref
+                                        * int BenchStream.node BenchLazy.delay 
+                                              BenchStream.node BenchLazy.state 
+                                          ref
+                             val ibits : int
+                                          -> int
+                                          -> int BenchStream.node 
+                                            BenchLazy.delay
+                             val ntrans : int
+                                           -> 'a BenchStream.node 
+                                                 BenchLazy.delay 
+                                               BenchStream.node 
+                                             BenchLazy.delay
+                                           -> 'a BenchStream.node 
+                                                 BenchLazy.delay 
+                                               BenchStream.node 
+                                             BenchLazy.delay
+                             val gated : int BenchStream.node BenchLazy.delay
+                                          -> int BenchStream.node 
+                                              BenchLazy.state ref
+                                          -> int BenchStream.node 
+                                            BenchLazy.delay
+                             val multiplier : int
+                                               -> int BenchStream.node 
+                                                 BenchLazy.delay
+                                               -> int BenchStream.node 
+                                                         BenchLazy.state ref 
+                                                     BenchStream.node 
+                                                   BenchLazy.state ref
+                                               -> int BenchStream.node 
+                                                         BenchLazy.state ref 
+                                                     BenchStream.node 
+                                                   BenchLazy.state ref
+                                               -> int BenchStream.node 
+                                                 BenchLazy.delay
+                                               * int BenchStream.node 
+                                                         BenchLazy.state ref 
+                                                     BenchStream.node 
+                                                   BenchLazy.state ref
+                                               * int BenchStream.node 
+                                                         BenchLazy.state ref 
+                                                     BenchStream.node 
+                                                   BenchLazy.state ref
+                                               * int BenchStream.node 
+                                                         BenchLazy.state ref 
+                                                     BenchStream.node 
+                                                   BenchLazy.state ref
+                             val multsys : int
+                                            -> (int * int) BenchStream.stream
+                                            -> int BenchStream.node 
+                                                  BenchLazy.delay 
+                                                BenchStream.node 
+                                              BenchLazy.delay
+                                            * int BenchStream.node 
+                                                  BenchLazy.delay 
+                                                BenchStream.node 
+                                              BenchLazy.delay
+                                            * int BenchStream.node 
+                                              BenchLazy.delay
+                                            * int BenchStream.node 
+                                                      BenchLazy.state ref 
+                                                  BenchStream.node 
+                                                BenchLazy.state ref
+                                            * int BenchStream.node 
+                                                      BenchLazy.state ref 
+                                                  BenchStream.node 
+                                                BenchLazy.state ref
+                                            * int BenchStream.node 
+                                                      BenchLazy.state ref 
+                                                  BenchStream.node 
+                                                BenchLazy.state ref
+                             val trans : 'a BenchStream.node BenchLazy.state 
+                                                  ref BenchStream.node 
+                                              BenchLazy.state ref
+                                          -> 'a BenchStream.node 
+                                                BenchLazy.delay 
+                                              BenchStream.node BenchLazy.delay
+                             val bitsi : int BenchStream.node BenchLazy.delay
+                                          -> Word64.word
+                             val intrep : int BenchStream.node BenchLazy.state 
+                                                   ref BenchStream.node 
+                                               BenchLazy.state ref
+                                           -> Word64.word BenchStream.node 
+                                             BenchLazy.delay
+                             val signed : Word64.word -> string
+                             val dec : int -> string -> string
+                             val fmtW : int
+                                         -> int BenchStream.node 
+                                                   BenchLazy.state ref 
+                                               BenchStream.node 
+                                             BenchLazy.state ref
+                                         -> string BenchStream.node 
+                                           BenchLazy.delay
+                             val fmtB : int BenchStream.node BenchLazy.delay
+                                         -> string BenchStream.node 
+                                           BenchLazy.delay
+                             val fmtStr : 'a
+                                           -> 'a BenchStream.node 
+                                               BenchLazy.state ref
+                             val inputs : int
+                                           -> (int * int) BenchStream.node 
+                                               BenchLazy.state ref
+                             val indexes : int
+                                            -> int BenchStream.node 
+                                                BenchLazy.state ref
+                             val trace : int
+                                          -> int
+                                          -> char BenchStream.node 
+                                            BenchLazy.delay
+                             val runMult : int
+                                            -> int
+                                            -> (int * int) BenchStream.stream
+                                            -> int
+                             val readyCount : int -> int -> int
+                           end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/multiplier-originals/driver.sml]
+functor BenchMultiplierDriverFn(P: sig
+                                   val trace : int
+                                                -> int
+                                                -> char BenchStream.stream
+                                   val readyCount : int -> int -> int
+                                 end) :
+                               
+                                 sig
+                                   val read : string -> TextIO.vector
+                                   val consume : string
+                                                  -> char BenchStream.node 
+                                                    BenchLazy.delay
+                                                  -> int
+                                   val run : string list -> string
+                                   val runCount : string list -> string
+                                 end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/multiplier-originals/tests.sml]
+PASS multiplier/lazy/original and independent trace 1
+PASS multiplier/lazy/original and independent trace 2
+PASS multiplier/lazy/original and independent trace 4
+PASS multiplier/lazy/original and independent trace 8
+PASS multiplier/lazy/original and independent trace 32
+PASS multiplier/lazy/original ready count 1
+PASS multiplier/lazy/original ready count 2
+PASS multiplier/lazy/original ready count 4
+PASS multiplier/lazy/original ready count 8
+PASS multiplier/lazy/original ready count 32
+PASS multiplier/lazy/both-input AND truth table
+PASS multiplier/lazy/OR truth table
+PASS multiplier/lazy/XOR truth table
+PASS multiplier/lazy/inverter truth table
+PASS multiplier/lazy/source unary headstrict
+PASS multiplier/lazy/binary head policy
+PASS multiplier/lazy/AND does not short circuit zero input
+PASS multiplier/lazy/latch output precedes input
+PASS multiplier/lazy/word combinator tail keeps arguments delayed
+PASS multiplier/lazy/wide gate length does not force signal constructors
+PASS multiplier/lazy/zero-width adder leaves operands unused
+PASS multiplier/lazy/signed 64-bit conversion wraps
+PASS multiplier/lazy/trace consumer
+PASS multiplier/lazy/count consumer
+PASS multiplier/lazy/incorrect trace rejected
+PASS multiplier/lazy/incorrect count rejected
+PASS multiplier/lazy/ready-only consumer leaves product undemanded
+PASS multiplier/lazy/memoized wire head
+PASS multiplier/strict/original and independent trace 1
+PASS multiplier/strict/original and independent trace 2
+PASS multiplier/strict/original and independent trace 4
+PASS multiplier/strict/original and independent trace 8
+PASS multiplier/strict/original and independent trace 32
+PASS multiplier/strict/original ready count 1
+PASS multiplier/strict/original ready count 2
+PASS multiplier/strict/original ready count 4
+PASS multiplier/strict/original ready count 8
+PASS multiplier/strict/original ready count 32
+PASS multiplier/strict/both-input AND truth table
+PASS multiplier/strict/OR truth table
+PASS multiplier/strict/XOR truth table
+PASS multiplier/strict/inverter truth table
+PASS multiplier/strict/source unary headstrict
+PASS multiplier/strict/binary head policy
+PASS multiplier/strict/AND does not short circuit zero input
+PASS multiplier/strict/latch output precedes input
+PASS multiplier/strict/word combinator tail keeps arguments delayed
+PASS multiplier/strict/wide gate length does not force signal constructors
+PASS multiplier/strict/zero-width adder leaves operands unused
+PASS multiplier/strict/signed 64-bit conversion wraps
+PASS multiplier/strict/trace consumer
+PASS multiplier/strict/count consumer
+PASS multiplier/strict/incorrect trace rejected
+PASS multiplier/strict/incorrect count rejected
+PASS multiplier/strict/ready-only consumer leaves product undemanded
+PASS multiplier/strict/memoized wire head
+functor MultiplierTestsFn(P: sig
+                             val eagerBinary : bool
+                             val policy : string
+                           end) :
+                         
+                           sig
+                             structure K : <sig>
+                             structure Driver : <sig>
+                             structure L : <sig>
+                             structure S : <sig>
+                             val base : string
+                             val label : string -> string
+                             val read : string -> TextIO.vector
+                             val render : char BenchStream.node 
+                                             BenchLazy.delay
+                                           -> string
+                             val bits : 'a list
+                                         -> 'a BenchStream.node 
+                                           BenchLazy.delay
+                             val poison : unit
+                                           -> int BenchStream.node 
+                                               BenchLazy.state ref
+                           end
+structure LazyMultiplierTests : 
+  sig
+    structure K : <sig>
+    structure Driver : <sig>
+    structure L : <sig>
+    structure S : <sig>
+    val base : string
+    val label : string -> string
+    val read : string -> TextIO.vector
+    val render : char BenchStream.node BenchLazy.delay -> string
+    val bits : 'a list -> 'a BenchStream.node BenchLazy.delay
+    val poison : unit -> int BenchStream.node BenchLazy.state ref
+  end
+structure StrictMultiplierTests : 
+  sig
+    structure K : <sig>
+    structure Driver : <sig>
+    structure L : <sig>
+    structure S : <sig>
+    val base : string
+    val label : string -> string
+    val read : string -> TextIO.vector
+    val render : char BenchStream.node BenchLazy.delay -> string
+    val bits : 'a list -> 'a BenchStream.node BenchLazy.delay
+    val poison : unit -> int BenchStream.node BenchLazy.state ref
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 56 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS multiplier/lazy/original and independent trace 1
+PASS multiplier/lazy/original and independent trace 2
+PASS multiplier/lazy/original and independent trace 4
+PASS multiplier/lazy/original and independent trace 8
+PASS multiplier/lazy/original and independent trace 32
+PASS multiplier/lazy/original ready count 1
+PASS multiplier/lazy/original ready count 2
+PASS multiplier/lazy/original ready count 4
+PASS multiplier/lazy/original ready count 8
+PASS multiplier/lazy/original ready count 32
+PASS multiplier/lazy/both-input AND truth table
+PASS multiplier/lazy/OR truth table
+PASS multiplier/lazy/XOR truth table
+PASS multiplier/lazy/inverter truth table
+PASS multiplier/lazy/source unary headstrict
+PASS multiplier/lazy/binary head policy
+PASS multiplier/lazy/AND does not short circuit zero input
+PASS multiplier/lazy/latch output precedes input
+PASS multiplier/lazy/word combinator tail keeps arguments delayed
+PASS multiplier/lazy/wide gate length does not force signal constructors
+PASS multiplier/lazy/zero-width adder leaves operands unused
+PASS multiplier/lazy/signed 64-bit conversion wraps
+PASS multiplier/lazy/trace consumer
+PASS multiplier/lazy/count consumer
+PASS multiplier/lazy/incorrect trace rejected
+PASS multiplier/lazy/incorrect count rejected
+PASS multiplier/lazy/ready-only consumer leaves product undemanded
+PASS multiplier/lazy/memoized wire head
+PASS multiplier/strict/original and independent trace 1
+PASS multiplier/strict/original and independent trace 2
+PASS multiplier/strict/original and independent trace 4
+PASS multiplier/strict/original and independent trace 8
+PASS multiplier/strict/original and independent trace 32
+PASS multiplier/strict/original ready count 1
+PASS multiplier/strict/original ready count 2
+PASS multiplier/strict/original ready count 4
+PASS multiplier/strict/original ready count 8
+PASS multiplier/strict/original ready count 32
+PASS multiplier/strict/both-input AND truth table
+PASS multiplier/strict/OR truth table
+PASS multiplier/strict/XOR truth table
+PASS multiplier/strict/inverter truth table
+PASS multiplier/strict/source unary headstrict
+PASS multiplier/strict/binary head policy
+PASS multiplier/strict/AND does not short circuit zero input
+PASS multiplier/strict/latch output precedes input
+PASS multiplier/strict/word combinator tail keeps arguments delayed
+PASS multiplier/strict/wide gate length does not force signal constructors
+PASS multiplier/strict/zero-width adder leaves operands unused
+PASS multiplier/strict/signed 64-bit conversion wraps
+PASS multiplier/strict/trace consumer
+PASS multiplier/strict/count consumer
+PASS multiplier/strict/incorrect trace rejected
+PASS multiplier/strict/incorrect count rejected
+PASS multiplier/strict/ready-only consumer leaves product undemanded
+PASS multiplier/strict/memoized wire head
+SUMMARY 56 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PASS multiplier/lazy/original and independent trace 1
+PASS multiplier/lazy/original and independent trace 2
+PASS multiplier/lazy/original and independent trace 4
+PASS multiplier/lazy/original and independent trace 8
+PASS multiplier/lazy/original and independent trace 32
+PASS multiplier/lazy/original ready count 1
+PASS multiplier/lazy/original ready count 2
+PASS multiplier/lazy/original ready count 4
+PASS multiplier/lazy/original ready count 8
+PASS multiplier/lazy/original ready count 32
+PASS multiplier/lazy/both-input AND truth table
+PASS multiplier/lazy/OR truth table
+PASS multiplier/lazy/XOR truth table
+PASS multiplier/lazy/inverter truth table
+PASS multiplier/lazy/source unary headstrict
+PASS multiplier/lazy/binary head policy
+PASS multiplier/lazy/AND does not short circuit zero input
+PASS multiplier/lazy/latch output precedes input
+PASS multiplier/lazy/word combinator tail keeps arguments delayed
+PASS multiplier/lazy/wide gate length does not force signal constructors
+PASS multiplier/lazy/zero-width adder leaves operands unused
+PASS multiplier/lazy/signed 64-bit conversion wraps
+PASS multiplier/lazy/trace consumer
+PASS multiplier/lazy/count consumer
+PASS multiplier/lazy/incorrect trace rejected
+PASS multiplier/lazy/incorrect count rejected
+PASS multiplier/lazy/ready-only consumer leaves product undemanded
+PASS multiplier/lazy/memoized wire head
+PASS multiplier/strict/original and independent trace 1
+PASS multiplier/strict/original and independent trace 2
+PASS multiplier/strict/original and independent trace 4
+PASS multiplier/strict/original and independent trace 8
+PASS multiplier/strict/original and independent trace 32
+PASS multiplier/strict/original ready count 1
+PASS multiplier/strict/original ready count 2
+PASS multiplier/strict/original ready count 4
+PASS multiplier/strict/original ready count 8
+PASS multiplier/strict/original ready count 32
+PASS multiplier/strict/both-input AND truth table
+PASS multiplier/strict/OR truth table
+PASS multiplier/strict/XOR truth table
+PASS multiplier/strict/inverter truth table
+PASS multiplier/strict/source unary headstrict
+PASS multiplier/strict/binary head policy
+PASS multiplier/strict/AND does not short circuit zero input
+PASS multiplier/strict/latch output precedes input
+PASS multiplier/strict/word combinator tail keeps arguments delayed
+PASS multiplier/strict/wide gate length does not force signal constructors
+PASS multiplier/strict/zero-width adder leaves operands unused
+PASS multiplier/strict/signed 64-bit conversion wraps
+PASS multiplier/strict/trace consumer
+PASS multiplier/strict/count consumer
+PASS multiplier/strict/incorrect trace rejected
+PASS multiplier/strict/incorrect count rejected
+PASS multiplier/strict/ready-only consumer leaves product undemanded
+PASS multiplier/strict/memoized wire head
+SUMMARY 56 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

@@ -1,0 +1,13 @@
+REENTRY 40 kernel-line52
+28 kernel-line71
+32 stream
+38 kernel-line47
+40 kernel-line52
+42 stream
+21 kernel-line60
+22 kernel-line65
+27 kernel-line18
+runevm: uncaught exception Fail "recursive forcing of delay"
+  in BenchLazy.force at /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/multiplier-originals/debug-lazy.sml:15:63
+  in BenchStream.head at /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml:14:22
+  in <toplevel> at /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/multiplier-originals/diagnostic.sml:4:33

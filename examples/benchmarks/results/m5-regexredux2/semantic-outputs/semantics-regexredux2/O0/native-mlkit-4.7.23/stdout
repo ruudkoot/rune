@@ -1,0 +1,24 @@
+PASS regexredux2/original Str overlap
+PASS regexredux2/original Str alternative-left
+PASS regexredux2/original Str alternative-right
+PASS regexredux2/original Str greedy
+PASS regexredux2/original Str backtracking
+PASS regexredux2/original Str line-anchors
+PASS regexredux2/original Str tags
+PASS regexredux2/original Str pipes
+PASS regexredux2/original Str folded-class
+PASS regexredux2/original Str class-exclusion
+PASS regexredux2/original Str no-match
+PASS regexredux2/original Str finish-eof
+PASS regexredux2/original program empty
+PASS regexredux2/original program mixed-case
+PASS regexredux2/original program adjacent-tags
+PASS regexredux2/original program unterminated-header
+PASS regexredux2/original program overlapping-motifs
+PASS regexredux2/original smoke FASTA
+PASS regexredux2/wrong output rejected
+PASS regexredux2/negative search index rejected
+PASS regexredux2/literal pipe is distinct from escaped alternation
+PASS regexredux2/malformed class rejected
+PASS regexredux2/empty replacement match rejected
+SUMMARY 23 checks, 0 failed

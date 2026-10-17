@@ -1,0 +1,1 @@
+regexredux2	600	4194304	shared/input.sml shared/sandmark-regexredux-str.sml shared/sandmark-regexredux2.sml regexredux2/benchmark.sml shared/main.sml	normal.fasta normal.output	regexredux2/normal.expected	normal.fasta normal.output

@@ -1,0 +1,5 @@
+COUNT unbudgeted expert-strict normal rune
+COUNT unbudgeted expert-strict normal rune:opt
+COUNT unbudgeted expert-strict normal rune:new
+COUNT unbudgeted expert-strict normal rune:jit
+COUNT comparisons agree

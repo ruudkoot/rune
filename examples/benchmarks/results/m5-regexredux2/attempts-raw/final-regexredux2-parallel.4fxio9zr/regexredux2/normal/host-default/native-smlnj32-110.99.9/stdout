@@ -1,0 +1,53 @@
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-regexredux-str.sml]
+[autoloading]
+[autoloading done]
+structure BenchRegexReduxStr : sig
+  datatype atom
+    = Any
+    | Class of bool * char list
+    | Finish
+    | Literal of char
+    | Repeat of atom
+    | Start
+  type regexp = atom list list
+  val compile : string -> atom list list
+  val matchesChar : bool -> atom -> char -> bool
+  val match : bool -> atom list list -> string -> int -> int option
+  val search : bool -> atom list list -> string -> int -> (int * int) option
+  val count : atom list list -> string -> int
+  val replace : atom list list -> string -> string -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-regexredux2.sml]
+[autoloading]
+[autoloading done]
+structure BenchRegexRedux2 : sig
+  structure R : <sig>
+  val variants : string list
+  val substitutions : (string * string) list
+  val displayPattern : string -> string
+  val calculate : string -> string
+  val read : string -> TextIO.vector
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/regexredux2/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 274
+PASS regexredux2
+SUMMARY 1 checks, 0 failed

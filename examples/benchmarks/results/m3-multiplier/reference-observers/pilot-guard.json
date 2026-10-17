@@ -1,0 +1,16 @@
+{
+  "command": [
+    "timeout",
+    "60",
+    "bin/runevm",
+    "tests/out/benchmarks/multiplier-originals/pilot.rbc"
+  ],
+  "exit": 1,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 0,
+  "observed_minimum_available_kib": 17765636,
+  "peak_processes": [],
+  "elapsed_seconds": 0.06529671099269763
+}

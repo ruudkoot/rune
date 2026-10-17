@@ -1,0 +1,3 @@
+RESULT 256 2000 222
+PASS multiplier-count-strict
+SUMMARY 1 checks, 0 failed

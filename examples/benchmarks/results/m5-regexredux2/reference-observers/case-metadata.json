@@ -1,0 +1,50 @@
+[
+  {
+    "name": "overlap",
+    "mode": "count"
+  },
+  {
+    "name": "alternative-left",
+    "mode": "search"
+  },
+  {
+    "name": "alternative-right",
+    "mode": "search"
+  },
+  {
+    "name": "greedy",
+    "mode": "search"
+  },
+  {
+    "name": "backtracking",
+    "mode": "search"
+  },
+  {
+    "name": "line-anchors",
+    "mode": "replace"
+  },
+  {
+    "name": "tags",
+    "mode": "replace"
+  },
+  {
+    "name": "pipes",
+    "mode": "replace"
+  },
+  {
+    "name": "folded-class",
+    "mode": "count"
+  },
+  {
+    "name": "class-exclusion",
+    "mode": "search"
+  },
+  {
+    "name": "no-match",
+    "mode": "search"
+  },
+  {
+    "name": "finish-eof",
+    "mode": "search"
+  }
+]

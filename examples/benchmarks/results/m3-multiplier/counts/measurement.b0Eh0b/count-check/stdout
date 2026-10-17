@@ -1,0 +1,5 @@
+COUNT unbudgeted multiplier-strict normal rune
+COUNT unbudgeted multiplier-strict normal rune:opt
+COUNT unbudgeted multiplier-strict normal rune:new
+COUNT unbudgeted multiplier-strict normal rune:jit
+COUNT comparisons agree

@@ -1,0 +1,4 @@
+runevm: uncaught exception Fail "recursive forcing of delay"
+  in BenchLazy.force at /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml:14:62
+  in BenchStream.head at /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml:14:22
+  in <toplevel> at /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/multiplier-originals/diagnostic.sml:4:33

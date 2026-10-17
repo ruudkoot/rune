@@ -1,0 +1,1 @@
+expert-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/stream.sml shared/nofib-expert-table.sml shared/nofib-expert-phrase.sml shared/nofib-expert-program.sml shared/nofib-expert-driver.sml expert-lazy/benchmark.sml shared/main.sml	1 animals.txt answers.txt dialog.txt	expert-lazy/smoke.expected	animals.txt answers.txt dialog.txt

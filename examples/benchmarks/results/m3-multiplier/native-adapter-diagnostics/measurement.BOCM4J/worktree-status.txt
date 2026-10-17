@@ -1,0 +1,30 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/inventory.tsv
+ M examples/benchmarks/manifest.tsv
+ M examples/benchmarks/source-variants.tsv
+ M scripts/benchmark-inventory.py
+ M tests/benchmarks/test-inventory.py
+?? examples/benchmarks/expert-lazy/
+?? examples/benchmarks/expert-strict/
+?? examples/benchmarks/multiplier-count-lazy/
+?? examples/benchmarks/multiplier-count-strict/
+?? examples/benchmarks/multiplier-lazy/
+?? examples/benchmarks/multiplier-strict/
+?? examples/benchmarks/regexredux2/
+?? examples/benchmarks/shared/nofib-expert-driver.sml
+?? examples/benchmarks/shared/nofib-expert-phrase.sml
+?? examples/benchmarks/shared/nofib-expert-program.sml
+?? examples/benchmarks/shared/nofib-expert-table.sml
+?? examples/benchmarks/shared/nofib-multiplier-driver.sml
+?? examples/benchmarks/shared/nofib-multiplier-kernel.sml
+?? examples/benchmarks/shared/sandmark-regexredux-str.sml
+?? examples/benchmarks/shared/sandmark-regexredux2.sml
+?? tests/benchmarks/check-expert.sh
+?? tests/benchmarks/check-multiplier.sh
+?? tests/benchmarks/check-regexredux2.sh
+?? tests/benchmarks/data/expert/
+?? tests/benchmarks/data/multiplier/
+?? tests/benchmarks/data/regexredux2/
+?? tests/benchmarks/expert-tests.sml
+?? tests/benchmarks/multiplier-tests.sml
+?? tests/benchmarks/regexredux2-tests.sml

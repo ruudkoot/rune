@@ -1,0 +1,1 @@
+multiplier-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/stream.sml shared/nofib-multiplier-kernel.sml shared/nofib-multiplier-driver.sml multiplier-lazy/benchmark.sml shared/main.sml	32 16 smoke.trace	multiplier-lazy/smoke.expected	smoke.trace

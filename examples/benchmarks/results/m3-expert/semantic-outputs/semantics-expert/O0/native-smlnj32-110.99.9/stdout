@@ -1,0 +1,1257 @@
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-expert-table.sml]
+structure BenchExpertTable : sig
+  structure L : <sig>
+  structure S : <sig>
+  datatype 'a tableNode
+    = Empty
+    | Fork of 'a tableNode BenchLazy.delay
+               * (string BenchLazy.delay * 'a BenchLazy.delay)
+               * 'a tableNode BenchLazy.delay
+  type 'a table = 'a tableNode BenchLazy.delay
+  type 'a entry = string BenchLazy.delay * 'a BenchLazy.delay
+  datatype ('a,'b) result = Answer of 'a | Reason of 'b
+  val answer : ('a,'b) result -> 'a
+  val fails : ('a,'b) result -> bool
+  val newTable : unit -> 'a tableNode BenchLazy.state ref
+  val find :
+      'a tableNode BenchLazy.delay
+       -> string -> ('a BenchLazy.delay,string) result BenchLazy.state ref
+  val enter :
+      'a tableNode BenchLazy.delay
+       -> string -> 'a BenchLazy.delay -> 'a tableNode BenchLazy.delay
+  val update :
+      'a tableNode BenchLazy.delay
+       -> string -> 'a BenchLazy.delay -> 'a tableNode BenchLazy.delay
+  val enterList :
+      'a tableNode BenchLazy.state ref
+       -> (string BenchLazy.state ref * 'a BenchLazy.delay) BenchStream.node 
+         BenchLazy.delay
+       -> 'a tableNode BenchLazy.delay
+  val delete :
+      'a tableNode BenchLazy.delay -> string -> 'a tableNode BenchLazy.delay
+  val graft :
+      'a tableNode BenchLazy.delay
+       -> 'a tableNode BenchLazy.delay -> 'a tableNode BenchLazy.state ref
+  val leftmost :
+      'a tableNode BenchLazy.state ref
+       -> (string BenchLazy.delay * 'a BenchLazy.delay)
+       * 'a tableNode BenchLazy.delay
+  val entries :
+      'a tableNode BenchLazy.state ref
+       -> (string BenchLazy.delay * 'a BenchLazy.delay) BenchStream.node 
+         BenchLazy.delay
+  val insertKey :
+      string BenchLazy.state ref * 'a
+       -> (string BenchLazy.state ref * 'a) BenchStream.node BenchLazy.delay
+       -> (string BenchLazy.state ref * 'a) BenchStream.node BenchLazy.delay
+  val sortKey :
+      (string BenchLazy.state ref * 'a) BenchStream.node BenchLazy.state ref
+       -> (string BenchLazy.state ref * 'a) BenchStream.node BenchLazy.delay
+  val unique :
+      'a entry BenchStream.stream
+       -> 'a entry BenchStream.node BenchLazy.state ref
+  val mergeKey :
+      'a entry BenchStream.node BenchLazy.delay
+       -> 'a entry BenchStream.stream
+       -> 'a entry BenchStream.node BenchLazy.delay
+  val take :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val drop :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.state ref
+  val balance :
+      (string BenchLazy.delay * 'a BenchLazy.delay) BenchStream.node 
+           BenchLazy.state ref
+       -> 'a tableNode BenchLazy.delay
+  val updateList :
+      'a tableNode BenchLazy.state ref
+       -> (string BenchLazy.state ref * 'a BenchLazy.delay) BenchStream.node 
+           BenchLazy.state ref
+       -> 'a tableNode BenchLazy.delay
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-expert-phrase.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-expert-phrase.sml:14.42 Warning: calling polyEqual
+functor BenchExpertPhraseFn(P: sig
+  val eagerTerms : bool
+end) :
+sig
+  structure Table : <sig>
+  exception EmptyList
+  structure L : <sig>
+  structure S : <sig>
+  type 'a tableNode
+  type 'a table
+  type 'a entry
+  type ('a,'b) result
+  val answer : ('a,'b) BenchExpertTable.result -> 'a
+  val fails : ('a,'b) BenchExpertTable.result -> bool
+  val newTable : unit -> 'a BenchExpertTable.tableNode BenchLazy.state ref
+  val find :
+      'a BenchExpertTable.tableNode BenchLazy.delay
+       -> string
+       -> ('a BenchLazy.delay,string) BenchExpertTable.result BenchLazy.state 
+         ref
+  val enter :
+      'a BenchExpertTable.tableNode BenchLazy.delay
+       -> string
+       -> 'a BenchLazy.delay -> 'a BenchExpertTable.tableNode BenchLazy.delay
+  val update :
+      'a BenchExpertTable.tableNode BenchLazy.delay
+       -> string
+       -> 'a BenchLazy.delay -> 'a BenchExpertTable.tableNode BenchLazy.delay
+  val enterList :
+      'a BenchExpertTable.tableNode BenchLazy.state ref
+       -> (string BenchLazy.state ref * 'a BenchLazy.delay) BenchStream.node 
+         BenchLazy.delay
+       -> 'a BenchExpertTable.tableNode BenchLazy.delay
+  val delete :
+      'a BenchExpertTable.tableNode BenchLazy.delay
+       -> string -> 'a BenchExpertTable.tableNode BenchLazy.delay
+  val graft :
+      'a BenchExpertTable.tableNode BenchLazy.delay
+       -> 'a BenchExpertTable.tableNode BenchLazy.delay
+       -> 'a BenchExpertTable.tableNode BenchLazy.state ref
+  val leftmost :
+      'a BenchExpertTable.tableNode BenchLazy.state ref
+       -> (string BenchLazy.delay * 'a BenchLazy.delay)
+       * 'a BenchExpertTable.tableNode BenchLazy.delay
+  val entries :
+      'a BenchExpertTable.tableNode BenchLazy.state ref
+       -> (string BenchLazy.delay * 'a BenchLazy.delay) BenchStream.node 
+         BenchLazy.delay
+  val insertKey :
+      string BenchLazy.state ref * 'a
+       -> (string BenchLazy.state ref * 'a) BenchStream.node BenchLazy.delay
+       -> (string BenchLazy.state ref * 'a) BenchStream.node BenchLazy.delay
+  val sortKey :
+      (string BenchLazy.state ref * 'a) BenchStream.node BenchLazy.state ref
+       -> (string BenchLazy.state ref * 'a) BenchStream.node BenchLazy.delay
+  val unique :
+      'a BenchExpertTable.entry BenchStream.stream
+       -> 'a BenchExpertTable.entry BenchStream.node BenchLazy.state ref
+  val mergeKey :
+      'a BenchExpertTable.entry BenchStream.node BenchLazy.delay
+       -> 'a BenchExpertTable.entry BenchStream.stream
+       -> 'a BenchExpertTable.entry BenchStream.node BenchLazy.delay
+  val take :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val drop :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.state ref
+  val balance :
+      (string BenchLazy.delay * 'a BenchLazy.delay) BenchStream.node 
+           BenchLazy.state ref
+       -> 'a BenchExpertTable.tableNode BenchLazy.delay
+  val updateList :
+      'a BenchExpertTable.tableNode BenchLazy.state ref
+       -> (string BenchLazy.state ref * 'a BenchLazy.delay) BenchStream.node 
+           BenchLazy.state ref
+       -> 'a BenchExpertTable.tableNode BenchLazy.delay
+  type phraseNode
+  type phrase
+  val materialize :
+      'a BenchLazy.state ref BenchStream.node BenchLazy.delay
+       -> 'a BenchLazy.state ref BenchStream.node BenchLazy.delay
+  val term :
+      string
+       -> <BaseFct>.<resultStr>.phraseNode BenchLazy.state ref 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.phraseNode BenchLazy.state ref
+  val variable :
+      string -> <BaseFct>.<resultStr>.phraseNode BenchLazy.state ref
+  val nub :
+      ''a BenchStream.node BenchLazy.delay
+       -> ''a BenchStream.node BenchLazy.state ref
+  val vars :
+      <BaseFct>.<resultStr>.phraseNode BenchLazy.state ref
+       -> string BenchStream.node BenchLazy.state ref
+  val showPhrase :
+      <BaseFct>.<resultStr>.phraseNode BenchLazy.state ref -> string
+  val list : 'a list -> 'a BenchStream.node BenchLazy.delay
+  val split :
+      string list
+       -> (string list -> <BaseFct>.<resultStr>.phraseNode BenchLazy.state ref)
+       -> string
+       -> (string list -> <BaseFct>.<resultStr>.phraseNode BenchLazy.state ref)
+       -> <BaseFct>.<resultStr>.phraseNode BenchLazy.state ref
+  val noun :
+      string list -> <BaseFct>.<resultStr>.phraseNode BenchLazy.state ref
+  val relation :
+      string list -> <BaseFct>.<resultStr>.phraseNode BenchLazy.state ref
+  val goal :
+      string list -> <BaseFct>.<resultStr>.phraseNode BenchLazy.state ref
+  val rule :
+      string list -> <BaseFct>.<resultStr>.phraseNode BenchLazy.state ref
+  val args :
+      <BaseFct>.<resultStr>.phraseNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.phraseNode BenchLazy.delay BenchStream.stream
+  val verb : <BaseFct>.<resultStr>.phraseNode BenchLazy.state ref -> string
+  val definitions :
+      string BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.phraseNode BenchLazy.state ref 
+               BenchStream.node BenchLazy.delay BenchExpertTable.tableNode 
+         BenchLazy.delay
+  val relevant :
+      'a BenchStream.node BenchLazy.state ref BenchExpertTable.tableNode 
+         BenchLazy.delay
+       -> <BaseFct>.<resultStr>.phraseNode BenchLazy.state ref
+       -> 'a BenchStream.node BenchLazy.state ref
+  val subst :
+      <BaseFct>.<resultStr>.phraseNode BenchLazy.delay 
+           BenchExpertTable.tableNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.phraseNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.phraseNode BenchLazy.state ref
+  val occurs :
+      <BaseFct>.<resultStr>.phraseNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.phraseNode BenchLazy.delay -> bool
+  val match :
+      <BaseFct>.<resultStr>.phraseNode BenchLazy.delay 
+           BenchExpertTable.tableNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.phraseNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.phraseNode BenchLazy.delay
+       -> (<BaseFct>.<resultStr>.phraseNode BenchLazy.delay 
+               BenchExpertTable.tableNode BenchLazy.delay,string) 
+         BenchExpertTable.result
+  val matchList :
+      <BaseFct>.<resultStr>.phraseNode BenchLazy.delay 
+           BenchExpertTable.tableNode BenchLazy.delay
+       -> (<BaseFct>.<resultStr>.phraseNode BenchLazy.delay
+            * <BaseFct>.<resultStr>.phraseNode BenchLazy.delay) 
+           BenchStream.node BenchLazy.delay
+       -> (<BaseFct>.<resultStr>.phraseNode BenchLazy.delay 
+               BenchExpertTable.tableNode BenchLazy.delay,string) 
+         BenchExpertTable.result
+  val compear :
+      <BaseFct>.<resultStr>.phraseNode BenchLazy.delay 
+           BenchExpertTable.tableNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.phraseNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.phraseNode BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.phraseNode BenchLazy.delay 
+               BenchExpertTable.tableNode BenchLazy.delay,string) 
+         BenchExpertTable.result
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-expert-program.sml]
+functor BenchExpertFn(P: sig
+  val eagerTerms : bool
+end) :
+sig
+  structure K : <sig>
+  structure Table : <sig>
+  exception EmptyList
+  structure L : <sig>
+  structure S : <sig>
+  type 'a tableNode
+  type 'a table
+  type 'a entry
+  type ('a,'b) result
+  val answer : ('a,'b) BenchExpertTable.result -> 'a
+  val fails : ('a,'b) BenchExpertTable.result -> bool
+  val newTable : unit -> 'a BenchExpertTable.tableNode BenchLazy.state ref
+  val find :
+      'a BenchExpertTable.tableNode BenchLazy.delay
+       -> string
+       -> ('a BenchLazy.delay,string) BenchExpertTable.result BenchLazy.state 
+         ref
+  val enter :
+      'a BenchExpertTable.tableNode BenchLazy.delay
+       -> string
+       -> 'a BenchLazy.delay -> 'a BenchExpertTable.tableNode BenchLazy.delay
+  val update :
+      'a BenchExpertTable.tableNode BenchLazy.delay
+       -> string
+       -> 'a BenchLazy.delay -> 'a BenchExpertTable.tableNode BenchLazy.delay
+  val enterList :
+      'a BenchExpertTable.tableNode BenchLazy.state ref
+       -> (string BenchLazy.state ref * 'a BenchLazy.delay) BenchStream.node 
+         BenchLazy.delay
+       -> 'a BenchExpertTable.tableNode BenchLazy.delay
+  val delete :
+      'a BenchExpertTable.tableNode BenchLazy.delay
+       -> string -> 'a BenchExpertTable.tableNode BenchLazy.delay
+  val graft :
+      'a BenchExpertTable.tableNode BenchLazy.delay
+       -> 'a BenchExpertTable.tableNode BenchLazy.delay
+       -> 'a BenchExpertTable.tableNode BenchLazy.state ref
+  val leftmost :
+      'a BenchExpertTable.tableNode BenchLazy.state ref
+       -> (string BenchLazy.delay * 'a BenchLazy.delay)
+       * 'a BenchExpertTable.tableNode BenchLazy.delay
+  val entries :
+      'a BenchExpertTable.tableNode BenchLazy.state ref
+       -> (string BenchLazy.delay * 'a BenchLazy.delay) BenchStream.node 
+         BenchLazy.delay
+  val insertKey :
+      string BenchLazy.state ref * 'a
+       -> (string BenchLazy.state ref * 'a) BenchStream.node BenchLazy.delay
+       -> (string BenchLazy.state ref * 'a) BenchStream.node BenchLazy.delay
+  val sortKey :
+      (string BenchLazy.state ref * 'a) BenchStream.node BenchLazy.state ref
+       -> (string BenchLazy.state ref * 'a) BenchStream.node BenchLazy.delay
+  val unique :
+      'a BenchExpertTable.entry BenchStream.stream
+       -> 'a BenchExpertTable.entry BenchStream.node BenchLazy.state ref
+  val mergeKey :
+      'a BenchExpertTable.entry BenchStream.node BenchLazy.delay
+       -> 'a BenchExpertTable.entry BenchStream.stream
+       -> 'a BenchExpertTable.entry BenchStream.node BenchLazy.delay
+  val take :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val drop :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.state ref
+  val balance :
+      (string BenchLazy.delay * 'a BenchLazy.delay) BenchStream.node 
+           BenchLazy.state ref
+       -> 'a BenchExpertTable.tableNode BenchLazy.delay
+  val updateList :
+      'a BenchExpertTable.tableNode BenchLazy.state ref
+       -> (string BenchLazy.state ref * 'a BenchLazy.delay) BenchStream.node 
+           BenchLazy.state ref
+       -> 'a BenchExpertTable.tableNode BenchLazy.delay
+  type phraseNode
+  type phrase
+  val materialize :
+      'a BenchLazy.state ref BenchStream.node BenchLazy.delay
+       -> 'a BenchLazy.state ref BenchStream.node BenchLazy.delay
+  val term :
+      string
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref
+  val variable :
+      string
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref
+  val nub :
+      ''a BenchStream.node BenchLazy.delay
+       -> ''a BenchStream.node BenchLazy.state ref
+  val vars :
+      <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref
+       -> string BenchStream.node BenchLazy.state ref
+  val showPhrase :
+      <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref
+       -> string
+  val list : 'a list -> 'a BenchStream.node BenchLazy.delay
+  val split :
+      string list
+       -> (string list
+        -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref)
+       -> string
+       -> (string list
+        -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref)
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref
+  val noun :
+      string list
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref
+  val relation :
+      string list
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref
+  val goal :
+      string list
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref
+  val rule :
+      string list
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref
+  val args :
+      <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.delay 
+         BenchStream.stream
+  val verb :
+      <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref
+       -> string
+  val definitions :
+      string BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref 
+               BenchStream.node BenchLazy.delay BenchExpertTable.tableNode 
+         BenchLazy.delay
+  val relevant :
+      'a BenchStream.node BenchLazy.state ref BenchExpertTable.tableNode 
+         BenchLazy.delay
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref
+       -> 'a BenchStream.node BenchLazy.state ref
+  val subst :
+      <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.delay 
+           BenchExpertTable.tableNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref
+  val occurs :
+      <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.delay
+       -> bool
+  val match :
+      <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.delay 
+           BenchExpertTable.tableNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.delay
+       -> (<BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.delay 
+               BenchExpertTable.tableNode BenchLazy.delay,string) 
+         BenchExpertTable.result
+  val matchList :
+      <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.delay 
+           BenchExpertTable.tableNode BenchLazy.delay
+       -> (<BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.delay
+            * <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.delay) 
+           BenchStream.node BenchLazy.delay
+       -> (<BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.delay 
+               BenchExpertTable.tableNode BenchLazy.delay,string) 
+         BenchExpertTable.result
+  val compear :
+      <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.delay 
+           BenchExpertTable.tableNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.delay 
+               BenchExpertTable.tableNode BenchLazy.delay,string) 
+         BenchExpertTable.result
+  type solution
+  val freshCopy :
+      <BaseFct>.<resultStr>.solution
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.solution
+       * <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref
+  val singleton : 'a -> 'a BenchStream.node BenchLazy.state ref
+  val children :
+      <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.delay
+       * <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.delay
+  val solve :
+      <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref 
+                 BenchStream.node BenchLazy.state ref 
+           BenchExpertTable.tableNode BenchLazy.delay
+       * bool BenchExpertTable.tableNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.solution
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.solution BenchStream.node BenchLazy.delay
+  val lookUp :
+      <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref 
+                 BenchStream.node BenchLazy.state ref 
+           BenchExpertTable.tableNode BenchLazy.delay
+       * bool BenchExpertTable.tableNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.solution
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref 
+             BenchStream.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.solution BenchStream.node BenchLazy.state ref
+  val try :
+      <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref 
+                 BenchStream.node BenchLazy.state ref 
+           BenchExpertTable.tableNode BenchLazy.delay
+       * bool BenchExpertTable.tableNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.solution
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.solution BenchStream.node BenchLazy.delay
+  val ask :
+      bool BenchExpertTable.tableNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.solution
+       -> <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.solution BenchStream.node BenchLazy.state ref
+  val strip :
+      string list
+       -> <BaseFct>.<resultStr>.solution BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.solution BenchStream.node BenchLazy.state ref
+  val text : string -> char BenchStream.node BenchLazy.delay
+  val showVars :
+      <BaseFct>.<resultStr>.K.<returnStr>.phraseNode BenchLazy.delay 
+           BenchExpertTable.tableNode BenchLazy.delay
+       -> string BenchStream.node BenchLazy.delay -> string
+  val display :
+      <BaseFct>.<resultStr>.solution BenchStream.node BenchLazy.delay
+       -> string BenchStream.node BenchLazy.delay
+       -> bool BenchStream.node BenchLazy.delay
+       -> char BenchStream.node BenchLazy.state ref
+  val lines : string -> string BenchStream.node BenchLazy.delay
+  val names : int -> string BenchStream.node BenchLazy.state ref
+  val charLines :
+      char BenchStream.node BenchLazy.state ref
+       -> string BenchStream.node BenchLazy.state ref
+  val process :
+      string
+       -> char BenchStream.node BenchLazy.state ref
+       -> char BenchStream.node BenchLazy.delay
+  val processText : string -> string -> char BenchStream.node BenchLazy.delay
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-expert-driver.sml]
+[autoloading]
+[autoloading done]
+functor BenchExpertDriverFn(P: sig
+  val process : string -> char BenchStream.stream -> char BenchStream.stream
+end) :
+sig
+  structure L : <sig>
+  structure S : <sig>
+  val read : string -> TextIO.vector
+  val consume : string -> char BenchStream.node BenchLazy.delay -> int
+  val take :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/expert-tests.sml]
+PASS expert/lazy/original dialog source
+PASS expert/lazy/original dialog lower-no
+PASS expert/lazy/original dialog uppercase-no
+PASS expert/lazy/original dialog all-yes
+PASS expert/lazy/original dialog stop-first
+PASS expert/lazy/original dialog mixed
+PASS expert/lazy/lazy table first duplicate wins
+PASS expert/lazy/updateList last new duplicate wins
+PASS expert/lazy/single update replaces value
+PASS expert/lazy/enter retains old value
+PASS expert/lazy/lookup avoids unused table branch
+PASS expert/lazy/unification and substitution
+PASS expert/lazy/occurs check rejects self reference
+PASS expert/lazy/term mismatch fails
+PASS expert/lazy/source zip truncates unmatched phrase arity
+PASS expert/lazy/question precedes missing answer
+PASS expert/lazy/lookup only when answer demanded
+PASS expert/lazy/unused answer stream remains unforced
+PASS expert/lazy/driver repeats source prefix and dialog
+PASS expert/lazy/zero repetitions
+PASS expert/lazy/incorrect dialog rejected
+PASS expert/strict/original dialog source
+PASS expert/strict/original dialog lower-no
+PASS expert/strict/original dialog uppercase-no
+PASS expert/strict/original dialog all-yes
+PASS expert/strict/original dialog stop-first
+PASS expert/strict/original dialog mixed
+PASS expert/strict/lazy table first duplicate wins
+PASS expert/strict/updateList last new duplicate wins
+PASS expert/strict/single update replaces value
+PASS expert/strict/enter retains old value
+PASS expert/strict/lookup avoids unused table branch
+PASS expert/strict/unification and substitution
+PASS expert/strict/occurs check rejects self reference
+PASS expert/strict/term mismatch fails
+PASS expert/strict/source zip truncates unmatched phrase arity
+PASS expert/strict/question precedes missing answer
+PASS expert/strict/lookup only when answer demanded
+PASS expert/strict/unused answer stream remains unforced
+PASS expert/strict/driver repeats source prefix and dialog
+PASS expert/strict/zero repetitions
+PASS expert/strict/incorrect dialog rejected
+PASS expert/lazy phrase leaves unused children delayed
+PASS expert/strict phrase evaluates finite children
+PASS expert/table delete and ordered entries
+functor ExpertTestsFn(P: sig
+  val eagerTerms : bool
+  val policy : string
+end) :
+sig
+  structure App : <sig>
+  structure K : <sig>
+  structure Driver : <sig>
+  structure Table : <sig>
+  exception EmptyList
+  structure L : <sig>
+  structure S : <sig>
+  type 'a tableNode
+  type 'a table
+  type 'a entry
+  type ('a,'b) result
+  val answer : ('a,'b) BenchExpertTable.result -> 'a
+  val fails : ('a,'b) BenchExpertTable.result -> bool
+  val newTable : unit -> 'a BenchExpertTable.tableNode BenchLazy.state ref
+  val find :
+      'a BenchExpertTable.tableNode BenchLazy.delay
+       -> string
+       -> ('a BenchLazy.delay,string) BenchExpertTable.result BenchLazy.state 
+         ref
+  val enter :
+      'a BenchExpertTable.tableNode BenchLazy.delay
+       -> string
+       -> 'a BenchLazy.delay -> 'a BenchExpertTable.tableNode BenchLazy.delay
+  val update :
+      'a BenchExpertTable.tableNode BenchLazy.delay
+       -> string
+       -> 'a BenchLazy.delay -> 'a BenchExpertTable.tableNode BenchLazy.delay
+  val enterList :
+      'a BenchExpertTable.tableNode BenchLazy.state ref
+       -> (string BenchLazy.state ref * 'a BenchLazy.delay) BenchStream.node 
+         BenchLazy.delay
+       -> 'a BenchExpertTable.tableNode BenchLazy.delay
+  val delete :
+      'a BenchExpertTable.tableNode BenchLazy.delay
+       -> string -> 'a BenchExpertTable.tableNode BenchLazy.delay
+  val graft :
+      'a BenchExpertTable.tableNode BenchLazy.delay
+       -> 'a BenchExpertTable.tableNode BenchLazy.delay
+       -> 'a BenchExpertTable.tableNode BenchLazy.state ref
+  val leftmost :
+      'a BenchExpertTable.tableNode BenchLazy.state ref
+       -> (string BenchLazy.delay * 'a BenchLazy.delay)
+       * 'a BenchExpertTable.tableNode BenchLazy.delay
+  val entries :
+      'a BenchExpertTable.tableNode BenchLazy.state ref
+       -> (string BenchLazy.delay * 'a BenchLazy.delay) BenchStream.node 
+         BenchLazy.delay
+  val insertKey :
+      string BenchLazy.state ref * 'a
+       -> (string BenchLazy.state ref * 'a) BenchStream.node BenchLazy.delay
+       -> (string BenchLazy.state ref * 'a) BenchStream.node BenchLazy.delay
+  val sortKey :
+      (string BenchLazy.state ref * 'a) BenchStream.node BenchLazy.state ref
+       -> (string BenchLazy.state ref * 'a) BenchStream.node BenchLazy.delay
+  val unique :
+      'a BenchExpertTable.entry BenchStream.stream
+       -> 'a BenchExpertTable.entry BenchStream.node BenchLazy.state ref
+  val mergeKey :
+      'a BenchExpertTable.entry BenchStream.node BenchLazy.delay
+       -> 'a BenchExpertTable.entry BenchStream.stream
+       -> 'a BenchExpertTable.entry BenchStream.node BenchLazy.delay
+  val take :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val drop :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.state ref
+  val balance :
+      (string BenchLazy.delay * 'a BenchLazy.delay) BenchStream.node 
+           BenchLazy.state ref
+       -> 'a BenchExpertTable.tableNode BenchLazy.delay
+  val updateList :
+      'a BenchExpertTable.tableNode BenchLazy.state ref
+       -> (string BenchLazy.state ref * 'a BenchLazy.delay) BenchStream.node 
+           BenchLazy.state ref
+       -> 'a BenchExpertTable.tableNode BenchLazy.delay
+  type phraseNode
+  type phrase
+  val materialize :
+      'a BenchLazy.state ref BenchStream.node BenchLazy.delay
+       -> 'a BenchLazy.state ref BenchStream.node BenchLazy.delay
+  val term :
+      string
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+             ref BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+  val variable :
+      string
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+  val nub :
+      ''a BenchStream.node BenchLazy.delay
+       -> ''a BenchStream.node BenchLazy.state ref
+  val vars :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state ref
+       -> string BenchStream.node BenchLazy.state ref
+  val showPhrase :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state ref
+       -> string
+  val list : 'a list -> 'a BenchStream.node BenchLazy.delay
+  val split :
+      string list
+       -> (string list
+        -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+          ref)
+       -> string
+       -> (string list
+        -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+          ref)
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+  val noun :
+      string list
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+  val relation :
+      string list
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+  val goal :
+      string list
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+  val rule :
+      string list
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+  val args :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay 
+         BenchStream.stream
+  val verb :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state ref
+       -> string
+  val definitions :
+      string BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+                 ref BenchStream.node BenchLazy.delay 
+           BenchExpertTable.tableNode BenchLazy.delay
+  val relevant :
+      'a BenchStream.node BenchLazy.state ref BenchExpertTable.tableNode 
+         BenchLazy.delay
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+       -> 'a BenchStream.node BenchLazy.state ref
+  val subst :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay 
+           BenchExpertTable.tableNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+  val occurs :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay
+       -> bool
+  val match :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay 
+           BenchExpertTable.tableNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay
+       -> (<BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay 
+               BenchExpertTable.tableNode BenchLazy.delay,string) 
+         BenchExpertTable.result
+  val matchList :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay 
+           BenchExpertTable.tableNode BenchLazy.delay
+       -> (<BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay
+            * <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode 
+              BenchLazy.delay) BenchStream.node BenchLazy.delay
+       -> (<BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay 
+               BenchExpertTable.tableNode BenchLazy.delay,string) 
+         BenchExpertTable.result
+  val compear :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay 
+           BenchExpertTable.tableNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+       -> (<BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay 
+               BenchExpertTable.tableNode BenchLazy.delay,string) 
+         BenchExpertTable.result
+  val base : string
+  val animals : TextIO.vector
+  val label : string -> string
+  val render : char BenchStream.node BenchLazy.delay -> string
+  val lookup :
+      'a BenchExpertTable.tableNode BenchLazy.delay -> string -> 'a option
+  val entry : 'a * 'b -> 'a BenchLazy.state ref * 'b BenchLazy.state ref
+end
+structure LazyExpertTests : sig
+  structure App : <sig>
+  structure K : <sig>
+  structure Driver : <sig>
+  structure Table : <sig>
+  exception EmptyList
+  structure L : <sig>
+  structure S : <sig>
+  datatype 'a tableNode
+    = Empty
+    | Fork of 'a tableNode BenchLazy.delay
+               * (string BenchLazy.delay * 'a BenchLazy.delay)
+               * 'a tableNode BenchLazy.delay
+  type 'a table = 'a tableNode BenchLazy.delay
+  type 'a entry = string BenchLazy.delay * 'a BenchLazy.delay
+  datatype ('a,'b) result = Answer of 'a | Reason of 'b
+  val answer : ('a,'b) result -> 'a
+  val fails : ('a,'b) result -> bool
+  val newTable : unit -> 'a tableNode BenchLazy.state ref
+  val find :
+      'a tableNode BenchLazy.delay
+       -> string -> ('a BenchLazy.delay,string) result BenchLazy.state ref
+  val enter :
+      'a tableNode BenchLazy.delay
+       -> string -> 'a BenchLazy.delay -> 'a tableNode BenchLazy.delay
+  val update :
+      'a tableNode BenchLazy.delay
+       -> string -> 'a BenchLazy.delay -> 'a tableNode BenchLazy.delay
+  val enterList :
+      'a tableNode BenchLazy.state ref
+       -> (string BenchLazy.state ref * 'a BenchLazy.delay) BenchStream.node 
+         BenchLazy.delay
+       -> 'a tableNode BenchLazy.delay
+  val delete :
+      'a tableNode BenchLazy.delay -> string -> 'a tableNode BenchLazy.delay
+  val graft :
+      'a tableNode BenchLazy.delay
+       -> 'a tableNode BenchLazy.delay -> 'a tableNode BenchLazy.state ref
+  val leftmost :
+      'a tableNode BenchLazy.state ref
+       -> (string BenchLazy.delay * 'a BenchLazy.delay)
+       * 'a tableNode BenchLazy.delay
+  val entries :
+      'a tableNode BenchLazy.state ref
+       -> (string BenchLazy.delay * 'a BenchLazy.delay) BenchStream.node 
+         BenchLazy.delay
+  val insertKey :
+      string BenchLazy.state ref * 'a
+       -> (string BenchLazy.state ref * 'a) BenchStream.node BenchLazy.delay
+       -> (string BenchLazy.state ref * 'a) BenchStream.node BenchLazy.delay
+  val sortKey :
+      (string BenchLazy.state ref * 'a) BenchStream.node BenchLazy.state ref
+       -> (string BenchLazy.state ref * 'a) BenchStream.node BenchLazy.delay
+  val unique :
+      'a entry BenchStream.stream
+       -> 'a entry BenchStream.node BenchLazy.state ref
+  val mergeKey :
+      'a entry BenchStream.node BenchLazy.delay
+       -> 'a entry BenchStream.stream
+       -> 'a entry BenchStream.node BenchLazy.delay
+  val take :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val drop :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.state ref
+  val balance :
+      (string BenchLazy.delay * 'a BenchLazy.delay) BenchStream.node 
+           BenchLazy.state ref
+       -> 'a tableNode BenchLazy.delay
+  val updateList :
+      'a tableNode BenchLazy.state ref
+       -> (string BenchLazy.state ref * 'a BenchLazy.delay) BenchStream.node 
+           BenchLazy.state ref
+       -> 'a tableNode BenchLazy.delay
+  datatype phraseNode
+    = Term of string
+               * <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode 
+                   BenchLazy.delay BenchStream.stream
+    | Var of string
+  type phrase = phraseNode BenchLazy.delay
+  val materialize :
+      'a BenchLazy.state ref BenchStream.node BenchLazy.delay
+       -> 'a BenchLazy.state ref BenchStream.node BenchLazy.delay
+  val term :
+      string
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+             ref BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+  val variable :
+      string
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+  val nub :
+      ''a BenchStream.node BenchLazy.delay
+       -> ''a BenchStream.node BenchLazy.state ref
+  val vars :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state ref
+       -> string BenchStream.node BenchLazy.state ref
+  val showPhrase :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state ref
+       -> string
+  val list : 'a list -> 'a BenchStream.node BenchLazy.delay
+  val split :
+      string list
+       -> (string list
+        -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+          ref)
+       -> string
+       -> (string list
+        -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+          ref)
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+  val noun :
+      string list
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+  val relation :
+      string list
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+  val goal :
+      string list
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+  val rule :
+      string list
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+  val args :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay 
+         BenchStream.stream
+  val verb :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state ref
+       -> string
+  val definitions :
+      string BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+                 ref BenchStream.node BenchLazy.delay tableNode 
+         BenchLazy.delay
+  val relevant :
+      'a BenchStream.node BenchLazy.state ref tableNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+       -> 'a BenchStream.node BenchLazy.state ref
+  val subst :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay 
+           tableNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+  val occurs :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay
+       -> bool
+  val match :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay 
+           tableNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay
+       -> (<BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay 
+               tableNode BenchLazy.delay,string) result
+  val matchList :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay 
+           tableNode BenchLazy.delay
+       -> (<BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay
+            * <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode 
+              BenchLazy.delay) BenchStream.node BenchLazy.delay
+       -> (<BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay 
+               tableNode BenchLazy.delay,string) result
+  val compear :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay 
+           tableNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+       -> (<BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay 
+               tableNode BenchLazy.delay,string) result
+  val base : string
+  val animals : TextIO.vector
+  val label : string -> string
+  val render : char BenchStream.node BenchLazy.delay -> string
+  val lookup : 'a tableNode BenchLazy.delay -> string -> 'a option
+  val entry : 'a * 'b -> 'a BenchLazy.state ref * 'b BenchLazy.state ref
+end
+structure StrictExpertTests : sig
+  structure App : <sig>
+  structure K : <sig>
+  structure Driver : <sig>
+  structure Table : <sig>
+  exception EmptyList
+  structure L : <sig>
+  structure S : <sig>
+  datatype 'a tableNode
+    = Empty
+    | Fork of 'a tableNode BenchLazy.delay
+               * (string BenchLazy.delay * 'a BenchLazy.delay)
+               * 'a tableNode BenchLazy.delay
+  type 'a table = 'a tableNode BenchLazy.delay
+  type 'a entry = string BenchLazy.delay * 'a BenchLazy.delay
+  datatype ('a,'b) result = Answer of 'a | Reason of 'b
+  val answer : ('a,'b) result -> 'a
+  val fails : ('a,'b) result -> bool
+  val newTable : unit -> 'a tableNode BenchLazy.state ref
+  val find :
+      'a tableNode BenchLazy.delay
+       -> string -> ('a BenchLazy.delay,string) result BenchLazy.state ref
+  val enter :
+      'a tableNode BenchLazy.delay
+       -> string -> 'a BenchLazy.delay -> 'a tableNode BenchLazy.delay
+  val update :
+      'a tableNode BenchLazy.delay
+       -> string -> 'a BenchLazy.delay -> 'a tableNode BenchLazy.delay
+  val enterList :
+      'a tableNode BenchLazy.state ref
+       -> (string BenchLazy.state ref * 'a BenchLazy.delay) BenchStream.node 
+         BenchLazy.delay
+       -> 'a tableNode BenchLazy.delay
+  val delete :
+      'a tableNode BenchLazy.delay -> string -> 'a tableNode BenchLazy.delay
+  val graft :
+      'a tableNode BenchLazy.delay
+       -> 'a tableNode BenchLazy.delay -> 'a tableNode BenchLazy.state ref
+  val leftmost :
+      'a tableNode BenchLazy.state ref
+       -> (string BenchLazy.delay * 'a BenchLazy.delay)
+       * 'a tableNode BenchLazy.delay
+  val entries :
+      'a tableNode BenchLazy.state ref
+       -> (string BenchLazy.delay * 'a BenchLazy.delay) BenchStream.node 
+         BenchLazy.delay
+  val insertKey :
+      string BenchLazy.state ref * 'a
+       -> (string BenchLazy.state ref * 'a) BenchStream.node BenchLazy.delay
+       -> (string BenchLazy.state ref * 'a) BenchStream.node BenchLazy.delay
+  val sortKey :
+      (string BenchLazy.state ref * 'a) BenchStream.node BenchLazy.state ref
+       -> (string BenchLazy.state ref * 'a) BenchStream.node BenchLazy.delay
+  val unique :
+      'a entry BenchStream.stream
+       -> 'a entry BenchStream.node BenchLazy.state ref
+  val mergeKey :
+      'a entry BenchStream.node BenchLazy.delay
+       -> 'a entry BenchStream.stream
+       -> 'a entry BenchStream.node BenchLazy.delay
+  val take :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val drop :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.state ref
+  val balance :
+      (string BenchLazy.delay * 'a BenchLazy.delay) BenchStream.node 
+           BenchLazy.state ref
+       -> 'a tableNode BenchLazy.delay
+  val updateList :
+      'a tableNode BenchLazy.state ref
+       -> (string BenchLazy.state ref * 'a BenchLazy.delay) BenchStream.node 
+           BenchLazy.state ref
+       -> 'a tableNode BenchLazy.delay
+  datatype phraseNode
+    = Term of string
+               * <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode 
+                   BenchLazy.delay BenchStream.stream
+    | Var of string
+  type phrase = phraseNode BenchLazy.delay
+  val materialize :
+      'a BenchLazy.state ref BenchStream.node BenchLazy.delay
+       -> 'a BenchLazy.state ref BenchStream.node BenchLazy.delay
+  val term :
+      string
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+             ref BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+  val variable :
+      string
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+  val nub :
+      ''a BenchStream.node BenchLazy.delay
+       -> ''a BenchStream.node BenchLazy.state ref
+  val vars :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state ref
+       -> string BenchStream.node BenchLazy.state ref
+  val showPhrase :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state ref
+       -> string
+  val list : 'a list -> 'a BenchStream.node BenchLazy.delay
+  val split :
+      string list
+       -> (string list
+        -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+          ref)
+       -> string
+       -> (string list
+        -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+          ref)
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+  val noun :
+      string list
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+  val relation :
+      string list
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+  val goal :
+      string list
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+  val rule :
+      string list
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+  val args :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay 
+         BenchStream.stream
+  val verb :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state ref
+       -> string
+  val definitions :
+      string BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+                 ref BenchStream.node BenchLazy.delay tableNode 
+         BenchLazy.delay
+  val relevant :
+      'a BenchStream.node BenchLazy.state ref tableNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+       -> 'a BenchStream.node BenchLazy.state ref
+  val subst :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay 
+           tableNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+  val occurs :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay
+       -> bool
+  val match :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay 
+           tableNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay
+       -> (<BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay 
+               tableNode BenchLazy.delay,string) result
+  val matchList :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay 
+           tableNode BenchLazy.delay
+       -> (<BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay
+            * <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode 
+              BenchLazy.delay) BenchStream.node BenchLazy.delay
+       -> (<BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay 
+               tableNode BenchLazy.delay,string) result
+  val compear :
+      <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay 
+           tableNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+       -> <BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.state 
+         ref
+       -> (<BaseFct>.<resultStr>.App.<returnStr>.K.phraseNode BenchLazy.delay 
+               tableNode BenchLazy.delay,string) result
+  val base : string
+  val animals : TextIO.vector
+  val label : string -> string
+  val render : char BenchStream.node BenchLazy.delay -> string
+  val lookup : 'a tableNode BenchLazy.delay -> string -> 'a option
+  val entry : 'a * 'b -> 'a BenchLazy.state ref * 'b BenchLazy.state ref
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 45 checks, 0 failed

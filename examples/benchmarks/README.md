@@ -399,6 +399,13 @@ inventory entry.
 | [knights-array-strict](#knights-array-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/knights) | Search closed knight tours with a persistent array board and strict numeric metadata. |
 | [mate-lazy](#mate-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/mate) | Solve chess mating problems by AND–OR search with lazy legal-move generation and compact printed replies. |
 | [mate-strict](#mate-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/mate) | Solve chess mating problems by AND–OR search with strict legal-move generation and compact printed replies. |
+| [expert-lazy](#expert-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/expert) | Infer animal identities through unification and a lazy question/answer feedback table with lazy finite phrase fields. |
+| [expert-strict](#expert-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/expert) | Infer animal identities through unification and a lazy question/answer feedback table with strict finite phrase fields. |
+| [regexredux2](#regexredux2) | [Sandmark](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/benchmarksgame/regexredux2.ml) | Count DNA regex motifs and apply the ordered regex-redux substitutions over fixed FASTA data. |
+| [multiplier-lazy](#multiplier-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/multiplier) | Simulate a bit-stream shift/add multiplier and validate its full trace with lazy binary gate heads. |
+| [multiplier-strict](#multiplier-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/multiplier) | Simulate a bit-stream shift/add multiplier and validate its full trace with strict binary gate heads. |
+| [multiplier-count-lazy](#multiplier-count-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/multiplier) | Sum ready signals while leaving the multiplier product path undemanded with lazy binary gate heads. |
+| [multiplier-count-strict](#multiplier-count-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/multiplier) | Sum ready signals while leaving the multiplier product path undemanded with strict binary gate heads. |
 
 ## Running and interpreting checks
 
@@ -22953,3 +22960,707 @@ allocation, continuation specialization, repeated printing during compaction and
 stable sorting. These are source-based diagnostic questions. Exact agreement
 with original outputs establishes results for the selected inputs; timing/count
 records are measured evidence and do not alone identify performance causes.
+
+## expert-lazy
+
+### Algorithm and workload
+
+Run the source animal-identification expert system: parse relations and rules,
+rename variables, unify phrases with an occurs check, search and/or goals and
+request answers as part of the result stream. Keep the binary-search-tree
+knowledge/environment tables, lazy information table, fresh-variable stream,
+duplicate-question filtering and solution/environment display. The information
+table is built from the questions produced by the same inference computation;
+this feedback is part of the workload, not ordinary eager input lookup.
+
+### History, authorship and input origins
+
+[Ian Holyer's expert source](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/expert), pinned at
+b7391df4540ac8b11b35e1b2e2c15819b5171798, declares a March 1993 translation and
+adaptation from his Functional programming with Miranda (Pitman, 1991).
+Preserve all six Haskell modules and the README under expert-lazy/upstream.
+Search.hs also records S. L. Peyton Jones's November 1999 extraction of shared
+question text to avoid dependence on accidental compiler common-subexpression
+elimination. Preserve that shared value explicitly.
+
+The source runtime_files/animals and expert.stdin provide the fixed knowledge
+and answer data. Retain their contents and source paths; no separate individual
+dataset notice is stated. The supplied answer No is intentionally positive:
+only a line whose words are exactly lowercase no is negative. Do not normalize
+case or substitute a different interpretation of yes/no.
+
+### Variants and translation decisions
+
+-lazy memoizes phrase trees and child streams. -strict eagerly traverses each
+finite phrase's children when its term is demanded. Both preserve lazy search,
+question/answer feedback, table roots and delayed answer values: eager feedback
+would force a question's answer before that question can be emitted. Explicit
+control delays also preserve unused replies after a negative More answer.
+The two policies have separate names and count records, with a poison-child
+check demonstrating their intended evaluation difference.
+
+The generic source table's key domain is specialized to the String keys used by
+this program; retain lexical comparison and its binary tree, rather than replace
+it with a host map/hash table. enterList remains lazy and first duplicate wins;
+updateList retains insertion sorting, last-new-duplicate selection, sorted merge
+and median balancing. Single updates, lookup, delete and entry enumeration are
+also translated and checked. Retain unification's source zip truncation for
+mismatched term arities; do not silently impose a new arity check.
+
+Source strings are portable SML strings where bounded words/question formatting
+need a complete value. Character, rule, answer and result streams retain explicit
+memoized spines. Knowledge lines and answer words use their ASCII fixture
+semantics. The driver builds one shared input-character stream and takes the
+source i+9999 prefix separately for each repetition. Line splitting and answer
+values remain delayed; no per-iteration full input conversion forces unused
+answers. Each repetition rebuilds inference and its feedback table as in Main.
+The question string is shared between display and information lookup.
+
+### Inputs, profiles and result checks
+
+Smoke uses one repetition instead of source FAST's 1000. Normal retains 10000
+repetitions and large retains 50000. Preserve the source per-repetition prefix
+parameter i+9999, fixed animal knowledge and exact answer bytes. This input is
+shorter than every selected prefix, but the prefix computation is still present.
+Selected indices and generated variable suffixes fit signed 31-bit arithmetic;
+the total checked-character report uses IntInf as validation metadata.
+
+The source prints length(process ...) each repetition: 526 for the supplied
+answers. The port instead compares all 526 dialog characters on every repetition
+and reports repetitions plus their total. This adds exact character validation
+to the source length consumer and explicitly forces character values as well as
+spines. Original GHC 9.4.7 matches every supplied FAST/NORM/SLOW length fixture;
+an export-only observer provides the complete original dialog and five additional
+answer scenarios. All checks are exact, with no numerical tolerance.
+
+The 45-check target covers those six original dialogs, positive/negative answer
+case, first/last duplicate behavior, update/lookup/delete/order, substitution,
+occurs rejection, source arity behavior, question-before-answer demand, unused
+answers, policy-specific phrase forcing, repetition and corrupt-dialog rejection.
+Normal pilots use the original repetition count under explicit resource guards.
+See the validation archive for actual compiler/engine results; full SML large
+repetitions remain unrecorded unless listed explicitly.
+
+### Literature and diagnostic questions
+
+The source README credits Holyer's Functional programming with Miranda (1991).
+Record this as its stated ancestry; the source, not an assumed textbook algorithm,
+defines the exact unification, table and feedback behavior.
+[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) provides suite
+context. Search.hs's dated shared-string comment is source evidence for that
+adaptation; it does not establish a current compiler performance cause.
+
+Investigate phrase traversal, repeated substitution, table balance, delayed
+input, knot tying, string sharing and stream allocation. These are source-based
+hypotheses. Original-dialog agreement and explicit demand checks establish
+correctness for the recorded cases. Runtime/count measurements are separate
+observations, and fresh versus repeated execution retains its recorded mode.
+
+## expert-strict
+
+### Algorithm and workload
+
+Run the source animal-identification expert system: parse relations and rules,
+rename variables, unify phrases with an occurs check, search and/or goals and
+request answers as part of the result stream. Keep the binary-search-tree
+knowledge/environment tables, lazy information table, fresh-variable stream,
+duplicate-question filtering and solution/environment display. The information
+table is built from the questions produced by the same inference computation;
+this feedback is part of the workload, not ordinary eager input lookup.
+
+### History, authorship and input origins
+
+[Ian Holyer's expert source](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/expert), pinned at
+b7391df4540ac8b11b35e1b2e2c15819b5171798, declares a March 1993 translation and
+adaptation from his Functional programming with Miranda (Pitman, 1991).
+Preserve all six Haskell modules and the README under expert-lazy/upstream.
+Search.hs also records S. L. Peyton Jones's November 1999 extraction of shared
+question text to avoid dependence on accidental compiler common-subexpression
+elimination. Preserve that shared value explicitly.
+
+The source runtime_files/animals and expert.stdin provide the fixed knowledge
+and answer data. Retain their contents and source paths; no separate individual
+dataset notice is stated. The supplied answer No is intentionally positive:
+only a line whose words are exactly lowercase no is negative. Do not normalize
+case or substitute a different interpretation of yes/no.
+
+### Variants and translation decisions
+
+-lazy memoizes phrase trees and child streams. -strict eagerly traverses each
+finite phrase's children when its term is demanded. Both preserve lazy search,
+question/answer feedback, table roots and delayed answer values: eager feedback
+would force a question's answer before that question can be emitted. Explicit
+control delays also preserve unused replies after a negative More answer.
+The two policies have separate names and count records, with a poison-child
+check demonstrating their intended evaluation difference.
+
+The generic source table's key domain is specialized to the String keys used by
+this program; retain lexical comparison and its binary tree, rather than replace
+it with a host map/hash table. enterList remains lazy and first duplicate wins;
+updateList retains insertion sorting, last-new-duplicate selection, sorted merge
+and median balancing. Single updates, lookup, delete and entry enumeration are
+also translated and checked. Retain unification's source zip truncation for
+mismatched term arities; do not silently impose a new arity check.
+
+Source strings are portable SML strings where bounded words/question formatting
+need a complete value. Character, rule, answer and result streams retain explicit
+memoized spines. Knowledge lines and answer words use their ASCII fixture
+semantics. The driver builds one shared input-character stream and takes the
+source i+9999 prefix separately for each repetition. Line splitting and answer
+values remain delayed; no per-iteration full input conversion forces unused
+answers. Each repetition rebuilds inference and its feedback table as in Main.
+The question string is shared between display and information lookup.
+
+### Inputs, profiles and result checks
+
+Smoke uses one repetition instead of source FAST's 1000. Normal retains 10000
+repetitions and large retains 50000. Preserve the source per-repetition prefix
+parameter i+9999, fixed animal knowledge and exact answer bytes. This input is
+shorter than every selected prefix, but the prefix computation is still present.
+Selected indices and generated variable suffixes fit signed 31-bit arithmetic;
+the total checked-character report uses IntInf as validation metadata.
+
+The source prints length(process ...) each repetition: 526 for the supplied
+answers. The port instead compares all 526 dialog characters on every repetition
+and reports repetitions plus their total. This adds exact character validation
+to the source length consumer and explicitly forces character values as well as
+spines. Original GHC 9.4.7 matches every supplied FAST/NORM/SLOW length fixture;
+an export-only observer provides the complete original dialog and five additional
+answer scenarios. All checks are exact, with no numerical tolerance.
+
+The 45-check target covers those six original dialogs, positive/negative answer
+case, first/last duplicate behavior, update/lookup/delete/order, substitution,
+occurs rejection, source arity behavior, question-before-answer demand, unused
+answers, policy-specific phrase forcing, repetition and corrupt-dialog rejection.
+Normal pilots use the original repetition count under explicit resource guards.
+See the validation archive for actual compiler/engine results; full SML large
+repetitions remain unrecorded unless listed explicitly.
+
+### Literature and diagnostic questions
+
+The source README credits Holyer's Functional programming with Miranda (1991).
+Record this as its stated ancestry; the source, not an assumed textbook algorithm,
+defines the exact unification, table and feedback behavior.
+[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) provides suite
+context. Search.hs's dated shared-string comment is source evidence for that
+adaptation; it does not establish a current compiler performance cause.
+
+Investigate phrase traversal, repeated substitution, table balance, delayed
+input, knot tying, string sharing and stream allocation. These are source-based
+hypotheses. Original-dialog agreement and explicit demand checks establish
+correctness for the recorded cases. Runtime/count measurements are separate
+observations, and fresh versus repeated execution retains its recorded mode.
+
+## regexredux2
+
+### Algorithm and workload
+
+Run the regex-redux pipeline: strip FASTA headers/newlines, count nine DNA motif
+patterns one at a time and apply the five source substitutions in order. Print
+all pattern/count pairs and the original, stripped and final lengths. Preserve
+case-folded motif counting, case-sensitive substitutions and the source count
+loop's next search position at match-start+1, including overlapping matches.
+Global substitution resumes at the previous match end.
+
+### History, names and notices
+
+Source [Sandmark benchmarksgame/regexredux2.ml](https://github.com/ocaml-bench/sandmark/blob/5605805954a00497ed197c930641cddd580e1507/benchmarks/benchmarksgame/regexredux2.ml), pinned
+at 5605805954a00497ed197c930641cddd580e1507. Christophe Troestler contributed the
+regex-dna ancestor; Roman Kashitsyn adapted mutation to Bytes. The established
+workload is regex-redux; retain regexredux2 as the pinned executable variant name
+and document regex-dna as ancestry rather than an exact duplicate. The required
+source pipeline differs from other historical regex-dna substitution programs.
+
+The pinned fasta3 generator credits Troestler, Mauricio Fernandez and Tony
+Tavener. Preserve both original programs, Dune, README, Revised BSD LICENSE and
+the Sandmark root notice. The individual BSD notice names Brent Fulgham and
+Isaac Gouy. All input profiles are generated from the pinned fasta3 source with
+its fixed initial random state and original probability tables. Record full
+file hashes and byte lengths in DATA-IDENTITIES.json; these are generated text
+data, not embedded executable artifacts.
+
+### Portable library replacement
+
+The original uses OCaml Str's native library. A portable SML97 adapter implements
+the precise fragment used here: literal characters, enumerated/negated character
+sets, dot excluding newline, greedy star with backtracking, ordered escaped
+alternatives, line anchors, ASCII case folding, forward search and constant
+replacement. It preserves regular-expression matching instead of replacing
+motif searches with direct nucleotide counts or a combined scan. Compile each
+motif at its source call site and run one pattern at a time. This adapter is
+scoped to these fixed expressions; it does not claim the full Str API, grouping,
+backreferences, ranges or empty-match replacement support.
+
+The engine uses immutable expression lists and explicit substring indices;
+OCaml Str's internal engine/representation is not reproduced. Record this
+library replacement when interpreting measurements. Read the selected fixed
+file with portable TextIO.inputAll rather than the original incremental
+Bytes/Buffer input loop. Preserve complete input materialization, strict
+pipeline order, original replacement strings and immutable intermediate text.
+The driver suppresses repetitive stdout, compares the complete report exactly
+and returns its checked length. All byte lengths and counts fit signed 31-bit
+integers for these profiles. No numerical tolerance applies.
+
+### Inputs and profiles
+
+Smoke generates FASTA with N=100 (1095 bytes). Normal uses N=50000 (508411 bytes),
+and large uses N=500000 (5083411 bytes). The pinned program expects an input
+named input5000000.txt generated with N=5000000. These are explicit smaller
+profile selections, retaining the generator, seed, sequence proportions and
+line widths; they do not claim to measure the published 50 MB input. Profile
+filenames are manifest parameters rather than a hardcoded working-directory
+filename. The source is processed as a whole file, with no universal size loop.
+
+Expected complete reports contain 259, 274 and 286 characters respectively.
+Original OCaml 4.14.1 supplies all three results. A private full large SML pilot
+also matches its original; canonical smoke/normal checks and configurations
+are recorded separately. Further edge cases include empty input, case changes,
+adjacent substitutions, an unterminated header and overlapping motifs.
+
+### Validation
+
+The 23-check target compares twelve original Str-library observations and five
+full original program reports, plus the smoke fixture, bad-output rejection,
+negative indices, literal/escaped pipe distinction, malformed classes and empty
+replacement rejection. Library cases cover ordered alternatives, greediness,
+backtracking, line/end anchors, negated sets, overlapping counts and ASCII
+case folding. The original executable and its generator remain correctness
+references. Measurements compare identical SML sources across SML compilers.
+
+### Literature and diagnostic interpretation
+
+[The Benchmarks Game description](https://benchmarksgame-team.pages.debian.net/benchmarksgame/description/regexredux.html)
+defines the motif/replacement sequence and notes that regex libraries can use
+different algorithms. [The OCaml 4.14 Str manual](https://ocaml.org/manual/4.14/api/Str.html)
+documents the matching, anchors and replacement interface used for the adapter;
+actual original-library observations establish the selected edge cases.
+
+Investigate regex compilation, literal/class scanning, greedy backtracking,
+intermediate string allocation and buffered input. These are source-based
+questions. Exact original report agreement establishes the selected results;
+current timings or allocations alone do not attribute differences to a regex
+engine, library implementation or compiler transformation.
+
+## multiplier-lazy
+
+### Algorithm and workload
+
+Simulate the source binary shift/add multiplier as streams of bit signals.
+Preserve combinational gates, balanced wide gates, full-adder carry chains,
+word multiplexors, latches, shifting registers and the ready-driven input
+interface. Inputs are the infinite pairs (2+3*i,11+2*i), starting at i=1,
+truncated to the selected input width. The product register has twice that
+width. Do not replace the bit-level circuit with arithmetic multiplication.
+
+### History, authorship and consumers
+
+[John T. O'Donnell's July 1992 multiplier source](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/multiplier/Main.hs), University
+of Glasgow, is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. Preserve the
+Copyright (c) 1992 header and original Main/Makefile/fixtures under
+multiplier-lazy/upstream. No separate individual redistribution grant is stated.
+This is a sequential functional stream simulation; no hardware or parallel
+runtime is required.
+
+The active go function selects verbose traceMult. Its inactive runMult driver
+instead sums the ready signal and prints the count. Preserve that materially
+different consumer as multiplier-count-lazy/strict, with a supplementary source
+inventory entry. It does not demand the product register/adder; source inspection
+and a pending-product test establish that boundary. It is a ready/control-path
+workload, not a claim to force the complete product calculation. Generic component
+utilities without a selected simulation driver remain in the original snapshot;
+they are support code rather than additional executable workloads.
+
+### Evaluation and translation
+
+-lazy preserves the active source lift21: its two input spines are matched but
+its output bit is delayed. -strict adds output-head forcing at that binary
+combinator, corresponding to the source's commented strict alternative. Both
+retain source headstrict on unary and three-/four-input lifting. Truth-table
+gates inspect both input bits; AND/OR are not replaced by short-circuit boolean
+operators. The source forceBit predicate and strictness points remain explicit.
+
+Use memoized bit and word spines, paired adder outputs and the original mutually
+recursive signals. Word combinators delay both tail access and wire arguments;
+forcing either while constructing a future word node creates an invalid circular
+demand. wideGate's length traverses only outer spines. Carry-chain matching and
+zero-width adder base-case demand follow the source. The independent clock model
+is a correctness oracle and is not the measured circuit implementation.
+
+Word-to-integer display uses modular Word64 accumulation and signed conversion,
+preserving the source's 64-bit Int behavior for long bit vectors. The fixed
+input generator, cycle counters and observed register values fit signed 31-bit
+integers in the selected profiles. Preserve explicit wire widths even where
+leading zeros make the output identical across widths. Numeric validation is
+exact; no floating-point tolerance applies.
+
+### Inputs and profiles
+
+| Profile | Input bit width | Clock cycles |
+|---|---:|---:|
+| Smoke | 32 | 16 |
+| Normal | 256 | 2000 |
+| Large | 512 | 2000 |
+
+Normal and large retain the original width/cycle parameters. Smoke reduces
+FAST's 2000 cycles to sixteen, using its exact header and trace prefix. Every
+trace result is compared character by character with the original full output:
+1093 bytes for smoke, 132037 for normal/large. The stable report gives width,
+cycles and checked characters. Buffer each bounded formatted row before lazy
+character assembly, replacing repetitive stdout with exact validation.
+
+Count variants preserve runMult's sum of the first requested ready bits. The
+original and independent model give three for smoke and 222 for normal/large.
+The report gives width, cycles and that validated sum. The source count consumer's
+limited demand is intentional and differs from the full trace contract. The
+driver rejects nonpositive widths and bounds selected cycles to 2000, making
+the original valid-input precondition explicit rather than entering its empty
+wide-gate recursion on zero width.
+
+### Correctness and recorded scope
+
+Unmodified GHC 9.4.7 matches every supplied FAST/NORM/SLOW fixture. Export-only
+observers expose complete traces and count results at eight width/cycle choices.
+An independent masked shift/add state machine matches all those original outputs,
+including small-width truncation and all published 2000-cycle profiles.
+
+The 56-check target covers five small original traces/counts under both policies,
+truth tables, unary/binary strictness, non-short-circuit AND, latch delay, lazy
+word callbacks/tails, spine-only length, zero-width adder demand, signed 64-bit
+wrap, incorrect output, memoization and the count consumer's unforced product.
+Native host checks and canonical matrices are recorded separately. Earlier
+recursive-forcing failures and snapshots are translation-development evidence,
+not compiler bugs. Full normal trace pilots match original text under resource
+guards; final canonical source identities remain distinct from older pilots.
+Full SML large traces are unrecorded unless explicitly listed in validation.
+
+### Literature and diagnostic questions
+
+[O'Donnell's research bibliography](https://www.dcs.gla.ac.uk/~jtod/research/)
+lists Hardware description with recursion equations (1987), providing functional
+circuit-simulation context. It is not an exact specification of this benchmark.
+[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) supplies suite
+context. The pinned program defines the actual circuit and strictness points.
+
+Investigate higher-order gate specialization, memoized feedback, bit-stream
+allocation, carry propagation, wide-gate traversal and the consumer's forcing.
+These are source-based diagnostic questions. Original/model agreement and demand
+controls establish recorded behavior; allocation or timing differences alone do
+not identify a compiler or collector cause.
+
+## multiplier-strict
+
+### Algorithm and workload
+
+Simulate the source binary shift/add multiplier as streams of bit signals.
+Preserve combinational gates, balanced wide gates, full-adder carry chains,
+word multiplexors, latches, shifting registers and the ready-driven input
+interface. Inputs are the infinite pairs (2+3*i,11+2*i), starting at i=1,
+truncated to the selected input width. The product register has twice that
+width. Do not replace the bit-level circuit with arithmetic multiplication.
+
+### History, authorship and consumers
+
+[John T. O'Donnell's July 1992 multiplier source](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/multiplier/Main.hs), University
+of Glasgow, is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. Preserve the
+Copyright (c) 1992 header and original Main/Makefile/fixtures under
+multiplier-lazy/upstream. No separate individual redistribution grant is stated.
+This is a sequential functional stream simulation; no hardware or parallel
+runtime is required.
+
+The active go function selects verbose traceMult. Its inactive runMult driver
+instead sums the ready signal and prints the count. Preserve that materially
+different consumer as multiplier-count-lazy/strict, with a supplementary source
+inventory entry. It does not demand the product register/adder; source inspection
+and a pending-product test establish that boundary. It is a ready/control-path
+workload, not a claim to force the complete product calculation. Generic component
+utilities without a selected simulation driver remain in the original snapshot;
+they are support code rather than additional executable workloads.
+
+### Evaluation and translation
+
+-lazy preserves the active source lift21: its two input spines are matched but
+its output bit is delayed. -strict adds output-head forcing at that binary
+combinator, corresponding to the source's commented strict alternative. Both
+retain source headstrict on unary and three-/four-input lifting. Truth-table
+gates inspect both input bits; AND/OR are not replaced by short-circuit boolean
+operators. The source forceBit predicate and strictness points remain explicit.
+
+Use memoized bit and word spines, paired adder outputs and the original mutually
+recursive signals. Word combinators delay both tail access and wire arguments;
+forcing either while constructing a future word node creates an invalid circular
+demand. wideGate's length traverses only outer spines. Carry-chain matching and
+zero-width adder base-case demand follow the source. The independent clock model
+is a correctness oracle and is not the measured circuit implementation.
+
+Word-to-integer display uses modular Word64 accumulation and signed conversion,
+preserving the source's 64-bit Int behavior for long bit vectors. The fixed
+input generator, cycle counters and observed register values fit signed 31-bit
+integers in the selected profiles. Preserve explicit wire widths even where
+leading zeros make the output identical across widths. Numeric validation is
+exact; no floating-point tolerance applies.
+
+### Inputs and profiles
+
+| Profile | Input bit width | Clock cycles |
+|---|---:|---:|
+| Smoke | 32 | 16 |
+| Normal | 256 | 2000 |
+| Large | 512 | 2000 |
+
+Normal and large retain the original width/cycle parameters. Smoke reduces
+FAST's 2000 cycles to sixteen, using its exact header and trace prefix. Every
+trace result is compared character by character with the original full output:
+1093 bytes for smoke, 132037 for normal/large. The stable report gives width,
+cycles and checked characters. Buffer each bounded formatted row before lazy
+character assembly, replacing repetitive stdout with exact validation.
+
+Count variants preserve runMult's sum of the first requested ready bits. The
+original and independent model give three for smoke and 222 for normal/large.
+The report gives width, cycles and that validated sum. The source count consumer's
+limited demand is intentional and differs from the full trace contract. The
+driver rejects nonpositive widths and bounds selected cycles to 2000, making
+the original valid-input precondition explicit rather than entering its empty
+wide-gate recursion on zero width.
+
+### Correctness and recorded scope
+
+Unmodified GHC 9.4.7 matches every supplied FAST/NORM/SLOW fixture. Export-only
+observers expose complete traces and count results at eight width/cycle choices.
+An independent masked shift/add state machine matches all those original outputs,
+including small-width truncation and all published 2000-cycle profiles.
+
+The 56-check target covers five small original traces/counts under both policies,
+truth tables, unary/binary strictness, non-short-circuit AND, latch delay, lazy
+word callbacks/tails, spine-only length, zero-width adder demand, signed 64-bit
+wrap, incorrect output, memoization and the count consumer's unforced product.
+Native host checks and canonical matrices are recorded separately. Earlier
+recursive-forcing failures and snapshots are translation-development evidence,
+not compiler bugs. Full normal trace pilots match original text under resource
+guards; final canonical source identities remain distinct from older pilots.
+Full SML large traces are unrecorded unless explicitly listed in validation.
+
+### Literature and diagnostic questions
+
+[O'Donnell's research bibliography](https://www.dcs.gla.ac.uk/~jtod/research/)
+lists Hardware description with recursion equations (1987), providing functional
+circuit-simulation context. It is not an exact specification of this benchmark.
+[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) supplies suite
+context. The pinned program defines the actual circuit and strictness points.
+
+Investigate higher-order gate specialization, memoized feedback, bit-stream
+allocation, carry propagation, wide-gate traversal and the consumer's forcing.
+These are source-based diagnostic questions. Original/model agreement and demand
+controls establish recorded behavior; allocation or timing differences alone do
+not identify a compiler or collector cause.
+
+## multiplier-count-lazy
+
+### Algorithm and workload
+
+Simulate the source binary shift/add multiplier as streams of bit signals.
+Preserve combinational gates, balanced wide gates, full-adder carry chains,
+word multiplexors, latches, shifting registers and the ready-driven input
+interface. Inputs are the infinite pairs (2+3*i,11+2*i), starting at i=1,
+truncated to the selected input width. The product register has twice that
+width. Do not replace the bit-level circuit with arithmetic multiplication.
+
+### History, authorship and consumers
+
+[John T. O'Donnell's July 1992 multiplier source](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/multiplier/Main.hs), University
+of Glasgow, is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. Preserve the
+Copyright (c) 1992 header and original Main/Makefile/fixtures under
+multiplier-lazy/upstream. No separate individual redistribution grant is stated.
+This is a sequential functional stream simulation; no hardware or parallel
+runtime is required.
+
+The active go function selects verbose traceMult. Its inactive runMult driver
+instead sums the ready signal and prints the count. Preserve that materially
+different consumer as multiplier-count-lazy/strict, with a supplementary source
+inventory entry. It does not demand the product register/adder; source inspection
+and a pending-product test establish that boundary. It is a ready/control-path
+workload, not a claim to force the complete product calculation. Generic component
+utilities without a selected simulation driver remain in the original snapshot;
+they are support code rather than additional executable workloads.
+
+### Evaluation and translation
+
+-lazy preserves the active source lift21: its two input spines are matched but
+its output bit is delayed. -strict adds output-head forcing at that binary
+combinator, corresponding to the source's commented strict alternative. Both
+retain source headstrict on unary and three-/four-input lifting. Truth-table
+gates inspect both input bits; AND/OR are not replaced by short-circuit boolean
+operators. The source forceBit predicate and strictness points remain explicit.
+
+Use memoized bit and word spines, paired adder outputs and the original mutually
+recursive signals. Word combinators delay both tail access and wire arguments;
+forcing either while constructing a future word node creates an invalid circular
+demand. wideGate's length traverses only outer spines. Carry-chain matching and
+zero-width adder base-case demand follow the source. The independent clock model
+is a correctness oracle and is not the measured circuit implementation.
+
+Word-to-integer display uses modular Word64 accumulation and signed conversion,
+preserving the source's 64-bit Int behavior for long bit vectors. The fixed
+input generator, cycle counters and observed register values fit signed 31-bit
+integers in the selected profiles. Preserve explicit wire widths even where
+leading zeros make the output identical across widths. Numeric validation is
+exact; no floating-point tolerance applies.
+
+### Inputs and profiles
+
+| Profile | Input bit width | Clock cycles |
+|---|---:|---:|
+| Smoke | 32 | 16 |
+| Normal | 256 | 2000 |
+| Large | 512 | 2000 |
+
+Normal and large retain the original width/cycle parameters. Smoke reduces
+FAST's 2000 cycles to sixteen, using its exact header and trace prefix. Every
+trace result is compared character by character with the original full output:
+1093 bytes for smoke, 132037 for normal/large. The stable report gives width,
+cycles and checked characters. Buffer each bounded formatted row before lazy
+character assembly, replacing repetitive stdout with exact validation.
+
+Count variants preserve runMult's sum of the first requested ready bits. The
+original and independent model give three for smoke and 222 for normal/large.
+The report gives width, cycles and that validated sum. The source count consumer's
+limited demand is intentional and differs from the full trace contract. The
+driver rejects nonpositive widths and bounds selected cycles to 2000, making
+the original valid-input precondition explicit rather than entering its empty
+wide-gate recursion on zero width.
+
+### Correctness and recorded scope
+
+Unmodified GHC 9.4.7 matches every supplied FAST/NORM/SLOW fixture. Export-only
+observers expose complete traces and count results at eight width/cycle choices.
+An independent masked shift/add state machine matches all those original outputs,
+including small-width truncation and all published 2000-cycle profiles.
+
+The 56-check target covers five small original traces/counts under both policies,
+truth tables, unary/binary strictness, non-short-circuit AND, latch delay, lazy
+word callbacks/tails, spine-only length, zero-width adder demand, signed 64-bit
+wrap, incorrect output, memoization and the count consumer's unforced product.
+Native host checks and canonical matrices are recorded separately. Earlier
+recursive-forcing failures and snapshots are translation-development evidence,
+not compiler bugs. Full normal trace pilots match original text under resource
+guards; final canonical source identities remain distinct from older pilots.
+Full SML large traces are unrecorded unless explicitly listed in validation.
+
+### Literature and diagnostic questions
+
+[O'Donnell's research bibliography](https://www.dcs.gla.ac.uk/~jtod/research/)
+lists Hardware description with recursion equations (1987), providing functional
+circuit-simulation context. It is not an exact specification of this benchmark.
+[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) supplies suite
+context. The pinned program defines the actual circuit and strictness points.
+
+Investigate higher-order gate specialization, memoized feedback, bit-stream
+allocation, carry propagation, wide-gate traversal and the consumer's forcing.
+These are source-based diagnostic questions. Original/model agreement and demand
+controls establish recorded behavior; allocation or timing differences alone do
+not identify a compiler or collector cause.
+
+## multiplier-count-strict
+
+### Algorithm and workload
+
+Simulate the source binary shift/add multiplier as streams of bit signals.
+Preserve combinational gates, balanced wide gates, full-adder carry chains,
+word multiplexors, latches, shifting registers and the ready-driven input
+interface. Inputs are the infinite pairs (2+3*i,11+2*i), starting at i=1,
+truncated to the selected input width. The product register has twice that
+width. Do not replace the bit-level circuit with arithmetic multiplication.
+
+### History, authorship and consumers
+
+[John T. O'Donnell's July 1992 multiplier source](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/multiplier/Main.hs), University
+of Glasgow, is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. Preserve the
+Copyright (c) 1992 header and original Main/Makefile/fixtures under
+multiplier-lazy/upstream. No separate individual redistribution grant is stated.
+This is a sequential functional stream simulation; no hardware or parallel
+runtime is required.
+
+The active go function selects verbose traceMult. Its inactive runMult driver
+instead sums the ready signal and prints the count. Preserve that materially
+different consumer as multiplier-count-lazy/strict, with a supplementary source
+inventory entry. It does not demand the product register/adder; source inspection
+and a pending-product test establish that boundary. It is a ready/control-path
+workload, not a claim to force the complete product calculation. Generic component
+utilities without a selected simulation driver remain in the original snapshot;
+they are support code rather than additional executable workloads.
+
+### Evaluation and translation
+
+-lazy preserves the active source lift21: its two input spines are matched but
+its output bit is delayed. -strict adds output-head forcing at that binary
+combinator, corresponding to the source's commented strict alternative. Both
+retain source headstrict on unary and three-/four-input lifting. Truth-table
+gates inspect both input bits; AND/OR are not replaced by short-circuit boolean
+operators. The source forceBit predicate and strictness points remain explicit.
+
+Use memoized bit and word spines, paired adder outputs and the original mutually
+recursive signals. Word combinators delay both tail access and wire arguments;
+forcing either while constructing a future word node creates an invalid circular
+demand. wideGate's length traverses only outer spines. Carry-chain matching and
+zero-width adder base-case demand follow the source. The independent clock model
+is a correctness oracle and is not the measured circuit implementation.
+
+Word-to-integer display uses modular Word64 accumulation and signed conversion,
+preserving the source's 64-bit Int behavior for long bit vectors. The fixed
+input generator, cycle counters and observed register values fit signed 31-bit
+integers in the selected profiles. Preserve explicit wire widths even where
+leading zeros make the output identical across widths. Numeric validation is
+exact; no floating-point tolerance applies.
+
+### Inputs and profiles
+
+| Profile | Input bit width | Clock cycles |
+|---|---:|---:|
+| Smoke | 32 | 16 |
+| Normal | 256 | 2000 |
+| Large | 512 | 2000 |
+
+Normal and large retain the original width/cycle parameters. Smoke reduces
+FAST's 2000 cycles to sixteen, using its exact header and trace prefix. Every
+trace result is compared character by character with the original full output:
+1093 bytes for smoke, 132037 for normal/large. The stable report gives width,
+cycles and checked characters. Buffer each bounded formatted row before lazy
+character assembly, replacing repetitive stdout with exact validation.
+
+Count variants preserve runMult's sum of the first requested ready bits. The
+original and independent model give three for smoke and 222 for normal/large.
+The report gives width, cycles and that validated sum. The source count consumer's
+limited demand is intentional and differs from the full trace contract. The
+driver rejects nonpositive widths and bounds selected cycles to 2000, making
+the original valid-input precondition explicit rather than entering its empty
+wide-gate recursion on zero width.
+
+### Correctness and recorded scope
+
+Unmodified GHC 9.4.7 matches every supplied FAST/NORM/SLOW fixture. Export-only
+observers expose complete traces and count results at eight width/cycle choices.
+An independent masked shift/add state machine matches all those original outputs,
+including small-width truncation and all published 2000-cycle profiles.
+
+The 56-check target covers five small original traces/counts under both policies,
+truth tables, unary/binary strictness, non-short-circuit AND, latch delay, lazy
+word callbacks/tails, spine-only length, zero-width adder demand, signed 64-bit
+wrap, incorrect output, memoization and the count consumer's unforced product.
+Native host checks and canonical matrices are recorded separately. Earlier
+recursive-forcing failures and snapshots are translation-development evidence,
+not compiler bugs. Full normal trace pilots match original text under resource
+guards; final canonical source identities remain distinct from older pilots.
+Full SML large traces are unrecorded unless explicitly listed in validation.
+
+### Literature and diagnostic questions
+
+[O'Donnell's research bibliography](https://www.dcs.gla.ac.uk/~jtod/research/)
+lists Hardware description with recursion equations (1987), providing functional
+circuit-simulation context. It is not an exact specification of this benchmark.
+[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) supplies suite
+context. The pinned program defines the actual circuit and strictness points.
+
+Investigate higher-order gate specialization, memoized feedback, bit-stream
+allocation, carry propagation, wide-gate traversal and the consumer's forcing.
+These are source-based diagnostic questions. Original/model agreement and demand
+controls establish recorded behavior; allocation or timing differences alone do
+not identify a compiler or collector cause.

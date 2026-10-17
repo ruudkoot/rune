@@ -1,0 +1,5 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+regexredux2	normal	rune	O2	count	1	1	pass	5.48	5.48	0.02	35000	1554288238	130994216	2559765	counts/measurement.1oZBQh/regexredux2/rune/fresh.1
+regexredux2	normal	rune:opt	O2	count	1	1	pass	1.50	1.49	0.02	35460	1554288238	130994216	2559765	counts/measurement.1oZBQh/regexredux2/rune-opt/fresh.1
+regexredux2	normal	rune:new	O2	count	1	1	pass	4.63	4.56	0.01	34952	847310956	130994216	2559765	counts/measurement.1oZBQh/regexredux2/rune-new/fresh.1
+regexredux2	normal	rune:jit	O2	count	1	1	pass	1.44	1.37	0.06	36148	847310956	130994216	2559765	counts/measurement.1oZBQh/regexredux2/rune-jit/fresh.1

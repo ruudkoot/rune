@@ -1,0 +1,1 @@
+multiplier-count-strict	30	1048576	shared/input.sml shared/lazy.sml shared/stream.sml shared/nofib-multiplier-kernel.sml shared/nofib-multiplier-driver.sml multiplier-count-strict/benchmark.sml shared/main.sml	32 16 smoke.count	multiplier-count-strict/smoke.expected	smoke.count

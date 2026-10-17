@@ -1,0 +1,14 @@
+[1 of 7] Compiling Result           ( Result.hs, Result.o )
+[2 of 7] Compiling Table            ( Table.hs, Table.o )
+[3 of 7] Compiling Knowledge        ( Knowledge.hs, Knowledge.o )
+[4 of 7] Compiling Match            ( Match.hs, Match.o )
+[5 of 7] Compiling Search           ( Search.hs, Search.o )
+
+Search.hs:91:1: warning: [-Wtabs]
+    Tab character found here, and in four further locations.
+    Suggested fix: Please use spaces instead.
+   |
+91 |         -- SLPJ Nov 99
+   | ^^^^^^^^
+[6 of 7] Compiling Main             ( Main.hs, Main.o )
+[7 of 7] Linking original

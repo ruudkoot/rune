@@ -1,0 +1,17 @@
+COUNT unbudgeted multiplier-lazy normal rune
+COUNT unbudgeted multiplier-lazy normal rune:opt
+COUNT unbudgeted multiplier-lazy normal rune:new
+COUNT unbudgeted multiplier-lazy normal rune:jit
+COUNT unbudgeted multiplier-strict normal rune
+COUNT unbudgeted multiplier-strict normal rune:opt
+COUNT unbudgeted multiplier-strict normal rune:new
+COUNT unbudgeted multiplier-strict normal rune:jit
+COUNT unbudgeted multiplier-count-lazy normal rune
+COUNT unbudgeted multiplier-count-lazy normal rune:opt
+COUNT unbudgeted multiplier-count-lazy normal rune:new
+COUNT unbudgeted multiplier-count-lazy normal rune:jit
+COUNT unbudgeted multiplier-count-strict normal rune
+COUNT unbudgeted multiplier-count-strict normal rune:opt
+COUNT unbudgeted multiplier-count-strict normal rune:new
+COUNT unbudgeted multiplier-count-strict normal rune:jit
+COUNT comparisons agree

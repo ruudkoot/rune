@@ -1,0 +1,4 @@
+RESULT 32 16 3
+PASS multiplier-count-lazy
+SAMPLE 1 0.002495000
+SUMMARY 1 checks, 0 failed

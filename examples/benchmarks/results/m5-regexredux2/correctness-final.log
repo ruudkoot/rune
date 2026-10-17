@@ -1,0 +1,7 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-regexredux2-parallel.4fxio9zr
+PASS regexredux2 smoke O2
+PASS regexredux2 smoke O0
+PASS regexredux2 smoke hosts
+PASS regexredux2 normal O2
+PASS regexredux2 normal O0
+PASS regexredux2 normal hosts

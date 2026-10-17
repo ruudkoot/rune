@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-expert-parallel.jat6_ou7
+PASS expert-lazy smoke O2
+PASS expert-lazy smoke O0
+PASS expert-lazy smoke hosts
+PASS expert-lazy normal O0
+PASS expert-lazy normal O2
+PASS expert-strict smoke O0
+PASS expert-strict smoke O2
+PASS expert-strict smoke hosts
+PASS expert-lazy normal hosts
+PASS expert-strict normal O2
+PASS expert-strict normal O0
+PASS expert-strict normal hosts

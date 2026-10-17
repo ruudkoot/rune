@@ -1,0 +1,17 @@
+overlap 3
+alternative-left 0 2
+alternative-right 0 1
+greedy 0 5
+backtracking 0 5
+line-anchors ABCXY
+tags ||p|
+pipes |-xy||-
+folded-class 6
+class-exclusion 0 3
+no-match none
+finish-eof 0 6
+program empty 251
+program mixed-case 254
+program adjacent-tags 254
+program unterminated-header 252
+program overlapping-motifs 254

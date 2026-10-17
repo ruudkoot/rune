@@ -1,0 +1,1 @@
+multiplier-count-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/stream.sml shared/nofib-multiplier-kernel.sml shared/nofib-multiplier-driver.sml multiplier-count-lazy/benchmark.sml shared/main.sml	256 2000 normal.count	multiplier-count-lazy/normal.expected	normal.count
