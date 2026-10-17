@@ -30,6 +30,8 @@ def main():
     p.add_argument('--windows', action='store_true')
     p.add_argument('--sources', nargs='+', required=True)
     p.add_argument('--headers', nargs='*', default=[])
+    p.add_argument('--objects', nargs='*', default=[],
+                   help='extra objects on the link line, such as a Windows icon resource')
     a = p.parse_args()
     os.chdir(ROOT)
     config = Path(a.config)
@@ -42,6 +44,7 @@ def main():
     inputs = runtime_inputs(shlex.split(a.cc),shlex.split(a.cflags),dependency['cppflags'],
                             config/'config.h',a.sources,a.headers)
     inputs += [str(Path(__file__)),str(Path(__file__).with_name('runtime_inputs.py'))]
+    inputs += list(a.objects)
     record = {'options': vars(a), 'inputs': {f: digest(f) for f in inputs},
               'configuration_sha256': digest(config/'config.json')}
     stamp = config/'linked.json'
@@ -54,7 +57,7 @@ def main():
     temporary = target.with_name(target.name+'.tmp')
     command = [*shlex.split(a.cc), *shlex.split(a.cflags), '-Iruntime',
                *dependency['cppflags'], '-include', str(config/'config.h'),
-               '-o', str(temporary), *a.sources, *dependency['ldlibs'],
+               '-o', str(temporary), *a.sources, *a.objects, *dependency['ldlibs'],
                *shlex.split(a.ldlibs)]
     print(shlex.join(command), flush=True)
     try:

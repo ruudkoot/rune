@@ -1,5 +1,6 @@
 bin/
 build/
+/dist/
 .cm/
 *.rbc
 tests/out/

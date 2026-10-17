@@ -101,6 +101,11 @@ struct
        some ("check-docs", ["docs"], ["*.md", "docs/*", "tests/basis/*", "lib/random/*", "lib/test/property/*"]),
        step ("check-layouts", {cpus = Int.min (2, few), memory = 500, pools = [], after = []}, ["layout"], ["tests/layouts/*"]),
        alone ("test-install", [], ["tests/install/*", "examples/hello.sml"]),
+       Test.requires ["python3"]
+         (alone ("test-dist", [],
+                 ["scripts/make-dist.py", "scripts/dist-install.sh", "scripts/dist-install.bat",
+                  "scripts/dist-uninstall.bat", "scripts/dist-register.ps1",
+                  "scripts/dist-rune.cmd", "scripts/dist-rune-repl.cmd", "tests/dist/*"])),
        Test.requires ["tmux", "python3"] (alone ("test-terminal", [], ["tests/terminal/*"])),
        Test.requires ["python3"] (alone ("test-diagnostics-steps", ["test-diagnostics"], ["tests/color/*"])),
        alone ("test-census", [], perfFiles @ ["tools/heapsim/*"]),

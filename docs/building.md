@@ -104,8 +104,9 @@ disable those dependency builds or their upstream tests. Their prefixes are
 The native prefix remains `GMP_PREFIX`. Explicit `GMP=yes` fails if the requested
 ABI's dependency cannot be checked; `auto` can use the SML fallback.
 
-The x86 packages use fat builds. Linux32 also uses `--with-pic`, avoiding text
-relocations when linked into the PIE VM. PowerPC defaults to
+The x86 packages use fat builds. Packages linked into a PIE VM (the
+archive's native build, Linux32, AArch64 and PowerPC) use `--with-pic`,
+avoiding text relocations. PowerPC defaults to
 `GMP_PPC64_FLAGS=--disable-assembly`: the clang 18 optimized build failed an
 upstream division check. The portable build passes the full upstream suite
 and the [retained minimal case](bugreport/gmp/ppc64-division/BUGREPORT.md).
@@ -223,6 +224,8 @@ name the tools to check.
 | `make perf` | the wall-clock times of the programs of `tests/perf` in the configurations of the matrix (`PERF_CONFIGS` selects others), one at a time, in `tests/out/perf/wall.md`; not part of `make check` |
 | `make install` | install `rune`, `runevm`, `runevm-stack`, `runedoc`, `runeopt`, `rune-repl` with `rune-dap` and `rune-kernel` where they are built, the basis library, the man pages and the shell completions under `PREFIX` |
 | `make uninstall` | remove them again |
+| `make dist` | write `dist/rune-<version>-linux.tar.gz` and `dist/rune-<version>-windows.zip` ([Distribution](#distribution)) |
+| `make test-dist` | check those archives with stand-in binaries; part of `make check` |
 | `make clean` | remove `bin/`, `build/`, generated files and test output |
 
 `bin/rune` runs on the VM and is about 35× slower than a host build, which
@@ -528,6 +531,48 @@ source relinking and removal are checked by `tests/intinf/install.py` in the
 release acceptance sequence. Release builds must use the pinned provisioning
 commands above; installing a checked system build does not turn it into a
 pinned release.
+
+## Distribution
+
+`make dist` writes `dist/rune-<version>-linux.tar.gz` and
+`dist/rune-<version>-windows.zip`. `<version>` is the version in
+`runtime/version.h`. Each archive holds the register VM for every machine
+of that system, under `runtime/<arch>/`, the compiler `lib/rune/rune.rbc`,
+the REPL image, and every library under `lib`: its `MANIFEST`, the files
+that names, and `README.md` where the library has one. The Linux machines
+are `x86_64`, `i686`, `aarch64` and big-endian `ppc64`. The Windows
+machines are `x86_64` and `i686`.
+
+The ARM and PowerPC VMs in the archive are linked with
+`/lib/ld-linux-aarch64.so.1` and `/lib64/ld64.so.1`. The qemu builds from
+`make portability` keep the sysroot interpreter and are not the ones shipped.
+
+Each of those VMs is linked to the pinned static GMP, under
+`build/deps/gmp/{native-dist,linux32,ppc64,aarch64,windows64,windows32}`.
+`make dist` builds a missing package (`gmp-dep-dist-native`,
+`gmp-dep-portability`, `gmp-dep-windows`) and refuses a VM that still
+needs `libgmp.so`. The development `bin/runevm` follows `GMP=auto`, which
+on this machine links the shared system library; the archive ships
+`bin/dist/runevm` instead.
+
+`install.sh` on Linux and `install.bat` on Windows copy the VM for the
+machine they are running on. As root, or in an elevated prompt, they
+install for everyone (`/usr/local`, `%ProgramFiles%\Rune`); otherwise for
+the current user (`~/.local`, `%LOCALAPPDATA%\Rune`). On Windows the
+installer adds a Start menu entry named Rune that starts the REPL, and an
+entry in Apps and Features that runs `uninstall.bat`. The entry's icon is
+`share/rune.png`, converted to a Windows icon (`share/rune.ico`, at 16, 32,
+48 and 256 pixels) when the archive is built, and linked into the Windows
+`runevm.exe`. That conversion needs Pillow (`python3-pil`). `install.bat`
+waits for a key after it finishes.
+
+`:doc` reads the Basis documentation out of the REPL image, which was
+loaded when `bin/rune-repl.img` was saved, so the archives do not carry
+`docs/lib`.
+
+`make test-dist` checks the archives with stand-in binaries and is part of
+`make check`. `make dist` itself needs the Windows and portability
+toolchains.
 
 ## How the build works
 
