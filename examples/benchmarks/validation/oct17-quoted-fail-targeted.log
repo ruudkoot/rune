@@ -1,0 +1,6 @@
+bench-measurement: statistics, execution-model comparisons and budget failures passed on four compilers
+bench-measurement: wrong results supply no repeated timing samples
+bench-measurement: numerical correctness and runtime exceptions have distinct failure categories
+bench-measurement: bare, colon and quoted correctness failures are distinguished from runtime failures
+bench-measurement: instrumentation rejected from headline timing
+bench-measurement: configuration resolution preserves other matrix workers

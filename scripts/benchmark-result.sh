@@ -12,7 +12,7 @@ classify() {
 }
 validate() {
   classify runtime-failure
-  if grep -Eq '^FAIL .* -- (Fail: )?(incorrect result|expected )' "$phase_dir/stdout"; then category=incorrect-result; fi
+  if grep -Eq '^FAIL .* -- (Fail: |Fail ")?(incorrect result|expected )' "$phase_dir/stdout"; then category=incorrect-result; fi
   if [ "$category" = pass ]; then
     if ! grep -q "^SUMMARY $rounds checks, 0 failed$" "$phase_dir/stdout" || \
        grep -q '^FAIL ' "$phase_dir/stdout" || \
