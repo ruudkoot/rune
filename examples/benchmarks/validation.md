@@ -2614,3 +2614,17 @@ Full DEBUGINFOD_URLS= make JOBS=4 check exits zero with 1102 profiles and all
 compiler/runedoc/runeopt cross-build comparisons.
 [The complete transcript](validation/oct17-graph500-1102-acceptance.log)
 records acceptance. M3, M4 and M5 remain in progress; M8 remains planned.
+
+## Quoted correctness-exception classification, 2026-10-17
+
+[The regression record](validation/quoted-fail-results.md) covers Poly/ML's quoted
+Fail message, bare and colon-prefixed incorrect results, and an unrelated quoted
+runtime failure. [Targeted measurement checks](validation/oct17-quoted-fail-targeted.log)
+pass, including four-compiler statistics, numerical/runtime distinction,
+instrumentation rejection and worker isolation.
+
+[Full make JOBS=4 check](validation/oct17-quoted-fail-1114-acceptance.log) exits
+zero with 1114 catalogue profiles, including registered pending linear imports,
+and all compiler/runedoc/runeopt cross-build comparisons. Those imports' broader
+correctness/count evidence is recorded separately. No failed precheck supplies
+timing results; historical raw statuses remain unchanged.

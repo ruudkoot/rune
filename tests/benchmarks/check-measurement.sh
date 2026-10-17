@@ -41,6 +41,26 @@ for failure in numeric runtime; do
   ! grep -q '^SAMPLE ' "$phase_dir/stdout"
 done
 echo 'bench-measurement: numerical correctness and runtime exceptions have distinct failure categories'
+# Captured General.exnMessage formats differ among native hosts. In particular,
+# Poly/ML quotes a Fail payload instead of using the colon prefix.
+for format in bare colon quoted quoted_runtime; do
+  phase_dir=$out/message-$format
+  mkdir -p "$phase_dir"
+  : > "$phase_dir/stderr"
+  case $format in
+    bare) message='FAIL negative -- incorrect result: numeric fixture'; expected_category=incorrect-result ;;
+    colon) message='FAIL negative -- Fail: incorrect result: numeric fixture'; expected_category=incorrect-result ;;
+    quoted) message='FAIL negative -- Fail "incorrect result"'; expected_category=incorrect-result ;;
+    quoted_runtime) message='FAIL negative -- Fail "ordinary runtime failure"'; expected_category=runtime-failure ;;
+  esac
+  printf '%s\n' "$message" > "$phase_dir/stdout"
+  phase_exit=1; rounds=1; status=0
+  validate
+  [ "$category" = "$expected_category" ] && [ "$status" = 1 ] || {
+    echo "measurement misclassified $format exception format" >&2; exit 1;
+  }
+done
+echo 'bench-measurement: bare, colon and quoted correctness failures are distinguished from runtime failures'
 if RUNEVM_OPTIONS=--count sh scripts/measure-benchmarks.sh time --filter tak > "$out/instrumented.log" 2>&1; then
   echo 'instrumented run accepted as headline timing' >&2; exit 1
 fi
