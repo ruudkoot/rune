@@ -2732,3 +2732,38 @@ input/source identities, raw samples and development failures separately.
 [Full make JOBS=4 check](validation/oct17-expert-regex-multiplier-1159-acceptance.log)
 exits zero with 1159 profiles and all compiler/runedoc/runeopt cross-build
 comparisons. M3/M4/M5 remain in progress; M8 remains planned.
+
+## Hartel event simulation and functional type inference, 2026-10-17
+
+Four ports bring the catalogue to 393 programs and 1171 profiles.
+[Event coverage](results/m3-hartel-event/coverage.tsv) and
+[typechecker coverage](results/m3-hartel-typecheck/coverage.tsv) each record
+56/56 passing primary cases. All Rune O0/O2 engines and six managed native SML
+hosts pass. The semantic ledgers record 1440 event and 560 type-inference
+assertions, none failed or unreached. All sixteen normal count samples agree;
+twelve serial single fresh-process native smoke adapter samples pass separately.
+
+Original fixtures, complete changed-event traces, an independent event model,
+exact inferred rows and substitution/generalization observations support
+correctness. Demand controls cover exclusive cutoffs, persistent states, lazy
+finite fields, functional substitutions and unused failure paths. Strong per-row
+checking rejects an incorrect type with the same original checksum. Source clock/
+AST sharing, no-op compatibility annotations, profile reductions and additional
+validation work are explicit. Full final SML large repetition checks remain
+unrecorded.
+
+[Event evidence](results/m3-hartel-event/README.md) and
+[typechecker evidence](results/m3-hartel-typecheck/README.md) retain the original
+modules/shim, expected data, source identities, raw results and development scopes.
+[Full make JOBS=4 check](validation/oct17-hartel-event-typecheck-1171-acceptance.log)
+exits zero with 1171 profiles and all compiler/runedoc/runeopt cross-build
+comparisons. M3/M4/M5 remain in progress; M8 remains planned.
+
+The event fixtures use the suffix .state for fourteen-byte ASCII data.
+[Exact fixture identities](validation/hartel-event-state-identities.tsv) record
+all thirty copies, each verified against the independent event model and original
+observations. This distinguishes them from compiler state/cache files: the
+payload audit accepts only those exact paths, lengths, hashes and state alphabet;
+binary signatures and NUL data remain rejected. The first broad suffix scan
+flagged these text files, and that result was resolved after the initial local
+commit. Benchmark source, inputs and recorded validation results are unchanged.

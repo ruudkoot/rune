@@ -1,0 +1,2 @@
+upstream/** -text -whitespace
+inferred-types.txt -text -whitespace
