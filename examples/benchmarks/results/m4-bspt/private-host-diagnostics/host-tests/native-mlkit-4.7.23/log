@@ -1,0 +1,17 @@
+error: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/bspt-originals/host-tests/native-mlkit-4.7.23/program/src/6/rational.sml, line 36, column 31: Type clash,
+
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/bspt-originals/host-tests/native-mlkit-4.7.23/program/src/6/rational.sml, line 36, column 31:
+      in node(integer(fn()=>imul(sign(value bottom),value top)),integer(fn()=>iabs(value bottom)))end
+                                 ^^^^^^^^^^^^^^^^^^
+Type clash,
+   operand suggests operator type: intinf -> intinf
+   but I found operator type:      int -> intinf
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/bspt-originals/host-tests/native-mlkit-4.7.23/program/src/6/rational.sml, line 63, column 34:
+    fun signum a=node(integer(fn()=>sign(numerator a)),integer(fn()=>IntInf.fromInt 1))
+                                    ^^^^^^^^^^^^^^^^^
+Type clash,
+   operand suggests operator type: intinf -> intinf
+   but I found operator type:      int -> intinf
+Stopping compilation of MLB-file due to error (code 1).

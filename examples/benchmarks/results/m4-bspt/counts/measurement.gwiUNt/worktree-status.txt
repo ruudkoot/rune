@@ -1,0 +1,12 @@
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/bspt-lazy/
+?? examples/benchmarks/bspt-strict/
+?? examples/benchmarks/shared/nofib-bspt-driver.sml
+?? examples/benchmarks/shared/nofib-bspt-geometry.sml
+?? examples/benchmarks/shared/nofib-bspt-program.sml
+?? examples/benchmarks/shared/nofib-bspt-rational.sml
+?? examples/benchmarks/shared/nofib-bspt-tree.sml
+?? examples/benchmarks/shared/nofib-bspt-ui.sml
+?? tests/benchmarks/bspt-tests.sml
+?? tests/benchmarks/check-bspt.sh
+?? tests/benchmarks/data/bspt/

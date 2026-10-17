@@ -1,0 +1,41 @@
+[ 1 of 19] Compiling Libfuns          ( Libfuns.lhs, Libfuns.o )
+[ 2 of 19] Compiling MGRlib           ( MGRlib.lhs, MGRlib.o )
+[ 3 of 19] Compiling NofibUtils       ( NofibUtils.hs, NofibUtils.o )
+[ 4 of 19] Compiling Params           ( Params.lhs, Params.o )
+[ 5 of 19] Compiling Rationals        ( Rationals.lhs, Rationals.o )
+
+Rationals.lhs:102:12: warning: [-Wmissing-methods]
+    • No explicit implementation for
+        ‘toEnum’ and ‘fromEnum’
+    • In the instance declaration for ‘Enum Rationals’
+    |
+102 | > instance Enum Rationals where -- partain
+    |            ^^^^^^^^^^^^^^
+[ 6 of 19] Compiling GeomNum          ( GeomNum.lhs, GeomNum.o )
+[ 7 of 19] Compiling Stdlib           ( Stdlib.lhs, Stdlib.o )
+[ 8 of 19] Compiling Init             ( Init.lhs, Init.o )
+[ 9 of 19] Compiling Euclid           ( Euclid.lhs, Euclid.o )
+[10 of 19] Compiling EuclidGMS        ( EuclidGMS.lhs, EuclidGMS.o )
+[11 of 19] Compiling Interpret        ( Interpret.lhs, Interpret.o )
+[12 of 19] Compiling Input            ( Input.lhs, Input.o )
+
+Input.lhs:10:1: warning: [-Wtabs]
+    Tab character found here, and in one further location.
+    Suggested fix: Please use spaces instead.
+   |
+10 |         (Quit,[])
+   | ^^^^^^^^
+[13 of 19] Compiling BSPT             ( BSPT.lhs, BSPT.o )
+[14 of 19] Compiling Render           ( Render.lhs, Render.o )
+[15 of 19] Compiling Merge            ( Merge.lhs, Merge.o )
+[16 of 19] Compiling Interface        ( Interface.lhs, Interface.o )
+[17 of 19] Compiling Prog             ( Prog.hs, Prog.o )
+
+Prog.hs:29:8: warning: [-Wtabs]
+    Tab character found here.
+    Suggested fix: Please use spaces instead.
+   |
+29 |  where  
+   |        ^
+[18 of 19] Compiling Main             ( Main.hs, Main.o )
+[19 of 19] Linking original

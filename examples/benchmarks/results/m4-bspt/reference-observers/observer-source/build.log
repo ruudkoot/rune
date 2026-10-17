@@ -1,0 +1,40 @@
+[ 1 of 18] Compiling Libfuns          ( Libfuns.lhs, Libfuns.o )
+[ 2 of 18] Compiling MGRlib           ( MGRlib.lhs, MGRlib.o )
+[ 3 of 18] Compiling Params           ( Params.lhs, Params.o )
+[ 4 of 18] Compiling Rationals        ( Rationals.lhs, Rationals.o )
+
+Rationals.lhs:102:12: warning: [-Wmissing-methods]
+    • No explicit implementation for
+        ‘toEnum’ and ‘fromEnum’
+    • In the instance declaration for ‘Enum Rationals’
+    |
+102 | > instance Enum Rationals where -- partain
+    |            ^^^^^^^^^^^^^^
+[ 5 of 18] Compiling GeomNum          ( GeomNum.lhs, GeomNum.o )
+[ 6 of 18] Compiling Stdlib           ( Stdlib.lhs, Stdlib.o )
+[ 7 of 18] Compiling Init             ( Init.lhs, Init.o )
+[ 8 of 18] Compiling Euclid           ( Euclid.lhs, Euclid.o )
+[ 9 of 18] Compiling EuclidGMS        ( EuclidGMS.lhs, EuclidGMS.o )
+[10 of 18] Compiling Interpret        ( Interpret.lhs, Interpret.o )
+[11 of 18] Compiling Input            ( Input.lhs, Input.o )
+
+Input.lhs:10:1: warning: [-Wtabs]
+    Tab character found here, and in one further location.
+    Suggested fix: Please use spaces instead.
+   |
+10 |         (Quit,[])
+   | ^^^^^^^^
+[12 of 18] Compiling BSPT             ( BSPT.lhs, BSPT.o )
+[13 of 18] Compiling Render           ( Render.lhs, Render.o )
+[14 of 18] Compiling Merge            ( Merge.lhs, Merge.o )
+[15 of 18] Compiling Interface        ( Interface.lhs, Interface.o )
+[16 of 18] Compiling Prog             ( Prog.hs, Prog.o )
+
+Prog.hs:29:8: warning: [-Wtabs]
+    Tab character found here.
+    Suggested fix: Please use spaces instead.
+   |
+29 |  where  
+   |        ^
+[17 of 18] Compiling Main             ( Observer.hs, Observer.o )
+[18 of 18] Linking observer

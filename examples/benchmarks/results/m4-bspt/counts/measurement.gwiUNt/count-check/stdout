@@ -1,0 +1,5 @@
+COUNT unbudgeted bspt-lazy normal rune
+COUNT unbudgeted bspt-lazy normal rune:opt
+COUNT unbudgeted bspt-lazy normal rune:new
+COUNT unbudgeted bspt-lazy normal rune:jit
+COUNT comparisons agree

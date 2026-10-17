@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-bspt-parallel.k_y6tynj
+PASS bspt-lazy smoke O2
+PASS bspt-lazy smoke O0
+FAIL bspt-lazy smoke hosts
+PASS bspt-lazy normal O2
+PASS bspt-lazy normal O0
+PASS bspt-lazy normal hosts
+PASS bspt-strict smoke O0
+PASS bspt-strict smoke O2
+PASS bspt-strict smoke hosts
+PASS bspt-strict normal O2
+PASS bspt-strict normal hosts
+PASS bspt-strict normal O0

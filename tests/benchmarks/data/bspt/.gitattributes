@@ -1,0 +1,2 @@
+batch.render -text -whitespace
+cases/** -text -whitespace

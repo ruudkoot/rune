@@ -1,0 +1,27 @@
+{
+  "command": [
+    "timeout",
+    "120",
+    "bin/runevm",
+    "tests/out/benchmarks/bspt-originals/driver-pilot.rbc"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 1048576,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 20796,
+  "observed_minimum_available_kib": 18761464,
+  "peak_processes": [
+    {
+      "pid": 8,
+      "name": "timeout",
+      "rss_kib": 1796
+    },
+    {
+      "pid": 9,
+      "name": "runevm",
+      "rss_kib": 19000
+    }
+  ],
+  "elapsed_seconds": 0.2584319930174388
+}

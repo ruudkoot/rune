@@ -1,0 +1,68 @@
+[
+  {
+    "name": "quit",
+    "exit": 0,
+    "input_bytes": 7,
+    "output_bytes": 2943
+  },
+  {
+    "name": "polygon",
+    "exit": 0,
+    "input_bytes": 55,
+    "output_bytes": 5529
+  },
+  {
+    "name": "area",
+    "exit": 0,
+    "input_bytes": 62,
+    "output_bytes": 6220
+  },
+  {
+    "name": "classify",
+    "exit": 0,
+    "input_bytes": 96,
+    "output_bytes": 7737
+  },
+  {
+    "name": "partition",
+    "exit": 0,
+    "input_bytes": 62,
+    "output_bytes": 6741
+  },
+  {
+    "name": "render",
+    "exit": 0,
+    "input_bytes": 62,
+    "output_bytes": 6391
+  },
+  {
+    "name": "complement",
+    "exit": 0,
+    "input_bytes": 62,
+    "output_bytes": 6508
+  },
+  {
+    "name": "union",
+    "exit": 0,
+    "input_bytes": 110,
+    "output_bytes": 8877
+  },
+  {
+    "name": "intersection",
+    "exit": 0,
+    "input_bytes": 111,
+    "output_bytes": 8771
+  },
+  {
+    "name": "subtract",
+    "exit": 0,
+    "input_bytes": 111,
+    "output_bytes": 8771
+  },
+  {
+    "name": "null-before-quit",
+    "exit": 0,
+    "input_bytes": 11,
+    "output_bytes": 2943
+  }
+]

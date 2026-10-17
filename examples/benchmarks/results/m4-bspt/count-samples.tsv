@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+bspt-lazy	normal	rune	O2	count	1	1	pass	79.06	78.86	0.20	10700	15296371288	11069658616	329414425	counts/measurement.gwiUNt/bspt-lazy/rune/fresh.1
+bspt-lazy	normal	rune:opt	O2	count	1	1	pass	26.75	26.58	0.18	12100	15296371288	11069658616	329414425	counts/measurement.gwiUNt/bspt-lazy/rune-opt/fresh.1
+bspt-lazy	normal	rune:new	O2	count	1	1	pass	68.90	68.75	0.14	10876	9044469067	11069658616	329414425	counts/measurement.gwiUNt/bspt-lazy/rune-new/fresh.1
+bspt-lazy	normal	rune:jit	O2	count	1	1	pass	19.71	19.65	0.06	13696	9044469067	11069658616	329414425	counts/measurement.gwiUNt/bspt-lazy/rune-jit/fresh.1
+bspt-strict	normal	rune	O2	count	1	1	pass	88.81	88.50	0.23	10604	15295778898	11068192648	329362665	counts/measurement.lK5BEt/bspt-strict/rune/fresh.1
+bspt-strict	normal	rune:opt	O2	count	1	1	pass	35.74	35.64	0.07	12068	15295778898	11068192648	329362665	counts/measurement.lK5BEt/bspt-strict/rune-opt/fresh.1
+bspt-strict	normal	rune:new	O2	count	1	1	pass	88.33	87.67	0.68	10948	9044114504	11068192648	329362665	counts/measurement.lK5BEt/bspt-strict/rune-new/fresh.1
+bspt-strict	normal	rune:jit	O2	count	1	1	pass	24.92	24.77	0.14	13492	9044114504	11068192648	329362665	counts/measurement.lK5BEt/bspt-strict/rune-jit/fresh.1

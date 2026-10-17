@@ -1,0 +1,638 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS bspt/lazy/add0
+PASS bspt/lazy/mul0
+PASS bspt/lazy/sub0
+PASS bspt/lazy/div0
+PASS bspt/lazy/add1
+PASS bspt/lazy/mul1
+PASS bspt/lazy/sub1
+PASS bspt/lazy/div1
+PASS bspt/lazy/add2
+PASS bspt/lazy/mul2
+PASS bspt/lazy/sub2
+PASS bspt/lazy/div2
+PASS bspt/lazy/add3
+PASS bspt/lazy/mul3
+PASS bspt/lazy/sub3
+PASS bspt/lazy/div3
+PASS bspt/lazy/overflow-add
+PASS bspt/lazy/overflow-mul
+PASS bspt/lazy/round-pos
+PASS bspt/lazy/round-neg
+PASS bspt/lazy/round-third
+PASS bspt/lazy/noncanonical-source-order
+PASS bspt/lazy/original-command-quit
+PASS bspt/lazy/original-command-polygon
+PASS bspt/lazy/original-command-area
+PASS bspt/lazy/original-command-classify
+PASS bspt/lazy/original-command-partition
+PASS bspt/lazy/original-command-render
+PASS bspt/lazy/original-command-complement
+PASS bspt/lazy/original-command-union
+PASS bspt/lazy/original-command-intersection
+PASS bspt/lazy/original-command-subtract
+PASS bspt/lazy/original-command-null-before-quit
+PASS bspt/lazy/complete-original-batch
+PASS bspt/lazy/zero-repetitions
+PASS bspt/lazy/corrupt-output-is-rejected
+PASS bspt/lazy/rational-zero-division
+PASS bspt/lazy/rectangle-area
+PASS bspt/lazy/rectangle-inside
+PASS bspt/lazy/rectangle-outside
+PASS bspt/lazy/rectangle-boundary
+PASS bspt/lazy/cached-area-is-not-forced-by-classification
+PASS bspt/lazy/explicit-seq-left-is-preserved
+PASS bspt/lazy/dummy-par-leaves-fore-tree-delayed
+PASS bspt/strict/add0
+PASS bspt/strict/mul0
+PASS bspt/strict/sub0
+PASS bspt/strict/div0
+PASS bspt/strict/add1
+PASS bspt/strict/mul1
+PASS bspt/strict/sub1
+PASS bspt/strict/div1
+PASS bspt/strict/add2
+PASS bspt/strict/mul2
+PASS bspt/strict/sub2
+PASS bspt/strict/div2
+PASS bspt/strict/add3
+PASS bspt/strict/mul3
+PASS bspt/strict/sub3
+PASS bspt/strict/div3
+PASS bspt/strict/overflow-add
+PASS bspt/strict/overflow-mul
+PASS bspt/strict/round-pos
+PASS bspt/strict/round-neg
+PASS bspt/strict/round-third
+PASS bspt/strict/noncanonical-source-order
+PASS bspt/strict/original-command-quit
+PASS bspt/strict/original-command-polygon
+PASS bspt/strict/original-command-area
+PASS bspt/strict/original-command-classify
+PASS bspt/strict/original-command-partition
+PASS bspt/strict/original-command-render
+PASS bspt/strict/original-command-complement
+PASS bspt/strict/original-command-union
+PASS bspt/strict/original-command-intersection
+PASS bspt/strict/original-command-subtract
+PASS bspt/strict/original-command-null-before-quit
+PASS bspt/strict/complete-original-batch
+PASS bspt/strict/zero-repetitions
+PASS bspt/strict/corrupt-output-is-rejected
+PASS bspt/strict/rational-zero-division
+PASS bspt/strict/rectangle-area
+PASS bspt/strict/rectangle-inside
+PASS bspt/strict/rectangle-outside
+PASS bspt/strict/rectangle-boundary
+PASS bspt/strict/cached-area-is-not-forced-by-classification
+PASS bspt/strict/explicit-seq-left-is-preserved
+PASS bspt/strict/dummy-par-leaves-fore-tree-delayed
+PASS bspt/sharing/batch-body-persists-across-calls
+SUMMARY 89 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/bspt-originals/rational.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/bspt-originals/rational.sml:36.31-36.61 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: int
+  operand:         IntInf.int
+  in expression:
+    sign (value bottom)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/bspt-originals/rational.sml:63.35-63.52 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: int
+  operand:         IntInf.int
+  in expression:
+    sign (numerator a)
+uncaught exception CompileError [CompileError]
+PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 1, exit 1)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/bspt-originals/rational.sml:36.31-36.61 Error: operator and operand do not agree [tycon mismatch]
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/bspt-originals/rational.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/bspt-originals/rational.sml:36.31-36.61 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: int
+  operand:         IntInf.int
+  in expression:
+    sign (value bottom)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/bspt-originals/rational.sml:63.35-63.52 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: int
+  operand:         IntInf.int
+  in expression:
+    sign (numerator a)
+uncaught exception CompileError [CompileError]
+PROGRAM FAIL native:smlnj32@110.99.9 (load 1, exit 1)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/bspt-originals/rational.sml:36.31-36.61 Error: operator and operand do not agree [tycon mismatch]
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : 
+  sig
+    datatype 'a node
+      = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay | Nil
+    type 'a stream = 'a node BenchLazy.delay
+    val empty : unit -> 'a node BenchLazy.state ref
+    val cons : 'a BenchLazy.delay * 'a node BenchLazy.delay
+                -> 'a node BenchLazy.state ref
+    val singleton : 'a -> 'a node BenchLazy.state ref
+    val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+    val head : 'a node BenchLazy.state ref -> 'a
+    val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val iterate : ('a -> 'a)
+                   -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+    val fromList : 'a list -> 'a node BenchLazy.delay
+    val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+    val zipWith : ('a * 'b -> 'c)
+                   -> 'a node BenchLazy.delay
+                   -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+    val append : 'a node BenchLazy.delay
+                  -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val concatMap : ('a -> 'b node BenchLazy.delay)
+                     -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+    val filter : ('a -> bool)
+                  -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+    val dropWhile : ('a -> bool)
+                     -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+    val foldrStream : ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+                       -> 'b BenchLazy.state ref
+                       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+    val zipWith3 : ('a * 'b * 'c -> 'd)
+                    -> 'a node BenchLazy.delay
+                    -> 'b node BenchLazy.delay
+                    -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+    val span : ('a -> bool)
+                -> 'a node BenchLazy.delay
+                -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+    val nth : 'a node BenchLazy.delay -> int -> 'a
+    val take : int -> 'a node BenchLazy.delay -> 'a list
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+    val foldPrefix : ('a * 'b -> 'b)
+                      -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/bspt-originals/rational.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/bspt-originals/rational.sml:36.31-36.61 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: int
+  operand:         IntInf.int
+  in expression:
+    sign (value bottom)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/bspt-originals/rational.sml:63.35-63.52 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: int
+  operand:         IntInf.int
+  in expression:
+    sign (numerator a)
+uncaught exception CompileError [CompileError]
+PROGRAM FAIL native:smlnj-dev@2026.2 (load 1, exit 1)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/bspt-originals/rational.sml:36.31-36.61 Error: operator and operand do not agree [tycon mismatch]
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS bspt/lazy/add0
+PASS bspt/lazy/mul0
+PASS bspt/lazy/sub0
+PASS bspt/lazy/div0
+PASS bspt/lazy/add1
+PASS bspt/lazy/mul1
+PASS bspt/lazy/sub1
+PASS bspt/lazy/div1
+PASS bspt/lazy/add2
+PASS bspt/lazy/mul2
+PASS bspt/lazy/sub2
+PASS bspt/lazy/div2
+PASS bspt/lazy/add3
+PASS bspt/lazy/mul3
+PASS bspt/lazy/sub3
+PASS bspt/lazy/div3
+PASS bspt/lazy/overflow-add
+PASS bspt/lazy/overflow-mul
+PASS bspt/lazy/round-pos
+PASS bspt/lazy/round-neg
+PASS bspt/lazy/round-third
+PASS bspt/lazy/noncanonical-source-order
+PASS bspt/lazy/original-command-quit
+PASS bspt/lazy/original-command-polygon
+PASS bspt/lazy/original-command-area
+PASS bspt/lazy/original-command-classify
+PASS bspt/lazy/original-command-partition
+PASS bspt/lazy/original-command-render
+PASS bspt/lazy/original-command-complement
+PASS bspt/lazy/original-command-union
+PASS bspt/lazy/original-command-intersection
+PASS bspt/lazy/original-command-subtract
+PASS bspt/lazy/original-command-null-before-quit
+PASS bspt/lazy/complete-original-batch
+PASS bspt/lazy/zero-repetitions
+PASS bspt/lazy/corrupt-output-is-rejected
+PASS bspt/lazy/rational-zero-division
+PASS bspt/lazy/rectangle-area
+PASS bspt/lazy/rectangle-inside
+PASS bspt/lazy/rectangle-outside
+PASS bspt/lazy/rectangle-boundary
+PASS bspt/lazy/cached-area-is-not-forced-by-classification
+PASS bspt/lazy/explicit-seq-left-is-preserved
+PASS bspt/lazy/dummy-par-leaves-fore-tree-delayed
+PASS bspt/strict/add0
+PASS bspt/strict/mul0
+PASS bspt/strict/sub0
+PASS bspt/strict/div0
+PASS bspt/strict/add1
+PASS bspt/strict/mul1
+PASS bspt/strict/sub1
+PASS bspt/strict/div1
+PASS bspt/strict/add2
+PASS bspt/strict/mul2
+PASS bspt/strict/sub2
+PASS bspt/strict/div2
+PASS bspt/strict/add3
+PASS bspt/strict/mul3
+PASS bspt/strict/sub3
+PASS bspt/strict/div3
+PASS bspt/strict/overflow-add
+PASS bspt/strict/overflow-mul
+PASS bspt/strict/round-pos
+PASS bspt/strict/round-neg
+PASS bspt/strict/round-third
+PASS bspt/strict/noncanonical-source-order
+PASS bspt/strict/original-command-quit
+PASS bspt/strict/original-command-polygon
+PASS bspt/strict/original-command-area
+PASS bspt/strict/original-command-classify
+PASS bspt/strict/original-command-partition
+PASS bspt/strict/original-command-render
+PASS bspt/strict/original-command-complement
+PASS bspt/strict/original-command-union
+PASS bspt/strict/original-command-intersection
+PASS bspt/strict/original-command-subtract
+PASS bspt/strict/original-command-null-before-quit
+PASS bspt/strict/complete-original-batch
+PASS bspt/strict/zero-repetitions
+PASS bspt/strict/corrupt-output-is-rejected
+PASS bspt/strict/rational-zero-division
+PASS bspt/strict/rectangle-area
+PASS bspt/strict/rectangle-inside
+PASS bspt/strict/rectangle-outside
+PASS bspt/strict/rectangle-boundary
+PASS bspt/strict/cached-area-is-not-forced-by-classification
+PASS bspt/strict/explicit-seq-left-is-preserved
+PASS bspt/strict/dummy-par-leaves-fore-tree-delayed
+PASS bspt/sharing/batch-body-persists-across-calls
+SUMMARY 89 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PROGRAM FAIL native:mlkit@4.7.23 (load 1, exit 0)
+error: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/bspt-originals/host-tests/native-mlkit-4.7.23/program/src/6/rational.sml, line 36, column 31: Type clash,

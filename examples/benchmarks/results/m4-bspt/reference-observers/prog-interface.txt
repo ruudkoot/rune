@@ -1,0 +1,119 @@
+Magic: Wanted 33214052,
+       got    33214052
+Version: Wanted 9047,
+         got    9047
+Way: Wanted [],
+     got    []
+interface Prog 9047
+  interface hash: 2c3eeb635c3c57eb6433b6eed8f4425c
+  ABI hash: b3c76cf543e57282ab61ec988d4e42d1
+  export-list hash: d622eebde039ec966f76dc4a9c97dbcf
+  orphan hash: 693e9af84d3dfcc71e640e005bdc5e2e
+  flag hash: d0ab4506cee6444ca4358aad4c92ade1
+  opt_hash: bf0ce761e54eb2079c9daea0006799b4
+  hpc_hash: 93b885adfe0da089cdf634904fd59f71
+  plugin_hash: ad164012d6b1e14942349d58b1132007
+  src_hash: 2160414f5e73a9b774a638eda61b5226
+  sig of: Nothing
+  used TH splices: False
+  where
+exports:
+  prog
+direct module dependencies: main:BSPT main:Euclid main:Init
+                            main:Input main:Interface main:Interpret
+boot module dependencies:
+direct package dependencies: base-4.17.2.0
+plugin package dependencies:
+orphans: GHC.Base GHC.Float GHC.Prim.Ext
+family instance modules: Control.Applicative Control.Arrow
+                         Data.Functor.Const Data.Functor.Identity Data.Monoid
+                         Data.Semigroup.Internal Data.Type.Ord GHC.Generics GHC.IO.Exception
+                         GHC.RTS.Flags
+import  -/  Data.OldList 1f45fecd16dd965d1e5a3e6b4887bb26
+import  -/  GHC.Base d99377a12eb91587b4e402ffda48a3fd
+import  -/  Prelude c68c68db1417d3e12466da84ced34a53
+import  -/  GHC.Classes c847bab9aeaa73d06520340ab9db51ce
+import  -/  main:BSPT 8048ac66010bda585e1bd1ce9eb997aa
+  exports: f588c64f2d6ba5890adcb0fa640febb2
+  buildBSPT 91c692c4e36f874801e1226c180a7281
+import  -/  main:Euclid e8f1b859618ca320e251ac70c415edbd
+  exports: 45cca66c62928d48f4c419b57a4baf8e
+import  -/  main:Init f2bcdd2448baf643052487c3afb057b1
+  exports: dc12eec9553441e80cf07ca2642bd4e6
+  initialiseMouse 2f0ac76d20990c745924ff5bc2ca0fc8
+  initialiseScreen 27a5befd21163ed2cb8ad0725df42f6a
+import  -/  main:Input 9c18ec98537b76e3b089b219c525bf13
+  exports: 77fa4ac35da7a840364082ac35763edd
+  operationsBatch 5a94ac7a8237f5e6c2287fa151cf97d4
+import  -/  main:Interface e51a768fdf7777ca0970b1920f22d13b
+  exports: 02ea388e6fa23d0a49eae27168fc061f
+  modeller 603479131e383cb227c438c2d135310d
+import  -/  main:Interpret d4255cca0c90d7870df80fdb8529d125
+  exports: fc01a9ebc0d1ef2d77b9d7eb137fb291
+  interpret ae7e0824f14332c2f687643686f3ff6f
+572675a82c9b466fe9c8eac63a4e97cf
+  $trModule :: GHC.Types.Module
+  [HasNoCafRefs, TagSig: <TagProper>,
+   LambdaFormInfo: LFCon[GHC.Types.Module],
+   Unfolding: (GHC.Types.Module $trModule3 $trModule1)]
+541e76823812a4e37aeb58d9fd19e65f
+  $trModule1 :: GHC.Types.TrName
+  [HasNoCafRefs, TagSig: <TagProper>,
+   LambdaFormInfo: LFCon[GHC.Types.TrNameS],
+   Unfolding: (GHC.Types.TrNameS $trModule2)]
+52c009d235f91543689c4b3273818320
+  $trModule2 :: GHC.Prim.Addr#
+  [HasNoCafRefs, LambdaFormInfo: LFUnlifted, Unfolding: ("Prog"#)]
+23ff58cd14fca38a1b30bc0c0e78b4c3
+  $trModule3 :: GHC.Types.TrName
+  [HasNoCafRefs, TagSig: <TagProper>,
+   LambdaFormInfo: LFCon[GHC.Types.TrNameS],
+   Unfolding: (GHC.Types.TrNameS $trModule4)]
+dcca04b0b90142f70768913d54433631
+  $trModule4 :: GHC.Prim.Addr#
+  [HasNoCafRefs, LambdaFormInfo: LFUnlifted, Unfolding: ("main"#)]
+2093b65441f584f7e7fc584d41e66975
+  prog :: GHC.Base.String -> GHC.Base.String
+  [LambdaFormInfo: LFReEntrant 1, Arity: 1, Strictness: <ML>,
+   Unfolding: (\ (rawinp['GHC.Types.Many] :: GHC.Base.String) ->
+               GHC.Base.++
+                 @GHC.Types.Char
+                 Init.initialiseMouse
+                 (GHC.Base.++
+                    @GHC.Types.Char
+                    Init.initialiseScreen
+                    (case Data.OldList.lines rawinp of wild {
+                       [] -> case prog5 ret_ty [GHC.Types.Char] of {}
+                       : head rest
+                       -> case GHC.Base.eqString head prog3 of wild1 {
+                            GHC.Types.False
+                            -> Interface.modeller prog2 (Interpret.interpret wild)
+                            GHC.Types.True -> prog1 } })))]
+9b3aa016a84990d01a1dad3f87f10f2c
+  prog1 :: GHC.Base.String
+  [LambdaFormInfo: LFThunk (updatable=True might_be_function= False),
+   Unfolding: (Interface.modeller prog2 Input.operationsBatch)]
+fac5880cd9249d191a8f8076c2951e28
+  prog2 :: BSPT.BSPT
+  [LambdaFormInfo: LFThunk (updatable=True might_be_function= False),
+   Unfolding: (BSPT.buildBSPT_$sbuildBSPTAux
+                 EuclidGMS.renderBorder1
+                 BSPT.Out
+                 (GHC.Types.[] @Euclid.Face))]
+87041c756d5e0116b6faf84175b09906
+  prog3 :: [GHC.Types.Char]
+  [LambdaFormInfo: LFThunk (updatable=True might_be_function= False),
+   Unfolding: (GHC.CString.unpackCString# prog4)]
+9f74037f56855160b7b2db259f27ee19
+  prog4 :: GHC.Prim.Addr#
+  [HasNoCafRefs, LambdaFormInfo: LFUnlifted, Unfolding: ("batch"#)]
+4fef37d44c7a656088a7c534e6909b13
+  prog5 :: ()
+  [LambdaFormInfo: LFThunk (updatable=True might_be_function= False),
+   Strictness: b, CPR: b]
+trusted: none
+require own pkg trusted: False
+docs:
+  Nothing
+extensible fields:
+

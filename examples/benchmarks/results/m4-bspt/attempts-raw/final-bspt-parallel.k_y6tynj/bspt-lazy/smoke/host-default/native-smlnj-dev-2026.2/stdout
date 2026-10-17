@@ -1,0 +1,706 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : 
+  sig
+    datatype 'a node
+      = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay | Nil
+    type 'a stream = 'a node BenchLazy.delay
+    val empty : unit -> 'a node BenchLazy.state ref
+    val cons : 'a BenchLazy.delay * 'a node BenchLazy.delay
+                -> 'a node BenchLazy.state ref
+    val singleton : 'a -> 'a node BenchLazy.state ref
+    val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+    val head : 'a node BenchLazy.state ref -> 'a
+    val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val iterate : ('a -> 'a)
+                   -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+    val fromList : 'a list -> 'a node BenchLazy.delay
+    val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+    val zipWith : ('a * 'b -> 'c)
+                   -> 'a node BenchLazy.delay
+                   -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+    val append : 'a node BenchLazy.delay
+                  -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val concatMap : ('a -> 'b node BenchLazy.delay)
+                     -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+    val filter : ('a -> bool)
+                  -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+    val dropWhile : ('a -> bool)
+                     -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+    val foldrStream : ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+                       -> 'b BenchLazy.state ref
+                       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+    val zipWith3 : ('a * 'b * 'c -> 'd)
+                    -> 'a node BenchLazy.delay
+                    -> 'b node BenchLazy.delay
+                    -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+    val span : ('a -> bool)
+                -> 'a node BenchLazy.delay
+                -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+    val nth : 'a node BenchLazy.delay -> int -> 'a
+    val take : int -> 'a node BenchLazy.delay -> 'a list
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+    val foldPrefix : ('a * 'b -> 'b)
+                      -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-bspt-rational.sml]
+functor BenchBSPTRationalFn(D: sig
+                               type 'a t
+                               val delay : (unit -> 'a) -> 'a t
+                               val force : 'a t -> 'a
+                             end) :
+                           
+                             sig
+                               structure L : <sig>
+                               val modulus : IntInf.int
+                               val halfRange : IntInf.int
+                               val wrap : IntInf.int -> IntInf.int
+                               val iadd : IntInf.int * IntInf.int
+                                           -> IntInf.int
+                               val imul : IntInf.int * IntInf.int
+                                           -> IntInf.int
+                               val ineg : IntInf.int -> IntInf.int
+                               val iabs : ?.intinf -> IntInf.int
+                               val sign : IntInf.int -> IntInf.int
+                               val idiv : IntInf.int * ?.intinf -> IntInf.int
+                               val gcd : ?.intinf -> ?.intinf -> IntInf.int
+                               type integer
+                               type node
+                               type rational
+                               val integer : (unit -> 'a) -> 'a D.t
+                               val value : 'a D.t -> 'a
+                               val node : integer * integer
+                                           -> node BenchLazy.state ref
+                               val number : int -> node BenchLazy.state ref
+                               val zero : node BenchLazy.state ref
+                               val one : node BenchLazy.state ref
+                               val numerator : node BenchLazy.state ref
+                                                -> IntInf.int
+                               val denominator : node BenchLazy.state ref
+                                                  -> IntInf.int
+                               val simplify : ?.intinf D.t
+                                               -> ?.intinf D.t
+                                               -> node BenchLazy.state ref
+                               val equal : node BenchLazy.state ref
+                                            -> node BenchLazy.state ref
+                                            -> bool
+                               val lessEqual : node BenchLazy.state ref
+                                                -> node BenchLazy.state ref
+                                                -> bool
+                               val compare : node BenchLazy.state ref
+                                              -> node BenchLazy.state ref
+                                              -> order
+                               val less : node BenchLazy.state ref
+                                           -> node BenchLazy.state ref -> bool
+                               val greater : node BenchLazy.state ref
+                                              -> node BenchLazy.state ref
+                                              -> bool
+                               val add : node BenchLazy.state ref
+                                          -> node BenchLazy.state ref
+                                          -> node BenchLazy.state ref
+                               val mul : node BenchLazy.state ref
+                                          -> node BenchLazy.state ref
+                                          -> node BenchLazy.state ref
+                               val negate : node BenchLazy.state ref
+                                             -> node BenchLazy.state ref
+                               val abs : node BenchLazy.state ref
+                                          -> node BenchLazy.state ref
+                               val signum : node BenchLazy.state ref
+                                             -> node BenchLazy.state ref
+                               val sub : node BenchLazy.state ref
+                                          -> node BenchLazy.state ref
+                                          -> node BenchLazy.state ref
+                               val divide : node BenchLazy.state ref
+                                             -> node BenchLazy.state ref
+                                             -> node BenchLazy.state ref
+                               val positive : node BenchLazy.state ref -> bool
+                               val negative : node BenchLazy.state ref -> bool
+                               val isZero : node BenchLazy.state ref -> bool
+                               val ratio : node BenchLazy.state ref
+                                            -> node BenchLazy.state ref
+                                            -> node BenchLazy.state ref
+                                            * node BenchLazy.state ref
+                               val half : node BenchLazy.state ref
+                               val round : node BenchLazy.state ref
+                                            -> IntInf.int
+                               val grid : node BenchLazy.state ref
+                                           -> node BenchLazy.state ref
+                             end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-bspt-geometry.sml]
+functor BenchBSPTGeometryFn(D: sig
+                               type 'a t
+                               val delay : (unit -> 'a) -> 'a t
+                               val force : 'a t -> 'a
+                             end) :
+                           
+                             sig
+                               structure R : <sig>
+                               structure L : <sig>
+                               structure S : <sig>
+                               type pointNode
+                               type point
+                               type lineNode
+                               type line
+                               type faceNode
+                               type face
+                               type faces
+                               type halfspace
+                               type location
+                               type region
+                               val point : R.rational * R.rational
+                                            -> pointNode BenchLazy.state ref
+                               val integerPoint : int * int
+                                                   -> pointNode 
+                                                       BenchLazy.state ref
+                               val line : R.rational * R.rational * R.rational
+                                           -> lineNode BenchLazy.state ref
+                               val face : (point * point) BenchLazy.delay
+                                           -> line
+                                           -> faceNode BenchLazy.state ref
+                               val getSegment : faceNode BenchLazy.state ref
+                                                 -> (point * point) 
+                                                   BenchLazy.delay
+                               val getLine : faceNode BenchLazy.state ref
+                                              -> line
+                               val getRegion : region -> faces
+                               val newRegion : region -> face -> region
+                               val empty : 'a BenchStream.node BenchLazy.state 
+                                              ref
+                                            -> bool
+                               val length : 'a BenchStream.node 
+                                               BenchLazy.delay
+                                             -> int
+                               val delayed : (unit -> 'a BenchLazy.state ref)
+                                              -> 'a BenchLazy.state ref
+                               val eqPoint : pointNode BenchLazy.state ref
+                                              -> pointNode BenchLazy.state ref
+                                              -> bool
+                               val eqLine : lineNode BenchLazy.state ref
+                                             -> lineNode BenchLazy.state ref
+                                             -> bool
+                               val eqFace : faceNode BenchLazy.state ref
+                                             -> faceNode BenchLazy.state ref
+                                             -> bool
+                               val equation : lineNode BenchLazy.state ref
+                                               -> pointNode BenchLazy.state 
+                                                 ref
+                                               -> R.node BenchLazy.state ref
+                               val equationValue : lineNode BenchLazy.state 
+                                                      ref
+                                                    -> pointNode 
+                                                        BenchLazy.state ref
+                                                    -> R.node BenchLazy.state 
+                                                      ref
+                               val space : lineNode BenchLazy.state ref
+                                            -> pointNode BenchLazy.state ref
+                                            -> halfspace
+                               val convert : pointNode BenchLazy.state ref
+                                              -> pointNode BenchLazy.state ref
+                                              -> lineNode BenchLazy.state ref
+                               val invert : lineNode BenchLazy.state ref
+                                             -> lineNode BenchLazy.state ref
+                               val mkFace : point * point
+                                             -> faceNode BenchLazy.state ref
+                               val solveAux : lineNode BenchLazy.state ref
+                                               -> lineNode BenchLazy.state ref
+                                               -> pointNode BenchLazy.state 
+                                                 ref
+                               val solve : lineNode BenchLazy.state ref
+                                            -> lineNode BenchLazy.state ref
+                                            -> pointNode BenchLazy.state ref
+                               val minus : pointNode BenchLazy.state ref
+                                            -> pointNode BenchLazy.state ref
+                                            -> pointNode BenchLazy.state ref
+                               val triangleArea : pointNode BenchLazy.state 
+                                                         ref BenchStream.node 
+                                                     BenchLazy.delay
+                                                   -> R.node BenchLazy.state 
+                                                     ref
+                               val mkPolygon : point BenchStream.node 
+                                                    BenchLazy.state ref
+                                                -> faceNode BenchLazy.state 
+                                                        ref BenchStream.node 
+                                                    BenchLazy.state ref
+                               val location : lineNode BenchLazy.state ref
+                                               -> (pointNode BenchLazy.state 
+                                                      ref
+                                                    * pointNode 
+                                                        BenchLazy.state ref) 
+                                                   BenchLazy.state ref
+                                               -> location
+                               val toBack : pointNode BenchLazy.state ref
+                                             -> lineNode BenchLazy.state ref
+                                             -> bool
+                               val bisect : faceNode BenchLazy.state ref
+                                             -> lineNode BenchLazy.state ref
+                                             -> faceNode BenchLazy.state ref
+                                             * faceNode BenchLazy.state ref
+                               val flip : faceNode BenchLazy.state ref
+                                           -> faceNode BenchLazy.state ref
+                               val inRegion : region
+                                               -> pointNode BenchLazy.state 
+                                                 ref
+                                               -> bool
+                               val makeSet : pointNode BenchLazy.state ref 
+                                                    BenchStream.node 
+                                                  BenchLazy.state ref
+                                              -> pointNode BenchLazy.state ref 
+                                                  BenchStream.node 
+                                                BenchLazy.delay
+                               val section : region
+                                              -> lineNode BenchLazy.state ref
+                                              -> (pointNode BenchLazy.state 
+                                                     ref
+                                                   * pointNode BenchLazy.state 
+                                                     ref) BenchLazy.state ref
+                               val mkPart : region
+                                             -> lineNode BenchLazy.state ref
+                                             -> faceNode BenchLazy.state ref
+                               val vertices : region
+                                               -> pointNode BenchLazy.state 
+                                                     ref BenchStream.node 
+                                                 BenchLazy.delay
+                               val renderBorder : region
+                             end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-bspt-tree.sml]
+functor BenchBSPTTreeFn(D: sig
+                           type 'a t
+                           val delay : (unit -> 'a) -> 'a t
+                           val force : 'a t -> 'a
+                         end) :
+                       
+                         sig
+                           structure G : <sig>
+                           structure R : <sig>
+                           structure L : <sig>
+                           structure S : <sig>
+                           type status
+                           type treeNode
+                           type tree
+                           val partPoints : G.lineNode BenchLazy.state ref
+                                             -> G.pointNode BenchLazy.state 
+                                                   ref BenchStream.node 
+                                               BenchLazy.delay
+                                             -> G.pointNode BenchLazy.state 
+                                                   ref BenchStream.node 
+                                               BenchLazy.delay
+                                             * G.pointNode BenchLazy.state ref 
+                                                 BenchStream.node 
+                                               BenchLazy.delay
+                           val triangles : G.pointNode BenchLazy.state ref 
+                                                BenchStream.node 
+                                              BenchLazy.delay
+                                            -> G.pointNode BenchLazy.state ref 
+                                                    BenchStream.node 
+                                                  BenchLazy.delay 
+                                                BenchStream.node 
+                                              BenchLazy.delay
+                           val areaRegion : G.region
+                                             -> G.R.node BenchLazy.state ref
+                           val mkCell : status
+                                         -> G.region
+                                         -> treeNode BenchLazy.state ref
+                           val partFaces : G.lineNode BenchLazy.state ref
+                                            -> G.faceNode BenchLazy.state ref 
+                                                BenchStream.node 
+                                              BenchLazy.delay
+                                            -> G.faceNode BenchLazy.state ref 
+                                                BenchStream.node 
+                                              BenchLazy.delay
+                                            * G.faceNode BenchLazy.state ref 
+                                                BenchStream.node 
+                                              BenchLazy.delay
+                                            * G.faceNode BenchLazy.state ref 
+                                                BenchStream.node 
+                                              BenchLazy.delay
+                           val buildAux : status
+                                           -> G.region
+                                           -> G.faceNode BenchLazy.state ref 
+                                               BenchStream.node 
+                                             BenchLazy.delay
+                                           -> treeNode BenchLazy.state ref
+                           val build : G.faceNode BenchLazy.state ref 
+                                            BenchStream.node BenchLazy.delay
+                                        -> treeNode BenchLazy.state ref
+                           val bspPrime : G.face
+                                           -> G.faces * G.region
+                                           -> treeNode BenchLazy.state ref
+                                           -> treeNode BenchLazy.state ref
+                                           -> treeNode BenchLazy.state ref
+                           val segments : (status
+                                            -> G.faceNode BenchLazy.state ref
+                                            -> 'a BenchStream.node 
+                                                BenchLazy.state ref)
+                                           -> treeNode BenchLazy.delay
+                                           -> G.faceNode BenchLazy.state ref
+                                           -> 'a BenchStream.node 
+                                             BenchLazy.delay
+                           val classifyFace : treeNode BenchLazy.delay
+                                               -> G.faceNode BenchLazy.state 
+                                                     ref BenchStream.node 
+                                                 BenchLazy.delay
+                                               -> (G.faceNode BenchLazy.state 
+                                                        ref * status) 
+                                                     BenchStream.node 
+                                                   BenchLazy.state ref
+                           val rubout : treeNode BenchLazy.delay
+                                         -> G.faceNode BenchLazy.state ref
+                                         * status
+                                         -> G.faceNode BenchLazy.state ref 
+                                             BenchStream.node BenchLazy.delay
+                           val updateFaces : treeNode BenchLazy.delay
+                                              -> treeNode BenchLazy.delay
+                                              -> G.faceNode BenchLazy.state 
+                                                    ref BenchStream.node 
+                                                BenchLazy.delay
+                                              -> G.faceNode BenchLazy.state 
+                                                      ref BenchStream.node 
+                                                  BenchLazy.state ref
+                           val simplify : G.face
+                                           -> G.region
+                                           -> treeNode BenchLazy.state ref
+                                           -> treeNode BenchLazy.state ref
+                                           -> treeNode BenchLazy.state ref
+                           val bspDouble : G.face
+                                            -> G.faceNode BenchLazy.state ref 
+                                                BenchStream.node 
+                                              BenchLazy.delay * G.region
+                                            -> treeNode BenchLazy.delay
+                                            -> treeNode BenchLazy.delay
+                                            -> treeNode BenchLazy.state ref
+                           val inside : status
+                                         -> 'a
+                                         -> 'a BenchStream.node 
+                                             BenchLazy.state ref
+                           val scanLine : treeNode BenchLazy.delay
+                                           -> G.faceNode BenchLazy.state ref
+                                           -> G.faceNode BenchLazy.state ref 
+                                               BenchStream.node 
+                                             BenchLazy.delay
+                           val fold : (status
+                                        -> G.region -> G.R.rational -> 'a)
+                                       -> (G.face
+                                        -> G.faces * G.region
+                                        -> 'a BenchLazy.state ref
+                                        -> 'a BenchLazy.state ref -> 'a)
+                                       -> treeNode BenchLazy.delay
+                                       -> 'a BenchLazy.state ref
+                           val countLeaves : treeNode BenchLazy.delay -> int
+                           val sumRegion : status
+                                            -> 'a
+                                            -> G.R.node BenchLazy.state ref
+                                            -> G.R.node BenchLazy.state ref
+                           val area : treeNode BenchLazy.delay
+                                       -> G.R.node BenchLazy.state ref
+                           val classify : G.pointNode BenchLazy.state ref
+                                           -> treeNode BenchLazy.delay
+                                           -> status
+                           val complement : treeNode BenchLazy.state ref
+                                             -> treeNode BenchLazy.delay
+                           val partTree : G.faceNode BenchLazy.state ref
+                                           -> treeNode BenchLazy.delay
+                                           -> treeNode BenchLazy.state ref
+                                           * treeNode BenchLazy.state ref
+                           val merge : (treeNode BenchLazy.state ref
+                                         -> treeNode BenchLazy.state ref
+                                         -> treeNode BenchLazy.state ref)
+                                        -> treeNode BenchLazy.delay
+                                        -> treeNode BenchLazy.state ref
+                                        -> treeNode BenchLazy.delay
+                           val unionRule : treeNode BenchLazy.state ref
+                                            -> treeNode BenchLazy.state ref
+                                            -> treeNode BenchLazy.state ref
+                           val intersectionRule : treeNode BenchLazy.state ref
+                                                   -> treeNode BenchLazy.state 
+                                                     ref
+                                                   -> treeNode BenchLazy.state 
+                                                     ref
+                           val union : treeNode BenchLazy.delay
+                                        -> treeNode BenchLazy.state ref
+                                        -> treeNode BenchLazy.delay
+                           val intersection : treeNode BenchLazy.delay
+                                               -> treeNode BenchLazy.state ref
+                                               -> treeNode BenchLazy.delay
+                           val subtract : treeNode BenchLazy.delay
+                                           -> treeNode BenchLazy.state ref
+                                           -> treeNode BenchLazy.delay
+                         end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-bspt-ui.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-bspt-ui.sml:68.13 Warning: calling polyEqual
+structure BenchBSPTUI : 
+  sig
+    datatype command
+      = Area
+    | Classify
+    | Complement
+    | Intersect
+    | Null
+    | Partition
+    | Polygon
+    | Quit
+    | Render
+    | Subtract
+    | Union
+    type button = command * int * string
+    val delimiter : string
+    val buttonIndent : int
+    val buttonWidth : int
+    val buttonHeight : int
+    val textIn : int
+    val textDown : int
+    val renderLeft : int
+    val renderTop : int
+    val renderHeight : int
+    val windowWidth : int
+    val windowHeight : int
+    val renderRegion : int list
+    val windowRegion : int list
+    val textRegion : int list
+    val treeRegion : int list
+    val noTextRegion : int list
+    val mouseRegion : int list
+    val buttons : button list
+    val integer : int -> string
+    val largeInteger : IntInf.int -> string
+    val escape : string
+    val command : string -> int list -> string
+    val largeCommand : string -> IntInf.int list -> string
+    val setTextRegion : int list -> string
+    val textReset : string
+    val clear : string
+    val mapEvent : int -> int
+    val setEvent : int -> string -> string
+    val clearEvent : int -> string
+    val func : int -> string
+    val line : int list -> string
+    val largeLine : IntInf.int list -> string
+    val setCursor : int -> string
+    val setMode : int -> string
+    val shapeWindow : int list -> string
+    val stringTo : int -> int -> int -> string -> string
+    val blanks : int -> string
+    val printOver : int -> int -> string -> string
+    val movePrintTo : int -> int -> string -> string
+    val writeVert : int * int -> string list -> string
+    val toScreenRegion : unit -> string
+    val toNoTextRegion : unit -> string
+    val toTextRegion : unit -> string
+    val toMouseRegion : unit -> string
+    val inside : int list -> int list
+    val clearRegion : int list -> string
+    val clearRender : unit -> string
+    val clearTree : unit -> string
+    val clearText : unit -> string
+    val button : int -> int list
+    val clearButton : 'a * int * 'b -> string
+    val drawBox : int list -> string
+    val drawButton : 'a * int * string -> string
+    val mapcatButton : (''a * 'b * 'c -> string)
+                        -> ''a -> (''a * 'b * 'c) list -> string
+    val mark : command -> string
+    val noMark : command -> string
+    val spacer : char * char -> string
+    val zipped : string -> string -> string list
+    val labelButtons : string * string -> string * string -> string
+    val unlabelButtons : unit -> string
+    val labelDefinePoly : unit -> string
+    val labelClassify : unit -> string
+    val drawMouse : unit -> string
+    val drawScreen : unit -> string
+    val initialiseMouse : string
+    val initialiseScreen : string
+    val reset : unit -> string
+    val indicate : command -> string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-bspt-program.sml]
+functor BenchBSPTProgramFn(D: sig
+                              type 'a t
+                              val delay : (unit -> 'a) -> 'a t
+                              val force : 'a t -> 'a
+                            end) :
+                          
+                            sig
+                              structure T : <sig>
+                              structure G : <sig>
+                              structure R : <sig>
+                              structure L : <sig>
+                              structure S : <sig>
+                              structure UI : <sig>
+                              val text : string
+                                          -> char BenchStream.node 
+                                            BenchLazy.delay
+                              val append : 'a BenchStream.node BenchLazy.delay
+                                            -> 'a BenchStream.node 
+                                                BenchLazy.state ref
+                                            -> 'a BenchStream.node 
+                                              BenchLazy.delay
+                              val delayed : (unit -> 'a BenchLazy.state ref)
+                                             -> 'a BenchLazy.state ref
+                              val drawSegment : (T.G.pointNode BenchLazy.state 
+                                                        ref
+                                                      * T.G.pointNode 
+                                                          BenchLazy.state ref) 
+                                                     BenchLazy.state ref
+                                                 -> char BenchStream.node 
+                                                     BenchLazy.state ref
+                              val drawFaces : T.G.faceNode BenchLazy.state ref 
+                                                   BenchStream.node 
+                                                 BenchLazy.delay
+                                               -> char BenchStream.node 
+                                                   BenchLazy.state ref
+                              val drawTree : T.treeNode BenchLazy.state ref
+                                              -> char BenchStream.node 
+                                                BenchLazy.delay
+                              val statusName : T.status -> string
+                              val pretty : int
+                                            -> int
+                                            -> int
+                                            -> T.treeNode BenchLazy.delay
+                                            -> char BenchStream.node 
+                                              BenchLazy.delay
+                              val prettyTree : T.treeNode BenchLazy.delay
+                                                -> char BenchStream.node 
+                                                  BenchLazy.delay
+                              val partitioned : T.treeNode BenchLazy.state ref
+                                                 -> char BenchStream.node 
+                                                   BenchLazy.delay
+                              val scanRules : T.G.R.node BenchLazy.state ref
+                                               -> T.G.faceNode BenchLazy.state 
+                                                     ref BenchStream.node 
+                                                 BenchLazy.delay
+                              val render : T.treeNode BenchLazy.delay
+                                            -> char BenchStream.node 
+                                                BenchLazy.state ref
+                              val transform : T.G.pointNode BenchLazy.state 
+                                                     ref BenchStream.node 
+                                                 BenchLazy.delay
+                                               -> T.G.pointNode 
+                                                       BenchLazy.state ref 
+                                                   BenchStream.node 
+                                                 BenchLazy.delay
+                              val validate : 'a BenchStream.node 
+                                                BenchLazy.delay
+                                              -> 'a BenchStream.node 
+                                                  BenchLazy.state ref
+                              val boolean : BenchBSPTUI.command
+                                             -> T.treeNode BenchLazy.delay
+                                             -> T.treeNode BenchLazy.state ref
+                                             -> T.treeNode BenchLazy.delay
+                              type operation
+                              val perform : T.treeNode BenchLazy.state ref
+                                             -> BenchBSPTUI.command
+                                             * T.G.pointNode BenchLazy.state 
+                                                   ref BenchStream.node 
+                                               BenchLazy.delay
+                                             -> (unit
+                                                -> char BenchStream.node 
+                                                  BenchLazy.delay) list
+                                             * T.treeNode BenchLazy.state ref
+                              val modeller : T.treeNode BenchLazy.state ref
+                                              -> (BenchBSPTUI.command
+                                                   * T.G.pointNode 
+                                                           BenchLazy.state ref 
+                                                       BenchStream.node 
+                                                     BenchLazy.delay) 
+                                                  BenchStream.node 
+                                                BenchLazy.delay
+                                              -> char BenchStream.node 
+                                                  BenchLazy.state ref
+                              val splitLine : string -> string * string
+                              val parseUnsigned : string -> IntInf.int
+                              val pointOfLine : string
+                                                 -> T.G.pointNode 
+                                                     BenchLazy.state ref
+                              val inScreen : T.G.pointNode BenchLazy.state ref
+                                              -> bool
+                              val toCommand : T.G.pointNode BenchLazy.state 
+                                                 ref
+                                               -> BenchBSPTUI.command
+                              val splitDelimiter : string list
+                                                    -> string list
+                                                    * string list
+                              val interpret : string list
+                                               -> (BenchBSPTUI.command
+                                                    * T.G.pointNode 
+                                                            BenchLazy.state 
+                                                          ref BenchStream.node 
+                                                      BenchLazy.delay) 
+                                                   BenchStream.node 
+                                                 BenchLazy.delay
+                              val batchPoints : T.G.pointNode BenchLazy.state 
+                                                       ref BenchStream.node 
+                                                   BenchLazy.delay
+                              val batchOperations : (BenchBSPTUI.command
+                                                          * T.G.pointNode 
+                                                                  BenchLazy.state
+                                                                ref 
+                                                              BenchStream.node 
+                                                            BenchLazy.delay) 
+                                                         BenchStream.node 
+                                                       BenchLazy.delay
+                              val initialTree : T.treeNode BenchLazy.state ref
+                              val batchBody : char BenchStream.node 
+                                                   BenchLazy.state ref
+                              val mouse : char BenchStream.node 
+                                             BenchLazy.delay
+                              val screen : char BenchStream.node 
+                                              BenchLazy.delay
+                              val lines : string -> string list
+                              val prog : string
+                                          -> char BenchStream.node 
+                                            BenchLazy.delay
+                            end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-bspt-driver.sml]
+functor BenchBSPTDriverFn(P: sig
+                           val prog : string -> char BenchStream.stream
+                           end) :
+                         
+                           sig
+                             structure W : <sig>
+                             val read : string -> TextIO.vector
+                             val expectedHash : string -> Word64.word
+                             val consume : string
+                                            -> char BenchStream.node 
+                                              BenchLazy.delay
+                                            -> int * Word64.word
+                             val run : string list -> string
+                           end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/bspt-lazy/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Program : <sig>
+    structure Driver : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 1 9761 2674C83CE2E76A07
+PASS bspt-lazy
+SUMMARY 1 checks, 0 failed

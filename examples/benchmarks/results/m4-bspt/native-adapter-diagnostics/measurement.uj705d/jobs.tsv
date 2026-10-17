@@ -1,0 +1,1 @@
+bspt-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/nofib-bspt-rational.sml shared/nofib-bspt-geometry.sml shared/nofib-bspt-tree.sml shared/nofib-bspt-ui.sml shared/nofib-bspt-program.sml shared/nofib-bspt-driver.sml bspt-lazy/benchmark.sml shared/main.sml	1 commands.txt batch.render	bspt-lazy/smoke.expected	commands.txt batch.render

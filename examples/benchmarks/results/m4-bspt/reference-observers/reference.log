@@ -1,0 +1,4 @@
+{'profile': 'smoke', 'repetitions': 1, 'source_fixture_lines': 2500, 'all_result_lines_match': True, 'hash': '2771059834570107399', 'elapsed_seconds': 0.01516711403382942}
+{'profile': 'normal', 'repetitions': 25000, 'source_fixture_lines': 25000, 'all_result_lines_match': True, 'hash': '2771059834570107399', 'elapsed_seconds': 1.7016907680081204}
+{'profile': 'large', 'repetitions': 125000, 'source_fixture_lines': 125000, 'all_result_lines_match': True, 'hash': '2771059834570107399', 'elapsed_seconds': 7.918770289979875}
+complete batch output 9761 bytes
