@@ -1,0 +1,1 @@
+array_iter	30	1048576	shared/input.sml shared/sandmark-stdlib-primitives.sml array_iter/benchmark.sml shared/main.sml	16 64	array_iter/smoke.expected	-

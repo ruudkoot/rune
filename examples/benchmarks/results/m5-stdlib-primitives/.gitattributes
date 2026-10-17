@@ -1,0 +1,9 @@
+initial-adapter-errors/** -whitespace
+large-correctness/** -whitespace
+reference-observers/** -text -whitespace
+semantics/** -whitespace
+semantics-final.log -whitespace
+counts/** -whitespace
+native-adapter-diagnostics/** -whitespace
+attempts-raw/** -whitespace
+host-diagnostics/** -whitespace

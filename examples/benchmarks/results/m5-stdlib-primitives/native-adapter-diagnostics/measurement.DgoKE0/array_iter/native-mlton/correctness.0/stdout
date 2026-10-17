@@ -1,0 +1,4 @@
+RESULT 64:0:0:64:0
+PASS array_iter
+SAMPLE 1 0.000002000
+SUMMARY 1 checks, 0 failed

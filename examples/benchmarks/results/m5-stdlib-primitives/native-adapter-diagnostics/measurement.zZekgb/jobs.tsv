@@ -1,0 +1,1 @@
+array_fold	30	1048576	shared/input.sml shared/sandmark-stdlib-primitives.sml array_fold/benchmark.sml shared/main.sml	16 64	array_fold/smoke.expected	-

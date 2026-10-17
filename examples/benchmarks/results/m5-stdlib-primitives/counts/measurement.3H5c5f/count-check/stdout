@@ -1,0 +1,5 @@
+COUNT unbudgeted pervasives_compare_strings normal rune
+COUNT unbudgeted pervasives_compare_strings normal rune:opt
+COUNT unbudgeted pervasives_compare_strings normal rune:new
+COUNT unbudgeted pervasives_compare_strings normal rune:jit
+COUNT comparisons agree

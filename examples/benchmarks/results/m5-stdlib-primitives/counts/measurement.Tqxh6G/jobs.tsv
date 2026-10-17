@@ -1,0 +1,1 @@
+pervasives_compare_lists	600	4194304	shared/input.sml shared/sandmark-stdlib-primitives.sml pervasives_compare_lists/benchmark.sml shared/main.sml	100000	pervasives_compare_lists/normal.expected	-

@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+pervasives_compare_floats	smoke	native:mlton@20241230	O2	compile	0	0	pass	4.68	3.82	1.06	671212	-	-	-	pervasives_compare_floats/native-mlton/build/compile
+pervasives_compare_floats	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2084	-	-	-	pervasives_compare_floats/native-mlton/correctness.0
+pervasives_compare_floats	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2092	-	-	-	pervasives_compare_floats/native-mlton/fresh.1
+pervasives_compare_floats	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.17	0.17	0.02	34600	-	-	-	pervasives_compare_floats/native-smlnj-legacy/build/compile
+pervasives_compare_floats	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.01	0.00	3796	-	-	-	pervasives_compare_floats/native-smlnj-legacy/correctness.0
+pervasives_compare_floats	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.00	0.00	3836	-	-	-	pervasives_compare_floats/native-smlnj-legacy/fresh.1
+pervasives_compare_floats	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.26	0.12	0.04	32620	-	-	-	pervasives_compare_floats/native-polyml/build/compile
+pervasives_compare_floats	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	5460	-	-	-	pervasives_compare_floats/native-polyml/correctness.0
+pervasives_compare_floats	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	5600	-	-	-	pervasives_compare_floats/native-polyml/fresh.1

@@ -1,0 +1,10 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1000 profiles)
+BENCH_PROFILE=large BENCH_CONFIGS=rune:opt BENCH_FILTER='=primetest-strict' sh scripts/run-benchmarks.sh
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/large/run.LDYyhU
+BENCH primetest-strict large
+PROGRAM LIMIT AS 8388608 KiB
+RESULT Probably primeProbably primeProbably primeCompositeProbably prime
+PASS primetest-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt

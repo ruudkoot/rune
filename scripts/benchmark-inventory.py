@@ -410,6 +410,17 @@ def classify(source, root, item, files, text):
             disposition, reason = "defer", "parallel/runtime-specific executable; retain its original execution model"
         # Reviewed microprobes require %opaque to preserve their measured
         # operation. Do not generalize this to algorithmic uses of opacity.
+        # These two modes measure typed C-layout Bigarray storage itself.
+        # Replacing it with ordinary managed arrays changes the storage policy.
+        if disposition == "import" and path == "benchmarks/stdlib/big_array_bench.exe":
+            kernel = root / "benchmarks/stdlib/big_array_bench.ml"
+            if (kernel.is_file() and hashlib.sha256(kernel.read_bytes()).hexdigest()
+                    == "4df8ddc28ddc4fd81ad2db5938003b1857791b6e8c74e68a1559dfd043ffa0d6"):
+                disposition, reason = "defer", (
+                    "both pinned modes benchmark Bigarray int/int32 C-layout storage; "
+                    "ordinary managed SML arrays change the measured storage policy; "
+                    "reconsider with equivalent typed C-layout storage, without adding "
+                    "runtime facilities through this benchmark roadmap")
         opaque_probes = {
             "benchmarks/simple-tests/morestacks.exe": (
                 "b4153c8f1a4c4e9ea948113ee300fe62a7aee31e1ae0b69d79e121d4232eb946",
@@ -549,9 +560,18 @@ def build(source, root, lock):
                     and '-- Taken from "The worlds shortest correct exact real arithmetic program?"\n-- David Lester, Information and Computation 216, pp39-46, 2012, Elsevier' in header):
                 authors.add("David Lester")
                 item["evidence"].append(str(p.relative_to(root)) + ":paper-attribution")
+            reviewed_prime_author = (
+                source == "nofib" and path == "spectral/primetest"
+                and r"\def\author{David Lester}" in header.splitlines())
+            if reviewed_prime_author:
+                authors.add("David Lester")
+                item["evidence"].append(str(p.relative_to(root)) + ":author-macro")
             if re.search(r"[Cc]opyright|[Ll]icen[sc]e|[Ww]ritten by|[Aa]uthor:|[Tt]ranslated", header):
                 notices.append(str(p.relative_to(root)) + ":header")
             for attribution in re.finditer(r"(?:[Ww]ritten|[Tt]ranslated|[Pp]orted|[Cc]ontributed)(?: to [^\n]*?)? by ([^\n]+)|[Aa]uthors?: ([^\n]+)", header):
+                if (reviewed_prime_author and attribution.start() > 0
+                        and header[attribution.start() - 1] == "$"):
+                    continue  # The RCS last-committer tag is not the declared author.
                 author = (attribution.group(1) or attribution.group(2)).strip(" *()-")
                 if len(author) <= 180:
                     authors.add(author)

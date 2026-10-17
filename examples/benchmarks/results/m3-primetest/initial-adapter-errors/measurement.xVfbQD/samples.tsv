@@ -1,0 +1,4 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+primetest-lazy	smoke	native:mlton@20241230	O2	compile	0	0	compile-error	2.39	1.86	0.68	544164	-	-	-	primetest-lazy/native-mlton/build/compile
+primetest-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	compile-error	0.43	0.39	0.06	35476	-	-	-	primetest-lazy/native-smlnj-legacy/build/compile
+primetest-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	compile-error	0.10	0.09	0.03	38936	-	-	-	primetest-lazy/native-polyml/build/compile

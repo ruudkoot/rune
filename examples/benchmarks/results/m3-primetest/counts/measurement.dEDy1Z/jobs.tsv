@@ -1,0 +1,1 @@
+primetest-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/scs-random.sml shared/nofib-primetest.sml shared/nofib-primetest-driver.sml primetest-lazy/benchmark.sml shared/main.sml	normal.input	primetest-lazy/normal.expected	normal.input

@@ -1,0 +1,1 @@
+array_fold	600	4194304	shared/input.sml shared/sandmark-stdlib-primitives.sml array_fold/benchmark.sml shared/main.sml	1000 10000	array_fold/normal.expected	-

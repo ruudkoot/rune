@@ -1,0 +1,3 @@
+{'profile': 'smoke', 'input': 'primetest.faststdin', 'lines': 5, 'bytes': 65}
+{'profile': 'normal', 'input': 'primetest.stdin', 'lines': 60, 'bytes': 780}
+{'profile': 'large', 'input': 'primetest.slowstdin', 'lines': 300, 'bytes': 3900}

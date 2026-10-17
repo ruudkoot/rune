@@ -1,0 +1,1006 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index a854e453..24e7295d 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -335,6 +335,16 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [minimax-lazy](#minimax-lazy) | [nofib minimax](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/minimax) | Play the original depth-five tic-tac-toe search with lazy finite game trees. |
+ | [minimax-strict](#minimax-strict) | [nofib minimax](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/minimax) | Play the original depth-five tic-tac-toe search with strict finite game trees. |
+ | [nbody-sandmark-multicore-numerical](#nbody-sandmark-multicore-numerical) | [Sandmark multicore-numerical nbody](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-numerical) | Advance randomly initialized bodies with sequential ordered all-pairs gravity updates. |
++| [array_iter](#array_iter) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Visit every identity-array element and retain the source upper-bound assertion. |
++| [array_forall](#array_forall) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Check every identity-array element against the source bound, preserving early exit on false. |
++| [array_fold](#array_fold) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Fold an identity array from left to right with integer addition. |
++| [pervasives_compare_lists](#pervasives_compare_lists) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Compare the original [1,2,3] and [3,1,2] lists lexicographically. |
++| [pervasives_compare_ints](#pervasives_compare_ints) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Compare consecutive positive integers with the source pivot 42. |
++| [pervasives_compare_floats](#pervasives_compare_floats) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Convert consecutive positive integers to binary64 and compare with 5.0. |
++| [pervasives_compare_strings](#pervasives_compare_strings) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Render each positive integer in decimal and compare with the source string I am a fish. |
++| [pervasives_equal_ints](#pervasives_equal_ints) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Test immediate-integer physical equality with 42, which coincides with value equality on this domain. |
++| [primetest-lazy](#primetest-lazy) | [nofib primetest](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/primetest) | Test integer candidates with 100 source witness trials and lazy finite data. |
++| [primetest-strict](#primetest-strict) | [nofib primetest](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/primetest) | Test integer candidates with 100 source witness trials and strict finite data. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -16719,3 +16729,829 @@ The original OCaml and independent model are correctness references, not timing
+ competitors. The retained source and Sandmark survey establish ancestry; the
+ Barnes-Hut literature describes a different tree approximation and is not used
+ to explain this all-pairs workload's measured behavior.
++
++
++## array_iter
++
++## Algorithm and workload
++
++Visit every identity-array element and retain the source upper-bound assertion.
++
++Array generation retains make-zero-array followed by index mapping into a distinct array. The selected arrays are ordinary mutable integer arrays. SML Array.foldl/app and an explicit short-circuit forall loop replace their OCaml counterparts. The original asserts unit for iter/forall; unit is encoded as zero in the report. Every final array element is independently checked.
++
++### History, source and notices
++
++Sandmark 5605805954a00497ed197c930641cddd580e1507, benchmarks/stdlib,
++the retained original module and Dune executable. The module states no individual
++author or separate notice. Preserve the aggregate LICENSE.md and original bytes.
++Names follow the executable's selector strings; distinct selectors remain
++distinct workloads. Result-only Sys.opaque_identity wrappers do not require a
++new compiler barrier: the portable driver consumes/checks their results. No
++claim is made that such wrappers prevent every optimization inside the operation.
++
++### Portable translation and library changes
++
++Kernels, generation and checks are SML97. Inclusive loops become tail-recursive
++helpers; all selected indices, loop counts, scalar comparisons and individual
++fold results fit signed 31-bit. The observer total may be larger, so the measured
++driver uses explicitly modular Word32 addition, with wrapping independent of
++native int width. Counters stay bounded and the final expected arithmetic uses
++IntInf outside the hot loop.
++
++The common report is calls:hex-checkword:negative:zero:positive. It consumes each
++operation result; the checkword is the sum modulo 2^32, not a collision-free
++replacement for validation. The array driver also checks every final input value
++and the reviewed fold formula. Comparison outcomes have independent closed-form
++totals over the selected integer ranges. Reviewed expected reports check all
++counters as well as the checkword. These checks add measured work.
++
++Typed SML adapters replace the OCaml library/runtime calls. This is a common
++portable workload across SML compilers, not a measurement of OCaml's generic
++runtime dispatch. Source fixture generation uses OCaml 4.14.1. The original
++executables emit no text; a reference-only Sys module override records the
++strict opaque_identity arguments. Only unit/int/bool results are admitted by
++that observer; its Obj inspection is confined to reference generation. Complete
++unmodified original runs are checked separately.
++
++### Inputs, correctness and diagnostic questions
++
++The profiles retain the source parameters listed below rather than a universal
++size argument. All data are generated from fixed source constants or the identity
++array; no external dataset is introduced. Original selector/run-plan parameters
++remain in provenance; selected profiles are calibrated portable checks.
++
++Original OCaml observations agree with independently derived result totals.
++Auxiliary SML tests cover all three profiles, zero counts, empty/singleton arrays,
++short circuiting, source assertions, malformed initialization, list prefixes,
++comparison/equality pivots, modular wrap and argument limits. Compilers may
++specialize or eliminate invariant pure comparisons; observed result wrappers
++do not prohibit that. No replacement opaque-call protocol or runtime feature is
++introduced. Interpretation must include the checksum/counter/checker cost.
++
++[The pinned suite](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib)
++defines these library microbenchmarks. The shared literature survey supplies
++measurement context. Loop lowering, callback specialization, library adapters,
++array access, boxing, constant propagation and result-consumption overhead are
++source-based diagnostic hypotheses, not established performance causes.
++
++| Profile | Iterations | Array length |
++|---|---:|---:|
++| smoke | 64 | 16 |
++| normal | 10000 | 1000 |
++| large | 10000 | 10000 |
++
++Upstream run parameters: array_iter 1000 100000.
++
++
++## array_forall
++
++## Algorithm and workload
++
++Check every identity-array element against the source bound, preserving early exit on false.
++
++Array generation retains make-zero-array followed by index mapping into a distinct array. The selected arrays are ordinary mutable integer arrays. SML Array.foldl/app and an explicit short-circuit forall loop replace their OCaml counterparts. The original asserts unit for iter/forall; unit is encoded as zero in the report. Every final array element is independently checked.
++
++### History, source and notices
++
++Sandmark 5605805954a00497ed197c930641cddd580e1507, benchmarks/stdlib,
++the retained original module and Dune executable. The module states no individual
++author or separate notice. Preserve the aggregate LICENSE.md and original bytes.
++Names follow the executable's selector strings; distinct selectors remain
++distinct workloads. Result-only Sys.opaque_identity wrappers do not require a
++new compiler barrier: the portable driver consumes/checks their results. No
++claim is made that such wrappers prevent every optimization inside the operation.
++
++### Portable translation and library changes
++
++Kernels, generation and checks are SML97. Inclusive loops become tail-recursive
++helpers; all selected indices, loop counts, scalar comparisons and individual
++fold results fit signed 31-bit. The observer total may be larger, so the measured
++driver uses explicitly modular Word32 addition, with wrapping independent of
++native int width. Counters stay bounded and the final expected arithmetic uses
++IntInf outside the hot loop.
++
++The common report is calls:hex-checkword:negative:zero:positive. It consumes each
++operation result; the checkword is the sum modulo 2^32, not a collision-free
++replacement for validation. The array driver also checks every final input value
++and the reviewed fold formula. Comparison outcomes have independent closed-form
++totals over the selected integer ranges. Reviewed expected reports check all
++counters as well as the checkword. These checks add measured work.
++
++Typed SML adapters replace the OCaml library/runtime calls. This is a common
++portable workload across SML compilers, not a measurement of OCaml's generic
++runtime dispatch. Source fixture generation uses OCaml 4.14.1. The original
++executables emit no text; a reference-only Sys module override records the
++strict opaque_identity arguments. Only unit/int/bool results are admitted by
++that observer; its Obj inspection is confined to reference generation. Complete
++unmodified original runs are checked separately.
++
++### Inputs, correctness and diagnostic questions
++
++The profiles retain the source parameters listed below rather than a universal
++size argument. All data are generated from fixed source constants or the identity
++array; no external dataset is introduced. Original selector/run-plan parameters
++remain in provenance; selected profiles are calibrated portable checks.
++
++Original OCaml observations agree with independently derived result totals.
++Auxiliary SML tests cover all three profiles, zero counts, empty/singleton arrays,
++short circuiting, source assertions, malformed initialization, list prefixes,
++comparison/equality pivots, modular wrap and argument limits. Compilers may
++specialize or eliminate invariant pure comparisons; observed result wrappers
++do not prohibit that. No replacement opaque-call protocol or runtime feature is
++introduced. Interpretation must include the checksum/counter/checker cost.
++
++[The pinned suite](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib)
++defines these library microbenchmarks. The shared literature survey supplies
++measurement context. Loop lowering, callback specialization, library adapters,
++array access, boxing, constant propagation and result-consumption overhead are
++source-based diagnostic hypotheses, not established performance causes.
++
++| Profile | Iterations | Array length |
++|---|---:|---:|
++| smoke | 64 | 16 |
++| normal | 10000 | 1000 |
++| large | 10000 | 10000 |
++
++Upstream run parameters: array_forall 1000 100000.
++
++
++## array_fold
++
++## Algorithm and workload
++
++Fold an identity array from left to right with integer addition.
++
++Array generation retains make-zero-array followed by index mapping into a distinct array. The selected arrays are ordinary mutable integer arrays. SML Array.foldl/app and an explicit short-circuit forall loop replace their OCaml counterparts. The original asserts unit for iter/forall; unit is encoded as zero in the report. Every final array element is independently checked.
++
++### History, source and notices
++
++Sandmark 5605805954a00497ed197c930641cddd580e1507, benchmarks/stdlib,
++the retained original module and Dune executable. The module states no individual
++author or separate notice. Preserve the aggregate LICENSE.md and original bytes.
++Names follow the executable's selector strings; distinct selectors remain
++distinct workloads. Result-only Sys.opaque_identity wrappers do not require a
++new compiler barrier: the portable driver consumes/checks their results. No
++claim is made that such wrappers prevent every optimization inside the operation.
++
++### Portable translation and library changes
++
++Kernels, generation and checks are SML97. Inclusive loops become tail-recursive
++helpers; all selected indices, loop counts, scalar comparisons and individual
++fold results fit signed 31-bit. The observer total may be larger, so the measured
++driver uses explicitly modular Word32 addition, with wrapping independent of
++native int width. Counters stay bounded and the final expected arithmetic uses
++IntInf outside the hot loop.
++
++The common report is calls:hex-checkword:negative:zero:positive. It consumes each
++operation result; the checkword is the sum modulo 2^32, not a collision-free
++replacement for validation. The array driver also checks every final input value
++and the reviewed fold formula. Comparison outcomes have independent closed-form
++totals over the selected integer ranges. Reviewed expected reports check all
++counters as well as the checkword. These checks add measured work.
++
++Typed SML adapters replace the OCaml library/runtime calls. This is a common
++portable workload across SML compilers, not a measurement of OCaml's generic
++runtime dispatch. Source fixture generation uses OCaml 4.14.1. The original
++executables emit no text; a reference-only Sys module override records the
++strict opaque_identity arguments. Only unit/int/bool results are admitted by
++that observer; its Obj inspection is confined to reference generation. Complete
++unmodified original runs are checked separately.
++
++### Inputs, correctness and diagnostic questions
++
++The profiles retain the source parameters listed below rather than a universal
++size argument. All data are generated from fixed source constants or the identity
++array; no external dataset is introduced. Original selector/run-plan parameters
++remain in provenance; selected profiles are calibrated portable checks.
++
++Original OCaml observations agree with independently derived result totals.
++Auxiliary SML tests cover all three profiles, zero counts, empty/singleton arrays,
++short circuiting, source assertions, malformed initialization, list prefixes,
++comparison/equality pivots, modular wrap and argument limits. Compilers may
++specialize or eliminate invariant pure comparisons; observed result wrappers
++do not prohibit that. No replacement opaque-call protocol or runtime feature is
++introduced. Interpretation must include the checksum/counter/checker cost.
++
++[The pinned suite](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib)
++defines these library microbenchmarks. The shared literature survey supplies
++measurement context. Loop lowering, callback specialization, library adapters,
++array access, boxing, constant propagation and result-consumption overhead are
++source-based diagnostic hypotheses, not established performance causes.
++
++| Profile | Iterations | Array length |
++|---|---:|---:|
++| smoke | 64 | 16 |
++| normal | 10000 | 1000 |
++| large | 10000 | 10000 |
++
++Upstream run parameters: array_fold 1000 100000.
++
++
++## pervasives_compare_lists
++
++## Algorithm and workload
++
++Compare the original [1,2,3] and [3,1,2] lists lexicographically.
++
++The source generic compare becomes a typed lexicographic/list, integer, Real.compare or String.compare adapter. Ordering signs match on the selected ordinary finite values. Real.fromInt is exact for the selected bounds. Decimal rendering uses identical positive ASCII digits. Physical equality is imported only for immediate integers; heap identity of immutable lists, floats and strings remains separately deferred in the case inventory. No structural or constant-answer substitute is used for those deferred cases.
++
++### History, source and notices
++
++Sandmark 5605805954a00497ed197c930641cddd580e1507, benchmarks/stdlib,
++the retained original module and Dune executable. The module states no individual
++author or separate notice. Preserve the aggregate LICENSE.md and original bytes.
++Names follow the executable's selector strings; distinct selectors remain
++distinct workloads. Result-only Sys.opaque_identity wrappers do not require a
++new compiler barrier: the portable driver consumes/checks their results. No
++claim is made that such wrappers prevent every optimization inside the operation.
++
++### Portable translation and library changes
++
++Kernels, generation and checks are SML97. Inclusive loops become tail-recursive
++helpers; all selected indices, loop counts, scalar comparisons and individual
++fold results fit signed 31-bit. The observer total may be larger, so the measured
++driver uses explicitly modular Word32 addition, with wrapping independent of
++native int width. Counters stay bounded and the final expected arithmetic uses
++IntInf outside the hot loop.
++
++The common report is calls:hex-checkword:negative:zero:positive. It consumes each
++operation result; the checkword is the sum modulo 2^32, not a collision-free
++replacement for validation. The array driver also checks every final input value
++and the reviewed fold formula. Comparison outcomes have independent closed-form
++totals over the selected integer ranges. Reviewed expected reports check all
++counters as well as the checkword. These checks add measured work.
++
++Typed SML adapters replace the OCaml library/runtime calls. This is a common
++portable workload across SML compilers, not a measurement of OCaml's generic
++runtime dispatch. Source fixture generation uses OCaml 4.14.1. The original
++executables emit no text; a reference-only Sys module override records the
++strict opaque_identity arguments. Only unit/int/bool results are admitted by
++that observer; its Obj inspection is confined to reference generation. Complete
++unmodified original runs are checked separately.
++
++### Inputs, correctness and diagnostic questions
++
++The profiles retain the source parameters listed below rather than a universal
++size argument. All data are generated from fixed source constants or the identity
++array; no external dataset is introduced. Original selector/run-plan parameters
++remain in provenance; selected profiles are calibrated portable checks.
++
++Original OCaml observations agree with independently derived result totals.
++Auxiliary SML tests cover all three profiles, zero counts, empty/singleton arrays,
++short circuiting, source assertions, malformed initialization, list prefixes,
++comparison/equality pivots, modular wrap and argument limits. Compilers may
++specialize or eliminate invariant pure comparisons; observed result wrappers
++do not prohibit that. No replacement opaque-call protocol or runtime feature is
++introduced. Interpretation must include the checksum/counter/checker cost.
++
++[The pinned suite](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib)
++defines these library microbenchmarks. The shared literature survey supplies
++measurement context. Loop lowering, callback specialization, library adapters,
++array access, boxing, constant propagation and result-consumption overhead are
++source-based diagnostic hypotheses, not established performance causes.
++
++| Profile | Iterations |
++|---|---:|
++| smoke | 64 |
++| normal | 100000 |
++| large | 1000000 |
++
++Upstream run parameters: pervasives_compare_lists 100000000.
++
++
++## pervasives_compare_ints
++
++## Algorithm and workload
++
++Compare consecutive positive integers with the source pivot 42.
++
++The source generic compare becomes a typed lexicographic/list, integer, Real.compare or String.compare adapter. Ordering signs match on the selected ordinary finite values. Real.fromInt is exact for the selected bounds. Decimal rendering uses identical positive ASCII digits. Physical equality is imported only for immediate integers; heap identity of immutable lists, floats and strings remains separately deferred in the case inventory. No structural or constant-answer substitute is used for those deferred cases.
++
++### History, source and notices
++
++Sandmark 5605805954a00497ed197c930641cddd580e1507, benchmarks/stdlib,
++the retained original module and Dune executable. The module states no individual
++author or separate notice. Preserve the aggregate LICENSE.md and original bytes.
++Names follow the executable's selector strings; distinct selectors remain
++distinct workloads. Result-only Sys.opaque_identity wrappers do not require a
++new compiler barrier: the portable driver consumes/checks their results. No
++claim is made that such wrappers prevent every optimization inside the operation.
++
++### Portable translation and library changes
++
++Kernels, generation and checks are SML97. Inclusive loops become tail-recursive
++helpers; all selected indices, loop counts, scalar comparisons and individual
++fold results fit signed 31-bit. The observer total may be larger, so the measured
++driver uses explicitly modular Word32 addition, with wrapping independent of
++native int width. Counters stay bounded and the final expected arithmetic uses
++IntInf outside the hot loop.
++
++The common report is calls:hex-checkword:negative:zero:positive. It consumes each
++operation result; the checkword is the sum modulo 2^32, not a collision-free
++replacement for validation. The array driver also checks every final input value
++and the reviewed fold formula. Comparison outcomes have independent closed-form
++totals over the selected integer ranges. Reviewed expected reports check all
++counters as well as the checkword. These checks add measured work.
++
++Typed SML adapters replace the OCaml library/runtime calls. This is a common
++portable workload across SML compilers, not a measurement of OCaml's generic
++runtime dispatch. Source fixture generation uses OCaml 4.14.1. The original
++executables emit no text; a reference-only Sys module override records the
++strict opaque_identity arguments. Only unit/int/bool results are admitted by
++that observer; its Obj inspection is confined to reference generation. Complete
++unmodified original runs are checked separately.
++
++### Inputs, correctness and diagnostic questions
++
++The profiles retain the source parameters listed below rather than a universal
++size argument. All data are generated from fixed source constants or the identity
++array; no external dataset is introduced. Original selector/run-plan parameters
++remain in provenance; selected profiles are calibrated portable checks.
++
++Original OCaml observations agree with independently derived result totals.
++Auxiliary SML tests cover all three profiles, zero counts, empty/singleton arrays,
++short circuiting, source assertions, malformed initialization, list prefixes,
++comparison/equality pivots, modular wrap and argument limits. Compilers may
++specialize or eliminate invariant pure comparisons; observed result wrappers
++do not prohibit that. No replacement opaque-call protocol or runtime feature is
++introduced. Interpretation must include the checksum/counter/checker cost.
++
++[The pinned suite](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib)
++defines these library microbenchmarks. The shared literature survey supplies
++measurement context. Loop lowering, callback specialization, library adapters,
++array access, boxing, constant propagation and result-consumption overhead are
++source-based diagnostic hypotheses, not established performance causes.
++
++| Profile | Iterations |
++|---|---:|
++| smoke | 64 |
++| normal | 100000 |
++| large | 1000000 |
++
++Upstream run parameters: pervasives_compare_ints 1000000000.
++
++
++## pervasives_compare_floats
++
++## Algorithm and workload
++
++Convert consecutive positive integers to binary64 and compare with 5.0.
++
++The source generic compare becomes a typed lexicographic/list, integer, Real.compare or String.compare adapter. Ordering signs match on the selected ordinary finite values. Real.fromInt is exact for the selected bounds. Decimal rendering uses identical positive ASCII digits. Physical equality is imported only for immediate integers; heap identity of immutable lists, floats and strings remains separately deferred in the case inventory. No structural or constant-answer substitute is used for those deferred cases.
++
++### History, source and notices
++
++Sandmark 5605805954a00497ed197c930641cddd580e1507, benchmarks/stdlib,
++the retained original module and Dune executable. The module states no individual
++author or separate notice. Preserve the aggregate LICENSE.md and original bytes.
++Names follow the executable's selector strings; distinct selectors remain
++distinct workloads. Result-only Sys.opaque_identity wrappers do not require a
++new compiler barrier: the portable driver consumes/checks their results. No
++claim is made that such wrappers prevent every optimization inside the operation.
++
++### Portable translation and library changes
++
++Kernels, generation and checks are SML97. Inclusive loops become tail-recursive
++helpers; all selected indices, loop counts, scalar comparisons and individual
++fold results fit signed 31-bit. The observer total may be larger, so the measured
++driver uses explicitly modular Word32 addition, with wrapping independent of
++native int width. Counters stay bounded and the final expected arithmetic uses
++IntInf outside the hot loop.
++
++The common report is calls:hex-checkword:negative:zero:positive. It consumes each
++operation result; the checkword is the sum modulo 2^32, not a collision-free
++replacement for validation. The array driver also checks every final input value
++and the reviewed fold formula. Comparison outcomes have independent closed-form
++totals over the selected integer ranges. Reviewed expected reports check all
++counters as well as the checkword. These checks add measured work.
++
++Typed SML adapters replace the OCaml library/runtime calls. This is a common
++portable workload across SML compilers, not a measurement of OCaml's generic
++runtime dispatch. Source fixture generation uses OCaml 4.14.1. The original
++executables emit no text; a reference-only Sys module override records the
++strict opaque_identity arguments. Only unit/int/bool results are admitted by
++that observer; its Obj inspection is confined to reference generation. Complete
++unmodified original runs are checked separately.
++
++### Inputs, correctness and diagnostic questions
++
++The profiles retain the source parameters listed below rather than a universal
++size argument. All data are generated from fixed source constants or the identity
++array; no external dataset is introduced. Original selector/run-plan parameters
++remain in provenance; selected profiles are calibrated portable checks.
++
++Original OCaml observations agree with independently derived result totals.
++Auxiliary SML tests cover all three profiles, zero counts, empty/singleton arrays,
++short circuiting, source assertions, malformed initialization, list prefixes,
++comparison/equality pivots, modular wrap and argument limits. Compilers may
++specialize or eliminate invariant pure comparisons; observed result wrappers
++do not prohibit that. No replacement opaque-call protocol or runtime feature is
++introduced. Interpretation must include the checksum/counter/checker cost.
++
++[The pinned suite](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib)
++defines these library microbenchmarks. The shared literature survey supplies
++measurement context. Loop lowering, callback specialization, library adapters,
++array access, boxing, constant propagation and result-consumption overhead are
++source-based diagnostic hypotheses, not established performance causes.
++
++| Profile | Iterations |
++|---|---:|
++| smoke | 64 |
++| normal | 100000 |
++| large | 1000000 |
++
++Upstream run parameters: pervasives_compare_floats 200000000.
++
++
++## pervasives_compare_strings
++
++## Algorithm and workload
++
++Render each positive integer in decimal and compare with the source string I am a fish.
++
++The source generic compare becomes a typed lexicographic/list, integer, Real.compare or String.compare adapter. Ordering signs match on the selected ordinary finite values. Real.fromInt is exact for the selected bounds. Decimal rendering uses identical positive ASCII digits. Physical equality is imported only for immediate integers; heap identity of immutable lists, floats and strings remains separately deferred in the case inventory. No structural or constant-answer substitute is used for those deferred cases.
++
++### History, source and notices
++
++Sandmark 5605805954a00497ed197c930641cddd580e1507, benchmarks/stdlib,
++the retained original module and Dune executable. The module states no individual
++author or separate notice. Preserve the aggregate LICENSE.md and original bytes.
++Names follow the executable's selector strings; distinct selectors remain
++distinct workloads. Result-only Sys.opaque_identity wrappers do not require a
++new compiler barrier: the portable driver consumes/checks their results. No
++claim is made that such wrappers prevent every optimization inside the operation.
++
++### Portable translation and library changes
++
++Kernels, generation and checks are SML97. Inclusive loops become tail-recursive
++helpers; all selected indices, loop counts, scalar comparisons and individual
++fold results fit signed 31-bit. The observer total may be larger, so the measured
++driver uses explicitly modular Word32 addition, with wrapping independent of
++native int width. Counters stay bounded and the final expected arithmetic uses
++IntInf outside the hot loop.
++
++The common report is calls:hex-checkword:negative:zero:positive. It consumes each
++operation result; the checkword is the sum modulo 2^32, not a collision-free
++replacement for validation. The array driver also checks every final input value
++and the reviewed fold formula. Comparison outcomes have independent closed-form
++totals over the selected integer ranges. Reviewed expected reports check all
++counters as well as the checkword. These checks add measured work.
++
++Typed SML adapters replace the OCaml library/runtime calls. This is a common
++portable workload across SML compilers, not a measurement of OCaml's generic
++runtime dispatch. Source fixture generation uses OCaml 4.14.1. The original
++executables emit no text; a reference-only Sys module override records the
++strict opaque_identity arguments. Only unit/int/bool results are admitted by
++that observer; its Obj inspection is confined to reference generation. Complete
++unmodified original runs are checked separately.
++
++### Inputs, correctness and diagnostic questions
++
++The profiles retain the source parameters listed below rather than a universal
++size argument. All data are generated from fixed source constants or the identity
++array; no external dataset is introduced. Original selector/run-plan parameters
++remain in provenance; selected profiles are calibrated portable checks.
++
++Original OCaml observations agree with independently derived result totals.
++Auxiliary SML tests cover all three profiles, zero counts, empty/singleton arrays,
++short circuiting, source assertions, malformed initialization, list prefixes,
++comparison/equality pivots, modular wrap and argument limits. Compilers may
++specialize or eliminate invariant pure comparisons; observed result wrappers
++do not prohibit that. No replacement opaque-call protocol or runtime feature is
++introduced. Interpretation must include the checksum/counter/checker cost.
++
++[The pinned suite](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib)
++defines these library microbenchmarks. The shared literature survey supplies
++measurement context. Loop lowering, callback specialization, library adapters,
++array access, boxing, constant propagation and result-consumption overhead are
++source-based diagnostic hypotheses, not established performance causes.
++
++| Profile | Iterations |
++|---|---:|
++| smoke | 64 |
++| normal | 100000 |
++| large | 1000000 |
++
++Upstream run parameters: pervasives_compare_strings 20000000.
++
++
++## pervasives_equal_ints
++
++## Algorithm and workload
++
++Test immediate-integer physical equality with 42, which coincides with value equality on this domain.
++
++The source generic compare becomes a typed lexicographic/list, integer, Real.compare or String.compare adapter. Ordering signs match on the selected ordinary finite values. Real.fromInt is exact for the selected bounds. Decimal rendering uses identical positive ASCII digits. Physical equality is imported only for immediate integers; heap identity of immutable lists, floats and strings remains separately deferred in the case inventory. No structural or constant-answer substitute is used for those deferred cases.
++
++### History, source and notices
++
++Sandmark 5605805954a00497ed197c930641cddd580e1507, benchmarks/stdlib,
++the retained original module and Dune executable. The module states no individual
++author or separate notice. Preserve the aggregate LICENSE.md and original bytes.
++Names follow the executable's selector strings; distinct selectors remain
++distinct workloads. Result-only Sys.opaque_identity wrappers do not require a
++new compiler barrier: the portable driver consumes/checks their results. No
++claim is made that such wrappers prevent every optimization inside the operation.
++
++### Portable translation and library changes
++
++Kernels, generation and checks are SML97. Inclusive loops become tail-recursive
++helpers; all selected indices, loop counts, scalar comparisons and individual
++fold results fit signed 31-bit. The observer total may be larger, so the measured
++driver uses explicitly modular Word32 addition, with wrapping independent of
++native int width. Counters stay bounded and the final expected arithmetic uses
++IntInf outside the hot loop.
++
++The common report is calls:hex-checkword:negative:zero:positive. It consumes each
++operation result; the checkword is the sum modulo 2^32, not a collision-free
++replacement for validation. The array driver also checks every final input value
++and the reviewed fold formula. Comparison outcomes have independent closed-form
++totals over the selected integer ranges. Reviewed expected reports check all
++counters as well as the checkword. These checks add measured work.
++
++Typed SML adapters replace the OCaml library/runtime calls. This is a common
++portable workload across SML compilers, not a measurement of OCaml's generic
++runtime dispatch. Source fixture generation uses OCaml 4.14.1. The original
++executables emit no text; a reference-only Sys module override records the
++strict opaque_identity arguments. Only unit/int/bool results are admitted by
++that observer; its Obj inspection is confined to reference generation. Complete
++unmodified original runs are checked separately.
++
++### Inputs, correctness and diagnostic questions
++
++The profiles retain the source parameters listed below rather than a universal
++size argument. All data are generated from fixed source constants or the identity
++array; no external dataset is introduced. Original selector/run-plan parameters
++remain in provenance; selected profiles are calibrated portable checks.
++
++Original OCaml observations agree with independently derived result totals.
++Auxiliary SML tests cover all three profiles, zero counts, empty/singleton arrays,
++short circuiting, source assertions, malformed initialization, list prefixes,
++comparison/equality pivots, modular wrap and argument limits. Compilers may
++specialize or eliminate invariant pure comparisons; observed result wrappers
++do not prohibit that. No replacement opaque-call protocol or runtime feature is
++introduced. Interpretation must include the checksum/counter/checker cost.
++
++[The pinned suite](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib)
++defines these library microbenchmarks. The shared literature survey supplies
++measurement context. Loop lowering, callback specialization, library adapters,
++array access, boxing, constant propagation and result-consumption overhead are
++source-based diagnostic hypotheses, not established performance causes.
++
++| Profile | Iterations |
++|---|---:|
++| smoke | 64 |
++| normal | 100000 |
++| large | 1000000 |
++
++Upstream run parameters: pervasives_equal_ints 1000000000.
++
++
++## primetest-lazy
++
++Finite evaluation: lazy.
++
++### Algorithm and workload
++
++Process decimal integer candidates with the source 100-round strong probable-prime
++test. Even/nonpositive guards consume no random values. For each odd candidate,
++factor n-1 as 2^k*q, select the source base, compute the nested modular-power
++algorithm and inspect up to k repeated squares for its witness. Composite
++witnesses stop the remaining trials early.
++
++### History, authorship, variants and notices
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/primetest,
++the four literate Haskell modules, Makefile, Readme, mersenne607 and all three
++stdin/stdout pairs. Main's author macro explicitly names David Lester; its RCS
++last-committer tag is history, not that declaration. The log dates the program
++to 1992 and records the 2004 Random-to-MyRandom rename. IntLib credits Joe Fasel
++for this modular-power coding; MyRandom credits Lennart Augustsson's generator.
++No separate redistribution notice or dataset author is stated in these files.
++Retain all original bytes and history. The established primetest name gets
++lazy/strict suffixes for material evaluation variants.
++
++The input files provide decimal constants; Readme identifies 2^607-1 as its
++principal Mersenne candidate. Smaller and composite candidates remain part of
++the collection rather than treating probable-prime output as a general proof.
++
++### Arithmetic, demand and translation
++
++Keep arbitrary-precision candidates, exponents, powers, residues and base-65536
++digits in IntInf. Preserve the source nested modular-power loop, including its
++exponent-zero shortcut returning 1 without reduction, and the findKQ call at each
++trial as written. Selected square counts fit signed 31-bit when converted to the
++finite take counter. No fixed-width replacement is used for large arithmetic.
++
++Reuse only the raw two-state generator engine shared with SCS. Initialize the
++source states directly to 111/47; do not call SCS's seed mapping or interval
++mapper. Explicit Word32 expresses the signed-32-bit Schrage transitions on every
++host. Their corrected values stay in the source ranges. Raw result heads and
++state transitions remain separately memoized, avoiding unused-head forcing.
++Raw numbers become IntInf when used by the digit mapping, covering values that
++do not fit a 31-bit SML int.
++
++Retain chop, the source conditional uniform digit mapper and left-associated
++makeNumber fold. Lazy accumulation is delayed; strict finite accumulation is
++eager. The mapper is not replaced by System.Random, modulo n or a rejection
++algorithm. Its zero-low-digit partiality is retained and tested; actual random
++bounds n-2 are odd, so that partial case is outside the valid program path.
++Fixed seeded witnesses do not establish independent-uniform sampling or transfer
++a general statistical confidence claim to the benchmark.
++
++The lazy variant memoizes finite digit/witness spines and heads. Its initial
++1/-1 and secondary 1/-1 decisions stop before unused square tails. The strict
++variant evaluates the selected finite square list and digit values eagerly,
++including source-unused repeated squares. Infinite raw and square streams stay
++lazy in both. splitAt retains shared prefix/tail projections; taking the tail
++does not force discarded raw heads in lazy mode.
++
++SML reads the selected input file as a finite string and decimal line list.
++A final LF is removed as a line terminator while internal empty lines remain
++invalid candidates. The selected parser accepts signed decimal integers and
++surrounding whitespace, not the full Haskell Read grammar. The complete output
++is assembled before returning, whereas the original prints labels incrementally.
++Source labels have no separating newlines; preserve that exact result. Only the
++suite's controlled report adds its normal line framing.
++
++Each run resets the two seed states and constructs fresh stream cells instead
++of retaining a top-level input-stream CAF across repeated suite invocations.
++Within-run sharing and state advancement remain. File reading, result validation
++and these initialization decisions are measured costs. Unused IntLib cube-root,
++logarithm and display helpers are not translated; complete originals remain.
++
++### Inputs, calibration and correctness
++
++| Profile | Candidates | Trials |
++|---|---|---:|
++| smoke | second original FAST candidate, 74 bits | 100 |
++| normal | original FAST candidates 2–4, including the composite | 100 |
++| large | complete original five-candidate FAST input, including 607 bits | 100 |
++
++The selected normal input contains 74/112/63-bit candidates. These source subsets
++keep bounded routine/comparative work. Removing earlier candidates changes which
++deterministic witnesses the remaining candidates see; original and independent
++references are regenerated for the exact new sequence with unchanged seeds.
++Large preserves the complete FAST sequence. Original NORM=60 and SLOW=300
++candidate inputs remain documented and referenced but are not selected profiles.
++
++Both policies' 607-bit single-candidate pilots hit the initial 600-second limit;
++these are timeouts, not incorrect results. Smoke and the three-candidate normal
++input validate at all 100 rounds under their recorded guards. Large retains the
++default 3600-second/8-GiB allowance. Whole large SML validation is unrecorded;
++no arithmetic shortcut or reduced trial count is used to fit normal limits.
++
++GHC originals match every complete upstream fixture. A separate Python integer/
++modular-power/generator model agrees on 380 original/small candidates, raw
++prefixes and successor-state observations for the small and FAST sequences.
++It also confirms the newly selected profiles. Eight exact power cases agree
++between GHC and Python, including two nontrivial 607-bit moduli. Those finite
++checks are separate from a proof of primality.
++
++Auxiliary SML checks compare candidate outcomes and successor streams, scalar
++powers, exact complete normal output, state reset, decimal parsing, factoring,
++digit roundtrips and source partiality. Demand probes check unused square tails,
++strict selected powers, unused split heads, prefix sharing and zero-length take.
++The driver preserves empty-line semantics. All validation is exact, with no
++floating tolerance.
++
++### Compiler/runtime behavior and references
++
++Investigate arbitrary-precision multiply/division, exponent loops, finite eager
++squares, closure/list allocation, memoized raw state, data width and early exits.
++Rune's portable IntInf limb/division implementation makes large cases expensive;
++a different arithmetic library is a different configuration, not a port fix.
++These are source-based diagnostic questions, not measured causal claims.
++Comparisons use identical SML; original Haskell supplies correctness references.
++
++[Rabin, Probabilistic algorithm for testing primality](https://doi.org/10.1016/0022-314X(80)90084-0)
++provides algorithmic context; the preserved source specifies this particular
++witness selection and control flow. [L'Ecuyer's combined-generator paper](https://doi.org/10.1145/62959.62969)
++provides generator context, while the source credits its Haskell coding above.
++[Partain](https://doi.org/10.1007/978-1-4471-3215-8_17) supplies suite context.
++The paper references are not correctness proofs of this SML translation.
++
++
++## primetest-strict
++
++Finite evaluation: strict.
++
++### Algorithm and workload
++
++Process decimal integer candidates with the source 100-round strong probable-prime
++test. Even/nonpositive guards consume no random values. For each odd candidate,
++factor n-1 as 2^k*q, select the source base, compute the nested modular-power
++algorithm and inspect up to k repeated squares for its witness. Composite
++witnesses stop the remaining trials early.
++
++### History, authorship, variants and notices
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/primetest,
++the four literate Haskell modules, Makefile, Readme, mersenne607 and all three
++stdin/stdout pairs. Main's author macro explicitly names David Lester; its RCS
++last-committer tag is history, not that declaration. The log dates the program
++to 1992 and records the 2004 Random-to-MyRandom rename. IntLib credits Joe Fasel
++for this modular-power coding; MyRandom credits Lennart Augustsson's generator.
++No separate redistribution notice or dataset author is stated in these files.
++Retain all original bytes and history. The established primetest name gets
++lazy/strict suffixes for material evaluation variants.
++
++The input files provide decimal constants; Readme identifies 2^607-1 as its
++principal Mersenne candidate. Smaller and composite candidates remain part of
++the collection rather than treating probable-prime output as a general proof.
++
++### Arithmetic, demand and translation
++
++Keep arbitrary-precision candidates, exponents, powers, residues and base-65536
++digits in IntInf. Preserve the source nested modular-power loop, including its
++exponent-zero shortcut returning 1 without reduction, and the findKQ call at each
++trial as written. Selected square counts fit signed 31-bit when converted to the
++finite take counter. No fixed-width replacement is used for large arithmetic.
++
++Reuse only the raw two-state generator engine shared with SCS. Initialize the
++source states directly to 111/47; do not call SCS's seed mapping or interval
++mapper. Explicit Word32 expresses the signed-32-bit Schrage transitions on every
++host. Their corrected values stay in the source ranges. Raw result heads and
++state transitions remain separately memoized, avoiding unused-head forcing.
++Raw numbers become IntInf when used by the digit mapping, covering values that
++do not fit a 31-bit SML int.
++
++Retain chop, the source conditional uniform digit mapper and left-associated
++makeNumber fold. Lazy accumulation is delayed; strict finite accumulation is
++eager. The mapper is not replaced by System.Random, modulo n or a rejection
++algorithm. Its zero-low-digit partiality is retained and tested; actual random
++bounds n-2 are odd, so that partial case is outside the valid program path.
++Fixed seeded witnesses do not establish independent-uniform sampling or transfer
++a general statistical confidence claim to the benchmark.
++
++The lazy variant memoizes finite digit/witness spines and heads. Its initial
++1/-1 and secondary 1/-1 decisions stop before unused square tails. The strict
++variant evaluates the selected finite square list and digit values eagerly,
++including source-unused repeated squares. Infinite raw and square streams stay
++lazy in both. splitAt retains shared prefix/tail projections; taking the tail
++does not force discarded raw heads in lazy mode.
++
++SML reads the selected input file as a finite string and decimal line list.
++A final LF is removed as a line terminator while internal empty lines remain
++invalid candidates. The selected parser accepts signed decimal integers and
++surrounding whitespace, not the full Haskell Read grammar. The complete output
++is assembled before returning, whereas the original prints labels incrementally.
++Source labels have no separating newlines; preserve that exact result. Only the
++suite's controlled report adds its normal line framing.
++
++Each run resets the two seed states and constructs fresh stream cells instead
++of retaining a top-level input-stream CAF across repeated suite invocations.
++Within-run sharing and state advancement remain. File reading, result validation
++and these initialization decisions are measured costs. Unused IntLib cube-root,
++logarithm and display helpers are not translated; complete originals remain.
++
++### Inputs, calibration and correctness
++
++| Profile | Candidates | Trials |
++|---|---|---:|
++| smoke | second original FAST candidate, 74 bits | 100 |
++| normal | original FAST candidates 2–4, including the composite | 100 |
++| large | complete original five-candidate FAST input, including 607 bits | 100 |
++
++The selected normal input contains 74/112/63-bit candidates. These source subsets
++keep bounded routine/comparative work. Removing earlier candidates changes which
++deterministic witnesses the remaining candidates see; original and independent
++references are regenerated for the exact new sequence with unchanged seeds.
++Large preserves the complete FAST sequence. Original NORM=60 and SLOW=300
++candidate inputs remain documented and referenced but are not selected profiles.
++
++Both policies' 607-bit single-candidate pilots hit the initial 600-second limit;
++these are timeouts, not incorrect results. Smoke and the three-candidate normal
++input validate at all 100 rounds under their recorded guards. Large retains the
++default 3600-second/8-GiB allowance. Whole large SML validation is unrecorded;
++no arithmetic shortcut or reduced trial count is used to fit normal limits.
++
++GHC originals match every complete upstream fixture. A separate Python integer/
++modular-power/generator model agrees on 380 original/small candidates, raw
++prefixes and successor-state observations for the small and FAST sequences.
++It also confirms the newly selected profiles. Eight exact power cases agree
++between GHC and Python, including two nontrivial 607-bit moduli. Those finite
++checks are separate from a proof of primality.
++
++Auxiliary SML checks compare candidate outcomes and successor streams, scalar
++powers, exact complete normal output, state reset, decimal parsing, factoring,
++digit roundtrips and source partiality. Demand probes check unused square tails,
++strict selected powers, unused split heads, prefix sharing and zero-length take.
++The driver preserves empty-line semantics. All validation is exact, with no
++floating tolerance.
++
++### Compiler/runtime behavior and references
++
++Investigate arbitrary-precision multiply/division, exponent loops, finite eager
++squares, closure/list allocation, memoized raw state, data width and early exits.
++Rune's portable IntInf limb/division implementation makes large cases expensive;
++a different arithmetic library is a different configuration, not a port fix.
++These are source-based diagnostic questions, not measured causal claims.
++Comparisons use identical SML; original Haskell supplies correctness references.
++
++[Rabin, Probabilistic algorithm for testing primality](https://doi.org/10.1016/0022-314X(80)90084-0)
++provides algorithmic context; the preserved source specifies this particular
++witness selection and control flow. [L'Ecuyer's combined-generator paper](https://doi.org/10.1145/62959.62969)
++provides generator context, while the source credits its Haskell coding above.
++[Partain](https://doi.org/10.1007/978-1-4471-3215-8_17) supplies suite context.
++The paper references are not correctness proofs of this SML translation.
+diff --git a/examples/benchmarks/inventory.tsv b/examples/benchmarks/inventory.tsv
+index f2f0dafa..40004c5e 100644
+--- a/examples/benchmarks/inventory.tsv
++++ b/examples/benchmarks/inventory.tsv
+@@ -663,7 +663,7 @@ nofib	spectral/multiplier	multiplier	multiplier	M3	import	kernel		not stated in
+ nofib	spectral/para	para	para	M3	import	application		not stated in scanned source headers	2c9525a59278dfae1c4f7df3d2fad20797ff29427db7d347fbca187d64a4ab17	spectral/para/Main.lhs;spectral/para/c++/Para.h;spectral/para/c++/Queue.h;spectral/para/c++/Thin.h	spectral/para/runtime_files/input-data		spectral/para/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/power	power	power-nofib	M3	import	integer-arithmetic	nofib:gc/power	not stated in scanned source headers	f1843f7270f6850c2830355484fe4b6a064174fdfa4e9b3732f19e6daaad1a8c	spectral/power/Main.hs			spectral/power/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/pretty	pretty	pretty	M3	import	integer-arithmetic		not stated in scanned source headers	0b3e89f295c950d26e0c23e197b9c22f04515939fd5549a74e29e12febdea1f0	spectral/pretty/CharSeq.hs;spectral/pretty/Main.hs;spectral/pretty/Pretty.hs	spectral/pretty/pretty.stdout		spectral/pretty/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	spectral/primetest	primetest	primetest	M3	import	integer-arithmetic		simonmar $	91ad428340db8f6cb126455dfe55a33e2f8c9acf8043beac98cc79b6a8415a81	spectral/primetest/IntLib.lhs;spectral/primetest/Main.lhs;spectral/primetest/MyRandom.lhs;spectral/primetest/Prime.lhs	spectral/primetest/primetest.faststdin;spectral/primetest/primetest.faststdout;spectral/primetest/primetest.slowstdin;spectral/primetest/primetest.slowstdout;spectral/primetest/primetest.stdin;spectral/primetest/primetest.stdout	spectral/primetest/Main.lhs:header	spectral/primetest/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	spectral/primetest	primetest	primetest	M3	import	integer-arithmetic		David Lester	91ad428340db8f6cb126455dfe55a33e2f8c9acf8043beac98cc79b6a8415a81	spectral/primetest/IntLib.lhs;spectral/primetest/Main.lhs;spectral/primetest/MyRandom.lhs;spectral/primetest/Prime.lhs	spectral/primetest/primetest.faststdin;spectral/primetest/primetest.faststdout;spectral/primetest/primetest.slowstdin;spectral/primetest/primetest.slowstdout;spectral/primetest/primetest.stdin;spectral/primetest/primetest.stdout	spectral/primetest/Main.lhs:header	spectral/primetest/Main.lhs:author-macro;spectral/primetest/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/puzzle	puzzle	puzzle	M3	import	kernel		not stated in scanned source headers	2dd87d351911efbdcd72f6ba5eb7164c137f7921a0084e12766dcf3f120c0f2c	spectral/puzzle/Main.hs			spectral/puzzle/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/rewrite	rewrite	rewrite	M3	import	symbolic-search		not stated in scanned source headers	43803650d3e4505fcd238a981ede8821ef4912bad06cab96c382b8abd47715c4	spectral/rewrite/Main.lhs	spectral/rewrite/rewrite.stdout		spectral/rewrite/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/scc	scc	scc	M3	import	kernel		not stated in scanned source headers	bb6373dc6cb21d9771bb06885f561545d13094a8fb79b0681bf33929b96cf794	spectral/scc/Digraph.hs;spectral/scc/Main.hs	spectral/scc/scc.stdout		spectral/scc/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+@@ -789,7 +789,7 @@ sandmark	benchmarks/simple-tests/weak_htbl.exe	weak_htbl	weak_htbl	M5	defer	allo
+ sandmark	benchmarks/simple-tests/weakretain.exe	weakretain	weakretain	M5	defer	allocation-lifetimes		not stated in scanned source headers	f41f671f840937356d2d7b62df8d668695b5b0b231a12a6291e7aaf0eb3c4bd6	benchmarks/simple-tests/dune;benchmarks/simple-tests/finalise-dune.inc;benchmarks/simple-tests/lazy-dune.inc;benchmarks/simple-tests/lists-dune.inc;benchmarks/simple-tests/ocamlcapi-dune.inc;benchmarks/simple-tests/stacks-dune.inc;benchmarks/simple-tests/stress-dune.inc;benchmarks/simple-tests/weak-dune.inc;benchmarks/simple-tests/weakretain.ml		LICENSE.md	benchmarks/simple-tests/weak-dune.inc;micro_multicore.json;run_config.json;run_config_byte.json	source uses OCaml-specific effects, concurrency, GC/weak-reference introspection, unsafe objects or C bindings; reconsider with equivalent runtime facilities
+ sandmark	benchmarks/soli/soli.exe	soli	soli	M5	defer	kernel		not stated in scanned source headers	4b1ffe7e17f181487532712b46ceb2a1f0c57a59d3dc1ff33cef9e9a99809425	benchmarks/soli/dune;benchmarks/soli/soli.ml		LICENSE.md	benchmarks/soli/dune;run_config.json;run_config_byte.json	requires the upstream application/package dependency graph (soli); reconsider with a portable implementation of those dependencies
+ sandmark	benchmarks/stdlib/array_bench.exe	array_bench	array_bench	M5	import	numerical		not stated in scanned source headers	b465d7b2e334b8a4092ccfc1fb543e90221dbf338d63ee13cd745aef6954f0c4	benchmarks/stdlib/array_bench.ml;benchmarks/stdlib/dune		LICENSE.md	run_config.json;run_config_byte.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-sandmark	benchmarks/stdlib/big_array_bench.exe	big_array_bench	big_array_bench	M5	import	numerical		not stated in scanned source headers	f4535649604b8ab895384c1fe782a848ebc9d67ce371b0cfe9a6ddf3bdc71fb9	benchmarks/stdlib/big_array_bench.ml;benchmarks/stdlib/dune		LICENSE.md	run_config.json;run_config_byte.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++sandmark	benchmarks/stdlib/big_array_bench.exe	big_array_bench	big_array_bench	M5	defer	numerical		not stated in scanned source headers	f4535649604b8ab895384c1fe782a848ebc9d67ce371b0cfe9a6ddf3bdc71fb9	benchmarks/stdlib/big_array_bench.ml;benchmarks/stdlib/dune		LICENSE.md	run_config.json;run_config_byte.json	both pinned modes benchmark Bigarray int/int32 C-layout storage; ordinary managed SML arrays change the measured storage policy; reconsider with equivalent typed C-layout storage, without adding runtime facilities through this benchmark roadmap
+ sandmark	benchmarks/stdlib/bytes_bench.exe	bytes_bench	bytes_bench	M5	import	kernel		not stated in scanned source headers	a3de418b18f37616d7a748c3dd1a4d75e9f306ebb301a175926a5b43dedb9b08	benchmarks/stdlib/bytes_bench.ml;benchmarks/stdlib/dune		LICENSE.md	run_config.json;run_config_byte.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ sandmark	benchmarks/stdlib/hashtbl_bench.exe	hashtbl_bench	hashtbl_bench	M5	import	kernel		not stated in scanned source headers	ff852d6a978c06cd3edfb2ee2c7cf99e3c4f1919b9c0b2d1391694925c205cd3	benchmarks/stdlib/dune;benchmarks/stdlib/hashtbl_bench.ml		LICENSE.md	run_config.json;run_config_byte.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ sandmark	benchmarks/stdlib/map_bench.exe	map_bench	map_bench	M5	import	kernel		not stated in scanned source headers	ac86bdb7dcd540903ef552fd9f0f625b8ea1358a0a46bd968ee63cbe2627ac61	benchmarks/stdlib/dune;benchmarks/stdlib/map_bench.ml		LICENSE.md	run_config.json;run_config_byte.json	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 45937bac..cd76dfe3 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -969,3 +969,33 @@ minimax-strict	large	nofib	spectral/minimax	1000 game.txt	minimax-strict/large.e
+ nbody-sandmark-multicore-numerical	smoke	sandmark	benchmarks/multicore-numerical/nbody.exe	1 16 smoke.state	nbody-sandmark-multicore-numerical/smoke.expected	shared/input.sml,shared/ocaml-random.sml,shared/sandmark-nbody.sml,shared/sandmark-manybody.sml,shared/sandmark-manybody-check.sml,nbody-sandmark-multicore-numerical/benchmark.sml,shared/main.sml	30	1048576	numeric-real,mutable-records,arrays,ordered-all-pairs	smoke.state	checked-numerical	implemented
+ nbody-sandmark-multicore-numerical	normal	sandmark	benchmarks/multicore-numerical/nbody.exe	20 256 normal.state	nbody-sandmark-multicore-numerical/normal.expected	shared/input.sml,shared/ocaml-random.sml,shared/sandmark-nbody.sml,shared/sandmark-manybody.sml,shared/sandmark-manybody-check.sml,nbody-sandmark-multicore-numerical/benchmark.sml,shared/main.sml	600	4194304	numeric-real,mutable-records,arrays,ordered-all-pairs	normal.state	checked-numerical	implemented
+ nbody-sandmark-multicore-numerical	large	sandmark	benchmarks/multicore-numerical/nbody.exe	500 1024 large.state	nbody-sandmark-multicore-numerical/large.expected	shared/input.sml,shared/ocaml-random.sml,shared/sandmark-nbody.sml,shared/sandmark-manybody.sml,shared/sandmark-manybody-check.sml,nbody-sandmark-multicore-numerical/benchmark.sml,shared/main.sml	3600	8388608	numeric-real,mutable-records,arrays,ordered-all-pairs	large.state	checked-numerical	implemented
++array_iter	smoke	sandmark	benchmarks/stdlib/array_bench.exe	16 64	array_iter/smoke.expected	shared/input.sml,shared/sandmark-stdlib-primitives.sml,array_iter/benchmark.sml,shared/main.sml	30	1048576	stdlib,arrays	-	exact	implemented
++array_iter	normal	sandmark	benchmarks/stdlib/array_bench.exe	1000 10000	array_iter/normal.expected	shared/input.sml,shared/sandmark-stdlib-primitives.sml,array_iter/benchmark.sml,shared/main.sml	600	4194304	stdlib,arrays	-	exact	implemented
++array_iter	large	sandmark	benchmarks/stdlib/array_bench.exe	10000 10000	array_iter/large.expected	shared/input.sml,shared/sandmark-stdlib-primitives.sml,array_iter/benchmark.sml,shared/main.sml	3600	8388608	stdlib,arrays	-	exact	implemented
++array_forall	smoke	sandmark	benchmarks/stdlib/array_bench.exe	16 64	array_forall/smoke.expected	shared/input.sml,shared/sandmark-stdlib-primitives.sml,array_forall/benchmark.sml,shared/main.sml	30	1048576	stdlib,arrays	-	exact	implemented
++array_forall	normal	sandmark	benchmarks/stdlib/array_bench.exe	1000 10000	array_forall/normal.expected	shared/input.sml,shared/sandmark-stdlib-primitives.sml,array_forall/benchmark.sml,shared/main.sml	600	4194304	stdlib,arrays	-	exact	implemented
++array_forall	large	sandmark	benchmarks/stdlib/array_bench.exe	10000 10000	array_forall/large.expected	shared/input.sml,shared/sandmark-stdlib-primitives.sml,array_forall/benchmark.sml,shared/main.sml	3600	8388608	stdlib,arrays	-	exact	implemented
++array_fold	smoke	sandmark	benchmarks/stdlib/array_bench.exe	16 64	array_fold/smoke.expected	shared/input.sml,shared/sandmark-stdlib-primitives.sml,array_fold/benchmark.sml,shared/main.sml	30	1048576	stdlib,arrays	-	exact	implemented
++array_fold	normal	sandmark	benchmarks/stdlib/array_bench.exe	1000 10000	array_fold/normal.expected	shared/input.sml,shared/sandmark-stdlib-primitives.sml,array_fold/benchmark.sml,shared/main.sml	600	4194304	stdlib,arrays	-	exact	implemented
++array_fold	large	sandmark	benchmarks/stdlib/array_bench.exe	10000 10000	array_fold/large.expected	shared/input.sml,shared/sandmark-stdlib-primitives.sml,array_fold/benchmark.sml,shared/main.sml	3600	8388608	stdlib,arrays	-	exact	implemented
++pervasives_compare_lists	smoke	sandmark	benchmarks/stdlib/pervasives_bench.exe	64	pervasives_compare_lists/smoke.expected	shared/input.sml,shared/sandmark-stdlib-primitives.sml,pervasives_compare_lists/benchmark.sml,shared/main.sml	30	1048576	stdlib,comparisons,scalar-ordering	-	exact	implemented
++pervasives_compare_lists	normal	sandmark	benchmarks/stdlib/pervasives_bench.exe	100000	pervasives_compare_lists/normal.expected	shared/input.sml,shared/sandmark-stdlib-primitives.sml,pervasives_compare_lists/benchmark.sml,shared/main.sml	600	4194304	stdlib,comparisons,scalar-ordering	-	exact	implemented
++pervasives_compare_lists	large	sandmark	benchmarks/stdlib/pervasives_bench.exe	1000000	pervasives_compare_lists/large.expected	shared/input.sml,shared/sandmark-stdlib-primitives.sml,pervasives_compare_lists/benchmark.sml,shared/main.sml	3600	8388608	stdlib,comparisons,scalar-ordering	-	exact	implemented
++pervasives_compare_ints	smoke	sandmark	benchmarks/stdlib/pervasives_bench.exe	64	pervasives_compare_ints/smoke.expected	shared/input.sml,shared/sandmark-stdlib-primitives.sml,pervasives_compare_ints/benchmark.sml,shared/main.sml	30	1048576	stdlib,comparisons,scalar-ordering	-	exact	implemented
++pervasives_compare_ints	normal	sandmark	benchmarks/stdlib/pervasives_bench.exe	100000	pervasives_compare_ints/normal.expected	shared/input.sml,shared/sandmark-stdlib-primitives.sml,pervasives_compare_ints/benchmark.sml,shared/main.sml	600	4194304	stdlib,comparisons,scalar-ordering	-	exact	implemented
++pervasives_compare_ints	large	sandmark	benchmarks/stdlib/pervasives_bench.exe	1000000	pervasives_compare_ints/large.expected	shared/input.sml,shared/sandmark-stdlib-primitives.sml,pervasives_compare_ints/benchmark.sml,shared/main.sml	3600	8388608	stdlib,comparisons,scalar-ordering	-	exact	implemented
++pervasives_compare_floats	smoke	sandmark	benchmarks/stdlib/pervasives_bench.exe	64	pervasives_compare_floats/smoke.expected	shared/input.sml,shared/sandmark-stdlib-primitives.sml,pervasives_compare_floats/benchmark.sml,shared/main.sml	30	1048576	stdlib,comparisons,scalar-ordering	-	exact	implemented
++pervasives_compare_floats	normal	sandmark	benchmarks/stdlib/pervasives_bench.exe	100000	pervasives_compare_floats/normal.expected	shared/input.sml,shared/sandmark-stdlib-primitives.sml,pervasives_compare_floats/benchmark.sml,shared/main.sml	600	4194304	stdlib,comparisons,scalar-ordering	-	exact	implemented
++pervasives_compare_floats	large	sandmark	benchmarks/stdlib/pervasives_bench.exe	1000000	pervasives_compare_floats/large.expected	shared/input.sml,shared/sandmark-stdlib-primitives.sml,pervasives_compare_floats/benchmark.sml,shared/main.sml	3600	8388608	stdlib,comparisons,scalar-ordering	-	exact	implemented
++pervasives_compare_strings	smoke	sandmark	benchmarks/stdlib/pervasives_bench.exe	64	pervasives_compare_strings/smoke.expected	shared/input.sml,shared/sandmark-stdlib-primitives.sml,pervasives_compare_strings/benchmark.sml,shared/main.sml	30	1048576	stdlib,comparisons,scalar-ordering	-	exact	implemented
++pervasives_compare_strings	normal	sandmark	benchmarks/stdlib/pervasives_bench.exe	100000	pervasives_compare_strings/normal.expected	shared/input.sml,shared/sandmark-stdlib-primitives.sml,pervasives_compare_strings/benchmark.sml,shared/main.sml	600	4194304	stdlib,comparisons,scalar-ordering	-	exact	implemented
++pervasives_compare_strings	large	sandmark	benchmarks/stdlib/pervasives_bench.exe	1000000	pervasives_compare_strings/large.expected	shared/input.sml,shared/sandmark-stdlib-primitives.sml,pervasives_compare_strings/benchmark.sml,shared/main.sml	3600	8388608	stdlib,comparisons,scalar-ordering	-	exact	implemented
++pervasives_equal_ints	smoke	sandmark	benchmarks/stdlib/pervasives_bench.exe	64	pervasives_equal_ints/smoke.expected	shared/input.sml,shared/sandmark-stdlib-primitives.sml,pervasives_equal_ints/benchmark.sml,shared/main.sml	30	1048576	stdlib,comparisons,scalar-ordering	-	exact	implemented
++pervasives_equal_ints	normal	sandmark	benchmarks/stdlib/pervasives_bench.exe	100000	pervasives_equal_ints/normal.expected	shared/input.sml,shared/sandmark-stdlib-primitives.sml,pervasives_equal_ints/benchmark.sml,shared/main.sml	600	4194304	stdlib,comparisons,scalar-ordering	-	exact	implemented
++pervasives_equal_ints	large	sandmark	benchmarks/stdlib/pervasives_bench.exe	1000000	pervasives_equal_ints/large.expected	shared/input.sml,shared/sandmark-stdlib-primitives.sml,pervasives_equal_ints/benchmark.sml,shared/main.sml	3600	8388608	stdlib,comparisons,scalar-ordering	-	exact	implemented
++primetest-lazy	smoke	nofib	spectral/primetest	smoke.input	primetest-lazy/smoke.expected	shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/scs-random.sml,shared/nofib-primetest.sml,shared/nofib-primetest-driver.sml,primetest-lazy/benchmark.sml,shared/main.sml	30	1048576	arithmetic-bigint,randomness,lists-streams,lazy	smoke.input	exact	implemented
++primetest-lazy	normal	nofib	spectral/primetest	normal.input	primetest-lazy/normal.expected	shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/scs-random.sml,shared/nofib-primetest.sml,shared/nofib-primetest-driver.sml,primetest-lazy/benchmark.sml,shared/main.sml	600	4194304	arithmetic-bigint,randomness,lists-streams,lazy	normal.input	exact	implemented
++primetest-lazy	large	nofib	spectral/primetest	large.input	primetest-lazy/large.expected	shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/scs-random.sml,shared/nofib-primetest.sml,shared/nofib-primetest-driver.sml,primetest-lazy/benchmark.sml,shared/main.sml	3600	8388608	arithmetic-bigint,randomness,lists-streams,lazy	large.input	exact	implemented
++primetest-strict	smoke	nofib	spectral/primetest	smoke.input	primetest-strict/smoke.expected	shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/scs-random.sml,shared/nofib-primetest.sml,shared/nofib-primetest-driver.sml,primetest-strict/benchmark.sml,shared/main.sml	30	1048576	arithmetic-bigint,randomness,lists-streams,strict	smoke.input	exact	implemented
++primetest-strict	normal	nofib	spectral/primetest	normal.input	primetest-strict/normal.expected	shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/scs-random.sml,shared/nofib-primetest.sml,shared/nofib-primetest-driver.sml,primetest-strict/benchmark.sml,shared/main.sml	600	4194304	arithmetic-bigint,randomness,lists-streams,strict	normal.input	exact	implemented
++primetest-strict	large	nofib	spectral/primetest	large.input	primetest-strict/large.expected	shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/scs-random.sml,shared/nofib-primetest.sml,shared/nofib-primetest-driver.sml,primetest-strict/benchmark.sml,shared/main.sml	3600	8388608	arithmetic-bigint,randomness,lists-streams,strict	large.input	exact	implemented
+diff --git a/scripts/benchmark-inventory.py b/scripts/benchmark-inventory.py
+index 35f7a8af..290d2ed8 100644
+--- a/scripts/benchmark-inventory.py
++++ b/scripts/benchmark-inventory.py
+@@ -410,6 +410,17 @@ def classify(source, root, item, files, text):
+             disposition, reason = "defer", "parallel/runtime-specific executable; retain its original execution model"
+         # Reviewed microprobes require %opaque to preserve their measured
+         # operation. Do not generalize this to algorithmic uses of opacity.
++        # These two modes measure typed C-layout Bigarray storage itself.
++        # Replacing it with ordinary managed arrays changes the storage policy.
++        if disposition == "import" and path == "benchmarks/stdlib/big_array_bench.exe":
++            kernel = root / "benchmarks/stdlib/big_array_bench.ml"
++            if (kernel.is_file() and hashlib.sha256(kernel.read_bytes()).hexdigest()
++                    == "4df8ddc28ddc4fd81ad2db5938003b1857791b6e8c74e68a1559dfd043ffa0d6"):
++                disposition, reason = "defer", (
++                    "both pinned modes benchmark Bigarray int/int32 C-layout storage; "
++                    "ordinary managed SML arrays change the measured storage policy; "
++                    "reconsider with equivalent typed C-layout storage, without adding "
++                    "runtime facilities through this benchmark roadmap")
+         opaque_probes = {
+             "benchmarks/simple-tests/morestacks.exe": (
+                 "b4153c8f1a4c4e9ea948113ee300fe62a7aee31e1ae0b69d79e121d4232eb946",
+@@ -549,9 +560,18 @@ def build(source, root, lock):
+                     and '-- Taken from "The worlds shortest correct exact real arithmetic program?"\n-- David Lester, Information and Computation 216, pp39-46, 2012, Elsevier' in header):
+                 authors.add("David Lester")
+                 item["evidence"].append(str(p.relative_to(root)) + ":paper-attribution")
++            reviewed_prime_author = (
++                source == "nofib" and path == "spectral/primetest"
++                and r"\def\author{David Lester}" in header.splitlines())
++            if reviewed_prime_author:
++                authors.add("David Lester")
++                item["evidence"].append(str(p.relative_to(root)) + ":author-macro")
+             if re.search(r"[Cc]opyright|[Ll]icen[sc]e|[Ww]ritten by|[Aa]uthor:|[Tt]ranslated", header):
+                 notices.append(str(p.relative_to(root)) + ":header")
+             for attribution in re.finditer(r"(?:[Ww]ritten|[Tt]ranslated|[Pp]orted|[Cc]ontributed)(?: to [^\n]*?)? by ([^\n]+)|[Aa]uthors?: ([^\n]+)", header):
++                if (reviewed_prime_author and attribution.start() > 0
++                        and header[attribution.start() - 1] == "$"):
++                    continue  # The RCS last-committer tag is not the declared author.
+                 author = (attribution.group(1) or attribution.group(2)).strip(" *()-")
+                 if len(author) <= 180:
+                     authors.add(author)
+diff --git a/tests/benchmarks/test-inventory.py b/tests/benchmarks/test-inventory.py
+index ad5f4503..4b752b55 100644
+--- a/tests/benchmarks/test-inventory.py
++++ b/tests/benchmarks/test-inventory.py
+@@ -157,6 +157,49 @@ class InventoryTest(unittest.TestCase):
+                   "The Circuit Simulator example\nDifferent authors\nJanuary, 1998\n\n> main = return ()\n")
+         self.assertEqual(self.build("nofib")[0]["authors"], "not stated in scanned source headers")
+ 
++    def test_primetest_declared_author_replaces_rcs_committer(self):
++        self.nofib_roots()
++        self.file("spectral/primetest/Makefile", "\n")
++        self.file("spectral/primetest/Main.lhs",
++                  "\\def\\author{David Lester}\n%$Author: simonmar $\n> main = print 0\n")
++        row = self.build("nofib")[0]
++        self.assertEqual(row["authors"], "David Lester")
++        self.assertIn("spectral/primetest/Main.lhs:author-macro", row["evidence"])
++
++    def test_changed_primetest_author_requires_review(self):
++        self.nofib_roots()
++        self.file("spectral/primetest/Makefile", "\n")
++        self.file("spectral/primetest/Main.lhs",
++                  "\\def\\author{Another author}\n> main = print 0\n")
++        self.assertNotIn("David Lester", self.build("nofib")[0]["authors"])
++
++    def test_quoted_primetest_macro_is_not_an_author_declaration(self):
++        self.nofib_roots()
++        self.file("spectral/primetest/Makefile", "\n")
++        self.file("spectral/primetest/Main.lhs",
++                  '> main = putStrLn "\\\\def\\\\author{David Lester}"\n')
++        self.assertNotIn("David Lester", self.build("nofib")[0]["authors"])
++
++    def test_reviewed_bigarray_storage_modes_are_deferred(self):
++        self.file("benchmarks/stdlib/dune", "(executable (name big_array_bench))\n")
++        self.file("benchmarks/stdlib/big_array_bench.ml",
++                  (ROOT / "tests/benchmarks/data/inventory-stdlib/big_array_bench.ml").read_text())
++        row = self.build("sandmark")[0]
++        self.assertEqual(row["disposition"], "defer")
++        self.assertIn("C-layout storage", row["reason"])
++
++    def test_changed_bigarray_source_requires_review(self):
++        self.file("benchmarks/stdlib/dune", "(executable (name big_array_bench))\n")
++        self.file("benchmarks/stdlib/big_array_bench.ml",
++                  (ROOT / "tests/benchmarks/data/inventory-stdlib/big_array_bench.ml").read_text()
++                  + "\nlet changed = true\n")
++        self.assertEqual(self.build("sandmark")[0]["disposition"], "import")
++
++    def test_bigarray_name_does_not_defer_portable_array_code(self):
++        self.file("benchmarks/stdlib/dune", "(executable (name big_array_bench))\n")
++        self.file("benchmarks/stdlib/big_array_bench.ml", "let a = Array.make 10 0\n")
++        self.assertEqual(self.build("sandmark")[0]["disposition"], "import")
++
+     def test_exact_reals_paper_attribution_is_recorded(self):
+         self.nofib_roots()
+         self.file("spectral/exact-reals/Makefile", "\n")

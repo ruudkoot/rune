@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+pervasives_compare_ints	normal	rune	O2	compile	0	0	pass	1.15	1.18	0.09	135360	-	-	-	pervasives_compare_ints/rune/build/compile
+pervasives_compare_ints	normal	rune	O2	correctness	0	0	pass	0.02	0.02	0.00	2476	5410678	20320	530	pervasives_compare_ints/rune/correctness.0
+pervasives_compare_ints	normal	rune	O2	count	1	1	pass	0.01	0.01	0.00	2336	5410678	20320	530	pervasives_compare_ints/rune/fresh.1
+pervasives_compare_ints	normal	rune:opt	O2	compile	0	0	pass	1.12	1.17	0.07	135356	-	-	-	pervasives_compare_ints/rune-opt/build/compile
+pervasives_compare_ints	normal	rune:opt	O2	native-compile	0	0	pass	0.28	0.13	0.05	11876	-	-	-	pervasives_compare_ints/rune-opt/build/native-compile
+pervasives_compare_ints	normal	rune:opt	O2	correctness	0	0	pass	0.01	0.01	0.00	2860	5410678	20320	530	pervasives_compare_ints/rune-opt/correctness.0
+pervasives_compare_ints	normal	rune:opt	O2	count	1	1	pass	0.00	0.00	0.00	2848	5410678	20320	530	pervasives_compare_ints/rune-opt/fresh.1
+pervasives_compare_ints	normal	rune:new	O2	compile	0	0	pass	1.13	1.15	0.10	135352	-	-	-	pervasives_compare_ints/rune-new/build/compile
+pervasives_compare_ints	normal	rune:new	O2	correctness	0	0	pass	0.01	0.01	0.00	2516	4006488	20320	530	pervasives_compare_ints/rune-new/correctness.0
+pervasives_compare_ints	normal	rune:new	O2	count	1	1	pass	0.02	0.02	0.00	2452	4006488	20320	530	pervasives_compare_ints/rune-new/fresh.1
+pervasives_compare_ints	normal	rune:jit	O2	compile	0	0	pass	1.15	1.16	0.10	135052	-	-	-	pervasives_compare_ints/rune-jit/build/compile
+pervasives_compare_ints	normal	rune:jit	O2	correctness	0	0	pass	0.01	0.00	0.00	3440	4006488	20320	530	pervasives_compare_ints/rune-jit/correctness.0
+pervasives_compare_ints	normal	rune:jit	O2	count	1	1	pass	0.01	0.01	0.00	3320	4006488	20320	530	pervasives_compare_ints/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

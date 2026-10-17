@@ -1,0 +1,5 @@
+scalar-powers.data
+small.observe
+suite-normal.expected
+suite-normal.input
+suite-normal.observe

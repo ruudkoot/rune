@@ -1,0 +1,20 @@
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 64:FFFFFFC0:64:0:0
+PASS pervasives_compare_lists
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 64:FFFFFFC0:64:0:0
+PASS pervasives_compare_lists
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 64:FFFFFFC0:64:0:0
+PASS pervasives_compare_lists
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 64:FFFFFFC0:64:0:0
+PASS pervasives_compare_lists
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt

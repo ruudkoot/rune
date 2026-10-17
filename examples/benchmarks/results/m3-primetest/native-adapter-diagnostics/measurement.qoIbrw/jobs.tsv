@@ -1,0 +1,1 @@
+primetest-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/scs-random.sml shared/nofib-primetest.sml shared/nofib-primetest-driver.sml primetest-lazy/benchmark.sml shared/main.sml	smoke.input	primetest-lazy/smoke.expected	smoke.input

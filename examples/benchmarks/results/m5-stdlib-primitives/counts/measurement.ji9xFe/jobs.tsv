@@ -1,0 +1,1 @@
+array_iter	600	4194304	shared/input.sml shared/sandmark-stdlib-primitives.sml array_iter/benchmark.sml shared/main.sml	1000 10000	array_iter/normal.expected	-

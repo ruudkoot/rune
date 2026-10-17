@@ -1,0 +1,5 @@
+PROGRAM LIMIT AS 8388608 KiB
+RESULT Probably primeProbably primeProbably primeCompositeProbably prime
+PASS primetest-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt

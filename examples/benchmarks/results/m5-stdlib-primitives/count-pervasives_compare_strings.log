@@ -1,0 +1,11 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1000 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=pervasives_compare_strings' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.3H5c5f
+BENCH MEASURE pervasives_compare_strings normal count
+COUNT unbudgeted pervasives_compare_strings normal rune
+COUNT unbudgeted pervasives_compare_strings normal rune:opt
+COUNT unbudgeted pervasives_compare_strings normal rune:new
+COUNT unbudgeted pervasives_compare_strings normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.3H5c5f/report.md

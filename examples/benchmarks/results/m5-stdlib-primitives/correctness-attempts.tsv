@@ -1,0 +1,225 @@
+benchmark	profile	optimization	configuration	arguments	status	artifact_directory
+array_iter	smoke	O0	rune-jit	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/smoke/O0/rune-jit
+array_iter	smoke	O0	rune	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/smoke/O0/rune
+array_iter	smoke	O0	rune-opt	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/smoke/O0/rune-opt
+array_iter	smoke	O0	rune-new	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/smoke/O0/rune-new
+array_iter	smoke	O2	rune-jit	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/smoke/O2/rune-jit
+array_iter	smoke	O2	rune	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/smoke/O2/rune
+array_iter	smoke	O2	rune-opt	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/smoke/O2/rune-opt
+array_iter	smoke	O2	rune-new	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/smoke/O2/rune-new
+array_iter	smoke	host-default	native-mlkit-4.7.23	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/smoke/host-default/native-mlkit-4.7.23
+array_iter	smoke	host-default	native-polyml-5.9.2	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/smoke/host-default/native-polyml-5.9.2
+array_iter	smoke	host-default	native-smlnj-legacy-110.99.9	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/smoke/host-default/native-smlnj-legacy-110.99.9
+array_iter	smoke	host-default	native-smlnj-dev-2026.2	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/smoke/host-default/native-smlnj-dev-2026.2
+array_iter	smoke	host-default	native-mlton-20241230	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/smoke/host-default/native-mlton-20241230
+array_iter	smoke	host-default	native-smlnj32-110.99.9	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/smoke/host-default/native-smlnj32-110.99.9
+array_iter	normal	O0	rune-jit	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/normal/O0/rune-jit
+array_iter	normal	O0	rune	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/normal/O0/rune
+array_iter	normal	O0	rune-opt	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/normal/O0/rune-opt
+array_iter	normal	O0	rune-new	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/normal/O0/rune-new
+array_iter	normal	O2	rune-jit	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/normal/O2/rune-jit
+array_iter	normal	O2	rune	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/normal/O2/rune
+array_iter	normal	O2	rune-opt	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/normal/O2/rune-opt
+array_iter	normal	O2	rune-new	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/normal/O2/rune-new
+array_iter	normal	host-default	native-mlkit-4.7.23	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/normal/host-default/native-mlkit-4.7.23
+array_iter	normal	host-default	native-polyml-5.9.2	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/normal/host-default/native-polyml-5.9.2
+array_iter	normal	host-default	native-smlnj-legacy-110.99.9	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/normal/host-default/native-smlnj-legacy-110.99.9
+array_iter	normal	host-default	native-smlnj-dev-2026.2	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/normal/host-default/native-smlnj-dev-2026.2
+array_iter	normal	host-default	native-mlton-20241230	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/normal/host-default/native-mlton-20241230
+array_iter	normal	host-default	native-smlnj32-110.99.9	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_iter/normal/host-default/native-smlnj32-110.99.9
+array_forall	smoke	O0	rune-jit	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/smoke/O0/rune-jit
+array_forall	smoke	O0	rune	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/smoke/O0/rune
+array_forall	smoke	O0	rune-opt	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/smoke/O0/rune-opt
+array_forall	smoke	O0	rune-new	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/smoke/O0/rune-new
+array_forall	smoke	O2	rune-jit	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/smoke/O2/rune-jit
+array_forall	smoke	O2	rune	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/smoke/O2/rune
+array_forall	smoke	O2	rune-opt	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/smoke/O2/rune-opt
+array_forall	smoke	O2	rune-new	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/smoke/O2/rune-new
+array_forall	smoke	host-default	native-mlkit-4.7.23	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/smoke/host-default/native-mlkit-4.7.23
+array_forall	smoke	host-default	native-polyml-5.9.2	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/smoke/host-default/native-polyml-5.9.2
+array_forall	smoke	host-default	native-smlnj-legacy-110.99.9	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/smoke/host-default/native-smlnj-legacy-110.99.9
+array_forall	smoke	host-default	native-smlnj-dev-2026.2	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/smoke/host-default/native-smlnj-dev-2026.2
+array_forall	smoke	host-default	native-mlton-20241230	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/smoke/host-default/native-mlton-20241230
+array_forall	smoke	host-default	native-smlnj32-110.99.9	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/smoke/host-default/native-smlnj32-110.99.9
+array_forall	normal	O0	rune-jit	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/normal/O0/rune-jit
+array_forall	normal	O0	rune	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/normal/O0/rune
+array_forall	normal	O0	rune-opt	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/normal/O0/rune-opt
+array_forall	normal	O0	rune-new	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/normal/O0/rune-new
+array_forall	normal	O2	rune-jit	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/normal/O2/rune-jit
+array_forall	normal	O2	rune	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/normal/O2/rune
+array_forall	normal	O2	rune-opt	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/normal/O2/rune-opt
+array_forall	normal	O2	rune-new	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/normal/O2/rune-new
+array_forall	normal	host-default	native-mlkit-4.7.23	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/normal/host-default/native-mlkit-4.7.23
+array_forall	normal	host-default	native-polyml-5.9.2	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/normal/host-default/native-polyml-5.9.2
+array_forall	normal	host-default	native-smlnj-legacy-110.99.9	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/normal/host-default/native-smlnj-legacy-110.99.9
+array_forall	normal	host-default	native-smlnj-dev-2026.2	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/normal/host-default/native-smlnj-dev-2026.2
+array_forall	normal	host-default	native-mlton-20241230	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/normal/host-default/native-mlton-20241230
+array_forall	normal	host-default	native-smlnj32-110.99.9	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_forall/normal/host-default/native-smlnj32-110.99.9
+array_fold	smoke	O0	rune-jit	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/smoke/O0/rune-jit
+array_fold	smoke	O0	rune	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/smoke/O0/rune
+array_fold	smoke	O0	rune-opt	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/smoke/O0/rune-opt
+array_fold	smoke	O0	rune-new	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/smoke/O0/rune-new
+array_fold	smoke	O2	rune-jit	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/smoke/O2/rune-jit
+array_fold	smoke	O2	rune	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/smoke/O2/rune
+array_fold	smoke	O2	rune-opt	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/smoke/O2/rune-opt
+array_fold	smoke	O2	rune-new	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/smoke/O2/rune-new
+array_fold	smoke	host-default	native-mlkit-4.7.23	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/smoke/host-default/native-mlkit-4.7.23
+array_fold	smoke	host-default	native-polyml-5.9.2	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/smoke/host-default/native-polyml-5.9.2
+array_fold	smoke	host-default	native-smlnj-legacy-110.99.9	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/smoke/host-default/native-smlnj-legacy-110.99.9
+array_fold	smoke	host-default	native-smlnj-dev-2026.2	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/smoke/host-default/native-smlnj-dev-2026.2
+array_fold	smoke	host-default	native-mlton-20241230	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/smoke/host-default/native-mlton-20241230
+array_fold	smoke	host-default	native-smlnj32-110.99.9	16 64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/smoke/host-default/native-smlnj32-110.99.9
+array_fold	normal	O0	rune-jit	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/normal/O0/rune-jit
+array_fold	normal	O0	rune	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/normal/O0/rune
+array_fold	normal	O0	rune-opt	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/normal/O0/rune-opt
+array_fold	normal	O0	rune-new	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/normal/O0/rune-new
+array_fold	normal	O2	rune-jit	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/normal/O2/rune-jit
+array_fold	normal	O2	rune	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/normal/O2/rune
+array_fold	normal	O2	rune-opt	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/normal/O2/rune-opt
+array_fold	normal	O2	rune-new	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/normal/O2/rune-new
+array_fold	normal	host-default	native-mlkit-4.7.23	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/normal/host-default/native-mlkit-4.7.23
+array_fold	normal	host-default	native-polyml-5.9.2	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/normal/host-default/native-polyml-5.9.2
+array_fold	normal	host-default	native-smlnj-legacy-110.99.9	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/normal/host-default/native-smlnj-legacy-110.99.9
+array_fold	normal	host-default	native-smlnj-dev-2026.2	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/normal/host-default/native-smlnj-dev-2026.2
+array_fold	normal	host-default	native-mlton-20241230	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/normal/host-default/native-mlton-20241230
+array_fold	normal	host-default	native-smlnj32-110.99.9	1000 10000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/array_fold/normal/host-default/native-smlnj32-110.99.9
+pervasives_compare_lists	smoke	O0	rune-jit	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/smoke/O0/rune-jit
+pervasives_compare_lists	smoke	O0	rune	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/smoke/O0/rune
+pervasives_compare_lists	smoke	O0	rune-opt	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/smoke/O0/rune-opt
+pervasives_compare_lists	smoke	O0	rune-new	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/smoke/O0/rune-new
+pervasives_compare_lists	smoke	O2	rune-jit	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/smoke/O2/rune-jit
+pervasives_compare_lists	smoke	O2	rune	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/smoke/O2/rune
+pervasives_compare_lists	smoke	O2	rune-opt	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/smoke/O2/rune-opt
+pervasives_compare_lists	smoke	O2	rune-new	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/smoke/O2/rune-new
+pervasives_compare_lists	smoke	host-default	native-mlkit-4.7.23	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/smoke/host-default/native-mlkit-4.7.23
+pervasives_compare_lists	smoke	host-default	native-polyml-5.9.2	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/smoke/host-default/native-polyml-5.9.2
+pervasives_compare_lists	smoke	host-default	native-smlnj-legacy-110.99.9	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/smoke/host-default/native-smlnj-legacy-110.99.9
+pervasives_compare_lists	smoke	host-default	native-smlnj-dev-2026.2	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/smoke/host-default/native-smlnj-dev-2026.2
+pervasives_compare_lists	smoke	host-default	native-mlton-20241230	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/smoke/host-default/native-mlton-20241230
+pervasives_compare_lists	smoke	host-default	native-smlnj32-110.99.9	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/smoke/host-default/native-smlnj32-110.99.9
+pervasives_compare_lists	normal	O0	rune-jit	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/normal/O0/rune-jit
+pervasives_compare_lists	normal	O0	rune	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/normal/O0/rune
+pervasives_compare_lists	normal	O0	rune-opt	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/normal/O0/rune-opt
+pervasives_compare_lists	normal	O0	rune-new	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/normal/O0/rune-new
+pervasives_compare_lists	normal	O2	rune-jit	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/normal/O2/rune-jit
+pervasives_compare_lists	normal	O2	rune	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/normal/O2/rune
+pervasives_compare_lists	normal	O2	rune-opt	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/normal/O2/rune-opt
+pervasives_compare_lists	normal	O2	rune-new	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/normal/O2/rune-new
+pervasives_compare_lists	normal	host-default	native-mlkit-4.7.23	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/normal/host-default/native-mlkit-4.7.23
+pervasives_compare_lists	normal	host-default	native-polyml-5.9.2	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/normal/host-default/native-polyml-5.9.2
+pervasives_compare_lists	normal	host-default	native-smlnj-legacy-110.99.9	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/normal/host-default/native-smlnj-legacy-110.99.9
+pervasives_compare_lists	normal	host-default	native-smlnj-dev-2026.2	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/normal/host-default/native-smlnj-dev-2026.2
+pervasives_compare_lists	normal	host-default	native-mlton-20241230	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/normal/host-default/native-mlton-20241230
+pervasives_compare_lists	normal	host-default	native-smlnj32-110.99.9	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_lists/normal/host-default/native-smlnj32-110.99.9
+pervasives_compare_ints	smoke	O0	rune-jit	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/smoke/O0/rune-jit
+pervasives_compare_ints	smoke	O0	rune	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/smoke/O0/rune
+pervasives_compare_ints	smoke	O0	rune-opt	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/smoke/O0/rune-opt
+pervasives_compare_ints	smoke	O0	rune-new	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/smoke/O0/rune-new
+pervasives_compare_ints	smoke	O2	rune-jit	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/smoke/O2/rune-jit
+pervasives_compare_ints	smoke	O2	rune	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/smoke/O2/rune
+pervasives_compare_ints	smoke	O2	rune-opt	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/smoke/O2/rune-opt
+pervasives_compare_ints	smoke	O2	rune-new	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/smoke/O2/rune-new
+pervasives_compare_ints	smoke	host-default	native-mlkit-4.7.23	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/smoke/host-default/native-mlkit-4.7.23
+pervasives_compare_ints	smoke	host-default	native-polyml-5.9.2	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/smoke/host-default/native-polyml-5.9.2
+pervasives_compare_ints	smoke	host-default	native-smlnj-legacy-110.99.9	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/smoke/host-default/native-smlnj-legacy-110.99.9
+pervasives_compare_ints	smoke	host-default	native-smlnj-dev-2026.2	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/smoke/host-default/native-smlnj-dev-2026.2
+pervasives_compare_ints	smoke	host-default	native-mlton-20241230	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/smoke/host-default/native-mlton-20241230
+pervasives_compare_ints	smoke	host-default	native-smlnj32-110.99.9	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/smoke/host-default/native-smlnj32-110.99.9
+pervasives_compare_ints	normal	O0	rune-jit	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/normal/O0/rune-jit
+pervasives_compare_ints	normal	O0	rune	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/normal/O0/rune
+pervasives_compare_ints	normal	O0	rune-opt	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/normal/O0/rune-opt
+pervasives_compare_ints	normal	O0	rune-new	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/normal/O0/rune-new
+pervasives_compare_ints	normal	O2	rune-jit	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/normal/O2/rune-jit
+pervasives_compare_ints	normal	O2	rune	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/normal/O2/rune
+pervasives_compare_ints	normal	O2	rune-opt	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/normal/O2/rune-opt
+pervasives_compare_ints	normal	O2	rune-new	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/normal/O2/rune-new
+pervasives_compare_ints	normal	host-default	native-mlkit-4.7.23	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/normal/host-default/native-mlkit-4.7.23
+pervasives_compare_ints	normal	host-default	native-polyml-5.9.2	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/normal/host-default/native-polyml-5.9.2
+pervasives_compare_ints	normal	host-default	native-smlnj-legacy-110.99.9	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/normal/host-default/native-smlnj-legacy-110.99.9
+pervasives_compare_ints	normal	host-default	native-smlnj-dev-2026.2	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/normal/host-default/native-smlnj-dev-2026.2
+pervasives_compare_ints	normal	host-default	native-mlton-20241230	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/normal/host-default/native-mlton-20241230
+pervasives_compare_ints	normal	host-default	native-smlnj32-110.99.9	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_ints/normal/host-default/native-smlnj32-110.99.9
+pervasives_compare_floats	smoke	O0	rune-jit	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/smoke/O0/rune-jit
+pervasives_compare_floats	smoke	O0	rune	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/smoke/O0/rune
+pervasives_compare_floats	smoke	O0	rune-opt	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/smoke/O0/rune-opt
+pervasives_compare_floats	smoke	O0	rune-new	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/smoke/O0/rune-new
+pervasives_compare_floats	smoke	O2	rune-jit	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/smoke/O2/rune-jit
+pervasives_compare_floats	smoke	O2	rune	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/smoke/O2/rune
+pervasives_compare_floats	smoke	O2	rune-opt	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/smoke/O2/rune-opt
+pervasives_compare_floats	smoke	O2	rune-new	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/smoke/O2/rune-new
+pervasives_compare_floats	smoke	host-default	native-mlkit-4.7.23	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/smoke/host-default/native-mlkit-4.7.23
+pervasives_compare_floats	smoke	host-default	native-polyml-5.9.2	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/smoke/host-default/native-polyml-5.9.2
+pervasives_compare_floats	smoke	host-default	native-smlnj-legacy-110.99.9	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/smoke/host-default/native-smlnj-legacy-110.99.9
+pervasives_compare_floats	smoke	host-default	native-smlnj-dev-2026.2	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/smoke/host-default/native-smlnj-dev-2026.2
+pervasives_compare_floats	smoke	host-default	native-mlton-20241230	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/smoke/host-default/native-mlton-20241230
+pervasives_compare_floats	smoke	host-default	native-smlnj32-110.99.9	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/smoke/host-default/native-smlnj32-110.99.9
+pervasives_compare_floats	normal	O0	rune-jit	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/normal/O0/rune-jit
+pervasives_compare_floats	normal	O0	rune	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/normal/O0/rune
+pervasives_compare_floats	normal	O0	rune-opt	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/normal/O0/rune-opt
+pervasives_compare_floats	normal	O0	rune-new	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/normal/O0/rune-new
+pervasives_compare_floats	normal	O2	rune-jit	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/normal/O2/rune-jit
+pervasives_compare_floats	normal	O2	rune	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/normal/O2/rune
+pervasives_compare_floats	normal	O2	rune-opt	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/normal/O2/rune-opt
+pervasives_compare_floats	normal	O2	rune-new	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/normal/O2/rune-new
+pervasives_compare_floats	normal	host-default	native-mlkit-4.7.23	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/normal/host-default/native-mlkit-4.7.23
+pervasives_compare_floats	normal	host-default	native-polyml-5.9.2	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/normal/host-default/native-polyml-5.9.2
+pervasives_compare_floats	normal	host-default	native-smlnj-legacy-110.99.9	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/normal/host-default/native-smlnj-legacy-110.99.9
+pervasives_compare_floats	normal	host-default	native-smlnj-dev-2026.2	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/normal/host-default/native-smlnj-dev-2026.2
+pervasives_compare_floats	normal	host-default	native-mlton-20241230	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/normal/host-default/native-mlton-20241230
+pervasives_compare_floats	normal	host-default	native-smlnj32-110.99.9	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_floats/normal/host-default/native-smlnj32-110.99.9
+pervasives_compare_strings	smoke	O0	rune-jit	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/smoke/O0/rune-jit
+pervasives_compare_strings	smoke	O0	rune	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/smoke/O0/rune
+pervasives_compare_strings	smoke	O0	rune-opt	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/smoke/O0/rune-opt
+pervasives_compare_strings	smoke	O0	rune-new	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/smoke/O0/rune-new
+pervasives_compare_strings	smoke	O2	rune-jit	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/smoke/O2/rune-jit
+pervasives_compare_strings	smoke	O2	rune	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/smoke/O2/rune
+pervasives_compare_strings	smoke	O2	rune-opt	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/smoke/O2/rune-opt
+pervasives_compare_strings	smoke	O2	rune-new	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/smoke/O2/rune-new
+pervasives_compare_strings	smoke	host-default	native-mlkit-4.7.23	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/smoke/host-default/native-mlkit-4.7.23
+pervasives_compare_strings	smoke	host-default	native-polyml-5.9.2	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/smoke/host-default/native-polyml-5.9.2
+pervasives_compare_strings	smoke	host-default	native-smlnj-legacy-110.99.9	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/smoke/host-default/native-smlnj-legacy-110.99.9
+pervasives_compare_strings	smoke	host-default	native-smlnj-dev-2026.2	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/smoke/host-default/native-smlnj-dev-2026.2
+pervasives_compare_strings	smoke	host-default	native-mlton-20241230	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/smoke/host-default/native-mlton-20241230
+pervasives_compare_strings	smoke	host-default	native-smlnj32-110.99.9	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/smoke/host-default/native-smlnj32-110.99.9
+pervasives_compare_strings	normal	O0	rune-jit	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/normal/O0/rune-jit
+pervasives_compare_strings	normal	O0	rune	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/normal/O0/rune
+pervasives_compare_strings	normal	O0	rune-opt	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/normal/O0/rune-opt
+pervasives_compare_strings	normal	O0	rune-new	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/normal/O0/rune-new
+pervasives_compare_strings	normal	O2	rune-jit	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/normal/O2/rune-jit
+pervasives_compare_strings	normal	O2	rune	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/normal/O2/rune
+pervasives_compare_strings	normal	O2	rune-opt	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/normal/O2/rune-opt
+pervasives_compare_strings	normal	O2	rune-new	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/normal/O2/rune-new
+pervasives_compare_strings	normal	host-default	native-mlkit-4.7.23	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/normal/host-default/native-mlkit-4.7.23
+pervasives_compare_strings	normal	host-default	native-polyml-5.9.2	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/normal/host-default/native-polyml-5.9.2
+pervasives_compare_strings	normal	host-default	native-smlnj-legacy-110.99.9	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/normal/host-default/native-smlnj-legacy-110.99.9
+pervasives_compare_strings	normal	host-default	native-smlnj-dev-2026.2	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/normal/host-default/native-smlnj-dev-2026.2
+pervasives_compare_strings	normal	host-default	native-mlton-20241230	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/normal/host-default/native-mlton-20241230
+pervasives_compare_strings	normal	host-default	native-smlnj32-110.99.9	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_compare_strings/normal/host-default/native-smlnj32-110.99.9
+pervasives_equal_ints	smoke	O0	rune-jit	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/smoke/O0/rune-jit
+pervasives_equal_ints	smoke	O0	rune	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/smoke/O0/rune
+pervasives_equal_ints	smoke	O0	rune-opt	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/smoke/O0/rune-opt
+pervasives_equal_ints	smoke	O0	rune-new	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/smoke/O0/rune-new
+pervasives_equal_ints	smoke	O2	rune-jit	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/smoke/O2/rune-jit
+pervasives_equal_ints	smoke	O2	rune	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/smoke/O2/rune
+pervasives_equal_ints	smoke	O2	rune-opt	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/smoke/O2/rune-opt
+pervasives_equal_ints	smoke	O2	rune-new	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/smoke/O2/rune-new
+pervasives_equal_ints	smoke	host-default	native-mlkit-4.7.23	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/smoke/host-default/native-mlkit-4.7.23
+pervasives_equal_ints	smoke	host-default	native-polyml-5.9.2	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/smoke/host-default/native-polyml-5.9.2
+pervasives_equal_ints	smoke	host-default	native-smlnj-legacy-110.99.9	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/smoke/host-default/native-smlnj-legacy-110.99.9
+pervasives_equal_ints	smoke	host-default	native-smlnj-dev-2026.2	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/smoke/host-default/native-smlnj-dev-2026.2
+pervasives_equal_ints	smoke	host-default	native-mlton-20241230	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/smoke/host-default/native-mlton-20241230
+pervasives_equal_ints	smoke	host-default	native-smlnj32-110.99.9	64	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/smoke/host-default/native-smlnj32-110.99.9
+pervasives_equal_ints	normal	O0	rune-jit	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/normal/O0/rune-jit
+pervasives_equal_ints	normal	O0	rune	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/normal/O0/rune
+pervasives_equal_ints	normal	O0	rune-opt	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/normal/O0/rune-opt
+pervasives_equal_ints	normal	O0	rune-new	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/normal/O0/rune-new
+pervasives_equal_ints	normal	O2	rune-jit	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/normal/O2/rune-jit
+pervasives_equal_ints	normal	O2	rune	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/normal/O2/rune
+pervasives_equal_ints	normal	O2	rune-opt	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/normal/O2/rune-opt
+pervasives_equal_ints	normal	O2	rune-new	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/normal/O2/rune-new
+pervasives_equal_ints	normal	host-default	native-mlkit-4.7.23	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/normal/host-default/native-mlkit-4.7.23
+pervasives_equal_ints	normal	host-default	native-polyml-5.9.2	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/normal/host-default/native-polyml-5.9.2
+pervasives_equal_ints	normal	host-default	native-smlnj-legacy-110.99.9	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/normal/host-default/native-smlnj-legacy-110.99.9
+pervasives_equal_ints	normal	host-default	native-smlnj-dev-2026.2	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/normal/host-default/native-smlnj-dev-2026.2
+pervasives_equal_ints	normal	host-default	native-mlton-20241230	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/normal/host-default/native-mlton-20241230
+pervasives_equal_ints	normal	host-default	native-smlnj32-110.99.9	100000	pass	results/m5-stdlib-primitives/attempts-raw/final-stdlib-primitives-parallel.334c3c3k/pervasives_equal_ints/normal/host-default/native-smlnj32-110.99.9

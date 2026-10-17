@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-primetest-parallel.rs8m2aqa
+PASS primetest-lazy smoke O2
+PASS primetest-lazy smoke O0
+PASS primetest-lazy smoke hosts
+PASS primetest-lazy normal O2
+PASS primetest-lazy normal O0
+PASS primetest-lazy normal hosts
+PASS primetest-strict smoke O0
+PASS primetest-strict smoke O2
+PASS primetest-strict smoke hosts
+PASS primetest-strict normal O2
+PASS primetest-strict normal O0
+PASS primetest-strict normal hosts

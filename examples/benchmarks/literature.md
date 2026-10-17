@@ -327,3 +327,18 @@ until supported by measurements or compiler inspection.
 
 See the [exact-real arithmetic literature review](validation/exact-reals-literature.md)
 for the imported source, precision argument and validation scopes.
+
+## Primality testing and generator state
+
+Rabin's [Probabilistic algorithm for testing primality](https://doi.org/10.1016/0022-314X(80)90084-0)
+(1980) supplies probabilistic-test context. L'Ecuyer's
+[Efficient and Portable Combined Random Number Generators](https://doi.org/10.1145/62959.62969)
+(1988), section 5 and figure 3, supplies the combined-generator context and
+32-bit implementation parameters. The retained nofib source credits Lester,
+Fasel and Augustsson for the program and its particular codings.
+
+The port-specific evidence comes from pinned source, exact original outputs,
+independent integer/state calculations and SML checks. Fixed seeded witnesses
+do not transfer an independent-uniform confidence bound to this benchmark.
+The recorded review scope uses publisher bibliographic/abstract information and
+the author paper's indexed generator section; direct full-text fetches failed.

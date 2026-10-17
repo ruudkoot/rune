@@ -1,0 +1,20 @@
+{
+  "reviewed_on": "2026-10-17",
+  "references": [
+    {
+      "author": "Michael O. Rabin",
+      "title": "Probabilistic algorithm for testing primality",
+      "doi": "10.1016/0022-314X(80)90084-0",
+      "url": "https://www.sciencedirect.com/science/article/pii/0022314X80900840",
+      "scope": "Publisher search-indexed abstract and bibliographic metadata; full text unavailable at attempted university URL"
+    },
+    {
+      "author": "Pierre L'Ecuyer",
+      "title": "Efficient and Portable Combined Random Number Generators",
+      "doi": "10.1145/62959.62969",
+      "url": "https://www.iro.umontreal.ca/~lecuyer/myftp/papers/cacm88.pdf",
+      "scope": "Author-hosted paper indexed section 5, page747, figure3/tableIII; direct PDF access denied by site challenge; source parameters verified against indexed primary text"
+    }
+  ],
+  "interpretation": "Algorithmic context only; the pinned Haskell source, exact finite references and empirical SML checks establish the port-specific evidence; fixed witnesses are not a statistical independence proof"
+}

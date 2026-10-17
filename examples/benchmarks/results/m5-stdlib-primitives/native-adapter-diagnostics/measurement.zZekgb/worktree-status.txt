@@ -1,0 +1,28 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/audit.md
+ M examples/benchmarks/inventory.tsv
+ M examples/benchmarks/literature.md
+ M examples/benchmarks/manifest.tsv
+ M scripts/benchmark-inventory.py
+ M tests/benchmarks/test-inventory.py
+?? examples/benchmarks/array_fold/
+?? examples/benchmarks/array_forall/
+?? examples/benchmarks/array_iter/
+?? examples/benchmarks/pervasives_compare_floats/
+?? examples/benchmarks/pervasives_compare_ints/
+?? examples/benchmarks/pervasives_compare_lists/
+?? examples/benchmarks/pervasives_compare_strings/
+?? examples/benchmarks/pervasives_equal_ints/
+?? examples/benchmarks/primetest-lazy/
+?? examples/benchmarks/primetest-strict/
+?? examples/benchmarks/shared/nofib-primetest-driver.sml
+?? examples/benchmarks/shared/nofib-primetest.sml
+?? examples/benchmarks/shared/sandmark-stdlib-primitives.sml
+?? examples/benchmarks/stdlib-cases.tsv
+?? tests/benchmarks/check-primetest.sh
+?? tests/benchmarks/check-stdlib-primitives.sh
+?? tests/benchmarks/data/inventory-stdlib/
+?? tests/benchmarks/data/primetest/
+?? tests/benchmarks/data/stdlib-primitives/
+?? tests/benchmarks/primetest-tests.sml
+?? tests/benchmarks/stdlib-primitives-tests.sml

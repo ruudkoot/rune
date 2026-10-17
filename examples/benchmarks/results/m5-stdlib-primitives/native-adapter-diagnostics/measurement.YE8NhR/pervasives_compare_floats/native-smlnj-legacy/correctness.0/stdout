@@ -1,0 +1,4 @@
+RESULT 64:37:4:1:59
+PASS pervasives_compare_floats
+SAMPLE 1 0.000006000
+SUMMARY 1 checks, 0 failed

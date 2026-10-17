@@ -1,0 +1,4 @@
+RESULT 64:FFFFFFED:41:1:22
+PASS pervasives_compare_ints
+SAMPLE 1 0.000002000
+SUMMARY 1 checks, 0 failed

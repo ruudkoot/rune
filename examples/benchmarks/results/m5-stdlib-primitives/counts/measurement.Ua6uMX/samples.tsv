@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+array_fold	normal	rune	O2	compile	0	0	pass	1.21	1.20	0.14	135240	-	-	-	array_fold/rune/build/compile
+array_fold	normal	rune	O2	correctness	0	0	pass	1.01	1.10	0.00	10584	280620667	560336136	10011643	array_fold/rune/correctness.0
+array_fold	normal	rune	O2	count	1	1	pass	1.05	1.08	0.02	10464	280620667	560336136	10011643	array_fold/rune/fresh.1
+array_fold	normal	rune:opt	O2	compile	0	0	pass	1.29	1.31	0.05	135260	-	-	-	array_fold/rune-opt/build/compile
+array_fold	normal	rune:opt	O2	native-compile	0	0	pass	0.29	0.15	0.03	12264	-	-	-	array_fold/rune-opt/build/native-compile
+array_fold	normal	rune:opt	O2	correctness	0	0	pass	0.38	0.39	0.00	10988	280620667	560336136	10011643	array_fold/rune-opt/correctness.0
+array_fold	normal	rune:opt	O2	count	1	1	pass	0.34	0.35	0.00	10928	280620667	560336136	10011643	array_fold/rune-opt/fresh.1
+array_fold	normal	rune:new	O2	compile	0	0	pass	1.21	1.18	0.09	135348	-	-	-	array_fold/rune-new/build/compile
+array_fold	normal	rune:new	O2	correctness	0	0	pass	0.87	0.91	0.00	10892	140449279	560336136	10011643	array_fold/rune-new/correctness.0
+array_fold	normal	rune:new	O2	count	1	1	pass	1.01	1.06	0.00	10820	140449279	560336136	10011643	array_fold/rune-new/fresh.1
+array_fold	normal	rune:jit	O2	compile	0	0	pass	1.46	1.37	0.12	135292	-	-	-	array_fold/rune-jit/build/compile
+array_fold	normal	rune:jit	O2	correctness	0	0	pass	0.29	0.28	0.00	11876	140449279	560336136	10011643	array_fold/rune-jit/correctness.0
+array_fold	normal	rune:jit	O2	count	1	1	pass	0.29	0.28	0.01	11912	140449279	560336136	10011643	array_fold/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

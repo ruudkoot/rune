@@ -1,0 +1,2 @@
+/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml
+@SMLload=/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YE8NhR/pervasives_compare_floats/native-smlnj-legacy/build/prog

@@ -1,0 +1,4 @@
+RESULT 64:1E00:0:0:64
+PASS array_fold
+SAMPLE 1 0.000022000
+SUMMARY 1 checks, 0 failed

@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+primetest-lazy	normal	rune	O2	count	1	1	pass	8.33	8.82	0.02	10472	1997403412	2442803600	61408500	counts/measurement.dEDy1Z/primetest-lazy/rune/fresh.1
+primetest-lazy	normal	rune:opt	O2	count	1	1	pass	3.15	3.19	0.00	10936	1997403412	2442803600	61408500	counts/measurement.dEDy1Z/primetest-lazy/rune-opt/fresh.1
+primetest-lazy	normal	rune:new	O2	count	1	1	pass	6.25	6.92	0.01	10400	1133702856	2442803600	61408500	counts/measurement.dEDy1Z/primetest-lazy/rune-new/fresh.1
+primetest-lazy	normal	rune:jit	O2	count	1	1	pass	2.37	2.47	0.00	11676	1133702856	2442803600	61408500	counts/measurement.dEDy1Z/primetest-lazy/rune-jit/fresh.1
+primetest-strict	normal	rune	O2	count	1	1	pass	7.27	7.92	0.00	10320	1999899601	2444960960	61451730	counts/measurement.uzULLJ/primetest-strict/rune/fresh.1
+primetest-strict	normal	rune:opt	O2	count	1	1	pass	2.91	3.22	0.01	10888	1999899601	2444960960	61451730	counts/measurement.uzULLJ/primetest-strict/rune-opt/fresh.1
+primetest-strict	normal	rune:new	O2	count	1	1	pass	6.47	6.67	0.02	10372	1135103755	2444960960	61451730	counts/measurement.uzULLJ/primetest-strict/rune-new/fresh.1
+primetest-strict	normal	rune:jit	O2	count	1	1	pass	2.37	2.47	0.01	11664	1135103755	2444960960	61451730	counts/measurement.uzULLJ/primetest-strict/rune-jit/fresh.1

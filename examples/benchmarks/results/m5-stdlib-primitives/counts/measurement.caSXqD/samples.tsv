@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+pervasives_compare_floats	normal	rune	O2	compile	0	0	pass	1.29	1.32	0.10	135240	-	-	-	pervasives_compare_floats/rune/build/compile
+pervasives_compare_floats	normal	rune	O2	correctness	0	0	pass	0.02	0.02	0.00	2332	6910985	20304	530	pervasives_compare_floats/rune/correctness.0
+pervasives_compare_floats	normal	rune	O2	count	1	1	pass	0.02	0.03	0.00	2368	6910985	20304	530	pervasives_compare_floats/rune/fresh.1
+pervasives_compare_floats	normal	rune:opt	O2	compile	0	0	pass	1.26	1.31	0.08	135240	-	-	-	pervasives_compare_floats/rune-opt/build/compile
+pervasives_compare_floats	normal	rune:opt	O2	native-compile	0	0	pass	0.28	0.13	0.04	12132	-	-	-	pervasives_compare_floats/rune-opt/build/native-compile
+pervasives_compare_floats	normal	rune:opt	O2	correctness	0	0	pass	0.01	0.01	0.00	2848	6910985	20304	530	pervasives_compare_floats/rune-opt/correctness.0
+pervasives_compare_floats	normal	rune:opt	O2	count	1	1	pass	0.01	0.01	0.00	2800	6910985	20304	530	pervasives_compare_floats/rune-opt/fresh.1
+pervasives_compare_floats	normal	rune:new	O2	compile	0	0	pass	1.20	1.26	0.06	135260	-	-	-	pervasives_compare_floats/rune-new/build/compile
+pervasives_compare_floats	normal	rune:new	O2	correctness	0	0	pass	0.02	0.02	0.00	2556	5006719	20304	530	pervasives_compare_floats/rune-new/correctness.0
+pervasives_compare_floats	normal	rune:new	O2	count	1	1	pass	0.02	0.02	0.00	2544	5006719	20304	530	pervasives_compare_floats/rune-new/fresh.1
+pervasives_compare_floats	normal	rune:jit	O2	compile	0	0	pass	1.19	1.15	0.10	135252	-	-	-	pervasives_compare_floats/rune-jit/build/compile
+pervasives_compare_floats	normal	rune:jit	O2	correctness	0	0	pass	0.02	0.02	0.00	3320	5006719	20304	530	pervasives_compare_floats/rune-jit/correctness.0
+pervasives_compare_floats	normal	rune:jit	O2	count	1	1	pass	0.02	0.01	0.00	3348	5006719	20304	530	pervasives_compare_floats/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

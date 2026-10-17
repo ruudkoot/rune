@@ -1,0 +1,30 @@
+[
+  {
+    "source": "nofib",
+    "path": "spectral/primetest",
+    "changes": {
+      "authors": {
+        "before": "simonmar $",
+        "after": "David Lester"
+      },
+      "evidence": {
+        "before": "spectral/primetest/Makefile",
+        "after": "spectral/primetest/Main.lhs:author-macro;spectral/primetest/Makefile"
+      }
+    }
+  },
+  {
+    "source": "sandmark",
+    "path": "benchmarks/stdlib/big_array_bench.exe",
+    "changes": {
+      "disposition": {
+        "before": "import",
+        "after": "defer"
+      },
+      "reason": {
+        "before": "portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import",
+        "after": "both pinned modes benchmark Bigarray int/int32 C-layout storage; ordinary managed SML arrays change the measured storage policy; reconsider with equivalent typed C-layout storage, without adding runtime facilities through this benchmark roadmap"
+      }
+    }
+  }
+]

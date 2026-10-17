@@ -1,0 +1,4 @@
+RESULT Probably prime
+PASS primetest-lazy
+SAMPLE 1 0.002269000
+SUMMARY 1 checks, 0 failed

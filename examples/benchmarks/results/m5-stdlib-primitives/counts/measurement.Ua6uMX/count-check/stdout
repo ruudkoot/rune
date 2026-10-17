@@ -1,0 +1,5 @@
+COUNT unbudgeted array_fold normal rune
+COUNT unbudgeted array_fold normal rune:opt
+COUNT unbudgeted array_fold normal rune:new
+COUNT unbudgeted array_fold normal rune:jit
+COUNT comparisons agree

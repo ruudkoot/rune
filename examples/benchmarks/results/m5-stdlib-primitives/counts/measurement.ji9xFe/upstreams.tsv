@@ -1,0 +1,6 @@
+source	url	revision	entries	notices
+mlton	https://github.com/MLton/mlton.git	b15e2d289c3d701131733665a74e2dd8438410b6	48	LICENSE;doc/license/README
+smlnj	https://github.com/smlnj/benchmarks.git	75ee8bee6fbd38af68a549bc6ca091f15fb8d3f0	45	LICENSE
+mlkit	https://github.com/melsman/mlkit.git	6dab5582db22a5f5672ca1fc5244171687d83ce5	438	doc/license/MLKit-LICENSE;doc/license/GPL-LICENSE;doc/license/SMLNJ-LICENSE
+nofib	https://gitlab.haskell.org/ghc/nofib.git	b7391df4540ac8b11b35e1b2e2c15819b5171798	187	-
+sandmark	https://github.com/ocaml-bench/sandmark.git	5605805954a00497ed197c930641cddd580e1507	143	LICENSE.md

@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+pervasives_compare_strings	normal	rune	O2	compile	0	0	pass	1.18	1.16	0.07	135256	-	-	-	pervasives_compare_strings/rune/build/compile
+pervasives_compare_strings	normal	rune	O2	correctness	0	0	pass	0.02	0.02	0.00	4588	4911082	2420400	100530	pervasives_compare_strings/rune/correctness.0
+pervasives_compare_strings	normal	rune	O2	count	1	1	pass	0.02	0.03	0.00	4644	4911082	2420400	100530	pervasives_compare_strings/rune/fresh.1
+pervasives_compare_strings	normal	rune:opt	O2	compile	0	0	pass	1.24	1.24	0.04	135128	-	-	-	pervasives_compare_strings/rune-opt/build/compile
+pervasives_compare_strings	normal	rune:opt	O2	native-compile	0	0	pass	0.28	0.13	0.03	12096	-	-	-	pervasives_compare_strings/rune-opt/build/native-compile
+pervasives_compare_strings	normal	rune:opt	O2	correctness	0	0	pass	0.02	0.01	0.00	4960	4911082	2420400	100530	pervasives_compare_strings/rune-opt/correctness.0
+pervasives_compare_strings	normal	rune:opt	O2	count	1	1	pass	0.02	0.02	0.00	4976	4911082	2420400	100530	pervasives_compare_strings/rune-opt/fresh.1
+pervasives_compare_strings	normal	rune:new	O2	compile	0	0	pass	1.34	1.30	0.09	135348	-	-	-	pervasives_compare_strings/rune-new/build/compile
+pervasives_compare_strings	normal	rune:new	O2	correctness	0	0	pass	0.03	0.03	0.00	4736	3606787	2420400	100530	pervasives_compare_strings/rune-new/correctness.0
+pervasives_compare_strings	normal	rune:new	O2	count	1	1	pass	0.03	0.02	0.00	4764	3606787	2420400	100530	pervasives_compare_strings/rune-new/fresh.1
+pervasives_compare_strings	normal	rune:jit	O2	compile	0	0	pass	1.24	1.19	0.07	135256	-	-	-	pervasives_compare_strings/rune-jit/build/compile
+pervasives_compare_strings	normal	rune:jit	O2	correctness	0	0	pass	0.02	0.01	0.01	5616	3606787	2420400	100530	pervasives_compare_strings/rune-jit/correctness.0
+pervasives_compare_strings	normal	rune:jit	O2	count	1	1	pass	0.03	0.02	0.01	5560	3606787	2420400	100530	pervasives_compare_strings/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

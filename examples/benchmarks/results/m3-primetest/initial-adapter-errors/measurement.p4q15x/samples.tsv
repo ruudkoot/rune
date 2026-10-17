@@ -1,0 +1,4 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+primetest-strict	smoke	native:mlton@20241230	O2	compile	0	0	compile-error	2.52	1.86	0.82	546028	-	-	-	primetest-strict/native-mlton/build/compile
+primetest-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	compile-error	0.37	0.35	0.05	36084	-	-	-	primetest-strict/native-smlnj-legacy/build/compile
+primetest-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	compile-error	0.09	0.09	0.02	38672	-	-	-	primetest-strict/native-polyml/build/compile

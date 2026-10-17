@@ -1,0 +1,5 @@
+[1 of 5] Compiling IntLib           ( IntLib.lhs, IntLib.o )
+[2 of 5] Compiling MyRandom         ( MyRandom.lhs, MyRandom.o )
+[3 of 5] Compiling KernelPrime      ( KernelPrime.lhs, KernelPrime.o )
+[4 of 5] Compiling Main             ( Observer.hs, Observer.o )
+[5 of 5] Linking observer

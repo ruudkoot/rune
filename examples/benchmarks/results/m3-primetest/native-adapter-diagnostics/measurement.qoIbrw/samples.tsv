@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+primetest-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	7.50	4.23	1.19	671052	-	-	-	primetest-lazy/native-mlton/build/compile
+primetest-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2496	-	-	-	primetest-lazy/native-mlton/correctness.0
+primetest-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2496	-	-	-	primetest-lazy/native-mlton/fresh.1
+primetest-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.41	0.40	0.02	37384	-	-	-	primetest-lazy/native-smlnj-legacy/build/compile
+primetest-lazy	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.02	0.01	0.00	4304	-	-	-	primetest-lazy/native-smlnj-legacy/correctness.0
+primetest-lazy	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.02	0.02	0.00	4388	-	-	-	primetest-lazy/native-smlnj-legacy/fresh.1
+primetest-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.29	0.16	0.05	37772	-	-	-	primetest-lazy/native-polyml/build/compile
+primetest-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.01	0.00	0.00	7448	-	-	-	primetest-lazy/native-polyml/correctness.0
+primetest-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	7368	-	-	-	primetest-lazy/native-polyml/fresh.1

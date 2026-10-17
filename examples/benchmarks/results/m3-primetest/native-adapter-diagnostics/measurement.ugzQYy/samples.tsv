@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+primetest-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	4.79	3.98	1.01	671524	-	-	-	primetest-strict/native-mlton/build/compile
+primetest-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2572	-	-	-	primetest-strict/native-mlton/correctness.0
+primetest-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2592	-	-	-	primetest-strict/native-mlton/fresh.1
+primetest-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.39	0.40	0.03	35516	-	-	-	primetest-strict/native-smlnj-legacy/build/compile
+primetest-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.02	0.02	0.00	4344	-	-	-	primetest-strict/native-smlnj-legacy/correctness.0
+primetest-strict	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.02	0.02	0.00	4344	-	-	-	primetest-strict/native-smlnj-legacy/fresh.1
+primetest-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.27	0.17	0.04	39640	-	-	-	primetest-strict/native-polyml/build/compile
+primetest-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	6996	-	-	-	primetest-strict/native-polyml/correctness.0
+primetest-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	7012	-	-	-	primetest-strict/native-polyml/fresh.1

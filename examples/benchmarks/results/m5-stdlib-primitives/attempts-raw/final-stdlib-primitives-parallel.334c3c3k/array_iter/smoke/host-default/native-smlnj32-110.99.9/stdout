@@ -1,0 +1,46 @@
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-stdlib-primitives.sml]
+[autoloading]
+[autoloading done]
+structure BenchStdlibPrimitives : sig
+  type statistics =
+    {calls:int, negative:int, positive:int, sum:Word32.word, zero:int}
+  val for : int -> int -> (int -> 'a) -> unit
+  val compareInt : int * int -> int
+  val compareList : int list * int list -> int
+  val order : order -> int
+  val summarize : int -> (int -> int) -> statistics
+  val render : statistics -> string
+  val createArray : int -> int array
+  val validateArray : int array -> unit
+  val arrayForAll : ('a -> bool) -> 'a array -> bool
+  val arrayOperation : string -> int array -> 'a -> int
+  val runArray : string -> string list -> string
+  val listA : int list
+  val listB : int list
+  val comparison : string -> int -> int
+  val runComparison : string -> string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/array_iter/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+[autoloading]
+[autoloading done]
+RESULT 64:0:0:64:0
+PASS array_iter
+SUMMARY 1 checks, 0 failed

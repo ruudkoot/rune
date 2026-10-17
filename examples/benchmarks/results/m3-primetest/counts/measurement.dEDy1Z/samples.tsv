@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+primetest-lazy	normal	rune	O2	compile	0	0	pass	1.34	1.44	0.05	135240	-	-	-	primetest-lazy/rune/build/compile
+primetest-lazy	normal	rune	O2	correctness	0	0	pass	8.47	9.33	0.01	10416	1997403412	2442803600	61408500	primetest-lazy/rune/correctness.0
+primetest-lazy	normal	rune	O2	count	1	1	pass	8.33	8.82	0.02	10472	1997403412	2442803600	61408500	primetest-lazy/rune/fresh.1
+primetest-lazy	normal	rune:opt	O2	compile	0	0	pass	1.77	1.74	0.09	135208	-	-	-	primetest-lazy/rune-opt/build/compile
+primetest-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.48	0.25	0.06	12596	-	-	-	primetest-lazy/rune-opt/build/native-compile
+primetest-lazy	normal	rune:opt	O2	correctness	0	0	pass	5.54	3.37	0.01	10952	1997403412	2442803600	61408500	primetest-lazy/rune-opt/correctness.0
+primetest-lazy	normal	rune:opt	O2	count	1	1	pass	3.15	3.19	0.00	10936	1997403412	2442803600	61408500	primetest-lazy/rune-opt/fresh.1
+primetest-lazy	normal	rune:new	O2	compile	0	0	pass	1.43	1.42	0.09	135256	-	-	-	primetest-lazy/rune-new/build/compile
+primetest-lazy	normal	rune:new	O2	correctness	0	0	pass	6.02	6.63	0.00	10416	1133702856	2442803600	61408500	primetest-lazy/rune-new/correctness.0
+primetest-lazy	normal	rune:new	O2	count	1	1	pass	6.25	6.92	0.01	10400	1133702856	2442803600	61408500	primetest-lazy/rune-new/fresh.1
+primetest-lazy	normal	rune:jit	O2	compile	0	0	pass	1.51	1.56	0.11	135308	-	-	-	primetest-lazy/rune-jit/build/compile
+primetest-lazy	normal	rune:jit	O2	correctness	0	0	pass	2.19	2.41	0.01	11652	1133702856	2442803600	61408500	primetest-lazy/rune-jit/correctness.0
+primetest-lazy	normal	rune:jit	O2	count	1	1	pass	2.37	2.47	0.00	11676	1133702856	2442803600	61408500	primetest-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

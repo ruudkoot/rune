@@ -1,0 +1,5 @@
+COUNT unbudgeted pervasives_compare_lists normal rune
+COUNT unbudgeted pervasives_compare_lists normal rune:opt
+COUNT unbudgeted pervasives_compare_lists normal rune:new
+COUNT unbudgeted pervasives_compare_lists normal rune:jit
+COUNT comparisons agree

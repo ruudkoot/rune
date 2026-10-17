@@ -1,0 +1,5 @@
+{
+  "cases": 8,
+  "large_modulus_bits": 607,
+  "scope": "Exact GHC source powerMod and independent Python pow; source exponent-zero shortcut retained including modulus zero/one"
+}

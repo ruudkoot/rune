@@ -1,0 +1,1 @@
+pervasives_compare_lists	30	1048576	shared/input.sml shared/sandmark-stdlib-primitives.sml pervasives_compare_lists/benchmark.sml shared/main.sml	64	pervasives_compare_lists/smoke.expected	-

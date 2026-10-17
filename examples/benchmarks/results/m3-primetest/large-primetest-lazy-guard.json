@@ -1,0 +1,55 @@
+{
+  "command": [
+    "env",
+    "RUNE_BENCH_COMPILE_OPTIONS=-O2",
+    "make",
+    "bench-check",
+    "BENCH_PROFILE=large",
+    "BENCH_CONFIGS=rune:opt",
+    "BENCH_FILTER==primetest-lazy"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 148280,
+  "observed_minimum_available_kib": 19397752,
+  "peak_processes": [
+    {
+      "pid": 2183212,
+      "name": "sh",
+      "rss_kib": 1680
+    },
+    {
+      "pid": 2183213,
+      "name": "sh",
+      "rss_kib": 1936
+    },
+    {
+      "pid": 2183248,
+      "name": "sh",
+      "rss_kib": 1936
+    },
+    {
+      "pid": 2183283,
+      "name": "sh",
+      "rss_kib": 1144
+    },
+    {
+      "pid": 2183289,
+      "name": "timeout",
+      "rss_kib": 1796
+    },
+    {
+      "pid": 2183290,
+      "name": "runevm",
+      "rss_kib": 135092
+    },
+    {
+      "pid": 2183103,
+      "name": "make",
+      "rss_kib": 4696
+    }
+  ],
+  "elapsed_seconds": 392.1852539240499
+}
