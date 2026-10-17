@@ -75,8 +75,8 @@ XDG_STATE_HOME=$PWD/$out/state
 XDG_CONFIG_HOME=$PWD/$out/config
 export XDG_STATE_HOME XDG_CONFIG_HOME
 case ":${WSLENV:-}:" in *:XDG_STATE_HOME/p:*) ;; *) WSLENV="XDG_STATE_HOME/p:XDG_CONFIG_HOME/p:RUNE_COLORS${WSLENV:+:$WSLENV}"; export WSLENV ;; esac
-# the version the REPL's banner says (scripts/gen-version.sh: a tag or a
-# hash), which the screens write @VERSION@
+# the version the REPL's banner says (scripts/gen-version.sh: a v tag
+# without the v, or a hash), which the screens write @VERSION@
 version=$(sed -n 's/^ *val version = "\(.*\)"$/\1/p' build/config.sml)
 pass=0
 fail=0

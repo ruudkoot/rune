@@ -4,10 +4,12 @@
 # sources, into build/config.sml.
 # Usage: scripts/gen-version.sh [ROOT_DIR]
 #
-# git decides the version: the name of the tag that points at HEAD, or else
-# HEAD's abbreviated hash, with -dirty after it when a tracked file differs
-# from HEAD (untracked files do not count, as with `git describe --dirty`;
-# git leaves the index alone, which a copy of the tree may share).
+# git decides the version. A tag that points at HEAD and starts with v is a
+# release: v1.2.3 is version 1.2.3, and any other tag is ignored. Otherwise
+# the version is HEAD's abbreviated hash. -dirty follows either when a
+# tracked file differs from HEAD (untracked files do not count, as with
+# `git describe --dirty`; git leaves the index alone, which a copy of the
+# tree may share).
 # Without git or a repository (a tarball, a copy without .git) the files keep
 # the version they have, or say "unknown" when there are none; the identity
 # is worked out all the same.
@@ -23,8 +25,15 @@ root=${1:-$(pwd)}
 cd "$root"
 mkdir -p build
 
-if version=$(git describe --tags --exact-match HEAD 2> /dev/null) ||
-   version=$(git rev-parse --short HEAD 2> /dev/null); then
+if tag=$(git describe --tags --exact-match --match 'v*' HEAD 2> /dev/null) &&
+   [ -n "${tag#v}" ]; then
+  version=${tag#v}
+elif version=$(git rev-parse --short HEAD 2> /dev/null); then
+  :
+else
+  version=
+fi
+if [ -n "$version" ]; then
   status=0
   git --no-optional-locks diff --quiet HEAD -- 2> /dev/null || status=$?
   [ "$status" -ne 1 ] || version=$version-dirty

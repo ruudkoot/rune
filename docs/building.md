@@ -599,9 +599,11 @@ toolchains.
 * `runeopt.build` is the same for `runeopt`, with `src/opt`; the entry
   points are `src/main/runeopt-*-main.sml`, and the rules below hold for
   `src/opt` too.
-* The version is git's: the name of the tag that points at the commit
-  checked out, or else the commit's abbreviated hash, with `-dirty` after
-  it when a tracked file has changed. `scripts/gen-version.sh` writes it
+* The version is git's. A tag that points at the commit checked out and
+  starts with `v` is a release, and the version is the rest of its name,
+  so `v1.2.3` is `1.2.3`. Any other tag is ignored. With no such tag the
+  version is the commit's abbreviated hash. `-dirty` follows either when
+  a tracked file has changed. `scripts/gen-version.sh` writes it
   into `build/config.sml`, which every build of the four programs loads
   first, with the compiler's identity, the hash of its sources that the
   cache of compiled units keys its entries by ([units.md](units.md), *The
