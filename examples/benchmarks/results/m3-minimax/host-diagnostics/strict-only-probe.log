@@ -1,0 +1,10 @@
+PROGRAM LIMIT AS 262144 KiB
+PASS minimax/Strict/custom-player-recursive-fold
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 262144 KiB
+PASS minimax/Strict/custom-player-recursive-fold
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 262144 KiB
+PROGRAM FAIL native:mlkit@4.7.23 (load 1, exit 255)

@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+minimax-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	5.87	4.88	1.45	668688	-	-	-	minimax-lazy/native-mlton/build/compile
+minimax-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.01	0.01	0.00	2596	-	-	-	minimax-lazy/native-mlton/correctness.0
+minimax-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2592	-	-	-	minimax-lazy/native-mlton/fresh.1
+minimax-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.45	0.44	0.05	38300	-	-	-	minimax-lazy/native-smlnj-legacy/build/compile
+minimax-lazy	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.02	0.02	0.00	5444	-	-	-	minimax-lazy/native-smlnj-legacy/correctness.0
+minimax-lazy	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.02	0.01	0.01	5484	-	-	-	minimax-lazy/native-smlnj-legacy/fresh.1
+minimax-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.32	0.17	0.10	38856	-	-	-	minimax-lazy/native-polyml/build/compile
+minimax-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.03	0.02	0.02	13192	-	-	-	minimax-lazy/native-polyml/correctness.0
+minimax-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.02	0.02	0.00	13296	-	-	-	minimax-lazy/native-polyml/fresh.1

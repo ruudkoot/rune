@@ -1,0 +1,5 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+nbody-sandmark-multicore-numerical	normal	rune	O2	count	1	1	pass	0.64	0.69	0.01	10644	148519968	8572024	225067	counts/measurement.pSZSJj/nbody-sandmark-multicore-numerical/rune/fresh.1
+nbody-sandmark-multicore-numerical	normal	rune:opt	O2	count	1	1	pass	0.18	0.19	0.00	11200	148519968	8572024	225067	counts/measurement.pSZSJj/nbody-sandmark-multicore-numerical/rune-opt/fresh.1
+nbody-sandmark-multicore-numerical	normal	rune:new	O2	count	1	1	pass	0.40	0.44	0.00	11100	97707002	8572024	225067	counts/measurement.pSZSJj/nbody-sandmark-multicore-numerical/rune-new/fresh.1
+nbody-sandmark-multicore-numerical	normal	rune:jit	O2	count	1	1	pass	0.10	0.10	0.00	11928	97707002	8572024	225067	counts/measurement.pSZSJj/nbody-sandmark-multicore-numerical/rune-jit/fresh.1

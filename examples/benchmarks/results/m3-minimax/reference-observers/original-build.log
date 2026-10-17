@@ -1,0 +1,42 @@
+[1 of 7] Compiling Tree             ( Tree.hs, Tree.o )
+
+Tree.hs:16:1: warning: [-Wtabs]
+    Tab character found here, and in one further location.
+    Suggested fix: Please use spaces instead.
+   |
+16 |                      | otherwise = Branch a (map (prune (n-1)) l)
+   | ^^^^^^^^
+[2 of 7] Compiling Wins             ( Wins.hs, Wins.o )
+[3 of 7] Compiling Board            ( Board.hs, Board.o )
+
+Board.hs:11:1: warning: [-Wtabs]
+    Tab character found here, and in 16 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+11 |                         showRow r2 ++ "\n------\n" ++
+   | ^^^^^^^^
+[4 of 7] Compiling Game             ( Game.hs, Game.o )
+
+Game.hs:17:1: warning: [-Wtabs]
+    Tab character found here, and in 22 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+17 |         where
+   | ^^^^^^^^
+[5 of 7] Compiling Prog             ( Prog.hs, Prog.o )
+
+Prog.hs:11:1: warning: [-Wtabs]
+    Tab character found here, and in five further locations.
+    Suggested fix: Please use spaces instead.
+   |
+11 |         "OXO\n" ++
+   | ^^^^^^^^
+[6 of 7] Compiling Main             ( Main.hs, Main.o )
+
+Main.hs:12:1: warning: [-Wtabs]
+    Tab character found here, and in five further locations.
+    Suggested fix: Please use spaces instead.
+   |
+12 |         (n:_) <- getArgs
+   | ^^^^^^^^
+[7 of 7] Linking original [Objects changed]

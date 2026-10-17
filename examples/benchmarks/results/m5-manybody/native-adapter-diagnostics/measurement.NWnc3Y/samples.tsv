@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+nbody-sandmark-multicore-numerical	smoke	native:mlton@20241230	O2	compile	0	0	pass	5.46	4.49	1.13	669844	-	-	-	nbody-sandmark-multicore-numerical/native-mlton/build/compile
+nbody-sandmark-multicore-numerical	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2172	-	-	-	nbody-sandmark-multicore-numerical/native-mlton/correctness.0
+nbody-sandmark-multicore-numerical	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2188	-	-	-	nbody-sandmark-multicore-numerical/native-mlton/fresh.1
+nbody-sandmark-multicore-numerical	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.25	0.22	0.04	34440	-	-	-	nbody-sandmark-multicore-numerical/native-smlnj-legacy/build/compile
+nbody-sandmark-multicore-numerical	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.01	0.00	4080	-	-	-	nbody-sandmark-multicore-numerical/native-smlnj-legacy/correctness.0
+nbody-sandmark-multicore-numerical	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.01	0.00	4148	-	-	-	nbody-sandmark-multicore-numerical/native-smlnj-legacy/fresh.1
+nbody-sandmark-multicore-numerical	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.24	0.10	0.06	32104	-	-	-	nbody-sandmark-multicore-numerical/native-polyml/build/compile
+nbody-sandmark-multicore-numerical	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.01	0.00	0.00	5936	-	-	-	nbody-sandmark-multicore-numerical/native-polyml/correctness.0
+nbody-sandmark-multicore-numerical	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.01	0.00	0.00	5860	-	-	-	nbody-sandmark-multicore-numerical/native-polyml/fresh.1

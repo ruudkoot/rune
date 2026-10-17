@@ -1,0 +1,68 @@
+[
+  {
+    "board": ".O..X....",
+    "static": "Score 2",
+    "max": "XWin",
+    "min": "Score (-2)"
+  },
+  {
+    "board": "XO.XO....",
+    "static": "Score (-1)",
+    "max": "XWin",
+    "min": "OWin"
+  },
+  {
+    "board": "XOXXO.O..",
+    "static": "Score (-1)",
+    "max": "Score 0",
+    "min": "OWin"
+  },
+  {
+    "board": "XXXOO....",
+    "static": "XWin",
+    "max": "XWin",
+    "min": "XWin"
+  },
+  {
+    "board": "OOOXX....",
+    "static": "OWin",
+    "max": "OWin",
+    "min": "OWin"
+  },
+  {
+    "board": "XOXOXOXOX",
+    "static": "XWin",
+    "max": "XWin",
+    "min": "XWin"
+  },
+  {
+    "board": "XXXOOO...",
+    "static": "XWin",
+    "max": "XWin",
+    "min": "XWin"
+  },
+  {
+    "board": "OOOXXX...",
+    "static": "OWin",
+    "max": "OWin",
+    "min": "OWin"
+  },
+  {
+    "board": ".XO.OXX..",
+    "static": "Score 0",
+    "max": "Score 2",
+    "min": "Score 0"
+  },
+  {
+    "board": "XX.OO....",
+    "static": "Score (-1)",
+    "max": "XWin",
+    "min": "OWin"
+  },
+  {
+    "board": "X.O.O.X..",
+    "static": "Score (-1)",
+    "max": "XWin",
+    "min": "Score (-4)"
+  }
+]

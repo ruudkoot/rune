@@ -1,0 +1,29 @@
+{
+  "command": [
+    "timeout",
+    "600",
+    "bin/runevm",
+    "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/minimax-originals/one-pilot.rbc",
+    "strict",
+    "100"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 1048576,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 12144,
+  "observed_minimum_available_kib": 21110472,
+  "peak_processes": [
+    {
+      "pid": 1919440,
+      "name": "timeout",
+      "rss_kib": 1796
+    },
+    {
+      "pid": 1919442,
+      "name": "runevm",
+      "rss_kib": 10348
+    }
+  ],
+  "elapsed_seconds": 32.76672398700612
+}

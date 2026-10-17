@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-minimax-parallel.0whjo851
+PASS minimax-lazy smoke O2
+PASS minimax-lazy smoke O0
+PASS minimax-lazy smoke hosts
+PASS minimax-lazy normal O0
+PASS minimax-lazy normal O2
+PASS minimax-strict smoke O0
+PASS minimax-strict smoke O2
+PASS minimax-lazy normal hosts
+PASS minimax-strict smoke hosts
+PASS minimax-strict normal O2
+PASS minimax-strict normal hosts
+PASS minimax-strict normal O0

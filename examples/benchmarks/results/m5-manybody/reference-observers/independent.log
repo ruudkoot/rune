@@ -1,0 +1,53 @@
+{
+  "scope": "Separate Python binary64 generator/ordered-pair/energy model; default seed words retained from pinned OCaml derivation; full original large integration is reference-only here",
+  "profiles": [
+    {
+      "profile": "one",
+      "numbers": 9,
+      "maximum_scaled_difference": 0.0,
+      "exact_binary64_matches": 9
+    },
+    {
+      "profile": "small-zero",
+      "numbers": 30,
+      "maximum_scaled_difference": 0.0,
+      "exact_binary64_matches": 30
+    },
+    {
+      "profile": "small-one",
+      "numbers": 30,
+      "maximum_scaled_difference": 0.0,
+      "exact_binary64_matches": 30
+    },
+    {
+      "profile": "small-two",
+      "numbers": 30,
+      "maximum_scaled_difference": 0.0,
+      "exact_binary64_matches": 30
+    },
+    {
+      "profile": "smoke",
+      "numbers": 114,
+      "maximum_scaled_difference": 0.0,
+      "exact_binary64_matches": 114
+    },
+    {
+      "profile": "normal",
+      "numbers": 1794,
+      "maximum_scaled_difference": 0.0,
+      "exact_binary64_matches": 1794
+    },
+    {
+      "profile": "normal-zero",
+      "numbers": 1794,
+      "maximum_scaled_difference": 0.0,
+      "exact_binary64_matches": 1794
+    },
+    {
+      "profile": "large-zero",
+      "numbers": 7170,
+      "maximum_scaled_difference": 0.0,
+      "exact_binary64_matches": 7170
+    }
+  ]
+}

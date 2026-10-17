@@ -1,0 +1,1 @@
+minimax-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/nofib-minimax.sml shared/nofib-minimax-driver.sml minimax-lazy/benchmark.sml shared/main.sml	100 game.txt	minimax-lazy/normal.expected	game.txt

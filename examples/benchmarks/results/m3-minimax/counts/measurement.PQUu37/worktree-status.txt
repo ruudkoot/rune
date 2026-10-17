@@ -1,0 +1,15 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/minimax-lazy/
+?? examples/benchmarks/minimax-strict/
+?? examples/benchmarks/nbody-sandmark-multicore-numerical/
+?? examples/benchmarks/shared/nofib-minimax-driver.sml
+?? examples/benchmarks/shared/nofib-minimax.sml
+?? examples/benchmarks/shared/sandmark-manybody-check.sml
+?? examples/benchmarks/shared/sandmark-manybody.sml
+?? tests/benchmarks/check-manybody.sh
+?? tests/benchmarks/check-minimax.sh
+?? tests/benchmarks/data/manybody/
+?? tests/benchmarks/data/minimax/
+?? tests/benchmarks/manybody-tests.sml
+?? tests/benchmarks/minimax-tests.sml

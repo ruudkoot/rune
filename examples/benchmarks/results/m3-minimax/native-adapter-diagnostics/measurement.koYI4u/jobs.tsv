@@ -1,0 +1,1 @@
+minimax-strict	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/nofib-minimax.sml shared/nofib-minimax-driver.sml minimax-strict/benchmark.sml shared/main.sml	1 game.txt	minimax-strict/smoke.expected	game.txt

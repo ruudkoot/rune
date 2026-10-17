@@ -1,0 +1,3 @@
+RESULT 20:256:1794
+PASS nbody-sandmark-multicore-numerical
+SUMMARY 1 checks, 0 failed

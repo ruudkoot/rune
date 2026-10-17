@@ -1,0 +1,9 @@
+{'profile': 'one', 'steps': 0, 'bodies': 1, 'stdout': ['57344750788.077613831', '57344750788.077613831'], 'state_numbers': 7}
+{'profile': 'small-zero', 'steps': 0, 'bodies': 4, 'stdout': ['437996430988.389526367', '437996430988.389526367'], 'state_numbers': 28}
+{'profile': 'small-one', 'steps': 1, 'bodies': 4, 'stdout': ['437996430988.389526367', '437994509148.212463379'], 'state_numbers': 28}
+{'profile': 'small-two', 'steps': 2, 'bodies': 4, 'stdout': ['437996430988.389526367', '437994503242.518371582'], 'state_numbers': 28}
+{'profile': 'smoke', 'steps': 1, 'bodies': 16, 'stdout': ['2848626989245.385253906', '2848626677985.253906250'], 'state_numbers': 112}
+{'profile': 'normal', 'steps': 20, 'bodies': 256, 'stdout': ['609994224186964.375000000', '610009460034242.250000000'], 'state_numbers': 1792}
+{'profile': 'large', 'steps': 500, 'bodies': 1024, 'stdout': ['10745700105646788.000000000', '10745765317385048.000000000'], 'state_numbers': 7168}
+{'profile': 'normal-zero', 'steps': 0, 'bodies': 256, 'stdout': ['609994224186964.375000000', '609994224186964.375000000'], 'state_numbers': 1792}
+{'profile': 'large-zero', 'steps': 0, 'bodies': 1024, 'stdout': ['10745700105646788.000000000', '10745700105646788.000000000'], 'state_numbers': 7168}

@@ -1,0 +1,5 @@
+COUNT unbudgeted nbody-sandmark-multicore-numerical normal rune
+COUNT unbudgeted nbody-sandmark-multicore-numerical normal rune:opt
+COUNT unbudgeted nbody-sandmark-multicore-numerical normal rune:new
+COUNT unbudgeted nbody-sandmark-multicore-numerical normal rune:jit
+COUNT comparisons agree

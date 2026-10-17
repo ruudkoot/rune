@@ -1,0 +1,636 @@
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 100:19400
+PASS minimax-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-minimax.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-minimax.sml:100.19 Warning: calling polyEqual
+functor BenchMinimaxFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a seq
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val ofList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val concat :
+      'a <BaseFct>.<resultStr>.node D.t <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val map2 :
+      ('a * 'b -> 'c)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+  val nth : 'a <BaseFct>.<resultStr>.node D.t -> int -> 'a
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a <BaseFct>.<resultStr>.node D.t -> 'b
+  val foldr :
+      ('a * 'b D.t -> 'b)
+       -> 'b D.t -> 'a <BaseFct>.<resultStr>.node D.t -> 'b D.t
+  val all : ('a -> bool) -> 'a <BaseFct>.<resultStr>.node D.t -> bool
+  type piece
+  type evaluation
+  type row
+  type board
+  type 'a tree
+  val opposite : <BaseFct>.<resultStr>.piece -> <BaseFct>.<resultStr>.piece
+  val range3 : unit -> int <BaseFct>.<resultStr>.node D.t
+  val positions : unit -> (int * int) <BaseFct>.<resultStr>.node D.t
+  val wins :
+      int <BaseFct>.<resultStr>.node D.t <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t
+  val board :
+      'a list list
+       -> 'a <BaseFct>.<resultStr>.node D.t <BaseFct>.<resultStr>.node D.t
+  val initial :
+      unit
+       -> <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t
+  val testBoard :
+      unit
+       -> <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t
+  val conjunction : bool <BaseFct>.<resultStr>.node D.t -> bool
+  val full :
+      <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t
+       -> bool
+  val three : 'a <BaseFct>.<resultStr>.node D.t -> 'a D.t * 'a D.t * 'a D.t
+  val refs : 'a D.t * 'a D.t * 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val replace :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val select3 : 'a D.t * 'a D.t * 'a D.t -> int -> 'a
+  val cell :
+      'a <BaseFct>.<resultStr>.node D.t <BaseFct>.<resultStr>.node D.t
+       -> int * int -> 'a
+  val place :
+      <BaseFct>.<resultStr>.piece
+       -> <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t
+       -> int * int
+       -> <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+               <BaseFct>.<resultStr>.node D.t <BaseFct>.<resultStr>.node D.t
+  val newPositions :
+      <BaseFct>.<resultStr>.piece
+       -> <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+               <BaseFct>.<resultStr>.node D.t <BaseFct>.<resultStr>.node D.t
+  val eval : int -> <BaseFct>.<resultStr>.evaluation
+  val scorePiece : <BaseFct>.<resultStr>.piece * int -> int
+  val sum : int <BaseFct>.<resultStr>.node D.t -> int
+  val score :
+      <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t
+       -> int <BaseFct>.<resultStr>.node D.t <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.evaluation
+  val static :
+      <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.evaluation
+  val maximum :
+      <BaseFct>.<resultStr>.evaluation
+       -> <BaseFct>.<resultStr>.evaluation D.t
+       -> <BaseFct>.<resultStr>.evaluation
+  val minimum :
+      <BaseFct>.<resultStr>.evaluation
+       -> <BaseFct>.<resultStr>.evaluation D.t
+       -> <BaseFct>.<resultStr>.evaluation
+  val repeatTree :
+      ('a -> 'a <BaseFct>.<resultStr>.node D.t)
+       -> ('a -> 'a <BaseFct>.<resultStr>.node D.t)
+       -> 'a -> 'a <BaseFct>.<resultStr>.tree D.t
+  val repTree :
+      <BaseFct>.<resultStr>.piece
+       -> <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+               <BaseFct>.<resultStr>.node D.t <BaseFct>.<resultStr>.tree D.t
+  val prune :
+      int
+       -> 'a <BaseFct>.<resultStr>.tree D.t
+       -> 'a <BaseFct>.<resultStr>.tree D.t
+  val mapTree :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.tree D.t
+       -> 'b <BaseFct>.<resultStr>.tree D.t
+  val cropTree :
+      <BaseFct>.<resultStr>.evaluation <BaseFct>.<resultStr>.tree D.t
+       -> <BaseFct>.<resultStr>.evaluation <BaseFct>.<resultStr>.tree D.t
+  val mise :
+      (<BaseFct>.<resultStr>.evaluation
+        -> <BaseFct>.<resultStr>.evaluation D.t
+        -> <BaseFct>.<resultStr>.evaluation)
+       -> (<BaseFct>.<resultStr>.evaluation
+        -> <BaseFct>.<resultStr>.evaluation D.t
+        -> <BaseFct>.<resultStr>.evaluation)
+       -> <BaseFct>.<resultStr>.evaluation <BaseFct>.<resultStr>.tree D.t
+       -> <BaseFct>.<resultStr>.evaluation
+  val bestMove :
+      <BaseFct>.<resultStr>.piece
+       -> (<BaseFct>.<resultStr>.evaluation
+        -> <BaseFct>.<resultStr>.evaluation D.t
+        -> <BaseFct>.<resultStr>.evaluation)
+       -> (<BaseFct>.<resultStr>.evaluation
+        -> <BaseFct>.<resultStr>.evaluation D.t
+        -> <BaseFct>.<resultStr>.evaluation)
+       -> <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.evaluation
+  val best :
+      (''a -> ''a D.t -> ''a)
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> ''a <BaseFct>.<resultStr>.node D.t -> 'b * ''a
+  val alternate :
+      <BaseFct>.<resultStr>.piece
+       -> (<BaseFct>.<resultStr>.evaluation
+        -> <BaseFct>.<resultStr>.evaluation D.t
+        -> <BaseFct>.<resultStr>.evaluation)
+       -> (<BaseFct>.<resultStr>.evaluation
+        -> <BaseFct>.<resultStr>.evaluation D.t
+        -> <BaseFct>.<resultStr>.evaluation)
+       -> <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t
+       -> (<BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+                <BaseFct>.<resultStr>.node D.t
+            * <BaseFct>.<resultStr>.evaluation) <BaseFct>.<resultStr>.node D.t
+  val showPiece : <BaseFct>.<resultStr>.piece -> string
+  val showRow :
+      <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t -> string
+  val showBoard :
+      <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t
+       -> string
+  val showEvaluation : <BaseFct>.<resultStr>.evaluation -> string
+  val showMove :
+      <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t * <BaseFct>.<resultStr>.evaluation
+       -> string
+  val prog : string -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-minimax-driver.sml]
+[autoloading]
+[autoloading done]
+functor BenchMinimaxDriverFn(K: sig
+  val prog : string -> string
+end) :
+sig
+  val read : string -> TextIO.vector
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/minimax-lazy/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 100:19400
+PASS minimax-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-minimax.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-minimax.sml:100.19 Warning: calling polyEqual
+functor BenchMinimaxFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a seq
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val ofList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val concat :
+      'a <BaseFct>.<resultStr>.node D.t <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val map2 :
+      ('a * 'b -> 'c)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+  val nth : 'a <BaseFct>.<resultStr>.node D.t -> int -> 'a
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a <BaseFct>.<resultStr>.node D.t -> 'b
+  val foldr :
+      ('a * 'b D.t -> 'b)
+       -> 'b D.t -> 'a <BaseFct>.<resultStr>.node D.t -> 'b D.t
+  val all : ('a -> bool) -> 'a <BaseFct>.<resultStr>.node D.t -> bool
+  type piece
+  type evaluation
+  type row
+  type board
+  type 'a tree
+  val opposite : <BaseFct>.<resultStr>.piece -> <BaseFct>.<resultStr>.piece
+  val range3 : unit -> int <BaseFct>.<resultStr>.node D.t
+  val positions : unit -> (int * int) <BaseFct>.<resultStr>.node D.t
+  val wins :
+      int <BaseFct>.<resultStr>.node D.t <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t
+  val board :
+      'a list list
+       -> 'a <BaseFct>.<resultStr>.node D.t <BaseFct>.<resultStr>.node D.t
+  val initial :
+      unit
+       -> <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t
+  val testBoard :
+      unit
+       -> <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t
+  val conjunction : bool <BaseFct>.<resultStr>.node D.t -> bool
+  val full :
+      <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t
+       -> bool
+  val three : 'a <BaseFct>.<resultStr>.node D.t -> 'a D.t * 'a D.t * 'a D.t
+  val refs : 'a D.t * 'a D.t * 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val replace :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val select3 : 'a D.t * 'a D.t * 'a D.t -> int -> 'a
+  val cell :
+      'a <BaseFct>.<resultStr>.node D.t <BaseFct>.<resultStr>.node D.t
+       -> int * int -> 'a
+  val place :
+      <BaseFct>.<resultStr>.piece
+       -> <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t
+       -> int * int
+       -> <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+               <BaseFct>.<resultStr>.node D.t <BaseFct>.<resultStr>.node D.t
+  val newPositions :
+      <BaseFct>.<resultStr>.piece
+       -> <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+               <BaseFct>.<resultStr>.node D.t <BaseFct>.<resultStr>.node D.t
+  val eval : int -> <BaseFct>.<resultStr>.evaluation
+  val scorePiece : <BaseFct>.<resultStr>.piece * int -> int
+  val sum : int <BaseFct>.<resultStr>.node D.t -> int
+  val score :
+      <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t
+       -> int <BaseFct>.<resultStr>.node D.t <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.evaluation
+  val static :
+      <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.evaluation
+  val maximum :
+      <BaseFct>.<resultStr>.evaluation
+       -> <BaseFct>.<resultStr>.evaluation D.t
+       -> <BaseFct>.<resultStr>.evaluation
+  val minimum :
+      <BaseFct>.<resultStr>.evaluation
+       -> <BaseFct>.<resultStr>.evaluation D.t
+       -> <BaseFct>.<resultStr>.evaluation
+  val repeatTree :
+      ('a -> 'a <BaseFct>.<resultStr>.node D.t)
+       -> ('a -> 'a <BaseFct>.<resultStr>.node D.t)
+       -> 'a -> 'a <BaseFct>.<resultStr>.tree D.t
+  val repTree :
+      <BaseFct>.<resultStr>.piece
+       -> <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+               <BaseFct>.<resultStr>.node D.t <BaseFct>.<resultStr>.tree D.t
+  val prune :
+      int
+       -> 'a <BaseFct>.<resultStr>.tree D.t
+       -> 'a <BaseFct>.<resultStr>.tree D.t
+  val mapTree :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.tree D.t
+       -> 'b <BaseFct>.<resultStr>.tree D.t
+  val cropTree :
+      <BaseFct>.<resultStr>.evaluation <BaseFct>.<resultStr>.tree D.t
+       -> <BaseFct>.<resultStr>.evaluation <BaseFct>.<resultStr>.tree D.t
+  val mise :
+      (<BaseFct>.<resultStr>.evaluation
+        -> <BaseFct>.<resultStr>.evaluation D.t
+        -> <BaseFct>.<resultStr>.evaluation)
+       -> (<BaseFct>.<resultStr>.evaluation
+        -> <BaseFct>.<resultStr>.evaluation D.t
+        -> <BaseFct>.<resultStr>.evaluation)
+       -> <BaseFct>.<resultStr>.evaluation <BaseFct>.<resultStr>.tree D.t
+       -> <BaseFct>.<resultStr>.evaluation
+  val bestMove :
+      <BaseFct>.<resultStr>.piece
+       -> (<BaseFct>.<resultStr>.evaluation
+        -> <BaseFct>.<resultStr>.evaluation D.t
+        -> <BaseFct>.<resultStr>.evaluation)
+       -> (<BaseFct>.<resultStr>.evaluation
+        -> <BaseFct>.<resultStr>.evaluation D.t
+        -> <BaseFct>.<resultStr>.evaluation)
+       -> <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.evaluation
+  val best :
+      (''a -> ''a D.t -> ''a)
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> ''a <BaseFct>.<resultStr>.node D.t -> 'b * ''a
+  val alternate :
+      <BaseFct>.<resultStr>.piece
+       -> (<BaseFct>.<resultStr>.evaluation
+        -> <BaseFct>.<resultStr>.evaluation D.t
+        -> <BaseFct>.<resultStr>.evaluation)
+       -> (<BaseFct>.<resultStr>.evaluation
+        -> <BaseFct>.<resultStr>.evaluation D.t
+        -> <BaseFct>.<resultStr>.evaluation)
+       -> <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t
+       -> (<BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+                <BaseFct>.<resultStr>.node D.t
+            * <BaseFct>.<resultStr>.evaluation) <BaseFct>.<resultStr>.node D.t
+  val showPiece : <BaseFct>.<resultStr>.piece -> string
+  val showRow :
+      <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t -> string
+  val showBoard :
+      <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t
+       -> string
+  val showEvaluation : <BaseFct>.<resultStr>.evaluation -> string
+  val showMove :
+      <BaseFct>.<resultStr>.piece <BaseFct>.<resultStr>.node D.t 
+           <BaseFct>.<resultStr>.node D.t * <BaseFct>.<resultStr>.evaluation
+       -> string
+  val prog : string -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-minimax-driver.sml]
+[autoloading]
+[autoloading done]
+functor BenchMinimaxDriverFn(K: sig
+  val prog : string -> string
+end) :
+sig
+  val read : string -> TextIO.vector
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/minimax-lazy/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 100:19400
+PASS minimax-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-minimax.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-minimax.sml:100.19 Warning: calling polyEqual
+functor BenchMinimaxFn(D: sig
+                          type 'a t
+                          val delay : (unit -> 'a) -> 'a t
+                          val force : 'a t -> 'a
+                        end) :
+                      
+                        sig
+                          type 'a node
+                          type 'a seq
+                          val empty : unit -> 'a node D.t
+                          val ofList : 'a list -> 'a node D.t
+                          val map : ('a -> 'b) -> 'a node D.t -> 'b node D.t
+                          val append : 'a node D.t
+                                        -> 'a node D.t -> 'a node D.t
+                          val concat : 'a node D.t node D.t -> 'a node D.t
+                          val map2 : ('a * 'b -> 'c)
+                                      -> 'a node D.t
+                                      -> 'b node D.t -> 'c node D.t
+                          val nth : 'a node D.t -> int -> 'a
+                          val foldl : ('a * 'b -> 'b)
+                                       -> 'b -> 'a node D.t -> 'b
+                          val foldr : ('a * 'b D.t -> 'b)
+                                       -> 'b D.t -> 'a node D.t -> 'b D.t
+                          val all : ('a -> bool) -> 'a node D.t -> bool
+                          type piece
+                          type evaluation
+                          type row
+                          type board
+                          type 'a tree
+                          val opposite : piece -> piece
+                          val range3 : unit -> int node D.t
+                          val positions : unit -> (int * int) node D.t
+                          val wins : int node D.t node D.t node D.t
+                          val board : 'a list list -> 'a node D.t node D.t
+                          val initial : unit -> piece node D.t node D.t
+                          val testBoard : unit -> piece node D.t node D.t
+                          val conjunction : bool node D.t -> bool
+                          val full : piece node D.t node D.t -> bool
+                          val three : 'a node D.t -> 'a D.t * 'a D.t * 'a D.t
+                          val refs : 'a D.t * 'a D.t * 'a D.t -> 'a node D.t
+                          val replace : 'a node D.t
+                                         -> int -> 'a D.t -> 'a node D.t
+                          val select3 : 'a D.t * 'a D.t * 'a D.t -> int -> 'a
+                          val cell : 'a node D.t node D.t -> int * int -> 'a
+                          val place : piece
+                                       -> piece node D.t node D.t
+                                       -> int * int
+                                       -> piece node D.t node D.t node D.t
+                          val newPositions : piece
+                                              -> piece node D.t node D.t
+                                              -> piece node D.t node D.t node 
+                                                D.t
+                          val eval : int -> evaluation
+                          val scorePiece : piece * int -> int
+                          val sum : int node D.t -> int
+                          val score : piece node D.t node D.t
+                                       -> int node D.t node D.t -> evaluation
+                          val static : piece node D.t node D.t -> evaluation
+                          val maximum : evaluation
+                                         -> evaluation D.t -> evaluation
+                          val minimum : evaluation
+                                         -> evaluation D.t -> evaluation
+                          val repeatTree : ('a -> 'a node D.t)
+                                            -> ('a -> 'a node D.t)
+                                            -> 'a -> 'a tree D.t
+                          val repTree : piece
+                                         -> piece node D.t node D.t
+                                         -> piece node D.t node D.t tree D.t
+                          val prune : int -> 'a tree D.t -> 'a tree D.t
+                          val mapTree : ('a -> 'b)
+                                         -> 'a tree D.t -> 'b tree D.t
+                          val cropTree : evaluation tree D.t
+                                          -> evaluation tree D.t
+                          val mise : (evaluation
+                                       -> evaluation D.t -> evaluation)
+                                      -> (evaluation
+                                       -> evaluation D.t -> evaluation)
+                                      -> evaluation tree D.t -> evaluation
+                          val bestMove : piece
+                                          -> (evaluation
+                                           -> evaluation D.t -> evaluation)
+                                          -> (evaluation
+                                           -> evaluation D.t -> evaluation)
+                                          -> piece node D.t node D.t
+                                          -> evaluation
+                          val best : (''a -> ''a D.t -> ''a)
+                                      -> 'b node D.t
+                                      -> ''a node D.t -> 'b * ''a
+                          val alternate : piece
+                                           -> (evaluation
+                                            -> evaluation D.t -> evaluation)
+                                           -> (evaluation
+                                            -> evaluation D.t -> evaluation)
+                                           -> piece node D.t node D.t
+                                           -> (piece node D.t node D.t
+                                                * evaluation) node D.t
+                          val showPiece : piece -> string
+                          val showRow : piece node D.t -> string
+                          val showBoard : piece node D.t node D.t -> string
+                          val showEvaluation : evaluation -> string
+                          val showMove : piece node D.t node D.t * evaluation
+                                          -> string
+                          val prog : string -> string
+                        end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-minimax-driver.sml]
+functor BenchMinimaxDriverFn(K: sig val prog : string -> string end) :
+                            
+                              sig
+                                val read : string -> TextIO.vector
+                                val run : string list -> string
+                              end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/minimax-lazy/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Kernel : <sig>
+    structure Driver : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 100:19400
+PASS minimax-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+RESULT 100:19400
+PASS minimax-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 100:19400
+PASS minimax-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

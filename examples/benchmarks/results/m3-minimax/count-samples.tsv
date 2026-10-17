@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+minimax-lazy	normal	rune	O2	count	1	1	pass	4.75	5.18	0.00	10484	974009066	2452412368	76280196	counts/measurement.PQUu37/minimax-lazy/rune/fresh.1
+minimax-lazy	normal	rune:opt	O2	count	1	1	pass	3.83	2.42	0.00	10972	974009066	2452412368	76280196	counts/measurement.PQUu37/minimax-lazy/rune-opt/fresh.1
+minimax-lazy	normal	rune:new	O2	count	1	1	pass	4.11	4.34	0.01	10548	558072978	2452412368	76280196	counts/measurement.PQUu37/minimax-lazy/rune-new/fresh.1
+minimax-lazy	normal	rune:jit	O2	count	1	1	pass	1.80	1.95	0.00	11756	558072978	2452412368	76280196	counts/measurement.PQUu37/minimax-lazy/rune-jit/fresh.1
+minimax-strict	normal	rune	O2	count	1	1	pass	32.11	32.10	0.01	10468	9004111933	13190403584	318934258	counts/measurement.CGYouv/minimax-strict/rune/fresh.1
+minimax-strict	normal	rune:opt	O2	count	1	1	pass	14.30	12.88	0.02	10920	9004111933	13190403584	318934258	counts/measurement.CGYouv/minimax-strict/rune-opt/fresh.1
+minimax-strict	normal	rune:new	O2	count	1	1	pass	24.74	26.30	0.02	10492	4568468328	13190403584	318934258	counts/measurement.CGYouv/minimax-strict/rune-new/fresh.1
+minimax-strict	normal	rune:jit	O2	count	1	1	pass	9.35	10.17	0.03	11788	4568468328	13190403584	318934258	counts/measurement.CGYouv/minimax-strict/rune-jit/fresh.1

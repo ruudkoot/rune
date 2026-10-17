@@ -1,0 +1,15 @@
+[
+  {
+    "executable": "benchmarks/multicore-numerical/nbody.exe",
+    "name": "nbody",
+    "tags": [
+      "macro_bench"
+    ],
+    "runs": [
+      {
+        "params": "128 8192",
+        "paramwrapper": "taskset --cpu-list 4"
+      }
+    ]
+  }
+]

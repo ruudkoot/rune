@@ -1,0 +1,3 @@
+cases.stdout
+game.txt
+wrong.txt

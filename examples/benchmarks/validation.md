@@ -2185,3 +2185,53 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 identical bytecode comparisons across seven builds. runedoc
 and runeopt also agree. [The complete transcript](validation/oct17-exact-reals-961-acceptance.log)
 records the run.
+
+## M3 minimax and M5 sequential many-body wave — 2026-10-17
+
+Three programs bring the catalogue to 326 programs and 970 profiles. All 84
+canonical smoke/normal cases pass: [56 minimax cases](results/m3-minimax/coverage.tsv)
+and [28 many-body cases](results/m5-manybody/coverage.tsv), across Rune's four
+engines at O0/O2 and six native hosts at compiler defaults. Twelve normal count
+samples agree under execution-model rules, including allocation across all Rune
+engines. Existing budgets remain unchanged. Nine serial single fresh-process
+native smoke samples validate adapters separately from instrumentation and
+headline comparisons.
+
+Minimax preserves depth-five game-tree construction/pruning/scoring/cropping,
+row-major moves, first-board ties, ordered winning masks, mapped Boolean lists,
+fresh position comprehensions and higher-order player functions. Lazy short
+circuiting and eager finite tree construction remain distinct. GHC and a separate
+position evaluator agree on the complete 194-character game and eleven varied
+static/max/min analyses. Final-source Rune O2 pilots validate all 100 normal
+games; the 180000/1800000/9000000 original repeat counts remain documented.
+Whole large SML validation is unrecorded.
+
+Eighteen minimax auxiliary invocations pass all 96 assertions. Both ML Kit
+invocations pass 90 before an allocation error leaves six checks unreached:
+1908 passed assertions, zero failed assertions, twelve unreached, and two
+runtime-failure statuses. [The host note](validation/minimax-host-results.md)
+records a three-node full-functor reproduction at a 256-MiB cap and passing
+controls. Its cause remains unreduced; neither the source nor the valid test
+is changed to hide it. All primary ML Kit benchmark cases pass.
+
+Many-body uses the distinct random-body ordered-pair kernel, retaining the
+source's solar-mass offset denominator and right-to-left initializer draws.
+All 49 checks pass in every invocation (980 assertions), including perturbations
+of every four-body fixture component, length/nonfinite rejection, an analytic
+step, offset behavior and fresh state. Original OCaml/observers agree on nine
+cases, including default 500/1024 large input. A separate generator/simulator
+agrees exactly on checked initial/small/smoke/normal numbers. Bounds are
+absolute 1e-9 plus relative 1e-11 for both energies and every final field.
+Whole large SML integration is unrecorded.
+
+[Minimax evidence](results/m3-minimax/README.md) and [many-body evidence](results/m5-manybody/README.md)
+retain complete attempts, count samples, original/independent references,
+source identities, diagnostic failures and resource guards. Individual notices,
+pins, input origins, variants and every adaptation are documented. M3 and M5
+remain in progress.
+
+Full DEBUGINFOD_URLS= make JOBS=4 check exits 0 with 970 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 identical bytecode comparisons across seven builds. runedoc
+and runeopt also agree. [The complete transcript](validation/oct17-minimax-manybody-970-acceptance.log)
+records the run.

@@ -1,0 +1,919 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS manybody/source/one
+PASS manybody/source/small-zero
+PASS manybody/source/small-one
+PASS manybody/source/small-two
+PASS manybody/source/smoke
+PASS manybody/source/normal
+PASS manybody/source/normal-zero
+PASS manybody/source/large-zero
+PASS manybody/perturbed-component-0
+PASS manybody/perturbed-component-1
+PASS manybody/perturbed-component-2
+PASS manybody/perturbed-component-3
+PASS manybody/perturbed-component-4
+PASS manybody/perturbed-component-5
+PASS manybody/perturbed-component-6
+PASS manybody/perturbed-component-7
+PASS manybody/perturbed-component-8
+PASS manybody/perturbed-component-9
+PASS manybody/perturbed-component-10
+PASS manybody/perturbed-component-11
+PASS manybody/perturbed-component-12
+PASS manybody/perturbed-component-13
+PASS manybody/perturbed-component-14
+PASS manybody/perturbed-component-15
+PASS manybody/perturbed-component-16
+PASS manybody/perturbed-component-17
+PASS manybody/perturbed-component-18
+PASS manybody/perturbed-component-19
+PASS manybody/perturbed-component-20
+PASS manybody/perturbed-component-21
+PASS manybody/perturbed-component-22
+PASS manybody/perturbed-component-23
+PASS manybody/perturbed-component-24
+PASS manybody/perturbed-component-25
+PASS manybody/perturbed-component-26
+PASS manybody/perturbed-component-27
+PASS manybody/perturbed-component-28
+PASS manybody/perturbed-component-29
+PASS manybody/inside-documented-bound
+PASS manybody/short-reference-rejected
+PASS manybody/extra-reference-rejected
+PASS manybody/nan-rejected
+PASS manybody/infinite-rejected
+PASS manybody/ordered-two-body-step
+PASS manybody/source-solar-mass-offset-denominator
+PASS manybody/fresh-default-generator
+PASS manybody/fresh-body-fields
+PASS manybody/zero-bodies-rejected
+PASS manybody/negative-steps-rejected
+SUMMARY 49 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+PASS manybody/source/one
+PASS manybody/source/small-zero
+PASS manybody/source/small-one
+PASS manybody/source/small-two
+PASS manybody/source/smoke
+PASS manybody/source/normal
+PASS manybody/source/normal-zero
+PASS manybody/source/large-zero
+PASS manybody/perturbed-component-0
+PASS manybody/perturbed-component-1
+PASS manybody/perturbed-component-2
+PASS manybody/perturbed-component-3
+PASS manybody/perturbed-component-4
+PASS manybody/perturbed-component-5
+PASS manybody/perturbed-component-6
+PASS manybody/perturbed-component-7
+PASS manybody/perturbed-component-8
+PASS manybody/perturbed-component-9
+PASS manybody/perturbed-component-10
+PASS manybody/perturbed-component-11
+PASS manybody/perturbed-component-12
+PASS manybody/perturbed-component-13
+PASS manybody/perturbed-component-14
+PASS manybody/perturbed-component-15
+PASS manybody/perturbed-component-16
+PASS manybody/perturbed-component-17
+PASS manybody/perturbed-component-18
+PASS manybody/perturbed-component-19
+PASS manybody/perturbed-component-20
+PASS manybody/perturbed-component-21
+PASS manybody/perturbed-component-22
+PASS manybody/perturbed-component-23
+PASS manybody/perturbed-component-24
+PASS manybody/perturbed-component-25
+PASS manybody/perturbed-component-26
+PASS manybody/perturbed-component-27
+PASS manybody/perturbed-component-28
+PASS manybody/perturbed-component-29
+PASS manybody/inside-documented-bound
+PASS manybody/short-reference-rejected
+PASS manybody/extra-reference-rejected
+PASS manybody/nan-rejected
+PASS manybody/infinite-rejected
+PASS manybody/ordered-two-body-step
+PASS manybody/source-solar-mass-offset-denominator
+PASS manybody/fresh-default-generator
+PASS manybody/fresh-body-fields
+PASS manybody/zero-bodies-rejected
+PASS manybody/negative-steps-rejected
+SUMMARY 49 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+PASS manybody/source/one
+PASS manybody/source/small-zero
+PASS manybody/source/small-one
+PASS manybody/source/small-two
+PASS manybody/source/smoke
+PASS manybody/source/normal
+PASS manybody/source/normal-zero
+PASS manybody/source/large-zero
+PASS manybody/perturbed-component-0
+PASS manybody/perturbed-component-1
+PASS manybody/perturbed-component-2
+PASS manybody/perturbed-component-3
+PASS manybody/perturbed-component-4
+PASS manybody/perturbed-component-5
+PASS manybody/perturbed-component-6
+PASS manybody/perturbed-component-7
+PASS manybody/perturbed-component-8
+PASS manybody/perturbed-component-9
+PASS manybody/perturbed-component-10
+PASS manybody/perturbed-component-11
+PASS manybody/perturbed-component-12
+PASS manybody/perturbed-component-13
+PASS manybody/perturbed-component-14
+PASS manybody/perturbed-component-15
+PASS manybody/perturbed-component-16
+PASS manybody/perturbed-component-17
+PASS manybody/perturbed-component-18
+PASS manybody/perturbed-component-19
+PASS manybody/perturbed-component-20
+PASS manybody/perturbed-component-21
+PASS manybody/perturbed-component-22
+PASS manybody/perturbed-component-23
+PASS manybody/perturbed-component-24
+PASS manybody/perturbed-component-25
+PASS manybody/perturbed-component-26
+PASS manybody/perturbed-component-27
+PASS manybody/perturbed-component-28
+PASS manybody/perturbed-component-29
+PASS manybody/inside-documented-bound
+PASS manybody/short-reference-rejected
+PASS manybody/extra-reference-rejected
+PASS manybody/nan-rejected
+PASS manybody/infinite-rejected
+PASS manybody/ordered-two-body-step
+PASS manybody/source-solar-mass-offset-denominator
+PASS manybody/fresh-default-generator
+PASS manybody/fresh-body-fields
+PASS manybody/zero-bodies-rejected
+PASS manybody/negative-steps-rejected
+SUMMARY 49 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+PASS manybody/source/one
+PASS manybody/source/small-zero
+PASS manybody/source/small-one
+PASS manybody/source/small-two
+PASS manybody/source/smoke
+PASS manybody/source/normal
+PASS manybody/source/normal-zero
+PASS manybody/source/large-zero
+PASS manybody/perturbed-component-0
+PASS manybody/perturbed-component-1
+PASS manybody/perturbed-component-2
+PASS manybody/perturbed-component-3
+PASS manybody/perturbed-component-4
+PASS manybody/perturbed-component-5
+PASS manybody/perturbed-component-6
+PASS manybody/perturbed-component-7
+PASS manybody/perturbed-component-8
+PASS manybody/perturbed-component-9
+PASS manybody/perturbed-component-10
+PASS manybody/perturbed-component-11
+PASS manybody/perturbed-component-12
+PASS manybody/perturbed-component-13
+PASS manybody/perturbed-component-14
+PASS manybody/perturbed-component-15
+PASS manybody/perturbed-component-16
+PASS manybody/perturbed-component-17
+PASS manybody/perturbed-component-18
+PASS manybody/perturbed-component-19
+PASS manybody/perturbed-component-20
+PASS manybody/perturbed-component-21
+PASS manybody/perturbed-component-22
+PASS manybody/perturbed-component-23
+PASS manybody/perturbed-component-24
+PASS manybody/perturbed-component-25
+PASS manybody/perturbed-component-26
+PASS manybody/perturbed-component-27
+PASS manybody/perturbed-component-28
+PASS manybody/perturbed-component-29
+PASS manybody/inside-documented-bound
+PASS manybody/short-reference-rejected
+PASS manybody/extra-reference-rejected
+PASS manybody/nan-rejected
+PASS manybody/infinite-rejected
+PASS manybody/ordered-two-body-step
+PASS manybody/source-solar-mass-offset-denominator
+PASS manybody/fresh-default-generator
+PASS manybody/fresh-body-fields
+PASS manybody/zero-bodies-rejected
+PASS manybody/negative-steps-rejected
+SUMMARY 49 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 1048576 KiB
+PASS manybody/source/one
+PASS manybody/source/small-zero
+PASS manybody/source/small-one
+PASS manybody/source/small-two
+PASS manybody/source/smoke
+PASS manybody/source/normal
+PASS manybody/source/normal-zero
+PASS manybody/source/large-zero
+PASS manybody/perturbed-component-0
+PASS manybody/perturbed-component-1
+PASS manybody/perturbed-component-2
+PASS manybody/perturbed-component-3
+PASS manybody/perturbed-component-4
+PASS manybody/perturbed-component-5
+PASS manybody/perturbed-component-6
+PASS manybody/perturbed-component-7
+PASS manybody/perturbed-component-8
+PASS manybody/perturbed-component-9
+PASS manybody/perturbed-component-10
+PASS manybody/perturbed-component-11
+PASS manybody/perturbed-component-12
+PASS manybody/perturbed-component-13
+PASS manybody/perturbed-component-14
+PASS manybody/perturbed-component-15
+PASS manybody/perturbed-component-16
+PASS manybody/perturbed-component-17
+PASS manybody/perturbed-component-18
+PASS manybody/perturbed-component-19
+PASS manybody/perturbed-component-20
+PASS manybody/perturbed-component-21
+PASS manybody/perturbed-component-22
+PASS manybody/perturbed-component-23
+PASS manybody/perturbed-component-24
+PASS manybody/perturbed-component-25
+PASS manybody/perturbed-component-26
+PASS manybody/perturbed-component-27
+PASS manybody/perturbed-component-28
+PASS manybody/perturbed-component-29
+PASS manybody/inside-documented-bound
+PASS manybody/short-reference-rejected
+PASS manybody/extra-reference-rejected
+PASS manybody/nan-rejected
+PASS manybody/infinite-rejected
+PASS manybody/ordered-two-body-step
+PASS manybody/source-solar-mass-offset-denominator
+PASS manybody/fresh-default-generator
+PASS manybody/fresh-body-fields
+PASS manybody/zero-bodies-rejected
+PASS manybody/negative-steps-rejected
+SUMMARY 49 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-random.sml]
+[autoloading]
+[autoloading done]
+structure BenchOCamlRandom : sig
+  type state = {index:int ref, words:Word32.word array}
+  val defaultWords : Word32.word vector
+  val seed42Words : Word32.word vector
+  val seed512Words : Word32.word vector
+  val make : Word32.word vector -> state
+  val default : unit -> state
+  val seed42 : unit -> state
+  val seed512 : unit -> state
+  val bits : state -> int
+  val integer : state -> int -> int
+  val real : state -> real -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-nbody.sml]
+[autoloading]
+[autoloading done]
+structure BenchRecordNBody : sig
+  type body =
+    {mass:real, vx:real ref, vy:real ref, vz:real ref, x:real ref, y:real ref,
+      z:real ref}
+  val pi : real
+  val solarMass : real
+  val daysPerYear : real
+  val for : int -> int -> (int -> 'a) -> unit
+  val planet : real * real * real * real * real * real * real -> body
+  val initial : unit -> body array
+  val advance : body array -> real -> unit
+  val energy : body array -> real
+  val offset : body array -> unit
+  val state : body array -> real list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-manybody.sml]
+structure BenchManyBody : sig
+  structure N : <sig>
+  type body = body
+  val initial : int -> body array
+  val advance : body array -> real -> unit
+  val offset : body array -> unit
+  val energy : body array -> real
+  val state : body array -> real list
+  val compute : int -> int -> real list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-manybody-check.sml]
+[autoloading]
+[autoloading done]
+structure BenchManyBodyCheck : sig
+  val read : string -> real list
+  val matches : int -> real list -> real list -> bool
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/manybody-tests.sml]
+PASS manybody/source/one
+PASS manybody/source/small-zero
+PASS manybody/source/small-one
+PASS manybody/source/small-two
+PASS manybody/source/smoke
+PASS manybody/source/normal
+PASS manybody/source/normal-zero
+PASS manybody/source/large-zero
+PASS manybody/perturbed-component-0
+PASS manybody/perturbed-component-1
+PASS manybody/perturbed-component-2
+PASS manybody/perturbed-component-3
+PASS manybody/perturbed-component-4
+PASS manybody/perturbed-component-5
+PASS manybody/perturbed-component-6
+PASS manybody/perturbed-component-7
+PASS manybody/perturbed-component-8
+PASS manybody/perturbed-component-9
+PASS manybody/perturbed-component-10
+PASS manybody/perturbed-component-11
+PASS manybody/perturbed-component-12
+PASS manybody/perturbed-component-13
+PASS manybody/perturbed-component-14
+PASS manybody/perturbed-component-15
+PASS manybody/perturbed-component-16
+PASS manybody/perturbed-component-17
+PASS manybody/perturbed-component-18
+PASS manybody/perturbed-component-19
+PASS manybody/perturbed-component-20
+PASS manybody/perturbed-component-21
+PASS manybody/perturbed-component-22
+PASS manybody/perturbed-component-23
+PASS manybody/perturbed-component-24
+PASS manybody/perturbed-component-25
+PASS manybody/perturbed-component-26
+PASS manybody/perturbed-component-27
+PASS manybody/perturbed-component-28
+PASS manybody/perturbed-component-29
+PASS manybody/inside-documented-bound
+PASS manybody/short-reference-rejected
+PASS manybody/extra-reference-rejected
+PASS manybody/nan-rejected
+PASS manybody/infinite-rejected
+PASS manybody/ordered-two-body-step
+PASS manybody/source-solar-mass-offset-denominator
+PASS manybody/fresh-default-generator
+PASS manybody/fresh-body-fields
+PASS manybody/zero-bodies-rejected
+PASS manybody/negative-steps-rejected
+structure ManyBodyTests : sig
+  structure K : <sig>
+  structure C : <sig>
+  structure N : <sig>
+  val check : string * int * int -> unit
+  val reference : real list
+  val changed : 'a list -> int -> ('a -> 'a) -> 'a list
+  val body :
+      real * real * real * real * real * real * real -> BenchManyBody.body
+  val close : real * real -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 49 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-random.sml]
+[autoloading]
+[autoloading done]
+structure BenchOCamlRandom : sig
+  type state = {index:int ref, words:Word32.word array}
+  val defaultWords : Word32.word vector
+  val seed42Words : Word32.word vector
+  val seed512Words : Word32.word vector
+  val make : Word32.word vector -> state
+  val default : unit -> state
+  val seed42 : unit -> state
+  val seed512 : unit -> state
+  val bits : state -> int
+  val integer : state -> int -> int
+  val real : state -> real -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-nbody.sml]
+[autoloading]
+[autoloading done]
+structure BenchRecordNBody : sig
+  type body =
+    {mass:real, vx:real ref, vy:real ref, vz:real ref, x:real ref, y:real ref,
+      z:real ref}
+  val pi : real
+  val solarMass : real
+  val daysPerYear : real
+  val for : int -> int -> (int -> 'a) -> unit
+  val planet : real * real * real * real * real * real * real -> body
+  val initial : unit -> body array
+  val advance : body array -> real -> unit
+  val energy : body array -> real
+  val offset : body array -> unit
+  val state : body array -> real list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-manybody.sml]
+structure BenchManyBody : sig
+  structure N : <sig>
+  type body = body
+  val initial : int -> body array
+  val advance : body array -> real -> unit
+  val offset : body array -> unit
+  val energy : body array -> real
+  val state : body array -> real list
+  val compute : int -> int -> real list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-manybody-check.sml]
+[autoloading]
+[autoloading done]
+structure BenchManyBodyCheck : sig
+  val read : string -> real list
+  val matches : int -> real list -> real list -> bool
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/manybody-tests.sml]
+PASS manybody/source/one
+PASS manybody/source/small-zero
+PASS manybody/source/small-one
+PASS manybody/source/small-two
+PASS manybody/source/smoke
+PASS manybody/source/normal
+PASS manybody/source/normal-zero
+PASS manybody/source/large-zero
+PASS manybody/perturbed-component-0
+PASS manybody/perturbed-component-1
+PASS manybody/perturbed-component-2
+PASS manybody/perturbed-component-3
+PASS manybody/perturbed-component-4
+PASS manybody/perturbed-component-5
+PASS manybody/perturbed-component-6
+PASS manybody/perturbed-component-7
+PASS manybody/perturbed-component-8
+PASS manybody/perturbed-component-9
+PASS manybody/perturbed-component-10
+PASS manybody/perturbed-component-11
+PASS manybody/perturbed-component-12
+PASS manybody/perturbed-component-13
+PASS manybody/perturbed-component-14
+PASS manybody/perturbed-component-15
+PASS manybody/perturbed-component-16
+PASS manybody/perturbed-component-17
+PASS manybody/perturbed-component-18
+PASS manybody/perturbed-component-19
+PASS manybody/perturbed-component-20
+PASS manybody/perturbed-component-21
+PASS manybody/perturbed-component-22
+PASS manybody/perturbed-component-23
+PASS manybody/perturbed-component-24
+PASS manybody/perturbed-component-25
+PASS manybody/perturbed-component-26
+PASS manybody/perturbed-component-27
+PASS manybody/perturbed-component-28
+PASS manybody/perturbed-component-29
+PASS manybody/inside-documented-bound
+PASS manybody/short-reference-rejected
+PASS manybody/extra-reference-rejected
+PASS manybody/nan-rejected
+PASS manybody/infinite-rejected
+PASS manybody/ordered-two-body-step
+PASS manybody/source-solar-mass-offset-denominator
+PASS manybody/fresh-default-generator
+PASS manybody/fresh-body-fields
+PASS manybody/zero-bodies-rejected
+PASS manybody/negative-steps-rejected
+structure ManyBodyTests : sig
+  structure K : <sig>
+  structure C : <sig>
+  structure N : <sig>
+  val check : string * int * int -> unit
+  val reference : real list
+  val changed : 'a list -> int -> ('a -> 'a) -> 'a list
+  val body :
+      real * real * real * real * real * real * real -> BenchManyBody.body
+  val close : real * real -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 49 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-random.sml]
+structure BenchOCamlRandom : 
+  sig
+    type state = {index:int ref, words:Word32.word array}
+    val defaultWords : Word32.word vector
+    val seed42Words : Word32.word vector
+    val seed512Words : Word32.word vector
+    val make : Word32.word vector -> state
+    val default : unit -> state
+    val seed42 : unit -> state
+    val seed512 : unit -> state
+    val bits : state -> int
+    val integer : state -> int -> int
+    val real : state -> real -> real
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-nbody.sml]
+structure BenchRecordNBody : 
+  sig
+    type body =
+      {mass:real, vx:real ref, vy:real ref, vz:real ref, x:real ref,
+        y:real ref, z:real ref}
+    val pi : real
+    val solarMass : real
+    val daysPerYear : real
+    val for : int -> int -> (int -> 'a) -> unit
+    val planet : real * real * real * real * real * real * real -> body
+    val initial : unit -> body array
+    val advance : body array -> real -> unit
+    val energy : body array -> real
+    val offset : body array -> unit
+    val state : body array -> real list
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-manybody.sml]
+structure BenchManyBody : 
+  sig
+    structure N : <sig>
+    type body = body
+    val initial : int -> body array
+    val advance : body array -> real -> unit
+    val offset : body array -> unit
+    val energy : body array -> real
+    val state : body array -> real list
+    val compute : int -> int -> real list
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-manybody-check.sml]
+structure BenchManyBodyCheck : 
+  sig
+    val read : string -> real list
+    val matches : int -> real list -> real list -> bool
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/manybody-tests.sml]
+PASS manybody/source/one
+PASS manybody/source/small-zero
+PASS manybody/source/small-one
+PASS manybody/source/small-two
+PASS manybody/source/smoke
+PASS manybody/source/normal
+PASS manybody/source/normal-zero
+PASS manybody/source/large-zero
+PASS manybody/perturbed-component-0
+PASS manybody/perturbed-component-1
+PASS manybody/perturbed-component-2
+PASS manybody/perturbed-component-3
+PASS manybody/perturbed-component-4
+PASS manybody/perturbed-component-5
+PASS manybody/perturbed-component-6
+PASS manybody/perturbed-component-7
+PASS manybody/perturbed-component-8
+PASS manybody/perturbed-component-9
+PASS manybody/perturbed-component-10
+PASS manybody/perturbed-component-11
+PASS manybody/perturbed-component-12
+PASS manybody/perturbed-component-13
+PASS manybody/perturbed-component-14
+PASS manybody/perturbed-component-15
+PASS manybody/perturbed-component-16
+PASS manybody/perturbed-component-17
+PASS manybody/perturbed-component-18
+PASS manybody/perturbed-component-19
+PASS manybody/perturbed-component-20
+PASS manybody/perturbed-component-21
+PASS manybody/perturbed-component-22
+PASS manybody/perturbed-component-23
+PASS manybody/perturbed-component-24
+PASS manybody/perturbed-component-25
+PASS manybody/perturbed-component-26
+PASS manybody/perturbed-component-27
+PASS manybody/perturbed-component-28
+PASS manybody/perturbed-component-29
+PASS manybody/inside-documented-bound
+PASS manybody/short-reference-rejected
+PASS manybody/extra-reference-rejected
+PASS manybody/nan-rejected
+PASS manybody/infinite-rejected
+PASS manybody/ordered-two-body-step
+PASS manybody/source-solar-mass-offset-denominator
+PASS manybody/fresh-default-generator
+PASS manybody/fresh-body-fields
+PASS manybody/zero-bodies-rejected
+PASS manybody/negative-steps-rejected
+structure ManyBodyTests : 
+  sig
+    structure K : <sig>
+    structure C : <sig>
+    structure N : <sig>
+    val check : string * int * int -> unit
+    val reference : real list
+    val changed : 'a list -> int -> ('a -> 'a) -> 'a list
+    val body : real * real * real * real * real * real * real
+                -> BenchManyBody.body
+    val close : real * real -> bool
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 49 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS manybody/source/one
+PASS manybody/source/small-zero
+PASS manybody/source/small-one
+PASS manybody/source/small-two
+PASS manybody/source/smoke
+PASS manybody/source/normal
+PASS manybody/source/normal-zero
+PASS manybody/source/large-zero
+PASS manybody/perturbed-component-0
+PASS manybody/perturbed-component-1
+PASS manybody/perturbed-component-2
+PASS manybody/perturbed-component-3
+PASS manybody/perturbed-component-4
+PASS manybody/perturbed-component-5
+PASS manybody/perturbed-component-6
+PASS manybody/perturbed-component-7
+PASS manybody/perturbed-component-8
+PASS manybody/perturbed-component-9
+PASS manybody/perturbed-component-10
+PASS manybody/perturbed-component-11
+PASS manybody/perturbed-component-12
+PASS manybody/perturbed-component-13
+PASS manybody/perturbed-component-14
+PASS manybody/perturbed-component-15
+PASS manybody/perturbed-component-16
+PASS manybody/perturbed-component-17
+PASS manybody/perturbed-component-18
+PASS manybody/perturbed-component-19
+PASS manybody/perturbed-component-20
+PASS manybody/perturbed-component-21
+PASS manybody/perturbed-component-22
+PASS manybody/perturbed-component-23
+PASS manybody/perturbed-component-24
+PASS manybody/perturbed-component-25
+PASS manybody/perturbed-component-26
+PASS manybody/perturbed-component-27
+PASS manybody/perturbed-component-28
+PASS manybody/perturbed-component-29
+PASS manybody/inside-documented-bound
+PASS manybody/short-reference-rejected
+PASS manybody/extra-reference-rejected
+PASS manybody/nan-rejected
+PASS manybody/infinite-rejected
+PASS manybody/ordered-two-body-step
+PASS manybody/source-solar-mass-offset-denominator
+PASS manybody/fresh-default-generator
+PASS manybody/fresh-body-fields
+PASS manybody/zero-bodies-rejected
+PASS manybody/negative-steps-rejected
+SUMMARY 49 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PASS manybody/source/one
+PASS manybody/source/small-zero
+PASS manybody/source/small-one
+PASS manybody/source/small-two
+PASS manybody/source/smoke
+PASS manybody/source/normal
+PASS manybody/source/normal-zero
+PASS manybody/source/large-zero
+PASS manybody/perturbed-component-0
+PASS manybody/perturbed-component-1
+PASS manybody/perturbed-component-2
+PASS manybody/perturbed-component-3
+PASS manybody/perturbed-component-4
+PASS manybody/perturbed-component-5
+PASS manybody/perturbed-component-6
+PASS manybody/perturbed-component-7
+PASS manybody/perturbed-component-8
+PASS manybody/perturbed-component-9
+PASS manybody/perturbed-component-10
+PASS manybody/perturbed-component-11
+PASS manybody/perturbed-component-12
+PASS manybody/perturbed-component-13
+PASS manybody/perturbed-component-14
+PASS manybody/perturbed-component-15
+PASS manybody/perturbed-component-16
+PASS manybody/perturbed-component-17
+PASS manybody/perturbed-component-18
+PASS manybody/perturbed-component-19
+PASS manybody/perturbed-component-20
+PASS manybody/perturbed-component-21
+PASS manybody/perturbed-component-22
+PASS manybody/perturbed-component-23
+PASS manybody/perturbed-component-24
+PASS manybody/perturbed-component-25
+PASS manybody/perturbed-component-26
+PASS manybody/perturbed-component-27
+PASS manybody/perturbed-component-28
+PASS manybody/perturbed-component-29
+PASS manybody/inside-documented-bound
+PASS manybody/short-reference-rejected
+PASS manybody/extra-reference-rejected
+PASS manybody/nan-rejected
+PASS manybody/infinite-rejected
+PASS manybody/ordered-two-body-step
+PASS manybody/source-solar-mass-offset-denominator
+PASS manybody/fresh-default-generator
+PASS manybody/fresh-body-fields
+PASS manybody/zero-bodies-rejected
+PASS manybody/negative-steps-rejected
+SUMMARY 49 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

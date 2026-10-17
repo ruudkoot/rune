@@ -1,0 +1,7 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-manybody-parallel.n3hg98_5
+PASS nbody-sandmark-multicore-numerical smoke O2
+PASS nbody-sandmark-multicore-numerical smoke O0
+PASS nbody-sandmark-multicore-numerical normal O0
+PASS nbody-sandmark-multicore-numerical smoke hosts
+PASS nbody-sandmark-multicore-numerical normal O2
+PASS nbody-sandmark-multicore-numerical normal hosts

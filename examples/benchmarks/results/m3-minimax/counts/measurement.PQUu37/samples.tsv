@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+minimax-lazy	normal	rune	O2	compile	0	0	pass	1.23	1.26	0.08	135240	-	-	-	minimax-lazy/rune/build/compile
+minimax-lazy	normal	rune	O2	correctness	0	0	pass	4.53	4.93	0.00	10464	974009066	2452412368	76280196	minimax-lazy/rune/correctness.0
+minimax-lazy	normal	rune	O2	count	1	1	pass	4.75	5.18	0.00	10484	974009066	2452412368	76280196	minimax-lazy/rune/fresh.1
+minimax-lazy	normal	rune:opt	O2	compile	0	0	pass	1.59	1.61	0.11	135084	-	-	-	minimax-lazy/rune-opt/build/compile
+minimax-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.43	0.23	0.05	12620	-	-	-	minimax-lazy/rune-opt/build/native-compile
+minimax-lazy	normal	rune:opt	O2	correctness	0	0	pass	2.06	2.25	0.00	11008	974009066	2452412368	76280196	minimax-lazy/rune-opt/correctness.0
+minimax-lazy	normal	rune:opt	O2	count	1	1	pass	3.83	2.42	0.00	10972	974009066	2452412368	76280196	minimax-lazy/rune-opt/fresh.1
+minimax-lazy	normal	rune:new	O2	compile	0	0	pass	1.78	1.70	0.08	135260	-	-	-	minimax-lazy/rune-new/build/compile
+minimax-lazy	normal	rune:new	O2	correctness	0	0	pass	4.19	4.18	0.02	10520	558072978	2452412368	76280196	minimax-lazy/rune-new/correctness.0
+minimax-lazy	normal	rune:new	O2	count	1	1	pass	4.11	4.34	0.01	10548	558072978	2452412368	76280196	minimax-lazy/rune-new/fresh.1
+minimax-lazy	normal	rune:jit	O2	compile	0	0	pass	1.53	1.45	0.22	135076	-	-	-	minimax-lazy/rune-jit/build/compile
+minimax-lazy	normal	rune:jit	O2	correctness	0	0	pass	1.75	1.89	0.01	11792	558072978	2452412368	76280196	minimax-lazy/rune-jit/correctness.0
+minimax-lazy	normal	rune:jit	O2	count	1	1	pass	1.80	1.95	0.00	11756	558072978	2452412368	76280196	minimax-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

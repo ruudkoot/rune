@@ -1,0 +1,1 @@
+nbody-sandmark-multicore-numerical	30	1048576	shared/input.sml shared/ocaml-random.sml shared/sandmark-nbody.sml shared/sandmark-manybody.sml shared/sandmark-manybody-check.sml nbody-sandmark-multicore-numerical/benchmark.sml shared/main.sml	1 16 smoke.state	nbody-sandmark-multicore-numerical/smoke.expected	smoke.state
