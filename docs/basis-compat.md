@@ -489,7 +489,9 @@ there is nothing yet to pin it to. Following the page as it should have been
 written would mean giving `WideString` a representation of its own and
 pinning `WideCharVector` to it, and then `MONO_VECTOR_EQ` would be
 unnecessary. The notes are `MONO_VECTOR/WideCharVector-must-admit-equality`
-and `MONO_VECTOR_EQ/not-in-the-specification`.
+and `MONO_VECTOR_EQ/not-in-the-specification`. [unicode.md](unicode.md) has
+the full analysis of Unicode, wide characters, and the wide text I/O defects
+in the specification.
 
 ### The largest one: `ARRAY2` cannot be sealed and keep its equality
 
