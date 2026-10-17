@@ -351,3 +351,13 @@ description and contents. The nofib PIC source, rather than a generic physical
 model, defines its active interpolation constants, parameter order and demand.
 Exact reference traces and empirical SML checks establish the port-specific
 evidence separately.
+
+## Binary space partitioning modeller
+
+[Fuchs, Kedem and Naylor, On visible surface generation by a priori tree structures](https://doi.org/10.1145/800250.807481)
+(1980) supplies partition-tree rendering context. Publisher-indexed bibliographic
+information was checked; direct publisher retrieval failed. Do not infer this
+paper authorship for nofib's two-dimensional modeller or claim its algorithms
+are identical. The pinned program and GHC interface establish the specific
+wrapped rational semantics, local par stub, seq demand and global batch sharing.
+Compiler performance explanations remain hypotheses until separately measured.

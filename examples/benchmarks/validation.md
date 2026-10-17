@@ -2655,3 +2655,24 @@ distinguishes private development attempts from final source identities.
 zero with 1114 profiles and all compiler/runedoc/runeopt cross-build comparisons.
 That run also validates the separately committed quoted-Fail classification fix.
 M3, M4 and M5 remain in progress; M8 remains planned.
+
+## Binary space partitioning modeller, 2026-10-17
+
+Two ports bring the catalogue to 376 programs and 1120 profiles.
+[Primary coverage](results/m4-bspt/coverage.tsv) records 55 passes in 56 cases:
+all Rune cases pass, while ML Kit lazy smoke compilation reaches its unchanged
+30-second limit. An isolated clean compiler probe confirms timeout status 124;
+its normal-profile case passes. The original empty harness diagnostic remains.
+
+All 1780 semantic assertions pass across twenty invocations. Eight normal count
+samples agree, and six serial native smoke adapter samples pass separately.
+Original full batch text, eleven interactive commands, signed-64 rational
+operations and the GHC updatable batch thunk support exact correctness and
+demand/sharing checks. Character comparison adds validation work to the original
+hash consumer; globally shared geometry is computed once per fresh program.
+[Complete evidence](results/m4-bspt/README.md) retains the profile limit,
+consumer adaptations, source identities and unrecorded SML large checks.
+
+[Full make JOBS=4 check](validation/oct17-bspt-1120-acceptance.log) exits zero
+with 1120 profiles and all compiler/runedoc/runeopt cross-build comparisons.
+M3, M4 and M5 remain in progress; M8 remains planned.
