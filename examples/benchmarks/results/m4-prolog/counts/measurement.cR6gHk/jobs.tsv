@@ -1,0 +1,1 @@
+prolog-tree-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/nofib-prolog-parse.sml shared/nofib-prolog.sml shared/nofib-prolog-driver.sml prolog-tree-strict/benchmark.sml shared/main.sml	200 stdlib normal.input normal.text	prolog-tree-strict/normal.expected	stdlib normal.input normal.text

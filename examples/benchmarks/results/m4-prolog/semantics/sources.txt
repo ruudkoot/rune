@@ -1,0 +1,10 @@
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-prolog-parse.sml
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-prolog.sml
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-prolog-driver.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/prolog-tests.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml

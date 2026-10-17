@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+prolog-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	6.47	5.52	1.28	671028	-	-	-	prolog-strict/native-mlton/build/compile
+prolog-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	3532	-	-	-	prolog-strict/native-mlton/correctness.0
+prolog-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	3472	-	-	-	prolog-strict/native-mlton/fresh.1
+prolog-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.78	0.79	0.04	38928	-	-	-	prolog-strict/native-smlnj-legacy/build/compile
+prolog-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.02	0.01	0.01	5252	-	-	-	prolog-strict/native-smlnj-legacy/correctness.0
+prolog-strict	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.02	0.01	0.00	5272	-	-	-	prolog-strict/native-smlnj-legacy/fresh.1
+prolog-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.47	0.28	0.10	41868	-	-	-	prolog-strict/native-polyml/build/compile
+prolog-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.02	0.01	0.00	11280	-	-	-	prolog-strict/native-polyml/correctness.0
+prolog-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	11244	-	-	-	prolog-strict/native-polyml/fresh.1

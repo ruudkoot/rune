@@ -1,0 +1,9 @@
+> p(a).
+> p(b).
+> q(X):==p(X),!.
+> ?- q(X)
+no.
+> ;
+I don't understand
+> bye
+Thank you and goodbye

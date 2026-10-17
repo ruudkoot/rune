@@ -1,0 +1,831 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : 
+  sig
+    datatype 'a node
+      = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay | Nil
+    type 'a stream = 'a node BenchLazy.delay
+    val empty : unit -> 'a node BenchLazy.state ref
+    val cons : 'a BenchLazy.delay * 'a node BenchLazy.delay
+                -> 'a node BenchLazy.state ref
+    val singleton : 'a -> 'a node BenchLazy.state ref
+    val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+    val head : 'a node BenchLazy.state ref -> 'a
+    val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val iterate : ('a -> 'a)
+                   -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+    val fromList : 'a list -> 'a node BenchLazy.delay
+    val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+    val zipWith : ('a * 'b -> 'c)
+                   -> 'a node BenchLazy.delay
+                   -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+    val append : 'a node BenchLazy.delay
+                  -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val concatMap : ('a -> 'b node BenchLazy.delay)
+                     -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+    val filter : ('a -> bool)
+                  -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+    val dropWhile : ('a -> bool)
+                     -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+    val foldrStream : ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+                       -> 'b BenchLazy.state ref
+                       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+    val zipWith3 : ('a * 'b * 'c -> 'd)
+                    -> 'a node BenchLazy.delay
+                    -> 'b node BenchLazy.delay
+                    -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+    val span : ('a -> bool)
+                -> 'a node BenchLazy.delay
+                -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+    val nth : 'a node BenchLazy.delay -> int -> 'a
+    val take : int -> 'a node BenchLazy.delay -> 'a list
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+    val foldPrefix : ('a * 'b -> 'b)
+                      -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-prolog-parse.sml]
+structure BenchPrologParse : 
+  sig
+    structure S : <sig>
+    structure L : <sig>
+    type 'a parser = char list -> ('a * char list) BenchStream.stream
+    val fail : 'a -> 'b BenchStream.node BenchLazy.state ref
+    val okay : 'a -> 'b -> ('a * 'b) BenchStream.node BenchLazy.state ref
+    val token : string
+                 -> char list
+                 -> (string * char list) BenchStream.node BenchLazy.state ref
+    val satisfy : ('a -> bool)
+                   -> 'a list
+                   -> ('a * 'a list) BenchStream.node BenchLazy.state ref
+    val alternative : ('a -> 'b BenchStream.node BenchLazy.delay)
+                       -> ('a -> 'b BenchStream.node BenchLazy.state ref)
+                       -> 'a -> 'b BenchStream.node BenchLazy.delay
+    val sequence : ('a -> ('b * 'c) BenchStream.node BenchLazy.delay)
+                    -> ('c -> ('d * 'e) BenchStream.node BenchLazy.delay)
+                    -> 'a
+                    -> (('b * 'd) * 'e) BenchStream.node BenchLazy.state ref
+    val map : ('a -> ('b * 'c) BenchStream.node BenchLazy.delay)
+               -> ('b -> 'd)
+               -> 'a -> ('d * 'c) BenchStream.node BenchLazy.delay
+    val dropSpaces : char list -> char list
+    val just : ('a -> ('b * char list) BenchStream.node BenchLazy.delay)
+                -> 'a -> ('b * 'c list) BenchStream.node BenchLazy.delay
+    val space : (char list -> 'a) -> char list -> 'a
+    val spaceToken : string
+                      -> char list
+                      -> (string * char list) BenchStream.node BenchLazy.state 
+                        ref
+    val many : ('a -> ('b * 'a) BenchStream.node BenchLazy.delay)
+                -> 'a -> ('b list * 'a) BenchStream.node BenchLazy.delay
+    val many1 : ('a -> ('b * 'a) BenchStream.node BenchLazy.delay)
+                 -> 'a -> ('b list * 'a) BenchStream.node BenchLazy.delay
+    val listOf : ('a -> ('b * 'a) BenchStream.node BenchLazy.delay)
+                  -> ('a -> ('c * 'a) BenchStream.node BenchLazy.delay)
+                  -> 'a -> ('b list * 'a) BenchStream.node BenchLazy.delay
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-prolog.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-prolog.sml:27.23 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-prolog.sml:29.51-29.53 Warning: calling polyEqual
+functor BenchPrologFn(D: sig
+                         type 'a t
+                         val delay : (unit -> 'a) -> 'a t
+                         val force : 'a t -> 'a
+                       end) :
+                     
+                       sig
+                         structure S : <sig>
+                         structure L : <sig>
+                         structure P : <sig>
+                         type id
+                         type node
+                         type term
+                         type clause
+                         type database
+                         type substitution
+                         val variable : id -> node D.t
+                         val structureTerm : string
+                                              -> node D.t BenchStream.node 
+                                                BenchLazy.delay
+                                              -> node D.t
+                         val equalList : term BenchStream.stream
+                                          -> term BenchStream.stream -> bool
+                         val equal : node D.t * node D.t -> bool
+                         val member : ''a
+                                       -> ''a BenchStream.node BenchLazy.delay
+                                       -> bool
+                         val nub : ''a BenchStream.node BenchLazy.state ref
+                                    -> ''a BenchStream.node BenchLazy.delay
+                         val varsIn : node D.t
+                                       -> id BenchStream.node BenchLazy.delay
+                         val rename : int -> term -> node D.t
+                         val emptyDb : database
+                         val clausesFor : string
+                                           -> (string * clause list) list
+                                           -> clause list
+                         val addClause : (string * clause list) list
+                                          -> clause
+                                          -> (string * clause list) list
+                         val renamed : (string * clause list) list
+                                        -> int
+                                        -> node D.t
+                                        -> clause BenchStream.node 
+                                            BenchLazy.state ref
+                         val apply : (id -> node D.t) -> term -> node D.t
+                         val nullSubst : substitution
+                         val bind : id -> node D.t -> id -> node D.t
+                         val compose : (id -> node D.t)
+                                        -> ('a -> term) -> 'a -> node D.t
+                         val listUnify : term BenchStream.stream
+                                          -> term BenchStream.stream
+                                          -> substitution BenchStream.node 
+                                              BenchLazy.state ref
+                         val unify : node D.t
+                                      -> node D.t
+                                      -> substitution BenchStream.node 
+                                          BenchLazy.state ref
+                         val theCut : node D.t
+                         val alternatives : (string * clause list) list
+                                             -> int
+                                             -> node D.t
+                                             -> (term BenchStream.stream
+                                                    * substitution) 
+                                                   BenchStream.node 
+                                                 BenchLazy.state ref
+                         val cut : ('a * 'b
+                                       * 'c BenchStream.node BenchLazy.state 
+                                         ref) list
+                                    -> ('a * 'b
+                                       * 'c BenchStream.node BenchLazy.state 
+                                         ref) list
+                         val proveStack : (string * clause list) list
+                                           -> node D.t BenchStream.node 
+                                             BenchLazy.delay
+                                           -> (id -> node D.t) 
+                                                 BenchStream.node 
+                                               BenchLazy.state ref
+                         type proofNode
+                         val proofTree : (string * clause list) list
+                                          -> int
+                                          -> (id -> node D.t)
+                                          -> node D.t BenchStream.node 
+                                            BenchLazy.delay
+                                          -> proofNode BenchLazy.delay
+                         val search : proofNode BenchLazy.state ref
+                                       -> substitution BenchStream.node 
+                                         BenchLazy.delay
+                         val proveTree : (string * clause list) list
+                                          -> node D.t BenchStream.node 
+                                            BenchLazy.delay
+                                          -> substitution BenchStream.node 
+                                            BenchLazy.delay
+                         val writeText : string
+                                          -> char BenchStream.node 
+                                              BenchLazy.state ref
+                                          -> char BenchStream.node 
+                                            BenchLazy.delay
+                         val showWithSep : string
+                                            -> term BenchStream.stream
+                                            -> char BenchStream.node 
+                                              BenchLazy.delay
+                                            -> char BenchStream.node 
+                                                BenchLazy.state ref
+                         val showTermS : node D.t
+                                          -> char BenchStream.node 
+                                              BenchLazy.state ref
+                                          -> char BenchStream.node 
+                                              BenchLazy.state ref
+                         val showClauseS : clause
+                                            -> char BenchStream.node 
+                                                BenchLazy.state ref
+                                            -> char BenchStream.node 
+                                                BenchLazy.state ref
+                         val showDbS : ('a * clause list) list
+                                        -> char BenchStream.node 
+                                            BenchLazy.state ref
+                                        -> char BenchStream.node 
+                                            BenchLazy.state ref
+                         val textOf : char BenchStream.node BenchLazy.delay
+                                       -> string
+                         val showTerm : node D.t -> string
+                         val showClause : clause -> string
+                         val showDb : ('a * clause list) list -> string
+                         val letter : char list
+                                       -> (char * char list) BenchStream.node 
+                                           BenchLazy.state ref
+                         val parseVariable : char list
+                                              -> (node D.t * char list) 
+                                                  BenchStream.node 
+                                                BenchLazy.delay
+                         val parseStruct : char list
+                                            -> (node D.t * char list) 
+                                                  BenchStream.node 
+                                                BenchLazy.state ref
+                         val parseTermList : char list
+                                              -> (node D.t list * char list) 
+                                                  BenchStream.node 
+                                                BenchLazy.delay
+                         val parseTerm : char list
+                                          -> (node D.t * char list) 
+                                              BenchStream.node BenchLazy.delay
+                         val parseClause : char list
+                                            -> (clause * char list) 
+                                                BenchStream.node 
+                                              BenchLazy.delay
+                         type command
+                         val command : char list
+                                        -> (command * char list) 
+                                            BenchStream.node BenchLazy.delay
+                         val readLibrary : string -> clause list
+                         val rubout : char -> bool
+                         val lineOut : char list -> char list
+                         val noBackSpaces : char list -> char list
+                         val solutions : id BenchStream.node BenchLazy.delay
+                                          -> (id -> node D.t)
+                                          -> char BenchStream.node 
+                                                    BenchLazy.state ref 
+                                                BenchStream.node 
+                                              BenchLazy.state ref
+                         val joinRows : char BenchStream.node BenchLazy.delay 
+                                             BenchStream.node BenchLazy.delay
+                                         -> char BenchStream.node 
+                                           BenchLazy.delay
+                                         -> char BenchStream.node 
+                                             BenchLazy.state ref
+                         val interactive : ((string * clause list) list
+                                             -> node D.t BenchStream.node 
+                                               BenchLazy.delay
+                                             -> (id -> node D.t) 
+                                                 BenchStream.node 
+                                               BenchLazy.delay)
+                                            -> (string * clause list) list
+                                            -> char list
+                                            -> char BenchStream.node 
+                                                BenchLazy.state ref
+                         val setup : string -> (string * clause list) list
+                         val runChars : bool
+                                         -> (string * clause list) list
+                                         -> char list
+                                         -> char BenchStream.node 
+                                             BenchLazy.state ref
+                         val runText : bool
+                                        -> (string * clause list) list
+                                        -> string
+                                        -> char BenchStream.node 
+                                            BenchLazy.state ref
+                       end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-prolog-driver.sml]
+functor BenchPrologDriverFn(K: sig
+                               type database
+                               val setup : string -> database
+                               val runChars : bool
+                                               -> database
+                                               -> char list
+                                               -> char BenchStream.stream
+                             end) :
+                           
+                             sig
+                               structure S : <sig>
+                               structure L : <sig>
+                               structure W : <sig>
+                               val read : string -> TextIO.vector
+                               val reverseHash : string -> Word64.word
+                               val consume : char BenchStream.node 
+                                                BenchLazy.delay
+                                              -> string -> Word64.word
+                               val run : bool -> string list -> string
+                             end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/prolog-tests.sml]
+PASS prolog/Need/stack-smoke
+PASS prolog/Need/stack-normal
+PASS prolog/Need/stack-large
+PASS prolog/Need/pure-smoke
+PASS prolog/Need/pure-normal
+PASS prolog/Need/pure-large
+PASS prolog/Need/stack-extra-empty-query
+PASS prolog/Need/stack-extra-parse-empty-name
+PASS prolog/Need/stack-extra-backspaces
+PASS prolog/Need/stack-extra-no-answer
+PASS prolog/Need/stack-extra-aliasing
+PASS prolog/Need/stack-extra-append-order
+PASS prolog/Need/stack-extra-cut-source
+PASS prolog/Need/stack-extra-unknown-and-blank
+PASS prolog/Need/stack-extra-arity
+PASS prolog/Need/stack-extra-numbered-variables
+PASS prolog/Need/stack-extra-quit-tail
+PASS prolog/Need/pure-extra-empty-query
+PASS prolog/Need/pure-extra-parse-empty-name
+PASS prolog/Need/pure-extra-backspaces
+PASS prolog/Need/pure-extra-no-answer
+PASS prolog/Need/pure-extra-aliasing
+PASS prolog/Need/pure-extra-append-order
+PASS prolog/Need/pure-extra-cut-source
+PASS prolog/Need/pure-extra-unknown-and-blank
+PASS prolog/Need/pure-extra-arity
+PASS prolog/Need/pure-extra-numbered-variables
+PASS prolog/Need/pure-extra-quit-tail
+PASS prolog/Need/parser-keeps-ambiguous-successes
+PASS prolog/Need/parser-many-prefers-longest-then-backtracks
+PASS prolog/Need/parser-just-strips-spaces-only
+PASS prolog/Need/empty-database-show
+PASS prolog/Need/library-has-eight-clauses
+PASS prolog/Need/self-unification
+PASS prolog/Need/occurs-check-rejects-cycle
+PASS prolog/Need/reverse-occurs-check-rejects-cycle
+PASS prolog/Need/arity-mismatch-rejected
+PASS prolog/Need/atom-mismatch-rejected
+PASS prolog/Need/unifier-composition-order
+PASS prolog/Need/unification-applies-earlier-argument-substitution
+PASS prolog/Need/variables-are-first-occurrence-ordered
+PASS prolog/Need/rename-resets-every-variable-level
+PASS prolog/Need/source-cut-discards-only-second-frame-alternatives
+PASS prolog/Need/source-cut-one-frame-is-unchanged
+PASS prolog/Need/backspaces-erase-prior-characters
+PASS prolog/Need/delete-at-start-does-not-erase-later-characters
+PASS prolog/Need/line-out-retains-terminal-erase-sequence
+PASS prolog/Need/driver-rejects-perturbed-transcript
+PASS prolog/Need/driver-rejects-truncated-transcript
+PASS prolog/Need/driver-rejects-extra-transcript
+PASS prolog/Need/empty-input-fails-without-looping
+PASS prolog/Need/hash-
+PASS prolog/Need/hash-a
+PASS prolog/Need/hash-abc
+PASS prolog/Strict/stack-smoke
+PASS prolog/Strict/stack-normal
+PASS prolog/Strict/stack-large
+PASS prolog/Strict/pure-smoke
+PASS prolog/Strict/pure-normal
+PASS prolog/Strict/pure-large
+PASS prolog/Strict/stack-extra-empty-query
+PASS prolog/Strict/stack-extra-parse-empty-name
+PASS prolog/Strict/stack-extra-backspaces
+PASS prolog/Strict/stack-extra-no-answer
+PASS prolog/Strict/stack-extra-aliasing
+PASS prolog/Strict/stack-extra-append-order
+PASS prolog/Strict/stack-extra-cut-source
+PASS prolog/Strict/stack-extra-unknown-and-blank
+PASS prolog/Strict/stack-extra-arity
+PASS prolog/Strict/stack-extra-numbered-variables
+PASS prolog/Strict/stack-extra-quit-tail
+PASS prolog/Strict/pure-extra-empty-query
+PASS prolog/Strict/pure-extra-parse-empty-name
+PASS prolog/Strict/pure-extra-backspaces
+PASS prolog/Strict/pure-extra-no-answer
+PASS prolog/Strict/pure-extra-aliasing
+PASS prolog/Strict/pure-extra-append-order
+PASS prolog/Strict/pure-extra-cut-source
+PASS prolog/Strict/pure-extra-unknown-and-blank
+PASS prolog/Strict/pure-extra-arity
+PASS prolog/Strict/pure-extra-numbered-variables
+PASS prolog/Strict/pure-extra-quit-tail
+PASS prolog/Strict/parser-keeps-ambiguous-successes
+PASS prolog/Strict/parser-many-prefers-longest-then-backtracks
+PASS prolog/Strict/parser-just-strips-spaces-only
+PASS prolog/Strict/empty-database-show
+PASS prolog/Strict/library-has-eight-clauses
+PASS prolog/Strict/self-unification
+PASS prolog/Strict/occurs-check-rejects-cycle
+PASS prolog/Strict/reverse-occurs-check-rejects-cycle
+PASS prolog/Strict/arity-mismatch-rejected
+PASS prolog/Strict/atom-mismatch-rejected
+PASS prolog/Strict/unifier-composition-order
+PASS prolog/Strict/unification-applies-earlier-argument-substitution
+PASS prolog/Strict/variables-are-first-occurrence-ordered
+PASS prolog/Strict/rename-resets-every-variable-level
+PASS prolog/Strict/source-cut-discards-only-second-frame-alternatives
+PASS prolog/Strict/source-cut-one-frame-is-unchanged
+PASS prolog/Strict/backspaces-erase-prior-characters
+PASS prolog/Strict/delete-at-start-does-not-erase-later-characters
+PASS prolog/Strict/line-out-retains-terminal-erase-sequence
+PASS prolog/Strict/driver-rejects-perturbed-transcript
+PASS prolog/Strict/driver-rejects-truncated-transcript
+PASS prolog/Strict/driver-rejects-extra-transcript
+PASS prolog/Strict/empty-input-fails-without-looping
+PASS prolog/Strict/hash-
+PASS prolog/Strict/hash-a
+PASS prolog/Strict/hash-abc
+PASS prolog/lazy-structure-skips-unused-child
+PASS prolog/strict-structure-forces-finite-children
+PASS prolog/lazy-composed-substitution-delays-and-shares-result
+structure NeedKernel : 
+  sig
+    structure S : <sig>
+    structure L : <sig>
+    structure P : <sig>
+    type id = int * string
+    datatype node = Struct of string * term BenchStream.stream | Var of id
+    type term = node BenchNeed.t
+    datatype clause = Clause of term * term BenchStream.stream
+    type database = (string * clause list) list
+    type substitution = id -> term
+    val variable : id -> node D.t
+    val structureTerm : string
+                         -> node D.t BenchStream.node BenchLazy.delay
+                         -> node D.t
+    val equalList : term BenchStream.stream -> term BenchStream.stream -> bool
+    val equal : node D.t * node D.t -> bool
+    val member : ''a -> ''a BenchStream.node BenchLazy.delay -> bool
+    val nub : ''a BenchStream.node BenchLazy.state ref
+               -> ''a BenchStream.node BenchLazy.delay
+    val varsIn : node D.t -> id BenchStream.node BenchLazy.delay
+    val rename : int -> term -> node D.t
+    val emptyDb : database
+    val clausesFor : string -> (string * clause list) list -> clause list
+    val addClause : (string * clause list) list
+                     -> clause -> (string * clause list) list
+    val renamed : (string * clause list) list
+                   -> int
+                   -> node D.t -> clause BenchStream.node BenchLazy.state ref
+    val apply : (id -> node D.t) -> term -> node D.t
+    val nullSubst : substitution
+    val bind : id -> node D.t -> id -> node D.t
+    val compose : (id -> node D.t) -> ('a -> term) -> 'a -> node D.t
+    val listUnify : term BenchStream.stream
+                     -> term BenchStream.stream
+                     -> substitution BenchStream.node BenchLazy.state ref
+    val unify : node D.t
+                 -> node D.t
+                 -> substitution BenchStream.node BenchLazy.state ref
+    val theCut : node D.t
+    val alternatives : (string * clause list) list
+                        -> int
+                        -> node D.t
+                        -> (term BenchStream.stream * substitution) 
+                              BenchStream.node BenchLazy.state ref
+    val cut : ('a * 'b * 'c BenchStream.node BenchLazy.state ref) list
+               -> ('a * 'b * 'c BenchStream.node BenchLazy.state ref) list
+    val proveStack : (string * clause list) list
+                      -> node D.t BenchStream.node BenchLazy.delay
+                      -> (id -> node D.t) BenchStream.node BenchLazy.state ref
+    datatype proofNode
+      = Choice of proofNode BenchLazy.delay BenchStream.stream
+    | Done of substitution
+    val proofTree : (string * clause list) list
+                     -> int
+                     -> (id -> node D.t)
+                     -> node D.t BenchStream.node BenchLazy.delay
+                     -> proofNode BenchLazy.delay
+    val search : proofNode BenchLazy.state ref
+                  -> substitution BenchStream.node BenchLazy.delay
+    val proveTree : (string * clause list) list
+                     -> node D.t BenchStream.node BenchLazy.delay
+                     -> substitution BenchStream.node BenchLazy.delay
+    val writeText : string
+                     -> char BenchStream.node BenchLazy.state ref
+                     -> char BenchStream.node BenchLazy.delay
+    val showWithSep : string
+                       -> term BenchStream.stream
+                       -> char BenchStream.node BenchLazy.delay
+                       -> char BenchStream.node BenchLazy.state ref
+    val showTermS : node D.t
+                     -> char BenchStream.node BenchLazy.state ref
+                     -> char BenchStream.node BenchLazy.state ref
+    val showClauseS : clause
+                       -> char BenchStream.node BenchLazy.state ref
+                       -> char BenchStream.node BenchLazy.state ref
+    val showDbS : ('a * clause list) list
+                   -> char BenchStream.node BenchLazy.state ref
+                   -> char BenchStream.node BenchLazy.state ref
+    val textOf : char BenchStream.node BenchLazy.delay -> string
+    val showTerm : node D.t -> string
+    val showClause : clause -> string
+    val showDb : ('a * clause list) list -> string
+    val letter : char list
+                  -> (char * char list) BenchStream.node BenchLazy.state ref
+    val parseVariable : char list
+                         -> (node D.t * char list) BenchStream.node 
+                           BenchLazy.delay
+    val parseStruct : char list
+                       -> (node D.t * char list) BenchStream.node 
+                           BenchLazy.state ref
+    val parseTermList : char list
+                         -> (node D.t list * char list) BenchStream.node 
+                           BenchLazy.delay
+    val parseTerm : char list
+                     -> (node D.t * char list) BenchStream.node 
+                       BenchLazy.delay
+    val parseClause : char list
+                       -> (clause * char list) BenchStream.node 
+                         BenchLazy.delay
+    datatype command
+      = Error
+    | Fact of clause
+    | NoChange
+    | Query of term BenchStream.stream
+    | Quit
+    | Show
+    val command : char list
+                   -> (command * char list) BenchStream.node BenchLazy.delay
+    val readLibrary : string -> clause list
+    val rubout : char -> bool
+    val lineOut : char list -> char list
+    val noBackSpaces : char list -> char list
+    val solutions : id BenchStream.node BenchLazy.delay
+                     -> (id -> node D.t)
+                     -> char BenchStream.node BenchLazy.state ref 
+                           BenchStream.node BenchLazy.state ref
+    val joinRows : char BenchStream.node BenchLazy.delay BenchStream.node 
+                      BenchLazy.delay
+                    -> char BenchStream.node BenchLazy.delay
+                    -> char BenchStream.node BenchLazy.state ref
+    val interactive : ((string * clause list) list
+                        -> node D.t BenchStream.node BenchLazy.delay
+                        -> (id -> node D.t) BenchStream.node BenchLazy.delay)
+                       -> (string * clause list) list
+                       -> char list
+                       -> char BenchStream.node BenchLazy.state ref
+    val setup : string -> (string * clause list) list
+    val runChars : bool
+                    -> (string * clause list) list
+                    -> char list -> char BenchStream.node BenchLazy.state ref
+    val runText : bool
+                   -> (string * clause list) list
+                   -> string -> char BenchStream.node BenchLazy.state ref
+  end
+structure NeedDriver : 
+  sig
+    structure S : <sig>
+    structure L : <sig>
+    structure W : <sig>
+    val read : string -> TextIO.vector
+    val reverseHash : string -> Word64.word
+    val consume : char BenchStream.node BenchLazy.delay
+                   -> string -> Word64.word
+    val run : bool -> string list -> string
+  end
+structure NeedTests : 
+  sig
+    structure K : <sig>
+    structure D : <sig>
+    structure S : <sig>
+    structure L : <sig>
+    structure P : <sig>
+    structure Driver : <sig>
+    val base : string
+    val label : string -> string
+    val read : string -> TextIO.vector
+    val db : (string * NeedKernel.clause list) list
+    val text : char BenchStream.node BenchLazy.delay -> string
+    val check : string * bool * string * string * string -> unit
+    val x : NeedKernel.node BenchNeed.t
+    val y : NeedKernel.node BenchNeed.t
+    val a : NeedKernel.node BenchNeed.t
+    val structureTerm : string
+                         -> NeedKernel.node BenchNeed.t list
+                         -> NeedKernel.node BenchNeed.t
+  end
+structure StrictKernel : 
+  sig
+    structure S : <sig>
+    structure L : <sig>
+    structure P : <sig>
+    type id = int * string
+    datatype node = Struct of string * term BenchStream.stream | Var of id
+    type term = node BenchStrict.t
+    datatype clause = Clause of term * term BenchStream.stream
+    type database = (string * clause list) list
+    type substitution = id -> term
+    val variable : id -> node D.t
+    val structureTerm : string
+                         -> node D.t BenchStream.node BenchLazy.delay
+                         -> node D.t
+    val equalList : term BenchStream.stream -> term BenchStream.stream -> bool
+    val equal : node D.t * node D.t -> bool
+    val member : ''a -> ''a BenchStream.node BenchLazy.delay -> bool
+    val nub : ''a BenchStream.node BenchLazy.state ref
+               -> ''a BenchStream.node BenchLazy.delay
+    val varsIn : node D.t -> id BenchStream.node BenchLazy.delay
+    val rename : int -> term -> node D.t
+    val emptyDb : database
+    val clausesFor : string -> (string * clause list) list -> clause list
+    val addClause : (string * clause list) list
+                     -> clause -> (string * clause list) list
+    val renamed : (string * clause list) list
+                   -> int
+                   -> node D.t -> clause BenchStream.node BenchLazy.state ref
+    val apply : (id -> node D.t) -> term -> node D.t
+    val nullSubst : substitution
+    val bind : id -> node D.t -> id -> node D.t
+    val compose : (id -> node D.t) -> ('a -> term) -> 'a -> node D.t
+    val listUnify : term BenchStream.stream
+                     -> term BenchStream.stream
+                     -> substitution BenchStream.node BenchLazy.state ref
+    val unify : node D.t
+                 -> node D.t
+                 -> substitution BenchStream.node BenchLazy.state ref
+    val theCut : node D.t
+    val alternatives : (string * clause list) list
+                        -> int
+                        -> node D.t
+                        -> (term BenchStream.stream * substitution) 
+                              BenchStream.node BenchLazy.state ref
+    val cut : ('a * 'b * 'c BenchStream.node BenchLazy.state ref) list
+               -> ('a * 'b * 'c BenchStream.node BenchLazy.state ref) list
+    val proveStack : (string * clause list) list
+                      -> node D.t BenchStream.node BenchLazy.delay
+                      -> (id -> node D.t) BenchStream.node BenchLazy.state ref
+    datatype proofNode
+      = Choice of proofNode BenchLazy.delay BenchStream.stream
+    | Done of substitution
+    val proofTree : (string * clause list) list
+                     -> int
+                     -> (id -> node D.t)
+                     -> node D.t BenchStream.node BenchLazy.delay
+                     -> proofNode BenchLazy.delay
+    val search : proofNode BenchLazy.state ref
+                  -> substitution BenchStream.node BenchLazy.delay
+    val proveTree : (string * clause list) list
+                     -> node D.t BenchStream.node BenchLazy.delay
+                     -> substitution BenchStream.node BenchLazy.delay
+    val writeText : string
+                     -> char BenchStream.node BenchLazy.state ref
+                     -> char BenchStream.node BenchLazy.delay
+    val showWithSep : string
+                       -> term BenchStream.stream
+                       -> char BenchStream.node BenchLazy.delay
+                       -> char BenchStream.node BenchLazy.state ref
+    val showTermS : node D.t
+                     -> char BenchStream.node BenchLazy.state ref
+                     -> char BenchStream.node BenchLazy.state ref
+    val showClauseS : clause
+                       -> char BenchStream.node BenchLazy.state ref
+                       -> char BenchStream.node BenchLazy.state ref
+    val showDbS : ('a * clause list) list
+                   -> char BenchStream.node BenchLazy.state ref
+                   -> char BenchStream.node BenchLazy.state ref
+    val textOf : char BenchStream.node BenchLazy.delay -> string
+    val showTerm : node D.t -> string
+    val showClause : clause -> string
+    val showDb : ('a * clause list) list -> string
+    val letter : char list
+                  -> (char * char list) BenchStream.node BenchLazy.state ref
+    val parseVariable : char list
+                         -> (node D.t * char list) BenchStream.node 
+                           BenchLazy.delay
+    val parseStruct : char list
+                       -> (node D.t * char list) BenchStream.node 
+                           BenchLazy.state ref
+    val parseTermList : char list
+                         -> (node D.t list * char list) BenchStream.node 
+                           BenchLazy.delay
+    val parseTerm : char list
+                     -> (node D.t * char list) BenchStream.node 
+                       BenchLazy.delay
+    val parseClause : char list
+                       -> (clause * char list) BenchStream.node 
+                         BenchLazy.delay
+    datatype command
+      = Error
+    | Fact of clause
+    | NoChange
+    | Query of term BenchStream.stream
+    | Quit
+    | Show
+    val command : char list
+                   -> (command * char list) BenchStream.node BenchLazy.delay
+    val readLibrary : string -> clause list
+    val rubout : char -> bool
+    val lineOut : char list -> char list
+    val noBackSpaces : char list -> char list
+    val solutions : id BenchStream.node BenchLazy.delay
+                     -> (id -> node D.t)
+                     -> char BenchStream.node BenchLazy.state ref 
+                           BenchStream.node BenchLazy.state ref
+    val joinRows : char BenchStream.node BenchLazy.delay BenchStream.node 
+                      BenchLazy.delay
+                    -> char BenchStream.node BenchLazy.delay
+                    -> char BenchStream.node BenchLazy.state ref
+    val interactive : ((string * clause list) list
+                        -> node D.t BenchStream.node BenchLazy.delay
+                        -> (id -> node D.t) BenchStream.node BenchLazy.delay)
+                       -> (string * clause list) list
+                       -> char list
+                       -> char BenchStream.node BenchLazy.state ref
+    val setup : string -> (string * clause list) list
+    val runChars : bool
+                    -> (string * clause list) list
+                    -> char list -> char BenchStream.node BenchLazy.state ref
+    val runText : bool
+                   -> (string * clause list) list
+                   -> string -> char BenchStream.node BenchLazy.state ref
+  end
+structure StrictDriver : 
+  sig
+    structure S : <sig>
+    structure L : <sig>
+    structure W : <sig>
+    val read : string -> TextIO.vector
+    val reverseHash : string -> Word64.word
+    val consume : char BenchStream.node BenchLazy.delay
+                   -> string -> Word64.word
+    val run : bool -> string list -> string
+  end
+structure StrictTests : 
+  sig
+    structure K : <sig>
+    structure D : <sig>
+    structure S : <sig>
+    structure L : <sig>
+    structure P : <sig>
+    structure Driver : <sig>
+    val base : string
+    val label : string -> string
+    val read : string -> TextIO.vector
+    val db : (string * StrictKernel.clause list) list
+    val text : char BenchStream.node BenchLazy.delay -> string
+    val check : string * bool * string * string * string -> unit
+    val x : StrictKernel.node BenchStrict.t
+    val y : StrictKernel.node BenchStrict.t
+    val a : StrictKernel.node BenchStrict.t
+    val structureTerm : string
+                         -> StrictKernel.node BenchStrict.t list
+                         -> StrictKernel.node BenchStrict.t
+  end
+structure PrologDemand : 
+  sig
+    structure K : <sig>
+    structure Q : <sig>
+    structure S : <sig>
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 111 checks, 0 failed

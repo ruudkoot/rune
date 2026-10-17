@@ -1,0 +1,8 @@
+> p(X,Y).
+> ?- p(A,B)
+A = X_1
+B = Y_1 ;
+no.
+> 
+> bye
+Thank you and goodbye

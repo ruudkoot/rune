@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+prolog-lazy	normal	rune	O2	compile	0	0	pass	1.80	1.85	0.07	135480	-	-	-	prolog-lazy/rune/build/compile
+prolog-lazy	normal	rune	O2	correctness	0	0	pass	37.76	37.96	0.04	18520	5889099991	21340559704	641566741	prolog-lazy/rune/correctness.0
+prolog-lazy	normal	rune	O2	count	1	1	pass	36.08	36.15	0.05	18480	5889099991	21340559704	641566741	prolog-lazy/rune/fresh.1
+prolog-lazy	normal	rune:opt	O2	compile	0	0	pass	1.76	1.86	0.09	135344	-	-	-	prolog-lazy/rune-opt/build/compile
+prolog-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.43	0.26	0.08	14936	-	-	-	prolog-lazy/rune-opt/build/native-compile
+prolog-lazy	normal	rune:opt	O2	correctness	0	0	pass	21.16	19.95	0.04	19304	5889099991	21340559704	641566741	prolog-lazy/rune-opt/correctness.0
+prolog-lazy	normal	rune:opt	O2	count	1	1	pass	18.45	19.71	0.05	19256	5889099991	21340559704	641566741	prolog-lazy/rune-opt/fresh.1
+prolog-lazy	normal	rune:new	O2	compile	0	0	pass	1.64	1.60	0.14	135392	-	-	-	prolog-lazy/rune-new/build/compile
+prolog-lazy	normal	rune:new	O2	correctness	0	0	pass	35.54	35.70	0.04	18844	3490037513	21340559704	641566741	prolog-lazy/rune-new/correctness.0
+prolog-lazy	normal	rune:new	O2	count	1	1	pass	33.85	33.75	0.04	18836	3490037513	21340559704	641566741	prolog-lazy/rune-new/fresh.1
+prolog-lazy	normal	rune:jit	O2	compile	0	0	pass	1.70	1.67	0.13	135428	-	-	-	prolog-lazy/rune-jit/build/compile
+prolog-lazy	normal	rune:jit	O2	correctness	0	0	pass	18.09	16.84	0.05	20436	3490037513	21340559704	641566741	prolog-lazy/rune-jit/correctness.0
+prolog-lazy	normal	rune:jit	O2	count	1	1	pass	15.75	16.86	0.04	20320	3490037513	21340559704	641566741	prolog-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

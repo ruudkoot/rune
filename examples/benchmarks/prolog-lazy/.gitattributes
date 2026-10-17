@@ -1,0 +1,3 @@
+upstream/** -text -whitespace
+*.text -text -whitespace
+*.input -text -whitespace

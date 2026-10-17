@@ -1,0 +1,46 @@
+{
+  "command": [
+    "make",
+    "bench-count",
+    "BENCH_FILTER==prolog-tree-strict"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 146468,
+  "observed_minimum_available_kib": 18744284,
+  "peak_processes": [
+    {
+      "pid": 3436483,
+      "name": "time",
+      "rss_kib": 1460
+    },
+    {
+      "pid": 3436486,
+      "name": "timeout",
+      "rss_kib": 1532
+    },
+    {
+      "pid": 3382279,
+      "name": "sh",
+      "rss_kib": 1680
+    },
+    {
+      "pid": 3382280,
+      "name": "sh",
+      "rss_kib": 1936
+    },
+    {
+      "pid": 3436487,
+      "name": "runevm",
+      "rss_kib": 135096
+    },
+    {
+      "pid": 3382223,
+      "name": "make",
+      "rss_kib": 4764
+    }
+  ],
+  "elapsed_seconds": 290.2597175799892
+}

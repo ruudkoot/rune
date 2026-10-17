@@ -180,6 +180,22 @@ class InventoryTest(unittest.TestCase):
         self.assertEqual(row["authors"], "not stated in scanned source headers")
         self.assertNotIn("real/hidden/MAIL:nofib-permission", row["notices"])
 
+    def test_prolog_author_heading_is_recorded(self):
+        self.nofib_roots()
+        self.file("real/prolog/Makefile", "\n")
+        self.file("real/prolog/Main.hs",
+                  "-- Mark P. Jones November 1990\nmain = print 0\n")
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "Mark P. Jones")
+        self.assertIn("real/prolog/Main.hs:author-heading", row["evidence"])
+
+    def test_changed_prolog_author_heading_requires_review(self):
+        self.nofib_roots()
+        self.file("real/prolog/Makefile", "\n")
+        self.file("real/prolog/Main.hs",
+                  "-- Another author November 1990\nmain = print 0\n")
+        self.assertNotIn("Mark P. Jones", self.build("nofib")[0]["authors"])
+
     def test_pic_author_heading_is_recorded(self):
         self.nofib_roots()
         self.file("real/pic/Makefile", "\n")

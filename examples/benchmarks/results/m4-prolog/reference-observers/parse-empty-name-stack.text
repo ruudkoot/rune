@@ -1,0 +1,18 @@
+> .
+> ??
+.
+
+append(nil,X,X).
+append(cons(X,Y),Z,cons(X,W)):==append(Y,Z,W).
+
+equals(X,X).
+
+not(X):==X,!,false.
+not(X).
+
+or(X,Y):==X.
+or(X,Y):==Y.
+
+true.
+> bye
+Thank you and goodbye

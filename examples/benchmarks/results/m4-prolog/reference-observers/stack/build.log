@@ -1,0 +1,23 @@
+[1 of 9] Compiling Interact         ( Interact.hs, Interact.o )
+[2 of 9] Compiling NofibUtils       ( NofibUtils.hs, NofibUtils.o )
+[3 of 9] Compiling Parse            ( Parse.hs, Parse.o )
+[4 of 9] Compiling PrologData       ( PrologData.hs, PrologData.o )
+
+PrologData.hs:62:1: warning: [-Wtabs]
+    Tab character found here, and in one further location.
+    Suggested fix: Please use spaces instead.
+   |
+62 |                           | n<a         = h : update rss'
+   | ^^^^^^^^
+[5 of 9] Compiling Subst            ( Subst.hs, Subst.o )
+[6 of 9] Compiling Engine           ( Engine.hs, Engine.o )
+[7 of 9] Compiling Version          ( Version.hs, Version.o )
+[8 of 9] Compiling Main             ( Main.hs, Main.o )
+
+Main.hs:49:1: warning: [-Wtabs]
+    Tab character found here, and in 7 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+49 |                       >>= \ is ->
+   | ^^^^^^^^
+[9 of 9] Linking original

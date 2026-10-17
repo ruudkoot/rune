@@ -1,0 +1,8 @@
+> p(a).
+> p(a,b).
+> ?- p(a,X)
+X = b ;
+no.
+> 
+> bye
+Thank you and goodbye

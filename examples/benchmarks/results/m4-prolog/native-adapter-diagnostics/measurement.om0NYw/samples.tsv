@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+prolog-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	6.73	5.62	1.43	663084	-	-	-	prolog-lazy/native-mlton/build/compile
+prolog-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	3468	-	-	-	prolog-lazy/native-mlton/correctness.0
+prolog-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.01	0.01	0.00	3456	-	-	-	prolog-lazy/native-mlton/fresh.1
+prolog-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.80	0.82	0.04	38284	-	-	-	prolog-lazy/native-smlnj-legacy/build/compile
+prolog-lazy	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.02	0.01	0.01	5316	-	-	-	prolog-lazy/native-smlnj-legacy/correctness.0
+prolog-lazy	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.02	0.01	0.00	5248	-	-	-	prolog-lazy/native-smlnj-legacy/fresh.1
+prolog-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.42	0.30	0.09	50536	-	-	-	prolog-lazy/native-polyml/build/compile
+prolog-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.01	0.00	0.00	11892	-	-	-	prolog-lazy/native-polyml/correctness.0
+prolog-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	11948	-	-	-	prolog-lazy/native-polyml/fresh.1

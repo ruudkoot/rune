@@ -1,0 +1,27 @@
+{
+  "command": [
+    "timeout",
+    "300",
+    "bin/runevm",
+    "tests/out/benchmarks/prolog-originals/tests-final.rbc"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 1048576,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 36904,
+  "observed_minimum_available_kib": 19577760,
+  "peak_processes": [
+    {
+      "pid": 8,
+      "name": "runevm",
+      "rss_kib": 35108
+    },
+    {
+      "pid": 7,
+      "name": "timeout",
+      "rss_kib": 1796
+    }
+  ],
+  "elapsed_seconds": 11.286822581023443
+}

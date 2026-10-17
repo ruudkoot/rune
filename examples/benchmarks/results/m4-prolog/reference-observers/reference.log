@@ -1,0 +1,6 @@
+{'engine': 'stack', 'profile': 'fast', 'exit': 0, 'bytes': 4080, 'fixture_match': True}
+{'engine': 'stack', 'profile': 'normal', 'exit': 0, 'bytes': 4080, 'fixture_match': True}
+{'engine': 'stack', 'profile': 'slow', 'exit': 0, 'bytes': 4080, 'fixture_match': True}
+{'engine': 'pure', 'profile': 'fast', 'exit': 0, 'bytes': 4080, 'fixture_match': False}
+{'engine': 'pure', 'profile': 'normal', 'exit': 0, 'bytes': 4080, 'fixture_match': False}
+{'engine': 'pure', 'profile': 'slow', 'exit': 0, 'bytes': 4080, 'fixture_match': False}

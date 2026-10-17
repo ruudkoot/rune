@@ -1,0 +1,5 @@
+COUNT unbudgeted prolog-tree-strict normal rune
+COUNT unbudgeted prolog-tree-strict normal rune:opt
+COUNT unbudgeted prolog-tree-strict normal rune:new
+COUNT unbudgeted prolog-tree-strict normal rune:jit
+COUNT comparisons agree

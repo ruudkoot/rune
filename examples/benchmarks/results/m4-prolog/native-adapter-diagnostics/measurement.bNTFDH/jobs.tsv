@@ -1,0 +1,1 @@
+prolog-tree-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/nofib-prolog-parse.sml shared/nofib-prolog.sml shared/nofib-prolog-driver.sml prolog-tree-lazy/benchmark.sml shared/main.sml	1 stdlib smoke.input smoke.text	prolog-tree-lazy/smoke.expected	stdlib smoke.input smoke.text

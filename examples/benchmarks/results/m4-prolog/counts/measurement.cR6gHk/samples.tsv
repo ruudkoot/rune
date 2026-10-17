@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+prolog-tree-strict	normal	rune	O2	compile	0	0	pass	1.98	2.10	0.09	135388	-	-	-	prolog-tree-strict/rune/build/compile
+prolog-tree-strict	normal	rune	O2	correctness	0	0	pass	59.60	58.13	0.07	18556	6812961969	22578748656	676068330	prolog-tree-strict/rune/correctness.0
+prolog-tree-strict	normal	rune	O2	count	1	1	pass	48.78	49.91	0.05	18608	6812961969	22578748656	676068330	prolog-tree-strict/rune/fresh.1
+prolog-tree-strict	normal	rune:opt	O2	compile	0	0	pass	1.83	1.83	0.09	135376	-	-	-	prolog-tree-strict/rune-opt/build/compile
+prolog-tree-strict	normal	rune:opt	O2	native-compile	0	0	pass	0.46	0.28	0.07	14720	-	-	-	prolog-tree-strict/rune-opt/build/native-compile
+prolog-tree-strict	normal	rune:opt	O2	correctness	0	0	pass	25.13	24.01	0.05	19396	6812961969	22578748656	676068330	prolog-tree-strict/rune-opt/correctness.0
+prolog-tree-strict	normal	rune:opt	O2	count	1	1	pass	25.39	24.68	0.05	19420	6812961969	22578748656	676068330	prolog-tree-strict/rune-opt/fresh.1
+prolog-tree-strict	normal	rune:new	O2	compile	0	0	pass	1.90	2.00	0.11	135372	-	-	-	prolog-tree-strict/rune-new/build/compile
+prolog-tree-strict	normal	rune:new	O2	correctness	0	0	pass	45.42	46.40	0.11	18932	3975336082	22578748656	676068330	prolog-tree-strict/rune-new/correctness.0
+prolog-tree-strict	normal	rune:new	O2	count	1	1	pass	46.19	44.17	0.06	18836	3975336082	22578748656	676068330	prolog-tree-strict/rune-new/fresh.1
+prolog-tree-strict	normal	rune:jit	O2	compile	0	0	pass	2.17	2.16	0.15	135480	-	-	-	prolog-tree-strict/rune-jit/build/compile
+prolog-tree-strict	normal	rune:jit	O2	correctness	0	0	pass	23.19	24.84	0.08	20368	3975336082	22578748656	676068330	prolog-tree-strict/rune-jit/correctness.0
+prolog-tree-strict	normal	rune:jit	O2	count	1	1	pass	26.08	25.42	0.08	20340	3975336082	22578748656	676068330	prolog-tree-strict/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

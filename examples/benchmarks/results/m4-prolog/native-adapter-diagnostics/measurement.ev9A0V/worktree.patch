@@ -1,0 +1,580 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 27a8e6ad..a2e4c3ff 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -349,6 +349,10 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [pic-strict](#pic-strict) | [nofib PIC](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/pic) | Run the source particle-in-cell simulation with strict finite state and validate its timestep. |
+ | [hidden-lazy](#hidden-lazy) | [nofib hidden](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/hidden) | Remove hidden polygon edges with lazy numeric components and validate every rendered coordinate and path command. |
+ | [hidden-strict](#hidden-strict) | [nofib hidden](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/hidden) | Remove hidden polygon edges with strict numeric components and validate every rendered coordinate and path command. |
++| [prolog-lazy](#prolog-lazy) | [nofib Mini Prolog](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/prolog) | Interpret Prolog commands with stack search and lazy finite terms, checking the full transcript. |
++| [prolog-strict](#prolog-strict) | [nofib Mini Prolog](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/prolog) | Interpret Prolog commands with stack search and strict finite terms, checking the full transcript. |
++| [prolog-tree-lazy](#prolog-tree-lazy) | [nofib Mini Prolog](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/prolog) | Interpret Prolog commands with proof-tree search and lazy finite terms, checking the full transcript. |
++| [prolog-tree-strict](#prolog-tree-strict) | [nofib Mini Prolog](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/prolog) | Interpret Prolog commands with proof-tree search and strict finite terms, checking the full transcript. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -18042,3 +18046,479 @@ correctness reference.
+ [Hidden host-result evidence](validation/hidden-host-results.md) distinguishes
+ legacy nursery-sensitive failures from the constructor-field defect on all
+ three SML/NJ hosts. Failed correctness checks never provide accepted timings.
++
++## prolog-lazy
++
++Inference engine: explicit backtrack stack. Finite payload evaluation: lazy.
++
++### Algorithm and workload
++
++Parse a Mini Prolog command transcript, extend a sorted predicate database,
++unify terms with an occurs check, enumerate query solutions, echo commands and
++format answers. Consume and validate the complete interactive transcript through
++a modular hash. Every repetition starts with the same immutable standard library.
++
++### History, authorship, revision and variants
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, real/prolog.
++Headers credit Mark P. Jones, November 1990. Examples describes an earlier
++Orwell interpreter and the Haskell B version. Parse.hs credits Richard Bird's
++Orwell parsing library; Interact.hs credits Bird and Wadler. README.nofib records
++Will Partain's change from the illegal Haskell constructor operator :- to :==.
++Retain all modules, original fixtures, standard library and historical notes
++under prolog-lazy/upstream. No separate individual redistribution grant is
++stated in those files; do not invent one. The examples and command data come
++from the pinned application; no external Prolog corpus is introduced.
++
++The active Engine.hs and excluded StackEngine.hs are byte-identical at the pin.
++They share the prolog-lazy/prolog-strict implementation and retain both source
++paths. PureEngine.hs is materially different: it builds and searches explicit
++proof trees rather than an explicit stack, applies substitutions to remaining
++goals at a different point, and has no cut predicate. Preserve it separately
++as prolog-tree-lazy/prolog-tree-strict. Its answers for the supplied cut queries
++differ from the active stack engine. They are checked against its own Haskell
++implementation, not the stack fixtures. The supplementary source-variant
++inventory records both relationships.
++
++### Portable translation and evaluation
++
++Keep the list-of-successes parser and all its alternative parse results,
++first-success selection, term representation, function-valued substitutions,
++composition order, occurs check and first-occurrence variable ordering.
++Do not replace the interpreter with an association-map unifier or a different
++Prolog engine. Predicate groups remain a sorted association list, keyed by
++name rather than arity; clauses retain insertion order.
++
++The stack engine retains explicit backtrack frames, fresh variable levels,
++goal application order and the source cut operation, which clears the second
++frame's alternatives while retaining the top frame. The proof-tree engine
++retains memoized Done/Choice nodes and depth-first search. It does not acquire
++the stack engine's cut behavior.
++
++Both policies retain memoized parser alternatives, proof/search control streams
++and output character streams. Lazy finite term payloads defer unused children
++and substitution results; strict finite payloads construct them eagerly.
++Potentially infinite search alternatives are not all forced by the strict
++variant. Function-valued substitutions remain functions in both variants.
++Difference-list output functions retain the source higher-order ShowS consumer.
++
++Atoms use SML strings and selected input characters are ASCII. Runtime text is
++converted to a shared character list once before the repetition loop. Parser
++choice streams, terms, substitutions and database extensions are fresh for each
++interpretation; the original immutable library/input are reused.
++
++The bounded machine integers store source variable levels, positions and profile
++counters; selected profiles fit signed 31-bit integers. Hash arithmetic uses
++explicit Word64 modulo 2^64 on every host, matching the selected GHC 64-bit Int.
++The driver checks every output character as it computes the forward hash, and
++compares the result with an independent reverse polynomial calculation of the
++reference transcript. It emits a stable repetition-count:hexadecimal-hash report.
++
++The driver reads the library, input and reference once. Library clauses are
++parsed once, as upstream. Remove the sign-on/library progress display from
++accepted output, and replace the 200 printed decimal hash lines with the stable
++report. The complete echoed/answer transcript being hashed is unchanged.
++Retain backspace/delete handling, blank commands, syntax errors, continuation
++semicolons, variable printing, database display and quit-tail demand.
++
++The historical parser accepts some unusual empty names/queries and strips
++literal spaces rather than arbitrary whitespace. Preserve and test those
++behaviors. Command input exhausted without quit raises an error, matching the source's
++partial reader under complete consumption. Selected source fixtures end in bye.
++
++### Profiles and correctness
++
++| Profile | Upstream command data | Repetitions |
++|---|---|---:|
++| Smoke | prolog.faststdin | 1 |
++| Normal | prolog.stdin | 200 |
++| Large | prolog.slowstdin | 200 |
++
++The normal and large profiles retain their source iteration count and exact
++command data. Smoke reduces only repetitions. All use the original standard
++library and the suite's default resource limits.
++
++Unmodified GHC runs match all three active-engine stdout fixtures exactly.
++The proof-tree reference changes only the selected engine file, then uses its
++own complete loop transcript. Export-only observers expose the original loop;
++they add no alternate parser, unifier or printer.
++
++All three complete transcripts agree for both SML payload policies and each
++engine. Additional source-observed cases cover ambiguous parsing, empty
++queries/names, backspaces, arity, aliases, numbered variables, clause order,
++cut and quit-tail behavior. Tests cover substitution composition, cyclic
++unification rejection, renaming, source cut-frame behavior, bad transcripts,
++golden hash vectors and lazy/strict finite payload demand.
++
++### Literature and diagnostic questions
++
++[Bird and Wadler, An introduction to functional programming (1988)](https://www.research.ed.ac.uk/en/publications/an-introduction-to-functional-programming/)
++supplies the bibliographic context for the credits in Parse.hs and Interact.hs.
++The university record confirms author/title/year; the cited chapter contents
++have not been reviewed here. The retained Examples document explains the two
++specific inference engines.
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
++provides suite context.
++
++Investigate parser branching and sharing, substitution closure chains,
++higher-order printing, term allocation, retained backtrack frames, proof-tree
++construction and early termination of alternative search. These questions
++follow from source inspection. Reference agreement establishes selected
++correctness; optimization/performance explanations require measurements.
++
++## prolog-strict
++
++Inference engine: explicit backtrack stack. Finite payload evaluation: strict.
++
++### Algorithm and workload
++
++Parse a Mini Prolog command transcript, extend a sorted predicate database,
++unify terms with an occurs check, enumerate query solutions, echo commands and
++format answers. Consume and validate the complete interactive transcript through
++a modular hash. Every repetition starts with the same immutable standard library.
++
++### History, authorship, revision and variants
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, real/prolog.
++Headers credit Mark P. Jones, November 1990. Examples describes an earlier
++Orwell interpreter and the Haskell B version. Parse.hs credits Richard Bird's
++Orwell parsing library; Interact.hs credits Bird and Wadler. README.nofib records
++Will Partain's change from the illegal Haskell constructor operator :- to :==.
++Retain all modules, original fixtures, standard library and historical notes
++under prolog-lazy/upstream. No separate individual redistribution grant is
++stated in those files; do not invent one. The examples and command data come
++from the pinned application; no external Prolog corpus is introduced.
++
++The active Engine.hs and excluded StackEngine.hs are byte-identical at the pin.
++They share the prolog-lazy/prolog-strict implementation and retain both source
++paths. PureEngine.hs is materially different: it builds and searches explicit
++proof trees rather than an explicit stack, applies substitutions to remaining
++goals at a different point, and has no cut predicate. Preserve it separately
++as prolog-tree-lazy/prolog-tree-strict. Its answers for the supplied cut queries
++differ from the active stack engine. They are checked against its own Haskell
++implementation, not the stack fixtures. The supplementary source-variant
++inventory records both relationships.
++
++### Portable translation and evaluation
++
++Keep the list-of-successes parser and all its alternative parse results,
++first-success selection, term representation, function-valued substitutions,
++composition order, occurs check and first-occurrence variable ordering.
++Do not replace the interpreter with an association-map unifier or a different
++Prolog engine. Predicate groups remain a sorted association list, keyed by
++name rather than arity; clauses retain insertion order.
++
++The stack engine retains explicit backtrack frames, fresh variable levels,
++goal application order and the source cut operation, which clears the second
++frame's alternatives while retaining the top frame. The proof-tree engine
++retains memoized Done/Choice nodes and depth-first search. It does not acquire
++the stack engine's cut behavior.
++
++Both policies retain memoized parser alternatives, proof/search control streams
++and output character streams. Lazy finite term payloads defer unused children
++and substitution results; strict finite payloads construct them eagerly.
++Potentially infinite search alternatives are not all forced by the strict
++variant. Function-valued substitutions remain functions in both variants.
++Difference-list output functions retain the source higher-order ShowS consumer.
++
++Atoms use SML strings and selected input characters are ASCII. Runtime text is
++converted to a shared character list once before the repetition loop. Parser
++choice streams, terms, substitutions and database extensions are fresh for each
++interpretation; the original immutable library/input are reused.
++
++The bounded machine integers store source variable levels, positions and profile
++counters; selected profiles fit signed 31-bit integers. Hash arithmetic uses
++explicit Word64 modulo 2^64 on every host, matching the selected GHC 64-bit Int.
++The driver checks every output character as it computes the forward hash, and
++compares the result with an independent reverse polynomial calculation of the
++reference transcript. It emits a stable repetition-count:hexadecimal-hash report.
++
++The driver reads the library, input and reference once. Library clauses are
++parsed once, as upstream. Remove the sign-on/library progress display from
++accepted output, and replace the 200 printed decimal hash lines with the stable
++report. The complete echoed/answer transcript being hashed is unchanged.
++Retain backspace/delete handling, blank commands, syntax errors, continuation
++semicolons, variable printing, database display and quit-tail demand.
++
++The historical parser accepts some unusual empty names/queries and strips
++literal spaces rather than arbitrary whitespace. Preserve and test those
++behaviors. Command input exhausted without quit raises an error, matching the source's
++partial reader under complete consumption. Selected source fixtures end in bye.
++
++### Profiles and correctness
++
++| Profile | Upstream command data | Repetitions |
++|---|---|---:|
++| Smoke | prolog.faststdin | 1 |
++| Normal | prolog.stdin | 200 |
++| Large | prolog.slowstdin | 200 |
++
++The normal and large profiles retain their source iteration count and exact
++command data. Smoke reduces only repetitions. All use the original standard
++library and the suite's default resource limits.
++
++Unmodified GHC runs match all three active-engine stdout fixtures exactly.
++The proof-tree reference changes only the selected engine file, then uses its
++own complete loop transcript. Export-only observers expose the original loop;
++they add no alternate parser, unifier or printer.
++
++All three complete transcripts agree for both SML payload policies and each
++engine. Additional source-observed cases cover ambiguous parsing, empty
++queries/names, backspaces, arity, aliases, numbered variables, clause order,
++cut and quit-tail behavior. Tests cover substitution composition, cyclic
++unification rejection, renaming, source cut-frame behavior, bad transcripts,
++golden hash vectors and lazy/strict finite payload demand.
++
++### Literature and diagnostic questions
++
++[Bird and Wadler, An introduction to functional programming (1988)](https://www.research.ed.ac.uk/en/publications/an-introduction-to-functional-programming/)
++supplies the bibliographic context for the credits in Parse.hs and Interact.hs.
++The university record confirms author/title/year; the cited chapter contents
++have not been reviewed here. The retained Examples document explains the two
++specific inference engines.
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
++provides suite context.
++
++Investigate parser branching and sharing, substitution closure chains,
++higher-order printing, term allocation, retained backtrack frames, proof-tree
++construction and early termination of alternative search. These questions
++follow from source inspection. Reference agreement establishes selected
++correctness; optimization/performance explanations require measurements.
++
++## prolog-tree-lazy
++
++Inference engine: explicit proof tree. Finite payload evaluation: lazy.
++
++### Algorithm and workload
++
++Parse a Mini Prolog command transcript, extend a sorted predicate database,
++unify terms with an occurs check, enumerate query solutions, echo commands and
++format answers. Consume and validate the complete interactive transcript through
++a modular hash. Every repetition starts with the same immutable standard library.
++
++### History, authorship, revision and variants
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, real/prolog.
++Headers credit Mark P. Jones, November 1990. Examples describes an earlier
++Orwell interpreter and the Haskell B version. Parse.hs credits Richard Bird's
++Orwell parsing library; Interact.hs credits Bird and Wadler. README.nofib records
++Will Partain's change from the illegal Haskell constructor operator :- to :==.
++Retain all modules, original fixtures, standard library and historical notes
++under prolog-lazy/upstream. No separate individual redistribution grant is
++stated in those files; do not invent one. The examples and command data come
++from the pinned application; no external Prolog corpus is introduced.
++
++The active Engine.hs and excluded StackEngine.hs are byte-identical at the pin.
++They share the prolog-lazy/prolog-strict implementation and retain both source
++paths. PureEngine.hs is materially different: it builds and searches explicit
++proof trees rather than an explicit stack, applies substitutions to remaining
++goals at a different point, and has no cut predicate. Preserve it separately
++as prolog-tree-lazy/prolog-tree-strict. Its answers for the supplied cut queries
++differ from the active stack engine. They are checked against its own Haskell
++implementation, not the stack fixtures. The supplementary source-variant
++inventory records both relationships.
++
++### Portable translation and evaluation
++
++Keep the list-of-successes parser and all its alternative parse results,
++first-success selection, term representation, function-valued substitutions,
++composition order, occurs check and first-occurrence variable ordering.
++Do not replace the interpreter with an association-map unifier or a different
++Prolog engine. Predicate groups remain a sorted association list, keyed by
++name rather than arity; clauses retain insertion order.
++
++The stack engine retains explicit backtrack frames, fresh variable levels,
++goal application order and the source cut operation, which clears the second
++frame's alternatives while retaining the top frame. The proof-tree engine
++retains memoized Done/Choice nodes and depth-first search. It does not acquire
++the stack engine's cut behavior.
++
++Both policies retain memoized parser alternatives, proof/search control streams
++and output character streams. Lazy finite term payloads defer unused children
++and substitution results; strict finite payloads construct them eagerly.
++Potentially infinite search alternatives are not all forced by the strict
++variant. Function-valued substitutions remain functions in both variants.
++Difference-list output functions retain the source higher-order ShowS consumer.
++
++Atoms use SML strings and selected input characters are ASCII. Runtime text is
++converted to a shared character list once before the repetition loop. Parser
++choice streams, terms, substitutions and database extensions are fresh for each
++interpretation; the original immutable library/input are reused.
++
++The bounded machine integers store source variable levels, positions and profile
++counters; selected profiles fit signed 31-bit integers. Hash arithmetic uses
++explicit Word64 modulo 2^64 on every host, matching the selected GHC 64-bit Int.
++The driver checks every output character as it computes the forward hash, and
++compares the result with an independent reverse polynomial calculation of the
++reference transcript. It emits a stable repetition-count:hexadecimal-hash report.
++
++The driver reads the library, input and reference once. Library clauses are
++parsed once, as upstream. Remove the sign-on/library progress display from
++accepted output, and replace the 200 printed decimal hash lines with the stable
++report. The complete echoed/answer transcript being hashed is unchanged.
++Retain backspace/delete handling, blank commands, syntax errors, continuation
++semicolons, variable printing, database display and quit-tail demand.
++
++The historical parser accepts some unusual empty names/queries and strips
++literal spaces rather than arbitrary whitespace. Preserve and test those
++behaviors. Command input exhausted without quit raises an error, matching the source's
++partial reader under complete consumption. Selected source fixtures end in bye.
++
++### Profiles and correctness
++
++| Profile | Upstream command data | Repetitions |
++|---|---|---:|
++| Smoke | prolog.faststdin | 1 |
++| Normal | prolog.stdin | 200 |
++| Large | prolog.slowstdin | 200 |
++
++The normal and large profiles retain their source iteration count and exact
++command data. Smoke reduces only repetitions. All use the original standard
++library and the suite's default resource limits.
++
++Unmodified GHC runs match all three active-engine stdout fixtures exactly.
++The proof-tree reference changes only the selected engine file, then uses its
++own complete loop transcript. Export-only observers expose the original loop;
++they add no alternate parser, unifier or printer.
++
++All three complete transcripts agree for both SML payload policies and each
++engine. Additional source-observed cases cover ambiguous parsing, empty
++queries/names, backspaces, arity, aliases, numbered variables, clause order,
++cut and quit-tail behavior. Tests cover substitution composition, cyclic
++unification rejection, renaming, source cut-frame behavior, bad transcripts,
++golden hash vectors and lazy/strict finite payload demand.
++
++### Literature and diagnostic questions
++
++[Bird and Wadler, An introduction to functional programming (1988)](https://www.research.ed.ac.uk/en/publications/an-introduction-to-functional-programming/)
++supplies the bibliographic context for the credits in Parse.hs and Interact.hs.
++The university record confirms author/title/year; the cited chapter contents
++have not been reviewed here. The retained Examples document explains the two
++specific inference engines.
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
++provides suite context.
++
++Investigate parser branching and sharing, substitution closure chains,
++higher-order printing, term allocation, retained backtrack frames, proof-tree
++construction and early termination of alternative search. These questions
++follow from source inspection. Reference agreement establishes selected
++correctness; optimization/performance explanations require measurements.
++
++## prolog-tree-strict
++
++Inference engine: explicit proof tree. Finite payload evaluation: strict.
++
++### Algorithm and workload
++
++Parse a Mini Prolog command transcript, extend a sorted predicate database,
++unify terms with an occurs check, enumerate query solutions, echo commands and
++format answers. Consume and validate the complete interactive transcript through
++a modular hash. Every repetition starts with the same immutable standard library.
++
++### History, authorship, revision and variants
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, real/prolog.
++Headers credit Mark P. Jones, November 1990. Examples describes an earlier
++Orwell interpreter and the Haskell B version. Parse.hs credits Richard Bird's
++Orwell parsing library; Interact.hs credits Bird and Wadler. README.nofib records
++Will Partain's change from the illegal Haskell constructor operator :- to :==.
++Retain all modules, original fixtures, standard library and historical notes
++under prolog-lazy/upstream. No separate individual redistribution grant is
++stated in those files; do not invent one. The examples and command data come
++from the pinned application; no external Prolog corpus is introduced.
++
++The active Engine.hs and excluded StackEngine.hs are byte-identical at the pin.
++They share the prolog-lazy/prolog-strict implementation and retain both source
++paths. PureEngine.hs is materially different: it builds and searches explicit
++proof trees rather than an explicit stack, applies substitutions to remaining
++goals at a different point, and has no cut predicate. Preserve it separately
++as prolog-tree-lazy/prolog-tree-strict. Its answers for the supplied cut queries
++differ from the active stack engine. They are checked against its own Haskell
++implementation, not the stack fixtures. The supplementary source-variant
++inventory records both relationships.
++
++### Portable translation and evaluation
++
++Keep the list-of-successes parser and all its alternative parse results,
++first-success selection, term representation, function-valued substitutions,
++composition order, occurs check and first-occurrence variable ordering.
++Do not replace the interpreter with an association-map unifier or a different
++Prolog engine. Predicate groups remain a sorted association list, keyed by
++name rather than arity; clauses retain insertion order.
++
++The stack engine retains explicit backtrack frames, fresh variable levels,
++goal application order and the source cut operation, which clears the second
++frame's alternatives while retaining the top frame. The proof-tree engine
++retains memoized Done/Choice nodes and depth-first search. It does not acquire
++the stack engine's cut behavior.
++
++Both policies retain memoized parser alternatives, proof/search control streams
++and output character streams. Lazy finite term payloads defer unused children
++and substitution results; strict finite payloads construct them eagerly.
++Potentially infinite search alternatives are not all forced by the strict
++variant. Function-valued substitutions remain functions in both variants.
++Difference-list output functions retain the source higher-order ShowS consumer.
++
++Atoms use SML strings and selected input characters are ASCII. Runtime text is
++converted to a shared character list once before the repetition loop. Parser
++choice streams, terms, substitutions and database extensions are fresh for each
++interpretation; the original immutable library/input are reused.
++
++The bounded machine integers store source variable levels, positions and profile
++counters; selected profiles fit signed 31-bit integers. Hash arithmetic uses
++explicit Word64 modulo 2^64 on every host, matching the selected GHC 64-bit Int.
++The driver checks every output character as it computes the forward hash, and
++compares the result with an independent reverse polynomial calculation of the
++reference transcript. It emits a stable repetition-count:hexadecimal-hash report.
++
++The driver reads the library, input and reference once. Library clauses are
++parsed once, as upstream. Remove the sign-on/library progress display from
++accepted output, and replace the 200 printed decimal hash lines with the stable
++report. The complete echoed/answer transcript being hashed is unchanged.
++Retain backspace/delete handling, blank commands, syntax errors, continuation
++semicolons, variable printing, database display and quit-tail demand.
++
++The historical parser accepts some unusual empty names/queries and strips
++literal spaces rather than arbitrary whitespace. Preserve and test those
++behaviors. Command input exhausted without quit raises an error, matching the source's
++partial reader under complete consumption. Selected source fixtures end in bye.
++
++### Profiles and correctness
++
++| Profile | Upstream command data | Repetitions |
++|---|---|---:|
++| Smoke | prolog.faststdin | 1 |
++| Normal | prolog.stdin | 200 |
++| Large | prolog.slowstdin | 200 |
++
++The normal and large profiles retain their source iteration count and exact
++command data. Smoke reduces only repetitions. All use the original standard
++library and the suite's default resource limits.
++
++Unmodified GHC runs match all three active-engine stdout fixtures exactly.
++The proof-tree reference changes only the selected engine file, then uses its
++own complete loop transcript. Export-only observers expose the original loop;
++they add no alternate parser, unifier or printer.
++
++All three complete transcripts agree for both SML payload policies and each
++engine. Additional source-observed cases cover ambiguous parsing, empty
++queries/names, backspaces, arity, aliases, numbered variables, clause order,
++cut and quit-tail behavior. Tests cover substitution composition, cyclic
++unification rejection, renaming, source cut-frame behavior, bad transcripts,
++golden hash vectors and lazy/strict finite payload demand.
++
++### Literature and diagnostic questions
++
++[Bird and Wadler, An introduction to functional programming (1988)](https://www.research.ed.ac.uk/en/publications/an-introduction-to-functional-programming/)
++supplies the bibliographic context for the credits in Parse.hs and Interact.hs.
++The university record confirms author/title/year; the cited chapter contents
++have not been reviewed here. The retained Examples document explains the two
++specific inference engines.
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
++provides suite context.
++
++Investigate parser branching and sharing, substitution closure chains,
++higher-order printing, term allocation, retained backtrack frames, proof-tree
++construction and early termination of alternative search. These questions
++follow from source inspection. Reference agreement establishes selected
++correctness; optimization/performance explanations require measurements.
+diff --git a/examples/benchmarks/inventory.tsv b/examples/benchmarks/inventory.tsv
+index 29af32ec..9eb5ff0b 100644
+--- a/examples/benchmarks/inventory.tsv
++++ b/examples/benchmarks/inventory.tsv
+@@ -583,7 +583,7 @@ nofib	real/maillist	maillist	maillist	M4	import	lists-streams		Paul Hudak, Janua
+ nofib	real/mkhprog	mkhprog	mkhprog	M4	import	application		not stated in scanned source headers	05613206770d88d6334b1092b1a5fc49271a78438212f4b743d4607183c71c1b	real/mkhprog/Main.lhs;real/mkhprog/NofibUtils.hs	real/mkhprog/mkhprog.stdin	real/mkhprog/Main.lhs:header	real/mkhprog/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/parser	parser	parser	M4	import	compiler-application		not stated in scanned source headers	3a279f462707dcc0de97c1b91955e8727a0d7c54c4cbcb324085975ab745cae4	real/parser/Main.hs;real/parser/NofibUtils.hs	real/parser/parser.faststdin;real/parser/parser.faststdout;real/parser/parser.slowstdin;real/parser/parser.slowstdout;real/parser/parser.stdin;real/parser/parser.stdout		real/parser/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/pic	pic	pic	M4	import	application		Patricia Fasel	069f386c15bd6861b79abcb5ee53410fdbf47b4146513b5d1295f901dcf75bd6	real/pic/ChargeDensity.hs;real/pic/Consts.hs;real/pic/ElecField.hs;real/pic/Main.hs;real/pic/NofibUtils.hs;real/pic/Pic.hs;real/pic/PicType.hs;real/pic/Potential.hs;real/pic/PushParticle.hs;real/pic/Utils.hs		real/pic/Pic.hs:header	real/pic/ChargeDensity.hs:author-heading;real/pic/Consts.hs:author-heading;real/pic/ElecField.hs:author-heading;real/pic/Main.hs:author-heading;real/pic/Makefile;real/pic/Pic.hs:author-heading;real/pic/PicType.hs:author-heading;real/pic/Potential.hs:author-heading;real/pic/PushParticle.hs:author-heading;real/pic/Utils.hs:author-heading	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	real/prolog	prolog	prolog	M4	import	compiler-application		not stated in scanned source headers	3dae5175920f5e6454159ecb599db318521277610e66ac2efba7f1df3fe61c7c	real/prolog/Engine.hs;real/prolog/Interact.hs;real/prolog/Main.hs;real/prolog/NofibUtils.hs;real/prolog/Parse.hs;real/prolog/PrologData.hs;real/prolog/PureEngine.hs;real/prolog/StackEngine.hs;real/prolog/Subst.hs;real/prolog/Version.hs	real/prolog/prolog.faststdin;real/prolog/prolog.faststdout;real/prolog/prolog.slowstdin;real/prolog/prolog.slowstdout;real/prolog/prolog.stdin;real/prolog/prolog.stdout;real/prolog/runtime_files/stdlib		real/prolog/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	real/prolog	prolog	prolog	M4	import	compiler-application		Mark P. Jones	3dae5175920f5e6454159ecb599db318521277610e66ac2efba7f1df3fe61c7c	real/prolog/Engine.hs;real/prolog/Interact.hs;real/prolog/Main.hs;real/prolog/NofibUtils.hs;real/prolog/Parse.hs;real/prolog/PrologData.hs;real/prolog/PureEngine.hs;real/prolog/StackEngine.hs;real/prolog/Subst.hs;real/prolog/Version.hs	real/prolog/prolog.faststdin;real/prolog/prolog.faststdout;real/prolog/prolog.slowstdin;real/prolog/prolog.slowstdout;real/prolog/prolog.stdin;real/prolog/prolog.stdout;real/prolog/runtime_files/stdlib		real/prolog/Engine.hs:author-heading;real/prolog/Interact.hs:author-heading;real/prolog/Main.hs:author-heading;real/prolog/Makefile;real/prolog/Parse.hs:author-heading;real/prolog/PrologData.hs:author-heading;real/prolog/PureEngine.hs:author-heading;real/prolog/StackEngine.hs:author-heading;real/prolog/Subst.hs:author-heading	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/reptile	reptile	reptile	M4	import	application		not stated in scanned source headers	c7a45764e8dead72e150a92c1566d92134217196e56ec0a78a479ecd040975c1	real/reptile/Auxprogfuns.hs;real/reptile/Diff.hs;real/reptile/Drawfuns.hs;real/reptile/Geomfuns.hs;real/reptile/Help.hs;real/reptile/Interstate.hs;real/reptile/Layout.hs;real/reptile/Main.hs;real/reptile/Mgrfuns.hs;real/reptile/NofibUtils.hs;real/reptile/Progfuns.hs;real/reptile/Psfuns.hs;real/reptile/Rational.hs;real/reptile/Tilefuns.hs	real/reptile/reptile.faststdin;real/reptile/reptile.faststdout;real/reptile/reptile.slowstdin;real/reptile/reptile.slowstdout;real/reptile/reptile.stdin;real/reptile/reptile.stdout		real/reptile/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/rsa	rsa	rsa	M4	import	integer-arithmetic		not stated in scanned source headers	410238f11772b54d24b09e09e9680d0bed98a563f3d56b183af27a25493f47f0	real/rsa/Main.hs;real/rsa/NofibUtils.hs;real/rsa/Rsa.hs	real/rsa/rsa.faststdin;real/rsa/rsa.faststdout;real/rsa/rsa.slowstdin;real/rsa/rsa.slowstdout;real/rsa/rsa.stdin;real/rsa/rsa.stdout		real/rsa/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/scs	scs	scs	M4	import	integer-arithmetic		not stated in scanned source headers	9c74063e460b2d762d4a2aa7b1482e6688144d744b75e8cd69060e83a75de212	real/scs/LinearAlgebra.hs;real/scs/Main.hs;real/scs/Parse.hs;real/scs/ParseLib.hs;real/scs/RandomFix.hs;real/scs/Simulate.hs;real/scs/Types.hs	real/scs/runtime_files/inverter.in;real/scs/scs.stdout		real/scs/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index bbe688bc..44c5aa7d 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -1011,3 +1011,15 @@ hidden-lazy	large	nofib	real/hidden	20 four.plate 2,10,3 large.commands	hidden-l
+ hidden-strict	smoke	nofib	real/hidden	1 houses.plate 2,10,3 smoke.commands	hidden-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-hidden-number.sml,shared/nofib-hidden.sml,shared/nofib-hidden-parse.sml,shared/nofib-hidden-driver.sml,hidden-strict/benchmark.sml,shared/main.sml	30	1048576	rendering,numerical,lists-streams,allocation-lifetimes,strict	houses.plate,smoke.commands	checked-numerical	implemented
+ hidden-strict	normal	nofib	real/hidden	20 rad.plate 2,10,3 normal.commands	hidden-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-hidden-number.sml,shared/nofib-hidden.sml,shared/nofib-hidden-parse.sml,shared/nofib-hidden-driver.sml,hidden-strict/benchmark.sml,shared/main.sml	600	4194304	rendering,numerical,lists-streams,allocation-lifetimes,strict	rad.plate,normal.commands	checked-numerical	implemented
+ hidden-strict	large	nofib	real/hidden	20 four.plate 2,10,3 large.commands	hidden-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-hidden-number.sml,shared/nofib-hidden.sml,shared/nofib-hidden-parse.sml,shared/nofib-hidden-driver.sml,hidden-strict/benchmark.sml,shared/main.sml	3600	8388608	rendering,numerical,lists-streams,allocation-lifetimes,strict	four.plate,large.commands	checked-numerical	implemented
++prolog-lazy	smoke	nofib	real/prolog	1 stdlib smoke.input smoke.text	prolog-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-prolog-parse.sml,shared/nofib-prolog.sml,shared/nofib-prolog-driver.sml,prolog-lazy/benchmark.sml,shared/main.sml	30	1048576	parsing,symbolic-search,higher-order,lists-streams,lazy	stdlib,smoke.input,smoke.text	exact	implemented
++prolog-lazy	normal	nofib	real/prolog	200 stdlib normal.input normal.text	prolog-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-prolog-parse.sml,shared/nofib-prolog.sml,shared/nofib-prolog-driver.sml,prolog-lazy/benchmark.sml,shared/main.sml	600	4194304	parsing,symbolic-search,higher-order,lists-streams,lazy	stdlib,normal.input,normal.text	exact	implemented
++prolog-lazy	large	nofib	real/prolog	200 stdlib large.input large.text	prolog-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-prolog-parse.sml,shared/nofib-prolog.sml,shared/nofib-prolog-driver.sml,prolog-lazy/benchmark.sml,shared/main.sml	3600	8388608	parsing,symbolic-search,higher-order,lists-streams,lazy	stdlib,large.input,large.text	exact	implemented
++prolog-strict	smoke	nofib	real/prolog	1 stdlib smoke.input smoke.text	prolog-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-prolog-parse.sml,shared/nofib-prolog.sml,shared/nofib-prolog-driver.sml,prolog-strict/benchmark.sml,shared/main.sml	30	1048576	parsing,symbolic-search,higher-order,lists-streams,strict	stdlib,smoke.input,smoke.text	exact	implemented
++prolog-strict	normal	nofib	real/prolog	200 stdlib normal.input normal.text	prolog-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-prolog-parse.sml,shared/nofib-prolog.sml,shared/nofib-prolog-driver.sml,prolog-strict/benchmark.sml,shared/main.sml	600	4194304	parsing,symbolic-search,higher-order,lists-streams,strict	stdlib,normal.input,normal.text	exact	implemented
++prolog-strict	large	nofib	real/prolog	200 stdlib large.input large.text	prolog-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-prolog-parse.sml,shared/nofib-prolog.sml,shared/nofib-prolog-driver.sml,prolog-strict/benchmark.sml,shared/main.sml	3600	8388608	parsing,symbolic-search,higher-order,lists-streams,strict	stdlib,large.input,large.text	exact	implemented
++prolog-tree-lazy	smoke	nofib	real/prolog	1 stdlib smoke.input smoke.text	prolog-tree-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-prolog-parse.sml,shared/nofib-prolog.sml,shared/nofib-prolog-driver.sml,prolog-tree-lazy/benchmark.sml,shared/main.sml	30	1048576	parsing,symbolic-search,higher-order,lists-streams,lazy	stdlib,smoke.input,smoke.text	exact	implemented
++prolog-tree-lazy	normal	nofib	real/prolog	200 stdlib normal.input normal.text	prolog-tree-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-prolog-parse.sml,shared/nofib-prolog.sml,shared/nofib-prolog-driver.sml,prolog-tree-lazy/benchmark.sml,shared/main.sml	600	4194304	parsing,symbolic-search,higher-order,lists-streams,lazy	stdlib,normal.input,normal.text	exact	implemented
++prolog-tree-lazy	large	nofib	real/prolog	200 stdlib large.input large.text	prolog-tree-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-prolog-parse.sml,shared/nofib-prolog.sml,shared/nofib-prolog-driver.sml,prolog-tree-lazy/benchmark.sml,shared/main.sml	3600	8388608	parsing,symbolic-search,higher-order,lists-streams,lazy	stdlib,large.input,large.text	exact	implemented
++prolog-tree-strict	smoke	nofib	real/prolog	1 stdlib smoke.input smoke.text	prolog-tree-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-prolog-parse.sml,shared/nofib-prolog.sml,shared/nofib-prolog-driver.sml,prolog-tree-strict/benchmark.sml,shared/main.sml	30	1048576	parsing,symbolic-search,higher-order,lists-streams,strict	stdlib,smoke.input,smoke.text	exact	implemented
++prolog-tree-strict	normal	nofib	real/prolog	200 stdlib normal.input normal.text	prolog-tree-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-prolog-parse.sml,shared/nofib-prolog.sml,shared/nofib-prolog-driver.sml,prolog-tree-strict/benchmark.sml,shared/main.sml	600	4194304	parsing,symbolic-search,higher-order,lists-streams,strict	stdlib,normal.input,normal.text	exact	implemented
++prolog-tree-strict	large	nofib	real/prolog	200 stdlib large.input large.text	prolog-tree-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/nofib-prolog-parse.sml,shared/nofib-prolog.sml,shared/nofib-prolog-driver.sml,prolog-tree-strict/benchmark.sml,shared/main.sml	3600	8388608	parsing,symbolic-search,higher-order,lists-streams,strict	stdlib,large.input,large.text	exact	implemented
+diff --git a/examples/benchmarks/source-variants.tsv b/examples/benchmarks/source-variants.tsv
+index 822b06c1..e9650bfc 100644
+--- a/examples/benchmarks/source-variants.tsv
++++ b/examples/benchmarks/source-variants.tsv
+@@ -5,3 +5,5 @@ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/pic	real/pic/inId/pic88.id	p
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/pic	real/pic/inId/doc.culler	doc.culler	text	historical call graph	not stated	4966bb3e1174e05cd35a8c5b9cba267b1e53d9eb503144328a46289254eae3c9	exclude	documentation of historical call graphs, without a workload entrypoint; retain as provenance for the associated Id implementation	no separate redistribution notice stated
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/pic	real/pic/inId/doc.olaf	doc.olaf	text	historical call graph	not stated	5d3e6d629fc1e01dc44b4a55d89fc4931c482937b703df869d2e6cd9752f6e9a	exclude	documentation of historical call graphs, without a workload entrypoint; retain as provenance for the associated Id implementation	no separate redistribution notice stated
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/hidden	real/hidden/etc/nbpip.c	nbpip	C	historical interactive wrapper	not stated	13cd8f4cf3574e2c3cf6b03f41de8d3c3800919e311bedd2acdeabd835d42234	exclude	pseudo-terminal wrapper for the hidden-line executable and external Ghostscript; no geometry workload of its own; obsolete BSD PTY and interactive display setup are outside the portable suite	no separate redistribution notice stated; do not infer correspondence permission for a broader use
++nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/prolog	real/prolog/StackEngine.hs	prolog-stack	Haskell	alternative inference engine	Mark P. Jones	ffa747aefe1941ad5798c6a0f44ba93563c8b6a8b7d227a960e0d0766767c145	duplicate	byte-identical to the active Engine.hs at the pinned revision; share prolog-lazy/prolog-strict implementations and retain both source paths	authorship header retained; no separate individual redistribution grant stated
++nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/prolog	real/prolog/PureEngine.hs	prolog-tree	Haskell	alternative inference engine	Mark P. Jones	d586de0f29309bad7fc0ff1fc19129757dc2ac89d58c4277df25338bf5b638a6	import	explicit memoized proof-tree engine, without the stack engines cut predicate; ported as prolog-tree-lazy/prolog-tree-strict with its own transcripts	authorship header retained; no separate individual redistribution grant stated
+diff --git a/scripts/benchmark-inventory.py b/scripts/benchmark-inventory.py
+index 1db1eac7..26f2534a 100644
+--- a/scripts/benchmark-inventory.py
++++ b/scripts/benchmark-inventory.py
+@@ -574,6 +574,10 @@ def build(source, root, lock):
+                     and re.search(r"(?m)^--[ \t]+Patricia Fasel\n--[ \t]+Los Alamos National Laboratory", header)):
+                 authors.add("Patricia Fasel")
+                 item["evidence"].append(str(p.relative_to(root)) + ":author-heading")
++            if (source == "nofib" and path == "real/prolog"
++                    and re.search(r"(?m)^-- Mark P\. Jones November 1990$", header)):
++                authors.add("Mark P. Jones")
++                item["evidence"].append(str(p.relative_to(root)) + ":author-heading")
+             reviewed_prime_author = (
+                 source == "nofib" and path == "spectral/primetest"
+                 and r"\def\author{David Lester}" in header.splitlines())
+diff --git a/tests/benchmarks/test-inventory.py b/tests/benchmarks/test-inventory.py
+index 925ac225..b8359013 100644
+--- a/tests/benchmarks/test-inventory.py
++++ b/tests/benchmarks/test-inventory.py
+@@ -180,6 +180,22 @@ class InventoryTest(unittest.TestCase):
+         self.assertEqual(row["authors"], "not stated in scanned source headers")
+         self.assertNotIn("real/hidden/MAIL:nofib-permission", row["notices"])
+ 
++    def test_prolog_author_heading_is_recorded(self):
++        self.nofib_roots()
++        self.file("real/prolog/Makefile", "\n")
++        self.file("real/prolog/Main.hs",
++                  "-- Mark P. Jones November 1990\nmain = print 0\n")
++        row = self.build("nofib")[0]
++        self.assertEqual(row["authors"], "Mark P. Jones")
++        self.assertIn("real/prolog/Main.hs:author-heading", row["evidence"])
++
++    def test_changed_prolog_author_heading_requires_review(self):
++        self.nofib_roots()
++        self.file("real/prolog/Makefile", "\n")
++        self.file("real/prolog/Main.hs",
++                  "-- Another author November 1990\nmain = print 0\n")
++        self.assertNotIn("Mark P. Jones", self.build("nofib")[0]["authors"])
++
+     def test_pic_author_heading_is_recorded(self):
+         self.nofib_roots()
+         self.file("real/pic/Makefile", "\n")

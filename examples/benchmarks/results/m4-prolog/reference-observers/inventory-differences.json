@@ -1,0 +1,38 @@
+[
+  {
+    "before": {
+      "source": "nofib",
+      "path": "real/prolog",
+      "name": "prolog",
+      "rune_name": "prolog",
+      "milestone": "M4",
+      "disposition": "import",
+      "family": "compiler-application",
+      "related": "",
+      "authors": "not stated in scanned source headers",
+      "sha256": "3dae5175920f5e6454159ecb599db318521277610e66ac2efba7f1df3fe61c7c",
+      "members": "real/prolog/Engine.hs;real/prolog/Interact.hs;real/prolog/Main.hs;real/prolog/NofibUtils.hs;real/prolog/Parse.hs;real/prolog/PrologData.hs;real/prolog/PureEngine.hs;real/prolog/StackEngine.hs;real/prolog/Subst.hs;real/prolog/Version.hs",
+      "inputs": "real/prolog/prolog.faststdin;real/prolog/prolog.faststdout;real/prolog/prolog.slowstdin;real/prolog/prolog.slowstdout;real/prolog/prolog.stdin;real/prolog/prolog.stdout;real/prolog/runtime_files/stdlib",
+      "notices": "",
+      "evidence": "real/prolog/Makefile",
+      "reason": "portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import"
+    },
+    "after": {
+      "source": "nofib",
+      "path": "real/prolog",
+      "name": "prolog",
+      "rune_name": "prolog",
+      "milestone": "M4",
+      "disposition": "import",
+      "family": "compiler-application",
+      "related": "",
+      "authors": "Mark P. Jones",
+      "sha256": "3dae5175920f5e6454159ecb599db318521277610e66ac2efba7f1df3fe61c7c",
+      "members": "real/prolog/Engine.hs;real/prolog/Interact.hs;real/prolog/Main.hs;real/prolog/NofibUtils.hs;real/prolog/Parse.hs;real/prolog/PrologData.hs;real/prolog/PureEngine.hs;real/prolog/StackEngine.hs;real/prolog/Subst.hs;real/prolog/Version.hs",
+      "inputs": "real/prolog/prolog.faststdin;real/prolog/prolog.faststdout;real/prolog/prolog.slowstdin;real/prolog/prolog.slowstdout;real/prolog/prolog.stdin;real/prolog/prolog.stdout;real/prolog/runtime_files/stdlib",
+      "notices": "",
+      "evidence": "real/prolog/Engine.hs:author-heading;real/prolog/Interact.hs:author-heading;real/prolog/Main.hs:author-heading;real/prolog/Makefile;real/prolog/Parse.hs:author-heading;real/prolog/PrologData.hs:author-heading;real/prolog/PureEngine.hs:author-heading;real/prolog/StackEngine.hs:author-heading;real/prolog/Subst.hs:author-heading",
+      "reason": "portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import"
+    }
+  }
+]

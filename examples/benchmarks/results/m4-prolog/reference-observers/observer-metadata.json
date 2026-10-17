@@ -1,0 +1,32 @@
+[
+  {
+    "engine": "stack",
+    "profile": "smoke",
+    "observation": "(1594,8250229652195819419)"
+  },
+  {
+    "engine": "stack",
+    "profile": "normal",
+    "observation": "(13404,3570019633462982316)"
+  },
+  {
+    "engine": "stack",
+    "profile": "large",
+    "observation": "(56763,3774220813685008751)"
+  },
+  {
+    "engine": "pure",
+    "profile": "smoke",
+    "observation": "(1589,6656209396847721696)"
+  },
+  {
+    "engine": "pure",
+    "profile": "normal",
+    "observation": "(11942,8157400211458286242)"
+  },
+  {
+    "engine": "pure",
+    "profile": "large",
+    "observation": "(49819,4380546038613831040)"
+  }
+]

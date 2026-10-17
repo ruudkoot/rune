@@ -1,0 +1,16 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/inventory.tsv
+ M examples/benchmarks/manifest.tsv
+ M examples/benchmarks/source-variants.tsv
+ M scripts/benchmark-inventory.py
+ M tests/benchmarks/test-inventory.py
+?? examples/benchmarks/prolog-lazy/
+?? examples/benchmarks/prolog-strict/
+?? examples/benchmarks/prolog-tree-lazy/
+?? examples/benchmarks/prolog-tree-strict/
+?? examples/benchmarks/shared/nofib-prolog-driver.sml
+?? examples/benchmarks/shared/nofib-prolog-parse.sml
+?? examples/benchmarks/shared/nofib-prolog.sml
+?? tests/benchmarks/check-prolog.sh
+?? tests/benchmarks/data/prolog/
+?? tests/benchmarks/prolog-tests.sml

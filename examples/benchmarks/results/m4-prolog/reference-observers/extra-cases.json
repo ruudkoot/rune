@@ -1,0 +1,13 @@
+{
+  "empty-query": "?-\nbye\n",
+  "parse-empty-name": ".\n??\nbye\n",
+  "backspaces": "?- equals(X,X)\nzz\b\bbye\n",
+  "no-answer": "?- equals(a,b)\nbye\n",
+  "aliasing": "?- equals(X,Y)\n;\nbye\n",
+  "append-order": "?- append(X,Y,cons(a,cons(b,nil)))\n;;;\nbye\n",
+  "cut-source": "p(a).\np(b).\nq(X):==p(X),!.\n?- q(X)\n;\nbye\n",
+  "unknown-and-blank": "this is invalid\n\nbye\n",
+  "arity": "p(a).\np(a,b).\n?- p(a,X)\n;\nbye\n",
+  "numbered-variables": "p(X,Y).\n?- p(A,B)\n;\nbye\n",
+  "quit-tail": "bye\nnot used at all\n"
+}

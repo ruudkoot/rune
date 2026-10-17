@@ -1,0 +1,4 @@
+> ?- equals(X,X)
+X = X_1 
+> z bye
+Thank you and goodbye
