@@ -560,6 +560,28 @@ def build(source, root, lock):
             if ".SH AUTHOR\nIain Checkland, University of York." in manual:
                 authors.add("Iain Checkland")
                 item["evidence"].append("real/gg/gg.1:author-section")
+        if source == "nofib" and path == "spectral/fft2" and (parent / "Main.lhs").is_file():
+            header = (parent / "Main.lhs").read_text(errors="replace")
+            if "Rex Page (rpage@trc.amoco.com)" in header and "Amoco Production Research, Sep 1992" in header:
+                authors.add("Rex Page")
+                item["evidence"].append("spectral/fft2/Main.lhs:author-header")
+        if source == "nofib" and path == "spectral/lambda" and (parent / "Main.hs").is_file():
+            header = (parent / "Main.hs").read_text(errors="replace")
+            if "-- From Mark: marku@cs.waikato.ac.nz [Nov 2001]" in header:
+                authors.add("Mark (marku@cs.waikato.ac.nz)")
+                item["evidence"].append("spectral/lambda/Main.hs:author-header")
+        if source == "nofib" and path == "spectral/para" and (parent / "Main.lhs").is_file():
+            header = (parent / "Main.lhs").read_text(errors="replace")
+            if "% \tA program by Oege de Moor and Jeremy Gibbons" in header:
+                authors.update(("Oege de Moor", "Jeremy Gibbons"))
+                item["evidence"].append("spectral/para/Main.lhs:author-heading")
+            data = parent / "runtime_files/input-data"
+            if data.is_file():
+                text = data.read_text(errors="replace")
+                if ("Far From The Madding Crowd, by Thomas Hardy" in text and
+                        "*END*THE SMALL PRINT! FOR PUBLIC DOMAIN ETEXTS*Ver.04.29.93*END*" in text):
+                    notices.append("spectral/para/runtime_files/input-data:Project-Gutenberg-1993-notice")
+                    item["evidence"].append("spectral/para/runtime_files/input-data:individual-dataset-notice")
         item["evidence"].extend(str(p.relative_to(root)) for p in context)
         for p in files + context:
             header = p.read_text(errors="replace")[:8000]

@@ -228,6 +228,62 @@ class InventoryTest(unittest.TestCase):
                   "% Crown Copyright 1992\n\\author{Another author\\\\\n\n> main = print 0\n")
         self.assertNotIn("N. D. North", self.build("nofib")[0]["authors"])
 
+    def test_para_article_authors_are_recorded(self):
+        self.nofib_roots()
+        self.file("spectral/para/Makefile", "\n")
+        self.file("spectral/para/Main.lhs", "% \tA program by Oege de Moor and Jeremy Gibbons\n> module Main where\n> main = print 0\n")
+        row = self.build("nofib")[0]
+        self.assertIn("Oege de Moor", row["authors"])
+        self.assertIn("Jeremy Gibbons", row["authors"])
+
+    def test_changed_para_article_author_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/para/Makefile", "\n")
+        self.file("spectral/para/Main.lhs", "% A program by Another author\n> module Main where\n> main = print 0\n")
+        self.assertNotIn("Oege de Moor", self.build("nofib")[0]["authors"])
+
+    def test_para_individual_data_notice_is_recorded(self):
+        self.nofib_roots()
+        self.file("spectral/para/Makefile", "\n")
+        self.file("spectral/para/Main.lhs", "> module Main where\n> main = print 0\n")
+        self.file("spectral/para/runtime_files/input-data", "Far From The Madding Crowd, by Thomas Hardy\n*END*THE SMALL PRINT! FOR PUBLIC DOMAIN ETEXTS*Ver.04.29.93*END*\n")
+        self.assertIn("spectral/para/runtime_files/input-data:Project-Gutenberg-1993-notice", self.build("nofib")[0]["notices"])
+
+    def test_incomplete_para_notice_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/para/Makefile", "\n")
+        self.file("spectral/para/Main.lhs", "> module Main where\n> main = print 0\n")
+        self.file("spectral/para/runtime_files/input-data", "Far From The Madding Crowd, by Thomas Hardy\n")
+        self.assertNotIn("spectral/para/runtime_files/input-data:Project-Gutenberg-1993-notice", self.build("nofib")[0]["notices"])
+
+    def test_lambda_source_author_header_is_recorded(self):
+        self.nofib_roots()
+        self.file("spectral/lambda/Makefile", "\n")
+        self.file("spectral/lambda/Main.hs", "module Main where\n-- From Mark: marku@cs.waikato.ac.nz [Nov 2001]\nmain = print 0\n")
+        row = self.build("nofib")[0]
+        self.assertIn("Mark (marku@cs.waikato.ac.nz)", row["authors"])
+        self.assertIn("spectral/lambda/Main.hs:author-header", row["evidence"])
+
+    def test_changed_lambda_source_author_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/lambda/Makefile", "\n")
+        self.file("spectral/lambda/Main.hs", "module Main where\n-- From Another author\nmain = print 0\n")
+        self.assertNotIn("Mark (marku@cs.waikato.ac.nz)", self.build("nofib")[0]["authors"])
+
+    def test_fft2_source_author_header_is_recorded(self):
+        self.nofib_roots()
+        self.file("spectral/fft2/Makefile", "\n")
+        self.file("spectral/fft2/Main.lhs", "> module Main where\n> main = print 0\n> -- Rex Page (rpage@trc.amoco.com)\n> -- Amoco Production Research, Sep 1992\n")
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "Rex Page")
+        self.assertIn("spectral/fft2/Main.lhs:author-header", row["evidence"])
+
+    def test_changed_fft2_author_header_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/fft2/Makefile", "\n")
+        self.file("spectral/fft2/Main.lhs", "> module Main where\n> main = print 0\n> -- Another author\n")
+        self.assertNotIn("Rex Page", self.build("nofib")[0]["authors"])
+
     def test_gg_manual_author_section_is_recorded(self):
         self.nofib_roots()
         self.file("real/gg/Makefile", "\n")

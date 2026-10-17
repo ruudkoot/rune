@@ -371,6 +371,14 @@ inventory entry.
 | [gg-spark-strict](#gg-spark-strict) | [nofib GRIP graphs](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/gg) | Render the source spark graph from fixed GRIP logs with strict numeric payloads and validate the complete PostScript. |
 | [gg-pool-lazy](#gg-pool-lazy) | [nofib GRIP graphs](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/gg) | Render the source pool graph from fixed GRIP logs with lazy numeric payloads and validate the complete PostScript. |
 | [gg-pool-strict](#gg-pool-strict) | [nofib GRIP graphs](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/gg) | Render the source pool graph from fixed GRIP logs with strict numeric payloads and validate the complete PostScript. |
+| [fft2-lazy](#fft2-lazy) | [nofib Fourier transforms](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/fft2) | Compute source FFT, mixed-factor DFT and cosine ramp checks with lazy numeric payloads. |
+| [fft2-strict](#fft2-strict) | [nofib Fourier transforms](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/fft2) | Compute source FFT, mixed-factor DFT and cosine ramp checks with strict numeric payloads. |
+| [lambda-simple-lazy](#lambda-simple-lazy) | [nofib lambda interpreters](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/lambda) | Evaluate the fixed-point summation term using the simple interpreter and lazy finite syntax/result payloads. |
+| [lambda-simple-strict](#lambda-simple-strict) | [nofib lambda interpreters](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/lambda) | Evaluate the fixed-point summation term using the simple interpreter and strict finite syntax/result payloads. |
+| [lambda-monad-lazy](#lambda-monad-lazy) | [nofib lambda interpreters](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/lambda) | Evaluate the fixed-point summation term using the monad interpreter and lazy finite syntax/result payloads. |
+| [lambda-monad-strict](#lambda-monad-strict) | [nofib lambda interpreters](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/lambda) | Evaluate the fixed-point summation term using the monad interpreter and strict finite syntax/result payloads. |
+| [para-lazy](#para-lazy) | [nofib paragraph formatter](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/para) | Format fixed text using the source symmetric-list candidate algorithm with lazy numeric summaries. |
+| [para-strict](#para-strict) | [nofib paragraph formatter](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/para) | Format fixed text using the source symmetric-list candidate algorithm with strict numeric summaries. |
 
 ## Running and interpreting checks
 
@@ -19930,3 +19938,803 @@ Investigate delayed numeric parsing, insertion shape, selected-field forcing,
 state/trace retention, outline transposition, Float32 versus Double operations
 and streaming text/hash consumers. These are source-based questions. Reference
 agreement and measured configurations are separate from architectural hypotheses.
+
+## fft2-lazy
+
+Numeric policy: lazy.
+
+### Algorithm and workload
+
+Compute fast FFT/inverse distance, general mixed-factor DFT/inverse distance
+and the sum of a slow cosine transform over independent ramps. Retain list
+algorithms, cyclic roots, the factor sieve, transpose/zip structure, numeric
+operation order and separate signal generation for the three measurements.
+No result cache or replacement transform is used in the benchmark.
+
+### History, authorship and variants
+
+Rex Page, Amoco Production Research, September 1992. Pinned nofib revision
+b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/fft2. Retain fft2 as distinct
+from classic FFT, spectral/hartel/fft and Sandmark FFT, with explicit lazy/strict
+suffixes. Complete original modules, MAIL, README.nofib, old platform fixtures
+and foreign-language references are retained under fft2-lazy/upstream.
+
+Individual files state no separate redistribution grant; retain all attribution
+and do not infer a license from another benchmark. The supplementary inventory
+records Rex Page's Miranda and fixed-array Fortran programs as distinct
+historical references outside the initial executable language-family set.
+Matt Donadio's iterative bit-reversal C FFT is a library fragment without a
+standalone workload. No foreign reference is called an exact duplicate.
+There are no external datasets; ramp inputs are generated deterministically.
+Old platform-specific numeric fixtures remain historical evidence.
+
+### Portable translation and evaluation
+
+All computation and checking uses SML97. Complex coordinates use real arithmetic,
+with memoized numeric delays in lazy and eager finite payloads in strict.
+Both preserve memoized control streams, shared even-root subsequences, periodic
+cyclic lists, the global prime stream and separately delayed transform metrics.
+Unused complex coordinates remain demand-sensitive in the lazy policy.
+
+Magnitude/division retain the installed GHC base-4.17.2.0 Data.Complex exponent
+scaling and zero-exponent behavior, inspected in its installed interface.
+Extreme-value references include the underflow of a tiny coordinate paired with
+zero. Integer indices and factors fit portable int in the bounded profile domain.
+Floating enumeration retains Haskell's half-step endpoint convention.
+
+For i from one through 100, the source generates base+i/15 and consequently
+eight different lengths. Compute each iteration anew. The fast transform assumes
+powers of two but source profiles include other lengths: preserve and check its
+large nonzero errors instead of silently correcting the source algorithm.
+
+Retain the demand for the length of the quoted result string. GEN17 replaces
+shortest decimal spelling; parsed values, escape roundtrips and an independently
+computed escaped length validate the consumer. Stable samples:checked output
+replaces empty stdout. No hash replaces the formatted-result consumer.
+
+### Profiles and result checks
+
+| Profile | Samples | Base |
+|---|---:|---:|
+| Smoke | 1 | 70 |
+| Normal | 100 | 245 |
+| Large | 100 | 490 |
+
+Normal and large retain source counts; smoke reduces FAST's 100 to one.
+Original GHC runs match the empty stdout fixture for all full profiles; print
+mode supplies all 300 numeric values per profile. An independent eager Python
+model agrees on all 300 triples, including non-power-of-two fast-transform errors.
+Its reference-only caching of repeated sizes is absent from the SML workload.
+
+For actual length n, fast-transform distance allows absolute 1e-9 plus relative
+1e-10. The general-transform residual allows absolute 128*epsilon*n^2*sqrt(n);
+the cosine sum allows 128*epsilon*n^3, with binary64 machine epsilon.
+These are conservative source-agreement budgets, not a formal proof for all math
+libraries. Reject nonfinite values, malformed triples and deliberate perturbations
+of each metric; also test an accepted interior point near the bound.
+Auxiliary transform vectors use absolute and relative 1e-11.
+
+The semantic target checks all five complex transforms and cosine vectors at
+lengths 2,3,4,5,8,16, magnitudes, cyclic lists, factors, floating enumeration,
+quoted output, coordinate demand and sharing. Both full normal SML profiles
+pass calibration. Full large SML repetition checks remain unrecorded, separately
+from validated large fixtures and first-sample checks.
+
+Private Rune, MLton, Poly/ML and ML Kit runs pass 132 checks. Private SML/NJ
+runs terminate with bus/segmentation faults or a fatal bogus-overflow diagnostic.
+Retain valid source and canonical host settings; the compiler mechanism is
+unresolved. Failed correctness checks cannot supply accepted timing samples.
+Canonical primary, count and semantic results are recorded as they finish.
+
+### Literature and diagnostic questions
+
+[Cooley and Tukey (1965)](https://doi.org/10.1090/S0025-5718-1965-0178586-1)
+provides FFT context; this source's Fourier.lhs and Complex_Vectors.lhs define
+the actual algorithms and MAIL records numerical investigations.
+[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) supplies suite
+context. Investigate higher-order streams, periodic sharing, complex-coordinate
+demand, numeric operation order, transform assumptions and formatting cost.
+These are source-based hypotheses until supported by measurements.
+
+## fft2-strict
+
+Numeric policy: strict.
+
+### Algorithm and workload
+
+Compute fast FFT/inverse distance, general mixed-factor DFT/inverse distance
+and the sum of a slow cosine transform over independent ramps. Retain list
+algorithms, cyclic roots, the factor sieve, transpose/zip structure, numeric
+operation order and separate signal generation for the three measurements.
+No result cache or replacement transform is used in the benchmark.
+
+### History, authorship and variants
+
+Rex Page, Amoco Production Research, September 1992. Pinned nofib revision
+b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/fft2. Retain fft2 as distinct
+from classic FFT, spectral/hartel/fft and Sandmark FFT, with explicit lazy/strict
+suffixes. Complete original modules, MAIL, README.nofib, old platform fixtures
+and foreign-language references are retained under fft2-lazy/upstream.
+
+Individual files state no separate redistribution grant; retain all attribution
+and do not infer a license from another benchmark. The supplementary inventory
+records Rex Page's Miranda and fixed-array Fortran programs as distinct
+historical references outside the initial executable language-family set.
+Matt Donadio's iterative bit-reversal C FFT is a library fragment without a
+standalone workload. No foreign reference is called an exact duplicate.
+There are no external datasets; ramp inputs are generated deterministically.
+Old platform-specific numeric fixtures remain historical evidence.
+
+### Portable translation and evaluation
+
+All computation and checking uses SML97. Complex coordinates use real arithmetic,
+with memoized numeric delays in lazy and eager finite payloads in strict.
+Both preserve memoized control streams, shared even-root subsequences, periodic
+cyclic lists, the global prime stream and separately delayed transform metrics.
+Unused complex coordinates remain demand-sensitive in the lazy policy.
+
+Magnitude/division retain the installed GHC base-4.17.2.0 Data.Complex exponent
+scaling and zero-exponent behavior, inspected in its installed interface.
+Extreme-value references include the underflow of a tiny coordinate paired with
+zero. Integer indices and factors fit portable int in the bounded profile domain.
+Floating enumeration retains Haskell's half-step endpoint convention.
+
+For i from one through 100, the source generates base+i/15 and consequently
+eight different lengths. Compute each iteration anew. The fast transform assumes
+powers of two but source profiles include other lengths: preserve and check its
+large nonzero errors instead of silently correcting the source algorithm.
+
+Retain the demand for the length of the quoted result string. GEN17 replaces
+shortest decimal spelling; parsed values, escape roundtrips and an independently
+computed escaped length validate the consumer. Stable samples:checked output
+replaces empty stdout. No hash replaces the formatted-result consumer.
+
+### Profiles and result checks
+
+| Profile | Samples | Base |
+|---|---:|---:|
+| Smoke | 1 | 70 |
+| Normal | 100 | 245 |
+| Large | 100 | 490 |
+
+Normal and large retain source counts; smoke reduces FAST's 100 to one.
+Original GHC runs match the empty stdout fixture for all full profiles; print
+mode supplies all 300 numeric values per profile. An independent eager Python
+model agrees on all 300 triples, including non-power-of-two fast-transform errors.
+Its reference-only caching of repeated sizes is absent from the SML workload.
+
+For actual length n, fast-transform distance allows absolute 1e-9 plus relative
+1e-10. The general-transform residual allows absolute 128*epsilon*n^2*sqrt(n);
+the cosine sum allows 128*epsilon*n^3, with binary64 machine epsilon.
+These are conservative source-agreement budgets, not a formal proof for all math
+libraries. Reject nonfinite values, malformed triples and deliberate perturbations
+of each metric; also test an accepted interior point near the bound.
+Auxiliary transform vectors use absolute and relative 1e-11.
+
+The semantic target checks all five complex transforms and cosine vectors at
+lengths 2,3,4,5,8,16, magnitudes, cyclic lists, factors, floating enumeration,
+quoted output, coordinate demand and sharing. Both full normal SML profiles
+pass calibration. Full large SML repetition checks remain unrecorded, separately
+from validated large fixtures and first-sample checks.
+
+Private Rune, MLton, Poly/ML and ML Kit runs pass 132 checks. Private SML/NJ
+runs terminate with bus/segmentation faults or a fatal bogus-overflow diagnostic.
+Retain valid source and canonical host settings; the compiler mechanism is
+unresolved. Failed correctness checks cannot supply accepted timing samples.
+Canonical primary, count and semantic results are recorded as they finish.
+
+### Literature and diagnostic questions
+
+[Cooley and Tukey (1965)](https://doi.org/10.1090/S0025-5718-1965-0178586-1)
+provides FFT context; this source's Fourier.lhs and Complex_Vectors.lhs define
+the actual algorithms and MAIL records numerical investigations.
+[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) supplies suite
+context. Investigate higher-order streams, periodic sharing, complex-coordinate
+demand, numeric operation order, transform assumptions and formatting cost.
+These are source-based hypotheses until supported by measurements.
+
+## lambda-simple-lazy
+
+Interpreter: simple. Numeric/syntax policy: lazy.
+
+### Algorithm and workload
+
+Evaluate a lambda-calculus program that sums zero through n using an explicit
+fixed-point combinator, closures, variable lookup, integer addition and a
+zero conditional. Compare a directly recursive interpreter with a state-monadic
+interpreter. Preserve both implementations and their original environments,
+call-by-name argument closures, association-list lookup and pretty printers.
+
+### History, authorship and variants
+
+The source says From Mark: marku@cs.waikato.ac.nz, November 2001; no surname
+is inferred from the address. Pinned nofib revision
+b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/lambda. Individual source
+and generated fixture files state no separate redistribution notice. Retain
+their complete attribution and historical observations under
+lambda-simple-lazy/upstream; do not infer a grant from another benchmark.
+
+Original main runs direct and monadic evaluation, each 100 times, interleaving
+their output. The suite splits the styles into separately named simple and monad
+workloads so each comparison measures one implementation. Each retains its
+individual source repetition count. Explicit lazy/strict variants retain
+materially different finite syntax/result evaluation and allocation behavior.
+No external datasets are required; all selected syntax is source-generated.
+
+The source's historical timing comments concern old Hugs/GHC implementations.
+They explain the comparison's motivation and are not measurements of Rune.
+
+### Translation and runtime behavior
+
+Kernel, generators, consumers and checks use SML97. The lazy policy memoizes
+term fields, numeric payloads, closure environments and delayed results.
+The strict policy evaluates finite payloads eagerly. Both retain the interpreted
+language's explicit call-by-name closures: a strict host policy does not turn the
+interpreted program into call-by-value or memoize interpreted variable results.
+
+Translate erased Identity directly and keep the direct interpreter's recursive
+calls. The other interpreter retains explicit state computations, return/bind,
+lookup, current environment, push and withEnv. withEnv evaluates a computation
+in a supplied environment while returning the caller's environment; its result
+can remain delayed. The source Incr is intentionally a no-op returning zero.
+
+Preserve the fixed-point and partial-sum syntax as shared global source terms.
+Construct each selected application anew per repetition. No result cache,
+algebraic replacement of evaluation or source transformation eliminates the
+interpreted recursion. Indices and source Int arithmetic fit even 31-bit signed
+ints for selected sizes; the driver bounds n at 20000 to keep the independent
+triangular-number checker portable.
+
+Retain the source direct Con output and monadic pretty-printed value plus final
+environment, including its two spaces and trailing newline. Selected source
+terms always return Con; the direct derived-Show adapter documents that bounded
+domain instead of pretending to implement every unused Read/Show operation.
+Full text equality consumes and validates every selected result. Stable
+repetitions:checked-characters output replaces repetitive stdout.
+
+### Inputs and correctness
+
+| Profile | Repetitions of each selected style | Summation bound |
+|---|---:|---:|
+| Smoke | 1 | 80 |
+| Normal | 100 | 260 |
+| Large | 100 | 550 |
+
+Smoke reduces source FAST's 100 repetitions to one; normal/large retain their
+upstream bounds and counts. Independent n*(n+1)/2 arithmetic checks every result,
+while the original GHC program reproduces all three complete 200-line fixtures.
+
+An export-only original observer checks 33 term/environment cases: arithmetic,
+zero branches, nonnumeric tests, unused arguments, shadowing, captured lexical
+environments, explicit Thunk environments, fixed-point recursion and caller
+state restoration. The 241-check target additionally covers independent sums,
+formatting/brackets, invalid applications, modified output, zero repetitions,
+syntax-field demand and sharing.
+
+All six native hosts and Rune pass the private semantic target. Final canonical
+matrices/counts are recorded with the import wave. Full normal calibration
+covers both styles and both policies; large fixtures are checked independently,
+while full SML large repetition runs remain unrecorded. No failing correctness
+case can supply accepted measurements.
+
+### Literature and diagnostic questions
+
+The retained source gives the direct-versus-state-monadic experiment and
+historical observations. [Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
+supplies suite context. Investigate closure allocation, environment traversal,
+higher-order state composition, restored lexical scope, evaluation/sharing and
+pretty-print consumers. These questions follow source inspection; host-specific
+performance conclusions require measurements of the selected implementation.
+
+## lambda-simple-strict
+
+Interpreter: simple. Numeric/syntax policy: strict.
+
+### Algorithm and workload
+
+Evaluate a lambda-calculus program that sums zero through n using an explicit
+fixed-point combinator, closures, variable lookup, integer addition and a
+zero conditional. Compare a directly recursive interpreter with a state-monadic
+interpreter. Preserve both implementations and their original environments,
+call-by-name argument closures, association-list lookup and pretty printers.
+
+### History, authorship and variants
+
+The source says From Mark: marku@cs.waikato.ac.nz, November 2001; no surname
+is inferred from the address. Pinned nofib revision
+b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/lambda. Individual source
+and generated fixture files state no separate redistribution notice. Retain
+their complete attribution and historical observations under
+lambda-simple-lazy/upstream; do not infer a grant from another benchmark.
+
+Original main runs direct and monadic evaluation, each 100 times, interleaving
+their output. The suite splits the styles into separately named simple and monad
+workloads so each comparison measures one implementation. Each retains its
+individual source repetition count. Explicit lazy/strict variants retain
+materially different finite syntax/result evaluation and allocation behavior.
+No external datasets are required; all selected syntax is source-generated.
+
+The source's historical timing comments concern old Hugs/GHC implementations.
+They explain the comparison's motivation and are not measurements of Rune.
+
+### Translation and runtime behavior
+
+Kernel, generators, consumers and checks use SML97. The lazy policy memoizes
+term fields, numeric payloads, closure environments and delayed results.
+The strict policy evaluates finite payloads eagerly. Both retain the interpreted
+language's explicit call-by-name closures: a strict host policy does not turn the
+interpreted program into call-by-value or memoize interpreted variable results.
+
+Translate erased Identity directly and keep the direct interpreter's recursive
+calls. The other interpreter retains explicit state computations, return/bind,
+lookup, current environment, push and withEnv. withEnv evaluates a computation
+in a supplied environment while returning the caller's environment; its result
+can remain delayed. The source Incr is intentionally a no-op returning zero.
+
+Preserve the fixed-point and partial-sum syntax as shared global source terms.
+Construct each selected application anew per repetition. No result cache,
+algebraic replacement of evaluation or source transformation eliminates the
+interpreted recursion. Indices and source Int arithmetic fit even 31-bit signed
+ints for selected sizes; the driver bounds n at 20000 to keep the independent
+triangular-number checker portable.
+
+Retain the source direct Con output and monadic pretty-printed value plus final
+environment, including its two spaces and trailing newline. Selected source
+terms always return Con; the direct derived-Show adapter documents that bounded
+domain instead of pretending to implement every unused Read/Show operation.
+Full text equality consumes and validates every selected result. Stable
+repetitions:checked-characters output replaces repetitive stdout.
+
+### Inputs and correctness
+
+| Profile | Repetitions of each selected style | Summation bound |
+|---|---:|---:|
+| Smoke | 1 | 80 |
+| Normal | 100 | 260 |
+| Large | 100 | 550 |
+
+Smoke reduces source FAST's 100 repetitions to one; normal/large retain their
+upstream bounds and counts. Independent n*(n+1)/2 arithmetic checks every result,
+while the original GHC program reproduces all three complete 200-line fixtures.
+
+An export-only original observer checks 33 term/environment cases: arithmetic,
+zero branches, nonnumeric tests, unused arguments, shadowing, captured lexical
+environments, explicit Thunk environments, fixed-point recursion and caller
+state restoration. The 241-check target additionally covers independent sums,
+formatting/brackets, invalid applications, modified output, zero repetitions,
+syntax-field demand and sharing.
+
+All six native hosts and Rune pass the private semantic target. Final canonical
+matrices/counts are recorded with the import wave. Full normal calibration
+covers both styles and both policies; large fixtures are checked independently,
+while full SML large repetition runs remain unrecorded. No failing correctness
+case can supply accepted measurements.
+
+### Literature and diagnostic questions
+
+The retained source gives the direct-versus-state-monadic experiment and
+historical observations. [Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
+supplies suite context. Investigate closure allocation, environment traversal,
+higher-order state composition, restored lexical scope, evaluation/sharing and
+pretty-print consumers. These questions follow source inspection; host-specific
+performance conclusions require measurements of the selected implementation.
+
+## lambda-monad-lazy
+
+Interpreter: monad. Numeric/syntax policy: lazy.
+
+### Algorithm and workload
+
+Evaluate a lambda-calculus program that sums zero through n using an explicit
+fixed-point combinator, closures, variable lookup, integer addition and a
+zero conditional. Compare a directly recursive interpreter with a state-monadic
+interpreter. Preserve both implementations and their original environments,
+call-by-name argument closures, association-list lookup and pretty printers.
+
+### History, authorship and variants
+
+The source says From Mark: marku@cs.waikato.ac.nz, November 2001; no surname
+is inferred from the address. Pinned nofib revision
+b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/lambda. Individual source
+and generated fixture files state no separate redistribution notice. Retain
+their complete attribution and historical observations under
+lambda-simple-lazy/upstream; do not infer a grant from another benchmark.
+
+Original main runs direct and monadic evaluation, each 100 times, interleaving
+their output. The suite splits the styles into separately named simple and monad
+workloads so each comparison measures one implementation. Each retains its
+individual source repetition count. Explicit lazy/strict variants retain
+materially different finite syntax/result evaluation and allocation behavior.
+No external datasets are required; all selected syntax is source-generated.
+
+The source's historical timing comments concern old Hugs/GHC implementations.
+They explain the comparison's motivation and are not measurements of Rune.
+
+### Translation and runtime behavior
+
+Kernel, generators, consumers and checks use SML97. The lazy policy memoizes
+term fields, numeric payloads, closure environments and delayed results.
+The strict policy evaluates finite payloads eagerly. Both retain the interpreted
+language's explicit call-by-name closures: a strict host policy does not turn the
+interpreted program into call-by-value or memoize interpreted variable results.
+
+Translate erased Identity directly and keep the direct interpreter's recursive
+calls. The other interpreter retains explicit state computations, return/bind,
+lookup, current environment, push and withEnv. withEnv evaluates a computation
+in a supplied environment while returning the caller's environment; its result
+can remain delayed. The source Incr is intentionally a no-op returning zero.
+
+Preserve the fixed-point and partial-sum syntax as shared global source terms.
+Construct each selected application anew per repetition. No result cache,
+algebraic replacement of evaluation or source transformation eliminates the
+interpreted recursion. Indices and source Int arithmetic fit even 31-bit signed
+ints for selected sizes; the driver bounds n at 20000 to keep the independent
+triangular-number checker portable.
+
+Retain the source direct Con output and monadic pretty-printed value plus final
+environment, including its two spaces and trailing newline. Selected source
+terms always return Con; the direct derived-Show adapter documents that bounded
+domain instead of pretending to implement every unused Read/Show operation.
+Full text equality consumes and validates every selected result. Stable
+repetitions:checked-characters output replaces repetitive stdout.
+
+### Inputs and correctness
+
+| Profile | Repetitions of each selected style | Summation bound |
+|---|---:|---:|
+| Smoke | 1 | 80 |
+| Normal | 100 | 260 |
+| Large | 100 | 550 |
+
+Smoke reduces source FAST's 100 repetitions to one; normal/large retain their
+upstream bounds and counts. Independent n*(n+1)/2 arithmetic checks every result,
+while the original GHC program reproduces all three complete 200-line fixtures.
+
+An export-only original observer checks 33 term/environment cases: arithmetic,
+zero branches, nonnumeric tests, unused arguments, shadowing, captured lexical
+environments, explicit Thunk environments, fixed-point recursion and caller
+state restoration. The 241-check target additionally covers independent sums,
+formatting/brackets, invalid applications, modified output, zero repetitions,
+syntax-field demand and sharing.
+
+All six native hosts and Rune pass the private semantic target. Final canonical
+matrices/counts are recorded with the import wave. Full normal calibration
+covers both styles and both policies; large fixtures are checked independently,
+while full SML large repetition runs remain unrecorded. No failing correctness
+case can supply accepted measurements.
+
+### Literature and diagnostic questions
+
+The retained source gives the direct-versus-state-monadic experiment and
+historical observations. [Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
+supplies suite context. Investigate closure allocation, environment traversal,
+higher-order state composition, restored lexical scope, evaluation/sharing and
+pretty-print consumers. These questions follow source inspection; host-specific
+performance conclusions require measurements of the selected implementation.
+
+## lambda-monad-strict
+
+Interpreter: monad. Numeric/syntax policy: strict.
+
+### Algorithm and workload
+
+Evaluate a lambda-calculus program that sums zero through n using an explicit
+fixed-point combinator, closures, variable lookup, integer addition and a
+zero conditional. Compare a directly recursive interpreter with a state-monadic
+interpreter. Preserve both implementations and their original environments,
+call-by-name argument closures, association-list lookup and pretty printers.
+
+### History, authorship and variants
+
+The source says From Mark: marku@cs.waikato.ac.nz, November 2001; no surname
+is inferred from the address. Pinned nofib revision
+b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/lambda. Individual source
+and generated fixture files state no separate redistribution notice. Retain
+their complete attribution and historical observations under
+lambda-simple-lazy/upstream; do not infer a grant from another benchmark.
+
+Original main runs direct and monadic evaluation, each 100 times, interleaving
+their output. The suite splits the styles into separately named simple and monad
+workloads so each comparison measures one implementation. Each retains its
+individual source repetition count. Explicit lazy/strict variants retain
+materially different finite syntax/result evaluation and allocation behavior.
+No external datasets are required; all selected syntax is source-generated.
+
+The source's historical timing comments concern old Hugs/GHC implementations.
+They explain the comparison's motivation and are not measurements of Rune.
+
+### Translation and runtime behavior
+
+Kernel, generators, consumers and checks use SML97. The lazy policy memoizes
+term fields, numeric payloads, closure environments and delayed results.
+The strict policy evaluates finite payloads eagerly. Both retain the interpreted
+language's explicit call-by-name closures: a strict host policy does not turn the
+interpreted program into call-by-value or memoize interpreted variable results.
+
+Translate erased Identity directly and keep the direct interpreter's recursive
+calls. The other interpreter retains explicit state computations, return/bind,
+lookup, current environment, push and withEnv. withEnv evaluates a computation
+in a supplied environment while returning the caller's environment; its result
+can remain delayed. The source Incr is intentionally a no-op returning zero.
+
+Preserve the fixed-point and partial-sum syntax as shared global source terms.
+Construct each selected application anew per repetition. No result cache,
+algebraic replacement of evaluation or source transformation eliminates the
+interpreted recursion. Indices and source Int arithmetic fit even 31-bit signed
+ints for selected sizes; the driver bounds n at 20000 to keep the independent
+triangular-number checker portable.
+
+Retain the source direct Con output and monadic pretty-printed value plus final
+environment, including its two spaces and trailing newline. Selected source
+terms always return Con; the direct derived-Show adapter documents that bounded
+domain instead of pretending to implement every unused Read/Show operation.
+Full text equality consumes and validates every selected result. Stable
+repetitions:checked-characters output replaces repetitive stdout.
+
+### Inputs and correctness
+
+| Profile | Repetitions of each selected style | Summation bound |
+|---|---:|---:|
+| Smoke | 1 | 80 |
+| Normal | 100 | 260 |
+| Large | 100 | 550 |
+
+Smoke reduces source FAST's 100 repetitions to one; normal/large retain their
+upstream bounds and counts. Independent n*(n+1)/2 arithmetic checks every result,
+while the original GHC program reproduces all three complete 200-line fixtures.
+
+An export-only original observer checks 33 term/environment cases: arithmetic,
+zero branches, nonnumeric tests, unused arguments, shadowing, captured lexical
+environments, explicit Thunk environments, fixed-point recursion and caller
+state restoration. The 241-check target additionally covers independent sums,
+formatting/brackets, invalid applications, modified output, zero repetitions,
+syntax-field demand and sharing.
+
+All six native hosts and Rune pass the private semantic target. Final canonical
+matrices/counts are recorded with the import wave. Full normal calibration
+covers both styles and both policies; large fixtures are checked independently,
+while full SML large repetition runs remain unrecorded. No failing correctness
+case can supply accepted measurements.
+
+### Literature and diagnostic questions
+
+The retained source gives the direct-versus-state-monadic experiment and
+historical observations. [Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
+supplies suite context. Investigate closure allocation, environment traversal,
+higher-order state composition, restored lexical scope, evaluation/sharing and
+pretty-print consumers. These questions follow source inspection; host-specific
+performance conclusions require measurements of the selected implementation.
+
+## para-lazy
+
+Finite numeric policy: lazy.
+
+### Algorithm and workload
+
+Format paragraphs at maximum width 70 and preferred width 63 using the source
+linear-time par3. Retain right-fold scan1, candidate cost/width/length summaries,
+symmetric lists as two lists, both rebalance operations, add/breakpoint pruning,
+drop_nofit, trim, tile and source parse/unparse. The implementation does not
+replace candidate maintenance with dynamic programming or a mutable queue.
+
+### History, authorship and known variants
+
+Oege de Moor and Jeremy Gibbons, 1995--1999; the article header dates its benchmark
+program September 1999. Pinned nofib revision
+b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/para. This is paragraph
+formatting, with no parallel runtime requirement.
+
+The literate source contains its paper, experiments and intermediate algorithms:
+exhaustive par0, quadratic par1, cached/pruned par1'/par2 forms, final linear par3
+and greedy parg. Original main selects par3. Preserve all definitions as upstream
+source; quadratic par1 is an independent original-language reference for a
+documented counterexample, not a substituted timed algorithm. No separate
+redistribution grant is stated in the Haskell/C++ sources.
+
+The C++ Part2.C comparison has its own bounded buffers, command-line width and
+Para/Queue/Thin modules. It remains a distinct future candidate outside the
+initial SML/Haskell/OCaml executable set. Retain its source and data; omit the
+pinned precompiled i386 part2 executable and record its SHA-256/disposition.
+No original executable is imported or executed. The complete article warns
+against treating its clarity-first historical comparison as modern performance
+evidence.
+
+### Dataset origins and notices
+
+The full input is the supplied Project Gutenberg February 1994 e-text #107,
+Far From the Madding Crowd by Thomas Hardy, named crowd10a.txt in its header.
+Its individual historical notice includes Charles B. Kramer's Small Print
+version 04.29.93, the public-domain statement and distribution terms.
+Retain the entire original text/header/notice byte-for-byte in full.input and
+upstream/runtime_files/input-data. Preserve the separate CRLF C++ crowd/cout
+copies unchanged; do not silently equate their raw identities.
+
+Formatted references retain all original words, including the complete historical
+header/notice, with only the benchmark's line wrapping and blank-line formatting.
+The original ASCII file is supplied alongside them. Smoke selects complete
+novel-body paragraphs after the historical header, with no Gutenberg references;
+its exact byte range, source identity and adaptation are recorded. Synthetic
+auxiliary cases have deterministic origins. The novel-body counterexample keeps
+its original author/source attribution here.
+
+### SML97 translation and evaluation
+
+Lazy and strict names identify memoized versus eager finite numeric summaries
+and state/candidate payloads. Both retain memoized list spines, head sharing,
+queue shape, scanning order, candidate selection and source right-fold grouping.
+The lazy policy can inspect a candidate length without forcing unrelated fields.
+No input, formatted output or parsed paragraph is cached across repetitions.
+
+The driver reopens the input each iteration. Portable TextIO.inputAll replaces
+hGetContents and produces a memoized character stream; record this eager file
+read separately from the source's lazy file IO. Reading fixed ASCII data keeps
+word/character classification within the reviewed common domain.
+All selected integer widths, costs and lengths fit signed 31-bit int; no
+arbitrary-precision or modular-arithmetic substitution is introduced.
+
+The original consumes length of the formatted string and prints nothing. The
+driver consumes the same output stream while comparing every character against
+the reviewed fixture, then reports repetitions:checked-characters. It buffers
+neither an extra full output list nor a parsed-result cache. This validation adds
+character comparison to the source length consumer; document it in comparisons.
+
+### Profiles and correctness
+
+| Profile | Repetitions | Text |
+|---|---:|---|
+| Smoke | 1 | 10005-byte complete body-paragraph selection |
+| Normal | 8 | original 789112-byte text |
+| Large | 40 | original 789112-byte text |
+
+Normal/large retain source inputs and counts. Smoke keeps FAST's one repetition
+and reduces its dataset for bounded routine checks. Original GHC runs finish
+all source profiles with empty stdout; there is no supplied para.stdout fixture.
+An export-only original formatter produces complete reviewed formatted text:
+784213 bytes for the original input and 9969 bytes for smoke.
+
+An independent quadratic dynamic-programming reference verifies preserved word
+order, maximum widths and layout costs for all 3574 original paragraphs.
+Source costs agree with the optimum on 3573. Paragraph 483, a 23-word quotation,
+has source par3 cost 5 versus optimum 1. Original quadratic par1 confirms cost 1.
+Preserve par3's three-line layout exactly; this is an established property of
+the pinned source, not evidence against the paper's general algorithm.
+Partial source behavior on whitespace-only input and overlong words is retained.
+
+The 112-check target compares 41 complete original cases under both policies,
+small full text, the source counterexample, output corruption/length rejection,
+zero iterations, front/back queue rebalancing and unused-field demand.
+Both policies agree with the complete original text in a guarded streaming
+pilot. Full normal calibration and canonical primary/count/semantic runs are
+recorded separately as they finish. Full large SML repetition checks remain
+unrecorded. An earlier development consumer materialized an extra full output
+list and exceeded a private 1-GiB guard; retain that development observation
+separately from the final streaming consumer's checks.
+
+### Literature and diagnostic questions
+
+[De Moor and Gibbons, Bridging the Algorithm Gap: A Linear-Time Functional
+Program for Paragraph Formatting (1999)](https://www.cs.ox.ac.uk/publications/publication2361-abstract.html)
+is the source article; the full literate text is preserved. It motivates the
+functional derivation and concrete queue representation.
+[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) supplies suite
+context. Investigate summary-field demand, symmetric-list sharing/rebalancing,
+candidate pruning, paragraph lifetimes, text parsing and output consumption.
+These are source-based diagnostic questions; current-host performance claims
+need separate measurements.
+
+## para-strict
+
+Finite numeric policy: strict.
+
+### Algorithm and workload
+
+Format paragraphs at maximum width 70 and preferred width 63 using the source
+linear-time par3. Retain right-fold scan1, candidate cost/width/length summaries,
+symmetric lists as two lists, both rebalance operations, add/breakpoint pruning,
+drop_nofit, trim, tile and source parse/unparse. The implementation does not
+replace candidate maintenance with dynamic programming or a mutable queue.
+
+### History, authorship and known variants
+
+Oege de Moor and Jeremy Gibbons, 1995--1999; the article header dates its benchmark
+program September 1999. Pinned nofib revision
+b7391df4540ac8b11b35e1b2e2c15819b5171798, spectral/para. This is paragraph
+formatting, with no parallel runtime requirement.
+
+The literate source contains its paper, experiments and intermediate algorithms:
+exhaustive par0, quadratic par1, cached/pruned par1'/par2 forms, final linear par3
+and greedy parg. Original main selects par3. Preserve all definitions as upstream
+source; quadratic par1 is an independent original-language reference for a
+documented counterexample, not a substituted timed algorithm. No separate
+redistribution grant is stated in the Haskell/C++ sources.
+
+The C++ Part2.C comparison has its own bounded buffers, command-line width and
+Para/Queue/Thin modules. It remains a distinct future candidate outside the
+initial SML/Haskell/OCaml executable set. Retain its source and data; omit the
+pinned precompiled i386 part2 executable and record its SHA-256/disposition.
+No original executable is imported or executed. The complete article warns
+against treating its clarity-first historical comparison as modern performance
+evidence.
+
+### Dataset origins and notices
+
+The full input is the supplied Project Gutenberg February 1994 e-text #107,
+Far From the Madding Crowd by Thomas Hardy, named crowd10a.txt in its header.
+Its individual historical notice includes Charles B. Kramer's Small Print
+version 04.29.93, the public-domain statement and distribution terms.
+Retain the entire original text/header/notice byte-for-byte in full.input and
+upstream/runtime_files/input-data. Preserve the separate CRLF C++ crowd/cout
+copies unchanged; do not silently equate their raw identities.
+
+Formatted references retain all original words, including the complete historical
+header/notice, with only the benchmark's line wrapping and blank-line formatting.
+The original ASCII file is supplied alongside them. Smoke selects complete
+novel-body paragraphs after the historical header, with no Gutenberg references;
+its exact byte range, source identity and adaptation are recorded. Synthetic
+auxiliary cases have deterministic origins. The novel-body counterexample keeps
+its original author/source attribution here.
+
+### SML97 translation and evaluation
+
+Lazy and strict names identify memoized versus eager finite numeric summaries
+and state/candidate payloads. Both retain memoized list spines, head sharing,
+queue shape, scanning order, candidate selection and source right-fold grouping.
+The lazy policy can inspect a candidate length without forcing unrelated fields.
+No input, formatted output or parsed paragraph is cached across repetitions.
+
+The driver reopens the input each iteration. Portable TextIO.inputAll replaces
+hGetContents and produces a memoized character stream; record this eager file
+read separately from the source's lazy file IO. Reading fixed ASCII data keeps
+word/character classification within the reviewed common domain.
+All selected integer widths, costs and lengths fit signed 31-bit int; no
+arbitrary-precision or modular-arithmetic substitution is introduced.
+
+The original consumes length of the formatted string and prints nothing. The
+driver consumes the same output stream while comparing every character against
+the reviewed fixture, then reports repetitions:checked-characters. It buffers
+neither an extra full output list nor a parsed-result cache. This validation adds
+character comparison to the source length consumer; document it in comparisons.
+
+### Profiles and correctness
+
+| Profile | Repetitions | Text |
+|---|---:|---|
+| Smoke | 1 | 10005-byte complete body-paragraph selection |
+| Normal | 8 | original 789112-byte text |
+| Large | 40 | original 789112-byte text |
+
+Normal/large retain source inputs and counts. Smoke keeps FAST's one repetition
+and reduces its dataset for bounded routine checks. Original GHC runs finish
+all source profiles with empty stdout; there is no supplied para.stdout fixture.
+An export-only original formatter produces complete reviewed formatted text:
+784213 bytes for the original input and 9969 bytes for smoke.
+
+An independent quadratic dynamic-programming reference verifies preserved word
+order, maximum widths and layout costs for all 3574 original paragraphs.
+Source costs agree with the optimum on 3573. Paragraph 483, a 23-word quotation,
+has source par3 cost 5 versus optimum 1. Original quadratic par1 confirms cost 1.
+Preserve par3's three-line layout exactly; this is an established property of
+the pinned source, not evidence against the paper's general algorithm.
+Partial source behavior on whitespace-only input and overlong words is retained.
+
+The 112-check target compares 41 complete original cases under both policies,
+small full text, the source counterexample, output corruption/length rejection,
+zero iterations, front/back queue rebalancing and unused-field demand.
+Both policies agree with the complete original text in a guarded streaming
+pilot. Full normal calibration and canonical primary/count/semantic runs are
+recorded separately as they finish. Full large SML repetition checks remain
+unrecorded. An earlier development consumer materialized an extra full output
+list and exceeded a private 1-GiB guard; retain that development observation
+separately from the final streaming consumer's checks.
+
+### Literature and diagnostic questions
+
+[De Moor and Gibbons, Bridging the Algorithm Gap: A Linear-Time Functional
+Program for Paragraph Formatting (1999)](https://www.cs.ox.ac.uk/publications/publication2361-abstract.html)
+is the source article; the full literate text is preserved. It motivates the
+functional derivation and concrete queue representation.
+[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) supplies suite
+context. Investigate summary-field demand, symmetric-list sharing/rebalancing,
+candidate pruning, paragraph lifetimes, text parsing and output consumption.
+These are source-based diagnostic questions; current-host performance claims
+need separate measurements.
