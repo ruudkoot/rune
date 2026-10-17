@@ -1,0 +1,1 @@
+linear-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/nofib-linear-float.sml shared/nofib-linear-dense.sml shared/nofib-linear-kernel.sml shared/nofib-linear-driver.sml linear-strict/benchmark.sml shared/main.sml	200 4 10 normal.metrics	linear-strict/normal.expected	normal.metrics

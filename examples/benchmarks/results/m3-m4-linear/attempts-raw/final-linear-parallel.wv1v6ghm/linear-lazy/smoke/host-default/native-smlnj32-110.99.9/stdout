@@ -1,0 +1,502 @@
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-linear-float.sml]
+[autoloading]
+[autoloading done]
+structure BenchLinearFloat : sig
+  val round : real -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-linear-dense.sml]
+[autoloading]
+[autoloading done]
+functor BenchLinearDenseFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure L : <sig>
+  structure S : <sig>
+  structure F : <sig>
+  type number
+  type vector
+  type matrix
+  val value : <BaseFct>.<resultStr>.number -> real
+  val number : real -> real D.t
+  val scalar : (unit -> real) -> real D.t
+  val add :
+      <BaseFct>.<resultStr>.number * <BaseFct>.<resultStr>.number -> real D.t
+  val sub :
+      <BaseFct>.<resultStr>.number * <BaseFct>.<resultStr>.number -> real D.t
+  val mul :
+      <BaseFct>.<resultStr>.number * <BaseFct>.<resultStr>.number -> real D.t
+  val divide :
+      <BaseFct>.<resultStr>.number * <BaseFct>.<resultStr>.number -> real D.t
+  val negate : <BaseFct>.<resultStr>.number -> real D.t
+  val sqrt : <BaseFct>.<resultStr>.number -> real D.t
+  val zero : real D.t
+  val one : real D.t
+  val empty : 'a BenchStream.node BenchLazy.state ref -> bool
+  val length : 'a BenchStream.node BenchLazy.delay -> int
+  val delay : (unit -> 'a BenchLazy.state ref) -> 'a BenchLazy.state ref
+  val range : int -> int -> int BenchStream.node BenchLazy.delay
+  val take :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val drop :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.state ref
+  val repeat : int -> 'a -> 'a BenchStream.node BenchLazy.delay
+  val concat :
+      'a BenchStream.node BenchLazy.delay BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.state ref
+  val fold1 : ('a * 'a -> 'a) -> 'a BenchStream.node BenchLazy.state ref -> 'a
+  val vec : real list -> real D.t BenchStream.node BenchLazy.delay
+  val block :
+      real list list
+       -> real D.t BenchStream.node BenchLazy.delay BenchStream.node 
+         BenchLazy.delay
+  val vadd :
+      <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay
+       -> real D.t BenchStream.node BenchLazy.delay
+  val vsub :
+      <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay
+       -> real D.t BenchStream.node BenchLazy.delay
+  val vneg :
+      <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay
+       -> real D.t BenchStream.node BenchLazy.delay
+  val smul :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay
+       -> real D.t BenchStream.node BenchLazy.delay
+  val dot :
+      <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay
+       -> real D.t
+  val norm :
+      <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay
+       -> real D.t
+  val madd :
+      <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay 
+           BenchStream.node BenchLazy.delay
+       -> real D.t BenchStream.node BenchLazy.delay BenchStream.node 
+         BenchLazy.delay
+  val msub :
+      <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay 
+           BenchStream.node BenchLazy.delay
+       -> real D.t BenchStream.node BenchLazy.delay BenchStream.node 
+         BenchLazy.delay
+  val outer :
+      <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay
+       -> real D.t BenchStream.node BenchLazy.delay BenchStream.node 
+         BenchLazy.delay
+  val rows : 'a BenchStream.node BenchLazy.delay -> int
+  val columns :
+      'a BenchStream.node BenchLazy.delay BenchStream.node BenchLazy.state ref
+       -> int
+  val getRow : int -> 'a BenchStream.node BenchLazy.delay -> 'a
+  val getCol :
+      int
+       -> 'a BenchStream.node BenchLazy.delay BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val subscript :
+      'a BenchStream.node BenchLazy.delay BenchStream.node BenchLazy.delay
+       -> int * int -> 'a
+  val mmult :
+      <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay 
+             BenchStream.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay 
+           BenchStream.node BenchLazy.delay
+       -> real D.t BenchStream.node BenchLazy.delay BenchStream.node 
+           BenchLazy.state ref
+  val matvec :
+      <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay
+       -> real D.t BenchStream.node BenchLazy.delay
+  val vecmat :
+      <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay 
+           BenchStream.node BenchLazy.delay
+       -> real D.t BenchStream.node BenchLazy.state ref
+  val identity :
+      int
+       -> real D.t BenchStream.node BenchLazy.delay BenchStream.node 
+         BenchLazy.delay
+  val swap :
+      int
+       -> int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val swapRows :
+      int
+       -> int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val swapCols :
+      int
+       -> int
+       -> 'a BenchStream.node BenchLazy.delay BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay BenchStream.node BenchLazy.delay
+  val absNumber : <BaseFct>.<resultStr>.number -> real D.t
+  val findPivot :
+      <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay 
+           BenchStream.node BenchLazy.delay
+       -> int
+  type factor
+  val factorLower :
+      <BaseFct>.<resultStr>.factor
+       -> <BaseFct>.<resultStr>.vector BenchStream.stream
+  val factorUpper :
+      <BaseFct>.<resultStr>.factor
+       -> <BaseFct>.<resultStr>.vector BenchStream.stream
+  val factorPermutation :
+      <BaseFct>.<resultStr>.factor -> int BenchStream.stream
+  val lu :
+      <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.factor BenchLazy.state ref
+  val forward :
+      <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay 
+           BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> real D.t BenchStream.node BenchLazy.delay BenchStream.node 
+         BenchLazy.delay
+       -> <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.state ref 
+           BenchStream.node BenchLazy.delay
+  val backward :
+      <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay 
+           BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay 
+           BenchStream.node BenchLazy.delay
+  val inverse :
+      <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.number BenchStream.node BenchLazy.delay 
+             BenchStream.node BenchLazy.state ref
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-linear-kernel.sml]
+functor BenchLinearFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure B : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  type number
+  type denseVector
+  type block
+  type entry
+  type matrix
+  type vector
+  val row :
+      int
+       -> 'a BenchLazy.state ref BenchStream.node BenchLazy.delay
+       -> 'a BenchLazy.state ref
+  val column :
+      int
+       -> <BaseFct>.<resultStr>.entry BenchStream.node BenchLazy.delay 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.entry BenchStream.node BenchLazy.state ref
+  val vecAt :
+      int
+       -> 'a BenchLazy.state ref BenchStream.node BenchLazy.delay
+       -> 'a BenchLazy.state ref
+  val zeroBlock :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.entry BenchStream.node BenchLazy.state ref 
+           BenchStream.node BenchLazy.delay
+       -> real D.t BenchStream.node BenchLazy.delay BenchStream.node 
+           BenchLazy.state ref
+  val at :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.entry BenchStream.node BenchLazy.state ref 
+           BenchStream.node BenchLazy.delay
+       -> real D.t BenchStream.node BenchLazy.delay BenchStream.node 
+           BenchLazy.state ref
+  val vadd :
+      <BaseFct>.<resultStr>.B.<returnStr>.number BenchStream.node 
+             BenchLazy.delay BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.B.<returnStr>.number BenchStream.node 
+             BenchLazy.delay BenchStream.node BenchLazy.delay
+       -> real D.t BenchStream.node BenchLazy.delay BenchStream.node 
+         BenchLazy.delay
+  val vsub :
+      <BaseFct>.<resultStr>.B.<returnStr>.number BenchStream.node 
+             BenchLazy.delay BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.B.<returnStr>.number BenchStream.node 
+             BenchLazy.delay BenchStream.node BenchLazy.delay
+       -> real D.t BenchStream.node BenchLazy.delay BenchStream.node 
+         BenchLazy.delay
+  val svmult :
+      <BaseFct>.<resultStr>.B.<returnStr>.number
+       -> <BaseFct>.<resultStr>.B.<returnStr>.number BenchStream.node 
+             BenchLazy.delay BenchStream.node BenchLazy.delay
+       -> real D.t BenchStream.node BenchLazy.delay BenchStream.node 
+         BenchLazy.delay
+  val dot :
+      <BaseFct>.<resultStr>.B.<returnStr>.number BenchStream.node 
+             BenchLazy.delay BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.B.<returnStr>.number BenchStream.node 
+             BenchLazy.delay BenchStream.node BenchLazy.delay
+       -> real D.t
+  val norm :
+      <BaseFct>.<resultStr>.B.<returnStr>.number BenchStream.node 
+             BenchLazy.delay BenchStream.node BenchLazy.delay
+       -> real D.t
+  val mvmult :
+      <BaseFct>.<resultStr>.entry BenchStream.node BenchLazy.delay 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.B.<returnStr>.number BenchStream.node 
+               BenchLazy.state ref BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.B.<returnStr>.number BenchStream.node 
+                 BenchLazy.state ref BenchStream.node BenchLazy.state ref
+  val blocknums :
+      'a BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.delay
+  val diagBlocks :
+      <BaseFct>.<resultStr>.entry BenchStream.node BenchLazy.state ref 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.entry BenchStream.node BenchLazy.state ref
+  val scale :
+      <BaseFct>.<resultStr>.entry BenchStream.node BenchLazy.state ref 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.B.<returnStr>.number BenchStream.node 
+               BenchLazy.state ref BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.entry BenchStream.node BenchLazy.delay 
+           BenchStream.node BenchLazy.delay
+       * real D.t BenchStream.node BenchLazy.delay BenchStream.node 
+         BenchLazy.delay
+  val blocksum :
+      <BaseFct>.<resultStr>.B.<returnStr>.number BenchStream.node 
+                   BenchLazy.delay BenchStream.node BenchLazy.delay 
+             BenchStream.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.number BenchStream.node 
+               BenchLazy.delay BenchStream.node BenchLazy.state ref
+  val vecsum :
+      <BaseFct>.<resultStr>.B.<returnStr>.number BenchStream.node 
+               BenchLazy.delay BenchStream.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.number BenchStream.node 
+           BenchLazy.state ref
+  val columnsBefore :
+      int
+       -> <BaseFct>.<resultStr>.entry BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.entry BenchStream.node BenchLazy.delay
+  val listMult :
+      <BaseFct>.<resultStr>.B.<returnStr>.number BenchStream.node 
+                     BenchLazy.delay BenchStream.node BenchLazy.state ref 
+             BenchStream.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.number BenchStream.node 
+                   BenchLazy.delay BenchStream.node BenchLazy.delay 
+             BenchStream.node BenchLazy.state ref
+       -> real D.t BenchStream.node BenchLazy.delay BenchStream.node 
+                 BenchLazy.state ref BenchStream.node BenchLazy.state ref
+  val listSub :
+      real D.t BenchStream.node BenchLazy.delay BenchStream.node 
+               BenchLazy.delay BenchStream.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.number BenchStream.node 
+                   BenchLazy.delay BenchStream.node BenchLazy.delay 
+             BenchStream.node BenchLazy.state ref
+       -> real D.t BenchStream.node BenchLazy.delay BenchStream.node 
+               BenchLazy.delay BenchStream.node BenchLazy.state ref
+  val sumBlocks :
+      <BaseFct>.<resultStr>.B.<returnStr>.number BenchStream.node 
+                     BenchLazy.delay BenchStream.node BenchLazy.delay 
+               BenchStream.node BenchLazy.delay BenchStream.node 
+         BenchLazy.delay
+       -> <BaseFct>.<resultStr>.B.<returnStr>.number BenchStream.node 
+                     BenchLazy.delay BenchStream.node BenchLazy.state ref 
+             BenchStream.node BenchLazy.state ref
+  val pseudofactor :
+      int
+       -> <BaseFct>.<resultStr>.entry BenchStream.node BenchLazy.state ref 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.entry BenchStream.node BenchLazy.state ref 
+             BenchStream.node BenchLazy.state ref
+  val forward :
+      <BaseFct>.<resultStr>.entry BenchStream.node BenchLazy.state ref 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.B.<returnStr>.number BenchStream.node 
+               BenchLazy.state ref BenchStream.node BenchLazy.delay
+       -> real D.t BenchStream.node BenchLazy.delay BenchStream.node 
+         BenchLazy.delay
+  val backward :
+      <BaseFct>.<resultStr>.entry BenchStream.node BenchLazy.state ref 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.B.<returnStr>.number BenchStream.node 
+               BenchLazy.state ref BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.B.<returnStr>.number BenchStream.node 
+               BenchLazy.state ref BenchStream.node BenchLazy.delay
+  val precondition :
+      int
+       -> <BaseFct>.<resultStr>.entry BenchStream.node BenchLazy.state ref 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.B.<returnStr>.number BenchStream.node 
+               BenchLazy.state ref BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.B.<returnStr>.number BenchStream.node 
+               BenchLazy.state ref BenchStream.node BenchLazy.delay
+  val hardOff :
+      real D.t BenchStream.node BenchLazy.delay BenchStream.node 
+         BenchLazy.delay
+  val hardDiag :
+      real D.t BenchStream.node BenchLazy.delay BenchStream.node 
+         BenchLazy.delay
+  val input :
+      int
+       -> <BaseFct>.<resultStr>.entry BenchStream.node BenchLazy.delay 
+           BenchStream.node BenchLazy.delay
+  val solution :
+      int
+       -> real D.t BenchStream.node BenchLazy.delay BenchStream.node 
+         BenchLazy.delay
+  type state
+  val iterations :
+      (<BaseFct>.<resultStr>.matrix
+        -> <BaseFct>.<resultStr>.vector
+        -> <BaseFct>.<resultStr>.matrix * <BaseFct>.<resultStr>.vector)
+       -> (<BaseFct>.<resultStr>.matrix
+        -> <BaseFct>.<resultStr>.vector -> <BaseFct>.<resultStr>.vector)
+       -> <BaseFct>.<resultStr>.matrix
+       -> <BaseFct>.<resultStr>.vector
+       -> <BaseFct>.<resultStr>.state BenchStream.node BenchLazy.state ref
+  val takeUntil :
+      ('a -> bool)
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val stats :
+      int
+       -> int -> (int * real D.t * real D.t) BenchStream.node BenchLazy.delay
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-linear-driver.sml]
+[autoloading]
+[autoloading done]
+functor BenchLinearDriverFn(K: sig
+  type number
+  val stats : int -> int -> (int * number * number) BenchStream.stream
+  val value : number -> real
+end) :
+sig
+  structure W : <sig>
+  val read : string -> TextIO.vector
+  val real : string -> real
+  val reference : string -> (int * real * real) list
+  val number : real -> string
+  val pad : int -> string -> string
+  val header : string
+  val checksum : CharVector.vector -> Word64.word
+  val reverseChecksum : CharVector.vector -> Word64.word
+  val consume :
+      (int * real * real) list
+       -> (int * K.number * K.number) BenchStream.node BenchLazy.delay
+       -> string * int
+  val run : string -> string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/linear-lazy/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 1:5:400
+PASS linear-lazy
+SUMMARY 1 checks, 0 failed

@@ -1,0 +1,48 @@
+[ 1 of 13] Compiling Misc             ( Misc.lhs, Misc.o )
+[ 2 of 13] Compiling NofibUtils       ( NofibUtils.hs, NofibUtils.o )
+[ 3 of 13] Compiling Utils            ( Utils.lhs, Utils.o )
+[ 4 of 13] Compiling Densematrix      ( Densematrix.lhs, Densematrix.o )
+
+Densematrix.lhs:41:1: warning: [-Wtabs]
+    Tab character found here.
+    Suggested fix: Please use spaces instead.
+   |
+41 |         subscript, vsubscript, vecpart,
+   | ^^^^^^^^
+[ 5 of 13] Compiling AbsDensematrix   ( AbsDensematrix.lhs, AbsDensematrix.o )
+[ 6 of 13] Compiling Matrix           ( Matrix.lhs, Matrix.o )
+
+Matrix.lhs:148:1: warning: [-Wtabs]
+    Tab character found here, and in six further locations.
+    Suggested fix: Please use spaces instead.
+    |
+148 |         
+    | ^^^^^^^^
+[ 7 of 13] Compiling Matlib           ( Matlib.lhs, Matlib.o )
+
+Matlib.lhs:74:1: warning: [-Wtabs]
+    Tab character found here, and in 15 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+74 |         diag_inverses = map inverse (diag_blocks m)
+   | ^^^^^^^^
+[ 8 of 13] Compiling Input            ( Input.lhs, Input.o )
+
+Input.lhs:51:1: warning: [-Wtabs]
+    Tab character found here.
+    Suggested fix: Please use spaces instead.
+   |
+51 |         f (r,c,b) = (r-1,c-1,mkblock b)
+   | ^^^^^^^^
+[ 9 of 13] Compiling Absmatlib        ( Absmatlib.lhs, Absmatlib.o )
+[10 of 13] Compiling Cg               ( Cg.lhs, Cg.o )
+
+Cg.lhs:84:1: warning: [-Wtabs]
+    Tab character found here.
+    Suggested fix: Please use spaces instead.
+   |
+84 |              = (Cg_stateC x' r' p' q' cnt')
+   | ^^^^^^^^
+[11 of 13] Compiling AbsCg            ( AbsCg.lhs, AbsCg.o )
+[12 of 13] Compiling Main             ( Main.lhs, Main.o )
+[13 of 13] Linking original

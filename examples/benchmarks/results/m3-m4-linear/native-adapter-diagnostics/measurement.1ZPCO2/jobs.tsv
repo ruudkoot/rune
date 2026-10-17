@@ -1,0 +1,1 @@
+linear-strict	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/nofib-linear-float.sml shared/nofib-linear-dense.sml shared/nofib-linear-kernel.sml shared/nofib-linear-driver.sml linear-strict/benchmark.sml shared/main.sml	1 2 10 smoke.metrics	linear-strict/smoke.expected	smoke.metrics

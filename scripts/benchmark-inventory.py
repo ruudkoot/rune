@@ -588,6 +588,24 @@ def build(source, root, lock):
                     "This is a Haskell port of the Id version from the Impala" in header):
                 authors.add("David J. King")
                 item["evidence"].append("spectral/sphere/Main.lhs:authorship-and-port-history")
+        if source == "nofib" and path in {"gc/linear", "real/linear"}:
+            main = parent / "Main.lhs"
+            if main.is_file():
+                text = main.read_text(errors="replace")
+                if ("Written by Brian D. Moe (Summer 1990)" in text and
+                        "Modified by Kamini Shenoi (Summer 1991)" in text and
+                        "Converted to Haskell by Ian R McLelland and Cordelia V Hall (Nov 1992)" in text):
+                    authors.update(("Brian D. Moe", "Kamini Shenoi", "Ian R. McLelland", "Cordelia V. Hall"))
+                    item["evidence"].append(path + "/Main.lhs:authorship-and-conversion-roles")
+            data = parent / "Input.lhs"
+            if data.is_file():
+                text = data.read_text(errors="replace")
+                if "Roger L. Wainwright  6-8-90" in text:
+                    authors.add("Roger L. Wainwright")
+                    item["evidence"].append(path + "/Input.lhs:data-representation-credit")
+                if "written by Dan Vasicek and copied from his directory 6/22/90" in text:
+                    authors.add("Dan Vasicek")
+                    item["evidence"].append(path + "/Input.lhs:input-reader-credit")
         item["evidence"].extend(str(p.relative_to(root)) for p in context)
         for p in files + context:
             header = p.read_text(errors="replace")[:8000]

@@ -1,0 +1,3 @@
+RESULT 1:5:400
+PASS linear-nofib-gc-lazy
+SUMMARY 1 checks, 0 failed

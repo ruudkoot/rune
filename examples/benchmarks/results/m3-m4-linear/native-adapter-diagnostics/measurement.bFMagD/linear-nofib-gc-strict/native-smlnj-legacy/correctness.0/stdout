@@ -1,0 +1,2 @@
+FAIL linear-nofib-gc-strict -- Fail: incorrect result: linear iteration metrics
+SUMMARY 1 checks, 1 failed

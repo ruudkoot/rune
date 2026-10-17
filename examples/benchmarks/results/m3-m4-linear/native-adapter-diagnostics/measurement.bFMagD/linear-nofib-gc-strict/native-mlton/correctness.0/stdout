@@ -1,0 +1,4 @@
+RESULT 1:5:400
+PASS linear-nofib-gc-strict
+SAMPLE 1 0.016647000
+SUMMARY 1 checks, 0 failed

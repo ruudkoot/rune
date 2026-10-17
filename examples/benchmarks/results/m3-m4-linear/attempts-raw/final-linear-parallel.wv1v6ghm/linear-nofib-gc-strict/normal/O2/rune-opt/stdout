@@ -1,0 +1,3 @@
+RESULT 1:50:3235
+PASS linear-nofib-gc-strict
+SUMMARY 1 checks, 0 failed

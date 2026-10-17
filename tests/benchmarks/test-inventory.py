@@ -228,6 +228,37 @@ class InventoryTest(unittest.TestCase):
                   "% Crown Copyright 1992\n\\author{Another author\\\\\n\n> main = print 0\n")
         self.assertNotIn("N. D. North", self.build("nofib")[0]["authors"])
 
+    def test_linear_authorship_and_conversion_roles_are_recorded(self):
+        self.nofib_roots()
+        self.file("real/linear/Makefile", "\n")
+        self.file("real/linear/Main.lhs", "Written by Brian D. Moe (Summer 1990)\nModified by Kamini Shenoi (Summer 1991)\nConverted to Haskell by Ian R McLelland and Cordelia V Hall (Nov 1992)\n\\begin{code}\nmain = print 0\n\\end{code}\n")
+        row = self.build("nofib")[0]
+        for name in ["Brian D. Moe", "Kamini Shenoi", "Ian R. McLelland", "Cordelia V. Hall"]:
+            self.assertIn(name, row["authors"])
+        self.assertIn("real/linear/Main.lhs:authorship-and-conversion-roles", row["evidence"])
+
+    def test_changed_linear_conversion_header_requires_review(self):
+        self.nofib_roots()
+        self.file("real/linear/Makefile", "\n")
+        self.file("real/linear/Main.lhs", "Another conversion\n\\begin{code}\nmain = print 0\n\\end{code}\n")
+        self.assertNotIn("Cordelia V. Hall", self.build("nofib")[0]["authors"])
+
+    def test_linear_input_roles_are_recorded(self):
+        self.nofib_roots()
+        self.file("gc/linear/Makefile", "\n")
+        self.file("gc/linear/Main.lhs", "\\begin{code}\nmain = print 0\n\\end{code}\n")
+        self.file("gc/linear/Input.lhs", "Roger L. Wainwright  6-8-90\nwritten by Dan Vasicek and copied from his directory 6/22/90\n")
+        row = self.build("nofib")[0]
+        self.assertIn("Roger L. Wainwright", row["authors"])
+        self.assertIn("Dan Vasicek", row["authors"])
+
+    def test_changed_linear_input_credit_requires_review(self):
+        self.nofib_roots()
+        self.file("gc/linear/Makefile", "\n")
+        self.file("gc/linear/Main.lhs", "\\begin{code}\nmain = print 0\n\\end{code}\n")
+        self.file("gc/linear/Input.lhs", "Another input author\n")
+        self.assertNotIn("Dan Vasicek", self.build("nofib")[0]["authors"])
+
     def test_sphere_source_port_author_is_recorded(self):
         self.nofib_roots()
         self.file("spectral/sphere/Makefile", "\n")

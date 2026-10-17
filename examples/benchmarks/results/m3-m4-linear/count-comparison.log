@@ -1,0 +1,17 @@
+COUNT unbudgeted linear-lazy normal rune
+COUNT unbudgeted linear-lazy normal rune:opt
+COUNT unbudgeted linear-lazy normal rune:new
+COUNT unbudgeted linear-lazy normal rune:jit
+COUNT unbudgeted linear-strict normal rune
+COUNT unbudgeted linear-strict normal rune:opt
+COUNT unbudgeted linear-strict normal rune:new
+COUNT unbudgeted linear-strict normal rune:jit
+COUNT unbudgeted linear-nofib-gc-lazy normal rune
+COUNT unbudgeted linear-nofib-gc-lazy normal rune:opt
+COUNT unbudgeted linear-nofib-gc-lazy normal rune:new
+COUNT unbudgeted linear-nofib-gc-lazy normal rune:jit
+COUNT unbudgeted linear-nofib-gc-strict normal rune
+COUNT unbudgeted linear-nofib-gc-strict normal rune:opt
+COUNT unbudgeted linear-nofib-gc-strict normal rune:new
+COUNT unbudgeted linear-nofib-gc-strict normal rune:jit
+COUNT comparisons agree

@@ -2628,3 +2628,30 @@ zero with 1114 catalogue profiles, including registered pending linear imports,
 and all compiler/runedoc/runeopt cross-build comparisons. Those imports' broader
 correctness/count evidence is recorded separately. No failed precheck supplies
 timing results; historical raw statuses remain unchanged.
+
+## Sparse block linear solvers, 2026-10-17
+
+Four imports bring the catalogue to 374 programs and 1114 profiles.
+[Primary coverage](results/m3-m4-linear/coverage.tsv) records 104 passes and
+eight legacy 64-bit SML/NJ failures in 112 attempts. All Rune and other native
+cases pass. The [semantic ledger](results/m3-m4-linear/semantic-summary.tsv)
+records 1341 passing assertions, 39 failures and no unreached checks.
+[Host findings](validation/linear-host-results.md) retain context-sensitive
+legacy differences without introducing compiler/nursery/tolerance workarounds.
+
+All sixteen normal count samples agree. Serial native smoke diagnostics retain
+accepted samples and rejected prechecks separately from instrumentation.
+Original GHC fixtures and export-only metric/block observers agree with every
+final normal Rune configuration. Exact binary32 values, higher-order callbacks,
+recursive sharing, both source iteration caps and distinct text/hash consumers
+remain. Full SML large repetition checks remain unrecorded.
+
+All 94 inventory tests and five-pin 861-entry replay pass. Six contributor roles
+and two concrete reservoir-data blockers are recorded; default generated-data
+workloads are runnable. [Complete source/validation evidence](results/m3-m4-linear/README.md)
+distinguishes private development attempts from final source identities.
+
+[Full make JOBS=4 check](validation/oct17-quoted-fail-1114-acceptance.log) exits
+zero with 1114 profiles and all compiler/runedoc/runeopt cross-build comparisons.
+That run also validates the separately committed quoted-Fail classification fix.
+M3, M4 and M5 remain in progress; M8 remains planned.

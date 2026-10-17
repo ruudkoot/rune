@@ -1,0 +1,13 @@
+error: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/linear-originals/host-tests/native-mlkit-4.7.23/program/src/8/kernel.sml, line 153, column 29: Overloading not resolved in record containing the record wildcard (...).
+
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/linear-originals/host-tests/native-mlkit-4.7.23/program/src/8/kernel.sml, line 153, column 29:
+          val a=B.delay(fn()=> #1(L.force scaled))
+                               ^^
+Overloading not resolved in record containing the record wildcard (...).
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/linear-originals/host-tests/native-mlkit-4.7.23/program/src/8/kernel.sml, line 154, column 29:
+          val b=B.delay(fn()=> #2(L.force scaled))
+                               ^^
+Overloading not resolved in record containing the record wildcard (...).
+Stopping compilation of MLB-file due to error (code 1).
