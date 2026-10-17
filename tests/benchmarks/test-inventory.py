@@ -157,6 +157,22 @@ class InventoryTest(unittest.TestCase):
                   "The Circuit Simulator example\nDifferent authors\nJanuary, 1998\n\n> main = return ()\n")
         self.assertEqual(self.build("nofib")[0]["authors"], "not stated in scanned source headers")
 
+    def test_pic_author_heading_is_recorded(self):
+        self.nofib_roots()
+        self.file("real/pic/Makefile", "\n")
+        self.file("real/pic/Main.hs",
+                  "--\n--      Patricia Fasel\n--      Los Alamos National Laboratory\nmain = print 0\n")
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "Patricia Fasel")
+        self.assertIn("real/pic/Main.hs:author-heading", row["evidence"])
+
+    def test_changed_pic_author_heading_requires_review(self):
+        self.nofib_roots()
+        self.file("real/pic/Makefile", "\n")
+        self.file("real/pic/Main.hs",
+                  "--      Another author\n--      Another laboratory\nmain = print 0\n")
+        self.assertNotIn("Patricia Fasel", self.build("nofib")[0]["authors"])
+
     def test_primetest_declared_author_replaces_rcs_committer(self):
         self.nofib_roots()
         self.file("spectral/primetest/Makefile", "\n")

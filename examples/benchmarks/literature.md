@@ -342,3 +342,12 @@ independent integer/state calculations and SML checks. Fixed seeded witnesses
 do not transfer an independent-uniform confidence bound to this benchmark.
 The recorded review scope uses publisher bibliographic/abstract information and
 the author paper's indexed generator section; direct full-text fetches failed.
+
+## Particle/grid simulation
+
+Hockney and Eastwood's [Computer Simulation Using Particles](https://www.routledge.com/Computer-Simulation-Using-Particles/Eastwood-Hockney/p/book/9780852743928)
+(1988) gives particle/grid and field-solver context, based on the publisher's
+description and contents. The nofib PIC source, rather than a generic physical
+model, defines its active interpolation constants, parameter order and demand.
+Exact reference traces and empirical SML checks establish the port-specific
+evidence separately.
