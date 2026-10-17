@@ -574,6 +574,10 @@ def build(source, root, lock):
                     and re.search(r"(?m)^--[ \t]+Patricia Fasel\n--[ \t]+Los Alamos National Laboratory", header)):
                 authors.add("Patricia Fasel")
                 item["evidence"].append(str(p.relative_to(root)) + ":author-heading")
+            if (source == "nofib" and path == "real/prolog"
+                    and re.search(r"(?m)^-- Mark P\. Jones November 1990$", header)):
+                authors.add("Mark P. Jones")
+                item["evidence"].append(str(p.relative_to(root)) + ":author-heading")
             reviewed_prime_author = (
                 source == "nofib" and path == "spectral/primetest"
                 and r"\def\author{David Lester}" in header.splitlines())

@@ -1,0 +1,7 @@
+> ?- equals(X,Y)
+X = X_1
+Y = X_1 ;
+no.
+> 
+> bye
+Thank you and goodbye

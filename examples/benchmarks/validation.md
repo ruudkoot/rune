@@ -2385,3 +2385,41 @@ complete failures, guards, reduced probes, counts and source identities.
 Full DEBUGINFOD_URLS= make JOBS=4 check exits 0 with 1012 catalogue profiles.
 [The full transcript](validation/oct17-hidden-1012-acceptance.log) records the
 acceptance run. M4 remains in progress.
+
+## October 17: Mini Prolog inference engines
+
+Four programs bring the catalogue to 344 programs and 1024 profiles.
+All [112 primary cases](results/m4-prolog/coverage.tsv) pass on Rune's four
+engines at O0/O2 and six native hosts at defaults. Every one of twenty
+[auxiliary invocations](results/m4-prolog/semantic-summary.tsv) passes all
+111 assertions, totaling 2220.
+
+Sixteen normal count samples agree under Rune's engine comparison rules.
+All twelve serial single fresh-process native smoke samples pass correctness
+prechecks. These are adapter diagnostics; the default ten-sample methodology
+and existing budgets remain unchanged.
+
+The active explicit-stack engine matches all original GHC stdout fixtures.
+StackEngine.hs is an exact duplicate of active Engine.hs. PureEngine.hs builds
+memoized proof trees and lacks cut, so its references come from its own Haskell
+loop. Both SML payload policies match every character of all three transcripts
+for both engines. Additional cases cover parser ambiguity, occurs checks,
+function-valued substitutions, source cut behavior, backspaces, aliases and
+early quit. Higher-order difference-list printing and lazy search control
+remain in both variants.
+
+The final four-variant normal calibration validates all original 200 repetitions
+on Rune O2. Every large transcript validates for one complete interpretation;
+whole 200-iteration large SML runs remain unrecorded. Stable hexadecimal reports,
+explicit Word64 hashing and required fixture files are documented adaptations.
+Raw fixture trailing prompt spaces and backspaces are preserved.
+
+All 74 inventory regressions and the clean five-pin 861-entry replay pass.
+One row gains Mark P. Jones's reviewed author headings. The supplementary
+inventory records the exact stack-module duplicate and distinct proof-tree
+engine. [The complete evidence](results/m4-prolog/README.md) includes original
+runs, observers, initial corrected errors, guards, samples and source identities.
+
+Full DEBUGINFOD_URLS= make JOBS=4 check exits 0 with 1024 catalogue profiles.
+[The full transcript](validation/oct17-prolog-1024-acceptance.log) records the
+acceptance run. M4 remains in progress.

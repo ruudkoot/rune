@@ -1,0 +1,4 @@
+> ?- equals(a,b)
+no.
+> bye
+Thank you and goodbye
