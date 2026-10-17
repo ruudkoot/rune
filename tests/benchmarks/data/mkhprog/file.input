@@ -1,0 +1,1 @@
+-o generated.hs -m Alternate -a Int

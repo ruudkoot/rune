@@ -2423,3 +2423,50 @@ runs, observers, initial corrected errors, guards, samples and source identities
 Full DEBUGINFOD_URLS= make JOBS=4 check exits 0 with 1024 catalogue profiles.
 [The full transcript](validation/oct17-prolog-1024-acceptance.log) records the
 acceptance run. M4 remains in progress.
+
+## October 17: photon transport and command parser generation
+
+Four programs bring the catalogue to 348 programs and 1036 profiles.
+GAMTEB records [50 passes and six SML/NJ failures](results/m4-gamteb/coverage.tsv)
+across 56 primary cases; every Rune configuration passes at O0/O2.
+The parser generator records [56 primary passes](results/m4-mkhprog/coverage.tsv)
+across all configurations. All sixteen normal count samples agree under Rune's
+engine comparison rules. Twelve serial single fresh-process native smoke
+samples pass; these remain adapter diagnostics separate from headline timings.
+
+GAMTEB's separate raw-kernel and full-checker targets total 8613 passing
+assertions, 115 failures and twelve unreached checks. The [complete ledger](results/m4-gamteb/semantic-summary.tsv)
+retains every invocation. Legacy 64-bit raw-stream mismatches respond to nursery
+size; legacy 32-bit decimal scanning fails the exact formatter roundtrip.
+Generic real tuples inside references reproduce a representation problem on all
+SML/NJ hosts. Ordinary arithmetic diagnostics and MLton negative-zero formatting
+failures remain separate from selected primary profile results.
+[The host note](validation/gamteb-host-results.md) records the scope and controls;
+no host fix or benchmark workaround is included.
+
+Original GHC GAMTEB fixtures pass. Export-only observers and an independent eager
+event queue agree on every raw result/statistic at seven particle counts;
+separate ordered accumulations agree exactly. Both final-source Rune numeric
+policies validate all 200 repetitions of normal and large. The source's lazy
+cached prefix, control sharing, order and historical numerical quirks remain.
+Derived modules/model retain the complete required Regents 1990 notice.
+
+The command parser generator passes [2240 auxiliary assertions](results/m4-mkhprog/semantic-summary.tsv).
+Both policies match nine full outputs, block hashes and channels, plus seven
+original invalid-input usage cases. Literal type comparisons preserve lazy
+prefix demand, and the original CPS/per-block consumer is retained. Source
+allocation diagnostics confirm repeated work; the port does not cache a whole
+generation across repetitions. Both policies validate all 3800 normal runs;
+whole 18000-iteration large SML validation remains unrecorded. Crown Copyright
+1992, N. D. North's source/manpage and historical syntax are preserved.
+
+All 78 inventory regressions and the clean five-pin 861-entry replay pass.
+Two primary rows gain reviewed author headings. Nine historical GAMTEB program
+or support entries receive individual supplementary dispositions, source hashes,
+notice review and reasons. [GAMTEB evidence](results/m4-gamteb/README.md) and
+[generator evidence](results/m4-mkhprog/README.md) retain complete attempts,
+samples, guards, references and initial-versus-final checks.
+
+Full DEBUGINFOD_URLS= make JOBS=4 check exits 0 with 1036 catalogue profiles.
+[The full transcript](validation/oct17-gamteb-mkhprog-1036-acceptance.log) records
+acceptance. M4 remains in progress.
