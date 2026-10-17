@@ -1,0 +1,2 @@
+upstream/** -text -whitespace
+*.trace -text -whitespace

@@ -377,3 +377,29 @@ Wochenschach, 1913). These are input origins, not program authorship or proof of
 full modern chess rules. Source-specific move ordering, pruning and printed
 subtree compaction are established by source and original output observations.
 Performance explanations remain diagnostic hypotheses.
+
+## Expert-system feedback and functional circuits
+
+The expert README credits Ian Holyer's Functional programming with Miranda
+(Pitman, 1991) and dates its adaptation March 1993. That is recorded ancestry,
+not a separate review of the textbook. Pinned Search.hs explains its November
+1999 shared-question-string change. Source and original dialogs establish the
+specific unification, lazy table and request/response behavior.
+
+[O'Donnell's research bibliography](https://www.dcs.gla.ac.uk/~jtod/research/)
+lists Hardware description with recursion equations (1987). It supplies
+functional circuit-simulation context; the 1992 multiplier source defines this
+benchmark's actual gates and strictness. Trace and ready-only consumers demand
+different portions of that circuit, demonstrated by original/model agreement and
+an explicit pending-product check.
+
+## Regex-redux and library boundaries
+
+[The Benchmarks Game description](https://benchmarksgame-team.pages.debian.net/benchmarksgame/description/regexredux.html)
+defines one-pattern-at-a-time searches and ordered substitutions, and distinguishes
+regex library algorithms. [The OCaml 4.14 Str manual](https://ocaml.org/manual/4.14/api/Str.html)
+supports the adapter's anchors, searching and replacement interface. Original
+library observations establish selected edge cases; the portable implementation
+covers only the fragment used by this program. The library replacement, buffered
+input and smaller generated profile sizes are explicit, separate from correctness
+and performance findings. All diagnostic performance explanations remain hypotheses.

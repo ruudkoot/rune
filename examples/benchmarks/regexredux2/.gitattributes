@@ -1,0 +1,3 @@
+upstream/** -text -whitespace
+LICENSE -text -whitespace
+*.fasta -text -whitespace

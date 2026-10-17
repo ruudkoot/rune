@@ -2703,3 +2703,32 @@ large-profile runs.
 [Full make JOBS=4 check](validation/oct17-chess-1138-acceptance.log) exits zero
 with 1138 profiles and all compiler/runedoc/runeopt cross-build comparisons.
 M3, M4 and M5 remain in progress; M8 remains planned.
+
+## Expert feedback, regex-redux and stream multiplier, 2026-10-17
+
+Seven ports bring the catalogue to 389 programs and 1159 profiles.
+[Expert coverage](results/m3-expert/coverage.tsv) records 56/56 passes,
+[regex-redux coverage](results/m5-regexredux2/coverage.tsv) 28/28 and
+[multiplier coverage](results/m3-multiplier/coverage.tsv) 112/112. All Rune O0/O2
+engines and six managed native SML hosts pass. The semantic ledgers record
+900 expert, 460 regex and 1120 multiplier passing assertions, none failed or
+unreached. All 28 normal count samples agree; 21 serial single fresh-process
+native smoke adapter samples pass separately from instrumentation.
+
+Original dialogs, regex-library observations, complete reports/traces and an
+independent multiplier clock model support correctness. Explicit demand tests
+cover question/answer feedback, unused replies, phrase policies, gate strictness,
+word arguments/tails and the count consumer's undemanded product stream. Fixed
+profile reductions, consumer validation costs, portable regex library replacement,
+source arithmetic widths and unrecorded final large runs are documented.
+
+All 102 inventory regressions and five-pin 861-entry replay pass. Holyer,
+O'Donnell and Kashitsyn credits are recorded, with the twenty-eighth supplementary
+variant preserving multiplier's count-only consumer. Complete
+[expert](results/m3-expert/README.md), [regex-redux](results/m5-regexredux2/README.md)
+and [multiplier](results/m3-multiplier/README.md) evidence retains notices,
+input/source identities, raw samples and development failures separately.
+
+[Full make JOBS=4 check](validation/oct17-expert-regex-multiplier-1159-acceptance.log)
+exits zero with 1159 profiles and all compiler/runedoc/runeopt cross-build
+comparisons. M3/M4/M5 remain in progress; M8 remains planned.
