@@ -157,6 +157,29 @@ class InventoryTest(unittest.TestCase):
                   "The Circuit Simulator example\nDifferent authors\nJanuary, 1998\n\n> main = return ()\n")
         self.assertEqual(self.build("nofib")[0]["authors"], "not stated in scanned source headers")
 
+    def test_hidden_correspondence_records_both_authors_and_permission(self):
+        self.nofib_roots()
+        self.file("real/hidden/Makefile", "\n")
+        self.file("real/hidden/Main.hs", "main = print 0\n")
+        self.file("real/hidden/MAIL",
+                  "From:    ramaer@cs.utwente.nl (Mark Ramaer)\n"
+                  "Certainly.  However, I should note that the program is written by\n"
+                  "Stef Joosten (joosten@cs.utwente.nl) in Miranda(TM) and I have translated\n"
+                  "it to Haskell to play with overloading; I also added the memoising.\n")
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "Mark Ramaer;Stef Joosten")
+        self.assertIn("real/hidden/MAIL:authorship-and-nofib-permission", row["evidence"])
+        self.assertIn("real/hidden/MAIL:nofib-permission", row["notices"])
+
+    def test_changed_hidden_correspondence_requires_review(self):
+        self.nofib_roots()
+        self.file("real/hidden/Makefile", "\n")
+        self.file("real/hidden/Main.hs", "main = print 0\n")
+        self.file("real/hidden/MAIL", "A different author and permission.\n")
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "not stated in scanned source headers")
+        self.assertNotIn("real/hidden/MAIL:nofib-permission", row["notices"])
+
     def test_pic_author_heading_is_recorded(self):
         self.nofib_roots()
         self.file("real/pic/Makefile", "\n")

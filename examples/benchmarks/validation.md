@@ -2344,3 +2344,44 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 identical bytecode comparisons across seven builds. runedoc
 and runeopt also agree. [The complete transcript](validation/oct17-pic-1006-acceptance.log)
 records the run.
+
+## October 17: hidden-line application variants
+
+Two programs bring the catalogue to 340 programs and 1012 profiles.
+The [complete primary ledger](results/m4-hidden/coverage.tsv) records 48 passes
+and eight SML/NJ failures across all 56 smoke/normal cases. Every Rune engine
+passes at O0/O2. MLton, Poly/ML and ML Kit pass at defaults; the lazy variant
+also passes both profiles on 32-bit legacy SML/NJ and 2026.2.
+
+The [20-invocation auxiliary ledger](results/m4-hidden/semantic-summary.tsv)
+records 1724 passing assertions, two failed assertions and 434 unreached checks.
+Fourteen invocations pass all 108 checks. Each 32-bit/development SML/NJ
+invocation passes 53 before strict rendering fails. Each 64-bit legacy
+invocation fails its first full-edge assertion and terminates during rendering.
+[The host note](validation/hidden-host-results.md) distinguishes the reduced
+constructor-field defect from the legacy nursery-sensitive failure.
+Canonical defaults and source checks retain both failures.
+
+Eight full normal count samples agree under the engine comparison rules.
+Four serial single fresh-process native smoke samples pass; two legacy
+prechecks reject output and cannot contribute timing samples. Existing budgets
+and the default ten-sample policy remain unchanged.
+
+All three unchanged GHC source runs match their full stored prompts and empty
+stdout. Complete geometry and PostScript observers, the independent binary32
+model and exact command/coordinate references are archived. Both SML policies
+match every one-iteration edge and vertex word across all three scenes.
+Primary rendering validates every x/y word and path command without adding
+unused z demand. Numerical comparison quirks, per-bottom memo construction,
+finite eager payloads and lazy control are preserved. Large full-iteration SML
+runs remain unrecorded.
+
+All 72 inventory regressions and the clean five-pin 861-entry replay pass.
+The hidden entry gains reviewed MAIL authorship/permission evidence; the
+historical pseudo-terminal wrapper has an explicit supplementary exclusion.
+[The evidence archive](results/m4-hidden/README.md) includes initial errors,
+complete failures, guards, reduced probes, counts and source identities.
+
+Full DEBUGINFOD_URLS= make JOBS=4 check exits 0 with 1012 catalogue profiles.
+[The full transcript](validation/oct17-hidden-1012-acceptance.log) records the
+acceptance run. M4 remains in progress.
