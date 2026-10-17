@@ -65,18 +65,18 @@ struct
   (* a make of a target: a test of the tier check with `tags` besides, that
      covers the paths `covers` names (for --affected; a step that covers
      none is selected by every change) *)
-  fun target (name, {cpus, memory, pools, after, tags, covers}) =
+  fun target (name, seconds, {cpus, memory, pools, after, tags, covers}) =
     List.foldl (fn (t, tree) => Test.tag t tree)
       (Test.it name
          {program = "/bin/sh",
           args = ["sh", "-c", "exec \"${MAKE:-make}\" --no-print-directory " ^ name ^ " JOBS=\"$RUNE_TEST_CPUS\""],
-          env = NONE, dir = SOME ".", stdin = NONE, timeout = Time.fromSeconds 3600, cap = 0, cpus = cpus,
+          env = NONE, dir = SOME ".", stdin = NONE, timeout = Time.fromSeconds seconds, cap = 0, cpus = cpus,
           memory = memory, pools = pools, exclusive = false, after = after,
           judge = judge} : Run.command Test.tree)
       (tags @ List.map (fn g => "covers:" ^ g) covers)
 
   fun step (name, {cpus, memory, pools, after}, tags, covers) =
-    target (name, {cpus = cpus, memory = memory, pools = pools, after = after, tags = "check" :: tags, covers = covers})
+    target (name, 3600, {cpus = cpus, memory = memory, pools = pools, after = after, tags = "check" :: tags, covers = covers})
   fun lang (name, more, after, covers) =
     step (name, {cpus = wide, memory = 2000, pools = "lang" :: more, after = after}, [], covers)
   fun alone (name, tags, covers) = step (name, {cpus = 1, memory = 500, pools = [], after = []}, tags, covers)
@@ -123,8 +123,20 @@ struct
   (* the profiles' extras (docs/testing.md, Profiles): AGENTS.md's targets
      for a kind of change, beyond make check. Each runs alone, as it always
      has: they run tests/lang from the root and the matrix *)
-  fun extra (name, tags) =
-    target (name, {cpus = processors, memory = 4000, pools = ["lang", "matrix"], after = [], tags = "nightly" :: tags, covers = []})
+  (* seconds is the whole make, not one basis program (that limit is
+     RUNE_MATRIX_TIMEOUT, 120s). The other extras finish inside an hour.
+     make matrix does not: a quiet 2-CPU runner takes about 50 minutes
+     (3028s on 2026-10-16) and a busy one was still in xc1:mlkit when the
+     hour ran out (run 39015037450; matrix-quick 2375s, against 1652s the
+     day before). That kill is SIGTERM to the group. The hosts' processes
+     then die with SIGSEGV and SIGFPE, which the shell reports as
+     "Segmentation fault" and "Floating point exception", and rm cannot
+     remove a directory MLKit's chmod has set to 01001. Two hours covers
+     that runner, inside the workflow's six-hour cap. *)
+  fun extra (name, tags) = extraFor (name, tags, 3600)
+  and extraFor (name, tags, seconds) =
+    target (name, seconds, {cpus = processors, memory = 4000, pools = ["lang", "matrix"], after = [],
+                            tags = "nightly" :: tags, covers = []})
   val extras =
     Test.describe "make"
       [extra ("test-register-asan", ["vm"]),
@@ -134,7 +146,7 @@ struct
        Test.requires Lang.hosts (extra ("test-lib-hosts", ["library"])),
        (* the nightly's own (docs/testing.md, Tiers, profiles and what changed):
           every configuration of the matrix, and the native code under stress *)
-       Test.requires Lang.hosts (extra ("matrix", [])),
+       Test.requires Lang.hosts (extraFor ("matrix", [], 7200)),
        extra ("test-native-stress", []),
        extra ("test-native-asan", [])]
 

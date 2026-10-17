@@ -290,6 +290,28 @@ fresh_bytecode() {
   [ -z "$(find "$root/lib/basis" -newer "$reused" -print | head -1)" ]
 }
 
+# remove_tree DIR: delete DIR. MLKit's Posix.FileSys.chmod ignores the mode
+# and sets 01001 (---------t), so a directory a test has chmod'd cannot be
+# listed and rm stops with "Permission denied"
+# (docs/bugreport/mlkit/Posix.FileSys.chmod/open-flags-as-mode). The first
+# rm is the usual case. When it leaves the tree, chmod of each directory
+# needs only its parent's search permission: one pass opens a locked
+# directory, and the next lists what was inside it.
+remove_tree() {
+  [ -e "$1" ] || [ -L "$1" ] || return 0
+  if rm -rf "$1" 2>/dev/null; then
+    return 0
+  fi
+  if [ -d "$1" ] && [ ! -L "$1" ]; then
+    restore_pass=0
+    while [ "$restore_pass" -lt 8 ]; do
+      find "$1" -type d -exec chmod u+rwx {} + 2>/dev/null || true
+      restore_pass=$((restore_pass + 1))
+    done
+  fi
+  rm -rf "$1"
+}
+
 # program_key SOURCE...: what a program is compiled from, the names and
 # the contents of its sources, as a line.
 program_key() {
@@ -302,7 +324,7 @@ load() {
   mode=$2
   shift 2
   load_status=0
-  rm -rf "$loaddir"
+  remove_tree "$loaddir"
   mkdir -p "$loaddir"
   : > "$loaddir/stdout"
   : > "$loaddir/log"
@@ -339,7 +361,7 @@ load() {
           # timeout kills the process WSL starts for the .exe, and the
           # program of Windows behind it dies with that one.
           windows_dir=$RUNE_WINDOWS_DIR/matrix/${loaddir#"$out"/}
-          rm -rf "$windows_dir"
+          remove_tree "$windows_dir"
           mkdir -p "$windows_dir"
           cp "$loaddir/prog.rbc" "$windows_dir/prog.rbc"
           (cd "$windows_dir" && timeout "$limit" "$cmd2" prog.rbc > "$loaddir/stdout" 2>> "$loaddir/log" < "$program_input")
@@ -497,7 +519,7 @@ has_structure() {
     # shellcheck disable=SC2046
     if load "$probe/work" run $(prefix) "$suite/harness.sml" "$probe/probe.sml" "$suite/finish.sml"; then echo yes; else echo no; fi > "$cache.$$"
     mv "$cache.$$" "$cache"
-    rm -rf "$probe"
+    remove_tree "$probe"
   fi
   [ "$(cat "$cache")" = yes ]
 }
@@ -792,7 +814,7 @@ perf_one() {
 # host rejects are few, so this replaces one run of the host per file.
 session_probe() {
   probedir=$cfgout/basis.probe
-  rm -rf "$probedir"
+  remove_tree "$probedir"
   mkdir -p "$probedir"
   # The prelude hides the top-level values of the host (print, ^, exnMessage
   # among them) and the files rebind TextIO, so the session keeps what it
@@ -825,11 +847,11 @@ session_probe() {
   # make sure of it: the accepted files must load as one program
   # shellcheck disable=SC2086
   if load "$cfgout/basis.work" check $2 $accepted "$gen/ok.sml"; then
-    rm -rf "$probedir"
+    remove_tree "$probedir"
     return 0
   fi
   accepted=""
-  rm -rf "$probedir"
+  remove_tree "$probedir"
   return 1
 }
 
@@ -921,7 +943,7 @@ mlkit_library() {
   [ "$host" = mlkit ] || return 0
   # shellcheck disable=SC2046
   if load "$cfgout/basis.work" check $(cat "$cfgout/basis/prelude" "$cfgout/basis.loaded") "$cfgout/basis/ok.sml"; then
-    rm -rf "$cfgout/basis.work"
+    remove_tree "$cfgout/basis.work"
     return 0
   fi
   echo "the library does not compile: $(first_error "$cfgout/basis.work/log" "$cfgout/basis.work/stdout")" > "$cfgout/basis.done"
@@ -968,7 +990,7 @@ probe_basis() {
         "$cfgout/basis.provides" "$cfgout/basis.dropped" "$cfgout/basis.time"
   discard_image
   gen=$cfgout/basis
-  rm -rf "$gen"
+  remove_tree "$gen"
   if ! sh tests/basis/host/gen-host-basis.sh "$gen"; then
     echo "tests/basis/host/gen-host-basis.sh failed" > "$cfgout/basis.done"
     return
@@ -1016,7 +1038,7 @@ probe_basis() {
     echo "$f" >> "$cfgout/basis.loaded"
     awk -F '\t' -v f="$f" '$1 == f { n = split($2, m, " "); for (i = 1; i <= n; i++) print m[i] }' "$gen/files" >> "$cfgout/basis.provides"
   done
-  rm -rf "$cfgout/basis.work"
+  remove_tree "$cfgout/basis.work"
   mlkit_library || return
   save_image "$prelude" "$accepted"
   echo "probed $tried $(since "$t_probe")" > "$cfgout/basis.time"
@@ -1050,7 +1072,7 @@ probe_xc2() {
     return
   fi
   rm -f "$cfgout/basis.key" "$cfgout/basis.time"
-  rm -rf "$cfgout/xc2"
+  remove_tree "$cfgout/xc2"
   if ! RUNE=$cmd1 sh "tests/basis/xc2/$host/gen.sh" "$cfgout/xc2" "$mlib" > "$cfgout/xc2.log" 2>&1; then
     echo "tests/basis/xc2/$host/gen.sh failed: $(tail -1 "$cfgout/xc2.log")" > "$cfgout/basis.done"
     return
@@ -1280,7 +1302,7 @@ resolve() {
 }
 
 mkdir -p "$run"
-trap 'rm -rf "$run"' EXIT HUP INT TERM
+trap 'remove_tree "$run"' EXIT HUP INT TERM
 : > "$run/configs"
 for c in $(expand "$configs"); do resolve "$c" || exit 2; done
 ids=$(cut -f 1 "$run/configs")
@@ -1361,8 +1383,8 @@ for id in $ids; do
   for t in $tests; do rm -f "$d/$t.result"; done
   # What a host has does not change between runs; what Rune's library has does.
   case "$id" in
-    rune|rune:*|xc1:*|xc2:*) rm -rf "$d/probe" ;;
-    *) [ -n "$filter" ] || rm -rf "$d/probe" ;;
+    rune|rune:*|xc1:*|xc2:*) remove_tree "$d/probe" ;;
+    *) [ -n "$filter" ] || remove_tree "$d/probe" ;;
   esac
 done
 
