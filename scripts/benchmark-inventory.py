@@ -588,6 +588,11 @@ def build(source, root, lock):
                     "This is a Haskell port of the Id version from the Impala" in header):
                 authors.add("David J. King")
                 item["evidence"].append("spectral/sphere/Main.lhs:authorship-and-port-history")
+        if source == "nofib" and path == "spectral/knights":
+            readme = parent / "README"
+            if readme.is_file() and "The Knights Tour in Haskell\n---------------------------\n\nJonathan Hill\n" in readme.read_text(errors="replace"):
+                authors.add("Jonathan Hill")
+                item["evidence"].append("spectral/knights/README:authorship-heading")
         if source == "nofib" and path in {"gc/linear", "real/linear"}:
             main = parent / "Main.lhs"
             if main.is_file():

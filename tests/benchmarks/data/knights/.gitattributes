@@ -1,0 +1,2 @@
+*.tour -text -whitespace
+*.array-tour -text -whitespace

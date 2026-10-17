@@ -228,6 +228,22 @@ class InventoryTest(unittest.TestCase):
                   "% Crown Copyright 1992\n\\author{Another author\\\\\n\n> main = print 0\n")
         self.assertNotIn("N. D. North", self.build("nofib")[0]["authors"])
 
+    def test_knights_readme_author_is_recorded(self):
+        self.nofib_roots()
+        self.file("spectral/knights/Makefile", "\n")
+        self.file("spectral/knights/Main.hs", "main = print 0\n")
+        self.file("spectral/knights/README", "The Knights Tour in Haskell\n---------------------------\n\nJonathan Hill\n")
+        row = self.build("nofib")[0]
+        self.assertIn("Jonathan Hill", row["authors"])
+        self.assertIn("spectral/knights/README:authorship-heading", row["evidence"])
+
+    def test_changed_knights_readme_heading_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/knights/Makefile", "\n")
+        self.file("spectral/knights/Main.hs", "main = print 0\n")
+        self.file("spectral/knights/README", "Another tour author\n")
+        self.assertNotIn("Jonathan Hill", self.build("nofib")[0]["authors"])
+
     def test_linear_authorship_and_conversion_roles_are_recorded(self):
         self.nofib_roots()
         self.file("real/linear/Makefile", "\n")

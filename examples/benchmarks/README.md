@@ -393,6 +393,12 @@ inventory entry.
 | [linear-nofib-gc-strict](#linear-nofib-gc-strict) | [nofib gc linear solver](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/linear) | Run the source binary32 block solver with strict numeric payloads and the gc iteration cap and consumer. |
 | [bspt-lazy](#bspt-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/bspt) | Build, manipulate and render a rational BSP modeller with memoized numeric fields and shared batch output. |
 | [bspt-strict](#bspt-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/bspt) | Build, manipulate and render a rational BSP modeller with eager numeric fields and shared batch output. |
+| [knights-lazy](#knights-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/knights) | Search closed knight tours with a persistent list board and lazy numeric metadata. |
+| [knights-strict](#knights-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/knights) | Search closed knight tours with a persistent list board and strict numeric metadata. |
+| [knights-array-lazy](#knights-array-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/knights) | Search closed knight tours with a persistent array board and lazy numeric metadata. |
+| [knights-array-strict](#knights-array-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/knights) | Search closed knight tours with a persistent array board and strict numeric metadata. |
+| [mate-lazy](#mate-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/mate) | Solve chess mating problems by AND–OR search with lazy legal-move generation and compact printed replies. |
+| [mate-strict](#mate-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/mate) | Solve chess mating problems by AND–OR search with strict legal-move generation and compact printed replies. |
 
 ## Running and interpreting checks
 
@@ -22383,3 +22389,567 @@ context. The pinned source and recorded GHC interface support the specific
 evaluation and sharing explanations above.
 
 See [bspt-strict/PROVENANCE.md](bspt-strict/PROVENANCE.md) for the per-program record.
+
+## knights-lazy
+
+### Algorithm and workload
+
+Find closed knight tours with depth-first search over the source queue/list of
+starting squares. Keep move order UL, UR, DL, DR, LU, LD, RU, RD; detect isolated
+squares, select a unique single-descendant move, or order candidates by onward
+degree with the source list-comprehension quicksort. All boards compare equal
+under the source Eq instance; degree ties therefore retain traversal order.
+The printed backtracking-moves counter increases with depth, not with the total
+number of nodes searched. Preserve this historical output label and behavior.
+
+### History, authorship and upstream variants
+
+[Jonathan Hill's knights source](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/knights), version 1.4 with 1992 module
+headers, is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. README declares
+Hill's authorship and distinguishes this sequential search from a separate
+parallel demonstration. All original literate modules, README and bibliography
+are retained under knights-lazy/upstream. No separate individual redistribution
+grant is stated in these files; retain the source notices and suite provenance.
+The active program imports ChessSetList. The unused ChessSetArray alternative
+has materially different storage, copying, deletion metadata and formatting;
+its -array variants have separate names and reference outputs.
+
+### Translation, representation and evaluation
+
+List variants retain a persistent reversed trail, lazy init/last operations,
+size, move number and starting square. Array variants retain immutable boxed
+arrays and copying updates; portable memoized vectors store delayed element
+values. No mutable in-place board replaces the source persistent structure.
+The array's tileIndex is (x-1)*size+y. Preserve its unused indexTile's original
+quotient/remainder quirk and deleteFirst's unchanged move count/reset first
+square. The board render layouts differ between representations.
+
+-lazy memoizes numeric metadata and candidate degrees. -strict evaluates those
+fields eagerly. Both preserve the lazy search frontier, finite child streams,
+trail/array roots and first-square field. A deleted singleton can have an unused
+undefined first square in the list source; forcing it eagerly changes behavior.
+The degree enumeration for singles and the fresh enumeration for sorting remain
+separate calls, as in the source. Search, output streams and demanded prefixes
+are memoized explicitly. Both variants preserve the source quicksort rather
+than replace it with a host library sort.
+
+The inactive array renderer contains logTen 1 = 0 and otherwise recurses with
+x div 10. Original spaces 64 1 overflows its stack after reaching zero repeatedly.
+For the array variants only, change this formatting base case to logTen 0 = 0.
+The reference observer makes exactly that repair and selects ChessSetArray;
+retain the failing original and bounded diagnostic. Search, board updates,
+numeric values and stopping conditions are unchanged. This is a documented
+source repair, not an exact duplicate of the active list program.
+
+### Inputs, profiles and checks
+
+Smoke uses one repetition on an 8-by-8 board and asks for one tour. Normal retains
+100 repetitions on a 14-by-14 board; large retains 100 on a 20-by-20 board.
+Source FAST also uses 100 repetitions; reducing only the smoke repetition count
+keeps routine checks practical. Source normal and large parameters are retained.
+All indices, coordinates and search counters fit signed 31-bit arithmetic for
+these profiles. The total checked-character counter uses IntInf as metadata.
+
+The original program prints the length of its rendered tour in each repetition.
+The port compares every rendered character with an original full-tour fixture,
+and reports repetitions plus total checked characters. This extra validation
+and character forcing are explicit consumer adaptations. Every repetition
+restarts the search; no memoized result is added across Benchmark.run calls.
+Original GHC 9.4.7 matches all active FAST/NORM/SLOW fixtures. Export-only
+observers record seven full-tour cases, including three tours, no solution and
+zero requested solutions. Array fixtures use the separately reviewed repair.
+No floating-point tolerance applies.
+
+Independent tests verify every square is visited once, bounds, each knight move
+and the closing jump. Also test original complete rendering, stable degree ties,
+odd-board rejection, zero-demand behavior, unused first-square demand, metadata
+memoization, persistent predecessors and incorrect-output rejection. Array tests
+check its distinct deletion/index behavior. See the validation archive for actual
+configuration outcomes; full SML large repetitions remain unrecorded unless listed.
+
+### Literature and runtime questions
+
+The pinned KnightHeuristic commentary credits Richard Bornat's Programming from
+First Principles, under Positively the last flourish; functional.bib records a
+1986 Prentice-Hall entry. This is an upstream attribution, not a claim to have
+reviewed the book's algorithm. [The source bibliography](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/knights/functional.bib)
+records it. [Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
+provides suite context. The program's own sorting comments are historical
+observations, not performance findings for these ports.
+
+Investigate degree recomputation, laziness, list membership, persistent array
+copying, dead-end pruning, equal-key ordering and rendering costs. These are
+source-based diagnostic hypotheses. Exact original output and independent tour
+legality support correctness for the selected inputs; count/timing records are
+separate measured evidence.
+
+## knights-strict
+
+### Algorithm and workload
+
+Find closed knight tours with depth-first search over the source queue/list of
+starting squares. Keep move order UL, UR, DL, DR, LU, LD, RU, RD; detect isolated
+squares, select a unique single-descendant move, or order candidates by onward
+degree with the source list-comprehension quicksort. All boards compare equal
+under the source Eq instance; degree ties therefore retain traversal order.
+The printed backtracking-moves counter increases with depth, not with the total
+number of nodes searched. Preserve this historical output label and behavior.
+
+### History, authorship and upstream variants
+
+[Jonathan Hill's knights source](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/knights), version 1.4 with 1992 module
+headers, is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. README declares
+Hill's authorship and distinguishes this sequential search from a separate
+parallel demonstration. All original literate modules, README and bibliography
+are retained under knights-lazy/upstream. No separate individual redistribution
+grant is stated in these files; retain the source notices and suite provenance.
+The active program imports ChessSetList. The unused ChessSetArray alternative
+has materially different storage, copying, deletion metadata and formatting;
+its -array variants have separate names and reference outputs.
+
+### Translation, representation and evaluation
+
+List variants retain a persistent reversed trail, lazy init/last operations,
+size, move number and starting square. Array variants retain immutable boxed
+arrays and copying updates; portable memoized vectors store delayed element
+values. No mutable in-place board replaces the source persistent structure.
+The array's tileIndex is (x-1)*size+y. Preserve its unused indexTile's original
+quotient/remainder quirk and deleteFirst's unchanged move count/reset first
+square. The board render layouts differ between representations.
+
+-lazy memoizes numeric metadata and candidate degrees. -strict evaluates those
+fields eagerly. Both preserve the lazy search frontier, finite child streams,
+trail/array roots and first-square field. A deleted singleton can have an unused
+undefined first square in the list source; forcing it eagerly changes behavior.
+The degree enumeration for singles and the fresh enumeration for sorting remain
+separate calls, as in the source. Search, output streams and demanded prefixes
+are memoized explicitly. Both variants preserve the source quicksort rather
+than replace it with a host library sort.
+
+The inactive array renderer contains logTen 1 = 0 and otherwise recurses with
+x div 10. Original spaces 64 1 overflows its stack after reaching zero repeatedly.
+For the array variants only, change this formatting base case to logTen 0 = 0.
+The reference observer makes exactly that repair and selects ChessSetArray;
+retain the failing original and bounded diagnostic. Search, board updates,
+numeric values and stopping conditions are unchanged. This is a documented
+source repair, not an exact duplicate of the active list program.
+
+### Inputs, profiles and checks
+
+Smoke uses one repetition on an 8-by-8 board and asks for one tour. Normal retains
+100 repetitions on a 14-by-14 board; large retains 100 on a 20-by-20 board.
+Source FAST also uses 100 repetitions; reducing only the smoke repetition count
+keeps routine checks practical. Source normal and large parameters are retained.
+All indices, coordinates and search counters fit signed 31-bit arithmetic for
+these profiles. The total checked-character counter uses IntInf as metadata.
+
+The original program prints the length of its rendered tour in each repetition.
+The port compares every rendered character with an original full-tour fixture,
+and reports repetitions plus total checked characters. This extra validation
+and character forcing are explicit consumer adaptations. Every repetition
+restarts the search; no memoized result is added across Benchmark.run calls.
+Original GHC 9.4.7 matches all active FAST/NORM/SLOW fixtures. Export-only
+observers record seven full-tour cases, including three tours, no solution and
+zero requested solutions. Array fixtures use the separately reviewed repair.
+No floating-point tolerance applies.
+
+Independent tests verify every square is visited once, bounds, each knight move
+and the closing jump. Also test original complete rendering, stable degree ties,
+odd-board rejection, zero-demand behavior, unused first-square demand, metadata
+memoization, persistent predecessors and incorrect-output rejection. Array tests
+check its distinct deletion/index behavior. See the validation archive for actual
+configuration outcomes; full SML large repetitions remain unrecorded unless listed.
+
+### Literature and runtime questions
+
+The pinned KnightHeuristic commentary credits Richard Bornat's Programming from
+First Principles, under Positively the last flourish; functional.bib records a
+1986 Prentice-Hall entry. This is an upstream attribution, not a claim to have
+reviewed the book's algorithm. [The source bibliography](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/knights/functional.bib)
+records it. [Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
+provides suite context. The program's own sorting comments are historical
+observations, not performance findings for these ports.
+
+Investigate degree recomputation, laziness, list membership, persistent array
+copying, dead-end pruning, equal-key ordering and rendering costs. These are
+source-based diagnostic hypotheses. Exact original output and independent tour
+legality support correctness for the selected inputs; count/timing records are
+separate measured evidence.
+
+## knights-array-lazy
+
+### Algorithm and workload
+
+Find closed knight tours with depth-first search over the source queue/list of
+starting squares. Keep move order UL, UR, DL, DR, LU, LD, RU, RD; detect isolated
+squares, select a unique single-descendant move, or order candidates by onward
+degree with the source list-comprehension quicksort. All boards compare equal
+under the source Eq instance; degree ties therefore retain traversal order.
+The printed backtracking-moves counter increases with depth, not with the total
+number of nodes searched. Preserve this historical output label and behavior.
+
+### History, authorship and upstream variants
+
+[Jonathan Hill's knights source](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/knights), version 1.4 with 1992 module
+headers, is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. README declares
+Hill's authorship and distinguishes this sequential search from a separate
+parallel demonstration. All original literate modules, README and bibliography
+are retained under knights-lazy/upstream. No separate individual redistribution
+grant is stated in these files; retain the source notices and suite provenance.
+The active program imports ChessSetList. The unused ChessSetArray alternative
+has materially different storage, copying, deletion metadata and formatting;
+its -array variants have separate names and reference outputs.
+
+### Translation, representation and evaluation
+
+List variants retain a persistent reversed trail, lazy init/last operations,
+size, move number and starting square. Array variants retain immutable boxed
+arrays and copying updates; portable memoized vectors store delayed element
+values. No mutable in-place board replaces the source persistent structure.
+The array's tileIndex is (x-1)*size+y. Preserve its unused indexTile's original
+quotient/remainder quirk and deleteFirst's unchanged move count/reset first
+square. The board render layouts differ between representations.
+
+-lazy memoizes numeric metadata and candidate degrees. -strict evaluates those
+fields eagerly. Both preserve the lazy search frontier, finite child streams,
+trail/array roots and first-square field. A deleted singleton can have an unused
+undefined first square in the list source; forcing it eagerly changes behavior.
+The degree enumeration for singles and the fresh enumeration for sorting remain
+separate calls, as in the source. Search, output streams and demanded prefixes
+are memoized explicitly. Both variants preserve the source quicksort rather
+than replace it with a host library sort.
+
+The inactive array renderer contains logTen 1 = 0 and otherwise recurses with
+x div 10. Original spaces 64 1 overflows its stack after reaching zero repeatedly.
+For the array variants only, change this formatting base case to logTen 0 = 0.
+The reference observer makes exactly that repair and selects ChessSetArray;
+retain the failing original and bounded diagnostic. Search, board updates,
+numeric values and stopping conditions are unchanged. This is a documented
+source repair, not an exact duplicate of the active list program.
+
+### Inputs, profiles and checks
+
+Smoke uses one repetition on an 8-by-8 board and asks for one tour. Normal retains
+100 repetitions on a 14-by-14 board; large retains 100 on a 20-by-20 board.
+Source FAST also uses 100 repetitions; reducing only the smoke repetition count
+keeps routine checks practical. Source normal and large parameters are retained.
+All indices, coordinates and search counters fit signed 31-bit arithmetic for
+these profiles. The total checked-character counter uses IntInf as metadata.
+
+The original program prints the length of its rendered tour in each repetition.
+The port compares every rendered character with an original full-tour fixture,
+and reports repetitions plus total checked characters. This extra validation
+and character forcing are explicit consumer adaptations. Every repetition
+restarts the search; no memoized result is added across Benchmark.run calls.
+Original GHC 9.4.7 matches all active FAST/NORM/SLOW fixtures. Export-only
+observers record seven full-tour cases, including three tours, no solution and
+zero requested solutions. Array fixtures use the separately reviewed repair.
+No floating-point tolerance applies.
+
+Independent tests verify every square is visited once, bounds, each knight move
+and the closing jump. Also test original complete rendering, stable degree ties,
+odd-board rejection, zero-demand behavior, unused first-square demand, metadata
+memoization, persistent predecessors and incorrect-output rejection. Array tests
+check its distinct deletion/index behavior. See the validation archive for actual
+configuration outcomes; full SML large repetitions remain unrecorded unless listed.
+
+### Literature and runtime questions
+
+The pinned KnightHeuristic commentary credits Richard Bornat's Programming from
+First Principles, under Positively the last flourish; functional.bib records a
+1986 Prentice-Hall entry. This is an upstream attribution, not a claim to have
+reviewed the book's algorithm. [The source bibliography](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/knights/functional.bib)
+records it. [Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
+provides suite context. The program's own sorting comments are historical
+observations, not performance findings for these ports.
+
+Investigate degree recomputation, laziness, list membership, persistent array
+copying, dead-end pruning, equal-key ordering and rendering costs. These are
+source-based diagnostic hypotheses. Exact original output and independent tour
+legality support correctness for the selected inputs; count/timing records are
+separate measured evidence.
+
+## knights-array-strict
+
+### Algorithm and workload
+
+Find closed knight tours with depth-first search over the source queue/list of
+starting squares. Keep move order UL, UR, DL, DR, LU, LD, RU, RD; detect isolated
+squares, select a unique single-descendant move, or order candidates by onward
+degree with the source list-comprehension quicksort. All boards compare equal
+under the source Eq instance; degree ties therefore retain traversal order.
+The printed backtracking-moves counter increases with depth, not with the total
+number of nodes searched. Preserve this historical output label and behavior.
+
+### History, authorship and upstream variants
+
+[Jonathan Hill's knights source](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/knights), version 1.4 with 1992 module
+headers, is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. README declares
+Hill's authorship and distinguishes this sequential search from a separate
+parallel demonstration. All original literate modules, README and bibliography
+are retained under knights-lazy/upstream. No separate individual redistribution
+grant is stated in these files; retain the source notices and suite provenance.
+The active program imports ChessSetList. The unused ChessSetArray alternative
+has materially different storage, copying, deletion metadata and formatting;
+its -array variants have separate names and reference outputs.
+
+### Translation, representation and evaluation
+
+List variants retain a persistent reversed trail, lazy init/last operations,
+size, move number and starting square. Array variants retain immutable boxed
+arrays and copying updates; portable memoized vectors store delayed element
+values. No mutable in-place board replaces the source persistent structure.
+The array's tileIndex is (x-1)*size+y. Preserve its unused indexTile's original
+quotient/remainder quirk and deleteFirst's unchanged move count/reset first
+square. The board render layouts differ between representations.
+
+-lazy memoizes numeric metadata and candidate degrees. -strict evaluates those
+fields eagerly. Both preserve the lazy search frontier, finite child streams,
+trail/array roots and first-square field. A deleted singleton can have an unused
+undefined first square in the list source; forcing it eagerly changes behavior.
+The degree enumeration for singles and the fresh enumeration for sorting remain
+separate calls, as in the source. Search, output streams and demanded prefixes
+are memoized explicitly. Both variants preserve the source quicksort rather
+than replace it with a host library sort.
+
+The inactive array renderer contains logTen 1 = 0 and otherwise recurses with
+x div 10. Original spaces 64 1 overflows its stack after reaching zero repeatedly.
+For the array variants only, change this formatting base case to logTen 0 = 0.
+The reference observer makes exactly that repair and selects ChessSetArray;
+retain the failing original and bounded diagnostic. Search, board updates,
+numeric values and stopping conditions are unchanged. This is a documented
+source repair, not an exact duplicate of the active list program.
+
+### Inputs, profiles and checks
+
+Smoke uses one repetition on an 8-by-8 board and asks for one tour. Normal retains
+100 repetitions on a 14-by-14 board; large retains 100 on a 20-by-20 board.
+Source FAST also uses 100 repetitions; reducing only the smoke repetition count
+keeps routine checks practical. Source normal and large parameters are retained.
+All indices, coordinates and search counters fit signed 31-bit arithmetic for
+these profiles. The total checked-character counter uses IntInf as metadata.
+
+The original program prints the length of its rendered tour in each repetition.
+The port compares every rendered character with an original full-tour fixture,
+and reports repetitions plus total checked characters. This extra validation
+and character forcing are explicit consumer adaptations. Every repetition
+restarts the search; no memoized result is added across Benchmark.run calls.
+Original GHC 9.4.7 matches all active FAST/NORM/SLOW fixtures. Export-only
+observers record seven full-tour cases, including three tours, no solution and
+zero requested solutions. Array fixtures use the separately reviewed repair.
+No floating-point tolerance applies.
+
+Independent tests verify every square is visited once, bounds, each knight move
+and the closing jump. Also test original complete rendering, stable degree ties,
+odd-board rejection, zero-demand behavior, unused first-square demand, metadata
+memoization, persistent predecessors and incorrect-output rejection. Array tests
+check its distinct deletion/index behavior. See the validation archive for actual
+configuration outcomes; full SML large repetitions remain unrecorded unless listed.
+
+### Literature and runtime questions
+
+The pinned KnightHeuristic commentary credits Richard Bornat's Programming from
+First Principles, under Positively the last flourish; functional.bib records a
+1986 Prentice-Hall entry. This is an upstream attribution, not a claim to have
+reviewed the book's algorithm. [The source bibliography](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/knights/functional.bib)
+records it. [Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
+provides suite context. The program's own sorting comments are historical
+observations, not performance findings for these ports.
+
+Investigate degree recomputation, laziness, list membership, persistent array
+copying, dead-end pruning, equal-key ordering and rendering costs. These are
+source-based diagnostic hypotheses. Exact original output and independent tour
+legality support correctness for the selected inputs; count/timing records are
+separate measured evidence.
+
+## mate-lazy
+
+### Algorithm and workload
+
+Search the source AND–OR chess end-game tree to depth 2*N-1: select the first
+winning attacking move, then prove a winning continuation for every legal reply.
+Retain list-based boards, legality checks, line-move continuations, source move
+order, pawn promotion and king threats. The program's move rules omit castling
+and en passant; do not substitute a different full-chess engine. Compact equal
+printed reply subtrees and print the source descriptive notation and ordering.
+
+### History, authorship and data
+
+The pinned [nofib mate source](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/mate) is revision
+b7391df4540ac8b11b35e1b2e2c15819b5171798. README describes AND–OR search and a
+historical nhc98 timing example. No individual program author is stated in its
+five Haskell modules or README. Preserve all originals, puzzle data and historical
+solution files under mate-lazy/upstream. The README's 2017 fixture note predates
+the current FAST/NORM/SLOW Makefile selections; use the pinned manifests and
+actual runs as evidence rather than assuming that note is current.
+
+Puzzle comments declare individual composition history: G. Heathcote's Reading
+Observer problem (1904), Kohtz and Kockelkorn's Schachaufgaben problem (1875),
+and the Holzhausen problem, plus other retained composers/dates. Preserve each
+input's comments and notices; do not treat a puzzle composer as program author.
+The simple problem's comment describes a castled king trapped behind pawns.
+New tiny validation positions are generated deterministic test data, separately
+identified by cases.py. No separate dataset redistribution notice is stated in
+these puzzle headers; retain the complete pinned files and suite provenance.
+
+### Variants and portable translation
+
+-lazy uses memoized board-list spines, move generation and result trees with
+source short-circuiting. -strict additionally materializes each position's finite
+legal-move list eagerly; it does not exhaustively evaluate the whole search tree.
+Both retain attacking disjunction and defending conjunction stopping rules.
+They must agree on the selected move and complete printed solution. Each
+Benchmark.run starts the source computation from its input; no cross-call result
+cache is added.
+
+Keep persistent board removal/insertion and source ray/sift ordering. Explicit
+callbacks preserve moveLine's difference-list continuations. Preserve default
+constructor order for pieces, moves and promotions. Compaction compares printed
+subtrees; the stable natural mergesort used by the source Data.List.sortBy is
+translated with its run detection and equal-key ordering. The foldr attacking
+selection is exposed as choose for a negative demand test; it uses the same
+move stream and source search rules. Portable pair type annotations resolve
+record selectors on all SML hosts without changing representations.
+
+Read the fixed problem and reviewed expected text once per run. Materialize the
+bounded final textual report before comparison, replacing repetitive stdout;
+record this output buffering/validation adaptation separately from the search.
+The source parser's comments, ranks, piece colours and goal convention remain.
+All board coordinates, depths and selected problem counts fit signed 31-bit
+integers; no arbitrary-precision or floating-point arithmetic is needed.
+
+### Inputs, profiles and exact validation
+
+Smoke selects upstream runtime_files/simple.prob, a one-move problem. This is an
+explicit smaller source problem than FAST's three-move heathcote3.prob, whose
+full output is also validated in private calibration and reference fixtures.
+Normal retains runtime_files/kohtz.prob; large retains
+runtime_files/holzhausen.prob. The timed program processes one named problem,
+not a synthetic universal size parameter. Preserve the relative runtime_files
+path because the original File header includes it.
+
+Compare the complete source output byte for byte and report its checked length:
+212 characters for smoke, 374 for normal and 2159 for large. There is no numerical
+tolerance. Original GHC 9.4.7 matches all published FAST/NORM/SLOW fixtures.
+The selected smaller smoke has its own original complete output. Historical
+.soln files can use older notation and are retained as provenance rather than
+silently promoted to current exact expectations.
+
+The 48-check target compares nine original legal-move/updated-board fixtures and
+six small solutions, verifies promotion choices, stable sorting, constructor
+order, persistent boards, unused-opponent demand and a winning alternative's
+unforced tail, and rejects incorrect output. These controls distinguish intended
+search pruning from accidental evaluation. Earlier draft demand probes and
+relative-path/type-annotation failures remain development evidence, not reported
+compiler bugs. See the recorded validation for actual host configurations and
+profile limits. Full large SML runs are claimed only where explicitly recorded.
+
+### Literature and diagnostic interpretation
+
+[The source README](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/mate/README) describes this particular AND–OR workload;
+[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) provides suite
+context. The puzzle headers supply their historical references. Do not infer
+alpha–beta pruning, transposition tables or a chess-correctness theorem from a
+generic game-search literature citation: these facilities are absent here.
+
+Investigate persistent board traversal, short-circuit search, eager legal-list
+allocation, continuation specialization, repeated printing during compaction and
+stable sorting. These are source-based diagnostic questions. Exact agreement
+with original outputs establishes results for the selected inputs; timing/count
+records are measured evidence and do not alone identify performance causes.
+
+## mate-strict
+
+### Algorithm and workload
+
+Search the source AND–OR chess end-game tree to depth 2*N-1: select the first
+winning attacking move, then prove a winning continuation for every legal reply.
+Retain list-based boards, legality checks, line-move continuations, source move
+order, pawn promotion and king threats. The program's move rules omit castling
+and en passant; do not substitute a different full-chess engine. Compact equal
+printed reply subtrees and print the source descriptive notation and ordering.
+
+### History, authorship and data
+
+The pinned [nofib mate source](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/mate) is revision
+b7391df4540ac8b11b35e1b2e2c15819b5171798. README describes AND–OR search and a
+historical nhc98 timing example. No individual program author is stated in its
+five Haskell modules or README. Preserve all originals, puzzle data and historical
+solution files under mate-lazy/upstream. The README's 2017 fixture note predates
+the current FAST/NORM/SLOW Makefile selections; use the pinned manifests and
+actual runs as evidence rather than assuming that note is current.
+
+Puzzle comments declare individual composition history: G. Heathcote's Reading
+Observer problem (1904), Kohtz and Kockelkorn's Schachaufgaben problem (1875),
+and the Holzhausen problem, plus other retained composers/dates. Preserve each
+input's comments and notices; do not treat a puzzle composer as program author.
+The simple problem's comment describes a castled king trapped behind pawns.
+New tiny validation positions are generated deterministic test data, separately
+identified by cases.py. No separate dataset redistribution notice is stated in
+these puzzle headers; retain the complete pinned files and suite provenance.
+
+### Variants and portable translation
+
+-lazy uses memoized board-list spines, move generation and result trees with
+source short-circuiting. -strict additionally materializes each position's finite
+legal-move list eagerly; it does not exhaustively evaluate the whole search tree.
+Both retain attacking disjunction and defending conjunction stopping rules.
+They must agree on the selected move and complete printed solution. Each
+Benchmark.run starts the source computation from its input; no cross-call result
+cache is added.
+
+Keep persistent board removal/insertion and source ray/sift ordering. Explicit
+callbacks preserve moveLine's difference-list continuations. Preserve default
+constructor order for pieces, moves and promotions. Compaction compares printed
+subtrees; the stable natural mergesort used by the source Data.List.sortBy is
+translated with its run detection and equal-key ordering. The foldr attacking
+selection is exposed as choose for a negative demand test; it uses the same
+move stream and source search rules. Portable pair type annotations resolve
+record selectors on all SML hosts without changing representations.
+
+Read the fixed problem and reviewed expected text once per run. Materialize the
+bounded final textual report before comparison, replacing repetitive stdout;
+record this output buffering/validation adaptation separately from the search.
+The source parser's comments, ranks, piece colours and goal convention remain.
+All board coordinates, depths and selected problem counts fit signed 31-bit
+integers; no arbitrary-precision or floating-point arithmetic is needed.
+
+### Inputs, profiles and exact validation
+
+Smoke selects upstream runtime_files/simple.prob, a one-move problem. This is an
+explicit smaller source problem than FAST's three-move heathcote3.prob, whose
+full output is also validated in private calibration and reference fixtures.
+Normal retains runtime_files/kohtz.prob; large retains
+runtime_files/holzhausen.prob. The timed program processes one named problem,
+not a synthetic universal size parameter. Preserve the relative runtime_files
+path because the original File header includes it.
+
+Compare the complete source output byte for byte and report its checked length:
+212 characters for smoke, 374 for normal and 2159 for large. There is no numerical
+tolerance. Original GHC 9.4.7 matches all published FAST/NORM/SLOW fixtures.
+The selected smaller smoke has its own original complete output. Historical
+.soln files can use older notation and are retained as provenance rather than
+silently promoted to current exact expectations.
+
+The 48-check target compares nine original legal-move/updated-board fixtures and
+six small solutions, verifies promotion choices, stable sorting, constructor
+order, persistent boards, unused-opponent demand and a winning alternative's
+unforced tail, and rejects incorrect output. These controls distinguish intended
+search pruning from accidental evaluation. Earlier draft demand probes and
+relative-path/type-annotation failures remain development evidence, not reported
+compiler bugs. See the recorded validation for actual host configurations and
+profile limits. Full large SML runs are claimed only where explicitly recorded.
+
+### Literature and diagnostic interpretation
+
+[The source README](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/mate/README) describes this particular AND–OR workload;
+[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) provides suite
+context. The puzzle headers supply their historical references. Do not infer
+alpha–beta pruning, transposition tables or a chess-correctness theorem from a
+generic game-search literature citation: these facilities are absent here.
+
+Investigate persistent board traversal, short-circuit search, eager legal-list
+allocation, continuation specialization, repeated printing during compaction and
+stable sorting. These are source-based diagnostic questions. Exact agreement
+with original outputs establishes results for the selected inputs; timing/count
+records are measured evidence and do not alone identify performance causes.
