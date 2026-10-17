@@ -1,0 +1,5 @@
+COUNT unbudgeted almabench normal rune
+COUNT unbudgeted almabench normal rune:opt
+COUNT unbudgeted almabench normal rune:new
+COUNT unbudgeted almabench normal rune:jit
+COUNT comparisons agree

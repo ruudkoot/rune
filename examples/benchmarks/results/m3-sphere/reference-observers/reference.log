@@ -1,0 +1,6 @@
+{'profile': 'smoke', 'size': 30, 'repetitions': 100, 'hash': '2241691123962392824', 'fixture_match': True}
+{'profile': 'normal', 'size': 100, 'repetitions': 100, 'hash': '-6363901940246200439', 'fixture_match': True}
+{'profile': 'large', 'size': 250, 'repetitions': 100, 'hash': '-5467258653527844038', 'fixture_match': True}
+smoke 900 pixels independently reproduce hash 2241691123962392824
+normal 10000 pixels independently reproduce hash -6363901940246200439
+large 62500 pixels independently reproduce hash -5467258653527844038

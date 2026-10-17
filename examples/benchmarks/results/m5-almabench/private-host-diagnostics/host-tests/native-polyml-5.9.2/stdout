@@ -1,0 +1,2 @@
+Exception- Io {cause = SysErr ("No such file or directory", SOME ENOENT), function = "TextIO.openIn", name = "tests/out/benchmarks/almabench-originals/points.reference"} raised
+uncaught exception Io [Io {cause = SysErr ("No such file or directory", SOME ENOENT), function = "TextIO.openIn", name = "tests/out/benchmarks/almabench-originals/points.reference"}]

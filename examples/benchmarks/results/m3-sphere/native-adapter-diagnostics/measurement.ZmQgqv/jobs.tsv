@@ -1,0 +1,1 @@
+sphere-strict	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/nofib-sphere.sml shared/nofib-sphere-driver.sml sphere-strict/benchmark.sml shared/main.sml	1 30 smoke.pixels	sphere-strict/smoke.expected	smoke.pixels

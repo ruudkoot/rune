@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+kb_no_exc	smoke	native:mlton@20241230	O2	compile	0	0	pass	5.30	4.14	1.02	663124	-	-	-	kb_no_exc/native-mlton/build/compile
+kb_no_exc	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.02	0.01	0.01	8272	-	-	-	kb_no_exc/native-mlton/correctness.0
+kb_no_exc	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.02	0.01	0.01	8180	-	-	-	kb_no_exc/native-mlton/fresh.1
+kb_no_exc	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.53	0.49	0.04	35920	-	-	-	kb_no_exc/native-smlnj-legacy/build/compile
+kb_no_exc	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.05	0.04	0.00	8876	-	-	-	kb_no_exc/native-smlnj-legacy/correctness.0
+kb_no_exc	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.07	0.06	0.01	8876	-	-	-	kb_no_exc/native-smlnj-legacy/fresh.1
+kb_no_exc	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.52	0.23	0.10	33500	-	-	-	kb_no_exc/native-polyml/build/compile
+kb_no_exc	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.04	0.05	0.00	14644	-	-	-	kb_no_exc/native-polyml/correctness.0
+kb_no_exc	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.04	0.03	0.01	14708	-	-	-	kb_no_exc/native-polyml/fresh.1

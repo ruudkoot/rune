@@ -1,0 +1,20 @@
+[
+  {
+    "profile": "smoke",
+    "pixels": 900,
+    "max_absolute_difference": 6.139533326177116e-13,
+    "all_quantized_components_agree": true
+  },
+  {
+    "profile": "normal",
+    "pixels": 10000,
+    "max_absolute_difference": 1.2295719997723609e-12,
+    "all_quantized_components_agree": true
+  },
+  {
+    "profile": "large",
+    "pixels": 62500,
+    "max_absolute_difference": 5.608513653498903e-12,
+    "all_quantized_components_agree": true
+  }
+]

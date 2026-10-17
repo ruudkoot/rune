@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/ocaml/ocaml",
+  "reference": "4.02",
+  "revision": "34a0e3994fe1755305358ca338aac74dca326c6d",
+  "url": "https://raw.githubusercontent.com/ocaml/ocaml/34a0e3994fe1755305358ca338aac74dca326c6d/LICENSE",
+  "sha256": "7d0365308fb608dcf950cf1978da91df286b58c01b724f50909daeb0c63f1d27",
+  "scope": "Historical compiler license text for the Q Public License 1.0 named by the individual benchmark notices; do not infer compiler-specific linking exceptions for the benchmark"
+}

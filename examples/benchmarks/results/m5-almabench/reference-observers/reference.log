@@ -1,0 +1,3 @@
+{'profile': 'smoke', 'loops': 1, 'days': 32, 'planet_calls': 264}
+{'profile': 'normal', 'loops': 5, 'days': 36525, 'planet_calls': 1461008}
+{'profile': 'large', 'loops': 20, 'days': 36525, 'planet_calls': 5844008}

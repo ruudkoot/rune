@@ -1,0 +1,5 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+almabench	normal	rune	O2	count	1	1	pass	44.93	44.86	0.06	10744	5361368795	10160848088	235548299	counts/measurement.Ihp2pO/almabench/rune/fresh.1
+almabench	normal	rune:opt	O2	count	1	1	pass	15.46	15.41	0.04	11472	5361368795	10160848088	235548299	counts/measurement.Ihp2pO/almabench/rune-opt/fresh.1
+almabench	normal	rune:new	O2	count	1	1	pass	42.65	42.59	0.06	10932	3496193571	10160848088	235548299	counts/measurement.Ihp2pO/almabench/rune-new/fresh.1
+almabench	normal	rune:jit	O2	count	1	1	pass	13.55	13.50	0.03	13340	3496193571	10160848088	235548299	counts/measurement.Ihp2pO/almabench/rune-jit/fresh.1

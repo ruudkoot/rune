@@ -1,0 +1,1 @@
+sphere-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/nofib-sphere.sml shared/nofib-sphere-driver.sml sphere-lazy/benchmark.sml shared/main.sml	100 100 normal.pixels	sphere-lazy/normal.expected	normal.pixels

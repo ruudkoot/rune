@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-sandmark-kb-parallel.8de17xrp
+PASS kb smoke O2
+PASS kb smoke O0
+PASS kb smoke hosts
+PASS kb normal O2
+PASS kb normal hosts
+PASS kb_no_exc smoke O0
+PASS kb_no_exc smoke O2
+PASS kb_no_exc smoke hosts
+PASS kb normal O0
+PASS kb_no_exc normal O2
+PASS kb_no_exc normal hosts
+PASS kb_no_exc normal O0

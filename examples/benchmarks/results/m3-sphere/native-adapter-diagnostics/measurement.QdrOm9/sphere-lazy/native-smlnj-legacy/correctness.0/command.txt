@@ -1,0 +1,2 @@
+/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml
+@SMLload=/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.QdrOm9/sphere-lazy/native-smlnj-legacy/build/prog

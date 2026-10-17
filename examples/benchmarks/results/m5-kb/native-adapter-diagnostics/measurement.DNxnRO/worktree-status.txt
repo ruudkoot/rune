@@ -1,0 +1,37 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/inventory.tsv
+ M examples/benchmarks/manifest.tsv
+ M scripts/benchmark-inventory.py
+ M tests/benchmarks/test-inventory.py
+?? examples/benchmarks/almabench/
+?? examples/benchmarks/kb/
+?? examples/benchmarks/kb_no_exc/
+?? examples/benchmarks/results/m3-sphere/
+?? examples/benchmarks/results/m5-almabench/
+?? examples/benchmarks/results/m5-kb/
+?? examples/benchmarks/shared/nofib-sphere-driver.sml
+?? examples/benchmarks/shared/nofib-sphere.sml
+?? examples/benchmarks/shared/sandmark-almabench-driver.sml
+?? examples/benchmarks/shared/sandmark-almabench-tables.sml
+?? examples/benchmarks/shared/sandmark-almabench.sml
+?? examples/benchmarks/shared/sandmark-kb-completion.sml
+?? examples/benchmarks/shared/sandmark-kb-data.sml
+?? examples/benchmarks/shared/sandmark-kb-driver.sml
+?? examples/benchmarks/shared/sandmark-kb-order.sml
+?? examples/benchmarks/shared/sandmark-kb-rewrite-option.sml
+?? examples/benchmarks/shared/sandmark-kb-rewrite-raise.sml
+?? examples/benchmarks/shared/sandmark-kb-terms.sml
+?? examples/benchmarks/sphere-lazy/
+?? examples/benchmarks/sphere-strict/
+?? examples/benchmarks/validation/almabench-host-results.md
+?? examples/benchmarks/validation/oct17-sphere-almabench-kb-1093-acceptance.log
+?? examples/benchmarks/validation/sphere-host-results.md
+?? tests/benchmarks/almabench-tests.sml
+?? tests/benchmarks/check-almabench.sh
+?? tests/benchmarks/check-sandmark-kb.sh
+?? tests/benchmarks/check-sphere.sh
+?? tests/benchmarks/data/almabench/
+?? tests/benchmarks/data/sandmark-kb/
+?? tests/benchmarks/data/sphere/
+?? tests/benchmarks/sandmark-kb-tests.sml
+?? tests/benchmarks/sphere-tests.sml

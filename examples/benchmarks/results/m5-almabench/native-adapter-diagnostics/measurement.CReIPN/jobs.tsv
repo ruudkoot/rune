@@ -1,0 +1,1 @@
+almabench	30	1048576	shared/input.sml shared/sandmark-almabench-tables.sml shared/sandmark-almabench.sml shared/sandmark-almabench-driver.sml almabench/benchmark.sml shared/main.sml	1 32 smoke.reference	almabench/smoke.expected	smoke.reference

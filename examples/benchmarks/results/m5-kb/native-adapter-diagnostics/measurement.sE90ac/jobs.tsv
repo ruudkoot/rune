@@ -1,0 +1,1 @@
+kb_no_exc	30	1048576	shared/input.sml shared/sandmark-kb-terms.sml shared/sandmark-kb-rewrite-option.sml shared/sandmark-kb-order.sml shared/sandmark-kb-completion.sml shared/sandmark-kb-data.sml shared/sandmark-kb-driver.sml kb_no_exc/benchmark.sml shared/main.sml	1 completed.rules	kb_no_exc/smoke.expected	completed.rules

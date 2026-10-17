@@ -1,0 +1,83 @@
+PROGRAM LIMIT AS 1048576 KiB
+7 3 1
+~7 3 ~1
+7 ~3 1
+~7 ~3 ~1
+6 3 0
+~6 3 ~0
+PROGRAM FAIL rune (load 1, exit 0)
+PROGRAM LIMIT AS 1048576 KiB
+7 3 1
+~7 3 ~1
+7 ~3 1
+~7 ~3 ~1
+6 3 0
+~6 3 0
+PROGRAM FAIL native:mlton@20241230 (load 1, exit 0)
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/almabench-originals/remainder-probe.sml]
+[autoloading]
+[autoloading done]
+7 3 1.0000000000000004
+~7 3 ~1.0000000000000004
+7 ~3 1.0000000000000004
+~7 ~3 ~1.0000000000000004
+6 3 0
+~6 3 ~0
+val it = () : unit
+- 
+PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 1, exit 0)
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/almabench-originals/remainder-probe.sml]
+[autoloading]
+[autoloading done]
+7 3 1.0000000000000004
+~7 3 ~1.0000000000000004
+7 ~3 1.0000000000000004
+~7 ~3 ~1.0000000000000004
+6 3 0
+~6 3 ~0
+val it = () : unit
+- 
+PROGRAM FAIL native:smlnj32@110.99.9 (load 1, exit 0)
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/almabench-originals/remainder-probe.sml]
+7 3 1.0000000000000004
+~7 3 ~1.0000000000000004
+7 ~3 1.0000000000000004
+~7 ~3 ~1.0000000000000004
+6 3 0
+~6 3 ~0
+val it = () : unit
+- 
+PROGRAM FAIL native:smlnj-dev@2026.2 (load 1, exit 0)
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+7.0 3.0 1.0
+~7.0 3.0 ~1.0
+7.0 ~3.0 1.0
+~7.0 ~3.0 ~1.0
+6.0 3.0 0.0
+~6.0 3.0 ~0.0
+PROGRAM FAIL native:polyml@5.9.2 (load 1, exit 0)
+PROGRAM LIMIT AS 1048576 KiB
+7.0 3.0 1.0
+~7.0 3.0 ~1.0
+7.0 ~3.0 1.0
+~7.0 ~3.0 ~1.0
+6.0 3.0 0.0
+~6.0 3.0 ~0.0
+PROGRAM FAIL native:mlkit@4.7.23 (load 1, exit 0)

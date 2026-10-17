@@ -1,0 +1,1 @@
+almabench	600	4194304	shared/input.sml shared/sandmark-almabench-tables.sml shared/sandmark-almabench.sml shared/sandmark-almabench-driver.sml almabench/benchmark.sml shared/main.sml	5 36525 normal.reference	almabench/normal.expected	normal.reference

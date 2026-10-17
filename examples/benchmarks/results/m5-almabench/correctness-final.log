@@ -1,0 +1,7 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-almabench-parallel.rfz2_big
+PASS almabench smoke O2
+PASS almabench smoke O0
+PASS almabench smoke hosts
+PASS almabench normal O0
+PASS almabench normal O2
+PASS almabench normal hosts

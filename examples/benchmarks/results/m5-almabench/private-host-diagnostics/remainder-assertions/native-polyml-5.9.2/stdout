@@ -1,0 +1,25 @@
+7.0 3.0 1.0
+~7.0 3.0 ~1.0
+7.0 ~3.0 1.0
+~7.0 ~3.0 ~1.0
+6.0 3.0 0.0
+~6.0 3.0 ~0.0
+PASS rem/7.0/3.0/exact
+PASS rem/7.0/3.0/sign
+PASS rem/7.0/3.0/magnitude
+PASS rem/~7.0/3.0/exact
+PASS rem/~7.0/3.0/sign
+PASS rem/~7.0/3.0/magnitude
+PASS rem/7.0/~3.0/exact
+PASS rem/7.0/~3.0/sign
+PASS rem/7.0/~3.0/magnitude
+PASS rem/~7.0/~3.0/exact
+PASS rem/~7.0/~3.0/sign
+PASS rem/~7.0/~3.0/magnitude
+PASS rem/6.0/3.0/exact
+PASS rem/6.0/3.0/sign
+PASS rem/6.0/3.0/magnitude
+PASS rem/~6.0/3.0/exact
+PASS rem/~6.0/3.0/sign
+PASS rem/~6.0/3.0/magnitude
+SUMMARY 18 checks, 0 failed

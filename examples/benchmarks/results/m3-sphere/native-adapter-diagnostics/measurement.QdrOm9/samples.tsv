@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+sphere-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	6.43	5.20	1.04	668512	-	-	-	sphere-lazy/native-mlton/build/compile
+sphere-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.01	0.01	0.00	4588	-	-	-	sphere-lazy/native-mlton/correctness.0
+sphere-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.01	0.01	0.00	4628	-	-	-	sphere-lazy/native-mlton/fresh.1
+sphere-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.80	0.72	0.07	36928	-	-	-	sphere-lazy/native-smlnj-legacy/build/compile
+sphere-lazy	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.04	0.03	0.01	6188	-	-	-	sphere-lazy/native-smlnj-legacy/correctness.0
+sphere-lazy	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.04	0.04	0.00	6260	-	-	-	sphere-lazy/native-smlnj-legacy/fresh.1
+sphere-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.46	0.35	0.08	57540	-	-	-	sphere-lazy/native-polyml/build/compile
+sphere-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.03	0.02	0.01	13744	-	-	-	sphere-lazy/native-polyml/correctness.0
+sphere-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.03	0.03	0.00	13604	-	-	-	sphere-lazy/native-polyml/fresh.1

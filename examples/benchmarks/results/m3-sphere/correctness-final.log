@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-sphere-parallel.jym2tode
+PASS sphere-lazy smoke O2
+PASS sphere-lazy smoke O0
+PASS sphere-lazy smoke hosts
+PASS sphere-lazy normal O2
+PASS sphere-lazy normal O0
+PASS sphere-strict smoke O0
+PASS sphere-strict smoke O2
+PASS sphere-strict smoke hosts
+FAIL sphere-lazy normal hosts
+PASS sphere-strict normal O2
+PASS sphere-strict normal O0
+PASS sphere-strict normal hosts

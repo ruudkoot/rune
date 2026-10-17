@@ -228,6 +228,20 @@ class InventoryTest(unittest.TestCase):
                   "% Crown Copyright 1992\n\\author{Another author\\\\\n\n> main = print 0\n")
         self.assertNotIn("N. D. North", self.build("nofib")[0]["authors"])
 
+    def test_sphere_source_port_author_is_recorded(self):
+        self.nofib_roots()
+        self.file("spectral/sphere/Makefile", "\n")
+        self.file("spectral/sphere/Main.lhs", "This is a Haskell port of the Id version from the Impala\n16 July, 1998, David J. King\n> module Main where\n> main = print 0\n")
+        row = self.build("nofib")[0]
+        self.assertIn("David J. King", row["authors"])
+        self.assertIn("spectral/sphere/Main.lhs:authorship-and-port-history", row["evidence"])
+
+    def test_changed_sphere_port_attribution_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/sphere/Makefile", "\n")
+        self.file("spectral/sphere/Main.lhs", "Another author\n> module Main where\n> main = print 0\n")
+        self.assertNotIn("David J. King", self.build("nofib")[0]["authors"])
+
     def test_para_article_authors_are_recorded(self):
         self.nofib_roots()
         self.file("spectral/para/Makefile", "\n")

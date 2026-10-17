@@ -1,0 +1,14 @@
+[
+  {
+    "variant": "kb",
+    "source_repetitions": 100,
+    "original_empty_stdout": true,
+    "completed_rules": 24
+  },
+  {
+    "variant": "kb_no_exc",
+    "source_repetitions": 100,
+    "original_empty_stdout": true,
+    "completed_rules": 24
+  }
+]

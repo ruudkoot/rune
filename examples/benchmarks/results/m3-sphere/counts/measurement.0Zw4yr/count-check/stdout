@@ -1,0 +1,5 @@
+COUNT unbudgeted sphere-strict normal rune
+COUNT unbudgeted sphere-strict normal rune:opt
+COUNT unbudgeted sphere-strict normal rune:new
+COUNT unbudgeted sphere-strict normal rune:jit
+COUNT comparisons agree

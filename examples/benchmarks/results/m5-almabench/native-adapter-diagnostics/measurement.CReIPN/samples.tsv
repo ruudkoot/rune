@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+almabench	smoke	native:mlton@20241230	O2	compile	0	0	pass	7.33	5.71	1.45	671344	-	-	-	almabench/native-mlton/build/compile
+almabench	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2536	-	-	-	almabench/native-mlton/correctness.0
+almabench	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2360	-	-	-	almabench/native-mlton/fresh.1
+almabench	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.36	0.32	0.03	36956	-	-	-	almabench/native-smlnj-legacy/build/compile
+almabench	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.01	0.00	4156	-	-	-	almabench/native-smlnj-legacy/correctness.0
+almabench	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.01	0.00	4160	-	-	-	almabench/native-smlnj-legacy/fresh.1
+almabench	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.45	0.28	0.10	46796	-	-	-	almabench/native-polyml/build/compile
+almabench	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	7392	-	-	-	almabench/native-polyml/correctness.0
+almabench	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	7280	-	-	-	almabench/native-polyml/fresh.1

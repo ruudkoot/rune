@@ -1,0 +1,692 @@
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 100:2400
+PASS kb
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-kb-terms.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-kb-terms.sml:18.35 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-kb-terms.sml:12.45 Warning: calling polyEqual
+structure BenchSandmarkKBTerms : sig
+  datatype term = Term of string * term list | Var of int
+  type rule = {lhs:term, number:int, numvars:int, rhs:term}
+  exception Failure of string
+  exception NotFound
+  exception Invalid of string
+  val union : ''a list -> ''a list -> ''a list
+  val vars : term -> int list
+  val varsList : term list -> int list
+  val assoc : ''a -> (''a * 'b) list -> 'b
+  val substitute : (int * term) list -> term -> term
+  val replace : term -> int list -> term -> term
+  val replaceNth : int -> term list -> int list -> term -> term list
+  val fold2 : ('a -> 'b -> 'c -> 'a) -> 'a -> 'b list -> 'c list -> 'a
+  val compose : (int * term) list -> (int * term) list -> (int * term) list
+  val occurs : int -> term -> bool
+  val unify : term * term -> (int * term) list
+  val mkRule : int -> term -> term -> rule
+  val checkRules : rule list -> int
+  val canonicalTerm : term -> string
+  val canonicalRule : rule -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-kb-rewrite-raise.sml]
+structure BenchSandmarkKBRaise : sig
+  structure T : <sig>
+  val matching :
+      BenchSandmarkKBTerms.term
+       -> BenchSandmarkKBTerms.term -> (int * BenchSandmarkKBTerms.term) list
+  val reduce :
+      BenchSandmarkKBTerms.term
+       -> BenchSandmarkKBTerms.term
+       -> BenchSandmarkKBTerms.term -> BenchSandmarkKBTerms.term
+  val canMatch :
+      BenchSandmarkKBTerms.term -> BenchSandmarkKBTerms.term -> bool
+  val reducible :
+      BenchSandmarkKBTerms.term -> BenchSandmarkKBTerms.term -> bool
+  val mreduce :
+      BenchSandmarkKBTerms.rule list
+       -> BenchSandmarkKBTerms.term -> BenchSandmarkKBTerms.term
+  val rewriteOne :
+      BenchSandmarkKBTerms.rule list
+       -> BenchSandmarkKBTerms.term -> BenchSandmarkKBTerms.term
+  val rewriteSons :
+      BenchSandmarkKBTerms.rule list
+       -> BenchSandmarkKBTerms.term list -> BenchSandmarkKBTerms.term list
+  val rewriteAll :
+      BenchSandmarkKBTerms.rule list
+       -> BenchSandmarkKBTerms.term -> BenchSandmarkKBTerms.term
+  val prettyTerm : 'a -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-kb-order.sml]
+structure BenchSandmarkKBOrder : sig
+  structure T : <sig>
+  datatype ordering = Equal | Greater | NotGE
+  val ge : ('a -> ordering) -> 'a -> bool
+  val gt : ('a -> ordering) -> 'a -> bool
+  val eq : ('a -> ordering) -> 'a -> bool
+  val remove : ('a * 'b -> bool) -> 'a -> 'b list -> 'b list
+  val difference : ('a * 'a -> bool) -> 'a list * 'a list -> 'a list * 'a list
+  val multiset :
+      (BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> ordering)
+       -> BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> ordering
+  val lex :
+      (BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> ordering)
+       -> BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> ordering
+  val rpo :
+      (string -> string -> ordering)
+       -> ((BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> ordering)
+        -> BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> ordering)
+       -> BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> ordering
+  val rank : string -> int
+  val precedence : string -> string -> ordering
+  val groupOrder :
+      BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> ordering
+  val greater : BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-kb-completion.sml]
+functor BenchSandmarkKBCompletionFn(R: sig
+  val reducible :
+      BenchSandmarkKBTerms.term -> BenchSandmarkKBTerms.term -> bool
+  val rewriteAll :
+      BenchSandmarkKBTerms.rule list
+       -> BenchSandmarkKBTerms.term -> BenchSandmarkKBTerms.term
+  val prettyTerm : BenchSandmarkKBTerms.term -> unit
+end) :
+sig
+  structure T : <sig>
+  val printString : 'a -> unit
+  val printInt : 'a -> unit
+  val printNewline : unit -> unit
+  val prettyRule : BenchSandmarkKBTerms.rule -> unit
+  val prettyRules : BenchSandmarkKBTerms.rule list -> unit
+  val super :
+      BenchSandmarkKBTerms.term
+       -> BenchSandmarkKBTerms.term
+       -> (int list * (int * BenchSandmarkKBTerms.term) list) list
+  val superStrict :
+      BenchSandmarkKBTerms.term
+       -> BenchSandmarkKBTerms.term
+       -> (int list * (int * BenchSandmarkKBTerms.term) list) list
+  val critical :
+      BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+       -> BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+       -> (BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term) list
+  val strictCritical :
+      BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+       -> BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+       -> (BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term) list
+  val mutual :
+      BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+       -> BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+       -> (BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term) list
+  val rename :
+      int
+       -> BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+       -> BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+  val deletion : BenchSandmarkKBTerms.rule -> unit
+  val nonOrientable :
+      BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> unit
+  val partition : ('a -> bool) -> 'a list -> 'a list * 'a list
+  val getRule :
+      int -> BenchSandmarkKBTerms.rule list -> BenchSandmarkKBTerms.rule
+  val completion :
+      (BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> bool)
+       -> int
+       -> BenchSandmarkKBTerms.rule list
+       -> (BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term) list
+       -> int * int
+       -> (BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term) list
+       -> BenchSandmarkKBTerms.rule list
+  val complete :
+      (BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> bool)
+       -> BenchSandmarkKBTerms.rule list
+       -> BenchSandmarkKBTerms.rule list -> BenchSandmarkKBTerms.rule list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-kb-data.sml]
+structure BenchSandmarkKBData : sig
+  structure T : <sig>
+  val symbol : string -> BenchSandmarkKBTerms.term
+  val inverse : BenchSandmarkKBTerms.term -> BenchSandmarkKBTerms.term
+  val product :
+      BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+       -> BenchSandmarkKBTerms.term
+  val u : BenchSandmarkKBTerms.term
+  val a : BenchSandmarkKBTerms.term
+  val b : BenchSandmarkKBTerms.term
+  val c : BenchSandmarkKBTerms.term
+  val rules : BenchSandmarkKBTerms.rule list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-kb-driver.sml]
+[autoloading]
+[autoloading done]
+functor BenchSandmarkKBDriverFn(K: sig
+  val complete :
+      (BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> bool)
+       -> BenchSandmarkKBTerms.rule list
+       -> BenchSandmarkKBTerms.rule list -> BenchSandmarkKBTerms.rule list
+end) :
+sig
+  val read : string -> TextIO.vector
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/kb/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 100:2400
+PASS kb
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-kb-terms.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-kb-terms.sml:18.35 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-kb-terms.sml:12.45 Warning: calling polyEqual
+structure BenchSandmarkKBTerms : sig
+  datatype term = Term of string * term list | Var of int
+  type rule = {lhs:term, number:int, numvars:int, rhs:term}
+  exception Failure of string
+  exception NotFound
+  exception Invalid of string
+  val union : ''a list -> ''a list -> ''a list
+  val vars : term -> int list
+  val varsList : term list -> int list
+  val assoc : ''a -> (''a * 'b) list -> 'b
+  val substitute : (int * term) list -> term -> term
+  val replace : term -> int list -> term -> term
+  val replaceNth : int -> term list -> int list -> term -> term list
+  val fold2 : ('a -> 'b -> 'c -> 'a) -> 'a -> 'b list -> 'c list -> 'a
+  val compose : (int * term) list -> (int * term) list -> (int * term) list
+  val occurs : int -> term -> bool
+  val unify : term * term -> (int * term) list
+  val mkRule : int -> term -> term -> rule
+  val checkRules : rule list -> int
+  val canonicalTerm : term -> string
+  val canonicalRule : rule -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-kb-rewrite-raise.sml]
+structure BenchSandmarkKBRaise : sig
+  structure T : <sig>
+  val matching :
+      BenchSandmarkKBTerms.term
+       -> BenchSandmarkKBTerms.term -> (int * BenchSandmarkKBTerms.term) list
+  val reduce :
+      BenchSandmarkKBTerms.term
+       -> BenchSandmarkKBTerms.term
+       -> BenchSandmarkKBTerms.term -> BenchSandmarkKBTerms.term
+  val canMatch :
+      BenchSandmarkKBTerms.term -> BenchSandmarkKBTerms.term -> bool
+  val reducible :
+      BenchSandmarkKBTerms.term -> BenchSandmarkKBTerms.term -> bool
+  val mreduce :
+      BenchSandmarkKBTerms.rule list
+       -> BenchSandmarkKBTerms.term -> BenchSandmarkKBTerms.term
+  val rewriteOne :
+      BenchSandmarkKBTerms.rule list
+       -> BenchSandmarkKBTerms.term -> BenchSandmarkKBTerms.term
+  val rewriteSons :
+      BenchSandmarkKBTerms.rule list
+       -> BenchSandmarkKBTerms.term list -> BenchSandmarkKBTerms.term list
+  val rewriteAll :
+      BenchSandmarkKBTerms.rule list
+       -> BenchSandmarkKBTerms.term -> BenchSandmarkKBTerms.term
+  val prettyTerm : 'a -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-kb-order.sml]
+structure BenchSandmarkKBOrder : sig
+  structure T : <sig>
+  datatype ordering = Equal | Greater | NotGE
+  val ge : ('a -> ordering) -> 'a -> bool
+  val gt : ('a -> ordering) -> 'a -> bool
+  val eq : ('a -> ordering) -> 'a -> bool
+  val remove : ('a * 'b -> bool) -> 'a -> 'b list -> 'b list
+  val difference : ('a * 'a -> bool) -> 'a list * 'a list -> 'a list * 'a list
+  val multiset :
+      (BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> ordering)
+       -> BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> ordering
+  val lex :
+      (BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> ordering)
+       -> BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> ordering
+  val rpo :
+      (string -> string -> ordering)
+       -> ((BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> ordering)
+        -> BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> ordering)
+       -> BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> ordering
+  val rank : string -> int
+  val precedence : string -> string -> ordering
+  val groupOrder :
+      BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> ordering
+  val greater : BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-kb-completion.sml]
+functor BenchSandmarkKBCompletionFn(R: sig
+  val reducible :
+      BenchSandmarkKBTerms.term -> BenchSandmarkKBTerms.term -> bool
+  val rewriteAll :
+      BenchSandmarkKBTerms.rule list
+       -> BenchSandmarkKBTerms.term -> BenchSandmarkKBTerms.term
+  val prettyTerm : BenchSandmarkKBTerms.term -> unit
+end) :
+sig
+  structure T : <sig>
+  val printString : 'a -> unit
+  val printInt : 'a -> unit
+  val printNewline : unit -> unit
+  val prettyRule : BenchSandmarkKBTerms.rule -> unit
+  val prettyRules : BenchSandmarkKBTerms.rule list -> unit
+  val super :
+      BenchSandmarkKBTerms.term
+       -> BenchSandmarkKBTerms.term
+       -> (int list * (int * BenchSandmarkKBTerms.term) list) list
+  val superStrict :
+      BenchSandmarkKBTerms.term
+       -> BenchSandmarkKBTerms.term
+       -> (int list * (int * BenchSandmarkKBTerms.term) list) list
+  val critical :
+      BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+       -> BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+       -> (BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term) list
+  val strictCritical :
+      BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+       -> BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+       -> (BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term) list
+  val mutual :
+      BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+       -> BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+       -> (BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term) list
+  val rename :
+      int
+       -> BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+       -> BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+  val deletion : BenchSandmarkKBTerms.rule -> unit
+  val nonOrientable :
+      BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> unit
+  val partition : ('a -> bool) -> 'a list -> 'a list * 'a list
+  val getRule :
+      int -> BenchSandmarkKBTerms.rule list -> BenchSandmarkKBTerms.rule
+  val completion :
+      (BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> bool)
+       -> int
+       -> BenchSandmarkKBTerms.rule list
+       -> (BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term) list
+       -> int * int
+       -> (BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term) list
+       -> BenchSandmarkKBTerms.rule list
+  val complete :
+      (BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> bool)
+       -> BenchSandmarkKBTerms.rule list
+       -> BenchSandmarkKBTerms.rule list -> BenchSandmarkKBTerms.rule list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-kb-data.sml]
+structure BenchSandmarkKBData : sig
+  structure T : <sig>
+  val symbol : string -> BenchSandmarkKBTerms.term
+  val inverse : BenchSandmarkKBTerms.term -> BenchSandmarkKBTerms.term
+  val product :
+      BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+       -> BenchSandmarkKBTerms.term
+  val u : BenchSandmarkKBTerms.term
+  val a : BenchSandmarkKBTerms.term
+  val b : BenchSandmarkKBTerms.term
+  val c : BenchSandmarkKBTerms.term
+  val rules : BenchSandmarkKBTerms.rule list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-kb-driver.sml]
+[autoloading]
+[autoloading done]
+functor BenchSandmarkKBDriverFn(K: sig
+  val complete :
+      (BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term -> bool)
+       -> BenchSandmarkKBTerms.rule list
+       -> BenchSandmarkKBTerms.rule list -> BenchSandmarkKBTerms.rule list
+end) :
+sig
+  val read : string -> TextIO.vector
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/kb/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 100:2400
+PASS kb
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-kb-terms.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-kb-terms.sml:12.45 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-kb-terms.sml:18.35 Warning: calling polyEqual
+structure BenchSandmarkKBTerms : 
+  sig
+    datatype term = Term of string * term list | Var of int
+    type rule = {lhs:term, number:int, numvars:int, rhs:term}
+    exception Failure of string
+    exception NotFound
+    exception Invalid of string
+    val union : ''a list -> ''a list -> ''a list
+    val varsList : term list -> int list
+    val vars : term -> int list
+    val assoc : ''a -> (''a * 'b) list -> 'b
+    val substitute : (int * term) list -> term -> term
+    val replaceNth : int -> term list -> int list -> term -> term list
+    val replace : term -> int list -> term -> term
+    val fold2 : ('a -> 'b -> 'c -> 'a) -> 'a -> 'b list -> 'c list -> 'a
+    val compose : (int * term) list -> (int * term) list -> (int * term) list
+    val occurs : int -> term -> bool
+    val unify : term * term -> (int * term) list
+    val mkRule : int -> term -> term -> rule
+    val checkRules : rule list -> int
+    val canonicalTerm : term -> string
+    val canonicalRule : rule -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-kb-rewrite-raise.sml]
+structure BenchSandmarkKBRaise : 
+  sig
+    structure T : <sig>
+    val matching : BenchSandmarkKBTerms.term
+                    -> BenchSandmarkKBTerms.term
+                    -> (int * BenchSandmarkKBTerms.term) list
+    val reduce : BenchSandmarkKBTerms.term
+                  -> BenchSandmarkKBTerms.term
+                  -> BenchSandmarkKBTerms.term -> BenchSandmarkKBTerms.term
+    val canMatch : BenchSandmarkKBTerms.term
+                    -> BenchSandmarkKBTerms.term -> bool
+    val reducible : BenchSandmarkKBTerms.term
+                     -> BenchSandmarkKBTerms.term -> bool
+    val mreduce : BenchSandmarkKBTerms.rule list
+                   -> BenchSandmarkKBTerms.term -> BenchSandmarkKBTerms.term
+    val rewriteSons : BenchSandmarkKBTerms.rule list
+                       -> BenchSandmarkKBTerms.term list
+                       -> BenchSandmarkKBTerms.term list
+    val rewriteOne : BenchSandmarkKBTerms.rule list
+                      -> BenchSandmarkKBTerms.term
+                      -> BenchSandmarkKBTerms.term
+    val rewriteAll : BenchSandmarkKBTerms.rule list
+                      -> BenchSandmarkKBTerms.term
+                      -> BenchSandmarkKBTerms.term
+    val prettyTerm : 'a -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-kb-order.sml]
+structure BenchSandmarkKBOrder : 
+  sig
+    structure T : <sig>
+    datatype ordering = Equal | Greater | NotGE
+    val ge : ('a -> ordering) -> 'a -> bool
+    val gt : ('a -> ordering) -> 'a -> bool
+    val eq : ('a -> ordering) -> 'a -> bool
+    val remove : ('a * 'b -> bool) -> 'a -> 'b list -> 'b list
+    val difference : ('a * 'a -> bool)
+                      -> 'a list * 'a list -> 'a list * 'a list
+    val multiset : (BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+                     -> ordering)
+                    -> BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+                    -> ordering
+    val lex : (BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+                -> ordering)
+               -> BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+               -> ordering
+    val rpo : (string -> string -> ordering)
+               -> ((BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+                 -> ordering)
+                -> BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+                -> ordering)
+               -> BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+               -> ordering
+    val rank : string -> int
+    val precedence : string -> string -> ordering
+    val groupOrder : BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+                      -> ordering
+    val greater : BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+                   -> bool
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-kb-completion.sml]
+functor BenchSandmarkKBCompletionFn(R: sig
+                                       val reducible : 
+                                                          BenchSandmarkKBTerms.term
+                                                        -> 
+                                                          BenchSandmarkKBTerms.term
+                                                        -> bool
+                                       val rewriteAll : 
+                                                             BenchSandmarkKBTerms.rule
+                                                           list
+                                                         -> 
+                                                           BenchSandmarkKBTerms.term
+                                                         -> 
+                                                           BenchSandmarkKBTerms.term
+                                       val prettyTerm : 
+                                                           BenchSandmarkKBTerms.term
+                                                         -> unit
+                                     end) :
+                                   
+                                     sig
+                                       structure T : <sig>
+                                       val printString : 'a -> unit
+                                       val printInt : 'a -> unit
+                                       val printNewline : unit -> unit
+                                       val prettyRule : 
+                                                           BenchSandmarkKBTerms.rule
+                                                         -> unit
+                                       val prettyRules : 
+                                                              BenchSandmarkKBTerms.rule
+                                                            list
+                                                          -> unit
+                                       val super : BenchSandmarkKBTerms.term
+                                                    -> 
+                                                      BenchSandmarkKBTerms.term
+                                                    -> (int list
+                                                       * (int
+                                                          * 
+                                                            BenchSandmarkKBTerms.term)
+                                                         list) list
+                                       val superStrict : 
+                                                            BenchSandmarkKBTerms.term
+                                                          -> 
+                                                            BenchSandmarkKBTerms.term
+                                                          -> (int list
+                                                             * (int
+                                                                * 
+                                                                  BenchSandmarkKBTerms.term)
+                                                               list) list
+                                       val critical : 
+                                                         BenchSandmarkKBTerms.term
+                                                       * 
+                                                         BenchSandmarkKBTerms.term
+                                                       -> 
+                                                         BenchSandmarkKBTerms.term
+                                                       * 
+                                                         BenchSandmarkKBTerms.term
+                                                       -> (
+                                                            BenchSandmarkKBTerms.term
+                                                          * 
+                                                            BenchSandmarkKBTerms.term)
+                                                         list
+                                       val strictCritical : 
+                                                               BenchSandmarkKBTerms.term
+                                                             * 
+                                                               BenchSandmarkKBTerms.term
+                                                             -> 
+                                                               BenchSandmarkKBTerms.term
+                                                             * 
+                                                               BenchSandmarkKBTerms.term
+                                                             -> (
+                                                                  BenchSandmarkKBTerms.term
+                                                                * 
+                                                                  BenchSandmarkKBTerms.term)
+                                                               list
+                                       val mutual : BenchSandmarkKBTerms.term
+                                                     * 
+                                                       BenchSandmarkKBTerms.term
+                                                     -> 
+                                                       BenchSandmarkKBTerms.term
+                                                     * 
+                                                       BenchSandmarkKBTerms.term
+                                                     -> (
+                                                          BenchSandmarkKBTerms.term
+                                                        * 
+                                                          BenchSandmarkKBTerms.term)
+                                                       list
+                                       val rename : int
+                                                     -> 
+                                                       BenchSandmarkKBTerms.term
+                                                     * 
+                                                       BenchSandmarkKBTerms.term
+                                                     -> 
+                                                       BenchSandmarkKBTerms.term
+                                                     * 
+                                                       BenchSandmarkKBTerms.term
+                                       val deletion : 
+                                                         BenchSandmarkKBTerms.rule
+                                                       -> unit
+                                       val nonOrientable : 
+                                                              BenchSandmarkKBTerms.term
+                                                            * 
+                                                              BenchSandmarkKBTerms.term
+                                                            -> unit
+                                       val partition : ('a -> bool)
+                                                        -> 'a list
+                                                        -> 'a list * 'a list
+                                       val getRule : int
+                                                      -> 
+                                                          BenchSandmarkKBTerms.rule
+                                                        list
+                                                      -> 
+                                                        BenchSandmarkKBTerms.rule
+                                       val completion : (
+                                                            BenchSandmarkKBTerms.term
+                                                          * 
+                                                            BenchSandmarkKBTerms.term
+                                                          -> bool)
+                                                         -> int
+                                                         -> 
+                                                             BenchSandmarkKBTerms.rule
+                                                           list
+                                                         -> (
+                                                              BenchSandmarkKBTerms.term
+                                                            * 
+                                                              BenchSandmarkKBTerms.term)
+                                                           list
+                                                         -> int * int
+                                                         -> (
+                                                              BenchSandmarkKBTerms.term
+                                                            * 
+                                                              BenchSandmarkKBTerms.term)
+                                                           list
+                                                         -> 
+                                                             BenchSandmarkKBTerms.rule
+                                                           list
+                                       val complete : (
+                                                          BenchSandmarkKBTerms.term
+                                                        * 
+                                                          BenchSandmarkKBTerms.term
+                                                        -> bool)
+                                                       -> 
+                                                           BenchSandmarkKBTerms.rule
+                                                         list
+                                                       -> 
+                                                           BenchSandmarkKBTerms.rule
+                                                         list
+                                                       -> 
+                                                           BenchSandmarkKBTerms.rule
+                                                         list
+                                     end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-kb-data.sml]
+structure BenchSandmarkKBData : 
+  sig
+    structure T : <sig>
+    val symbol : string -> BenchSandmarkKBTerms.term
+    val inverse : BenchSandmarkKBTerms.term -> BenchSandmarkKBTerms.term
+    val product : BenchSandmarkKBTerms.term * BenchSandmarkKBTerms.term
+                   -> BenchSandmarkKBTerms.term
+    val u : BenchSandmarkKBTerms.term
+    val a : BenchSandmarkKBTerms.term
+    val b : BenchSandmarkKBTerms.term
+    val c : BenchSandmarkKBTerms.term
+    val rules : BenchSandmarkKBTerms.rule list
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-kb-driver.sml]
+functor BenchSandmarkKBDriverFn(K: sig
+                                 val complete : (BenchSandmarkKBTerms.term
+                                                  * BenchSandmarkKBTerms.term
+                                                  -> bool)
+                                                 -> BenchSandmarkKBTerms.rule 
+                                                   list
+                                                 -> BenchSandmarkKBTerms.rule 
+                                                   list
+                                                 -> BenchSandmarkKBTerms.rule 
+                                                   list
+                                 end) :
+                               
+                                 sig
+                                   val read : string -> TextIO.vector
+                                   val run : string list -> string
+                                 end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/kb/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Kernel : <sig>
+    structure Driver : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 100:2400
+PASS kb
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+RESULT 100:2400
+PASS kb
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 100:2400
+PASS kb
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

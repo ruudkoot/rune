@@ -1,0 +1,927 @@
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 100:1000000 A7AEE0E71A34BF89
+PASS sphere-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-sphere.sml]
+[autoloading]
+[autoloading done]
+functor BenchSphereFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure L : <sig>
+  structure S : <sig>
+  type number
+  type vectorNode
+  type vector
+  type light
+  type surface
+  type sphere
+  val value : 'a D.t -> 'a
+  val number : real -> real D.t
+  val vector :
+      real * real * real
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val zip :
+      (real * real -> real)
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val add :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val sub :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val mult :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val scale :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> real D.t -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val dot :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref -> real D.t
+  val cross :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val norm :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref * real D.t
+  val unit :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val epsilon : real
+  val infinity : real
+  val zero : <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val white : <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val background : <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val lookfrom : <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val lookat : <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val vup : <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val isZero : <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref -> bool
+  val vectorSurface :
+      ('a -> 'b BenchLazy.state ref option)
+       -> 'b BenchLazy.state ref -> 'a list -> 'b BenchLazy.state ref
+  val scalarSurface : ('a -> 'b D.t option) -> 'b -> 'a list -> 'b D.t
+  val ambient :
+      <BaseFct>.<resultStr>.surface list
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val diffuse :
+      <BaseFct>.<resultStr>.surface list
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val specular :
+      <BaseFct>.<resultStr>.surface list
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val body :
+      <BaseFct>.<resultStr>.surface list
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val specpow : <BaseFct>.<resultStr>.surface list -> real D.t
+  val reflect : <BaseFct>.<resultStr>.surface list -> real D.t
+  val transmit : <BaseFct>.<resultStr>.surface list -> real D.t
+  val refract : <BaseFct>.<resultStr>.surface list -> real D.t
+  val surface :
+      <BaseFct>.<resultStr>.sphere -> <BaseFct>.<resultStr>.surface list
+  val standard : <BaseFct>.<resultStr>.surface list
+  val ball : real * real * real * real -> <BaseFct>.<resultStr>.sphere
+  val world : <BaseFct>.<resultStr>.sphere list
+  val lightColor : <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val lights : <BaseFct>.<resultStr>.light list
+  val intersect :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.sphere
+       -> (bool * real D.t) BenchLazy.state ref
+  val trace :
+      <BaseFct>.<resultStr>.sphere list
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> (bool * real D.t * <BaseFct>.<resultStr>.sphere BenchLazy.state ref) 
+           BenchLazy.state ref
+  val normal :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.sphere
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val lightColour :
+      <BaseFct>.<resultStr>.light -> <BaseFct>.<resultStr>.vector
+  val lightDirection :
+      <BaseFct>.<resultStr>.light
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.vectorNode BenchLazy.state ref * real D.t) 
+           BenchLazy.state ref
+  val shadow :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> 'a -> (bool * 'a) BenchLazy.state ref
+  val refractRay :
+      real D.t
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> (bool * <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref) 
+           BenchLazy.state ref
+  val vectorSum :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val lightRay :
+      <BaseFct>.<resultStr>.light
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.surface list
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val shade :
+      <BaseFct>.<resultStr>.light list
+       -> <BaseFct>.<resultStr>.sphere
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> real D.t
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val transmitRay :
+      <BaseFct>.<resultStr>.light list
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> real D.t
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> (bool * <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref) 
+           BenchLazy.state ref
+  val reflectRay :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.light list
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val camera :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> real
+       -> real
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       * <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       * <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val pixel :
+      <BaseFct>.<resultStr>.sphere list
+       -> <BaseFct>.<resultStr>.light list
+       -> real
+       -> real
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val indices : int -> int BenchStream.node BenchLazy.delay
+  val ray :
+      int
+       -> (int * int * <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref) 
+             BenchStream.node BenchLazy.state ref
+  val components :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> real * real * real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-sphere-driver.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-sphere-driver.sml:24.25 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-sphere-driver.sml:24.38 Warning: calling polyEqual
+functor BenchSphereDriverFn(K: sig
+  type vector
+  val ray : int -> (int * int * vector) BenchStream.stream
+  val components : vector -> real * real * real
+end) :
+sig
+  type pixel
+  val read : string -> TextIO.vector
+  val real : string -> real
+  val integer : string -> int
+  val reference :
+      string -> (int * int * (real * real * real) * (int * int * int)) list
+  val valid : (real * real * real) * (real * real * real) -> bool
+  val quantize : real * real * real -> int * int * int
+  val consume :
+      (''a * ''b * (real * real * real) * (int * int * int)) list
+       -> (''a * ''b * K.vector) BenchStream.node BenchLazy.delay
+       -> int * Word64.word
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/sphere-lazy/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+FAIL sphere-lazy -- Fail: incorrect result: sphere pixel
+SUMMARY 1 checks, 1 failed
+PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 0, exit 1)
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-sphere.sml]
+[autoloading]
+[autoloading done]
+functor BenchSphereFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure L : <sig>
+  structure S : <sig>
+  type number
+  type vectorNode
+  type vector
+  type light
+  type surface
+  type sphere
+  val value : 'a D.t -> 'a
+  val number : real -> real D.t
+  val vector :
+      real * real * real
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val zip :
+      (real * real -> real)
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val add :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val sub :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val mult :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val scale :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> real D.t -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val dot :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref -> real D.t
+  val cross :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val norm :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref * real D.t
+  val unit :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val epsilon : real
+  val infinity : real
+  val zero : <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val white : <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val background : <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val lookfrom : <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val lookat : <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val vup : <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val isZero : <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref -> bool
+  val vectorSurface :
+      ('a -> 'b BenchLazy.state ref option)
+       -> 'b BenchLazy.state ref -> 'a list -> 'b BenchLazy.state ref
+  val scalarSurface : ('a -> 'b D.t option) -> 'b -> 'a list -> 'b D.t
+  val ambient :
+      <BaseFct>.<resultStr>.surface list
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val diffuse :
+      <BaseFct>.<resultStr>.surface list
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val specular :
+      <BaseFct>.<resultStr>.surface list
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val body :
+      <BaseFct>.<resultStr>.surface list
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val specpow : <BaseFct>.<resultStr>.surface list -> real D.t
+  val reflect : <BaseFct>.<resultStr>.surface list -> real D.t
+  val transmit : <BaseFct>.<resultStr>.surface list -> real D.t
+  val refract : <BaseFct>.<resultStr>.surface list -> real D.t
+  val surface :
+      <BaseFct>.<resultStr>.sphere -> <BaseFct>.<resultStr>.surface list
+  val standard : <BaseFct>.<resultStr>.surface list
+  val ball : real * real * real * real -> <BaseFct>.<resultStr>.sphere
+  val world : <BaseFct>.<resultStr>.sphere list
+  val lightColor : <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val lights : <BaseFct>.<resultStr>.light list
+  val intersect :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.sphere
+       -> (bool * real D.t) BenchLazy.state ref
+  val trace :
+      <BaseFct>.<resultStr>.sphere list
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> (bool * real D.t * <BaseFct>.<resultStr>.sphere BenchLazy.state ref) 
+           BenchLazy.state ref
+  val normal :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.sphere
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val lightColour :
+      <BaseFct>.<resultStr>.light -> <BaseFct>.<resultStr>.vector
+  val lightDirection :
+      <BaseFct>.<resultStr>.light
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.vectorNode BenchLazy.state ref * real D.t) 
+           BenchLazy.state ref
+  val shadow :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> 'a -> (bool * 'a) BenchLazy.state ref
+  val refractRay :
+      real D.t
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> (bool * <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref) 
+           BenchLazy.state ref
+  val vectorSum :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref BenchStream.node 
+           BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val lightRay :
+      <BaseFct>.<resultStr>.light
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.surface list
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val shade :
+      <BaseFct>.<resultStr>.light list
+       -> <BaseFct>.<resultStr>.sphere
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> real D.t
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val transmitRay :
+      <BaseFct>.<resultStr>.light list
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> real D.t
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> (bool * <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref) 
+           BenchLazy.state ref
+  val reflectRay :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.light list
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val camera :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> real
+       -> real
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       * <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       * <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val pixel :
+      <BaseFct>.<resultStr>.sphere list
+       -> <BaseFct>.<resultStr>.light list
+       -> real
+       -> real
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+  val indices : int -> int BenchStream.node BenchLazy.delay
+  val ray :
+      int
+       -> (int * int * <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref) 
+             BenchStream.node BenchLazy.state ref
+  val components :
+      <BaseFct>.<resultStr>.vectorNode BenchLazy.state ref
+       -> real * real * real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-sphere-driver.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-sphere-driver.sml:24.25 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-sphere-driver.sml:24.38 Warning: calling polyEqual
+functor BenchSphereDriverFn(K: sig
+  type vector
+  val ray : int -> (int * int * vector) BenchStream.stream
+  val components : vector -> real * real * real
+end) :
+sig
+  type pixel
+  val read : string -> TextIO.vector
+  val real : string -> real
+  val integer : string -> int
+  val reference :
+      string -> (int * int * (real * real * real) * (int * int * int)) list
+  val valid : (real * real * real) * (real * real * real) -> bool
+  val quantize : real * real * real -> int * int * int
+  val consume :
+      (''a * ''b * (real * real * real) * (int * int * int)) list
+       -> (''a * ''b * K.vector) BenchStream.node BenchLazy.delay
+       -> int * Word64.word
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/sphere-lazy/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 100:1000000 A7AEE0E71A34BF89
+PASS sphere-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : 
+  sig
+    datatype 'a node
+      = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay | Nil
+    type 'a stream = 'a node BenchLazy.delay
+    val empty : unit -> 'a node BenchLazy.state ref
+    val cons : 'a BenchLazy.delay * 'a node BenchLazy.delay
+                -> 'a node BenchLazy.state ref
+    val singleton : 'a -> 'a node BenchLazy.state ref
+    val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+    val head : 'a node BenchLazy.state ref -> 'a
+    val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val iterate : ('a -> 'a)
+                   -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+    val fromList : 'a list -> 'a node BenchLazy.delay
+    val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+    val zipWith : ('a * 'b -> 'c)
+                   -> 'a node BenchLazy.delay
+                   -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+    val append : 'a node BenchLazy.delay
+                  -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val concatMap : ('a -> 'b node BenchLazy.delay)
+                     -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+    val filter : ('a -> bool)
+                  -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+    val dropWhile : ('a -> bool)
+                     -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+    val foldrStream : ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+                       -> 'b BenchLazy.state ref
+                       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+    val zipWith3 : ('a * 'b * 'c -> 'd)
+                    -> 'a node BenchLazy.delay
+                    -> 'b node BenchLazy.delay
+                    -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+    val span : ('a -> bool)
+                -> 'a node BenchLazy.delay
+                -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+    val nth : 'a node BenchLazy.delay -> int -> 'a
+    val take : int -> 'a node BenchLazy.delay -> 'a list
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+    val foldPrefix : ('a * 'b -> 'b)
+                      -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-sphere.sml]
+functor BenchSphereFn(D: sig
+                         type 'a t
+                         val delay : (unit -> 'a) -> 'a t
+                         val force : 'a t -> 'a
+                       end) :
+                     
+                       sig
+                         structure L : <sig>
+                         structure S : <sig>
+                         type number
+                         type vectorNode
+                         type vector
+                         type light
+                         type surface
+                         type sphere
+                         val value : 'a D.t -> 'a
+                         val number : real -> real D.t
+                         val vector : real * real * real
+                                       -> vectorNode BenchLazy.state ref
+                         val zip : (real * real -> real)
+                                    -> vectorNode BenchLazy.state ref
+                                    -> vectorNode BenchLazy.state ref
+                                    -> vectorNode BenchLazy.state ref
+                         val add : vectorNode BenchLazy.state ref
+                                    -> vectorNode BenchLazy.state ref
+                                    -> vectorNode BenchLazy.state ref
+                         val sub : vectorNode BenchLazy.state ref
+                                    -> vectorNode BenchLazy.state ref
+                                    -> vectorNode BenchLazy.state ref
+                         val mult : vectorNode BenchLazy.state ref
+                                     -> vectorNode BenchLazy.state ref
+                                     -> vectorNode BenchLazy.state ref
+                         val scale : vectorNode BenchLazy.state ref
+                                      -> real D.t
+                                      -> vectorNode BenchLazy.state ref
+                         val dot : vectorNode BenchLazy.state ref
+                                    -> vectorNode BenchLazy.state ref
+                                    -> real D.t
+                         val cross : vectorNode BenchLazy.state ref
+                                      -> vectorNode BenchLazy.state ref
+                                      -> vectorNode BenchLazy.state ref
+                         val norm : vectorNode BenchLazy.state ref
+                                     -> vectorNode BenchLazy.state ref
+                                     * real D.t
+                         val unit : vectorNode BenchLazy.state ref
+                                     -> vectorNode BenchLazy.state ref
+                         val epsilon : real
+                         val infinity : real
+                         val zero : vectorNode BenchLazy.state ref
+                         val white : vectorNode BenchLazy.state ref
+                         val background : vectorNode BenchLazy.state ref
+                         val lookfrom : vectorNode BenchLazy.state ref
+                         val lookat : vectorNode BenchLazy.state ref
+                         val vup : vectorNode BenchLazy.state ref
+                         val isZero : vectorNode BenchLazy.state ref -> bool
+                         val vectorSurface : ('a
+                                               -> 'b BenchLazy.state ref 
+                                                 option)
+                                              -> 'b BenchLazy.state ref
+                                              -> 'a list
+                                              -> 'b BenchLazy.state ref
+                         val scalarSurface : ('a -> 'b D.t option)
+                                              -> 'b -> 'a list -> 'b D.t
+                         val ambient : surface list
+                                        -> vectorNode BenchLazy.state ref
+                         val diffuse : surface list
+                                        -> vectorNode BenchLazy.state ref
+                         val specular : surface list
+                                         -> vectorNode BenchLazy.state ref
+                         val body : surface list
+                                     -> vectorNode BenchLazy.state ref
+                         val specpow : surface list -> real D.t
+                         val reflect : surface list -> real D.t
+                         val transmit : surface list -> real D.t
+                         val refract : surface list -> real D.t
+                         val surface : sphere -> surface list
+                         val standard : surface list
+                         val ball : real * real * real * real -> sphere
+                         val world : sphere list
+                         val lightColor : vectorNode BenchLazy.state ref
+                         val lights : light list
+                         val intersect : vectorNode BenchLazy.state ref
+                                          -> vectorNode BenchLazy.state ref
+                                          -> sphere
+                                          -> (bool * real D.t) BenchLazy.state 
+                                            ref
+                         val trace : sphere list
+                                      -> vectorNode BenchLazy.state ref
+                                      -> vectorNode BenchLazy.state ref
+                                      -> (bool * real D.t
+                                           * sphere BenchLazy.state ref) 
+                                          BenchLazy.state ref
+                         val normal : vectorNode BenchLazy.state ref
+                                       -> sphere
+                                       -> vectorNode BenchLazy.state ref
+                         val lightColour : light -> vector
+                         val lightDirection : light
+                                               -> vectorNode BenchLazy.state 
+                                                 ref
+                                               -> (vectorNode BenchLazy.state 
+                                                      ref * real D.t) 
+                                                   BenchLazy.state ref
+                         val shadow : vectorNode BenchLazy.state ref
+                                       -> vectorNode BenchLazy.state ref
+                                       -> 'a
+                                       -> (bool * 'a) BenchLazy.state ref
+                         val refractRay : real D.t
+                                           -> vectorNode BenchLazy.state ref
+                                           -> vectorNode BenchLazy.state ref
+                                           -> (bool
+                                                * vectorNode BenchLazy.state 
+                                                  ref) BenchLazy.state ref
+                         val vectorSum : vectorNode BenchLazy.state ref 
+                                                BenchStream.node 
+                                              BenchLazy.state ref
+                                          -> vectorNode BenchLazy.state ref
+                         val lightRay : light
+                                         -> vectorNode BenchLazy.state ref
+                                         -> vectorNode BenchLazy.state ref
+                                         -> vectorNode BenchLazy.state ref
+                                         -> surface list
+                                         -> vectorNode BenchLazy.state ref
+                         val reflectRay : vectorNode BenchLazy.state ref
+                                           -> vectorNode BenchLazy.state ref
+                                           -> light list
+                                           -> vectorNode BenchLazy.state ref
+                                           -> vectorNode BenchLazy.state ref
+                                           -> vectorNode BenchLazy.state ref
+                                           -> vectorNode BenchLazy.state ref
+                         val transmitRay : light list
+                                            -> vectorNode BenchLazy.state ref
+                                            -> vectorNode BenchLazy.state ref
+                                            -> vectorNode BenchLazy.state ref
+                                            -> real D.t
+                                            -> vectorNode BenchLazy.state ref
+                                            -> vectorNode BenchLazy.state ref
+                                            -> vectorNode BenchLazy.state ref
+                                            -> (bool
+                                                 * vectorNode BenchLazy.state 
+                                                   ref) BenchLazy.state ref
+                         val shade : light list
+                                      -> sphere
+                                      -> vectorNode BenchLazy.state ref
+                                      -> vectorNode BenchLazy.state ref
+                                      -> real D.t
+                                      -> vectorNode BenchLazy.state ref
+                                      -> vectorNode BenchLazy.state ref
+                         val camera : vectorNode BenchLazy.state ref
+                                       -> vectorNode BenchLazy.state ref
+                                       -> vectorNode BenchLazy.state ref
+                                       -> real
+                                       -> real
+                                       -> vectorNode BenchLazy.state ref
+                                       * vectorNode BenchLazy.state ref
+                                       * vectorNode BenchLazy.state ref
+                         val pixel : sphere list
+                                      -> light list
+                                      -> real
+                                      -> real
+                                      -> vectorNode BenchLazy.state ref
+                                      -> vectorNode BenchLazy.state ref
+                                      -> vectorNode BenchLazy.state ref
+                                      -> vectorNode BenchLazy.state ref
+                         val indices : int
+                                        -> int BenchStream.node 
+                                          BenchLazy.delay
+                         val ray : int
+                                    -> (int * int
+                                           * vectorNode BenchLazy.state ref) 
+                                          BenchStream.node BenchLazy.state ref
+                         val components : vectorNode BenchLazy.state ref
+                                           -> real * real * real
+                       end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-sphere-driver.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-sphere-driver.sml:24.25 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-sphere-driver.sml:24.38 Warning: calling polyEqual
+functor BenchSphereDriverFn(K: sig
+                               type vector
+                               val ray : int
+                                          -> (int * int * vector) 
+                                            BenchStream.stream
+                               val components : vector -> real * real * real
+                             end) :
+                           
+                             sig
+                               type pixel
+                               val read : string -> TextIO.vector
+                               val real : string -> real
+                               val integer : string -> int
+                               val reference : string
+                                                -> (int * int
+                                                   * (real * real * real)
+                                                   * (int * int * int)) list
+                               val valid : (real * real * real)
+                                            * (real * real * real)
+                                            -> bool
+                               val quantize : real * real * real
+                                               -> int * int * int
+                               val consume : (''a * ''b * (real * real * real)
+                                                 * (int * int * int)) list
+                                              -> (''a * ''b * K.vector) 
+                                                  BenchStream.node 
+                                                BenchLazy.delay
+                                              -> int * Word64.word
+                               val run : string list -> string
+                             end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/sphere-lazy/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Kernel : <sig>
+    structure Driver : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 100:1000000 A7AEE0E71A34BF89
+PASS sphere-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+RESULT 100:1000000 A7AEE0E71A34BF89
+PASS sphere-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 100:1000000 A7AEE0E71A34BF89
+PASS sphere-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

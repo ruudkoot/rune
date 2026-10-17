@@ -1,0 +1,11 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/almabench-originals/remainder-probe.sml]
+7 3 1.0000000000000004
+~7 3 ~1.0000000000000004
+7 ~3 1.0000000000000004
+~7 ~3 ~1.0000000000000004
+6 3 0
+~6 3 ~0
+val it = () : unit
+- 

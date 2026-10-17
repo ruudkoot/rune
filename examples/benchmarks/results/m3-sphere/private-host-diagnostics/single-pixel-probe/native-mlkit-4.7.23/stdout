@@ -1,0 +1,5 @@
+sphere/single-pixel/lazy 0.38736071504753133 0.47926595424417673 0.5909764326374678
+PASS sphere/single-pixel/lazy
+sphere/single-pixel/strict 0.38736071504753133 0.47926595424417673 0.5909764326374678
+PASS sphere/single-pixel/strict
+SUMMARY 2 checks, 0 failed

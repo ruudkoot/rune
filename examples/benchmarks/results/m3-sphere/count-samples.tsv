@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+sphere-lazy	normal	rune	O2	count	1	1	pass	104.12	103.93	0.15	19872	17933612049	46852252480	1319947212	counts/measurement.bd8Hcx/sphere-lazy/rune/fresh.1
+sphere-lazy	normal	rune:opt	O2	count	1	1	pass	59.80	59.69	0.11	20652	17933612049	46852252480	1319947212	counts/measurement.bd8Hcx/sphere-lazy/rune-opt/fresh.1
+sphere-lazy	normal	rune:new	O2	count	1	1	pass	123.00	122.85	0.12	37208	10608714268	46852252480	1319947212	counts/measurement.bd8Hcx/sphere-lazy/rune-new/fresh.1
+sphere-lazy	normal	rune:jit	O2	count	1	1	pass	54.53	54.24	0.10	38828	10608714268	46852252480	1319947212	counts/measurement.bd8Hcx/sphere-lazy/rune-jit/fresh.1
+sphere-strict	normal	rune	O2	count	1	1	pass	55.64	55.52	0.11	19900	9917407789	23644025424	617028600	counts/measurement.0Zw4yr/sphere-strict/rune/fresh.1
+sphere-strict	normal	rune:opt	O2	count	1	1	pass	26.13	26.05	0.07	20596	9917407789	23644025424	617028600	counts/measurement.0Zw4yr/sphere-strict/rune-opt/fresh.1
+sphere-strict	normal	rune:new	O2	count	1	1	pass	52.05	51.97	0.08	37172	5545338200	23644025424	617028600	counts/measurement.0Zw4yr/sphere-strict/rune-new/fresh.1
+sphere-strict	normal	rune:jit	O2	count	1	1	pass	24.54	24.42	0.11	38660	5545338200	23644025424	617028600	counts/measurement.0Zw4yr/sphere-strict/rune-jit/fresh.1

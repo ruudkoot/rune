@@ -1,0 +1,297 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/almabench-originals/tables.sml]
+[autoloading]
+[autoloading done]
+structure BenchAlmaTables : sig
+  val pic : real
+  val j2000 : real
+  val jcentury : real
+  val jmillenia : real
+  val twopi : real
+  val a2r : real
+  val r2h : real
+  val r2d : real
+  val gaussk : real
+  val test_loops : int
+  val test_length : int
+  val sineps : real
+  val coseps : real
+  val amas : Real64Array.array
+  val a : Real64Array.array array
+  val dlm : Real64Array.array array
+  val e : Real64Array.array array
+  val pi : Real64Array.array array
+  val dinc : Real64Array.array array
+  val omega : Real64Array.array array
+  val kp : Real64Array.array array
+  val ca : Real64Array.array array
+  val sa : Real64Array.array array
+  val kq : Real64Array.array array
+  val cl : Real64Array.array array
+  val sl : Real64Array.array array
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/almabench-originals/kernel.sml]
+[autoloading]
+[autoloading done]
+structure BenchAlma : sig
+  structure T : <sig>
+  val get : Real64Array.array array -> int -> int -> Real64Array.elem
+  val anpm : real -> real
+  val planetPV : Real64Array.array -> int -> Real64Array.array array -> unit
+  val raDecDist : Real64Array.array array -> Real64Array.array -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/almabench-originals/driver.sml]
+[autoloading]
+[autoloading done]
+structure BenchAlmaDriver : sig
+  val read : string -> TextIO.vector
+  val real : string -> real
+  val reference : string -> real list
+  val valid : real list * real list -> bool
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/almabench-originals/tests.sml]
+PASS alma/source-state-~36525-0
+PASS alma/source-state-~36525-1
+PASS alma/source-state-~36525-2
+PASS alma/source-state-~36525-3
+PASS alma/source-state-~36525-4
+PASS alma/source-state-~36525-5
+PASS alma/source-state-~36525-6
+PASS alma/source-state-~36525-7
+PASS alma/source-state-0-0
+PASS alma/source-state-0-1
+PASS alma/source-state-0-2
+PASS alma/source-state-0-3
+PASS alma/source-state-0-4
+PASS alma/source-state-0-5
+PASS alma/source-state-0-6
+PASS alma/source-state-0-7
+PASS alma/source-state-1-0
+PASS alma/source-state-1-1
+PASS alma/source-state-1-2
+PASS alma/source-state-1-3
+PASS alma/source-state-1-4
+PASS alma/source-state-1-5
+PASS alma/source-state-1-6
+PASS alma/source-state-1-7
+PASS alma/source-state-2-0
+PASS alma/source-state-2-1
+PASS alma/source-state-2-2
+PASS alma/source-state-2-3
+PASS alma/source-state-2-4
+PASS alma/source-state-2-5
+PASS alma/source-state-2-6
+PASS alma/source-state-2-7
+PASS alma/source-state-31-0
+PASS alma/source-state-31-1
+PASS alma/source-state-31-2
+PASS alma/source-state-31-3
+PASS alma/source-state-31-4
+PASS alma/source-state-31-5
+PASS alma/source-state-31-6
+PASS alma/source-state-31-7
+PASS alma/source-state-365-0
+PASS alma/source-state-365-1
+PASS alma/source-state-365-2
+PASS alma/source-state-365-3
+PASS alma/source-state-365-4
+PASS alma/source-state-365-5
+PASS alma/source-state-365-6
+PASS alma/source-state-365-7
+PASS alma/source-state-12345-0
+PASS alma/source-state-12345-1
+PASS alma/source-state-12345-2
+PASS alma/source-state-12345-3
+PASS alma/source-state-12345-4
+PASS alma/source-state-12345-5
+PASS alma/source-state-12345-6
+PASS alma/source-state-12345-7
+PASS alma/source-state-36525-0
+PASS alma/source-state-36525-1
+PASS alma/source-state-36525-2
+PASS alma/source-state-36525-3
+PASS alma/source-state-36525-4
+PASS alma/source-state-36525-5
+PASS alma/source-state-36525-6
+PASS alma/source-state-36525-7
+PASS alma/independent-ERFA-~36525-0
+PASS alma/independent-ERFA-~36525-1
+PASS alma/independent-ERFA-~36525-2
+PASS alma/independent-ERFA-~36525-3
+PASS alma/independent-ERFA-~36525-4
+PASS alma/independent-ERFA-~36525-5
+PASS alma/independent-ERFA-~36525-6
+PASS alma/independent-ERFA-~36525-7
+PASS alma/independent-ERFA-0-0
+PASS alma/independent-ERFA-0-1
+PASS alma/independent-ERFA-0-2
+PASS alma/independent-ERFA-0-3
+PASS alma/independent-ERFA-0-4
+PASS alma/independent-ERFA-0-5
+PASS alma/independent-ERFA-0-6
+PASS alma/independent-ERFA-0-7
+PASS alma/independent-ERFA-1-0
+PASS alma/independent-ERFA-1-1
+PASS alma/independent-ERFA-1-2
+PASS alma/independent-ERFA-1-3
+PASS alma/independent-ERFA-1-4
+PASS alma/independent-ERFA-1-5
+PASS alma/independent-ERFA-1-6
+PASS alma/independent-ERFA-1-7
+PASS alma/independent-ERFA-2-0
+PASS alma/independent-ERFA-2-1
+PASS alma/independent-ERFA-2-2
+PASS alma/independent-ERFA-2-3
+PASS alma/independent-ERFA-2-4
+PASS alma/independent-ERFA-2-5
+PASS alma/independent-ERFA-2-6
+PASS alma/independent-ERFA-2-7
+PASS alma/independent-ERFA-31-0
+PASS alma/independent-ERFA-31-1
+PASS alma/independent-ERFA-31-2
+PASS alma/independent-ERFA-31-3
+PASS alma/independent-ERFA-31-4
+PASS alma/independent-ERFA-31-5
+PASS alma/independent-ERFA-31-6
+PASS alma/independent-ERFA-31-7
+PASS alma/independent-ERFA-365-0
+PASS alma/independent-ERFA-365-1
+PASS alma/independent-ERFA-365-2
+PASS alma/independent-ERFA-365-3
+PASS alma/independent-ERFA-365-4
+PASS alma/independent-ERFA-365-5
+PASS alma/independent-ERFA-365-6
+PASS alma/independent-ERFA-365-7
+PASS alma/independent-ERFA-12345-0
+PASS alma/independent-ERFA-12345-1
+PASS alma/independent-ERFA-12345-2
+PASS alma/independent-ERFA-12345-3
+PASS alma/independent-ERFA-12345-4
+PASS alma/independent-ERFA-12345-5
+PASS alma/independent-ERFA-12345-6
+PASS alma/independent-ERFA-12345-7
+PASS alma/independent-ERFA-36525-0
+PASS alma/independent-ERFA-36525-1
+PASS alma/independent-ERFA-36525-2
+PASS alma/independent-ERFA-36525-3
+PASS alma/independent-ERFA-36525-4
+PASS alma/independent-ERFA-36525-5
+PASS alma/independent-ERFA-36525-6
+PASS alma/independent-ERFA-36525-7
+PASS alma/source-angle-minus-pi
+PASS alma/source-angle-plus-pi
+FAIL alma/negative-remainder-sign -- false
+PASS alma/smoke-all-moments
+PASS alma/baseline-aggregate-accepted
+PASS alma/perturbed-moment-0
+PASS alma/perturbed-moment-1
+PASS alma/perturbed-moment-2
+PASS alma/perturbed-moment-3
+PASS alma/perturbed-moment-4
+PASS alma/perturbed-moment-5
+PASS alma/perturbed-moment-6
+PASS alma/perturbed-moment-7
+PASS alma/perturbed-moment-8
+PASS alma/perturbed-moment-9
+PASS alma/perturbed-moment-10
+PASS alma/perturbed-moment-11
+PASS alma/perturbed-moment-12
+PASS alma/perturbed-moment-13
+PASS alma/perturbed-moment-14
+PASS alma/perturbed-moment-15
+PASS alma/perturbed-moment-16
+PASS alma/perturbed-moment-17
+PASS alma/perturbed-moment-18
+PASS alma/perturbed-moment-19
+PASS alma/perturbed-moment-20
+PASS alma/perturbed-moment-21
+PASS alma/perturbed-moment-22
+PASS alma/perturbed-moment-23
+PASS alma/perturbed-moment-24
+PASS alma/perturbed-moment-25
+PASS alma/perturbed-moment-26
+PASS alma/nonfinite-aggregate-rejected
+PASS alma/short-aggregate-rejected
+PASS alma/malformed-reference-rejected
+structure AlmaTests : sig
+  val base : string
+  val read : string -> TextIO.vector
+  val rows : string -> string list
+  val signed : string -> int
+  val parsed : string -> int * int * real list
+  val evaluate : int -> int -> Real64Array.elem list
+  val close : real * real -> bool
+  val check : string -> unit
+  val wanted : real list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 163 checks, 1 failed

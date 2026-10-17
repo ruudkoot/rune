@@ -1,0 +1,5 @@
+COUNT unbudgeted kb_no_exc normal rune
+COUNT unbudgeted kb_no_exc normal rune:opt
+COUNT unbudgeted kb_no_exc normal rune:new
+COUNT unbudgeted kb_no_exc normal rune:jit
+COUNT comparisons agree

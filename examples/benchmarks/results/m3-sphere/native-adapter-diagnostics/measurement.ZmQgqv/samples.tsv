@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+sphere-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	6.14	4.83	1.15	666600	-	-	-	sphere-strict/native-mlton/build/compile
+sphere-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.01	0.00	0.00	4072	-	-	-	sphere-strict/native-mlton/correctness.0
+sphere-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.01	0.00	0.00	4076	-	-	-	sphere-strict/native-mlton/fresh.1
+sphere-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.79	0.74	0.05	36892	-	-	-	sphere-strict/native-smlnj-legacy/build/compile
+sphere-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.02	0.01	0.01	5428	-	-	-	sphere-strict/native-smlnj-legacy/correctness.0
+sphere-strict	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.02	0.02	0.00	5360	-	-	-	sphere-strict/native-smlnj-legacy/fresh.1
+sphere-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.42	0.27	0.11	51084	-	-	-	sphere-strict/native-polyml/build/compile
+sphere-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.02	0.00	0.01	13612	-	-	-	sphere-strict/native-polyml/correctness.0
+sphere-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.02	0.02	0.00	13612	-	-	-	sphere-strict/native-polyml/fresh.1

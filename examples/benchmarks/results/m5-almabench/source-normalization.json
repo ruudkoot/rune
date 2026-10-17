@@ -1,0 +1,20 @@
+{
+  "path": "shared/sandmark-almabench-tables.sml",
+  "change": "strip trailing spaces only; lexical words unchanged",
+  "before_sha256": "b2464d2645a477be4028cf74a29ae51688ee0c48dbc93f385ec1741c322413ef",
+  "after_sha256": "6101c8534e4267a3463b1077e0829210f857dc5f820581865953f7b995d5f481",
+  "original_snapshot": "reference-observers/pre-whitespace-tables.sml",
+  "rune_bytecode": [
+    {
+      "level": "O0",
+      "identical_bytecode": true,
+      "sha256": "7ce7ec25e3cc9b8230aeab3c480e398fbc14e9b11030cff3b8e0cfb3e6dedf29"
+    },
+    {
+      "level": "O2",
+      "identical_bytecode": true,
+      "sha256": "59a73f57b2ffbee7740476eb250e2544f6a3d59b5b0d6df002ac2c54597252c4"
+    }
+  ],
+  "native_validation_source": "original snapshot; only trailing whitespace normalized afterward"
+}

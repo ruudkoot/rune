@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+kb	normal	rune	O2	count	1	1	pass	33.54	33.49	0.04	19016	6982787135	6339505856	157804700	counts/measurement.ikfQ1v/kb/rune/fresh.1
+kb	normal	rune:opt	O2	count	1	1	pass	17.94	17.80	0.12	19636	6982787135	6339505856	157804700	counts/measurement.ikfQ1v/kb/rune-opt/fresh.1
+kb	normal	rune:new	O2	count	1	1	pass	31.08	31.03	0.04	35736	3615234719	6339505856	157804700	counts/measurement.ikfQ1v/kb/rune-new/fresh.1
+kb	normal	rune:jit	O2	count	1	1	pass	15.74	15.70	0.04	37388	3615234719	6339505856	157804700	counts/measurement.ikfQ1v/kb/rune-jit/fresh.1
+kb_no_exc	normal	rune	O2	count	1	1	pass	26.40	26.32	0.07	35428	6596260053	2799088376	73281703	counts/measurement.Ij0OMc/kb_no_exc/rune/fresh.1
+kb_no_exc	normal	rune:opt	O2	count	1	1	pass	10.43	10.36	0.06	36000	6596260053	2799088376	73281703	counts/measurement.Ij0OMc/kb_no_exc/rune-opt/fresh.1
+kb_no_exc	normal	rune:new	O2	count	1	1	pass	35.48	35.41	0.06	35900	3071631302	2799088376	73281703	counts/measurement.Ij0OMc/kb_no_exc/rune-new/fresh.1
+kb_no_exc	normal	rune:jit	O2	count	1	1	pass	9.81	9.74	0.06	37460	3071631302	2799088376	73281703	counts/measurement.Ij0OMc/kb_no_exc/rune-jit/fresh.1

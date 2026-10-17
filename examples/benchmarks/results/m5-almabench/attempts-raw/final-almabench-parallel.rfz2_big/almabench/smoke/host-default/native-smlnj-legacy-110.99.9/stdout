@@ -1,0 +1,73 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-almabench-tables.sml]
+[autoloading]
+[autoloading done]
+structure BenchAlmaTables : sig
+  val pic : real
+  val j2000 : real
+  val jcentury : real
+  val jmillenia : real
+  val twopi : real
+  val a2r : real
+  val r2h : real
+  val r2d : real
+  val gaussk : real
+  val test_loops : int
+  val test_length : int
+  val sineps : real
+  val coseps : real
+  val amas : Real64Array.array
+  val a : Real64Array.array array
+  val dlm : Real64Array.array array
+  val e : Real64Array.array array
+  val pi : Real64Array.array array
+  val dinc : Real64Array.array array
+  val omega : Real64Array.array array
+  val kp : Real64Array.array array
+  val ca : Real64Array.array array
+  val sa : Real64Array.array array
+  val kq : Real64Array.array array
+  val cl : Real64Array.array array
+  val sl : Real64Array.array array
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-almabench.sml]
+[autoloading]
+[autoloading done]
+structure BenchAlma : sig
+  structure T : <sig>
+  val get : Real64Array.array array -> int -> int -> Real64Array.elem
+  val anpm : real -> real
+  val planetPV : Real64Array.array -> int -> Real64Array.array array -> unit
+  val raDecDist : Real64Array.array array -> Real64Array.array -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-almabench-driver.sml]
+[autoloading]
+[autoloading done]
+structure BenchAlmaDriver : sig
+  val read : string -> TextIO.vector
+  val real : string -> real
+  val reference : string -> real list
+  val valid : real list * real list -> bool
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/almabench/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 264:27
+PASS almabench
+SUMMARY 1 checks, 0 failed
