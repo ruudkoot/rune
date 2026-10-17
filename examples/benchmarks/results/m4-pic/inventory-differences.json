@@ -1,0 +1,16 @@
+[
+  {
+    "source": "nofib",
+    "path": "real/pic",
+    "changes": {
+      "authors": {
+        "before": "not stated in scanned source headers",
+        "after": "Patricia Fasel"
+      },
+      "evidence": {
+        "before": "real/pic/Makefile",
+        "after": "real/pic/ChargeDensity.hs:author-heading;real/pic/Consts.hs:author-heading;real/pic/ElecField.hs:author-heading;real/pic/Main.hs:author-heading;real/pic/Makefile;real/pic/Pic.hs:author-heading;real/pic/PicType.hs:author-heading;real/pic/Potential.hs:author-heading;real/pic/PushParticle.hs:author-heading;real/pic/Utils.hs:author-heading"
+      }
+    }
+  }
+]

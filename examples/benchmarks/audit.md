@@ -303,3 +303,18 @@ All 68 discovery/classification regressions pass. All five clean pinned trees
 reproduce 861 inventory entries; only the two reviewed rows change. The additional
 selector table accounts for nested cases without presenting deferred cases as
 runnable programs.
+
+## PIC authorship and historical variants, 2026-10-17
+
+The exact Patricia Fasel/Los Alamos heading appears in nine source modules.
+Discovery records the declared author and each heading's evidence. Only that
+inventory row's authors/evidence change; all 70 regressions pass and all five
+clean pinned trees reproduce 861 primary entries.
+
+[Historical variants](source-variants.tsv) separately account for the retained
+Culler/Lubeck Id implementations and their call graphs. Three non-built dataflow
+implementations have explicit missing execution/setup facilities and conditions
+for reconsideration; the two call graphs are excluded as documentation.
+They are not runnable benchmarks or declared duplicates of the Haskell program.
+The Haskell copying notice is retained on the derivative kernel and independent
+model; no notice is inferred for a different historical component.

@@ -1,0 +1,7 @@
+{
+  "issue": "https://github.com/smlnj/legacy/issues/353",
+  "title": "Inconsistent datatype representation causes segfault",
+  "state": "closed",
+  "checked_on": "2026-10-17",
+  "scope": "Related parameterized-type boxing report, different minimal case; no common cause or applicable fix established"
+}

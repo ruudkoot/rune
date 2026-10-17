@@ -1,0 +1,9 @@
+COUNT unbudgeted pic-lazy normal rune
+COUNT unbudgeted pic-lazy normal rune:opt
+COUNT unbudgeted pic-lazy normal rune:new
+COUNT unbudgeted pic-lazy normal rune:jit
+COUNT unbudgeted pic-strict normal rune
+COUNT unbudgeted pic-strict normal rune:opt
+COUNT unbudgeted pic-strict normal rune:new
+COUNT unbudgeted pic-strict normal rune:jit
+COUNT comparisons agree

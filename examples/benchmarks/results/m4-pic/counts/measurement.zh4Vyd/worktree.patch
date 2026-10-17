@@ -1,0 +1,320 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index dda14932..600f1622 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -345,6 +345,8 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [pervasives_equal_ints](#pervasives_equal_ints) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Test immediate-integer physical equality with 42, which coincides with value equality on this domain. |
+ | [primetest-lazy](#primetest-lazy) | [nofib primetest](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/primetest) | Test integer candidates with 100 source witness trials and lazy finite data. |
+ | [primetest-strict](#primetest-strict) | [nofib primetest](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/primetest) | Test integer candidates with 100 source witness trials and strict finite data. |
++| [pic-lazy](#pic-lazy) | [nofib PIC](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/pic) | Run the source particle-in-cell simulation with lazy finite state and validate its timestep. |
++| [pic-strict](#pic-strict) | [nofib PIC](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/pic) | Run the source particle-in-cell simulation with strict finite state and validate its timestep. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -17572,3 +17574,237 @@ witness selection and control flow. [L'Ecuyer's combined-generator paper](https:
+ provides generator context, while the source credits its Haskell coding above.
+ [Partain](https://doi.org/10.1007/978-1-4471-3215-8_17) supplies suite context.
+ The paper references are not correctness proofs of this SML translation.
++
++
++## pic-lazy
++
++Finite evaluation: lazy.
++
++### Algorithm and workload
++
++Run the source electrostatic particle-in-cell application on a 16-by-16 toroidal
++mesh for ten timesteps. Generate deterministic particle positions, accumulate
++their charge at neighboring cells, compute potential and electric fields, push
++particles and update the timestep. Repeated runs start with fresh particles.
++The primary source consumes only the final timestep through formatting/hash.
++
++### History, authorship, revision and variants
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, real/pic, all ten
++Haskell modules and Makefile. Headers credit Patricia Fasel, Los Alamos National
++Laboratory, August 1990. Pic.hs grants public copying/use provided its full
++notice and authorship statements are reproduced. Preserve that complete notice
++on the translated kernel and independent reference model, and retain all
++original files. Data are generated internally; no external particle dataset is
++introduced. Preserve the established pic name with explicit evaluation suffixes.
++
++The directory also retains David E. Culler's 1987 Id code, Olaf Lubeck's Id
++implementations and two call graphs. These have different array/accumulator
++organization and interpolation code, and are not declared duplicates. The
++[historical variant inventory](source-variants.tsv) records their individual dispositions,
++authors, source hashes and missing dataflow/setup facilities. Their notices do
++not automatically inherit Fasel's Haskell grant. No Id runtime feature is added.
++
++### Source behavior retained
++
++The ACTIVE fineMesh constructs constants: 3 at corners, 4 on horizontal edges,
++5 on vertical edges and 6 inside. Its actual interpolation is commented out,
++and it never forces the recursive coarse-mesh argument. Retain those constants.
++
++potential calls vCycle rho phi, reversing the names of its first two arguments.
++pushParticle returns acceleration/velocity maxima, while timeStep binds them
++with swapped names; retain the resulting timestep formula. The top-edge
++operator's row-high neighbor is n-2 rather than 1, except at corners. Positions
++wrap only once by plus/minus 16. Initial potential uses depth three; timestep
++depths cycle through zero, one and two. These are observed source definitions,
++not corrections inferred from the physical model.
++
++### Portable translation and evaluation
++
++Immutable meshes use privately constructed SML arrays of memoized numeric cells;
++writes stop when construction finishes. Association order, per-particle charge
++update order and six-element neighbor LIST arguments remain. Array construction
++adds complete/unique-write checks. Position and velocity remain separate finite
++lists, with delayed tuple components and shared acceleration/velocity values.
++Whole intermediate mesh computations and the coarse solve also remain delayed.
++
++The lazy policy avoids the coarse computation discarded by fineMesh, unused
++velocity lists during charge density, and terminal particle lists when only
++the timestep is requested. The strict policy eagerly constructs finite cells/
++lists and the positive-depth coarse dependency graph. Both retain the depth-zero
++and timestep-zero guards before entering further recursion. Infinite recursion
++from eager evaluation of an unselected branch is not introduced.
++
++Use binary64 as the source Double requires. Preserve numerical operation order,
++indexed stencils, scalar maximum order, truncation and square root. The real-based
++genRand formula retains its integer truncate/divide/multiply stage. Selected
++seeds stay below 16 and that stage stays below about 504 million, fitting signed
++31-bit int; indices, depths and profile counters are also bounded. Explicit
++Word64 implements the source 64-bit GHC hash wrapping on every SML host.
++
++The driver reads arguments/reference once, validates each final timestep with
++absolute bound 1e-12 plus relative bound 1e-10, and checks finite GEN17 rendering
++and exact numerical roundtrip. SML formatting replaces GHC shortest formatting.
++The source forward hash is consumed through an independent reverse polynomial
++check of the same text; golden GHC/Python hash vectors also test it separately.
++A stable particles:checked-runs report omits renderer-dependent hash values.
++Numeric/reference I/O, complete hash checking and the added construction checks
++are measured costs.
++
++### Inputs, correctness and references
++
++| Profile | Repeated simulations | Particles | Source |
++|---|---:|---:|---|
++| smoke | 1 | 18 | FAST particle input, fewer repetitions |
++| normal | 500 | 80 | unchanged NORM_OPTS |
++| large | 1000 | 300 | unchanged SLOW_OPTS |
++
++Original FAST=200/18 remains in Makefile and reference runs. The mesh, ten steps,
++depth rules, input formulas and selected normal/large parameters are unchanged.
++Default resource limits apply.
++
++All unmodified GHC FAST/NORM/SLOW runs finish with their original empty stdout.
++Export-only observers provide timestep prefixes zero through ten and complete
++mesh/position/velocity states at particle counts 1,2,3,18,80,300. A separate Python
++binary64 model agrees exactly on every recorded number. It uses the constant
++fineMesh closed form instead of the unused multigrid dependency graph, providing
++an independent calculation of the observable results.
++
++Auxiliary full-state checks use absolute 1e-10 plus relative 1e-10. They add
++terminal demand and are separate from the measured timestep-only consumer.
++Tests cover every prefix, exact modular hashes, driver rendering, wrong numeric
++fixtures, repeat reset, shape errors, source argument/stencil/statistics quirks
++and unused coarse/velocity/terminal-list demand. These bounds validate source
++results; no physical-accuracy guarantee is claimed.
++
++[Hockney and Eastwood, Computer Simulation Using Particles](https://www.routledge.com/Computer-Simulation-Using-Particles/Eastwood-Hockney/p/book/9780852743928)
++provides particle/grid and field-solve context. The pinned program defines the
++specific computation checked here; the publication's model properties are not
++transferred to its historical quirks. [Partain](https://doi.org/10.1007/978-1-4471-3215-8_17)
++supplies nofib context. The publisher description/contents and source form the
++recorded review scope.
++
++### Compiler/runtime diagnostic questions
++
++Investigate persistent arrays, indexing, association lists, memoized payloads,
++unused coarse work, finite eager construction, higher-order stencil callbacks,
++short circuiting, numeric boxing and retained closures. Separate source analysis,
++reference agreement and measured sensitivity. Identical SML is the compiler
++comparison; Haskell and the independent model supply correctness references.
++
++
++## pic-strict
++
++Finite evaluation: strict.
++
++### Algorithm and workload
++
++Run the source electrostatic particle-in-cell application on a 16-by-16 toroidal
++mesh for ten timesteps. Generate deterministic particle positions, accumulate
++their charge at neighboring cells, compute potential and electric fields, push
++particles and update the timestep. Repeated runs start with fresh particles.
++The primary source consumes only the final timestep through formatting/hash.
++
++### History, authorship, revision and variants
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, real/pic, all ten
++Haskell modules and Makefile. Headers credit Patricia Fasel, Los Alamos National
++Laboratory, August 1990. Pic.hs grants public copying/use provided its full
++notice and authorship statements are reproduced. Preserve that complete notice
++on the translated kernel and independent reference model, and retain all
++original files. Data are generated internally; no external particle dataset is
++introduced. Preserve the established pic name with explicit evaluation suffixes.
++
++The directory also retains David E. Culler's 1987 Id code, Olaf Lubeck's Id
++implementations and two call graphs. These have different array/accumulator
++organization and interpolation code, and are not declared duplicates. The
++[historical variant inventory](source-variants.tsv) records their individual dispositions,
++authors, source hashes and missing dataflow/setup facilities. Their notices do
++not automatically inherit Fasel's Haskell grant. No Id runtime feature is added.
++
++### Source behavior retained
++
++The ACTIVE fineMesh constructs constants: 3 at corners, 4 on horizontal edges,
++5 on vertical edges and 6 inside. Its actual interpolation is commented out,
++and it never forces the recursive coarse-mesh argument. Retain those constants.
++
++potential calls vCycle rho phi, reversing the names of its first two arguments.
++pushParticle returns acceleration/velocity maxima, while timeStep binds them
++with swapped names; retain the resulting timestep formula. The top-edge
++operator's row-high neighbor is n-2 rather than 1, except at corners. Positions
++wrap only once by plus/minus 16. Initial potential uses depth three; timestep
++depths cycle through zero, one and two. These are observed source definitions,
++not corrections inferred from the physical model.
++
++### Portable translation and evaluation
++
++Immutable meshes use privately constructed SML arrays of memoized numeric cells;
++writes stop when construction finishes. Association order, per-particle charge
++update order and six-element neighbor LIST arguments remain. Array construction
++adds complete/unique-write checks. Position and velocity remain separate finite
++lists, with delayed tuple components and shared acceleration/velocity values.
++Whole intermediate mesh computations and the coarse solve also remain delayed.
++
++The lazy policy avoids the coarse computation discarded by fineMesh, unused
++velocity lists during charge density, and terminal particle lists when only
++the timestep is requested. The strict policy eagerly constructs finite cells/
++lists and the positive-depth coarse dependency graph. Both retain the depth-zero
++and timestep-zero guards before entering further recursion. Infinite recursion
++from eager evaluation of an unselected branch is not introduced.
++
++Use binary64 as the source Double requires. Preserve numerical operation order,
++indexed stencils, scalar maximum order, truncation and square root. The real-based
++genRand formula retains its integer truncate/divide/multiply stage. Selected
++seeds stay below 16 and that stage stays below about 504 million, fitting signed
++31-bit int; indices, depths and profile counters are also bounded. Explicit
++Word64 implements the source 64-bit GHC hash wrapping on every SML host.
++
++The driver reads arguments/reference once, validates each final timestep with
++absolute bound 1e-12 plus relative bound 1e-10, and checks finite GEN17 rendering
++and exact numerical roundtrip. SML formatting replaces GHC shortest formatting.
++The source forward hash is consumed through an independent reverse polynomial
++check of the same text; golden GHC/Python hash vectors also test it separately.
++A stable particles:checked-runs report omits renderer-dependent hash values.
++Numeric/reference I/O, complete hash checking and the added construction checks
++are measured costs.
++
++### Inputs, correctness and references
++
++| Profile | Repeated simulations | Particles | Source |
++|---|---:|---:|---|
++| smoke | 1 | 18 | FAST particle input, fewer repetitions |
++| normal | 500 | 80 | unchanged NORM_OPTS |
++| large | 1000 | 300 | unchanged SLOW_OPTS |
++
++Original FAST=200/18 remains in Makefile and reference runs. The mesh, ten steps,
++depth rules, input formulas and selected normal/large parameters are unchanged.
++Default resource limits apply.
++
++All unmodified GHC FAST/NORM/SLOW runs finish with their original empty stdout.
++Export-only observers provide timestep prefixes zero through ten and complete
++mesh/position/velocity states at particle counts 1,2,3,18,80,300. A separate Python
++binary64 model agrees exactly on every recorded number. It uses the constant
++fineMesh closed form instead of the unused multigrid dependency graph, providing
++an independent calculation of the observable results.
++
++Auxiliary full-state checks use absolute 1e-10 plus relative 1e-10. They add
++terminal demand and are separate from the measured timestep-only consumer.
++Tests cover every prefix, exact modular hashes, driver rendering, wrong numeric
++fixtures, repeat reset, shape errors, source argument/stencil/statistics quirks
++and unused coarse/velocity/terminal-list demand. These bounds validate source
++results; no physical-accuracy guarantee is claimed.
++
++[Hockney and Eastwood, Computer Simulation Using Particles](https://www.routledge.com/Computer-Simulation-Using-Particles/Eastwood-Hockney/p/book/9780852743928)
++provides particle/grid and field-solve context. The pinned program defines the
++specific computation checked here; the publication's model properties are not
++transferred to its historical quirks. [Partain](https://doi.org/10.1007/978-1-4471-3215-8_17)
++supplies nofib context. The publisher description/contents and source form the
++recorded review scope.
++
++### Compiler/runtime diagnostic questions
++
++Investigate persistent arrays, indexing, association lists, memoized payloads,
++unused coarse work, finite eager construction, higher-order stencil callbacks,
++short circuiting, numeric boxing and retained closures. Separate source analysis,
++reference agreement and measured sensitivity. Identical SML is the compiler
++comparison; Haskell and the independent model supply correctness references.
+diff --git a/examples/benchmarks/inventory.tsv b/examples/benchmarks/inventory.tsv
+index 40004c5e..e5ee81b6 100644
+--- a/examples/benchmarks/inventory.tsv
++++ b/examples/benchmarks/inventory.tsv
+@@ -582,7 +582,7 @@ nofib	real/linear	linear	linear-nofib	M4	import	application	nofib:gc/linear	Bria
+ nofib	real/maillist	maillist	maillist	M4	import	lists-streams		Paul Hudak, January 1992.	7cad251590cd5d44d2e4d14d4236dd93e7f6d4b2967984397455e251167d6aa7	real/maillist/Main.hs	real/maillist/maillist.faststdout;real/maillist/maillist.slowstdout;real/maillist/maillist.stdout;real/maillist/runtime_files/fast;real/maillist/runtime_files/norm;real/maillist/runtime_files/slow	real/maillist/Main.hs:header	real/maillist/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/mkhprog	mkhprog	mkhprog	M4	import	application		not stated in scanned source headers	05613206770d88d6334b1092b1a5fc49271a78438212f4b743d4607183c71c1b	real/mkhprog/Main.lhs;real/mkhprog/NofibUtils.hs	real/mkhprog/mkhprog.stdin	real/mkhprog/Main.lhs:header	real/mkhprog/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/parser	parser	parser	M4	import	compiler-application		not stated in scanned source headers	3a279f462707dcc0de97c1b91955e8727a0d7c54c4cbcb324085975ab745cae4	real/parser/Main.hs;real/parser/NofibUtils.hs	real/parser/parser.faststdin;real/parser/parser.faststdout;real/parser/parser.slowstdin;real/parser/parser.slowstdout;real/parser/parser.stdin;real/parser/parser.stdout		real/parser/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	real/pic	pic	pic	M4	import	application		not stated in scanned source headers	069f386c15bd6861b79abcb5ee53410fdbf47b4146513b5d1295f901dcf75bd6	real/pic/ChargeDensity.hs;real/pic/Consts.hs;real/pic/ElecField.hs;real/pic/Main.hs;real/pic/NofibUtils.hs;real/pic/Pic.hs;real/pic/PicType.hs;real/pic/Potential.hs;real/pic/PushParticle.hs;real/pic/Utils.hs		real/pic/Pic.hs:header	real/pic/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	real/pic	pic	pic	M4	import	application		Patricia Fasel	069f386c15bd6861b79abcb5ee53410fdbf47b4146513b5d1295f901dcf75bd6	real/pic/ChargeDensity.hs;real/pic/Consts.hs;real/pic/ElecField.hs;real/pic/Main.hs;real/pic/NofibUtils.hs;real/pic/Pic.hs;real/pic/PicType.hs;real/pic/Potential.hs;real/pic/PushParticle.hs;real/pic/Utils.hs		real/pic/Pic.hs:header	real/pic/ChargeDensity.hs:author-heading;real/pic/Consts.hs:author-heading;real/pic/ElecField.hs:author-heading;real/pic/Main.hs:author-heading;real/pic/Makefile;real/pic/Pic.hs:author-heading;real/pic/PicType.hs:author-heading;real/pic/Potential.hs:author-heading;real/pic/PushParticle.hs:author-heading;real/pic/Utils.hs:author-heading	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/prolog	prolog	prolog	M4	import	compiler-application		not stated in scanned source headers	3dae5175920f5e6454159ecb599db318521277610e66ac2efba7f1df3fe61c7c	real/prolog/Engine.hs;real/prolog/Interact.hs;real/prolog/Main.hs;real/prolog/NofibUtils.hs;real/prolog/Parse.hs;real/prolog/PrologData.hs;real/prolog/PureEngine.hs;real/prolog/StackEngine.hs;real/prolog/Subst.hs;real/prolog/Version.hs	real/prolog/prolog.faststdin;real/prolog/prolog.faststdout;real/prolog/prolog.slowstdin;real/prolog/prolog.slowstdout;real/prolog/prolog.stdin;real/prolog/prolog.stdout;real/prolog/runtime_files/stdlib		real/prolog/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/reptile	reptile	reptile	M4	import	application		not stated in scanned source headers	c7a45764e8dead72e150a92c1566d92134217196e56ec0a78a479ecd040975c1	real/reptile/Auxprogfuns.hs;real/reptile/Diff.hs;real/reptile/Drawfuns.hs;real/reptile/Geomfuns.hs;real/reptile/Help.hs;real/reptile/Interstate.hs;real/reptile/Layout.hs;real/reptile/Main.hs;real/reptile/Mgrfuns.hs;real/reptile/NofibUtils.hs;real/reptile/Progfuns.hs;real/reptile/Psfuns.hs;real/reptile/Rational.hs;real/reptile/Tilefuns.hs	real/reptile/reptile.faststdin;real/reptile/reptile.faststdout;real/reptile/reptile.slowstdin;real/reptile/reptile.slowstdout;real/reptile/reptile.stdin;real/reptile/reptile.stdout		real/reptile/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/rsa	rsa	rsa	M4	import	integer-arithmetic		not stated in scanned source headers	410238f11772b54d24b09e09e9680d0bed98a563f3d56b183af27a25493f47f0	real/rsa/Main.hs;real/rsa/NofibUtils.hs;real/rsa/Rsa.hs	real/rsa/rsa.faststdin;real/rsa/rsa.faststdout;real/rsa/rsa.slowstdin;real/rsa/rsa.slowstdout;real/rsa/rsa.stdin;real/rsa/rsa.stdout		real/rsa/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 778bdb76..6e7c9995 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -999,3 +999,9 @@ primetest-lazy	large	nofib	spectral/primetest	large.input	primetest-lazy/large.e
+ primetest-strict	smoke	nofib	spectral/primetest	smoke.input	primetest-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/scs-random.sml,shared/nofib-primetest.sml,shared/nofib-primetest-driver.sml,primetest-strict/benchmark.sml,shared/main.sml	30	1048576	arithmetic-bigint,randomness,lists-streams,strict	smoke.input	exact	implemented
+ primetest-strict	normal	nofib	spectral/primetest	normal.input	primetest-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/scs-random.sml,shared/nofib-primetest.sml,shared/nofib-primetest-driver.sml,primetest-strict/benchmark.sml,shared/main.sml	600	4194304	arithmetic-bigint,randomness,lists-streams,strict	normal.input	exact	implemented
+ primetest-strict	large	nofib	spectral/primetest	large.input	primetest-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/scs-random.sml,shared/nofib-primetest.sml,shared/nofib-primetest-driver.sml,primetest-strict/benchmark.sml,shared/main.sml	3600	8388608	arithmetic-bigint,randomness,lists-streams,strict	large.input	exact	implemented
++pic-lazy	smoke	nofib	real/pic	1 18 smoke.dt	pic-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/nofib-pic.sml,shared/nofib-pic-driver.sml,pic-lazy/benchmark.sml,shared/main.sml	30	1048576	numerical,arrays,allocation-lifetimes,lazy	smoke.dt	checked-numerical	implemented
++pic-lazy	normal	nofib	real/pic	500 80 normal.dt	pic-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/nofib-pic.sml,shared/nofib-pic-driver.sml,pic-lazy/benchmark.sml,shared/main.sml	600	4194304	numerical,arrays,allocation-lifetimes,lazy	normal.dt	checked-numerical	implemented
++pic-lazy	large	nofib	real/pic	1000 300 large.dt	pic-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/nofib-pic.sml,shared/nofib-pic-driver.sml,pic-lazy/benchmark.sml,shared/main.sml	3600	8388608	numerical,arrays,allocation-lifetimes,lazy	large.dt	checked-numerical	implemented
++pic-strict	smoke	nofib	real/pic	1 18 smoke.dt	pic-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/nofib-pic.sml,shared/nofib-pic-driver.sml,pic-strict/benchmark.sml,shared/main.sml	30	1048576	numerical,arrays,allocation-lifetimes,strict	smoke.dt	checked-numerical	implemented
++pic-strict	normal	nofib	real/pic	500 80 normal.dt	pic-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/nofib-pic.sml,shared/nofib-pic-driver.sml,pic-strict/benchmark.sml,shared/main.sml	600	4194304	numerical,arrays,allocation-lifetimes,strict	normal.dt	checked-numerical	implemented
++pic-strict	large	nofib	real/pic	1000 300 large.dt	pic-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/nofib-pic.sml,shared/nofib-pic-driver.sml,pic-strict/benchmark.sml,shared/main.sml	3600	8388608	numerical,arrays,allocation-lifetimes,strict	large.dt	checked-numerical	implemented
+diff --git a/scripts/benchmark-inventory.py b/scripts/benchmark-inventory.py
+index 290d2ed8..d33fb27d 100644
+--- a/scripts/benchmark-inventory.py
++++ b/scripts/benchmark-inventory.py
+@@ -560,6 +560,10 @@ def build(source, root, lock):
+                     and '-- Taken from "The worlds shortest correct exact real arithmetic program?"\n-- David Lester, Information and Computation 216, pp39-46, 2012, Elsevier' in header):
+                 authors.add("David Lester")
+                 item["evidence"].append(str(p.relative_to(root)) + ":paper-attribution")
++            if (source == "nofib" and path == "real/pic"
++                    and re.search(r"(?m)^--[ \t]+Patricia Fasel\n--[ \t]+Los Alamos National Laboratory", header)):
++                authors.add("Patricia Fasel")
++                item["evidence"].append(str(p.relative_to(root)) + ":author-heading")
+             reviewed_prime_author = (
+                 source == "nofib" and path == "spectral/primetest"
+                 and r"\def\author{David Lester}" in header.splitlines())
+diff --git a/tests/benchmarks/test-inventory.py b/tests/benchmarks/test-inventory.py
+index 4b752b55..4ed26a58 100644
+--- a/tests/benchmarks/test-inventory.py
++++ b/tests/benchmarks/test-inventory.py
+@@ -157,6 +157,22 @@ class InventoryTest(unittest.TestCase):
+                   "The Circuit Simulator example\nDifferent authors\nJanuary, 1998\n\n> main = return ()\n")
+         self.assertEqual(self.build("nofib")[0]["authors"], "not stated in scanned source headers")
+ 
++    def test_pic_author_heading_is_recorded(self):
++        self.nofib_roots()
++        self.file("real/pic/Makefile", "\n")
++        self.file("real/pic/Main.hs",
++                  "--\n--      Patricia Fasel\n--      Los Alamos National Laboratory\nmain = print 0\n")
++        row = self.build("nofib")[0]
++        self.assertEqual(row["authors"], "Patricia Fasel")
++        self.assertIn("real/pic/Main.hs:author-heading", row["evidence"])
++
++    def test_changed_pic_author_heading_requires_review(self):
++        self.nofib_roots()
++        self.file("real/pic/Makefile", "\n")
++        self.file("real/pic/Main.hs",
++                  "--      Another author\n--      Another laboratory\nmain = print 0\n")
++        self.assertNotIn("Patricia Fasel", self.build("nofib")[0]["authors"])
++
+     def test_primetest_declared_author_replaces_rcs_committer(self):
+         self.nofib_roots()
+         self.file("spectral/primetest/Makefile", "\n")

@@ -1,0 +1,11 @@
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/docs/bugreport/smlnj/Datatype/real-pair-through-type-constructor/bug.sml]
+PASS inside
+FAIL outside
+DETAIL ~5.08559666354E268 1.09275921019E~311
+SUMMARY 2 checks, 1 failed

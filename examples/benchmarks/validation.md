@@ -2293,3 +2293,54 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 identical bytecode comparisons across seven builds. runedoc
 and runeopt also agree. [The complete transcript](validation/oct17-stdlib-primetest-1000-acceptance.log)
 records the run.
+
+## M4 particle-in-cell application wave — 2026-10-17
+
+Two programs bring the catalogue to 338 programs and 1006 profiles. All [56
+primary smoke/normal cases](results/m4-pic/coverage.tsv) pass on Rune's four
+engines at O0/O2 and six native hosts at compiler defaults. Eight normal count
+samples agree under execution-model rules, including allocation across all Rune
+engines. Existing budgets remain unchanged. Six serial single fresh-process
+native smoke samples validate adapters separately from instrumentation and
+headline reports. The original normal 500/80 workload is retained and both
+final-source Rune O2 calibration runs pass their guards.
+
+Fourteen auxiliary invocations pass all 202 assertions. Each of six SML/NJ
+invocations passes 115, fails 66 direct full-state checks and then terminates,
+leaving 21 assertions unreached. Totals are 3518 passing assertions, 396 failed
+assertions and 126 unreached. [The host note](validation/pic-host-results.md)
+records the failures and a self-contained two-real constructor reduction. It
+requires no arithmetic or collector stress: the internal accessor works while
+external constructor matching reads garbage on all three managed SML/NJ hosts.
+First-order abstract-type, mixed-field and array controls pass. Rune, MLton,
+Poly/ML and ML Kit pass the reduced case. No test/kernel rewrite hides the
+failure, no host fix is included and no issue is posted.
+
+The application retains the source's active constant interpolation, reversed
+potential arguments, swapped statistics, top-edge stencil and one-wrap rules.
+Whole mesh/payload delays and separate position/velocity lists retain primary
+timestep-only demand. Strict finite construction retains recursion guards.
+The original GHC FAST/NORM/SLOW runs pass. Eleven state prefixes at six particle
+counts agree exactly with an independent model using the active constant
+interpolation closed form. Extra full-state observations remain auxiliary;
+primary validation does not force terminal particle lists.
+
+Every final timestep uses absolute bound 1e-12 plus relative 1e-10. Full-state
+checks use absolute/relative 1e-10. GEN17 roundtrip, source-width Word64 hash
+consumption and stable checked-run output are documented adaptations. Large
+retains original 1000/300 parameters; whole large SML validation is unrecorded.
+[Raw evidence](results/m4-pic/README.md) retains source/model notices, reference
+runs, canonical attempts, samples, partial failures, reduced programs and guards.
+
+All 70 inventory regressions pass and five clean pinned trees reproduce 861
+primary entries. One row gains Patricia Fasel's declared heading/evidence only.
+The [supplementary historical inventory](source-variants.tsv) records three
+deferred Id implementations and two excluded non-program call graphs, with
+individual hashes, author/notice review and missing-facility conditions.
+M4 remains in progress.
+
+Full DEBUGINFOD_URLS= make JOBS=4 check exits 0 with 1006 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 identical bytecode comparisons across seven builds. runedoc
+and runeopt also agree. [The complete transcript](validation/oct17-pic-1006-acceptance.log)
+records the run.

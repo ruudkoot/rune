@@ -1,0 +1,47 @@
+{
+  "scope": "Independent binary64 state simulator uses the constant fineMesh closed form instead of the unused multigrid dependency graph; full-state reference observation adds terminal demand",
+  "traces": [
+    {
+      "particles": 1,
+      "numbers": 2871,
+      "exact_matches": 2871,
+      "maximum_scaled_difference": 0.0,
+      "minimum_nonzero_cell_boundary_gap": 0.06556029581428824
+    },
+    {
+      "particles": 2,
+      "numbers": 2915,
+      "exact_matches": 2915,
+      "maximum_scaled_difference": 0.0,
+      "minimum_nonzero_cell_boundary_gap": 0.024162681732442515
+    },
+    {
+      "particles": 3,
+      "numbers": 2959,
+      "exact_matches": 2959,
+      "maximum_scaled_difference": 0.0,
+      "minimum_nonzero_cell_boundary_gap": 0.0019435589055554203
+    },
+    {
+      "particles": 18,
+      "numbers": 3619,
+      "exact_matches": 3619,
+      "maximum_scaled_difference": 0.0,
+      "minimum_nonzero_cell_boundary_gap": 0.0018152492894039085
+    },
+    {
+      "particles": 80,
+      "numbers": 6347,
+      "exact_matches": 6347,
+      "maximum_scaled_difference": 0.0,
+      "minimum_nonzero_cell_boundary_gap": 1.8809886236592632e-05
+    },
+    {
+      "particles": 300,
+      "numbers": 16027,
+      "exact_matches": 16027,
+      "maximum_scaled_difference": 0.0,
+      "minimum_nonzero_cell_boundary_gap": 1.6380818584682544e-05
+    }
+  ]
+}

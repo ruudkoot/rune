@@ -1,0 +1,7 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/docs/bugreport/smlnj/Datatype/real-pair-through-type-constructor/bug.sml]
+PASS inside
+FAIL outside
+DETAIL 6.81335780812E~310 6.81335780812E~310
+SUMMARY 2 checks, 1 failed

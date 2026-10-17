@@ -1,0 +1,4 @@
+RESULT 18:1
+PASS pic-lazy
+SAMPLE 1 0.004180000
+SUMMARY 1 checks, 0 failed

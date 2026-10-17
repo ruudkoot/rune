@@ -1,0 +1,1 @@
+pic-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/nofib-pic.sml shared/nofib-pic-driver.sml pic-lazy/benchmark.sml shared/main.sml	1 18 smoke.dt	pic-lazy/smoke.expected	smoke.dt

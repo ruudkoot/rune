@@ -1,0 +1,1 @@
+pic-strict	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/nofib-pic.sml shared/nofib-pic-driver.sml pic-strict/benchmark.sml shared/main.sml	1 18 smoke.dt	pic-strict/smoke.expected	smoke.dt

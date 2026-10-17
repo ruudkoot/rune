@@ -1,0 +1,11 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1006 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=pic-lazy' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.iiqKF2
+BENCH MEASURE pic-lazy normal count
+COUNT unbudgeted pic-lazy normal rune
+COUNT unbudgeted pic-lazy normal rune:opt
+COUNT unbudgeted pic-lazy normal rune:new
+COUNT unbudgeted pic-lazy normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.iiqKF2/report.md

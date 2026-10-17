@@ -1,0 +1,243 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-pic.sml]
+functor BenchPicFn(D: sig
+                      type 'a t
+                      val delay : (unit -> 'a) -> 'a t
+                      val force : 'a t -> 'a
+                    end) :
+                  
+                    sig
+                      type 'a node
+                      type point
+                      type heap
+                      type mesh
+                      type pushed
+                      type state
+                      val nCell : int
+                      val nStep : int
+                      val log2 : int -> int
+                      val maxDepth : int
+                      val charge : real
+                      val mass : real
+                      val zero : real D.t
+                      val three : real D.t
+                      val four : real D.t
+                      val five : real D.t
+                      val six : real D.t
+                      val empty : unit -> 'a node D.t
+                      val range : int -> int -> int node D.t
+                      val map : ('a -> 'b) -> 'a node D.t -> 'b node D.t
+                      val indices : int -> int -> int list
+                      val pairs : 'a list -> 'b list -> ('a * 'b) list
+                      val makeMesh : int
+                                      -> (unit
+                                       -> ((int * int) * real D.t) list)
+                                      -> mesh D.t
+                      val get : mesh D.t -> int * int -> real
+                      val zeroMesh : int -> mesh D.t
+                      val applyOpToMesh : (mesh D.t -> int list -> real)
+                                           -> mesh D.t -> int -> mesh D.t
+                      val coarseMesh : mesh D.t -> int -> mesh D.t
+                      val fineMesh : mesh D.t -> int -> mesh D.t
+                      val laplacianOp : mesh D.t -> int list -> real
+                      val residual : mesh D.t -> mesh D.t -> int -> mesh D.t
+                      val relax : mesh D.t -> mesh D.t -> int -> mesh D.t
+                      val correct : mesh D.t
+                                     -> mesh D.t -> int -> int -> mesh D.t
+                      val vCycle : mesh D.t
+                                    -> mesh D.t -> int -> int -> mesh D.t
+                      val potential : mesh D.t
+                                       -> mesh D.t -> int -> int -> mesh D.t
+                      val genRand : real -> real
+                      val initParticles : int
+                                           -> point node D.t * point node D.t
+                      val chargeDensity : heap D.t -> mesh D.t
+                      val elecField : mesh D.t -> mesh D.t * mesh D.t
+                      val larger : real * real -> real
+                      val wrapped : real -> real
+                      val pushParticle : (point node D.t * point node D.t) D.t
+                                          -> mesh D.t * mesh D.t
+                                          -> real D.t
+                                          -> real D.t
+                                          -> real D.t -> pushed D.t
+                      val timeStep : heap D.t
+                                      -> mesh D.t
+                                      -> real D.t -> int -> int -> state
+                      val runState : int -> int -> state
+                      val run : int -> real
+                    end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-pic-driver.sml]
+functor BenchPicDriverFn(K: sig val run : int -> real end) :
+                        
+                          sig
+                            structure W : <sig>
+                            val hash : string -> Word64.word
+                            val hashReference : string -> Word64.word
+                            val checkedText : int -> real -> unit
+                            val reference : string -> real
+                            val run : string list -> string
+                          end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/pic-originals/strict-only-tests.sml]
+FAIL pic/Strict/state-1-0 -- false
+FAIL pic/Strict/state-1-1 -- false
+FAIL pic/Strict/state-1-2 -- false
+FAIL pic/Strict/state-1-3 -- false
+FAIL pic/Strict/state-1-4 -- false
+FAIL pic/Strict/state-1-5 -- false
+FAIL pic/Strict/state-1-6 -- false
+FAIL pic/Strict/state-1-7 -- false
+FAIL pic/Strict/state-1-8 -- false
+FAIL pic/Strict/state-1-9 -- false
+FAIL pic/Strict/state-1-10 -- false
+PASS pic/Strict/scalar-1
+PASS pic/Strict/driver-1
+FAIL pic/Strict/state-2-0 -- false
+FAIL pic/Strict/state-2-1 -- false
+FAIL pic/Strict/state-2-2 -- false
+FAIL pic/Strict/state-2-3 -- false
+FAIL pic/Strict/state-2-4 -- false
+FAIL pic/Strict/state-2-5 -- false
+FAIL pic/Strict/state-2-6 -- false
+FAIL pic/Strict/state-2-7 -- false
+FAIL pic/Strict/state-2-8 -- false
+FAIL pic/Strict/state-2-9 -- false
+FAIL pic/Strict/state-2-10 -- false
+PASS pic/Strict/scalar-2
+PASS pic/Strict/driver-2
+FAIL pic/Strict/state-3-0 -- false
+FAIL pic/Strict/state-3-1 -- false
+FAIL pic/Strict/state-3-2 -- false
+FAIL pic/Strict/state-3-3 -- false
+FAIL pic/Strict/state-3-4 -- false
+FAIL pic/Strict/state-3-5 -- false
+FAIL pic/Strict/state-3-6 -- false
+FAIL pic/Strict/state-3-7 -- false
+FAIL pic/Strict/state-3-8 -- false
+FAIL pic/Strict/state-3-9 -- false
+FAIL pic/Strict/state-3-10 -- false
+PASS pic/Strict/scalar-3
+PASS pic/Strict/driver-3
+FAIL pic/Strict/state-18-0 -- false
+FAIL pic/Strict/state-18-1 -- false
+FAIL pic/Strict/state-18-2 -- false
+FAIL pic/Strict/state-18-3 -- false
+FAIL pic/Strict/state-18-4 -- false
+FAIL pic/Strict/state-18-5 -- false
+FAIL pic/Strict/state-18-6 -- false
+FAIL pic/Strict/state-18-7 -- false
+FAIL pic/Strict/state-18-8 -- false
+FAIL pic/Strict/state-18-9 -- false
+FAIL pic/Strict/state-18-10 -- false
+PASS pic/Strict/scalar-18
+PASS pic/Strict/driver-18
+FAIL pic/Strict/state-80-0 -- false
+FAIL pic/Strict/state-80-1 -- false
+FAIL pic/Strict/state-80-2 -- false
+FAIL pic/Strict/state-80-3 -- false
+FAIL pic/Strict/state-80-4 -- false
+FAIL pic/Strict/state-80-5 -- false
+FAIL pic/Strict/state-80-6 -- false
+FAIL pic/Strict/state-80-7 -- false
+FAIL pic/Strict/state-80-8 -- false
+FAIL pic/Strict/state-80-9 -- false
+FAIL pic/Strict/state-80-10 -- false
+PASS pic/Strict/scalar-80
+PASS pic/Strict/driver-80
+FAIL pic/Strict/state-300-0 -- false
+FAIL pic/Strict/state-300-1 -- false
+FAIL pic/Strict/state-300-2 -- false
+FAIL pic/Strict/state-300-3 -- false
+FAIL pic/Strict/state-300-4 -- false
+FAIL pic/Strict/state-300-5 -- false
+FAIL pic/Strict/state-300-6 -- false
+FAIL pic/Strict/state-300-7 -- false
+FAIL pic/Strict/state-300-8 -- false
+FAIL pic/Strict/state-300-9 -- false
+FAIL pic/Strict/state-300-10 -- false
+PASS pic/Strict/scalar-300
+PASS pic/Strict/driver-300
+PASS pic/Strict/source-potential-argument-order
+PASS pic/Strict/source-top-edge-stencil
+PASS pic/Strict/depth-zero-prunes-recursion
+PASS pic/Strict/source-one-wrap

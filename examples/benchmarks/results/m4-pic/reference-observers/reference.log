@@ -1,0 +1,9 @@
+{'particles': 1, 'header': ['pic 1.3565048722588746', 'hash -5209267697550984362'], 'steps': 11}
+{'particles': 2, 'header': ['pic 0.7609318009435702', 'hash -7443701028891417318'], 'steps': 11}
+{'particles': 3, 'header': ['pic 0.9844651543795475', 'hash -8611657718598285359'], 'steps': 11}
+{'particles': 18, 'header': ['pic 0.5501657858091226', 'hash 8973760416452266871'], 'steps': 11}
+{'particles': 80, 'header': ['pic 0.5797796887679297', 'hash -6223511183536357551'], 'steps': 11}
+{'particles': 300, 'header': ['pic 0.37955623791539556', 'hash 1754348970520265527'], 'steps': 11}
+Original fast 200 18 empty stdout verified
+Original normal 500 80 empty stdout verified
+Original slow 1000 300 empty stdout verified

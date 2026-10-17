@@ -1,0 +1,235 @@
+PROGRAM LIMIT AS 1048576 KiB
+PROGRAM FAIL native:mlton@20241230 (load 1, exit 0)
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-pic.sml]
+[autoloading]
+[autoloading done]
+functor BenchPicFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type point
+  type heap
+  type mesh
+  type pushed
+  type state
+  val nCell : int
+  val nStep : int
+  val log2 : int -> int
+  val maxDepth : int
+  val charge : real
+  val mass : real
+  val zero : real D.t
+  val three : real D.t
+  val four : real D.t
+  val five : real D.t
+  val six : real D.t
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val range : int -> int -> int <BaseFct>.<resultStr>.node D.t
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val indices : int -> int -> int list
+  val pairs : 'a list -> 'b list -> ('a * 'b) list
+  val makeMesh :
+      int
+       -> (unit -> ((int * int) * real D.t) list)
+       -> <BaseFct>.<resultStr>.mesh D.t
+  val get : <BaseFct>.<resultStr>.mesh D.t -> int * int -> real
+  val zeroMesh : int -> <BaseFct>.<resultStr>.mesh D.t
+  val applyOpToMesh :
+      (<BaseFct>.<resultStr>.mesh D.t -> int list -> real)
+       -> <BaseFct>.<resultStr>.mesh D.t
+       -> int -> <BaseFct>.<resultStr>.mesh D.t
+  val coarseMesh :
+      <BaseFct>.<resultStr>.mesh D.t -> int -> <BaseFct>.<resultStr>.mesh D.t
+  val fineMesh :
+      <BaseFct>.<resultStr>.mesh D.t -> int -> <BaseFct>.<resultStr>.mesh D.t
+  val laplacianOp : <BaseFct>.<resultStr>.mesh D.t -> int list -> real
+  val residual :
+      <BaseFct>.<resultStr>.mesh D.t
+       -> <BaseFct>.<resultStr>.mesh D.t
+       -> int -> <BaseFct>.<resultStr>.mesh D.t
+  val relax :
+      <BaseFct>.<resultStr>.mesh D.t
+       -> <BaseFct>.<resultStr>.mesh D.t
+       -> int -> <BaseFct>.<resultStr>.mesh D.t
+  val correct :
+      <BaseFct>.<resultStr>.mesh D.t
+       -> <BaseFct>.<resultStr>.mesh D.t
+       -> int -> int -> <BaseFct>.<resultStr>.mesh D.t
+  val vCycle :
+      <BaseFct>.<resultStr>.mesh D.t
+       -> <BaseFct>.<resultStr>.mesh D.t
+       -> int -> int -> <BaseFct>.<resultStr>.mesh D.t
+  val potential :
+      <BaseFct>.<resultStr>.mesh D.t
+       -> <BaseFct>.<resultStr>.mesh D.t
+       -> int -> int -> <BaseFct>.<resultStr>.mesh D.t
+  val genRand : real -> real
+  val initParticles :
+      int
+       -> <BaseFct>.<resultStr>.point <BaseFct>.<resultStr>.node D.t
+       * <BaseFct>.<resultStr>.point <BaseFct>.<resultStr>.node D.t
+  val chargeDensity :
+      <BaseFct>.<resultStr>.heap D.t -> <BaseFct>.<resultStr>.mesh D.t
+  val elecField :
+      <BaseFct>.<resultStr>.mesh D.t
+       -> <BaseFct>.<resultStr>.mesh D.t * <BaseFct>.<resultStr>.mesh D.t
+  val larger : real * real -> real
+  val wrapped : real -> real
+  val pushParticle :
+      (<BaseFct>.<resultStr>.point <BaseFct>.<resultStr>.node D.t
+          * <BaseFct>.<resultStr>.point <BaseFct>.<resultStr>.node D.t) D.t
+       -> <BaseFct>.<resultStr>.mesh D.t * <BaseFct>.<resultStr>.mesh D.t
+       -> real D.t -> real D.t -> real D.t -> <BaseFct>.<resultStr>.pushed D.t
+  val timeStep :
+      <BaseFct>.<resultStr>.heap D.t
+       -> <BaseFct>.<resultStr>.mesh D.t
+       -> real D.t -> int -> int -> <BaseFct>.<resultStr>.state
+  val runState : int -> int -> <BaseFct>.<resultStr>.state
+  val run : int -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/pic-originals/state-probe.sml]
+[autoloading]
+[autoloading done]
+DETAIL 257 actual=6.69313537978E~310 expected=6.58912928373
+DETAIL 258 actual=6.69313537978E~310 expected=10.4637629264
+structure StrictPic : sig
+  datatype 'a node = Cons of 'a D.t * 'a <BaseFct>.<resultStr>.node D.t | Nil
+  datatype point = Point of real D.t * real D.t
+  type heap = point node BenchStrict.t * point node BenchStrict.t
+  datatype mesh = Mesh of int * real D.t array
+  datatype pushed = Pushed of real D.t * real D.t * <BaseFct>.<resultStr>.heap
+  datatype state
+    = State of real D.t * <BaseFct>.<resultStr>.mesh D.t
+                * <BaseFct>.<resultStr>.heap D.t
+  val nCell : int
+  val nStep : int
+  val log2 : int -> int
+  val maxDepth : int
+  val charge : real
+  val mass : real
+  val zero : real D.t
+  val three : real D.t
+  val four : real D.t
+  val five : real D.t
+  val six : real D.t
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val range : int -> int -> int <BaseFct>.<resultStr>.node D.t
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val indices : int -> int -> int list
+  val pairs : 'a list -> 'b list -> ('a * 'b) list
+  val makeMesh :
+      int
+       -> (unit -> ((int * int) * real D.t) list)
+       -> <BaseFct>.<resultStr>.mesh D.t
+  val get : <BaseFct>.<resultStr>.mesh D.t -> int * int -> real
+  val zeroMesh : int -> <BaseFct>.<resultStr>.mesh D.t
+  val applyOpToMesh :
+      (<BaseFct>.<resultStr>.mesh D.t -> int list -> real)
+       -> <BaseFct>.<resultStr>.mesh D.t
+       -> int -> <BaseFct>.<resultStr>.mesh D.t
+  val coarseMesh :
+      <BaseFct>.<resultStr>.mesh D.t -> int -> <BaseFct>.<resultStr>.mesh D.t
+  val fineMesh :
+      <BaseFct>.<resultStr>.mesh D.t -> int -> <BaseFct>.<resultStr>.mesh D.t
+  val laplacianOp : <BaseFct>.<resultStr>.mesh D.t -> int list -> real
+  val residual :
+      <BaseFct>.<resultStr>.mesh D.t
+       -> <BaseFct>.<resultStr>.mesh D.t
+       -> int -> <BaseFct>.<resultStr>.mesh D.t
+  val relax :
+      <BaseFct>.<resultStr>.mesh D.t
+       -> <BaseFct>.<resultStr>.mesh D.t
+       -> int -> <BaseFct>.<resultStr>.mesh D.t
+  val correct :
+      <BaseFct>.<resultStr>.mesh D.t
+       -> <BaseFct>.<resultStr>.mesh D.t
+       -> int -> int -> <BaseFct>.<resultStr>.mesh D.t
+  val vCycle :
+      <BaseFct>.<resultStr>.mesh D.t
+       -> <BaseFct>.<resultStr>.mesh D.t
+       -> int -> int -> <BaseFct>.<resultStr>.mesh D.t
+  val potential :
+      <BaseFct>.<resultStr>.mesh D.t
+       -> <BaseFct>.<resultStr>.mesh D.t
+       -> int -> int -> <BaseFct>.<resultStr>.mesh D.t
+  val genRand : real -> real
+  val initParticles :
+      int
+       -> <BaseFct>.<resultStr>.point <BaseFct>.<resultStr>.node D.t
+       * <BaseFct>.<resultStr>.point <BaseFct>.<resultStr>.node D.t
+  val chargeDensity :
+      <BaseFct>.<resultStr>.heap D.t -> <BaseFct>.<resultStr>.mesh D.t
+  val elecField :
+      <BaseFct>.<resultStr>.mesh D.t
+       -> <BaseFct>.<resultStr>.mesh D.t * <BaseFct>.<resultStr>.mesh D.t
+  val larger : real * real -> real
+  val wrapped : real -> real
+  val pushParticle :
+      (<BaseFct>.<resultStr>.point <BaseFct>.<resultStr>.node D.t
+          * <BaseFct>.<resultStr>.point <BaseFct>.<resultStr>.node D.t) D.t
+       -> <BaseFct>.<resultStr>.mesh D.t * <BaseFct>.<resultStr>.mesh D.t
+       -> real D.t -> real D.t -> real D.t -> <BaseFct>.<resultStr>.pushed D.t
+  val timeStep :
+      <BaseFct>.<resultStr>.heap D.t
+       -> <BaseFct>.<resultStr>.mesh D.t
+       -> real D.t -> int -> int -> <BaseFct>.<resultStr>.state
+  val runState : int -> int -> <BaseFct>.<resultStr>.state
+  val run : int -> real
+end
+structure StrictProbe : sig
+  structure K : <sig>
+  structure D : <sig>
+  val read : string -> string list
+  val numbers : string -> real list
+  val expected : string list -> real list list
+  val points : StrictPic.point StrictPic.node BenchStrict.t -> real list
+  val values : StrictPic.state -> real list
+  val close : real * real -> bool
+  val check : int -> unit
+end
+val it = () : unit
+- 
+PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 1, exit 0)

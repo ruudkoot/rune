@@ -1,0 +1,1 @@
+pic-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/nofib-pic.sml shared/nofib-pic-driver.sml pic-strict/benchmark.sml shared/main.sml	500 80 normal.dt	pic-strict/normal.expected	normal.dt

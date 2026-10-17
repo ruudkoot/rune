@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-pic-parallel.jqpk3spn
+PASS pic-lazy smoke O2
+PASS pic-lazy smoke O0
+PASS pic-lazy smoke hosts
+PASS pic-lazy normal O0
+PASS pic-lazy normal O2
+PASS pic-strict smoke O0
+PASS pic-strict smoke O2
+PASS pic-strict smoke hosts
+PASS pic-lazy normal hosts
+PASS pic-strict normal O2
+PASS pic-strict normal O0
+PASS pic-strict normal hosts

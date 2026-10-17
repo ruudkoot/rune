@@ -1,0 +1,67 @@
+[ 1 of 11] Compiling NofibUtils       ( NofibUtils.hs, NofibUtils.o )
+[ 2 of 11] Compiling PicType          ( PicType.hs, PicType.o )
+
+PicType.hs:8:1: warning: [-Wtabs]
+    Tab character found here, and in 32 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+8 |                 Phi, Rho, Position, Range, Velocity, ParticleHeap) where
+  | ^^^^^^^^
+[ 3 of 11] Compiling Utils            ( Utils.hs, Utils.o )
+
+Utils.hs:8:7: warning: [-Wtabs]
+    Tab character found here, and in 79 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+8 | import  PicType
+  |       ^^
+[ 4 of 11] Compiling Consts           ( Consts.hs, Consts.o )
+
+Consts.hs:14:6: warning: [-Wtabs]
+    Tab character found here, and in 15 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+14 | nCell           = 16                    -- number of Cells
+   |      ^^^
+[ 5 of 11] Compiling PushParticle     ( PushParticle.hs, PushParticle.o )
+
+PushParticle.hs:8:7: warning: [-Wtabs]
+    Tab character found here, and in 49 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+8 | import  PicType
+  |       ^^
+[ 6 of 11] Compiling Potential        ( Potential.hs, Potential.o )
+
+Potential.hs:8:7: warning: [-Wtabs]
+    Tab character found here, and in 41 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+8 | import  PicType
+  |       ^^
+[ 7 of 11] Compiling ElecField        ( ElecField.hs, ElecField.o )
+
+ElecField.hs:8:7: warning: [-Wtabs]
+    Tab character found here, and in 21 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+8 | import  PicType
+  |       ^^
+[ 8 of 11] Compiling ChargeDensity    ( ChargeDensity.hs, ChargeDensity.o )
+
+ChargeDensity.hs:8:7: warning: [-Wtabs]
+    Tab character found here, and in 16 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+8 | import  PicType
+  |       ^^
+[ 9 of 11] Compiling KernelPic        ( KernelPic.hs, KernelPic.o )
+
+KernelPic.hs:18:7: warning: [-Wtabs]
+    Tab character found here, and in 54 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+18 | import  PicType
+   |       ^^
+[10 of 11] Compiling Main             ( Observer.hs, Observer.o )
+[11 of 11] Linking observer

@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+pic-lazy	normal	rune	O2	count	1	1	pass	14.38	15.37	0.01	35108	3017696529	6534234104	164300295	counts/measurement.iiqKF2/pic-lazy/rune/fresh.1
+pic-lazy	normal	rune:opt	O2	count	1	1	pass	8.97	7.14	0.02	35912	3017696529	6534234104	164300295	counts/measurement.iiqKF2/pic-lazy/rune-opt/fresh.1
+pic-lazy	normal	rune:new	O2	count	1	1	pass	13.90	14.87	0.02	35376	1684065689	6534234104	164300295	counts/measurement.iiqKF2/pic-lazy/rune-new/fresh.1
+pic-lazy	normal	rune:jit	O2	count	1	1	pass	7.17	7.62	0.05	36880	1684065689	6534234104	164300295	counts/measurement.iiqKF2/pic-lazy/rune-jit/fresh.1
+pic-strict	normal	rune	O2	count	1	1	pass	12.57	10.96	0.02	10344	3060158435	5410569512	122807271	counts/measurement.zh4Vyd/pic-strict/rune/fresh.1
+pic-strict	normal	rune:opt	O2	count	1	1	pass	3.54	3.79	0.00	11108	3060158435	5410569512	122807271	counts/measurement.zh4Vyd/pic-strict/rune-opt/fresh.1
+pic-strict	normal	rune:new	O2	count	1	1	pass	11.81	10.13	0.01	10720	1616212130	5410569512	122807271	counts/measurement.zh4Vyd/pic-strict/rune-new/fresh.1
+pic-strict	normal	rune:jit	O2	count	1	1	pass	3.36	3.57	0.02	12104	1616212130	5410569512	122807271	counts/measurement.zh4Vyd/pic-strict/rune-jit/fresh.1
