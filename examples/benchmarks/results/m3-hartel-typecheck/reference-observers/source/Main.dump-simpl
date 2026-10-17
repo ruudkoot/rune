@@ -1,0 +1,1951 @@
+
+==================== Tidy Core ====================
+
+Result size of Tidy Core
+  = {terms: 3,007, types: 2,425, coercions: 29, joins: 10/34}
+
+main2 = errorWithoutStackTrace readEither2
+
+main22 = "a"#
+
+main21 = unpackCString# main22
+
+main26 = F_VAR main21
+
+main31 = "succ"#
+
+main30 = unpackCString# main31
+
+main45 = "y   "#
+
+main44 = unpackCString# main45
+
+main78 = "sum "#
+
+main77 = unpackCString# main78
+
+main87 = "inc "#
+
+main86 = unpackCString# main87
+
+main103 = "y"#
+
+main102 = unpackCString# main103
+
+main112 = F_VAR main102
+
+main101 = : main102 []
+
+main96 = "S"#
+
+main95 = unpackCString# main96
+
+main94 = F_VAR main95
+
+main117 = "skk "#
+
+main116 = unpackCString# main117
+
+main140 = "map "#
+
+main139 = unpackCString# main140
+
+main153 = "len "#
+
+main152 = unpackCString# main153
+
+main162 = errorWithoutStackTrace readEither5
+
+lvl1_r5py = "failure\n"#
+
+lvl2_r5pz = unpackCString# lvl1_r5py
+
+main4 = "\n"#
+
+main3 = unpackCString# main4
+
+lvl3_r5pA = " :: "#
+
+lvl4_r5pB = C# '/'#
+
+Rec {
+$wf_sumcode'
+  = \ ds2_s5bp ww_s5bs ww1_s5bw ->
+      case ds2_s5bp of {
+        [] ->
+          ++
+            (itos (+# ww_s5bs ww1_s5bw) []) (: lvl4_r5pB (itos ww1_s5bw []));
+        : a_x_a1fx a_xs_a1fy ->
+          case a_x_a1fx of { C# c#_a4kK ->
+          $wf_sumcode' a_xs_a1fy (+# ww_s5bs (ord# c#_a4kK)) (+# ww1_s5bw 1#)
+          }
+      }
+end Rec }
+
+lvl5_r5pC
+  = "Pattern match failure in 'do' block at Main.hs:660:15-19"#
+
+lvl6_r5pD = unpackCString# lvl5_r5pC
+
+main163 = failIO1 lvl6_r5pD
+
+Rec {
+go1_r5pE
+  = \ ds2_a584 ->
+      case ds2_a584 of {
+        [] -> [];
+        : y_a587 ys_a588 ->
+          : (case y_a587 of { (a_x_a1e0, a_tvn_a1e1) ->
+             (a_x_a1e0, F_SCHEME [] (F_TVAR a_tvn_a1e1))
+             })
+            (go1_r5pE ys_a588)
+      }
+end Rec }
+
+Rec {
+go2_r5pF
+  = \ ds2_a584 ->
+      case ds2_a584 of {
+        [] -> [];
+        : y_a587 ys_a588 ->
+          : (case y_a587 of { (a_a_a1vW, a_b_a1vX) -> a_a_a1vW })
+            (go2_r5pF ys_a588)
+      }
+end Rec }
+
+lvl7_r5pG = "Main.hs:(327,5)-(328,112)|function f_tcap1"#
+
+lvl8_r5pH = patError lvl7_r5pG
+
+lvl9_r5pI = I# 1#
+
+Rec {
+go3_r5pJ
+  = \ ds2_X1G ->
+      case ds2_X1G of {
+        [] -> [];
+        : y_X1I ys_X1J ->
+          : (case y_X1I of { (a_a_a1x6, a_b_a1x7) -> a_b_a1x7 })
+            (go3_r5pJ ys_X1J)
+      }
+end Rec }
+
+lvl10_r5pK = "Main.hs:273:5-79|function f_deplete"#
+
+lvl11_r5pL = patError lvl10_r5pK
+
+f_deplete_rpK
+  = \ ds2_d3um ->
+      case ds2_d3um of {
+        [] -> case lvl11_r5pL of wild1_00 { };
+        : a_n_a1a2 a_ns_a1a3 ->
+          : (case a_n_a1a2 of { I# x_a3MP -> I# (+# x_a3MP 2#) }) a_ns_a1a3
+      }
+
+Rec {
+$wf_take
+  = \ @t1_s5a7 ww_s5aa a_x_s5ac ->
+      case ww_s5aa of ds2_X1 {
+        __DEFAULT ->
+          case a_x_s5ac of {
+            [] -> [];
+            : a_a_a1xh a_x1_a1xi ->
+              : a_a_a1xh ($wf_take (-# ds2_X1 1#) a_x1_a1xi)
+          };
+        0# -> []
+      }
+end Rec }
+
+lvl12_r5pM = I# 24#
+
+lvl13_r5pN = I# 20#
+
+lvl14_r5pO = I# 259#
+
+Rec {
+go4_r5pP
+  = \ ds2_a584 ->
+      case ds2_a584 of {
+        [] -> [];
+        : y_a587 ys_a588 ->
+          case y_a587 of { (a_k_a1dv, a_v_a1dw) ->
+          : a_k_a1dv (go4_r5pP ys_a588)
+          }
+      }
+end Rec }
+
+lvl15_r5pQ = I# 25#
+
+lvl16_r5pR = I# 21#
+
+lvl17_r5pS = I# 319#
+
+lvl18_r5pT = I# 55#
+
+lvl19_r5pU = I# 48#
+
+lvl20_r5pV = I# 91#
+
+lvl21_r5pW = "libraries/base/GHC/List.hs"#
+
+lvl22_r5pX = unpackCString# lvl21_r5pW
+
+lvl23_r5pY = "GHC.List"#
+
+lvl24_r5pZ = unpackCString# lvl23_r5pY
+
+lvl25_r5q0 = "base"#
+
+lvl26_r5q1 = unpackCString# lvl25_r5q0
+
+lvl27_r5q2
+  = SrcLoc
+      lvl26_r5q1
+      lvl24_r5pZ
+      lvl22_r5pX
+      lvl20_r5pV
+      lvl19_r5pU
+      lvl20_r5pV
+      lvl18_r5pT
+
+lvl28_r5q3 = "badHead"#
+
+lvl29_r5q4 = unpackCString# lvl28_r5q3
+
+Rec {
+f_in_rpA
+  = \ a_x'_a17Y ds2_d3xz ->
+      case ds2_d3xz of {
+        [] -> False;
+        : a_x_a180 a_xs_a181 ->
+          case eqString a_x_a180 a_x'_a17Y of {
+            False -> f_in_rpA a_x'_a17Y a_xs_a181;
+            True -> True
+          }
+      }
+end Rec }
+
+Rec {
+f_f_r5q5
+  = \ a_acc_a1eF ds2_d3yv ->
+      case ds2_d3yv of {
+        [] -> a_acc_a1eF;
+        : a_x_a1eH a_xs_a1eI ->
+          case f_in_rpA a_x_a1eH a_acc_a1eF of {
+            False -> f_f_r5q5 (: a_x_a1eH a_acc_a1eF) a_xs_a1eI;
+            True -> f_f_r5q5 a_acc_a1eF a_xs_a1eI
+          }
+      }
+end Rec }
+
+ds_r5q6 = C# '.'#
+
+Rec {
+go5_r5q7
+  = \ ds2_a584 ->
+      case ds2_a584 of {
+        [] -> [];
+        : y_a587 ys_a588 ->
+          : (: ds_r5q6 ($fShowInt_$cshow y_a587)) (go5_r5q7 ys_a588)
+      }
+end Rec }
+
+lvl30_r5q8 = I# 26#
+
+lvl31_r5q9 = I# 22#
+
+lvl32_r5qa = I# 271#
+
+lvl33_r5qb = "Main.hs"#
+
+lvl34_r5qc = unpackCString# lvl33_r5qb
+
+$tc'F_Exit3 = "'F_Exit"#
+
+$tc'F_Exit2 = TrNameS $tc'F_Exit3
+
+$tc'F_Tofile3 = "'F_Tofile"#
+
+$tc'F_Tofile2 = TrNameS $tc'F_Tofile3
+
+$tc'F_System2 = "'F_System"#
+
+$tc'F_System1 = TrNameS $tc'F_System2
+
+$tc'F_Appendfile3 = "'F_Appendfile"#
+
+$tc'F_Appendfile2 = TrNameS $tc'F_Appendfile3
+
+$tc'F_Closefile2 = "'F_Closefile"#
+
+$tc'F_Closefile1 = TrNameS $tc'F_Closefile2
+
+$tc'F_Stderr2 = "'F_Stderr"#
+
+$tc'F_Stderr1 = TrNameS $tc'F_Stderr2
+
+$tc'F_Stdout2 = "'F_Stdout"#
+
+$tc'F_Stdout1 = TrNameS $tc'F_Stdout2
+
+$tcT_sys_message2 = "T_sys_message"#
+
+$tcT_sys_message1 = TrNameS $tcT_sys_message2
+
+$tc'F_SCHEME3 = "'F_SCHEME"#
+
+$tc'F_SCHEME2 = TrNameS $tc'F_SCHEME3
+
+$tcT_type_scheme2 = "T_type_scheme"#
+
+$tcT_type_scheme1 = TrNameS $tcT_type_scheme2
+
+$tc'F_OK3 = "'F_OK"#
+
+$tc'F_OK2 = TrNameS $tc'F_OK3
+
+$tc'C_FAILURE3 = "'C_FAILURE"#
+
+$tc'C_FAILURE2 = TrNameS $tc'C_FAILURE3
+
+$tcT_reply2 = "T_reply"#
+
+$tcT_reply1 = TrNameS $tcT_reply2
+
+$tc'F_TCONS3 = "'F_TCONS"#
+
+$tc'F_TCONS2 = TrNameS $tc'F_TCONS3
+
+$tc'F_TVAR3 = "'F_TVAR"#
+
+$tc'F_TVAR2 = TrNameS $tc'F_TVAR3
+
+$tcT_type_exp2 = "T_type_exp"#
+
+$tcT_type_exp1 = TrNameS $tcT_type_exp2
+
+$tc'F_LETRECE2 = "'F_LETRECE"#
+
+$tc'F_LETRECE1 = TrNameS $tc'F_LETRECE2
+
+$tc'F_LETE3 = "'F_LETE"#
+
+$tc'F_LETE2 = TrNameS $tc'F_LETE3
+
+$tc'F_APE3 = "'F_APE"#
+
+$tc'F_APE2 = TrNameS $tc'F_APE3
+
+$tc'F_LAMBDA3 = "'F_LAMBDA"#
+
+$tc'F_LAMBDA2 = TrNameS $tc'F_LAMBDA3
+
+$tc'F_VAR3 = "'F_VAR"#
+
+$tc'F_VAR2 = TrNameS $tc'F_VAR3
+
+$tcT_vexp2 = "T_vexp"#
+
+$tcT_vexp1 = TrNameS $tcT_vexp2
+
+$krep_r5qd = KindRepVar 0#
+
+$krep1_r5qe = : $krep_r5qd []
+
+$krep2_r5qf = KindRepTyConApp $tcChar []
+
+$krep3_r5qg = : $krep2_r5qf []
+
+$krep4_r5qh = KindRepTyConApp $tc[] $krep3_r5qg
+
+$krep5_r5qi = : $krep4_r5qh []
+
+$krep6_r5qj = KindRepTyConApp $tc[] $krep5_r5qi
+
+$krep7_r5qk = KindRepTyConApp $tcInt []
+
+$trModule2 = "Main"#
+
+$trModule1 = TrNameS $trModule2
+
+lvl35_r5ql = unpackCString# $trModule2
+
+$trModule4 = "main"#
+
+$trModule3 = TrNameS $trModule4
+
+$trModule = Module $trModule3 $trModule1
+
+$tcT_vexp
+  = TyCon
+      1653729331390373119##64
+      7666282279058436930##64
+      $trModule
+      $tcT_vexp1
+      0#
+      krep$*
+
+$krep8_r5qm = KindRepTyConApp $tcT_vexp []
+
+$tc'F_VAR1 = KindRepFun $krep4_r5qh $krep8_r5qm
+
+$krep9_r5qn = KindRepFun $krep8_r5qm $krep8_r5qm
+
+$tc'F_LAMBDA1 = KindRepFun $krep4_r5qh $krep9_r5qn
+
+$tc'F_APE1 = KindRepFun $krep8_r5qm $krep9_r5qn
+
+$krep10_r5qo = : $krep8_r5qm []
+
+$krep11_r5qp = KindRepTyConApp $tc[] $krep10_r5qo
+
+$krep12_r5qq = KindRepFun $krep11_r5qp $krep9_r5qn
+
+$tc'F_LETE1 = KindRepFun $krep6_r5qj $krep12_r5qq
+
+$tc'F_VAR
+  = TyCon
+      17937516834474187355##64
+      12175430425175394256##64
+      $trModule
+      $tc'F_VAR2
+      0#
+      $tc'F_VAR1
+
+$tc'F_LAMBDA
+  = TyCon
+      13026190013433889401##64
+      5243031770173683225##64
+      $trModule
+      $tc'F_LAMBDA2
+      0#
+      $tc'F_LAMBDA1
+
+$tc'F_APE
+  = TyCon
+      5822944905595991798##64
+      16946669600037849803##64
+      $trModule
+      $tc'F_APE2
+      0#
+      $tc'F_APE1
+
+$tc'F_LETE
+  = TyCon
+      3044458798534866630##64
+      12985428616920203859##64
+      $trModule
+      $tc'F_LETE2
+      0#
+      $tc'F_LETE1
+
+$tc'F_LETRECE
+  = TyCon
+      6587749020136192992##64
+      8747166420150389880##64
+      $trModule
+      $tc'F_LETRECE1
+      0#
+      $tc'F_LETE1
+
+$tcT_type_exp
+  = TyCon
+      11494662943743793176##64
+      9235644603234413635##64
+      $trModule
+      $tcT_type_exp1
+      0#
+      krep$*
+
+$krep13_r5qr = KindRepTyConApp $tcT_type_exp []
+
+$tc'F_TVAR1 = KindRepFun $krep4_r5qh $krep13_r5qr
+
+$krep14_r5qs = : $krep13_r5qr []
+
+$krep15_r5qt = KindRepTyConApp $tc[] $krep14_r5qs
+
+$krep16_r5qu = KindRepFun $krep15_r5qt $krep13_r5qr
+
+$tc'F_TCONS1 = KindRepFun $krep4_r5qh $krep16_r5qu
+
+$tc'F_TVAR
+  = TyCon
+      13213000512877231232##64
+      10167561177536125311##64
+      $trModule
+      $tc'F_TVAR2
+      0#
+      $tc'F_TVAR1
+
+$tc'F_TCONS
+  = TyCon
+      14900784684754766213##64
+      17348266479350942516##64
+      $trModule
+      $tc'F_TCONS2
+      0#
+      $tc'F_TCONS1
+
+$tcT_reply
+  = TyCon
+      9214710130021128657##64
+      8305088537500511025##64
+      $trModule
+      $tcT_reply1
+      0#
+      krep$*Arr*
+
+$tc'C_FAILURE1 = KindRepTyConApp $tcT_reply $krep1_r5qe
+
+$tc'F_OK1 = KindRepFun $krep_r5qd $tc'C_FAILURE1
+
+$tc'C_FAILURE
+  = TyCon
+      5938716454156942067##64
+      17871995615021121766##64
+      $trModule
+      $tc'C_FAILURE2
+      1#
+      $tc'C_FAILURE1
+
+$tc'F_OK
+  = TyCon
+      10802088233586973190##64
+      16170510321265931510##64
+      $trModule
+      $tc'F_OK2
+      1#
+      $tc'F_OK1
+
+$tcT_type_scheme
+  = TyCon
+      11982627488671464676##64
+      2726526441715029570##64
+      $trModule
+      $tcT_type_scheme1
+      0#
+      krep$*
+
+$krep17_r5qv = KindRepTyConApp $tcT_type_scheme []
+
+$krep18_r5qw = KindRepFun $krep13_r5qr $krep17_r5qv
+
+$tc'F_SCHEME1 = KindRepFun $krep6_r5qj $krep18_r5qw
+
+$tc'F_SCHEME
+  = TyCon
+      13046889723653488227##64
+      16831538428975759833##64
+      $trModule
+      $tc'F_SCHEME2
+      0#
+      $tc'F_SCHEME1
+
+$tcT_sys_message
+  = TyCon
+      1982767906666705997##64
+      6411606753803804293##64
+      $trModule
+      $tcT_sys_message1
+      0#
+      krep$*
+
+$krep19_r5qx = KindRepTyConApp $tcT_sys_message []
+
+$tc'F_Appendfile1 = KindRepFun $krep4_r5qh $krep19_r5qx
+
+$tc'F_Tofile1 = KindRepFun $krep4_r5qh $tc'F_Appendfile1
+
+$tc'F_Exit1 = KindRepFun $krep7_r5qk $krep19_r5qx
+
+$tc'F_Stdout
+  = TyCon
+      18100209026904888981##64
+      11155419606163732285##64
+      $trModule
+      $tc'F_Stdout1
+      0#
+      $tc'F_Appendfile1
+
+$tc'F_Stderr
+  = TyCon
+      17155255145159161675##64
+      15029849413090881713##64
+      $trModule
+      $tc'F_Stderr1
+      0#
+      $tc'F_Appendfile1
+
+$tc'F_Closefile
+  = TyCon
+      18120333443193727571##64
+      10937250853129575770##64
+      $trModule
+      $tc'F_Closefile1
+      0#
+      $tc'F_Appendfile1
+
+$tc'F_Appendfile
+  = TyCon
+      5920166430948728279##64
+      15791942046845189702##64
+      $trModule
+      $tc'F_Appendfile2
+      0#
+      $tc'F_Appendfile1
+
+$tc'F_System
+  = TyCon
+      3620335194706588756##64
+      10607754037396713556##64
+      $trModule
+      $tc'F_System1
+      0#
+      $tc'F_Appendfile1
+
+$tc'F_Tofile
+  = TyCon
+      8771454358949703794##64
+      17932075015256875734##64
+      $trModule
+      $tc'F_Tofile2
+      0#
+      $tc'F_Tofile1
+
+$tc'F_Exit
+  = TyCon
+      1784386841772543555##64
+      16246369965411944426##64
+      $trModule
+      $tc'F_Exit2
+      0#
+      $tc'F_Exit1
+
+lvl36_r5qy = unpackCString# $trModule4
+
+lvl37_r5qz
+  = SrcLoc
+      lvl36_r5qy
+      lvl35_r5ql
+      lvl34_r5qc
+      lvl32_r5qa
+      lvl31_r5q9
+      lvl32_r5qa
+      lvl30_r5q8
+
+lvl38_r5qA
+  = SrcLoc
+      lvl36_r5qy
+      lvl35_r5ql
+      lvl34_r5qc
+      lvl17_r5pS
+      lvl16_r5pR
+      lvl17_r5pS
+      lvl15_r5pQ
+
+lvl39_r5qB
+  = SrcLoc
+      lvl36_r5qy
+      lvl35_r5ql
+      lvl34_r5qc
+      lvl14_r5pO
+      lvl13_r5pN
+      lvl14_r5pO
+      lvl12_r5pM
+
+Rec {
+f_zip2_rr7
+  = \ @t1_a2sw @t2_a2sx ds2_d3rU ds3_d3rV ->
+      case ds2_d3rU of {
+        [] -> [];
+        : a_a_a1xu a_x_a1xv ->
+          case ds3_d3rV of {
+            [] -> [];
+            : a_b_a1xw a_y_a1xx ->
+              : (a_a_a1xu, a_b_a1xw) (f_zip2_rr7 a_x_a1xv a_y_a1xx)
+          }
+      }
+end Rec }
+
+Rec {
+f_repeat = \ @t1_a2uH a_x_a1wW -> : a_x_a1wW (f_repeat a_x_a1wW)
+end Rec }
+
+lvl40_r5qC = "<"#
+
+lvl41_r5qD = ">"#
+
+lvl42_r5qE = unpackCString# lvl41_r5qD
+
+ds1_r5qF = C# ' '#
+
+lvl43_r5qG = "["#
+
+lvl44_r5qH = "]"#
+
+lvl45_r5qI = unpackCString# lvl44_r5qH
+
+lvl46_r5qJ = " x "#
+
+lvl47_r5qK = "cross"#
+
+lvl48_r5qL = unpackCString# lvl47_r5qK
+
+lvl49_r5qM = "("#
+
+lvl50_r5qN = " -> "#
+
+lvl51_r5qO = ")"#
+
+lvl52_r5qP = unpackCString# lvl51_r5qO
+
+Rec {
+$sf_sub_type_r5qQ
+  = \ sc_s5jS sc1_s5jT sc2_s5jR ->
+      F_TCONS
+        sc_s5jS
+        (letrec {
+           go8_a583
+             = \ ds2_a584 ->
+                 case ds2_a584 of {
+                   [] -> [];
+                   : y_a587 ys_a588 ->
+                     : (f_sub_type_rpr sc2_s5jR y_a587) (go8_a583 ys_a588)
+                 }; } in
+         go8_a583 sc1_s5jT)
+
+f_sub_type_rpr
+  = \ a_phi_a17k ds2_d3uA ->
+      case ds2_d3uA of {
+        F_TVAR a_tvn_a17l -> a_phi_a17k a_tvn_a17l;
+        F_TCONS a_tcn_a17n a_ts_a17o ->
+          F_TCONS
+            a_tcn_a17n
+            (letrec {
+               go8_a583
+                 = \ ds3_a584 ->
+                     case ds3_a584 of {
+                       [] -> [];
+                       : y_a587 ys_a588 ->
+                         : (f_sub_type_rpr a_phi_a17k y_a587) (go8_a583 ys_a588)
+                     }; } in
+             go8_a583 a_ts_a17o)
+      }
+end Rec }
+
+f_scomp_rps
+  = \ a_sub2_a17p a_sub1_a17q a_tvn_a17r ->
+      f_sub_type_rpr a_sub2_a17p (a_sub1_a17q a_tvn_a17r)
+
+f_sub_te_rpI
+  = \ a_phi_a19X a_gamma_a19Y ->
+      letrec {
+        go8_a583
+          = \ ds2_a584 ->
+              case ds2_a584 of {
+                [] -> [];
+                : y_a587 ys_a588 ->
+                  case y_a587 of { (a_x_a19Z, a_st_a1a0) ->
+                  : (a_x_a19Z,
+                     case a_st_a1a0 of { F_SCHEME a_scvs_a183 a_t_a184 ->
+                     F_SCHEME
+                       a_scvs_a183
+                       (f_sub_type_rpr
+                          (\ a_tvn_a187 ->
+                             case f_in_rpA a_tvn_a187 a_scvs_a183 of {
+                               False -> a_phi_a19X a_tvn_a187;
+                               True -> F_TVAR a_tvn_a187
+                             })
+                          a_t_a184)
+                     })
+                    (go8_a583 ys_a588)
+                  }
+              }; } in
+      go8_a583 a_gamma_a19Y
+
+Rec {
+main_$sf_foldr
+  = \ a_r_a1vL ds2_d3tu ->
+      case ds2_d3tu of {
+        [] -> a_r_a1vL;
+        : a_a_a1vO a_x_a1vP ->
+          F_LAMBDA a_a_a1vO (main_$sf_foldr a_r_a1vL a_x_a1vP)
+      }
+end Rec }
+
+Rec {
+f_foldr
+  = \ @t1_a2CA @t2_a2CB a_op_a1vK a_r_a1vL ds2_d3tu ->
+      case ds2_d3tu of {
+        [] -> a_r_a1vL;
+        : a_a_a1vO a_x_a1vP ->
+          a_op_a1vK a_a_a1vO (f_foldr a_op_a1vK a_r_a1vL a_x_a1vP)
+      }
+end Rec }
+
+Rec {
+f_tvars_in'_r5qR
+  = \ ds2_d3uR a_l_a17g ->
+      case ds2_d3uR of {
+        F_TVAR a_x_a17f -> : a_x_a17f a_l_a17g;
+        F_TCONS a_y_a17h a_ts_a17i ->
+          f_foldr f_tvars_in'_r5qR a_l_a17g a_ts_a17i
+      }
+end Rec }
+
+Rec {
+$s$wf_unify_r5qS
+  = \ sc_s5ia sc1_s5ib sc2_s5i9 ww_s59J ->
+      case ww_s59J of wild_X2 {
+        F_TVAR a_tvn_a17H ->
+          $s$wf_unify2_r5qV sc_s5ia sc1_s5ib wild_X2 sc2_s5i9;
+        F_TCONS a_tcn'_a17L a_ts'_a17M ->
+          case eqString sc_s5ia a_tcn'_a17L of {
+            False -> C_FAILURE;
+            True ->
+              f_foldr lvl53_r5qU (F_OK sc2_s5i9) (f_zip2_rr7 sc1_s5ib a_ts'_a17M)
+          }
+      }
+
+$s$wf_unify1_r5qT
+  = \ sc_s5i7 sc1_s5i6 ww_s59J ->
+      case sc1_s5i6 sc_s5i7 of {
+        F_TVAR a_tvx_a16L ->
+          case eqString a_tvx_a16L sc_s5i7 of {
+            False ->
+              $s$wf_unify1_r5qT
+                a_tvx_a16L sc1_s5i6 (f_sub_type_rpr sc1_s5i6 ww_s59J);
+            True ->
+              let { a_t_s4FC = f_sub_type_rpr sc1_s5i6 ww_s59J } in
+              join {
+                $j_s4Tj
+                  = case f_in_rpA sc_s5i7 (f_tvars_in'_r5qR a_t_s4FC []) of {
+                      False ->
+                        F_OK
+                          (let {
+                             a_sub2_s4FE
+                               = \ a_tvn'_a17v ->
+                                   case eqString sc_s5i7 a_tvn'_a17v of {
+                                     False -> F_TVAR a_tvn'_a17v;
+                                     True -> a_t_s4FC
+                                   } } in
+                           \ a_tvn_a17r -> f_sub_type_rpr a_sub2_s4FE (sc1_s5i6 a_tvn_a17r));
+                      True -> C_FAILURE
+                    } } in
+              case a_t_s4FC of {
+                F_TVAR a_tvx1_X1H ->
+                  case eqString a_tvx1_X1H sc_s5i7 of {
+                    False -> jump $j_s4Tj;
+                    True -> F_OK sc1_s5i6
+                  };
+                F_TCONS a_tcx_a16N a_txs_a16O -> jump $j_s4Tj
+              }
+          };
+        F_TCONS a_tcx_a16N a_txs_a16O ->
+          $s$wf_unify_r5qS
+            a_tcx_a16N a_txs_a16O sc1_s5i6 (f_sub_type_rpr sc1_s5i6 ww_s59J)
+      }
+
+lvl53_r5qU
+  = \ a_eqn_a17Q ds2_d3xG ->
+      case ds2_d3xG of wild_X1F {
+        F_OK a_phi_a17R ->
+          case a_eqn_a17Q of { (ww_s59I, ww1_s59J) ->
+          case ww_s59I of {
+            F_TVAR a_tvn_a17A ->
+              case a_phi_a17R a_tvn_a17A of {
+                F_TVAR a_tvx_a16L ->
+                  case eqString a_tvx_a16L a_tvn_a17A of {
+                    False ->
+                      $s$wf_unify1_r5qT
+                        a_tvx_a16L a_phi_a17R (f_sub_type_rpr a_phi_a17R ww1_s59J);
+                    True ->
+                      let { a_t_s4FC = f_sub_type_rpr a_phi_a17R ww1_s59J } in
+                      join {
+                        $j_s4Tj
+                          = case f_in_rpA a_tvn_a17A (f_tvars_in'_r5qR a_t_s4FC []) of {
+                              False ->
+                                F_OK
+                                  (let {
+                                     a_sub2_s4FE
+                                       = \ a_tvn'_a17v ->
+                                           case eqString a_tvn_a17A a_tvn'_a17v of {
+                                             False -> F_TVAR a_tvn'_a17v;
+                                             True -> a_t_s4FC
+                                           } } in
+                                   \ a_tvn1_a17r ->
+                                     f_sub_type_rpr a_sub2_s4FE (a_phi_a17R a_tvn1_a17r));
+                              True -> C_FAILURE
+                            } } in
+                      case a_t_s4FC of {
+                        F_TVAR a_tvx1_X1I ->
+                          case eqString a_tvx1_X1I a_tvn_a17A of {
+                            False -> jump $j_s4Tj;
+                            True -> wild_X1F
+                          };
+                        F_TCONS a_tcx_a16N a_txs_a16O -> jump $j_s4Tj
+                      }
+                  };
+                F_TCONS a_tcx_a16N a_txs_a16O ->
+                  $s$wf_unify_r5qS
+                    a_tcx_a16N
+                    a_txs_a16O
+                    a_phi_a17R
+                    (f_sub_type_rpr a_phi_a17R ww1_s59J)
+              };
+            F_TCONS a_tcn_a17F a_ts_a17G ->
+              case ww1_s59J of wild3_X2 {
+                F_TVAR a_tvn_a17H ->
+                  $s$wf_unify2_r5qV a_tcn_a17F a_ts_a17G wild3_X2 a_phi_a17R;
+                F_TCONS a_tcn'_a17L a_ts'_a17M ->
+                  case eqString a_tcn_a17F a_tcn'_a17L of {
+                    False -> C_FAILURE;
+                    True ->
+                      f_foldr lvl53_r5qU wild_X1F (f_zip2_rr7 a_ts_a17G a_ts'_a17M)
+                  }
+              }
+          }
+          };
+        C_FAILURE -> C_FAILURE
+      }
+
+$s$wf_unify2_r5qV
+  = \ sc_s5i0 sc1_s5i1 sc2_s5hZ sc3_s5hY ->
+      case sc2_s5hZ of {
+        F_TVAR a_tvn_a17A ->
+          case sc3_s5hY a_tvn_a17A of {
+            F_TVAR a_tvx_a16L ->
+              case eqString a_tvx_a16L a_tvn_a17A of {
+                False ->
+                  $s$wf_unify1_r5qT
+                    a_tvx_a16L sc3_s5hY ($sf_sub_type_r5qQ sc_s5i0 sc1_s5i1 sc3_s5hY);
+                True ->
+                  let { a_t_s4FC = $sf_sub_type_r5qQ sc_s5i0 sc1_s5i1 sc3_s5hY } in
+                  join {
+                    $j_s4Tj
+                      = case f_in_rpA a_tvn_a17A (f_tvars_in'_r5qR a_t_s4FC []) of {
+                          False ->
+                            F_OK
+                              (let {
+                                 a_sub2_s4FE
+                                   = \ a_tvn'_a17v ->
+                                       case eqString a_tvn_a17A a_tvn'_a17v of {
+                                         False -> F_TVAR a_tvn'_a17v;
+                                         True -> a_t_s4FC
+                                       } } in
+                               \ a_tvn1_a17r ->
+                                 f_sub_type_rpr a_sub2_s4FE (sc3_s5hY a_tvn1_a17r));
+                          True -> C_FAILURE
+                        } } in
+                  case a_t_s4FC of {
+                    F_TVAR a_tvx1_X1H ->
+                      case eqString a_tvx1_X1H a_tvn_a17A of {
+                        False -> jump $j_s4Tj;
+                        True -> F_OK sc3_s5hY
+                      };
+                    F_TCONS a_tcx_a16N a_txs_a16O -> jump $j_s4Tj
+                  }
+              };
+            F_TCONS a_tcx_a16N a_txs_a16O ->
+              $s$wf_unify_r5qS
+                a_tcx_a16N
+                a_txs_a16O
+                sc3_s5hY
+                ($sf_sub_type_r5qQ sc_s5i0 sc1_s5i1 sc3_s5hY)
+          };
+        F_TCONS a_tcn_a17F a_ts_a17G ->
+          case eqString a_tcn_a17F sc_s5i0 of {
+            False -> C_FAILURE;
+            True ->
+              f_foldr lvl53_r5qU (F_OK sc3_s5hY) (f_zip2_rr7 a_ts_a17G sc1_s5i1)
+          }
+      }
+end Rec }
+
+lvl54_r5qW = "Main.hs:400:5-42|function f_old_bvar"#
+
+lvl55_r5qX = patError lvl54_r5qW
+
+Rec {
+go6_r5qY
+  = \ ds2_a584 ->
+      case ds2_a584 of {
+        [] -> [];
+        : y_a587 ys_a588 ->
+          : (case y_a587 of { (a_x_a1f8, ds3_d3u2) ->
+             case ds3_d3u2 of { F_SCHEME ds4_d3u3 a_t_a1f9 ->
+             case ds4_d3u3 of {
+               [] -> a_t_a1f9;
+               : ipv_s3Gm ipv1_s3Gn -> case lvl55_r5qX of wild4_00 { }
+             }
+             }
+             })
+            (go6_r5qY ys_a588)
+      }
+end Rec }
+
+f_id_subst_rpt = \ a_tvn_a17s -> F_TVAR a_tvn_a17s
+
+lvl56_r5qZ = (f_id_subst_rpt, [])
+
+lvl57_r5r0 = F_OK lvl56_r5qZ
+
+main137 = "NIL"#
+
+main136 = unpackCString# main137
+
+main135 = F_VAR main136
+
+c_main_gamma1_r5r1 = "list"#
+
+c_main_gamma2_r5r2 = unpackCString# c_main_gamma1_r5r1
+
+c_main_gamma3_r5r3 = "arrow"#
+
+c_main_gamma4_r5r4 = unpackCString# c_main_gamma3_r5r3
+
+Rec {
+$sgo1_r5r5
+  = \ sc_s5jz sc1_s5jA ->
+      : (: ds1_r5qF (f_tpr_rpk sc_s5jz)) (go7_r5r6 sc1_s5jA)
+
+f_tpr_rpk
+  = \ ds2_d3vl ->
+      case ds2_d3vl of {
+        F_TVAR a_tvname_a16Z ->
+          unpackAppendCString# lvl40_r5qC (++ a_tvname_a16Z lvl42_r5qE);
+        F_TCONS ds3_d3wQ ds4_d3wR ->
+          join {
+            fail_s4FJ _
+              = join {
+                  fail1_s4FM _
+                    = join {
+                        fail2_s4FK _
+                          = case ds4_d3wR of {
+                              [] -> ds3_d3wQ;
+                              : ipv_s3JD ipv1_s3JE ->
+                                unpackAppendCString#
+                                  lvl49_r5qM
+                                  (++
+                                     ds3_d3wQ
+                                     (++
+                                        (f_foldr ++ [] ($sgo1_r5r5 ipv_s3JD ipv1_s3JE)) lvl52_r5qP))
+                            } } in
+                      case eqString ds3_d3wQ c_main_gamma2_r5r2 of {
+                        False -> jump fail2_s4FK (##);
+                        True ->
+                          case ds4_d3wR of {
+                            [] -> jump fail2_s4FK (##);
+                            : a_t_a172 ds7_d3wW ->
+                              case ds7_d3wW of {
+                                [] ->
+                                  unpackAppendCString#
+                                    lvl43_r5qG (++ (f_tpr_rpk a_t_a172) lvl45_r5qI);
+                                : ipv_s3JN ipv1_s3JO -> jump fail2_s4FK (##)
+                              }
+                          }
+                      } } in
+                case eqString ds3_d3wQ lvl48_r5qL of {
+                  False -> jump fail1_s4FM (##);
+                  True ->
+                    case ds4_d3wR of {
+                      [] -> jump fail1_s4FM (##);
+                      : a_t1_a173 ds6_d3wU ->
+                        case ds6_d3wU of {
+                          [] -> jump fail1_s4FM (##);
+                          : a_t2_a174 ds7_d3wV ->
+                            case ds7_d3wV of {
+                              [] ->
+                                unpackAppendCString#
+                                  lvl49_r5qM
+                                  (++
+                                     (f_tpr_rpk a_t1_a173)
+                                     (unpackAppendCString#
+                                        lvl46_r5qJ (++ (f_tpr_rpk a_t2_a174) lvl52_r5qP)));
+                              : ipv_s3JS ipv1_s3JT -> jump fail1_s4FM (##)
+                            }
+                        }
+                    }
+                } } in
+          case eqString ds3_d3wQ c_main_gamma4_r5r4 of {
+            False -> jump fail_s4FJ (##);
+            True ->
+              case ds4_d3wR of {
+                [] -> jump fail_s4FJ (##);
+                : a_t1_a170 ds5_d3wS ->
+                  case ds5_d3wS of {
+                    [] -> jump fail_s4FJ (##);
+                    : a_t2_a171 ds6_d3wT ->
+                      case ds6_d3wT of {
+                        [] ->
+                          unpackAppendCString#
+                            lvl49_r5qM
+                            (++
+                               (f_tpr_rpk a_t1_a170)
+                               (unpackAppendCString#
+                                  lvl50_r5qN (++ (f_tpr_rpk a_t2_a171) lvl52_r5qP)));
+                        : ipv_s3JX ipv1_s3JY -> jump fail_s4FJ (##)
+                      }
+                  }
+              }
+          }
+      }
+
+go7_r5r6
+  = \ ds2_a584 ->
+      case ds2_a584 of {
+        [] -> [];
+        : y_a587 ys_a588 ->
+          : (: ds1_r5qF (f_tpr_rpk y_a587)) (go7_r5r6 ys_a588)
+      }
+end Rec }
+
+c_tbool1_r5r7 = "bool"#
+
+c_tbool2_r5r8 = unpackCString# c_tbool1_r5r7
+
+c_tbool_rpn = F_TCONS c_tbool2_r5r8 []
+
+c_main_gamma5_r5r9 = : c_tbool_rpn []
+
+c_tint1_r5ra = "int"#
+
+c_tint2_r5rb = unpackCString# c_tint1_r5ra
+
+c_tint_rpm = F_TCONS c_tint2_r5rb []
+
+c_main_gamma6_r5rc = : c_tint_rpm []
+
+c_main_gamma7_r5rd = : c_tint_rpm c_main_gamma6_r5rc
+
+c_main_gamma8_r5re = F_TCONS c_main_gamma4_r5r4 c_main_gamma7_r5rd
+
+c_main_gamma9_r5rf = : c_main_gamma8_r5re []
+
+c_main_gamma10_r5rg = : c_tint_rpm c_main_gamma9_r5rf
+
+c_main_gamma11_r5rh
+  = F_TCONS c_main_gamma4_r5r4 c_main_gamma10_r5rg
+
+c_main_gamma12_r5ri = F_SCHEME [] c_main_gamma11_r5rh
+
+c_main_gamma13_r5rj = F_SCHEME [] c_tint_rpm
+
+main109 = "z"#
+
+main108 = unpackCString# main109
+
+c_var_z = F_VAR main108
+
+main111 = F_APE main112 c_var_z
+
+main107 = : main108 []
+
+main106 = : main102 main107
+
+main58 = "x"#
+
+main57 = unpackCString# main58
+
+c_var_x = F_VAR main57
+
+main113 = F_APE c_var_x c_var_z
+
+main110 = F_APE main113 main111
+
+main125 = : main57 []
+
+main105 = main_$sf_foldr main110 main106
+
+main104 = F_LAMBDA main57 main105
+
+main100 = main_$sf_foldr c_var_x main101
+
+main99 = F_LAMBDA main57 main100
+
+main98 = : main99 []
+
+main97 = : main104 main98
+
+main49 = "sum"#
+
+main48 = unpackCString# main49
+
+c_var_sum = F_VAR main48
+
+main76 = : main48 []
+
+main157 = "ones"#
+
+main156 = unpackCString# main157
+
+c_var_ones = F_VAR main156
+
+main161 = : main156 []
+
+main28 = "n"#
+
+main27 = unpackCString# main28
+
+c_var_n = F_VAR main27
+
+main25 = F_APE c_var_n main26
+
+main121 = "map"#
+
+main120 = unpackCString# main121
+
+c_var_map = F_VAR main120
+
+main138 = : main120 []
+
+main144 = "len"#
+
+main143 = unpackCString# main144
+
+c_var_len = F_VAR main143
+
+main151 = : main143 []
+
+main42 = "f"#
+
+main41 = unpackCString# main42
+
+c_var_f = F_VAR main41
+
+main129 = F_APE c_var_map c_var_f
+
+main20 = "b"#
+
+main19 = unpackCString# main20
+
+c_var_b = F_VAR main19
+
+main29 = F_APE c_var_b c_var_n
+
+main24 = F_APE main25 c_var_b
+
+main23 = F_APE main29 main24
+
+main18 = : main19 []
+
+main17 = : main21 main18
+
+main16 = main_$sf_foldr main23 main17
+
+main15 = F_LAMBDA main27 main16
+
+main14 = (main30, main15)
+
+main13 = : main14 []
+
+main35 = "Y"#
+
+main34 = unpackCString# main35
+
+c_var_Y = F_VAR main34
+
+main40 = F_APE c_var_Y c_var_f
+
+main39 = F_APE c_var_f main40
+
+main38 = main_$sf_foldr main39 []
+
+main37 = F_LAMBDA main41 main38
+
+main36 = : main37 []
+
+main43 = : main34 []
+
+main33 = F_LETRECE main43 main36 c_var_Y
+
+main32 = (main44, main33)
+
+main12 = : main32 main13
+
+main92 = "K"#
+
+main91 = unpackCString# main92
+
+c_var_K = F_VAR main91
+
+main93 = F_APE main94 c_var_K
+
+main90 = F_APE main93 c_var_K
+
+main115 = : main91 []
+
+main114 = : main95 main115
+
+main89 = F_LETE main114 main97 main90
+
+main88 = (main116, main89)
+
+main69 = "0"#
+
+main68 = unpackCString# main69
+
+c_cnst_zero = F_VAR main68
+
+c_main_gamma14_r5rk = (main68, c_main_gamma13_r5rj)
+
+main60 = "tail"#
+
+main59 = unpackCString# main60
+
+c_cnst_tail = F_VAR main59
+
+main56 = F_APE c_cnst_tail c_var_x
+
+main150 = F_APE c_var_len main56
+
+main128 = F_APE main129 main56
+
+main55 = F_APE c_var_sum main56
+
+lvl58_r5rl = PushCallStack main59 lvl37_r5qz EmptyCallStack
+
+lvl59_r5rm = lvl (lvl58_r5rl `cast` <Co:4> :: ...)
+
+Rec {
+f_name_sequence_rpM
+  = \ a_ns_a1cA ->
+      : (case f_foldr ++ [] (go5_r5q7 a_ns_a1cA) of {
+           [] -> lvl59_r5rm;
+           : ds2_a3Li xs_a3Lj -> xs_a3Lj
+         })
+        (f_name_sequence_rpM (f_deplete_rpK a_ns_a1cA))
+end Rec }
+
+main85 = "1"#
+
+main84 = unpackCString# main85
+
+c_cnst_one = F_VAR main84
+
+c_main_gamma15_r5rn = (main84, c_main_gamma13_r5rj)
+
+main73 = "null"#
+
+main72 = unpackCString# main73
+
+c_cnst_null = F_VAR main72
+
+main71 = F_APE c_cnst_null c_var_x
+
+main75 = "if"#
+
+main74 = unpackCString# main75
+
+c_cnst_if = F_VAR main74
+
+main70 = F_APE c_cnst_if main71
+
+main67 = F_APE main70 c_cnst_zero
+
+main134 = F_APE main70 main135
+
+main64 = "head"#
+
+main63 = unpackCString# main64
+
+c_cnst_head = F_VAR main63
+
+main62 = F_APE c_cnst_head c_var_x
+
+main131 = F_APE c_var_f main62
+
+lvl60_r5ro = PushCallStack main63 lvl38_r5qA EmptyCallStack
+
+lvl61_r5rp = PushCallStack lvl29_r5q4 lvl27_r5q2 lvl60_r5ro
+
+lvl62_r5rq = badHead (lvl61_r5rp `cast` <Co:4> :: ...)
+
+$wf_al_to_subst_r5rr
+  = \ a_al_s5a1 a_tvn_s5a2 ->
+      case f_in_rpA a_tvn_s5a2 (go4_r5pP a_al_s5a1) of {
+        False -> (# a_tvn_s5a2 #);
+        True ->
+          (# joinrec {
+               go8_X1F ds2_a584
+                 = case ds2_a584 of {
+                     [] -> lvl62_r5rq;
+                     : y_a587 ys_a588 ->
+                       case y_a587 of { (a_k'_a1dz, a_v_a1dA) ->
+                       case eqString a_tvn_s5a2 a_k'_a1dz of {
+                         False -> jump go8_X1F ys_a588;
+                         True -> a_v_a1dA
+                       }
+                       }
+                   }; } in
+             jump go8_X1F a_al_s5a1 #)
+      }
+
+lvl63_r5rs = PushCallStack main63 lvl39_r5qB EmptyCallStack
+
+lvl64_r5rt = PushCallStack lvl29_r5q4 lvl27_r5q2 lvl63_r5rs
+
+lvl65_r5ru = badHead (lvl64_r5rt `cast` <Co:4> :: ...)
+
+f_add_decls_rq5
+  = \ a_gamma_a1er a_ns_a1es a_xs_a1et a_ts_a1eu ->
+      ++
+        (f_zip2_rr7
+           a_xs_a1et
+           (let { lvl66_s4Mv = f_name_sequence_rpM a_ns_a1es } in
+            let {
+              a_unknowns_s4Fv
+                = letrec {
+                    go8_a583
+                      = \ ds2_a584 ->
+                          case ds2_a584 of {
+                            [] -> [];
+                            : y_a587 ys_a588 ->
+                              case y_a587 of { (a_k_a189, a_v_a18a) ->
+                              : (joinrec {
+                                   go9_X1L ds3_X1M
+                                     = case ds3_X1M of {
+                                         [] -> case lvl65_r5ru of wild3_00 { };
+                                         : y1_X1O ys1_X1P ->
+                                           case y1_X1O of { (a_k'_a19Q, a_v1_a19R) ->
+                                           case eqString a_k_a189 a_k'_a19Q of {
+                                             False -> jump go9_X1L ys1_X1P;
+                                             True ->
+                                               case a_v1_a19R of { F_SCHEME a_scvs_a17T a_t_a17U ->
+                                               letrec {
+                                                 go10_X1S
+                                                   = \ ds4_X1T ->
+                                                       case ds4_X1T of {
+                                                         [] -> [];
+                                                         : y2_X1V ys2_X1W ->
+                                                           case f_in_rpA y2_X1V a_scvs_a17T of {
+                                                             False -> : y2_X1V (go10_X1S ys2_X1W);
+                                                             True -> go10_X1S ys2_X1W
+                                                           }
+                                                       }; } in
+                                               go10_X1S (f_tvars_in'_r5qR a_t_a17U [])
+                                               }
+                                           }
+                                           }
+                                       }; } in
+                                 jump go9_X1L a_gamma_a1er)
+                                (go8_a583 ys_a588)
+                              }
+                          }; } in
+                  f_foldr ++ [] (go8_a583 a_gamma_a1er) } in
+            letrec {
+              go8_s5dh
+                = \ ds2_X1G ->
+                    case ds2_X1G of {
+                      [] -> [];
+                      : y_X1I ys_X1J ->
+                        case f_in_rpA y_X1I a_unknowns_s4Fv of {
+                          False -> : y_X1I (go8_s5dh ys_X1J);
+                          True -> go8_s5dh ys_X1J
+                        }
+                    }; } in
+            letrec {
+              go9_a583
+                = \ ds2_a584 ->
+                    case ds2_a584 of {
+                      [] -> [];
+                      : y_a587 ys_a588 ->
+                        : (let {
+                             r_al_s4Fw
+                               = f_zip2_rr7
+                                   (go8_s5dh (f_f_r5q5 [] (f_tvars_in'_r5qR y_a587 [])))
+                                   lvl66_s4Mv } in
+                           F_SCHEME
+                             (go3_r5pJ r_al_s4Fw)
+                             (f_sub_type_rpr
+                                (\ a_tvn_s5a2 ->
+                                   case $wf_al_to_subst_r5rr r_al_s4Fw a_tvn_s5a2 of
+                                   { (# ww_s5bG #) ->
+                                   F_TVAR ww_s5bG
+                                   })
+                                y_a587))
+                          (go9_a583 ys_a588)
+                    }; } in
+            go9_a583 a_ts_a1eu))
+        a_gamma_a1er
+
+main133 = "cons"#
+
+main132 = unpackCString# main133
+
+c_cnst_cons = F_VAR main132
+
+main160 = F_APE c_cnst_cons c_cnst_one
+
+main159 = F_APE main160 c_var_ones
+
+main158 = : main159 []
+
+main155 = F_LETRECE main161 main158 c_var_ones
+
+main154 = (main156, main155)
+
+main130 = F_APE c_cnst_cons main131
+
+main127 = F_APE main130 main128
+
+main126 = F_APE main134 main127
+
+main124 = main_$sf_foldr main126 main125
+
+main123 = F_LAMBDA main41 main124
+
+main122 = : main123 []
+
+main119 = F_LETRECE main138 main122 c_var_map
+
+main118 = (main139, main119)
+
+main66 = "add"#
+
+main65 = unpackCString# main66
+
+c_cnst_add = F_VAR main65
+
+main83 = F_APE c_cnst_add c_cnst_one
+
+main149 = F_APE main83 main150
+
+main148 = F_APE main67 main149
+
+main147 = main_$sf_foldr main148 []
+
+main146 = F_LAMBDA main57 main147
+
+main145 = : main146 []
+
+main142 = F_LETRECE main151 main145 c_var_len
+
+main141 = (main152, main142)
+
+main82 = F_APE main83 c_var_x
+
+main81 = main_$sf_foldr main82 []
+
+main80 = F_LAMBDA main57 main81
+
+main79 = (main86, main80)
+
+main61 = F_APE c_cnst_add main62
+
+main54 = F_APE main61 main55
+
+main53 = F_APE main67 main54
+
+main52 = main_$sf_foldr main53 []
+
+main51 = F_LAMBDA main57 main52
+
+main50 = : main51 []
+
+main47 = F_LETRECE main76 main50 c_var_sum
+
+main46 = (main77, main47)
+
+main11 = : main46 main12
+
+main10 = : main79 main11
+
+main9 = : main88 main10
+
+main8 = : main118 main9
+
+main7 = : main141 main8
+
+main6 = : main154 main7
+
+main5 = f_repeat main6
+
+c_main_gamma16_r5rv = (main65, c_main_gamma12_r5ri)
+
+c_main_ns1_r5rw = I# 0#
+
+c_main_ns_roq = : c_main_ns1_r5rw []
+
+Rec {
+f_tcl_rpO
+  = \ a_gamma_a1cW a_ns_a1cX ds2_d3CG ->
+      case ds2_d3CG of {
+        [] -> lvl57_r5r0;
+        : a_e_a1d0 a_es_a1d1 ->
+          case f_tc_rpN a_gamma_a1cW (: lvl9_r5pI a_ns_a1cX) a_e_a1d0 of {
+            F_OK ds3_d3CF ->
+              case ds3_d3CF of { (a_phi_a1da, a_t_a1db) ->
+              case f_tcl_rpO
+                     (f_sub_te_rpI a_phi_a1da a_gamma_a1cW)
+                     (: c_main_ns1_r5rw a_ns_a1cX)
+                     a_es_a1d1
+              of {
+                F_OK ds4_d3uQ ->
+                  case ds4_d3uQ of { (a_psi_a1dh, a_ts_a1di) ->
+                  F_OK
+                    (f_scomp_rps a_psi_a1dh a_phi_a1da,
+                     : (f_sub_type_rpr a_psi_a1dh a_t_a1db) a_ts_a1di)
+                  };
+                C_FAILURE -> C_FAILURE
+              }
+              };
+            C_FAILURE -> C_FAILURE
+          }
+      }
+
+f_tc_rpN
+  = \ a_gamma_a1cB a_ns_a1cC ds2_d3CP ->
+      case ds2_d3CP of {
+        F_VAR a_x_a1cD ->
+          F_OK
+            (f_id_subst_rpt,
+             join {
+               exit_X1G a_v_a19R
+                 = case a_v_a19R of { F_SCHEME a_scvs_a1do a_t_a1dp ->
+                   f_sub_type_rpr
+                     (let {
+                        a_al_s5a1
+                          = f_zip2_rr7 a_scvs_a1do (f_name_sequence_rpM a_ns_a1cC) } in
+                      \ a_tvn_s5a2 ->
+                        case $wf_al_to_subst_r5rr a_al_s5a1 a_tvn_s5a2 of
+                        { (# ww_s5bG #) ->
+                        F_TVAR ww_s5bG
+                        })
+                     a_t_a1dp
+                   } } in
+             joinrec {
+               go8_a583 ds3_a584
+                 = case ds3_a584 of {
+                     [] -> case lvl65_r5ru of wild2_00 { };
+                     : y_a587 ys_a588 ->
+                       case y_a587 of { (a_k'_a19Q, a_v_a19R) ->
+                       case eqString a_x_a1cD a_k'_a19Q of {
+                         False -> jump go8_a583 ys_a588;
+                         True -> jump exit_X1G a_v_a19R
+                       }
+                       }
+                   }; } in
+             jump go8_a583 a_gamma_a1cB);
+        F_LAMBDA a_x_a1cK a_e_a1cL ->
+          let {
+            r_tvn_s4F8
+              = case f_foldr ++ [] (go5_r5q7 a_ns_a1cC) of {
+                  [] -> lvl59_r5rm;
+                  : ds3_a3Li xs_a3Lj -> xs_a3Lj
+                } } in
+          case f_tc_rpN
+                 (: (a_x_a1cK, F_SCHEME [] (F_TVAR r_tvn_s4F8)) a_gamma_a1cB)
+                 (f_deplete_rpK a_ns_a1cC)
+                 a_e_a1cL
+          of {
+            F_OK ds3_d3vk ->
+              case ds3_d3vk of { (a_phi_a1dY, a_t_a1dZ) ->
+              F_OK
+                (a_phi_a1dY,
+                 F_TCONS
+                   c_main_gamma4_r5r4 (: (a_phi_a1dY r_tvn_s4F8) (: a_t_a1dZ [])))
+              };
+            C_FAILURE -> C_FAILURE
+          };
+        F_APE a_e1_a1cG a_e2_a1cH ->
+          case $sf_tcl_r5rx
+                 a_e1_a1cG
+                 (: a_e2_a1cH [])
+                 (case a_ns_a1cC of {
+                    [] -> case lvl11_r5pL of wild2_00 { };
+                    : a_n_a1a2 a_ns1_a1a3 ->
+                      : (case a_n_a1a2 of { I# x_a3MP -> I# (+# x_a3MP 2#) }) a_ns1_a1a3
+                  })
+                 a_gamma_a1cB
+          of {
+            F_OK ds3_d3ya ->
+              case ds3_d3ya of { (a_phi_a1dJ, ds4_d3yb) ->
+              case ds4_d3yb of {
+                [] -> case lvl8_r5pH of wild4_00 { };
+                : a_t1_a1dK ds5_d3yc ->
+                  case ds5_d3yc of {
+                    [] -> case lvl8_r5pH of wild5_00 { };
+                    : a_t2_a1dL ds6_d3yd ->
+                      case ds6_d3yd of {
+                        [] ->
+                          let {
+                            a_tvn_s4Fc
+                              = case f_foldr ++ [] (go5_r5q7 a_ns_a1cC) of {
+                                  [] -> lvl59_r5rm;
+                                  : ds7_a3Li xs_a3Lj -> xs_a3Lj
+                                } } in
+                          case $s$wf_unify2_r5qV
+                                 c_main_gamma4_r5r4
+                                 (: a_t2_a1dL (: (F_TVAR a_tvn_s4Fc) []))
+                                 a_t1_a1dK
+                                 a_phi_a1dJ
+                          of {
+                            F_OK a_phi1_a1dO -> F_OK (a_phi1_a1dO, a_phi1_a1dO a_tvn_s4Fc);
+                            C_FAILURE -> C_FAILURE
+                          };
+                        : ipv_s3N0 ipv1_s3N1 -> case lvl8_r5pH of wild6_00 { }
+                      }
+                  }
+              }
+              };
+            C_FAILURE -> C_FAILURE
+          };
+        F_LETE a_xs_a1cO a_es_a1cP a_e_a1cQ ->
+          case f_tcl_rpO a_gamma_a1cB (: lvl9_r5pI a_ns_a1cC) a_es_a1cP of {
+            F_OK ds3_d3CA ->
+              case ds3_d3CA of { (a_phi_a1eh, a_ts_a1ei) ->
+              let { ds4_s4Ff = : c_main_ns1_r5rw a_ns_a1cC } in
+              case f_tc_rpN
+                     (f_add_decls_rq5
+                        (f_sub_te_rpI a_phi_a1eh a_gamma_a1cB)
+                        (: c_main_ns1_r5rw ds4_s4Ff)
+                        a_xs_a1cO
+                        a_ts_a1ei)
+                     (: lvl9_r5pI ds4_s4Ff)
+                     a_e_a1cQ
+              of {
+                F_OK ds5_d3uJ ->
+                  case ds5_d3uJ of { (a_phi'_a1ep, a_t_a1eq) ->
+                  F_OK (f_scomp_rps a_phi'_a1ep a_phi_a1eh, a_t_a1eq)
+                  };
+                C_FAILURE -> C_FAILURE
+              }
+              };
+            C_FAILURE -> C_FAILURE
+          };
+        F_LETRECE a_xs_a1cT a_es_a1cU a_e_a1cV ->
+          let { ds3_s4Fn = : lvl9_r5pI a_ns_a1cC } in
+          let {
+            r_nbvs_s4Fm
+              = go1_r5pE
+                  (f_zip2_rr7
+                     a_xs_a1cT (f_name_sequence_rpM (: lvl9_r5pI ds3_s4Fn))) } in
+          case f_tcl_rpO
+                 (++ r_nbvs_s4Fm a_gamma_a1cB)
+                 (: c_main_ns1_r5rw ds3_s4Fn)
+                 a_es_a1cU
+          of {
+            F_OK ds4_d3Ct ->
+              case ds4_d3Ct of { (a_phi_a1f3, a_ts_a1f4) ->
+              let { r_nbvs'_s4Fs = f_sub_te_rpI a_phi_a1f3 r_nbvs_s4Fm } in
+              case f_foldr
+                     lvl53_r5qU
+                     (F_OK a_phi_a1f3)
+                     (f_zip2_rr7 a_ts_a1f4 (go6_r5qY r_nbvs'_s4Fs))
+              of {
+                F_OK a_phi1_a1fi ->
+                  let { ds5_s4Fp = : c_main_ns1_r5rw a_ns_a1cC } in
+                  case f_tc_rpN
+                         (f_add_decls_rq5
+                            (f_sub_te_rpI a_phi1_a1fi (f_sub_te_rpI a_phi_a1f3 a_gamma_a1cB))
+                            (: c_main_ns1_r5rw ds5_s4Fp)
+                            (go2_r5pF r_nbvs'_s4Fs)
+                            (go6_r5qY (f_sub_te_rpI a_phi1_a1fi r_nbvs'_s4Fs)))
+                         (: lvl9_r5pI ds5_s4Fp)
+                         a_e_a1cV
+                  of {
+                    F_OK ds6_d3uJ ->
+                      case ds6_d3uJ of { (a_phi'_a1ep, a_t_a1eq) ->
+                      F_OK (f_scomp_rps a_phi'_a1ep a_phi1_a1fi, a_t_a1eq)
+                      };
+                    C_FAILURE -> C_FAILURE
+                  };
+                C_FAILURE -> C_FAILURE
+              }
+              };
+            C_FAILURE -> C_FAILURE
+          }
+      }
+
+$sf_tcl_r5rx
+  = \ sc_s5gR sc1_s5gS sc2_s5gQ sc3_s5gP ->
+      case f_tc_rpN sc3_s5gP (: lvl9_r5pI sc2_s5gQ) sc_s5gR of {
+        F_OK ds2_d3CF ->
+          case ds2_d3CF of { (a_phi_a1da, a_t_a1db) ->
+          case f_tcl_rpO
+                 (f_sub_te_rpI a_phi_a1da sc3_s5gP)
+                 (: c_main_ns1_r5rw sc2_s5gQ)
+                 sc1_s5gS
+          of {
+            F_OK ds3_d3uQ ->
+              case ds3_d3uQ of { (a_psi_a1dh, a_ts_a1di) ->
+              F_OK
+                (f_scomp_rps a_psi_a1dh a_phi_a1da,
+                 : (f_sub_type_rpr a_psi_a1dh a_t_a1db) a_ts_a1di)
+              };
+            C_FAILURE -> C_FAILURE
+          }
+          };
+        C_FAILURE -> C_FAILURE
+      }
+end Rec }
+
+c_star1_r5ry = "*"#
+
+c_star2_r5rz = unpackCString# c_star1_r5ry
+
+c_star_roo = F_TVAR c_star2_r5rz
+
+c_main_gamma17_r5rA = : c_star_roo []
+
+c_main_gamma18_r5rB
+  = F_TCONS c_main_gamma2_r5r2 c_main_gamma17_r5rA
+
+c_main_gamma19_r5rC = : c_main_gamma18_r5rB []
+
+c_main_gamma20_r5rD = : c_main_gamma18_r5rB c_main_gamma19_r5rC
+
+c_main_gamma21_r5rE
+  = F_TCONS c_main_gamma4_r5r4 c_main_gamma20_r5rD
+
+c_main_gamma22_r5rF = : c_main_gamma21_r5rE []
+
+c_main_gamma23_r5rG = : c_main_gamma18_r5rB c_main_gamma5_r5r9
+
+c_main_gamma24_r5rH
+  = F_TCONS c_main_gamma4_r5r4 c_main_gamma23_r5rG
+
+c_main_gamma25_r5rI = : c_main_gamma18_r5rB c_main_gamma17_r5rA
+
+c_main_gamma26_r5rJ
+  = F_TCONS c_main_gamma4_r5r4 c_main_gamma25_r5rI
+
+c_main_gamma27_r5rK = : c_star_roo c_main_gamma17_r5rA
+
+c_main_gamma28_r5rL
+  = F_TCONS c_main_gamma4_r5r4 c_main_gamma27_r5rK
+
+c_main_gamma29_r5rM = : c_main_gamma28_r5rL []
+
+c_main_gamma30_r5rN = : c_star_roo c_main_gamma29_r5rM
+
+c_main_gamma31_r5rO
+  = F_TCONS c_main_gamma4_r5r4 c_main_gamma30_r5rN
+
+c_main_gamma32_r5rP = : c_main_gamma31_r5rO []
+
+c_main_gamma33_r5rQ = : c_tbool_rpn c_main_gamma32_r5rP
+
+c_main_gamma34_r5rR
+  = F_TCONS c_main_gamma4_r5r4 c_main_gamma33_r5rQ
+
+c_main_gamma35_r5rS = : c_star_roo c_main_gamma22_r5rF
+
+c_main_gamma36_r5rT
+  = F_TCONS c_main_gamma4_r5r4 c_main_gamma35_r5rS
+
+c_main_gamma37_r5rU = : c_star2_r5rz []
+
+c_main_gamma38_r5rV
+  = F_SCHEME c_main_gamma37_r5rU c_main_gamma34_r5rR
+
+c_main_gamma39_r5rW = (main74, c_main_gamma38_r5rV)
+
+c_main_gamma40_r5rX
+  = F_SCHEME c_main_gamma37_r5rU c_main_gamma36_r5rT
+
+c_main_gamma41_r5rY = (main132, c_main_gamma40_r5rX)
+
+c_main_gamma42_r5rZ
+  = F_SCHEME c_main_gamma37_r5rU c_main_gamma26_r5rJ
+
+c_main_gamma43_r5s0 = (main63, c_main_gamma42_r5rZ)
+
+c_main_gamma44_r5s1
+  = F_SCHEME c_main_gamma37_r5rU c_main_gamma21_r5rE
+
+c_main_gamma45_r5s2 = (main59, c_main_gamma44_r5s1)
+
+c_main_gamma46_r5s3
+  = F_SCHEME c_main_gamma37_r5rU c_main_gamma24_r5rH
+
+c_main_gamma47_r5s4 = (main72, c_main_gamma46_r5s3)
+
+c_main_gamma48_r5s5
+  = F_SCHEME c_main_gamma37_r5rU c_main_gamma18_r5rB
+
+c_main_gamma49_r5s6 = (main136, c_main_gamma48_r5s5)
+
+c_main_gamma50_r5s7 = : c_main_gamma49_r5s6 []
+
+c_main_gamma51_r5s8 = : c_main_gamma47_r5s4 c_main_gamma50_r5s7
+
+c_main_gamma52_r5s9 = : c_main_gamma45_r5s2 c_main_gamma51_r5s8
+
+c_main_gamma53_r5sa = : c_main_gamma43_r5s0 c_main_gamma52_r5s9
+
+c_main_gamma54_r5sb = : c_main_gamma41_r5rY c_main_gamma53_r5sa
+
+c_main_gamma55_r5sc = : c_main_gamma39_r5rW c_main_gamma54_r5sb
+
+c_main_gamma56_r5sd = : c_main_gamma15_r5rn c_main_gamma55_r5sc
+
+c_main_gamma57_r5se = : c_main_gamma14_r5rk c_main_gamma56_r5sd
+
+c_main_gamma_ron = : c_main_gamma16_r5rv c_main_gamma57_r5se
+
+Rec {
+main_go1
+  = \ ds2_a584 ->
+      case ds2_a584 of {
+        [] -> [];
+        : y_a587 ys_a588 ->
+          : (case y_a587 of { (a_name_a1fr, a_expr_a1fs) ->
+             ++
+               a_name_a1fr
+               (unpackAppendCString#
+                  lvl3_r5pA
+                  (case f_tc_rpN c_main_gamma_ron c_main_ns_roq a_expr_a1fs of {
+                     F_OK ipv_s4kM ->
+                       case ipv_s4kM of { (a_phi_aUa, a_tpe_aUb) ->
+                       ++ (f_tpr_rpk a_tpe_aUb) main3
+                       };
+                     C_FAILURE -> lvl2_r5pz
+                   }))
+             })
+            (main_go1 ys_a588)
+      }
+end Rec }
+
+main1
+  = \ s_a3NB ->
+      case $wallocaBytesAligned
+             4# 4# (getArgs2 `cast` <Co:8> :: ...) s_a3NB
+      of
+      { (# ipv_a3ND, ipv1_a3NE #) ->
+      case ipv1_a3NE of {
+        [] -> main163 ipv_a3ND;
+        : n_a1yv ds3_d3Dn ->
+          hPutStr2
+            stdout
+            (case readEither8 (run ($fReadInt1 minPrec readEither7) n_a1yv)
+             of {
+               [] -> case main162 of wild2_00 { };
+               : x_a4QS ds4_a4QT ->
+                 case ds4_a4QT of {
+                   [] ->
+                     case x_a4QS of { I# ww_s5aa ->
+                     ++
+                       ($wf_sumcode'
+                          (f_foldr ++ [] (main_go1 (f_foldr ++ [] ($wf_take ww_s5aa main5))))
+                          0#
+                          0#)
+                       main3
+                     };
+                   : ipv2_a56s ipv3_a56t -> case main2 of wild3_00 { }
+                 }
+             })
+            False
+            ipv_a3ND
+      }
+      }
+
+main = main1 `cast` <Co:3> :: ...
+
+main164 = runMainIO1 (main1 `cast` <Co:3> :: ...)
+
+main = main164 `cast` <Co:3> :: ...
+
+

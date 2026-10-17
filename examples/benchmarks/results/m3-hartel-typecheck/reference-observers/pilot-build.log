@@ -1,0 +1,1 @@
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-typecheck-originals/infer.sml:21:33: warning: binding is not exhaustive (missing case: nil)

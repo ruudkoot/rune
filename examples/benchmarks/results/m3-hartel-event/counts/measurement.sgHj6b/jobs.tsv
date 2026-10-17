@@ -1,0 +1,1 @@
+event-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/hartel-event-finite.sml shared/hartel-event-kernel.sml shared/hartel-event-driver.sml event-strict/benchmark.sml shared/main.sml	100 100000 normal.state	event-strict/normal.expected	normal.state

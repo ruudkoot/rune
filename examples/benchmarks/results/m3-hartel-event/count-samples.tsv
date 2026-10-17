@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+event-lazy	normal	rune	O2	count	1	1	pass	40.81	40.67	0.09	76160	7098694044	17103309768	513891007	counts/measurement.WkvaeN/event-lazy/rune/fresh.1
+event-lazy	normal	rune:opt	O2	count	1	1	pass	21.58	21.57	0.10	76600	7098694044	17103309768	513891007	counts/measurement.WkvaeN/event-lazy/rune-opt/fresh.1
+event-lazy	normal	rune:new	O2	count	1	1	pass	47.47	47.37	0.11	82980	4205167376	17103309768	513891007	counts/measurement.WkvaeN/event-lazy/rune-new/fresh.1
+event-lazy	normal	rune:jit	O2	count	1	1	pass	20.83	20.71	0.16	79676	4205167376	17103309768	513891007	counts/measurement.WkvaeN/event-lazy/rune-jit/fresh.1
+event-strict	normal	rune	O2	count	1	1	pass	24.28	24.29	0.03	38652	4375974229	8862101712	251828246	counts/measurement.sgHj6b/event-strict/rune/fresh.1
+event-strict	normal	rune:opt	O2	count	1	1	pass	10.62	10.58	0.06	40024	4375974229	8862101712	251828246	counts/measurement.sgHj6b/event-strict/rune-opt/fresh.1
+event-strict	normal	rune:new	O2	count	1	1	pass	19.56	19.61	0.06	46084	2576192219	8862101712	251828246	counts/measurement.sgHj6b/event-strict/rune-new/fresh.1
+event-strict	normal	rune:jit	O2	count	1	1	pass	9.44	9.41	0.04	47160	2576192219	8862101712	251828246	counts/measurement.sgHj6b/event-strict/rune-jit/fresh.1

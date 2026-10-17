@@ -1,0 +1,73 @@
+PASS event/lazy/original and independent state 0
+PASS event/lazy/original and independent state 1
+PASS event/lazy/original and independent state 3
+PASS event/lazy/original and independent state 25
+PASS event/lazy/original and independent state 26
+PASS event/lazy/original and independent state 28
+PASS event/lazy/original and independent state 29
+PASS event/lazy/original and independent state 50
+PASS event/lazy/original and independent state 51
+PASS event/lazy/original and independent state 100
+PASS event/lazy/original and independent state 200
+PASS event/lazy/original and independent state 1000
+PASS event/lazy/original and independent event sequence 0
+PASS event/lazy/original and independent event sequence 1
+PASS event/lazy/original and independent event sequence 3
+PASS event/lazy/original and independent event sequence 25
+PASS event/lazy/original and independent event sequence 26
+PASS event/lazy/original and independent event sequence 28
+PASS event/lazy/original and independent event sequence 29
+PASS event/lazy/original and independent event sequence 50
+PASS event/lazy/original and independent event sequence 51
+PASS event/lazy/original and independent event sequence 100
+PASS event/lazy/original and independent event sequence 200
+PASS event/lazy/original and independent event sequence 1000
+PASS event/lazy/original dependency construction
+PASS event/lazy/NAND three-state truth table
+PASS event/lazy/low NAND input avoids unused right
+PASS event/lazy/end-time cutoff precedes wire and state demand
+PASS event/lazy/stable pending-event tie ordering
+PASS event/lazy/persistent state update
+PASS event/lazy/finite-state evaluation policy
+PASS event/lazy/no events leave initial state undemanded
+PASS event/lazy/source recalculate callback
+PASS event/lazy/fresh state across cached clock runs
+PASS event/lazy/consumer
+PASS event/lazy/wrong result rejected
+PASS event/strict/original and independent state 0
+PASS event/strict/original and independent state 1
+PASS event/strict/original and independent state 3
+PASS event/strict/original and independent state 25
+PASS event/strict/original and independent state 26
+PASS event/strict/original and independent state 28
+PASS event/strict/original and independent state 29
+PASS event/strict/original and independent state 50
+PASS event/strict/original and independent state 51
+PASS event/strict/original and independent state 100
+PASS event/strict/original and independent state 200
+PASS event/strict/original and independent state 1000
+PASS event/strict/original and independent event sequence 0
+PASS event/strict/original and independent event sequence 1
+PASS event/strict/original and independent event sequence 3
+PASS event/strict/original and independent event sequence 25
+PASS event/strict/original and independent event sequence 26
+PASS event/strict/original and independent event sequence 28
+PASS event/strict/original and independent event sequence 29
+PASS event/strict/original and independent event sequence 50
+PASS event/strict/original and independent event sequence 51
+PASS event/strict/original and independent event sequence 100
+PASS event/strict/original and independent event sequence 200
+PASS event/strict/original and independent event sequence 1000
+PASS event/strict/original dependency construction
+PASS event/strict/NAND three-state truth table
+PASS event/strict/low NAND input avoids unused right
+PASS event/strict/end-time cutoff precedes wire and state demand
+PASS event/strict/stable pending-event tie ordering
+PASS event/strict/persistent state update
+PASS event/strict/finite-state evaluation policy
+PASS event/strict/no events leave initial state undemanded
+PASS event/strict/source recalculate callback
+PASS event/strict/fresh state across cached clock runs
+PASS event/strict/consumer
+PASS event/strict/wrong result rejected
+SUMMARY 72 checks, 0 failed

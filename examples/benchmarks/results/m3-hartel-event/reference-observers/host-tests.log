@@ -1,0 +1,1413 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS event/lazy/original and independent state 0
+PASS event/lazy/original and independent state 1
+PASS event/lazy/original and independent state 3
+PASS event/lazy/original and independent state 25
+PASS event/lazy/original and independent state 26
+PASS event/lazy/original and independent state 28
+PASS event/lazy/original and independent state 29
+PASS event/lazy/original and independent state 50
+PASS event/lazy/original and independent state 51
+PASS event/lazy/original and independent state 100
+PASS event/lazy/original and independent state 200
+PASS event/lazy/original and independent state 1000
+PASS event/lazy/original and independent event sequence 0
+PASS event/lazy/original and independent event sequence 1
+PASS event/lazy/original and independent event sequence 3
+PASS event/lazy/original and independent event sequence 25
+PASS event/lazy/original and independent event sequence 26
+PASS event/lazy/original and independent event sequence 28
+PASS event/lazy/original and independent event sequence 29
+PASS event/lazy/original and independent event sequence 50
+PASS event/lazy/original and independent event sequence 51
+PASS event/lazy/original and independent event sequence 100
+PASS event/lazy/original and independent event sequence 200
+PASS event/lazy/original and independent event sequence 1000
+PASS event/lazy/original dependency construction
+PASS event/lazy/NAND three-state truth table
+PASS event/lazy/low NAND input avoids unused right
+PASS event/lazy/end-time cutoff precedes wire and state demand
+PASS event/lazy/stable pending-event tie ordering
+PASS event/lazy/persistent state update
+PASS event/lazy/finite-state evaluation policy
+PASS event/lazy/no events leave initial state undemanded
+PASS event/lazy/source recalculate callback
+PASS event/lazy/fresh state across cached clock runs
+PASS event/lazy/consumer
+PASS event/lazy/wrong result rejected
+PASS event/strict/original and independent state 0
+PASS event/strict/original and independent state 1
+PASS event/strict/original and independent state 3
+PASS event/strict/original and independent state 25
+PASS event/strict/original and independent state 26
+PASS event/strict/original and independent state 28
+PASS event/strict/original and independent state 29
+PASS event/strict/original and independent state 50
+PASS event/strict/original and independent state 51
+PASS event/strict/original and independent state 100
+PASS event/strict/original and independent state 200
+PASS event/strict/original and independent state 1000
+PASS event/strict/original and independent event sequence 0
+PASS event/strict/original and independent event sequence 1
+PASS event/strict/original and independent event sequence 3
+PASS event/strict/original and independent event sequence 25
+PASS event/strict/original and independent event sequence 26
+PASS event/strict/original and independent event sequence 28
+PASS event/strict/original and independent event sequence 29
+PASS event/strict/original and independent event sequence 50
+PASS event/strict/original and independent event sequence 51
+PASS event/strict/original and independent event sequence 100
+PASS event/strict/original and independent event sequence 200
+PASS event/strict/original and independent event sequence 1000
+PASS event/strict/original dependency construction
+PASS event/strict/NAND three-state truth table
+PASS event/strict/low NAND input avoids unused right
+PASS event/strict/end-time cutoff precedes wire and state demand
+PASS event/strict/stable pending-event tie ordering
+PASS event/strict/persistent state update
+PASS event/strict/finite-state evaluation policy
+PASS event/strict/no events leave initial state undemanded
+PASS event/strict/source recalculate callback
+PASS event/strict/fresh state across cached clock runs
+PASS event/strict/consumer
+PASS event/strict/wrong result rejected
+SUMMARY 72 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/event-originals/finite.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/event-originals/finite.sml:19.32 Warning: calling polyEqual
+functor BenchEventFiniteFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a seq
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t * 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val defer : (unit -> 'a D.t) -> 'a D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val nth : 'a <BaseFct>.<resultStr>.node D.t -> int -> 'a
+  val update :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val unify :
+      ''a <BaseFct>.<resultStr>.node D.t
+       -> ''a -> ''a <BaseFct>.<resultStr>.node D.t
+  val foldl :
+      ('a D.t -> 'b -> 'a D.t)
+       -> 'a D.t -> 'b <BaseFct>.<resultStr>.node D.t -> 'a D.t
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/event-originals/kernel.sml]
+functor BenchEventFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure L : <sig>
+  structure S : <sig>
+  structure F : <sig>
+  type three
+  type state
+  type event
+  type func
+  val at :
+      int -> int -> <BaseFct>.<resultStr>.three -> <BaseFct>.<resultStr>.event
+  val time : <BaseFct>.<resultStr>.event -> int
+  val wire : <BaseFct>.<resultStr>.event -> int
+  val what : <BaseFct>.<resultStr>.event -> <BaseFct>.<resultStr>.three
+  val compareEvents :
+      <BaseFct>.<resultStr>.event -> <BaseFct>.<resultStr>.event -> order
+  val stateView : 'a D.t BenchLazy.state ref -> 'a D.t
+  val stateAt :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t BenchLazy.state ref
+       -> int -> 'a
+  val update :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t BenchLazy.state ref
+       -> int
+       -> 'a BenchLazy.state ref
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t BenchLazy.state ref
+  val nand :
+      <BaseFct>.<resultStr>.three BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.three BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.three
+  val nandGate :
+      int
+       -> int
+       -> int
+       -> int
+       -> <BaseFct>.<resultStr>.three <BaseFct>.<resultStr>.F.<returnStr>.node 
+             D.t BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.event
+  val definition : int -> <BaseFct>.<resultStr>.func
+  val recalculate :
+      <BaseFct>.<resultStr>.func
+       -> int
+       -> int -> <BaseFct>.<resultStr>.state -> <BaseFct>.<resultStr>.event
+  val numberWires : int
+  val initialState :
+      <BaseFct>.<resultStr>.three <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+           BenchLazy.state ref
+  val insert :
+      int <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val dependencyTable :
+      int <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t BenchLazy.state 
+         ref
+  val dependencies : int -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val finiteStream :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a BenchStream.node BenchLazy.delay
+  val merge :
+      ('a -> 'a -> order)
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.state ref
+       -> 'a BenchStream.node BenchLazy.delay
+  val length : 'a BenchStream.node BenchLazy.delay -> int
+  val take :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val drop :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.state ref
+  val sort :
+      ('a -> 'a -> order)
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val clock :
+      int
+       -> int
+       -> int
+       -> int
+       -> <BaseFct>.<resultStr>.event BenchStream.node BenchLazy.state ref
+  val initialEvents :
+      <BaseFct>.<resultStr>.event BenchStream.node BenchLazy.delay
+  val simulate :
+      <BaseFct>.<resultStr>.event BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.three <BaseFct>.<resultStr>.F.<returnStr>.node 
+             D.t BenchLazy.state ref
+       -> int
+       -> <BaseFct>.<resultStr>.event BenchStream.node BenchLazy.state ref
+  val findLastState :
+      <BaseFct>.<resultStr>.event BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.three <BaseFct>.<resultStr>.F.<returnStr>.node 
+             D.t BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.three <BaseFct>.<resultStr>.F.<returnStr>.node 
+             D.t BenchLazy.state ref
+  val show : <BaseFct>.<resultStr>.three -> char
+  val benchmark : int -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/event-originals/driver.sml]
+[autoloading]
+[autoloading done]
+functor BenchEventDriverFn(P: sig
+  val benchmark : int -> string
+end) :
+sig
+  val read : string -> TextIO.vector
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/event-originals/tests.sml]
+PASS event/lazy/original and independent state 0
+PASS event/lazy/original and independent state 1
+PASS event/lazy/original and independent state 3
+PASS event/lazy/original and independent state 25
+PASS event/lazy/original and independent state 26
+PASS event/lazy/original and independent state 28
+PASS event/lazy/original and independent state 29
+PASS event/lazy/original and independent state 50
+PASS event/lazy/original and independent state 51
+PASS event/lazy/original and independent state 100
+PASS event/lazy/original and independent state 200
+PASS event/lazy/original and independent state 1000
+PASS event/lazy/original and independent event sequence 0
+PASS event/lazy/original and independent event sequence 1
+PASS event/lazy/original and independent event sequence 3
+PASS event/lazy/original and independent event sequence 25
+PASS event/lazy/original and independent event sequence 26
+PASS event/lazy/original and independent event sequence 28
+PASS event/lazy/original and independent event sequence 29
+PASS event/lazy/original and independent event sequence 50
+PASS event/lazy/original and independent event sequence 51
+PASS event/lazy/original and independent event sequence 100
+PASS event/lazy/original and independent event sequence 200
+PASS event/lazy/original and independent event sequence 1000
+PASS event/lazy/original dependency construction
+PASS event/lazy/NAND three-state truth table
+PASS event/lazy/low NAND input avoids unused right
+PASS event/lazy/end-time cutoff precedes wire and state demand
+PASS event/lazy/stable pending-event tie ordering
+PASS event/lazy/persistent state update
+PASS event/lazy/finite-state evaluation policy
+PASS event/lazy/no events leave initial state undemanded
+PASS event/lazy/source recalculate callback
+PASS event/lazy/fresh state across cached clock runs
+PASS event/lazy/consumer
+PASS event/lazy/wrong result rejected
+PASS event/strict/original and independent state 0
+PASS event/strict/original and independent state 1
+PASS event/strict/original and independent state 3
+PASS event/strict/original and independent state 25
+PASS event/strict/original and independent state 26
+PASS event/strict/original and independent state 28
+PASS event/strict/original and independent state 29
+PASS event/strict/original and independent state 50
+PASS event/strict/original and independent state 51
+PASS event/strict/original and independent state 100
+PASS event/strict/original and independent state 200
+PASS event/strict/original and independent state 1000
+PASS event/strict/original and independent event sequence 0
+PASS event/strict/original and independent event sequence 1
+PASS event/strict/original and independent event sequence 3
+PASS event/strict/original and independent event sequence 25
+PASS event/strict/original and independent event sequence 26
+PASS event/strict/original and independent event sequence 28
+PASS event/strict/original and independent event sequence 29
+PASS event/strict/original and independent event sequence 50
+PASS event/strict/original and independent event sequence 51
+PASS event/strict/original and independent event sequence 100
+PASS event/strict/original and independent event sequence 200
+PASS event/strict/original and independent event sequence 1000
+PASS event/strict/original dependency construction
+PASS event/strict/NAND three-state truth table
+PASS event/strict/low NAND input avoids unused right
+PASS event/strict/end-time cutoff precedes wire and state demand
+PASS event/strict/stable pending-event tie ordering
+PASS event/strict/persistent state update
+PASS event/strict/finite-state evaluation policy
+PASS event/strict/no events leave initial state undemanded
+PASS event/strict/source recalculate callback
+PASS event/strict/fresh state across cached clock runs
+PASS event/strict/consumer
+PASS event/strict/wrong result rejected
+functor EventTestsFn(P: sig
+  structure D : <sig>
+  val policy : string
+  val strict : bool
+end) :
+sig
+  structure K : <sig>
+  structure Driver : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  val base : string
+  val label : string -> string
+  val read : string -> TextIO.vector
+  val trace : int -> string
+  val join : int list -> string
+end
+structure LazyEventTests : sig
+  structure K : <sig>
+  structure Driver : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  val base : string
+  val label : string -> string
+  val read : string -> TextIO.vector
+  val trace : int -> string
+  val join : int list -> string
+end
+structure StrictEventTests : sig
+  structure K : <sig>
+  structure Driver : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  val base : string
+  val label : string -> string
+  val read : string -> TextIO.vector
+  val trace : int -> string
+  val join : int list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 72 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/event-originals/finite.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/event-originals/finite.sml:19.32 Warning: calling polyEqual
+functor BenchEventFiniteFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a seq
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t * 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val defer : (unit -> 'a D.t) -> 'a D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val nth : 'a <BaseFct>.<resultStr>.node D.t -> int -> 'a
+  val update :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val unify :
+      ''a <BaseFct>.<resultStr>.node D.t
+       -> ''a -> ''a <BaseFct>.<resultStr>.node D.t
+  val foldl :
+      ('a D.t -> 'b -> 'a D.t)
+       -> 'a D.t -> 'b <BaseFct>.<resultStr>.node D.t -> 'a D.t
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/event-originals/kernel.sml]
+functor BenchEventFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure L : <sig>
+  structure S : <sig>
+  structure F : <sig>
+  type three
+  type state
+  type event
+  type func
+  val at :
+      int -> int -> <BaseFct>.<resultStr>.three -> <BaseFct>.<resultStr>.event
+  val time : <BaseFct>.<resultStr>.event -> int
+  val wire : <BaseFct>.<resultStr>.event -> int
+  val what : <BaseFct>.<resultStr>.event -> <BaseFct>.<resultStr>.three
+  val compareEvents :
+      <BaseFct>.<resultStr>.event -> <BaseFct>.<resultStr>.event -> order
+  val stateView : 'a D.t BenchLazy.state ref -> 'a D.t
+  val stateAt :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t BenchLazy.state ref
+       -> int -> 'a
+  val update :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t BenchLazy.state ref
+       -> int
+       -> 'a BenchLazy.state ref
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t BenchLazy.state ref
+  val nand :
+      <BaseFct>.<resultStr>.three BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.three BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.three
+  val nandGate :
+      int
+       -> int
+       -> int
+       -> int
+       -> <BaseFct>.<resultStr>.three <BaseFct>.<resultStr>.F.<returnStr>.node 
+             D.t BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.event
+  val definition : int -> <BaseFct>.<resultStr>.func
+  val recalculate :
+      <BaseFct>.<resultStr>.func
+       -> int
+       -> int -> <BaseFct>.<resultStr>.state -> <BaseFct>.<resultStr>.event
+  val numberWires : int
+  val initialState :
+      <BaseFct>.<resultStr>.three <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+           BenchLazy.state ref
+  val insert :
+      int <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val dependencyTable :
+      int <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t BenchLazy.state 
+         ref
+  val dependencies : int -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val finiteStream :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a BenchStream.node BenchLazy.delay
+  val merge :
+      ('a -> 'a -> order)
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.state ref
+       -> 'a BenchStream.node BenchLazy.delay
+  val length : 'a BenchStream.node BenchLazy.delay -> int
+  val take :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val drop :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.state ref
+  val sort :
+      ('a -> 'a -> order)
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val clock :
+      int
+       -> int
+       -> int
+       -> int
+       -> <BaseFct>.<resultStr>.event BenchStream.node BenchLazy.state ref
+  val initialEvents :
+      <BaseFct>.<resultStr>.event BenchStream.node BenchLazy.delay
+  val simulate :
+      <BaseFct>.<resultStr>.event BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.three <BaseFct>.<resultStr>.F.<returnStr>.node 
+             D.t BenchLazy.state ref
+       -> int
+       -> <BaseFct>.<resultStr>.event BenchStream.node BenchLazy.state ref
+  val findLastState :
+      <BaseFct>.<resultStr>.event BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.three <BaseFct>.<resultStr>.F.<returnStr>.node 
+             D.t BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.three <BaseFct>.<resultStr>.F.<returnStr>.node 
+             D.t BenchLazy.state ref
+  val show : <BaseFct>.<resultStr>.three -> char
+  val benchmark : int -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/event-originals/driver.sml]
+[autoloading]
+[autoloading done]
+functor BenchEventDriverFn(P: sig
+  val benchmark : int -> string
+end) :
+sig
+  val read : string -> TextIO.vector
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/event-originals/tests.sml]
+PASS event/lazy/original and independent state 0
+PASS event/lazy/original and independent state 1
+PASS event/lazy/original and independent state 3
+PASS event/lazy/original and independent state 25
+PASS event/lazy/original and independent state 26
+PASS event/lazy/original and independent state 28
+PASS event/lazy/original and independent state 29
+PASS event/lazy/original and independent state 50
+PASS event/lazy/original and independent state 51
+PASS event/lazy/original and independent state 100
+PASS event/lazy/original and independent state 200
+PASS event/lazy/original and independent state 1000
+PASS event/lazy/original and independent event sequence 0
+PASS event/lazy/original and independent event sequence 1
+PASS event/lazy/original and independent event sequence 3
+PASS event/lazy/original and independent event sequence 25
+PASS event/lazy/original and independent event sequence 26
+PASS event/lazy/original and independent event sequence 28
+PASS event/lazy/original and independent event sequence 29
+PASS event/lazy/original and independent event sequence 50
+PASS event/lazy/original and independent event sequence 51
+PASS event/lazy/original and independent event sequence 100
+PASS event/lazy/original and independent event sequence 200
+PASS event/lazy/original and independent event sequence 1000
+PASS event/lazy/original dependency construction
+PASS event/lazy/NAND three-state truth table
+PASS event/lazy/low NAND input avoids unused right
+PASS event/lazy/end-time cutoff precedes wire and state demand
+PASS event/lazy/stable pending-event tie ordering
+PASS event/lazy/persistent state update
+PASS event/lazy/finite-state evaluation policy
+PASS event/lazy/no events leave initial state undemanded
+PASS event/lazy/source recalculate callback
+PASS event/lazy/fresh state across cached clock runs
+PASS event/lazy/consumer
+PASS event/lazy/wrong result rejected
+PASS event/strict/original and independent state 0
+PASS event/strict/original and independent state 1
+PASS event/strict/original and independent state 3
+PASS event/strict/original and independent state 25
+PASS event/strict/original and independent state 26
+PASS event/strict/original and independent state 28
+PASS event/strict/original and independent state 29
+PASS event/strict/original and independent state 50
+PASS event/strict/original and independent state 51
+PASS event/strict/original and independent state 100
+PASS event/strict/original and independent state 200
+PASS event/strict/original and independent state 1000
+PASS event/strict/original and independent event sequence 0
+PASS event/strict/original and independent event sequence 1
+PASS event/strict/original and independent event sequence 3
+PASS event/strict/original and independent event sequence 25
+PASS event/strict/original and independent event sequence 26
+PASS event/strict/original and independent event sequence 28
+PASS event/strict/original and independent event sequence 29
+PASS event/strict/original and independent event sequence 50
+PASS event/strict/original and independent event sequence 51
+PASS event/strict/original and independent event sequence 100
+PASS event/strict/original and independent event sequence 200
+PASS event/strict/original and independent event sequence 1000
+PASS event/strict/original dependency construction
+PASS event/strict/NAND three-state truth table
+PASS event/strict/low NAND input avoids unused right
+PASS event/strict/end-time cutoff precedes wire and state demand
+PASS event/strict/stable pending-event tie ordering
+PASS event/strict/persistent state update
+PASS event/strict/finite-state evaluation policy
+PASS event/strict/no events leave initial state undemanded
+PASS event/strict/source recalculate callback
+PASS event/strict/fresh state across cached clock runs
+PASS event/strict/consumer
+PASS event/strict/wrong result rejected
+functor EventTestsFn(P: sig
+  structure D : <sig>
+  val policy : string
+  val strict : bool
+end) :
+sig
+  structure K : <sig>
+  structure Driver : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  val base : string
+  val label : string -> string
+  val read : string -> TextIO.vector
+  val trace : int -> string
+  val join : int list -> string
+end
+structure LazyEventTests : sig
+  structure K : <sig>
+  structure Driver : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  val base : string
+  val label : string -> string
+  val read : string -> TextIO.vector
+  val trace : int -> string
+  val join : int list -> string
+end
+structure StrictEventTests : sig
+  structure K : <sig>
+  structure Driver : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  val base : string
+  val label : string -> string
+  val read : string -> TextIO.vector
+  val trace : int -> string
+  val join : int list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 72 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : 
+  sig
+    datatype 'a node
+      = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay | Nil
+    type 'a stream = 'a node BenchLazy.delay
+    val empty : unit -> 'a node BenchLazy.state ref
+    val cons : 'a BenchLazy.delay * 'a node BenchLazy.delay
+                -> 'a node BenchLazy.state ref
+    val singleton : 'a -> 'a node BenchLazy.state ref
+    val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+    val head : 'a node BenchLazy.state ref -> 'a
+    val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val iterate : ('a -> 'a)
+                   -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+    val fromList : 'a list -> 'a node BenchLazy.delay
+    val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+    val zipWith : ('a * 'b -> 'c)
+                   -> 'a node BenchLazy.delay
+                   -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+    val append : 'a node BenchLazy.delay
+                  -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val concatMap : ('a -> 'b node BenchLazy.delay)
+                     -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+    val filter : ('a -> bool)
+                  -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+    val dropWhile : ('a -> bool)
+                     -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+    val foldrStream : ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+                       -> 'b BenchLazy.state ref
+                       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+    val zipWith3 : ('a * 'b * 'c -> 'd)
+                    -> 'a node BenchLazy.delay
+                    -> 'b node BenchLazy.delay
+                    -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+    val span : ('a -> bool)
+                -> 'a node BenchLazy.delay
+                -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+    val nth : 'a node BenchLazy.delay -> int -> 'a
+    val take : int -> 'a node BenchLazy.delay -> 'a list
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+    val foldPrefix : ('a * 'b -> 'b)
+                      -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/event-originals/finite.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/event-originals/finite.sml:19.32 Warning: calling polyEqual
+functor BenchEventFiniteFn(D: sig
+                              type 'a t
+                              val delay : (unit -> 'a) -> 'a t
+                              val force : 'a t -> 'a
+                            end) :
+                          
+                            sig
+                              type 'a node
+                              type 'a seq
+                              val empty : unit -> 'a node D.t
+                              val cons : 'a D.t * 'a node D.t -> 'a node D.t
+                              val fromList : 'a list -> 'a node D.t
+                              val defer : (unit -> 'a D.t) -> 'a D.t
+                              val append : 'a node D.t
+                                            -> 'a node D.t -> 'a node D.t
+                              val take : int -> 'a node D.t -> 'a node D.t
+                              val drop : int -> 'a node D.t -> 'a node D.t
+                              val nth : 'a node D.t -> int -> 'a
+                              val update : 'a node D.t
+                                            -> int -> 'a D.t -> 'a node D.t
+                              val unify : ''a node D.t -> ''a -> ''a node D.t
+                              val foldl : ('a D.t -> 'b -> 'a D.t)
+                                           -> 'a D.t -> 'b node D.t -> 'a D.t
+                              val toList : 'a node D.t -> 'a list
+                            end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/event-originals/kernel.sml]
+functor BenchEventFn(D: sig
+                        type 'a t
+                        val delay : (unit -> 'a) -> 'a t
+                        val force : 'a t -> 'a
+                      end) :
+                    
+                      sig
+                        structure L : <sig>
+                        structure S : <sig>
+                        structure F : <sig>
+                        type three
+                        type state
+                        type event
+                        type func
+                        val at : int -> int -> three -> event
+                        val time : event -> int
+                        val wire : event -> int
+                        val what : event -> three
+                        val compareEvents : event -> event -> order
+                        val stateView : 'a D.t BenchLazy.state ref -> 'a D.t
+                        val stateAt : 'a F.node D.t BenchLazy.state ref
+                                       -> int -> 'a
+                        val update : 'a F.node D.t BenchLazy.state ref
+                                      -> int
+                                      -> 'a BenchLazy.state ref
+                                      -> 'a F.node D.t BenchLazy.state ref
+                        val nand : three BenchLazy.state ref
+                                    -> three BenchLazy.state ref -> three
+                        val nandGate : int
+                                        -> int
+                                        -> int
+                                        -> int
+                                        -> three F.node D.t BenchLazy.state 
+                                          ref
+                                        -> event
+                        val definition : int -> func
+                        val recalculate : func -> int -> int -> state -> event
+                        val numberWires : int
+                        val initialState : three F.node D.t BenchLazy.state 
+                                              ref
+                        val insert : int F.node D.t F.node D.t
+                                      -> int -> int F.node D.t F.node D.t
+                        val dependencyTable : int F.node D.t F.node D.t 
+                                                   BenchLazy.state ref
+                        val dependencies : int -> int F.node D.t
+                        val finiteStream : 'a F.node D.t
+                                            -> 'a BenchStream.node 
+                                              BenchLazy.delay
+                        val merge : ('a -> 'a -> order)
+                                     -> 'a BenchStream.node BenchLazy.delay
+                                     -> 'a BenchStream.node BenchLazy.state 
+                                       ref
+                                     -> 'a BenchStream.node BenchLazy.delay
+                        val length : 'a BenchStream.node BenchLazy.delay
+                                      -> int
+                        val take : int
+                                    -> 'a BenchStream.node BenchLazy.delay
+                                    -> 'a BenchStream.node BenchLazy.delay
+                        val drop : int
+                                    -> 'a BenchStream.node BenchLazy.delay
+                                    -> 'a BenchStream.node BenchLazy.state ref
+                        val sort : ('a -> 'a -> order)
+                                    -> 'a BenchStream.node BenchLazy.delay
+                                    -> 'a BenchStream.node BenchLazy.delay
+                        val clock : int
+                                     -> int
+                                     -> int
+                                     -> int
+                                     -> event BenchStream.node BenchLazy.state 
+                                       ref
+                        val initialEvents : event BenchStream.node 
+                                               BenchLazy.delay
+                        val simulate : event BenchStream.node BenchLazy.delay
+                                        -> three F.node D.t BenchLazy.state 
+                                          ref
+                                        -> int
+                                        -> event BenchStream.node 
+                                            BenchLazy.state ref
+                        val findLastState : event BenchStream.node 
+                                               BenchLazy.delay
+                                             -> three F.node D.t 
+                                                 BenchLazy.state ref
+                                             -> three F.node D.t 
+                                                 BenchLazy.state ref
+                        val show : three -> char
+                        val benchmark : int -> string
+                      end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/event-originals/driver.sml]
+functor BenchEventDriverFn(P: sig val benchmark : int -> string end) :
+                          
+                            sig
+                              val read : string -> TextIO.vector
+                              val run : string list -> string
+                            end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/event-originals/tests.sml]
+PASS event/lazy/original and independent state 0
+PASS event/lazy/original and independent state 1
+PASS event/lazy/original and independent state 3
+PASS event/lazy/original and independent state 25
+PASS event/lazy/original and independent state 26
+PASS event/lazy/original and independent state 28
+PASS event/lazy/original and independent state 29
+PASS event/lazy/original and independent state 50
+PASS event/lazy/original and independent state 51
+PASS event/lazy/original and independent state 100
+PASS event/lazy/original and independent state 200
+PASS event/lazy/original and independent state 1000
+PASS event/lazy/original and independent event sequence 0
+PASS event/lazy/original and independent event sequence 1
+PASS event/lazy/original and independent event sequence 3
+PASS event/lazy/original and independent event sequence 25
+PASS event/lazy/original and independent event sequence 26
+PASS event/lazy/original and independent event sequence 28
+PASS event/lazy/original and independent event sequence 29
+PASS event/lazy/original and independent event sequence 50
+PASS event/lazy/original and independent event sequence 51
+PASS event/lazy/original and independent event sequence 100
+PASS event/lazy/original and independent event sequence 200
+PASS event/lazy/original and independent event sequence 1000
+PASS event/lazy/original dependency construction
+PASS event/lazy/NAND three-state truth table
+PASS event/lazy/low NAND input avoids unused right
+PASS event/lazy/end-time cutoff precedes wire and state demand
+PASS event/lazy/stable pending-event tie ordering
+PASS event/lazy/persistent state update
+PASS event/lazy/finite-state evaluation policy
+PASS event/lazy/no events leave initial state undemanded
+PASS event/lazy/source recalculate callback
+PASS event/lazy/fresh state across cached clock runs
+PASS event/lazy/consumer
+PASS event/lazy/wrong result rejected
+PASS event/strict/original and independent state 0
+PASS event/strict/original and independent state 1
+PASS event/strict/original and independent state 3
+PASS event/strict/original and independent state 25
+PASS event/strict/original and independent state 26
+PASS event/strict/original and independent state 28
+PASS event/strict/original and independent state 29
+PASS event/strict/original and independent state 50
+PASS event/strict/original and independent state 51
+PASS event/strict/original and independent state 100
+PASS event/strict/original and independent state 200
+PASS event/strict/original and independent state 1000
+PASS event/strict/original and independent event sequence 0
+PASS event/strict/original and independent event sequence 1
+PASS event/strict/original and independent event sequence 3
+PASS event/strict/original and independent event sequence 25
+PASS event/strict/original and independent event sequence 26
+PASS event/strict/original and independent event sequence 28
+PASS event/strict/original and independent event sequence 29
+PASS event/strict/original and independent event sequence 50
+PASS event/strict/original and independent event sequence 51
+PASS event/strict/original and independent event sequence 100
+PASS event/strict/original and independent event sequence 200
+PASS event/strict/original and independent event sequence 1000
+PASS event/strict/original dependency construction
+PASS event/strict/NAND three-state truth table
+PASS event/strict/low NAND input avoids unused right
+PASS event/strict/end-time cutoff precedes wire and state demand
+PASS event/strict/stable pending-event tie ordering
+PASS event/strict/persistent state update
+PASS event/strict/finite-state evaluation policy
+PASS event/strict/no events leave initial state undemanded
+PASS event/strict/source recalculate callback
+PASS event/strict/fresh state across cached clock runs
+PASS event/strict/consumer
+PASS event/strict/wrong result rejected
+functor EventTestsFn(P: sig
+                        structure D : <sig>
+                        val policy : string
+                        val strict : bool
+                      end) :
+                    
+                      sig
+                        structure K : <sig>
+                        structure Driver : <sig>
+                        structure L : <sig>
+                        structure S : <sig>
+                        val base : string
+                        val label : string -> string
+                        val read : string -> TextIO.vector
+                        val trace : int -> string
+                        val join : int list -> string
+                      end
+structure LazyEventTests : 
+  sig
+    structure K : <sig>
+    structure Driver : <sig>
+    structure L : <sig>
+    structure S : <sig>
+    val base : string
+    val label : string -> string
+    val read : string -> TextIO.vector
+    val trace : int -> string
+    val join : int list -> string
+  end
+structure StrictEventTests : 
+  sig
+    structure K : <sig>
+    structure Driver : <sig>
+    structure L : <sig>
+    structure S : <sig>
+    val base : string
+    val label : string -> string
+    val read : string -> TextIO.vector
+    val trace : int -> string
+    val join : int list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 72 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS event/lazy/original and independent state 0
+PASS event/lazy/original and independent state 1
+PASS event/lazy/original and independent state 3
+PASS event/lazy/original and independent state 25
+PASS event/lazy/original and independent state 26
+PASS event/lazy/original and independent state 28
+PASS event/lazy/original and independent state 29
+PASS event/lazy/original and independent state 50
+PASS event/lazy/original and independent state 51
+PASS event/lazy/original and independent state 100
+PASS event/lazy/original and independent state 200
+PASS event/lazy/original and independent state 1000
+PASS event/lazy/original and independent event sequence 0
+PASS event/lazy/original and independent event sequence 1
+PASS event/lazy/original and independent event sequence 3
+PASS event/lazy/original and independent event sequence 25
+PASS event/lazy/original and independent event sequence 26
+PASS event/lazy/original and independent event sequence 28
+PASS event/lazy/original and independent event sequence 29
+PASS event/lazy/original and independent event sequence 50
+PASS event/lazy/original and independent event sequence 51
+PASS event/lazy/original and independent event sequence 100
+PASS event/lazy/original and independent event sequence 200
+PASS event/lazy/original and independent event sequence 1000
+PASS event/lazy/original dependency construction
+PASS event/lazy/NAND three-state truth table
+PASS event/lazy/low NAND input avoids unused right
+PASS event/lazy/end-time cutoff precedes wire and state demand
+PASS event/lazy/stable pending-event tie ordering
+PASS event/lazy/persistent state update
+PASS event/lazy/finite-state evaluation policy
+PASS event/lazy/no events leave initial state undemanded
+PASS event/lazy/source recalculate callback
+PASS event/lazy/fresh state across cached clock runs
+PASS event/lazy/consumer
+PASS event/lazy/wrong result rejected
+PASS event/strict/original and independent state 0
+PASS event/strict/original and independent state 1
+PASS event/strict/original and independent state 3
+PASS event/strict/original and independent state 25
+PASS event/strict/original and independent state 26
+PASS event/strict/original and independent state 28
+PASS event/strict/original and independent state 29
+PASS event/strict/original and independent state 50
+PASS event/strict/original and independent state 51
+PASS event/strict/original and independent state 100
+PASS event/strict/original and independent state 200
+PASS event/strict/original and independent state 1000
+PASS event/strict/original and independent event sequence 0
+PASS event/strict/original and independent event sequence 1
+PASS event/strict/original and independent event sequence 3
+PASS event/strict/original and independent event sequence 25
+PASS event/strict/original and independent event sequence 26
+PASS event/strict/original and independent event sequence 28
+PASS event/strict/original and independent event sequence 29
+PASS event/strict/original and independent event sequence 50
+PASS event/strict/original and independent event sequence 51
+PASS event/strict/original and independent event sequence 100
+PASS event/strict/original and independent event sequence 200
+PASS event/strict/original and independent event sequence 1000
+PASS event/strict/original dependency construction
+PASS event/strict/NAND three-state truth table
+PASS event/strict/low NAND input avoids unused right
+PASS event/strict/end-time cutoff precedes wire and state demand
+PASS event/strict/stable pending-event tie ordering
+PASS event/strict/persistent state update
+PASS event/strict/finite-state evaluation policy
+PASS event/strict/no events leave initial state undemanded
+PASS event/strict/source recalculate callback
+PASS event/strict/fresh state across cached clock runs
+PASS event/strict/consumer
+PASS event/strict/wrong result rejected
+SUMMARY 72 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PASS event/lazy/original and independent state 0
+PASS event/lazy/original and independent state 1
+PASS event/lazy/original and independent state 3
+PASS event/lazy/original and independent state 25
+PASS event/lazy/original and independent state 26
+PASS event/lazy/original and independent state 28
+PASS event/lazy/original and independent state 29
+PASS event/lazy/original and independent state 50
+PASS event/lazy/original and independent state 51
+PASS event/lazy/original and independent state 100
+PASS event/lazy/original and independent state 200
+PASS event/lazy/original and independent state 1000
+PASS event/lazy/original and independent event sequence 0
+PASS event/lazy/original and independent event sequence 1
+PASS event/lazy/original and independent event sequence 3
+PASS event/lazy/original and independent event sequence 25
+PASS event/lazy/original and independent event sequence 26
+PASS event/lazy/original and independent event sequence 28
+PASS event/lazy/original and independent event sequence 29
+PASS event/lazy/original and independent event sequence 50
+PASS event/lazy/original and independent event sequence 51
+PASS event/lazy/original and independent event sequence 100
+PASS event/lazy/original and independent event sequence 200
+PASS event/lazy/original and independent event sequence 1000
+PASS event/lazy/original dependency construction
+PASS event/lazy/NAND three-state truth table
+PASS event/lazy/low NAND input avoids unused right
+PASS event/lazy/end-time cutoff precedes wire and state demand
+PASS event/lazy/stable pending-event tie ordering
+PASS event/lazy/persistent state update
+PASS event/lazy/finite-state evaluation policy
+PASS event/lazy/no events leave initial state undemanded
+PASS event/lazy/source recalculate callback
+PASS event/lazy/fresh state across cached clock runs
+PASS event/lazy/consumer
+PASS event/lazy/wrong result rejected
+PASS event/strict/original and independent state 0
+PASS event/strict/original and independent state 1
+PASS event/strict/original and independent state 3
+PASS event/strict/original and independent state 25
+PASS event/strict/original and independent state 26
+PASS event/strict/original and independent state 28
+PASS event/strict/original and independent state 29
+PASS event/strict/original and independent state 50
+PASS event/strict/original and independent state 51
+PASS event/strict/original and independent state 100
+PASS event/strict/original and independent state 200
+PASS event/strict/original and independent state 1000
+PASS event/strict/original and independent event sequence 0
+PASS event/strict/original and independent event sequence 1
+PASS event/strict/original and independent event sequence 3
+PASS event/strict/original and independent event sequence 25
+PASS event/strict/original and independent event sequence 26
+PASS event/strict/original and independent event sequence 28
+PASS event/strict/original and independent event sequence 29
+PASS event/strict/original and independent event sequence 50
+PASS event/strict/original and independent event sequence 51
+PASS event/strict/original and independent event sequence 100
+PASS event/strict/original and independent event sequence 200
+PASS event/strict/original and independent event sequence 1000
+PASS event/strict/original dependency construction
+PASS event/strict/NAND three-state truth table
+PASS event/strict/low NAND input avoids unused right
+PASS event/strict/end-time cutoff precedes wire and state demand
+PASS event/strict/stable pending-event tie ordering
+PASS event/strict/persistent state update
+PASS event/strict/finite-state evaluation policy
+PASS event/strict/no events leave initial state undemanded
+PASS event/strict/source recalculate callback
+PASS event/strict/fresh state across cached clock runs
+PASS event/strict/consumer
+PASS event/strict/wrong result rejected
+SUMMARY 72 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

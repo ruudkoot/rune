@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+typecheck-lazy	normal	rune	O2	compile	0	0	pass	1.62	1.55	0.08	135288	-	-	-	typecheck-lazy/rune/build/compile
+typecheck-lazy	normal	rune	O2	correctness	0	0	pass	21.71	20.62	1.05	1050804	3662834798	12300269152	395807078	typecheck-lazy/rune/correctness.0
+typecheck-lazy	normal	rune	O2	count	1	1	pass	21.04	20.26	0.90	1050696	3662834798	12300269152	395807078	typecheck-lazy/rune/fresh.1
+typecheck-lazy	normal	rune:opt	O2	compile	0	0	pass	1.57	1.47	0.07	135428	-	-	-	typecheck-lazy/rune-opt/build/compile
+typecheck-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.38	0.22	0.03	14572	-	-	-	typecheck-lazy/rune-opt/build/native-compile
+typecheck-lazy	normal	rune:opt	O2	correctness	0	0	pass	13.97	12.64	1.23	1051408	3662834798	12300269152	395807078	typecheck-lazy/rune-opt/correctness.0
+typecheck-lazy	normal	rune:opt	O2	count	1	1	pass	15.71	14.62	1.19	1051284	3662834798	12300269152	395807078	typecheck-lazy/rune-opt/fresh.1
+typecheck-lazy	normal	rune:new	O2	compile	0	0	pass	2.04	1.89	0.12	135456	-	-	-	typecheck-lazy/rune-new/build/compile
+typecheck-lazy	normal	rune:new	O2	correctness	0	0	pass	26.78	25.55	1.23	1051008	2165975372	12300269152	395807078	typecheck-lazy/rune-new/correctness.0
+typecheck-lazy	normal	rune:new	O2	count	1	1	pass	28.27	27.08	1.16	1050740	2165975372	12300269152	395807078	typecheck-lazy/rune-new/fresh.1
+typecheck-lazy	normal	rune:jit	O2	compile	0	0	pass	1.95	1.89	0.07	135328	-	-	-	typecheck-lazy/rune-jit/build/compile
+typecheck-lazy	normal	rune:jit	O2	correctness	0	0	pass	14.32	13.17	1.08	1052820	2165975372	12300269152	395807078	typecheck-lazy/rune-jit/correctness.0
+typecheck-lazy	normal	rune:jit	O2	count	1	1	pass	14.21	13.13	1.12	1052788	2165975372	12300269152	395807078	typecheck-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

@@ -1,0 +1,1 @@
+typecheck-strict	30	1048576	shared/input.sml shared/lazy.sml shared/stream.sml shared/hartel-typecheck-types.sml shared/hartel-typecheck-infer.sml shared/hartel-typecheck-program.sml shared/hartel-typecheck-driver.sml typecheck-strict/benchmark.sml shared/main.sml	1 inferred-types.txt	typecheck-strict/smoke.expected	inferred-types.txt

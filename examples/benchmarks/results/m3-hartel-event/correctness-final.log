@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-event-parallel.k5r5kdou
+PASS event-lazy smoke O2
+PASS event-lazy smoke O0
+PASS event-lazy smoke hosts
+PASS event-lazy normal O2
+PASS event-lazy normal O0
+PASS event-strict smoke O0
+PASS event-strict smoke O2
+PASS event-strict smoke hosts
+PASS event-lazy normal hosts
+PASS event-strict normal O0
+PASS event-strict normal O2
+PASS event-strict normal hosts

@@ -1,0 +1,29 @@
+PASS hartel-typecheck/lazy/eight original inferred rows
+PASS hartel-typecheck/lazy/original extra expressions
+PASS hartel-typecheck/lazy/original substitutions, arity and shadowed range
+PASS hartel-typecheck/lazy/type child evaluation policy
+PASS hartel-typecheck/lazy/failure skips earlier equation payload
+PASS hartel-typecheck/lazy/failure skips later expression
+PASS hartel-typecheck/lazy/substitution remains a callable function
+PASS hartel-typecheck/lazy/scheme bound variables exclude substitution
+PASS hartel-typecheck/lazy/original checksum
+PASS hartel-typecheck/lazy/original zero repetitions
+PASS hartel-typecheck/lazy/zero repetitions do not observe rows
+PASS hartel-typecheck/lazy/consumer validates every row
+PASS hartel-typecheck/lazy/row perturbation preserves weak checksum
+PASS hartel-typecheck/lazy/same-checksum wrong row is rejected
+PASS hartel-typecheck/strict/eight original inferred rows
+PASS hartel-typecheck/strict/original extra expressions
+PASS hartel-typecheck/strict/original substitutions, arity and shadowed range
+PASS hartel-typecheck/strict/type child evaluation policy
+PASS hartel-typecheck/strict/failure skips earlier equation payload
+PASS hartel-typecheck/strict/failure skips later expression
+PASS hartel-typecheck/strict/substitution remains a callable function
+PASS hartel-typecheck/strict/scheme bound variables exclude substitution
+PASS hartel-typecheck/strict/original checksum
+PASS hartel-typecheck/strict/original zero repetitions
+PASS hartel-typecheck/strict/zero repetitions do not observe rows
+PASS hartel-typecheck/strict/consumer validates every row
+PASS hartel-typecheck/strict/row perturbation preserves weak checksum
+PASS hartel-typecheck/strict/same-checksum wrong row is rejected
+SUMMARY 28 checks, 0 failed

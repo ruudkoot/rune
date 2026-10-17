@@ -1,0 +1,4 @@
+RESULT 14522/239
+PASS typecheck-strict
+SAMPLE 1 0.001588000
+SUMMARY 1 checks, 0 failed

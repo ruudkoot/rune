@@ -403,3 +403,19 @@ library observations establish selected edge cases; the portable implementation
 covers only the fragment used by this program. The library replacement, buffered
 input and smaller generated profile sizes are explicit, separate from correctness
 and performance findings. All diagnostic performance explanations remain hypotheses.
+
+## Hartel circuit events and functional substitutions
+
+[Hartel and Langendoen's collection paper](https://doi.org/10.1145/165180.165230)
+(1993) provides translated-benchmark context, based on institution metadata and
+the abstract. It is not individual authorship evidence for the generated event
+or typecheck modules. Their pinned source and compatibility shim establish the
+particular evaluation details, including the no-op miraseq stub.
+
+[Milner's A theory of type polymorphism in programming](https://doi.org/10.1016/0022-0000(78)90014-4)
+(1978) provides polymorphic-inference context. The benchmark preserves its own
+functional substitution, environment, name-supply and unification ordering.
+Original inferred rows and explicit demand/collision controls support the port;
+the paper's soundness results are not transferred to source-specific arity or
+shadowing behavior. Performance questions remain hypotheses until separately
+supported by measurements or compiler analysis.

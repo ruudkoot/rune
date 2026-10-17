@@ -1,0 +1,9 @@
+nodups c b a
+name 2.0.1
+sequence 0 2 4 6
+compose int
+right-fold <b> <b> <b>
+arity int <b> <c>
+unknowns live live
+occurs failure
+unused-equation failure

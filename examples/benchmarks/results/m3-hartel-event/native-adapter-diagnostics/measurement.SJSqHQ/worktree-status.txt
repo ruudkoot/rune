@@ -1,0 +1,19 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/event-lazy/
+?? examples/benchmarks/event-strict/
+?? examples/benchmarks/shared/hartel-event-driver.sml
+?? examples/benchmarks/shared/hartel-event-finite.sml
+?? examples/benchmarks/shared/hartel-event-kernel.sml
+?? examples/benchmarks/shared/hartel-typecheck-driver.sml
+?? examples/benchmarks/shared/hartel-typecheck-infer.sml
+?? examples/benchmarks/shared/hartel-typecheck-program.sml
+?? examples/benchmarks/shared/hartel-typecheck-types.sml
+?? examples/benchmarks/typecheck-lazy/
+?? examples/benchmarks/typecheck-strict/
+?? tests/benchmarks/check-event.sh
+?? tests/benchmarks/check-hartel-typecheck.sh
+?? tests/benchmarks/data/event/
+?? tests/benchmarks/data/hartel-typecheck/
+?? tests/benchmarks/event-tests.sml
+?? tests/benchmarks/hartel-typecheck-tests.sml

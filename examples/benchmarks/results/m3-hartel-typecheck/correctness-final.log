@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-hartel-typecheck-parallel.e3fw8m1p
+PASS typecheck-lazy smoke O2
+PASS typecheck-lazy smoke O0
+PASS typecheck-lazy smoke hosts
+PASS typecheck-lazy normal O0
+PASS typecheck-lazy normal O2
+PASS typecheck-strict smoke O0
+PASS typecheck-strict smoke O2
+PASS typecheck-strict smoke hosts
+PASS typecheck-lazy normal hosts
+PASS typecheck-strict normal O2
+PASS typecheck-strict normal O0
+PASS typecheck-strict normal hosts

@@ -1,0 +1,1 @@
+bench-hartel-typecheck: original inferred types, functional substitutions, fold ordering and checksum-collision rejection hold (/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-typecheck-checks.b6Wp1i)

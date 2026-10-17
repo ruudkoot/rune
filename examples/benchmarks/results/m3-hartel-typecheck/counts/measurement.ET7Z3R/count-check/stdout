@@ -1,0 +1,5 @@
+COUNT unbudgeted typecheck-strict normal rune
+COUNT unbudgeted typecheck-strict normal rune:opt
+COUNT unbudgeted typecheck-strict normal rune:new
+COUNT unbudgeted typecheck-strict normal rune:jit
+COUNT comparisons agree

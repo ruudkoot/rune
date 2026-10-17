@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+typecheck-lazy	normal	rune	O2	count	1	1	pass	21.04	20.26	0.90	1050696	3662834798	12300269152	395807078	counts/measurement.hy6mDm/typecheck-lazy/rune/fresh.1
+typecheck-lazy	normal	rune:opt	O2	count	1	1	pass	15.71	14.62	1.19	1051284	3662834798	12300269152	395807078	counts/measurement.hy6mDm/typecheck-lazy/rune-opt/fresh.1
+typecheck-lazy	normal	rune:new	O2	count	1	1	pass	28.27	27.08	1.16	1050740	2165975372	12300269152	395807078	counts/measurement.hy6mDm/typecheck-lazy/rune-new/fresh.1
+typecheck-lazy	normal	rune:jit	O2	count	1	1	pass	14.21	13.13	1.12	1052788	2165975372	12300269152	395807078	counts/measurement.hy6mDm/typecheck-lazy/rune-jit/fresh.1
+typecheck-strict	normal	rune	O2	count	1	1	pass	30.06	28.67	1.34	1050820	4497408858	14633640648	472307451	counts/measurement.ET7Z3R/typecheck-strict/rune/fresh.1
+typecheck-strict	normal	rune:opt	O2	count	1	1	pass	18.68	17.26	1.53	1051336	4497408858	14633640648	472307451	counts/measurement.ET7Z3R/typecheck-strict/rune-opt/fresh.1
+typecheck-strict	normal	rune:new	O2	count	1	1	pass	30.72	29.37	1.33	1050900	2656067749	14633640648	472307451	counts/measurement.ET7Z3R/typecheck-strict/rune-new/fresh.1
+typecheck-strict	normal	rune:jit	O2	count	1	1	pass	17.26	16.12	1.23	1052592	2656067749	14633640648	472307451	counts/measurement.ET7Z3R/typecheck-strict/rune-jit/fresh.1

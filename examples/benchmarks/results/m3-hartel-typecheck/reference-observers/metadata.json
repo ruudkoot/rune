@@ -1,0 +1,26 @@
+[
+  {
+    "profile": "smoke",
+    "repetitions": 1,
+    "result": "14522/239",
+    "elapsed_seconds": 0.016403442015871406
+  },
+  {
+    "profile": "source-fast",
+    "repetitions": 500,
+    "result": "7261000/119500",
+    "elapsed_seconds": 0.15651950397295877
+  },
+  {
+    "profile": "normal",
+    "repetitions": 5000,
+    "result": "72610000/1195000",
+    "elapsed_seconds": 1.325951244973112
+  },
+  {
+    "profile": "large",
+    "repetitions": 25000,
+    "result": "363050000/5975000",
+    "elapsed_seconds": 6.205977489997167
+  }
+]

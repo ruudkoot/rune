@@ -1,0 +1,1 @@
+event-strict	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/hartel-event-finite.sml shared/hartel-event-kernel.sml shared/hartel-event-driver.sml event-strict/benchmark.sml shared/main.sml	1 200 smoke.state	event-strict/smoke.expected	smoke.state

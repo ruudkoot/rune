@@ -406,6 +406,10 @@ inventory entry.
 | [multiplier-strict](#multiplier-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/multiplier) | Simulate a bit-stream shift/add multiplier and validate its full trace with strict binary gate heads. |
 | [multiplier-count-lazy](#multiplier-count-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/multiplier) | Sum ready signals while leaving the multiplier product path undemanded with lazy binary gate heads. |
 | [multiplier-count-strict](#multiplier-count-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/multiplier) | Sum ready signals while leaving the multiplier product path undemanded with strict binary gate heads. |
+| [event-lazy](#event-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/event) | Simulate stable timed three-state circuit events with persistent lazy finite state lists. |
+| [event-strict](#event-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/event) | Simulate stable timed three-state circuit events with persistent strict finite state lists. |
+| [typecheck-lazy](#typecheck-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/typecheck) | Infer polymorphic types with functional substitutions and lazy finite type children, validating every printed row. |
+| [typecheck-strict](#typecheck-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/typecheck) | Infer polymorphic types with functional substitutions and strict finite type children, validating every printed row. |
 
 ## Running and interpreting checks
 
@@ -23664,3 +23668,393 @@ allocation, carry propagation, wide-gate traversal and the consumer's forcing.
 These are source-based diagnostic questions. Original/model agreement and demand
 controls establish recorded behavior; allocation or timing differences alone do
 not identify a compiler or collector cause.
+
+## event-lazy
+
+### Algorithm and workload
+
+Simulate the source thirteen-wire circuit with timed three-state NAND events.
+Merge the two periodic input clocks, process pending events in time order,
+discard unchanged signals, update persistent state lists and schedule dependent
+NAND outputs three simulated time units later. NAND results capture the state
+snapshot at scheduling time. Stable merges process existing pending events before
+new events at the same time; sorting preserves dependency order for equal times.
+
+The source simulator returns changed events. A second source pass, findLastState,
+reapplies those changes to an initial state for display. Retain both update passes;
+do not replace them with the simulator's internal final state or a mutable-array
+simulation. The independent heap-based model is only a correctness oracle.
+
+### History, provenance and related workloads
+
+Source [nofib spectral/hartel/event](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/event), pinned at
+b7391df4540ac8b11b35e1b2e2c15819b5171798. No individual author or separate notice is
+stated in Main.hs; the collection name alone is insufficient program attribution.
+Preserve the complete generated Haskell module, Makefile and fixtures under
+event-lazy/upstream/event, with the parent Fast2haskell.hs compatibility shim.
+This is a timed event-queue simulator, distinct from the stream multiplier and
+other circsim topologies/consumers. Names -lazy/-strict identify finite-state
+policies, not exact duplicates of those programs.
+
+### Translation and evaluation decisions
+
+-lazy memoizes finite state/dependency list heads and spines. -strict evaluates
+those finite lists eagerly when their root is requested. Both preserve lazy
+infinite clock streams, pending-event streams, event values and control roots.
+A state update's outer delay keeps unused state unforced at the horizon cutoff.
+Persistent prefix copying, dependency construction, duplicate suppression,
+stable mergesort and function-valued gate definitions remain.
+
+Check time >= horizon before forcing an event's wire/value or previous state.
+Preserve NAND's three-state pattern order: a low left input can yield high
+without demanding the right input. The strict finite-state variant may evaluate
+more state fields but does not turn event/control streams into infinite eager
+lists. Retain the source reconstructed output event and its shared field values.
+
+Fast2haskell's pinned miraseq is a no-op implemented through seq_const, despite
+the strict terminology in generated fold helpers. Do not translate that stub as
+an actual strict accumulator operation. The lazy dependency fold preserves its
+behavior; the strict finite-list policy is a separately named port choice.
+Global initial clock/dependency/state values retain source sharing across
+repetitions and repeated Benchmark.run calls; simulation state updates remain
+fresh persistent values. Every numeric profile value fits signed 31-bit integers.
+No floating-point or OS-clock dependency is required.
+
+### Inputs and exact result validation
+
+| Profile | Repetitions | Exclusive event horizon |
+|---|---:|---:|
+| Smoke | 1 | 200 |
+| Normal | 100 | 100000 |
+| Large | 100 | 500000 |
+
+Normal and large retain original parameters. Smoke reduces FAST's hundred runs
+at horizon ten thousand to one run at horizon two hundred. These are deterministic
+simulated-time bounds, not wall-clock search limits. The two clocks and thirteen
+initial unknown states are the original fixed input. Wire two remains unused.
+
+Validate every thirteen-symbol state and trailing newline exactly; the selected
+profiles yield HHxLLHHLLHHLH. Return repetitions, checked characters and final
+state instead of source repeated stdout. Input argument lookup is outside the
+repetition loop; the event computation and both update passes remain inside it.
+All checks are exact, with no numerical tolerance. Full SML large repetitions
+remain unrecorded unless explicitly listed in validation.
+
+### Correctness and runtime observations
+
+Original GHC 9.4.7 matches all supplied FAST/NORM/SLOW fixtures. Export-only
+observers record complete states, changed-event traces at twelve boundary
+horizons and the dependency table. An independent stable-priority-queue model
+agrees with every observed state/trace, including startup, equal timestamps and
+exclusive cutoffs. The port matches those traces and the full normal profile.
+
+The 72-check target also covers the NAND table/short circuit, cutoff demand,
+persistent states, overwritten lazy fields, strict finite-state behavior,
+unneeded initial states, gate callbacks, cached clocks with fresh simulation
+state and wrong-result rejection. Recorded native/engine outcomes are separate
+from the private development pilots.
+
+### Literature and diagnostic questions
+
+[Hartel and Langendoen, Benchmarking implementations of lazy functional languages](https://doi.org/10.1145/165180.165230)
+(1993) supplies collection context for translated workloads. It does not establish
+individual authorship of this module. The pinned program defines this circuit,
+its stable event ordering and compatibility-shim behavior.
+
+Investigate queue/list allocation, persistent updates, dependency sharing,
+finite-state strictness, gate callbacks and retained clock prefixes. These are
+source-based diagnostic hypotheses. Original/model traces establish selected
+behavior; counts/timings alone do not identify compiler or collector causes.
+Fresh and repeated execution retain the recorded sharing/measurement modes.
+
+## event-strict
+
+### Algorithm and workload
+
+Simulate the source thirteen-wire circuit with timed three-state NAND events.
+Merge the two periodic input clocks, process pending events in time order,
+discard unchanged signals, update persistent state lists and schedule dependent
+NAND outputs three simulated time units later. NAND results capture the state
+snapshot at scheduling time. Stable merges process existing pending events before
+new events at the same time; sorting preserves dependency order for equal times.
+
+The source simulator returns changed events. A second source pass, findLastState,
+reapplies those changes to an initial state for display. Retain both update passes;
+do not replace them with the simulator's internal final state or a mutable-array
+simulation. The independent heap-based model is only a correctness oracle.
+
+### History, provenance and related workloads
+
+Source [nofib spectral/hartel/event](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/event), pinned at
+b7391df4540ac8b11b35e1b2e2c15819b5171798. No individual author or separate notice is
+stated in Main.hs; the collection name alone is insufficient program attribution.
+Preserve the complete generated Haskell module, Makefile and fixtures under
+event-lazy/upstream/event, with the parent Fast2haskell.hs compatibility shim.
+This is a timed event-queue simulator, distinct from the stream multiplier and
+other circsim topologies/consumers. Names -lazy/-strict identify finite-state
+policies, not exact duplicates of those programs.
+
+### Translation and evaluation decisions
+
+-lazy memoizes finite state/dependency list heads and spines. -strict evaluates
+those finite lists eagerly when their root is requested. Both preserve lazy
+infinite clock streams, pending-event streams, event values and control roots.
+A state update's outer delay keeps unused state unforced at the horizon cutoff.
+Persistent prefix copying, dependency construction, duplicate suppression,
+stable mergesort and function-valued gate definitions remain.
+
+Check time >= horizon before forcing an event's wire/value or previous state.
+Preserve NAND's three-state pattern order: a low left input can yield high
+without demanding the right input. The strict finite-state variant may evaluate
+more state fields but does not turn event/control streams into infinite eager
+lists. Retain the source reconstructed output event and its shared field values.
+
+Fast2haskell's pinned miraseq is a no-op implemented through seq_const, despite
+the strict terminology in generated fold helpers. Do not translate that stub as
+an actual strict accumulator operation. The lazy dependency fold preserves its
+behavior; the strict finite-list policy is a separately named port choice.
+Global initial clock/dependency/state values retain source sharing across
+repetitions and repeated Benchmark.run calls; simulation state updates remain
+fresh persistent values. Every numeric profile value fits signed 31-bit integers.
+No floating-point or OS-clock dependency is required.
+
+### Inputs and exact result validation
+
+| Profile | Repetitions | Exclusive event horizon |
+|---|---:|---:|
+| Smoke | 1 | 200 |
+| Normal | 100 | 100000 |
+| Large | 100 | 500000 |
+
+Normal and large retain original parameters. Smoke reduces FAST's hundred runs
+at horizon ten thousand to one run at horizon two hundred. These are deterministic
+simulated-time bounds, not wall-clock search limits. The two clocks and thirteen
+initial unknown states are the original fixed input. Wire two remains unused.
+
+Validate every thirteen-symbol state and trailing newline exactly; the selected
+profiles yield HHxLLHHLLHHLH. Return repetitions, checked characters and final
+state instead of source repeated stdout. Input argument lookup is outside the
+repetition loop; the event computation and both update passes remain inside it.
+All checks are exact, with no numerical tolerance. Full SML large repetitions
+remain unrecorded unless explicitly listed in validation.
+
+### Correctness and runtime observations
+
+Original GHC 9.4.7 matches all supplied FAST/NORM/SLOW fixtures. Export-only
+observers record complete states, changed-event traces at twelve boundary
+horizons and the dependency table. An independent stable-priority-queue model
+agrees with every observed state/trace, including startup, equal timestamps and
+exclusive cutoffs. The port matches those traces and the full normal profile.
+
+The 72-check target also covers the NAND table/short circuit, cutoff demand,
+persistent states, overwritten lazy fields, strict finite-state behavior,
+unneeded initial states, gate callbacks, cached clocks with fresh simulation
+state and wrong-result rejection. Recorded native/engine outcomes are separate
+from the private development pilots.
+
+### Literature and diagnostic questions
+
+[Hartel and Langendoen, Benchmarking implementations of lazy functional languages](https://doi.org/10.1145/165180.165230)
+(1993) supplies collection context for translated workloads. It does not establish
+individual authorship of this module. The pinned program defines this circuit,
+its stable event ordering and compatibility-shim behavior.
+
+Investigate queue/list allocation, persistent updates, dependency sharing,
+finite-state strictness, gate callbacks and retained clock prefixes. These are
+source-based diagnostic hypotheses. Original/model traces establish selected
+behavior; counts/timings alone do not identify compiler or collector causes.
+Fresh and repeated execution retain the recorded sharing/measurement modes.
+
+## typecheck-lazy
+
+### Algorithm and workload
+
+Infer polymorphic types for the source's eight fixed functional programs:
+recursive ones, length, map, SKK, increment, sum, recursive Y and succ. Preserve
+unification with occurs checking, scheme instantiation/generalization, recursive
+bindings, deterministic split name supplies and printed type variables. The succ
+case reports failure under the source algorithm. The original consumer sums
+printed character codes and returns (sum+character-count)/character-count.
+
+Substitutions remain callable name-to-type functions composed by higher-order
+closures. Environments remain ordered association lists, with shadowing and
+source lookup costs. Do not replace them with union-find variables, mutable
+substitution tables or a host typechecker.
+
+### History, authorship and naming
+
+Source [nofib spectral/hartel/typecheck](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/typecheck), pinned at
+b7391df4540ac8b11b35e1b2e2c15819b5171798. Preserve Main.hs, Makefile, all fixtures
+and the parent Fast2haskell.hs under typecheck-lazy/upstream. No individual author
+or separate program notice is stated in Main.hs. Collection-paper authorship is
+context rather than evidence of individual program authorship. Names retain the
+established typecheck workload and separate -lazy/-strict evaluation policies.
+
+### Source details and portable adaptation
+
+-lazy memoizes type constructors and finite children; -strict demands those
+children when a type constructor is requested. Both preserve lazy expression,
+environment, scheme and control structures where failure can leave work unused.
+Names use bounded atomic SML strings rather than lazy character lists. Keep the
+eight immutable input ASTs global, but add no cross-repetition inferred-row cache.
+Each source repetition maps inference over the flattened program list.
+
+Unification of equation lists proceeds right to left, as the source foldr;
+it can skip an earlier equation payload after a later failure. Preserve source
+zip truncation for mismatched constructor arities. Source noDuplicates reverses
+first-occurrence order. Environment range maps first-match lookup over every
+name, so shadowed duplicate names repeat the first scheme's unknowns. Keep those
+behaviors rather than substitute customary library implementations.
+
+Preserve name-supply splitting/depletion, the same scheme supply across a group
+of declarations, function substitution composition and the source recursive-let
+stages, including applying the next substitution to already substituted bounds
+and environments. Fast2haskell's miraseq stub is a no-op; a generated strict
+helper name is not proof of strict evaluation. These choices matter to structure,
+sharing and printed type-variable names.
+
+### Profiles and result consumers
+
+Smoke uses one repetition instead of source FAST's 500. Normal retains 5000
+repetitions and large retains 25000. Every repetition processes the original eight
+ASTs and 239 printed characters. Preserve the original checksum, while adding an
+exact comparison of each inferred row with the reviewed original rows before its
+characters enter the checksum. The validation callback adds observable work and
+is documented separately from the inference algorithm.
+
+Original GHC 9.4.7 gives 14522/239 for one repetition,
+72610000/1195000 for normal and 363050000/5975000 for large. Every selected counter
+fits signed 31-bit integers; even a conservative ASCII upper bound for the large
+checksum is 764800000. Driver counts are bounded to the selected range 0..25000.
+No arbitrary-precision or floating-point arithmetic/tolerance is required.
+The stable report retains the original checksum without its trailing newline.
+Full final SML large repetitions remain unrecorded unless listed in validation.
+
+### Validation and compiler behavior
+
+Original GHC matches all FAST/NORM/SLOW fixtures. Export-only observers provide
+all eight exact inferred rows, six further expressions and substitution/name/
+generalization edge cases. Both ports reproduce the rows and original checksum.
+Full normal private pilots also validate every row. The recorded optimized GHC
+core retains the source mapping/checking pipeline; timings are not used as proof
+of a particular optimization or memoization decision.
+
+The 28-check target covers these observations, right-fold failure demand,
+constructor-arity behavior, shadowed environments, occurs rejection, a skipped
+later expression, memoized function substitution, quantified-variable exclusion,
+zero repetitions and exact per-row validation. A deliberately changed int to nit
+row has the same weak checksum and is rejected by the new validator. Native and
+Rune O0/O2 canonical outcomes are recorded separately from development pilots.
+
+### Literature and diagnostic interpretation
+
+[Milner, A theory of type polymorphism in programming](https://doi.org/10.1016/0022-0000(78)90014-4)
+(1978) supplies polymorphic-inference context; the pinned source defines this
+particular implementation and ordering. No soundness theorem is inferred for
+its source-specific arity/shadowing behavior.
+[Hartel and Langendoen's collection paper](https://doi.org/10.1145/165180.165230)
+(1993) supplies translated-benchmark context. Publisher/institution metadata and
+abstracts were reviewed; this does not claim a full paper-derived proof.
+
+Investigate higher-order substitution composition, repeated environment lookup,
+type reconstruction, generalization, memoized fields, strict children and text
+consumption. These are source-based questions. Exact original type agreement and
+negative controls support correctness for the selected cases; measured counts
+and times are distinct evidence and do not alone establish performance causes.
+
+## typecheck-strict
+
+### Algorithm and workload
+
+Infer polymorphic types for the source's eight fixed functional programs:
+recursive ones, length, map, SKK, increment, sum, recursive Y and succ. Preserve
+unification with occurs checking, scheme instantiation/generalization, recursive
+bindings, deterministic split name supplies and printed type variables. The succ
+case reports failure under the source algorithm. The original consumer sums
+printed character codes and returns (sum+character-count)/character-count.
+
+Substitutions remain callable name-to-type functions composed by higher-order
+closures. Environments remain ordered association lists, with shadowing and
+source lookup costs. Do not replace them with union-find variables, mutable
+substitution tables or a host typechecker.
+
+### History, authorship and naming
+
+Source [nofib spectral/hartel/typecheck](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/typecheck), pinned at
+b7391df4540ac8b11b35e1b2e2c15819b5171798. Preserve Main.hs, Makefile, all fixtures
+and the parent Fast2haskell.hs under typecheck-lazy/upstream. No individual author
+or separate program notice is stated in Main.hs. Collection-paper authorship is
+context rather than evidence of individual program authorship. Names retain the
+established typecheck workload and separate -lazy/-strict evaluation policies.
+
+### Source details and portable adaptation
+
+-lazy memoizes type constructors and finite children; -strict demands those
+children when a type constructor is requested. Both preserve lazy expression,
+environment, scheme and control structures where failure can leave work unused.
+Names use bounded atomic SML strings rather than lazy character lists. Keep the
+eight immutable input ASTs global, but add no cross-repetition inferred-row cache.
+Each source repetition maps inference over the flattened program list.
+
+Unification of equation lists proceeds right to left, as the source foldr;
+it can skip an earlier equation payload after a later failure. Preserve source
+zip truncation for mismatched constructor arities. Source noDuplicates reverses
+first-occurrence order. Environment range maps first-match lookup over every
+name, so shadowed duplicate names repeat the first scheme's unknowns. Keep those
+behaviors rather than substitute customary library implementations.
+
+Preserve name-supply splitting/depletion, the same scheme supply across a group
+of declarations, function substitution composition and the source recursive-let
+stages, including applying the next substitution to already substituted bounds
+and environments. Fast2haskell's miraseq stub is a no-op; a generated strict
+helper name is not proof of strict evaluation. These choices matter to structure,
+sharing and printed type-variable names.
+
+### Profiles and result consumers
+
+Smoke uses one repetition instead of source FAST's 500. Normal retains 5000
+repetitions and large retains 25000. Every repetition processes the original eight
+ASTs and 239 printed characters. Preserve the original checksum, while adding an
+exact comparison of each inferred row with the reviewed original rows before its
+characters enter the checksum. The validation callback adds observable work and
+is documented separately from the inference algorithm.
+
+Original GHC 9.4.7 gives 14522/239 for one repetition,
+72610000/1195000 for normal and 363050000/5975000 for large. Every selected counter
+fits signed 31-bit integers; even a conservative ASCII upper bound for the large
+checksum is 764800000. Driver counts are bounded to the selected range 0..25000.
+No arbitrary-precision or floating-point arithmetic/tolerance is required.
+The stable report retains the original checksum without its trailing newline.
+Full final SML large repetitions remain unrecorded unless listed in validation.
+
+### Validation and compiler behavior
+
+Original GHC matches all FAST/NORM/SLOW fixtures. Export-only observers provide
+all eight exact inferred rows, six further expressions and substitution/name/
+generalization edge cases. Both ports reproduce the rows and original checksum.
+Full normal private pilots also validate every row. The recorded optimized GHC
+core retains the source mapping/checking pipeline; timings are not used as proof
+of a particular optimization or memoization decision.
+
+The 28-check target covers these observations, right-fold failure demand,
+constructor-arity behavior, shadowed environments, occurs rejection, a skipped
+later expression, memoized function substitution, quantified-variable exclusion,
+zero repetitions and exact per-row validation. A deliberately changed int to nit
+row has the same weak checksum and is rejected by the new validator. Native and
+Rune O0/O2 canonical outcomes are recorded separately from development pilots.
+
+### Literature and diagnostic interpretation
+
+[Milner, A theory of type polymorphism in programming](https://doi.org/10.1016/0022-0000(78)90014-4)
+(1978) supplies polymorphic-inference context; the pinned source defines this
+particular implementation and ordering. No soundness theorem is inferred for
+its source-specific arity/shadowing behavior.
+[Hartel and Langendoen's collection paper](https://doi.org/10.1145/165180.165230)
+(1993) supplies translated-benchmark context. Publisher/institution metadata and
+abstracts were reviewed; this does not claim a full paper-derived proof.
+
+Investigate higher-order substitution composition, repeated environment lookup,
+type reconstruction, generalization, memoized fields, strict children and text
+consumption. These are source-based questions. Exact original type agreement and
+negative controls support correctness for the selected cases; measured counts
+and times are distinct evidence and do not alone establish performance causes.

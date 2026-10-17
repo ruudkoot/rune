@@ -1,0 +1,5 @@
+COUNT unbudgeted event-strict normal rune
+COUNT unbudgeted event-strict normal rune:opt
+COUNT unbudgeted event-strict normal rune:new
+COUNT unbudgeted event-strict normal rune:jit
+COUNT comparisons agree

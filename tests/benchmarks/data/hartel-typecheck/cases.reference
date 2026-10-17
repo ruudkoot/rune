@@ -1,0 +1,6 @@
+identity (<0> -> <0>)
+self-application failure
+integer-application failure
+constant (<0> -> int)
+polymorphic-let int
+mutual-recursion (<3.0.0> -> <1.0.0>)

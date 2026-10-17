@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+typecheck-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	6.35	5.10	1.04	670236	-	-	-	typecheck-lazy/native-mlton/build/compile
+typecheck-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2724	-	-	-	typecheck-lazy/native-mlton/correctness.0
+typecheck-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2656	-	-	-	typecheck-lazy/native-mlton/fresh.1
+typecheck-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	1.11	1.05	0.06	36452	-	-	-	typecheck-lazy/native-smlnj-legacy/build/compile
+typecheck-lazy	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.03	0.01	0.01	4144	-	-	-	typecheck-lazy/native-smlnj-legacy/correctness.0
+typecheck-lazy	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.02	0.01	0.01	4144	-	-	-	typecheck-lazy/native-smlnj-legacy/fresh.1
+typecheck-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.52	0.37	0.08	50964	-	-	-	typecheck-lazy/native-polyml/build/compile
+typecheck-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	7408	-	-	-	typecheck-lazy/native-polyml/correctness.0
+typecheck-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	7296	-	-	-	typecheck-lazy/native-polyml/fresh.1

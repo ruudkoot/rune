@@ -1,0 +1,4 @@
+RESULT 1 14 HHxLLHHLLHHLH
+PASS event-strict
+SAMPLE 1 0.000164000
+SUMMARY 1 checks, 0 failed
