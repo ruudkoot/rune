@@ -1,0 +1,8 @@
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/hidden-lazy/
+?? examples/benchmarks/hidden-strict/
+?? examples/benchmarks/shared/nofib-hidden-driver.sml
+?? examples/benchmarks/shared/nofib-hidden-number.sml
+?? examples/benchmarks/shared/nofib-hidden-parse.sml
+?? examples/benchmarks/shared/nofib-hidden.sml
+?? tests/benchmarks/data/hidden/

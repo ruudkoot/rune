@@ -545,6 +545,16 @@ def build(source, root, lock):
                     notices.append(str(notice.relative_to(root)))
         authors = set()
         context = [p for p in parent.iterdir() if p.is_file() and p.name in {"README", "README.md", "Makefile", "FILES", "sources.cm"}] if parent.exists() and files else []
+        if source == "nofib" and path == "real/hidden" and (parent / "MAIL").is_file():
+            # Reviewed correspondence credits both roles and grants nofib use.
+            mail = (parent / "MAIL").read_text(errors="replace")
+            if ('From:    ramaer@cs.utwente.nl (Mark Ramaer)' in mail
+                    and 'Certainly.  However, I should note that the program is written by\n'
+                        'Stef Joosten (joosten@cs.utwente.nl) in Miranda(TM) and I have translated\n'
+                        'it to Haskell to play with overloading; I also added the memoising.' in mail):
+                authors.update(["Stef Joosten", "Mark Ramaer"])
+                item["evidence"].append("real/hidden/MAIL:authorship-and-nofib-permission")
+                notices.append("real/hidden/MAIL:nofib-permission")
         item["evidence"].extend(str(p.relative_to(root)) for p in context)
         for p in files + context:
             header = p.read_text(errors="replace")[:8000]

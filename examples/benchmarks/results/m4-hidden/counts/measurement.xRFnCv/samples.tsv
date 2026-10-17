@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+hidden-lazy	normal	rune	O2	compile	0	0	pass	1.68	1.79	0.08	135620	-	-	-	hidden-lazy/rune/build/compile
+hidden-lazy	normal	rune	O2	correctness	0	0	pass	94.49	93.78	0.06	10648	16493700634	36439272392	1135040241	hidden-lazy/rune/correctness.0
+hidden-lazy	normal	rune	O2	count	1	1	pass	111.73	112.10	0.08	10660	16493700634	36439272392	1135040241	hidden-lazy/rune/fresh.1
+hidden-lazy	normal	rune:opt	O2	compile	0	0	pass	2.39	2.54	0.11	135684	-	-	-	hidden-lazy/rune-opt/build/compile
+hidden-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.58	0.38	0.11	23472	-	-	-	hidden-lazy/rune-opt/build/native-compile
+hidden-lazy	normal	rune:opt	O2	correctness	0	0	pass	44.46	45.45	0.10	11628	16493700634	36439272392	1135040241	hidden-lazy/rune-opt/correctness.0
+hidden-lazy	normal	rune:opt	O2	count	1	1	pass	43.65	44.20	0.08	11692	16493700634	36439272392	1135040241	hidden-lazy/rune-opt/fresh.1
+hidden-lazy	normal	rune:new	O2	compile	0	0	pass	4.65	2.00	0.07	135492	-	-	-	hidden-lazy/rune-new/build/compile
+hidden-lazy	normal	rune:new	O2	correctness	0	0	pass	95.01	97.16	0.09	10880	10067367392	36439272392	1135040241	hidden-lazy/rune-new/correctness.0
+hidden-lazy	normal	rune:new	O2	count	1	1	pass	101.11	99.98	0.09	10900	10067367392	36439272392	1135040241	hidden-lazy/rune-new/fresh.1
+hidden-lazy	normal	rune:jit	O2	compile	0	0	pass	2.02	2.04	0.11	135620	-	-	-	hidden-lazy/rune-jit/build/compile
+hidden-lazy	normal	rune:jit	O2	correctness	0	0	pass	41.83	40.53	0.08	13076	10067367392	36439272392	1135040241	hidden-lazy/rune-jit/correctness.0
+hidden-lazy	normal	rune:jit	O2	count	1	1	pass	46.69	46.57	0.13	13056	10067367392	36439272392	1135040241	hidden-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

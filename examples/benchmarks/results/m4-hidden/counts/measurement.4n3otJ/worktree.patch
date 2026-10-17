@@ -1,0 +1,336 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 600f1622..6831fd2a 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -347,6 +347,8 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [primetest-strict](#primetest-strict) | [nofib primetest](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/primetest) | Test integer candidates with 100 source witness trials and strict finite data. |
+ | [pic-lazy](#pic-lazy) | [nofib PIC](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/pic) | Run the source particle-in-cell simulation with lazy finite state and validate its timestep. |
+ | [pic-strict](#pic-strict) | [nofib PIC](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/pic) | Run the source particle-in-cell simulation with strict finite state and validate its timestep. |
++| [hidden-lazy](#hidden-lazy) | [nofib hidden](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/hidden) | Remove hidden polygon edges with lazy numeric components and validate every rendered coordinate and path command. |
++| [hidden-strict](#hidden-strict) | [nofib hidden](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/hidden) | Remove hidden polygon edges with strict numeric components and validate every rendered coordinate and path command. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -17808,3 +17810,231 @@ unused coarse work, finite eager construction, higher-order stencil callbacks,
+ short circuiting, numeric boxing and retained closures. Separate source analysis,
+ reference agreement and measured sensitivity. Identical SML is the compiler
+ comparison; Haskell and the independent model supply correctness references.
++
++## hidden-lazy
++
++Finite numeric evaluation: lazy.
++
++### Algorithm and workload
++
++Remove hidden portions of polygon edges, rotate the selected scene toward the
++view direction, scale it onto the page and consume the resulting PostScript.
++Preserve the original right-rotated polygon border order, support/heading edge
++representation, pairwise overlap, clipping order and triangular visibility memo.
++
++### History, authorship, revision and variants
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, real/hidden.
++The retained December 1992 MAIL credits Stef Joosten's original Miranda program
++and Mark Ramaer's Haskell translation and memoization. The correspondence
++explicitly permits its inclusion in nofib; no broader separate license grant
++is inferred. Original modules, Makefile, correspondence, prompts and all eight
++scene files remain under hidden-lazy/upstream. Individual scene files state no
++separate author or notice. MAIL describes four.plate as a composition of table,
++horse, bookcase and houses. Other dataset origins are unstated.
++
++The historical etc/nbpip.c is a pseudo-terminal/Ghostscript interaction wrapper,
++not a second hidden-line algorithm. Its excluded support-program disposition,
++identity and missing obsolete terminal setup are recorded in source-variants.tsv.
++It is retained as provenance and is not linked into the portable benchmark.
++
++The established hidden name is retained with explicit lazy/strict suffixes.
++This program is distinct from the suite's other ray tracers and renderers.
++
++### Portable translation and source behavior
++
++All geometry, binary32 rounding, bounded scene parsing, rendering and checks are
++SML97. Float arithmetic rounds after each primitive operation, including square
++root. The selected computations use finite normal numbers or zero; the helper
++does not claim general binary32 subnormal, overflow or transcendental support.
++An independent eager binary32 model agrees exactly with GHC on every rotated
++vertex and full visible edge in all three profiles. It records 34,715,488
++operations, with no nonfinite or subnormal results.
++
++Number's historical comparisons are unusual: equality uses abs(a-b)<epsilon,
++while inequality uses abs(a-b)>epsilon. At exactly epsilon both are false.
++Less-than and less-or-equal subtract epsilon on different operands; greater-than
++and greater-or-equal derive from the source Ord comparison defaults. Preserve
++these definitions, including min/max selection. Vector inequality instead
++complements vector equality. Epsilon is binary32 word 953267991.
++
++Vectors remain lists of numeric components. Dot products sum from zero in source
++order. Keep rotation basis construction and repeated face normal calculations
++at their source call sites. View zero or positive z leaves coordinates alone;
++negative z negates every coordinate, as the source specifies.
++
++Both policies retain lazy memoized control streams and lazy shared visibility
++cells. Lazy numeric components avoid unused cross-product/rotation coordinates;
++strict finite numeric construction evaluates them. The array of triangle cells
++is freshly constructed inside each bottom-plate iteration, as written upstream.
++Do not replace it with one global matrix. Reverse visibility queries retain
++the source's cached-reverse test followed by an uncached forward calculation.
++
++The driver retains 20 iterations for normal and large, with file reload, scene
++parse and view parse on every iteration. Smoke reduces only repetitions to one.
++Replace interactive prompts with explicit parameters and a stable checked-runs:
++edge-count report. The parser handles the selected closed three-coordinate
++plate grammar; it is not a general Haskell Read implementation.
++
++PostScript keeps source path-continuity decisions using three-coordinate tolerant
++vector equality, but prints only x/y. Primary checks compare every emitted x/y
++binary32 word and every move/line/path-break command. They do not force an
++otherwise irrelevant z coordinate just to validate output. Extra full-edge and
++rotated-vertex checks are auxiliary observations.
++
++GEN9 with a decimal minus sign replaces GHC's shortest Float formatting.
++Every formatted value must round back to its exact binary32 word, including
++signed zero. The full text is consumed by the source polynomial hash modulo
++2^64, checked against an independent reverse polynomial calculation.
++Golden text hash vectors are tested separately. Accepted results depend on the
++coordinate/command oracle rather than compiler-specific decimal spellings.
++
++### Profiles and correctness
++
++| Profile | Original scene | Polygons | Repetitions | Visible edges per run |
++|---|---|---:|---:|---:|
++| Smoke | FAST houses.plate | 14 | 1 | 25 |
++| Normal | NORM rad.plate | 51 | 20 | 130 |
++| Large | SLOW four.plate | 119 | 20 | 238 |
++
++All profiles use view 2,10,3 and their normal suite resource limits.
++The unmodified GHC program runs 20 repetitions on every scene and matches empty
++stdout plus its complete upstream stderr fixture. Export-only observers provide
++full geometry and PostScript fixtures; the separate Python reference model
++independently agrees on binary32 geometry. Command references are decoded from
++the original PostScript with binary32 decimal roundtrip.
++
++Primary geometry bounds are exact binary32 word equality, not a loose numerical
++tolerance. The source's epsilon controls geometry rather than checker accuracy.
++Tests exercise deliberately perturbed coordinates/topology, missing/extra output,
++bad references, comparison boundary quirks, rotation special cases, border order,
++memo sharing, finite numeric demand and unused z demand.
++
++### Literature and diagnostic questions
++
++[Joosten, The use of functional programming in software development (1989)](https://research.utwente.nl/en/publications/the-use-of-functional-programming-in-software-development/)
++is the thesis identified by the original author correspondence. The university
++bibliographic record confirms authorship, date and title; the thesis contents
++have not been reviewed here.
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
++provides suite context.
++
++Investigate list/vector representation, binary32 emulation, higher-order clipping,
++short circuiting, memo construction versus cell forcing, unused coordinates and
++numeric boxing. These are source-based questions, not measured optimization
++claims. Compare the identical SML sources across compilers; Haskell supplies a
++correctness reference.
++
++## hidden-strict
++
++Finite numeric evaluation: strict.
++
++### Algorithm and workload
++
++Remove hidden portions of polygon edges, rotate the selected scene toward the
++view direction, scale it onto the page and consume the resulting PostScript.
++Preserve the original right-rotated polygon border order, support/heading edge
++representation, pairwise overlap, clipping order and triangular visibility memo.
++
++### History, authorship, revision and variants
++
++nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, real/hidden.
++The retained December 1992 MAIL credits Stef Joosten's original Miranda program
++and Mark Ramaer's Haskell translation and memoization. The correspondence
++explicitly permits its inclusion in nofib; no broader separate license grant
++is inferred. Original modules, Makefile, correspondence, prompts and all eight
++scene files remain under hidden-lazy/upstream. Individual scene files state no
++separate author or notice. MAIL describes four.plate as a composition of table,
++horse, bookcase and houses. Other dataset origins are unstated.
++
++The historical etc/nbpip.c is a pseudo-terminal/Ghostscript interaction wrapper,
++not a second hidden-line algorithm. Its excluded support-program disposition,
++identity and missing obsolete terminal setup are recorded in source-variants.tsv.
++It is retained as provenance and is not linked into the portable benchmark.
++
++The established hidden name is retained with explicit lazy/strict suffixes.
++This program is distinct from the suite's other ray tracers and renderers.
++
++### Portable translation and source behavior
++
++All geometry, binary32 rounding, bounded scene parsing, rendering and checks are
++SML97. Float arithmetic rounds after each primitive operation, including square
++root. The selected computations use finite normal numbers or zero; the helper
++does not claim general binary32 subnormal, overflow or transcendental support.
++An independent eager binary32 model agrees exactly with GHC on every rotated
++vertex and full visible edge in all three profiles. It records 34,715,488
++operations, with no nonfinite or subnormal results.
++
++Number's historical comparisons are unusual: equality uses abs(a-b)<epsilon,
++while inequality uses abs(a-b)>epsilon. At exactly epsilon both are false.
++Less-than and less-or-equal subtract epsilon on different operands; greater-than
++and greater-or-equal derive from the source Ord comparison defaults. Preserve
++these definitions, including min/max selection. Vector inequality instead
++complements vector equality. Epsilon is binary32 word 953267991.
++
++Vectors remain lists of numeric components. Dot products sum from zero in source
++order. Keep rotation basis construction and repeated face normal calculations
++at their source call sites. View zero or positive z leaves coordinates alone;
++negative z negates every coordinate, as the source specifies.
++
++Both policies retain lazy memoized control streams and lazy shared visibility
++cells. Lazy numeric components avoid unused cross-product/rotation coordinates;
++strict finite numeric construction evaluates them. The array of triangle cells
++is freshly constructed inside each bottom-plate iteration, as written upstream.
++Do not replace it with one global matrix. Reverse visibility queries retain
++the source's cached-reverse test followed by an uncached forward calculation.
++
++The driver retains 20 iterations for normal and large, with file reload, scene
++parse and view parse on every iteration. Smoke reduces only repetitions to one.
++Replace interactive prompts with explicit parameters and a stable checked-runs:
++edge-count report. The parser handles the selected closed three-coordinate
++plate grammar; it is not a general Haskell Read implementation.
++
++PostScript keeps source path-continuity decisions using three-coordinate tolerant
++vector equality, but prints only x/y. Primary checks compare every emitted x/y
++binary32 word and every move/line/path-break command. They do not force an
++otherwise irrelevant z coordinate just to validate output. Extra full-edge and
++rotated-vertex checks are auxiliary observations.
++
++GEN9 with a decimal minus sign replaces GHC's shortest Float formatting.
++Every formatted value must round back to its exact binary32 word, including
++signed zero. The full text is consumed by the source polynomial hash modulo
++2^64, checked against an independent reverse polynomial calculation.
++Golden text hash vectors are tested separately. Accepted results depend on the
++coordinate/command oracle rather than compiler-specific decimal spellings.
++
++### Profiles and correctness
++
++| Profile | Original scene | Polygons | Repetitions | Visible edges per run |
++|---|---|---:|---:|---:|
++| Smoke | FAST houses.plate | 14 | 1 | 25 |
++| Normal | NORM rad.plate | 51 | 20 | 130 |
++| Large | SLOW four.plate | 119 | 20 | 238 |
++
++All profiles use view 2,10,3 and their normal suite resource limits.
++The unmodified GHC program runs 20 repetitions on every scene and matches empty
++stdout plus its complete upstream stderr fixture. Export-only observers provide
++full geometry and PostScript fixtures; the separate Python reference model
++independently agrees on binary32 geometry. Command references are decoded from
++the original PostScript with binary32 decimal roundtrip.
++
++Primary geometry bounds are exact binary32 word equality, not a loose numerical
++tolerance. The source's epsilon controls geometry rather than checker accuracy.
++Tests exercise deliberately perturbed coordinates/topology, missing/extra output,
++bad references, comparison boundary quirks, rotation special cases, border order,
++memo sharing, finite numeric demand and unused z demand.
++
++### Literature and diagnostic questions
++
++[Joosten, The use of functional programming in software development (1989)](https://research.utwente.nl/en/publications/the-use-of-functional-programming-in-software-development/)
++is the thesis identified by the original author correspondence. The university
++bibliographic record confirms authorship, date and title; the thesis contents
++have not been reviewed here.
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
++provides suite context.
++
++Investigate list/vector representation, binary32 emulation, higher-order clipping,
++short circuiting, memo construction versus cell forcing, unused coordinates and
++numeric boxing. These are source-based questions, not measured optimization
++claims. Compare the identical SML sources across compilers; Haskell supplies a
++correctness reference.
+diff --git a/examples/benchmarks/inventory.tsv b/examples/benchmarks/inventory.tsv
+index e5ee81b6..29af32ec 100644
+--- a/examples/benchmarks/inventory.tsv
++++ b/examples/benchmarks/inventory.tsv
+@@ -572,7 +572,7 @@ nofib	real/fulsom/Main.hs	fulsom	fulsom-nofib	M4	import	application	nofib:gc/ful
+ nofib	real/gamteb	gamteb	gamteb	M4	import	application		not stated in scanned source headers	59954bb60ebde5c8b56c62aacdb4f252c9647f5d2689bec1147933efce5f5d19	real/gamteb/Compton.hs;real/gamteb/Consts.hs;real/gamteb/Distance.hs;real/gamteb/GamtebMain.hs;real/gamteb/GamtebType.hs;real/gamteb/InitTable.hs;real/gamteb/Main.hs;real/gamteb/NofibUtils.hs;real/gamteb/Output.hs;real/gamteb/Pair.hs;real/gamteb/PhotoElec.hs;real/gamteb/RoulSplit.hs;real/gamteb/TransPort.hs;real/gamteb/Utils.hs	real/gamteb/gamteb.faststdout;real/gamteb/gamteb.slowstdout;real/gamteb/gamteb.stdout	real/gamteb/GamtebMain.hs:header	real/gamteb/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/gg	gg	gg	M4	import	application		not stated in scanned source headers	e670c250f14ce0d26a61f15ab0286d106b24059fb7421b811c658e7fbfc2b434	real/gg/Activity.hs;real/gg/GRIP.hs;real/gg/Graph.hs;real/gg/Main.hs;real/gg/NofibUtils.hs;real/gg/PSlib.hs;real/gg/Parse.hs;real/gg/Pool.hs;real/gg/Spark.hs;real/gg/StdLib.hs	real/gg/gg.faststdin;real/gg/gg.faststdout;real/gg/gg.slowstdin;real/gg/gg.slowstdout;real/gg/gg.stdin;real/gg/gg.stdout		real/gg/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/grep	grep	grep	M4	import	kernel		not stated in scanned source headers	d9dadbddd22cc3db52c300d393d12485206db6731c78dcc12a5c0b846d08e4db	real/grep/Main.lhs;real/grep/NofibUtils.hs;real/grep/Parsers.hs;real/grep/StringMatch.hs	real/grep/grep.faststdin;real/grep/grep.faststdout;real/grep/grep.slowstdin;real/grep/grep.slowstdout;real/grep/grep.stdin;real/grep/grep.stdout		real/grep/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	real/hidden	hidden	hidden	M4	import	application		not stated in scanned source headers	0e1040d3cc5da5880e37c19df57a31156894a845c07a936466cabf56384bafd1	real/hidden/Comparing.hs;real/hidden/Cross.hs;real/hidden/EdgePlate.hs;real/hidden/Geometric.hs;real/hidden/Hide.hs;real/hidden/Main.hs;real/hidden/Matrices.hs;real/hidden/Memo.hs;real/hidden/MyIO.hs;real/hidden/NofibUtils.hs;real/hidden/Numbers.hs;real/hidden/Postscript.hs;real/hidden/Preds.hs;real/hidden/Rotate.lhs;real/hidden/Solve.hs;real/hidden/Vectors.hs;real/hidden/etc/nbpip.c	real/hidden/hidden.stdin;real/hidden/runtime_files/four.plate;real/hidden/runtime_files/houses.plate;real/hidden/runtime_files/rad.plate		real/hidden/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	real/hidden	hidden	hidden	M4	import	application		Mark Ramaer;Stef Joosten	0e1040d3cc5da5880e37c19df57a31156894a845c07a936466cabf56384bafd1	real/hidden/Comparing.hs;real/hidden/Cross.hs;real/hidden/EdgePlate.hs;real/hidden/Geometric.hs;real/hidden/Hide.hs;real/hidden/Main.hs;real/hidden/Matrices.hs;real/hidden/Memo.hs;real/hidden/MyIO.hs;real/hidden/NofibUtils.hs;real/hidden/Numbers.hs;real/hidden/Postscript.hs;real/hidden/Preds.hs;real/hidden/Rotate.lhs;real/hidden/Solve.hs;real/hidden/Vectors.hs;real/hidden/etc/nbpip.c	real/hidden/hidden.stdin;real/hidden/runtime_files/four.plate;real/hidden/runtime_files/houses.plate;real/hidden/runtime_files/rad.plate	real/hidden/MAIL:nofib-permission	real/hidden/MAIL:authorship-and-nofib-permission;real/hidden/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/hpg	hpg	hpg	M4	import	integer-arithmetic		not stated in scanned source headers	b241e65bac3ced5d134bcb5be065c2b815957a9122949c6ef7f8cd80d007a309	real/hpg/Config.lhs;real/hpg/Env.lhs;real/hpg/GenExp.lhs;real/hpg/GenType.lhs;real/hpg/GenVal.lhs;real/hpg/Main.lhs;real/hpg/NofibUtils.hs;real/hpg/Types.lhs;real/hpg/Utils.lhs	real/hpg/hpg.faststdout;real/hpg/hpg.slowstdout;real/hpg/hpg.stdout	real/hpg/Config.lhs:header;real/hpg/Env.lhs:header;real/hpg/GenExp.lhs:header;real/hpg/GenType.lhs:header;real/hpg/GenVal.lhs:header;real/hpg/Main.lhs:header;real/hpg/Types.lhs:header;real/hpg/Utils.lhs:header	real/hpg/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/infer/Main.hs	infer	infer	M4	import	compiler-application		not stated in scanned source headers	179e72dcd88a32dd9e85e0faaa4e66d7224c54335b1efa8289f55febef3f73f3	real/infer/Environment.hs;real/infer/FiniteMap.hs;real/infer/Infer.hs;real/infer/InferMonad.hs;real/infer/Main.hs;real/infer/MaybeM.hs;real/infer/MyList.hs;real/infer/NofibUtils.hs;real/infer/Parse.hs;real/infer/Shows.hs;real/infer/StateX.hs;real/infer/Substitution.hs;real/infer/Term.hs;real/infer/Type.hs	real/infer/infer.faststdin;real/infer/infer.faststdout;real/infer/infer.slowstdin;real/infer/infer.slowstdout;real/infer/infer.stdin;real/infer/infer.stdout		real/infer/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/infer/TestTerm.hs	TestTerm	TestTerm	-	exclude	kernel		not stated in scanned source headers	1bdc4828944541815460444338a91aded693be41368b6a5dde569746a0dd9d35	real/infer/Parse.hs;real/infer/Shows.hs;real/infer/Term.hs;real/infer/TestTerm.hs	real/infer/infer.faststdin;real/infer/infer.faststdout;real/infer/infer.slowstdin;real/infer/infer.slowstdout;real/infer/infer.stdin;real/infer/infer.stdout		real/infer/Makefile	auxiliary test or alternate entrypoint; the directory Makefile excludes it or selects the Main driver, not a separate benchmark invocation
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 6e7c9995..bbe688bc 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -1005,3 +1005,9 @@ pic-lazy	large	nofib	real/pic	1000 300 large.dt	pic-lazy/large.expected	shared/i
+ pic-strict	smoke	nofib	real/pic	1 18 smoke.dt	pic-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/nofib-pic.sml,shared/nofib-pic-driver.sml,pic-strict/benchmark.sml,shared/main.sml	30	1048576	numerical,arrays,allocation-lifetimes,strict	smoke.dt	checked-numerical	implemented
+ pic-strict	normal	nofib	real/pic	500 80 normal.dt	pic-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/nofib-pic.sml,shared/nofib-pic-driver.sml,pic-strict/benchmark.sml,shared/main.sml	600	4194304	numerical,arrays,allocation-lifetimes,strict	normal.dt	checked-numerical	implemented
+ pic-strict	large	nofib	real/pic	1000 300 large.dt	pic-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/nofib-pic.sml,shared/nofib-pic-driver.sml,pic-strict/benchmark.sml,shared/main.sml	3600	8388608	numerical,arrays,allocation-lifetimes,strict	large.dt	checked-numerical	implemented
++hidden-lazy	smoke	nofib	real/hidden	1 houses.plate 2,10,3 smoke.commands	hidden-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-hidden-number.sml,shared/nofib-hidden.sml,shared/nofib-hidden-parse.sml,shared/nofib-hidden-driver.sml,hidden-lazy/benchmark.sml,shared/main.sml	30	1048576	rendering,numerical,lists-streams,allocation-lifetimes,lazy	houses.plate,smoke.commands	checked-numerical	implemented
++hidden-lazy	normal	nofib	real/hidden	20 rad.plate 2,10,3 normal.commands	hidden-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-hidden-number.sml,shared/nofib-hidden.sml,shared/nofib-hidden-parse.sml,shared/nofib-hidden-driver.sml,hidden-lazy/benchmark.sml,shared/main.sml	600	4194304	rendering,numerical,lists-streams,allocation-lifetimes,lazy	rad.plate,normal.commands	checked-numerical	implemented
++hidden-lazy	large	nofib	real/hidden	20 four.plate 2,10,3 large.commands	hidden-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-hidden-number.sml,shared/nofib-hidden.sml,shared/nofib-hidden-parse.sml,shared/nofib-hidden-driver.sml,hidden-lazy/benchmark.sml,shared/main.sml	3600	8388608	rendering,numerical,lists-streams,allocation-lifetimes,lazy	four.plate,large.commands	checked-numerical	implemented
++hidden-strict	smoke	nofib	real/hidden	1 houses.plate 2,10,3 smoke.commands	hidden-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-hidden-number.sml,shared/nofib-hidden.sml,shared/nofib-hidden-parse.sml,shared/nofib-hidden-driver.sml,hidden-strict/benchmark.sml,shared/main.sml	30	1048576	rendering,numerical,lists-streams,allocation-lifetimes,strict	houses.plate,smoke.commands	checked-numerical	implemented
++hidden-strict	normal	nofib	real/hidden	20 rad.plate 2,10,3 normal.commands	hidden-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-hidden-number.sml,shared/nofib-hidden.sml,shared/nofib-hidden-parse.sml,shared/nofib-hidden-driver.sml,hidden-strict/benchmark.sml,shared/main.sml	600	4194304	rendering,numerical,lists-streams,allocation-lifetimes,strict	rad.plate,normal.commands	checked-numerical	implemented
++hidden-strict	large	nofib	real/hidden	20 four.plate 2,10,3 large.commands	hidden-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/finite-binary32.sml,shared/nofib-hidden-number.sml,shared/nofib-hidden.sml,shared/nofib-hidden-parse.sml,shared/nofib-hidden-driver.sml,hidden-strict/benchmark.sml,shared/main.sml	3600	8388608	rendering,numerical,lists-streams,allocation-lifetimes,strict	four.plate,large.commands	checked-numerical	implemented
+diff --git a/examples/benchmarks/source-variants.tsv b/examples/benchmarks/source-variants.tsv
+index 2e271e8f..822b06c1 100644
+--- a/examples/benchmarks/source-variants.tsv
++++ b/examples/benchmarks/source-variants.tsv
+@@ -4,3 +4,4 @@ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/pic	real/pic/inId/pic_olaf.i
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/pic	real/pic/inId/pic88.id	pic88	Id Nouveau	historical implementation	Olaf Lubeck	696ceed2206f7b34bbb68d7499f5a23562dcb24933e21063016ad8c55b20167d	defer	historical dataflow array/accumulator execution model and original library/setup dependencies are unavailable; reconsider with complete pinned setup and equivalent facilities under a separate feature roadmap	no separate redistribution notice stated in the file; do not infer the Haskell notice applies
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/pic	real/pic/inId/doc.culler	doc.culler	text	historical call graph	not stated	4966bb3e1174e05cd35a8c5b9cba267b1e53d9eb503144328a46289254eae3c9	exclude	documentation of historical call graphs, without a workload entrypoint; retain as provenance for the associated Id implementation	no separate redistribution notice stated
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/pic	real/pic/inId/doc.olaf	doc.olaf	text	historical call graph	not stated	5d3e6d629fc1e01dc44b4a55d89fc4931c482937b703df869d2e6cd9752f6e9a	exclude	documentation of historical call graphs, without a workload entrypoint; retain as provenance for the associated Id implementation	no separate redistribution notice stated
++nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/hidden	real/hidden/etc/nbpip.c	nbpip	C	historical interactive wrapper	not stated	13cd8f4cf3574e2c3cf6b03f41de8d3c3800919e311bedd2acdeabd835d42234	exclude	pseudo-terminal wrapper for the hidden-line executable and external Ghostscript; no geometry workload of its own; obsolete BSD PTY and interactive display setup are outside the portable suite	no separate redistribution notice stated; do not infer correspondence permission for a broader use
+diff --git a/scripts/benchmark-inventory.py b/scripts/benchmark-inventory.py
+index d33fb27d..1db1eac7 100644
+--- a/scripts/benchmark-inventory.py
++++ b/scripts/benchmark-inventory.py
+@@ -545,6 +545,16 @@ def build(source, root, lock):
+                     notices.append(str(notice.relative_to(root)))
+         authors = set()
+         context = [p for p in parent.iterdir() if p.is_file() and p.name in {"README", "README.md", "Makefile", "FILES", "sources.cm"}] if parent.exists() and files else []
++        if source == "nofib" and path == "real/hidden" and (parent / "MAIL").is_file():
++            # Reviewed correspondence credits both roles and grants nofib use.
++            mail = (parent / "MAIL").read_text(errors="replace")
++            if ('From:    ramaer@cs.utwente.nl (Mark Ramaer)' in mail
++                    and 'Certainly.  However, I should note that the program is written by\n'
++                        'Stef Joosten (joosten@cs.utwente.nl) in Miranda(TM) and I have translated\n'
++                        'it to Haskell to play with overloading; I also added the memoising.' in mail):
++                authors.update(["Stef Joosten", "Mark Ramaer"])
++                item["evidence"].append("real/hidden/MAIL:authorship-and-nofib-permission")
++                notices.append("real/hidden/MAIL:nofib-permission")
+         item["evidence"].extend(str(p.relative_to(root)) for p in context)
+         for p in files + context:
+             header = p.read_text(errors="replace")[:8000]
+diff --git a/tests/benchmarks/test-inventory.py b/tests/benchmarks/test-inventory.py
+index 4ed26a58..925ac225 100644
+--- a/tests/benchmarks/test-inventory.py
++++ b/tests/benchmarks/test-inventory.py
+@@ -157,6 +157,29 @@ class InventoryTest(unittest.TestCase):
+                   "The Circuit Simulator example\nDifferent authors\nJanuary, 1998\n\n> main = return ()\n")
+         self.assertEqual(self.build("nofib")[0]["authors"], "not stated in scanned source headers")
+ 
++    def test_hidden_correspondence_records_both_authors_and_permission(self):
++        self.nofib_roots()
++        self.file("real/hidden/Makefile", "\n")
++        self.file("real/hidden/Main.hs", "main = print 0\n")
++        self.file("real/hidden/MAIL",
++                  "From:    ramaer@cs.utwente.nl (Mark Ramaer)\n"
++                  "Certainly.  However, I should note that the program is written by\n"
++                  "Stef Joosten (joosten@cs.utwente.nl) in Miranda(TM) and I have translated\n"
++                  "it to Haskell to play with overloading; I also added the memoising.\n")
++        row = self.build("nofib")[0]
++        self.assertEqual(row["authors"], "Mark Ramaer;Stef Joosten")
++        self.assertIn("real/hidden/MAIL:authorship-and-nofib-permission", row["evidence"])
++        self.assertIn("real/hidden/MAIL:nofib-permission", row["notices"])
++
++    def test_changed_hidden_correspondence_requires_review(self):
++        self.nofib_roots()
++        self.file("real/hidden/Makefile", "\n")
++        self.file("real/hidden/Main.hs", "main = print 0\n")
++        self.file("real/hidden/MAIL", "A different author and permission.\n")
++        row = self.build("nofib")[0]
++        self.assertEqual(row["authors"], "not stated in scanned source headers")
++        self.assertNotIn("real/hidden/MAIL:nofib-permission", row["notices"])
++
+     def test_pic_author_heading_is_recorded(self):
+         self.nofib_roots()
+         self.file("real/pic/Makefile", "\n")

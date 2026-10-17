@@ -1,0 +1,311 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : 
+  sig
+    datatype 'a node
+      = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay | Nil
+    type 'a stream = 'a node BenchLazy.delay
+    val empty : unit -> 'a node BenchLazy.state ref
+    val cons : 'a BenchLazy.delay * 'a node BenchLazy.delay
+                -> 'a node BenchLazy.state ref
+    val singleton : 'a -> 'a node BenchLazy.state ref
+    val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+    val head : 'a node BenchLazy.state ref -> 'a
+    val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val iterate : ('a -> 'a)
+                   -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+    val fromList : 'a list -> 'a node BenchLazy.delay
+    val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+    val zipWith : ('a * 'b -> 'c)
+                   -> 'a node BenchLazy.delay
+                   -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+    val append : 'a node BenchLazy.delay
+                  -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+    val concatMap : ('a -> 'b node BenchLazy.delay)
+                     -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+    val filter : ('a -> bool)
+                  -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+    val dropWhile : ('a -> bool)
+                     -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+    val foldrStream : ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+                       -> 'b BenchLazy.state ref
+                       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+    val zipWith3 : ('a * 'b * 'c -> 'd)
+                    -> 'a node BenchLazy.delay
+                    -> 'b node BenchLazy.delay
+                    -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+    val span : ('a -> bool)
+                -> 'a node BenchLazy.delay
+                -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+    val nth : 'a node BenchLazy.delay -> int -> 'a
+    val take : int -> 'a node BenchLazy.delay -> 'a list
+    val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+    val foldPrefix : ('a * 'b -> 'b)
+                      -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/finite-binary32.sml]
+structure BenchMandelSingle : 
+  sig
+    val round : real -> real
+    val add : real * real -> real
+    val sub : real * real -> real
+    val mul : real * real -> real
+    val divide : real * real -> real
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-hidden-number.sml]
+functor BenchHiddenNumberFn(D: sig
+                               type 'a t
+                               val delay : (unit -> 'a) -> 'a t
+                               val force : 'a t -> 'a
+                             end) :
+                           
+                             sig
+                               structure F : <sig>
+                               type number
+                               val literal : real -> real D.t
+                               val zero : real D.t
+                               val one : real D.t
+                               val eps : real
+                               val add : real D.t * real D.t -> real D.t
+                               val sub : real D.t * real D.t -> real D.t
+                               val mul : real D.t * real D.t -> real D.t
+                               val divide : real D.t * real D.t -> real D.t
+                               val negative : number -> real D.t
+                               val sqrt : real D.t -> real D.t
+                               val eq : real D.t * real D.t -> bool
+                               val ne : real D.t * real D.t -> bool
+                               val lt : real D.t * real D.t -> bool
+                               val le : real D.t * real D.t -> bool
+                               val compare : real D.t * real D.t -> order
+                               val gt : real D.t * real D.t -> bool
+                               val ge : real D.t * real D.t -> bool
+                               val maximum : real D.t * real D.t -> real D.t
+                               val minimum : real D.t * real D.t -> real D.t
+                               val value : 'a D.t -> 'a
+                               val bits : real -> Word32.word
+                             end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-hidden.sml]
+functor BenchHiddenFn(D: sig
+                         type 'a t
+                         val delay : (unit -> 'a) -> 'a t
+                         val force : 'a t -> 'a
+                       end) :
+                     
+                       sig
+                         structure N : <sig>
+                         structure L : <sig>
+                         structure S : <sig>
+                         type number
+                         type vector
+                         type edge
+                         type plate
+                         type memo
+                         val vector : real D.t BenchStream.node 
+                                         BenchLazy.delay
+                                       -> vector
+                         val vec : real D.t list -> vector
+                         val constructed : (unit -> real D.t) list -> vector
+                         val zeroVector : vector
+                         val zVector : vector
+                         val minusZVector : vector
+                         val coordinate : vector -> int -> number
+                         val x : vector -> number
+                         val y : vector -> number
+                         val z : vector -> number
+                         val add : vector * vector -> vector
+                         val subtract : vector * vector -> vector
+                         val negative : vector -> vector
+                         val multiply : vector * vector -> vector
+                         val scale : real D.t -> vector -> vector
+                         val inner : vector * vector -> real D.t
+                         val length : vector -> real D.t
+                         val normalize : vector -> vector
+                         val equal : vector * vector -> bool
+                         val parallel : vector * vector -> bool
+                         val project : vector -> vector
+                         val rotate : vector -> vector -> vector
+                         val edgeT : vector -> vector -> edge
+                         val support : edge -> vector
+                         val heading : edge -> vector
+                         val terminal : edge -> vector
+                         val plateEdges : plate -> edge BenchStream.stream
+                         val plateId : plate -> int
+                         val faceNormal : plate -> vector
+                         val verticalEdge : edge -> bool
+                         val verticalPlate : plate -> bool
+                         val rotateEdge : vector -> edge -> edge
+                         val scaleVector : real D.t
+                                            -> vector -> vector -> vector
+                         val scaleEdge : real D.t -> vector -> edge -> edge
+                         val solve : vector
+                                      -> vector
+                                      -> vector
+                                      -> (real D.t * real D.t) 
+                                            BenchStream.node BenchLazy.state 
+                                        ref
+                         val altitude : plate -> vector -> number
+                         val onto : vector -> edge -> bool
+                         val any : ('a -> bool)
+                                    -> 'a BenchStream.node BenchLazy.delay
+                                    -> bool
+                         val all : ('a -> bool)
+                                    -> 'a BenchStream.node BenchLazy.delay
+                                    -> bool
+                         val into : vector -> plate -> bool
+                         val cross : edge
+                                      -> edge
+                                      -> (vector * vector) BenchStream.node 
+                                        BenchLazy.delay
+                         val member : vector
+                                       -> vector BenchStream.node 
+                                         BenchLazy.delay
+                                       -> bool
+                         val nub : vector BenchStream.node BenchLazy.state ref
+                                    -> vector BenchStream.node BenchLazy.delay
+                         val overlap : plate
+                                        -> plate
+                                        -> vector BenchStream.node 
+                                          BenchLazy.delay
+                         val above : plate -> plate -> bool
+                         val last : 'a BenchStream.node BenchLazy.state ref
+                                     -> 'a
+                         val comp : edge
+                                     -> plate
+                                     -> edge BenchStream.node BenchLazy.state 
+                                       ref
+                         val cmp : plate
+                                    -> edge BenchStream.node BenchLazy.delay
+                                    -> edge BenchStream.node BenchLazy.state 
+                                      ref
+                         val streamLength : 'a BenchStream.node 
+                                               BenchLazy.delay
+                                             -> int
+                         val memoIndex : int -> int -> int
+                         val makeMemo : (plate -> plate -> 'a)
+                                         -> plate BenchStream.node 
+                                           BenchLazy.delay
+                                         -> 'a BenchLazy.state ref array
+                         val lazyAbove : memo -> plate -> plate -> bool
+                         val hide : memo
+                                     -> plate BenchStream.node BenchLazy.delay
+                                     -> plate
+                                     -> edge BenchStream.node BenchLazy.delay
+                         val hideObject : plate BenchStream.node 
+                                             BenchLazy.delay
+                                           -> edge BenchStream.node 
+                                               BenchLazy.state ref
+                         val rotateRight : 'a BenchStream.node BenchLazy.state 
+                                              ref
+                                            -> 'a BenchStream.node 
+                                                BenchLazy.state ref
+                         val makeObject : vector BenchStream.node 
+                                                 BenchLazy.delay 
+                                               BenchStream.node 
+                                             BenchLazy.delay
+                                           -> plate BenchStream.node 
+                                             BenchLazy.delay
+                         val reduce : ('a * 'a -> 'a)
+                                       -> 'a BenchStream.node BenchLazy.state 
+                                         ref
+                                       -> 'a
+                         val extremes : vector BenchStream.node 
+                                               BenchLazy.delay 
+                                             BenchStream.node BenchLazy.delay
+                                         -> vector * real D.t
+                         val prepare : vector
+                                        -> vector BenchStream.node 
+                                              BenchLazy.delay BenchStream.node 
+                                          BenchLazy.delay
+                                        -> edge BenchStream.node 
+                                          BenchLazy.delay
+                         type command
+                         val plot : edge BenchStream.node BenchLazy.state ref
+                                     -> command BenchStream.node 
+                                         BenchLazy.state ref
+                       end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-hidden-parse.sml]
+functor BenchHiddenParseFn(K: sig
+                              type number
+                              type vector
+                              structure N : <sig>
+                              val vec : number list -> vector
+                            end) :
+                          
+                            sig
+                              structure L : <sig>
+                              structure S : <sig>
+                              type token
+                              val tokenize : string -> token list
+                              val point : token list -> K.vector * token list
+                              val face : string
+                                          -> K.vector BenchStream.node 
+                                            BenchLazy.delay
+                              val scene : string
+                                           -> K.vector BenchStream.node 
+                                                 BenchLazy.delay 
+                                               BenchStream.node 
+                                             BenchLazy.delay
+                              val view : string -> K.vector
+                            end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-hidden-driver.sml]
+functor BenchHiddenDriverFn(<param>: sig
+                               structure K : <sig>
+                               structure Parser : <sig>
+                             end) :
+                           
+                             sig
+                               structure W : <sig>
+                               structure S : <sig>
+                               structure L : <sig>
+                               val read : string -> TextIO.vector
+                               val hash : string -> Word64.word
+                               val hashReference : string -> Word64.word
+                               val word : string -> Word32.word
+                               type expected
+                               val reference : string -> expected list
+                               val number : number -> string
+                               val render : K.command BenchStream.node 
+                                               BenchLazy.delay
+                                             -> expected list -> string * int
+                               val run : string list -> string
+                             end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/hidden-lazy/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Kernel : <sig>
+    structure Parser : <sig>
+    structure Driver : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 20:2600
+PASS hidden-lazy
+SUMMARY 1 checks, 0 failed

@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+hidden-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	9.21	5.47	1.59	659916	-	-	-	hidden-lazy/native-mlton/build/compile
+hidden-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.04	0.05	0.00	4220	-	-	-	hidden-lazy/native-mlton/correctness.0
+hidden-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.04	0.04	0.00	4212	-	-	-	hidden-lazy/native-mlton/fresh.1
+hidden-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.84	0.82	0.08	36616	-	-	-	hidden-lazy/native-smlnj-legacy/build/compile
+hidden-lazy	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	incorrect-result	0.02	0.01	0.01	4740	-	-	-	hidden-lazy/native-smlnj-legacy/correctness.0
+hidden-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.42	0.36	0.07	56352	-	-	-	hidden-lazy/native-polyml/build/compile
+hidden-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.06	0.04	0.03	22552	-	-	-	hidden-lazy/native-polyml/correctness.0
+hidden-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.06	0.05	0.01	26444	-	-	-	hidden-lazy/native-polyml/fresh.1

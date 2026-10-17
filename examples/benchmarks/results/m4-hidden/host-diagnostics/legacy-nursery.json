@@ -1,0 +1,12 @@
+[
+  {
+    "nursery": "128k",
+    "exit": 1,
+    "pass_check": false
+  },
+  {
+    "nursery": "64m",
+    "exit": 0,
+    "pass_check": true
+  }
+]

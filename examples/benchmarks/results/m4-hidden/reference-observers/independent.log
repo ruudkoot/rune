@@ -1,0 +1,3 @@
+{'profile': 'smoke', 'polygons': 14, 'visible_edges': 25, 'complete_bits_match': True}
+{'profile': 'normal', 'polygons': 51, 'visible_edges': 130, 'complete_bits_match': True}
+{'profile': 'large', 'polygons': 119, 'visible_edges': 238, 'complete_bits_match': True}

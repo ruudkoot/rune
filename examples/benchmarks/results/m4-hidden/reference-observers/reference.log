@@ -1,0 +1,18 @@
+{'profile': 'smoke', 'file': 'houses.plate', 'repetitions': 20, 'polygons': 14, 'stderr_bytes': 2480}
+{'profile': 'normal', 'file': 'rad.plate', 'repetitions': 20, 'polygons': 51, 'stderr_bytes': 2480}
+{'profile': 'large', 'file': 'four.plate', 'repetitions': 20, 'polygons': 119, 'stderr_bytes': 2480}
+result 25 1722 189650297958939016
+scale 3251641080 3259243963 0 1091972215
+
+result 130 8926 -4514492109319616675
+scale 3241330910 3239040741 0 1105811180
+
+result 238 15955 -5561305568168386934
+scale 3272606569 3275121493 0 1072005899
+
+zero-zero 0 0 True False False True False True EQ True False
+eps-zero 953267991 0 False False False False True True GT False True
+zero-eps 0 953267991 False False False True False False LT False True
+minus-eps-zero 3100751639 0 False False False True False False LT False True
+below-eps 953266617 0 True False False True False True EQ True False
+

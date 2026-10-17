@@ -1,0 +1,1 @@
+hidden-strict	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/finite-binary32.sml shared/nofib-hidden-number.sml shared/nofib-hidden.sml shared/nofib-hidden-parse.sml shared/nofib-hidden-driver.sml hidden-strict/benchmark.sml shared/main.sml	1 houses.plate 2,10,3 smoke.commands	hidden-strict/smoke.expected	houses.plate smoke.commands

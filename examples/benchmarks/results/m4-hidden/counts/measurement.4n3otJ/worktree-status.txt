@@ -1,0 +1,15 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/inventory.tsv
+ M examples/benchmarks/manifest.tsv
+ M examples/benchmarks/source-variants.tsv
+ M scripts/benchmark-inventory.py
+ M tests/benchmarks/test-inventory.py
+?? examples/benchmarks/hidden-lazy/
+?? examples/benchmarks/hidden-strict/
+?? examples/benchmarks/shared/nofib-hidden-driver.sml
+?? examples/benchmarks/shared/nofib-hidden-number.sml
+?? examples/benchmarks/shared/nofib-hidden-parse.sml
+?? examples/benchmarks/shared/nofib-hidden.sml
+?? tests/benchmarks/check-hidden.sh
+?? tests/benchmarks/data/hidden/
+?? tests/benchmarks/hidden-tests.sml

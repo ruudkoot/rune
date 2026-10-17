@@ -1,0 +1,9 @@
+PASS hidden-command/Need/internal
+Need internal 1.25 2.5
+Need external 1.25 2.5
+PASS hidden-command/Need/external
+PASS hidden-command/Strict/internal
+Strict internal 1.25 2.5
+Strict external 1.25 2.5
+PASS hidden-command/Strict/external
+SUMMARY 4 checks, 0 failed

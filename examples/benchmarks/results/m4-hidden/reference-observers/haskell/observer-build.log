@@ -1,0 +1,134 @@
+[ 1 of 16] Compiling NofibUtils       ( NofibUtils.hs, NofibUtils.o )
+[ 2 of 16] Compiling Numbers          ( Numbers.hs, Numbers.o )
+
+Numbers.hs:8:1: warning: [-Wtabs]
+    Tab character found here, and in 36 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+8 |         Tolerant a == Tolerant b        = abs(a-b) < eps
+  | ^^^^^^^^
+
+Numbers.hs:13:10: warning: [-Wmissing-methods]
+    • No explicit implementation for
+        ‘abs’ and ‘signum’
+    • In the instance declaration for ‘Num Number’
+   |
+13 | instance Num Number where
+   |          ^^^^^^^^^^
+
+Numbers.hs:19:10: warning: [-Wmissing-methods]
+    • No explicit implementation for
+        ‘fromRational’
+    • In the instance declaration for ‘Fractional Number’
+   |
+19 | instance Fractional Number where
+   |          ^^^^^^^^^^^^^^^^^
+
+Numbers.hs:21:10: warning: [-Wmissing-methods]
+    • No explicit implementation for
+        ‘pi’, ‘exp’, ‘log’, ‘sin’, ‘cos’, ‘asin’, ‘acos’, ‘atan’, ‘sinh’,
+        ‘cosh’, ‘asinh’, ‘acosh’, and ‘atanh’
+    • In the instance declaration for ‘Floating Number’
+   |
+21 | instance Floating Number where
+   |          ^^^^^^^^^^^^^^^
+[ 3 of 16] Compiling Vectors          ( Vectors.hs, Vectors.o )
+
+Vectors.hs:30:1: warning: [-Wtabs]
+    Tab character found here, and in 37 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+30 |         Vec v + Vec w   = Vec (zipWith (+) v w)
+   | ^^^^^^^^
+[ 4 of 16] Compiling Matrices         ( Matrices.hs, Matrices.o )
+[ 5 of 16] Compiling Rotate           ( Rotate.lhs, Rotate.o )
+[ 6 of 16] Compiling EdgePlate        ( EdgePlate.hs, EdgePlate.o )
+
+EdgePlate.hs:2:1: warning: [-Wtabs]
+    Tab character found here, and in six further locations.
+    Suggested fix: Please use spaces instead.
+  |
+2 |                  Input,Object,makeObject) where
+  | ^^^^^^^^
+[ 7 of 16] Compiling Solve            ( Solve.hs, Solve.o )
+
+Solve.hs:13:1: warning: [-Wtabs]
+    Tab character found here, and in 8 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+13 |         let determinant = z (v1*v2) in
+   | ^^^^^^^^
+[ 8 of 16] Compiling Postscript       ( Postscript.hs, Postscript.o )
+
+Postscript.hs:13:1: warning: [-Wtabs]
+    Tab character found here, and in 10 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+13 |         where
+   | ^^^^^^^^
+[ 9 of 16] Compiling Geometric        ( Geometric.hs, Geometric.o )
+
+Geometric.hs:8:1: warning: [-Wtabs]
+    Tab character found here, and in 39 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+8 |         (|||) :: a -> a -> Bool                 -- two entities are parrallel ?
+  | ^^^^^^^^
+
+Geometric.hs:16:10: warning: [-Wmissing-methods]
+    • No explicit implementation for
+        ‘|||’ and ‘vertical’
+    • In the instance declaration for ‘Geom [a]’
+   |
+16 | instance Geom a => Geom [a] where
+   |          ^^^^^^^^^^^^^^^^^^
+
+Geometric.hs:35:10: warning: [-Wmissing-methods]
+    • No explicit implementation for
+        ‘scale’
+    • In the instance declaration for ‘Geom Plate’
+   |
+35 | instance Geom Plate where
+   |          ^^^^^^^^^^
+[10 of 16] Compiling Preds            ( Preds.hs, Preds.o )
+
+Preds.hs:12:1: warning: [-Wtabs]
+    Tab character found here, and in 11 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+12 |          | otherwise  = v ||| w && 0<=v`inpr`w && v`inpr`w<=w`inpr`w
+   | ^^^^^^^^
+[11 of 16] Compiling Cross            ( Cross.hs, Cross.o )
+
+Cross.hs:16:1: warning: [-Wtabs]
+    Tab character found here, and in five further locations.
+    Suggested fix: Please use spaces instead.
+   |
+16 |             |(lambda,mu) <- solve (-h l) (h k) (s l - s k)
+   | ^^^^^^^^
+[12 of 16] Compiling Comparing        ( Comparing.hs, Comparing.o )
+
+Comparing.hs:18:1: warning: [-Wtabs]
+    Tab character found here, and in 30 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+18 |         if          inS &&     inT      then []
+   | ^^^^^^^^
+[13 of 16] Compiling Memo             ( Memo.hs, Memo.o )
+
+Memo.hs:12:1: warning: [-Wtabs]
+    Tab character found here, and in 54 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+12 |         range (t0 :^ b0 , t1 :^ b1) =
+   | ^^^^^^^^
+[14 of 16] Compiling Hide             ( Hide.hs, Hide.o )
+
+Hide.hs:17:1: warning: [-Wtabs]
+    Tab character found here, and in five further locations.
+    Suggested fix: Please use spaces instead.
+   |
+17 |         = (draw . scale factor base . hideObj . makeObject) rotated
+   | ^^^^^^^^
+[15 of 16] Compiling Main             ( Observer.hs, Observer.o )
+[16 of 16] Linking observer

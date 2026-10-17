@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+hidden-lazy	normal	rune	O2	count	1	1	pass	111.73	112.10	0.08	10660	16493700634	36439272392	1135040241	counts/measurement.xRFnCv/hidden-lazy/rune/fresh.1
+hidden-lazy	normal	rune:opt	O2	count	1	1	pass	43.65	44.20	0.08	11692	16493700634	36439272392	1135040241	counts/measurement.xRFnCv/hidden-lazy/rune-opt/fresh.1
+hidden-lazy	normal	rune:new	O2	count	1	1	pass	101.11	99.98	0.09	10900	10067367392	36439272392	1135040241	counts/measurement.xRFnCv/hidden-lazy/rune-new/fresh.1
+hidden-lazy	normal	rune:jit	O2	count	1	1	pass	46.69	46.57	0.13	13056	10067367392	36439272392	1135040241	counts/measurement.xRFnCv/hidden-lazy/rune-jit/fresh.1
+hidden-strict	normal	rune	O2	count	1	1	pass	178.99	172.87	0.50	10660	26585462016	30974431832	961411449	counts/measurement.4n3otJ/hidden-strict/rune/fresh.1
+hidden-strict	normal	rune:opt	O2	count	1	1	pass	96.34	80.57	0.82	11588	26585462016	30974431832	961411449	counts/measurement.4n3otJ/hidden-strict/rune-opt/fresh.1
+hidden-strict	normal	rune:new	O2	count	1	1	pass	137.61	137.26	0.21	10800	16101412400	30974431832	961411449	counts/measurement.4n3otJ/hidden-strict/rune-new/fresh.1
+hidden-strict	normal	rune:jit	O2	count	1	1	pass	71.73	71.00	0.42	13104	16101412400	30974431832	961411449	counts/measurement.4n3otJ/hidden-strict/rune-jit/fresh.1

@@ -1,0 +1,28 @@
+{
+  "command": [
+    "timeout",
+    "600",
+    "sh",
+    "-c",
+    "cd tests/benchmarks/data/hidden && exec /home/ruud/rune/.worktrees/benchmarks/bin/runevm /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hidden-originals/tests.rbc"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 1048576,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 20908,
+  "observed_minimum_available_kib": 20334476,
+  "peak_processes": [
+    {
+      "pid": 4,
+      "name": "timeout",
+      "rss_kib": 1856
+    },
+    {
+      "pid": 5,
+      "name": "runevm",
+      "rss_kib": 19052
+    }
+  ],
+  "elapsed_seconds": 60.85182804998476
+}

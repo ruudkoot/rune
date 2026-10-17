@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-hidden-parallel.vm0556v9
+PASS hidden-lazy smoke O2
+PASS hidden-lazy smoke O0
+FAIL hidden-lazy smoke hosts
+PASS hidden-lazy normal O2
+PASS hidden-lazy normal O0
+PASS hidden-strict smoke O0
+PASS hidden-strict smoke O2
+FAIL hidden-strict smoke hosts
+FAIL hidden-lazy normal hosts
+PASS hidden-strict normal O2
+FAIL hidden-strict normal hosts
+PASS hidden-strict normal O0

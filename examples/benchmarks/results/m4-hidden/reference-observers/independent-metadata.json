@@ -1,0 +1,28 @@
+{
+  "scope": "Independent eager IEEE binary32 geometry with one mathematical visibility cache; benchmark source retains per-bottom memo construction and explicit lazy demand",
+  "profiles": [
+    {
+      "profile": "smoke",
+      "polygons": 14,
+      "visible_edges": 25,
+      "complete_bits_match": true
+    },
+    {
+      "profile": "normal",
+      "polygons": 51,
+      "visible_edges": 130,
+      "complete_bits_match": true
+    },
+    {
+      "profile": "large",
+      "polygons": 119,
+      "visible_edges": 238,
+      "complete_bits_match": true
+    }
+  ],
+  "arithmetic": {
+    "operations": 34715488,
+    "subnormal_results": 0,
+    "nonfinite_results": 0
+  }
+}

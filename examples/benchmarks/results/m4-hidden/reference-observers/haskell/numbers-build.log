@@ -1,0 +1,43 @@
+[1 of 4] Compiling Numbers          ( Numbers.hs, Numbers.o )
+
+Numbers.hs:8:1: warning: [-Wtabs]
+    Tab character found here, and in 36 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+8 |         Tolerant a == Tolerant b        = abs(a-b) < eps
+  | ^^^^^^^^
+
+Numbers.hs:13:10: warning: [-Wmissing-methods]
+    • No explicit implementation for
+        ‘abs’ and ‘signum’
+    • In the instance declaration for ‘Num Number’
+   |
+13 | instance Num Number where
+   |          ^^^^^^^^^^
+
+Numbers.hs:19:10: warning: [-Wmissing-methods]
+    • No explicit implementation for
+        ‘fromRational’
+    • In the instance declaration for ‘Fractional Number’
+   |
+19 | instance Fractional Number where
+   |          ^^^^^^^^^^^^^^^^^
+
+Numbers.hs:21:10: warning: [-Wmissing-methods]
+    • No explicit implementation for
+        ‘pi’, ‘exp’, ‘log’, ‘sin’, ‘cos’, ‘asin’, ‘acos’, ‘atan’, ‘sinh’,
+        ‘cosh’, ‘asinh’, ‘acosh’, and ‘atanh’
+    • In the instance declaration for ‘Floating Number’
+   |
+21 | instance Floating Number where
+   |          ^^^^^^^^^^^^^^^
+[2 of 4] Compiling Vectors          ( Vectors.hs, Vectors.o )
+
+Vectors.hs:30:1: warning: [-Wtabs]
+    Tab character found here, and in 37 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+30 |         Vec v + Vec w   = Vec (zipWith (+) v w)
+   | ^^^^^^^^
+[3 of 4] Compiling Main             ( NumbersProbe.hs, NumbersProbe.o )
+[4 of 4] Linking numbers

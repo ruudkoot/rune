@@ -1,0 +1,7 @@
+runevm: uncaught exception Io <value>
+  in RuneFile.open' at bin/../lib/basis/runefile.sml:29:79
+  in TextIO.openIn at bin/../lib/basis/textio.sml:148:50
+  in NeedDriver.read at examples/benchmarks/shared/nofib-hidden-driver.sml:18:27
+  in NeedTests.check at tests/benchmarks/hidden-tests.sml:20:32
+  in app at bin/../lib/basis/pervasive.sml:58:24
+  in <toplevel> at tests/benchmarks/hidden-tests.sml:33:72

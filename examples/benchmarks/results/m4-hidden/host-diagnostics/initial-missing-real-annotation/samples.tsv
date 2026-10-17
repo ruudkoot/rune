@@ -1,0 +1,4 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+hidden-lazy	smoke	native:mlton@20241230	O2	compile	0	0	compile-error	3.90	2.15	1.97	561816	-	-	-	hidden-lazy/native-mlton/build/compile
+hidden-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	compile-error	0.29	0.26	0.04	36080	-	-	-	hidden-lazy/native-smlnj-legacy/build/compile
+hidden-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	compile-error	0.06	0.06	0.03	32568	-	-	-	hidden-lazy/native-polyml/build/compile

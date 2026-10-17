@@ -1,0 +1,1 @@
+hidden-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/finite-binary32.sml shared/nofib-hidden-number.sml shared/nofib-hidden.sml shared/nofib-hidden-parse.sml shared/nofib-hidden-driver.sml hidden-lazy/benchmark.sml shared/main.sml	20 rad.plate 2,10,3 normal.commands	hidden-lazy/normal.expected	rad.plate normal.commands

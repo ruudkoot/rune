@@ -1,0 +1,38 @@
+[
+  {
+    "before": {
+      "source": "nofib",
+      "path": "real/hidden",
+      "name": "hidden",
+      "rune_name": "hidden",
+      "milestone": "M4",
+      "disposition": "import",
+      "family": "application",
+      "related": "",
+      "authors": "not stated in scanned source headers",
+      "sha256": "0e1040d3cc5da5880e37c19df57a31156894a845c07a936466cabf56384bafd1",
+      "members": "real/hidden/Comparing.hs;real/hidden/Cross.hs;real/hidden/EdgePlate.hs;real/hidden/Geometric.hs;real/hidden/Hide.hs;real/hidden/Main.hs;real/hidden/Matrices.hs;real/hidden/Memo.hs;real/hidden/MyIO.hs;real/hidden/NofibUtils.hs;real/hidden/Numbers.hs;real/hidden/Postscript.hs;real/hidden/Preds.hs;real/hidden/Rotate.lhs;real/hidden/Solve.hs;real/hidden/Vectors.hs;real/hidden/etc/nbpip.c",
+      "inputs": "real/hidden/hidden.stdin;real/hidden/runtime_files/four.plate;real/hidden/runtime_files/houses.plate;real/hidden/runtime_files/rad.plate",
+      "notices": "",
+      "evidence": "real/hidden/Makefile",
+      "reason": "portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import"
+    },
+    "after": {
+      "source": "nofib",
+      "path": "real/hidden",
+      "name": "hidden",
+      "rune_name": "hidden",
+      "milestone": "M4",
+      "disposition": "import",
+      "family": "application",
+      "related": "",
+      "authors": "Mark Ramaer;Stef Joosten",
+      "sha256": "0e1040d3cc5da5880e37c19df57a31156894a845c07a936466cabf56384bafd1",
+      "members": "real/hidden/Comparing.hs;real/hidden/Cross.hs;real/hidden/EdgePlate.hs;real/hidden/Geometric.hs;real/hidden/Hide.hs;real/hidden/Main.hs;real/hidden/Matrices.hs;real/hidden/Memo.hs;real/hidden/MyIO.hs;real/hidden/NofibUtils.hs;real/hidden/Numbers.hs;real/hidden/Postscript.hs;real/hidden/Preds.hs;real/hidden/Rotate.lhs;real/hidden/Solve.hs;real/hidden/Vectors.hs;real/hidden/etc/nbpip.c",
+      "inputs": "real/hidden/hidden.stdin;real/hidden/runtime_files/four.plate;real/hidden/runtime_files/houses.plate;real/hidden/runtime_files/rad.plate",
+      "notices": "real/hidden/MAIL:nofib-permission",
+      "evidence": "real/hidden/MAIL:authorship-and-nofib-permission;real/hidden/Makefile",
+      "reason": "portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import"
+    }
+  }
+]
