@@ -130,6 +130,8 @@ The acceptance tests also need Python 3. The compiler-driver tests use its
 POSIX resource controls to interrupt a bytecode write and check that the previous
 artifact survives, and the VM tests check saved limits and stricter restore
 policies (`compiler/*` and `limits/*` of `tests/runner/tools.sml`).
+`make test-dist`, part of `make check`, also needs Pillow (`python3-pil`)
+to convert `share/rune.png` into the Windows icon.
 
 * A C compiler (`cc`; gcc 13 and clang 18 are tested), GNU make 4.3 or later, POSIX `sh`, `awk`. The VMs are built as C17 (`-std=c17`), and what they take from it beyond C99 is behind a test of `__STDC_VERSION__` (the header word of a `Value`, `runtime/vm.h`), so `make CFLAGS='-std=c99 -O2'` builds them too, a little slower. Where the compiler is gcc or clang the VM's loop goes from instruction to instruction by computed goto, a GNU extension; `make CFLAGS='-std=c99 -O2 -DRUNE_SWITCH'` builds the switch every C compiler has.
 * The SML systems that build the compiler, which `make hosts`
