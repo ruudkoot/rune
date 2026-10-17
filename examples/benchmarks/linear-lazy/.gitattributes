@@ -1,0 +1,2 @@
+upstream-real/** -text -whitespace
+upstream-gc/** -text -whitespace
