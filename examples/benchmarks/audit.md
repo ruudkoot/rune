@@ -278,3 +278,28 @@ One inventory row changes authors/evidence only; identities, names, dispositions
 and inputs are unchanged. All 62 inventory regressions pass, and all five clean
 pinned trees reproduce 861 entries. Paper metadata and numerical reference scopes
 are retained with the import.
+
+## Primetest author and stdlib selector review, 2026-10-17
+
+Primetest's exact author macro names David Lester. Its RCS Author field instead
+identifies the last committer; the reviewed heading now takes precedence over
+that tag. One inventory row changes authors/evidence only.
+
+The stdlib review identifies 71 cases across ten executables, including the
+already imported Stack cases and two byte operations defined but omitted from
+dispatch. [The selector inventory](stdlib-cases.tsv) records source hashes,
+evidence lines, reachability, implementation state and dispositions. Result-only
+opaque_identity wrappers do not justify blanket deferral of portable operations.
+Immediate integer equality is portable; three immutable-value physical-identity
+cases have explicit missing-facility conditions.
+
+Both pinned Bigarray modes specifically test typed C-layout storage. Managed
+SML arrays would change that storage policy, so the executable and its two cases
+are deferred until equivalent storage is available. No prerequisite runtime
+feature is introduced. The classification is guarded by the reviewed source
+hash; changed source and a portable same-named program require fresh review.
+
+All 68 discovery/classification regressions pass. All five clean pinned trees
+reproduce 861 inventory entries; only the two reviewed rows change. The additional
+selector table accounts for nested cases without presenting deferred cases as
+runnable programs.

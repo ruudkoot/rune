@@ -2235,3 +2235,61 @@ the 16-program routine set, 331 language fixtures per compiler, existing budgets
 bootstrap and 498 identical bytecode comparisons across seven builds. runedoc
 and runeopt also agree. [The complete transcript](validation/oct17-minimax-manybody-970-acceptance.log)
 records the run.
+
+## M3 probable-prime and M5 stdlib primitive wave — 2026-10-17
+
+Ten programs bring the catalogue to 336 programs and 1000 profiles. All 280
+canonical smoke/normal cases pass: [56 primetest cases](results/m3-primetest/coverage.tsv)
+and [224 stdlib cases](results/m5-stdlib-primitives/coverage.tsv), on Rune's four
+engines at O0/O2 and six native hosts at compiler defaults. All 2720 semantic
+assertions pass: 95 primetest and 41 stdlib assertions in each of twenty
+invocations. Forty normal count samples agree under execution-model rules,
+including allocation across all Rune engines. Existing budgets remain unchanged.
+Thirty serial single fresh-process native smoke samples validate adapters
+separately from instrumentation and headline comparisons.
+
+Primetest retains 100 trials, source modular-power control flow, factorization,
+base-65536 digit mapping, seeds 111/47, short circuiting and source partiality.
+Infinite streams remain memoized; finite values are separately lazy/strict.
+All original GHC fixtures agree. A separate Python integer/generator model
+agrees on 380 original/small outcomes and small/FAST successor-state snapshots.
+Eight exact power cases include two nontrivial 607-bit moduli. New profiles
+have their own original/independent references; selecting candidates changes
+which fixed witnesses they receive, without changing seeds or trial count.
+
+Initial 607-bit single-candidate stack pilots time out at 600 seconds in both
+policies. Smoke selects the second FAST candidate; normal selects candidates
+2–4 at 74/112/63 bits. Both complete original five-candidate FAST large profiles
+pass on Rune native code at O2, under the declared large limits and a 2-GiB
+RSS guard. Other large configurations are unrecorded. The initial six adapter
+builds exposed a missing shared-input manifest dependency; raw compile failures
+are retained, the dependency is fixed before canonical/count runs, and all
+final adapters pass. No incorrect timing is accepted.
+
+The stdlib imports preserve three array selectors and five portable comparison/
+immediate-integer equality selectors. Constant lists remain shared across loop
+iterations and in-process calls. Typed library replacements, generator allocation,
+counter/checkword consumption and final checks are documented. Original OCaml
+observations agree with independent closed-form results for all profiles.
+Tests also cover empty/singleton inputs, assertion failure, short circuiting,
+comparison pivots, source shape errors and modular wrap.
+
+The [71-case selector inventory](stdlib-cases.tsv) records ten implemented cases,
+five concrete runtime deferrals and 56 planned cases, including two source
+operations omitted from dispatch. Both typed C-layout Bigarray modes are
+deferred; three immutable-value physical-identity cases have explicit missing
+facilities and reconsideration conditions. Portable result-only opaque wrappers
+are retained through consumption without a blanket exclusion.
+
+All 68 inventory regressions pass; all five clean pinned trees reproduce 861
+entries. Only primetest's declared-author evidence and Bigarray's disposition/
+reason change. Individual notices, original run parameters, data origins,
+translation decisions and scoped [primality evidence](results/m3-primetest/README.md)
+and [stdlib evidence](results/m5-stdlib-primitives/README.md) accompany every
+import. M3 and M5 remain in progress.
+
+Full DEBUGINFOD_URLS= make JOBS=4 check exits 0 with 1000 catalogue profiles,
+the 16-program routine set, 331 language fixtures per compiler, existing budgets,
+bootstrap and 498 identical bytecode comparisons across seven builds. runedoc
+and runeopt also agree. [The complete transcript](validation/oct17-stdlib-primetest-1000-acceptance.log)
+records the run.

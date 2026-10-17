@@ -157,6 +157,49 @@ class InventoryTest(unittest.TestCase):
                   "The Circuit Simulator example\nDifferent authors\nJanuary, 1998\n\n> main = return ()\n")
         self.assertEqual(self.build("nofib")[0]["authors"], "not stated in scanned source headers")
 
+    def test_primetest_declared_author_replaces_rcs_committer(self):
+        self.nofib_roots()
+        self.file("spectral/primetest/Makefile", "\n")
+        self.file("spectral/primetest/Main.lhs",
+                  "\\def\\author{David Lester}\n%$Author: simonmar $\n> main = print 0\n")
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "David Lester")
+        self.assertIn("spectral/primetest/Main.lhs:author-macro", row["evidence"])
+
+    def test_changed_primetest_author_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/primetest/Makefile", "\n")
+        self.file("spectral/primetest/Main.lhs",
+                  "\\def\\author{Another author}\n> main = print 0\n")
+        self.assertNotIn("David Lester", self.build("nofib")[0]["authors"])
+
+    def test_quoted_primetest_macro_is_not_an_author_declaration(self):
+        self.nofib_roots()
+        self.file("spectral/primetest/Makefile", "\n")
+        self.file("spectral/primetest/Main.lhs",
+                  '> main = putStrLn "\\\\def\\\\author{David Lester}"\n')
+        self.assertNotIn("David Lester", self.build("nofib")[0]["authors"])
+
+    def test_reviewed_bigarray_storage_modes_are_deferred(self):
+        self.file("benchmarks/stdlib/dune", "(executable (name big_array_bench))\n")
+        self.file("benchmarks/stdlib/big_array_bench.ml",
+                  (ROOT / "tests/benchmarks/data/inventory-stdlib/big_array_bench.ml").read_text())
+        row = self.build("sandmark")[0]
+        self.assertEqual(row["disposition"], "defer")
+        self.assertIn("C-layout storage", row["reason"])
+
+    def test_changed_bigarray_source_requires_review(self):
+        self.file("benchmarks/stdlib/dune", "(executable (name big_array_bench))\n")
+        self.file("benchmarks/stdlib/big_array_bench.ml",
+                  (ROOT / "tests/benchmarks/data/inventory-stdlib/big_array_bench.ml").read_text()
+                  + "\nlet changed = true\n")
+        self.assertEqual(self.build("sandmark")[0]["disposition"], "import")
+
+    def test_bigarray_name_does_not_defer_portable_array_code(self):
+        self.file("benchmarks/stdlib/dune", "(executable (name big_array_bench))\n")
+        self.file("benchmarks/stdlib/big_array_bench.ml", "let a = Array.make 10 0\n")
+        self.assertEqual(self.build("sandmark")[0]["disposition"], "import")
+
     def test_exact_reals_paper_attribution_is_recorded(self):
         self.nofib_roots()
         self.file("spectral/exact-reals/Makefile", "\n")
