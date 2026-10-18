@@ -601,3 +601,14 @@ explicit rounding and output/validation costs remain performance hypotheses.
 Legacy default-process numeric variation and separate nursery successes are
 recorded diagnostics. They are consistent with a known GC-root issue but do
 not establish a new application-specific compiler-pass diagnosis.
+
+## Hartel Solid geometry and correctness scope
+
+The previously reviewed Hartel and Langendoen (1993) translation account
+provides collection context. The pinned Solid source establishes this CSG
+classifier, circle pruning, subdivision, stopping conditions and operation
+order; no separate solid-modelling derivation is claimed as reviewed.
+Original/corrected observers and the independent direct circle-membership
+oracle establish the recorded classification repair and finite-grid results.
+Lazy numeric sharing, parser specialization and allocation effects remain
+performance hypotheses until investigated by separate measurements.
