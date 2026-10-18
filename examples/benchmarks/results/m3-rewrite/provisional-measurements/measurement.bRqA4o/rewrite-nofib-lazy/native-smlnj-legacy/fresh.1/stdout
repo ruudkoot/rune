@@ -1,0 +1,4 @@
+RESULT True
+PASS rewrite-nofib-lazy
+SAMPLE 1 0.006004000
+SUMMARY 1 checks, 0 failed

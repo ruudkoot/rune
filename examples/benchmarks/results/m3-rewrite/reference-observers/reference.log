@@ -1,0 +1,4 @@
+{'profile': 'smoke', 'queries': 1, 'result': 'True', 'elapsed_seconds': 0.014910891011822969}
+{'profile': 'source-fast', 'queries': 20000, 'result': 'True', 'elapsed_seconds': 0.10510429600253701}
+{'profile': 'normal', 'queries': 250000, 'result': 'True', 'elapsed_seconds': 1.14684263599338}
+{'profile': 'large', 'queries': 1200000, 'result': 'True', 'elapsed_seconds': 4.79687634302536}

@@ -1,0 +1,2 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+rewrite-nofib-strict	normal	rune	O2	compile	0	0	pass	4.17	2.94	0.25	135168	-	-	-	rewrite-nofib-strict/rune/build/compile

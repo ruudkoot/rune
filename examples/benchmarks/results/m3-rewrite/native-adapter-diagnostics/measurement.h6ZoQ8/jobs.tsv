@@ -1,0 +1,1 @@
+rewrite-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/stream.sml shared/nofib-rewrite-expr.sml shared/nofib-rewrite-parser.sml shared/nofib-rewrite-kernel.sml shared/nofib-rewrite-driver.sml rewrite-lazy/benchmark.sml shared/main.sml	1	rewrite-lazy/smoke.expected	-

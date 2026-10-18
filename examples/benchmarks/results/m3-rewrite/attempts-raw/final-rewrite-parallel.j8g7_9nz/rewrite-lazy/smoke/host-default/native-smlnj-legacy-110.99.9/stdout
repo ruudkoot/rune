@@ -1,0 +1,568 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-rewrite-expr.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-rewrite-expr.sml:32.16 Warning: calling polyEqual
+functor BenchRewriteExprFn(P: sig
+  val eagerChildren : bool
+end) :
+sig
+  structure L : <sig>
+  structure S : <sig>
+  type exprNode
+  type expr
+  type equation
+  val variable : string -> <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+  val forceChildren :
+      'a BenchLazy.state ref BenchStream.node BenchLazy.delay
+       -> 'a BenchLazy.state ref BenchStream.node BenchLazy.delay
+  val func :
+      string
+       -> <BaseFct>.<resultStr>.exprNode BenchLazy.state ref BenchStream.node 
+         BenchLazy.delay
+       -> <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+  val equal :
+      <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.exprNode BenchLazy.state ref -> bool
+  val equalList :
+      <BaseFct>.<resultStr>.exprNode BenchLazy.delay BenchStream.stream
+       -> <BaseFct>.<resultStr>.exprNode BenchLazy.delay BenchStream.stream
+       -> bool
+  val fold :
+      (string
+        -> 'a BenchLazy.state ref BenchStream.node BenchLazy.delay
+        -> 'a BenchLazy.state ref)
+       -> (string -> 'a BenchLazy.state ref)
+       -> <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+       -> 'a BenchLazy.state ref
+  val occurs :
+      string -> <BaseFct>.<resultStr>.exprNode BenchLazy.state ref -> bool
+  val lhs : <BaseFct>.<resultStr>.equation -> <BaseFct>.<resultStr>.expr
+  val rhs : <BaseFct>.<resultStr>.equation -> <BaseFct>.<resultStr>.expr
+  val number : <BaseFct>.<resultStr>.equation -> int
+  val pair :
+      <BaseFct>.<resultStr>.equation
+       -> <BaseFct>.<resultStr>.expr * <BaseFct>.<resultStr>.expr
+  val cost :
+      <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+       * <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+       -> int
+  val assoc : (''a * 'b) BenchStream.node BenchLazy.delay -> ''a -> 'b option
+  val apply :
+      (string * <BaseFct>.<resultStr>.exprNode BenchLazy.state ref) 
+           BenchStream.node BenchLazy.delay
+       -> string -> <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+  val sub :
+      <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+       -> (string * <BaseFct>.<resultStr>.exprNode BenchLazy.state ref) 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+  val compose :
+      (string * <BaseFct>.<resultStr>.exprNode BenchLazy.state ref) 
+           BenchStream.node BenchLazy.delay
+       -> (string * <BaseFct>.<resultStr>.exprNode BenchLazy.state ref) 
+           BenchStream.node BenchLazy.delay
+       -> (string * <BaseFct>.<resultStr>.exprNode BenchLazy.state ref) 
+           BenchStream.node BenchLazy.delay
+  val standard :
+      string
+       -> <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+  val standardEquation :
+      string
+       -> <BaseFct>.<resultStr>.equation -> <BaseFct>.<resultStr>.equation
+  val modify :
+      'a BenchStream.node BenchLazy.delay
+       -> int -> ('a -> 'a) -> 'a BenchStream.node BenchLazy.delay
+  val replace :
+      <BaseFct>.<resultStr>.exprNode BenchLazy.delay
+       -> int list
+       -> <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.exprNode BenchLazy.delay
+  val subterms :
+      <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+       -> (int list * <BaseFct>.<resultStr>.exprNode BenchLazy.state ref) 
+           BenchStream.node BenchLazy.delay
+  val match :
+      <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+       -> (string * <BaseFct>.<resultStr>.exprNode BenchLazy.state ref) 
+               BenchStream.node BenchLazy.state ref option
+  val unify :
+      <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+       -> (string * <BaseFct>.<resultStr>.exprNode BenchLazy.state ref) 
+             BenchStream.node BenchLazy.delay option
+  val rewrite :
+      <BaseFct>.<resultStr>.equation
+       -> <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.exprNode BenchLazy.state ref option
+  val tryAll :
+      ('a -> 'b option) BenchStream.node BenchLazy.delay -> 'a -> 'b option
+  val inside :
+      (<BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+        -> <BaseFct>.<resultStr>.exprNode BenchLazy.state ref option)
+       -> <BaseFct>.<resultStr>.exprNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.exprNode BenchLazy.delay option
+  val reduceOne :
+      <BaseFct>.<resultStr>.equation
+       -> <BaseFct>.<resultStr>.exprNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.exprNode BenchLazy.delay option
+  val reduce :
+      <BaseFct>.<resultStr>.equation BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.exprNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.exprNode BenchLazy.delay option
+  val simplify : ('a -> 'a option) -> 'a -> 'a
+  val render : <BaseFct>.<resultStr>.exprNode BenchLazy.state ref -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-rewrite-parser.sml]
+[autoloading]
+[autoloading done]
+functor BenchRewriteParserFn(E: sig
+  type expr
+  val variable : string -> expr
+  val func : string -> expr BenchStream.stream -> expr
+end) :
+sig
+  structure S : <sig>
+  type syntax
+  type parser
+  val lift : ('a -> 'b) -> 'a option -> 'b option
+  val choice : ('a -> 'b option) -> ('a -> 'b option) -> 'a -> 'b option
+  val build : ('a -> 'b) -> ('c -> ('a * 'd) option) -> 'c -> ('b * 'd) option
+  val seq2 :
+      ('a -> 'b -> 'c)
+       -> ('d -> ('a * 'e) option)
+       -> ('e -> ('b * 'f) option) -> 'd -> ('c * 'f) option
+  val empty : 'a -> (<BaseFct>.<resultStr>.syntax * 'a) option
+  val cons :
+      <BaseFct>.<resultStr>.syntax
+       -> <BaseFct>.<resultStr>.syntax -> <BaseFct>.<resultStr>.syntax
+  val sequence :
+      (<BaseFct>.<resultStr>.syntax list -> 'a)
+       -> ('b -> (<BaseFct>.<resultStr>.syntax * 'b) option) list
+       -> 'b -> ('a * 'b) option
+  val spaces : (string -> 'a) -> string -> 'a
+  val pchar :
+      (char -> bool)
+       -> string -> (<BaseFct>.<resultStr>.syntax * string) option
+  val look : char -> string -> (<BaseFct>.<resultStr>.syntax * string) option
+  val stringOf :
+      (char -> bool)
+       -> string -> (<BaseFct>.<resultStr>.syntax * string) option
+  val alphanum : char -> bool
+  val identifier : string -> (<BaseFct>.<resultStr>.syntax * string) option
+  val operator : string -> (<BaseFct>.<resultStr>.syntax * string) option
+  val expression : string -> (<BaseFct>.<resultStr>.syntax * string) option
+  val term : string -> (<BaseFct>.<resultStr>.syntax * string) option
+  val primitive : string -> (<BaseFct>.<resultStr>.syntax * string) option
+  val listOf :
+      (string -> (<BaseFct>.<resultStr>.syntax * string) option)
+       -> char -> string -> (<BaseFct>.<resultStr>.syntax * string) option
+  val parse : string -> E.expr
+  val equation : string -> E.expr * E.expr
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-rewrite-kernel.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-rewrite-kernel.sml:43.14 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-rewrite-kernel.sml:39.52 Warning: calling polyEqual
+functor BenchRewriteFn(P: sig
+  val eagerChildren : bool
+end) :
+sig
+  structure E : <sig>
+  structure Parser : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  type exprNode
+  type expr
+  type equation
+  val variable :
+      string
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+  val forceChildren :
+      'a BenchLazy.state ref BenchStream.node BenchLazy.delay
+       -> 'a BenchLazy.state ref BenchStream.node BenchLazy.delay
+  val func :
+      string
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+  val equal :
+      <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+       -> bool
+  val equalList :
+      <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.delay 
+         BenchStream.stream
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.delay 
+         BenchStream.stream
+       -> bool
+  val fold :
+      (string
+        -> 'a BenchLazy.state ref BenchStream.node BenchLazy.delay
+        -> 'a BenchLazy.state ref)
+       -> (string -> 'a BenchLazy.state ref)
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+       -> 'a BenchLazy.state ref
+  val occurs :
+      string
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+       -> bool
+  val lhs :
+      <BaseFct>.<resultStr>.E.<returnStr>.equation
+       -> <BaseFct>.<resultStr>.E.<returnStr>.expr
+  val rhs :
+      <BaseFct>.<resultStr>.E.<returnStr>.equation
+       -> <BaseFct>.<resultStr>.E.<returnStr>.expr
+  val number : <BaseFct>.<resultStr>.E.<returnStr>.equation -> int
+  val pair :
+      <BaseFct>.<resultStr>.E.<returnStr>.equation
+       -> <BaseFct>.<resultStr>.E.<returnStr>.expr
+       * <BaseFct>.<resultStr>.E.<returnStr>.expr
+  val cost :
+      <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+       * <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+       -> int
+  val assoc : (''a * 'b) BenchStream.node BenchLazy.delay -> ''a -> 'b option
+  val apply :
+      (string
+            * <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref)
+           BenchStream.node BenchLazy.delay
+       -> string
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+  val sub :
+      <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+       -> (string
+            * <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref)
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+  val compose :
+      (string
+            * <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref)
+           BenchStream.node BenchLazy.delay
+       -> (string
+            * <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref)
+           BenchStream.node BenchLazy.delay
+       -> (string
+            * <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref)
+           BenchStream.node BenchLazy.delay
+  val standard :
+      string
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+  val standardEquation :
+      string
+       -> <BaseFct>.<resultStr>.E.<returnStr>.equation
+       -> <BaseFct>.<resultStr>.E.<returnStr>.equation
+  val modify :
+      'a BenchStream.node BenchLazy.delay
+       -> int -> ('a -> 'a) -> 'a BenchStream.node BenchLazy.delay
+  val replace :
+      <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.delay
+       -> int list
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.delay
+  val subterms :
+      <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+       -> (int list
+            * <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref)
+           BenchStream.node BenchLazy.delay
+  val match :
+      <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+       -> (string
+                * <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state 
+                  ref) BenchStream.node BenchLazy.state ref option
+  val unify :
+      <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+       -> (string
+              * <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state 
+                ref) BenchStream.node BenchLazy.delay option
+  val rewrite :
+      <BaseFct>.<resultStr>.E.<returnStr>.equation
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref 
+         option
+  val tryAll :
+      ('a -> 'b option) BenchStream.node BenchLazy.delay -> 'a -> 'b option
+  val inside :
+      (<BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+        -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref 
+          option)
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.delay option
+  val reduceOne :
+      <BaseFct>.<resultStr>.E.<returnStr>.equation
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.delay option
+  val reduce :
+      <BaseFct>.<resultStr>.E.<returnStr>.equation BenchStream.node 
+         BenchLazy.delay
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.delay option
+  val simplify : ('a -> 'a option) -> 'a -> 'a
+  val render :
+      <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+       -> string
+  val all : ('a -> bool) -> 'a BenchStream.node BenchLazy.delay -> bool
+  val any : ('a -> bool) -> 'a BenchStream.node BenchLazy.delay -> bool
+  type answer
+  val ge : <BaseFct>.<resultStr>.answer -> bool
+  val lexico :
+      ('a * 'b -> <BaseFct>.<resultStr>.answer)
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'b BenchStream.node BenchLazy.delay -> <BaseFct>.<resultStr>.answer
+  val rank : string -> int
+  val order :
+      <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+       * <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.answer
+  type token
+  type netNode
+  type net
+  val emptyNet : unit -> <BaseFct>.<resultStr>.netNode BenchLazy.state ref
+  val lookup : ''a -> (''a * 'b) BenchStream.node BenchLazy.delay -> 'b option
+  val update :
+      ''a
+       -> ('b -> 'b)
+       -> 'b
+       -> (''a * 'b) BenchStream.node BenchLazy.delay
+       -> (''a * 'b) BenchStream.node BenchLazy.delay
+  val preorder :
+      <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref 
+             BenchStream.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.token BenchStream.node BenchLazy.delay
+  val thread :
+      <BaseFct>.<resultStr>.token BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.E.<returnStr>.equation
+       -> <BaseFct>.<resultStr>.netNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.netNode BenchLazy.state ref
+  val addEquation :
+      <BaseFct>.<resultStr>.netNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.E.<returnStr>.equation
+       -> <BaseFct>.<resultStr>.netNode BenchLazy.state ref
+  val findStack :
+      <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.delay 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.net
+       -> <BaseFct>.<resultStr>.E.<returnStr>.equation BenchStream.node 
+           BenchLazy.state ref
+  val find :
+      <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.net
+       -> <BaseFct>.<resultStr>.E.<returnStr>.equation BenchStream.node 
+           BenchLazy.state ref
+  val mapNet :
+      (<BaseFct>.<resultStr>.E.<returnStr>.equation BenchStream.stream
+        -> <BaseFct>.<resultStr>.E.<returnStr>.equation BenchStream.stream)
+       -> <BaseFct>.<resultStr>.net -> <BaseFct>.<resultStr>.net
+  val deleteEquations :
+      int list -> <BaseFct>.<resultStr>.net -> <BaseFct>.<resultStr>.net
+  val netReduce :
+      <BaseFct>.<resultStr>.net
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref 
+         option
+  val superReduce :
+      <BaseFct>.<resultStr>.net
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.delay option
+  val mapMaybe :
+      ('a -> 'b option)
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'b BenchStream.node BenchLazy.state ref
+  val superpose :
+      <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+       -> (int list
+              * (string
+                   * <BaseFct>.<resultStr>.E.<returnStr>.exprNode 
+                       BenchLazy.state ref) BenchStream.node BenchLazy.delay) 
+             BenchStream.node BenchLazy.state ref
+  val strictSuper :
+      <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+       -> (int list
+              * (string
+                   * <BaseFct>.<resultStr>.E.<returnStr>.exprNode 
+                       BenchLazy.state ref) BenchStream.node BenchLazy.delay) 
+             BenchStream.node BenchLazy.state ref
+  val makeCritical :
+      <BaseFct>.<resultStr>.E.<returnStr>.equation
+       -> <BaseFct>.<resultStr>.E.<returnStr>.equation
+       -> int list
+       * (string
+            * <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref)
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+       * <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+  val criticalPairs :
+      <BaseFct>.<resultStr>.E.<returnStr>.equation
+       -> <BaseFct>.<resultStr>.E.<returnStr>.equation
+       -> (<BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+            * <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref)
+           BenchStream.node BenchLazy.delay
+  val allCritical :
+      <BaseFct>.<resultStr>.E.<returnStr>.equation
+       -> <BaseFct>.<resultStr>.E.<returnStr>.equation BenchStream.node 
+         BenchLazy.delay
+       -> (<BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref
+            * <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.state ref)
+           BenchStream.node BenchLazy.delay
+  type item
+  val itemCost : <BaseFct>.<resultStr>.item -> int
+  val insert :
+      <BaseFct>.<resultStr>.item
+       -> <BaseFct>.<resultStr>.item BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.item BenchStream.node BenchLazy.delay
+  val addAgenda :
+      (<BaseFct>.<resultStr>.E.<returnStr>.expr
+        * <BaseFct>.<resultStr>.E.<returnStr>.expr
+        -> int)
+       -> (<BaseFct>.<resultStr>.E.<returnStr>.expr
+            * <BaseFct>.<resultStr>.E.<returnStr>.expr) BenchStream.node 
+         BenchLazy.delay
+       -> <BaseFct>.<resultStr>.item BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.item BenchStream.node BenchLazy.delay
+  val preprocess :
+      <BaseFct>.<resultStr>.net
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.delay
+       * <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.delay
+       * <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.delay
+  val resolve :
+      <BaseFct>.<resultStr>.net
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.delay
+       * <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.delay
+       -> (<BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.delay
+          * <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.delay) 
+         option
+  val split :
+      ('a -> bool)
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+       * 'a BenchStream.node BenchLazy.delay
+  val process :
+      int
+       -> <BaseFct>.<resultStr>.E.<returnStr>.equation BenchStream.node 
+         BenchLazy.delay
+       -> <BaseFct>.<resultStr>.netNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.item BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.netNode BenchLazy.state ref
+  val groupRules :
+      (<BaseFct>.<resultStr>.E.<returnStr>.expr
+                * <BaseFct>.<resultStr>.E.<returnStr>.expr) BenchStream.node 
+             BenchLazy.delay BenchLazy.state ref
+  val completion : <BaseFct>.<resultStr>.netNode BenchLazy.state ref
+  val normalize :
+      <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.E.<returnStr>.exprNode BenchLazy.delay
+  val result : string * string -> bool
+  val take :
+      int
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+  val queryStream : int -> (string * string) BenchStream.node BenchLazy.delay
+  val calculate : int -> (string -> unit) option -> bool
+  val test : int -> bool
+  val rules :
+      <BaseFct>.<resultStr>.netNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.E.<returnStr>.equation BenchStream.node 
+         BenchLazy.delay
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-rewrite-driver.sml]
+functor BenchRewriteDriverFn(B: sig
+  val calculate : int -> (string -> unit) option -> bool
+end) :
+sig
+  val calculate : int -> string -> string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/rewrite-lazy/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Program : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+[autoloading]
+[autoloading done]
+RESULT True
+PASS rewrite-lazy
+SUMMARY 1 checks, 0 failed

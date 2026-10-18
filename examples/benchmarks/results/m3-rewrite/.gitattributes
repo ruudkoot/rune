@@ -1,0 +1,10 @@
+reference-observers/** -text -whitespace
+semantics/** -whitespace
+semantics-*.log -whitespace
+semantic-outputs/** -whitespace
+counts/** -whitespace
+native-adapter-diagnostics/** -whitespace
+attempts-raw/** -whitespace
+private-host-diagnostics/** -whitespace
+provisional-names/** -whitespace
+provisional-measurements/** -whitespace

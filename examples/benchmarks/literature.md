@@ -430,3 +430,20 @@ in validation/dom-lt-source-issue.md. Patricia/bitmap operations, DFS, path
 compression, persistent environment records, CPS specialization and array
 initialization are diagnostic questions inferred from source. Counts and
 timings do not establish their individual performance effects.
+
+## Spivey's free-group rewriting workload, 2026-10-18
+
+[Knuth and Bendix, Simple Word Problems in Universal Algebras](https://www.cs.tufts.edu/~nr/cs257/archive/don-knuth/knuth-bendix.pdf)
+(1970), summary and opening sections inspected, describes completion and
+common-normal-form reasoning, with group equations among its examples.
+[Dershowitz, Orderings for term-rewriting systems](https://www.sciencedirect.com/science/article/pii/0304397582900263)
+(1982), publisher abstract inspected, supplies termination-ordering context.
+The author's full-paper PDF retrieval timed out; no full review is claimed.
+
+Spivey's preserved 1991 Orwell description and the pinned Haskell conversion
+establish this benchmark's history and concrete algorithm. Source inspection
+establishes its active lexicographic RPO extension, discrimination-net rule
+order and shared completion; the generic multiset extension is inactive.
+Original theory/normal forms, an independent cancellation model and demand
+regressions support the port. These are separate from the papers' mathematical
+results and from measured compiler/collector behavior.

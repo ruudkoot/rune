@@ -594,6 +594,13 @@ def build(source, root, lock):
                     "This is a Haskell port of the Id version from the Impala" in header):
                 authors.add("David J. King")
                 item["evidence"].append("spectral/sphere/Main.lhs:authorship-and-port-history")
+        if source == "nofib" and path == "spectral/rewrite":
+            module = parent / "Main.lhs"
+            if module.is_file():
+                heading = module.read_text(errors="replace")[:2500]
+                if "Mike Spivey," in heading and "St. George's Day, 1991." in heading and "[converted to Haskell by partain]" in heading:
+                    authors.update(["Mike Spivey", "partain (Haskell conversion)"])
+                    item["evidence"].append("spectral/rewrite/Main.lhs:Orwell-author-and-Haskell-conversion-heading")
         if source == "nofib" and path == "spectral/dom-lt":
             module = parent / "Dom.hs"
             if module.is_file():

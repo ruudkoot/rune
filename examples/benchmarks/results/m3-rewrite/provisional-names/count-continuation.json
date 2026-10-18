@@ -1,0 +1,12 @@
+{
+  "completed": [
+    "rune",
+    "rune:opt"
+  ],
+  "remaining": [
+    "rune:new",
+    "rune:jit"
+  ],
+  "original_run": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.x1FG6w",
+  "reason": "unchanged sources/input; resume only missing engine samples after host-memory guard"
+}

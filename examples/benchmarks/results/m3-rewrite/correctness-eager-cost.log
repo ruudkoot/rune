@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-rewrite-parallel.1lh_cn2t
+PASS rewrite-lazy smoke O2
+PASS rewrite-lazy smoke O0
+PASS rewrite-lazy smoke hosts
+PASS rewrite-lazy normal O2
+PASS rewrite-lazy normal O0
+PASS rewrite-strict smoke O0
+PASS rewrite-strict smoke O2
+FAIL rewrite-lazy normal hosts
+PASS rewrite-strict smoke hosts
+PASS rewrite-strict normal O2
+PASS rewrite-strict normal O0
+FAIL rewrite-strict normal hosts

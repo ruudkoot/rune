@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+rewrite-lazy	normal	rune	O2	compile	0	0	pass	3.10	3.01	0.17	135380	-	-	-	rewrite-lazy/rune/build/compile
+rewrite-lazy	normal	rune	O2	correctness	0	0	pass	70.30	68.77	0.18	10428	5595565633	16532153864	485683525	rewrite-lazy/rune/correctness.0
+rewrite-lazy	normal	rune	O2	count	1	1	pass	58.36	58.56	0.20	10496	5595565633	16532153864	485683525	rewrite-lazy/rune/fresh.1
+rewrite-lazy	normal	rune:opt	O2	compile	0	0	pass	2.11	2.09	0.09	135452	-	-	-	rewrite-lazy/rune-opt/build/compile
+rewrite-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.51	0.29	0.07	15488	-	-	-	rewrite-lazy/rune-opt/build/native-compile
+rewrite-lazy	normal	rune:opt	O2	correctness	0	0	pass	17.01	16.43	0.02	11304	5595565633	16532153864	485683525	rewrite-lazy/rune-opt/correctness.0
+rewrite-lazy	normal	rune:opt	O2	count	1	1	pass	15.25	15.69	0.03	11340	5595565633	16532153864	485683525	rewrite-lazy/rune-opt/fresh.1
+rewrite-lazy	normal	rune:new	O2	compile	0	0	pass	3.99	2.91	0.15	135376	-	-	-	rewrite-lazy/rune-new/build/compile
+rewrite-lazy	normal	rune:new	O2	correctness	0	0	pass	59.09	59.59	0.28	133480	3259268506	16532153864	485683525	rewrite-lazy/rune-new/correctness.0
+rewrite-lazy	normal	rune:new	O2	count	1	1	pass	54.61	53.06	0.52	133332	3259268506	16532153864	485683525	rewrite-lazy/rune-new/fresh.1
+rewrite-lazy	normal	rune:jit	O2	compile	0	0	pass	2.43	2.41	0.09	135456	-	-	-	rewrite-lazy/rune-jit/build/compile
+rewrite-lazy	normal	rune:jit	O2	correctness	0	0	pass	23.40	22.90	0.17	135028	3259268506	16532153864	485683525	rewrite-lazy/rune-jit/correctness.0
+rewrite-lazy	normal	rune:jit	O2	count	1	1	pass	21.25	21.58	0.24	135020	3259268506	16532153864	485683525	rewrite-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

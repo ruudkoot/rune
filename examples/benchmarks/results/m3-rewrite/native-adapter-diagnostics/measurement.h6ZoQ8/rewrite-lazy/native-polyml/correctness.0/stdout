@@ -1,0 +1,4 @@
+RESULT True
+PASS rewrite-lazy
+SAMPLE 1 0.012757000
+SUMMARY 1 checks, 0 failed

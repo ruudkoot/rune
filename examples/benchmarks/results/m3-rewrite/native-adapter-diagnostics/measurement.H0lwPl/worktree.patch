@@ -1,0 +1,373 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 587dcde9..28df48f4 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -403,6 +403,8 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [typecheck-lazy](#typecheck-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/typecheck) | Infer polymorphic types with functional substitutions and lazy finite type children, validating every printed row. |
+ | [typecheck-strict](#typecheck-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/typecheck) | Infer polymorphic types with functional substitutions and strict finite type children, validating every printed row. |
+ | [dom-lt](#dom-lt) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/dom-lt) | Compute and fully validate Lengauer–Tarjan dominators with a reviewed minimum-threshold repair and portable Patricia containers. |
++| [rewrite-lazy](#rewrite-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/rewrite) | Complete free-group rewrite rules and normalize repeated queries with lazy finite expression fields. |
++| [rewrite-strict](#rewrite-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/rewrite) | Complete free-group rewrite rules and normalize repeated queries with strict finite expression fields. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -24074,3 +24076,209 @@ CPS specialization, persistent environment updates, array initialization/bounds
+ and complete-result validation. These are source-based diagnostic questions.
+ Reference agreement and recorded counts/timings are separate evidence; do not
+ infer a compiler or collector cause from performance ratios alone.
++
++## rewrite-lazy
++
++### Algorithm and workload
++
++Complete the three free-group axioms with Knuth–Bendix completion, recursive
++path ordering with lexicographic extension, substitutions and unification,
++critical-pair generation and a cost-sorted agenda. Index rewrite rules in the
++source discrimination net. Normalize repeated queries proving
++I(a*b)=I(b)*I(a). Preserve the generated ten-rule theory, equation numbers,
++rule order, variable-standardization suffixes and source left-biased tactics.
++
++### History, names and notices
++
++[The nofib spectral/rewrite source](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/rewrite) is pinned at
++b7391df4540ac8b11b35e1b2e2c15819b5171798. Its April 23, 1991 correspondence
++and Orwell heading credit Mike Spivey, Programming Research Group, University
++of Oxford; the Haskell conversion is credited to partain. Preserve those
++credits and the complete literate source, Makefile and fixtures. No separate
++program copyright/license declaration or dataset notice is stated there;
++do not invent one or infer authorship from the collection name.
++
++The name rewrite has no collision in the pinned naming inventory, so the
++ports are named rewrite-lazy and rewrite-strict. This is a free-group
++completion workload, distinct from classic theorem-proving/rewriting programs
++and Sandmark's separately sourced completion programs. Similar algorithm
++families do not establish exact duplication.
++
++### Translation and variant decisions
++
++The lazy variant memoizes expression roots, finite child-list heads/spines,
++substitutions, discrimination-net branches, agendas, candidate streams and
++computed agenda costs. A singleton agenda need not evaluate its unused cost.
++The source map/zip classification is expressed as shared lazy tagged pairs;
++filter order and predicate sharing remain, while its separate Boolean-map
++spine is omitted.
++The strict variant forces finite expression children when their constructor
++root is requested. Both retain lazy net/control roots and short-circuit
++search. Lexicographic comparison skips unused tails; matching/unification
++retain the source zipped-arity truncation and association-list lookup order.
++Substitution composition, persistent replacement and higher-order parser/
++rewriting callbacks remain. No hash-consing or union-find replacement is added.
++
++Keep the source global completion as a shared memoized delay across queries
++and repeated Benchmark.run calls. Zero queries leave both axioms and completion
++undemanded. Each call constructs the source finite take/repeat query stream;
++the repeated pair is shared within it. No normalized-query result cache is
++introduced. Global source completion sharing is deliberate and matters to
++fresh versus repeated-process measurements.
++
++SML strings represent finite atomic names and source text, with portable
++substring operations in the same backtracking parser combinators. This changes
++character-list representation/allocation, not the grammar or prefix parsing.
++Inactive multiset ordering and generic helpers remain in the archived source;
++the benchmark uses recursive path ordering's lexicographic extension.
++The source NOINLINE annotation has no claimed identical portable SML switch;
++record options and investigate optimizer effects instead of asserting that all
++compilers perform identical work.
++
++### Inputs and exact checks
++
++Smoke selects one query, reducing source FAST's 20000; normal retains 250000
++and large retains 1200000. Inputs are fixed source axiom/query strings, with
++no external dataset, random seed or clock-dependent stopping condition.
++The driver accepts canonical decimal counts from zero through 1200000;
++other arguments are outside its fixed-profile contract. Driver counts fit
++signed 31-bit integers.
++
++The source Boolean True remains the reported result. Additionally check the
++entire normalized query tree on every successful repetition and the number of
++observed results; an incorrect term cannot contribute a measurement.
++Original GHC 9.4.7 matches all FAST/NORM/SLOW fixtures. An export-only original
++observer records the complete ten-rule theory and sixteen normalization cases.
++An independent signed-letter cancellation model and original normalization
++agree on 128 depth-bounded generated terms (seed 19790601).
++
++The 344-check target covers both variants: exact numbered theory, 144 full
++normal forms, source substitution/matching/unification behavior, occurrences,
++persistent replacement, field demand, short-circuiting, unneeded zero-query
++completion and incorrect-result rejection. Native/compiler outcomes are
++recorded separately from development pilots. Full final SML large repetitions
++remain unrecorded unless explicitly listed in validation.
++
++### Literature and diagnostic interpretation
++
++[Knuth and Bendix (1970)](https://www.cs.tufts.edu/~nr/cs257/archive/don-knuth/knuth-bendix.pdf)
++gives the completion/common-normal-form foundation, including group equations.
++[Dershowitz (1982)](https://www.sciencedirect.com/science/article/pii/0304397582900263)
++discusses orderings used to justify rewrite termination. These give context;
++the pinned program determines its specific ordering extension, agenda and demand.
++
++Spivey's preserved 1991 description establishes the program's Orwell history,
++free-group problem and use of Maybe/combinators. Partain's nofib paper supplies
++suite context, not measured conclusions about this port. The source defines
++this particular completion strategy and ordering; exact theory and independent
++normal forms support the recorded behavior.
++
++Investigate higher-order specialization, lazy allocation/sharing, persistent
++substitutions, discrimination-net traversal, backtracking parser allocation
++and repeated-query optimization. These are source-based diagnostic hypotheses.
++Measurements must establish their actual costs; ratios alone do not identify
++a compiler or collector cause. Retain all samples and distinguish fresh runs
++from repeated execution with cached completion.
++
++## rewrite-strict
++
++### Algorithm and workload
++
++Complete the three free-group axioms with Knuth–Bendix completion, recursive
++path ordering with lexicographic extension, substitutions and unification,
++critical-pair generation and a cost-sorted agenda. Index rewrite rules in the
++source discrimination net. Normalize repeated queries proving
++I(a*b)=I(b)*I(a). Preserve the generated ten-rule theory, equation numbers,
++rule order, variable-standardization suffixes and source left-biased tactics.
++
++### History, names and notices
++
++[The nofib spectral/rewrite source](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/rewrite) is pinned at
++b7391df4540ac8b11b35e1b2e2c15819b5171798. Its April 23, 1991 correspondence
++and Orwell heading credit Mike Spivey, Programming Research Group, University
++of Oxford; the Haskell conversion is credited to partain. Preserve those
++credits and the complete literate source, Makefile and fixtures. No separate
++program copyright/license declaration or dataset notice is stated there;
++do not invent one or infer authorship from the collection name.
++
++The name rewrite has no collision in the pinned naming inventory, so the
++ports are named rewrite-lazy and rewrite-strict. This is a free-group
++completion workload, distinct from classic theorem-proving/rewriting programs
++and Sandmark's separately sourced completion programs. Similar algorithm
++families do not establish exact duplication.
++
++### Translation and variant decisions
++
++The lazy variant memoizes expression roots, finite child-list heads/spines,
++substitutions, discrimination-net branches, agendas, candidate streams and
++computed agenda costs. A singleton agenda need not evaluate its unused cost.
++The source map/zip classification is expressed as shared lazy tagged pairs;
++filter order and predicate sharing remain, while its separate Boolean-map
++spine is omitted.
++The strict variant forces finite expression children when their constructor
++root is requested. Both retain lazy net/control roots and short-circuit
++search. Lexicographic comparison skips unused tails; matching/unification
++retain the source zipped-arity truncation and association-list lookup order.
++Substitution composition, persistent replacement and higher-order parser/
++rewriting callbacks remain. No hash-consing or union-find replacement is added.
++
++Keep the source global completion as a shared memoized delay across queries
++and repeated Benchmark.run calls. Zero queries leave both axioms and completion
++undemanded. Each call constructs the source finite take/repeat query stream;
++the repeated pair is shared within it. No normalized-query result cache is
++introduced. Global source completion sharing is deliberate and matters to
++fresh versus repeated-process measurements.
++
++SML strings represent finite atomic names and source text, with portable
++substring operations in the same backtracking parser combinators. This changes
++character-list representation/allocation, not the grammar or prefix parsing.
++Inactive multiset ordering and generic helpers remain in the archived source;
++the benchmark uses recursive path ordering's lexicographic extension.
++The source NOINLINE annotation has no claimed identical portable SML switch;
++record options and investigate optimizer effects instead of asserting that all
++compilers perform identical work.
++
++### Inputs and exact checks
++
++Smoke selects one query, reducing source FAST's 20000; normal retains 250000
++and large retains 1200000. Inputs are fixed source axiom/query strings, with
++no external dataset, random seed or clock-dependent stopping condition.
++The driver accepts canonical decimal counts from zero through 1200000;
++other arguments are outside its fixed-profile contract. Driver counts fit
++signed 31-bit integers.
++
++The source Boolean True remains the reported result. Additionally check the
++entire normalized query tree on every successful repetition and the number of
++observed results; an incorrect term cannot contribute a measurement.
++Original GHC 9.4.7 matches all FAST/NORM/SLOW fixtures. An export-only original
++observer records the complete ten-rule theory and sixteen normalization cases.
++An independent signed-letter cancellation model and original normalization
++agree on 128 depth-bounded generated terms (seed 19790601).
++
++The 344-check target covers both variants: exact numbered theory, 144 full
++normal forms, source substitution/matching/unification behavior, occurrences,
++persistent replacement, field demand, short-circuiting, unneeded zero-query
++completion and incorrect-result rejection. Native/compiler outcomes are
++recorded separately from development pilots. Full final SML large repetitions
++remain unrecorded unless explicitly listed in validation.
++
++### Literature and diagnostic interpretation
++
++[Knuth and Bendix (1970)](https://www.cs.tufts.edu/~nr/cs257/archive/don-knuth/knuth-bendix.pdf)
++gives the completion/common-normal-form foundation, including group equations.
++[Dershowitz (1982)](https://www.sciencedirect.com/science/article/pii/0304397582900263)
++discusses orderings used to justify rewrite termination. These give context;
++the pinned program determines its specific ordering extension, agenda and demand.
++
++Spivey's preserved 1991 description establishes the program's Orwell history,
++free-group problem and use of Maybe/combinators. Partain's nofib paper supplies
++suite context, not measured conclusions about this port. The source defines
++this particular completion strategy and ordering; exact theory and independent
++normal forms support the recorded behavior.
++
++Investigate higher-order specialization, lazy allocation/sharing, persistent
++substitutions, discrimination-net traversal, backtracking parser allocation
++and repeated-query optimization. These are source-based diagnostic hypotheses.
++Measurements must establish their actual costs; ratios alone do not identify
++a compiler or collector cause. Retain all samples and distinguish fresh runs
++from repeated execution with cached completion.
+diff --git a/examples/benchmarks/audit.md b/examples/benchmarks/audit.md
+index 0eda3d71..2154e750 100644
+--- a/examples/benchmarks/audit.md
++++ b/examples/benchmarks/audit.md
+@@ -377,3 +377,18 @@ containers 0.6.7 is pinned separately by archive hash with complete selected
+ module notices and LICENSE; graph data retain their original bytes and stated
+ limits of upstream attribution. The corrected import preserves Patricia maps,
+ bitmap sets, immutable environment updates and continuation/state callbacks.
++
++## Spivey's completion workload, 2026-10-18
++
++Two guarded notice regressions record the joint Orwell/1991/Mike Spivey and
++partain Haskell-conversion heading; changed headings do not inherit those
++credits. All 108 inventory tests pass and all five pinned trees reproduce
++861 primary entries. The established name rewrite has no collision in that
++inventory, so the final ports are rewrite-lazy and rewrite-strict.
++
++The port retains the active lexicographic RPO extension, numbered theory,
++discrimination net and shared completion. Computed agenda costs remain lazy;
++a singleton agenda leaves an unused cost undemanded. A regression distinguishes
++that behavior from the preliminary eager-cost implementation. The source's
++map/zip classification uses shared tagged pairs in SML; the separate Boolean
++map spine is omitted and recorded as a representation adaptation.
+diff --git a/examples/benchmarks/inventory.tsv b/examples/benchmarks/inventory.tsv
+index 257f7962..19ac5a40 100644
+--- a/examples/benchmarks/inventory.tsv
++++ b/examples/benchmarks/inventory.tsv
+@@ -665,7 +665,7 @@ nofib	spectral/power	power	power-nofib	M3	import	integer-arithmetic	nofib:gc/pow
+ nofib	spectral/pretty	pretty	pretty	M3	import	integer-arithmetic		not stated in scanned source headers	0b3e89f295c950d26e0c23e197b9c22f04515939fd5549a74e29e12febdea1f0	spectral/pretty/CharSeq.hs;spectral/pretty/Main.hs;spectral/pretty/Pretty.hs	spectral/pretty/pretty.stdout		spectral/pretty/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/primetest	primetest	primetest	M3	import	integer-arithmetic		David Lester	91ad428340db8f6cb126455dfe55a33e2f8c9acf8043beac98cc79b6a8415a81	spectral/primetest/IntLib.lhs;spectral/primetest/Main.lhs;spectral/primetest/MyRandom.lhs;spectral/primetest/Prime.lhs	spectral/primetest/primetest.faststdin;spectral/primetest/primetest.faststdout;spectral/primetest/primetest.slowstdin;spectral/primetest/primetest.slowstdout;spectral/primetest/primetest.stdin;spectral/primetest/primetest.stdout	spectral/primetest/Main.lhs:header	spectral/primetest/Main.lhs:author-macro;spectral/primetest/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/puzzle	puzzle	puzzle	M3	import	kernel		not stated in scanned source headers	2dd87d351911efbdcd72f6ba5eb7164c137f7921a0084e12766dcf3f120c0f2c	spectral/puzzle/Main.hs			spectral/puzzle/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	spectral/rewrite	rewrite	rewrite	M3	import	symbolic-search		not stated in scanned source headers	43803650d3e4505fcd238a981ede8821ef4912bad06cab96c382b8abd47715c4	spectral/rewrite/Main.lhs	spectral/rewrite/rewrite.stdout		spectral/rewrite/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	spectral/rewrite	rewrite	rewrite	M3	import	symbolic-search		Mike Spivey;partain (Haskell conversion)	43803650d3e4505fcd238a981ede8821ef4912bad06cab96c382b8abd47715c4	spectral/rewrite/Main.lhs	spectral/rewrite/rewrite.stdout		spectral/rewrite/Main.lhs:Orwell-author-and-Haskell-conversion-heading;spectral/rewrite/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/scc	scc	scc	M3	import	kernel		not stated in scanned source headers	bb6373dc6cb21d9771bb06885f561545d13094a8fb79b0681bf33929b96cf794	spectral/scc/Digraph.hs;spectral/scc/Main.hs	spectral/scc/scc.stdout		spectral/scc/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/secretary	secretary	secretary	M3	import	integer-arithmetic		not stated in scanned source headers	97d86d7e6fc123947cd0a0b22c7713f787ae543b9ad47aed052adf47a36a8344	spectral/secretary/Main.lhs	spectral/secretary/secretary.stdout		spectral/secretary/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/simple	simple	simple-nofib	M3	import	numerical	mlton:benchmark/tests/simple.sml;smlnj:programs/simple	Kattamuri Ekanadham <EKNATH@ibm.com>;an id to ph translator, hand annotated for toplevel	df027b488c7bd727c92459ffdfc789b86ebc1102b8100a7358e8d0c52980fcba	spectral/simple/Main.hs;spectral/simple/simple.c		spectral/simple/Main.hs:header	spectral/simple/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+diff --git a/examples/benchmarks/literature.md b/examples/benchmarks/literature.md
+index 3c349afe..890fd927 100644
+--- a/examples/benchmarks/literature.md
++++ b/examples/benchmarks/literature.md
+@@ -430,3 +430,20 @@ in validation/dom-lt-source-issue.md. Patricia/bitmap operations, DFS, path
+ compression, persistent environment records, CPS specialization and array
+ initialization are diagnostic questions inferred from source. Counts and
+ timings do not establish their individual performance effects.
++
++## Spivey's free-group rewriting workload, 2026-10-18
++
++[Knuth and Bendix, Simple Word Problems in Universal Algebras](https://www.cs.tufts.edu/~nr/cs257/archive/don-knuth/knuth-bendix.pdf)
++(1970), summary and opening sections inspected, describes completion and
++common-normal-form reasoning, with group equations among its examples.
++[Dershowitz, Orderings for term-rewriting systems](https://www.sciencedirect.com/science/article/pii/0304397582900263)
++(1982), publisher abstract inspected, supplies termination-ordering context.
++The author's full-paper PDF retrieval timed out; no full review is claimed.
++
++Spivey's preserved 1991 Orwell description and the pinned Haskell conversion
++establish this benchmark's history and concrete algorithm. Source inspection
++establishes its active lexicographic RPO extension, discrimination-net rule
++order and shared completion; the generic multiset extension is inactive.
++Original theory/normal forms, an independent cancellation model and demand
++regressions support the port. These are separate from the papers' mathematical
++results and from measured compiler/collector behavior.
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 37f4f2a5..83f8d18f 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -1173,3 +1173,9 @@ typecheck-strict	large	nofib	spectral/hartel/typecheck	25000 inferred-types.txt
+ dom-lt	smoke	nofib	spectral/dom-lt	ghc-examples.in 0 expected-parents.txt	dom-lt/smoke.expected	shared/input.sml,shared/nofib-dom-lt-word.sml,shared/nofib-dom-lt-intmap.sml,shared/nofib-dom-lt-intset.sml,shared/nofib-dom-lt-graph.sml,shared/nofib-dom-lt-kernel.sml,shared/nofib-dom-lt-reader.sml,shared/nofib-dom-lt-driver.sml,dom-lt/benchmark.sml,shared/main.sml	30	1048576	graphs,mutable-arrays,higher-order,word64	ghc-examples.in,expected-parents.txt	exact	implemented
+ dom-lt	normal	nofib	spectral/dom-lt	ghc-examples.in 400 expected-parents.txt	dom-lt/normal.expected	shared/input.sml,shared/nofib-dom-lt-word.sml,shared/nofib-dom-lt-intmap.sml,shared/nofib-dom-lt-intset.sml,shared/nofib-dom-lt-graph.sml,shared/nofib-dom-lt-kernel.sml,shared/nofib-dom-lt-reader.sml,shared/nofib-dom-lt-driver.sml,dom-lt/benchmark.sml,shared/main.sml	600	4194304	graphs,mutable-arrays,higher-order,word64	ghc-examples.in,expected-parents.txt	exact	implemented
+ dom-lt	large	nofib	spectral/dom-lt	ghc-examples.in 2000 expected-parents.txt	dom-lt/large.expected	shared/input.sml,shared/nofib-dom-lt-word.sml,shared/nofib-dom-lt-intmap.sml,shared/nofib-dom-lt-intset.sml,shared/nofib-dom-lt-graph.sml,shared/nofib-dom-lt-kernel.sml,shared/nofib-dom-lt-reader.sml,shared/nofib-dom-lt-driver.sml,dom-lt/benchmark.sml,shared/main.sml	3600	8388608	graphs,mutable-arrays,higher-order,word64	ghc-examples.in,expected-parents.txt	exact	implemented
++rewrite-lazy	smoke	nofib	spectral/rewrite	1	rewrite-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-rewrite-expr.sml,shared/nofib-rewrite-parser.sml,shared/nofib-rewrite-kernel.sml,shared/nofib-rewrite-driver.sml,rewrite-lazy/benchmark.sml,shared/main.sml	30	1048576	symbolic-search,higher-order,lists-streams,lazy	-	exact	implemented
++rewrite-lazy	normal	nofib	spectral/rewrite	250000	rewrite-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-rewrite-expr.sml,shared/nofib-rewrite-parser.sml,shared/nofib-rewrite-kernel.sml,shared/nofib-rewrite-driver.sml,rewrite-lazy/benchmark.sml,shared/main.sml	600	4194304	symbolic-search,higher-order,lists-streams,lazy	-	exact	implemented
++rewrite-lazy	large	nofib	spectral/rewrite	1200000	rewrite-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-rewrite-expr.sml,shared/nofib-rewrite-parser.sml,shared/nofib-rewrite-kernel.sml,shared/nofib-rewrite-driver.sml,rewrite-lazy/benchmark.sml,shared/main.sml	3600	8388608	symbolic-search,higher-order,lists-streams,lazy	-	exact	implemented
++rewrite-strict	smoke	nofib	spectral/rewrite	1	rewrite-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-rewrite-expr.sml,shared/nofib-rewrite-parser.sml,shared/nofib-rewrite-kernel.sml,shared/nofib-rewrite-driver.sml,rewrite-strict/benchmark.sml,shared/main.sml	30	1048576	symbolic-search,higher-order,lists-streams,strict	-	exact	implemented
++rewrite-strict	normal	nofib	spectral/rewrite	250000	rewrite-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-rewrite-expr.sml,shared/nofib-rewrite-parser.sml,shared/nofib-rewrite-kernel.sml,shared/nofib-rewrite-driver.sml,rewrite-strict/benchmark.sml,shared/main.sml	600	4194304	symbolic-search,higher-order,lists-streams,strict	-	exact	implemented
++rewrite-strict	large	nofib	spectral/rewrite	1200000	rewrite-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/nofib-rewrite-expr.sml,shared/nofib-rewrite-parser.sml,shared/nofib-rewrite-kernel.sml,shared/nofib-rewrite-driver.sml,rewrite-strict/benchmark.sml,shared/main.sml	3600	8388608	symbolic-search,higher-order,lists-streams,strict	-	exact	implemented
+diff --git a/examples/benchmarks/validation.md b/examples/benchmarks/validation.md
+index 00099bdc..68bc70f1 100644
+--- a/examples/benchmarks/validation.md
++++ b/examples/benchmarks/validation.md
+@@ -2787,3 +2787,27 @@ original/corrected observations.
+ [Full make JOBS=4 check](validation/oct18-dom-lt-1174-acceptance.log) exits zero
+ with 1174 profiles and all cross-build comparisons. M3/M4/M5 remain in progress
+ and M8 remains planned; final SML large repetitions are unrecorded.
++
++## Free-group completion and rewriting, 2026-10-18
++
++The catalogue now contains 396 programs and 1180 profiles.
++[Final wrapper coverage](results/m3-rewrite/coverage.tsv) records 54/56
++passing smoke/normal cases. All Rune O0/O2 engines and five native SML hosts
++pass. Both normal ML Kit attempts report allocation failure at the 4 GiB
++limit; their raw failures remain in the ledger.
++
++[Semantic results](results/m3-rewrite/semantic-summary.tsv) record all 6880
++assertions passing across twenty invocations of the 344-check target, with
++none failed or unreached. The original ten-rule theory, full normal forms and
++an independent free-group cancellation model agree. Demand controls include
++the shared completion, unused agenda costs and short-circuiting; each repeated
++driver result is fully checked.
++
++[The repository acceptance run](validation/oct18-rewrite-1180-acceptance.log)
++exits zero with 1180 profiles and all compiler/runedoc/runeopt cross-build
++comparisons. Its bounded routine set is separate from the new ports' explicit
++final profile and semantic runs; those runs include the final agenda-cost fix.
++[The evidence report](results/m3-rewrite/README.md) distinguishes final records
++from provisional names, the initial fixture-path mistake and earlier cost
++handling. Final SML large repetitions remain unrecorded. M3/M4/M5 remain in
++progress; M8 remains planned.
+diff --git a/scripts/benchmark-inventory.py b/scripts/benchmark-inventory.py
+index 64fad996..b893475b 100644
+--- a/scripts/benchmark-inventory.py
++++ b/scripts/benchmark-inventory.py
+@@ -594,6 +594,13 @@ def build(source, root, lock):
+                     "This is a Haskell port of the Id version from the Impala" in header):
+                 authors.add("David J. King")
+                 item["evidence"].append("spectral/sphere/Main.lhs:authorship-and-port-history")
++        if source == "nofib" and path == "spectral/rewrite":
++            module = parent / "Main.lhs"
++            if module.is_file():
++                heading = module.read_text(errors="replace")[:2500]
++                if "Mike Spivey," in heading and "St. George's Day, 1991." in heading and "[converted to Haskell by partain]" in heading:
++                    authors.update(["Mike Spivey", "partain (Haskell conversion)"])
++                    item["evidence"].append("spectral/rewrite/Main.lhs:Orwell-author-and-Haskell-conversion-heading")
+         if source == "nofib" and path == "spectral/dom-lt":
+             module = parent / "Dom.hs"
+             if module.is_file():
+diff --git a/tests/benchmarks/test-inventory.py b/tests/benchmarks/test-inventory.py
+index cc068931..07337ff1 100644
+--- a/tests/benchmarks/test-inventory.py
++++ b/tests/benchmarks/test-inventory.py
+@@ -228,6 +228,20 @@ class InventoryTest(unittest.TestCase):
+                   "% Crown Copyright 1992\n\\author{Another author\\\\\n\n> main = print 0\n")
+         self.assertNotIn("N. D. North", self.build("nofib")[0]["authors"])
+ 
++    def test_rewrite_orwell_author_and_conversion_are_recorded(self):
++        self.nofib_roots()
++        self.file("spectral/rewrite/Makefile", "\\n")
++        self.file("spectral/rewrite/Main.lhs", "[converted to Haskell by partain]\\nMike Spivey,\\nSt. George's Day, 1991.\\n> main = print True\\n")
++        row = self.build("nofib")[0]
++        self.assertIn("Mike Spivey", row["authors"])
++        self.assertIn("partain (Haskell conversion)", row["authors"])
++
++    def test_changed_rewrite_heading_requires_review(self):
++        self.nofib_roots()
++        self.file("spectral/rewrite/Makefile", "\\n")
++        self.file("spectral/rewrite/Main.lhs", "Another author\\n> main = print True\\n")
++        self.assertNotIn("Mike Spivey", self.build("nofib")[0]["authors"])
++
+     def test_dominator_algorithm_author_is_recorded(self):
+         self.nofib_roots()
+         self.file("spectral/dom-lt/Makefile", "\n")

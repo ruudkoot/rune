@@ -1,0 +1,4 @@
+RESULT True
+PASS rewrite-nofib-strict
+SAMPLE 1 0.007054000
+SUMMARY 1 checks, 0 failed

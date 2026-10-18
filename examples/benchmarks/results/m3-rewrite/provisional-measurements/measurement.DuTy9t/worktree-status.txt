@@ -1,0 +1,13 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+ M scripts/benchmark-inventory.py
+ M tests/benchmarks/test-inventory.py
+?? examples/benchmarks/rewrite-nofib-lazy/
+?? examples/benchmarks/rewrite-nofib-strict/
+?? examples/benchmarks/shared/nofib-rewrite-driver.sml
+?? examples/benchmarks/shared/nofib-rewrite-expr.sml
+?? examples/benchmarks/shared/nofib-rewrite-kernel.sml
+?? examples/benchmarks/shared/nofib-rewrite-parser.sml
+?? tests/benchmarks/check-rewrite.sh
+?? tests/benchmarks/data/rewrite/
+?? tests/benchmarks/rewrite-tests.sml

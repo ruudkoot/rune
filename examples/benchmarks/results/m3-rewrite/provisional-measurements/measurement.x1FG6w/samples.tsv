@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+rewrite-nofib-strict	normal	rune	O2	compile	0	0	pass	2.72	2.64	0.17	135452	-	-	-	rewrite-nofib-strict/rune/build/compile
+rewrite-nofib-strict	normal	rune	O2	correctness	0	0	pass	45.88	46.29	0.06	10528	6185881507	18228482360	541008959	rewrite-nofib-strict/rune/correctness.0
+rewrite-nofib-strict	normal	rune	O2	count	1	1	pass	50.34	49.34	0.11	10516	6185881507	18228482360	541008959	rewrite-nofib-strict/rune/fresh.1
+rewrite-nofib-strict	normal	rune:opt	O2	compile	0	0	pass	2.22	2.18	0.10	135348	-	-	-	rewrite-nofib-strict/rune-opt/build/compile
+rewrite-nofib-strict	normal	rune:opt	O2	native-compile	0	0	pass	0.52	0.32	0.05	15432	-	-	-	rewrite-nofib-strict/rune-opt/build/native-compile
+rewrite-nofib-strict	normal	rune:opt	O2	correctness	0	0	pass	23.19	23.64	0.13	11300	6185881507	18228482360	541008959	rewrite-nofib-strict/rune-opt/correctness.0
+rewrite-nofib-strict	normal	rune:opt	O2	count	1	1	pass	24.97	24.00	0.23	11180	6185881507	18228482360	541008959	rewrite-nofib-strict/rune-opt/fresh.1
+rewrite-nofib-strict	normal	rune:new	O2	compile	0	0	pass	2.48	2.42	0.13	135376	-	-	-	rewrite-nofib-strict/rune-new/build/compile
+rewrite-nofib-strict	normal	rune:new	O2	correctness	0	0	pass	54.21	52.39	0.35	133356	3604994181	18228482360	541008959	rewrite-nofib-strict/rune-new/correctness.0

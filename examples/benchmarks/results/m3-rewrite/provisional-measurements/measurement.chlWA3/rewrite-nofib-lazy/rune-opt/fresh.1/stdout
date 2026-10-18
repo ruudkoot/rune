@@ -1,0 +1,3 @@
+RESULT True
+PASS rewrite-nofib-lazy
+SUMMARY 1 checks, 0 failed

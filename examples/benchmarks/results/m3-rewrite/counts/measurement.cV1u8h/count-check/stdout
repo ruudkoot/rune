@@ -1,0 +1,5 @@
+COUNT unbudgeted rewrite-strict normal rune
+COUNT unbudgeted rewrite-strict normal rune:opt
+COUNT unbudgeted rewrite-strict normal rune:new
+COUNT unbudgeted rewrite-strict normal rune:jit
+COUNT comparisons agree

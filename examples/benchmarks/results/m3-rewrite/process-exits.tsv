@@ -1,0 +1,8 @@
+target	exit
+final-profile-correctness	1
+final-semantic-correctness	0
+final-lazy-counts	0
+final-strict-counts	0
+final-serial-native-adapters	0
+full-repository-acceptance	0
+inventory-final-names	0
