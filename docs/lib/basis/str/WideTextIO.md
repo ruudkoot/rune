@@ -7,7 +7,7 @@
 | Signatures | none: it matches no signature of the library |
 | Status | optional |
 | Members | 37 |
-| Tests | 51 checks |
+| Tests | 56 checks |
 | Source | [lib/basis/widetextio.sml](../../../../lib/basis/widetextio.sml) |
 
 WideTextIO (optional in the specification): the imperative streams of the
@@ -33,7 +33,8 @@ members are those of TEXT\_IO over [`WideString.string`](../sig/STRING.md#type-s
 > the writer of a file of wide characters have no positions, no `ioDesc`,
 > no operations that do not block, and neither `canInput` nor `avail`: a
 > position in the file is one of bytes and not of characters. Their
-> `chunkSize` is 1024 characters, where a file of [`TextIO`](../str/TextIO.md) has 4096.
+> `chunkSize` is 4096 characters, as that of a file of [`TextIO`](../str/TextIO.md) is 4096
+> bytes.
 
 ## Members
 
@@ -44,7 +45,7 @@ The types are this structure's own.
 | type | `elem` | `RuneWideChar.char` |
 | datatype | `instream` | `InStream` |
 | datatype | `outstream` | `OutStream` |
-| type | `vector` | `WideCharVector.vector` |
+| type | `vector` | `WideString.string` |
 | val | `canInput` | `instream * int -> int option` |
 | val | `closeIn` | `instream -> unit` |
 | val | `closeOut` | `outstream -> unit` |
@@ -53,22 +54,22 @@ The types are this structure's own.
 | val | `getInstream` | `instream -> StreamIO.instream` |
 | val | `getOutstream` | `outstream -> StreamIO.outstream` |
 | val | `getPosOut` | `outstream -> StreamIO.out_pos` |
-| val | `input` | `instream -> WideCharVector.vector` |
+| val | `input` | `instream -> WideString.string` |
 | val | `input1` | `instream -> RuneWideChar.char option` |
-| val | `inputAll` | `instream -> WideCharVector.vector` |
-| val | `inputLine` | `instream -> WideCharVector.vector option` |
-| val | `inputN` | `instream * int -> WideCharVector.vector` |
+| val | `inputAll` | `instream -> WideString.string` |
+| val | `inputLine` | `instream -> WideString.string option` |
+| val | `inputN` | `instream * int -> WideString.string` |
 | val | `lookahead` | `instream -> RuneWideChar.char option` |
 | val | `mkInstream` | `StreamIO.instream -> instream` |
 | val | `mkOutstream` | `StreamIO.outstream -> outstream` |
 | val | `openAppend` | `string -> outstream` |
 | val | `openIn` | `string -> instream` |
 | val | `openOut` | `string -> outstream` |
-| val | `openString` | `WideCharVector.vector -> instream` |
-| val | `output` | `outstream * WideCharVector.vector -> unit` |
+| val | `openString` | `WideString.string -> instream` |
+| val | `output` | `outstream * WideString.string -> unit` |
 | val | `output1` | `outstream * RuneWideChar.char -> unit` |
 | val | `outputSubstr` | `outstream * WideCharVectorSlice.slice -> unit` |
-| val | `print` | `WideCharVector.vector -> unit` |
+| val | `print` | `WideString.string -> unit` |
 | val | `scanStream` | `((StreamIO.instream -> (RuneWideChar.char * StreamIO.instream) option) -> StreamIO.instream -> ('a * StreamIO.instream) option) -> instream -> 'a option` |
 | val | `setInstream` | `instream * StreamIO.instream -> unit` |
 | val | `setOutstream` | `outstream * StreamIO.outstream -> unit` |

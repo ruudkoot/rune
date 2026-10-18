@@ -15,7 +15,7 @@
 ```sml
 signature STRING
 structure String : STRING where type string = string where type char = Char.char
-structure WideString :> STRING where type string = WideCharVector.vector where type char = WideChar.char  (* optional *)
+structure WideString : STRING where type char = WideChar.char  (* optional *)
 ```
 
 | Implementation |  | Source |

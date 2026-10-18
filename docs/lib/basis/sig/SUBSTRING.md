@@ -15,7 +15,7 @@
 ```sml
 signature SUBSTRING
 structure Substring : SUBSTRING where type string = string where type char = Char.char
-structure WideSubstring :> SUBSTRING where type substring = WideCharVectorSlice.slice where type string = WideCharVector.vector where type char = WideChar.char  (* optional *)
+structure WideSubstring : SUBSTRING where type substring = WideCharVectorSlice.slice where type string = WideString.string where type char = WideChar.char  (* optional *)
 ```
 
 | Implementation |  | Source |

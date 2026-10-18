@@ -8,7 +8,7 @@
 - `O.trunc` (val): [POSIX_FILE_SYS](../sig/POSIX_FILE_SYS.md#val-o.trunc)
 - `SOCK.toString` (val): [SOCKET](../sig/SOCKET.md#val-sock.tostring)
 - `Status.timeout` (val): [WINDOWS](../sig/WINDOWS.md#val-status.timeout)
-- `tabulate` (val): [ARRAY](../sig/ARRAY.md#val-tabulate), [ARRAY2](../sig/ARRAY2.md#val-tabulate), [LIST](../sig/LIST.md#val-tabulate), [MONO_ARRAY](../sig/MONO_ARRAY.md#val-tabulate), [MONO_ARRAY2](../sig/MONO_ARRAY2.md#val-tabulate), [MONO_VECTOR](../sig/MONO_VECTOR.md#val-tabulate), [MONO_VECTOR_EQ](../sig/MONO_VECTOR_EQ.md#val-tabulate), [VECTOR](../sig/VECTOR.md#val-tabulate)
+- `tabulate` (val): [ARRAY](../sig/ARRAY.md#val-tabulate), [ARRAY2](../sig/ARRAY2.md#val-tabulate), [LIST](../sig/LIST.md#val-tabulate), [MONO_ARRAY](../sig/MONO_ARRAY.md#val-tabulate), [MONO_ARRAY2](../sig/MONO_ARRAY2.md#val-tabulate), [MONO_VECTOR](../sig/MONO_VECTOR.md#val-tabulate), [VECTOR](../sig/VECTOR.md#val-tabulate)
 - `take` (val): [LIST](../sig/LIST.md#val-take)
 - `takel` (val): [STRING_CVT](../sig/STRING_CVT.md#val-takel), [SUBSTRING](../sig/SUBSTRING.md#val-takel)
 - `taker` (val): [SUBSTRING](../sig/SUBSTRING.md#val-taker)

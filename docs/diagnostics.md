@@ -21,6 +21,14 @@ not a terminal and nothing asks for more, this line is all that is
 printed, byte for byte as before (`tests/errors` and every other suite
 compare it).
 
+A type in a message is named as the top level of the program names it. A
+type that the top level does not name by its own name gets the path that
+reaches it, the structure named for the type first: `WideString.string`
+where `string` is `String.string`, `S.t`, and `A.d` and `B.d` for the
+datatypes of two applications of one functor. A type that no path reaches,
+such as one of the structure being elaborated, keeps its own name, and a
+stamp where two of one name meet in a message (`t/102`).
+
 In the **full** form the lines of source that the diagnostic is about
 follow, under a gutter of line numbers, with carets under the span:
 

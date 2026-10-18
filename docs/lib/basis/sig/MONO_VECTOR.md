@@ -27,7 +27,7 @@ structure LargeWordVector : MONO_VECTOR where type elem = LargeWord.word  (* opt
 structure Real32Vector :> MONO_VECTOR where type elem = Real32.real  (* optional *)
 structure Real64Vector : MONO_VECTOR where type elem = Real64.real  (* optional *)
 structure RealVector : MONO_VECTOR where type elem = real  (* optional *)
-structure WideCharVector :> MONO_VECTOR where type elem = WideChar.char  (* optional *)
+structure WideCharVector : MONO_VECTOR where type vector = WideString.string where type elem = WideChar.char  (* optional *)
 structure Word16Vector :> MONO_VECTOR where type elem = Word16.word  (* optional *)
 structure Word32Vector :> MONO_VECTOR where type elem = Word32.word  (* optional *)
 structure Word64Vector :> MONO_VECTOR where type elem = Word64.word  (* optional *)
@@ -50,7 +50,7 @@ structure WordVector :> MONO_VECTOR where type elem = word  (* optional *)
 | [`Real32Vector`](../str/Real32Vector.md) | Real32Vector: immutable vectors of binary32 reals. | [lib/basis/mono\_real32.sml](../../../../lib/basis/mono_real32.sml) |
 | [`Real64Vector`](../str/RealVector.md) | Real64 is Real, so its vectors, arrays, slices and two-dimensional arrays (optional in the specification) are those of Real. | [lib/basis/mono\_real64.sml](../../../../lib/basis/mono_real64.sml) |
 | [`RealVector`](../str/RealVector.md) | RealVector: immutable vectors of reals. | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
-| [`WideCharVector`](../str/WideCharVector.md) | WideCharVector: immutable vectors of wide characters, which are the strings of [`WideString`](../str/WideString.md). | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
+| [`WideCharVector`](../str/WideCharVector.md) | WideCharVector: immutable vectors of wide characters, which are the strings of [`WideString`](../str/WideString.md): [`WideCharVector.vector`](#type-vector) is [`WideString.string`](../sig/STRING.md#type-string), as [`CharVector.vector`](#type-vector) is [`String.string`](../sig/STRING.md#type-string). | [lib/basis/widestring.sml](../../../../lib/basis/widestring.sml) |
 | [`Word16Vector`](../str/Word16Vector.md) | Word16Vector: immutable vectors of 16-bit words. | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
 | [`Word32Vector`](../str/Word32Vector.md) | Word32Vector: immutable vectors of 32-bit words. | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
 | [`Word64Vector`](../str/Word64Vector.md) | Word64Vector: immutable vectors of 64-bit words. | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |
@@ -88,14 +88,11 @@ length.
 > type to pin to; here [`WideString.string`](../sig/STRING.md#type-string) is already there and [`STRING`](../sig/STRING.md)
 > already makes it an equality type.
 
-Rune gives the equality the other way, by sealing with [`MONO_VECTOR_EQ`](../sig/MONO_VECTOR_EQ.md).
-That is a consequence of \*this\* library's order and not of the fault:
-[`WideString`](../str/WideString.md) is built on [`WideCharVector`](../str/WideCharVector.md) (`type string = V.vector`, and
-every operation delegates), so [`WideCharVector`](../str/WideCharVector.md) is where the type name is
-born and there is nothing yet to pin it to. Following the page as it
-should have been written would mean giving [`WideString`](../str/WideString.md) a representation
-of its own and pinning [`WideCharVector`](../str/WideCharVector.md) to it -- a change to two files,
-not a rename -- and [`MONO_VECTOR_EQ`](../sig/MONO_VECTOR_EQ.md) would then be unnecessary.
+Rune follows the page as it should have been written: [`WideCharVector`](../str/WideCharVector.md) is
+declared `where type vector = WideString.string where type elem = WideChar.char`, and the wide family is sealed in the order of the 8-bit
+one, the strings first (widestring.sml), so [`WideCharVector.vector`](#type-vector)
+admits equality because [`WideString.string`](../sig/STRING.md#type-string) does, and [`MONO_VECTOR`](MONO_VECTOR.md)
+serves it unchanged (the reading `WideCharVector/vector-is-WideString.string`).
 
 <details><summary>Other implementations (1)</summary>
 
@@ -781,7 +778,7 @@ In [tests/basis/fn/mono\_vector\_fn.sml](../../../../tests/basis/fn/mono_vector_
 ## See also
 
 [`VECTOR`](../sig/VECTOR.md), [`ARRAY`](../sig/ARRAY.md), [`VECTOR_SLICE`](../sig/VECTOR_SLICE.md), [`ARRAY_SLICE`](../sig/ARRAY_SLICE.md), [`MONO_ARRAY2`](../sig/MONO_ARRAY2.md),
-[`MONO_VECTOR_EQ`](../sig/MONO_VECTOR_EQ.md), [`TEXT`](../sig/TEXT.md), [`BYTE`](../sig/BYTE.md)
+[`TEXT`](../sig/TEXT.md), [`BYTE`](../sig/BYTE.md)
 
 ---
 

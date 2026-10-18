@@ -155,7 +155,7 @@
 - `Strm` (str): [UNIX_SOCK](../sig/UNIX_SOCK.md#str-strm)
 - `Strm.socket` (val): [UNIX_SOCK](../sig/UNIX_SOCK.md#val-strm.socket)
 - `Strm.socketPair` (val): [UNIX_SOCK](../sig/UNIX_SOCK.md#val-strm.socketpair)
-- `sub` (val): [ARRAY](../sig/ARRAY.md#val-sub), [ARRAY2](../sig/ARRAY2.md#val-sub), [ARRAY_SLICE](../sig/ARRAY_SLICE.md#val-sub), [MONO_ARRAY](../sig/MONO_ARRAY.md#val-sub), [MONO_ARRAY2](../sig/MONO_ARRAY2.md#val-sub), [MONO_ARRAY_SLICE](../sig/MONO_ARRAY_SLICE.md#val-sub), [MONO_VECTOR](../sig/MONO_VECTOR.md#val-sub), [MONO_VECTOR_EQ](../sig/MONO_VECTOR_EQ.md#val-sub), [MONO_VECTOR_SLICE](../sig/MONO_VECTOR_SLICE.md#val-sub), [STRING](../sig/STRING.md#val-sub), [SUBSTRING](../sig/SUBSTRING.md#val-sub), [VECTOR](../sig/VECTOR.md#val-sub), [VECTOR_SLICE](../sig/VECTOR_SLICE.md#val-sub)
+- `sub` (val): [ARRAY](../sig/ARRAY.md#val-sub), [ARRAY2](../sig/ARRAY2.md#val-sub), [ARRAY_SLICE](../sig/ARRAY_SLICE.md#val-sub), [MONO_ARRAY](../sig/MONO_ARRAY.md#val-sub), [MONO_ARRAY2](../sig/MONO_ARRAY2.md#val-sub), [MONO_ARRAY_SLICE](../sig/MONO_ARRAY_SLICE.md#val-sub), [MONO_VECTOR](../sig/MONO_VECTOR.md#val-sub), [MONO_VECTOR_SLICE](../sig/MONO_VECTOR_SLICE.md#val-sub), [STRING](../sig/STRING.md#val-sub), [SUBSTRING](../sig/SUBSTRING.md#val-sub), [VECTOR](../sig/VECTOR.md#val-sub), [VECTOR_SLICE](../sig/VECTOR_SLICE.md#val-sub)
 - `subArr` (val): [PACK_REAL](../sig/PACK_REAL.md#val-subarr), [PACK_WORD](../sig/PACK_WORD.md#val-subarr)
 - `subArrX` (val): [PACK_WORD](../sig/PACK_WORD.md#val-subarrx)
 - `SUBNORMAL` (con): [IEEE_REAL](../sig/IEEE_REAL.md#con-subnormal)

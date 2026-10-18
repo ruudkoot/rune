@@ -1762,7 +1762,7 @@
    ]
   },
   "INET6_SOCK": {
-   "doc": "Sockets of the Internet protocol version 6, as `INET_SOCK` describes them\nfor version 4.\n\nThe specification knows nothing of IPv6: it was written when the protocol\nwas new, and its `NetHostDB` is an IPv4 database whose `toString` is\ndefined to give the four dotted numbers. So this signature is Rune's own,\nand a program that uses it is not portable. It is as close to `INET_SOCK`\nas it can be -- the same names, in the same order, for the same things --\nso that the two read alike.\n\nAn address of this family is an `in6_addr` and a port. `toString` and\n`fromString` write and read the text of `inet_ntop` and `inet_pton` \\--\neight groups of up to four hexadecimal digits, at most one `::` for the\nlongest run of zeros, a dotted quad in place of the last two groups, and\nno scope after `%` \\-- and they do it here rather than asking the system,\nas `NetHostDB` does for IPv4, so that a host compiling this library can\nread and write addresses although it has no sockets. On 300 addresses\ndrawn at random the text is the same as `inet_ntop`'s, character for\ncharacter. The addresses of a host are not looked up here; `NetHostDB`\nanswers for IPv4 only.\n\n> **Deviation** `INET6_SOCK/not-in-the-specification`. This signature is not in\nthe specification, which has no IPv6 at all: it was written before the\nprotocol, its `NetHostDB` is defined to give the four dotted numbers of\nIPv4, and it names no structure for anything else. A program that uses\nthis one does not port. What the specification does allow is the family:\nAF.list \"returns a list of all the available address families\", so\n`Socket.AF` knowing `INET6` is not a departure and this signature is.\n\n**See also** `INET_SOCK`, `SOCKET`, `NET_HOST_DB`, `MONO_VECTOR_EQ`\n\n",
+   "doc": "Sockets of the Internet protocol version 6, as `INET_SOCK` describes them\nfor version 4.\n\nThe specification knows nothing of IPv6: it was written when the protocol\nwas new, and its `NetHostDB` is an IPv4 database whose `toString` is\ndefined to give the four dotted numbers. So this signature is Rune's own,\nand a program that uses it is not portable. It is as close to `INET_SOCK`\nas it can be -- the same names, in the same order, for the same things --\nso that the two read alike.\n\nAn address of this family is an `in6_addr` and a port. `toString` and\n`fromString` write and read the text of `inet_ntop` and `inet_pton` \\--\neight groups of up to four hexadecimal digits, at most one `::` for the\nlongest run of zeros, a dotted quad in place of the last two groups, and\nno scope after `%` \\-- and they do it here rather than asking the system,\nas `NetHostDB` does for IPv4, so that a host compiling this library can\nread and write addresses although it has no sockets. On 300 addresses\ndrawn at random the text is the same as `inet_ntop`'s, character for\ncharacter. The addresses of a host are not looked up here; `NetHostDB`\nanswers for IPv4 only.\n\n> **Deviation** `INET6_SOCK/not-in-the-specification`. This signature is not in\nthe specification, which has no IPv6 at all: it was written before the\nprotocol, its `NetHostDB` is defined to give the four dotted numbers of\nIPv4, and it names no structure for anything else. A program that uses\nthis one does not port. What the specification does allow is the family:\nAF.list \"returns a list of all the available address families\", so\n`Socket.AF` knowing `INET6` is not a departure and this signature is.\n\n**See also** `INET_SOCK`, `SOCKET`, `NET_HOST_DB`\n\n",
    "page": "sig/INET6_SOCK.md",
    "members": [
     {
@@ -3382,7 +3382,7 @@
    ]
   },
   "MONO_VECTOR": {
-   "doc": "The sequences of one element type: vectors, arrays and their slices, as\n`VECTOR`, `ARRAY`, `VECTOR_SLICE` and `ARRAY_SLICE` describe them for any\nelement type.\n\nFixing the element type lets an implementation pack the elements, so\n`Word8Vector` need not hold one machine word per byte, and it gives the\nbyte- and character-oriented parts of the library (`BYTE`, `TEXT`,\n`BIN_IO`) a sequence type to name. The members are those of the\npolymorphic signatures, with `elem` for the element type; what they mean\nis the same, and the pages of `VECTOR` and `ARRAY` describe it at more\nlength.\n\n> **Erratum** `MONO_VECTOR/WideCharVector-must-admit-equality`. The page writes\n`type vector`, not `eqtype`, so that a family whose elements do not admit\nequality can have a vector -- `RealVector` needs that. Where a vector has\nto admit equality the page says so on the instance instead: `CharVector`\nis declared `where type vector = String.string`, and `STRING` writes\n`eqtype string`. \\*\\*`WideCharVector` is declared `where type elem = WideChar.char` and nothing more, and that is not enough.\\*\\* `TEXT` shares\n`String.string` with `CharVector.vector`, and `WideText` is declared\n`where type String.string = WideString.string`, so\n`WideText.CharVector.vector` is `WideString.string`, which `STRING` makes\nan equality type. Any implementation whose `WideText.CharVector` is the\ntop-level `WideCharVector` \\-- every one that has both -- must therefore\ngive `WideCharVector.vector` equality, and the declaration the page gives\nit cannot. \\*\\*The whole of the defect is one missing constraint\\*\\*:\n`where type vector = WideString.string`, which `CharVector` has and\n`WideCharVector` does not. That makes this a milder fault than the one on\nthe page of `ARRAY2`, where no constraint can help because there is no\ntype to pin to; here `WideString.string` is already there and `STRING`\nalready makes it an equality type.\n\nRune gives the equality the other way, by sealing with `MONO_VECTOR_EQ`.\nThat is a consequence of \\*this\\* library's order and not of the fault:\n`WideString` is built on `WideCharVector` (`type string = V.vector`, and\nevery operation delegates), so `WideCharVector` is where the type name is\nborn and there is nothing yet to pin it to. Following the page as it\nshould have been written would mean giving `WideString` a representation\nof its own and pinning `WideCharVector` to it -- a change to two files,\nnot a rename -- and `MONO_VECTOR_EQ` would then be unnecessary.\n\n**See also** `VECTOR`, `ARRAY`, `VECTOR_SLICE`, `ARRAY_SLICE`, `MONO_ARRAY2`,\n`MONO_VECTOR_EQ`, `TEXT`, `BYTE`\n\n",
+   "doc": "The sequences of one element type: vectors, arrays and their slices, as\n`VECTOR`, `ARRAY`, `VECTOR_SLICE` and `ARRAY_SLICE` describe them for any\nelement type.\n\nFixing the element type lets an implementation pack the elements, so\n`Word8Vector` need not hold one machine word per byte, and it gives the\nbyte- and character-oriented parts of the library (`BYTE`, `TEXT`,\n`BIN_IO`) a sequence type to name. The members are those of the\npolymorphic signatures, with `elem` for the element type; what they mean\nis the same, and the pages of `VECTOR` and `ARRAY` describe it at more\nlength.\n\n> **Erratum** `MONO_VECTOR/WideCharVector-must-admit-equality`. The page writes\n`type vector`, not `eqtype`, so that a family whose elements do not admit\nequality can have a vector -- `RealVector` needs that. Where a vector has\nto admit equality the page says so on the instance instead: `CharVector`\nis declared `where type vector = String.string`, and `STRING` writes\n`eqtype string`. \\*\\*`WideCharVector` is declared `where type elem = WideChar.char` and nothing more, and that is not enough.\\*\\* `TEXT` shares\n`String.string` with `CharVector.vector`, and `WideText` is declared\n`where type String.string = WideString.string`, so\n`WideText.CharVector.vector` is `WideString.string`, which `STRING` makes\nan equality type. Any implementation whose `WideText.CharVector` is the\ntop-level `WideCharVector` \\-- every one that has both -- must therefore\ngive `WideCharVector.vector` equality, and the declaration the page gives\nit cannot. \\*\\*The whole of the defect is one missing constraint\\*\\*:\n`where type vector = WideString.string`, which `CharVector` has and\n`WideCharVector` does not. That makes this a milder fault than the one on\nthe page of `ARRAY2`, where no constraint can help because there is no\ntype to pin to; here `WideString.string` is already there and `STRING`\nalready makes it an equality type.\n\nRune follows the page as it should have been written: `WideCharVector` is\ndeclared `where type vector = WideString.string where type elem = WideChar.char`, and the wide family is sealed in the order of the 8-bit\none, the strings first (widestring.sml), so `WideCharVector.vector`\nadmits equality because `WideString.string` does, and `MONO_VECTOR`\nserves it unchanged (the reading `WideCharVector/vector-is-WideString.string`).\n\n**See also** `VECTOR`, `ARRAY`, `VECTOR_SLICE`, `ARRAY_SLICE`, `MONO_ARRAY2`,\n`TEXT`, `BYTE`\n\n",
    "page": "sig/MONO_VECTOR.md",
    "members": [
     {
@@ -3538,166 +3538,6 @@
      "spec": "val collate : (elem * elem -> order) -> vector * vector -> order",
      "doc": "`collate cmp (a, b)` compares the elements of two of these lexicographically with `cmp`.\n\n**Law** `collate cmp (a, b) = List.collate cmp (foldr (op ::) [] a, foldr (op ::) [] b)`\n\n**Example** `collate Char.compare (\"ab\", \"ac\") = LESS`\n\n",
      "page": "sig/MONO_VECTOR.md#val-collate"
-    }
-   ]
-  },
-  "MONO_VECTOR_EQ": {
-   "doc": "The same as `MONO_VECTOR`, with a vector type that admits equality.\n\n> **Deviation** `MONO_VECTOR_EQ/not-in-the-specification`. This signature is\nnot in the specification, and it is here because the specification asks\nfor something it gives no way to say: `WideCharVector.vector` has to admit\nequality, and the declaration the page gives `WideCharVector` cannot make\nit -- see the erratum `MONO_VECTOR/WideCharVector-must-admit-equality`.\n`MONO_VECTOR` writes `type vector`, not `eqtype`, so that a family whose\nelements do not admit equality can have a vector; a family whose vector is\na type of its own and does admit it is sealed with this instead. The\nspecification's own way out is `where type vector = WideString.string` on\nthe instance, which Rune cannot use because `WideString` is declared after\n`WideCharVector` and is built on it -- `WideString.string` must be a type\nname of its own for wide string constants to be overloaded at it.\n\n",
-   "page": "sig/MONO_VECTOR_EQ.md",
-   "members": [
-    {
-     "kind": "eqtype",
-     "name": "vector",
-     "spec": "eqtype vector",
-     "doc": "The type of these vectors, which admits equality.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#type-vector"
-    },
-    {
-     "kind": "type",
-     "name": "elem",
-     "spec": "type elem",
-     "doc": "The type of the elements: `WideChar.char` for `WideCharVector`.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#type-elem"
-    },
-    {
-     "kind": "val",
-     "name": "maxLen",
-     "spec": "val maxLen : int",
-     "doc": "The greatest length such a vector may have.\n\n> **Implementation** `MONO_VECTOR_EQ.maxLen/value`. `String.maxSize`, the\nbound of the families of `MONO_VECTOR` whose vector is a string.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-maxlen"
-    },
-    {
-     "kind": "val",
-     "name": "fromList",
-     "spec": "val fromList : elem list -> vector",
-     "doc": "`fromList l` is the sequence of the elements of `l`, in order.\n\n**Raises** `Size` if `l` is longer than `maxLen`.\n\n**Example** `fromList [WideChar.chr 65, WideChar.chr 0x3BB] = fromList [WideChar.chr 65, WideChar.chr 0x3BB]`\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-fromlist"
-    },
-    {
-     "kind": "val",
-     "name": "tabulate",
-     "spec": "val tabulate : int * (int -> elem) -> vector",
-     "doc": "`tabulate (n, f)` is the sequence of `f 0`, ..., `f (n - 1)`, applied in order.\n\n**Raises** `Size` if `n < 0` or `n > maxLen`, before `f` is applied.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-tabulate"
-    },
-    {
-     "kind": "val",
-     "name": "length",
-     "spec": "val length : vector -> int",
-     "doc": "`length x` is the number of elements.\n\n**Example** `length (fromList [WideChar.chr 0x10000]) = 1`\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-length"
-    },
-    {
-     "kind": "val",
-     "name": "sub",
-     "spec": "val sub : vector * int -> elem",
-     "doc": "`sub (x, i)` is the element at position `i`, counting from 0.\n\n**Raises** `Subscript` if `i` is outside.\n\n**Example** `WideChar.ord (sub (fromList [WideChar.chr 65, WideChar.chr 0x3BB], 1)) = 0x3BB`\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-sub"
-    },
-    {
-     "kind": "val",
-     "name": "update",
-     "spec": "val update : vector * int * elem -> vector",
-     "doc": "`update (v, i, x)` is a new vector like `v` but with `x` at position `i`.\n\n**Raises** `Subscript` if `i` is outside `v`.\n\n**Example** `update (fromList [WideChar.chr 65], 0, WideChar.chr 66) = fromList [WideChar.chr 66]`\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-update"
-    },
-    {
-     "kind": "val",
-     "name": "concat",
-     "spec": "val concat : vector list -> vector",
-     "doc": "`concat l` is the vectors of `l` one after another.\n\n**Raises** `Size` if the result would be longer than `maxLen`.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-concat"
-    },
-    {
-     "kind": "val",
-     "name": "appi",
-     "spec": "val appi : (int * elem -> unit) -> vector -> unit",
-     "doc": "`appi f x` applies `f` to the index and the element of each position, from 0 up, for its effect.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-appi"
-    },
-    {
-     "kind": "val",
-     "name": "app",
-     "spec": "val app : (elem -> unit) -> vector -> unit",
-     "doc": "`app f x` applies `f` to every element, from 0 up, for its effect.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-app"
-    },
-    {
-     "kind": "val",
-     "name": "mapi",
-     "spec": "val mapi : (int * elem -> elem) -> vector -> vector",
-     "doc": "`mapi f v` is the vector of the results of `f` on the index and the element of each position.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-mapi"
-    },
-    {
-     "kind": "val",
-     "name": "map",
-     "spec": "val map : (elem -> elem) -> vector -> vector",
-     "doc": "`map f v` is the vector of the results of `f` on each element, in order.\n\n**Example** `map WideChar.toUpper (fromList [WideChar.chr 97]) = fromList [WideChar.chr 65]`\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-map"
-    },
-    {
-     "kind": "val",
-     "name": "foldli",
-     "spec": "val foldli : (int * elem * 'b -> 'b) -> 'b -> vector -> 'b",
-     "doc": "`foldli f init x` combines the elements from the left, giving `f` the index as well.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-foldli"
-    },
-    {
-     "kind": "val",
-     "name": "foldri",
-     "spec": "val foldri : (int * elem * 'b -> 'b) -> 'b -> vector -> 'b",
-     "doc": "`foldri f init x` combines the elements from the right, giving `f` the index as well.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-foldri"
-    },
-    {
-     "kind": "val",
-     "name": "foldl",
-     "spec": "val foldl : (elem * 'b -> 'b) -> 'b -> vector -> 'b",
-     "doc": "`foldl f init x` combines the elements from the left, as `List.foldl` does.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-foldl"
-    },
-    {
-     "kind": "val",
-     "name": "foldr",
-     "spec": "val foldr : (elem * 'b -> 'b) -> 'b -> vector -> 'b",
-     "doc": "`foldr f init x` combines the elements from the right, as `List.foldr` does.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-foldr"
-    },
-    {
-     "kind": "val",
-     "name": "findi",
-     "spec": "val findi : (int * elem -> bool) -> vector -> (int * elem) option",
-     "doc": "`findi p x` is `SOME (i, e)` for the first position whose index and element satisfy `p`, or `NONE`.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-findi"
-    },
-    {
-     "kind": "val",
-     "name": "find",
-     "spec": "val find : (elem -> bool) -> vector -> elem option",
-     "doc": "`find p x` is `SOME e` for the first element that satisfies `p`, or `NONE`.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-find"
-    },
-    {
-     "kind": "val",
-     "name": "exists",
-     "spec": "val exists : (elem -> bool) -> vector -> bool",
-     "doc": "`exists p x` is `true` when some element satisfies `p`.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-exists"
-    },
-    {
-     "kind": "val",
-     "name": "all",
-     "spec": "val all : (elem -> bool) -> vector -> bool",
-     "doc": "`all p x` is `true` when every element satisfies `p`.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-all"
-    },
-    {
-     "kind": "val",
-     "name": "collate",
-     "spec": "val collate : (elem * elem -> order) -> vector * vector -> order",
-     "doc": "`collate cmp (a, b)` compares the elements of two of these lexicographically with `cmp`.\n\n**Example** `collate WideChar.compare (fromList [WideChar.chr 65], fromList [WideChar.chr 66]) = LESS`\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-collate"
     }
    ]
   },

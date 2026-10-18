@@ -1,8 +1,11 @@
-(* requires: WideCharVector WideCharArray WideChar *)
+(* requires: WideCharVector WideCharArray WideChar WideString *)
 (* uses: spec-sigs/MONO_VECTOR.sml spec-sigs/MONO_ARRAY.sml spec-sigs/MONO_VECTOR_SLICE.sml spec-sigs/MONO_ARRAY_SLICE.sml spec-sigs/MONO_ARRAY2.sml *)
 (* WideCharVector, WideCharArray, WideCharVectorSlice and WideCharArraySlice
-   match their signatures, with the constraints of the specification:
-     structure WideCharVector :> MONO_VECTOR where type elem = WideChar.char
+   match their signatures, with the constraints of the specification, and
+   the one its declaration of WideCharVector lacks (the erratum
+   MONO_VECTOR/WideCharVector-must-admit-equality of lib/basis):
+     structure WideCharVector :> MONO_VECTOR
+       where type vector = WideString.string where type elem = WideChar.char
      structure WideCharArray :> MONO_ARRAY where type vector = WideCharVector.vector
        where type elem = WideChar.char
      structure WideCharVectorSlice :> MONO_VECTOR_SLICE
@@ -27,6 +30,16 @@ struct
   val () = T.check ("WideCharVector:MONO_VECTOR/vector-is-WideCharVector.vector",
                     fn () => WideCharVector.length (V.fromList [] : WideCharVector.vector) = 0 andalso V.length (WideCharVector.fromList [] : V.vector) = 0)
   val () = T.check ("WideCharVector:MONO_VECTOR/opaque-vector", fn () => eq (VO.sub (VO.tabulate (3, x), 2), x 2))
+  (* MONO_VECTOR as it is, with the vector of WideString: no signature with an
+     eqtype vector is needed, since STRING makes WideString.string one *)
+  structure VW : SPEC_MONO_VECTOR where type vector = WideString.string where type elem = WideChar.char = WideCharVector
+  structure VWO :> SPEC_MONO_VECTOR where type vector = WideString.string where type elem = WideChar.char = WideCharVector
+  val () = T.check ("WideCharVector:MONO_VECTOR/vector-is-WideString.string",
+                    fn () => WideString.size (VW.tabulate (3, x)) = 3
+                             andalso VWO.length (WideString.implode [x 1, x 2]) = 2)
+  val () = T.check ("WideCharVector:MONO_VECTOR/vector-admits-equality",
+                    fn () => VWO.tabulate (2, x) = WideString.implode [x 0, x 1]
+                             andalso WideCharVector.fromList [x 3] <> WideCharVector.fromList [x 4])
 
   structure A : SPEC_MONO_ARRAY = WideCharArray
   structure AE : SPEC_MONO_ARRAY where type vector = WideCharVector.vector where type elem = WideChar.char = WideCharArray

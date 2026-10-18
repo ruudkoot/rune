@@ -23,7 +23,13 @@ In Rune:
   takes them. They are refused where text meets the world: `WideTextIO`
   neither reads nor writes one, for UTF-8 holds the scalar values, the code
   points that are not surrogates.
-* `WideString.string` is a `WideCharVector.vector` of code points.
+* `WideString.string` is a type of its own, a string of code points, and
+  `WideCharVector.vector` is that type, as `CharVector.vector` is
+  `String.string`: the wide family is built in the order of the 8-bit one,
+  and sealed at once (`RuneWideText` in
+  [`lib/basis/widestring.sml`](../lib/basis/widestring.sml)). A wide
+  character takes a word of the vector; `^`, `concat` and `substring` copy
+  the words in C, as `String`'s copy bytes.
 * `WideSubstring.substring` is a `WideCharVectorSlice.slice`.
 * `WideText` packages these structures together under `TEXT`.
 * `WideTextPrimIO` provides primitive readers and writers of wide characters
@@ -143,9 +149,11 @@ Any implementation where `WideText.CharVector` is the top-level
 specification omitted `where type vector = WideString.string` from
 `WideCharVector`.
 
-Rune resolves this by sealing `WideCharVector` with `MONO_VECTOR_EQ`, a signature
-that adds `eqtype vector` to `MONO_VECTOR`
-([basis-compat.md](basis-compat.md#widecharvector-must-admit-equality)).
+Rune declares `WideCharVector` as the specification should have, `where type
+vector = WideString.string`. The strings are made first and the vectors of
+wide characters are a view of them, so plain `MONO_VECTOR` serves and
+`STRING` gives the vectors their equality
+([basis-compat.md](basis-compat.md#widecharvector-must-admit-equality-and-its-declaration-cannot-say-so)).
 
 ## Encodings and stream positions in `WideTextIO`
 

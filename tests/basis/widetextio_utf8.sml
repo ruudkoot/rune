@@ -516,5 +516,45 @@ struct
                     [0xD800, 0xDBFF, 0xDC00, 0xDFFF]
   val () = T.raises ("WideTextIO.output1/refuses-a-surrogate", isUtf8,
                      fn () => writeWide (WideTextIO.output1, WideChar.chr 0xDFFF))
+
+  (* the reader decodes blocks of bytes: what comes before a sequence that is
+     not UTF-8 is given first, and the read after it raises, as does every
+     read after that; a sequence that the end of a block cuts short is
+     completed from the next *)
+  fun withWide f =
+    let val ins = WideTextIO.openIn file
+    in (f ins handle e => (WideTextIO.closeIn ins; raise e)) before WideTextIO.closeIn ins end
+  fun raisesUtf8 f = (ignore (f ()); false) handle e => isUtf8 e
+  fun codesOf c = case c of SOME c => [WideChar.ord c] | NONE => []
+  val () = T.check ("WideTextIO.input1/gives-what-comes-before-a-bad-byte",
+                    fn () => (writeBytes [0x61, 0xFF];
+                              withWide (fn ins =>
+                                codesOf (WideTextIO.input1 ins) = [0x61]
+                                andalso raisesUtf8 (fn () => WideTextIO.input1 ins)
+                                andalso raisesUtf8 (fn () => WideTextIO.input1 ins))))
+  val () = T.check ("WideTextIO.input1/gives-what-comes-before-a-sequence-cut-short",
+                    fn () => (writeBytes [0x61, 0xE1, 0x80];
+                              withWide (fn ins =>
+                                codesOf (WideTextIO.input1 ins) = [0x61]
+                                andalso raisesUtf8 (fn () => WideTextIO.input1 ins))))
+  val () = T.check ("WideTextIO.input/gives-the-characters-then-raises",
+                    fn () => (writeBytes [0x61, 0xCE, 0xBB, 0xC0, 0x80, 0x62];
+                              withWide (fn ins =>
+                                codes (WideTextIO.input ins) = [0x61, 0x3BB]
+                                andalso raisesUtf8 (fn () => WideTextIO.input ins))))
+  val () = T.check ("WideTextIO.inputN/gives-what-comes-before-a-bad-byte-in-a-later-block",
+                    fn () => (writeBytes (List.tabulate (10000, fn _ => 0x61) @ [0xFF]);
+                              withWide (fn ins =>
+                                WideString.size (WideTextIO.inputN (ins, 10000)) = 10000
+                                andalso raisesUtf8 (fn () => WideTextIO.input1 ins))))
+  (* k bytes of ASCII, then U+1F600 in four bytes, then b: the four cross the
+     end of a block of 4096 or 8192 bytes for some k *)
+  val () = List.app (fn k =>
+                       eqCodes ("WideTextIO.inputAll/a-sequence-across-blocks-" ^ Int.toString k, [k + 2, 0x61, 0x1F600, 0x62],
+                                fn () => (writeBytes (List.tabulate (k, fn _ => 0x61) @ [0xF0, 0x9F, 0x98, 0x80, 0x62]);
+                                          let val v = readWide ()
+                                              val n = WideString.size v
+                                          in n :: codes (WideString.extract (v, n - 3, NONE)) end)))
+                    (List.tabulate (9, fn i => 4091 + i) @ List.tabulate (9, fn i => 8187 + i))
   val () = OS.FileSys.remove file handle _ => ()
 end

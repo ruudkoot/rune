@@ -15,13 +15,13 @@
 ```sml
 signature CHAR
 structure Char : CHAR where type char = char where type string = String.string
-structure WideChar :> CHAR where type char = WideChar.char where type string = WideString.string  (* optional *)
+structure WideChar : CHAR where type char = WideChar.char where type string = WideString.string  (* optional *)
 ```
 
 | Implementation |  | Source |
 | --- | --- | --- |
 | [`Char`](../str/Char.md) | Char: the characters of 8 bits, codes 0 to 255, which are the elements of [`string`](#type-string). Its type is the top-level [`char`](#type-char), and its classes are those of ASCII. | [lib/basis/char.sml](../../../../lib/basis/char.sml) |
-| [`WideChar`](../str/WideChar.md) | WideChar: the characters of Unicode, each a code point up to 0x10FFFF, and their classes and conversions. | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
+| [`WideChar`](../str/WideChar.md) | WideChar: the characters of Unicode, each a code point up to 0x10FFFF, and their classes and conversions. | [lib/basis/widestring.sml](../../../../lib/basis/widestring.sml) |
 
 Characters: their codes and order, the classes they belong to, and their
 conversion to and from the text of SML and C character constants.

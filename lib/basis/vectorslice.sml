@@ -36,7 +36,7 @@ struct
   fun foldl f init sl = foldli (fn (_, x, acc) => f (x, acc)) init sl
   fun foldr f init sl = foldri (fn (_, x, acc) => f (x, acc)) init sl
 
-  fun vector sl = Vector.fromList (foldr (op ::) [] sl)
+  fun vector (Slice (v, i, n)) = Vector.extract (v, i, n)
   fun concat l = Vector.concat (List.map vector l)
 
   fun appi f sl = foldli (fn (k, x, ()) => f (k, x)) () sl

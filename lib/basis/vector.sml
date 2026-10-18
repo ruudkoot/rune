@@ -10,6 +10,12 @@ struct
   val length = _prim "vector_length" : 'a vector -> int
   val sub = _prim "vector_sub" : 'a vector * int -> 'a
 
+  (* copies in C, for the library (seal_vector.sml leaves them out):
+     append (a, b) is concat [a, b]; extract (v, i, n) the n elements from i,
+     raising Subscript where VectorSlice.slice would *)
+  val append = _prim "vector_concat" : 'a vector * 'a vector -> 'a vector
+  val extract = _prim "vector_extract" : 'a vector * int * int -> 'a vector
+
   (* "If n < 0 or maxLen < n, then the Size exception is raised": before f is applied *)
   fun tabulate (n, f) = if n > maxLen then raise Size else fromList (List.tabulate (n, f))
 
@@ -30,7 +36,7 @@ struct
   fun app f v = appi (fn (_, x) => f x) v
   fun mapi f v = fromList (List.rev (foldli (fn (i, x, acc) => f (i, x) :: acc) [] v))
   fun map f v = mapi (fn (_, x) => f x) v
-  fun concat vs = fromList (List.concat (List.map toList vs))
+  val concat = _prim "vector_concat_list" : 'a vector list -> 'a vector
   fun update (v, i, x) =
     if i < 0 orelse i >= length v then raise Subscript
     else mapi (fn (j, y) => if i = j then x else y) v

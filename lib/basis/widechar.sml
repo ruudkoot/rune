@@ -1,78 +1,56 @@
-(* WideChar and the vectors and arrays of wide characters (optional in the
-   specification): a character is a Unicode code point, 0 to 0x10FFFF, as
-   MLton's WideChar has it. The code point sits in a type of its own, so that
-   WideChar.char, char and int stay apart and the families of the wide
-   character carry it. *)
+(* The wide character (optional in the specification): a character is a
+   Unicode code point, 0 to 0x10FFFF, as MLton's WideChar has it. The code
+   point sits in a type of its own, so that WideChar.char, char and int stay
+   apart and the families of the wide character carry it.
+
+   This file has what the wide family is made of: the character, its
+   operations, and the vectors, slices and arrays of it as they are before
+   widestring.sml seals them together with WideString, in the order of the
+   specification -- the strings first, and the vectors of characters a view
+   of them, as `CharVector.vector` is `String.string`. *)
 structure RuneWideChar :>
 sig
   eqtype char
   val maxOrd : int
   val ord : char -> int
   val chr : int -> char
+  (* `decodeUtf8 (s, i, n)`: the characters that the UTF-8 of `s` from byte
+     `i` encodes, at most `n`, the byte after them, and 0, or 1 where a
+     sequence that is not UTF-8 begins there, or 2 where the end of `s` cuts
+     one short (the primitive `utf8_decode`; WideTextIO's reader) *)
+  val decodeUtf8 : string * int * int -> char vector * int * int
 end =
 struct
   type char = int
   val maxOrd = 1114111                       (* 0x10FFFF *)
   fun ord (c : char) : int = c
   fun chr i = if Int.< (i, 0) orelse Int.> (i, maxOrd) then raise Chr else i
+  val decodeUtf8 = _prim "utf8_decode" : string * int * int -> int vector * int * int
 end
 
-(* WideCharVector: immutable vectors of wide characters, which are the
-   strings of `WideString`.
-
-   Sealed with a vector of its own (MONO_VECTOR_EQ), so that WideString.string
-   is a type name: the constants of a type are overloaded at a name.
-
-   Implements: MONO_VECTOR where type elem = WideChar.char
-
-   Status: optional *)
-structure WideCharVector :> MONO_VECTOR_EQ where type elem = RuneWideChar.char =
-  RuneMonoVectorFn (type elem = RuneWideChar.char)
-(* WideCharVectorSlice: stretches of `WideCharVector` vectors, without a
-   copy, which are the substrings of `WideSubstring`.
-
-   Implements: MONO_VECTOR_SLICE where type vector = WideCharVector.vector
-   where type elem = WideChar.char
-
-   Status: optional *)
-structure WideCharVectorSlice :> MONO_VECTOR_SLICE where type vector = WideCharVector.vector
-  where type elem = RuneWideChar.char = RuneMonoVectorSliceFn (structure V = WideCharVector)
-(* WideCharArray: mutable arrays of wide characters, a type of their own with
-   identity equality, whose vectors are those of `WideCharVector`.
-
-   Implements: MONO_ARRAY where type vector = WideCharVector.vector where type
-   elem = WideChar.char
-
-   Status: optional *)
-structure WideCharArray :> MONO_ARRAY where type vector = WideCharVector.vector
-  where type elem = RuneWideChar.char = RuneMonoArrayFn (structure V = WideCharVector)
-(* WideCharArraySlice: stretches of `WideCharArray` arrays, without a copy: an
-   update through a slice changes the array.
-
-   Implements: MONO_ARRAY_SLICE where type vector = WideCharVector.vector
-   where type vector_slice = WideCharVectorSlice.slice where type array =
-   WideCharArray.array where type elem = WideChar.char
-
-   Status: optional *)
-structure WideCharArraySlice :> MONO_ARRAY_SLICE where type vector = WideCharVector.vector
-  where type vector_slice = WideCharVectorSlice.slice where type array = WideCharArray.array
-  where type elem = RuneWideChar.char =
-  RuneMonoArraySliceFn (structure V = WideCharVector structure A = WideCharArray structure VS = WideCharVectorSlice)
-(* WideCharArray2: two-dimensional arrays of wide characters, whose rows and
-   columns are `WideCharVector` vectors.
-
-   Implements: MONO_ARRAY2 where type vector = WideCharVector.vector where
-   type elem = WideChar.char
-
-   Status: optional *)
-structure WideCharArray2 :> MONO_ARRAY2 where type vector = WideCharVector.vector
-  where type elem = RuneWideChar.char =
-  RuneMonoArray2Fn (structure V = WideCharVector)
+(* The vectors, slices and arrays of wide characters before the seal of
+   widestring.sml, where their types are those of the polymorphic vectors and
+   arrays. *)
+structure RuneWideCharVector = RuneMonoVectorFn (type elem = RuneWideChar.char)
+structure RuneWideCharVectorSlice =
+struct
+  structure S = RuneMonoVectorSliceFn (structure V = RuneWideCharVector)
+  open S
+  (* a stretch copied in C (Vector.extract), where the functor tabulates it,
+     as String.substring copies the bytes of a string *)
+  fun vector (Slice (v, i, n)) = Vector.extract (v, i, n)
+  fun concat l = Vector.concat (List.map vector l)
+end
+structure RuneWideCharArray = RuneMonoArrayFn (structure V = RuneWideCharVector)
+structure RuneWideCharArraySlice =
+  RuneMonoArraySliceFn (structure V = RuneWideCharVector structure A = RuneWideCharArray
+                        structure VS = RuneWideCharVectorSlice)
+structure RuneWideCharArray2 = RuneMonoArray2Fn (structure V = RuneWideCharVector)
 
 structure RuneWideCharImpl =
 struct
   type char = RuneWideChar.char
-  type string = WideCharVector.vector
+  type string = RuneWideCharVector.vector
 
   val maxOrd = RuneWideChar.maxOrd
   val ord = RuneWideChar.ord
@@ -88,7 +66,7 @@ struct
   fun op > (a, b) = Int.> (ord a, ord b)
   fun op >= (a, b) = Int.>= (ord a, ord b)
 
-  fun contains s c = WideCharVector.exists (fn x => x = c) s
+  fun contains s c = RuneWideCharVector.exists (fn x => x = c) s
   fun notContains s c = not (contains s c)
 
   (* the classes of ASCII, through Char; a character above 127 is in none *)
@@ -177,46 +155,3 @@ struct
     fun fromCString s = StringCvt.scanString (fn getc => fn src => wide getc (false, src)) s
   end
 end
-
-(* WideChar: the characters of Unicode, each a code point up to 0x10FFFF, and
-   their classes and conversions.
-
-   Implements: CHAR where type char = WideChar.char where type string =
-   WideString.string
-
-   Status: optional
-
-   Reading: `WideChar.isAlpha/ascii-classes`. "In WideChar, the functions
-   toLower, toUpper, isAlpha, ... and, in general, the definition of a letter
-   are locale-dependent": here they are those of ASCII, so a character above
-   127 is in no class and is its own upper and lower case. MLton reads it so
-   too.
-
-   Pinned by: `WideChar.isAscii/above-127`, `WideChar.isAlpha/e-acute`,
-   `WideChar.toLower/leaves-a-wide-character`,
-   `WideChar.toUpper/leaves-a-wide-character`
-
-   Implementation: `WideChar.toString/escapes-above-255`. `toString` and
-   `toCString` write a character above 255 as `\uXXXX`, or `\UXXXXXXXX` above
-   0xFFFF, as MLton writes them, and `fromString` and `fromCString` read those
-   escapes. `fromString` also reads `\ddd` of exactly three decimal digits,
-   and `fromCString` the escapes of C, whose digits are octal; an octal or a
-   `\x` escape of C names a character up to 255 only, so that
-   `fromCString "\\x1F600"` is `NONE`. The text they take and
-   give is of `char`, the 8-bit one, as the signature writes it, and `scan`
-   reads from a stream of `char` and yields a wide character.
-
-   Pinned by: `WideChar:CHAR/toString-gives-a-string-of-char`,
-   `WideChar.scan/takes-the-escape-and-leaves-the-rest` *)
-structure WideChar :> CHAR
-  where type char = RuneWideChar.char
-  where type string = WideCharVector.vector = RuneWideCharImpl
-
-(* A character constant of the type WideChar.char is read from its text where
-   it is evaluated, as the constants of IntInf and Real32 are. *)
-structure RuneWideCharLit =
-struct
-  fun fromLit s = case WideChar.fromString s of SOME c => c | NONE => raise Fail ("wide character constant " ^ s)
-end
-
-_overload char WideChar via RuneWideCharLit.fromLit

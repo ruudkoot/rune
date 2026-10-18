@@ -1373,6 +1373,8 @@ struct
 
   fun elabTop (env : env ref, decs : dec list) : unit =
     (lastDelta := Env.empty;
+     (* a type of a message is named as the top level names it *)
+     Types.qualifier := (fn c => Env.qualifiedName (!env, c));
      List.app (fn d =>
                 let
                   val saved = if !recover then SOME (snapshot ()) else NONE

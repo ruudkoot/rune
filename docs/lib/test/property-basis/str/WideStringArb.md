@@ -22,8 +22,8 @@ What each means is on [`ARB_OF`](../sig/ARB_OF.md); the types are this structure
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`t`](../sig/ARB_OF.md#type-t) | `WideCharVector.vector` |
-| val | [`arb`](../sig/ARB_OF.md#val-arb) | `{co : WideCharVector.vector -> Word64.word, eq : (WideCharVector.vector * WideCharVector.vector -> bool) option, gen : WideCharVector.vector Gen.gen, show : WideCharVector.vector -> string}` |
+| type | [`t`](../sig/ARB_OF.md#type-t) | `WideString.string` |
+| val | [`arb`](../sig/ARB_OF.md#val-arb) | `{co : WideString.string -> Word64.word, eq : (WideString.string * WideString.string -> bool) option, gen : WideString.string Gen.gen, show : WideString.string -> string}` |
 
 ---
 

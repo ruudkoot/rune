@@ -47,7 +47,8 @@ structure WideTextPrimIO =
    the writer of a file of wide characters have no positions, no `ioDesc`,
    no operations that do not block, and neither `canInput` nor `avail`: a
    position in the file is one of bytes and not of characters. Their
-   `chunkSize` is 1024 characters, where a file of `TextIO` has 4096.
+   `chunkSize` is 4096 characters, as that of a file of `TextIO` is 4096
+   bytes.
 
    Pinned by: `WideTextIO.openIn/the-reader-has-no-positions`
 
@@ -154,61 +155,44 @@ struct
       end
     (* the whole vector is encoded before a byte of it is written *)
     fun encodeString (name, v) = String.concat (List.map (encode name) (WideString.explode v))
-    (* one code point from the bytes that next () gives, NONE at the end. The
-       sequences taken are the well-formed ones of the Unicode Standard's
-       Table 3-7, and anything else raises: a byte 80 to BF where a sequence
-       begins, a lead byte C0, C1 or F5 to FF, a second byte out of its lead
-       byte's range (which is what an overlong form, a surrogate and a value
-       past 0x10FFFF have), a later byte that is not 80 to BF, and a sequence
-       that the end cuts short. *)
-    fun decode (name, next) =
-      let
-        fun malformed () = notUtf8 (name, "input")
-        (* the next byte, from lo to hi, as the six bits it carries *)
-        fun continuation (lo, hi) =
-          case next () of
-            SOME c =>
-              let val n = Char.ord c
-              in if Int.>= (n, lo) andalso Int.<= (n, hi) then Int.- (n, 0x80) else malformed () end
-          | NONE => malformed ()
-        fun more (acc, k) =
-          if k = 0 then acc else more (Int.+ (Int.* (acc, 64), continuation (0x80, 0xBF)), Int.- (k, 1))
-        (* the bits of the lead byte, the range of the second byte, and how
-           many bytes follow that *)
-        fun sequence (bits, lo, hi, k) = more (Int.+ (Int.* (bits, 64), continuation (lo, hi)), k)
-      in
-        case next () of
-          NONE => NONE
-        | SOME c =>
-            let val n = Char.ord c
-            in
-              SOME (WideChar.chr
-                      (if Int.< (n, 0x80) then n
-                       else if Int.< (n, 0xC2) then malformed ()
-                       else if Int.< (n, 0xE0) then sequence (Int.- (n, 0xC0), 0x80, 0xBF, 0)
-                       else if n = 0xE0 then sequence (0, 0xA0, 0xBF, 1)
-                       else if n = 0xED then sequence (0xD, 0x80, 0x9F, 1)
-                       else if Int.< (n, 0xF0) then sequence (Int.- (n, 0xE0), 0x80, 0xBF, 1)
-                       else if n = 0xF0 then sequence (0, 0x90, 0xBF, 2)
-                       else if Int.< (n, 0xF4) then sequence (Int.- (n, 0xF0), 0x80, 0xBF, 2)
-                       else if n = 0xF4 then sequence (4, 0x80, 0x8F, 2)
-                       else malformed ()))
-            end
-      end
+    val empty = WideCharVector.fromList []
 
-    (* the reader and the writer of a stream of TextIO, in UTF-8 *)
+    (* the reader of a stream of TextIO, in UTF-8: the bytes come in the
+       blocks TextIO.input gives, and C decodes them (RuneWideText.decodeUtf8,
+       which takes the well-formed sequences of the Unicode Standard's
+       Table 3-7 and nothing else). A sequence that the end of a block cuts
+       short waits for the next one. The characters before a sequence that is
+       not UTF-8, or before one that the end of the file cuts short, are given
+       first; the read after them raises Io, and so does every read after
+       that. *)
     fun reader (ins, name) =
       let
+        val bytes = ref ""            (* read from ins, decoded up to !at *)
+        val at = ref 0
+        val bad = ref false           (* what !at begins is not UTF-8 *)
+        fun malformed () = (bad := true; notUtf8 (name, "input"))
         fun readVec n =
-          let
-            fun go (0, acc) = List.rev acc
-              | go (k, acc) =
-                case decode (name, fn () => TextIO.input1 ins) of
-                  SOME c => go (Int.- (k, 1), c :: acc)
-                | NONE => List.rev acc
-          in WideCharVector.fromList (go (n, [])) end
+          if Int.< (n, 0) then raise Size
+          else if !bad then malformed ()
+          else if n = 0 then empty
+          else
+            let val (v, j, status) = RuneWideText.decodeUtf8 (!bytes, !at, n)
+            in
+              at := j;
+              if Int.> (WideString.size v, 0) then (if status = 1 then bad := true else (); v)
+              else if status = 1 then malformed ()
+              else
+                (* nothing whole is left: what is left, and the next block *)
+                let
+                  val rest = String.extract (!bytes, j, NONE)
+                  val more = TextIO.input ins
+                in
+                  if String.size more = 0 then (if String.size rest = 0 then empty else malformed ())
+                  else (bytes := rest ^ more; at := 0; readVec n)
+                end
+            end
       in
-        WideTextPrimIO.RD {name = name, chunkSize = 1024, readVec = SOME readVec, readArr = NONE,
+        WideTextPrimIO.RD {name = name, chunkSize = 4096, readVec = SOME readVec, readArr = NONE,
                            readVecNB = NONE, readArrNB = NONE, block = NONE, canInput = NONE,
                            avail = fn () => NONE, getPos = NONE, setPos = NONE, endPos = NONE,
                            verifyPos = NONE, close = fn () => TextIO.closeIn ins, ioDesc = NONE}
@@ -219,13 +203,12 @@ struct
           let val v = WideCharVectorSlice.vector sl
           in TextIO.output (outs, encodeString (name, v)); WideCharVector.length v end
       in
-        (WideTextPrimIO.WR {name = name, chunkSize = 1024, writeVec = SOME writeVec, writeArr = NONE,
+        (WideTextPrimIO.WR {name = name, chunkSize = 4096, writeVec = SOME writeVec, writeArr = NONE,
                             writeVecNB = NONE, writeArrNB = NONE, block = NONE, canOutput = NONE,
                             getPos = NONE, setPos = NONE, endPos = NONE, verifyPos = NONE,
                             close = fn () => TextIO.closeOut outs, ioDesc = NONE},
          {write = fn v => TextIO.output (outs, encodeString (name, v)), flush = fn () => TextIO.flushOut outs})
       end
-    val empty = WideCharVector.fromList []
     fun instreamOf (ins, name) = mkInstream (StreamIO.mkInstream (reader (ins, name), empty))
     fun outstreamOf (outs, name) =
       let val (w, device) = writer (outs, name)

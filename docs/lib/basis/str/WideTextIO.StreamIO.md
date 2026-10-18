@@ -6,7 +6,7 @@
 | --- | --- |
 | Signatures | none: it matches no signature of the library |
 | Status | required |
-| Members | 48 |
+| Members | 49 |
 | Tests | 114 checks |
 | Source | [lib/basis/widetextio.sml](../../../../lib/basis/widetextio.sml) |
 
@@ -29,7 +29,7 @@ The types are this structure's own.
 | datatype | `segment` | `Unread` &#124; `Chunk` &#124; `Eos` |
 | type | `state` | `{active : bool ref, augmented : WideTextPrimIO.reader, closed : bool ref, reader : WideTextPrimIO.reader}` |
 | datatype | `status` | `Active` &#124; `Terminated` &#124; `Closed` |
-| type | `vector` | `WideCharVector.vector` |
+| type | `vector` | `WideString.string` |
 | type | `writer` | `WideTextPrimIO.writer` |
 | val | `canInput` | `instream * int -> int option` |
 | val | `closeIn` | `instream -> unit` |
@@ -44,29 +44,30 @@ The types are this structure's own.
 | val | `force` | `segment ref * state * string -> segment` |
 | val | `getBufferMode` | `outstream -> IO.buffer_mode` |
 | val | `getPosOut` | `outstream -> out_pos` |
-| val | `getReader` | `instream -> WideTextPrimIO.reader * WideCharVector.vector` |
+| val | `getReader` | `instream -> WideTextPrimIO.reader * WideString.string` |
 | val | `getWriter` | `outstream -> WideTextPrimIO.writer * IO.buffer_mode` |
 | val | `guarded` | `string * string -> ('a -> 'b) -> 'a -> 'b` |
-| val | `hasNewline` | `WideCharVector.vector -> bool` |
+| val | `hasNewline` | `WideString.string -> bool` |
 | val | `here` | `(unit -> 'a) option -> 'a option` |
-| val | `input` | `instream -> WideCharVector.vector * instream` |
+| val | `input` | `instream -> WideString.string * instream` |
 | val | `input1` | `instream -> (RuneWideChar.char * instream) option` |
-| val | `inputAll` | `instream -> WideCharVector.vector * instream` |
-| val | `inputLine` | `instream -> (WideCharVector.vector * instream) option` |
-| val | `inputN` | `instream * int -> WideCharVector.vector * instream` |
+| val | `inputAll` | `instream -> WideString.string * instream` |
+| val | `inputLine` | `instream -> (WideString.string * instream) option` |
+| val | `inputN` | `instream * int -> WideString.string * instream` |
 | val | `ioError` | `string * string * exn -> 'a` |
 | val | `isInterrupt` | `exn -> bool` |
-| val | `mkInstream` | `WideTextPrimIO.reader * WideCharVector.vector -> instream` |
+| val | `mkInstream` | `WideTextPrimIO.reader * WideString.string -> instream` |
 | val | `mkOutstream` | `WideTextPrimIO.writer * IO.buffer_mode -> outstream` |
-| val | `mkOutstreamOver` | `WideTextPrimIO.writer * IO.buffer_mode * {flush : unit -> unit, write : WideCharVector.vector -> unit} -> outstream` |
-| val | `output` | `outstream * WideCharVector.vector -> unit` |
+| val | `mkOutstreamOver` | `WideTextPrimIO.writer * IO.buffer_mode * {flush : unit -> unit, write : WideString.string -> unit} -> outstream` |
+| val | `output` | `outstream * WideString.string -> unit` |
 | val | `output1` | `outstream * RuneWideChar.char -> unit` |
 | val | `outputSubstr` | `outstream * WideCharVectorSlice.slice -> unit` |
-| val | `outputWith` | `outstream * WideCharVector.vector * string -> unit` |
+| val | `outputWith` | `outstream * WideString.string * string -> unit` |
 | val | `readerName` | `WideTextPrimIO.reader -> string` |
+| val | `rest` | `WideString.string * int -> WideString.string` |
 | val | `setBufferMode` | `outstream * IO.buffer_mode -> unit` |
 | val | `setPosOut` | `out_pos -> outstream` |
-| val | `writeAll` | `WideTextPrimIO.writer * WideCharVector.vector * string -> unit` |
+| val | `writeAll` | `WideTextPrimIO.writer * WideString.string * string -> unit` |
 | val | `writerName` | `WideTextPrimIO.writer -> string` |
 
 ---

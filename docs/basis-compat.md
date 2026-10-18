@@ -488,15 +488,14 @@ milder fault than the `ARRAY2` one below: there, no constraint can help,
 because there is no type to pin to; here `WideString.string` is already there
 and `STRING` already makes it an equality type.
 
-**What Rune does:** seals `WideCharVector` with `MONO_VECTOR_EQ`, a signature
-of its own that is `MONO_VECTOR` with `eqtype vector`. That follows from this
-library's order rather than from the fault: `WideString` is built on
-`WideCharVector`, so `WideCharVector` is where the type name is born and
-there is nothing yet to pin it to. Following the page as it should have been
-written would mean giving `WideString` a representation of its own and
-pinning `WideCharVector` to it, and then `MONO_VECTOR_EQ` would be
-unnecessary. The notes are `MONO_VECTOR/WideCharVector-must-admit-equality`
-and `MONO_VECTOR_EQ/not-in-the-specification`. [unicode.md](unicode.md) has
+**What Rune does:** declares `WideCharVector` as the page should have, `where
+type vector = WideString.string`, as `CharVector` is declared `where type
+vector = String.string`. The wide family is sealed at once, in the order of
+the 8-bit one: `WideString.string` is a type of its own, born at the seal,
+and the vectors of wide characters are that type, so `MONO_VECTOR` serves
+`WideCharVector` unchanged and `STRING` gives it its equality. The notes are
+`MONO_VECTOR/WideCharVector-must-admit-equality` and
+`WideCharVector/vector-is-WideString.string`. [unicode.md](unicode.md) has
 the full analysis of Unicode, wide characters, and the wide text I/O defects
 in the specification.
 

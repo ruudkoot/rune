@@ -63,57 +63,17 @@ struct
 
   (* ---- the names of types in the session ---- *)
 
-  (* the type constructor a type structure is, or abbreviates with its
-     parameters in order *)
-  fun tyconOf (Env.TyStr {fcn, ...}) = Option.map #stamp (fcnIsName fcn)
+  (* the paths that name a type constructor, as Env finds them for the
+     elaborator's messages too *)
+  val tyconOf = Env.tyconOf
+  val pathOfWhen = Env.pathOfWhen
+  val pathOf = Env.pathOf
 
   (* the environment of the structure at a path *)
   fun structureAt (env : Env.env, path : string list) : Env.env option =
     case path of
       [] => SOME env
     | p :: rest => (case StringMap.find (Env.strs env, p) of SOME e => structureAt (e, rest) | NONE => NONE)
-
-  (* the shortest path that names the type constructor in the session: its
-     own name at the top where that is it, else the structures breadth
-     first, a path that ends in its own name before one that does not, then
-     the first in order; only names satisfying accepts are considered *)
-  fun pathOfWhen (env : Env.env, c : tycon, accepts : string -> bool) : string option =
-    let
-      val stamp = #stamp c
-      fun named e n = case StringMap.find (Env.tys e, n) of SOME ts => tyconOf ts = SOME stamp | NONE => false
-      fun search ([], _) = NONE
-        | search (_, 0) = NONE
-        | search (level : (string * Env.env) list, depth : int) =
-            let
-              fun own (p, e) = if named e (#name c) andalso accepts (p ^ #name c) then SOME (p ^ #name c) else NONE
-              fun other (p, e) =
-                StringMap.foldli (fn (n, ts, found) => case found of
-                                                         SOME _ => found
-                                                       | NONE => if tyconOf ts = SOME stamp andalso accepts (p ^ n)
-                                                                 then SOME (p ^ n) else NONE)
-                                 NONE (Env.tys e)
-              (* the library's own structures (Rune...) after the others *)
-              fun private p = String.isPrefix "Rune" p orelse String.isPrefix "RUNE" p
-              fun firstOf f =
-                case List.mapPartial f level of
-                  [] => NONE
-                | found => SOME (case List.filter (not o private) found of p :: _ => p | [] => hd found)
-            in
-              case firstOf own of
-                SOME p => SOME p
-              | NONE =>
-                  case firstOf other of
-                    SOME p => SOME p
-                  | NONE =>
-                      search (List.concat (List.map (fn (p, e) => StringMap.foldri (fn (n, s, acc) => (p ^ n ^ ".", s) :: acc)
-                                                                                    [] (Env.strs e)) level),
-                              depth - 1)
-            end
-    in
-      if named env (#name c) andalso accepts (#name c) then SOME (#name c) else search ([("", env)], 5)
-    end
-
-  fun pathOf (env : Env.env, c : tycon) = pathOfWhen (env, c, fn _ => true)
 
   (* a type as the session names it, the type constructors of `local` by
      the names given there first *)

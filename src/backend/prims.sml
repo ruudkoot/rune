@@ -404,7 +404,11 @@ struct
     ("intinf_divmod", 398, 5),
     ("intinf_shift", 399, 4),
     ("intinf_power", 400, 3),
-    ("intinf_decimal", 401, 1)
+    ("intinf_decimal", 401, 1),
+    ("vector_concat", 402, 2),
+    ("vector_concat_list", 403, 1),
+    ("vector_extract", 404, 3),
+    ("utf8_decode", 405, 3)
   ]
   val byName =
     List.foldl (fn ((n, i, a), m) => StringMap.insert (m, n, (i, a))) StringMap.empty table
@@ -955,7 +959,11 @@ struct
            ("intinf_divmod", ([5, 5, 6, 5, 6], 0)),
            ("intinf_shift", ([5, 5, 6, 2], 0)),
            ("intinf_power", ([5, 6, 1], 0)),
-           ("intinf_decimal", ([6], 6))
+           ("intinf_decimal", ([6], 6)),
+           ("vector_concat", ([6, 6], 6)),
+           ("vector_concat_list", ([7], 6)),
+           ("vector_extract", ([6, 1, 1], 6)),
+           ("utf8_decode", ([6, 1, 1], 0))
          ]);
          repsOf name)
 end
