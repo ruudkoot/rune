@@ -56,7 +56,7 @@ What it rests on:
 | M2 | Source modes: the plumbing | |
 | M3 | What a source may hold raw | |
 | M4 | Literals by type and mode | |
-| M5 | `lib/unicode`: normalisation and identifier tables | |
+| M5 | `lib/unicode`: normalisation and identifier tables | done 2026-10-18; G2 to see |
 | M6 | Unicode identifiers | |
 | M7 | Showing source and names | |
 | M8 | The wide family in the 8-bit order, and its costs | |
@@ -2962,6 +2962,127 @@ then confirms that the default becomes ASCII in M4 (D16).
     and an existing test that runs out of memory on MLKit.
   - The tables' cost to the bootstrap budget is measured (E5: +2.2%), and
     the budget updated with the reason.
+* **Done** (2026-10-18, at `a12b602b`):
+  - **`Normalize`** (`NORMALIZE`, `lib/unicode/normalize.sml`): `nfd`, `nfc`,
+    `nfdList`, `nfcList`, `quickCheck`, `quickCheckList`, `isNFC`,
+    `isNFCList` and `combiningClass`, as E4's prototype. NFKC is left out
+    (E4). The tables take 20.9 KB of source, against E4's 73 KB:
+    - numbers are written in base 32, a third of six hexadecimal digits;
+    - the compositions are not written out but found through the
+      decompositions, by an index in order of first and second.
+  - **`Identifier`** (`IDENTIFIER`): `isXIDStart`, `isXIDContinue`,
+    `isDefaultIgnorable`, the profile (`isStart`, `isContinue`,
+    `isAlphanumeric`), and `exclusion`, which says why the profile leaves a
+    code point out (`Ignorable`, or `Lookalike #"x"`, for M6's errors).
+    - The profile is one table of two stages, as *The architecture* asks:
+      blocks of 128 code points (220 distinct below U+3FC80), two bits a
+      code point, 18 KB of hexadecimal digits that a lookup reads in place.
+      No table is built at first use, and an ASCII name reads none.
+    - The tables take 24.9 KB, against E5's 49 KB.
+  - **The frozen sets** are written in `scripts/gen-unicode-tables.py`, not
+    derived (D10):
+    - the 269 default ignorables of XID_Continue, in 10 ranges;
+    - 221 lookalikes: the 85 of SML's punctuation, the 116 of the digits 2
+      to 9 that are not Recommended, and 20 by hand. Those are U+00B7 and the
+      19 lookalikes of `|` that the code charts of Unicode 18.0 draw as a
+      bare vertical stroke (no serif, foot, hook, loop or slant) and that
+      UTS #39 does not recommend, by the owner's rule for the digits.
+    - The generator checks the seeds against the data while it is
+      18.0.0's, and shows what a later version's would change.
+  - **`UnicodeSecurity`** (`UNICODE_SECURITY`) holds the lints' data. It is
+    a structure of its own, not part of `Identifier` as *What* has it, so
+    that a program can take the profile without them. It has:
+    - `status` and `types` (Identifier_Status and Identifier_Type);
+    - `scripts`, `resolvedScripts` and `isSingleScript` (augmented script
+      sets, with 18.0's new Hntl);
+    - `restriction`, the levels of UTS #39, section 5.2;
+    - `skeleton` and `isConfusable`.
+
+    Its tables take 76 KB: confusables 43 KB, types 18 KB, scripts 11 KB.
+  - **Tests** (`tests/lib/unicode`, in `make test-lib`), with the data files
+    they read committed beside them (5.7 MB):
+    - `normalize.sml`: all of `NormalizationTest.txt`, over lists and UTF-8,
+      and Part 1's rule over every scalar value;
+    - `normalize_props.sml`: ten properties;
+    - `identifier.sml`: every code point against
+      `DerivedCoreProperties.txt`; the frozen sets against `confusables.txt`
+      and `IdentifierType.txt`, through skeletons the test makes itself; the
+      profile; nine names taken and fifteen refused;
+    - `security.sml`: every code point against `IdentifierType.txt`,
+      `IdentifierStatus.txt`, `Scripts.txt`, `ScriptExtensions.txt` and
+      `confusables.txt`; the restriction levels of eighteen strings, among
+      them UTS #39's Table 1a;
+    - `utf8.sml`: the 62 ill-formed cases of Kuhn's test and of Tables 3-8 to
+      3-11 of Unicode 18.0. Its old example is now named as Unicode 6.0 to
+      10.0's.
+  - **On the hosts:** all six programs of `unicode` pass on MLton, SML/NJ
+    110.99.9 (64 and 32 bits), SML/NJ 2026.2, Poly/ML and MLKit.
+  - **MLKit's 7 GB** is MLKit's fault. It binds the region of a value made
+    in a `let` around a tail call in its body, although
+    `--preserve_tail_calls` is on. Every step of `utf8.sml`'s round trip
+    then keeps a region and a frame, 4.3 KB, so the test takes 7.1 GB and
+    fails where the machine cannot give that (E4's `ulimit -v 14000000`).
+    It is reported in `docs/bugreport/mlkit/preserve-tail-calls`, with a
+    `HOST-FLAKY` line, since the test passes where the memory is there.
+  - **What a lookup costs** (`runevm --count`, instructions for a name of
+    ten characters, with E5's in brackets):
+
+    | Name | `isAlphanumeric` | and `isNFC` | `skeleton` | `restriction` |
+    |---|---|---|---|---|
+    | ASCII | 352 (352) | 494 (494) | 4,644 | 2,359 |
+    | Latin, `Größenmaße` | 760 (1,071) | 1,220 (1,531) | 6,868 | 4,848 |
+    | Greek | 1,596 (2,482) | 5,095 (5,981) | 10,443 | 5,629 |
+    | Han | 2,174 (2,798) | 6,676 (7,300) | 13,179 | 7,317 |
+
+    At first use the profile costs nothing (E5: 0.58M), the quick check 77K,
+    the rest of NFC 0.45M (E4: 1.73M), the lints' types and scripts 1.0M,
+    the confusables 1.4M. Decoding the profile into a string of one value a
+    code point would save a tenth of a lookup, for 1.0M at first use: not
+    taken.
+  - **What the files would cost the compiler**, measured as E5 did: added
+    to `rune.build` after `grapheme.sml` in a copy, with a use in the
+    lexer's "unexpected character" error. *Errors* adds `Normalize` and
+    `Identifier`, which the errors of D10 and D12 need; *lints* adds
+    `UnicodeSecurity` too, for D13's warnings.
+
+    | | Base | Errors | Lints |
+    |---|---|---|---|
+    | sources (@boot), bytes | 1,114,352 | 1,181,000 (+6.0%) | 1,269,803 (+14.0%) |
+    | `bin/rune.rbc`, bytes | 2,138,776 | 2,198,415 (+2.8%) | 2,279,332 (+6.6%) |
+    | `bin/rune.stack.rbc`, bytes | 1,368,498 | 1,418,167 (+3.6%) | 1,492,882 (+9.1%) |
+    | bootstrap, register (budget 1,134.2M) | 1,030.7M | 1,047.6M (+1.64%) | 1,062.1M (+3.04%) |
+    | bootstrap, stack (budget 1,688.7M) | 1,607.5M | 1,634.3M (+1.67%) | 1,657.6M (+3.12%) |
+    | a compile of `hello.sml`, register | 1,965,058 instructions, 2.55 MB | +388, +36 KB | +412, +104 KB |
+    | MLton build, peak memory | 2,604,716 KB | 2,623,604 KB (+0.7%) | 3,107,784 KB (+19.3%) |
+    | MLton build, user time, two runs | 49.6 s, 50.7 s | 51.2 s, 47.5 s | 49.8 s, 51.8 s |
+    | Poly/ML build, user time and peak memory | 7.2 s, 323 MB | 7.3 s, 325 MB | 6.5 s, 325 MB |
+    | `rune-mlton.bin`, bytes | 9,427,592 | 9,529,032 | 9,665,320 |
+
+    E5 measured +2.2% for 120 KB of tables. Both variants stay within the
+    budgets. The budget is not changed here: the files join `rune.build` in
+    M6, which updates it with the reason (the campaign's brief).
+  - **Open for G2,** each with what the owner's rule for the digits (leave
+    to the lints what UTS #39 recommends, refuse the rest) would do:
+    - Of the 85 lookalikes of punctuation, 9 are Recommended letters and
+      digits of living scripts: Hebrew yod U+05D9 (`'`), Katakana no U+30CE
+      (`/`), Armenian feh U+0586 (`$`), the Arabic-Indic zeros U+0660 and
+      U+06F0 (`.`), the visargas U+0903 and U+0A83 (`:`), and the CJK
+      U+4E36 (`\`) and U+4E3F (`/`). Refusing yod and no makes most Hebrew
+      names and many Japanese ones impossible. The rule would allow the 9
+      and refuse the other 76, U+02BC and U+02BB among them (Inclusion, not
+      Recommended). Built as decided: all 85 refused.
+    - The rule covers 2 to 9, which UTS #39 maps to digits; it maps 0 and 1
+      to the letters O and l. Of the decimal digits that look like 0, 13 are
+      not Recommended, and of those that look like 1, 10, two of them among
+      the bars (fullwidth, mathematical, outlined and segmented ones, and
+      the digits of rare scripts). The rule would refuse the 13 and the 8;
+      Kannada zero and the two Arabic-Indic ones stay allowed. Built as
+      decided: allowed.
+    - Seven lookalikes of `|` were left out as drawn otherwise: U+1050E (a
+      short stroke), U+1D62D and U+1D661 (slanted), U+1FBF1 (a broken bar),
+      U+2C92 (curled), and U+A7FE and U+217C (serifs in the charts, a bare
+      stroke in some fonts). None is Recommended, so the rule would refuse
+      all seven.
 
 **Gate G2.** The owner sees the cost of the tables to the compiler (E5, M5)
 and the final identifier profile before M6. That includes the lookalikes list
