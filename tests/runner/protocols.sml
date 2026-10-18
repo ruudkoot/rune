@@ -338,12 +338,13 @@ struct
     end
 
   (* ---- the tree *)
-  fun job (path, args, after, memory, timeout) =
+  fun jobIn pools (path, args, after, memory, timeout) =
     Test.it path
       {program = "/bin/sh",
        args = ["sh", "-c", "exec \"$RUNE_TEST_ROOT\"/bin/rune-test " ^ String.concatWith " " (List.map quote args)],
        env = NONE, dir = SOME ".", stdin = NONE, timeout = Time.fromSeconds timeout, cap = 0, cpus = 1, memory = memory,
-       pools = [], exclusive = false, after = after, judge = failLines} : Run.command Test.tree
+       pools = pools, exclusive = false, after = after, judge = failLines} : Run.command Test.tree
+  fun job x = jobIn [] x
 
   (* a driver that stays, run as a job: it exits 0 when it passed; the
      drivers of a pool write one directory of tests/out, one at a time *)
@@ -376,10 +377,14 @@ struct
 
   val tree =
     Test.describe ""
-      [tagged ["check", "test-repl", "covers:tests/repl/*"]
+      [(* the ways one at a time: reload.in writes its files to
+          tests/out/repl, whose names its transcript shows, and a way that
+          ran beside another read the other's (make check, 2026-10-18) *)
+       tagged ["check", "test-repl", "covers:tests/repl/*"]
          (Test.describe "repl"
-            (List.map (fn (s, _) => job (if s = "" then "default" else String.extract (s, 1, NONE), ["repl", if s = "" then "-" else s],
-                                         [], 1000, 1800))
+            (List.map (fn (s, _) => jobIn ["repl-files"]
+                                          (if s = "" then "default" else String.extract (s, 1, NONE), ["repl", if s = "" then "-" else s],
+                                           [], 1000, 1800))
                       replWays)),
        tagged ["check", "test-diagnostics", "covers:tests/diagnostics/*"]
          (Test.describe "diagnostics" (List.map (fn f => job (basename f, ["diagnostics-one", basename f], [], 300, 600))
