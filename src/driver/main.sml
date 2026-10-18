@@ -78,6 +78,23 @@ struct
       OS.Process.success
     end
 
+  (* --lex-count N: the inputs lexed N times, each in its mode, and how
+     many tokens and bytes they have; what scripts/lex-corpus.sh measures
+     the lexer by *)
+  fun lexCount () : OS.Process.status =
+    let
+      val inputs = !Options.inputs
+      val () = if List.null inputs then raise Options.Usage "no input files" else ()
+      val files = List.map (fn p => Source.load (inputMode p, p) handle IO.Io _ => raise Options.Usage (Options.cannotRead p))
+                           inputs
+      fun once () = List.foldl (fn (f, (t, b)) => (t + Vector.length (Lexer.tokenize f), b + String.size (#text f))) (0, 0) files
+      fun again (k, last) = if k = 0 then last else again (k - 1, once ())
+      val (t, b) = again (!Options.lexCount, (0, 0))
+    in
+      println (Int.toString t ^ " tokens, " ^ Int.toString b ^ " bytes");
+      OS.Process.success
+    end
+
   fun parseTokens (toks : Lexer.item vector) : Ast.program =
     let val (prog, fx) = Parser.parseTokensWith (toks, !fixity)
     in fixity := fx; prog end
@@ -1082,6 +1099,7 @@ struct
      else if isSome (!Options.basisIndex) then basisIndex (valOf (!Options.basisIndex))
      else if !Options.buildList then
        (List.app println (filesOf (#1 (planOf (valOf (!Options.build))))); OS.Process.success)
+     else if !Options.lexCount > 0 then lexCount ()
      else if !Options.dumpTokens then dumpTokens ()
      else if isSome (!Options.readMid) then readMid (valOf (!Options.readMid))
      else compile ())
