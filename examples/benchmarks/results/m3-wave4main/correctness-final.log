@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-wave4main-parallel.k_i3vt1g
+PASS wave4main-lazy smoke O2
+PASS wave4main-lazy smoke O0
+PASS wave4main-lazy smoke hosts
+PASS wave4main-lazy normal O2
+PASS wave4main-lazy normal O0
+PASS wave4main-strict smoke O0
+PASS wave4main-strict smoke O2
+PASS wave4main-strict smoke hosts
+PASS wave4main-lazy normal hosts
+PASS wave4main-strict normal O2
+PASS wave4main-strict normal hosts
+PASS wave4main-strict normal O0

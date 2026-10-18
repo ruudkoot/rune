@@ -1,0 +1,1 @@
+wave4main-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/hartel-wave4main-array.sml shared/hartel-wave4main-kernel.sml shared/hartel-wave4main-check.sml wave4main-lazy/benchmark.sml shared/main.sml	500 80 normal.reference	wave4main-lazy/normal.expected	normal.reference

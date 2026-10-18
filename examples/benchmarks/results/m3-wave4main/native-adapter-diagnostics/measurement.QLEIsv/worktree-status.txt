@@ -1,0 +1,10 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/shared/hartel-wave4main-array.sml
+?? examples/benchmarks/shared/hartel-wave4main-check.sml
+?? examples/benchmarks/shared/hartel-wave4main-kernel.sml
+?? examples/benchmarks/wave4main-lazy/
+?? examples/benchmarks/wave4main-strict/
+?? tests/benchmarks/check-wave4main.sh
+?? tests/benchmarks/data/wave4main/
+?? tests/benchmarks/wave4main-tests.sml

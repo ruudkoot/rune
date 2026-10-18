@@ -468,3 +468,16 @@ guarded unused fields and lazy branch/hint control. Normal retains source
 100-by-eleven; selected large uses one fourteen-labelled graph for tree-size/
 memory scaling, while source SLOW500-by-eleven remains a recorded reference.
 The catalogue reaches 459 programs and 1331 profiles. M3/M4 remain in progress.
+
+## Hartel wave4main workload, 2026-10-18
+
+Two finite-data policies now implement the original split wave-state workload.
+Immutable bounded vector adapters preserve six array domains, source indices,
+halo exchange and U/V/height update dependencies. Direct vector construction
+replaces the original association-list array builder; full numeric validation
+adds an explicitly documented traversal before source formatting.
+
+Original complete observations and an independent unsplit-grid oracle agree.
+The source supplies no individual author or separate program notice; complete
+Main, shim, Makefile and fixtures remain available without inferred authorship.
+The catalogue contains 461 programs and 1337 profiles. M3/M4 remain in progress.

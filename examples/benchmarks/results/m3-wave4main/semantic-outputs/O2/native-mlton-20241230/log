@@ -1,0 +1,4 @@
+Warning: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-wave4main-originals/tests-final.sml 56.12-56.32.
+  Declaration is not exhaustive.
+    missing pattern: nil
+    in: val (bounds, values) :: rest = expected0

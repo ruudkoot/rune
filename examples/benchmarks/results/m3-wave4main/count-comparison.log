@@ -1,0 +1,9 @@
+COUNT unbudgeted wave4main-lazy normal rune
+COUNT unbudgeted wave4main-lazy normal rune:opt
+COUNT unbudgeted wave4main-lazy normal rune:new
+COUNT unbudgeted wave4main-lazy normal rune:jit
+COUNT unbudgeted wave4main-strict normal rune
+COUNT unbudgeted wave4main-strict normal rune:opt
+COUNT unbudgeted wave4main-strict normal rune:new
+COUNT unbudgeted wave4main-strict normal rune:jit
+COUNT comparisons agree

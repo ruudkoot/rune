@@ -1,0 +1,5 @@
+ *** Warnings ***
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-wave4main-originals/host-tests-O0/native-mlkit-4.7.23/program/src/8/tests-final.sml, line 56, column 11:
+     let val (bounds,values)::rest=expected0
+             ^^^^^^^^^^^^^^^^^^^^^
+Pattern not exhaustive.

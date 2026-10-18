@@ -1,0 +1,20 @@
+[
+  {
+    "profile": "source-fast",
+    "steps": 8,
+    "repetitions": 500,
+    "seconds": 0.25821934600026
+  },
+  {
+    "profile": "normal",
+    "steps": 80,
+    "repetitions": 500,
+    "seconds": 1.6099149679994298
+  },
+  {
+    "profile": "large",
+    "steps": 400,
+    "repetitions": 500,
+    "seconds": 10.164605470999959
+  }
+]

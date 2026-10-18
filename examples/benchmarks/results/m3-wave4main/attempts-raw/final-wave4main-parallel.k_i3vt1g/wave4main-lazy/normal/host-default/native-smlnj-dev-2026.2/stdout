@@ -1,0 +1,174 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-wave4main-array.sml]
+functor BenchWaveArrayFn(D: sig
+                            type 'a t
+                            val delay : (unit -> 'a) -> 'a t
+                            val force : 'a t -> 'a
+                          end) :
+                        
+                          sig
+                            type 'a node
+                            type 'a array
+                            val defer : (unit -> 'a D.t) -> 'a D.t
+                            val tabulate : (int -> 'a)
+                                            -> int * int -> 'a node D.t
+                            val bounds : 'a node D.t -> int * int
+                            val sub : 'a node D.t -> int -> 'a
+                            val append : 'a node D.t -> 'a -> 'a node D.t
+                            val prepend : 'a node D.t -> 'a -> 'a node D.t
+                            val values : 'a node D.t -> 'a list
+                          end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-wave4main-kernel.sml]
+functor BenchWave4Fn(D: sig
+                        type 'a t
+                        val delay : (unit -> 'a) -> 'a t
+                        val force : 'a t -> 'a
+                      end) :
+                    
+                      sig
+                        structure A : <sig>
+                        type column
+                        type matrix
+                        type tripleNode
+                        type triple
+                        type solution
+                        val tabulate : (int -> int -> 'a)
+                                        -> (int * int) * (int * int)
+                                        -> 'a A.node D.t A.node D.t
+                        val sub : 'a A.node D.t A.node D.t -> int -> int -> 'a
+                        val firstColumn : 'a D.t A.node D.t -> 'a D.t
+                        val lastColumn : 'a D.t A.node D.t -> 'a D.t
+                        val imax : int
+                        val jmax : int
+                        val k : int
+                        val deltaX : real
+                        val deltaY : real
+                        val deltaT : real
+                        val coriolisRate : real
+                        val gamma : real
+                        val psi : real
+                        val gravity : real
+                        val lambda : real
+                        val wind : real
+                        val cux : real
+                        val cuy : real
+                        val ccr : real
+                        val cfr : real
+                        val windX : real
+                        val windY : real
+                        val chx : real
+                        val chy : real
+                        val depth : 'a -> 'b -> real
+                        val updateU : real A.node D.t A.node D.t
+                                       -> real A.node D.t A.node D.t
+                                       -> real A.node D.t A.node D.t
+                                       -> int -> int -> real
+                        val updateV : real A.node D.t A.node D.t
+                                       -> real A.node D.t A.node D.t
+                                       -> real A.node D.t A.node D.t
+                                       -> int -> int -> real
+                        val updateH : real A.node D.t A.node D.t
+                                       -> real A.node D.t A.node D.t
+                                       -> real A.node D.t A.node D.t
+                                       -> int -> int -> real
+                        val dul : (int * int) * (int * int)
+                        val dvl : (int * int) * (int * int)
+                        val dhl : (int * int) * (int * int)
+                        val dur : (int * int) * (int * int)
+                        val dvr : (int * int) * (int * int)
+                        val dhr : (int * int) * (int * int)
+                        val u0 : 'a -> 'b -> real
+                        val v0 : 'a -> 'b -> real
+                        val h0 : int -> 'a -> real
+                        val initialLeft : tripleNode D.t
+                        val initialRight : tripleNode D.t
+                        val firstBorders : tripleNode D.t
+                                            -> real A.node D.t
+                                            * real A.node D.t
+                        val lastBorder : tripleNode D.t -> real A.node D.t
+                        val fu : tripleNode D.t
+                                  -> column * column -> tripleNode D.t
+                        val fv : tripleNode D.t -> tripleNode D.t
+                        val fh : tripleNode D.t -> tripleNode D.t
+                        val gu : tripleNode D.t -> tripleNode D.t
+                        val gv : tripleNode D.t -> column -> tripleNode D.t
+                        val gh : tripleNode D.t -> column -> tripleNode D.t
+                        val solve : int -> tripleNode D.t * tripleNode D.t
+                        val matrices : tripleNode D.t * tripleNode D.t
+                                        -> matrix list
+                        val bounds : 'a A.node D.t A.node D.t
+                                      -> int * int * int * int
+                        val flatten : 'a A.node D.t A.node D.t -> 'a list
+                        val showFix : real -> string
+                        val descriptor : int * int -> string
+                        val arrayPrint : ('a -> string)
+                                          -> char -> 'a A.node D.t -> string
+                        val matrixPrint : real A.node D.t A.node D.t -> string
+                        val output : tripleNode D.t * tripleNode D.t -> string
+                        val sumcode : string -> string
+                      end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-wave4main-check.sml]
+functor BenchWaveCheckFn(K: sig
+                            type matrix
+                            type solution
+                            val solve : int -> solution
+                            val matrices : solution -> matrix list
+                            val bounds : matrix -> int * int * int * int
+                            val flatten : matrix -> real list
+                            val output : solution -> string
+                            val sumcode : string -> string
+                          end) :
+                        
+                          sig
+                            type expected
+                            val close : real * real -> bool
+                            val check : real list -> real vector -> bool
+                            val verify : K.solution
+                                          -> ((int * int * int * int)
+                                             * real vector) list
+                                          -> string -> unit
+                            val read : string
+                                        -> int * string
+                                        * ((int * int * int * int)
+                                           * real vector) list
+                            val run : string list -> string
+                          end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/wave4main-lazy/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Kernel : <sig>
+    structure Check : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 500:208
+PASS wave4main-lazy
+SUMMARY 1 checks, 0 failed

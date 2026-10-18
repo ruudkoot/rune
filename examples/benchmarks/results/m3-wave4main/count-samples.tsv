@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+wave4main-lazy	normal	rune	O2	count	1	1	pass	39.23	38.29	0.08	10544	5283571056	2695448216	67180739	counts/measurement.sYZmml/wave4main-lazy/rune/fresh.1
+wave4main-lazy	normal	rune:opt	O2	count	1	1	pass	14.49	13.26	0.05	11088	5283571056	2695448216	67180739	counts/measurement.sYZmml/wave4main-lazy/rune-opt/fresh.1
+wave4main-lazy	normal	rune:new	O2	count	1	1	pass	33.34	32.74	0.09	10788	2718828185	2695448216	67180739	counts/measurement.sYZmml/wave4main-lazy/rune-new/fresh.1
+wave4main-lazy	normal	rune:jit	O2	count	1	1	pass	11.60	10.59	0.02	12068	2718828185	2695448216	67180739	counts/measurement.sYZmml/wave4main-lazy/rune-jit/fresh.1
+wave4main-strict	normal	rune	O2	count	1	1	pass	14.87	13.91	0.01	10544	3403612024	950685904	18376772	counts/measurement.DoIgQT/wave4main-strict/rune/fresh.1
+wave4main-strict	normal	rune:opt	O2	count	1	1	pass	4.01	4.23	0.00	11096	3403612024	950685904	18376772	counts/measurement.DoIgQT/wave4main-strict/rune-opt/fresh.1
+wave4main-strict	normal	rune:new	O2	count	1	1	pass	9.55	8.54	0.00	10852	1630597982	950685904	18376772	counts/measurement.DoIgQT/wave4main-strict/rune-new/fresh.1
+wave4main-strict	normal	rune:jit	O2	count	1	1	pass	2.40	2.50	0.00	11920	1630597982	950685904	18376772	counts/measurement.DoIgQT/wave4main-strict/rune-jit/fresh.1

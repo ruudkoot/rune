@@ -2949,3 +2949,29 @@ comparisons. [Evidence](results/m3-hartel-sched/README.md) retains raw outputs,
 source identities, notices/attribution limits and separate source-order setup
 diagnostics. Final full SML large repetitions remain unrecorded.
 M3/M4 remain in progress and M8 remains planned.
+
+## Hartel wave4main, 2026-10-18
+
+The catalogue contains 461 programs and 1337 profiles. Both policies pass all
+56 canonical smoke/normal cases on Rune O0/O2 across four engines and all six
+managed native hosts. All twenty final semantic invocations complete thirty
+assertions: 600 pass, none failed or unreached. Native O0/O2 labels repeat
+host-default compiler settings.
+
+Original full six-array states and an independent unsplit-grid oracle agree
+on all 1872 observed values through 400 steps. Complete numeric checks,
+source formatting, boundary demand, shared cells, strict materialization,
+halo indices and perturbed/NaN result controls pass. Normal preserves
+500-by-eighty; full selected large 500-by-400 remains unrecorded.
+
+All eight full-normal Rune count samples agree; both guards exit zero without
+interruption. Six serial single fresh-process native smoke diagnostics pass
+before heavy validation. These are adapter diagnostics, not ten-sample
+comparative performance claims. Public semantic shell targets, all 114
+inventory tests and the five-pin 861-entry replay pass.
+
+[Full make JOBS=4 check](validation/oct18-wave4main-1337-acceptance.log)
+exits zero with 1337 profiles and all compiler/runedoc/runeopt cross-build
+comparisons. [Evidence](results/m3-wave4main/README.md) retains raw outputs,
+source identities, notices/attribution limits and separate source-order setup
+failures. M3/M4 remain in progress and M8 remains planned.

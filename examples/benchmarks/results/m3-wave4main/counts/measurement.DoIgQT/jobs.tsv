@@ -1,0 +1,1 @@
+wave4main-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/hartel-wave4main-array.sml shared/hartel-wave4main-kernel.sml shared/hartel-wave4main-check.sml wave4main-strict/benchmark.sml shared/main.sml	500 80 normal.reference	wave4main-strict/normal.expected	normal.reference

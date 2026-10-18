@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+wave4main-lazy	normal	rune	O2	compile	0	0	pass	2.53	2.16	0.14	135320	-	-	-	wave4main-lazy/rune/build/compile
+wave4main-lazy	normal	rune	O2	correctness	0	0	pass	41.86	39.08	0.21	10444	5283571056	2695448216	67180739	wave4main-lazy/rune/correctness.0
+wave4main-lazy	normal	rune	O2	count	1	1	pass	39.23	38.29	0.08	10544	5283571056	2695448216	67180739	wave4main-lazy/rune/fresh.1
+wave4main-lazy	normal	rune:opt	O2	compile	0	0	pass	2.20	2.01	0.14	135136	-	-	-	wave4main-lazy/rune-opt/build/compile
+wave4main-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.62	0.30	0.05	12644	-	-	-	wave4main-lazy/rune-opt/build/native-compile
+wave4main-lazy	normal	rune:opt	O2	correctness	0	0	pass	12.99	12.95	0.04	11216	5283571056	2695448216	67180739	wave4main-lazy/rune-opt/correctness.0
+wave4main-lazy	normal	rune:opt	O2	count	1	1	pass	14.49	13.26	0.05	11088	5283571056	2695448216	67180739	wave4main-lazy/rune-opt/fresh.1
+wave4main-lazy	normal	rune:new	O2	compile	0	0	pass	2.22	2.07	0.14	135204	-	-	-	wave4main-lazy/rune-new/build/compile
+wave4main-lazy	normal	rune:new	O2	correctness	0	0	pass	35.52	32.50	0.19	10536	2718828185	2695448216	67180739	wave4main-lazy/rune-new/correctness.0
+wave4main-lazy	normal	rune:new	O2	count	1	1	pass	33.34	32.74	0.09	10788	2718828185	2695448216	67180739	wave4main-lazy/rune-new/fresh.1
+wave4main-lazy	normal	rune:jit	O2	compile	0	0	pass	2.11	2.05	0.12	135356	-	-	-	wave4main-lazy/rune-jit/build/compile
+wave4main-lazy	normal	rune:jit	O2	correctness	0	0	pass	10.59	10.92	0.04	11972	2718828185	2695448216	67180739	wave4main-lazy/rune-jit/correctness.0
+wave4main-lazy	normal	rune:jit	O2	count	1	1	pass	11.60	10.59	0.02	12068	2718828185	2695448216	67180739	wave4main-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

@@ -1,0 +1,328 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-wave4main-originals/array.sml]
+[autoloading]
+[autoloading done]
+functor BenchWaveArrayFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a array
+  val defer : (unit -> 'a D.t) -> 'a D.t
+  val tabulate : (int -> 'a) -> int * int -> 'a <BaseFct>.<resultStr>.node D.t
+  val bounds : 'a <BaseFct>.<resultStr>.node D.t -> int * int
+  val sub : 'a <BaseFct>.<resultStr>.node D.t -> int -> 'a
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a -> 'a <BaseFct>.<resultStr>.node D.t
+  val prepend :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a -> 'a <BaseFct>.<resultStr>.node D.t
+  val values : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-wave4main-originals/kernel.sml]
+[autoloading]
+[autoloading done]
+functor BenchWave4Fn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure A : <sig>
+  type column
+  type matrix
+  type tripleNode
+  type triple
+  type solution
+  val tabulate :
+      (int -> int -> 'a)
+       -> (int * int) * (int * int)
+       -> 'a <BaseFct>.<resultStr>.A.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.A.<returnStr>.node D.t
+  val sub :
+      'a <BaseFct>.<resultStr>.A.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.A.<returnStr>.node D.t
+       -> int -> int -> 'a
+  val firstColumn :
+      'a D.t <BaseFct>.<resultStr>.A.<returnStr>.node D.t -> 'a D.t
+  val lastColumn :
+      'a D.t <BaseFct>.<resultStr>.A.<returnStr>.node D.t -> 'a D.t
+  val imax : int
+  val jmax : int
+  val k : int
+  val deltaX : real
+  val deltaY : real
+  val deltaT : real
+  val coriolisRate : real
+  val gamma : real
+  val psi : real
+  val gravity : real
+  val lambda : real
+  val wind : real
+  val cux : real
+  val cuy : real
+  val ccr : real
+  val cfr : real
+  val windX : real
+  val windY : real
+  val chx : real
+  val chy : real
+  val depth : 'a -> 'b -> real
+  val updateU :
+      real <BaseFct>.<resultStr>.A.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.A.<returnStr>.node D.t
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.A.<returnStr>.node D.t
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.A.<returnStr>.node D.t
+       -> int -> int -> real
+  val updateV :
+      real <BaseFct>.<resultStr>.A.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.A.<returnStr>.node D.t
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.A.<returnStr>.node D.t
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.A.<returnStr>.node D.t
+       -> int -> int -> real
+  val updateH :
+      real <BaseFct>.<resultStr>.A.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.A.<returnStr>.node D.t
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.A.<returnStr>.node D.t
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.A.<returnStr>.node D.t
+       -> int -> int -> real
+  val dul : (int * int) * (int * int)
+  val dvl : (int * int) * (int * int)
+  val dhl : (int * int) * (int * int)
+  val dur : (int * int) * (int * int)
+  val dvr : (int * int) * (int * int)
+  val dhr : (int * int) * (int * int)
+  val u0 : 'a -> 'b -> real
+  val v0 : 'a -> 'b -> real
+  val h0 : int -> 'a -> real
+  val initialLeft : <BaseFct>.<resultStr>.tripleNode D.t
+  val initialRight : <BaseFct>.<resultStr>.tripleNode D.t
+  val firstBorders :
+      <BaseFct>.<resultStr>.tripleNode D.t
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.node D.t
+       * real <BaseFct>.<resultStr>.A.<returnStr>.node D.t
+  val lastBorder :
+      <BaseFct>.<resultStr>.tripleNode D.t
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.node D.t
+  val fu :
+      <BaseFct>.<resultStr>.tripleNode D.t
+       -> <BaseFct>.<resultStr>.column * <BaseFct>.<resultStr>.column
+       -> <BaseFct>.<resultStr>.tripleNode D.t
+  val fv :
+      <BaseFct>.<resultStr>.tripleNode D.t
+       -> <BaseFct>.<resultStr>.tripleNode D.t
+  val fh :
+      <BaseFct>.<resultStr>.tripleNode D.t
+       -> <BaseFct>.<resultStr>.tripleNode D.t
+  val gu :
+      <BaseFct>.<resultStr>.tripleNode D.t
+       -> <BaseFct>.<resultStr>.tripleNode D.t
+  val gv :
+      <BaseFct>.<resultStr>.tripleNode D.t
+       -> <BaseFct>.<resultStr>.column -> <BaseFct>.<resultStr>.tripleNode D.t
+  val gh :
+      <BaseFct>.<resultStr>.tripleNode D.t
+       -> <BaseFct>.<resultStr>.column -> <BaseFct>.<resultStr>.tripleNode D.t
+  val solve :
+      int
+       -> <BaseFct>.<resultStr>.tripleNode D.t
+       * <BaseFct>.<resultStr>.tripleNode D.t
+  val matrices :
+      <BaseFct>.<resultStr>.tripleNode D.t
+       * <BaseFct>.<resultStr>.tripleNode D.t
+       -> <BaseFct>.<resultStr>.matrix list
+  val bounds :
+      'a <BaseFct>.<resultStr>.A.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.A.<returnStr>.node D.t
+       -> int * int * int * int
+  val flatten :
+      'a <BaseFct>.<resultStr>.A.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.A.<returnStr>.node D.t
+       -> 'a list
+  val showFix : real -> string
+  val descriptor : int * int -> string
+  val arrayPrint :
+      ('a -> string)
+       -> char -> 'a <BaseFct>.<resultStr>.A.<returnStr>.node D.t -> string
+  val matrixPrint :
+      real <BaseFct>.<resultStr>.A.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.A.<returnStr>.node D.t
+       -> string
+  val output :
+      <BaseFct>.<resultStr>.tripleNode D.t
+       * <BaseFct>.<resultStr>.tripleNode D.t
+       -> string
+  val sumcode : string -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-wave4main-originals/check.sml]
+[autoloading]
+[autoloading done]
+functor BenchWaveCheckFn(K: sig
+  type matrix
+  type solution
+  val solve : int -> solution
+  val matrices : solution -> matrix list
+  val bounds : matrix -> int * int * int * int
+  val flatten : matrix -> real list
+  val output : solution -> string
+  val sumcode : string -> string
+end) :
+sig
+  type expected
+  val close : real * real -> bool
+  val check : real list -> real vector -> bool
+  val verify :
+      K.solution
+       -> ((int * int * int * int) * real vector) list -> string -> unit
+  val read :
+      string -> int * string * ((int * int * int * int) * real vector) list
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-wave4main-originals/tests-final.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-wave4main-originals/tests-final.sml:56.12-56.43 Warning: binding not exhaustive
+          (bounds,values) :: rest = ...
+PASS wave4main/source-all-matrices/N/0
+PASS wave4main/source-all-matrices/E/0
+PASS wave4main/source-all-matrices/N/1
+PASS wave4main/source-all-matrices/E/1
+PASS wave4main/source-all-matrices/N/2
+PASS wave4main/source-all-matrices/E/2
+PASS wave4main/source-all-matrices/N/3
+PASS wave4main/source-all-matrices/E/3
+PASS wave4main/source-all-matrices/N/8
+PASS wave4main/source-all-matrices/E/8
+PASS wave4main/source-all-matrices/N/16
+PASS wave4main/source-all-matrices/E/16
+PASS wave4main/source-all-matrices/N/40
+PASS wave4main/source-all-matrices/E/40
+PASS wave4main/source-all-matrices/N/80
+PASS wave4main/source-all-matrices/E/80
+PASS wave4main/source-all-matrices/N/400
+PASS wave4main/source-all-matrices/E/400
+PASS wave4main/lazy-U-boundary-does-not-demand-neighbors
+PASS wave4main/lazy-V-boundary-does-not-demand-neighbors
+PASS wave4main/lazy-array-cells-are-memoized
+PASS wave4main/strict-array-materializes-cells
+PASS wave4main/array-border-indices-retained
+PASS wave4main/numerical-perturbation-rejected
+PASS wave4main/numerical-small-roundoff-accepted
+PASS wave4main/numerical-NaN-rejected
+PASS wave4main/array-out-of-bounds-rejected
+PASS wave4main/complete-checker-rejects-corrupted-value
+PASS wave4main/driver-zero-repetitions
+PASS wave4main/driver-reference-step-mismatch-rejected
+structure WaveTests : sig
+  structure N : <sig>
+  structure E : <sig>
+  structure NC : <sig>
+  structure EC : <sig>
+  val check : string -> (unit -> bool) -> unit
+  val expected0 : ((int * int * int * int) * real vector) list
+  val expected1 : ((int * int * int * int) * real vector) list
+  val expected2 : ((int * int * int * int) * real vector) list
+  val expected3 : ((int * int * int * int) * real vector) list
+  val expected8 : ((int * int * int * int) * real vector) list
+  val expected16 : ((int * int * int * int) * real vector) list
+  val expected40 : ((int * int * int * int) * real vector) list
+  val expected80 : ((int * int * int * int) * real vector) list
+  val expected400 : ((int * int * int * int) * real vector) list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 30 checks, 0 failed

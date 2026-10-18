@@ -1,0 +1,27 @@
+{
+  "command": [
+    "timeout",
+    "600",
+    "bin/runevm",
+    "tests/out/benchmarks/hartel-wave4main-originals/normal-pilot.rbc"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 12320,
+  "observed_minimum_available_kib": 23292260,
+  "peak_processes": [
+    {
+      "pid": 8,
+      "name": "runevm",
+      "rss_kib": 10524
+    },
+    {
+      "pid": 7,
+      "name": "timeout",
+      "rss_kib": 1796
+    }
+  ],
+  "elapsed_seconds": 62.906188274999295
+}

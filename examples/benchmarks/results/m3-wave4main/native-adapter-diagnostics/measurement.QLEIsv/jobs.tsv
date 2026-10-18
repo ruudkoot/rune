@@ -1,0 +1,1 @@
+wave4main-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/hartel-wave4main-array.sml shared/hartel-wave4main-kernel.sml shared/hartel-wave4main-check.sml wave4main-lazy/benchmark.sml shared/main.sml	1 8 smoke.reference	wave4main-lazy/smoke.expected	smoke.reference
