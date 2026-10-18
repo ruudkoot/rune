@@ -2767,3 +2767,23 @@ payload audit accepts only those exact paths, lengths, hashes and state alphabet
 binary signatures and NUL data remain rejected. The first broad suffix scan
 flagged these text files, and that result was resolved after the initial local
 commit. Benchmark source, inputs and recorded validation results are unchanged.
+
+## Corrected dominators, 2026-10-18
+
+The catalogue now has 394 programs and 1174 profiles.
+[Coverage](results/m3-dom-lt/coverage.tsv) records 26/28 primary passes;
+[semantic results](results/m3-dom-lt/semantic-summary.tsv) record 2220 passing
+and 160 failing assertions, with none unreached. All failures are native
+32-bit SML/NJ, independently reproduced by a Word64 zero-shift probe; valid
+arithmetic remains unchanged and that configuration contributes no timing sample.
+
+[The source issue](validation/dom-lt-source-issue.md) separately proves and repairs
+an upstream dominator algorithm defect hidden by its length-only checksum.
+Corrected original and an independent model agree on all 86 graphs. Every
+measured repetition checks full ordered parents. Four normal count samples
+agree; three serial single fresh-process native smoke adapter samples pass.
+[Evidence](results/m3-dom-lt/README.md) retains rejected measurements and raw
+original/corrected observations.
+[Full make JOBS=4 check](validation/oct18-dom-lt-1174-acceptance.log) exits zero
+with 1174 profiles and all cross-build comparisons. M3/M4/M5 remain in progress
+and M8 remains planned; final SML large repetitions are unrecorded.

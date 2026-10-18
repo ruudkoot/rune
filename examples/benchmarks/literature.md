@@ -419,3 +419,14 @@ Original inferred rows and explicit demand/collision controls support the port;
 the paper's soundness results are not transferred to source-specific arity or
 shadowing behavior. Performance questions remain hypotheses until separately
 supported by measurements or compiler analysis.
+
+## Dominator implementation evidence, 2026-10-18
+
+dom-lt cites Lengauer and Tarjan (1979), Muchnick (1997), and Brisk and
+Sarrafzadeh (2007); these are declared source references, not newly claimed
+paper reviews. The pinned code, minimal counterexample, exact threshold patch
+and independent fixed-point model establish the correctness finding recorded
+in validation/dom-lt-source-issue.md. Patricia/bitmap operations, DFS, path
+compression, persistent environment records, CPS specialization and array
+initialization are diagnostic questions inferred from source. Counts and
+timings do not establish their individual performance effects.
