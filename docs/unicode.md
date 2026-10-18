@@ -1,8 +1,9 @@
 # Unicode and Wide Text in Rune
 
-How Rune implements Unicode and wide characters, how the Standard ML Basis
-Library specifies them, and where the specification's wide text design breaks
-down.
+How Rune reads Unicode in source text, how it implements Unicode and wide
+characters, how the Standard ML Basis Library specifies them, where the
+specification's wide text design breaks down, and how Rune compares with
+the specifications and the other implementations.
 
 ## The Standard ML text model
 
@@ -36,6 +37,74 @@ In Rune:
   under `PRIM_IO`.
 * `WideTextIO` provides imperative and stream I/O for wide characters. Files read
   and written by `WideTextIO` are encoded in UTF-8.
+
+## Source text
+
+A source file is read in one of three *modes*, which say what its bytes are
+and how much of Unicode it may hold. [units.md](units.md), *Source modes*,
+says where a file's mode comes from: its build file's annotation, else the
+command line, else the default. The rows *Source text*, *Strings* and
+*Identifiers* of [language.md](language.md#deviations-from-the-definition)
+give every rule, and the tests that pin it.
+
+| | the default | `--unicode` (`--unicode=utf8`) | `--unicode=latin1` |
+|---|---|---|---|
+| the file | UTF-8 | UTF-8 | Latin-1, made UTF-8 as it is read; text that looks like UTF-8 is refused |
+| a comment | UTF-8 text | UTF-8 text | Latin-1 text, but no C1 control |
+| a raw character above 127 in a literal | refused: it is written as its escape (`\u00E9`) | its code point, which only `WideChar.char` and `WideString.string` take | its byte, at every type |
+| the escape `\U` | refused | taken | taken |
+| an alphanumeric identifier | ASCII | ASCII, and the letters, marks and digits of the identifier profile, in NFC | as under `--unicode` |
+
+In every mode:
+
+* **The same characters are refused,** in comments, in literals and between
+  tokens: the controls but TAB, LF, CR LF and FF, DEL, the C1 controls, the
+  line and paragraph separators U+2028 and U+2029, the nine explicit bidi
+  controls that Trojan Source uses, a byte order mark past the start of the
+  file, and text that is not well formed in the file's encoding. A literal
+  refuses TAB too, and writes each of these as its escape (`\t`,
+  `\u202E`). A byte order mark at the start of a UTF-8 file is dropped.
+  The marks LRM, RLM and ALM and the other default-ignorable characters are
+  taken in comments and literals.
+* **A raw character means its code point,** as its escape does, wherever a
+  mode takes it. So a program that two modes take means the same in both:
+  under `--unicode`, `"é"` at `WideString.string` is the one character
+  U+00E9, as `"\u00E9"` is in every mode, and not its two bytes of UTF-8.
+  At `string`, where the character and its UTF-8 differ, `--unicode` refuses
+  the raw character and names both escapes (`\233` for the character,
+  `\195\169` for its UTF-8). Under `--unicode=latin1` a byte is its own
+  code point, so the rule holds there at every type.
+* **Escapes** are the Definition's, at both widths: `\ddd` goes up to 999
+  at the wide types, and a character above 255 is an error at `char` and
+  `string`. `\UXXXXXXXX`, Rune's extension from Successor ML, needs
+  `--unicode`. A surrogate, U+D800 to U+DFFF, is refused in an escape, and
+  `\x` is no escape of Standard ML. At run time there is no mode:
+  `WideString.toString` and `WideChar.toString` write `\U`, and
+  their `fromString` read it.
+* **Names.** The identifier profile is `lib/unicode`'s
+  [`Identifier`](lib/unicode/str/Identifier.md): UAX #31's XID_Start and
+  XID_Continue, with `'` and `_`, less the default-ignorable characters,
+  which show nothing, and 239 lookalikes of Standard ML's punctuation and
+  digits. The two sets left out are frozen at Unicode 18.0.0, so that no
+  later version of Unicode makes a valid name invalid. A name that is not
+  in NFC is refused, with its NFC spelling, and not converted: names are
+  compared by their bytes. Symbolic identifiers, record labels and numbers
+  are ASCII in every mode. The compiler warns of what UTS #39 finds suspect
+  in names (restricted characters, mixed scripts, names that look alike, a
+  name that looks like a reserved word or like punctuation) and of a
+  lookalike of `*)` in a comment, unless `--no-unicode-lints` is given.
+  The data behind these warnings change with every version of Unicode,
+  which is why they are warnings and not errors.
+* **The Basis Library** and the libraries beside it are read in the
+  default, so what they export is ASCII, and a program in any mode can
+  name it.
+* **Positions** are byte offsets inside the compiler. A column that a
+  person reads, in a diagnostic or a REPL's trace, counts characters,
+  and one that an editor's protocol reads counts UTF-16 units
+  ([diagnostics.md](diagnostics.md), *Columns*). The REPL shows a
+  `WideString.string` or a `WideChar.char` quoted, in UTF-8, with the
+  characters that would not show, or would move the text around them,
+  escaped ([repl.md](repl.md)).
 
 ## The specification defect in `WideTextIO`
 
@@ -413,3 +482,62 @@ Among traditional SML implementations:
   `0x10FFFF` in `WideChar`, UTF-8-encoded file streams in `WideTextIO`, and
   full `PRIM_IO` readers and writers in `WideTextPrimIO`.
 
+## Rune, the specifications and the other systems
+
+How each of Rune's modes reads source text, and what its wide text is,
+beside the Definition and the Basis Library ("Def.") and the other
+implementations of Standard ML. The other systems' columns come from the
+same programs run on each (the utf8 roadmap's *Appendix E*,
+[plans/utf8.md](plans/utf8.md#appendix-e-the-host-probes)): MLton 20241230, with and without
+`-default-ann 'allowExtendedTextConsts true'` ("MLton+ext"), SML/NJ
+110.99.9, Poly/ML 5.9.2, MLKit 4.7.25, Moscow ML 2.10.1 and HaMLet 2.0.1. A
+"-" is a question the system cannot be asked, for want of the wide types.
+
+| | Def. | Rune, default | Rune, `--unicode=latin1` | Rune, `--unicode` | MLton | MLton+ext | SML/NJ | Poly/ML | MLKit | Moscow ML | HaMLet |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| encoding of the file | none | UTF-8 | Latin-1 | UTF-8 | bytes | bytes | bytes | bytes | bytes | bytes | bytes |
+| text that is not UTF-8 refused | - | yes | - | yes | in literals (all non-ASCII) | in literals | no | in literals (all non-ASCII) | no | no | no |
+| non-ASCII in comments | any | UTF-8 | Latin-1 but C1 controls | UTF-8 | any | any | any | any | any | any | any |
+| raw non-ASCII at `string` | no | no | its byte | no | no | bytes | bytes | no | bytes | bytes | no, or cut short |
+| raw non-ASCII at `WideString` | (no) | no | its code point | its code point | no | a code point per byte | - | - | - | - | - |
+| raw TAB in a literal | no | no | no | no | no | no | no | no | spaces | no | no |
+| raw DEL in a literal | no | no | no | no | no | no | yes | no | yes | no | no |
+| VT between tokens | allowed | no | no | no | yes | yes | no | yes | no | no | yes |
+| FF between tokens | required | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes |
+| bare CR | allowed | no | no | no | yes | yes | yes | yes | yes | yes | yes |
+| byte order mark at the start | - | dropped | refused (looks like UTF-8) | dropped | error | error | error | error | error | error | error |
+| the nine bidi controls, raw | literals no, comments yes | no | no | no | comments only | yes | yes | comments only | yes | yes | comments; literals cut short |
+| non-ASCII identifiers | ("letters") | no | the identifier profile | the identifier profile | no | no | no | no | no | no | no |
+| identifiers in NFC | - | - | required | required | - | - | - | - | - | - | - |
+| Unicode symbols in identifiers | no | no | no | no | no | no | no | no | no | no | no |
+| `\uXXXX` | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes |
+| `\UXXXXXXXX` | no | no (needs `--unicode`) | yes | yes | needs ext | yes | no | no | no | no | no |
+| `\x` | no | no | no | no | no | no | no | no | no | no | no |
+| `\ddd` above 255 at the wide types | yes | yes | yes | yes | yes | yes | - | - | - | - | - |
+| a surrogate in `\u` | in the range | refused | refused | refused | not probed | not probed | - | - | - | - | - |
+| wide types | optional | all | all | all | `WideChar` to `WideText` | the same | no | no | no | no | no |
+| `WideTextIO` | optional, unmatchable | sealed with the generic `TEXT_IO` | the same | the same | no | no | no | no | no | no | no |
+| `WideCharVector.vector` admits equality | must, unwritten | `where type vector = WideString.string` | the same | the same | yes | yes | - | - | - | - | - |
+| top-level `^` at `WideString.string` | no | yes, overloaded | the same | the same | no: `WideString.^` | the same | - | - | - | - | - |
+
+* **Each mode of Rune is Standard ML '97** read from a file in the mode's
+  encoding, but stricter in three ways:
+  - a comment holds no control but TAB, LF, CR LF and FF, no bidi control,
+    no U+2028 or U+2029, and no text that is not well formed, where the
+    Definition allows any character: a deviation, pinned by tests
+    ([language.md](language.md), *Source text*);
+  - a surrogate in `\u` is refused, which the Definition's alphabet
+    holds: a deviation, pinned by tests (*Strings*);
+  - VT and a lone CR are refused. The Definition asks for no more than
+    space, tab, newline and formfeed, so this is no deviation.
+* **The default reads nothing that the Definition does not:** `\U` needs
+  `--unicode`. Its types go further in one place, in every mode: `^`,
+  `size`, `concat` and `substring` are overloaded at `WideString.string`
+  as well as `string`, which Appendix E does not list (*Overloading*).
+* **`--unicode` and `--unicode=latin1` go beyond the Definition in two
+  rows,** non-ASCII identifiers and raw non-ASCII characters at the wide
+  types, and each is pinned by tests (`lex.ident_*`, `lex.string_modes_*`).
+* **A raw character in a wide literal is one character,** the code point
+  that the Definition's rule for an escape would give: a number in the
+  type's alphabet. MLton+ext reads one character a byte, so `"é"` at
+  `WideString.string` is two characters there and one in Rune.

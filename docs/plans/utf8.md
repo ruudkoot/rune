@@ -62,7 +62,7 @@ What it rests on:
 | M8 | The wide family in the 8-bit order, and its costs | done 2026-10-18 |
 | M9 | The symmetric text signatures, and the change request | done 2026-10-18 |
 | M10 | String operations at both widths | done 2026-10-18 |
-| M11 | The corpora and the comparison | |
+| M11 | The corpora and the comparison | done 2026-10-18 |
 
 The owner decided D1 to D20 on 2026-10-18, every one as recommended
 (*Decisions*). D1's flag names and D7's `\U` are the owner's own (*The
@@ -3983,10 +3983,13 @@ nothing.
     (`tests/repl/commands`). It takes it at the type it defaults to, as the
     printer shows it.
   - **Checks,** with MLKit 4.7.25: `make check` (`bas-m10-2`), whose
-    bootstrap is the compiler's fixed point, `make matrix-quick`
-    (`bas-m10-matrix`) and every xc2 configuration (`bas-m10-xc2`) before
-    the rebase on M2; after it, `make check` and `make matrix-quick` again
-    (`bas-m10-rebased`, `bas-m10-rebased-matrix`).
+    bootstrap is the compiler's fixed point, and `make matrix-quick`
+    (`bas-m10-matrix`) before the rebase on M2; after it, on M10's last
+    commit, `make check`, `make matrix-quick` and every xc2
+    configuration, all five passing (`bas-m10-rebased`,
+    `bas-m10-rebased-matrix`, `bas-m10-rebased-xc2`). The xc2 run before
+    the rebase (`bas-m10-xc2`) took MLKit 4.7.23, whose library Rune's
+    no longer compiles, and is not counted.
 
 **Gate G4**, the owner accepting overloading as a deviation from Appendix E,
 was passed on 2026-10-18 with D20.
@@ -4003,6 +4006,40 @@ was passed on 2026-10-18 with D20.
   - HOL-rune builds.
   - `docs/unicode.md` has the comparison, the change request and the modes.
   - `docs/language.md`'s deviations are pinned.
+* **Done** (2026-10-18):
+  - **HOL-rune builds under the default.** A copy of HOL-rune at
+    `3d15b18a8` (a `git archive`, so nothing of the real tree was
+    touched), configured with the compiler of M6 (`14655405`) by
+    `tools-rune/configure.sh`, and built by `bin/build`, which ends "Hol
+    built successfully": 221 theories, in 70 minutes beside other runs,
+    with no warning from Rune and no file of HOL changed. Its `bin/hol`
+    proves `x + y = y + x` by `DECIDE_TAC`. G1 had predicted it: after
+    `unquote`, HOL4's non-ASCII is in its comments.
+  - **MLton's compiler compiles under the default.** The 606 files of
+    MLton at `5fe943391`, in the order of its `mlton-rune.txt`, as
+    `scripts/perf-units.sh` compiles them (`ulimit -v 12582912`,
+    `--heap-limit 5368709120`): 739 s, 5.7 GB at the peak. The MLton it
+    makes, run by MLton's own `build/bin/mlton.rune`, compiles a hello
+    world in 21 s, and the program runs.
+  - **`docs/unicode.md`** gains *Source text*, the three modes and what
+    each takes, and *Rune, the specifications and the other systems*,
+    the table of *Appendix B* with one column for each mode. Its Rune
+    cells were checked by 29 small programs in each mode (the drafts'
+    `m11/probes`), and every one came out as *Appendix B* said. The
+    change request is M9's.
+  - **The deviations of `docs/language.md` are pinned:** the tests that
+    its rows *Strings*, *Source text*, *Identifiers* and *Overloading*
+    name are all there (`err.lex_comment_*` 65, `err.lex_trojan_*` 15,
+    `err.lex_surrogate*` 11, `err.lex_escape_bigu*` 8,
+    `err.lex_name_*` 38, `lex.string_modes_*` 3, `lex.ident_*`,
+    `ty.overload.string` and `err.ty_overload-string-mixed`).
+  - **Not foreseen:** *Appendix B*'s note said the default reads
+    nowhere wider than the Definition, and so it does; but since D20 its
+    types are wider in one place, in every mode, as `^`, `size`,
+    `concat` and `substring` are overloaded at `WideString.string`. The
+    note and `docs/unicode.md` say so. M10's Done note named the xc2 run
+    that took MLKit 4.7.23; it now names the one that passed all five
+    configurations.
 
 ### Later
 
@@ -4358,7 +4395,10 @@ Notes:
     this is no deviation.
   - A surrogate in `\u` is refused, a deviation pinned (D9).
   
-  It is nowhere wider: `\U`, Rune's extension, needs `--unicode` (D7).
+  It reads nowhere wider: `\U`, Rune's extension, needs `--unicode` (D7).
+  Its types are wider in one place, in every mode, as D20 decided: `^`,
+  `size`, `concat` and `substring` are overloaded at `WideString.string`.
+  (Found by M11, which puts this table in `docs/unicode.md`.)
 - `--unicode` departs from the Definition in two rows: non-ASCII identifiers and
   raw non-ASCII at `WideString`. Each is pinned by a test, with its row in
   `docs/language.md`.
