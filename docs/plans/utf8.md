@@ -52,7 +52,7 @@ What it rests on:
 | Milestone | What | State |
 |---|---|---|
 | M0 | This roadmap | done |
-| M1 | Fixes that follow the Definition or fix bugs | Basis part done 2026-10-18 |
+| M1 | Fixes that follow the Definition or fix bugs | done 2026-10-18: the Basis part and the source part |
 | M2 | Source modes: the plumbing | |
 | M3 | What a source may hold raw | |
 | M4 | Literals by type and mode | |
@@ -2840,6 +2840,75 @@ The sizes are lines of code and tests, not counting generated tables.
   - **Checks:** `make check` and `make matrix-quick` at the commit that
     records this, with MLKit 4.7.25 (logs `bas-m1-final` and
     `bas-m1-final-matrix` of the campaign).
+* **Done, the source part** (2026-10-18, at `c6d588ad`):
+  - **The lexer** (`src/frontend/lexer.sml`):
+    - A raw control character in a literal, DEL included, is refused with
+      its code point and its escape: "control character U+007F in string
+      literal (write it as `\127`)".
+    - `\ddd` is taken up to 999. Above 255 elaboration refuses it at `char`
+      and `string`, by the check that `\u` had already (`checkLiteral`), so
+      `#"\999"` is U+03E7 at `WideChar` and an error at `char`.
+    - "unexpected character U+03BB" names the UTF-8 character, and its span
+      covers the character's bytes. A byte that is not UTF-8 is "unexpected
+      byte 0xE9 (invalid UTF-8)", and an ASCII control "unexpected character
+      U+0001".
+  - **Reject tests:** 18 in `tests/errors/err.lex_*`, one for each lexer
+    error that had none: the unexpected character, byte and control, a
+    control and DEL in a literal, every invalid escape, the gaps, the length
+    of a character literal, a lone `.` and the long identifiers. Two more,
+    `err.literal_ddd_char` and `err.literal_ddd_string`, refuse `\ddd` above
+    255 at the 8-bit types. `tests/lang/lex.string_wide_ddd` takes it at the
+    wide types, in expressions and in patterns.
+  - **`Serve.parse`** refuses a `\u` escape of a lone surrogate, high or
+    low: "not JSON: a lone surrogate in a `\u` escape" (-32700), and the
+    service goes on. It encodes with `Utf8.encode`. The runner's `serve`
+    test checks it.
+  - **`Json.encode`** writes a byte that is not part of a string's UTF-8 as
+    `\u00XX`, the character of its number, instead of raising `Domain`. The
+    signature says so, with an example; `tests/lib/json/roundtrip.sml`
+    checks bytes alone, a sequence that breaks off, a surrogate's bytes and
+    an overlong form. The runner's `diagnostics/latin1-name` compiles a file
+    named `caf\233.sml` with `--diagnostics-json` and reads its report back.
+  - **`docs/language.md`:** the rows *Integer literals*, *Strings*,
+    `lex.char` and `lex.string` now agree. A code point above 255, by any
+    escape, is an error at the 8-bit types and taken at the wide ones.
+  - **MLton's `regression/widechar.sml`** now lexes and compiles. It passes
+    every test but test42, which wants `WideChar.fromCString` to read C's
+    hexadecimal escape `\x67ab` as U+67AB. Rune's reads a `\x` escape up to
+    255 only, as the note on `WideChar` says. Its line in
+    `tests/external/mlton-skip.txt` now gives that reason (READING) instead
+    of SCOPE. Whether `fromCString` should take more is the Basis track's
+    question.
+  - **The corpus run.** `scripts/lex-corpus.sh` comes in M3, so this used
+    E9's acceptance check, with `--dump-tokens`:
+
+    | Corpus | Files | Lexed before | Lexed now |
+    |---|---|---|---|
+    | Rune's tracked `.sml`, `.sig`, `.fun` (before this commit) | 2,152 | 2,149 | 2,149 |
+    | HOL4 after `unquote` | 3,419 | 3,419 | 3,419 |
+    | MLton | 1,787 | 1,784 | 1,785 |
+    | The Latin-1 files of E1 | 17 | 16 | 16 |
+
+    - The three of Rune's that are refused are `tests/diagnostics/eof.sml`,
+      `err.unterminated_comment` and `err.unterminated_string`. The new
+      lexer tests of `tests/errors` are refused, as they must be.
+    - The file of MLton's that lexes now is `regression/widechar.sml`. The
+      two files with `Error.: T` ("malformed long identifier") stay
+      refused.
+    - The Latin-1 file refused is MLKit's `test/cobol.sml`, with an
+      unterminated comment.
+    - No file that lexed before is refused.
+  - **Not foreseen:**
+    - `make check` failed once in `make/test-census` with "mv: cannot stat
+      'build/gmp/selected.tmp'". Every make remakes `build/gmp/selected`,
+      through the phony `gmp-force`, and the makes that the runner starts
+      at once shared the one temporary file. The commit after this one
+      gives each make a temporary file of its own.
+    - MLKit 4.7.23, as the Basis part found: these checks too were run with
+      `MLKIT=` and `MLKIT_LIB=` of 4.7.25.
+  - **Checks:** `make check` and `make test-lib-hosts` at the commit that
+    fixes the race, with MLKit 4.7.25 (logs `src-m1-final` and
+    `src-m1-final-libhosts` of the campaign).
 
 ### M2. Source modes: the plumbing (M, about 500)
 
