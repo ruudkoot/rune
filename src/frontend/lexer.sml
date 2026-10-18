@@ -61,6 +61,9 @@ struct
     if Char.isDigit c then Char.ord c - Char.ord #"0"
     else Char.ord (Char.toLower c) - Char.ord #"a" + 10
 
+  (* A character by its code point, as Unicode writes it: U+03BB. *)
+  fun codePoint c = "U+" ^ StringCvt.padLeft #"0" 4 (Int.fmt StringCvt.HEX c)
+
   (* The lexer of a text: the token at an index, with its span and the index
      after it (whitespace and comments before it skipped), and the index
      after a comment that begins at an index. Both raise Error.CompileError
@@ -153,7 +156,12 @@ struct
           case ch i of
             #"\"" => (List.rev acc, i + 1)
           | #"\\" => lexEscape (start, i + 1, acc)
-          | c => if Char.ord c < 32 then err (i, i + 1, "control character in string literal")
+          (* the Definition's printable characters are 33 to 126 and space
+             (Section 2.2): a control, DEL among them, is written as its
+             escape *)
+          | c => if Char.ord c < 32 orelse Char.ord c = 127 then
+                   err (i, i + 1, "control character " ^ codePoint (Char.ord c) ^ " in string literal (write it as "
+                                  ^ Char.toString c ^ ")")
                  else lexStringBody (start, i + 1, Char.ord c :: acc)
       and lexEscape (start, i, acc) =
         let fun cont c = lexStringBody (start, i + 1, Char.ord c :: acc)
@@ -181,13 +189,13 @@ struct
                  else lexStringBody (start, i + 9, v :: acc)
               end
             else err (i - 1, i + 1, "invalid \\U escape")
+          (* \ddd is the character with that code, up to 999 (Section 2.2):
+             above 255 only a wide character or string can hold it, as
+             with \u *)
           | c =>
             if Char.isDigit c then
               (if Char.isDigit (ch (i + 1)) andalso Char.isDigit (ch (i + 2)) then
-                 let val v = IntInf.toInt (parseInt (String.substring (text, i, 3), 10))
-                 in if v > 255 then err (i - 1, i + 3, "\\ddd escape out of range")
-                    else lexStringBody (start, i + 3, v :: acc)
-                 end
+                 lexStringBody (start, i + 3, IntInf.toInt (parseInt (String.substring (text, i, 3), 10)) :: acc)
                else err (i - 1, i + 1, "invalid numeric escape"))
             else if Char.isSpace c then
               (* string gap: \ whitespace \ *)
@@ -201,6 +209,16 @@ struct
         end
 
       fun lexSymbolic (i, j) = if at j andalso isSymbolic (ch j) then lexSymbolic (i, j + 1) else j
+
+      (* A character that begins no token, named by its code point: the
+         bytes of a UTF-8 character together, a byte that is not UTF-8 by
+         itself. *)
+      fun unexpected i =
+        if Char.ord (ch i) < 128 then err (i, i + 1, "unexpected character " ^ codePoint (Char.ord (ch i)))
+        else
+          case Utf8.decode (text, i) of
+            SOME (c, k) => err (i, i + k, "unexpected character " ^ codePoint c)
+          | NONE => err (i, i + 1, "unexpected byte 0x" ^ Int.fmt StringCvt.HEX (Char.ord (ch i)) ^ " (invalid UTF-8)")
 
       (* Alphanumeric identifier or long identifier. *)
       fun lexAlpha (i) =
@@ -294,7 +312,7 @@ struct
                   case c of
                     #"(" => LPAREN | #")" => RPAREN | #"[" => LBRACKET | #"]" => RBRACKET
                   | #"{" => LBRACE | #"}" => RBRACE | #"," => COMMA | #";" => SEMI
-                  | _ => err (i, i + 1, "unexpected character '" ^ Char.toString c ^ "'")
+                  | _ => unexpected i
               in (t, span (i, i + 1), i + 1) end
           end
 

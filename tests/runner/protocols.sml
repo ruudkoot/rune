@@ -218,6 +218,27 @@ struct
       else ()
     end
 
+  (* --diagnostics-json for a file whose name is not UTF-8, Latin-1's
+     "caf\233.sml": the byte is written as the character of its number, and
+     the report reads back *)
+  fun diagnosticsLatin1 () =
+    let
+      val dir = run ^ "/diagnostics-latin1"
+      val () = (rmTree dir; mkdirs dir)
+      val src = dir ^ "/caf\233.sml"
+      val () = write (src, "val x : int = \"a\"\n")
+      val _ = exec {cmd = ["bin/rune", "--diagnostics-json", dir ^ "/report.json", src, "-o", dir ^ "/a.rbc"], dir = NONE,
+                    stdin = "", stdout = "", stderr = "", timeout = 120}
+      val report = Json.decode (read (dir ^ "/report.json")) handle Json.Syntax _ => Json.Null
+      val paths =
+        case Json.member ("diagnostics", report) of
+          SOME (Json.Array ds) => List.map (fn d => Json.member ("path", d)) ds
+        | _ => []
+    in
+      if paths = [SOME (Json.String (dir ^ "/caf\195\169.sml"))] then ()
+      else fail ("diagnostics.latin1-name: " ^ read (dir ^ "/report.json"))
+    end
+
   (* ---- rune --serve *)
   fun serve () =
     let
@@ -292,6 +313,13 @@ struct
       val () = want ("diagnostics-utf8", r,
                      List.map (fn d => (num (field (d, ["line"])), num (field (d, ["start"])))) (diags r)
                      = [(SOME 2, SOME (index (accented, "alsoUndefined")))])
+      (* a lone surrogate names no character, and has no UTF-8: the request
+         is refused as text that is not JSON, and the service goes on *)
+      val r = request (20, "diagnostics", buffer ("\"val s = \\\"\\ud800\\\"\\n\"", ""))
+      val () = want ("lone-surrogate", r, num (field (r, ["error", "code"])) = SOME ~32700
+                                          andalso (case str (field (r, ["error", "message"])) of
+                                                     SOME m => String.isSubstring "lone surrogate" m
+                                                   | NONE => false))
       val () = List.app (fn k => ignore (request (10 + k, "diagnostics", buffer (q good, "")))) (List.tabulate (9, fn k => k))
       val r = request (7, "nosuch", "{}")
       val () = want ("unknown-method", r, num (field (r, ["error", "code"])) = SOME ~32601)
@@ -330,6 +358,7 @@ struct
     case args of
       ["repl", suffix] => SOME (fn () => repl (if suffix = "-" then "" else suffix))
     | ["diagnostics-one", n] => SOME (fn () => diagnosticsOne n)
+    | ["diagnostics-latin1"] => SOME diagnosticsLatin1
     | ["serve"] => SOME serve
     | _ => NONE
 
@@ -354,7 +383,8 @@ struct
                       replWays)),
        tagged ["check", "test-diagnostics", "covers:tests/diagnostics/*"]
          (Test.describe "diagnostics" (List.map (fn f => job (basename f, ["diagnostics-one", basename f], [], 300, 600))
-                                                (glob ("tests/diagnostics", ".sml")))),
+                                                (glob ("tests/diagnostics", ".sml"))
+                                       @ [job ("latin1-name", ["diagnostics-latin1"], [], 300, 600)])),
        tagged ["check", "test-serve", "covers:tests/serve/*"] (Test.describe "serve" [job ("rune", ["serve"], [], 500, 600)]),
        Test.requires ["python3"] (tagged ["check", "test-repl-protocol", "covers:tests/repl-protocol/*"]
          (Test.describe "repl-protocol"

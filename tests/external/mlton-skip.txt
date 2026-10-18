@@ -97,7 +97,7 @@
 * | weak.3 | UNSUPPORTED | DEFINITION: val cache = ref [] gets its type from a later declaration, which MLton allows and the Definition rejects (rules 87-89); the program also needs MLton.Weak
 * | weird-word1 | UNSUPPORTED | EXTENSION: Word5, a width the specification does not have
 * | weird-word2 | UNSUPPORTED | EXTENSION: Word5, a width the specification does not have
-* | widechar | UNSUPPORTED | SCOPE: characters above 255 (WideChar, outside the plan's scope)
+* | widechar | UNSUPPORTED | READING: test42 wants WideChar.fromCString to read C's hexadecimal escape of 0x67AB as U+67AB; Rune's reads one up to 255 only (the note on WideChar, lib/basis/widechar.sml), and passes the rest
 * | word | UNSUPPORTED | WIDTH: assumes a 32-bit word, MLton's default; Rune's has 64 bits
 * | word-all | UNSUPPORTED | EXTENSION: Word2 ... Word31, widths the specification does not have
 * | wordn-array | UNSUPPORTED | EXTENSION: Word5, a width the specification does not have

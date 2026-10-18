@@ -178,19 +178,33 @@ struct
       if i < n then fail (i, "text after the value") else v
     end
 
+  (* a string in quotes, with what the RFC requires escaped; a byte that
+     is not part of the string's UTF-8 is written as the character of its
+     value, \u00XX, since JSON text holds characters and not bytes *)
   fun escape str =
-    if not (Utf8.isValid str) then raise Domain
-    else
-      let
-        fun esc c =
-          case c of
-            #"\"" => "\\\"" | #"\\" => "\\\\" | #"\n" => "\\n" | #"\r" => "\\r"
-          | #"\t" => "\\t" | #"\b" => "\\b" | #"\f" => "\\f"
-          | c => if ord c < 0x20 then "\\u00" ^ StringCvt.padLeft #"0" 2 (Int.fmt StringCvt.HEX (ord c))
-                 else String.str c
-      in
-        "\"" ^ String.translate esc str ^ "\""
-      end
+    let
+      fun hex b = "\\u00" ^ StringCvt.padLeft #"0" 2 (Int.fmt StringCvt.HEX b)
+      fun esc c =
+        case c of
+          #"\"" => "\\\"" | #"\\" => "\\\\" | #"\n" => "\\n" | #"\r" => "\\r"
+        | #"\t" => "\\t" | #"\b" => "\\b" | #"\f" => "\\f"
+        | c => if ord c < 0x20 then hex (ord c) else String.str c
+      val n = size str
+      (* the pieces from byte i, where the UTF-8 is not valid throughout *)
+      fun pieces (i, acc) =
+        if i >= n then String.concat (rev acc)
+        else
+          let val c = String.sub (str, i)
+          in
+            if ord c < 0x80 then pieces (i + 1, esc c :: acc)
+            else
+              case Utf8.decode (str, i) of
+                SOME (_, k) => pieces (i + k, String.substring (str, i, k) :: acc)
+              | NONE => pieces (i + 1, hex (ord c) :: acc)
+          end
+    in
+      "\"" ^ (if Utf8.isValid str then String.translate esc str else pieces (0, [])) ^ "\""
+    end
 
   fun number str = if size str > 0 andalso numberEnd (str, 0) = size str then str else raise Domain
 
