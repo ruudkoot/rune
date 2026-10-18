@@ -524,6 +524,11 @@ def build(source, root, lock):
                                                 files.append(member)
         else:
             files = source_files(root, path)
+        if source == "nofib" and path == "spectral/simple":
+            # Reviewed historical Fortran comparator, outside SRCS=Main.hs.
+            fortran = root / path / "simple.f"
+            if fortran.is_file():
+                files.append(fortran)
         files = sorted(set(files))
         text = "\n".join(p.read_text(errors="replace") for p in files if p.suffix in EXTENSIONS and p.suffix not in {".cm", ".mlb"})
         code = "\n".join(nofib_feature_code(root, p) for p in files) if source == "nofib" else code_only(text)
@@ -553,6 +558,34 @@ def build(source, root, lock):
                     notices.append(str(notice.relative_to(root)))
         authors = set()
         context = [p for p in parent.iterdir() if p.is_file() and p.name in {"README", "README.md", "Makefile", "FILES", "sources.cm"}] if parent.exists() and files else []
+        if source == "nofib" and path == "spectral/simple":
+            main = parent / "Main.hs"
+            if main.is_file():
+                heading = main.read_text(errors="replace")
+                if ("Original Author: Kattamuri Ekanadham <EKNATH@ibm.com>" in heading
+                        and "translated to haskell by an id to ph translator" in heading):
+                    item["evidence"].append("spectral/simple/Main.hs:Id-author-and-anonymous-translator-role")
+            c_source = parent / "simple.c"
+            if c_source.is_file():
+                heading = c_source.read_text(errors="replace")[:1000]
+                if ("Andy Shaw and Kofi Fynn." in heading
+                        and "Wed Feb  2 14:59:18 EST 1994" in heading):
+                    authors.update({"Andy Shaw (C comparator)", "Kofi Fynn (C comparator)"})
+                    item["evidence"].append("spectral/simple/simple.c:C-comparator-authors")
+            mail = parent / "MAIL"
+            if mail.is_file():
+                context.append(mail)
+                correspondence = mail.read_text(errors="replace")
+                if ("RPaul Johnson told me" in correspondence
+                        and "This version may be useful because it is in 1.2 Haskell" in correspondence):
+                    authors.add("RPaul Johnson (Haskell/pH correspondence)")
+                    item["evidence"].append("spectral/simple/MAIL:Haskell-port-correspondence")
+                if "Here is the fortran in its original form from Olaf Lubeck:" in correspondence:
+                    authors.add("Olaf Lubeck (Fortran supplier, not asserted sole author)")
+                    item["evidence"].append("spectral/simple/MAIL:Fortran-supplier")
+            makefile = parent / "Makefile"
+            if makefile.is_file() and "SRCS = Main.hs" in makefile.read_text():
+                item["evidence"].append("spectral/simple/Makefile:excludes-C-and-Fortran-comparators")
         if source == "nofib" and path == "real/lift":
             paper = parent / "LambdaLift.lhs"
             if paper.is_file():

@@ -1,0 +1,7 @@
+{
+  "exit": 0,
+  "session": 67103,
+  "profiles": 1421,
+  "subject": "final source fidelity restoration: tables, sparse entries, lazy folds, totals tuple, shared energy and explicit real types",
+  "validation": "compiler/runedoc/runeopt agree across seven builds; complete transcript retained"
+}

@@ -286,6 +286,50 @@ class InventoryTest(unittest.TestCase):
         self.file("spectral/multiplier/Main.hs", "-- Another multiplier author\nmain = print 0\n")
         self.assertNotIn("John T. O'Donnell", self.build("nofib")[0]["authors"])
 
+    def simple_sources(self, c_header="Andy Shaw and Kofi Fynn.\nWed Feb  2 14:59:18 EST 1994"):
+        self.nofib_roots()
+        self.file("spectral/simple/Makefile", "SRCS = Main.hs\n")
+        self.file("spectral/simple/Main.hs", "main = print 0\n")
+        self.file("spectral/simple/simple.c", "/* " + c_header + " */\n")
+        self.file("spectral/simple/simple.f", "      PARAMETER(II=101,JJ=100)\n")
+        return self.root / "spectral/simple"
+
+    def test_simple_records_both_C_comparator_authors(self):
+        self.simple_sources()
+        row = self.build("nofib")[0]
+        self.assertIn("Andy Shaw (C comparator)", row["authors"])
+        self.assertIn("Kofi Fynn (C comparator)", row["authors"])
+
+    def test_simple_changed_C_header_requires_review(self):
+        self.simple_sources("Other authors")
+        self.assertNotIn("Kofi Fynn (C comparator)", self.build("nofib")[0]["authors"])
+
+    def test_simple_preserves_Fortran_comparator_and_build_scope(self):
+        self.simple_sources()
+        row = self.build("nofib")[0]
+        self.assertIn("spectral/simple/simple.f", row["members"])
+        self.assertIn("spectral/simple/Makefile:excludes-C-and-Fortran-comparators", row["evidence"])
+
+    def test_simple_Fortran_identity_changes_with_source(self):
+        directory = self.simple_sources()
+        before = self.build("nofib")[0]["sha256"]
+        (directory / "simple.f").write_text("      PARAMETER(II=102,JJ=100)\n")
+        self.assertNotEqual(before, self.build("nofib")[0]["sha256"])
+
+    def test_simple_records_correspondence_roles(self):
+        self.simple_sources()
+        self.file("spectral/simple/MAIL", "RPaul Johnson told me\n"
+                  "This version may be useful because it is in 1.2 Haskell\n"
+                  "Here is the fortran in its original form from Olaf Lubeck:\n")
+        row = self.build("nofib")[0]
+        self.assertIn("RPaul Johnson (Haskell/pH correspondence)", row["authors"])
+        self.assertIn("Olaf Lubeck (Fortran supplier, not asserted sole author)", row["authors"])
+
+    def test_simple_changed_correspondence_does_not_invent_roles(self):
+        self.simple_sources()
+        self.file("spectral/simple/MAIL", "A different correspondence.\n")
+        self.assertNotIn("Olaf Lubeck", self.build("nofib")[0]["authors"])
+
     def fem_header(self, heading, data=False):
         self.nofib_roots()
         self.file("real/fem/Makefile", "\n")
