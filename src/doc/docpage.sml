@@ -507,7 +507,7 @@ struct
      hyphens. Section titles are ours, so this is safe for them. *)
   fun headingAnchor (title : string) : string =
     String.translate (fn c => if Char.isAlphaNum c then String.str (Char.toLower c)
-                              else if c = #" " orelse c = #"-" then "-" else "") title
+                              else if c = #" " orelse c = #"-" then "-" else "") (Ident.asciiSpelling title)
 
   (* ---- a structure's page ---- *)
   (* A signature says what a member means; a structure says what it is here.

@@ -527,12 +527,15 @@ struct
       fun timed name f = Pass.stage {name = name, showIn = NONE, show = fn _ => "", check = fn _ => (), size = fn _ => 0} f ()
       (* the input files' settings, which the libraries are compiled
          without: in their units' keys, so that a unit compiled under them is
-         not taken for one compiled without (--default-type, --or-patterns) *)
+         not taken for one compiled without (--default-type, --or-patterns,
+         and --no-unicode-lints, since an entry keeps the warnings it
+         leaves out) *)
       val userSettings =
         String.concatWith " " (List.filter (fn s => s <> "")
                                  [if !Options.defaultInt64 then "int64" else "",
                                   if !Options.defaultWord64 then "word64" else "",
-                                  if !Options.orPatterns then "or-patterns" else ""])
+                                  if !Options.orPatterns then "or-patterns" else "",
+                                  if !Lexer.lints then "" else "no-unicode-lints"])
       val userNames = List.foldl (fn (n, m) => StringMap.insert (m, n, ())) StringMap.empty inputs
       (* and the unit's mode, where it is not the default: a unit read in
          one mode is not taken for one read in another (docs/plans/utf8.md,
@@ -690,6 +693,8 @@ struct
               (fn () =>
                  let
                    val decs = frontStage "parse" (fn () => parseTokens (load ())) ()
+                   (* the warnings of UTS #39 its lexing found (D13) *)
+                   val () = Lexer.report name
                  in
                    (* a unit's flexible records are settled at its end, and its
                       matches reported (docs/units.md) *)
@@ -1016,6 +1021,8 @@ struct
                              in (b, l, List.concat (List.map parseTokens userToks), parseEntries final) end)
                    ()
       val preludeProg = basisProg @ libraryProg
+      (* the warnings of UTS #39 the inputs' lexing found (D13) *)
+      val () = List.app Lexer.report (!Options.inputs)
       val () = if !Options.dumpAst then List.app (fn d => println (Ast.decToString d)) (userProg @ finalProg) else ()
       val env = ref Env.initial
       fun elaborate (progs as (b, l, u, fin)) =

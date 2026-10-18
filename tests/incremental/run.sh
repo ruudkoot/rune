@@ -834,5 +834,24 @@ if run S63; then
   build; want ""
 fi
 
+# S64, the warnings of UTS #39 (docs/plans/utf8.md, D13): an entry keeps a
+# unit's warnings, and --no-unicode-lints leaves out those of UTS #39, so
+# an input file's key says it. The file is compiled again with it and
+# found without it, warning as it did
+if run S64; then
+  own S64 p.sml
+  printf 'val x\316\273 = 1\nval () = print "linted\\n"\n' > "$dir/p.sml"
+  lint="p.sml:1:5: warning: the name x.* mixes scripts"
+  linted() {
+    if grep -q "$lint" "$dir/build.err"; then [ "$1" = yes ]; else [ "$1" = no ]; fi && { pass=$((pass + 1)); return; }
+    echo "FAIL incremental.S64: wanted a warning: $1 ($dir/build.err)"; fail=$((fail + 1))
+  }
+  build --unicode; want "p.sml"; linted yes
+  prints linted
+  build --unicode --no-unicode-lints; want "p.sml"; linted no
+  build --unicode --no-unicode-lints; want ""; linted no
+  build --unicode; want ""; linted yes
+fi
+
 echo "incremental: passed $pass, failed $fail"
 [ $fail = 0 ]

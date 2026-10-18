@@ -17,6 +17,16 @@ files
   lib/unicode/grapheme_data.sml
   lib/unicode/grapheme_sig.sml
   lib/unicode/grapheme.sml
+  lib/unicode/normalize_data.sml
+  lib/unicode/normalize_sig.sml
+  lib/unicode/normalize.sml
+  lib/unicode/identifier_data.sml
+  lib/unicode/identifier_sig.sml
+  lib/unicode/identifier.sml
+  lib/unicode/security_data.sml
+  lib/unicode/security_sig.sml
+  lib/unicode/security.sml
+  src/util/ident.sml
   lib/json/json_sig.sml
   lib/json/json.sml
   src/util/color.sml

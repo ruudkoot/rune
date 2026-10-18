@@ -150,7 +150,7 @@ struct
      another declaration's (a nested use). *)
   fun run (decs : Ast.dec list, name : string, text : string, cached : (string * int * string list) option,
            stopping : bool) : bool =
-    runGroups (topdecs decs, name, text, cached, stopping)
+    (Lexer.report name; runGroups (topdecs decs, name, text, cached, stopping))
 
   (* The declarations as units: a top-level declaration each -- those to a
      `;` or the end -- where flexible records are settled there, as Poly/ML

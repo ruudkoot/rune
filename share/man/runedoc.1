@@ -330,6 +330,24 @@ Also write every diagnostic of the run to
 .I FILE
 as JSON, in the form rune-ide reads.
 .TP
+.BR \-\-unicode [= \fIENC\fP]
+Read the files named on the command line as
+.BR rune (1)
+reads its inputs under it, Unicode text in the encoding
+.IR ENC ,
+.B utf8
+(the default) or
+.BR latin1 ,
+so that their names may hold the letters of
+.IR lib/unicode 's
+identifier profile. A name's anchor spells a character above 127 as
+.B u
+and its code point in hexadecimal:
+.B val\-u3bb
+is the value
+\(*l.
+A library is always read in the default mode.
+.TP
 .BI \-\-lib " DIR"
 The directory that holds the libraries. The wrapper script passes it; a later
 one wins.

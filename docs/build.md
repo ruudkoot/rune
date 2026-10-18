@@ -98,6 +98,16 @@ works it out from the sources (`Deps`, docs/units.md, The graph) and writes
 `DIR/MANIFEST`, which is what the compiler reads (`BasisManifest`). `make
 manifests` makes them all, and they are not committed.
 
+**What a library exports is ASCII.** Standard ML has no escape for a
+name, so a program read in the default mode could not name `Foo.λ`:
+the structures, signatures and functors of a library, and their
+members, constructors and fields, are spelt in ASCII, whatever mode its
+files are read in (the utf8 roadmap's X11 and D10). Today a library is
+read in the default mode, whatever its build file and the command line
+say ([units.md](units.md), *Source modes*), and the compiler refuses a
+name beyond ASCII in it; should a library's files ever be read in
+another mode, its exports stay ASCII all the same.
+
 ## Virtual modules
 
 A virtual module is a structure that units are compiled against by its

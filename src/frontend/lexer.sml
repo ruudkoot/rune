@@ -11,8 +11,9 @@ struct
      and build a closure. *)
   val symbolicTable = Vector.tabulate (256, fn i => Char.contains "!%&$#+-/:<=>?@\\~`^|*" (Char.chr i))
   fun isSymbolic c = Vector.sub (symbolicTable, Char.ord c)
-  fun isIdentStart c = Char.isAlpha c
-  fun isIdentChar c = Char.isAlphaNum c orelse c = #"'" orelse c = #"_"
+  (* the ASCII characters of an alphanumeric identifier (Ident) *)
+  val isIdentStart = Ident.isStartAscii
+  val isIdentChar = Ident.isContinueAscii
   fun isHex c = Char.isHexDigit c
 
   (* The reserved words by their first character, so that an identifier is
@@ -87,6 +88,37 @@ struct
                                   else if (i >= 32 andalso i < 127) orelse i = 9 orelse i = 10 orelse i = 12 then 0
                                   else 3)
 
+  (* The UTS #39 warnings (D13), which --no-unicode-lints turns off; what
+     tokenize found of them in a source, by its name, until the compile of
+     the source reports them (report) *)
+  val lints = ref true
+  val pending : (Source.span * string) list StringMap.map ref = ref StringMap.empty
+  fun report (name : string) : unit =
+    case StringMap.find (!pending, name) of
+      NONE => ()
+    | SOME found =>
+        let
+          (* in the order of the text *)
+          fun insert (w, []) = [w]
+            | insert (w : Source.span * string, v :: rest) =
+                if #start (#1 w) <= #start (#1 v) then w :: v :: rest else v :: insert (w, rest)
+        in
+          pending := StringMap.remove (!pending, name);
+          List.app Error.warn (List.foldl insert [] found)
+        end
+
+  (* the code points whose skeleton holds a star or a closing parenthesis,
+     each looked up once a run: the parts of a lookalike of a comment's
+     end *)
+  val starOrParen : bool IntTable.table = IntTable.table 64
+  fun isStarOrParen (c : int) : bool =
+    case IntTable.find (starOrParen, c) of
+      SOME b => b
+    | NONE =>
+        let val k = UnicodeSecurity.skeleton (Utf8.encode c)
+            val b = CharVector.exists (fn x => x = #"*" orelse x = #")") k
+        in IntTable.insert (starOrParen, c, b); b end
+
   (* An escape of a code point: \uXXXX, or \UXXXXXXXX above U+FFFF *)
   fun escapeOf c =
     if c <= 0xFFFF then "\\u" ^ StringCvt.padLeft #"0" 4 (Int.fmt StringCvt.HEX c)
@@ -111,7 +143,8 @@ struct
      read (Source.readFile), and refused where it looks like UTF-8 itself
      (D3). *)
   fun lexerOf (mode : Source.mode, name : string, text : string)
-      : {next : int -> token * Source.span * int, skipComment : int -> int} =
+      : {next : int -> token * Source.span * int, skipComment : int -> int, sawUnicodeName : unit -> bool,
+         found : unit -> (Source.span * string) list} =
     let
       val n = String.size text
       fun span (a, b) : Source.span = {file = name, start = a, stop = b}
@@ -120,6 +153,12 @@ struct
       fun at i = i < n
       val latin1 = mode = Source.Unicode Source.Latin1
       val utf8Raw = mode = Source.Unicode Source.Utf8
+      (* under --unicode an alphanumeric identifier may hold the code points
+         of Ident's profile (D10) *)
+      val unicodeNames = mode <> Source.Ascii
+      (* whether a name above ASCII was met, and the warnings found *)
+      val sawUnicodeName = ref false
+      val found : (Source.span * string) list ref = ref []
 
       (* Under --unicode=latin1, the characters from i, each a byte of the
          file, where they are the UTF-8 of a character: the file was UTF-8
@@ -155,6 +194,26 @@ struct
                                           ^ (if context = "in a comment" then "" else " (write it as " ^ escapeOf c ^ ")"))
             | NONE => ((if latin1 andalso c >= 0xC2 then looksUtf8 i else ()); (c, k))
 
+      (* UTS #55's lookalike of a comment's end (D13): the character at i,
+         of k bytes, and the one before or after it, where their skeleton
+         is a star and a closing parenthesis, as the end of a comment is *)
+      and endLookalike (i, cp, k) =
+        let
+          fun startBefore j = if j > 0 andalso Char.ord (ch (j - 1)) >= 128 andalso Char.ord (ch (j - 1)) < 0xC0
+                              then startBefore (j - 1) else j - 1
+          val p = startBefore i
+          val q = i + k
+          val nextLen = if q < n andalso Char.ord (ch q) >= 128
+                        then (case Utf8.decode (text, q) of SOME (_, m) => m | NONE => 1) else 1
+          fun has (a, b) = a >= 0 andalso b <= n
+                           andalso String.isSubstring "*)" (UnicodeSecurity.skeleton (String.substring (text, a, b - a)))
+        in
+          if has (p, q) then found := (span (p, q), "a lookalike of *) in a comment, which does not end it") :: !found
+          else if has (i, q + nextLen) then
+            found := (span (i, q + nextLen), "a lookalike of *) in a comment, which does not end it") :: !found
+          else ()
+        end
+
       (* how many bytes of formatting -- space, TAB, LF, FF, or CR LF -- are
          at i: the white space between tokens and in a string's gap *)
       fun formatting i =
@@ -184,7 +243,9 @@ struct
           (* a control, DEL or a byte above 127 in a comment: how many bytes
              its character has, where the comment may hold it (D4, D5) *)
           and odd (i, c) =
-            if Char.ord c >= 128 then #2 (above127 (i, "in a comment"))
+            if Char.ord c >= 128 then
+              let val (cp, k) = above127 (i, "in a comment")
+              in (if !lints andalso isStarOrParen cp then endLookalike (i, cp, k) else ()); k end
             else if c = #"\r" andalso ch (i + 1) = #"\n" then 2
             else err (i, i + 1, "control character " ^ codePoint (Char.ord c) ^ " in a comment"
                                 ^ (if c = #"\r" then " (a carriage return not before a line feed)" else ""))
@@ -342,31 +403,81 @@ struct
         else
           case Utf8.decode (text, i) of
             SOME (c, k) => ((if latin1 andalso c >= 0xC2 then looksUtf8 i else ());
-                            err (i, i + k, "unexpected character " ^ codePoint c
-                                          ^ (case refusedAbove127 c of SOME what => " (a " ^ what ^ ")" | NONE => "")))
+                            err (i, i + k,
+                                 case (refusedAbove127 c, Ident.refusal c) of
+                                   (SOME what, _) => "unexpected character " ^ codePoint c ^ " (a " ^ what ^ ")"
+                                 | (NONE, SOME why) => "the character " ^ codePoint c ^ " cannot be part of a name: it is " ^ why
+                                 | (NONE, NONE) =>
+                                     "unexpected character " ^ codePoint c
+                                     ^ (if not unicodeNames andalso Ident.isStart c
+                                        then " (a letter, which a name holds under --unicode)" else "")))
           | NONE => err (i, i + 1, "unexpected byte 0x" ^ Int.fmt StringCvt.HEX (Char.ord (ch i)) ^ " (invalid UTF-8)")
+
+      (* The end of the characters of an alphanumeric identifier from i,
+         and whether it holds one above ASCII: ASCII ones, and under
+         --unicode those of the profile (Ident). A character the profile
+         leaves out of XID_Continue is refused with why; any other ends the
+         name. Under --unicode=latin1 a name, as any text, is refused where
+         its characters are the bytes of UTF-8 (looksUtf8). *)
+      fun identEnd (i, above) =
+        if i >= n then (i, above)
+        else
+          let val c = String.sub (text, i)
+          in
+            if Char.ord c < 128 then (if isIdentChar c then identEnd (i + 1, above) else (i, above))
+            else if not unicodeNames then (i, above)
+            else
+              case Utf8.decode (text, i) of
+                SOME (cp, k) =>
+                  ((if latin1 andalso cp >= 0xC2 then looksUtf8 i else ());
+                   if Ident.isContinue cp then identEnd (i + k, true)
+                   else (case Ident.refusal cp of
+                           SOME why => err (i, i + k, "the character " ^ codePoint cp ^ " in a name is " ^ why)
+                         | NONE => (i, above)))
+              | NONE => (i, above)
+          end
+      (* whether a name begins at j *)
+      fun startsIdent j =
+        isIdentStart (ch j)
+        orelse (unicodeNames andalso Char.ord (ch j) >= 128
+                andalso (case Utf8.decode (text, j) of SOME (cp, _) => Ident.isStart cp | NONE => false))
+      (* the name from a to b, which identEnd says holds a character above
+         ASCII where above: in NFC, or refused with its NFC spelling (D12) *)
+      fun nameFrom (a, b, above) =
+        let val s = String.substring (text, a, b - a)
+        in
+          if not above then s
+          else
+            (sawUnicodeName := true;
+             case Normalize.quickCheck s of
+               Normalize.Yes => s
+             | answer =>
+                 if answer = Normalize.Maybe andalso Normalize.isNFC s then s
+                 else err (a, b, "the name " ^ s ^ " is not in NFC, the form names are written in: write it as "
+                                 ^ Normalize.nfc s))
+        end
 
       (* Alphanumeric identifier or long identifier. *)
       fun lexAlpha (i) =
         let
-          val j = digitsWhile (i, isIdentChar)
-          val s = String.substring (text, i, j - i)
+          val (j, above) = identEnd (i, false)
+          val s = nameFrom (i, j, above)
         in
           case lookupReserved (s, reservedBuckets) of
             SOME t => (t, span (i, j), j)
           | NONE =>
-            if ch j = #"." andalso (isIdentStart (ch (j + 1)) orelse isSymbolic (ch (j + 1))) then
+            if ch j = #"." andalso (isIdentStart (ch (j + 1)) orelse isSymbolic (ch (j + 1)) orelse startsIdent (j + 1)) then
               lexLong (i, [s], j + 1)
             else (ID s, span (i, j), j)
         end
       and lexLong (start, path, i) =
-        if isIdentStart (ch i) then
+        if startsIdent i then
           let
-            val j = digitsWhile (i, isIdentChar)
-            val s = String.substring (text, i, j - i)
+            val (j, above) = identEnd (i, false)
+            val s = nameFrom (i, j, above)
           in
             if isSome (lookupReserved (s, reservedBuckets)) then err (i, j, "reserved word in long identifier")
-            else if ch j = #"." andalso (isIdentStart (ch (j + 1)) orelse isSymbolic (ch (j + 1))) then
+            else if ch j = #"." andalso (startsIdent (j + 1) orelse isSymbolic (ch (j + 1))) then
               lexLong (start, s :: path, j + 1)
             else (LONGID (List.rev path, s), span (start, j), j)
           end
@@ -395,8 +506,8 @@ struct
             else if isIdentStart c then lexAlpha i
             else if c = #"'" then
               (* Section 2.4: a type variable is an alphanumeric identifier starting with a prime *)
-              let val j = digitsWhile (i + 1, isIdentChar)
-              in (TYVAR (String.substring (text, i, j - i)), span (i, j), j) end
+              let val (j, above) = identEnd (i + 1, false)
+              in (TYVAR (nameFrom (i, j, above)), span (i, j), j) end
             else if c = #"\"" then
               let
                 val () = rawMark := NONE
@@ -413,6 +524,7 @@ struct
                    [c] => (CHAR (c, !rawMark), span (i, j), j)
                  | _ => err (i, j, "character literal must contain exactly one character")
               end
+            else if Char.ord c >= 128 andalso unicodeNames andalso startsIdent i then lexAlpha i
             else if c = #"_" then
               (if String.size text >= i + 5 andalso String.substring (text, i, 5) = "_prim"
                   andalso not (isIdentChar (ch (i + 5))) then (PRIM, span (i, i + 5), i + 5)
@@ -448,12 +560,92 @@ struct
           end
 
     in
-      {next = next, skipComment = skipComment}
+      {next = next, skipComment = skipComment, sawUnicodeName = fn () => !sawUnicodeName,
+       found = fn () => !found}
+    end
+
+  (* ---- the UTS #39 warnings on names (D13) ---- *)
+
+  (* what a name may look like and not be: a reserved word, or Standard
+     ML's punctuation and symbols *)
+  val reservedWords = List.map #1 reserved
+  fun isPunctuation (k : string) : bool =
+    k <> "" andalso CharVector.all (fn c => isSymbolic c orelse Char.contains "()[]{},;._'\"" c) k
+
+  (* The warnings on the names of a text that holds a name above ASCII:
+     a character UTS #39 restricts; scripts mixed in a part of a name, as
+     the moderately restrictive profile refuses; a name that looks like a
+     reserved word, like punctuation, or like another name of the text. A
+     part is what `_` and `'` and the dots of a long identifier part. *)
+  fun nameLints (file : Source.file, toks : item vector) : (Source.span * string) list =
+    let
+      val firstAt : Source.span StringMap.map ref = ref StringMap.empty
+      fun add (s, sp) =
+        if s = "" orelse not (Ident.isStartByte (String.sub (s, 0))) orelse StringMap.member (!firstAt, s) then ()
+        else firstAt := StringMap.insert (!firstAt, s, sp)
+      fun unprimed s = Substring.string (Substring.dropl (fn c => c = #"'") (Substring.full s))
+      val () = Vector.app (fn (ID s, sp) => add (s, sp)
+                            | (LONGID (path, s), sp) => (List.app (fn q => add (q, sp)) path; add (s, sp))
+                            | (TYVAR s, sp) => add (unprimed s, sp)
+                            | _ => ()) toks
+      val names = StringMap.listItemsi (!firstAt)
+      fun above s = CharVector.exists (fn c => Char.ord c >= 128) s
+      val unicodeNames = List.filter (above o #1) names
+      (* the names by their skeletons: the first two of each skeleton, so
+         that a name finds another of its skeleton at once *)
+      val bySkeleton : (string * Source.span) list StringMap.map ref = ref StringMap.empty
+      val () = List.app (fn (s, sp) =>
+                           let val k = UnicodeSecurity.skeleton s
+                           in
+                             case StringMap.find (!bySkeleton, k) of
+                               NONE => bySkeleton := StringMap.insert (!bySkeleton, k, [(s, sp)])
+                             | SOME [one] => bySkeleton := StringMap.insert (!bySkeleton, k, [(s, sp), one])
+                             | SOME _ => ()
+                           end) names
+      val warnings = ref []
+      fun warn (sp, msg) = warnings := (sp, msg) :: !warnings
+      fun typeName t =
+        case t of
+          UnicodeSecurity.LimitedUse => "of limited use" | UnicodeSecurity.Technical => "technical"
+        | UnicodeSecurity.UncommonUse => "of uncommon use" | UnicodeSecurity.Obsolete => "obsolete"
+        | UnicodeSecurity.Exclusion => "of a script no longer in use" | UnicodeSecurity.Deprecated => "deprecated"
+        | UnicodeSecurity.NotNFKC => "changed by NFKC" | _ => "not recommended"
+      fun one (s, sp) =
+        let
+          val restricted = Utf8.foldl (fn (c, NONE) => if UnicodeSecurity.status c = UnicodeSecurity.Restricted then SOME c else NONE
+                                        | (_, r) => r) NONE s
+          val parts = String.tokens (fn c => c = #"_" orelse c = #"'") s
+          val mixed = List.find (fn q => above q andalso UnicodeSecurity.restriction q = UnicodeSecurity.MinimallyRestrictive) parts
+          val k = UnicodeSecurity.skeleton s
+          val twin = case StringMap.find (!bySkeleton, k) of
+                       SOME others => List.find (fn (t, _) => t <> s) others
+                     | NONE => NONE
+        in
+          (case restricted of
+             SOME c => warn (sp, "the name " ^ s ^ " holds " ^ codePoint c ^ ", which UTS #39 restricts in names ("
+                                 ^ String.concatWith ", " (List.map typeName (UnicodeSecurity.types c)) ^ ")")
+           | NONE => ());
+          (case mixed of
+             SOME q => warn (sp, "the name " ^ s ^ " mixes scripts" ^ (if q = s then "" else " in " ^ q)
+                                 ^ ", which UTS #39's moderately restrictive profile refuses")
+           | NONE => ());
+          if List.exists (fn w => w = k) reservedWords then warn (sp, "the name " ^ s ^ " looks like the reserved word " ^ k)
+          else if isPunctuation k then warn (sp, "the name " ^ s ^ " looks like " ^ k)
+          else
+            case twin of
+              SOME (t, tsp) =>
+                warn (sp, "the name " ^ s ^ " looks like " ^ t ^ ", a name on line " ^ Int.toString (#1 (Source.lineCol (file, #start tsp)))
+                          ^ " (UTS #39's confusables)")
+            | NONE => ()
+        end
+    in
+      List.app one unicodeNames;
+      !warnings
     end
 
   fun tokenize (file : Source.file) : item vector =
     let
-      val {next, ...} = lexerOf (#mode file, #name file, #text file)
+      val {next, sawUnicodeName, found, ...} = lexerOf (#mode file, #name file, #text file)
       fun loop (i, acc) =
         let val (t, sp, j) = next i
         in case t of EOF => List.rev ((t, sp) :: acc) | _ => loop (j, (t, sp) :: acc) end
@@ -461,8 +653,15 @@ struct
          (D5); elsewhere it is refused *)
       val start = if #mode file <> Source.Unicode Source.Latin1 andalso String.isPrefix "\239\187\191" (#text file) then 3
                   else 0
+      val toks = Vector.fromList (loop (start, []))
+      (* the warnings, kept until the source is compiled (report) *)
+      val warnings = found () @ (if !lints andalso sawUnicodeName () then nameLints (file, toks) else [])
+      val () = pending := (case warnings of
+                             [] => if StringMap.member (!pending, #name file) then StringMap.remove (!pending, #name file)
+                                   else !pending
+                           | _ => StringMap.insert (!pending, #name file, warnings))
     in
-      Vector.fromList (loop (start, []))
+      toks
     end
 
   (* ---- the lexer for the eye (docs/plans/repl.md, D13) ----
@@ -507,7 +706,7 @@ struct
           | _ => body (i + 1, false)
       fun classOf (t : token, i : int) : class =
         case t of
-          ID s => if Char.isAlpha (String.sub (s, 0)) then Name else Operator
+          ID s => if Ident.isStartByte (String.sub (s, 0)) then Name else Operator
         | LONGID _ => LongName
         | TYVAR _ => TyVar
         | INT _ => Number

@@ -305,9 +305,12 @@ struct
       val k = !count
       val name = case cached of SOME (stem, n, _) => stem ^ "#" ^ Int.toString n | NONE => file ^ "#" ^ Int.toString k
       (* the mode its text was read in, which its key says where it is not
-         the default, as a compile in units says it (Main) *)
+         the default, as a compile in units says it (Main), and
+         --no-unicode-lints, whose warnings an entry would keep *)
       val srcMode = modeOf file
-      val settings = if srcMode = Source.Ascii then "" else Source.modeName srcMode
+      val settings = String.concatWith " " (List.filter (fn s => s <> "")
+                                              [if srcMode = Source.Ascii then "" else Source.modeName srcMode,
+                                               if !Lexer.lints then "" else "no-unicode-lints"])
       val cache =
         case cached of
           NONE => NONE
@@ -393,7 +396,9 @@ struct
                       NONE => []
                     | SOME (text, synth) =>
                         let
-                          val file = Source.fromString (echoName, text)
+                          (* read as --unicode reads, since it names the
+                             declaration's values, which may be Unicode *)
+                          val file = Source.fromStringIn (Source.Unicode Source.Utf8, echoName, text)
                           val () = Source.register file
                           (* the standard fixity, whatever the declarations made of the
                              names the printer uses *)

@@ -66,7 +66,7 @@ struct
   (* A law's name in a label: its letters and digits, lower case, the rest
      a hyphen. *)
   fun slug (name : string) : string =
-    String.concatWith "-" (String.tokens (fn c => not (Char.isAlphaNum c)) (String.map Char.toLower name))
+    String.concatWith "-" (String.tokens (fn c => not (Char.isAlphaNum c)) (String.map Char.toLower (Ident.asciiSpelling name)))
 
   (* The label of a law, as the Basis suite labels its checks (D13):
      `INTEGER.div/law-1`, or by its name, `GENERAL.o/law-associative`. *)
@@ -115,8 +115,8 @@ struct
     let
       val n = String.size c
       fun word (i, w) = String.isPrefix w (String.extract (c, i, NONE))
-                        andalso (i = 0 orelse not (Char.isAlphaNum (String.sub (c, i - 1))))
-                        andalso (i + String.size w >= n orelse not (Char.isAlphaNum (String.sub (c, i + String.size w))))
+                        andalso (i = 0 orelse not (Ident.isNameByte (String.sub (c, i - 1))))
+                        andalso (i + String.size w >= n orelse not (Ident.isNameByte (String.sub (c, i + String.size w))))
       fun go (i, depth, start, acc) =
         if i >= n then List.rev (String.substring (c, start, n - start) :: acc)
         else
@@ -141,7 +141,7 @@ struct
 
   (* whether the name occurs in the text as a word of its own *)
   fun mentions (name : string) (t : string) : bool =
-    List.exists (fn w => w = name) (String.tokens (fn c => not (Char.isAlphaNum c orelse c = #"_" orelse c = #"'")) t)
+    List.exists (fn w => w = name) (String.tokens (not o Ident.isNameByte) t)
 
   (* The bounds a condition sets on the integer variable x: lower and upper,
      each an expression and whether it is strict. *)

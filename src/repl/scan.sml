@@ -31,7 +31,7 @@ struct
      | _ => ();
      word := [])
 
-  fun isWordChar c = Char.isAlphaNum c orelse c = #"_" orelse c = #"'"
+  val isWordChar = Ident.isNameByte
 
   (* char (s, c): c is the next character typed *)
   fun char (s as {depth, comment, inString, escaped, gap, prev, word, ended, broken} : t, c : char) : unit =

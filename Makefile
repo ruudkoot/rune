@@ -1083,9 +1083,10 @@ test-repl: bin/rune-repl bin/runevm bin/rune-test
 
 # rune-kernel, a Jupyter kernel for Standard ML (docs/kernel.md): a bridge
 # in SML over lib/jupyter that drives the REPL's engine as its child
-bin/rune-kernel.rbc: $(RUNE) src/front/engine.sml src/dap/translate.sml src/kernel/kernel.sml manifests \
-                     $(wildcard lib/jupyter/*.sml lib/zmtp/*.sml lib/digest/*.sml lib/json/*.sml lib/jsonrpc/*.sml)
-	$(RUNE) --library jupyter --library jsonrpc --library digest src/front/engine.sml src/dap/translate.sml src/kernel/kernel.sml -o $@
+bin/rune-kernel.rbc: $(RUNE) src/front/engine.sml src/dap/translate.sml src/util/ident.sml src/kernel/kernel.sml manifests \
+                     $(wildcard lib/jupyter/*.sml lib/zmtp/*.sml lib/digest/*.sml lib/json/*.sml lib/jsonrpc/*.sml lib/unicode/*.sml)
+	$(RUNE) --library jupyter --library jsonrpc --library digest --library unicode src/front/engine.sml src/dap/translate.sml \
+	  src/util/ident.sml src/kernel/kernel.sml -o $@
 bin/rune-kernel: bin/rune-kernel.rbc bin/rune-repl.img bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-kernel.rbc" --vm "$$d/runevm" --image "$$d/rune-repl.img" --program "$$d/rune-kernel.rbc" "$$@"\n' > $@
 	chmod +x $@

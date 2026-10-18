@@ -1,0 +1,15 @@
+- = = val λ = 1 : int
+- val 合計 = fn : int list -> int
+- val it = 6 : int
+- structure Σ
+- val it = 8 : int
+- val संख्या = 7 : int
+- breakpoint 1 at tests/repl/lib/unicode.sml:5 (no code there yet: a file used from now on, compiled for the debugger, may have some)
+- val 面積 = fn : int -> int
+val it = () : unit
+- stopped at a breakpoint: in 面積 at tests/repl/lib/unicode.sml:5:6
+    5 |   in π * 半径 * 半径 end
+debug> val 半径 = 2 : int
+val π = 3 : int
+debug> val it = 12 : int
+- 

@@ -71,6 +71,8 @@ struct
     \  --or-patterns     allow or-patterns (p1 | p2), which are not Standard ML\n\
     \  --unicode[=ENC]   read the input files as Unicode text in the encoding ENC:\n\
     \                    utf8 (the default) or latin1 (docs/units.md, Source modes)\n\
+    \  --no-unicode-lints  do not warn of what UTS #39 finds in names and comments:\n\
+    \                    restricted characters, mixed scripts, lookalikes\n\
     \  --default-type=T  in the input files, the type of an int or word constant or\n\
     \                    operator that its declaration leaves open: int (default)\n\
     \                    or int64, word (default) or word64\n\
@@ -193,6 +195,7 @@ struct
     | "--int-bits=64" :: rest => (Overload.setIntBits 64; Target.intBits := 64; parse rest)
     | "--or-patterns" :: rest => (orPatterns := true; parse rest)
     | "--unicode" :: rest => (sourceMode := Source.Unicode Source.Utf8; parse rest)
+    | "--no-unicode-lints" :: rest => (Lexer.lints := false; parse rest)
     | "--default-type=int" :: rest => (defaultInt64 := false; parse rest)
     | "--default-type=int64" :: rest => (defaultInt64 := true; parse rest)
     | "--default-type=word" :: rest => (defaultWord64 := false; parse rest)

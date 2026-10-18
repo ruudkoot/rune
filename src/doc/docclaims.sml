@@ -33,7 +33,7 @@ struct
   fun split (sigexp : string) : (string * string) option =
     let
       val s = T.oneLine sigexp
-      fun isName c = Char.isAlphaNum c orelse c = #"_" orelse c = #"'"
+      val isName = Ident.isNameByte
       fun stop i = if i < String.size s andalso isName (String.sub (s, i)) then stop (i + 1) else i
       val n = stop 0
     in

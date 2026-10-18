@@ -93,6 +93,15 @@ a file that holds the UTF-8 of a character is refused as one that looks
 like UTF-8. What else a source may hold raw is the same in every mode
 (*Source text*).
 
+The modes differ too in what a name holds ([language.md](language.md),
+*Identifiers*). By default an alphanumeric identifier is ASCII. Under
+`--unicode` and `--unicode=latin1` it may hold the letters, marks and
+digits of `lib/unicode`'s identifier profile, in NFC, and the compiler
+warns of what UTS #39 finds in the names unless `--no-unicode-lints`
+is given. A library is read in the default, so what it exports is
+ASCII, and a unit in any mode can name it (*A library's build file* of
+[build.md](build.md)).
+
 ## The export basis
 
 Once a unit is compiled, what the units after it need of it -- its
@@ -248,7 +257,8 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
 * in that, a directory per *key*, the hash of the unit's name, its source
   and whether it may use `_prim`, and of an input file's unit the settings
   that hold for the input files and not the libraries (`--default-type`,
-  `--or-patterns`; S62), and of any unit its mode where it is not the
+  `--or-patterns`; S62; and `--no-unicode-lints`, since an entry keeps
+  the warnings it leaves out; S64), and of any unit its mode where it is not the
   default (*Source modes*; S63); a file of the library is named by its
   place in the library (`lib/basis/list.sml`), so that a cache follows the
   library where it is moved, and a unit taken from the cache names its

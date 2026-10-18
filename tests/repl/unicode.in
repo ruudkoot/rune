@@ -1,0 +1,13 @@
+(* names of Unicode under --unicode (docs/plans/utf8.md, M6): the REPL
+   prints them as they are, and the debugger shows them *)
+val λ = 1;
+fun 合計 (xs : int list) = List.foldl op+ 0 xs;
+合計 [λ, 2, 3];
+structure Σ = struct val α = 2 val работа = 5 end;
+Σ.α + λ + Σ.работа;
+val संख्या = 7;
+:break tests/repl/lib/unicode.sml:5
+use "tests/repl/lib/unicode.sml";
+面積 2;
+:locals
+:continue

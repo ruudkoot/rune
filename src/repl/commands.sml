@@ -277,7 +277,8 @@ struct
     let
       val t = trim line
       val body = String.extract (t, 1, NONE)
-      val name = Substring.string (Substring.takel (fn c => Char.isAlpha c orelse c = #"-") (Substring.full body))
+      (* a command's name is ASCII *)
+      val name = Substring.string (Substring.takel (fn c => Ident.isStartAscii c orelse c = #"-") (Substring.full body))
       val rest = trim (String.extract (body, String.size name, NONE))
     in
       (#run (find name) rest; true)

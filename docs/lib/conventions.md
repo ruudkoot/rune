@@ -54,6 +54,8 @@ Every entry has an anchor `kind-name`, where the kind is one of `val`, `type`, `
 spelled `-prime`. A member of a substructure has the substructure before its name
 (`val-kind.file`), a field what it is a field of (`fld-failed.why`). A symbolic identifier is
 spelled out, after `op-`, with these names: `val-op-at` is `@`, `con-op-colon-colon` is `::`.
+A library's names are ASCII; in a source that `runedoc --unicode` reads, a character above 127
+is spelled `u` and its code point in hexadecimal, so that `val-u3bb` is a value named U+03BB.
 
 | Character | Name |
 | --- | --- |

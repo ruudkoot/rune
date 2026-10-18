@@ -606,7 +606,8 @@ struct
       val signatures = List.filter (fn p => List.exists (fn l => String.isPrefix "signature " l) (lines (read p)))
                                    (glob ("lib/basis", ".sml"))
       val () = runAll ("ir-basis", "--dump-ir" :: signatures)
-      val () = runAll ("ir-tests", "--dump-ir" :: glob ("tests/doc", ".sml"))
+      (* --unicode: a test's names may be Unicode (anchors-unicode.sml) *)
+      val () = runAll ("ir-tests", "--unicode" :: "--dump-ir" :: glob ("tests/doc", ".sml"))
       fun site c = out ^ "/site." ^ c
       val () = List.app (fn c => (rmTree (site c);
                                   if exec {cmd = ["bin/runedoc-" ^ c, "--lib", "lib", "--library", "basis", "--tests", "tests/basis",

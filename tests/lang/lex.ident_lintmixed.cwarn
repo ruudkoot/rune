@@ -1,0 +1,1 @@
+tests/lang/lex.ident_lintmixed.sml:3:5: warning: the name xλ mixes scripts, which UTS #39's moderately restrictive profile refuses

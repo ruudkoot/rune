@@ -41,7 +41,7 @@ with the reasons for what it does.
 ## The command line
 
 ```
-rune-repl [-q] [-e DECLARATIONS]... [--no-init] [--color=WHEN] [--basic] [--unicode[=ENC]] [FILE]...
+rune-repl [-q] [-e DECLARATIONS]... [--no-init] [--color=WHEN] [--basic] [--unicode[=ENC]] [--no-unicode-lints] [FILE]...
 ```
 
 * `-q`: no banner on a terminal.
@@ -62,7 +62,12 @@ rune-repl [-q] [-e DECLARATIONS]... [--no-init] [--color=WHEN] [--basic] [--unic
   its inputs in, Unicode text in the encoding `utf8` (the default) or
   `latin1`, and what is typed is read as UTF-8 ([units.md](units.md),
   *Source modes*). The encoding is taken only after an `=`, as by `rune`:
-  `--unicode latin1` uses a file `latin1`.
+  `--unicode latin1` uses a file `latin1`. Under it a name may hold the
+  letters of `lib/unicode`'s identifier profile, which the REPL, its
+  completion and the debugger show as they are written.
+* `--no-unicode-lints`: the warnings of UTS #39 on the names, and of a
+  lookalike of `*)` in a comment, are left out, as `rune` leaves them out
+  ([language.md](language.md), *Identifiers*).
 
 On Windows, `rune-repl.cmd` beside `runevm.exe` is `rune-repl` for the
 command prompt and PowerShell.

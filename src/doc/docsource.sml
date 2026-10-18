@@ -10,10 +10,12 @@ struct
   (* A comment: from its "(*" to after the matching "*)". *)
   type comment = {start : int, stop : int}
 
-  (* a library's file, read in the default mode, as the compiler reads a
-     library's (Source.mode) *)
+  (* the mode the files are read in: the default, as the compiler reads a
+     library's, or runedoc --unicode's (Source.mode) *)
+  val mode = ref Source.Ascii
+
   fun load (path : string) : t =
-    let val file = Source.load (Source.Ascii, path)
+    let val file = Source.load (!mode, path)
     in {file = file, toks = Lexer.tokenize file} end
 
   fun text ({file, ...} : t) : string = #text file

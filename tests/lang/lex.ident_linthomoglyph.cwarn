@@ -1,0 +1,2 @@
+tests/lang/lex.ident_linthomoglyph.sml:4:5: warning: the name sayΗello mixes scripts, which UTS #39's moderately restrictive profile refuses
+tests/lang/lex.ident_linthomoglyph.sml:4:5: warning: the name sayΗello looks like sayHello, a name on line 3 (UTS #39's confusables)

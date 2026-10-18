@@ -41,7 +41,13 @@ Shared utilities: `src/util/ordmap.sml` (AVL maps: `functor OrdMapFn`,
 applied as `StringMap`/`IntMap`), `inttable.sml` (mutable hash tables of
 ints, which are never listed, so their order cannot reach the output),
 `source.sml` (files, spans, line/column), `error.sml` (`CompileError`,
-`Bug`), `pass.sml` (the passes' options, lints and fuel).
+`Bug`), `pass.sml` (the passes' options, lints and fuel), `ident.sml`
+(`Ident`, the one test of an identifier's characters, which the lexer,
+the REPL, the kernel and runedoc share: ASCII by default, the profile of
+`lib/unicode`'s `Identifier` under `--unicode`). The compiler is built
+with `lib/unicode`'s `Utf8`, `Normalize`, `Identifier` and
+`UnicodeSecurity` (`rune.build`), whose tables are decoded at their first
+use, so that an ASCII source decodes none.
 
 
 Literal range checking reuses immutable signed and unsigned limits for widths
@@ -102,7 +108,7 @@ that what `runeopt` writes names fields and never gives their offsets.
 | `DocHead` | `src/doc/dochead.sml` | Usage heads: `` `take (l, i)` `` at the start of a value's description is parsed with the compiler's parser and checked against the type of the specification; its arguments name the arguments for the rest of the comment. |
 | `DocIR` | `src/doc/docir.sml` | The intermediate representation: modules, the entries of a signature in source order, constructors, fields. Renderers read only this. `dump` is its text form. |
 | `DocExtract` | `src/doc/docextract.sml` | Syntax tree and comments to `DocIR`, in two walks: the first notes what can be documented, the second builds the modules with their comments. Specifications are shown as the source has them; the parser's derived forms (`type t = ty`, `include A B`) are recognised and undone. |
-| `DocAnchor` | `src/doc/docanchor.sml` | The explicit anchors of a page, `kind-name` in lower case with symbolic identifiers spelled out (`val-op-at`): GitHub's own anchors are useless for SML. |
+| `DocAnchor` | `src/doc/docanchor.sml` | The explicit anchors of a page, `kind-name` in lower case with symbolic identifiers spelled out (`val-op-at`) and a character above 127 as `u` and its code point (`val-u3bb`): GitHub's own anchors are useless for SML. |
 | `DocMarkdown` | `src/doc/docmarkdown.sml` | Markdown as GitHub reads it: what must be escaped for text to stay text, blocks, tables. |
 | `DocClaims` | `src/doc/docclaims.sml` | What implements what: the `Implements:` paragraphs of structures and functors, the ascriptions of the source, and the substructures a structure has through `structure A = B`. They give the signature pages their implementations and are written to `claims.tsv`, which `tests/basis/check-claims.sh` compares with what the suite matches against the specification's signatures. |
 | `DocElab` | `src/doc/docelab.sml` | The library through the compiler's elaborator, file by file as the driver does it. A claim is checked by elaborating `structure Claim : SIG where type ... = S` on top, and the compiler's complaint is the diagnostic; a usage head is checked against the elaborated type of its value, with abbreviations expanded. It also answers what only elaboration knows: whether an example that is an equation is well typed (`checkExample`), what a structure without a body in the source declares and what a signature specifies with its includes (`namesOf`, `specifiedBy`, for the names beyond the signature of `structures.md`), which types have one type name (`typeNames`, for `types.md`), and whether a signature with its `where type`s says which type one of its types is or leaves it abstract (`typeSpecOf`, for the reason that `types.md` gives with every name). A library other than the Basis Library is elaborated on top of it. |

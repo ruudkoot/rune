@@ -54,7 +54,10 @@ reads a line at a time, as on a pipe,
 .BR \-\-unicode [= \fIENC\fP]
 reads the files it uses as
 .B rune
-reads its inputs under it, and what is typed as UTF-8;
+reads its inputs under it, and what is typed as UTF-8,
+.B \-\-no\-unicode\-lints
+leaves out the warnings of UTS #39 as it does for
+.BR rune ;
 .B \-\-engine
 is the session for a front in another process, JSON-RPC 2.0 on the
 descriptors 3 and 4
@@ -183,6 +186,21 @@ the file is Latin-1, made UTF-8 as it is read, and a raw character is
 its own byte
 .RI ( docs/language.md ,
 Strings).
+Under either an alphanumeric identifier may hold the letters, marks and
+digits of the identifier profile of
+.IR lib/unicode ,
+in NFC
+.RI ( docs/language.md ,
+Identifiers).
+.TP
+.B \-\-no\-unicode\-lints
+Do not warn of what UTS #39 finds in the names of a source read under
+.BR \-\-unicode :
+a character it restricts, a name that mixes scripts, a name that looks
+like another, like a reserved word or like punctuation; nor of a
+lookalike of
+.B *)
+in a comment (UTS #55), in every mode.
 .TP
 .BI \-\-default\-type= T
 In the input files, not the libraries, make an integer or word constant, or an

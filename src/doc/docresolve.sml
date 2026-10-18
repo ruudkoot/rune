@@ -213,7 +213,7 @@ struct
 
   (* The signature that a signature expression names: its first identifier. *)
   fun sigexpHead (sigexp : string) : string option =
-    case String.tokens (fn c => not (Char.isAlphaNum c orelse c = #"_" orelse c = #"'")) sigexp of
+    case String.tokens (not o Ident.isNameByte) sigexp of
       s :: _ => SOME s
     | [] => NONE
 

@@ -294,8 +294,9 @@ struct
             end
     end
 
-  fun valueName n = if CharVector.all (fn c => Char.isAlphaNum c orelse c = #"_" orelse c = #"'") n then n
-                    else "(op " ^ n ^ ")"
+  (* a value's name as a declaration writes it: an alphanumeric one as it
+     is, Unicode ones too (Ident), a symbolic one after op *)
+  fun valueName n = if Ident.isAlphanumeric n then n else "(op " ^ n ^ ")"
 
   (* the exception constructors with an argument a declaration declared, at
      their paths, with the argument's type *)

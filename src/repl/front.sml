@@ -40,6 +40,7 @@ struct
     \  --basic        a prompt and a line at a time, as on a pipe\n\
     \  --unicode[=ENC]  read the files used as Unicode text in the encoding ENC, utf8 (the default) or latin1,\n\
     \                 and what is typed as UTF-8 (docs/units.md, Source modes)\n\
+    \  --no-unicode-lints  do not warn of what UTS #39 finds in names and comments\n\
     \  --engine       the engine, for a front: JSON-RPC on the descriptors 3 and 4 (docs/repl-protocol.md)\n\
     \  --engine-connect PORT  the same on a connection to 127.0.0.1:PORT, its token in RUNE_ENGINE_TOKEN\n\
     \  FILE           used before the first prompt\n"
@@ -78,6 +79,7 @@ struct
                 (* the encoding only after an =, as rune takes it: a word
                    after --unicode is a file *)
                 else if a = "--unicode" then (mode := Source.Unicode Source.Utf8; go rest)
+                else if a = "--no-unicode-lints" then (Lexer.lints := false; go rest)
                 else if String.isPrefix "--unicode=" a then
                   (case Source.modeNamed (String.extract (a, 2, NONE)) of
                      SOME m => (mode := m; go rest)
