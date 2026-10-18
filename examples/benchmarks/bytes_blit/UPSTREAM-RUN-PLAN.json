@@ -1,0 +1,140 @@
+{
+  "run_config_sha256": "2acf290d36e665a5148dd2b3a2f437ebd1a0883238494d33e4701edd77c050b3",
+  "entries": [
+    {
+      "index": 68,
+      "entry": {
+        "executable": "benchmarks/stdlib/bytes_bench.exe",
+        "name": "bytes_bench",
+        "tags": [
+          "1s_10s"
+        ],
+        "runs": [
+          {
+            "params": "bytes_map 1000000"
+          },
+          {
+            "params": "bytes_uppercase_ascii 1000000"
+          },
+          {
+            "params": "bytes_contains 100000000"
+          },
+          {
+            "params": "bytes_iter 1000000"
+          },
+          {
+            "params": "bytes_get 100000000"
+          },
+          {
+            "params": "bytes_sub 100000000"
+          }
+        ]
+      }
+    },
+    {
+      "index": 69,
+      "entry": {
+        "executable": "benchmarks/stdlib/bytes_bench.exe",
+        "name": "bytes_bench",
+        "tags": [
+          "lt_1s"
+        ],
+        "runs": [
+          {
+            "params": "bytes_blit 2500000"
+          },
+          {
+            "params": "bytes_concat 2000000"
+          },
+          {
+            "params": "bytes_trim 2500000"
+          },
+          {
+            "params": "bytes_index 10000000"
+          },
+          {
+            "params": "bytes_set 1000000000"
+          },
+          {
+            "params": "bytes_cat 1000000000"
+          }
+        ]
+      }
+    },
+    {
+      "index": 73,
+      "entry": {
+        "executable": "benchmarks/stdlib/string_bench.exe",
+        "name": "string_bench",
+        "tags": [
+          "lt_1s"
+        ],
+        "runs": [
+          {
+            "params": "string_get 50000000"
+          },
+          {
+            "params": "string_blit 25000000"
+          },
+          {
+            "params": "string_trim 1000000"
+          },
+          {
+            "params": "string_contains 25000000"
+          },
+          {
+            "params": "string_index 25000000"
+          }
+        ]
+      }
+    },
+    {
+      "index": 74,
+      "entry": {
+        "executable": "benchmarks/stdlib/string_bench.exe",
+        "name": "string_bench",
+        "tags": [
+          "1s_10s"
+        ],
+        "runs": [
+          {
+            "params": "string_sub 50000000"
+          },
+          {
+            "params": "string_concat 20000000"
+          },
+          {
+            "params": "string_iter 1000000"
+          },
+          {
+            "params": "string_uppercase_ascii 1000000"
+          },
+          {
+            "params": "string_split_on_char 500000"
+          },
+          {
+            "params": "string_compare 10000"
+          },
+          {
+            "params": "string_equal 25000"
+          }
+        ]
+      }
+    },
+    {
+      "index": 75,
+      "entry": {
+        "executable": "benchmarks/stdlib/string_bench.exe",
+        "name": "string_bench",
+        "tags": [
+          "10s_100s"
+        ],
+        "runs": [
+          {
+            "params": "string_map 20000000"
+          }
+        ]
+      }
+    }
+  ]
+}

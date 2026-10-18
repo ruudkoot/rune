@@ -2850,3 +2850,33 @@ is retained separately. All 108 inventory regressions and the five-pin
 [map/set evidence](results/m5-stdlib-trees/README.md) retain source identities,
 notices, raw outputs and development scopes. Final SML large repetitions
 remain unrecorded. M3/M4/M5 remain in progress and M8 remains planned.
+
+## Remaining Sandmark stdlib selectors, 2026-10-18
+
+The catalogue contains 454 programs and 1316 profiles. All 45 newly imported
+selectors pass their 1260 primary smoke/normal cases on Rune O0/O2 across
+four engines and six managed native SML hosts. The semantic targets record
+5140 passing assertions across twenty invocations per group, none failed or
+unreached. Native O0/O2 group labels repeat host-default builds. Public shell
+targets also pass Rune O0/O2, confirming source and data ordering.
+
+All 180 full-normal Rune count samples agree, with 45 guard processes exiting
+zero and no interruptions. All 135 serial single fresh-process native smoke
+adapter samples pass before heavy validation. These remain diagnostics rather
+than ten-sample comparative performance claims.
+
+[Text/byte evidence](results/m5-stdlib-text/README.md),
+[Str evidence](results/m5-stdlib-str/README.md) and
+[hashtable evidence](results/m5-stdlib-hashtbl/README.md) retain complete original
+observations, independent models, notices, source identities and raw records.
+The imported kernel bytes match the final semantic subjects. Original source
+quirks, explicit library/representation replacements and profile reductions
+remain documented. Count child-output and guard-summary log filenames were
+normalized without rerunning or changing the underlying samples.
+
+[Full make JOBS=4 check](validation/oct18-stdlib-1316-acceptance.log) exits zero
+with 1316 profiles and all compiler/runedoc/runeopt cross-build comparisons.
+All 108 inventory regressions and the five-pin 861-entry replay pass.
+The complete 71-case stdlib inventory has no suitable planned selector.
+M5 still has three pending applications; M3 and M4 remain in progress,
+M8 remains planned, and full final SML large repetitions remain unrecorded.
