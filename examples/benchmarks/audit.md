@@ -392,3 +392,24 @@ a singleton agenda leaves an unused cost undemanded. A regression distinguishes
 that behavior from the preliminary eager-cost implementation. The source's
 map/zip classification uses shared tagged pairs in SML; the separate Boolean
 map spine is omitted and recorded as a representation adaptation.
+
+## Hartel IDA and Sandmark ordered trees, 2026-10-18
+
+The sequential Hartel IDA source uses the compatibility shim's no-op miraseq;
+it requires no parallel runtime. The lazy and strict finite-list ports retain
+the reversed shuffle distribution, sequential branch selection, stable shared
+partitions and cutoff demand. Original configuration/path observations and
+independent optimal lengths support their distinction; no unsupported feature
+is introduced.
+
+All eleven map/set selectors are individually imported. OCaml 4.14.1 library
+modules and notices are pinned separately from Sandmark benchmark sources and
+run-plan entries. NONE/SOME change flags replace physical-identity decisions;
+map/set node payloads remain distinct. Original remove/add-remove quirks are
+preserved rather than silently repaired. Forty-five other stdlib cases remain
+planned, including bytes_set and bytes_cat which are defined but unreachable
+from the upstream command-line selector.
+
+All 108 inventory regressions pass, and the five pinned trees reproduce
+861 primary entries. These imports bring the catalogue to 409 programs and
+1214 profiles. Remaining M3/M4/M5 coverage is still work in progress.

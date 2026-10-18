@@ -447,3 +447,17 @@ order and shared completion; the generic multiset extension is inactive.
 Original theory/normal forms, an independent cancellation model and demand
 regressions support the port. These are separate from the papers' mathematical
 results and from measured compiler/collector behavior.
+
+## Hartel IDA and ordered-tree library evidence, 2026-10-18
+
+The pinned Hartel source and the collection context cited above establish the
+particular sequential IDA workload. Original path observations, independent
+breadth-first optimal lengths and explicit demand tests support the translation.
+They do not establish a review of a separate IDA paper.
+
+The OCaml 4.14.1 map/set source establishes this implementation's AVL balance,
+unchanged-path decisions and traversal ordering. Exact original shapes and
+independent ordered-content models support correctness. Specialization,
+persistent-node allocation, change-flag elimination, global baseline retention
+and additional consumers are source-based performance hypotheses. The recorded
+count agreement and adapter timings do not identify their individual costs.

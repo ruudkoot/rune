@@ -2817,3 +2817,36 @@ Six serial single fresh-process native smoke adapter samples pass after the
 heavy jobs completed. Their complete records are retained as diagnostics.
 Earlier names, fixture-path failures, eager-cost behavior and host-reserve guard
 interruptions are separate development evidence and do not supply final results.
+
+## Hartel IDA and Sandmark ordered trees, 2026-10-18
+
+The catalogue now contains 409 programs and 1214 profiles.
+[IDA coverage](results/m3-ida/coverage.tsv) records 56/56 primary passes;
+[map/set coverage](results/m5-stdlib-trees/coverage.tsv) records 308/308.
+All Rune O0/O2 engines and six managed native hosts pass smoke and normal.
+The semantic ledgers record 2160 IDA and 7280 tree assertions passing, with
+none failed or unreached. Native O0/O2 group labels repeat host-default builds.
+
+All 52 normal Rune count samples agree, with thirteen guard processes exiting
+zero and no guard interruptions. Thirty-nine serial single fresh-process native
+smoke samples pass as adapter diagnostics, separately from heavy checks. These
+are not ten-sample comparative performance claims.
+
+Original configurations, ordered paths and independent breadth-first optimal
+lengths support IDA correctness. Original AVL shapes, independent ordered
+contents and source selector observations support the tree ports. Demand
+checks preserve shared IDA partitions and cutoffs; a deliberately corrupted
+map with an unchanged digest is rejected by the full-content checker.
+Source profile reductions, mutable/immutable construction scopes, library
+replacement costs and source quirks remain explicit.
+
+[Full make JOBS=4 check](validation/oct18-ida-stdlib-trees-1214-acceptance.log)
+exits zero with 1214 profiles and all compiler/runedoc/runeopt cross-build
+comparisons. An earlier run was interrupted and has no final result; its log
+is retained separately. All 108 inventory regressions and the five-pin
+861-entry replay pass.
+
+[IDA evidence](results/m3-ida/README.md) and
+[map/set evidence](results/m5-stdlib-trees/README.md) retain source identities,
+notices, raw outputs and development scopes. Final SML large repetitions
+remain unrecorded. M3/M4/M5 remain in progress and M8 remains planned.
