@@ -1,0 +1,13 @@
+[ 1 of 13] Compiling Interval         ( Interval.hs, Interval.o )
+[ 2 of 13] Compiling Patchlevel       ( Patchlevel.hs, Patchlevel.o )
+[ 3 of 13] Compiling Types            ( Types.hs, Types.o )
+[ 4 of 13] Compiling Matrix           ( Matrix.hs, Matrix.o )
+[ 5 of 13] Compiling Kolor            ( Kolor.hs, Kolor.o )
+[ 6 of 13] Compiling Shapes           ( Shapes.hs, Shapes.o )
+[ 7 of 13] Compiling Csg              ( Csg.hs, Csg.o )
+[ 8 of 13] Compiling Vector           ( Vector.hs, Vector.o )
+[ 9 of 13] Compiling Oct              ( Oct.hs, Oct.o )
+[10 of 13] Compiling Quad             ( Quad.hs, Quad.o )
+[11 of 13] Compiling Raster           ( Raster.hs, Raster.o )
+[12 of 13] Compiling Main             ( Main.hs, Main.o )
+[13 of 13] Linking original

@@ -1,0 +1,84 @@
+[ 1 of 13] Compiling Lexer            ( Lexer.hs, Lexer.o )
+
+Lexer.hs:7:1: warning: [-Wtabs]
+    Tab character found here, and in 64 further locations.
+    Suggested fix: Please use spaces instead.
+  |
+7 |             | Evar String
+  | ^^^^^^^^
+[ 2 of 13] Compiling NofibUtils       ( NofibUtils.hs, NofibUtils.o )
+[ 3 of 13] Compiling Op               ( Op.hs, Op.o )
+[ 4 of 13] Compiling RealM            ( RealM.hs, RealM.o )
+
+RealM.hs:176:1: warning: [-Wtabs]
+    Tab character found here, and in 10 further locations.
+    Suggested fix: Please use spaces instead.
+    |
+176 |         f n dx xr m = if m >= 0
+    | ^^^^^^^^
+[ 5 of 13] Compiling BasicNumber      ( BasicNumber.hs, BasicNumber.o )
+
+BasicNumber.hs:121:10: warning: [-Wmissing-methods]
+    • No explicit implementation for
+        ‘toEnum’ and ‘fromEnum’
+    • In the instance declaration for ‘Enum BasicNumber’
+    |
+121 | instance Enum BasicNumber where
+    |          ^^^^^^^^^^^^^^^^
+
+BasicNumber.hs:204:1: warning: [-Wtabs]
+    Tab character found here, and in one further location.
+    Suggested fix: Please use spaces instead.
+    |
+204 |                       (int, frac) = span (\c -> c /= '.') s
+    | ^^^^^^^^
+[ 6 of 13] Compiling BasicNumberApprox ( BasicNumberApprox.hs, BasicNumberApprox.o )
+[ 7 of 13] Compiling Ast              ( Ast.hs, Ast.o )
+
+Ast.hs:10:32: warning: [-Wtabs]
+    Tab character found here, and in 18 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+10 | data Ast = Set VarName BasicExp         -- set variable literally
+   |                                ^
+[ 8 of 13] Compiling Parser           ( Parser.hs, Parser.o )
+
+Parser.hs:12:1: warning: [-Wtabs]
+    Tab character found here, and in 143 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+12 |                     else SyntaxError
+   | ^^^^^^^^
+[ 9 of 13] Compiling Env              ( Env.hs, Env.o )
+
+Env.hs:17:1: warning: [-Wtabs]
+    Tab character found here, and in 11 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+17 |                                         else lookupEnv str es
+   | ^^^^^^^^
+[10 of 13] Compiling Eval             ( Eval.hs, Eval.o )
+
+Eval.hs:13:1: warning: [-Wtabs]
+    Tab character found here, and in 104 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+13 |                                 []          -> Func name []
+   | ^^^^^^^^
+[11 of 13] Compiling Print            ( Print.hs, Print.o )
+
+Print.hs:18:1: warning: [-Wtabs]
+    Tab character found here, and in 39 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+18 |                 "Eval\t"++(printBasicExp bexp env)++"\n"++
+   | ^^^^^^^^
+[12 of 13] Compiling Main             ( Main.hs, Main.o )
+
+Main.hs:26:1: warning: [-Wtabs]
+    Tab character found here, and in 46 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+26 |            return ()
+   | ^^^^^^^^
+[13 of 13] Linking original

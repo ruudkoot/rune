@@ -1,0 +1,38 @@
+[
+  {
+    "depth": 0,
+    "dimension": 1,
+    "foreground": 1,
+    "tiles": 1
+  },
+  {
+    "depth": 1,
+    "dimension": 2,
+    "foreground": 4,
+    "tiles": 4
+  },
+  {
+    "depth": 2,
+    "dimension": 4,
+    "foreground": 15,
+    "tiles": 15
+  },
+  {
+    "depth": 3,
+    "dimension": 8,
+    "foreground": 42,
+    "tiles": 42
+  },
+  {
+    "depth": 4,
+    "dimension": 16,
+    "foreground": 142,
+    "tiles": 142
+  },
+  {
+    "depth": 5,
+    "dimension": 32,
+    "foreground": 496,
+    "tiles": 496
+  }
+]

@@ -1,0 +1,30 @@
+[
+  {
+    "profile": "smoke",
+    "precision": 20,
+    "values": 11,
+    "bytes": 264,
+    "sha256": "2c391f2179cf453c444dd6f5730d1c8a5ac334717e4a8b92b66b77d82a1d0147"
+  },
+  {
+    "profile": "source-fast",
+    "precision": 3000,
+    "values": 263,
+    "bytes": 784600,
+    "sha256": "0f09d6cc44276428ea0cf5e748767337a3bf668996a10542e9e373445a1a54f4"
+  },
+  {
+    "profile": "normal",
+    "precision": 15000,
+    "values": 263,
+    "bytes": 3916602,
+    "sha256": "d50a319cbe625139af744775341ef3241f58e0c838ee7e92a2dada0fa47a30ef"
+  },
+  {
+    "profile": "source-slow",
+    "precision": 40000,
+    "values": 263,
+    "bytes": 10441602,
+    "sha256": "4fbe2c36c1cdef4a0665a64d750c77e006fbc11e124e121f57a7df129c152030"
+  }
+]

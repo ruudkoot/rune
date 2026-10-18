@@ -1,0 +1,5 @@
+COUNT unbudgeted symalg-strict normal rune
+COUNT unbudgeted symalg-strict normal rune:opt
+COUNT unbudgeted symalg-strict normal rune:new
+COUNT unbudgeted symalg-strict normal rune:jit
+COUNT comparisons agree

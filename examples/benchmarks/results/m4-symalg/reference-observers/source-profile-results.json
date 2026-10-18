@@ -1,0 +1,17 @@
+[
+  {
+    "profile": "source-fast",
+    "bytes": 6188,
+    "seconds": 0.3348380429997633
+  },
+  {
+    "profile": "normal",
+    "bytes": 6132,
+    "seconds": 2.8515041149985336
+  },
+  {
+    "profile": "source-slow",
+    "bytes": 6103,
+    "seconds": 12.823521618000086
+  }
+]

@@ -1,0 +1,17 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+fulsom-lazy	smoke	rune	O2	count	1	1	pass	0.12	0.10	0.02	10588	9789174	32003696	993360	counts/measurement.U83X9V/fulsom-lazy/rune/fresh.1
+fulsom-lazy	smoke	rune:opt	O2	count	1	1	pass	0.06	0.05	0.01	11160	9789174	32003696	993360	counts/measurement.U83X9V/fulsom-lazy/rune-opt/fresh.1
+fulsom-lazy	smoke	rune:new	O2	count	1	1	pass	0.13	0.11	0.01	10688	5870557	32003696	993360	counts/measurement.U83X9V/fulsom-lazy/rune-new/fresh.1
+fulsom-lazy	smoke	rune:jit	O2	count	1	1	pass	0.18	0.11	0.06	12084	5870557	32003696	993360	counts/measurement.U83X9V/fulsom-lazy/rune-jit/fresh.1
+fulsom-strict	smoke	rune	O2	count	1	1	pass	0.06	0.05	0.01	10480	4958701	17427608	470153	counts/measurement.cuEGeQ/fulsom-strict/rune/fresh.1
+fulsom-strict	smoke	rune:opt	O2	count	1	1	pass	0.03	0.02	0.00	11048	4958701	17427608	470153	counts/measurement.cuEGeQ/fulsom-strict/rune-opt/fresh.1
+fulsom-strict	smoke	rune:new	O2	count	1	1	pass	0.05	0.04	0.01	10516	2901626	17427608	470153	counts/measurement.cuEGeQ/fulsom-strict/rune-new/fresh.1
+fulsom-strict	smoke	rune:jit	O2	count	1	1	pass	0.05	0.04	0.01	11920	2901626	17427608	470153	counts/measurement.cuEGeQ/fulsom-strict/rune-jit/fresh.1
+fulsom-nofib-lazy	smoke	rune	O2	count	1	1	pass	0.10	0.09	0.01	10500	9803575	32011136	993562	counts/measurement.TBlJZI/fulsom-nofib-lazy/rune/fresh.1
+fulsom-nofib-lazy	smoke	rune:opt	O2	count	1	1	pass	0.10	0.08	0.01	11212	9803575	32011136	993562	counts/measurement.TBlJZI/fulsom-nofib-lazy/rune-opt/fresh.1
+fulsom-nofib-lazy	smoke	rune:new	O2	count	1	1	pass	0.18	0.16	0.03	10708	5879179	32011136	993562	counts/measurement.TBlJZI/fulsom-nofib-lazy/rune-new/fresh.1
+fulsom-nofib-lazy	smoke	rune:jit	O2	count	1	1	pass	0.09	0.08	0.01	12144	5879179	32011136	993562	counts/measurement.TBlJZI/fulsom-nofib-lazy/rune-jit/fresh.1
+fulsom-nofib-strict	smoke	rune	O2	count	1	1	pass	0.08	0.06	0.02	10612	4973102	17435032	470355	counts/measurement.Q8yiMv/fulsom-nofib-strict/rune/fresh.1
+fulsom-nofib-strict	smoke	rune:opt	O2	count	1	1	pass	0.02	0.01	0.01	11148	4973102	17435032	470355	counts/measurement.Q8yiMv/fulsom-nofib-strict/rune-opt/fresh.1
+fulsom-nofib-strict	smoke	rune:new	O2	count	1	1	pass	0.06	0.04	0.01	10620	2910248	17435032	470355	counts/measurement.Q8yiMv/fulsom-nofib-strict/rune-new/fresh.1
+fulsom-nofib-strict	smoke	rune:jit	O2	count	1	1	pass	0.08	0.04	0.02	11848	2910248	17435032	470355	counts/measurement.Q8yiMv/fulsom-nofib-strict/rune-jit/fresh.1

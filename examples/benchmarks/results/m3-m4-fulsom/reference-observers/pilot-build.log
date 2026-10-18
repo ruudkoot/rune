@@ -1,0 +1,1 @@
+tests/out/benchmarks/nofib-fulsom-originals/kernel.sml:127:46: error: function argument: type mismatch between 'a state ref and int (type constructor mismatch: ref vs int)

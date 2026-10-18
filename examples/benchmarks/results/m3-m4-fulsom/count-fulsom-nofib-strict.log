@@ -1,0 +1,11 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1355 profiles)
+BENCH_PROFILE=smoke BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=fulsom-nofib-strict' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Q8yiMv
+BENCH MEASURE fulsom-nofib-strict smoke count
+COUNT unbudgeted fulsom-nofib-strict smoke rune
+COUNT unbudgeted fulsom-nofib-strict smoke rune:opt
+COUNT unbudgeted fulsom-nofib-strict smoke rune:new
+COUNT unbudgeted fulsom-nofib-strict smoke rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Q8yiMv/report.md

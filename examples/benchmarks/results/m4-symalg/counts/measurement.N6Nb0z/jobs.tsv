@@ -1,0 +1,1 @@
+symalg-lazy	600	4194304	shared/lazy.sml shared/suspend.sml shared/symalg-real.sml shared/symalg-number.sml shared/symalg-kernel.sml shared/symalg-check.sml symalg-lazy/benchmark.sml shared/main.sml	normal.stdin normal.numbers.reference normal.stdout	symalg-lazy/normal.expected	normal.stdin normal.numbers.reference normal.stdout

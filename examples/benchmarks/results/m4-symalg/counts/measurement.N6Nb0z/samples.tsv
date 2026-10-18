@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+symalg-lazy	normal	rune	O2	compile	0	0	pass	4.76	3.59	0.33	135212	-	-	-	symalg-lazy/rune/build/compile
+symalg-lazy	normal	rune	O2	correctness	0	0	pass	3.12	2.31	0.02	10592	342399953	485828440	12161621	symalg-lazy/rune/correctness.0
+symalg-lazy	normal	rune	O2	count	1	1	pass	2.95	2.22	0.00	10600	342399953	485828440	12161621	symalg-lazy/rune/fresh.1
+symalg-lazy	normal	rune:opt	O2	compile	0	0	pass	5.47	3.01	0.21	135432	-	-	-	symalg-lazy/rune-opt/build/compile
+symalg-lazy	normal	rune:opt	O2	native-compile	0	0	pass	1.33	0.55	0.11	24760	-	-	-	symalg-lazy/rune-opt/build/native-compile
+symalg-lazy	normal	rune:opt	O2	correctness	0	0	pass	1.16	1.09	0.01	11508	342399953	485828440	12161621	symalg-lazy/rune-opt/correctness.0
+symalg-lazy	normal	rune:opt	O2	count	1	1	pass	0.87	0.81	0.05	11572	342399953	485828440	12161621	symalg-lazy/rune-opt/fresh.1
+symalg-lazy	normal	rune:new	O2	compile	0	0	pass	3.97	3.40	0.26	135448	-	-	-	symalg-lazy/rune-new/build/compile
+symalg-lazy	normal	rune:new	O2	correctness	0	0	pass	1.77	1.71	0.01	10660	192038308	485828440	12161621	symalg-lazy/rune-new/correctness.0
+symalg-lazy	normal	rune:new	O2	count	1	1	pass	2.35	2.31	0.02	10816	192038308	485828440	12161621	symalg-lazy/rune-new/fresh.1
+symalg-lazy	normal	rune:jit	O2	compile	0	0	pass	3.84	3.38	0.20	135312	-	-	-	symalg-lazy/rune-jit/build/compile
+symalg-lazy	normal	rune:jit	O2	correctness	0	0	pass	0.73	0.73	0.00	13012	192038308	485828440	12161621	symalg-lazy/rune-jit/correctness.0
+symalg-lazy	normal	rune:jit	O2	count	1	1	pass	1.57	1.46	0.09	13012	192038308	485828440	12161621	symalg-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

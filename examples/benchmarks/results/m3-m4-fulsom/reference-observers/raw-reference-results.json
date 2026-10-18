@@ -1,0 +1,38 @@
+[
+  {
+    "depth": 0,
+    "bytes": 16,
+    "sha256": "24b81994ea4e33994a9ca8844097264cf3e5e11efba37b8fc8be2a40fe8b7d41",
+    "signed64_hash": 2669947381020361904
+  },
+  {
+    "depth": 1,
+    "bytes": 52,
+    "sha256": "3587c44fde3374242e361c93252898f0d757194f6d25d2356ce39c6e42e21104",
+    "signed64_hash": 1433191962827660606
+  },
+  {
+    "depth": 2,
+    "bytes": 184,
+    "sha256": "4e7ad95afe776b1bea9620f9d3b9cf2c1c0b0ffbf0f0f4e2c4a553f4e5d36e95",
+    "signed64_hash": -5072790738572988382
+  },
+  {
+    "depth": 3,
+    "bytes": 508,
+    "sha256": "fa19b7365edca4c248ff2d6134740e4b8bb6507c4879579575395f2835032d05",
+    "signed64_hash": -5423511942267836205
+  },
+  {
+    "depth": 4,
+    "bytes": 1708,
+    "sha256": "83309fe3607e48507ae8b7de5dd683688f5379905d0a307cc6bbdf9520f5f0c6",
+    "signed64_hash": 2066483427283309121
+  },
+  {
+    "depth": 5,
+    "bytes": 5956,
+    "sha256": "3fe6157c157d57287f1b5387f21963c0c807f928223b5793fcc2791317f29378",
+    "signed64_hash": 8553150556328418559
+  }
+]

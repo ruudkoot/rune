@@ -2975,3 +2975,42 @@ exits zero with 1337 profiles and all compiler/runedoc/runeopt cross-build
 comparisons. [Evidence](results/m3-wave4main/README.md) retains raw outputs,
 source identities, notices/attribution limits and separate source-order setup
 failures. M3/M4 remain in progress and M8 remains planned.
+
+## Fulsom solid modelling and Symalg exact arithmetic, 2026-10-18
+
+The catalogue contains 467 programs and 1355 profiles. All 168 canonical
+smoke/normal cases pass: 112 for four Fulsom consumer/data-policy variants
+and 56 for two Symalg policies. These cover Rune O0/O2 stack, register,
+JIT and native engines and all six managed native hosts. Fulsom's candidate
+subject bytes match the registered public sources exactly.
+
+Fulsom's twenty semantic invocations reach every assertion: 3420 pass,
+260 fail and none are unreached. All complete raster/hash observations pass.
+External strict interval-pattern and 32-bit Word64-literal failures remain
+visible and match the existing reduced SML/NJ reports, as explained in the
+[host note](validation/fulsom-host-results.md). No expected value, access
+path or tolerance was changed to accept them.
+
+Symalg's twenty semantic invocations pass all 6640 assertions. Original
+command transcripts, 161 direct real-arithmetic observations, complete
+numerical values, memoization/demand and deliberate result perturbations
+are checked. Independent integer square roots agree with complete original
+positive sqrt values through 40000 digits. Its source zero-times-nonzero
+magnitude loop remains unrepaired and has separate bounded failure evidence.
+
+Sixteen explicitly selected Fulsom smoke count samples and eight Symalg
+selected-normal count samples agree; all six guards exit zero without
+interruption. No new fresh-process timing samples are recorded for this wave.
+Default-profile limits remain unchanged. Calibration timeouts/guards are
+separate from successful selected profiles and unrecorded full large runs.
+
+Both public semantic shell targets pass Rune O0/O2. All 118 inventory tests
+and the five-pin 861-entry replay pass. Complete source notices, input origins,
+ancillary-tool exclusions, original/independent references, source identities
+and distinct development failures are retained in
+[Fulsom evidence](results/m3-m4-fulsom/README.md) and
+[Symalg evidence](results/m4-symalg/README.md).
+
+[Full make JOBS=4 check](validation/oct18-fulsom-symalg-1355-acceptance.log)
+exits zero with 1355 profiles and all compiler/runedoc/runeopt cross-build
+comparisons. M3/M4 remain in progress and M8 remains planned.

@@ -1,0 +1,1 @@
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-symalg-originals/tests-final.sml:333:27: error: function argument: type mismatch between int * int and string * 'a (no common type for overloaded operators (int/word/real vs string))

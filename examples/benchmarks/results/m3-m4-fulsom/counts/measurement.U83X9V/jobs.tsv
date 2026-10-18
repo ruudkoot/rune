@@ -1,0 +1,1 @@
+fulsom-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/hartel-ida-finite.sml shared/fulsom-interval.sml shared/fulsom-kernel.sml shared/fulsom-check.sml fulsom-lazy/benchmark.sml shared/main.sml	4 smoke.hex	fulsom-lazy/smoke.expected	smoke.hex

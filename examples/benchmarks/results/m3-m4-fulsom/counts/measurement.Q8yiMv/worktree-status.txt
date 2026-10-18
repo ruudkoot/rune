@@ -1,0 +1,25 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/inventory.tsv
+ M examples/benchmarks/manifest.tsv
+ M examples/benchmarks/source-variants.tsv
+ M scripts/benchmark-inventory.py
+ M tests/benchmarks/test-inventory.py
+?? examples/benchmarks/fulsom-lazy/
+?? examples/benchmarks/fulsom-nofib-lazy/
+?? examples/benchmarks/fulsom-nofib-strict/
+?? examples/benchmarks/fulsom-strict/
+?? examples/benchmarks/shared/fulsom-check.sml
+?? examples/benchmarks/shared/fulsom-interval.sml
+?? examples/benchmarks/shared/fulsom-kernel.sml
+?? examples/benchmarks/shared/symalg-check.sml
+?? examples/benchmarks/shared/symalg-kernel.sml
+?? examples/benchmarks/shared/symalg-number.sml
+?? examples/benchmarks/shared/symalg-real.sml
+?? examples/benchmarks/symalg-lazy/
+?? examples/benchmarks/symalg-strict/
+?? tests/benchmarks/check-fulsom.sh
+?? tests/benchmarks/check-symalg.sh
+?? tests/benchmarks/data/fulsom/
+?? tests/benchmarks/data/symalg/
+?? tests/benchmarks/fulsom-tests.sml
+?? tests/benchmarks/symalg-tests.sml

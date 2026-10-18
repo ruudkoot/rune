@@ -1,0 +1,7 @@
+attempts-raw/** -whitespace
+counts/** -whitespace
+semantics/** -whitespace
+semantic-outputs/** -whitespace
+semantics-*.log -whitespace
+reference-observers/** -text -whitespace
+host-diagnostics/** -whitespace

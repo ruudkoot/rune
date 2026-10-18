@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-symalg-parallel.fa6_adpt
+PASS symalg-lazy smoke O0
+PASS symalg-lazy smoke O2
+PASS symalg-lazy normal O0
+PASS symalg-lazy normal O2
+PASS symalg-lazy smoke hosts
+PASS symalg-strict smoke O0
+PASS symalg-strict smoke O2
+PASS symalg-lazy normal hosts
+PASS symalg-strict normal O0
+PASS symalg-strict smoke hosts
+PASS symalg-strict normal O2
+PASS symalg-strict normal hosts

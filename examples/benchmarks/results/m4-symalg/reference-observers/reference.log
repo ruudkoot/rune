@@ -1,0 +1,21 @@
+{'profile': 'source-fast', 'bytes': 6188, 'seconds': 0.3348380429997633}
+{'profile': 'normal', 'bytes': 6132, 'seconds': 2.8515041149985336}
+{'profile': 'source-slow', 'bytes': 6103, 'seconds': 12.823521618000086}
+Traceback (most recent call last):
+  File "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-symalg-originals/reference.py", line 36, in <module>
+    with(p/'real-observations.reference').open('w')as log:subprocess.run([str(p/'source/observer')],stdout=log,stderr=subprocess.STDOUT,timeout=120,preexec_fn=cap,check=True)
+                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 550, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 1209, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 2141, in _communicate
+    self.wait(timeout=self._remaining_time(endtime))
+  File "/usr/lib/python3.12/subprocess.py", line 1264, in wait
+    return self._wait(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 2045, in _wait
+    raise TimeoutExpired(self.args, timeout)
+subprocess.TimeoutExpired: Command '['/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-symalg-originals/source/observer']' timed out after 119.99995738799953 seconds

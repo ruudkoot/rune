@@ -1,0 +1,1 @@
+(use "/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml"; use "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-fulsom-originals/representation-probe.sml"; use "/home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml") handle e => (print ("uncaught exception " ^ exnName e ^ " [" ^ exnMessage e ^ "]\n"); OS.Process.exit OS.Process.failure);

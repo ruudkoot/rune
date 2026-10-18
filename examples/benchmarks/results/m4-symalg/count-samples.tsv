@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+symalg-lazy	normal	rune	O2	count	1	1	pass	2.95	2.22	0.00	10600	342399953	485828440	12161621	counts/measurement.N6Nb0z/symalg-lazy/rune/fresh.1
+symalg-lazy	normal	rune:opt	O2	count	1	1	pass	0.87	0.81	0.05	11572	342399953	485828440	12161621	counts/measurement.N6Nb0z/symalg-lazy/rune-opt/fresh.1
+symalg-lazy	normal	rune:new	O2	count	1	1	pass	2.35	2.31	0.02	10816	192038308	485828440	12161621	counts/measurement.N6Nb0z/symalg-lazy/rune-new/fresh.1
+symalg-lazy	normal	rune:jit	O2	count	1	1	pass	1.57	1.46	0.09	13012	192038308	485828440	12161621	counts/measurement.N6Nb0z/symalg-lazy/rune-jit/fresh.1
+symalg-strict	normal	rune	O2	count	1	1	pass	3.30	2.95	0.10	10440	462088811	651348552	16345937	counts/measurement.gzK9DF/symalg-strict/rune/fresh.1
+symalg-strict	normal	rune:opt	O2	count	1	1	pass	1.34	1.15	0.01	11524	462088811	651348552	16345937	counts/measurement.gzK9DF/symalg-strict/rune-opt/fresh.1
+symalg-strict	normal	rune:new	O2	count	1	1	pass	2.60	2.33	0.01	10812	259503252	651348552	16345937	counts/measurement.gzK9DF/symalg-strict/rune-new/fresh.1
+symalg-strict	normal	rune:jit	O2	count	1	1	pass	1.23	1.12	0.03	12884	259503252	651348552	16345937	counts/measurement.gzK9DF/symalg-strict/rune-jit/fresh.1

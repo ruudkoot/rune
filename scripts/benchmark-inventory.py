@@ -551,6 +551,16 @@ def build(source, root, lock):
                     notices.append(str(notice.relative_to(root)))
         authors = set()
         context = [p for p in parent.iterdir() if p.is_file() and p.name in {"README", "README.md", "Makefile", "FILES", "sources.cm"}] if parent.exists() and files else []
+        if source == "nofib" and path in {"gc/fulsom/Main.hs", "real/fulsom/Main.hs",
+                                          "gc/fulsom/Bah.hs", "real/fulsom/Bah.hs"}:
+            module = parent / "Interval.hs"
+            if module.is_file():
+                heading = module.read_text(errors="replace")[:2500]
+                if ("Copyright 1990,1991,1992,1993 Duncan Sinclair" in heading
+                        and "Permissiom to use, copy, modify, and distribute this software for any" in heading
+                        and "copyright notice and this permission notice appear in all copies" in heading):
+                    authors.add("Duncan Sinclair")
+                    item["evidence"].append(str(module.relative_to(root)) + ":author-and-individual-permission")
         if source == "nofib" and path == "real/hidden" and (parent / "MAIL").is_file():
             # Reviewed correspondence credits both roles and grants nofib use.
             mail = (parent / "MAIL").read_text(errors="replace")

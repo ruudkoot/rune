@@ -1,0 +1,4 @@
+$(SML_LIB)/basis/basis.mlb
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-fulsom-originals/word64-tests/native-mlkit-4.7.23/program/src/1/harness.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-fulsom-originals/word64-tests/native-mlkit-4.7.23/program/src/2/word64-probe.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-fulsom-originals/word64-tests/native-mlkit-4.7.23/program/src/3/finish.sml"

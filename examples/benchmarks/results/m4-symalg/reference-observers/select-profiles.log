@@ -1,0 +1,2 @@
+{'profile': 'normal', 'precision': 3000, 'sqrt_commands': 9, 'source_commands': 261, 'source_input': 'symalg.faststdin', 'selection': 'first original cycle; retain precision; deterministic exit'}
+{'profile': 'large', 'precision': 40000, 'sqrt_commands': 9, 'source_commands': 261, 'source_input': 'symalg.slowstdin', 'selection': 'first original cycle; retain precision; deterministic exit'}

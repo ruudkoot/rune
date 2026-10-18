@@ -1,0 +1,23 @@
+[
+  {
+    "profile": "smoke",
+    "precision": 20,
+    "values": 9,
+    "min_gap": 0,
+    "max_gap": 0
+  },
+  {
+    "profile": "selected-normal300",
+    "precision": 300,
+    "values": 9,
+    "min_gap": 0,
+    "max_gap": 0
+  },
+  {
+    "profile": "selected-large3000",
+    "precision": 3000,
+    "values": 9,
+    "min_gap": 0,
+    "max_gap": 0
+  }
+]

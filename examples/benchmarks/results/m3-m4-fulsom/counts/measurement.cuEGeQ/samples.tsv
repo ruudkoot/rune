@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+fulsom-strict	smoke	rune	O2	compile	0	0	pass	2.58	2.38	0.15	135380	-	-	-	fulsom-strict/rune/build/compile
+fulsom-strict	smoke	rune	O2	correctness	0	0	pass	0.05	0.04	0.01	10480	4958701	17427608	470153	fulsom-strict/rune/correctness.0
+fulsom-strict	smoke	rune	O2	count	1	1	pass	0.06	0.05	0.01	10480	4958701	17427608	470153	fulsom-strict/rune/fresh.1
+fulsom-strict	smoke	rune:opt	O2	compile	0	0	pass	2.46	2.43	0.10	135324	-	-	-	fulsom-strict/rune-opt/build/compile
+fulsom-strict	smoke	rune:opt	O2	native-compile	0	0	pass	0.66	0.34	0.10	14976	-	-	-	fulsom-strict/rune-opt/build/native-compile
+fulsom-strict	smoke	rune:opt	O2	correctness	0	0	pass	0.02	0.02	0.00	11088	4958701	17427608	470153	fulsom-strict/rune-opt/correctness.0
+fulsom-strict	smoke	rune:opt	O2	count	1	1	pass	0.03	0.02	0.00	11048	4958701	17427608	470153	fulsom-strict/rune-opt/fresh.1
+fulsom-strict	smoke	rune:new	O2	compile	0	0	pass	2.71	2.43	0.19	135136	-	-	-	fulsom-strict/rune-new/build/compile
+fulsom-strict	smoke	rune:new	O2	correctness	0	0	pass	0.06	0.05	0.00	10636	2901626	17427608	470153	fulsom-strict/rune-new/correctness.0
+fulsom-strict	smoke	rune:new	O2	count	1	1	pass	0.05	0.04	0.01	10516	2901626	17427608	470153	fulsom-strict/rune-new/fresh.1
+fulsom-strict	smoke	rune:jit	O2	compile	0	0	pass	4.35	2.86	0.25	135376	-	-	-	fulsom-strict/rune-jit/build/compile
+fulsom-strict	smoke	rune:jit	O2	correctness	0	0	pass	0.06	0.03	0.02	11812	2901626	17427608	470153	fulsom-strict/rune-jit/correctness.0
+fulsom-strict	smoke	rune:jit	O2	count	1	1	pass	0.05	0.04	0.01	11920	2901626	17427608	470153	fulsom-strict/rune-jit/fresh.1
+	smoke	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

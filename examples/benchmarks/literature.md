@@ -530,3 +530,24 @@ Boxed numerical fields, immutable border views, memoized history retention,
 finite-data specialization and the extra validation consumer are source-based
 performance questions. Passing states and agreeing deterministic counts do
 not attribute their individual costs.
+
+## Solid modelling and arbitrary-precision symbolic arithmetic
+
+Sinclair's original Fulsom README and 30 June 1993 correspondence supply its
+program-specific account of solid modelling and historical space behavior.
+The historical figures are not present-day measurements. Pinned interval,
+CSG, octree, quadtree and raster modules establish the actual fixed scene and
+demand; an independent sphere/box projection supplies separate correctness
+evidence. No external solid-modelling derivation is claimed as reviewed.
+
+Symalg's RealM source establishes its memoized decimal approximation trees,
+scale/quot rules, magnitude search and integer refinement with a binary64
+seed. The nofib suite reference supplies application-coverage context at the
+survey scope already recorded. No external exact-real paper is claimed as
+the derivation of this particular implementation. Complete source values and
+independent integer-square-root bounds distinguish arithmetic validation
+from the original small output hash.
+
+Retention, specialization, finite-field forcing, arbitrary-precision costs and
+extra validation consumers remain source-based performance questions. Resource-
+limited pilots and successful smaller profiles are distinct observations.

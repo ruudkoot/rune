@@ -1,0 +1,8 @@
+literal=FFFFFFFFFFFFFFFF
+toLargeInt=18446744073709551615
+masked=8000000000000000
+PASS word64/toLargeInt-all-ones
+PASS word64/fromLargeInt-all-ones
+PASS word64/sign-mask
+PASS word64/signed-conversion
+SUMMARY 4 checks, 0 failed

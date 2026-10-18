@@ -1,0 +1,12 @@
+[ 1 of 12] Compiling Interval         ( Interval.hs, Interval.o )
+[ 2 of 12] Compiling Types            ( Types.hs, Types.o )
+[ 3 of 12] Compiling Matrix           ( Matrix.hs, Matrix.o )
+[ 4 of 12] Compiling Kolor            ( Kolor.hs, Kolor.o )
+[ 5 of 12] Compiling Shapes           ( Shapes.hs, Shapes.o )
+[ 6 of 12] Compiling Csg              ( Csg.hs, Csg.o )
+[ 7 of 12] Compiling Vector           ( Vector.hs, Vector.o )
+[ 8 of 12] Compiling Oct              ( Oct.hs, Oct.o )
+[ 9 of 12] Compiling Quad             ( Quad.hs, Quad.o )
+[10 of 12] Compiling Raster           ( Raster.hs, Raster.o )
+[11 of 12] Compiling Main             ( Observer.hs, Observer.o )
+[12 of 12] Linking observer

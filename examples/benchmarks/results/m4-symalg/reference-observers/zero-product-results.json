@@ -1,0 +1,20 @@
+[
+  {
+    "policy": "original",
+    "status": "timeout",
+    "seconds_limit": 3,
+    "memory_limit_bytes": 1073741824
+  },
+  {
+    "policy": "need",
+    "status": "timeout",
+    "seconds_limit": 3,
+    "memory_limit_bytes": 1073741824
+  },
+  {
+    "policy": "strict",
+    "status": "timeout",
+    "seconds_limit": 3,
+    "memory_limit_bytes": 1073741824
+  }
+]

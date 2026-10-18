@@ -1,0 +1,52 @@
+-> Commands:
+clear        clear the environment
+env          browse through the environment
+exit         quit
+?            display this help info
+$var = 'expr augment the environment
+$var = expr  eval and assign
+expr         evaluate the expression
+
+where expr could be any of the following:
+
+EXP -> BINARY-EXP (EXP1,EXP2)
+     | UNARY-EXP (EXP)
+     | EXP1 OP EXP2
+
+BINARY-EXP -> add | sub | mul | div | equ
+            | ne  | lt  | gt | lte | gte
+
+UNARY-EXP -> sqrt | real | rat 
+
+VAR -> a variable name
+
+-> 
+-> Set $a to 50+51
+-> 53
+-> Eval	$a+49
+Set	$a to 54
+-> $a	54
+$prec	1598
+
+-> 1571
+-> 1598
+-> 50^51
+-> 1968234039036027582
+-> (33333333333333333333 % 100000000000000000000)
+-> (3602879701896397 % 36028797018963968)
+-> x+y
+-> foo(50,51,52)
+-> 49
+-> 49
+-> 49
+-> 48
+-> (3 % 2)
+-> 49
+-> ((-3) % 2)
+-> Syntax error
+-> 
+-> 50+ERROR
+-> 
+-> $prec	1598
+
+-> 

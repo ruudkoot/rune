@@ -1,0 +1,33 @@
+{
+  "command": [
+    "timeout",
+    "600",
+    "sh",
+    "-c",
+    "cd tests/out/benchmarks/nofib-symalg-originals && ../../../../bin/runevm selected-normal300.rbc"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 14124,
+  "observed_minimum_available_kib": 18925436,
+  "peak_processes": [
+    {
+      "pid": 16,
+      "name": "sh",
+      "rss_kib": 1680
+    },
+    {
+      "pid": 17,
+      "name": "runevm",
+      "rss_kib": 10648
+    },
+    {
+      "pid": 15,
+      "name": "timeout",
+      "rss_kib": 1796
+    }
+  ],
+  "elapsed_seconds": 5.890136463998715
+}

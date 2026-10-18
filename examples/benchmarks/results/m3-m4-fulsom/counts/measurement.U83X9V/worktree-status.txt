@@ -1,0 +1,16 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/inventory.tsv
+ M examples/benchmarks/manifest.tsv
+ M examples/benchmarks/source-variants.tsv
+ M scripts/benchmark-inventory.py
+ M tests/benchmarks/test-inventory.py
+?? examples/benchmarks/fulsom-lazy/
+?? examples/benchmarks/fulsom-nofib-lazy/
+?? examples/benchmarks/fulsom-nofib-strict/
+?? examples/benchmarks/fulsom-strict/
+?? examples/benchmarks/shared/fulsom-check.sml
+?? examples/benchmarks/shared/fulsom-interval.sml
+?? examples/benchmarks/shared/fulsom-kernel.sml
+?? tests/benchmarks/check-fulsom.sh
+?? tests/benchmarks/data/fulsom/
+?? tests/benchmarks/fulsom-tests.sml

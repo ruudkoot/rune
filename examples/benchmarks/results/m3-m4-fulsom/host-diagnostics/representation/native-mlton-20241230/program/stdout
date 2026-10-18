@@ -1,0 +1,5 @@
+inside 3
+outside 3
+PASS functor-real-payload/inside
+PASS functor-real-payload/outside
+SUMMARY 2 checks, 0 failed

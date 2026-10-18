@@ -1,0 +1,6 @@
+PASS 0 1 pixels independent sphere-box projection mask; 1 nonoverlapping source tiles
+PASS 1 4 pixels independent sphere-box projection mask; 4 nonoverlapping source tiles
+PASS 2 16 pixels independent sphere-box projection mask; 15 nonoverlapping source tiles
+PASS 3 64 pixels independent sphere-box projection mask; 42 nonoverlapping source tiles
+PASS 4 256 pixels independent sphere-box projection mask; 142 nonoverlapping source tiles
+PASS 5 1024 pixels independent sphere-box projection mask; 496 nonoverlapping source tiles

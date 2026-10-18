@@ -1,0 +1,1 @@
+fulsom-nofib-strict	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/hartel-ida-finite.sml shared/fulsom-interval.sml shared/fulsom-kernel.sml shared/fulsom-check.sml fulsom-nofib-strict/benchmark.sml shared/main.sml	1 4 smoke.hex 2066483427283309121	fulsom-nofib-strict/smoke.expected	smoke.hex

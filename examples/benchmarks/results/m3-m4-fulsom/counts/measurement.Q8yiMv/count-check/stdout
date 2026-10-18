@@ -1,0 +1,5 @@
+COUNT unbudgeted fulsom-nofib-strict smoke rune
+COUNT unbudgeted fulsom-nofib-strict smoke rune:opt
+COUNT unbudgeted fulsom-nofib-strict smoke rune:new
+COUNT unbudgeted fulsom-nofib-strict smoke rune:jit
+COUNT comparisons agree

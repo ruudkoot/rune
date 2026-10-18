@@ -1,0 +1,593 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 58249f043..f826f9f2a 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -470,6 +470,10 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [sched-strict](#sched-strict) | [nofib Hartel sched](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/sched) | Enumerate two-processor fork/join schedules with strict finite job data. |
+ | [wave4main-lazy](#wave4main-lazy) | [nofib Hartel wave4main](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/wave4main) | Evolve split wave-state arrays with memoized finite grid data and original boundary exchanges. |
+ | [wave4main-strict](#wave4main-strict) | [nofib Hartel wave4main](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/wave4main) | Evolve split wave-state arrays with strict finite grid data and original boundary exchanges. |
++| [fulsom-lazy](#fulsom-lazy) | [nofib gc/fulsom](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/fulsom) | Emit one interval-CSG solid-model raster with memoized finite data. |
++| [fulsom-strict](#fulsom-strict) | [nofib gc/fulsom](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/fulsom) | Emit one interval-CSG solid-model raster with strict finite data. |
++| [fulsom-nofib-lazy](#fulsom-nofib-lazy) | [nofib real/fulsom](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/fulsom) | Hash repeated interval-CSG solid-model raster with memoized finite data. |
++| [fulsom-nofib-strict](#fulsom-nofib-strict) | [nofib real/fulsom](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/fulsom) | Hash repeated interval-CSG solid-model raster with strict finite data. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -30442,3 +30446,463 @@ source inspection. The numerical interpretation is source-based, not a
+ newly claimed review of a hydrodynamics paper. Original and independent
+ state agreement supports correctness; compiler/collector effects remain
+ hypotheses pending separate evidence.
++
++## fulsom-lazy
++
++### Algorithm and workload
++
++Render the fixed union of three coloured spheres using source interval
++arithmetic, constructive-solid-geometry residual pruning, an octree, front-to-
++back quadtree projection and the original coloured raster stream. Preserve
++source child order, lighting calculations and the overlapping topBit z-half.
++The workload is a sequential renderer, requiring no graphics or foreign API.
++
++### History, variants and notices
++
++Duncan Sinclair's Fulsom sources carry copyright 1990,1991,1992,1993 and an
++individual permission grant. Complete original notices, including their
++spelling, remain in source copies and translated derivative modules.
++README.original and dated correspondence supply the program history;
++README.nofib credits Will Partain with directory flattening. Historical machine,
++heap and time examples are not current performance measurements.
++
++[nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798) is pinned
++at b7391df4540ac8b11b35e1b2e2c15819b5171798. The gc/fulsom and real/fulsom Main programs are materially
++different consumers: one writes one complete raw raster; the other computes
++and prints a signed machine-integer hash in 1000 iterations. Their shared
++reachable renderer is implemented once. The unsuffixed family fulsom denotes
++the GC source and fulsom-nofib the colliding real source, matching the inventory.
++Each receives explicit -lazy/-strict finite-data names.
++
++The source modules mostly match byte for byte; the interval copies also contain
++formatting/type-context differences. Both exact copies are retained. Bah.hs
++is an auxiliary test explicitly excluded by each Makefile. Cube, transforms,
++other sample scenes and unused interval operations are not entrypoints of
++either fixed Main workload. Retain their original definitions without
++claiming runnable imports of inactive library APIs. No external dataset is
++needed; scene coordinates, colours and light vector come from Shapes/Kolor.
++
++### Translation, demand and numeric decisions
++
++Keep infinite octree and quadtree control, CSG nodes, change flags, stream
++spines and branch choices memoized in both policies. Fully eager infinite
++control would not terminate. The lazy policy memoizes finite interval bounds,
++RGB components and child-list spines; the strict policy materializes those
++finite fields. Shared global scene definitions remain global.
++
++False change flags leave the source dead-residual sentinel undemanded.
++A full front quad skips hidden back octrees. Lighting is delayed until a
++nonempty node requires it; RGB component calculation is shared. Retain source
++short circuits and lazy raster prefixes instead of evaluating all colour data
++when constructing a stream cell. Both policies use the same SML97 program on
++every host.
++
++Real values use binary64. Preserve source operation grouping, interval-specific
++comparisons/minimum behavior, midpoint overlap and the 255.5 rounding formula.
++Raster words are unsigned 16-bit values emitted high byte first. The real
++source's hash is fixed explicitly to the original tested signed 64-bit
++semantics: Word64 modular arithmetic and IntInf signed conversion, including
++negative hashes. This avoids silently changing the reference on 31-bit hosts.
++Small indices and raster counts fit signed 31-bit integers.
++
++### Inputs, profiles and complete checks
++
++| Consumer | Smoke | Normal | Large |
++|---|---|---|---|
++| GC/raw | one depth-four raster | one depth-seven raster | one depth-nine raster |
++| Real/hashed | one depth-four raster | 1000 depth-five rasters | 1000 depth-six rasters |
++
++Raw normal selects the source FAST depth seven for practical portable checks;
++source NORM/SLOW depth nine remains the selected large profile. A depth-nine
++default Rune pilot exceeded a protective 2 GiB process-tree limit; that guarded
++attempt is not a workload failure at the suite's 4/8 GiB limits. Smoke reduces
++source GC depth seven or real 1000 repetitions explicitly. Real normal/large
++retain original parameters. Normal and large limits retain suite defaults.
++
++Validate every raster byte against reviewed original outputs. ASCII hexadecimal
++is only a reversible transport for binary fixtures; source byte lengths and
++SHA-256 identities are recorded. Consume/check the raw stream without adding
++hash arithmetic to the GC workload. The real consumer additionally checks each
++signed modular hash. Drivers suppress raw/repeated stdout and return checked
++byte/repetition counts; hex input and expected hash parsing occur outside
++the repetition loop, replacing repeated getArgs. Online reference comparisons
++add validation work, but do not materialize a second generated raster.
++
++Original FAST/NORM fixtures match the unmodified Haskell executables.
++An independent sphere/box projection model agrees on all 1365 selected
++foreground-mask pixels through depth five, using neither CSG residuals nor
++octree/quadtree construction. Complete original raster/hash equality also checks
++colours and tile order. Interval observations cover 25 operand pairs and five
++squares. Negative byte controls and hidden-branch/unused-colour tests exercise
++essential demand. Original source and independent models remain distinct.
++
++### Compiler/runtime concerns and recorded outcomes
++
++Investigate retained lazy trees, residual pruning, finite-field specialization,
++memo cells, stream allocation, colour sharing, online validation and modular
++hash arithmetic. These are source-based questions; count agreement alone
++does not establish individual performance effects. Fresh-process and repeated
++execution remain separate measurement modes.
++
++Canonical profiles, full semantic assertions, counts, host-specific diagnostic
++failures and repository acceptance are recorded in the validation ledger.
++Valid external interval-constructor tests are retained even where SML/NJ
++misreads real-pair fields across a parameterized functor boundary, matching the
++existing PIC reduction. The 32-bit all-ones Word64 literal control also exposes
++the existing low-half literal defect. Neither changes expected benchmark values
++or authorizes a compiler-specific kernel.
++
++### Literature and evidence scope
++
++Partain's nofib suite paper, at the review scope recorded in the suite survey,
++anchors the source family. Sinclair's 30 June 1993 correspondence and original
++README supply the program-specific account of solid modelling and historical
++space behavior. The actual algorithm, inactive APIs, numeric grouping and
++demand decisions come from source inspection. No external paper is claimed
++as a reviewed derivation of this renderer. Current correctness observations
++are separate from historical timings and unmeasured performance hypotheses.
++
++## fulsom-strict
++
++### Algorithm and workload
++
++Render the fixed union of three coloured spheres using source interval
++arithmetic, constructive-solid-geometry residual pruning, an octree, front-to-
++back quadtree projection and the original coloured raster stream. Preserve
++source child order, lighting calculations and the overlapping topBit z-half.
++The workload is a sequential renderer, requiring no graphics or foreign API.
++
++### History, variants and notices
++
++Duncan Sinclair's Fulsom sources carry copyright 1990,1991,1992,1993 and an
++individual permission grant. Complete original notices, including their
++spelling, remain in source copies and translated derivative modules.
++README.original and dated correspondence supply the program history;
++README.nofib credits Will Partain with directory flattening. Historical machine,
++heap and time examples are not current performance measurements.
++
++[nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798) is pinned
++at b7391df4540ac8b11b35e1b2e2c15819b5171798. The gc/fulsom and real/fulsom Main programs are materially
++different consumers: one writes one complete raw raster; the other computes
++and prints a signed machine-integer hash in 1000 iterations. Their shared
++reachable renderer is implemented once. The unsuffixed family fulsom denotes
++the GC source and fulsom-nofib the colliding real source, matching the inventory.
++Each receives explicit -lazy/-strict finite-data names.
++
++The source modules mostly match byte for byte; the interval copies also contain
++formatting/type-context differences. Both exact copies are retained. Bah.hs
++is an auxiliary test explicitly excluded by each Makefile. Cube, transforms,
++other sample scenes and unused interval operations are not entrypoints of
++either fixed Main workload. Retain their original definitions without
++claiming runnable imports of inactive library APIs. No external dataset is
++needed; scene coordinates, colours and light vector come from Shapes/Kolor.
++
++### Translation, demand and numeric decisions
++
++Keep infinite octree and quadtree control, CSG nodes, change flags, stream
++spines and branch choices memoized in both policies. Fully eager infinite
++control would not terminate. The lazy policy memoizes finite interval bounds,
++RGB components and child-list spines; the strict policy materializes those
++finite fields. Shared global scene definitions remain global.
++
++False change flags leave the source dead-residual sentinel undemanded.
++A full front quad skips hidden back octrees. Lighting is delayed until a
++nonempty node requires it; RGB component calculation is shared. Retain source
++short circuits and lazy raster prefixes instead of evaluating all colour data
++when constructing a stream cell. Both policies use the same SML97 program on
++every host.
++
++Real values use binary64. Preserve source operation grouping, interval-specific
++comparisons/minimum behavior, midpoint overlap and the 255.5 rounding formula.
++Raster words are unsigned 16-bit values emitted high byte first. The real
++source's hash is fixed explicitly to the original tested signed 64-bit
++semantics: Word64 modular arithmetic and IntInf signed conversion, including
++negative hashes. This avoids silently changing the reference on 31-bit hosts.
++Small indices and raster counts fit signed 31-bit integers.
++
++### Inputs, profiles and complete checks
++
++| Consumer | Smoke | Normal | Large |
++|---|---|---|---|
++| GC/raw | one depth-four raster | one depth-seven raster | one depth-nine raster |
++| Real/hashed | one depth-four raster | 1000 depth-five rasters | 1000 depth-six rasters |
++
++Raw normal selects the source FAST depth seven for practical portable checks;
++source NORM/SLOW depth nine remains the selected large profile. A depth-nine
++default Rune pilot exceeded a protective 2 GiB process-tree limit; that guarded
++attempt is not a workload failure at the suite's 4/8 GiB limits. Smoke reduces
++source GC depth seven or real 1000 repetitions explicitly. Real normal/large
++retain original parameters. Normal and large limits retain suite defaults.
++
++Validate every raster byte against reviewed original outputs. ASCII hexadecimal
++is only a reversible transport for binary fixtures; source byte lengths and
++SHA-256 identities are recorded. Consume/check the raw stream without adding
++hash arithmetic to the GC workload. The real consumer additionally checks each
++signed modular hash. Drivers suppress raw/repeated stdout and return checked
++byte/repetition counts; hex input and expected hash parsing occur outside
++the repetition loop, replacing repeated getArgs. Online reference comparisons
++add validation work, but do not materialize a second generated raster.
++
++Original FAST/NORM fixtures match the unmodified Haskell executables.
++An independent sphere/box projection model agrees on all 1365 selected
++foreground-mask pixels through depth five, using neither CSG residuals nor
++octree/quadtree construction. Complete original raster/hash equality also checks
++colours and tile order. Interval observations cover 25 operand pairs and five
++squares. Negative byte controls and hidden-branch/unused-colour tests exercise
++essential demand. Original source and independent models remain distinct.
++
++### Compiler/runtime concerns and recorded outcomes
++
++Investigate retained lazy trees, residual pruning, finite-field specialization,
++memo cells, stream allocation, colour sharing, online validation and modular
++hash arithmetic. These are source-based questions; count agreement alone
++does not establish individual performance effects. Fresh-process and repeated
++execution remain separate measurement modes.
++
++Canonical profiles, full semantic assertions, counts, host-specific diagnostic
++failures and repository acceptance are recorded in the validation ledger.
++Valid external interval-constructor tests are retained even where SML/NJ
++misreads real-pair fields across a parameterized functor boundary, matching the
++existing PIC reduction. The 32-bit all-ones Word64 literal control also exposes
++the existing low-half literal defect. Neither changes expected benchmark values
++or authorizes a compiler-specific kernel.
++
++### Literature and evidence scope
++
++Partain's nofib suite paper, at the review scope recorded in the suite survey,
++anchors the source family. Sinclair's 30 June 1993 correspondence and original
++README supply the program-specific account of solid modelling and historical
++space behavior. The actual algorithm, inactive APIs, numeric grouping and
++demand decisions come from source inspection. No external paper is claimed
++as a reviewed derivation of this renderer. Current correctness observations
++are separate from historical timings and unmeasured performance hypotheses.
++
++## fulsom-nofib-lazy
++
++### Algorithm and workload
++
++Render the fixed union of three coloured spheres using source interval
++arithmetic, constructive-solid-geometry residual pruning, an octree, front-to-
++back quadtree projection and the original coloured raster stream. Preserve
++source child order, lighting calculations and the overlapping topBit z-half.
++The workload is a sequential renderer, requiring no graphics or foreign API.
++
++### History, variants and notices
++
++Duncan Sinclair's Fulsom sources carry copyright 1990,1991,1992,1993 and an
++individual permission grant. Complete original notices, including their
++spelling, remain in source copies and translated derivative modules.
++README.original and dated correspondence supply the program history;
++README.nofib credits Will Partain with directory flattening. Historical machine,
++heap and time examples are not current performance measurements.
++
++[nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798) is pinned
++at b7391df4540ac8b11b35e1b2e2c15819b5171798. The gc/fulsom and real/fulsom Main programs are materially
++different consumers: one writes one complete raw raster; the other computes
++and prints a signed machine-integer hash in 1000 iterations. Their shared
++reachable renderer is implemented once. The unsuffixed family fulsom denotes
++the GC source and fulsom-nofib the colliding real source, matching the inventory.
++Each receives explicit -lazy/-strict finite-data names.
++
++The source modules mostly match byte for byte; the interval copies also contain
++formatting/type-context differences. Both exact copies are retained. Bah.hs
++is an auxiliary test explicitly excluded by each Makefile. Cube, transforms,
++other sample scenes and unused interval operations are not entrypoints of
++either fixed Main workload. Retain their original definitions without
++claiming runnable imports of inactive library APIs. No external dataset is
++needed; scene coordinates, colours and light vector come from Shapes/Kolor.
++
++### Translation, demand and numeric decisions
++
++Keep infinite octree and quadtree control, CSG nodes, change flags, stream
++spines and branch choices memoized in both policies. Fully eager infinite
++control would not terminate. The lazy policy memoizes finite interval bounds,
++RGB components and child-list spines; the strict policy materializes those
++finite fields. Shared global scene definitions remain global.
++
++False change flags leave the source dead-residual sentinel undemanded.
++A full front quad skips hidden back octrees. Lighting is delayed until a
++nonempty node requires it; RGB component calculation is shared. Retain source
++short circuits and lazy raster prefixes instead of evaluating all colour data
++when constructing a stream cell. Both policies use the same SML97 program on
++every host.
++
++Real values use binary64. Preserve source operation grouping, interval-specific
++comparisons/minimum behavior, midpoint overlap and the 255.5 rounding formula.
++Raster words are unsigned 16-bit values emitted high byte first. The real
++source's hash is fixed explicitly to the original tested signed 64-bit
++semantics: Word64 modular arithmetic and IntInf signed conversion, including
++negative hashes. This avoids silently changing the reference on 31-bit hosts.
++Small indices and raster counts fit signed 31-bit integers.
++
++### Inputs, profiles and complete checks
++
++| Consumer | Smoke | Normal | Large |
++|---|---|---|---|
++| GC/raw | one depth-four raster | one depth-seven raster | one depth-nine raster |
++| Real/hashed | one depth-four raster | 1000 depth-five rasters | 1000 depth-six rasters |
++
++Raw normal selects the source FAST depth seven for practical portable checks;
++source NORM/SLOW depth nine remains the selected large profile. A depth-nine
++default Rune pilot exceeded a protective 2 GiB process-tree limit; that guarded
++attempt is not a workload failure at the suite's 4/8 GiB limits. Smoke reduces
++source GC depth seven or real 1000 repetitions explicitly. Real normal/large
++retain original parameters. Normal and large limits retain suite defaults.
++
++Validate every raster byte against reviewed original outputs. ASCII hexadecimal
++is only a reversible transport for binary fixtures; source byte lengths and
++SHA-256 identities are recorded. Consume/check the raw stream without adding
++hash arithmetic to the GC workload. The real consumer additionally checks each
++signed modular hash. Drivers suppress raw/repeated stdout and return checked
++byte/repetition counts; hex input and expected hash parsing occur outside
++the repetition loop, replacing repeated getArgs. Online reference comparisons
++add validation work, but do not materialize a second generated raster.
++
++Original FAST/NORM fixtures match the unmodified Haskell executables.
++An independent sphere/box projection model agrees on all 1365 selected
++foreground-mask pixels through depth five, using neither CSG residuals nor
++octree/quadtree construction. Complete original raster/hash equality also checks
++colours and tile order. Interval observations cover 25 operand pairs and five
++squares. Negative byte controls and hidden-branch/unused-colour tests exercise
++essential demand. Original source and independent models remain distinct.
++
++### Compiler/runtime concerns and recorded outcomes
++
++Investigate retained lazy trees, residual pruning, finite-field specialization,
++memo cells, stream allocation, colour sharing, online validation and modular
++hash arithmetic. These are source-based questions; count agreement alone
++does not establish individual performance effects. Fresh-process and repeated
++execution remain separate measurement modes.
++
++Canonical profiles, full semantic assertions, counts, host-specific diagnostic
++failures and repository acceptance are recorded in the validation ledger.
++Valid external interval-constructor tests are retained even where SML/NJ
++misreads real-pair fields across a parameterized functor boundary, matching the
++existing PIC reduction. The 32-bit all-ones Word64 literal control also exposes
++the existing low-half literal defect. Neither changes expected benchmark values
++or authorizes a compiler-specific kernel.
++
++### Literature and evidence scope
++
++Partain's nofib suite paper, at the review scope recorded in the suite survey,
++anchors the source family. Sinclair's 30 June 1993 correspondence and original
++README supply the program-specific account of solid modelling and historical
++space behavior. The actual algorithm, inactive APIs, numeric grouping and
++demand decisions come from source inspection. No external paper is claimed
++as a reviewed derivation of this renderer. Current correctness observations
++are separate from historical timings and unmeasured performance hypotheses.
++
++## fulsom-nofib-strict
++
++### Algorithm and workload
++
++Render the fixed union of three coloured spheres using source interval
++arithmetic, constructive-solid-geometry residual pruning, an octree, front-to-
++back quadtree projection and the original coloured raster stream. Preserve
++source child order, lighting calculations and the overlapping topBit z-half.
++The workload is a sequential renderer, requiring no graphics or foreign API.
++
++### History, variants and notices
++
++Duncan Sinclair's Fulsom sources carry copyright 1990,1991,1992,1993 and an
++individual permission grant. Complete original notices, including their
++spelling, remain in source copies and translated derivative modules.
++README.original and dated correspondence supply the program history;
++README.nofib credits Will Partain with directory flattening. Historical machine,
++heap and time examples are not current performance measurements.
++
++[nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798) is pinned
++at b7391df4540ac8b11b35e1b2e2c15819b5171798. The gc/fulsom and real/fulsom Main programs are materially
++different consumers: one writes one complete raw raster; the other computes
++and prints a signed machine-integer hash in 1000 iterations. Their shared
++reachable renderer is implemented once. The unsuffixed family fulsom denotes
++the GC source and fulsom-nofib the colliding real source, matching the inventory.
++Each receives explicit -lazy/-strict finite-data names.
++
++The source modules mostly match byte for byte; the interval copies also contain
++formatting/type-context differences. Both exact copies are retained. Bah.hs
++is an auxiliary test explicitly excluded by each Makefile. Cube, transforms,
++other sample scenes and unused interval operations are not entrypoints of
++either fixed Main workload. Retain their original definitions without
++claiming runnable imports of inactive library APIs. No external dataset is
++needed; scene coordinates, colours and light vector come from Shapes/Kolor.
++
++### Translation, demand and numeric decisions
++
++Keep infinite octree and quadtree control, CSG nodes, change flags, stream
++spines and branch choices memoized in both policies. Fully eager infinite
++control would not terminate. The lazy policy memoizes finite interval bounds,
++RGB components and child-list spines; the strict policy materializes those
++finite fields. Shared global scene definitions remain global.
++
++False change flags leave the source dead-residual sentinel undemanded.
++A full front quad skips hidden back octrees. Lighting is delayed until a
++nonempty node requires it; RGB component calculation is shared. Retain source
++short circuits and lazy raster prefixes instead of evaluating all colour data
++when constructing a stream cell. Both policies use the same SML97 program on
++every host.
++
++Real values use binary64. Preserve source operation grouping, interval-specific
++comparisons/minimum behavior, midpoint overlap and the 255.5 rounding formula.
++Raster words are unsigned 16-bit values emitted high byte first. The real
++source's hash is fixed explicitly to the original tested signed 64-bit
++semantics: Word64 modular arithmetic and IntInf signed conversion, including
++negative hashes. This avoids silently changing the reference on 31-bit hosts.
++Small indices and raster counts fit signed 31-bit integers.
++
++### Inputs, profiles and complete checks
++
++| Consumer | Smoke | Normal | Large |
++|---|---|---|---|
++| GC/raw | one depth-four raster | one depth-seven raster | one depth-nine raster |
++| Real/hashed | one depth-four raster | 1000 depth-five rasters | 1000 depth-six rasters |
++
++Raw normal selects the source FAST depth seven for practical portable checks;
++source NORM/SLOW depth nine remains the selected large profile. A depth-nine
++default Rune pilot exceeded a protective 2 GiB process-tree limit; that guarded
++attempt is not a workload failure at the suite's 4/8 GiB limits. Smoke reduces
++source GC depth seven or real 1000 repetitions explicitly. Real normal/large
++retain original parameters. Normal and large limits retain suite defaults.
++
++Validate every raster byte against reviewed original outputs. ASCII hexadecimal
++is only a reversible transport for binary fixtures; source byte lengths and
++SHA-256 identities are recorded. Consume/check the raw stream without adding
++hash arithmetic to the GC workload. The real consumer additionally checks each
++signed modular hash. Drivers suppress raw/repeated stdout and return checked
++byte/repetition counts; hex input and expected hash parsing occur outside
++the repetition loop, replacing repeated getArgs. Online reference comparisons
++add validation work, but do not materialize a second generated raster.
++
++Original FAST/NORM fixtures match the unmodified Haskell executables.
++An independent sphere/box projection model agrees on all 1365 selected
++foreground-mask pixels through depth five, using neither CSG residuals nor
++octree/quadtree construction. Complete original raster/hash equality also checks
++colours and tile order. Interval observations cover 25 operand pairs and five
++squares. Negative byte controls and hidden-branch/unused-colour tests exercise
++essential demand. Original source and independent models remain distinct.
++
++### Compiler/runtime concerns and recorded outcomes
++
++Investigate retained lazy trees, residual pruning, finite-field specialization,
++memo cells, stream allocation, colour sharing, online validation and modular
++hash arithmetic. These are source-based questions; count agreement alone
++does not establish individual performance effects. Fresh-process and repeated
++execution remain separate measurement modes.
++
++Canonical profiles, full semantic assertions, counts, host-specific diagnostic
++failures and repository acceptance are recorded in the validation ledger.
++Valid external interval-constructor tests are retained even where SML/NJ
++misreads real-pair fields across a parameterized functor boundary, matching the
++existing PIC reduction. The 32-bit all-ones Word64 literal control also exposes
++the existing low-half literal defect. Neither changes expected benchmark values
++or authorizes a compiler-specific kernel.
++
++### Literature and evidence scope
++
++Partain's nofib suite paper, at the review scope recorded in the suite survey,
++anchors the source family. Sinclair's 30 June 1993 correspondence and original
++README supply the program-specific account of solid modelling and historical
++space behavior. The actual algorithm, inactive APIs, numeric grouping and
++demand decisions come from source inspection. No external paper is claimed
++as a reviewed derivation of this renderer. Current correctness observations
++are separate from historical timings and unmeasured performance hypotheses.
+diff --git a/examples/benchmarks/inventory.tsv b/examples/benchmarks/inventory.tsv
+index 70f5918f7..60fa1e6b8 100644
+--- a/examples/benchmarks/inventory.tsv
++++ b/examples/benchmarks/inventory.tsv
+@@ -489,8 +489,8 @@ nofib	gc/cacheprof	cacheprof	cacheprof	M3	import	application	nofib:real/cachepro
+ nofib	gc/circsim	circsim	circsim	M3	import	application	nofib:spectral/circsim	David J. King;John O'Donnell	2748f133d1b183f1b70c405689f266291ae319d8c72cb1034a1c8e79d2641e2f	gc/circsim/Main.lhs			gc/circsim/Main.lhs:authorship-heading;gc/circsim/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	gc/constraints	constraints	constraints	M3	import	kernel	nofib:spectral/constraints	not stated in scanned source headers	c4b8aa369a0730e639866b628fab145ba965758fec94c2ae323be140ac14f18e	gc/constraints/Main.hs	gc/constraints/constraints.faststdout;gc/constraints/constraints.slowstdout;gc/constraints/constraints.stdout		gc/constraints/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	gc/fibheaps	fibheaps	fibheaps	M3	import	calls-recursion	nofib:spectral/fibheaps	not stated in scanned source headers	c9726703b6fbc79e348073ff87935d23897aad73b0de7aa60930fbf6394c468f	gc/fibheaps/Main.lhs	gc/fibheaps/fibheaps.stdout	gc/fibheaps/Main.lhs:header	gc/fibheaps/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	gc/fulsom/Bah.hs	Bah	Bah	-	exclude	application	nofib:real/fulsom/Bah.hs	not stated in scanned source headers	dee4d428691bbf65f391631a984dd56501e45e4483d7d052fde597d707bfca0a	gc/fulsom/Bah.hs;gc/fulsom/Csg.hs;gc/fulsom/Interval.hs;gc/fulsom/Kolor.hs;gc/fulsom/Matrix.hs;gc/fulsom/Oct.hs;gc/fulsom/Quad.hs;gc/fulsom/Raster.hs;gc/fulsom/Shapes.hs;gc/fulsom/Types.hs;gc/fulsom/Vector.hs	gc/fulsom/fulsom.faststdout;gc/fulsom/fulsom.stdout	gc/fulsom/Bah.hs:header;gc/fulsom/Csg.hs:header;gc/fulsom/Interval.hs:header;gc/fulsom/Kolor.hs:header;gc/fulsom/Matrix.hs:header;gc/fulsom/Oct.hs:header;gc/fulsom/Quad.hs:header;gc/fulsom/Raster.hs:header;gc/fulsom/Shapes.hs:header;gc/fulsom/Types.hs:header;gc/fulsom/Vector.hs:header	gc/fulsom/Makefile	auxiliary test or alternate entrypoint; the directory Makefile excludes it or selects the Main driver, not a separate benchmark invocation
+-nofib	gc/fulsom/Main.hs	fulsom	fulsom	M3	import	application	nofib:real/fulsom/Main.hs	not stated in scanned source headers	9a667934091ce6847985daac4192d7f34ffe20c37fd65388af47d5fd1c73d911	gc/fulsom/Csg.hs;gc/fulsom/Interval.hs;gc/fulsom/Kolor.hs;gc/fulsom/Main.hs;gc/fulsom/Matrix.hs;gc/fulsom/Oct.hs;gc/fulsom/Patchlevel.hs;gc/fulsom/Quad.hs;gc/fulsom/Raster.hs;gc/fulsom/Shapes.hs;gc/fulsom/Types.hs;gc/fulsom/Vector.hs	gc/fulsom/fulsom.faststdout;gc/fulsom/fulsom.stdout	gc/fulsom/Csg.hs:header;gc/fulsom/Interval.hs:header;gc/fulsom/Kolor.hs:header;gc/fulsom/Main.hs:header;gc/fulsom/Matrix.hs:header;gc/fulsom/Oct.hs:header;gc/fulsom/Patchlevel.hs:header;gc/fulsom/Quad.hs:header;gc/fulsom/Raster.hs:header;gc/fulsom/Shapes.hs:header;gc/fulsom/Types.hs:header;gc/fulsom/Vector.hs:header	gc/fulsom/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	gc/fulsom/Bah.hs	Bah	Bah	-	exclude	application	nofib:real/fulsom/Bah.hs	Duncan Sinclair	dee4d428691bbf65f391631a984dd56501e45e4483d7d052fde597d707bfca0a	gc/fulsom/Bah.hs;gc/fulsom/Csg.hs;gc/fulsom/Interval.hs;gc/fulsom/Kolor.hs;gc/fulsom/Matrix.hs;gc/fulsom/Oct.hs;gc/fulsom/Quad.hs;gc/fulsom/Raster.hs;gc/fulsom/Shapes.hs;gc/fulsom/Types.hs;gc/fulsom/Vector.hs	gc/fulsom/fulsom.faststdout;gc/fulsom/fulsom.stdout	gc/fulsom/Bah.hs:header;gc/fulsom/Csg.hs:header;gc/fulsom/Interval.hs:header;gc/fulsom/Kolor.hs:header;gc/fulsom/Matrix.hs:header;gc/fulsom/Oct.hs:header;gc/fulsom/Quad.hs:header;gc/fulsom/Raster.hs:header;gc/fulsom/Shapes.hs:header;gc/fulsom/Types.hs:header;gc/fulsom/Vector.hs:header	gc/fulsom/Interval.hs:author-and-individual-permission;gc/fulsom/Makefile	auxiliary test or alternate entrypoint; the directory Makefile excludes it or selects the Main driver, not a separate benchmark invocation
++nofib	gc/fulsom/Main.hs	fulsom	fulsom	M3	import	application	nofib:real/fulsom/Main.hs	Duncan Sinclair	9a667934091ce6847985daac4192d7f34ffe20c37fd65388af47d5fd1c73d911	gc/fulsom/Csg.hs;gc/fulsom/Interval.hs;gc/fulsom/Kolor.hs;gc/fulsom/Main.hs;gc/fulsom/Matrix.hs;gc/fulsom/Oct.hs;gc/fulsom/Patchlevel.hs;gc/fulsom/Quad.hs;gc/fulsom/Raster.hs;gc/fulsom/Shapes.hs;gc/fulsom/Types.hs;gc/fulsom/Vector.hs	gc/fulsom/fulsom.faststdout;gc/fulsom/fulsom.stdout	gc/fulsom/Csg.hs:header;gc/fulsom/Interval.hs:header;gc/fulsom/Kolor.hs:header;gc/fulsom/Main.hs:header;gc/fulsom/Matrix.hs:header;gc/fulsom/Oct.hs:header;gc/fulsom/Patchlevel.hs:header;gc/fulsom/Quad.hs:header;gc/fulsom/Raster.hs:header;gc/fulsom/Shapes.hs:header;gc/fulsom/Types.hs:header;gc/fulsom/Vector.hs:header	gc/fulsom/Interval.hs:author-and-individual-permission;gc/fulsom/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	gc/gc_bench	gc_bench	gc_bench	M3	import	allocation-lifetimes		John Ellis and Pete Kovac	52ecba8fa77375be0b863d9854ef7fd9b3b112ffd0c675f7c0d129ebb4002e1a	gc/gc_bench/Main.hs		gc/gc_bench/Main.hs:header	gc/gc_bench/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	gc/happy	happy	happy	M3	import	integer-arithmetic		not stated in scanned source headers	09e64ba7140a210f177de61d0916899dbea4b936d52cbee15aa3b6af11fb0de1	gc/happy/AbsSyn.lhs;gc/happy/AttrGrammar.lhs;gc/happy/AttrGrammarParser.hs;gc/happy/First.lhs;gc/happy/GenUtils.lhs;gc/happy/Grammar.lhs;gc/happy/Info.lhs;gc/happy/LALR.lhs;gc/happy/Lexer.lhs;gc/happy/Main.lhs;gc/happy/ParseMonad.lhs;gc/happy/Parser.hs;gc/happy/Paths_happy.hs;gc/happy/ProduceCode.lhs;gc/happy/ProduceGLRCode.lhs;gc/happy/Set.hs;gc/happy/Target.lhs	gc/happy/TestInput.y;gc/happy/happy.expected	gc/happy/Main.lhs:header	gc/happy/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	gc/hash	hash	hash	M3	import	integer-arithmetic		not stated in scanned source headers	3ec00ac7589a5899fff59badb575a2620e04aa862e974ea136d86ba0db7d9359	gc/hash/HashTable.hs;gc/hash/hash.hs	gc/hash/hash.stdout	gc/hash/HashTable.hs:header	gc/hash/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+@@ -567,8 +567,8 @@ nofib	real/eff/VSD	VSD	VSD	M4	import	kernel		not stated in scanned source header
+ nofib	real/eff/VSM	VSM	VSM	M4	import	kernel		not stated in scanned source headers	3187d3683f07f58d29ed5f73325d0d7b81f5593a01a41fd8e2f29d39e5c280a2	real/eff/VSM/EffBench.hs;real/eff/VSM/Main.hs	real/eff/VSM/VSM.stdout	real/eff/VSM/EffBench.hs:header	real/eff/VSM/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/fem	fem	fem	M4	import	numerical		not stated in scanned source headers	7c06a52d51982c9ef4e6f964a1e262d4101adf27abc3f89bf800c7afcb160179	real/fem/Assemble_loadvec.hs;real/fem/Assemble_stiffness.hs;real/fem/Basics.hs;real/fem/DB_interface.hs;real/fem/Database.hs;real/fem/Degrees.hs;real/fem/Displacement.hs;real/fem/Elemforce.hs;real/fem/Elemstif.hs;real/fem/Main.hs;real/fem/Matrix.hs;real/fem/NofibUtils.hs;real/fem/Pre_assemble.hs;real/fem/PrintSource.hs;real/fem/Printuvwforce.hs;real/fem/VBlldecomp.hs;real/fem/VBmatrix.hs;real/fem/Vector.hs;real/fem/inC/assemble_loadvec.c;real/fem/inC/assemble_stiffness.c;real/fem/inC/bar_2d.c;real/fem/inC/database;real/fem/inC/displacement.c;real/fem/inC/fem.c;real/fem/inC/internalforce.c;real/fem/inC/pre_assemble.c;real/fem/inC/read_data.c;real/fem/inC/vblldecomp.c	real/fem/fem.stdin	real/fem/README:header	real/fem/Makefile;real/fem/README	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/fluid	fluid	fluid	M4	import	numerical		not stated in scanned source headers	b19f1d5811ff52215d0b18f2761bb697464a539e9a54f38a00bd8e1fb52d0a50	real/fluid/Asb_routs.hs;real/fluid/C_matrix.hs;real/fluid/Chl_decomp.hs;real/fluid/Chl_method.hs;real/fluid/Chl_routs.hs;real/fluid/Defs.hs;real/fluid/Elefac.hs;real/fluid/Input_proc.hs;real/fluid/Jcb_method.hs;real/fluid/L_matrix.hs;real/fluid/Main.hs;real/fluid/Min_degree.hs;real/fluid/NofibUtils.hs;real/fluid/Norm.hs;real/fluid/Rhs_Asb_routs.hs;real/fluid/S_Array.hs;real/fluid/S_matrix.hs;real/fluid/TG_iter.hs;real/fluid/Tol_cal.hs	real/fluid/fluid.stdin		real/fluid/Makefile;real/fluid/README	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	real/fulsom/Bah.hs	Bah	Bah	-	exclude	application	nofib:gc/fulsom/Bah.hs	not stated in scanned source headers	09bfd257e0a8c5886cdc5de12fef19f0a67a6f0bc68b00f93eb7d4c2489f4dc3	real/fulsom/Bah.hs;real/fulsom/Csg.hs;real/fulsom/Interval.hs;real/fulsom/Kolor.hs;real/fulsom/Matrix.hs;real/fulsom/Oct.hs;real/fulsom/Quad.hs;real/fulsom/Raster.hs;real/fulsom/Shapes.hs;real/fulsom/Types.hs;real/fulsom/Vector.hs	real/fulsom/fulsom.faststdout;real/fulsom/fulsom.slowstdout;real/fulsom/fulsom.stdout	real/fulsom/Bah.hs:header;real/fulsom/Csg.hs:header;real/fulsom/Interval.hs:header;real/fulsom/Kolor.hs:header;real/fulsom/Matrix.hs:header;real/fulsom/Oct.hs:header;real/fulsom/Quad.hs:header;real/fulsom/Raster.hs:header;real/fulsom/Shapes.hs:header;real/fulsom/Types.hs:header;real/fulsom/Vector.hs:header	real/fulsom/Makefile	auxiliary test or alternate entrypoint; the directory Makefile excludes it or selects the Main driver, not a separate benchmark invocation
+-nofib	real/fulsom/Main.hs	fulsom	fulsom-nofib	M4	import	application	nofib:gc/fulsom/Main.hs	not stated in scanned source headers	ba2d312f27a9fe76c2daaf885309207f2702902e4cb4d73669575f4068774443	real/fulsom/Csg.hs;real/fulsom/Interval.hs;real/fulsom/Kolor.hs;real/fulsom/Main.hs;real/fulsom/Matrix.hs;real/fulsom/NofibUtils.hs;real/fulsom/Oct.hs;real/fulsom/Patchlevel.hs;real/fulsom/Quad.hs;real/fulsom/Raster.hs;real/fulsom/Shapes.hs;real/fulsom/Types.hs;real/fulsom/Vector.hs	real/fulsom/fulsom.faststdout;real/fulsom/fulsom.slowstdout;real/fulsom/fulsom.stdout	real/fulsom/Csg.hs:header;real/fulsom/Interval.hs:header;real/fulsom/Kolor.hs:header;real/fulsom/Main.hs:header;real/fulsom/Matrix.hs:header;real/fulsom/Oct.hs:header;real/fulsom/Patchlevel.hs:header;real/fulsom/Quad.hs:header;real/fulsom/Raster.hs:header;real/fulsom/Shapes.hs:header;real/fulsom/Types.hs:header;real/fulsom/Vector.hs:header	real/fulsom/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	real/fulsom/Bah.hs	Bah	Bah	-	exclude	application	nofib:gc/fulsom/Bah.hs	Duncan Sinclair	09bfd257e0a8c5886cdc5de12fef19f0a67a6f0bc68b00f93eb7d4c2489f4dc3	real/fulsom/Bah.hs;real/fulsom/Csg.hs;real/fulsom/Interval.hs;real/fulsom/Kolor.hs;real/fulsom/Matrix.hs;real/fulsom/Oct.hs;real/fulsom/Quad.hs;real/fulsom/Raster.hs;real/fulsom/Shapes.hs;real/fulsom/Types.hs;real/fulsom/Vector.hs	real/fulsom/fulsom.faststdout;real/fulsom/fulsom.slowstdout;real/fulsom/fulsom.stdout	real/fulsom/Bah.hs:header;real/fulsom/Csg.hs:header;real/fulsom/Interval.hs:header;real/fulsom/Kolor.hs:header;real/fulsom/Matrix.hs:header;real/fulsom/Oct.hs:header;real/fulsom/Quad.hs:header;real/fulsom/Raster.hs:header;real/fulsom/Shapes.hs:header;real/fulsom/Types.hs:header;real/fulsom/Vector.hs:header	real/fulsom/Interval.hs:author-and-individual-permission;real/fulsom/Makefile	auxiliary test or alternate entrypoint; the directory Makefile excludes it or selects the Main driver, not a separate benchmark invocation
++nofib	real/fulsom/Main.hs	fulsom	fulsom-nofib	M4	import	application	nofib:gc/fulsom/Main.hs	Duncan Sinclair	ba2d312f27a9fe76c2daaf885309207f2702902e4cb4d73669575f4068774443	real/fulsom/Csg.hs;real/fulsom/Interval.hs;real/fulsom/Kolor.hs;real/fulsom/Main.hs;real/fulsom/Matrix.hs;real/fulsom/NofibUtils.hs;real/fulsom/Oct.hs;real/fulsom/Patchlevel.hs;real/fulsom/Quad.hs;real/fulsom/Raster.hs;real/fulsom/Shapes.hs;real/fulsom/Types.hs;real/fulsom/Vector.hs	real/fulsom/fulsom.faststdout;real/fulsom/fulsom.slowstdout;real/fulsom/fulsom.stdout	real/fulsom/Csg.hs:header;real/fulsom/Interval.hs:header;real/fulsom/Kolor.hs:header;real/fulsom/Main.hs:header;real/fulsom/Matrix.hs:header;real/fulsom/Oct.hs:header;real/fulsom/Patchlevel.hs:header;real/fulsom/Quad.hs:header;real/fulsom/Raster.hs:header;real/fulsom/Shapes.hs:header;real/fulsom/Types.hs:header;real/fulsom/Vector.hs:header	real/fulsom/Interval.hs:author-and-individual-permission;real/fulsom/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/gamteb	gamteb	gamteb	M4	import	application		Patricia Fasel	59954bb60ebde5c8b56c62aacdb4f252c9647f5d2689bec1147933efce5f5d19	real/gamteb/Compton.hs;real/gamteb/Consts.hs;real/gamteb/Distance.hs;real/gamteb/GamtebMain.hs;real/gamteb/GamtebType.hs;real/gamteb/InitTable.hs;real/gamteb/Main.hs;real/gamteb/NofibUtils.hs;real/gamteb/Output.hs;real/gamteb/Pair.hs;real/gamteb/PhotoElec.hs;real/gamteb/RoulSplit.hs;real/gamteb/TransPort.hs;real/gamteb/Utils.hs	real/gamteb/gamteb.faststdout;real/gamteb/gamteb.slowstdout;real/gamteb/gamteb.stdout	real/gamteb/GamtebMain.hs:header	real/gamteb/Compton.hs:author-heading;real/gamteb/Consts.hs:author-heading;real/gamteb/Distance.hs:author-heading;real/gamteb/GamtebMain.hs:author-heading;real/gamteb/GamtebType.hs:author-heading;real/gamteb/InitTable.hs:author-heading;real/gamteb/Main.hs:author-heading;real/gamteb/Makefile;real/gamteb/Output.hs:author-heading;real/gamteb/Pair.hs:author-heading;real/gamteb/PhotoElec.hs:author-heading;real/gamteb/RoulSplit.hs:author-heading;real/gamteb/TransPort.hs:author-heading;real/gamteb/Utils.hs:author-heading	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/gg	gg	gg	M4	import	application		Iain Checkland	e670c250f14ce0d26a61f15ab0286d106b24059fb7421b811c658e7fbfc2b434	real/gg/Activity.hs;real/gg/GRIP.hs;real/gg/Graph.hs;real/gg/Main.hs;real/gg/NofibUtils.hs;real/gg/PSlib.hs;real/gg/Parse.hs;real/gg/Pool.hs;real/gg/Spark.hs;real/gg/StdLib.hs	real/gg/gg.faststdin;real/gg/gg.faststdout;real/gg/gg.slowstdin;real/gg/gg.slowstdout;real/gg/gg.stdin;real/gg/gg.stdout		real/gg/Makefile;real/gg/gg.1:author-section	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/grep	grep	grep	M4	import	kernel		not stated in scanned source headers	d9dadbddd22cc3db52c300d393d12485206db6731c78dcc12a5c0b846d08e4db	real/grep/Main.lhs;real/grep/NofibUtils.hs;real/grep/Parsers.hs;real/grep/StringMatch.hs	real/grep/grep.faststdin;real/grep/grep.faststdout;real/grep/grep.slowstdin;real/grep/grep.slowstdout;real/grep/grep.stdin;real/grep/grep.stdout		real/grep/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index ed6962a60..3d5527a85 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -1336,3 +1336,15 @@ wave4main-lazy	large	nofib	spectral/hartel/wave4main	500 400 large.reference	wav
+ wave4main-strict	smoke	nofib	spectral/hartel/wave4main	1 8 smoke.reference	wave4main-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-wave4main-array.sml,shared/hartel-wave4main-kernel.sml,shared/hartel-wave4main-check.sml,wave4main-strict/benchmark.sml,shared/main.sml	30	1048576	numerical,arrays,indexed-data,sharing,allocation-lifetimes,hartel	smoke.reference	exact	implemented
+ wave4main-strict	normal	nofib	spectral/hartel/wave4main	500 80 normal.reference	wave4main-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-wave4main-array.sml,shared/hartel-wave4main-kernel.sml,shared/hartel-wave4main-check.sml,wave4main-strict/benchmark.sml,shared/main.sml	600	4194304	numerical,arrays,indexed-data,sharing,allocation-lifetimes,hartel	normal.reference	exact	implemented
+ wave4main-strict	large	nofib	spectral/hartel/wave4main	500 400 large.reference	wave4main-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-wave4main-array.sml,shared/hartel-wave4main-kernel.sml,shared/hartel-wave4main-check.sml,wave4main-strict/benchmark.sml,shared/main.sml	3600	8388608	numerical,arrays,indexed-data,sharing,allocation-lifetimes,hartel	large.reference	exact	implemented
++fulsom-lazy	smoke	nofib	gc/fulsom/Main.hs	4 smoke.hex	fulsom-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/hartel-ida-finite.sml,shared/fulsom-interval.sml,shared/fulsom-kernel.sml,shared/fulsom-check.sml,fulsom-lazy/benchmark.sml,shared/main.sml	30	1048576	applications,csg,interval-arithmetic,octrees,quadtrees,streams,sharing,allocation-lifetimes	smoke.hex	exact	implemented
++fulsom-lazy	normal	nofib	gc/fulsom/Main.hs	7 normal.hex	fulsom-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/hartel-ida-finite.sml,shared/fulsom-interval.sml,shared/fulsom-kernel.sml,shared/fulsom-check.sml,fulsom-lazy/benchmark.sml,shared/main.sml	600	4194304	applications,csg,interval-arithmetic,octrees,quadtrees,streams,sharing,allocation-lifetimes	normal.hex	exact	implemented
++fulsom-lazy	large	nofib	gc/fulsom/Main.hs	9 large.hex	fulsom-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/hartel-ida-finite.sml,shared/fulsom-interval.sml,shared/fulsom-kernel.sml,shared/fulsom-check.sml,fulsom-lazy/benchmark.sml,shared/main.sml	3600	8388608	applications,csg,interval-arithmetic,octrees,quadtrees,streams,sharing,allocation-lifetimes	large.hex	exact	implemented
++fulsom-strict	smoke	nofib	gc/fulsom/Main.hs	4 smoke.hex	fulsom-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/hartel-ida-finite.sml,shared/fulsom-interval.sml,shared/fulsom-kernel.sml,shared/fulsom-check.sml,fulsom-strict/benchmark.sml,shared/main.sml	30	1048576	applications,csg,interval-arithmetic,octrees,quadtrees,streams,sharing,allocation-lifetimes	smoke.hex	exact	implemented
++fulsom-strict	normal	nofib	gc/fulsom/Main.hs	7 normal.hex	fulsom-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/hartel-ida-finite.sml,shared/fulsom-interval.sml,shared/fulsom-kernel.sml,shared/fulsom-check.sml,fulsom-strict/benchmark.sml,shared/main.sml	600	4194304	applications,csg,interval-arithmetic,octrees,quadtrees,streams,sharing,allocation-lifetimes	normal.hex	exact	implemented
++fulsom-strict	large	nofib	gc/fulsom/Main.hs	9 large.hex	fulsom-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/hartel-ida-finite.sml,shared/fulsom-interval.sml,shared/fulsom-kernel.sml,shared/fulsom-check.sml,fulsom-strict/benchmark.sml,shared/main.sml	3600	8388608	applications,csg,interval-arithmetic,octrees,quadtrees,streams,sharing,allocation-lifetimes	large.hex	exact	implemented
++fulsom-nofib-lazy	smoke	nofib	real/fulsom/Main.hs	1 4 smoke.hex 2066483427283309121	fulsom-nofib-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/hartel-ida-finite.sml,shared/fulsom-interval.sml,shared/fulsom-kernel.sml,shared/fulsom-check.sml,fulsom-nofib-lazy/benchmark.sml,shared/main.sml	30	1048576	applications,csg,interval-arithmetic,octrees,quadtrees,streams,sharing,allocation-lifetimes	smoke.hex	exact	implemented
++fulsom-nofib-lazy	normal	nofib	real/fulsom/Main.hs	1000 5 normal.hex 8553150556328418559	fulsom-nofib-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/hartel-ida-finite.sml,shared/fulsom-interval.sml,shared/fulsom-kernel.sml,shared/fulsom-check.sml,fulsom-nofib-lazy/benchmark.sml,shared/main.sml	600	4194304	applications,csg,interval-arithmetic,octrees,quadtrees,streams,sharing,allocation-lifetimes	normal.hex	exact	implemented
++fulsom-nofib-lazy	large	nofib	real/fulsom/Main.hs	1000 6 large.hex 4884933858404188076	fulsom-nofib-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/hartel-ida-finite.sml,shared/fulsom-interval.sml,shared/fulsom-kernel.sml,shared/fulsom-check.sml,fulsom-nofib-lazy/benchmark.sml,shared/main.sml	3600	8388608	applications,csg,interval-arithmetic,octrees,quadtrees,streams,sharing,allocation-lifetimes	large.hex	exact	implemented
++fulsom-nofib-strict	smoke	nofib	real/fulsom/Main.hs	1 4 smoke.hex 2066483427283309121	fulsom-nofib-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/hartel-ida-finite.sml,shared/fulsom-interval.sml,shared/fulsom-kernel.sml,shared/fulsom-check.sml,fulsom-nofib-strict/benchmark.sml,shared/main.sml	30	1048576	applications,csg,interval-arithmetic,octrees,quadtrees,streams,sharing,allocation-lifetimes	smoke.hex	exact	implemented
++fulsom-nofib-strict	normal	nofib	real/fulsom/Main.hs	1000 5 normal.hex 8553150556328418559	fulsom-nofib-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/hartel-ida-finite.sml,shared/fulsom-interval.sml,shared/fulsom-kernel.sml,shared/fulsom-check.sml,fulsom-nofib-strict/benchmark.sml,shared/main.sml	600	4194304	applications,csg,interval-arithmetic,octrees,quadtrees,streams,sharing,allocation-lifetimes	normal.hex	exact	implemented
++fulsom-nofib-strict	large	nofib	real/fulsom/Main.hs	1000 6 large.hex 4884933858404188076	fulsom-nofib-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/stream.sml,shared/hartel-ida-finite.sml,shared/fulsom-interval.sml,shared/fulsom-kernel.sml,shared/fulsom-check.sml,fulsom-nofib-strict/benchmark.sml,shared/main.sml	3600	8388608	applications,csg,interval-arithmetic,octrees,quadtrees,streams,sharing,allocation-lifetimes	large.hex	exact	implemented
+diff --git a/examples/benchmarks/source-variants.tsv b/examples/benchmarks/source-variants.tsv
+index 7edff87cf..24d2d5a3a 100644
+--- a/examples/benchmarks/source-variants.tsv
++++ b/examples/benchmarks/source-variants.tsv
+@@ -28,3 +28,5 @@ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/linear	real/linear/Input.lhs
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/knights	spectral/knights/ChessSetArray.lhs	knights-array	Haskell	inactive persistent-array board representation	Jonathan Hill (program README)	c0383ed40d3127220ea53671ecb1ea1c9e302ba78775caf19a0fd50b500ab905	import	ported as knights-array-lazy/strict with immutable boxed arrays; original renderer logTen 1 base loops at zero; one-line formatting repair logTen 0 is reviewed against an adapted original, with bounded failing-original evidence; retain distinct layout, deletion metadata and indexTile quirk	no separate individual redistribution grant stated; retain original module, README and bibliography
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/multiplier	spectral/multiplier/Main.hs	multiplier-count	Haskell	inactive count-only simulation driver	John T. O'Donnell	a92974cefa647671a21b441e9affb21afd7ae3208a38de603b161931c4e96489	import	ported separately as multiplier-count-lazy/strict; runMult sums ready without observing product registers, so its demand excludes the product adder; preserve this source consumer and all provenance rather than silently replacing verbose traceMult	Copyright (c) 1992 John T. O'Donnell; full original notice retained
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/dom-lt	spectral/dom-lt/Dom.hs	dom-lt-unrepaired	Haskell	unrepaired semidominator threshold	Matt Morrow	ae7675a60f6915fee3f62c6e329b696e7f7a24324fc1cfac98fcaa1eff9094a1	defer	unmodified kernel returns incorrect parents on 15 of 17 supplied graphs and a three-node counterexample; list-length checksums conceal the error; only the reviewed minimum-threshold repair is runnable; reconsider unrepaired baseline only after an upstream revision fixes the defect and full parent results pass independent checks	Copyright Matt Morrow 2009; BSD3 declaration retained
++nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	gc/fulsom/Main.hs	gc/fulsom/raster/raster.c	fulsom-gc-raster-viewer	C	ancillary raster-to-PGM output converter	Duncan Sinclair	fa64d19a2d5fafd196d5640f65fabd235a8abed5ed96c2aaee117ce9286c7ee0	exclude	README.original describes this separate output-viewing utility; neither benchmark Main nor its Makefile invokes it; retain source and protocol provenance rather than claim a runnable renderer variant	Copyright 1990,1992 Duncan Sinclair; no separate permission grant stated in this C file
++nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/fulsom/Main.hs	real/fulsom/raster/raster.c	fulsom-real-raster-viewer	C	ancillary raster-to-PGM output converter	Duncan Sinclair	fa64d19a2d5fafd196d5640f65fabd235a8abed5ed96c2aaee117ce9286c7ee0	exclude	README.original describes this separate output-viewing utility; neither benchmark Main nor its Makefile invokes it; retain source and protocol provenance rather than claim a runnable renderer variant	Copyright 1990,1992 Duncan Sinclair; no separate permission grant stated in this C file
+diff --git a/scripts/benchmark-inventory.py b/scripts/benchmark-inventory.py
+index 3cfeaadb1..923b8e4cf 100644
+--- a/scripts/benchmark-inventory.py
++++ b/scripts/benchmark-inventory.py
+@@ -551,6 +551,16 @@ def build(source, root, lock):
+                     notices.append(str(notice.relative_to(root)))
+         authors = set()
+         context = [p for p in parent.iterdir() if p.is_file() and p.name in {"README", "README.md", "Makefile", "FILES", "sources.cm"}] if parent.exists() and files else []
++        if source == "nofib" and path in {"gc/fulsom/Main.hs", "real/fulsom/Main.hs",
++                                          "gc/fulsom/Bah.hs", "real/fulsom/Bah.hs"}:
++            module = parent / "Interval.hs"
++            if module.is_file():
++                heading = module.read_text(errors="replace")[:2500]
++                if ("Copyright 1990,1991,1992,1993 Duncan Sinclair" in heading
++                        and "Permissiom to use, copy, modify, and distribute this software for any" in heading
++                        and "copyright notice and this permission notice appear in all copies" in heading):
++                    authors.add("Duncan Sinclair")
++                    item["evidence"].append(str(module.relative_to(root)) + ":author-and-individual-permission")
+         if source == "nofib" and path == "real/hidden" and (parent / "MAIL").is_file():
+             # Reviewed correspondence credits both roles and grants nofib use.
+             mail = (parent / "MAIL").read_text(errors="replace")
+diff --git a/tests/benchmarks/test-inventory.py b/tests/benchmarks/test-inventory.py
+index f7cab76b7..0fcd2d379 100644
+--- a/tests/benchmarks/test-inventory.py
++++ b/tests/benchmarks/test-inventory.py
+@@ -286,6 +286,32 @@ class InventoryTest(unittest.TestCase):
+         self.file("spectral/multiplier/Main.hs", "-- Another multiplier author\nmain = print 0\n")
+         self.assertNotIn("John T. O'Donnell", self.build("nofib")[0]["authors"])
+ 
++    def fulsom_notice(self, family, heading):
++        self.nofib_roots()
++        self.file(family + "/fulsom/Makefile", "EXCLUDED_SRCS = Bah.hs\n")
++        self.file(family + "/fulsom/Main.hs", "import Interval\nmain = print 0\n")
++        self.file(family + "/fulsom/Bah.hs", "main = print 0\n")
++        self.file(family + "/fulsom/Interval.hs", heading + "\nmodule Interval where\n")
++        return next(row for row in self.build("nofib") if row["path"] == family + "/fulsom/Main.hs")
++
++    def test_fulsom_gc_individual_credit_is_recorded(self):
++        heading = (ROOT / "examples/benchmarks/fulsom-lazy/upstream/Interval.hs").read_text().split("module Interval")[0]
++        row = self.fulsom_notice("gc", heading)
++        self.assertIn("Duncan Sinclair", row["authors"])
++        self.assertIn("gc/fulsom/Interval.hs:author-and-individual-permission", row["evidence"])
++
++    def test_fulsom_real_individual_credit_is_recorded(self):
++        heading = (ROOT / "examples/benchmarks/fulsom-nofib-lazy/upstream/Interval.hs").read_text().split("module Interval")[0]
++        self.assertIn("Duncan Sinclair", self.fulsom_notice("real", heading)["authors"])
++
++    def test_changed_fulsom_author_requires_review(self):
++        heading = (ROOT / "examples/benchmarks/fulsom-lazy/upstream/Interval.hs").read_text().split("module Interval")[0]
++        self.assertNotIn("Duncan Sinclair", self.fulsom_notice("gc", heading.replace("Duncan Sinclair", "Another author"))["authors"])
++
++    def test_changed_fulsom_permission_requires_review(self):
++        heading = (ROOT / "examples/benchmarks/fulsom-lazy/upstream/Interval.hs").read_text().split("module Interval")[0]
++        self.assertNotIn("Duncan Sinclair", self.fulsom_notice("gc", heading.replace("notice appear in all copies", "notice has changed"))["authors"])
++
+     def application_notice(self, directory, executable, file, source):
+         self.file("benchmarks/" + directory + "/dune", "(executable (name " + executable + "))\\n")
+         self.file("benchmarks/" + directory + "/" + file, source + "\\nlet () = ()\\n")

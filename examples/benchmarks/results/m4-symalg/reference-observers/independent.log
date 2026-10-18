@@ -1,0 +1,4 @@
+PASS smoke 9 complete values; 20 digits;max floor gap 0
+PASS source-fast 261 complete values; 3000 digits;max floor gap 0
+PASS normal 261 complete values; 15000 digits;max floor gap 0
+PASS source-slow 261 complete values; 40000 digits;max floor gap 0

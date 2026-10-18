@@ -1,0 +1,770 @@
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 11:242
+PASS symalg-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/symalg-real.sml]
+[autoloading]
+[autoloading done]
+functor BenchSymalgRealFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure L : <sig>
+  structure Z : <sig>
+  type treeNode
+  type tree
+  type realT
+  val power : ?.intinf -> IntInf.int
+  val scale : IntInf.int * IntInf.int -> IntInf.int
+  val treeFrom : IntInf.int -> <BaseFct>.<resultStr>.treeNode BenchLazy.delay
+  val numberTree : <BaseFct>.<resultStr>.treeNode BenchLazy.delay
+  val mapTree :
+      (IntInf.int -> IntInf.int)
+       -> <BaseFct>.<resultStr>.treeNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.treeNode BenchLazy.delay
+  val lookupTree :
+      <BaseFct>.<resultStr>.treeNode BenchLazy.delay
+       -> IntInf.int -> IntInf.int
+  val eval : <BaseFct>.<resultStr>.realT -> IntInf.int -> IntInf.int
+  val msd : <BaseFct>.<resultStr>.tree -> ?.intinf -> ?.intinf
+  val fromInteger : IntInf.int -> <BaseFct>.<resultStr>.realT
+  val add :
+      <BaseFct>.<resultStr>.realT
+       -> <BaseFct>.<resultStr>.realT -> <BaseFct>.<resultStr>.realT
+  val subtract :
+      <BaseFct>.<resultStr>.realT
+       -> <BaseFct>.<resultStr>.realT -> <BaseFct>.<resultStr>.realT
+  val multiply :
+      <BaseFct>.<resultStr>.realT
+       -> <BaseFct>.<resultStr>.realT -> <BaseFct>.<resultStr>.realT
+  val reciprocal : <BaseFct>.<resultStr>.realT -> <BaseFct>.<resultStr>.realT
+  val divide :
+      <BaseFct>.<resultStr>.realT
+       -> <BaseFct>.<resultStr>.realT -> <BaseFct>.<resultStr>.realT
+  val square : <BaseFct>.<resultStr>.realT -> <BaseFct>.<resultStr>.realT
+  val sqrt : <BaseFct>.<resultStr>.realT -> <BaseFct>.<resultStr>.realT
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/symalg-number.sml]
+[autoloading]
+[autoloading done]
+functor BenchSymalgNumberFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure R : <sig>
+  structure Z : <sig>
+  type number
+  val gcd : IntInf.int * IntInf.int -> IntInf.int
+  val rational : IntInf.int * ?.intinf -> <BaseFct>.<resultStr>.number
+  val toRational : <BaseFct>.<resultStr>.number -> IntInf.int * IntInf.int
+  val toReal :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.R.<returnStr>.realT
+  val add :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.number -> <BaseFct>.<resultStr>.number
+  val subtract :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.number -> <BaseFct>.<resultStr>.number
+  val multiply :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.number -> <BaseFct>.<resultStr>.number
+  val divide :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.number -> <BaseFct>.<resultStr>.number
+  val rationalCompare :
+      <BaseFct>.<resultStr>.number -> <BaseFct>.<resultStr>.number -> order
+  val realDifference :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.number -> IntInf.int -> ?.intinf
+  val equal :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.number -> IntInf.int -> bool
+  val less :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.number -> IntInf.int -> bool
+  val greater :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.number -> IntInf.int -> bool
+  val lessEqual :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.number -> IntInf.int -> bool
+  val greaterEqual :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.number -> IntInf.int -> bool
+  val notEqual :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.number -> IntInf.int -> bool
+  val squareRoot :
+      <BaseFct>.<resultStr>.number -> <BaseFct>.<resultStr>.number
+  val makeReal : <BaseFct>.<resultStr>.number -> <BaseFct>.<resultStr>.number
+  val makeRational :
+      <BaseFct>.<resultStr>.number -> <BaseFct>.<resultStr>.number
+  val rationalAt :
+      <BaseFct>.<resultStr>.number -> ?.intinf -> <BaseFct>.<resultStr>.number
+  val decimal : string -> <BaseFct>.<resultStr>.number
+  val decimalInteger : IntInf.int -> string
+  val format : <BaseFct>.<resultStr>.number -> IntInf.int -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/symalg-kernel.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/symalg-kernel.sml:107.67-107.69 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/symalg-kernel.sml:106.43 Warning: calling polyEqual
+functor BenchSymalgFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure B : <sig>
+  structure Z : <sig>
+  structure L : <sig>
+  type expressionNode
+  type expression
+  type command
+  type token
+  val func :
+      string
+       -> <BaseFct>.<resultStr>.expressionNode D.t list
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+  val numb :
+      (unit -> <BaseFct>.<resultStr>.B.<returnStr>.number)
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+  val error : unit -> <BaseFct>.<resultStr>.expressionNode D.t
+  val opPrec : string -> int
+  val opPrec1 : string -> int
+  val opName : string -> string
+  val opName1 : string -> string
+  val opAssoc : string -> string
+  val toOp : string -> string
+  val toOp1 : string -> string
+  val span : (char -> bool) -> char list -> string * char list
+  val lexer : string -> <BaseFct>.<resultStr>.token list * bool
+  val parseBexpr :
+      <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+       * <BaseFct>.<resultStr>.token list
+  val parsePrec :
+      int
+       -> <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+       * <BaseFct>.<resultStr>.token list
+  val parseAccum :
+      int
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+       -> <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+       * <BaseFct>.<resultStr>.token list
+  val parseOp :
+      string
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+       -> <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+       * <BaseFct>.<resultStr>.token list
+  val parseLeft :
+      string
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+       -> <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+       * <BaseFct>.<resultStr>.token list
+  val parseAtomic :
+      <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+       * <BaseFct>.<resultStr>.token list
+  val parseArgs :
+      <BaseFct>.<resultStr>.expressionNode D.t list
+       -> <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.expressionNode D.t list
+       * <BaseFct>.<resultStr>.token list * bool
+  val parseCommand :
+      <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.command * <BaseFct>.<resultStr>.token list
+  val parse : string -> <BaseFct>.<resultStr>.command
+  val initial :
+      unit -> (string * <BaseFct>.<resultStr>.expressionNode D.t) list
+  val lookup :
+      ''a
+       -> (''a * <BaseFct>.<resultStr>.expressionNode D.t) list
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+  val enter : ''a -> 'b -> (''a * 'b) list -> (''a * 'b) list
+  val precision :
+      (string * <BaseFct>.<resultStr>.expressionNode D.t) list -> IntInf.int
+  val eval :
+      <BaseFct>.<resultStr>.expressionNode D.t
+       -> (string * <BaseFct>.<resultStr>.expressionNode D.t) list
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+  structure W : <sig>
+  val modulus : IntInf.int
+  val hash : string -> string
+  val numberObserver : (string -> unit) ref
+  val numberString :
+      <BaseFct>.<resultStr>.B.<returnStr>.number -> IntInf.int -> string
+  val printExp :
+      int
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+       -> (string * <BaseFct>.<resultStr>.expressionNode D.t) list -> string
+  val printAst :
+      <BaseFct>.<resultStr>.command
+       -> (string * <BaseFct>.<resultStr>.expressionNode D.t) list -> string
+  val printEnv :
+      (string * <BaseFct>.<resultStr>.expressionNode D.t) list
+       -> (string * <BaseFct>.<resultStr>.expressionNode D.t) list -> string
+  val help : string
+  val command :
+      string
+       -> (string * <BaseFct>.<resultStr>.expressionNode D.t) list
+       -> string * (string * <BaseFct>.<resultStr>.expressionNode D.t) list
+  val streamTranscript : (string -> 'a) -> string list -> 'a
+  val transcript : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/symalg-check.sml]
+[autoloading]
+[autoloading done]
+functor BenchSymalgCheckFn(K: sig
+  val numberObserver : (string -> unit) ref
+  val streamTranscript : (string -> unit) -> string list -> unit
+end) :
+sig
+  val read : string -> TextIO.vector
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/symalg-strict/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Check : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 11:242
+PASS symalg-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/symalg-real.sml]
+[autoloading]
+[autoloading done]
+functor BenchSymalgRealFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure L : <sig>
+  structure Z : <sig>
+  type treeNode
+  type tree
+  type realT
+  val power : ?.intinf -> IntInf.int
+  val scale : IntInf.int * IntInf.int -> IntInf.int
+  val treeFrom : IntInf.int -> <BaseFct>.<resultStr>.treeNode BenchLazy.delay
+  val numberTree : <BaseFct>.<resultStr>.treeNode BenchLazy.delay
+  val mapTree :
+      (IntInf.int -> IntInf.int)
+       -> <BaseFct>.<resultStr>.treeNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.treeNode BenchLazy.delay
+  val lookupTree :
+      <BaseFct>.<resultStr>.treeNode BenchLazy.delay
+       -> IntInf.int -> IntInf.int
+  val eval : <BaseFct>.<resultStr>.realT -> IntInf.int -> IntInf.int
+  val msd : <BaseFct>.<resultStr>.tree -> ?.intinf -> ?.intinf
+  val fromInteger : IntInf.int -> <BaseFct>.<resultStr>.realT
+  val add :
+      <BaseFct>.<resultStr>.realT
+       -> <BaseFct>.<resultStr>.realT -> <BaseFct>.<resultStr>.realT
+  val subtract :
+      <BaseFct>.<resultStr>.realT
+       -> <BaseFct>.<resultStr>.realT -> <BaseFct>.<resultStr>.realT
+  val multiply :
+      <BaseFct>.<resultStr>.realT
+       -> <BaseFct>.<resultStr>.realT -> <BaseFct>.<resultStr>.realT
+  val reciprocal : <BaseFct>.<resultStr>.realT -> <BaseFct>.<resultStr>.realT
+  val divide :
+      <BaseFct>.<resultStr>.realT
+       -> <BaseFct>.<resultStr>.realT -> <BaseFct>.<resultStr>.realT
+  val square : <BaseFct>.<resultStr>.realT -> <BaseFct>.<resultStr>.realT
+  val sqrt : <BaseFct>.<resultStr>.realT -> <BaseFct>.<resultStr>.realT
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/symalg-number.sml]
+[autoloading]
+[autoloading done]
+functor BenchSymalgNumberFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure R : <sig>
+  structure Z : <sig>
+  type number
+  val gcd : IntInf.int * IntInf.int -> IntInf.int
+  val rational : IntInf.int * ?.intinf -> <BaseFct>.<resultStr>.number
+  val toRational : <BaseFct>.<resultStr>.number -> IntInf.int * IntInf.int
+  val toReal :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.R.<returnStr>.realT
+  val add :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.number -> <BaseFct>.<resultStr>.number
+  val subtract :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.number -> <BaseFct>.<resultStr>.number
+  val multiply :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.number -> <BaseFct>.<resultStr>.number
+  val divide :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.number -> <BaseFct>.<resultStr>.number
+  val rationalCompare :
+      <BaseFct>.<resultStr>.number -> <BaseFct>.<resultStr>.number -> order
+  val realDifference :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.number -> IntInf.int -> ?.intinf
+  val equal :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.number -> IntInf.int -> bool
+  val less :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.number -> IntInf.int -> bool
+  val greater :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.number -> IntInf.int -> bool
+  val lessEqual :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.number -> IntInf.int -> bool
+  val greaterEqual :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.number -> IntInf.int -> bool
+  val notEqual :
+      <BaseFct>.<resultStr>.number
+       -> <BaseFct>.<resultStr>.number -> IntInf.int -> bool
+  val squareRoot :
+      <BaseFct>.<resultStr>.number -> <BaseFct>.<resultStr>.number
+  val makeReal : <BaseFct>.<resultStr>.number -> <BaseFct>.<resultStr>.number
+  val makeRational :
+      <BaseFct>.<resultStr>.number -> <BaseFct>.<resultStr>.number
+  val rationalAt :
+      <BaseFct>.<resultStr>.number -> ?.intinf -> <BaseFct>.<resultStr>.number
+  val decimal : string -> <BaseFct>.<resultStr>.number
+  val decimalInteger : IntInf.int -> string
+  val format : <BaseFct>.<resultStr>.number -> IntInf.int -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/symalg-kernel.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/symalg-kernel.sml:107.67-107.69 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/symalg-kernel.sml:106.43 Warning: calling polyEqual
+functor BenchSymalgFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure B : <sig>
+  structure Z : <sig>
+  structure L : <sig>
+  type expressionNode
+  type expression
+  type command
+  type token
+  val func :
+      string
+       -> <BaseFct>.<resultStr>.expressionNode D.t list
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+  val numb :
+      (unit -> <BaseFct>.<resultStr>.B.<returnStr>.number)
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+  val error : unit -> <BaseFct>.<resultStr>.expressionNode D.t
+  val opPrec : string -> int
+  val opPrec1 : string -> int
+  val opName : string -> string
+  val opName1 : string -> string
+  val opAssoc : string -> string
+  val toOp : string -> string
+  val toOp1 : string -> string
+  val span : (char -> bool) -> char list -> string * char list
+  val lexer : string -> <BaseFct>.<resultStr>.token list * bool
+  val parseBexpr :
+      <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+       * <BaseFct>.<resultStr>.token list
+  val parsePrec :
+      int
+       -> <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+       * <BaseFct>.<resultStr>.token list
+  val parseAccum :
+      int
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+       -> <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+       * <BaseFct>.<resultStr>.token list
+  val parseOp :
+      string
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+       -> <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+       * <BaseFct>.<resultStr>.token list
+  val parseLeft :
+      string
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+       -> <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+       * <BaseFct>.<resultStr>.token list
+  val parseAtomic :
+      <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+       * <BaseFct>.<resultStr>.token list
+  val parseArgs :
+      <BaseFct>.<resultStr>.expressionNode D.t list
+       -> <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.expressionNode D.t list
+       * <BaseFct>.<resultStr>.token list * bool
+  val parseCommand :
+      <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.command * <BaseFct>.<resultStr>.token list
+  val parse : string -> <BaseFct>.<resultStr>.command
+  val initial :
+      unit -> (string * <BaseFct>.<resultStr>.expressionNode D.t) list
+  val lookup :
+      ''a
+       -> (''a * <BaseFct>.<resultStr>.expressionNode D.t) list
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+  val enter : ''a -> 'b -> (''a * 'b) list -> (''a * 'b) list
+  val precision :
+      (string * <BaseFct>.<resultStr>.expressionNode D.t) list -> IntInf.int
+  val eval :
+      <BaseFct>.<resultStr>.expressionNode D.t
+       -> (string * <BaseFct>.<resultStr>.expressionNode D.t) list
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+  structure W : <sig>
+  val modulus : IntInf.int
+  val hash : string -> string
+  val numberObserver : (string -> unit) ref
+  val numberString :
+      <BaseFct>.<resultStr>.B.<returnStr>.number -> IntInf.int -> string
+  val printExp :
+      int
+       -> <BaseFct>.<resultStr>.expressionNode D.t
+       -> (string * <BaseFct>.<resultStr>.expressionNode D.t) list -> string
+  val printAst :
+      <BaseFct>.<resultStr>.command
+       -> (string * <BaseFct>.<resultStr>.expressionNode D.t) list -> string
+  val printEnv :
+      (string * <BaseFct>.<resultStr>.expressionNode D.t) list
+       -> (string * <BaseFct>.<resultStr>.expressionNode D.t) list -> string
+  val help : string
+  val command :
+      string
+       -> (string * <BaseFct>.<resultStr>.expressionNode D.t) list
+       -> string * (string * <BaseFct>.<resultStr>.expressionNode D.t) list
+  val streamTranscript : (string -> 'a) -> string list -> 'a
+  val transcript : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/symalg-check.sml]
+[autoloading]
+[autoloading done]
+functor BenchSymalgCheckFn(K: sig
+  val numberObserver : (string -> unit) ref
+  val streamTranscript : (string -> unit) -> string list -> unit
+end) :
+sig
+  val read : string -> TextIO.vector
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/symalg-strict/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Check : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 11:242
+PASS symalg-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/symalg-real.sml]
+functor BenchSymalgRealFn(D: sig
+                             type 'a t
+                             val delay : (unit -> 'a) -> 'a t
+                             val force : 'a t -> 'a
+                           end) :
+                         
+                           sig
+                             structure L : <sig>
+                             structure Z : <sig>
+                             type treeNode
+                             type tree
+                             type realT
+                             val power : ?.intinf -> IntInf.int
+                             val scale : IntInf.int * IntInf.int -> IntInf.int
+                             val treeFrom : IntInf.int
+                                             -> treeNode BenchLazy.delay
+                             val numberTree : treeNode BenchLazy.delay
+                             val mapTree : (IntInf.int -> IntInf.int)
+                                            -> treeNode BenchLazy.delay
+                                            -> treeNode BenchLazy.delay
+                             val lookupTree : treeNode BenchLazy.delay
+                                               -> IntInf.int -> IntInf.int
+                             val eval : realT -> IntInf.int -> IntInf.int
+                             val msd : tree -> ?.intinf -> ?.intinf
+                             val fromInteger : IntInf.int -> realT
+                             val add : realT -> realT -> realT
+                             val subtract : realT -> realT -> realT
+                             val multiply : realT -> realT -> realT
+                             val reciprocal : realT -> realT
+                             val divide : realT -> realT -> realT
+                             val square : realT -> realT
+                             val sqrt : realT -> realT
+                           end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/symalg-number.sml]
+functor BenchSymalgNumberFn(D: sig
+                               type 'a t
+                               val delay : (unit -> 'a) -> 'a t
+                               val force : 'a t -> 'a
+                             end) :
+                           
+                             sig
+                               structure R : <sig>
+                               structure Z : <sig>
+                               type number
+                               val gcd : IntInf.int * IntInf.int -> IntInf.int
+                               val rational : IntInf.int * ?.intinf -> number
+                               val toRational : number
+                                                 -> IntInf.int * IntInf.int
+                               val toReal : number -> R.realT
+                               val add : number -> number -> number
+                               val subtract : number -> number -> number
+                               val multiply : number -> number -> number
+                               val divide : number -> number -> number
+                               val rationalCompare : number -> number -> order
+                               val realDifference : number
+                                                     -> number
+                                                     -> IntInf.int -> ?.intinf
+                               val equal : number
+                                            -> number -> IntInf.int -> bool
+                               val greater : number
+                                              -> number -> IntInf.int -> bool
+                               val less : number
+                                           -> number -> IntInf.int -> bool
+                               val lessEqual : number
+                                                -> number
+                                                -> IntInf.int -> bool
+                               val greaterEqual : number
+                                                   -> number
+                                                   -> IntInf.int -> bool
+                               val notEqual : number
+                                               -> number -> IntInf.int -> bool
+                               val squareRoot : number -> number
+                               val makeReal : number -> number
+                               val makeRational : number -> number
+                               val rationalAt : number -> ?.intinf -> number
+                               val decimal : string -> number
+                               val decimalInteger : IntInf.int -> string
+                               val format : number -> IntInf.int -> string
+                             end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/symalg-kernel.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/symalg-kernel.sml:106.43 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/symalg-kernel.sml:107.67-107.69 Warning: calling polyEqual
+functor BenchSymalgFn(D: sig
+                         type 'a t
+                         val delay : (unit -> 'a) -> 'a t
+                         val force : 'a t -> 'a
+                       end) :
+                     
+                       sig
+                         structure B : <sig>
+                         structure Z : <sig>
+                         structure L : <sig>
+                         type expressionNode
+                         type expression
+                         type command
+                         type token
+                         val func : string
+                                     -> expressionNode D.t list
+                                     -> expressionNode D.t
+                         val numb : (unit -> B.number) -> expressionNode D.t
+                         val error : unit -> expressionNode D.t
+                         val opPrec : string -> int
+                         val opPrec1 : string -> int
+                         val opName : string -> string
+                         val opName1 : string -> string
+                         val opAssoc : string -> string
+                         val toOp : string -> string
+                         val toOp1 : string -> string
+                         val span : (char -> bool)
+                                     -> char list -> string * char list
+                         val lexer : string -> token list * bool
+                         val parseArgs : expressionNode D.t list
+                                          -> token list
+                                          -> expressionNode D.t list
+                                          * token list * bool
+                         val parseAtomic : token list
+                                            -> expressionNode D.t * token list
+                         val parseLeft : string
+                                          -> expressionNode D.t
+                                          -> token list
+                                          -> expressionNode D.t * token list
+                         val parseOp : string
+                                        -> expressionNode D.t
+                                        -> token list
+                                        -> expressionNode D.t * token list
+                         val parseAccum : int
+                                           -> expressionNode D.t
+                                           -> token list
+                                           -> expressionNode D.t * token list
+                         val parsePrec : int
+                                          -> token list
+                                          -> expressionNode D.t * token list
+                         val parseBexpr : token list
+                                           -> expressionNode D.t * token list
+                         val parseCommand : token list -> command * token list
+                         val parse : string -> command
+                         val initial : unit
+                                        -> (string * expressionNode D.t) list
+                         val lookup : ''a
+                                       -> (''a * expressionNode D.t) list
+                                       -> expressionNode D.t
+                         val enter : ''a
+                                      -> 'b
+                                      -> (''a * 'b) list -> (''a * 'b) list
+                         val eval : expressionNode D.t
+                                     -> (string * expressionNode D.t) list
+                                     -> expressionNode D.t
+                         val precision : (string * expressionNode D.t) list
+                                          -> IntInf.int
+                         structure W : <sig>
+                         val modulus : IntInf.int
+                         val hash : string -> string
+                         val numberObserver : (string -> unit) ref
+                         val numberString : B.number -> IntInf.int -> string
+                         val printExp : int
+                                         -> expressionNode D.t
+                                         -> (string * expressionNode D.t) list
+                                         -> string
+                         val printAst : command
+                                         -> (string * expressionNode D.t) list
+                                         -> string
+                         val printEnv : (string * expressionNode D.t) list
+                                         -> (string * expressionNode D.t) list
+                                         -> string
+                         val help : string
+                         val command : string
+                                        -> (string * expressionNode D.t) list
+                                        -> string
+                                        * (string * expressionNode D.t) list
+                         val streamTranscript : (string -> 'a)
+                                                 -> string list -> 'a
+                         val transcript : string list -> string
+                       end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/symalg-check.sml]
+functor BenchSymalgCheckFn(K: sig
+                              val numberObserver : (string -> unit) ref
+                              val streamTranscript : (string -> unit)
+                                                      -> string list -> unit
+                            end) :
+                          
+                            sig
+                              val read : string -> TextIO.vector
+                              val run : string list -> string
+                            end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/symalg-strict/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Kernel : <sig>
+    structure Check : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 11:242
+PASS symalg-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+RESULT 11:242
+PASS symalg-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 11:242
+PASS symalg-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

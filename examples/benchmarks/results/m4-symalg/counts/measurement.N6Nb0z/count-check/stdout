@@ -1,0 +1,5 @@
+COUNT unbudgeted symalg-lazy normal rune
+COUNT unbudgeted symalg-lazy normal rune:opt
+COUNT unbudgeted symalg-lazy normal rune:new
+COUNT unbudgeted symalg-lazy normal rune:jit
+COUNT comparisons agree

@@ -1,0 +1,5 @@
+{'family': 'gc', 'profile': 'source-fast', 'depth': 7, 'bytes': 87916, 'seconds': 0.19613135700092243}
+{'family': 'gc', 'profile': 'normal', 'depth': 9, 'bytes': 1376356, 'seconds': 3.351810595999268}
+{'family': 'real', 'profile': 'source-fast', 'depth': 4, 'bytes': 20000, 'seconds': 0.12435904700032552}
+{'family': 'real', 'profile': 'normal', 'depth': 5, 'bytes': 20000, 'seconds': 0.5441809669991926}
+{'family': 'real', 'profile': 'source-slow', 'depth': 6, 'bytes': 20000, 'seconds': 4.7858395549992565}

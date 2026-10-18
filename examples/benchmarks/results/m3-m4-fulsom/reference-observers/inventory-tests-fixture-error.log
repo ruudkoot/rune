@@ -1,0 +1,53 @@
+................EE...........................................EE.......................................................
+======================================================================
+ERROR: test_changed_fulsom_author_requires_review (__main__.InventoryTest.test_changed_fulsom_author_requires_review)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/test-inventory.py", line 308, in test_changed_fulsom_author_requires_review
+    self.assertNotIn("Duncan Sinclair", self.fulsom_notice("gc", heading.replace("Duncan Sinclair", "Another author"))["authors"])
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/test-inventory.py", line 294, in fulsom_notice
+    return next(row for row in self.build("nofib") if row["path"] == family + "/fulsom/Main.hs")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+StopIteration
+
+======================================================================
+ERROR: test_changed_fulsom_permission_requires_review (__main__.InventoryTest.test_changed_fulsom_permission_requires_review)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/test-inventory.py", line 312, in test_changed_fulsom_permission_requires_review
+    self.assertNotIn("Duncan Sinclair", self.fulsom_notice("gc", heading.replace("notice appear in all copies", "notice has changed"))["authors"])
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/test-inventory.py", line 294, in fulsom_notice
+    return next(row for row in self.build("nofib") if row["path"] == family + "/fulsom/Main.hs")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+StopIteration
+
+======================================================================
+ERROR: test_fulsom_gc_individual_credit_is_recorded (__main__.InventoryTest.test_fulsom_gc_individual_credit_is_recorded)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/test-inventory.py", line 298, in test_fulsom_gc_individual_credit_is_recorded
+    row = self.fulsom_notice("gc", heading)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/test-inventory.py", line 294, in fulsom_notice
+    return next(row for row in self.build("nofib") if row["path"] == family + "/fulsom/Main.hs")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+StopIteration
+
+======================================================================
+ERROR: test_fulsom_real_individual_credit_is_recorded (__main__.InventoryTest.test_fulsom_real_individual_credit_is_recorded)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/test-inventory.py", line 304, in test_fulsom_real_individual_credit_is_recorded
+    self.assertIn("Duncan Sinclair", self.fulsom_notice("real", heading)["authors"])
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/test-inventory.py", line 294, in fulsom_notice
+    return next(row for row in self.build("nofib") if row["path"] == family + "/fulsom/Main.hs")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+StopIteration
+
+----------------------------------------------------------------------
+Ran 118 tests in 1.346s
+
+FAILED (errors=4)

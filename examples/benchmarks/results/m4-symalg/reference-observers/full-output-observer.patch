@@ -1,0 +1,8 @@
+--- /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-symalg-originals/source/Print.hs	2026-10-16 16:09:55.933747485 +0100
++++ /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-symalg-originals/full-observer-source/Print.hs	2026-10-18 07:30:50.175190197 +0100
+@@ -91,4 +91,4 @@
+ 	     else "("++(basicNumber2str (BasRationalC sx) p)++")"
+ 		where sx = x/1
+ -- mybasicNumber2str x p = basicNumber2str x p
+-mybasicNumber2str x p = show (hash (basicNumber2str x p))
++mybasicNumber2str x p = basicNumber2str x p

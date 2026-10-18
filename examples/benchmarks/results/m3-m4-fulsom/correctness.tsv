@@ -1,0 +1,113 @@
+benchmark	profile	optimization	configuration	arguments	status	artifact_directory
+fulsom-lazy	normal	O0	rune	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/normal/O0/rune
+fulsom-lazy	normal	O0	rune-jit	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/normal/O0/rune-jit
+fulsom-lazy	normal	O0	rune-new	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/normal/O0/rune-new
+fulsom-lazy	normal	O0	rune-opt	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/normal/O0/rune-opt
+fulsom-lazy	normal	O2	rune	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/normal/O2/rune
+fulsom-lazy	normal	O2	rune-jit	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/normal/O2/rune-jit
+fulsom-lazy	normal	O2	rune-new	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/normal/O2/rune-new
+fulsom-lazy	normal	O2	rune-opt	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/normal/O2/rune-opt
+fulsom-lazy	normal	host-default	native-mlkit-4.7.23	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/normal/host-default/native-mlkit-4.7.23
+fulsom-lazy	normal	host-default	native-mlton-20241230	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/normal/host-default/native-mlton-20241230
+fulsom-lazy	normal	host-default	native-polyml-5.9.2	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/normal/host-default/native-polyml-5.9.2
+fulsom-lazy	normal	host-default	native-smlnj-dev-2026.2	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/normal/host-default/native-smlnj-dev-2026.2
+fulsom-lazy	normal	host-default	native-smlnj-legacy-110.99.9	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/normal/host-default/native-smlnj-legacy-110.99.9
+fulsom-lazy	normal	host-default	native-smlnj32-110.99.9	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/normal/host-default/native-smlnj32-110.99.9
+fulsom-lazy	smoke	O0	rune	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/smoke/O0/rune
+fulsom-lazy	smoke	O0	rune-jit	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/smoke/O0/rune-jit
+fulsom-lazy	smoke	O0	rune-new	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/smoke/O0/rune-new
+fulsom-lazy	smoke	O0	rune-opt	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/smoke/O0/rune-opt
+fulsom-lazy	smoke	O2	rune	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/smoke/O2/rune
+fulsom-lazy	smoke	O2	rune-jit	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/smoke/O2/rune-jit
+fulsom-lazy	smoke	O2	rune-new	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/smoke/O2/rune-new
+fulsom-lazy	smoke	O2	rune-opt	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/smoke/O2/rune-opt
+fulsom-lazy	smoke	host-default	native-mlkit-4.7.23	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/smoke/host-default/native-mlkit-4.7.23
+fulsom-lazy	smoke	host-default	native-mlton-20241230	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/smoke/host-default/native-mlton-20241230
+fulsom-lazy	smoke	host-default	native-polyml-5.9.2	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/smoke/host-default/native-polyml-5.9.2
+fulsom-lazy	smoke	host-default	native-smlnj-dev-2026.2	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/smoke/host-default/native-smlnj-dev-2026.2
+fulsom-lazy	smoke	host-default	native-smlnj-legacy-110.99.9	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/smoke/host-default/native-smlnj-legacy-110.99.9
+fulsom-lazy	smoke	host-default	native-smlnj32-110.99.9	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-lazy/smoke/host-default/native-smlnj32-110.99.9
+fulsom-nofib-lazy	normal	O0	rune	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/normal/O0/rune
+fulsom-nofib-lazy	normal	O0	rune-jit	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/normal/O0/rune-jit
+fulsom-nofib-lazy	normal	O0	rune-new	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/normal/O0/rune-new
+fulsom-nofib-lazy	normal	O0	rune-opt	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/normal/O0/rune-opt
+fulsom-nofib-lazy	normal	O2	rune	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/normal/O2/rune
+fulsom-nofib-lazy	normal	O2	rune-jit	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/normal/O2/rune-jit
+fulsom-nofib-lazy	normal	O2	rune-new	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/normal/O2/rune-new
+fulsom-nofib-lazy	normal	O2	rune-opt	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/normal/O2/rune-opt
+fulsom-nofib-lazy	normal	host-default	native-mlkit-4.7.23	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/normal/host-default/native-mlkit-4.7.23
+fulsom-nofib-lazy	normal	host-default	native-mlton-20241230	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/normal/host-default/native-mlton-20241230
+fulsom-nofib-lazy	normal	host-default	native-polyml-5.9.2	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/normal/host-default/native-polyml-5.9.2
+fulsom-nofib-lazy	normal	host-default	native-smlnj-dev-2026.2	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/normal/host-default/native-smlnj-dev-2026.2
+fulsom-nofib-lazy	normal	host-default	native-smlnj-legacy-110.99.9	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/normal/host-default/native-smlnj-legacy-110.99.9
+fulsom-nofib-lazy	normal	host-default	native-smlnj32-110.99.9	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/normal/host-default/native-smlnj32-110.99.9
+fulsom-nofib-lazy	smoke	O0	rune	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/smoke/O0/rune
+fulsom-nofib-lazy	smoke	O0	rune-jit	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/smoke/O0/rune-jit
+fulsom-nofib-lazy	smoke	O0	rune-new	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/smoke/O0/rune-new
+fulsom-nofib-lazy	smoke	O0	rune-opt	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/smoke/O0/rune-opt
+fulsom-nofib-lazy	smoke	O2	rune	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/smoke/O2/rune
+fulsom-nofib-lazy	smoke	O2	rune-jit	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/smoke/O2/rune-jit
+fulsom-nofib-lazy	smoke	O2	rune-new	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/smoke/O2/rune-new
+fulsom-nofib-lazy	smoke	O2	rune-opt	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/smoke/O2/rune-opt
+fulsom-nofib-lazy	smoke	host-default	native-mlkit-4.7.23	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/smoke/host-default/native-mlkit-4.7.23
+fulsom-nofib-lazy	smoke	host-default	native-mlton-20241230	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/smoke/host-default/native-mlton-20241230
+fulsom-nofib-lazy	smoke	host-default	native-polyml-5.9.2	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/smoke/host-default/native-polyml-5.9.2
+fulsom-nofib-lazy	smoke	host-default	native-smlnj-dev-2026.2	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/smoke/host-default/native-smlnj-dev-2026.2
+fulsom-nofib-lazy	smoke	host-default	native-smlnj-legacy-110.99.9	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/smoke/host-default/native-smlnj-legacy-110.99.9
+fulsom-nofib-lazy	smoke	host-default	native-smlnj32-110.99.9	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-lazy/smoke/host-default/native-smlnj32-110.99.9
+fulsom-nofib-strict	normal	O0	rune	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/normal/O0/rune
+fulsom-nofib-strict	normal	O0	rune-jit	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/normal/O0/rune-jit
+fulsom-nofib-strict	normal	O0	rune-new	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/normal/O0/rune-new
+fulsom-nofib-strict	normal	O0	rune-opt	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/normal/O0/rune-opt
+fulsom-nofib-strict	normal	O2	rune	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/normal/O2/rune
+fulsom-nofib-strict	normal	O2	rune-jit	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/normal/O2/rune-jit
+fulsom-nofib-strict	normal	O2	rune-new	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/normal/O2/rune-new
+fulsom-nofib-strict	normal	O2	rune-opt	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/normal/O2/rune-opt
+fulsom-nofib-strict	normal	host-default	native-mlkit-4.7.23	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/normal/host-default/native-mlkit-4.7.23
+fulsom-nofib-strict	normal	host-default	native-mlton-20241230	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/normal/host-default/native-mlton-20241230
+fulsom-nofib-strict	normal	host-default	native-polyml-5.9.2	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/normal/host-default/native-polyml-5.9.2
+fulsom-nofib-strict	normal	host-default	native-smlnj-dev-2026.2	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/normal/host-default/native-smlnj-dev-2026.2
+fulsom-nofib-strict	normal	host-default	native-smlnj-legacy-110.99.9	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/normal/host-default/native-smlnj-legacy-110.99.9
+fulsom-nofib-strict	normal	host-default	native-smlnj32-110.99.9	1000 5 normal.hex 8553150556328418559	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/normal/host-default/native-smlnj32-110.99.9
+fulsom-nofib-strict	smoke	O0	rune	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/smoke/O0/rune
+fulsom-nofib-strict	smoke	O0	rune-jit	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/smoke/O0/rune-jit
+fulsom-nofib-strict	smoke	O0	rune-new	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/smoke/O0/rune-new
+fulsom-nofib-strict	smoke	O0	rune-opt	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/smoke/O0/rune-opt
+fulsom-nofib-strict	smoke	O2	rune	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/smoke/O2/rune
+fulsom-nofib-strict	smoke	O2	rune-jit	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/smoke/O2/rune-jit
+fulsom-nofib-strict	smoke	O2	rune-new	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/smoke/O2/rune-new
+fulsom-nofib-strict	smoke	O2	rune-opt	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/smoke/O2/rune-opt
+fulsom-nofib-strict	smoke	host-default	native-mlkit-4.7.23	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/smoke/host-default/native-mlkit-4.7.23
+fulsom-nofib-strict	smoke	host-default	native-mlton-20241230	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/smoke/host-default/native-mlton-20241230
+fulsom-nofib-strict	smoke	host-default	native-polyml-5.9.2	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/smoke/host-default/native-polyml-5.9.2
+fulsom-nofib-strict	smoke	host-default	native-smlnj-dev-2026.2	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/smoke/host-default/native-smlnj-dev-2026.2
+fulsom-nofib-strict	smoke	host-default	native-smlnj-legacy-110.99.9	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/smoke/host-default/native-smlnj-legacy-110.99.9
+fulsom-nofib-strict	smoke	host-default	native-smlnj32-110.99.9	1 4 smoke.hex 2066483427283309121	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-nofib-strict/smoke/host-default/native-smlnj32-110.99.9
+fulsom-strict	normal	O0	rune	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/normal/O0/rune
+fulsom-strict	normal	O0	rune-jit	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/normal/O0/rune-jit
+fulsom-strict	normal	O0	rune-new	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/normal/O0/rune-new
+fulsom-strict	normal	O0	rune-opt	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/normal/O0/rune-opt
+fulsom-strict	normal	O2	rune	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/normal/O2/rune
+fulsom-strict	normal	O2	rune-jit	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/normal/O2/rune-jit
+fulsom-strict	normal	O2	rune-new	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/normal/O2/rune-new
+fulsom-strict	normal	O2	rune-opt	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/normal/O2/rune-opt
+fulsom-strict	normal	host-default	native-mlkit-4.7.23	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/normal/host-default/native-mlkit-4.7.23
+fulsom-strict	normal	host-default	native-mlton-20241230	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/normal/host-default/native-mlton-20241230
+fulsom-strict	normal	host-default	native-polyml-5.9.2	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/normal/host-default/native-polyml-5.9.2
+fulsom-strict	normal	host-default	native-smlnj-dev-2026.2	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/normal/host-default/native-smlnj-dev-2026.2
+fulsom-strict	normal	host-default	native-smlnj-legacy-110.99.9	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/normal/host-default/native-smlnj-legacy-110.99.9
+fulsom-strict	normal	host-default	native-smlnj32-110.99.9	7 normal.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/normal/host-default/native-smlnj32-110.99.9
+fulsom-strict	smoke	O0	rune	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/smoke/O0/rune
+fulsom-strict	smoke	O0	rune-jit	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/smoke/O0/rune-jit
+fulsom-strict	smoke	O0	rune-new	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/smoke/O0/rune-new
+fulsom-strict	smoke	O0	rune-opt	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/smoke/O0/rune-opt
+fulsom-strict	smoke	O2	rune	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/smoke/O2/rune
+fulsom-strict	smoke	O2	rune-jit	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/smoke/O2/rune-jit
+fulsom-strict	smoke	O2	rune-new	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/smoke/O2/rune-new
+fulsom-strict	smoke	O2	rune-opt	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/smoke/O2/rune-opt
+fulsom-strict	smoke	host-default	native-mlkit-4.7.23	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/smoke/host-default/native-mlkit-4.7.23
+fulsom-strict	smoke	host-default	native-mlton-20241230	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/smoke/host-default/native-mlton-20241230
+fulsom-strict	smoke	host-default	native-polyml-5.9.2	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/smoke/host-default/native-polyml-5.9.2
+fulsom-strict	smoke	host-default	native-smlnj-dev-2026.2	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/smoke/host-default/native-smlnj-dev-2026.2
+fulsom-strict	smoke	host-default	native-smlnj-legacy-110.99.9	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/smoke/host-default/native-smlnj-legacy-110.99.9
+fulsom-strict	smoke	host-default	native-smlnj32-110.99.9	4 smoke.hex	pass	results/m3-m4-fulsom/attempts-raw/final-fulsom-parallel.oyvkvjbq/fulsom-strict/smoke/host-default/native-smlnj32-110.99.9

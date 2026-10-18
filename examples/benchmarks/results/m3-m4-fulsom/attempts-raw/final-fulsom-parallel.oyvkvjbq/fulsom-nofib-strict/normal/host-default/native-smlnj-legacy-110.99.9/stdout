@@ -1,0 +1,336 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-fulsom-originals/candidate/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-fulsom-originals/candidate/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-fulsom-originals/candidate/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-fulsom-originals/candidate/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-fulsom-originals/candidate/shared/hartel-ida-finite.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-fulsom-originals/candidate/shared/hartel-ida-finite.sml:19.32 Warning: calling polyEqual
+functor BenchIdaFiniteFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a seq
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t * 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val defer : (unit -> 'a D.t) -> 'a D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val nth : 'a <BaseFct>.<resultStr>.node D.t -> int -> 'a
+  val update :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val unify :
+      ''a <BaseFct>.<resultStr>.node D.t
+       -> ''a -> ''a <BaseFct>.<resultStr>.node D.t
+  val foldl :
+      ('a D.t -> 'b -> 'a D.t)
+       -> 'a D.t -> 'b <BaseFct>.<resultStr>.node D.t -> 'a D.t
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val filter :
+      ('a -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val length : 'a <BaseFct>.<resultStr>.node D.t -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-fulsom-originals/candidate/shared/fulsom-interval.sml]
+functor BenchFulsomIntervalFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type node
+  type t
+  val point : real -> <BaseFct>.<resultStr>.node D.t
+  val range : real -> real -> <BaseFct>.<resultStr>.node D.t
+  val mapPoint :
+      (real -> real)
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val unpoint : <BaseFct>.<resultStr>.node D.t -> real
+  val lower : <BaseFct>.<resultStr>.node D.t -> real
+  val upper : <BaseFct>.<resultStr>.node D.t -> real
+  val less :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val greater :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val lessEqual :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val greaterEqual :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t -> bool
+  val add :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val negative :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val subtract :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val square :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val minimum :
+      <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val bottom :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val top : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val topBit :
+      <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val up : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val mid1 : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+  val mid2 : <BaseFct>.<resultStr>.node D.t -> <BaseFct>.<resultStr>.node D.t
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-fulsom-originals/candidate/shared/fulsom-kernel.sml]
+[autoloading]
+[autoloading done]
+functor BenchFulsomFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure I : <sig>
+  structure L : <sig>
+  structure F : <sig>
+  type colorNode
+  type color
+  type xyz
+  type csgNode
+  type resultNode
+  type csg
+  type result
+  type octNode
+  type oct
+  type quadNode
+  type quad
+  val color : real -> real -> real -> <BaseFct>.<resultStr>.colorNode D.t
+  val mkcolor : int -> int -> int -> <BaseFct>.<resultStr>.colorNode D.t
+  val white : <BaseFct>.<resultStr>.colorNode D.t
+  val black : <BaseFct>.<resultStr>.colorNode D.t
+  val zero : <BaseFct>.<resultStr>.I.<returnStr>.node D.t
+  val dead : unit -> 'a BenchLazy.state ref
+  val answer :
+      <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.I.<returnStr>.node D.t
+  val residual :
+      <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.csgNode BenchLazy.delay
+  val resultColor :
+      <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.colorNode D.t
+  val changed : <BaseFct>.<resultStr>.resultNode BenchLazy.state ref -> bool
+  val sphereFunction :
+      real
+       -> real
+       -> real -> real -> <BaseFct>.<resultStr>.csgNode BenchLazy.state ref
+  val calc :
+      <BaseFct>.<resultStr>.csgNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.color
+       -> <BaseFct>.<resultStr>.xyz
+       -> <BaseFct>.<resultStr>.resultNode BenchLazy.state ref
+  val components : <BaseFct>.<resultStr>.colorNode D.t -> real * real * real
+  val light :
+      <BaseFct>.<resultStr>.colorNode D.t
+       -> (real * real * real) BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.colorNode D.t
+  val normal :
+      <BaseFct>.<resultStr>.csgNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.I.<returnStr>.node D.t
+       * <BaseFct>.<resultStr>.I.<returnStr>.node D.t
+       * <BaseFct>.<resultStr>.I.<returnStr>.node D.t
+       -> real * real * real
+  val shadeColor :
+      <BaseFct>.<resultStr>.colorNode D.t
+       -> <BaseFct>.<resultStr>.csgNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.I.<returnStr>.node D.t
+       * <BaseFct>.<resultStr>.I.<returnStr>.node D.t
+       * <BaseFct>.<resultStr>.I.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.colorNode D.t
+  val octer :
+      int
+       -> <BaseFct>.<resultStr>.csgNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.I.<returnStr>.node D.t
+       * <BaseFct>.<resultStr>.I.<returnStr>.node D.t
+       * <BaseFct>.<resultStr>.I.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.octNode BenchLazy.delay
+  val prune :
+      int
+       -> <BaseFct>.<resultStr>.octNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.octNode BenchLazy.delay
+  val octcsg :
+      int
+       -> <BaseFct>.<resultStr>.csgNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.octNode BenchLazy.delay
+  val emptyQuad : unit -> <BaseFct>.<resultStr>.quadNode BenchLazy.state ref
+  val child : 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> int -> 'a
+  val deferredChild :
+      'a BenchLazy.state ref <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int -> 'a BenchLazy.state ref
+  val qo :
+      <BaseFct>.<resultStr>.octNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.quadNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.quadNode BenchLazy.delay
+  val quadoct :
+      <BaseFct>.<resultStr>.octNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.quadNode BenchLazy.delay
+  val pic : <BaseFct>.<resultStr>.csgNode BenchLazy.state ref
+  structure S : <sig>
+  val integer : 'a -> 'a BenchLazy.state ref
+  val cons :
+      'a
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.state ref
+  val colorWords : <BaseFct>.<resultStr>.colorNode D.t -> int * int * int
+  val tileWords :
+      int
+       -> int
+       -> int
+       -> <BaseFct>.<resultStr>.colorNode D.t
+       -> int BenchStream.node BenchLazy.delay
+       -> int BenchStream.node BenchLazy.state ref
+  val cout :
+      int
+       -> int
+       -> int
+       -> <BaseFct>.<resultStr>.quadNode BenchLazy.state ref
+       -> int BenchStream.node BenchLazy.state ref
+       -> int BenchStream.node BenchLazy.state ref
+  val words :
+      int
+       -> <BaseFct>.<resultStr>.quadNode BenchLazy.state ref
+       -> int BenchStream.node BenchLazy.state ref
+  val bytes :
+      int BenchStream.node BenchLazy.state ref
+       -> int BenchStream.node BenchLazy.delay
+  val picture : int -> int BenchStream.node BenchLazy.delay
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-fulsom-originals/candidate/shared/fulsom-check.sml]
+[autoloading]
+[autoloading done]
+functor BenchFulsomCheckFn(K: sig
+  val picture : int -> int BenchStream.stream
+end) :
+sig
+  structure L : <sig>
+  structure S : <sig>
+  structure W : <sig>
+  val modulus : IntInf.int
+  val signed : Word64.word -> IntInf.int
+  val read : string -> TextIO.vector
+  val digit : char -> int
+  val reference : string -> string
+  val consumeWith : (int -> 'a -> 'a) -> 'a -> int -> string -> int * 'a
+  val consume : int -> string -> int * IntInf.int
+  val runHashed : string list -> string
+  val runRaw : string list -> string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-fulsom-originals/candidate/fulsom-nofib-strict/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Check : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-fulsom-originals/candidate/shared/main.sml]
+RESULT 1000:5956000
+PASS fulsom-nofib-strict
+SUMMARY 1 checks, 0 failed
