@@ -1,0 +1,26 @@
+[
+  {
+    "input": "data.0",
+    "report_bytes": 1228,
+    "result_floats": 11,
+    "hash": "8897f484618939b6"
+  },
+  {
+    "input": "data.1",
+    "report_bytes": 4069,
+    "result_floats": 40,
+    "hash": "74eae702345b923a"
+  },
+  {
+    "input": "data.2",
+    "report_bytes": 6978,
+    "result_floats": 73,
+    "hash": "71c76aedb2588a4a"
+  },
+  {
+    "input": "fem.stdin",
+    "report_bytes": 13830,
+    "result_floats": 180,
+    "hash": "82e2f9503b5211c4"
+  }
+]

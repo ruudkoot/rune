@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+fem-lazy	normal	rune	O2	compile	0	0	pass	4.52	3.09	0.11	135568	-	-	-	fem-lazy/rune/build/compile
+fem-lazy	normal	rune	O2	correctness	0	0	pass	15.05	14.53	0.11	10636	1871111138	5308949160	135688107	fem-lazy/rune/correctness.0
+fem-lazy	normal	rune	O2	count	1	1	pass	14.39	14.54	0.07	10588	1871111138	5308949160	135688107	fem-lazy/rune/fresh.1
+fem-lazy	normal	rune:opt	O2	compile	0	0	pass	4.38	2.98	0.10	135504	-	-	-	fem-lazy/rune-opt/build/compile
+fem-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.88	0.53	0.11	23512	-	-	-	fem-lazy/rune-opt/build/native-compile
+fem-lazy	normal	rune:opt	O2	correctness	0	0	pass	5.51	5.61	0.02	11588	1871111138	5308949160	135688107	fem-lazy/rune-opt/correctness.0
+fem-lazy	normal	rune:opt	O2	count	1	1	pass	5.55	5.80	0.02	11668	1871111138	5308949160	135688107	fem-lazy/rune-opt/fresh.1
+fem-lazy	normal	rune:new	O2	compile	0	0	pass	3.61	3.51	0.22	135484	-	-	-	fem-lazy/rune-new/build/compile
+fem-lazy	normal	rune:new	O2	correctness	0	0	pass	13.08	13.69	0.02	10964	1100681322	5308949160	135688107	fem-lazy/rune-new/correctness.0
+fem-lazy	normal	rune:new	O2	count	1	1	pass	14.29	13.28	0.02	11024	1100681322	5308949160	135688107	fem-lazy/rune-new/fresh.1
+fem-lazy	normal	rune:jit	O2	compile	0	0	pass	2.94	2.90	0.16	135432	-	-	-	fem-lazy/rune-jit/build/compile
+fem-lazy	normal	rune:jit	O2	correctness	0	0	pass	4.84	4.99	0.04	12900	1100681322	5308949160	135688107	fem-lazy/rune-jit/correctness.0
+fem-lazy	normal	rune:jit	O2	count	1	1	pass	5.21	5.34	0.03	12924	1100681322	5308949160	135688107	fem-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

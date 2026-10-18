@@ -1,0 +1,49 @@
+!
+
+CONTROL DATA :
+
+   Total number of nodes = 3  
+   Number of elements    = 2  
+   Number of point loads = 1  
+   Total number of materials = 1  
+
+
+NODE INFORMATION  :
+
+  Node.no = 1     x = -1.000000000    y = 0.000000000    bc = 330 
+  Node.no = 2     x = 0.000000000    y = 5.000000000    bc = 110 
+  Node.no = 3     x = 1.000000000    y = 0.000000000    bc = 330 
+
+
+MATERIAL INFORMATION :
+
+  Material No.=1     EA = 60000.000000000    EI = 0.000000000 
+
+ELEMENT DATA:
+
+  Element No.=1     Node.L =1     Node.R =2     Material No. =1  
+  Element No.=2     Node.L =3     Node.R =2     Material No. =1  
+
+
+
+POINT LOADS DATA:
+
+  To_point No.2    Px = 0.000000000   Py = -1.000000000   M = 0.000000000 
+
+
+
+
+DISPLACEMENT OF THE STRUCTURE 
+
+     Node     X     Y     BC         U             V                  Theta
+       1 -1.000000000 0.000000000    330    0.000000000    0.000000000    0.000000000
+       2 0.000000000 5.000000000    110    0.000000000   -0.000044192    0.000000000
+       3 1.000000000 0.000000000    330    0.000000000    0.000000000    0.000000000
+
+
+
+INTERNAL FORCES OF ELEMENT 
+
+    Element    NodeL   NodeR     TENSION
+       1         1       2   -0.509902000
+       2         3       2   -0.509902000

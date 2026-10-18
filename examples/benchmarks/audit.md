@@ -543,3 +543,21 @@ remain. The catalogue contains 475 programs and 1379 profiles.
 Poly/ML's isolated auxiliary strict-tree compiler error remains distinct from
 passing standard applications and corrected earlier tuple-projection type
 ambiguity. M3/M4 remain in progress and M8 remains planned.
+
+## FEM scalar semantics and historical comparison, 2026-10-18
+
+Two FEM policies retain source binary32 operations, variable-bandwidth LL
+factorization, cyclic array dependencies and ordered assembly. Exact final
+bits supplement complete adapted report/hash validation; intermediate
+snapshots and an independent dense physical model remain separate checks.
+
+README and dated MAIL credit Junxian Liu and describe the packaged Haskell
+lineage. Four guarded author/data regressions bring inventory tests to 128;
+all pass and five clean source pins reproduce 861 entries. All author datasets
+are inventoried; data.3 is byte-identical to fem.stdin with both origins
+retained. The inC historical comparison is explicitly excluded from the
+maintained nofib invocation, with its whole source/data/timing tree preserved.
+
+Legacy 64-bit default numerical failures and separate nursery diagnostics
+remain visible. The catalogue contains 477 programs and 1385 profiles.
+M3/M4 remain in progress and M8 remains planned.

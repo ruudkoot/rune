@@ -1,0 +1,42 @@
+[
+  {
+    "input": "data.0",
+    "policy": "need",
+    "differences": []
+  },
+  {
+    "input": "data.0",
+    "policy": "strict",
+    "differences": []
+  },
+  {
+    "input": "data.1",
+    "policy": "need",
+    "differences": []
+  },
+  {
+    "input": "data.1",
+    "policy": "strict",
+    "differences": []
+  },
+  {
+    "input": "data.2",
+    "policy": "need",
+    "differences": []
+  },
+  {
+    "input": "data.2",
+    "policy": "strict",
+    "differences": []
+  },
+  {
+    "input": "fem.stdin",
+    "policy": "need",
+    "differences": []
+  },
+  {
+    "input": "fem.stdin",
+    "policy": "strict",
+    "differences": []
+  }
+]

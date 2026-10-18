@@ -1,0 +1,38 @@
+--- /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-fem-originals/source/Basics.hs	2026-10-16 16:09:55.892571939 +0100
++++ /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-fem-originals/report-observer-source/Basics.hs	2026-10-18 09:47:26.422653156 +0100
+@@ -11,6 +11,8 @@
+ module Basics(showrj,showlj, azip, module Data.Array) where
+ 
+ import Data.Array
++import Numeric(showFFloat)
++
+ 
+ 
+ showlj, showrj :: (Show a) => Int -> a -> [Char]
+@@ -23,14 +25,14 @@
+ showrj l x
+       = (rep bs ' ') ++ ns
+         where
+-        ns = dropWhile ((==) ' ') (show x)
++        ns = render x
+         bs | l <= length ns   = 1
+            | otherwise        = l - length ns
+ 
+ showlj l x
+       = ns ++ (rep bs ' ')
+         where
+-        ns = dropWhile ((==) ' ') (show x)
++        ns = render x
+         bs | l <= length ns   = 1
+            | otherwise        = l - length ns
+ 
+@@ -40,3 +42,9 @@
+ azip ( x : ls ) ( x' : ls' ) = (x,x') : (azip ls ls')
+ 
+ 
++
++render :: (Show a) => a -> String
++render x = if any (\c -> c=='.'||c=='e'||c=='E') raw
++           then showFFloat (Just 9) (realToFrac (read raw :: Float) :: Double) ""
++           else raw
++ where raw=dropWhile (==' ') (show x)

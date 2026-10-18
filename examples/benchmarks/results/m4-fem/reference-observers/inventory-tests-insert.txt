@@ -1,0 +1,28 @@
+    def fem_header(self, heading, data=False):
+        self.nofib_roots()
+        self.file("real/fem/Makefile", "\n")
+        self.file("real/fem/Main.hs", "main = print 0\n")
+        self.file("real/fem/README", heading)
+        if data:
+            self.file("real/fem/data.0", "3 2 1 1\n")
+            self.file("real/fem/data.3", "36 72 2 1\n")
+        return self.build("nofib")[0]
+
+    def test_fem_individual_author_is_recorded(self):
+        heading = (ROOT / "examples/benchmarks/fem-lazy/upstream/README").read_text()
+        row = self.fem_header(heading)
+        self.assertIn("Junxian Liu", row["authors"])
+        self.assertIn("real/fem/README:author-and-model-description", row["evidence"])
+
+    def test_changed_fem_author_requires_review(self):
+        heading = (ROOT / "examples/benchmarks/fem-lazy/upstream/README").read_text()
+        self.assertNotIn("Junxian Liu", self.fem_header(heading.replace("Dr. Junxian Liu", "Dr. Another Author"))["authors"])
+
+    def test_fem_alternate_data_is_inventoried(self):
+        row = self.fem_header("", data=True)
+        self.assertIn("real/fem/data.0", row["inputs"])
+        self.assertIn("real/fem/data.3", row["inputs"])
+
+    def test_absent_fem_data_is_not_invented(self):
+        self.assertNotIn("real/fem/data.0", self.fem_header("")["inputs"])
+

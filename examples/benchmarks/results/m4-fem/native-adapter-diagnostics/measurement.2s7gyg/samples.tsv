@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+fem-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	9.10	7.87	1.49	659864	-	-	-	fem-strict/native-mlton/build/compile
+fem-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2716	-	-	-	fem-strict/native-mlton/correctness.0
+fem-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2720	-	-	-	fem-strict/native-mlton/fresh.1
+fem-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	1.10	1.07	0.07	38332	-	-	-	fem-strict/native-smlnj-legacy/build/compile
+fem-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.02	0.00	0.00	4336	-	-	-	fem-strict/native-smlnj-legacy/correctness.0
+fem-strict	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.02	0.00	0.00	4272	-	-	-	fem-strict/native-smlnj-legacy/fresh.1
+fem-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.69	0.64	0.10	56276	-	-	-	fem-strict/native-polyml/build/compile
+fem-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	7204	-	-	-	fem-strict/native-polyml/correctness.0
+fem-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	7248	-	-	-	fem-strict/native-polyml/fresh.1

@@ -1,0 +1,4 @@
+{'input': 'data.0', 'bytes': 1228, 'sha256': 'f2916e4c429acf38223a58f2dba962d887eab6c091633dcbb489d75ed410651a'}
+{'input': 'data.1', 'bytes': 4069, 'sha256': '4f9b8086bc5aef53b5c6551625a4e6cef503f5fa344b98e666c9d433e0db1b4f'}
+{'input': 'data.2', 'bytes': 6978, 'sha256': 'fdc0906ee531d545cdb2cd3afe897673e5ae1f391a05e5fe7694d766c2e18f6c'}
+{'input': 'fem.stdin', 'bytes': 13830, 'sha256': '03fc3e4a75954b35d7bf5d17bcfe6241525424de101cbd59c021f32429dbd3ca'}

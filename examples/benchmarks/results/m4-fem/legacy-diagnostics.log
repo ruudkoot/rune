@@ -1,0 +1,6 @@
+{'nursery': 'default', 'sample': 1, 'exit': 1, 'passed': 108, 'failed': 25}
+{'nursery': 'default', 'sample': 2, 'exit': 1, 'passed': 107, 'failed': 26}
+{'nursery': 'default', 'sample': 3, 'exit': 1, 'passed': 108, 'failed': 25}
+{'nursery': '64m', 'sample': 1, 'exit': 0, 'passed': 133, 'failed': 0}
+{'nursery': '64m', 'sample': 2, 'exit': 0, 'passed': 133, 'failed': 0}
+{'nursery': '64m', 'sample': 3, 'exit': 0, 'passed': 133, 'failed': 0}

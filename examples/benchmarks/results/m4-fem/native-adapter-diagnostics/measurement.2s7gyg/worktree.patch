@@ -1,0 +1,422 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index e7c9be0b0..f7c89edee 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -484,6 +484,8 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [comp_lab_zift-strict](#comp_lab_zift-strict) | [nofib Hartel comp_lab_zift](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/comp_lab_zift) | Label tiled binary-image components with strict persistent data and source sifting. |
+ | [comp_lab_nozift-lazy](#comp_lab_nozift-lazy) | [nofib Hartel comp_lab_zift](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/comp_lab_zift) | Label tiled binary-image components with memoized persistent data without source sifting. |
+ | [comp_lab_nozift-strict](#comp_lab_nozift-strict) | [nofib Hartel comp_lab_zift](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/comp_lab_zift) | Label tiled binary-image components with strict persistent data without source sifting. |
++| [fem-lazy](#fem-lazy) | [nofib real/fem](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/fem) | Solve a binary32 truss model with variable-bandwidth LL factors and memoized finite arrays. |
++| [fem-strict](#fem-strict) | [nofib real/fem](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/fem) | Solve a binary32 truss model with variable-bandwidth LL factors and strict finite arrays. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -32216,3 +32218,309 @@ source inspection. No separate image-labelling paper is claimed as reviewed
+ for this program. Original/independent result agreement establishes
+ correctness at the recorded inputs; individual performance effects remain
+ hypotheses pending separate evidence.
++
++## fem-lazy
++
++### Algorithm and workload
++
++Perform two-dimensional truss structural analysis: parse model arrays,
++assign free degrees, construct the variable-bandwidth diagonal-address vector,
++assemble element stiffness/load contributions, compute the recursive LL
++factorization and forward/back substitution, recover all nodal displacements
++and element forces, then render and hash the report.
++
++Keep the original one-dimensional boxed vector/matrix representation,
++association-list accumulation order and skyline/variable-bandwidth indexing.
++The routine named beam2d implements axial bar stiffness; preserve its unused
++EI parameter and zero rotational entries. No dense pivoted solver replaces
++the benchmark's recursive factorization.
++
++### History, authorship, source variants and notices
++
++[nofib real/fem](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/fem)
++is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. README credits Dr. Junxian Liu, Imperial College;
++module headers date the vector/matrix and application work to March 1991.
++Preserve all eighteen Haskell modules, Makefile, README, MAIL and datasets.
++The inspected program/data headings state no separate redistribution grant;
++do not infer one from historical correspondence.
++
++The April 1994 correspondence, forwarded by Paul H. J. Kelly, identifies
++Glasgow/distr as the properly packaged Haskell version and describes earlier
++Miranda/Hope+ origins and incompletely tested compiler-specific directories.
++Those historical directories are not additional implementations in this pin.
++The -lazy/-strict names distinguish portable finite-array materialization.
++
++Retain the complete inC tree as a historical comparison with fixed mutable
++arrays, separate input/output and timing scripts. No maintained nofib target
++builds/invokes that C program; its explicit ancillary disposition does not
++assign Haskell author credit to uncredited C headers. Generated assembly/C
++or runtime-specific facilities are not prerequisites of this Haskell workload.
++
++### Translation and exact numeric decisions
++
++Represent Haskell Float values exactly in SML real while rounding every
++source arithmetic operation to binary32, using the existing portable
++BenchLinearFloat rounding helper. Keep multiplication/addition grouping,
++sqrt/refinement order, signed zero and binary32 bit validation. This is a
++numeric-semantics adapter with binary64 storage and explicit rounding cost;
++it is not a claim of native binary32 layout or Haskell-equivalent timing.
++
++Preserve the unusual database parser: tokens containing a decimal point are
++real fields, other tokens are integer fields; float digits, decimal powers,
++division and addition round in source order. Do not replace that parser with
++a generic decimal read. Retain its digit fallback behavior. Selected dataset
++indices, offsets, counts and report totals fit signed 31-bit integers.
++
++Use bounded immutable boxed arrays/vectors with memoized cells, retaining the
++source flattened matrix/list-index builder and ordered accumulating updates.
++The lazy policy demands cells as needed; the strict policy forces finite
++values after construction. Both retain memoized recursive-array control:
++install the vector/matrix knot before materialization, preserving the diagonal
++recurrence, LL factor, forward vector and backward vector. Dependencies may
++force cells in a different index order. Share the factor and final displacement
++vector where the source does, avoiding duplicate solves in the benchmark.
++
++Finite bounds/position metadata uses explicit strict bridges. The common
++representation retains memo cells even in the strict policy. Record that
++library/layout cost, not an assumed identical source runtime representation.
++Unused library exports remain in the retained originals; the portable modules
++cover every dependency of the selected Main computation.
++
++The original report uses shortest Float formatting. The portable report uses
++nine fixed decimal places through the common SML real formatter, preserving
++headings, field order, padding rules and all values. An output-only Haskell
++observer applies that same formatting; no numerical kernel changes. Complete
++report bytes are validated separately from exact binary32 final values.
++
++Preserve the original post-report hash as explicit modular 64-bit arithmetic,
++comparing its Word64 bit pattern on every host. This fixes the tested source
++machine-integer width without introducing arbitrary-precision kernel math.
++Do not rely on the report hash alone to validate floating values.
++
++### Inputs, profiles and result validation
++
++| Profile | Repetitions | Model |
++|---|---:|---|
++| Smoke | 1 | Author-supplied data.0, the small two-free-degree model. |
++| Normal | 100 | Original fem.stdin, 36 nodes and 62 free degrees. |
++| Large | 500 | Original fem.stdin with the source SLOW count. |
++
++Original FAST uses twenty full-model repetitions; smoke deliberately reduces
++both repetition count and model size. Normal/large retain source counts and
++input. data.3 is byte-identical to fem.stdin; retain both provenance paths.
++The other author datasets are covered by broader semantic checks.
++No random or external dataset is required.
++
++Each iteration runs the original final-result path once, renders the report,
++checks every final displacement/force bit, complete report bytes and 64-bit
++hash. Require finite values and zero binary32-ulp deviation from reviewed
++original final results. Parse inputs/references outside the loop, replacing
++source lazy stdin/getArgs/salt plumbing. No opaque optimization barrier is
++assumed. Return validated repetition/report-byte/final-value counts.
++
++Intermediate snapshots belong to separate correctness tests: parsed arrays,
++degree maps, diagonal addresses, stiffness, factor, loads, forward/back solve,
++full displacement and forces all agree bit for bit across four datasets on
++the validated configurations. They are not extra solves in timed workloads.
++Original FAST/NORM/SLOW executables fully evaluate their original reports/hash
++and print no stdout, as recorded.
++
++An independent binary64 dense assembly and partial-pivot solve, using reviewed
++binary32 input data, checks physical assembly, factor residual, free-degree
++equilibrium and forces. Its norm bounds are explicit: assembly 2e-6, LL residual
++1e-5, solution 1e-12 plus 2e-4 times solution infinity norm, scaled equilibrium
++1e-5, and forces 1e-10 plus 1e-5 times force norm. A one-percent solution
++perturbation is rejected. These independent-model tolerances do not loosen
++the runtime's exact original-bit requirement.
++
++### Compiler/runtime concerns and recorded validation
++
++Investigate binary32 adapter overhead, boxed/lazy array cells, cyclic sharing,
++list-index matrix builders, skyline sparsity, strict materialization, closure
++specialization and report/validation costs. Treat these as source-based
++hypotheses until separate measurements support a narrower explanation.
++
++Direct tests cover complete original states and reports, binary32 ties/
++subnormal/overflow/sign cases, recursive arrays in both dependency directions,
++band-matrix knots, update order, bounds, overwritten cells, materialization,
++zero work and deliberately perturbed values/reports/hashes.
++
++Legacy 64-bit SML/NJ has default-configuration numeric failures. The same
++program passes the other managed hosts; repeated legacy defaults vary and
++separate 64 MiB nursery diagnostics pass. This is consistent with the existing
++GC-root report, not proof of the application's exact cause. Preserve all
++failures, standard defaults and expected bits. Diagnostic heap settings are
++separate configurations, never substituted for the standard comparison.
++
++Canonical smoke/normal cases, semantic counts, timing/count scopes and full
++repository acceptance are recorded in the validation ledger. Native group
++labels use host defaults; Rune O0/O2 are explicit. Unrecorded large checks
++are not inferred from smaller inputs.
++
++### Literature and evidence scope
++
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
++provides application-suite context at the existing survey scope.
++The original README and April 1994 MAIL provide program-specific authorship,
++model and version history. MAIL names Functional Programming for Finite
++Element Analysis and a submitted Functional Programming for Scientific
++Computation; these are source-declared historical references, not a claimed
++verified journal publication or full paper review.
++
++The stiffness formulas, variable-bandwidth scheme, numeric parser and
++dependency/sharing decisions come from source inspection. Original exact
++states and the independent dense physical model establish correctness at
++recorded inputs; compiler/runtime performance explanations remain hypotheses.
++
++## fem-strict
++
++### Algorithm and workload
++
++Perform two-dimensional truss structural analysis: parse model arrays,
++assign free degrees, construct the variable-bandwidth diagonal-address vector,
++assemble element stiffness/load contributions, compute the recursive LL
++factorization and forward/back substitution, recover all nodal displacements
++and element forces, then render and hash the report.
++
++Keep the original one-dimensional boxed vector/matrix representation,
++association-list accumulation order and skyline/variable-bandwidth indexing.
++The routine named beam2d implements axial bar stiffness; preserve its unused
++EI parameter and zero rotational entries. No dense pivoted solver replaces
++the benchmark's recursive factorization.
++
++### History, authorship, source variants and notices
++
++[nofib real/fem](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/fem)
++is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. README credits Dr. Junxian Liu, Imperial College;
++module headers date the vector/matrix and application work to March 1991.
++Preserve all eighteen Haskell modules, Makefile, README, MAIL and datasets.
++The inspected program/data headings state no separate redistribution grant;
++do not infer one from historical correspondence.
++
++The April 1994 correspondence, forwarded by Paul H. J. Kelly, identifies
++Glasgow/distr as the properly packaged Haskell version and describes earlier
++Miranda/Hope+ origins and incompletely tested compiler-specific directories.
++Those historical directories are not additional implementations in this pin.
++The -lazy/-strict names distinguish portable finite-array materialization.
++
++Retain the complete inC tree as a historical comparison with fixed mutable
++arrays, separate input/output and timing scripts. No maintained nofib target
++builds/invokes that C program; its explicit ancillary disposition does not
++assign Haskell author credit to uncredited C headers. Generated assembly/C
++or runtime-specific facilities are not prerequisites of this Haskell workload.
++
++### Translation and exact numeric decisions
++
++Represent Haskell Float values exactly in SML real while rounding every
++source arithmetic operation to binary32, using the existing portable
++BenchLinearFloat rounding helper. Keep multiplication/addition grouping,
++sqrt/refinement order, signed zero and binary32 bit validation. This is a
++numeric-semantics adapter with binary64 storage and explicit rounding cost;
++it is not a claim of native binary32 layout or Haskell-equivalent timing.
++
++Preserve the unusual database parser: tokens containing a decimal point are
++real fields, other tokens are integer fields; float digits, decimal powers,
++division and addition round in source order. Do not replace that parser with
++a generic decimal read. Retain its digit fallback behavior. Selected dataset
++indices, offsets, counts and report totals fit signed 31-bit integers.
++
++Use bounded immutable boxed arrays/vectors with memoized cells, retaining the
++source flattened matrix/list-index builder and ordered accumulating updates.
++The lazy policy demands cells as needed; the strict policy forces finite
++values after construction. Both retain memoized recursive-array control:
++install the vector/matrix knot before materialization, preserving the diagonal
++recurrence, LL factor, forward vector and backward vector. Dependencies may
++force cells in a different index order. Share the factor and final displacement
++vector where the source does, avoiding duplicate solves in the benchmark.
++
++Finite bounds/position metadata uses explicit strict bridges. The common
++representation retains memo cells even in the strict policy. Record that
++library/layout cost, not an assumed identical source runtime representation.
++Unused library exports remain in the retained originals; the portable modules
++cover every dependency of the selected Main computation.
++
++The original report uses shortest Float formatting. The portable report uses
++nine fixed decimal places through the common SML real formatter, preserving
++headings, field order, padding rules and all values. An output-only Haskell
++observer applies that same formatting; no numerical kernel changes. Complete
++report bytes are validated separately from exact binary32 final values.
++
++Preserve the original post-report hash as explicit modular 64-bit arithmetic,
++comparing its Word64 bit pattern on every host. This fixes the tested source
++machine-integer width without introducing arbitrary-precision kernel math.
++Do not rely on the report hash alone to validate floating values.
++
++### Inputs, profiles and result validation
++
++| Profile | Repetitions | Model |
++|---|---:|---|
++| Smoke | 1 | Author-supplied data.0, the small two-free-degree model. |
++| Normal | 100 | Original fem.stdin, 36 nodes and 62 free degrees. |
++| Large | 500 | Original fem.stdin with the source SLOW count. |
++
++Original FAST uses twenty full-model repetitions; smoke deliberately reduces
++both repetition count and model size. Normal/large retain source counts and
++input. data.3 is byte-identical to fem.stdin; retain both provenance paths.
++The other author datasets are covered by broader semantic checks.
++No random or external dataset is required.
++
++Each iteration runs the original final-result path once, renders the report,
++checks every final displacement/force bit, complete report bytes and 64-bit
++hash. Require finite values and zero binary32-ulp deviation from reviewed
++original final results. Parse inputs/references outside the loop, replacing
++source lazy stdin/getArgs/salt plumbing. No opaque optimization barrier is
++assumed. Return validated repetition/report-byte/final-value counts.
++
++Intermediate snapshots belong to separate correctness tests: parsed arrays,
++degree maps, diagonal addresses, stiffness, factor, loads, forward/back solve,
++full displacement and forces all agree bit for bit across four datasets on
++the validated configurations. They are not extra solves in timed workloads.
++Original FAST/NORM/SLOW executables fully evaluate their original reports/hash
++and print no stdout, as recorded.
++
++An independent binary64 dense assembly and partial-pivot solve, using reviewed
++binary32 input data, checks physical assembly, factor residual, free-degree
++equilibrium and forces. Its norm bounds are explicit: assembly 2e-6, LL residual
++1e-5, solution 1e-12 plus 2e-4 times solution infinity norm, scaled equilibrium
++1e-5, and forces 1e-10 plus 1e-5 times force norm. A one-percent solution
++perturbation is rejected. These independent-model tolerances do not loosen
++the runtime's exact original-bit requirement.
++
++### Compiler/runtime concerns and recorded validation
++
++Investigate binary32 adapter overhead, boxed/lazy array cells, cyclic sharing,
++list-index matrix builders, skyline sparsity, strict materialization, closure
++specialization and report/validation costs. Treat these as source-based
++hypotheses until separate measurements support a narrower explanation.
++
++Direct tests cover complete original states and reports, binary32 ties/
++subnormal/overflow/sign cases, recursive arrays in both dependency directions,
++band-matrix knots, update order, bounds, overwritten cells, materialization,
++zero work and deliberately perturbed values/reports/hashes.
++
++Legacy 64-bit SML/NJ has default-configuration numeric failures. The same
++program passes the other managed hosts; repeated legacy defaults vary and
++separate 64 MiB nursery diagnostics pass. This is consistent with the existing
++GC-root report, not proof of the application's exact cause. Preserve all
++failures, standard defaults and expected bits. Diagnostic heap settings are
++separate configurations, never substituted for the standard comparison.
++
++Canonical smoke/normal cases, semantic counts, timing/count scopes and full
++repository acceptance are recorded in the validation ledger. Native group
++labels use host defaults; Rune O0/O2 are explicit. Unrecorded large checks
++are not inferred from smaller inputs.
++
++### Literature and evidence scope
++
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
++provides application-suite context at the existing survey scope.
++The original README and April 1994 MAIL provide program-specific authorship,
++model and version history. MAIL names Functional Programming for Finite
++Element Analysis and a submitted Functional Programming for Scientific
++Computation; these are source-declared historical references, not a claimed
++verified journal publication or full paper review.
++
++The stiffness formulas, variable-bandwidth scheme, numeric parser and
++dependency/sharing decisions come from source inspection. Original exact
++states and the independent dense physical model establish correctness at
++recorded inputs; compiler/runtime performance explanations remain hypotheses.
+diff --git a/examples/benchmarks/inventory.tsv b/examples/benchmarks/inventory.tsv
+index b9211eebc..d94862747 100644
+--- a/examples/benchmarks/inventory.tsv
++++ b/examples/benchmarks/inventory.tsv
+@@ -565,7 +565,7 @@ nofib	real/eff/S	S	S	M4	import	kernel		not stated in scanned source headers	1353
+ nofib	real/eff/VS	VS	VS	M4	import	kernel		not stated in scanned source headers	bc743c83cc6dce0ae1838a1d7a95ba838b2b61ffd986e843887e636d085cd4ab	real/eff/VS/EffBench.hs;real/eff/VS/Main.hs	real/eff/VS/VS.stdout		real/eff/VS/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/eff/VSD	VSD	VSD	M4	import	kernel		not stated in scanned source headers	189bf8f73247270cc9714b13a9783f2321f911ee44718559f9b25a8265d9c0b9	real/eff/VSD/EffBench.hs;real/eff/VSD/Main.hs	real/eff/VSD/VSD.stdout		real/eff/VSD/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/eff/VSM	VSM	VSM	M4	import	kernel		not stated in scanned source headers	3187d3683f07f58d29ed5f73325d0d7b81f5593a01a41fd8e2f29d39e5c280a2	real/eff/VSM/EffBench.hs;real/eff/VSM/Main.hs	real/eff/VSM/VSM.stdout	real/eff/VSM/EffBench.hs:header	real/eff/VSM/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	real/fem	fem	fem	M4	import	numerical		not stated in scanned source headers	7c06a52d51982c9ef4e6f964a1e262d4101adf27abc3f89bf800c7afcb160179	real/fem/Assemble_loadvec.hs;real/fem/Assemble_stiffness.hs;real/fem/Basics.hs;real/fem/DB_interface.hs;real/fem/Database.hs;real/fem/Degrees.hs;real/fem/Displacement.hs;real/fem/Elemforce.hs;real/fem/Elemstif.hs;real/fem/Main.hs;real/fem/Matrix.hs;real/fem/NofibUtils.hs;real/fem/Pre_assemble.hs;real/fem/PrintSource.hs;real/fem/Printuvwforce.hs;real/fem/VBlldecomp.hs;real/fem/VBmatrix.hs;real/fem/Vector.hs;real/fem/inC/assemble_loadvec.c;real/fem/inC/assemble_stiffness.c;real/fem/inC/bar_2d.c;real/fem/inC/database;real/fem/inC/displacement.c;real/fem/inC/fem.c;real/fem/inC/internalforce.c;real/fem/inC/pre_assemble.c;real/fem/inC/read_data.c;real/fem/inC/vblldecomp.c	real/fem/fem.stdin	real/fem/README:header	real/fem/Makefile;real/fem/README	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	real/fem	data.3	data.3	M4	import	application		Junxian Liu	7c06a52d51982c9ef4e6f964a1e262d4101adf27abc3f89bf800c7afcb160179	real/fem/Assemble_loadvec.hs;real/fem/Assemble_stiffness.hs;real/fem/Basics.hs;real/fem/DB_interface.hs;real/fem/Database.hs;real/fem/Degrees.hs;real/fem/Displacement.hs;real/fem/Elemforce.hs;real/fem/Elemstif.hs;real/fem/Main.hs;real/fem/Matrix.hs;real/fem/NofibUtils.hs;real/fem/Pre_assemble.hs;real/fem/PrintSource.hs;real/fem/Printuvwforce.hs;real/fem/VBlldecomp.hs;real/fem/VBmatrix.hs;real/fem/Vector.hs;real/fem/inC/assemble_loadvec.c;real/fem/inC/assemble_stiffness.c;real/fem/inC/bar_2d.c;real/fem/inC/database;real/fem/inC/displacement.c;real/fem/inC/fem.c;real/fem/inC/internalforce.c;real/fem/inC/pre_assemble.c;real/fem/inC/read_data.c;real/fem/inC/vblldecomp.c	real/fem/data.0;real/fem/data.1;real/fem/data.2;real/fem/data.3;real/fem/fem.stdin	real/fem/README:header	real/fem/Makefile;real/fem/README;real/fem/README:author-and-model-description;real/fem/data.0:reviewed-model-input;real/fem/data.1:reviewed-model-input;real/fem/data.2:reviewed-model-input;real/fem/data.3:reviewed-model-input	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/fluid	fluid	fluid	M4	import	numerical		not stated in scanned source headers	b19f1d5811ff52215d0b18f2761bb697464a539e9a54f38a00bd8e1fb52d0a50	real/fluid/Asb_routs.hs;real/fluid/C_matrix.hs;real/fluid/Chl_decomp.hs;real/fluid/Chl_method.hs;real/fluid/Chl_routs.hs;real/fluid/Defs.hs;real/fluid/Elefac.hs;real/fluid/Input_proc.hs;real/fluid/Jcb_method.hs;real/fluid/L_matrix.hs;real/fluid/Main.hs;real/fluid/Min_degree.hs;real/fluid/NofibUtils.hs;real/fluid/Norm.hs;real/fluid/Rhs_Asb_routs.hs;real/fluid/S_Array.hs;real/fluid/S_matrix.hs;real/fluid/TG_iter.hs;real/fluid/Tol_cal.hs	real/fluid/fluid.stdin		real/fluid/Makefile;real/fluid/README	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/fulsom/Bah.hs	Bah	Bah	-	exclude	application	nofib:gc/fulsom/Bah.hs	Duncan Sinclair	09bfd257e0a8c5886cdc5de12fef19f0a67a6f0bc68b00f93eb7d4c2489f4dc3	real/fulsom/Bah.hs;real/fulsom/Csg.hs;real/fulsom/Interval.hs;real/fulsom/Kolor.hs;real/fulsom/Matrix.hs;real/fulsom/Oct.hs;real/fulsom/Quad.hs;real/fulsom/Raster.hs;real/fulsom/Shapes.hs;real/fulsom/Types.hs;real/fulsom/Vector.hs	real/fulsom/fulsom.faststdout;real/fulsom/fulsom.slowstdout;real/fulsom/fulsom.stdout	real/fulsom/Bah.hs:header;real/fulsom/Csg.hs:header;real/fulsom/Interval.hs:header;real/fulsom/Kolor.hs:header;real/fulsom/Matrix.hs:header;real/fulsom/Oct.hs:header;real/fulsom/Quad.hs:header;real/fulsom/Raster.hs:header;real/fulsom/Shapes.hs:header;real/fulsom/Types.hs:header;real/fulsom/Vector.hs:header	real/fulsom/Interval.hs:author-and-individual-permission;real/fulsom/Makefile	auxiliary test or alternate entrypoint; the directory Makefile excludes it or selects the Main driver, not a separate benchmark invocation
+ nofib	real/fulsom/Main.hs	fulsom	fulsom-nofib	M4	import	application	nofib:gc/fulsom/Main.hs	Duncan Sinclair	ba2d312f27a9fe76c2daaf885309207f2702902e4cb4d73669575f4068774443	real/fulsom/Csg.hs;real/fulsom/Interval.hs;real/fulsom/Kolor.hs;real/fulsom/Main.hs;real/fulsom/Matrix.hs;real/fulsom/NofibUtils.hs;real/fulsom/Oct.hs;real/fulsom/Patchlevel.hs;real/fulsom/Quad.hs;real/fulsom/Raster.hs;real/fulsom/Shapes.hs;real/fulsom/Types.hs;real/fulsom/Vector.hs	real/fulsom/fulsom.faststdout;real/fulsom/fulsom.slowstdout;real/fulsom/fulsom.stdout	real/fulsom/Csg.hs:header;real/fulsom/Interval.hs:header;real/fulsom/Kolor.hs:header;real/fulsom/Main.hs:header;real/fulsom/Matrix.hs:header;real/fulsom/Oct.hs:header;real/fulsom/Patchlevel.hs:header;real/fulsom/Quad.hs:header;real/fulsom/Raster.hs:header;real/fulsom/Shapes.hs:header;real/fulsom/Types.hs:header;real/fulsom/Vector.hs:header	real/fulsom/Interval.hs:author-and-individual-permission;real/fulsom/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index fb450494d..b307c34d1 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -1378,3 +1378,9 @@ comp_lab_nozift-lazy	large	nofib	spectral/hartel/comp_lab_zift	100 9 2304 large.
+ comp_lab_nozift-strict	smoke	nofib	spectral/hartel/comp_lab_zift	1 1 0 smoke.reference 119390/2103	comp_lab_nozift-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/hartel-comp-lab-figures.sml,shared/hartel-comp-lab-kernel.sml,shared/hartel-comp-lab-check.sml,comp_lab_nozift-strict/benchmark.sml,shared/main.sml	30	1048576	graphs,persistent-trees,component-labelling,sharing,allocation-lifetimes,hartel	smoke.reference	exact	implemented
+ comp_lab_nozift-strict	normal	nofib	spectral/hartel/comp_lab_zift	100 5 1280 normal.reference 2899651/52401	comp_lab_nozift-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/hartel-comp-lab-figures.sml,shared/hartel-comp-lab-kernel.sml,shared/hartel-comp-lab-check.sml,comp_lab_nozift-strict/benchmark.sml,shared/main.sml	600	4194304	graphs,persistent-trees,component-labelling,sharing,allocation-lifetimes,hartel	normal.reference	exact	implemented
+ comp_lab_nozift-strict	large	nofib	spectral/hartel/comp_lab_zift	100 9 2304 large.reference 9937267/179845	comp_lab_nozift-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/hartel-comp-lab-figures.sml,shared/hartel-comp-lab-kernel.sml,shared/hartel-comp-lab-check.sml,comp_lab_nozift-strict/benchmark.sml,shared/main.sml	3600	8388608	graphs,persistent-trees,component-labelling,sharing,allocation-lifetimes,hartel	large.reference	exact	implemented
++fem-lazy	smoke	nofib	real/fem	1 smoke.model smoke.report smoke.reference	fem-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-linear-float.sml,shared/fem-float.sml,shared/fem-arrays.sml,shared/fem-kernel.sml,shared/fem-report.sml,shared/fem-check.sml,fem-lazy/benchmark.sml,shared/main.sml	30	1048576	applications,numerical,binary32,cholesky,variable-bandwidth,recursive-arrays,sharing,allocation-lifetimes	smoke.model,smoke.report,smoke.reference	exact	implemented
++fem-lazy	normal	nofib	real/fem	100 normal.model normal.report normal.reference	fem-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-linear-float.sml,shared/fem-float.sml,shared/fem-arrays.sml,shared/fem-kernel.sml,shared/fem-report.sml,shared/fem-check.sml,fem-lazy/benchmark.sml,shared/main.sml	600	4194304	applications,numerical,binary32,cholesky,variable-bandwidth,recursive-arrays,sharing,allocation-lifetimes	normal.model,normal.report,normal.reference	exact	implemented
++fem-lazy	large	nofib	real/fem	500 large.model large.report large.reference	fem-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-linear-float.sml,shared/fem-float.sml,shared/fem-arrays.sml,shared/fem-kernel.sml,shared/fem-report.sml,shared/fem-check.sml,fem-lazy/benchmark.sml,shared/main.sml	3600	8388608	applications,numerical,binary32,cholesky,variable-bandwidth,recursive-arrays,sharing,allocation-lifetimes	large.model,large.report,large.reference	exact	implemented
++fem-strict	smoke	nofib	real/fem	1 smoke.model smoke.report smoke.reference	fem-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-linear-float.sml,shared/fem-float.sml,shared/fem-arrays.sml,shared/fem-kernel.sml,shared/fem-report.sml,shared/fem-check.sml,fem-strict/benchmark.sml,shared/main.sml	30	1048576	applications,numerical,binary32,cholesky,variable-bandwidth,recursive-arrays,sharing,allocation-lifetimes	smoke.model,smoke.report,smoke.reference	exact	implemented
++fem-strict	normal	nofib	real/fem	100 normal.model normal.report normal.reference	fem-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-linear-float.sml,shared/fem-float.sml,shared/fem-arrays.sml,shared/fem-kernel.sml,shared/fem-report.sml,shared/fem-check.sml,fem-strict/benchmark.sml,shared/main.sml	600	4194304	applications,numerical,binary32,cholesky,variable-bandwidth,recursive-arrays,sharing,allocation-lifetimes	normal.model,normal.report,normal.reference	exact	implemented
++fem-strict	large	nofib	real/fem	500 large.model large.report large.reference	fem-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-linear-float.sml,shared/fem-float.sml,shared/fem-arrays.sml,shared/fem-kernel.sml,shared/fem-report.sml,shared/fem-check.sml,fem-strict/benchmark.sml,shared/main.sml	3600	8388608	applications,numerical,binary32,cholesky,variable-bandwidth,recursive-arrays,sharing,allocation-lifetimes	large.model,large.report,large.reference	exact	implemented
+diff --git a/examples/benchmarks/source-variants.tsv b/examples/benchmarks/source-variants.tsv
+index e2a94f4e8..51971a6f5 100644
+--- a/examples/benchmarks/source-variants.tsv
++++ b/examples/benchmarks/source-variants.tsv
+@@ -31,3 +31,4 @@ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/dom-lt	spectral/dom-lt/D
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	gc/fulsom/Main.hs	gc/fulsom/raster/raster.c	fulsom-gc-raster-viewer	C	ancillary raster-to-PGM output converter	Duncan Sinclair	fa64d19a2d5fafd196d5640f65fabd235a8abed5ed96c2aaee117ce9286c7ee0	exclude	README.original describes this separate output-viewing utility; neither benchmark Main nor its Makefile invokes it; retain source and protocol provenance rather than claim a runnable renderer variant	Copyright 1990,1992 Duncan Sinclair; no separate permission grant stated in this C file
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/fulsom/Main.hs	real/fulsom/raster/raster.c	fulsom-real-raster-viewer	C	ancillary raster-to-PGM output converter	Duncan Sinclair	fa64d19a2d5fafd196d5640f65fabd235a8abed5ed96c2aaee117ce9286c7ee0	exclude	README.original describes this separate output-viewing utility; neither benchmark Main nor its Makefile invokes it; retain source and protocol provenance rather than claim a runnable renderer variant	Copyright 1990,1992 Duncan Sinclair; no separate permission grant stated in this C file
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/hartel/comp_lab_zift	spectral/hartel/comp_lab_zift/Main.hs	comp_lab_nozift	Haskell	inactive non-sifting label mapping	not stated in source heading	b20f91a38894f5ffcc3651066bb1453c713d252b5c08913df932c247a76a1eb3	import	ported as comp_lab_nozift-lazy/strict using the original f_comp_lab_diff-prime with f_no_zift; retain positive tiling and full renderer; no new algorithm replaces source trees; source helper f_main_field-prime also selects this mode with negative size but the benchmark Main itself requires positive tiling	no separate individual program notice stated; retain complete module and Fast2haskell shim
++nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/fem	real/fem/inC/fem.c	fem-c-reference	C	historical C comparison implementation	not separately stated in C headers	912b9fdde14896f9e3fcdff443a41d072d49b1ce9914129a6e43e30af8006b20	exclude	historical C comparison with fixed-size mutable arrays, a date-based run script and FEM_MODEL_DATA output; no maintained nofib Makefile builds or invokes it; preserve the complete inC source/data/timing tree and record its distinct role	no separate individual notice stated in scanned C headers or its README; retain originals without assigning Haskell author credit to these files
+diff --git a/scripts/benchmark-inventory.py b/scripts/benchmark-inventory.py
+index b53989106..a1954b9b7 100644
+--- a/scripts/benchmark-inventory.py
++++ b/scripts/benchmark-inventory.py
+@@ -551,6 +551,19 @@ def build(source, root, lock):
+                     notices.append(str(notice.relative_to(root)))
+         authors = set()
+         context = [p for p in parent.iterdir() if p.is_file() and p.name in {"README", "README.md", "Makefile", "FILES", "sources.cm"}] if parent.exists() and files else []
++        if source == "nofib" and path == "real/fem":
++            readme = parent / "README"
++            if readme.is_file():
++                heading = readme.read_text(errors="replace")
++                if ("Dr. Junxian Liu" in heading and "Department of Computing" in heading
++                        and "Imperial College, London SW7 2BZ" in heading):
++                    authors.add("Junxian Liu")
++                    item["evidence"].append("real/fem/README:author-and-model-description")
++            for name in ("data.0", "data.1", "data.2", "data.3"):
++                data = parent / name
++                if data.is_file():
++                    inputs.add(str(data.relative_to(root)))
++                    item["evidence"].append("real/fem/" + name + ":reviewed-model-input")
+         if source == "nofib" and path in {"gc/cacheprof", "real/cacheprof"}:
+             module = parent / "Main.hs"
+             if module.is_file():
+diff --git a/tests/benchmarks/test-inventory.py b/tests/benchmarks/test-inventory.py
+index 9377f7417..6ad5e4b59 100644
+--- a/tests/benchmarks/test-inventory.py
++++ b/tests/benchmarks/test-inventory.py
+@@ -286,6 +286,34 @@ class InventoryTest(unittest.TestCase):
+         self.file("spectral/multiplier/Main.hs", "-- Another multiplier author\nmain = print 0\n")
+         self.assertNotIn("John T. O'Donnell", self.build("nofib")[0]["authors"])
+ 
++    def fem_header(self, heading, data=False):
++        self.nofib_roots()
++        self.file("real/fem/Makefile", "\n")
++        self.file("real/fem/Main.hs", "main = print 0\n")
++        self.file("real/fem/README", heading)
++        if data:
++            self.file("real/fem/data.0", "3 2 1 1\n")
++            self.file("real/fem/data.3", "36 72 2 1\n")
++        return self.build("nofib")[0]
++
++    def test_fem_individual_author_is_recorded(self):
++        heading = (ROOT / "examples/benchmarks/fem-lazy/upstream/README").read_text()
++        row = self.fem_header(heading)
++        self.assertIn("Junxian Liu", row["authors"])
++        self.assertIn("real/fem/README:author-and-model-description", row["evidence"])
++
++    def test_changed_fem_author_requires_review(self):
++        heading = (ROOT / "examples/benchmarks/fem-lazy/upstream/README").read_text()
++        self.assertNotIn("Junxian Liu", self.fem_header(heading.replace("Dr. Junxian Liu", "Dr. Another Author"))["authors"])
++
++    def test_fem_alternate_data_is_inventoried(self):
++        row = self.fem_header("", data=True)
++        self.assertIn("real/fem/data.0", row["inputs"])
++        self.assertIn("real/fem/data.3", row["inputs"])
++
++    def test_absent_fem_data_is_not_invented(self):
++        self.assertNotIn("real/fem/data.0", self.fem_header("")["inputs"])
++
+     def cacheprof_notice(self, family, heading, full=False):
+         self.nofib_roots()
+         self.file(family + "/cacheprof/Makefile", "\n")

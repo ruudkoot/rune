@@ -551,6 +551,19 @@ def build(source, root, lock):
                     notices.append(str(notice.relative_to(root)))
         authors = set()
         context = [p for p in parent.iterdir() if p.is_file() and p.name in {"README", "README.md", "Makefile", "FILES", "sources.cm"}] if parent.exists() and files else []
+        if source == "nofib" and path == "real/fem":
+            readme = parent / "README"
+            if readme.is_file():
+                heading = readme.read_text(errors="replace")
+                if ("Dr. Junxian Liu" in heading and "Department of Computing" in heading
+                        and "Imperial College, London SW7 2BZ" in heading):
+                    authors.add("Junxian Liu")
+                    item["evidence"].append("real/fem/README:author-and-model-description")
+            for name in ("data.0", "data.1", "data.2", "data.3"):
+                data = parent / name
+                if data.is_file():
+                    inputs.add(str(data.relative_to(root)))
+                    item["evidence"].append("real/fem/" + name + ":reviewed-model-input")
         if source == "nofib" and path in {"gc/cacheprof", "real/cacheprof"}:
             module = parent / "Main.hs"
             if module.is_file():

@@ -1,0 +1,4 @@
+PASS data.0 1:1228:11
+PASS data.1 1:4069:40
+PASS data.2 1:6978:73
+PASS fem.stdin 1:13830:180

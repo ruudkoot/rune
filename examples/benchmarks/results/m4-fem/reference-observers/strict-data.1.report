@@ -1,0 +1,96 @@
+
+
+
+CONTROL DATA :
+
+   Total number of nodes = 8  
+   Number of elements    = 16 
+   Number of point loads = 7  
+   Total number of materials = 3  
+
+
+NODE INFORMATION  :
+
+  Node.no = 1     x = 0.000000000    y = 3.000000000    bc = 110 
+  Node.no = 2     x = 0.000000000    y = 0.000000000    bc = 130 
+  Node.no = 3     x = 2.000000000    y = 3.000000000    bc = 110 
+  Node.no = 4     x = 2.000000000    y = 0.000000000    bc = 110 
+  Node.no = 5     x = 4.000000000    y = 3.000000000    bc = 110 
+  Node.no = 6     x = 4.000000000    y = 0.000000000    bc = 110 
+  Node.no = 7     x = 6.000000000    y = 3.000000000    bc = 310 
+  Node.no = 8     x = 6.000000000    y = 0.000000000    bc = 310 
+
+
+MATERIAL INFORMATION :
+
+  Material No.=1     EA = 60000.000000000    EI = 0.000000000 
+  Material No.=2     EA = 40000.000000000    EI = 0.000000000 
+  Material No.=3     EA = 20000.000000000    EI = 0.000000000 
+
+ELEMENT DATA:
+
+  Element No.=1     Node.L =1     Node.R =3     Material No. =1  
+  Element No.=2     Node.L =3     Node.R =5     Material No. =1  
+  Element No.=3     Node.L =5     Node.R =7     Material No. =1  
+  Element No.=4     Node.L =2     Node.R =4     Material No. =1  
+  Element No.=5     Node.L =4     Node.R =6     Material No. =1  
+  Element No.=6     Node.L =6     Node.R =8     Material No. =1  
+  Element No.=7     Node.L =1     Node.R =2     Material No. =2  
+  Element No.=8     Node.L =3     Node.R =4     Material No. =2  
+  Element No.=9     Node.L =5     Node.R =6     Material No. =2  
+  Element No.=10    Node.L =7     Node.R =8     Material No. =2  
+  Element No.=11    Node.L =1     Node.R =4     Material No. =3  
+  Element No.=12    Node.L =4     Node.R =5     Material No. =3  
+  Element No.=13    Node.L =5     Node.R =8     Material No. =3  
+  Element No.=14    Node.L =2     Node.R =3     Material No. =3  
+  Element No.=15    Node.L =3     Node.R =6     Material No. =3  
+  Element No.=16    Node.L =6     Node.R =7     Material No. =3  
+
+
+
+POINT LOADS DATA:
+
+  To_point No.1    Px = 0.000000000   Py = -1.000000000   M = 0.000000000 
+  To_point No.3    Px = 0.000000000   Py = -1.500000000   M = 0.000000000 
+  To_point No.5    Px = 0.000000000   Py = -1.500000000   M = 0.000000000 
+  To_point No.7    Px = 0.000000000   Py = -1.000000000   M = 0.000000000 
+  To_point No.4    Px = 0.000000000   Py = -1.000000000   M = 0.000000000 
+  To_point No.6    Px = 0.000000000   Py = -1.000000000   M = 0.000000000 
+  To_point No.8    Px = 0.000000000   Py = -0.500000000   M = 0.000000000 
+
+
+
+
+DISPLACEMENT OF THE STRUCTURE 
+
+     Node     X     Y     BC         U             V                  Theta
+       1 0.000000000 3.000000000    110    0.000499281   -0.000282580    0.000000000
+       2 0.000000000 0.000000000    130   -0.000522940    0.000000000    0.000000000
+       3 2.000000000 3.000000000    110    0.000437775   -0.001612360    0.000000000
+       4 2.000000000 0.000000000    110   -0.000440001   -0.001629489    0.000000000
+       5 4.000000000 3.000000000    110    0.000248801   -0.002608482    0.000000000
+       6 4.000000000 0.000000000    110   -0.000251199   -0.002593487    0.000000000
+       7 6.000000000 3.000000000    310    0.000000000   -0.002970303    0.000000000
+       8 6.000000000 0.000000000    310    0.000000000   -0.002955600    0.000000000
+
+
+
+INTERNAL FORCES OF ELEMENT 
+
+    Element    NodeL   NodeR     TENSION
+       1         1       3   -1.845156312
+       2         3       5   -5.669243336
+       3         5       7   -7.464021206
+       4         2       4    2.488170624
+       5         4       6    5.664073467
+       6         6       8    7.535959721
+       7         1       2   -3.767735958
+       8         3       4    0.228385121
+       9         5       6   -0.199927017
+      10         7       8   -0.196049601
+      11         1       4    3.326404095
+      12         4       5   -2.399037123
+      13         5       8    0.836543083
+      14         2       3   -4.485614777
+      15         3       6    2.408357620
+      16         6       7   -0.966233611

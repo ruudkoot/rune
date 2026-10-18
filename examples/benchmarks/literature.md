@@ -581,3 +581,23 @@ Sifting/generator demand, persistent sharing, memoized fold chains, strict
 materialization and whole-string consumers are source-based performance
 questions. Isolated compiler failures and measured counter agreement remain
 separate kinds of evidence.
+
+## FEM truss analysis and cyclic arrays
+
+The original README and April 1994 correspondence identify Junxian Liu's
+program, its Miranda/Hope+ lineage and the properly packaged Glasgow Haskell
+version. MAIL supplies source-declared titles Functional Programming for
+Finite Element Analysis and Functional Programming for Scientific Computation;
+journal-publication status and full text were not established in this review.
+Partain supplies the previously reviewed suite/application context.
+
+Source inspection establishes axial bar stiffness, variable-bandwidth storage,
+LL factorization, recursive dependencies and the peculiar binary32 numeric
+parser. Exact original state comparisons and an independent dense physical
+model validate recorded inputs. They do not constitute a general numerical
+stability proof. Boxed-cell retention, materialization, matrix/list builders,
+explicit rounding and output/validation costs remain performance hypotheses.
+
+Legacy default-process numeric variation and separate nursery successes are
+recorded diagnostics. They are consistent with a known GC-root issue but do
+not establish a new application-specific compiler-pass diagnosis.

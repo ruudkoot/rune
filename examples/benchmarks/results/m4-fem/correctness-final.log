@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-fem-parallel.sa216y0n
+PASS fem-lazy smoke O2
+PASS fem-lazy smoke O0
+PASS fem-lazy smoke hosts
+PASS fem-lazy normal O0
+PASS fem-lazy normal O2
+PASS fem-strict smoke O0
+PASS fem-strict smoke O2
+FAIL fem-lazy normal hosts
+PASS fem-strict smoke hosts
+PASS fem-strict normal O2
+PASS fem-strict normal O0
+FAIL fem-strict normal hosts

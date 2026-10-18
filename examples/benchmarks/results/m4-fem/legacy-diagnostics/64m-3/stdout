@@ -1,0 +1,585 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+val it = () : unit
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+val it = () : unit
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+val it = () : unit
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+val it = () : unit
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml:19.32 Warning: calling polyEqual
+functor BenchIdaFiniteFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a seq
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t * 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val defer : (unit -> 'a D.t) -> 'a D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val nth : 'a <BaseFct>.<resultStr>.node D.t -> int -> 'a
+  val update :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val unify :
+      ''a <BaseFct>.<resultStr>.node D.t
+       -> ''a -> ''a <BaseFct>.<resultStr>.node D.t
+  val foldl :
+      ('a D.t -> 'b -> 'a D.t)
+       -> 'a D.t -> 'b <BaseFct>.<resultStr>.node D.t -> 'a D.t
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val filter :
+      ('a -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val length : 'a <BaseFct>.<resultStr>.node D.t -> int
+end
+val it = () : unit
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-linear-float.sml]
+[autoloading]
+[autoloading done]
+structure BenchLinearFloat : sig
+  val round : real -> real
+end
+val it = () : unit
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-fem-originals/float.sml]
+[autoloading]
+[autoloading done]
+structure BenchFemFloat : sig
+  val round : real -> real
+  val add : real * real -> real
+  val sub : real * real -> real
+  val mul : real * real -> real
+  val divide : real * real -> real
+  val negative : real -> real
+  val sqrt : real -> real
+  val bits : real -> Word32.word
+end
+val it = () : unit
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-fem-originals/arrays.sml]
+[autoloading]
+[autoloading done]
+functor BenchFemArraysFn(<param>: sig
+  val strict : bool
+end) :
+sig
+  structure L : <sig>
+  structure F : <sig>
+  type 'a arrayNode
+  type 'a store
+  type 'a vec
+  type 'a mat
+  type 'a vbm
+  val range : int -> int -> int list
+  val rawArray :
+      int
+       -> int
+       -> (int -> 'a)
+       -> 'a <BaseFct>.<resultStr>.arrayNode BenchLazy.state ref
+  val forceArray :
+      'a <BaseFct>.<resultStr>.arrayNode BenchLazy.state ref -> unit
+  val materialize :
+      'a <BaseFct>.<resultStr>.arrayNode BenchLazy.state ref -> unit
+  val array :
+      int
+       -> int
+       -> (int -> 'a)
+       -> 'a <BaseFct>.<resultStr>.arrayNode BenchLazy.state ref
+  val sub :
+      'a <BaseFct>.<resultStr>.arrayNode BenchLazy.state ref -> int -> 'a
+  val arrayBounds :
+      'a <BaseFct>.<resultStr>.arrayNode BenchLazy.state ref -> int * int
+  val listArray :
+      int -> 'a list -> 'a <BaseFct>.<resultStr>.arrayNode BenchLazy.state ref
+  val delayedListArray :
+      int
+       -> 'a BenchLazy.state ref list
+       -> 'a <BaseFct>.<resultStr>.arrayNode BenchLazy.state ref
+  val change :
+      ('a BenchLazy.delay -> 'b -> 'a BenchLazy.delay)
+       -> 'a <BaseFct>.<resultStr>.arrayNode BenchLazy.state ref
+       -> (int * 'b) list
+       -> 'a <BaseFct>.<resultStr>.arrayNode BenchLazy.state ref
+  val makevec : int -> (int -> 'a) -> 'a <BaseFct>.<resultStr>.vec
+  val recursiveVec :
+      int
+       -> ('a <BaseFct>.<resultStr>.vec -> int -> 'a)
+       -> 'a <BaseFct>.<resultStr>.vec
+  val boundvec : 'a <BaseFct>.<resultStr>.vec -> int
+  val vecsub : 'a <BaseFct>.<resultStr>.vec -> int -> 'a
+  val updvec :
+      'a <BaseFct>.<resultStr>.vec
+       -> (int * 'a BenchLazy.delay) list -> 'a <BaseFct>.<resultStr>.vec
+  val incrvec :
+      ('a * 'b -> 'a)
+       -> 'a <BaseFct>.<resultStr>.vec
+       -> (int * 'b BenchLazy.state ref) list -> 'a <BaseFct>.<resultStr>.vec
+  val maxupdvec :
+      int <BaseFct>.<resultStr>.vec
+       -> (int * int BenchLazy.state ref) list
+       -> int <BaseFct>.<resultStr>.vec
+  val elements : 'a <BaseFct>.<resultStr>.vec -> 'a list
+  val makemat : int * int -> (int * int -> 'a) -> 'a <BaseFct>.<resultStr>.mat
+  val boundmat : 'a <BaseFct>.<resultStr>.mat -> int * int
+  val matsub : 'a <BaseFct>.<resultStr>.mat -> int * int -> 'a
+  val vbdim : 'a <BaseFct>.<resultStr>.vbm -> int
+  val vbdiag : 'a <BaseFct>.<resultStr>.vbm -> int <BaseFct>.<resultStr>.vec
+  val vbelements :
+      'a <BaseFct>.<resultStr>.vbm -> 'a <BaseFct>.<resultStr>.vec
+  val firstColumn : 'a <BaseFct>.<resultStr>.vbm -> int -> int
+  val address : 'a <BaseFct>.<resultStr>.vbm -> int * int -> int
+  val vbsub : 'a <BaseFct>.<resultStr>.vbm -> int * int -> 'a
+  val vbpositions : int -> int <BaseFct>.<resultStr>.vec -> (int * int) list
+  val makevb :
+      int
+       -> int <BaseFct>.<resultStr>.vec
+       -> (int * int -> 'a) -> 'a <BaseFct>.<resultStr>.vbm
+  val recursiveVB :
+      int
+       -> int <BaseFct>.<resultStr>.vec
+       -> ('a <BaseFct>.<resultStr>.vbm -> int * int -> 'a)
+       -> 'a <BaseFct>.<resultStr>.vbm
+  val incrvb :
+      ('a * 'b -> 'a)
+       -> 'a <BaseFct>.<resultStr>.vbm
+       -> ((int * int) * 'b BenchLazy.state ref) list
+       -> 'a <BaseFct>.<resultStr>.vbm
+end
+val it = () : unit
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-fem-originals/kernel.sml]
+[autoloading]
+[autoloading done]
+functor BenchFemFn(<param>: sig
+  val strict : bool
+end) :
+sig
+  structure A : <sig>
+  structure L : <sig>
+  structure R : <sig>
+  type database
+  val ints :
+      <BaseFct>.<resultStr>.database
+       -> int <BaseFct>.<resultStr>.A.<returnStr>.store
+  val reals :
+      <BaseFct>.<resultStr>.database
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store
+  val intAt : <BaseFct>.<resultStr>.database -> int -> int
+  val realAt : <BaseFct>.<resultStr>.database -> int -> real
+  val digit : char -> int
+  val integer : string -> int
+  val digits : char list -> real
+  val powerTen : int -> real
+  val floating : string -> real
+  val database : string -> <BaseFct>.<resultStr>.database
+  val nnode : <BaseFct>.<resultStr>.database -> int
+  val nelem : <BaseFct>.<resultStr>.database -> int
+  val nmats : <BaseFct>.<resultStr>.database -> int
+  val nplds : <BaseFct>.<resultStr>.database -> int
+  val nodeXY : <BaseFct>.<resultStr>.database -> int -> real * real
+  val nodeBC : <BaseFct>.<resultStr>.database -> int -> int
+  val material : <BaseFct>.<resultStr>.database -> int -> real * real
+  val elementNodes : <BaseFct>.<resultStr>.database -> int -> int * int
+  val elementMaterial : <BaseFct>.<resultStr>.database -> int -> int
+  val pointLoad :
+      <BaseFct>.<resultStr>.database -> int -> int * real * real * real
+  val degreesAndCount : <BaseFct>.<resultStr>.database -> int * int list
+  val degreeCount : <BaseFct>.<resultStr>.database -> int
+  val nodeDegrees : <BaseFct>.<resultStr>.database -> int -> int list
+  val diagonal :
+      <BaseFct>.<resultStr>.database
+       -> int <BaseFct>.<resultStr>.A.<returnStr>.vec
+  val beam :
+      <BaseFct>.<resultStr>.database
+       -> int -> real <BaseFct>.<resultStr>.A.<returnStr>.mat
+  val stiffness :
+      <BaseFct>.<resultStr>.database
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.vbm
+  val loads :
+      <BaseFct>.<resultStr>.database
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.vec
+  val sum : real BenchLazy.state ref list -> real
+  val decompose :
+      real <BaseFct>.<resultStr>.A.<returnStr>.vbm
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.vbm
+  val forward :
+      real <BaseFct>.<resultStr>.A.<returnStr>.vec
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.vbm
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.vec
+  val backward :
+      real <BaseFct>.<resultStr>.A.<returnStr>.vec
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.vbm
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.vec
+  val solve :
+      real <BaseFct>.<resultStr>.A.<returnStr>.vbm
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.vec
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.vec
+  val displacement :
+      <BaseFct>.<resultStr>.database
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.vec
+  val nodeDisplacement :
+      'a <BaseFct>.<resultStr>.A.<returnStr>.vec -> int -> 'a * 'a * 'a
+  val forces :
+      <BaseFct>.<resultStr>.database
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.vec
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.vec
+end
+val it = () : unit
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-fem-originals/snapshot.sml]
+functor BenchFemSnapshotFn(K: sig
+  structure A : <sig>
+  type database
+  val database : string -> database
+  val ints : database -> int A.store
+  val reals : database -> real A.store
+  val nnode : database -> int
+  val degreeCount : database -> int
+  val nodeDegrees : database -> int -> int list
+  val diagonal : database -> int A.vec
+  val stiffness : database -> real A.vbm
+  val decompose : real A.vbm -> real A.vbm
+  val loads : database -> real A.vec
+  val forward : real A.vec -> real A.vbm -> real A.vec
+  val backward : real A.vec -> real A.vbm -> real A.vec
+  val displacement : database -> real A.vec
+  val forces : database -> real A.vec -> real A.vec
+end) :
+sig
+  val integers : string -> int list -> string
+  val floats : string -> real list -> string
+  val arrayValues : 'a K.store -> 'a list
+  val band : 'a K.vbm -> 'a list
+  val render : string -> string
+end
+val it = () : unit
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-fem-originals/report.sml]
+[autoloading]
+[autoloading done]
+functor BenchFemReportFn(K: sig
+  structure A : <sig>
+  type database
+  val nnode : database -> int
+  val nelem : database -> int
+  val nmats : database -> int
+  val nplds : database -> int
+  val nodeXY : database -> int -> real * real
+  val nodeBC : database -> int -> int
+  val material : database -> int -> real * real
+  val elementNodes : database -> int -> int * int
+  val elementMaterial : database -> int -> int
+  val pointLoad : database -> int -> int * real * real * real
+  val nodeDisplacement : real A.vec -> int -> real * real * real
+end) :
+sig
+  val range : int -> int -> int list
+  val spaces : int -> string
+  val left : int -> string -> string
+  val right : int -> string -> string
+  val integer : int -> string
+  val real : real -> string
+  val il : int -> int -> string
+  val ir : int -> int -> string
+  val rl : int -> real -> string
+  val rr : int -> real -> string
+  val source : K.database -> string
+  val displacements : K.database -> real K.vec -> string
+  val forces : K.database -> real K.vec -> string
+  val render : K.database -> real K.vec -> real K.vec -> string
+end
+val it = () : unit
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-fem-originals/check.sml]
+[autoloading]
+[autoloading done]
+functor BenchFemCheckFn(K: sig
+  structure A : <sig>
+  type database
+  val nnode : database -> int
+  val nelem : database -> int
+  val nmats : database -> int
+  val nplds : database -> int
+  val nodeXY : database -> int -> real * real
+  val nodeBC : database -> int -> int
+  val material : database -> int -> real * real
+  val elementNodes : database -> int -> int * int
+  val elementMaterial : database -> int -> int
+  val pointLoad : database -> int -> int * real * real * real
+  val nodeDisplacement : real A.vec -> int -> real * real * real
+  val database : string -> database
+  val displacement : database -> real A.vec
+  val forces : database -> real A.vec -> real A.vec
+end) :
+sig
+  structure P : <sig>
+  structure W : <sig>
+  val read : string -> TextIO.vector
+  val integer : string -> int
+  val word32 : string -> Word32.word
+  val word64 : string -> Word64.word
+  val hash : string -> Word64.word
+  val reference :
+      string -> int * int * Word32.word list * Word32.word list * Word64.word
+  val same : Word32.word list -> real list -> bool
+  val run : string list -> string
+end
+val it = () : unit
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-fem-originals/tests.sml]
+PASS fem/original-idatabase/N/data.0
+PASS fem/original-rdatabase/N/data.0
+PASS fem/original-degrees/N/data.0
+PASS fem/original-degree-count/N/data.0
+PASS fem/original-diagonal/N/data.0
+PASS fem/original-stiffness/N/data.0
+PASS fem/original-decomposition/N/data.0
+PASS fem/original-load/N/data.0
+PASS fem/original-forward/N/data.0
+PASS fem/original-solution/N/data.0
+PASS fem/original-displacement/N/data.0
+PASS fem/original-forces/N/data.0
+PASS fem/complete-report-result-hash/N/data.0
+PASS fem/original-idatabase/E/data.0
+PASS fem/original-rdatabase/E/data.0
+PASS fem/original-degrees/E/data.0
+PASS fem/original-degree-count/E/data.0
+PASS fem/original-diagonal/E/data.0
+PASS fem/original-stiffness/E/data.0
+PASS fem/original-decomposition/E/data.0
+PASS fem/original-load/E/data.0
+PASS fem/original-forward/E/data.0
+PASS fem/original-solution/E/data.0
+PASS fem/original-displacement/E/data.0
+PASS fem/original-forces/E/data.0
+PASS fem/complete-report-result-hash/E/data.0
+PASS fem/original-idatabase/N/data.1
+PASS fem/original-rdatabase/N/data.1
+PASS fem/original-degrees/N/data.1
+PASS fem/original-degree-count/N/data.1
+PASS fem/original-diagonal/N/data.1
+PASS fem/original-stiffness/N/data.1
+PASS fem/original-decomposition/N/data.1
+PASS fem/original-load/N/data.1
+PASS fem/original-forward/N/data.1
+PASS fem/original-solution/N/data.1
+PASS fem/original-displacement/N/data.1
+PASS fem/original-forces/N/data.1
+PASS fem/complete-report-result-hash/N/data.1
+PASS fem/original-idatabase/E/data.1
+PASS fem/original-rdatabase/E/data.1
+PASS fem/original-degrees/E/data.1
+PASS fem/original-degree-count/E/data.1
+PASS fem/original-diagonal/E/data.1
+PASS fem/original-stiffness/E/data.1
+PASS fem/original-decomposition/E/data.1
+PASS fem/original-load/E/data.1
+PASS fem/original-forward/E/data.1
+PASS fem/original-solution/E/data.1
+PASS fem/original-displacement/E/data.1
+PASS fem/original-forces/E/data.1
+PASS fem/complete-report-result-hash/E/data.1
+PASS fem/original-idatabase/N/data.2
+PASS fem/original-rdatabase/N/data.2
+PASS fem/original-degrees/N/data.2
+PASS fem/original-degree-count/N/data.2
+PASS fem/original-diagonal/N/data.2
+PASS fem/original-stiffness/N/data.2
+PASS fem/original-decomposition/N/data.2
+PASS fem/original-load/N/data.2
+PASS fem/original-forward/N/data.2
+PASS fem/original-solution/N/data.2
+PASS fem/original-displacement/N/data.2
+PASS fem/original-forces/N/data.2
+PASS fem/complete-report-result-hash/N/data.2
+PASS fem/original-idatabase/E/data.2
+PASS fem/original-rdatabase/E/data.2
+PASS fem/original-degrees/E/data.2
+PASS fem/original-degree-count/E/data.2
+PASS fem/original-diagonal/E/data.2
+PASS fem/original-stiffness/E/data.2
+PASS fem/original-decomposition/E/data.2
+PASS fem/original-load/E/data.2
+PASS fem/original-forward/E/data.2
+PASS fem/original-solution/E/data.2
+PASS fem/original-displacement/E/data.2
+PASS fem/original-forces/E/data.2
+PASS fem/complete-report-result-hash/E/data.2
+PASS fem/original-idatabase/N/fem.stdin
+PASS fem/original-rdatabase/N/fem.stdin
+PASS fem/original-degrees/N/fem.stdin
+PASS fem/original-degree-count/N/fem.stdin
+PASS fem/original-diagonal/N/fem.stdin
+PASS fem/original-stiffness/N/fem.stdin
+PASS fem/original-decomposition/N/fem.stdin
+PASS fem/original-load/N/fem.stdin
+PASS fem/original-forward/N/fem.stdin
+PASS fem/original-solution/N/fem.stdin
+PASS fem/original-displacement/N/fem.stdin
+PASS fem/original-forces/N/fem.stdin
+PASS fem/complete-report-result-hash/N/fem.stdin
+PASS fem/original-idatabase/E/fem.stdin
+PASS fem/original-rdatabase/E/fem.stdin
+PASS fem/original-degrees/E/fem.stdin
+PASS fem/original-degree-count/E/fem.stdin
+PASS fem/original-diagonal/E/fem.stdin
+PASS fem/original-stiffness/E/fem.stdin
+PASS fem/original-decomposition/E/fem.stdin
+PASS fem/original-load/E/fem.stdin
+PASS fem/original-forward/E/fem.stdin
+PASS fem/original-solution/E/fem.stdin
+PASS fem/original-displacement/E/fem.stdin
+PASS fem/original-forces/E/fem.stdin
+PASS fem/complete-report-result-hash/E/fem.stdin
+PASS fem/binary32/add
+PASS fem/binary32/divide
+PASS fem/binary32/sqrt
+PASS fem/binary32/tie-even-low
+PASS fem/binary32/tie-even-high
+PASS fem/binary32/smallest-subnormal
+PASS fem/binary32/underflow-tie-even
+PASS fem/binary32/subnormal-tie-even
+PASS fem/binary32/largest-finite
+PASS fem/binary32/overflow
+PASS fem/binary32/negative-zero
+PASS fem/negative-sqrt-NaN
+PASS fem/recursive-forward-vector/N
+PASS fem/recursive-backward-vector/N
+PASS fem/recursive-band-matrix/N
+PASS fem/accumulation-order/N
+PASS fem/array-bounds/N
+PASS fem/recursive-forward-vector/E
+PASS fem/recursive-backward-vector/E
+PASS fem/recursive-band-matrix/E
+PASS fem/accumulation-order/E
+PASS fem/array-bounds/E
+PASS fem/lazy-bounds-skip-cells
+PASS fem/strict-array-materialization
+PASS fem/replacement-skips-old-cell
+PASS fem/reject-wrong-value
+PASS fem/reject-wrong-hash
+PASS fem/reject-wrong-report
+PASS fem/zero-repetitions
+structure FemTests : sig
+  structure N : <sig>
+  structure E : <sig>
+  structure NS : <sig>
+  structure ES : <sig>
+  structure NC : <sig>
+  structure EC : <sig>
+  structure L : <sig>
+  structure F : <sig>
+  val check : string -> (unit -> bool) -> unit
+  val read : string -> TextIO.vector
+  val split : string -> string list
+  val ndata_0 : string list
+  val edata_0 : string list
+  val ndata_1 : string list
+  val edata_1 : string list
+  val ndata_2 : string list
+  val edata_2 : string list
+  val nfem_stdin : string list
+  val efem_stdin : string list
+end
+val it = () : unit
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 133 checks, 0 failed

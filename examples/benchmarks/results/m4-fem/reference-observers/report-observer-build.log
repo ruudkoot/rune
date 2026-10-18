@@ -1,0 +1,124 @@
+[ 1 of 19] Compiling Basics           ( Basics.hs, Basics.o )
+[ 2 of 19] Compiling Database         ( Database.hs, Database.o )
+
+Database.hs:20:1: warning: [-Wtabs]
+    Tab character found here, and in six further locations.
+    Suggested fix: Please use spaces instead.
+   |
+20 |         where
+   | ^^^^^^^^
+[ 3 of 19] Compiling DB_interface     ( DB_interface.hs, DB_interface.o )
+
+DB_interface.hs:25:1: warning: [-Wtabs]
+    Tab character found here, and in 43 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+25 |         = ( x, y )
+   | ^^^^^^^^
+[ 4 of 19] Compiling NofibUtils       ( NofibUtils.hs, NofibUtils.o )
+[ 5 of 19] Compiling PrintSource      ( PrintSource.hs, PrintSource.o )
+
+PrintSource.hs:22:1: warning: [-Wtabs]
+    Tab character found here, and in 22 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+22 |         node_data db ++
+   | ^^^^^^^^
+[ 6 of 19] Compiling Vector           ( Vector.hs, Vector.o )
+
+Vector.hs:125:1: warning: [-Wtabs]
+    Tab character found here, and in four further locations.
+    Suggested fix: Please use spaces instead.
+    |
+125 |         "< " ++
+    | ^^^^^^^^
+[ 7 of 19] Compiling VBmatrix         ( VBmatrix.hs, VBmatrix.o )
+
+VBmatrix.hs:22:1: warning: [-Wtabs]
+    Tab character found here, and in 41 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+22 |         -- make a variable bandwidth matrix, by giving the diagonal
+   | ^^^^^^^^
+[ 8 of 19] Compiling VBlldecomp       ( VBlldecomp.hs, VBlldecomp.o )
+
+VBlldecomp.hs:20:1: warning: [-Wtabs]
+    Tab character found here, and in 64 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+20 |         -- L[i,i] = sqrt(A[i,i] - ***)
+   | ^^^^^^^^
+[ 9 of 19] Compiling Matrix           ( Matrix.hs, Matrix.o )
+
+Matrix.hs:51:1: warning: [-Wtabs]
+    Tab character found here, and in 20 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+51 |         MAT (nr,nc)
+   | ^^^^^^^^
+[10 of 19] Compiling Elemstif         ( Elemstif.hs, Elemstif.o )
+
+Elemstif.hs:65:1: warning: [-Wtabs]
+    Tab character found here.
+    Suggested fix: Please use spaces instead.
+   |
+65 |         where
+   | ^^^^^^^^
+[11 of 19] Compiling Degrees          ( Degrees.hs, Degrees.o )
+
+Degrees.hs:21:1: warning: [-Wtabs]
+    Tab character found here, and in 62 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+21 |          -- Return the total number of degrees
+   | ^^^^^^^^
+[12 of 19] Compiling Pre_assemble     ( Pre_assemble.hs, Pre_assemble.o )
+
+Pre_assemble.hs:24:1: warning: [-Wtabs]
+    Tab character found here, and in 23 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+24 |         v
+   | ^^^^^^^^
+[13 of 19] Compiling Assemble_stiffness ( Assemble_stiffness.hs, Assemble_stiffness.o )
+
+Assemble_stiffness.hs:25:1: warning: [-Wtabs]
+    Tab character found here, and in 21 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+25 |         incrvbmat initial_value index_value_assoc_s
+   | ^^^^^^^^
+[14 of 19] Compiling Assemble_loadvec ( Assemble_loadvec.hs, Assemble_loadvec.o )
+
+Assemble_loadvec.hs:20:1: warning: [-Wtabs]
+    Tab character found here, and in 13 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+20 |         incrvec initial_value index_value_assoc_s
+   | ^^^^^^^^
+[15 of 19] Compiling Displacement     ( Displacement.hs, Displacement.o )
+
+Displacement.hs:26:1: warning: [-Wtabs]
+    Tab character found here, and in 18 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+26 |                 Vec Float -> (Float, Float, Float)
+   | ^^^^^^^^
+[16 of 19] Compiling Elemforce        ( Elemforce.hs, Elemforce.o )
+
+Elemforce.hs:18:1: warning: [-Wtabs]
+    Tab character found here, and in 21 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+18 |                 Vec Float -> Vec Float
+   | ^^^^^^^^
+[17 of 19] Compiling Printuvwforce    ( Printuvwforce.hs, Printuvwforce.o )
+
+Printuvwforce.hs:20:1: warning: [-Wtabs]
+    Tab character found here, and in 29 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+20 |                         Vec Float -> [Char]
+   | ^^^^^^^^
+[18 of 19] Compiling Main             ( Main.hs, Main.o )
+[19 of 19] Linking report-observer

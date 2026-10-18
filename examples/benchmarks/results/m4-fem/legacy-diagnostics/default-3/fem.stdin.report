@@ -1,0 +1,257 @@
+
+
+
+CONTROL DATA :
+
+   Total number of nodes = 36 
+   Number of elements    = 72 
+   Number of point loads = 1  
+   Total number of materials = 2  
+
+
+NODE INFORMATION  :
+
+  Node.no = 1     x = 0.000000000    y = 0.000000000    bc = 330 
+  Node.no = 2     x = 0.000000000    y = 1.000000000    bc = 330 
+  Node.no = 3     x = 0.000000000    y = 2.000000000    bc = 330 
+  Node.no = 4     x = 0.000000000    y = 6.000000000    bc = 330 
+  Node.no = 5     x = 0.000000000    y = 7.000000000    bc = 330 
+  Node.no = 6     x = 1.000000000    y = 1.000000000    bc = 110 
+  Node.no = 7     x = 1.000000000    y = 2.000000000    bc = 110 
+  Node.no = 8     x = 1.000000000    y = 3.000000000    bc = 110 
+  Node.no = 9     x = 1.000000000    y = 6.000000000    bc = 110 
+  Node.no = 10    x = 1.000000000    y = 7.000000000    bc = 110 
+  Node.no = 11    x = 2.000000000    y = 2.000000000    bc = 110 
+  Node.no = 12    x = 2.000000000    y = 3.000000000    bc = 110 
+  Node.no = 13    x = 2.000000000    y = 4.000000000    bc = 110 
+  Node.no = 14    x = 2.000000000    y = 6.000000000    bc = 110 
+  Node.no = 15    x = 2.000000000    y = 7.000000000    bc = 110 
+  Node.no = 16    x = 3.000000000    y = 3.000000000    bc = 110 
+  Node.no = 17    x = 3.000000000    y = 4.000000000    bc = 110 
+  Node.no = 18    x = 3.000000000    y = 5.000000000    bc = 110 
+  Node.no = 19    x = 3.000000000    y = 6.000000000    bc = 110 
+  Node.no = 20    x = 3.000000000    y = 7.000000000    bc = 110 
+  Node.no = 21    x = 4.000000000    y = 4.000000000    bc = 110 
+  Node.no = 22    x = 4.000000000    y = 5.000000000    bc = 110 
+  Node.no = 23    x = 4.000000000    y = 6.000000000    bc = 110 
+  Node.no = 24    x = 4.000000000    y = 7.000000000    bc = 110 
+  Node.no = 25    x = 5.000000000    y = 5.000000000    bc = 110 
+  Node.no = 26    x = 5.000000000    y = 6.000000000    bc = 110 
+  Node.no = 27    x = 5.000000000    y = 7.000000000    bc = 110 
+  Node.no = 28    x = 6.000000000    y = 6.000000000    bc = 110 
+  Node.no = 29    x = 6.000000000    y = 7.000000000    bc = 110 
+  Node.no = 30    x = 7.000000000    y = 6.000000000    bc = 110 
+  Node.no = 31    x = 7.000000000    y = 7.000000000    bc = 110 
+  Node.no = 32    x = 8.000000000    y = 6.000000000    bc = 110 
+  Node.no = 33    x = 8.000000000    y = 7.000000000    bc = 110 
+  Node.no = 34    x = 9.000000000    y = 6.000000000    bc = 110 
+  Node.no = 35    x = 9.000000000    y = 7.000000000    bc = 110 
+  Node.no = 36    x = 10.000000000    y = 6.000000000    bc = 110 
+
+
+MATERIAL INFORMATION :
+
+  Material No.=1     EA = 516.000000000    EI = 0.000000000 
+  Material No.=2     EA = 258.000000000    EI = 0.000000000 
+
+ELEMENT DATA:
+
+  Element No.=1     Node.L =1     Node.R =6     Material No. =1  
+  Element No.=2     Node.L =2     Node.R =6     Material No. =1  
+  Element No.=3     Node.L =2     Node.R =7     Material No. =1  
+  Element No.=4     Node.L =3     Node.R =7     Material No. =1  
+  Element No.=5     Node.L =3     Node.R =8     Material No. =1  
+  Element No.=6     Node.L =6     Node.R =7     Material No. =1  
+  Element No.=7     Node.L =7     Node.R =8     Material No. =1  
+  Element No.=8     Node.L =6     Node.R =11    Material No. =1  
+  Element No.=9     Node.L =7     Node.R =11    Material No. =1  
+  Element No.=10    Node.L =7     Node.R =12    Material No. =1  
+  Element No.=11    Node.L =8     Node.R =12    Material No. =1  
+  Element No.=12    Node.L =8     Node.R =13    Material No. =1  
+  Element No.=13    Node.L =11    Node.R =12    Material No. =1  
+  Element No.=14    Node.L =12    Node.R =13    Material No. =1  
+  Element No.=15    Node.L =11    Node.R =16    Material No. =1  
+  Element No.=16    Node.L =12    Node.R =16    Material No. =1  
+  Element No.=17    Node.L =12    Node.R =17    Material No. =1  
+  Element No.=18    Node.L =13    Node.R =17    Material No. =1  
+  Element No.=19    Node.L =13    Node.R =18    Material No. =1  
+  Element No.=20    Node.L =16    Node.R =17    Material No. =1  
+  Element No.=21    Node.L =17    Node.R =18    Material No. =1  
+  Element No.=22    Node.L =16    Node.R =21    Material No. =1  
+  Element No.=23    Node.L =17    Node.R =21    Material No. =1  
+  Element No.=24    Node.L =17    Node.R =22    Material No. =1  
+  Element No.=25    Node.L =18    Node.R =22    Material No. =1  
+  Element No.=26    Node.L =18    Node.R =19    Material No. =1  
+  Element No.=27    Node.L =18    Node.R =23    Material No. =1  
+  Element No.=28    Node.L =21    Node.R =22    Material No. =1  
+  Element No.=29    Node.L =22    Node.R =23    Material No. =1  
+  Element No.=30    Node.L =21    Node.R =25    Material No. =1  
+  Element No.=31    Node.L =22    Node.R =25    Material No. =1  
+  Element No.=32    Node.L =22    Node.R =26    Material No. =1  
+  Element No.=33    Node.L =25    Node.R =26    Material No. =1  
+  Element No.=34    Node.L =25    Node.R =28    Material No. =1  
+  Element No.=35    Node.L =4     Node.R =9     Material No. =2  
+  Element No.=36    Node.L =5     Node.R =9     Material No. =2  
+  Element No.=37    Node.L =5     Node.R =10    Material No. =2  
+  Element No.=38    Node.L =9     Node.R =10    Material No. =2  
+  Element No.=39    Node.L =9     Node.R =14    Material No. =2  
+  Element No.=40    Node.L =10    Node.R =14    Material No. =2  
+  Element No.=41    Node.L =10    Node.R =15    Material No. =2  
+  Element No.=42    Node.L =14    Node.R =15    Material No. =2  
+  Element No.=43    Node.L =14    Node.R =19    Material No. =2  
+  Element No.=44    Node.L =15    Node.R =19    Material No. =2  
+  Element No.=45    Node.L =15    Node.R =20    Material No. =2  
+  Element No.=46    Node.L =19    Node.R =20    Material No. =2  
+  Element No.=47    Node.L =19    Node.R =23    Material No. =2  
+  Element No.=48    Node.L =20    Node.R =23    Material No. =2  
+  Element No.=49    Node.L =20    Node.R =24    Material No. =2  
+  Element No.=50    Node.L =23    Node.R =24    Material No. =2  
+  Element No.=51    Node.L =23    Node.R =26    Material No. =2  
+  Element No.=52    Node.L =24    Node.R =26    Material No. =2  
+  Element No.=53    Node.L =24    Node.R =27    Material No. =2  
+  Element No.=54    Node.L =26    Node.R =27    Material No. =2  
+  Element No.=55    Node.L =26    Node.R =28    Material No. =2  
+  Element No.=56    Node.L =27    Node.R =28    Material No. =2  
+  Element No.=57    Node.L =27    Node.R =29    Material No. =2  
+  Element No.=58    Node.L =28    Node.R =29    Material No. =2  
+  Element No.=59    Node.L =28    Node.R =30    Material No. =2  
+  Element No.=60    Node.L =29    Node.R =30    Material No. =2  
+  Element No.=61    Node.L =29    Node.R =31    Material No. =2  
+  Element No.=62    Node.L =30    Node.R =31    Material No. =2  
+  Element No.=63    Node.L =30    Node.R =32    Material No. =2  
+  Element No.=64    Node.L =31    Node.R =32    Material No. =2  
+  Element No.=65    Node.L =31    Node.R =33    Material No. =2  
+  Element No.=66    Node.L =32    Node.R =33    Material No. =2  
+  Element No.=67    Node.L =32    Node.R =34    Material No. =2  
+  Element No.=68    Node.L =33    Node.R =34    Material No. =2  
+  Element No.=69    Node.L =33    Node.R =35    Material No. =2  
+  Element No.=70    Node.L =34    Node.R =35    Material No. =2  
+  Element No.=71    Node.L =34    Node.R =36    Material No. =2  
+  Element No.=72    Node.L =35    Node.R =36    Material No. =2  
+
+
+
+POINT LOADS DATA:
+
+  To_point No.36   Px = 0.000000000   Py = -0.100000001   M = 0.000000000 
+
+
+
+
+DISPLACEMENT OF THE STRUCTURE 
+
+     Node     X     Y     BC         U             V                  Theta
+       1 0.000000000 0.000000000    330    0.000000000    0.000000000    0.000000000
+       2 0.000000000 1.000000000    330    0.000000000    0.000000000    0.000000000
+       3 0.000000000 2.000000000    330    0.000000000    0.000000000    0.000000000
+       4 0.000000000 6.000000000    330    0.000000000    0.000000000    0.000000000
+       5 0.000000000 7.000000000    330    0.000000000    0.000000000    0.000000000
+       6 1.000000000 1.000000000    110   -0.000032225   -0.000088173    0.000000000
+       7 1.000000000 2.000000000    110   -0.000120951   -0.000055948    0.000000000
+       8 1.000000000 3.000000000    110   -0.000345507    0.000016934    0.000000000
+       9 1.000000000 6.000000000    110    0.000228361    0.000383805    0.000000000
+      10 1.000000000 7.000000000    110    0.000575507    0.000438763    0.000000000
+      11 2.000000000 2.000000000    110   -0.000201244   -0.000130699    0.000000000
+      12 2.000000000 3.000000000    110   -0.000418389   -0.000050405    0.000000000
+      13 2.000000000 4.000000000    110   -0.000474974    0.000023972    0.000000000
+      14 2.000000000 6.000000000    110    0.000401765    0.000420464    0.000000000
+      15 2.000000000 7.000000000    110    0.001205971    0.000475422    0.000000000
+      16 3.000000000 3.000000000    110   -0.000497187   -0.000273404    0.000000000
+      17 3.000000000 4.000000000    110   -0.000549352   -0.000194606    0.000000000
+      18 3.000000000 5.000000000    110   -0.000256451   -0.000106610    0.000000000
+      19 3.000000000 6.000000000    110    0.000520212   -0.000054894    0.000000000
+      20 3.000000000 7.000000000    110    0.001891393    0.000103495    0.000000000
+      21 4.000000000 4.000000000    110   -0.000614532   -0.000817584    0.000000000
+      22 4.000000000 5.000000000    110   -0.000292730   -0.000752404    0.000000000
+      23 4.000000000 6.000000000    110    0.000583701   -0.000756206    0.000000000
+      24 4.000000000 7.000000000    110    0.002735205   -0.000470677    0.000000000
+      25 5.000000000 5.000000000    110   -0.000397992   -0.001880005    0.000000000
+      26 5.000000000 6.000000000    110    0.000623544   -0.001774743    0.000000000
+      27 5.000000000 7.000000000    110    0.003864545   -0.001353691    0.000000000
+      28 6.000000000 6.000000000    110    0.000302858   -0.003724462    0.000000000
+      29 6.000000000 7.000000000    110    0.005414937   -0.004112061    0.000000000
+      30 7.000000000 6.000000000    110   -0.001247531   -0.011870824    0.000000000
+      31 7.000000000 7.000000000    110    0.006577731   -0.012258423    0.000000000
+      32 8.000000000 6.000000000    110   -0.002410322   -0.022342769    0.000000000
+      33 8.000000000 7.000000000    110    0.007352926   -0.022730369    0.000000000
+      34 9.000000000 6.000000000    110   -0.003185515   -0.034365099    0.000000000
+      35 9.000000000 7.000000000    110    0.007740524   -0.034752697    0.000000000
+      36 10.000000000 6.000000000    110   -0.003573111   -0.047162622    0.000000000
+
+
+
+INTERNAL FORCES OF ELEMENT 
+
+    Element    NodeL   NodeR     TENSION
+       1         1       6   -0.031062776
+       2         2       6   -0.016628128
+       3         2       7   -0.045639932
+       4         3       7   -0.062410578
+       5         3       8   -0.084771678
+       6         6       7    0.016628131
+       7         7       8    0.037607338
+       8         6      11   -0.054578498
+       9         7      11   -0.041431390
+      10         7      12   -0.075309031
+      11         8      12   -0.037607331
+      12         8      13   -0.031586885
+      13        11      12    0.041431382
+      14        12      13    0.038378783
+      15        11      16   -0.113171302
+      16        12      16   -0.040659983
+      17        12      17   -0.070992000
+      18        13      17   -0.038378723
+      19        13      18    0.022688901
+      20        16      17    0.040659968
+      21        17      18    0.045405708
+      22        16      21   -0.170673206
+      23        17      21   -0.033632975
+      24        17      22   -0.077703550
+      25        18      22   -0.018720280
+      26        18      19    0.026685383
+      27        18      23    0.049163412
+      28        21      22    0.033632975
+      29        22      23   -0.001961836
+      30        21      25   -0.218237415
+      31        22      25   -0.054315001
+      32        22      26   -0.027364964
+      33        25      26    0.054315090
+      34        25      28   -0.295050502
+      35         4       9    0.058917250
+      36         5       9   -0.020052217
+      37         5      10    0.148480743
+      38         9      10    0.014179047
+      39         9      14    0.044738203
+      40        10      14   -0.020052204
+      41        10      15    0.162659839
+      42        14      15    0.014179032
+      43        14      19    0.030559169
+      44        15      19   -0.020052191
+      45        15      20    0.176838934
+      46        19      20    0.040864423
+      47        19      23    0.016380152
+      48        20      23   -0.057791002
+      49        20      24    0.217703432
+      50        23      24    0.073666275
+      51        23      26    0.010279486
+      52        24      26   -0.104179867
+      53        24      27    0.291369706
+      54        26      27    0.108631469
+      55        26      28   -0.082736805
+      56        27      28   -0.153628126
+      57        27      29    0.400001138
+      58        28      29   -0.100000478
+      59        28      30   -0.400000542
+      60        29      30    0.141422033
+      61        29      31    0.300000727
+      62        30      31   -0.100000478
+      63        30      32   -0.300000042
+      64        31      32    0.141421944
+      65        31      33    0.200000480
+      66        32      33   -0.100000724
+      67        32      34   -0.199999765
+      68        33      34    0.141421273
+      69        33      35    0.100000121
+      70        34      35   -0.100000240
+      71        34      36   -0.099999823
+      72        35      36    0.141421348

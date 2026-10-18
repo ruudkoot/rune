@@ -1,0 +1,17 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/inventory.tsv
+ M examples/benchmarks/manifest.tsv
+ M examples/benchmarks/source-variants.tsv
+ M scripts/benchmark-inventory.py
+ M tests/benchmarks/test-inventory.py
+?? examples/benchmarks/fem-lazy/
+?? examples/benchmarks/fem-strict/
+?? examples/benchmarks/shared/fem-arrays.sml
+?? examples/benchmarks/shared/fem-check.sml
+?? examples/benchmarks/shared/fem-float.sml
+?? examples/benchmarks/shared/fem-kernel.sml
+?? examples/benchmarks/shared/fem-report.sml
+?? examples/benchmarks/shared/fem-snapshot.sml
+?? tests/benchmarks/check-fem.sh
+?? tests/benchmarks/data/fem/
+?? tests/benchmarks/fem-tests.sml

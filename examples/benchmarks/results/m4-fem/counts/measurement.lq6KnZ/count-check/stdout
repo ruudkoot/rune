@@ -1,0 +1,5 @@
+COUNT unbudgeted fem-strict normal rune
+COUNT unbudgeted fem-strict normal rune:opt
+COUNT unbudgeted fem-strict normal rune:new
+COUNT unbudgeted fem-strict normal rune:jit
+COUNT comparisons agree

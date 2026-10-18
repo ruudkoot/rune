@@ -1,0 +1,5 @@
+profile	source	sha256
+smoke	real/fem/data.0	4f3dbe2b5b7b227ce7ea146d2c3b821099cc0e13f38610d18fb2289050d15b60
+normal	real/fem/fem.stdin	31265007d4fd40e3a6bbbde3bb7968d88abe1de8ea0a678d0913fe214c773c0d
+large	real/fem/fem.stdin	31265007d4fd40e3a6bbbde3bb7968d88abe1de8ea0a678d0913fe214c773c0d
+normal,large	real/fem/data.3	31265007d4fd40e3a6bbbde3bb7968d88abe1de8ea0a678d0913fe214c773c0d

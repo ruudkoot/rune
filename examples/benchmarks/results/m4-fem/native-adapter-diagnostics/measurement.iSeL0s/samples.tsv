@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+fem-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	9.01	7.66	1.53	659760	-	-	-	fem-lazy/native-mlton/build/compile
+fem-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2328	-	-	-	fem-lazy/native-mlton/correctness.0
+fem-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2484	-	-	-	fem-lazy/native-mlton/fresh.1
+fem-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	1.01	0.96	0.08	38268	-	-	-	fem-lazy/native-smlnj-legacy/build/compile
+fem-lazy	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.00	0.00	4284	-	-	-	fem-lazy/native-smlnj-legacy/correctness.0
+fem-lazy	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.00	0.00	4284	-	-	-	fem-lazy/native-smlnj-legacy/fresh.1
+fem-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.62	0.57	0.08	56456	-	-	-	fem-lazy/native-polyml/build/compile
+fem-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	5812	-	-	-	fem-lazy/native-polyml/correctness.0
+fem-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	5772	-	-	-	fem-lazy/native-polyml/fresh.1

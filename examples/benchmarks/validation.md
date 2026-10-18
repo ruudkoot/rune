@@ -3084,3 +3084,40 @@ canonical input identity/group maps.
 [Full make JOBS=4 check](validation/oct18-comp-lab-1379-acceptance.log)
 exits zero with 1379 profiles and all compiler/runedoc/runeopt cross-build
 comparisons. M3/M4 remain in progress and M8 remains planned.
+
+## FEM finite-element analysis, 2026-10-18
+
+The catalogue contains 477 programs and 1385 profiles. The two FEM policies
+record 54 passing primary smoke/normal cases in 56 attempts. All Rune O0/O2
+stack/register/JIT/native cases and other managed hosts pass. Both legacy
+64-bit SML/NJ normal cases fail with incorrect numerical results.
+
+Every semantic invocation completes all 133 assertions: 2604 pass, 56 fail
+and none are unreached. The legacy native groups have 24 and 32 failures;
+host-default flags are unchanged. Complete original binary32 state/report
+references, edge cases, cyclic arrays, update order and deliberately bad
+values/reports/hashes are covered. [Host details](validation/fem-host-results.md)
+retain varying default failures and three successful separate nursery
+diagnostics. No expected bit or normal default accepts those failures.
+
+The source numeric parser and every Float operation retain binary32 semantics
+in a portable value representation. Runtime checks require finite, exact final
+bits, complete adapted FIX9 report and modular-64 hash. An independent dense
+physical assembly/pivoted solve validates four models under explicit scaled
+bounds and rejects perturbations; it does not loosen runtime equality.
+
+All eight full-normal Rune count samples agree with guards exiting zero
+without interruption. Six serial fresh-process native smoke adapter samples,
+including correctness preflights, pass before heavy validation. Their small
+model does not establish legacy normal correctness; these are not ten-sample
+comparative claims. Full selected large runs remain unrecorded.
+
+The public Rune O0/O2 semantic target, 128 inventory regressions and five-pin
+861-entry replay pass. [Evidence](results/m4-fem/README.md) preserves original
+notices, model origins and exact data.3/fem.stdin alias, historical C-reference
+disposition, source/input identities and all raw failed diagnostics.
+Repeated archive fixture copies use verified canonical identity/group maps.
+
+[Full make JOBS=4 check](validation/oct18-fem-1385-acceptance.log)
+exits zero with 1385 profiles and all compiler/runedoc/runeopt cross-build
+comparisons. M3/M4 remain in progress and M8 remains planned.
