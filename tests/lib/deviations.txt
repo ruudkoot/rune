@@ -25,14 +25,16 @@ native:smlnj-dev | property.core | HOST-BUG | Real.fromManExp {man = 0.5, exp = 
 native:smlnj-dev | property.shrink | HOST-BUG | the host stops with "Fatal error -- bogus fault not in ML" (signal 11) in planted/sort-drops-equals, in every run, and the tests after it do not run; not reduced, and perhaps the raw Word64 among the pointers of a record of arguments that 2026.3 fixed (smlnj/smlnj#394; docs/bugreport/smlnj/GC/spilled-word64-argument)
 
 # ---- MLKit 4.7.25: region inference that corrupts values still in use
-# (docs/bugreport/mlkit/region-inference), and a Socket without acceptNB
-# (docs/bugreport/mlkit/socket-acceptNB-absent).
+# (docs/bugreport/mlkit/region-inference), a Socket without acceptNB
+# (docs/bugreport/mlkit/socket-acceptNB-absent), and a tail call that keeps
+# its region (docs/bugreport/mlkit/preserve-tail-calls).
 native:mlkit | json.roundtrip | HOST-BUG | region inference hands the program strings and values that are no longer its own, and it dies with SIGSEGV; built with -no_ri it passes (docs/bugreport/mlkit/region-inference)
 native:mlkit | jsonrpc.jsonrpc | HOST-BUG | region inference: a name lib/json decodes comes back corrupt, and the program dies with SIGSEGV; built with -no_ri it passes (docs/bugreport/mlkit/region-inference)
 native:mlkit | dap.dap | HOST-BUG | region inference: the names of the members of a message lib/json decodes come back corrupt, so no message reads back; built with -no_ri it passes (docs/bugreport/mlkit/region-inference)
 native:mlkit | pretty.pretty | HOST-BUG | region inference: the random documents end in SIGSEGV; built with -no_ri the test passes (docs/bugreport/mlkit/region-inference)
 native:mlkit | zmtp.zmtp | HOST-ABSENT | MLKit's Socket has no acceptNB, which lib/zmtp's loop accepts with (docs/bugreport/mlkit/socket-acceptNB-absent)
 native:mlkit | jupyter.jupyter | HOST-ABSENT | lib/jupyter is written on lib/zmtp, which needs Socket.acceptNB (docs/bugreport/mlkit/socket-acceptNB-absent)
+native:mlkit | unicode.utf8 | HOST-FLAKY | MLKit keeps a region and a frame for every step of a loop whose tail call stands inside the let that makes a string, although --preserve_tail_calls is on (docs/bugreport/mlkit/preserve-tail-calls): the round trip of every scalar value takes 7.1 GB, and the test fails with "Cannot allocate memory" where the machine cannot give it that (under ulimit -v 14000000); it passes where it can, and passes in 3.5 MB built with -no_ri
 
 # ---- Poly/ML 5.9.2: Socket.recvVecNB blocks on a socket that accept or
 # acceptNB returned, where it must return NONE
