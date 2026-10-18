@@ -1,0 +1,12 @@
+The pinned Main.hs credits Marc Feeley and dates the molecular search
+June 6, 1994. README credits Lennart Augustsson for the HBC Haskell
+version. MAIL records Pieter H. Hartel's 1994 coordination and invitation
+to port the program; no broader licence is inferred.
+All original source/header and README bytes remain under upstream/.
+No separate program or conformation-dataset redistribution licence was found
+in this pinned directory; no grant is invented from a paper citation.
+
+The GHC 9.4.7 base implementation used to inspect atan2/maximum and numeric
+support has its distinct full licence at upstream/base/LICENSE.
+That licence is not asserted to cover the molecular program or its data.
+The Rune adaptation and shared portable support retain repository terms.

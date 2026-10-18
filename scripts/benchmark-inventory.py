@@ -558,6 +558,39 @@ def build(source, root, lock):
                     notices.append(str(notice.relative_to(root)))
         authors = set()
         context = [p for p in parent.iterdir() if p.is_file() and p.name in {"README", "README.md", "Makefile", "FILES", "sources.cm"}] if parent.exists() and files else []
+        if source == "nofib" and path == "spectral/hartel/nucleic2":
+            main = parent / "Main.hs"
+            if main.is_file():
+                heading = main.read_text(errors="replace")
+                if ("Author: Marc Feeley (feeley@iro.umontreal.ca)" in heading
+                        and "Last modified: June 6, 1994" in heading):
+                    authors.add("Marc Feeley")
+                    item["evidence"].append(path + "/Main.hs:molecular-search-author-and-date")
+                if "#ifdef USE_HARTEL_LAZINESS" in heading and "make_relative_nuc t n" in heading:
+                    item["evidence"].append(path + "/Main.hs:on-demand-and-shared-coordinate-variants")
+            readme = parent / "README"
+            if readme.is_file():
+                readme_text = readme.read_text(errors="replace")
+                if "Haskell version (for HBC, by Lennart Augustsson)" in readme_text:
+                    authors.add("Lennart Augustsson (Haskell version)")
+                    item["evidence"].append(path + "/README:Haskell-port-authorship")
+                if "UPDATE(2017.01)" in readme_text and "non-Haskell versions of the program" in readme_text:
+                    item["evidence"].append(path + "/README:historical-archive-files-removed-in-2017")
+            mail = parent / "MAIL"
+            if mail.is_file():
+                context.append(mail)
+                correspondence = mail.read_text(errors="replace")
+                if ("From: pieter@fwi.uva.nl (Pieter H. Hartel)" in correspondence
+                        and "Subject: Request participation pseudo knot benchmark" in correspondence
+                        and "Mon, 13 Jun 1994" in correspondence):
+                    authors.add("Pieter H. Hartel (benchmark coordination)")
+                    item["evidence"].append(path + "/MAIL:1994-benchmark-coordination-and-porting-invitation")
+            header = parent / "unboxery.h"
+            if header.is_file():
+                header_text = header.read_text(errors="replace")
+                if (re.search(r"^#define FLOAT_TY Float\s*$", header_text, re.M)
+                        and "#define FL_LIT(x) (x)" in header_text):
+                    item["evidence"].append(path + "/unboxery.h:boxed-Float-default")
         if source == "nofib" and path == "gc/happy":
             main = parent / "Main.lhs"
             if main.is_file():
@@ -822,6 +855,8 @@ def build(source, root, lock):
                         and header[attribution.start() - 1] == "$"):
                     continue  # The RCS last-committer tag is not the declared author.
                 author = (attribution.group(1) or attribution.group(2)).strip(" *()-")
+                if author == "Marc Feeley (feeley@iro.umontreal.ca":
+                    author = "Marc Feeley"
                 if len(author) <= 180:
                     authors.add(author)
         if source == "sandmark" and not path.startswith("benchmarks/"):

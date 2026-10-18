@@ -703,3 +703,35 @@ translation-helper overflow from falling back to a decimal prefix.
 The selected source input and normal 706113-byte output stay unchanged.
 Resource overrides and native-runner status-reporting limitations remain
 explicit; failure-status capture is scheduled for M8.
+
+
+## Pseudoknot/nucleic2 and M3 coverage closure
+
+Four separately named ports preserve on-demand versus shared placed
+coordinates and memoized versus eager finite data. The catalogue contains
+495 programs and 1437 profiles. No scheduled M3 import path is absent from
+the manifest. All 92 suitable M3 paths have implemented smoke and normal
+profiles. [Final validation and coverage](results/m3-nucleic2/README.md)
+close M3, retaining host failures and incomplete assertion groups.
+
+The Marc Feeley source credit, Lennart Augustsson Haskell-port credit and
+Hartel coordination correspondence are separately guarded. The 2017 README
+cleanup is recorded without claiming removed archive members are present.
+All 152 inventory tests pass. Legacy unboxed/PrimIO paths have explicit
+facility blockers in source-variants.tsv; current GHC ignores historical
+STRICT pragmas, with complete source observations matching the default.
+Portable eager policies are not silently equated with that legacy pragma.
+
+Private source observations validate every binary32 constant, full molecular
+solutions, conformation identities, numerical budgets, exact pruning work,
+demand/sharing and planted faults. The public target passes all 5081 assertions in twelve complete groups.
+All 64 Rune profile combinations pass; the complete matrix has 98 of 112
+passes, with 116 raw attempts retained. Final native adapters pass on
+MLton/Poly/ML; legacy SML/NJ has
+domain/incorrect-result failures whose behavior changes with nursery size.
+The kernel and numerical bounds remain unchanged. Host-specific results,
+unclassified causes and incomplete groups remain explicit. Development
+SML/NJ has three smoke loading timeouts and one explicit allocation failure,
+and passes every normal profile. ML Kit has two empty-log smoke compiles
+and passes every normal profile. All normal allocation counts agree;
+repository acceptance and all 152 inventory tests pass.

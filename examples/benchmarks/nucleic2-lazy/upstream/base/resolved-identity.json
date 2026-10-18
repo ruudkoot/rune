@@ -1,0 +1,37 @@
+{
+  "repository": "https://github.com/ghc/ghc",
+  "tag": "ghc-9.4.7-release",
+  "commit": "00920f176b0235d5bb52a8e054d89a664f8938fe",
+  "tag_refs": {
+    "refs/tags/ghc-9.4.7-release": "af51becb5baf97bdda812592111116fa6aac4738",
+    "refs/tags/ghc-9.4.7-release^{}": "00920f176b0235d5bb52a8e054d89a664f8938fe"
+  },
+  "package": "base-4.17.2.0",
+  "files": [
+    {
+      "path": "Data/Foldable.hs",
+      "bytes": 87719,
+      "sha256": "a4fe2e6615d469fec853c475e209aee614dacf4ff44416d123893879aa7558bf"
+    },
+    {
+      "path": "Data/OldList.hs",
+      "bytes": 55866,
+      "sha256": "c9f75e1d0ed4b27cf58e040339b6936c59c5a455ecbe172fb6b73655cb613ea1"
+    },
+    {
+      "path": "GHC/Float.hs",
+      "bytes": 59978,
+      "sha256": "d71c11665bfcdbebb58c7d0df40e263653942760291d9dd37e2cc1cc004a761f"
+    },
+    {
+      "path": "GHC/List.hs",
+      "bytes": 53734,
+      "sha256": "dedaac79627e250a6112cce958c04fb122e3a85fca400ca5371729ba6d757a88"
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 3881,
+      "sha256": "768c070bd0b7d820d169ee8153d5487acfc262cbbc10dfce18d05c0bb2d2800d"
+    }
+  ]
+}

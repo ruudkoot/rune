@@ -3318,3 +3318,50 @@ The final literal helper avoids a reproduced SML/NJ32 dynamic subtraction
 false Overflow with equivalent quotient/remainder limits. Decimal, hex and
 octal boundary tests also reject overflow without decimal-prefix fallback.
 Selected inputs, source algorithms and expected results remain unchanged.
+
+
+## M3 closure: Pseudoknot/nucleic2, 2026-10-18
+
+Four imported variants bring the catalogue to 495 programs and 1437 profiles.
+[Complete evidence](results/m3-nucleic2/README.md),
+[all outcomes](results/m3-nucleic2/correctness.tsv) and
+[92-path coverage reconciliation](results/m3-nucleic2/inventory-coverage.tsv)
+close the suitable pinned nofib kernel/GC inventory. M3 is complete;
+M4 remains in progress and M8 remains planned.
+
+All 64 Rune smoke/normal combinations pass across four engines, four variants
+and O0/O2. The canonical matrix has 98 of 112 passes, with all 116 attempts
+retained. Normal profiles pass on five SML hosts. Legacy SML/NJ records eight
+domain errors; development SML/NJ records three smoke loading timeouts and
+one explicit allocation failure under 1 GiB; ML Kit records two empty-log
+smoke compiles. Interactive-host failure phases and empty-log causes remain
+unclassified. No numerical bound or valid computation is weakened.
+
+Twelve complete semantic groups each pass 5081 assertions. The partial legacy
+group records 89 passes and 65 failures, then stops; the ML Kit group records
+no assertions. Overall 61061 passes and 65 failures are recorded, with
+unreached checks kept incomplete. Independent GHC/Python observations cover
+all 6624 input patterns, 50 complete solutions, 1150 conformation choices,
+109800 coordinates, exact pruning counts, precision, demand, sharing and
+planted perturbations. Portable results agree bit-for-bit with each other;
+original-language coordinate differences meet the documented numerical budget.
+
+All sixteen normal count samples agree across applicable Rune engines, with
+four unchanged guards completing without intervention. Eight final serial
+MLton/Poly/ML fresh samples pass; four legacy SML/NJ preflights fail and supply
+no accepted timings. Single samples validate adapters, not performance claims.
+The SML/NJ image adapter can place eager declaration initialization in its
+compilation phase; compilation and execution are reported separately.
+
+Repository acceptance exits zero after 2047.2 seconds, including all 498
+compiler comparisons, seven-host runedoc/runeopt agreement and the required
+bounded benchmark, VM, Basis, compiler and documentation checks. All 152
+inventory tests and the five pinned 861-entry inventories pass. Every suitable
+M3 path has implemented smoke/normal profiles and separately named meaningful
+variants. Source-feature deferrals retain concrete capability blockers.
+
+The shared-strict smoke allowance records 120 seconds/1 GiB after four Rune
+O0 runtime timeouts at the original 30 seconds. The successful retry replaces
+those four canonical results while preserving raw attempts. Other defaults
+and the upstream 3/25/125 search counts remain unchanged. The large SML matrix
+is not claimed. Native compile exit-status capture remains an M8 follow-up.
