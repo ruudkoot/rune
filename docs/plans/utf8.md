@@ -59,7 +59,7 @@ What it rests on:
 | M5 | `lib/unicode`: normalisation and identifier tables | done 2026-10-18; G2 passed 2026-10-18 |
 | M6 | Unicode identifiers | |
 | M7 | Showing source and names | |
-| M8 | The wide family in the 8-bit order, and its costs | |
+| M8 | The wide family in the 8-bit order, and its costs | done 2026-10-18 |
 | M9 | The symmetric text signatures, and the change request | |
 | M10 | String operations at both widths | |
 | M11 | The corpora and the comparison | |
@@ -3278,8 +3278,85 @@ lookalikes, and the lints' data goes into the compiler (*The request*).
     a small factor of `String.^`, and `WideTextIO.inputAll` within a small
     factor of `TextIO.inputAll`.
 
+* **Done** (2026-10-18, at `ad4e1a56`):
+  - **The order.** E6's stage 2, the part of it that is M8's:
+    - widechar.sml makes the character and the vectors, slices and arrays
+      of it as they are before the seal (`RuneWideCharVector` and the
+      others);
+    - widestring.sml makes the strings and substrings on them, seals the
+      family at once (`RuneWideText`), and binds the public structures to
+      its parts;
+    - `WideCharVector` is `MONO_VECTOR where type vector =
+      WideString.string`, and `MONO_VECTOR_EQ` is `RUNE_MONO_VECTOR_EQ`,
+      inside the library only, for `Word8Vector`;
+    - `tests/basis/mono.widechar_sig.sml` checks the new constraint, and
+      that the vectors admit equality.
+  - **Four primitives** (`src/isa/prims.sml`, at the end):
+    - `vector_concat`, `vector_concat_list` and `vector_extract` copy the
+      fields of vectors in C. `Vector.concat`, `VectorSlice.vector`,
+      `WideString.^`, `concat`, `extract` and `substring` and
+      `WideSubstring.string` use them;
+    - `utf8_decode` decodes UTF-8 in C, by Table 3-7, and says where it
+      stopped and why.
+
+    A reader in Standard ML alone could not come within a small factor of
+    `TextIO.inputAll`, whose work is one read in C: the fourth primitive
+    was not foreseen. A tabulation primitive was not needed:
+    `WideCharVector.tabulate` costs 1.4 times `CharVector.tabulate`, and
+    both go through a list.
+  - **The reader** of `WideTextIO` decodes the blocks that `TextIO.input`
+    gives. A sequence that the end of a block cuts short waits for the next
+    block. The characters before a sequence that is not UTF-8 are given
+    first, and the read after them raises; so does every later read. The
+    chunk of a file's reader and writer is 4096 characters, where it was
+    1024. `RuneStreamIOFn` gives a chunk that is read whole without copying
+    it, which takes 8% of the instructions and a third of the allocation
+    off `TextIO.inputAll` too.
+  - **The type printer** names a type as the program's top level names it:
+    `Types.qualifier`, set by `Elaborate.elabTop`, from
+    `Env.qualifiedName`, the REPL's path finder moved into `Env`. Among
+    paths of one length, a structure named for the type comes first
+    (`WideString.string`, not `WideChar.string`). Unify's reasons use it
+    too. Three messages of `tests/errors` changed for the better
+    (`A.d vs B.d` where it said `d vs d`), and
+    `err.ty_qualified-name` is new; `docs/diagnostics.md` says so.
+  - **E8 again** (`results/M8`, `runevm-stack --count`):
+
+    | What | Before | After | 8-bit |
+    |---|---|---|---|
+    | 1,000 times `acc ^ piece` | 170,287,835 | 15,833 | 15,555 |
+    | `inputAll` of 10 MB of ASCII | 2,063,041,004 | 1,106,888 | 460,281 (499,301 before) |
+    | `concat` of 100,000 pieces of 10 | | 1,202,983 | 1,202,706 |
+    | 100,000 substrings of 100 | | 2,333,743 | 1,924,555 |
+    | `tabulate` of 100,000 | | 3,102,740 | 2,202,559 |
+
+    The wide side allocates about eight times what the 8-bit side does:
+    a word per code point (D19). Wide literals are still parsed at each
+    evaluation; that is M4's.
+  - **Documents:** `docs/basis-compat.md` says what Rune does now about the
+    erratum, `docs/unicode.md` describes the new order, and the rows
+    `basis.widechar`, `basis.widestring`, `basis.mono.widechar` and
+    `basis.widetextio` of `docs/language.md` say it too; `docs/bytecode.md`
+    lists the primitives.
+  - **G3's data:** what xc1 needed is the four primitives on the hosts in
+    `tests/basis/host/rune-prim.sml`, written from their descriptions, as
+    every primitive is. Nothing else: no shim, no line of
+    `deviations.txt`. xc2:mlton needed nothing.
+  - **Checks,** with MLKit 4.7.25: `make check`, `make matrix-quick` and
+    xc2:mlton on the commit that recorded this before the rebase on M5's
+    lookalikes (logs `bas-m8-final`, `bas-m8-final-matrix` and
+    `bas-m8-final-xc2` of the campaign), and `make check` again after it
+    (`bas-m8-rebased`), since the lookalikes touch nothing the others test.
+    Before the rebase on M1's source part and M5, the same three passed on
+    `838cb2ae`. The only failure was one of xc1:smlnj-legacy,
+    `Real.fromLargeInt/maxFinite`, under the matrix's load: SML/NJ
+    110.99.9's floats, as the `HOST-FLAKY` lines for its `Real` laws say.
+    It passed in three runs alone.
+
 **Gate G3.** E6 found nothing for xc1 or xc2 to need. If M8 does, the owner
-sees the list before M9.
+sees the list before M9. Passed on 2026-10-18: xc1 needed only the hosts'
+versions of the new primitives, which every new primitive needs, and xc2
+nothing.
 
 ### M9. The symmetric text signatures, and the change request (M, about 800)
 
