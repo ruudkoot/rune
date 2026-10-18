@@ -1,0 +1,4 @@
+RESULT 17:E10F4A73
+PASS hashtbl_add_duplicate
+SAMPLE 1 0.000026000
+SUMMARY 1 checks, 0 failed

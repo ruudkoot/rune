@@ -1,0 +1,9 @@
+{
+  "ocaml": "4.14.1",
+  "source_sha256": {
+    "bytes": "80f86f1df4ecd1f944782da80d564e06c61ad4e1b008954466b06bdafe84d926",
+    "string": "8274a344f80f2608e4754d5ed677544e8e79e2d4e8f1a0a10429a9656e2b6b76"
+  },
+  "cases": 100,
+  "equal_pairs": 133
+}

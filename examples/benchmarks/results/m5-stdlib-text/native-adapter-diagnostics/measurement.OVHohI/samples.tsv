@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+string_split_on_char	smoke	native:mlton@20241230	O2	compile	0	0	pass	3.88	3.08	0.68	671652	-	-	-	string_split_on_char/native-mlton/build/compile
+string_split_on_char	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2096	-	-	-	string_split_on_char/native-mlton/correctness.0
+string_split_on_char	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2116	-	-	-	string_split_on_char/native-mlton/fresh.1
+string_split_on_char	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.35	0.34	0.02	39300	-	-	-	string_split_on_char/native-smlnj-legacy/build/compile
+string_split_on_char	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.00	0.00	3808	-	-	-	string_split_on_char/native-smlnj-legacy/correctness.0
+string_split_on_char	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.00	0.00	3828	-	-	-	string_split_on_char/native-smlnj-legacy/fresh.1
+string_split_on_char	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.31	0.17	0.06	38180	-	-	-	string_split_on_char/native-polyml/build/compile
+string_split_on_char	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	5564	-	-	-	string_split_on_char/native-polyml/correctness.0
+string_split_on_char	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	5596	-	-	-	string_split_on_char/native-polyml/fresh.1

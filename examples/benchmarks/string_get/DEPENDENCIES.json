@@ -1,0 +1,10 @@
+{
+  "ocaml": "4.14.1",
+  "files": {
+    "upstream-library/LGPL-2.1": "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551",
+    "upstream-library/LICENSE": "65f47d3bf5a921011ac7fa30f23d54f9dffbe7683921eeb116d5ce8dc26ff0c1",
+    "upstream-library/debian-copyright": "e34a4f2c01a1e0fc8d995d14419236e5f6de9cb948eb553595ee64551695e716",
+    "upstream-library/string.ml": "5031e76b4ba336aac54c70df8df890f284d6d20c2197152dc748cba170f6fd55",
+    "upstream-library/string.mli": "023e79718d6ed63a1d1637674498ba77421ef57c1e0801aa56f9f813ed644f11"
+  }
+}

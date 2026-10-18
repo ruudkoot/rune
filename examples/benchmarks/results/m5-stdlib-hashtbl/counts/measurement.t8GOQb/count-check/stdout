@@ -1,0 +1,5 @@
+COUNT unbudgeted hashtbl_remove normal rune
+COUNT unbudgeted hashtbl_remove normal rune:opt
+COUNT unbudgeted hashtbl_remove normal rune:new
+COUNT unbudgeted hashtbl_remove normal rune:jit
+COUNT comparisons agree

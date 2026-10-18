@@ -1,0 +1,25 @@
+COUNT unbudgeted str_global_replace normal rune
+COUNT unbudgeted str_global_replace normal rune:opt
+COUNT unbudgeted str_global_replace normal rune:new
+COUNT unbudgeted str_global_replace normal rune:jit
+COUNT unbudgeted str_regexp normal rune
+COUNT unbudgeted str_regexp normal rune:opt
+COUNT unbudgeted str_regexp normal rune:new
+COUNT unbudgeted str_regexp normal rune:jit
+COUNT unbudgeted str_search_forward normal rune
+COUNT unbudgeted str_search_forward normal rune:opt
+COUNT unbudgeted str_search_forward normal rune:new
+COUNT unbudgeted str_search_forward normal rune:jit
+COUNT unbudgeted str_split normal rune
+COUNT unbudgeted str_split normal rune:opt
+COUNT unbudgeted str_split normal rune:new
+COUNT unbudgeted str_split normal rune:jit
+COUNT unbudgeted str_string_match normal rune
+COUNT unbudgeted str_string_match normal rune:opt
+COUNT unbudgeted str_string_match normal rune:new
+COUNT unbudgeted str_string_match normal rune:jit
+COUNT unbudgeted str_string_partial_match normal rune
+COUNT unbudgeted str_string_partial_match normal rune:opt
+COUNT unbudgeted str_string_partial_match normal rune:new
+COUNT unbudgeted str_string_partial_match normal rune:jit
+COUNT comparisons agree

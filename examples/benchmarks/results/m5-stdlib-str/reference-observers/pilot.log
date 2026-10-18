@@ -1,0 +1,6 @@
+str_regexp 5:E1BB7F44
+str_string_match 5:1210D00F
+str_search_forward 5:B23B47B5
+str_string_partial_match 5:1210D00F
+str_global_replace 5:1292575E
+str_split 5:DB4C1674

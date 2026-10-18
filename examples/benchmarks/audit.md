@@ -413,3 +413,25 @@ from the upstream command-line selector.
 All 108 inventory regressions pass, and the five pinned trees reproduce
 861 primary entries. These imports bring the catalogue to 409 programs and
 1214 profiles. Remaining M3/M4/M5 coverage is still work in progress.
+
+## Sandmark stdlib closure, 2026-10-18
+
+All 45 remaining suitable selectors now have portable implementations:
+twelve bytes functions, thirteen string functions, six Str operations and
+fourteen hash/table selectors. bytes_set and bytes_cat remain explicitly
+unreachable from the original CLI; original reference programs export their
+defined bodies directly. The 71-case executable inventory now has no suitable
+planned selector. Existing capability-based deferrals remain explicit.
+
+The catalogue contains 454 programs and 1316 profiles. Fixed source inputs,
+operation-count parameters and per-call/global construction scopes remain.
+Original run-plan entries retain published counts beside the selected profile
+reductions. Complete selected benchmark/library/runtime sources, Dune credit,
+independent source hashes and distinct Unlicense/LGPL/linking-exception notices
+are retained. The numerical representation and library replacements are
+documented per workload rather than treated as identical OCaml runtime costs.
+
+This closes the stdlib selector inventory, not milestone M5: LexiFi G2++,
+sequential MiniLight and Sauvola remain pending. M3 and M4 also remain in
+progress. Canonical validation and outstanding checks are recorded separately
+in the validation ledger.

@@ -1,0 +1,5 @@
+COUNT unbudgeted int_replace2 normal rune
+COUNT unbudgeted int_replace2 normal rune:opt
+COUNT unbudgeted int_replace2 normal rune:new
+COUNT unbudgeted int_replace2 normal rune:jit
+COUNT comparisons agree

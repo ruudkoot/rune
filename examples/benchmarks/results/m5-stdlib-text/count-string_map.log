@@ -1,0 +1,11 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1316 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=string_map' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.xEl3Xu
+BENCH MEASURE string_map normal count
+COUNT unbudgeted string_map normal rune
+COUNT unbudgeted string_map normal rune:opt
+COUNT unbudgeted string_map normal rune:new
+COUNT unbudgeted string_map normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.xEl3Xu/report.md

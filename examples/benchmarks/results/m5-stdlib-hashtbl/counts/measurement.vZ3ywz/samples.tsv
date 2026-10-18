@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+caml_hash_tuple	normal	rune	O2	compile	0	0	pass	2.50	2.33	0.15	135312	-	-	-	caml_hash_tuple/rune/build/compile
+caml_hash_tuple	normal	rune	O2	correctness	0	0	pass	1.89	1.92	0.00	2472	221260895	130568	1663	caml_hash_tuple/rune/correctness.0
+caml_hash_tuple	normal	rune	O2	count	1	1	pass	1.86	1.80	0.00	2408	221260895	130568	1663	caml_hash_tuple/rune/fresh.1
+caml_hash_tuple	normal	rune:opt	O2	compile	0	0	pass	3.37	2.40	0.14	135228	-	-	-	caml_hash_tuple/rune-opt/build/compile
+caml_hash_tuple	normal	rune:opt	O2	native-compile	0	0	pass	0.68	0.31	0.10	15756	-	-	-	caml_hash_tuple/rune-opt/build/native-compile
+caml_hash_tuple	normal	rune:opt	O2	correctness	0	0	pass	0.42	0.42	0.00	3012	221260895	130568	1663	caml_hash_tuple/rune-opt/correctness.0
+caml_hash_tuple	normal	rune:opt	O2	count	1	1	pass	0.44	0.42	0.00	3124	221260895	130568	1663	caml_hash_tuple/rune-opt/fresh.1
+caml_hash_tuple	normal	rune:new	O2	compile	0	0	pass	2.52	2.38	0.16	135312	-	-	-	caml_hash_tuple/rune-new/build/compile
+caml_hash_tuple	normal	rune:new	O2	correctness	0	0	pass	1.27	1.39	0.00	2672	177202517	130568	1663	caml_hash_tuple/rune-new/correctness.0
+caml_hash_tuple	normal	rune:new	O2	count	1	1	pass	1.33	1.44	0.00	2508	177202517	130568	1663	caml_hash_tuple/rune-new/fresh.1
+caml_hash_tuple	normal	rune:jit	O2	compile	0	0	pass	2.30	2.36	0.13	135184	-	-	-	caml_hash_tuple/rune-jit/build/compile
+caml_hash_tuple	normal	rune:jit	O2	correctness	0	0	pass	0.35	0.30	0.04	3968	177202517	130568	1663	caml_hash_tuple/rune-jit/correctness.0
+caml_hash_tuple	normal	rune:jit	O2	count	1	1	pass	0.29	0.29	0.00	4032	177202517	130568	1663	caml_hash_tuple/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

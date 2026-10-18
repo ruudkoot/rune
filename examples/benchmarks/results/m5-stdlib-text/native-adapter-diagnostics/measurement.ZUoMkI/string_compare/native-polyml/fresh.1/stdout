@@ -1,0 +1,4 @@
+RESULT 1:50C5D1F
+PASS string_compare
+SAMPLE 1 0.000176000
+SUMMARY 1 checks, 0 failed

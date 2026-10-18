@@ -426,6 +426,51 @@ inventory entry.
 | [set_add_rem](#set_add_rem) | [Sandmark](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Add and immediately remove descending integer keys from a persistent set. |
 | [set_fold](#set_fold) | [Sandmark](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Sum the fixed thousand-entry integer set using the source in-order fold. |
 | [set_mem](#set_mem) | [Sandmark](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Test ascending integer membership in the fixed thousand-entry set. |
+| [bytes_blit](#bytes_blit) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Copy thirty-two source characters into a newly filled byte destination. |
+| [bytes_cat](#bytes_cat) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Concatenate the fixed fish prefix and original byte sequence. |
+| [bytes_concat](#bytes_concat) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Join the original four fish words with single-space separators. |
+| [bytes_contains](#bytes_contains) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Test whether the fixed text contains a lowercase r. |
+| [bytes_get](#bytes_get) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Read characters at cyclic positions of the original fixed text. |
+| [bytes_index](#bytes_index) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Search from the beginning for the first lowercase r. |
+| [bytes_iter](#bytes_iter) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Traverse the fixed text and invoke the source callback for every character. |
+| [bytes_map](#bytes_map) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Map every original character to an exclamation mark. |
+| [bytes_set](#bytes_set) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Mutate a per-call copy of the original text to spaces at cyclic positions. |
+| [bytes_sub](#bytes_sub) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Copy two characters at cyclic source positions. |
+| [bytes_trim](#bytes_trim) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Remove the original trailing newlines from the fixed trim input. |
+| [bytes_uppercase_ascii](#bytes_uppercase_ascii) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Convert the original text to uppercase with ASCII rules. |
+| [string_blit](#string_blit) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Copy thirty-two source characters into a newly filled byte destination. |
+| [string_compare](#string_compare) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Sum all ordered pairwise comparisons of words from the original text. |
+| [string_concat](#string_concat) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Join the original four fish words with single-space separators. |
+| [string_contains](#string_contains) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Test whether the fixed text contains a lowercase r. |
+| [string_equal](#string_equal) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Count all ordered pairs of equal words from the original text. |
+| [string_get](#string_get) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Read characters at cyclic positions of the original fixed text. |
+| [string_index](#string_index) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Search from the beginning for the first lowercase r. |
+| [string_iter](#string_iter) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Traverse the fixed text and invoke the source callback for every character. |
+| [string_map](#string_map) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Map every original character to an exclamation mark. |
+| [string_split_on_char](#string_split_on_char) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Split the original fixed text on single spaces, preserving empty fields. |
+| [string_sub](#string_sub) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Copy two characters at cyclic source positions. |
+| [string_trim](#string_trim) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Remove the original trailing newlines from the fixed trim input. |
+| [string_uppercase_ascii](#string_uppercase_ascii) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Convert the original text to uppercase with ASCII rules. |
+| [str_regexp](#str_regexp) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Compile the original nonempty literal regular expression on each iteration. |
+| [str_string_match](#str_string_match) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Test the original expression against the beginning of the fixed source text. |
+| [str_search_forward](#str_search_forward) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Search forward for the original literal phrase in the fixed source text. |
+| [str_string_partial_match](#str_string_partial_match) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Test complete or truncated-prefix matching at the beginning of the fixed source text. |
+| [str_global_replace](#str_global_replace) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Replace every occurrence of the original literal phrase with a period. |
+| [str_split](#str_split) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Split the fixed source text with the original absent at-sign expression. |
+| [int_find1](#int_find1) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Run inclusive batches of lookups in the original empty generic integer-key table. |
+| [int_find2](#int_find2) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Run inclusive batches of lookups in the original empty specialized integer-hash table. |
+| [int_replace1](#int_replace1) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Run inclusive batches of replacements in the original shared generic integer-key table. |
+| [int_replace2](#int_replace2) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Run inclusive batches of replacements in the original shared specialized integer-hash table. |
+| [caml_hash_int](#caml_hash_int) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Hash the original thousand integer values in inclusive outer batches. |
+| [caml_hash_tuple](#caml_hash_tuple) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Hash the original thousand two-integer tuples in inclusive outer batches. |
+| [hashtbl_iter](#hashtbl_iter) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Traverse the freshly built thousand-entry hash table with the original callback. |
+| [hashtbl_fold](#hashtbl_fold) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Sum keys, values and accumulator over a freshly built thousand-entry hash table. |
+| [hashtbl_add_resizing](#hashtbl_add_resizing) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Insert ascending integer bindings while growing a minimal hash table. |
+| [hashtbl_add_sized](#hashtbl_add_sized) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Insert ascending integer bindings into a pre-sized hash table. |
+| [hashtbl_add_duplicate](#hashtbl_add_duplicate) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Insert each ascending integer binding twice while retaining duplicate bucket entries. |
+| [hashtbl_remove](#hashtbl_remove) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Build and empty thousand-entry tables in the original rounded-up batch loop. |
+| [hashtbl_find](#hashtbl_find) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Search ascending keys in the fixed populated table, including later misses. |
+| [hashtbl_filter_map](#hashtbl_filter_map) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Repeatedly double all table values using the source signed 63-bit wraparound. |
 
 ## Running and interpreting checks
 
@@ -25825,3 +25870,3962 @@ heights, duplicate-path reuse, callback specialization, global baseline
 retention and the cost of explicit consumers. Treat these as source-based
 hypotheses until supported by compiler analysis or measurements. Report fresh
 and repeated modes separately and retain all samples and resource failures.
+
+## bytes_blit
+
+### Algorithm and workload
+
+Copy thirty-two source characters into a newly filled byte destination.
+
+The source loop starts at one. Get/set use i mod 574; sub uses i mod 572 and blit i mod 542, deliberately retaining the excluded last valid start. Smoke crosses these modulo boundaries.
+
+### History, aliases and notices
+
+This is selector bytes_blit in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Other selectors are separate workloads.
+The Dune source credits adaptation from OCamlPro's benchmark repository;
+the selected .ml/.inc files state no individual benchmark author or notice.
+Preserve them and the suite Unlicense under bytes_get/upstream.
+
+Pin OCaml 4.14.1 library source independently in bytes_get/DEPENDENCIES.json.
+Bytes credits Xavier Leroy/INRIA, copyright 1996; String's implementation
+credits Damien Doligez/INRIA, copyright 2014. Complete selected .ml/.mli
+headers, LGPL 2.1 text and the linking exception are retained under
+bytes_get/upstream-library. The library and benchmark notices are distinct.
+The 574-byte Latin-like text is an embedded source literal, with no separate
+dataset author or notice stated; INPUT-IDENTITY.json records its exact identity.
+
+### Translation and variants
+
+Use portable SML97 strings and Word8Array byte storage. Preserve operation
+order, loop bounds, source text and per-call/global construction scopes.
+Global text/byte input is shared; mutable bytes_set copies it per call.
+No full OCaml library compatibility or identical storage/primitive cost is claimed.
+
+Portable byte arrays may use different host packing and initialization.
+Copy/sub/map use tabulation; blit/cat/concat use explicit element loops and
+filled destinations in place of OCaml runtime block operations. Bytes.concat
+retains one length pass and ordered segment copies. String.concat interleaves
+separator list cells before the host String.concat, adding a temporary list.
+String.split_on_char retains the source backward scan and empty fields.
+ASCII uppercase and the exact five trim whitespace characters remain explicit.
+
+OCaml's Sys.opaque_identity has no claimed identical SML97 barrier.
+Full consumers and result checks add work and may expose constant results to
+compiler specialization or hoisting. They do not establish equal work to the
+original OCaml runtime. Standard comparisons use identical SML sources.
+
+### Fixed inputs and checks
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 575 | 2500000 | 575:1DB491D0 |
+| normal | 20000 | 2500000 | 20000:4CD88C58 |
+
+The source parameter is an operation count; input text remains fixed.
+Normal reductions and selected large counts are explicit rather than a
+universal size argument. Full final large SML runs are unrecorded unless
+listed separately in validation.
+
+Check every scalar, complete produced string/byte sequence or split word list.
+bytes_set additionally checks every final byte. FNV-1a-style Word32 mixing
+consumes the checked observations; it is an added modular result format,
+not source kernel arithmetic. Counts and source character operations fit
+signed 31-bit integers. No floating-point tolerance applies.
+
+### Validation and runtime concerns
+
+Original OCaml function observers and independent byte/word models agree on
+100 edge-count results and all 55 selected profiles. Observer-only hooks
+capture discarded blit/callback results without adding an FFI requirement to
+the SML program. The semantic target checks overlapping copies, isolation,
+trim/ASCII behavior, empty split fields, cyclic boundaries, all selectors,
+unchanged global input and rejection of corrupt character/final-array results.
+Private pilot evidence and canonical wrapper checks have separate scopes.
+
+### Literature and diagnostic interpretation
+
+The preserved benchmark and OCaml library sources establish these algorithms
+and adaptations. Original observations and independent models establish the
+reviewed expected results. No separate string-algorithm paper review is claimed.
+Packing, bounds checks, byte/string conversions, callback specialization,
+temporary allocation, source barriers and the added complete consumers are
+performance questions inferred from source; timing alone does not isolate them.
+
+## bytes_cat
+
+### Algorithm and workload
+
+Concatenate the fixed fish prefix and original byte sequence.
+
+ The original function is defined and configured but absent from the CLI dispatch; its callable body is preserved and named explicitly. The fish byte prefix is constructed once per call.
+
+### History, aliases and notices
+
+This is selector bytes_cat in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Other selectors are separate workloads.
+The Dune source credits adaptation from OCamlPro's benchmark repository;
+the selected .ml/.inc files state no individual benchmark author or notice.
+Preserve them and the suite Unlicense under bytes_get/upstream.
+
+Pin OCaml 4.14.1 library source independently in bytes_get/DEPENDENCIES.json.
+Bytes credits Xavier Leroy/INRIA, copyright 1996; String's implementation
+credits Damien Doligez/INRIA, copyright 2014. Complete selected .ml/.mli
+headers, LGPL 2.1 text and the linking exception are retained under
+bytes_get/upstream-library. The library and benchmark notices are distinct.
+The 574-byte Latin-like text is an embedded source literal, with no separate
+dataset author or notice stated; INPUT-IDENTITY.json records its exact identity.
+
+### Translation and variants
+
+Use portable SML97 strings and Word8Array byte storage. Preserve operation
+order, loop bounds, source text and per-call/global construction scopes.
+Global text/byte input is shared; mutable bytes_set copies it per call.
+No full OCaml library compatibility or identical storage/primitive cost is claimed.
+
+Portable byte arrays may use different host packing and initialization.
+Copy/sub/map use tabulation; blit/cat/concat use explicit element loops and
+filled destinations in place of OCaml runtime block operations. Bytes.concat
+retains one length pass and ordered segment copies. String.concat interleaves
+separator list cells before the host String.concat, adding a temporary list.
+String.split_on_char retains the source backward scan and empty fields.
+ASCII uppercase and the exact five trim whitespace characters remain explicit.
+
+OCaml's Sys.opaque_identity has no claimed identical SML97 barrier.
+Full consumers and result checks add work and may expose constant results to
+compiler specialization or hoisting. They do not establish equal work to the
+original OCaml runtime. Standard comparisons use identical SML sources.
+
+### Fixed inputs and checks
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 1000000000 | 1:20FE6FF2 |
+| normal | 2000 | 1000000000 | 2000:192CCDD5 |
+
+The source parameter is an operation count; input text remains fixed.
+Normal reductions and selected large counts are explicit rather than a
+universal size argument. Full final large SML runs are unrecorded unless
+listed separately in validation.
+
+Check every scalar, complete produced string/byte sequence or split word list.
+bytes_set additionally checks every final byte. FNV-1a-style Word32 mixing
+consumes the checked observations; it is an added modular result format,
+not source kernel arithmetic. Counts and source character operations fit
+signed 31-bit integers. No floating-point tolerance applies.
+
+### Validation and runtime concerns
+
+Original OCaml function observers and independent byte/word models agree on
+100 edge-count results and all 55 selected profiles. Observer-only hooks
+capture discarded blit/callback results without adding an FFI requirement to
+the SML program. The semantic target checks overlapping copies, isolation,
+trim/ASCII behavior, empty split fields, cyclic boundaries, all selectors,
+unchanged global input and rejection of corrupt character/final-array results.
+Private pilot evidence and canonical wrapper checks have separate scopes.
+
+### Literature and diagnostic interpretation
+
+The preserved benchmark and OCaml library sources establish these algorithms
+and adaptations. Original observations and independent models establish the
+reviewed expected results. No separate string-algorithm paper review is claimed.
+Packing, bounds checks, byte/string conversions, callback specialization,
+temporary allocation, source barriers and the added complete consumers are
+performance questions inferred from source; timing alone does not isolate them.
+
+## bytes_concat
+
+### Algorithm and workload
+
+Join the original four fish words with single-space separators.
+
+ Bytes constructs its four arrays and separator once per call; String retains the word list expression inside the loop. The exact result is I AM A FISH.
+
+### History, aliases and notices
+
+This is selector bytes_concat in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Other selectors are separate workloads.
+The Dune source credits adaptation from OCamlPro's benchmark repository;
+the selected .ml/.inc files state no individual benchmark author or notice.
+Preserve them and the suite Unlicense under bytes_get/upstream.
+
+Pin OCaml 4.14.1 library source independently in bytes_get/DEPENDENCIES.json.
+Bytes credits Xavier Leroy/INRIA, copyright 1996; String's implementation
+credits Damien Doligez/INRIA, copyright 2014. Complete selected .ml/.mli
+headers, LGPL 2.1 text and the linking exception are retained under
+bytes_get/upstream-library. The library and benchmark notices are distinct.
+The 574-byte Latin-like text is an embedded source literal, with no separate
+dataset author or notice stated; INPUT-IDENTITY.json records its exact identity.
+
+### Translation and variants
+
+Use portable SML97 strings and Word8Array byte storage. Preserve operation
+order, loop bounds, source text and per-call/global construction scopes.
+Global text/byte input is shared; mutable bytes_set copies it per call.
+No full OCaml library compatibility or identical storage/primitive cost is claimed.
+
+Portable byte arrays may use different host packing and initialization.
+Copy/sub/map use tabulation; blit/cat/concat use explicit element loops and
+filled destinations in place of OCaml runtime block operations. Bytes.concat
+retains one length pass and ordered segment copies. String.concat interleaves
+separator list cells before the host String.concat, adding a temporary list.
+String.split_on_char retains the source backward scan and empty fields.
+ASCII uppercase and the exact five trim whitespace characters remain explicit.
+
+OCaml's Sys.opaque_identity has no claimed identical SML97 barrier.
+Full consumers and result checks add work and may expose constant results to
+compiler specialization or hoisting. They do not establish equal work to the
+original OCaml runtime. Standard comparisons use identical SML sources.
+
+### Fixed inputs and checks
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 2000000 | 1:6A917A1C |
+| normal | 20000 | 2000000 | 20000:7DA2FDA5 |
+
+The source parameter is an operation count; input text remains fixed.
+Normal reductions and selected large counts are explicit rather than a
+universal size argument. Full final large SML runs are unrecorded unless
+listed separately in validation.
+
+Check every scalar, complete produced string/byte sequence or split word list.
+bytes_set additionally checks every final byte. FNV-1a-style Word32 mixing
+consumes the checked observations; it is an added modular result format,
+not source kernel arithmetic. Counts and source character operations fit
+signed 31-bit integers. No floating-point tolerance applies.
+
+### Validation and runtime concerns
+
+Original OCaml function observers and independent byte/word models agree on
+100 edge-count results and all 55 selected profiles. Observer-only hooks
+capture discarded blit/callback results without adding an FFI requirement to
+the SML program. The semantic target checks overlapping copies, isolation,
+trim/ASCII behavior, empty split fields, cyclic boundaries, all selectors,
+unchanged global input and rejection of corrupt character/final-array results.
+Private pilot evidence and canonical wrapper checks have separate scopes.
+
+### Literature and diagnostic interpretation
+
+The preserved benchmark and OCaml library sources establish these algorithms
+and adaptations. Original observations and independent models establish the
+reviewed expected results. No separate string-algorithm paper review is claimed.
+Packing, bounds checks, byte/string conversions, callback specialization,
+temporary allocation, source barriers and the added complete consumers are
+performance questions inferred from source; timing alone does not isolate them.
+
+## bytes_contains
+
+### Algorithm and workload
+
+Test whether the fixed text contains a lowercase r.
+
+
+
+### History, aliases and notices
+
+This is selector bytes_contains in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Other selectors are separate workloads.
+The Dune source credits adaptation from OCamlPro's benchmark repository;
+the selected .ml/.inc files state no individual benchmark author or notice.
+Preserve them and the suite Unlicense under bytes_get/upstream.
+
+Pin OCaml 4.14.1 library source independently in bytes_get/DEPENDENCIES.json.
+Bytes credits Xavier Leroy/INRIA, copyright 1996; String's implementation
+credits Damien Doligez/INRIA, copyright 2014. Complete selected .ml/.mli
+headers, LGPL 2.1 text and the linking exception are retained under
+bytes_get/upstream-library. The library and benchmark notices are distinct.
+The 574-byte Latin-like text is an embedded source literal, with no separate
+dataset author or notice stated; INPUT-IDENTITY.json records its exact identity.
+
+### Translation and variants
+
+Use portable SML97 strings and Word8Array byte storage. Preserve operation
+order, loop bounds, source text and per-call/global construction scopes.
+Global text/byte input is shared; mutable bytes_set copies it per call.
+No full OCaml library compatibility or identical storage/primitive cost is claimed.
+
+Portable byte arrays may use different host packing and initialization.
+Copy/sub/map use tabulation; blit/cat/concat use explicit element loops and
+filled destinations in place of OCaml runtime block operations. Bytes.concat
+retains one length pass and ordered segment copies. String.concat interleaves
+separator list cells before the host String.concat, adding a temporary list.
+String.split_on_char retains the source backward scan and empty fields.
+ASCII uppercase and the exact five trim whitespace characters remain explicit.
+
+OCaml's Sys.opaque_identity has no claimed identical SML97 barrier.
+Full consumers and result checks add work and may expose constant results to
+compiler specialization or hoisting. They do not establish equal work to the
+original OCaml runtime. Standard comparisons use identical SML sources.
+
+### Fixed inputs and checks
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 100000000 | 1:40C5B8C |
+| normal | 200000 | 100000000 | 200000:671A7005 |
+
+The source parameter is an operation count; input text remains fixed.
+Normal reductions and selected large counts are explicit rather than a
+universal size argument. Full final large SML runs are unrecorded unless
+listed separately in validation.
+
+Check every scalar, complete produced string/byte sequence or split word list.
+bytes_set additionally checks every final byte. FNV-1a-style Word32 mixing
+consumes the checked observations; it is an added modular result format,
+not source kernel arithmetic. Counts and source character operations fit
+signed 31-bit integers. No floating-point tolerance applies.
+
+### Validation and runtime concerns
+
+Original OCaml function observers and independent byte/word models agree on
+100 edge-count results and all 55 selected profiles. Observer-only hooks
+capture discarded blit/callback results without adding an FFI requirement to
+the SML program. The semantic target checks overlapping copies, isolation,
+trim/ASCII behavior, empty split fields, cyclic boundaries, all selectors,
+unchanged global input and rejection of corrupt character/final-array results.
+Private pilot evidence and canonical wrapper checks have separate scopes.
+
+### Literature and diagnostic interpretation
+
+The preserved benchmark and OCaml library sources establish these algorithms
+and adaptations. Original observations and independent models establish the
+reviewed expected results. No separate string-algorithm paper review is claimed.
+Packing, bounds checks, byte/string conversions, callback specialization,
+temporary allocation, source barriers and the added complete consumers are
+performance questions inferred from source; timing alone does not isolate them.
+
+## bytes_get
+
+### Algorithm and workload
+
+Read characters at cyclic positions of the original fixed text.
+
+The source loop starts at one. Get/set use i mod 574; sub uses i mod 572 and blit i mod 542, deliberately retaining the excluded last valid start. Smoke crosses these modulo boundaries.
+
+### History, aliases and notices
+
+This is selector bytes_get in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Other selectors are separate workloads.
+The Dune source credits adaptation from OCamlPro's benchmark repository;
+the selected .ml/.inc files state no individual benchmark author or notice.
+Preserve them and the suite Unlicense under bytes_get/upstream.
+
+Pin OCaml 4.14.1 library source independently in bytes_get/DEPENDENCIES.json.
+Bytes credits Xavier Leroy/INRIA, copyright 1996; String's implementation
+credits Damien Doligez/INRIA, copyright 2014. Complete selected .ml/.mli
+headers, LGPL 2.1 text and the linking exception are retained under
+bytes_get/upstream-library. The library and benchmark notices are distinct.
+The 574-byte Latin-like text is an embedded source literal, with no separate
+dataset author or notice stated; INPUT-IDENTITY.json records its exact identity.
+
+### Translation and variants
+
+Use portable SML97 strings and Word8Array byte storage. Preserve operation
+order, loop bounds, source text and per-call/global construction scopes.
+Global text/byte input is shared; mutable bytes_set copies it per call.
+No full OCaml library compatibility or identical storage/primitive cost is claimed.
+
+Portable byte arrays may use different host packing and initialization.
+Copy/sub/map use tabulation; blit/cat/concat use explicit element loops and
+filled destinations in place of OCaml runtime block operations. Bytes.concat
+retains one length pass and ordered segment copies. String.concat interleaves
+separator list cells before the host String.concat, adding a temporary list.
+String.split_on_char retains the source backward scan and empty fields.
+ASCII uppercase and the exact five trim whitespace characters remain explicit.
+
+OCaml's Sys.opaque_identity has no claimed identical SML97 barrier.
+Full consumers and result checks add work and may expose constant results to
+compiler specialization or hoisting. They do not establish equal work to the
+original OCaml runtime. Standard comparisons use identical SML sources.
+
+### Fixed inputs and checks
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 575 | 100000000 | 575:D89F0437 |
+| normal | 200000 | 100000000 | 200000:74F22C62 |
+
+The source parameter is an operation count; input text remains fixed.
+Normal reductions and selected large counts are explicit rather than a
+universal size argument. Full final large SML runs are unrecorded unless
+listed separately in validation.
+
+Check every scalar, complete produced string/byte sequence or split word list.
+bytes_set additionally checks every final byte. FNV-1a-style Word32 mixing
+consumes the checked observations; it is an added modular result format,
+not source kernel arithmetic. Counts and source character operations fit
+signed 31-bit integers. No floating-point tolerance applies.
+
+### Validation and runtime concerns
+
+Original OCaml function observers and independent byte/word models agree on
+100 edge-count results and all 55 selected profiles. Observer-only hooks
+capture discarded blit/callback results without adding an FFI requirement to
+the SML program. The semantic target checks overlapping copies, isolation,
+trim/ASCII behavior, empty split fields, cyclic boundaries, all selectors,
+unchanged global input and rejection of corrupt character/final-array results.
+Private pilot evidence and canonical wrapper checks have separate scopes.
+
+### Literature and diagnostic interpretation
+
+The preserved benchmark and OCaml library sources establish these algorithms
+and adaptations. Original observations and independent models establish the
+reviewed expected results. No separate string-algorithm paper review is claimed.
+Packing, bounds checks, byte/string conversions, callback specialization,
+temporary allocation, source barriers and the added complete consumers are
+performance questions inferred from source; timing alone does not isolate them.
+
+## bytes_index
+
+### Algorithm and workload
+
+Search from the beginning for the first lowercase r.
+
+
+
+### History, aliases and notices
+
+This is selector bytes_index in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Other selectors are separate workloads.
+The Dune source credits adaptation from OCamlPro's benchmark repository;
+the selected .ml/.inc files state no individual benchmark author or notice.
+Preserve them and the suite Unlicense under bytes_get/upstream.
+
+Pin OCaml 4.14.1 library source independently in bytes_get/DEPENDENCIES.json.
+Bytes credits Xavier Leroy/INRIA, copyright 1996; String's implementation
+credits Damien Doligez/INRIA, copyright 2014. Complete selected .ml/.mli
+headers, LGPL 2.1 text and the linking exception are retained under
+bytes_get/upstream-library. The library and benchmark notices are distinct.
+The 574-byte Latin-like text is an embedded source literal, with no separate
+dataset author or notice stated; INPUT-IDENTITY.json records its exact identity.
+
+### Translation and variants
+
+Use portable SML97 strings and Word8Array byte storage. Preserve operation
+order, loop bounds, source text and per-call/global construction scopes.
+Global text/byte input is shared; mutable bytes_set copies it per call.
+No full OCaml library compatibility or identical storage/primitive cost is claimed.
+
+Portable byte arrays may use different host packing and initialization.
+Copy/sub/map use tabulation; blit/cat/concat use explicit element loops and
+filled destinations in place of OCaml runtime block operations. Bytes.concat
+retains one length pass and ordered segment copies. String.concat interleaves
+separator list cells before the host String.concat, adding a temporary list.
+String.split_on_char retains the source backward scan and empty fields.
+ASCII uppercase and the exact five trim whitespace characters remain explicit.
+
+OCaml's Sys.opaque_identity has no claimed identical SML97 barrier.
+Full consumers and result checks add work and may expose constant results to
+compiler specialization or hoisting. They do not establish equal work to the
+original OCaml runtime. Standard comparisons use identical SML sources.
+
+### Fixed inputs and checks
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 10000000 | 1:20C5866 |
+| normal | 200000 | 10000000 | 200000:556E3A05 |
+
+The source parameter is an operation count; input text remains fixed.
+Normal reductions and selected large counts are explicit rather than a
+universal size argument. Full final large SML runs are unrecorded unless
+listed separately in validation.
+
+Check every scalar, complete produced string/byte sequence or split word list.
+bytes_set additionally checks every final byte. FNV-1a-style Word32 mixing
+consumes the checked observations; it is an added modular result format,
+not source kernel arithmetic. Counts and source character operations fit
+signed 31-bit integers. No floating-point tolerance applies.
+
+### Validation and runtime concerns
+
+Original OCaml function observers and independent byte/word models agree on
+100 edge-count results and all 55 selected profiles. Observer-only hooks
+capture discarded blit/callback results without adding an FFI requirement to
+the SML program. The semantic target checks overlapping copies, isolation,
+trim/ASCII behavior, empty split fields, cyclic boundaries, all selectors,
+unchanged global input and rejection of corrupt character/final-array results.
+Private pilot evidence and canonical wrapper checks have separate scopes.
+
+### Literature and diagnostic interpretation
+
+The preserved benchmark and OCaml library sources establish these algorithms
+and adaptations. Original observations and independent models establish the
+reviewed expected results. No separate string-algorithm paper review is claimed.
+Packing, bounds checks, byte/string conversions, callback specialization,
+temporary allocation, source barriers and the added complete consumers are
+performance questions inferred from source; timing alone does not isolate them.
+
+## bytes_iter
+
+### Algorithm and workload
+
+Traverse the fixed text and invoke the source callback for every character.
+
+ The original callback returns unit; the portable callback counts all 574 visits. This additional callback work is explicit.
+
+### History, aliases and notices
+
+This is selector bytes_iter in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Other selectors are separate workloads.
+The Dune source credits adaptation from OCamlPro's benchmark repository;
+the selected .ml/.inc files state no individual benchmark author or notice.
+Preserve them and the suite Unlicense under bytes_get/upstream.
+
+Pin OCaml 4.14.1 library source independently in bytes_get/DEPENDENCIES.json.
+Bytes credits Xavier Leroy/INRIA, copyright 1996; String's implementation
+credits Damien Doligez/INRIA, copyright 2014. Complete selected .ml/.mli
+headers, LGPL 2.1 text and the linking exception are retained under
+bytes_get/upstream-library. The library and benchmark notices are distinct.
+The 574-byte Latin-like text is an embedded source literal, with no separate
+dataset author or notice stated; INPUT-IDENTITY.json records its exact identity.
+
+### Translation and variants
+
+Use portable SML97 strings and Word8Array byte storage. Preserve operation
+order, loop bounds, source text and per-call/global construction scopes.
+Global text/byte input is shared; mutable bytes_set copies it per call.
+No full OCaml library compatibility or identical storage/primitive cost is claimed.
+
+Portable byte arrays may use different host packing and initialization.
+Copy/sub/map use tabulation; blit/cat/concat use explicit element loops and
+filled destinations in place of OCaml runtime block operations. Bytes.concat
+retains one length pass and ordered segment copies. String.concat interleaves
+separator list cells before the host String.concat, adding a temporary list.
+String.split_on_char retains the source backward scan and empty fields.
+ASCII uppercase and the exact five trim whitespace characters remain explicit.
+
+OCaml's Sys.opaque_identity has no claimed identical SML97 barrier.
+Full consumers and result checks add work and may expose constant results to
+compiler specialization or hoisting. They do not establish equal work to the
+original OCaml runtime. Standard comparisons use identical SML sources.
+
+### Fixed inputs and checks
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 1000000 | 1:3B0FD821 |
+| normal | 2000 | 1000000 | 2000:73398505 |
+
+The source parameter is an operation count; input text remains fixed.
+Normal reductions and selected large counts are explicit rather than a
+universal size argument. Full final large SML runs are unrecorded unless
+listed separately in validation.
+
+Check every scalar, complete produced string/byte sequence or split word list.
+bytes_set additionally checks every final byte. FNV-1a-style Word32 mixing
+consumes the checked observations; it is an added modular result format,
+not source kernel arithmetic. Counts and source character operations fit
+signed 31-bit integers. No floating-point tolerance applies.
+
+### Validation and runtime concerns
+
+Original OCaml function observers and independent byte/word models agree on
+100 edge-count results and all 55 selected profiles. Observer-only hooks
+capture discarded blit/callback results without adding an FFI requirement to
+the SML program. The semantic target checks overlapping copies, isolation,
+trim/ASCII behavior, empty split fields, cyclic boundaries, all selectors,
+unchanged global input and rejection of corrupt character/final-array results.
+Private pilot evidence and canonical wrapper checks have separate scopes.
+
+### Literature and diagnostic interpretation
+
+The preserved benchmark and OCaml library sources establish these algorithms
+and adaptations. Original observations and independent models establish the
+reviewed expected results. No separate string-algorithm paper review is claimed.
+Packing, bounds checks, byte/string conversions, callback specialization,
+temporary allocation, source barriers and the added complete consumers are
+performance questions inferred from source; timing alone does not isolate them.
+
+## bytes_map
+
+### Algorithm and workload
+
+Map every original character to an exclamation mark.
+
+
+
+### History, aliases and notices
+
+This is selector bytes_map in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Other selectors are separate workloads.
+The Dune source credits adaptation from OCamlPro's benchmark repository;
+the selected .ml/.inc files state no individual benchmark author or notice.
+Preserve them and the suite Unlicense under bytes_get/upstream.
+
+Pin OCaml 4.14.1 library source independently in bytes_get/DEPENDENCIES.json.
+Bytes credits Xavier Leroy/INRIA, copyright 1996; String's implementation
+credits Damien Doligez/INRIA, copyright 2014. Complete selected .ml/.mli
+headers, LGPL 2.1 text and the linking exception are retained under
+bytes_get/upstream-library. The library and benchmark notices are distinct.
+The 574-byte Latin-like text is an embedded source literal, with no separate
+dataset author or notice stated; INPUT-IDENTITY.json records its exact identity.
+
+### Translation and variants
+
+Use portable SML97 strings and Word8Array byte storage. Preserve operation
+order, loop bounds, source text and per-call/global construction scopes.
+Global text/byte input is shared; mutable bytes_set copies it per call.
+No full OCaml library compatibility or identical storage/primitive cost is claimed.
+
+Portable byte arrays may use different host packing and initialization.
+Copy/sub/map use tabulation; blit/cat/concat use explicit element loops and
+filled destinations in place of OCaml runtime block operations. Bytes.concat
+retains one length pass and ordered segment copies. String.concat interleaves
+separator list cells before the host String.concat, adding a temporary list.
+String.split_on_char retains the source backward scan and empty fields.
+ASCII uppercase and the exact five trim whitespace characters remain explicit.
+
+OCaml's Sys.opaque_identity has no claimed identical SML97 barrier.
+Full consumers and result checks add work and may expose constant results to
+compiler specialization or hoisting. They do not establish equal work to the
+original OCaml runtime. Standard comparisons use identical SML sources.
+
+### Fixed inputs and checks
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 1000000 | 1:1B281A12 |
+| normal | 2000 | 1000000 | 2000:C2A3F6D5 |
+| large | 100000 | 1000000 | 100000:FC708FA5 |
+
+The source parameter is an operation count; input text remains fixed.
+Normal reductions and selected large counts are explicit rather than a
+universal size argument. Full final large SML runs are unrecorded unless
+listed separately in validation.
+
+Check every scalar, complete produced string/byte sequence or split word list.
+bytes_set additionally checks every final byte. FNV-1a-style Word32 mixing
+consumes the checked observations; it is an added modular result format,
+not source kernel arithmetic. Counts and source character operations fit
+signed 31-bit integers. No floating-point tolerance applies.
+
+### Validation and runtime concerns
+
+Original OCaml function observers and independent byte/word models agree on
+100 edge-count results and all 55 selected profiles. Observer-only hooks
+capture discarded blit/callback results without adding an FFI requirement to
+the SML program. The semantic target checks overlapping copies, isolation,
+trim/ASCII behavior, empty split fields, cyclic boundaries, all selectors,
+unchanged global input and rejection of corrupt character/final-array results.
+Private pilot evidence and canonical wrapper checks have separate scopes.
+
+### Literature and diagnostic interpretation
+
+The preserved benchmark and OCaml library sources establish these algorithms
+and adaptations. Original observations and independent models establish the
+reviewed expected results. No separate string-algorithm paper review is claimed.
+Packing, bounds checks, byte/string conversions, callback specialization,
+temporary allocation, source barriers and the added complete consumers are
+performance questions inferred from source; timing alone does not isolate them.
+
+## bytes_set
+
+### Algorithm and workload
+
+Mutate a per-call copy of the original text to spaces at cyclic positions.
+
+The source loop starts at one. Get/set use i mod 574; sub uses i mod 572 and blit i mod 542, deliberately retaining the excluded last valid start. Smoke crosses these modulo boundaries. The original function is defined and configured but absent from the CLI dispatch; the reference exports and calls that function directly. A copy is made once per call, including zero iterations, and the final complete byte sequence is checked.
+
+### History, aliases and notices
+
+This is selector bytes_set in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Other selectors are separate workloads.
+The Dune source credits adaptation from OCamlPro's benchmark repository;
+the selected .ml/.inc files state no individual benchmark author or notice.
+Preserve them and the suite Unlicense under bytes_get/upstream.
+
+Pin OCaml 4.14.1 library source independently in bytes_get/DEPENDENCIES.json.
+Bytes credits Xavier Leroy/INRIA, copyright 1996; String's implementation
+credits Damien Doligez/INRIA, copyright 2014. Complete selected .ml/.mli
+headers, LGPL 2.1 text and the linking exception are retained under
+bytes_get/upstream-library. The library and benchmark notices are distinct.
+The 574-byte Latin-like text is an embedded source literal, with no separate
+dataset author or notice stated; INPUT-IDENTITY.json records its exact identity.
+
+### Translation and variants
+
+Use portable SML97 strings and Word8Array byte storage. Preserve operation
+order, loop bounds, source text and per-call/global construction scopes.
+Global text/byte input is shared; mutable bytes_set copies it per call.
+No full OCaml library compatibility or identical storage/primitive cost is claimed.
+
+Portable byte arrays may use different host packing and initialization.
+Copy/sub/map use tabulation; blit/cat/concat use explicit element loops and
+filled destinations in place of OCaml runtime block operations. Bytes.concat
+retains one length pass and ordered segment copies. String.concat interleaves
+separator list cells before the host String.concat, adding a temporary list.
+String.split_on_char retains the source backward scan and empty fields.
+ASCII uppercase and the exact five trim whitespace characters remain explicit.
+
+OCaml's Sys.opaque_identity has no claimed identical SML97 barrier.
+Full consumers and result checks add work and may expose constant results to
+compiler specialization or hoisting. They do not establish equal work to the
+original OCaml runtime. Standard comparisons use identical SML sources.
+
+### Fixed inputs and checks
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 575 | 1000000000 | 575:21D9374E |
+| normal | 200000 | 1000000000 | 200000:FA28B2A8 |
+| large | 1000000 | 1000000000 | 1000000:84BE56A8 |
+
+The source parameter is an operation count; input text remains fixed.
+Normal reductions and selected large counts are explicit rather than a
+universal size argument. Full final large SML runs are unrecorded unless
+listed separately in validation.
+
+Check every scalar, complete produced string/byte sequence or split word list.
+bytes_set additionally checks every final byte. FNV-1a-style Word32 mixing
+consumes the checked observations; it is an added modular result format,
+not source kernel arithmetic. Counts and source character operations fit
+signed 31-bit integers. No floating-point tolerance applies.
+
+### Validation and runtime concerns
+
+Original OCaml function observers and independent byte/word models agree on
+100 edge-count results and all 55 selected profiles. Observer-only hooks
+capture discarded blit/callback results without adding an FFI requirement to
+the SML program. The semantic target checks overlapping copies, isolation,
+trim/ASCII behavior, empty split fields, cyclic boundaries, all selectors,
+unchanged global input and rejection of corrupt character/final-array results.
+Private pilot evidence and canonical wrapper checks have separate scopes.
+
+### Literature and diagnostic interpretation
+
+The preserved benchmark and OCaml library sources establish these algorithms
+and adaptations. Original observations and independent models establish the
+reviewed expected results. No separate string-algorithm paper review is claimed.
+Packing, bounds checks, byte/string conversions, callback specialization,
+temporary allocation, source barriers and the added complete consumers are
+performance questions inferred from source; timing alone does not isolate them.
+
+## bytes_sub
+
+### Algorithm and workload
+
+Copy two characters at cyclic source positions.
+
+The source loop starts at one. Get/set use i mod 574; sub uses i mod 572 and blit i mod 542, deliberately retaining the excluded last valid start. Smoke crosses these modulo boundaries.
+
+### History, aliases and notices
+
+This is selector bytes_sub in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Other selectors are separate workloads.
+The Dune source credits adaptation from OCamlPro's benchmark repository;
+the selected .ml/.inc files state no individual benchmark author or notice.
+Preserve them and the suite Unlicense under bytes_get/upstream.
+
+Pin OCaml 4.14.1 library source independently in bytes_get/DEPENDENCIES.json.
+Bytes credits Xavier Leroy/INRIA, copyright 1996; String's implementation
+credits Damien Doligez/INRIA, copyright 2014. Complete selected .ml/.mli
+headers, LGPL 2.1 text and the linking exception are retained under
+bytes_get/upstream-library. The library and benchmark notices are distinct.
+The 574-byte Latin-like text is an embedded source literal, with no separate
+dataset author or notice stated; INPUT-IDENTITY.json records its exact identity.
+
+### Translation and variants
+
+Use portable SML97 strings and Word8Array byte storage. Preserve operation
+order, loop bounds, source text and per-call/global construction scopes.
+Global text/byte input is shared; mutable bytes_set copies it per call.
+No full OCaml library compatibility or identical storage/primitive cost is claimed.
+
+Portable byte arrays may use different host packing and initialization.
+Copy/sub/map use tabulation; blit/cat/concat use explicit element loops and
+filled destinations in place of OCaml runtime block operations. Bytes.concat
+retains one length pass and ordered segment copies. String.concat interleaves
+separator list cells before the host String.concat, adding a temporary list.
+String.split_on_char retains the source backward scan and empty fields.
+ASCII uppercase and the exact five trim whitespace characters remain explicit.
+
+OCaml's Sys.opaque_identity has no claimed identical SML97 barrier.
+Full consumers and result checks add work and may expose constant results to
+compiler specialization or hoisting. They do not establish equal work to the
+original OCaml runtime. Standard comparisons use identical SML sources.
+
+### Fixed inputs and checks
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 575 | 100000000 | 575:F2DD3CD1 |
+| normal | 20000 | 100000000 | 20000:1C500846 |
+
+The source parameter is an operation count; input text remains fixed.
+Normal reductions and selected large counts are explicit rather than a
+universal size argument. Full final large SML runs are unrecorded unless
+listed separately in validation.
+
+Check every scalar, complete produced string/byte sequence or split word list.
+bytes_set additionally checks every final byte. FNV-1a-style Word32 mixing
+consumes the checked observations; it is an added modular result format,
+not source kernel arithmetic. Counts and source character operations fit
+signed 31-bit integers. No floating-point tolerance applies.
+
+### Validation and runtime concerns
+
+Original OCaml function observers and independent byte/word models agree on
+100 edge-count results and all 55 selected profiles. Observer-only hooks
+capture discarded blit/callback results without adding an FFI requirement to
+the SML program. The semantic target checks overlapping copies, isolation,
+trim/ASCII behavior, empty split fields, cyclic boundaries, all selectors,
+unchanged global input and rejection of corrupt character/final-array results.
+Private pilot evidence and canonical wrapper checks have separate scopes.
+
+### Literature and diagnostic interpretation
+
+The preserved benchmark and OCaml library sources establish these algorithms
+and adaptations. Original observations and independent models establish the
+reviewed expected results. No separate string-algorithm paper review is claimed.
+Packing, bounds checks, byte/string conversions, callback specialization,
+temporary allocation, source barriers and the added complete consumers are
+performance questions inferred from source; timing alone does not isolate them.
+
+## bytes_trim
+
+### Algorithm and workload
+
+Remove the original trailing newlines from the fixed trim input.
+
+
+
+### History, aliases and notices
+
+This is selector bytes_trim in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Other selectors are separate workloads.
+The Dune source credits adaptation from OCamlPro's benchmark repository;
+the selected .ml/.inc files state no individual benchmark author or notice.
+Preserve them and the suite Unlicense under bytes_get/upstream.
+
+Pin OCaml 4.14.1 library source independently in bytes_get/DEPENDENCIES.json.
+Bytes credits Xavier Leroy/INRIA, copyright 1996; String's implementation
+credits Damien Doligez/INRIA, copyright 2014. Complete selected .ml/.mli
+headers, LGPL 2.1 text and the linking exception are retained under
+bytes_get/upstream-library. The library and benchmark notices are distinct.
+The 574-byte Latin-like text is an embedded source literal, with no separate
+dataset author or notice stated; INPUT-IDENTITY.json records its exact identity.
+
+### Translation and variants
+
+Use portable SML97 strings and Word8Array byte storage. Preserve operation
+order, loop bounds, source text and per-call/global construction scopes.
+Global text/byte input is shared; mutable bytes_set copies it per call.
+No full OCaml library compatibility or identical storage/primitive cost is claimed.
+
+Portable byte arrays may use different host packing and initialization.
+Copy/sub/map use tabulation; blit/cat/concat use explicit element loops and
+filled destinations in place of OCaml runtime block operations. Bytes.concat
+retains one length pass and ordered segment copies. String.concat interleaves
+separator list cells before the host String.concat, adding a temporary list.
+String.split_on_char retains the source backward scan and empty fields.
+ASCII uppercase and the exact five trim whitespace characters remain explicit.
+
+OCaml's Sys.opaque_identity has no claimed identical SML97 barrier.
+Full consumers and result checks add work and may expose constant results to
+compiler specialization or hoisting. They do not establish equal work to the
+original OCaml runtime. Standard comparisons use identical SML sources.
+
+### Fixed inputs and checks
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 2500000 | 1:BAD021D7 |
+| normal | 20000 | 2500000 | 20000:23F41E45 |
+
+The source parameter is an operation count; input text remains fixed.
+Normal reductions and selected large counts are explicit rather than a
+universal size argument. Full final large SML runs are unrecorded unless
+listed separately in validation.
+
+Check every scalar, complete produced string/byte sequence or split word list.
+bytes_set additionally checks every final byte. FNV-1a-style Word32 mixing
+consumes the checked observations; it is an added modular result format,
+not source kernel arithmetic. Counts and source character operations fit
+signed 31-bit integers. No floating-point tolerance applies.
+
+### Validation and runtime concerns
+
+Original OCaml function observers and independent byte/word models agree on
+100 edge-count results and all 55 selected profiles. Observer-only hooks
+capture discarded blit/callback results without adding an FFI requirement to
+the SML program. The semantic target checks overlapping copies, isolation,
+trim/ASCII behavior, empty split fields, cyclic boundaries, all selectors,
+unchanged global input and rejection of corrupt character/final-array results.
+Private pilot evidence and canonical wrapper checks have separate scopes.
+
+### Literature and diagnostic interpretation
+
+The preserved benchmark and OCaml library sources establish these algorithms
+and adaptations. Original observations and independent models establish the
+reviewed expected results. No separate string-algorithm paper review is claimed.
+Packing, bounds checks, byte/string conversions, callback specialization,
+temporary allocation, source barriers and the added complete consumers are
+performance questions inferred from source; timing alone does not isolate them.
+
+## bytes_uppercase_ascii
+
+### Algorithm and workload
+
+Convert the original text to uppercase with ASCII rules.
+
+
+
+### History, aliases and notices
+
+This is selector bytes_uppercase_ascii in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Other selectors are separate workloads.
+The Dune source credits adaptation from OCamlPro's benchmark repository;
+the selected .ml/.inc files state no individual benchmark author or notice.
+Preserve them and the suite Unlicense under bytes_get/upstream.
+
+Pin OCaml 4.14.1 library source independently in bytes_get/DEPENDENCIES.json.
+Bytes credits Xavier Leroy/INRIA, copyright 1996; String's implementation
+credits Damien Doligez/INRIA, copyright 2014. Complete selected .ml/.mli
+headers, LGPL 2.1 text and the linking exception are retained under
+bytes_get/upstream-library. The library and benchmark notices are distinct.
+The 574-byte Latin-like text is an embedded source literal, with no separate
+dataset author or notice stated; INPUT-IDENTITY.json records its exact identity.
+
+### Translation and variants
+
+Use portable SML97 strings and Word8Array byte storage. Preserve operation
+order, loop bounds, source text and per-call/global construction scopes.
+Global text/byte input is shared; mutable bytes_set copies it per call.
+No full OCaml library compatibility or identical storage/primitive cost is claimed.
+
+Portable byte arrays may use different host packing and initialization.
+Copy/sub/map use tabulation; blit/cat/concat use explicit element loops and
+filled destinations in place of OCaml runtime block operations. Bytes.concat
+retains one length pass and ordered segment copies. String.concat interleaves
+separator list cells before the host String.concat, adding a temporary list.
+String.split_on_char retains the source backward scan and empty fields.
+ASCII uppercase and the exact five trim whitespace characters remain explicit.
+
+OCaml's Sys.opaque_identity has no claimed identical SML97 barrier.
+Full consumers and result checks add work and may expose constant results to
+compiler specialization or hoisting. They do not establish equal work to the
+original OCaml runtime. Standard comparisons use identical SML sources.
+
+### Fixed inputs and checks
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 1000000 | 1:CC561E2E |
+| normal | 2000 | 1000000 | 2000:44E33535 |
+
+The source parameter is an operation count; input text remains fixed.
+Normal reductions and selected large counts are explicit rather than a
+universal size argument. Full final large SML runs are unrecorded unless
+listed separately in validation.
+
+Check every scalar, complete produced string/byte sequence or split word list.
+bytes_set additionally checks every final byte. FNV-1a-style Word32 mixing
+consumes the checked observations; it is an added modular result format,
+not source kernel arithmetic. Counts and source character operations fit
+signed 31-bit integers. No floating-point tolerance applies.
+
+### Validation and runtime concerns
+
+Original OCaml function observers and independent byte/word models agree on
+100 edge-count results and all 55 selected profiles. Observer-only hooks
+capture discarded blit/callback results without adding an FFI requirement to
+the SML program. The semantic target checks overlapping copies, isolation,
+trim/ASCII behavior, empty split fields, cyclic boundaries, all selectors,
+unchanged global input and rejection of corrupt character/final-array results.
+Private pilot evidence and canonical wrapper checks have separate scopes.
+
+### Literature and diagnostic interpretation
+
+The preserved benchmark and OCaml library sources establish these algorithms
+and adaptations. Original observations and independent models establish the
+reviewed expected results. No separate string-algorithm paper review is claimed.
+Packing, bounds checks, byte/string conversions, callback specialization,
+temporary allocation, source barriers and the added complete consumers are
+performance questions inferred from source; timing alone does not isolate them.
+
+## string_blit
+
+### Algorithm and workload
+
+Copy thirty-two source characters into a newly filled byte destination.
+
+The source loop starts at one. Get/set use i mod 574; sub uses i mod 572 and blit i mod 542, deliberately retaining the excluded last valid start. Smoke crosses these modulo boundaries.
+
+### History, aliases and notices
+
+This is selector string_blit in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Other selectors are separate workloads.
+The Dune source credits adaptation from OCamlPro's benchmark repository;
+the selected .ml/.inc files state no individual benchmark author or notice.
+Preserve them and the suite Unlicense under string_get/upstream.
+
+Pin OCaml 4.14.1 library source independently in string_get/DEPENDENCIES.json.
+Bytes credits Xavier Leroy/INRIA, copyright 1996; String's implementation
+credits Damien Doligez/INRIA, copyright 2014. Complete selected .ml/.mli
+headers, LGPL 2.1 text and the linking exception are retained under
+string_get/upstream-library. The library and benchmark notices are distinct.
+The 574-byte Latin-like text is an embedded source literal, with no separate
+dataset author or notice stated; INPUT-IDENTITY.json records its exact identity.
+
+### Translation and variants
+
+Use portable SML97 strings and Word8Array byte storage. Preserve operation
+order, loop bounds, source text and per-call/global construction scopes.
+Global text/byte input is shared; mutable bytes_set copies it per call.
+No full OCaml library compatibility or identical storage/primitive cost is claimed.
+
+Portable byte arrays may use different host packing and initialization.
+Copy/sub/map use tabulation; blit/cat/concat use explicit element loops and
+filled destinations in place of OCaml runtime block operations. Bytes.concat
+retains one length pass and ordered segment copies. String.concat interleaves
+separator list cells before the host String.concat, adding a temporary list.
+String.split_on_char retains the source backward scan and empty fields.
+ASCII uppercase and the exact five trim whitespace characters remain explicit.
+
+OCaml's Sys.opaque_identity has no claimed identical SML97 barrier.
+Full consumers and result checks add work and may expose constant results to
+compiler specialization or hoisting. They do not establish equal work to the
+original OCaml runtime. Standard comparisons use identical SML sources.
+
+### Fixed inputs and checks
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 575 | 25000000 | 575:1DB491D0 |
+| normal | 20000 | 25000000 | 20000:4CD88C58 |
+
+The source parameter is an operation count; input text remains fixed.
+Normal reductions and selected large counts are explicit rather than a
+universal size argument. Full final large SML runs are unrecorded unless
+listed separately in validation.
+
+Check every scalar, complete produced string/byte sequence or split word list.
+bytes_set additionally checks every final byte. FNV-1a-style Word32 mixing
+consumes the checked observations; it is an added modular result format,
+not source kernel arithmetic. Counts and source character operations fit
+signed 31-bit integers. No floating-point tolerance applies.
+
+### Validation and runtime concerns
+
+Original OCaml function observers and independent byte/word models agree on
+100 edge-count results and all 55 selected profiles. Observer-only hooks
+capture discarded blit/callback results without adding an FFI requirement to
+the SML program. The semantic target checks overlapping copies, isolation,
+trim/ASCII behavior, empty split fields, cyclic boundaries, all selectors,
+unchanged global input and rejection of corrupt character/final-array results.
+Private pilot evidence and canonical wrapper checks have separate scopes.
+
+### Literature and diagnostic interpretation
+
+The preserved benchmark and OCaml library sources establish these algorithms
+and adaptations. Original observations and independent models establish the
+reviewed expected results. No separate string-algorithm paper review is claimed.
+Packing, bounds checks, byte/string conversions, callback specialization,
+temporary allocation, source barriers and the added complete consumers are
+performance questions inferred from source; timing alone does not isolate them.
+
+## string_compare
+
+### Algorithm and workload
+
+Sum all ordered pairwise comparisons of words from the original text.
+
+ Split the words once per call, retain both nested left folds and their original argument order. Normalized comparisons sum to zero; ordered equal pairs total 133, independently counted from word multiplicities.
+
+### History, aliases and notices
+
+This is selector string_compare in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Other selectors are separate workloads.
+The Dune source credits adaptation from OCamlPro's benchmark repository;
+the selected .ml/.inc files state no individual benchmark author or notice.
+Preserve them and the suite Unlicense under string_get/upstream.
+
+Pin OCaml 4.14.1 library source independently in string_get/DEPENDENCIES.json.
+Bytes credits Xavier Leroy/INRIA, copyright 1996; String's implementation
+credits Damien Doligez/INRIA, copyright 2014. Complete selected .ml/.mli
+headers, LGPL 2.1 text and the linking exception are retained under
+string_get/upstream-library. The library and benchmark notices are distinct.
+The 574-byte Latin-like text is an embedded source literal, with no separate
+dataset author or notice stated; INPUT-IDENTITY.json records its exact identity.
+
+### Translation and variants
+
+Use portable SML97 strings and Word8Array byte storage. Preserve operation
+order, loop bounds, source text and per-call/global construction scopes.
+Global text/byte input is shared; mutable bytes_set copies it per call.
+No full OCaml library compatibility or identical storage/primitive cost is claimed.
+
+Portable byte arrays may use different host packing and initialization.
+Copy/sub/map use tabulation; blit/cat/concat use explicit element loops and
+filled destinations in place of OCaml runtime block operations. Bytes.concat
+retains one length pass and ordered segment copies. String.concat interleaves
+separator list cells before the host String.concat, adding a temporary list.
+String.split_on_char retains the source backward scan and empty fields.
+ASCII uppercase and the exact five trim whitespace characters remain explicit.
+
+OCaml's Sys.opaque_identity has no claimed identical SML97 barrier.
+Full consumers and result checks add work and may expose constant results to
+compiler specialization or hoisting. They do not establish equal work to the
+original OCaml runtime. Standard comparisons use identical SML sources.
+
+### Fixed inputs and checks
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 10000 | 1:50C5D1F |
+| normal | 100 | 10000 | 100:E5464095 |
+| large | 10000 | 10000 | 10000:73D70505 |
+
+The source parameter is an operation count; input text remains fixed.
+Normal reductions and selected large counts are explicit rather than a
+universal size argument. Full final large SML runs are unrecorded unless
+listed separately in validation.
+
+Check every scalar, complete produced string/byte sequence or split word list.
+bytes_set additionally checks every final byte. FNV-1a-style Word32 mixing
+consumes the checked observations; it is an added modular result format,
+not source kernel arithmetic. Counts and source character operations fit
+signed 31-bit integers. No floating-point tolerance applies.
+
+### Validation and runtime concerns
+
+Original OCaml function observers and independent byte/word models agree on
+100 edge-count results and all 55 selected profiles. Observer-only hooks
+capture discarded blit/callback results without adding an FFI requirement to
+the SML program. The semantic target checks overlapping copies, isolation,
+trim/ASCII behavior, empty split fields, cyclic boundaries, all selectors,
+unchanged global input and rejection of corrupt character/final-array results.
+Private pilot evidence and canonical wrapper checks have separate scopes.
+
+### Literature and diagnostic interpretation
+
+The preserved benchmark and OCaml library sources establish these algorithms
+and adaptations. Original observations and independent models establish the
+reviewed expected results. No separate string-algorithm paper review is claimed.
+Packing, bounds checks, byte/string conversions, callback specialization,
+temporary allocation, source barriers and the added complete consumers are
+performance questions inferred from source; timing alone does not isolate them.
+
+## string_concat
+
+### Algorithm and workload
+
+Join the original four fish words with single-space separators.
+
+ Bytes constructs its four arrays and separator once per call; String retains the word list expression inside the loop. The exact result is I AM A FISH.
+
+### History, aliases and notices
+
+This is selector string_concat in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Other selectors are separate workloads.
+The Dune source credits adaptation from OCamlPro's benchmark repository;
+the selected .ml/.inc files state no individual benchmark author or notice.
+Preserve them and the suite Unlicense under string_get/upstream.
+
+Pin OCaml 4.14.1 library source independently in string_get/DEPENDENCIES.json.
+Bytes credits Xavier Leroy/INRIA, copyright 1996; String's implementation
+credits Damien Doligez/INRIA, copyright 2014. Complete selected .ml/.mli
+headers, LGPL 2.1 text and the linking exception are retained under
+string_get/upstream-library. The library and benchmark notices are distinct.
+The 574-byte Latin-like text is an embedded source literal, with no separate
+dataset author or notice stated; INPUT-IDENTITY.json records its exact identity.
+
+### Translation and variants
+
+Use portable SML97 strings and Word8Array byte storage. Preserve operation
+order, loop bounds, source text and per-call/global construction scopes.
+Global text/byte input is shared; mutable bytes_set copies it per call.
+No full OCaml library compatibility or identical storage/primitive cost is claimed.
+
+Portable byte arrays may use different host packing and initialization.
+Copy/sub/map use tabulation; blit/cat/concat use explicit element loops and
+filled destinations in place of OCaml runtime block operations. Bytes.concat
+retains one length pass and ordered segment copies. String.concat interleaves
+separator list cells before the host String.concat, adding a temporary list.
+String.split_on_char retains the source backward scan and empty fields.
+ASCII uppercase and the exact five trim whitespace characters remain explicit.
+
+OCaml's Sys.opaque_identity has no claimed identical SML97 barrier.
+Full consumers and result checks add work and may expose constant results to
+compiler specialization or hoisting. They do not establish equal work to the
+original OCaml runtime. Standard comparisons use identical SML sources.
+
+### Fixed inputs and checks
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 20000000 | 1:6A917A1C |
+| normal | 20000 | 20000000 | 20000:7DA2FDA5 |
+
+The source parameter is an operation count; input text remains fixed.
+Normal reductions and selected large counts are explicit rather than a
+universal size argument. Full final large SML runs are unrecorded unless
+listed separately in validation.
+
+Check every scalar, complete produced string/byte sequence or split word list.
+bytes_set additionally checks every final byte. FNV-1a-style Word32 mixing
+consumes the checked observations; it is an added modular result format,
+not source kernel arithmetic. Counts and source character operations fit
+signed 31-bit integers. No floating-point tolerance applies.
+
+### Validation and runtime concerns
+
+Original OCaml function observers and independent byte/word models agree on
+100 edge-count results and all 55 selected profiles. Observer-only hooks
+capture discarded blit/callback results without adding an FFI requirement to
+the SML program. The semantic target checks overlapping copies, isolation,
+trim/ASCII behavior, empty split fields, cyclic boundaries, all selectors,
+unchanged global input and rejection of corrupt character/final-array results.
+Private pilot evidence and canonical wrapper checks have separate scopes.
+
+### Literature and diagnostic interpretation
+
+The preserved benchmark and OCaml library sources establish these algorithms
+and adaptations. Original observations and independent models establish the
+reviewed expected results. No separate string-algorithm paper review is claimed.
+Packing, bounds checks, byte/string conversions, callback specialization,
+temporary allocation, source barriers and the added complete consumers are
+performance questions inferred from source; timing alone does not isolate them.
+
+## string_contains
+
+### Algorithm and workload
+
+Test whether the fixed text contains a lowercase r.
+
+
+
+### History, aliases and notices
+
+This is selector string_contains in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Other selectors are separate workloads.
+The Dune source credits adaptation from OCamlPro's benchmark repository;
+the selected .ml/.inc files state no individual benchmark author or notice.
+Preserve them and the suite Unlicense under string_get/upstream.
+
+Pin OCaml 4.14.1 library source independently in string_get/DEPENDENCIES.json.
+Bytes credits Xavier Leroy/INRIA, copyright 1996; String's implementation
+credits Damien Doligez/INRIA, copyright 2014. Complete selected .ml/.mli
+headers, LGPL 2.1 text and the linking exception are retained under
+string_get/upstream-library. The library and benchmark notices are distinct.
+The 574-byte Latin-like text is an embedded source literal, with no separate
+dataset author or notice stated; INPUT-IDENTITY.json records its exact identity.
+
+### Translation and variants
+
+Use portable SML97 strings and Word8Array byte storage. Preserve operation
+order, loop bounds, source text and per-call/global construction scopes.
+Global text/byte input is shared; mutable bytes_set copies it per call.
+No full OCaml library compatibility or identical storage/primitive cost is claimed.
+
+Portable byte arrays may use different host packing and initialization.
+Copy/sub/map use tabulation; blit/cat/concat use explicit element loops and
+filled destinations in place of OCaml runtime block operations. Bytes.concat
+retains one length pass and ordered segment copies. String.concat interleaves
+separator list cells before the host String.concat, adding a temporary list.
+String.split_on_char retains the source backward scan and empty fields.
+ASCII uppercase and the exact five trim whitespace characters remain explicit.
+
+OCaml's Sys.opaque_identity has no claimed identical SML97 barrier.
+Full consumers and result checks add work and may expose constant results to
+compiler specialization or hoisting. They do not establish equal work to the
+original OCaml runtime. Standard comparisons use identical SML sources.
+
+### Fixed inputs and checks
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 25000000 | 1:40C5B8C |
+| normal | 200000 | 25000000 | 200000:671A7005 |
+
+The source parameter is an operation count; input text remains fixed.
+Normal reductions and selected large counts are explicit rather than a
+universal size argument. Full final large SML runs are unrecorded unless
+listed separately in validation.
+
+Check every scalar, complete produced string/byte sequence or split word list.
+bytes_set additionally checks every final byte. FNV-1a-style Word32 mixing
+consumes the checked observations; it is an added modular result format,
+not source kernel arithmetic. Counts and source character operations fit
+signed 31-bit integers. No floating-point tolerance applies.
+
+### Validation and runtime concerns
+
+Original OCaml function observers and independent byte/word models agree on
+100 edge-count results and all 55 selected profiles. Observer-only hooks
+capture discarded blit/callback results without adding an FFI requirement to
+the SML program. The semantic target checks overlapping copies, isolation,
+trim/ASCII behavior, empty split fields, cyclic boundaries, all selectors,
+unchanged global input and rejection of corrupt character/final-array results.
+Private pilot evidence and canonical wrapper checks have separate scopes.
+
+### Literature and diagnostic interpretation
+
+The preserved benchmark and OCaml library sources establish these algorithms
+and adaptations. Original observations and independent models establish the
+reviewed expected results. No separate string-algorithm paper review is claimed.
+Packing, bounds checks, byte/string conversions, callback specialization,
+temporary allocation, source barriers and the added complete consumers are
+performance questions inferred from source; timing alone does not isolate them.
+
+## string_equal
+
+### Algorithm and workload
+
+Count all ordered pairs of equal words from the original text.
+
+ Split the words once per call, retain both nested left folds and their original argument order. Normalized comparisons sum to zero; ordered equal pairs total 133, independently counted from word multiplicities.
+
+### History, aliases and notices
+
+This is selector string_equal in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Other selectors are separate workloads.
+The Dune source credits adaptation from OCamlPro's benchmark repository;
+the selected .ml/.inc files state no individual benchmark author or notice.
+Preserve them and the suite Unlicense under string_get/upstream.
+
+Pin OCaml 4.14.1 library source independently in string_get/DEPENDENCIES.json.
+Bytes credits Xavier Leroy/INRIA, copyright 1996; String's implementation
+credits Damien Doligez/INRIA, copyright 2014. Complete selected .ml/.mli
+headers, LGPL 2.1 text and the linking exception are retained under
+string_get/upstream-library. The library and benchmark notices are distinct.
+The 574-byte Latin-like text is an embedded source literal, with no separate
+dataset author or notice stated; INPUT-IDENTITY.json records its exact identity.
+
+### Translation and variants
+
+Use portable SML97 strings and Word8Array byte storage. Preserve operation
+order, loop bounds, source text and per-call/global construction scopes.
+Global text/byte input is shared; mutable bytes_set copies it per call.
+No full OCaml library compatibility or identical storage/primitive cost is claimed.
+
+Portable byte arrays may use different host packing and initialization.
+Copy/sub/map use tabulation; blit/cat/concat use explicit element loops and
+filled destinations in place of OCaml runtime block operations. Bytes.concat
+retains one length pass and ordered segment copies. String.concat interleaves
+separator list cells before the host String.concat, adding a temporary list.
+String.split_on_char retains the source backward scan and empty fields.
+ASCII uppercase and the exact five trim whitespace characters remain explicit.
+
+OCaml's Sys.opaque_identity has no claimed identical SML97 barrier.
+Full consumers and result checks add work and may expose constant results to
+compiler specialization or hoisting. They do not establish equal work to the
+original OCaml runtime. Standard comparisons use identical SML sources.
+
+### Fixed inputs and checks
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 25000 | 1:800B8BC0 |
+| normal | 100 | 25000 | 100:4A20B51 |
+
+The source parameter is an operation count; input text remains fixed.
+Normal reductions and selected large counts are explicit rather than a
+universal size argument. Full final large SML runs are unrecorded unless
+listed separately in validation.
+
+Check every scalar, complete produced string/byte sequence or split word list.
+bytes_set additionally checks every final byte. FNV-1a-style Word32 mixing
+consumes the checked observations; it is an added modular result format,
+not source kernel arithmetic. Counts and source character operations fit
+signed 31-bit integers. No floating-point tolerance applies.
+
+### Validation and runtime concerns
+
+Original OCaml function observers and independent byte/word models agree on
+100 edge-count results and all 55 selected profiles. Observer-only hooks
+capture discarded blit/callback results without adding an FFI requirement to
+the SML program. The semantic target checks overlapping copies, isolation,
+trim/ASCII behavior, empty split fields, cyclic boundaries, all selectors,
+unchanged global input and rejection of corrupt character/final-array results.
+Private pilot evidence and canonical wrapper checks have separate scopes.
+
+### Literature and diagnostic interpretation
+
+The preserved benchmark and OCaml library sources establish these algorithms
+and adaptations. Original observations and independent models establish the
+reviewed expected results. No separate string-algorithm paper review is claimed.
+Packing, bounds checks, byte/string conversions, callback specialization,
+temporary allocation, source barriers and the added complete consumers are
+performance questions inferred from source; timing alone does not isolate them.
+
+## string_get
+
+### Algorithm and workload
+
+Read characters at cyclic positions of the original fixed text.
+
+The source loop starts at one. Get/set use i mod 574; sub uses i mod 572 and blit i mod 542, deliberately retaining the excluded last valid start. Smoke crosses these modulo boundaries.
+
+### History, aliases and notices
+
+This is selector string_get in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Other selectors are separate workloads.
+The Dune source credits adaptation from OCamlPro's benchmark repository;
+the selected .ml/.inc files state no individual benchmark author or notice.
+Preserve them and the suite Unlicense under string_get/upstream.
+
+Pin OCaml 4.14.1 library source independently in string_get/DEPENDENCIES.json.
+Bytes credits Xavier Leroy/INRIA, copyright 1996; String's implementation
+credits Damien Doligez/INRIA, copyright 2014. Complete selected .ml/.mli
+headers, LGPL 2.1 text and the linking exception are retained under
+string_get/upstream-library. The library and benchmark notices are distinct.
+The 574-byte Latin-like text is an embedded source literal, with no separate
+dataset author or notice stated; INPUT-IDENTITY.json records its exact identity.
+
+### Translation and variants
+
+Use portable SML97 strings and Word8Array byte storage. Preserve operation
+order, loop bounds, source text and per-call/global construction scopes.
+Global text/byte input is shared; mutable bytes_set copies it per call.
+No full OCaml library compatibility or identical storage/primitive cost is claimed.
+
+Portable byte arrays may use different host packing and initialization.
+Copy/sub/map use tabulation; blit/cat/concat use explicit element loops and
+filled destinations in place of OCaml runtime block operations. Bytes.concat
+retains one length pass and ordered segment copies. String.concat interleaves
+separator list cells before the host String.concat, adding a temporary list.
+String.split_on_char retains the source backward scan and empty fields.
+ASCII uppercase and the exact five trim whitespace characters remain explicit.
+
+OCaml's Sys.opaque_identity has no claimed identical SML97 barrier.
+Full consumers and result checks add work and may expose constant results to
+compiler specialization or hoisting. They do not establish equal work to the
+original OCaml runtime. Standard comparisons use identical SML sources.
+
+### Fixed inputs and checks
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 575 | 50000000 | 575:D89F0437 |
+| normal | 200000 | 50000000 | 200000:74F22C62 |
+
+The source parameter is an operation count; input text remains fixed.
+Normal reductions and selected large counts are explicit rather than a
+universal size argument. Full final large SML runs are unrecorded unless
+listed separately in validation.
+
+Check every scalar, complete produced string/byte sequence or split word list.
+bytes_set additionally checks every final byte. FNV-1a-style Word32 mixing
+consumes the checked observations; it is an added modular result format,
+not source kernel arithmetic. Counts and source character operations fit
+signed 31-bit integers. No floating-point tolerance applies.
+
+### Validation and runtime concerns
+
+Original OCaml function observers and independent byte/word models agree on
+100 edge-count results and all 55 selected profiles. Observer-only hooks
+capture discarded blit/callback results without adding an FFI requirement to
+the SML program. The semantic target checks overlapping copies, isolation,
+trim/ASCII behavior, empty split fields, cyclic boundaries, all selectors,
+unchanged global input and rejection of corrupt character/final-array results.
+Private pilot evidence and canonical wrapper checks have separate scopes.
+
+### Literature and diagnostic interpretation
+
+The preserved benchmark and OCaml library sources establish these algorithms
+and adaptations. Original observations and independent models establish the
+reviewed expected results. No separate string-algorithm paper review is claimed.
+Packing, bounds checks, byte/string conversions, callback specialization,
+temporary allocation, source barriers and the added complete consumers are
+performance questions inferred from source; timing alone does not isolate them.
+
+## string_index
+
+### Algorithm and workload
+
+Search from the beginning for the first lowercase r.
+
+
+
+### History, aliases and notices
+
+This is selector string_index in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Other selectors are separate workloads.
+The Dune source credits adaptation from OCamlPro's benchmark repository;
+the selected .ml/.inc files state no individual benchmark author or notice.
+Preserve them and the suite Unlicense under string_get/upstream.
+
+Pin OCaml 4.14.1 library source independently in string_get/DEPENDENCIES.json.
+Bytes credits Xavier Leroy/INRIA, copyright 1996; String's implementation
+credits Damien Doligez/INRIA, copyright 2014. Complete selected .ml/.mli
+headers, LGPL 2.1 text and the linking exception are retained under
+string_get/upstream-library. The library and benchmark notices are distinct.
+The 574-byte Latin-like text is an embedded source literal, with no separate
+dataset author or notice stated; INPUT-IDENTITY.json records its exact identity.
+
+### Translation and variants
+
+Use portable SML97 strings and Word8Array byte storage. Preserve operation
+order, loop bounds, source text and per-call/global construction scopes.
+Global text/byte input is shared; mutable bytes_set copies it per call.
+No full OCaml library compatibility or identical storage/primitive cost is claimed.
+
+Portable byte arrays may use different host packing and initialization.
+Copy/sub/map use tabulation; blit/cat/concat use explicit element loops and
+filled destinations in place of OCaml runtime block operations. Bytes.concat
+retains one length pass and ordered segment copies. String.concat interleaves
+separator list cells before the host String.concat, adding a temporary list.
+String.split_on_char retains the source backward scan and empty fields.
+ASCII uppercase and the exact five trim whitespace characters remain explicit.
+
+OCaml's Sys.opaque_identity has no claimed identical SML97 barrier.
+Full consumers and result checks add work and may expose constant results to
+compiler specialization or hoisting. They do not establish equal work to the
+original OCaml runtime. Standard comparisons use identical SML sources.
+
+### Fixed inputs and checks
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 25000000 | 1:20C5866 |
+| normal | 200000 | 25000000 | 200000:556E3A05 |
+
+The source parameter is an operation count; input text remains fixed.
+Normal reductions and selected large counts are explicit rather than a
+universal size argument. Full final large SML runs are unrecorded unless
+listed separately in validation.
+
+Check every scalar, complete produced string/byte sequence or split word list.
+bytes_set additionally checks every final byte. FNV-1a-style Word32 mixing
+consumes the checked observations; it is an added modular result format,
+not source kernel arithmetic. Counts and source character operations fit
+signed 31-bit integers. No floating-point tolerance applies.
+
+### Validation and runtime concerns
+
+Original OCaml function observers and independent byte/word models agree on
+100 edge-count results and all 55 selected profiles. Observer-only hooks
+capture discarded blit/callback results without adding an FFI requirement to
+the SML program. The semantic target checks overlapping copies, isolation,
+trim/ASCII behavior, empty split fields, cyclic boundaries, all selectors,
+unchanged global input and rejection of corrupt character/final-array results.
+Private pilot evidence and canonical wrapper checks have separate scopes.
+
+### Literature and diagnostic interpretation
+
+The preserved benchmark and OCaml library sources establish these algorithms
+and adaptations. Original observations and independent models establish the
+reviewed expected results. No separate string-algorithm paper review is claimed.
+Packing, bounds checks, byte/string conversions, callback specialization,
+temporary allocation, source barriers and the added complete consumers are
+performance questions inferred from source; timing alone does not isolate them.
+
+## string_iter
+
+### Algorithm and workload
+
+Traverse the fixed text and invoke the source callback for every character.
+
+ The original callback returns unit; the portable callback counts all 574 visits. This additional callback work is explicit.
+
+### History, aliases and notices
+
+This is selector string_iter in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Other selectors are separate workloads.
+The Dune source credits adaptation from OCamlPro's benchmark repository;
+the selected .ml/.inc files state no individual benchmark author or notice.
+Preserve them and the suite Unlicense under string_get/upstream.
+
+Pin OCaml 4.14.1 library source independently in string_get/DEPENDENCIES.json.
+Bytes credits Xavier Leroy/INRIA, copyright 1996; String's implementation
+credits Damien Doligez/INRIA, copyright 2014. Complete selected .ml/.mli
+headers, LGPL 2.1 text and the linking exception are retained under
+string_get/upstream-library. The library and benchmark notices are distinct.
+The 574-byte Latin-like text is an embedded source literal, with no separate
+dataset author or notice stated; INPUT-IDENTITY.json records its exact identity.
+
+### Translation and variants
+
+Use portable SML97 strings and Word8Array byte storage. Preserve operation
+order, loop bounds, source text and per-call/global construction scopes.
+Global text/byte input is shared; mutable bytes_set copies it per call.
+No full OCaml library compatibility or identical storage/primitive cost is claimed.
+
+Portable byte arrays may use different host packing and initialization.
+Copy/sub/map use tabulation; blit/cat/concat use explicit element loops and
+filled destinations in place of OCaml runtime block operations. Bytes.concat
+retains one length pass and ordered segment copies. String.concat interleaves
+separator list cells before the host String.concat, adding a temporary list.
+String.split_on_char retains the source backward scan and empty fields.
+ASCII uppercase and the exact five trim whitespace characters remain explicit.
+
+OCaml's Sys.opaque_identity has no claimed identical SML97 barrier.
+Full consumers and result checks add work and may expose constant results to
+compiler specialization or hoisting. They do not establish equal work to the
+original OCaml runtime. Standard comparisons use identical SML sources.
+
+### Fixed inputs and checks
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 1000000 | 1:3B0FD821 |
+| normal | 2000 | 1000000 | 2000:73398505 |
+
+The source parameter is an operation count; input text remains fixed.
+Normal reductions and selected large counts are explicit rather than a
+universal size argument. Full final large SML runs are unrecorded unless
+listed separately in validation.
+
+Check every scalar, complete produced string/byte sequence or split word list.
+bytes_set additionally checks every final byte. FNV-1a-style Word32 mixing
+consumes the checked observations; it is an added modular result format,
+not source kernel arithmetic. Counts and source character operations fit
+signed 31-bit integers. No floating-point tolerance applies.
+
+### Validation and runtime concerns
+
+Original OCaml function observers and independent byte/word models agree on
+100 edge-count results and all 55 selected profiles. Observer-only hooks
+capture discarded blit/callback results without adding an FFI requirement to
+the SML program. The semantic target checks overlapping copies, isolation,
+trim/ASCII behavior, empty split fields, cyclic boundaries, all selectors,
+unchanged global input and rejection of corrupt character/final-array results.
+Private pilot evidence and canonical wrapper checks have separate scopes.
+
+### Literature and diagnostic interpretation
+
+The preserved benchmark and OCaml library sources establish these algorithms
+and adaptations. Original observations and independent models establish the
+reviewed expected results. No separate string-algorithm paper review is claimed.
+Packing, bounds checks, byte/string conversions, callback specialization,
+temporary allocation, source barriers and the added complete consumers are
+performance questions inferred from source; timing alone does not isolate them.
+
+## string_map
+
+### Algorithm and workload
+
+Map every original character to an exclamation mark.
+
+
+
+### History, aliases and notices
+
+This is selector string_map in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Other selectors are separate workloads.
+The Dune source credits adaptation from OCamlPro's benchmark repository;
+the selected .ml/.inc files state no individual benchmark author or notice.
+Preserve them and the suite Unlicense under string_get/upstream.
+
+Pin OCaml 4.14.1 library source independently in string_get/DEPENDENCIES.json.
+Bytes credits Xavier Leroy/INRIA, copyright 1996; String's implementation
+credits Damien Doligez/INRIA, copyright 2014. Complete selected .ml/.mli
+headers, LGPL 2.1 text and the linking exception are retained under
+string_get/upstream-library. The library and benchmark notices are distinct.
+The 574-byte Latin-like text is an embedded source literal, with no separate
+dataset author or notice stated; INPUT-IDENTITY.json records its exact identity.
+
+### Translation and variants
+
+Use portable SML97 strings and Word8Array byte storage. Preserve operation
+order, loop bounds, source text and per-call/global construction scopes.
+Global text/byte input is shared; mutable bytes_set copies it per call.
+No full OCaml library compatibility or identical storage/primitive cost is claimed.
+
+Portable byte arrays may use different host packing and initialization.
+Copy/sub/map use tabulation; blit/cat/concat use explicit element loops and
+filled destinations in place of OCaml runtime block operations. Bytes.concat
+retains one length pass and ordered segment copies. String.concat interleaves
+separator list cells before the host String.concat, adding a temporary list.
+String.split_on_char retains the source backward scan and empty fields.
+ASCII uppercase and the exact five trim whitespace characters remain explicit.
+
+OCaml's Sys.opaque_identity has no claimed identical SML97 barrier.
+Full consumers and result checks add work and may expose constant results to
+compiler specialization or hoisting. They do not establish equal work to the
+original OCaml runtime. Standard comparisons use identical SML sources.
+
+### Fixed inputs and checks
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 20000000 | 1:1B281A12 |
+| normal | 2000 | 20000000 | 2000:C2A3F6D5 |
+| large | 100000 | 20000000 | 100000:FC708FA5 |
+
+The source parameter is an operation count; input text remains fixed.
+Normal reductions and selected large counts are explicit rather than a
+universal size argument. Full final large SML runs are unrecorded unless
+listed separately in validation.
+
+Check every scalar, complete produced string/byte sequence or split word list.
+bytes_set additionally checks every final byte. FNV-1a-style Word32 mixing
+consumes the checked observations; it is an added modular result format,
+not source kernel arithmetic. Counts and source character operations fit
+signed 31-bit integers. No floating-point tolerance applies.
+
+### Validation and runtime concerns
+
+Original OCaml function observers and independent byte/word models agree on
+100 edge-count results and all 55 selected profiles. Observer-only hooks
+capture discarded blit/callback results without adding an FFI requirement to
+the SML program. The semantic target checks overlapping copies, isolation,
+trim/ASCII behavior, empty split fields, cyclic boundaries, all selectors,
+unchanged global input and rejection of corrupt character/final-array results.
+Private pilot evidence and canonical wrapper checks have separate scopes.
+
+### Literature and diagnostic interpretation
+
+The preserved benchmark and OCaml library sources establish these algorithms
+and adaptations. Original observations and independent models establish the
+reviewed expected results. No separate string-algorithm paper review is claimed.
+Packing, bounds checks, byte/string conversions, callback specialization,
+temporary allocation, source barriers and the added complete consumers are
+performance questions inferred from source; timing alone does not isolate them.
+
+## string_split_on_char
+
+### Algorithm and workload
+
+Split the original fixed text on single spaces, preserving empty fields.
+
+
+
+### History, aliases and notices
+
+This is selector string_split_on_char in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Other selectors are separate workloads.
+The Dune source credits adaptation from OCamlPro's benchmark repository;
+the selected .ml/.inc files state no individual benchmark author or notice.
+Preserve them and the suite Unlicense under string_get/upstream.
+
+Pin OCaml 4.14.1 library source independently in string_get/DEPENDENCIES.json.
+Bytes credits Xavier Leroy/INRIA, copyright 1996; String's implementation
+credits Damien Doligez/INRIA, copyright 2014. Complete selected .ml/.mli
+headers, LGPL 2.1 text and the linking exception are retained under
+string_get/upstream-library. The library and benchmark notices are distinct.
+The 574-byte Latin-like text is an embedded source literal, with no separate
+dataset author or notice stated; INPUT-IDENTITY.json records its exact identity.
+
+### Translation and variants
+
+Use portable SML97 strings and Word8Array byte storage. Preserve operation
+order, loop bounds, source text and per-call/global construction scopes.
+Global text/byte input is shared; mutable bytes_set copies it per call.
+No full OCaml library compatibility or identical storage/primitive cost is claimed.
+
+Portable byte arrays may use different host packing and initialization.
+Copy/sub/map use tabulation; blit/cat/concat use explicit element loops and
+filled destinations in place of OCaml runtime block operations. Bytes.concat
+retains one length pass and ordered segment copies. String.concat interleaves
+separator list cells before the host String.concat, adding a temporary list.
+String.split_on_char retains the source backward scan and empty fields.
+ASCII uppercase and the exact five trim whitespace characters remain explicit.
+
+OCaml's Sys.opaque_identity has no claimed identical SML97 barrier.
+Full consumers and result checks add work and may expose constant results to
+compiler specialization or hoisting. They do not establish equal work to the
+original OCaml runtime. Standard comparisons use identical SML sources.
+
+### Fixed inputs and checks
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 500000 | 1:C6A9B718 |
+| normal | 2000 | 500000 | 2000:9CAB6C55 |
+| large | 50000 | 500000 | 50000:98969D5 |
+
+The source parameter is an operation count; input text remains fixed.
+Normal reductions and selected large counts are explicit rather than a
+universal size argument. Full final large SML runs are unrecorded unless
+listed separately in validation.
+
+Check every scalar, complete produced string/byte sequence or split word list.
+bytes_set additionally checks every final byte. FNV-1a-style Word32 mixing
+consumes the checked observations; it is an added modular result format,
+not source kernel arithmetic. Counts and source character operations fit
+signed 31-bit integers. No floating-point tolerance applies.
+
+### Validation and runtime concerns
+
+Original OCaml function observers and independent byte/word models agree on
+100 edge-count results and all 55 selected profiles. Observer-only hooks
+capture discarded blit/callback results without adding an FFI requirement to
+the SML program. The semantic target checks overlapping copies, isolation,
+trim/ASCII behavior, empty split fields, cyclic boundaries, all selectors,
+unchanged global input and rejection of corrupt character/final-array results.
+Private pilot evidence and canonical wrapper checks have separate scopes.
+
+### Literature and diagnostic interpretation
+
+The preserved benchmark and OCaml library sources establish these algorithms
+and adaptations. Original observations and independent models establish the
+reviewed expected results. No separate string-algorithm paper review is claimed.
+Packing, bounds checks, byte/string conversions, callback specialization,
+temporary allocation, source barriers and the added complete consumers are
+performance questions inferred from source; timing alone does not isolate them.
+
+## string_sub
+
+### Algorithm and workload
+
+Copy two characters at cyclic source positions.
+
+The source loop starts at one. Get/set use i mod 574; sub uses i mod 572 and blit i mod 542, deliberately retaining the excluded last valid start. Smoke crosses these modulo boundaries.
+
+### History, aliases and notices
+
+This is selector string_sub in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Other selectors are separate workloads.
+The Dune source credits adaptation from OCamlPro's benchmark repository;
+the selected .ml/.inc files state no individual benchmark author or notice.
+Preserve them and the suite Unlicense under string_get/upstream.
+
+Pin OCaml 4.14.1 library source independently in string_get/DEPENDENCIES.json.
+Bytes credits Xavier Leroy/INRIA, copyright 1996; String's implementation
+credits Damien Doligez/INRIA, copyright 2014. Complete selected .ml/.mli
+headers, LGPL 2.1 text and the linking exception are retained under
+string_get/upstream-library. The library and benchmark notices are distinct.
+The 574-byte Latin-like text is an embedded source literal, with no separate
+dataset author or notice stated; INPUT-IDENTITY.json records its exact identity.
+
+### Translation and variants
+
+Use portable SML97 strings and Word8Array byte storage. Preserve operation
+order, loop bounds, source text and per-call/global construction scopes.
+Global text/byte input is shared; mutable bytes_set copies it per call.
+No full OCaml library compatibility or identical storage/primitive cost is claimed.
+
+Portable byte arrays may use different host packing and initialization.
+Copy/sub/map use tabulation; blit/cat/concat use explicit element loops and
+filled destinations in place of OCaml runtime block operations. Bytes.concat
+retains one length pass and ordered segment copies. String.concat interleaves
+separator list cells before the host String.concat, adding a temporary list.
+String.split_on_char retains the source backward scan and empty fields.
+ASCII uppercase and the exact five trim whitespace characters remain explicit.
+
+OCaml's Sys.opaque_identity has no claimed identical SML97 barrier.
+Full consumers and result checks add work and may expose constant results to
+compiler specialization or hoisting. They do not establish equal work to the
+original OCaml runtime. Standard comparisons use identical SML sources.
+
+### Fixed inputs and checks
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 575 | 50000000 | 575:F2DD3CD1 |
+| normal | 20000 | 50000000 | 20000:1C500846 |
+
+The source parameter is an operation count; input text remains fixed.
+Normal reductions and selected large counts are explicit rather than a
+universal size argument. Full final large SML runs are unrecorded unless
+listed separately in validation.
+
+Check every scalar, complete produced string/byte sequence or split word list.
+bytes_set additionally checks every final byte. FNV-1a-style Word32 mixing
+consumes the checked observations; it is an added modular result format,
+not source kernel arithmetic. Counts and source character operations fit
+signed 31-bit integers. No floating-point tolerance applies.
+
+### Validation and runtime concerns
+
+Original OCaml function observers and independent byte/word models agree on
+100 edge-count results and all 55 selected profiles. Observer-only hooks
+capture discarded blit/callback results without adding an FFI requirement to
+the SML program. The semantic target checks overlapping copies, isolation,
+trim/ASCII behavior, empty split fields, cyclic boundaries, all selectors,
+unchanged global input and rejection of corrupt character/final-array results.
+Private pilot evidence and canonical wrapper checks have separate scopes.
+
+### Literature and diagnostic interpretation
+
+The preserved benchmark and OCaml library sources establish these algorithms
+and adaptations. Original observations and independent models establish the
+reviewed expected results. No separate string-algorithm paper review is claimed.
+Packing, bounds checks, byte/string conversions, callback specialization,
+temporary allocation, source barriers and the added complete consumers are
+performance questions inferred from source; timing alone does not isolate them.
+
+## string_trim
+
+### Algorithm and workload
+
+Remove the original trailing newlines from the fixed trim input.
+
+
+
+### History, aliases and notices
+
+This is selector string_trim in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Other selectors are separate workloads.
+The Dune source credits adaptation from OCamlPro's benchmark repository;
+the selected .ml/.inc files state no individual benchmark author or notice.
+Preserve them and the suite Unlicense under string_get/upstream.
+
+Pin OCaml 4.14.1 library source independently in string_get/DEPENDENCIES.json.
+Bytes credits Xavier Leroy/INRIA, copyright 1996; String's implementation
+credits Damien Doligez/INRIA, copyright 2014. Complete selected .ml/.mli
+headers, LGPL 2.1 text and the linking exception are retained under
+string_get/upstream-library. The library and benchmark notices are distinct.
+The 574-byte Latin-like text is an embedded source literal, with no separate
+dataset author or notice stated; INPUT-IDENTITY.json records its exact identity.
+
+### Translation and variants
+
+Use portable SML97 strings and Word8Array byte storage. Preserve operation
+order, loop bounds, source text and per-call/global construction scopes.
+Global text/byte input is shared; mutable bytes_set copies it per call.
+No full OCaml library compatibility or identical storage/primitive cost is claimed.
+
+Portable byte arrays may use different host packing and initialization.
+Copy/sub/map use tabulation; blit/cat/concat use explicit element loops and
+filled destinations in place of OCaml runtime block operations. Bytes.concat
+retains one length pass and ordered segment copies. String.concat interleaves
+separator list cells before the host String.concat, adding a temporary list.
+String.split_on_char retains the source backward scan and empty fields.
+ASCII uppercase and the exact five trim whitespace characters remain explicit.
+
+OCaml's Sys.opaque_identity has no claimed identical SML97 barrier.
+Full consumers and result checks add work and may expose constant results to
+compiler specialization or hoisting. They do not establish equal work to the
+original OCaml runtime. Standard comparisons use identical SML sources.
+
+### Fixed inputs and checks
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 1000000 | 1:BAD021D7 |
+| normal | 20000 | 1000000 | 20000:23F41E45 |
+
+The source parameter is an operation count; input text remains fixed.
+Normal reductions and selected large counts are explicit rather than a
+universal size argument. Full final large SML runs are unrecorded unless
+listed separately in validation.
+
+Check every scalar, complete produced string/byte sequence or split word list.
+bytes_set additionally checks every final byte. FNV-1a-style Word32 mixing
+consumes the checked observations; it is an added modular result format,
+not source kernel arithmetic. Counts and source character operations fit
+signed 31-bit integers. No floating-point tolerance applies.
+
+### Validation and runtime concerns
+
+Original OCaml function observers and independent byte/word models agree on
+100 edge-count results and all 55 selected profiles. Observer-only hooks
+capture discarded blit/callback results without adding an FFI requirement to
+the SML program. The semantic target checks overlapping copies, isolation,
+trim/ASCII behavior, empty split fields, cyclic boundaries, all selectors,
+unchanged global input and rejection of corrupt character/final-array results.
+Private pilot evidence and canonical wrapper checks have separate scopes.
+
+### Literature and diagnostic interpretation
+
+The preserved benchmark and OCaml library sources establish these algorithms
+and adaptations. Original observations and independent models establish the
+reviewed expected results. No separate string-algorithm paper review is claimed.
+Packing, bounds checks, byte/string conversions, callback specialization,
+temporary allocation, source barriers and the added complete consumers are
+performance questions inferred from source; timing alone does not isolate them.
+
+## string_uppercase_ascii
+
+### Algorithm and workload
+
+Convert the original text to uppercase with ASCII rules.
+
+
+
+### History, aliases and notices
+
+This is selector string_uppercase_ascii in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Other selectors are separate workloads.
+The Dune source credits adaptation from OCamlPro's benchmark repository;
+the selected .ml/.inc files state no individual benchmark author or notice.
+Preserve them and the suite Unlicense under string_get/upstream.
+
+Pin OCaml 4.14.1 library source independently in string_get/DEPENDENCIES.json.
+Bytes credits Xavier Leroy/INRIA, copyright 1996; String's implementation
+credits Damien Doligez/INRIA, copyright 2014. Complete selected .ml/.mli
+headers, LGPL 2.1 text and the linking exception are retained under
+string_get/upstream-library. The library and benchmark notices are distinct.
+The 574-byte Latin-like text is an embedded source literal, with no separate
+dataset author or notice stated; INPUT-IDENTITY.json records its exact identity.
+
+### Translation and variants
+
+Use portable SML97 strings and Word8Array byte storage. Preserve operation
+order, loop bounds, source text and per-call/global construction scopes.
+Global text/byte input is shared; mutable bytes_set copies it per call.
+No full OCaml library compatibility or identical storage/primitive cost is claimed.
+
+Portable byte arrays may use different host packing and initialization.
+Copy/sub/map use tabulation; blit/cat/concat use explicit element loops and
+filled destinations in place of OCaml runtime block operations. Bytes.concat
+retains one length pass and ordered segment copies. String.concat interleaves
+separator list cells before the host String.concat, adding a temporary list.
+String.split_on_char retains the source backward scan and empty fields.
+ASCII uppercase and the exact five trim whitespace characters remain explicit.
+
+OCaml's Sys.opaque_identity has no claimed identical SML97 barrier.
+Full consumers and result checks add work and may expose constant results to
+compiler specialization or hoisting. They do not establish equal work to the
+original OCaml runtime. Standard comparisons use identical SML sources.
+
+### Fixed inputs and checks
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 1000000 | 1:CC561E2E |
+| normal | 2000 | 1000000 | 2000:44E33535 |
+
+The source parameter is an operation count; input text remains fixed.
+Normal reductions and selected large counts are explicit rather than a
+universal size argument. Full final large SML runs are unrecorded unless
+listed separately in validation.
+
+Check every scalar, complete produced string/byte sequence or split word list.
+bytes_set additionally checks every final byte. FNV-1a-style Word32 mixing
+consumes the checked observations; it is an added modular result format,
+not source kernel arithmetic. Counts and source character operations fit
+signed 31-bit integers. No floating-point tolerance applies.
+
+### Validation and runtime concerns
+
+Original OCaml function observers and independent byte/word models agree on
+100 edge-count results and all 55 selected profiles. Observer-only hooks
+capture discarded blit/callback results without adding an FFI requirement to
+the SML program. The semantic target checks overlapping copies, isolation,
+trim/ASCII behavior, empty split fields, cyclic boundaries, all selectors,
+unchanged global input and rejection of corrupt character/final-array results.
+Private pilot evidence and canonical wrapper checks have separate scopes.
+
+### Literature and diagnostic interpretation
+
+The preserved benchmark and OCaml library sources establish these algorithms
+and adaptations. Original observations and independent models establish the
+reviewed expected results. No separate string-algorithm paper review is claimed.
+Packing, bounds checks, byte/string conversions, callback specialization,
+temporary allocation, source barriers and the added complete consumers are
+performance questions inferred from source; timing alone does not isolate them.
+
+## str_regexp
+
+### Algorithm and workload
+
+Compile the original nonempty literal regular expression on each iteration.
+
+Preserve test_regex Novum Site and the exact 574-byte source text. The source
+starts its loop at one. Compile on every iteration only for str_regexp;
+other selectors compile once per call. str_split uses @ instead of test_regex.
+The fixed text starts with In, so both initial-match selectors return false.
+Forward search finds position 274; replacement substitutes that ten-byte phrase.
+
+### History, variants and notices
+
+Selector str_regexp comes from [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. These are separate configured selectors, not duplicates.
+The Dune source credits adaptation from OCamlPro's repository; the individual
+source states no author or separate notice. Preserve it, str.inc and the
+Sandmark Unlicense in str_regexp/upstream.
+
+Pin the OCaml 4.14.1 Str implementation, interface, C matcher and full LICENSE
+independently under str_regexp/upstream-library; DEPENDENCIES.json records their
+identities. Those sources credit Xavier Leroy/INRIA, copyright 1996, under
+LGPL 2.1 with the linking exception. The original Str engine and benchmark
+notices are distinct. The input literal and its attribution limits are recorded
+with bytes_get/string_get; no external dataset is required.
+
+### Translation decisions
+
+Reuse the suite's portable regex adapter, with literal compilation, ordered
+matching, leftmost search and nonempty constant replacement. Add a
+literal-sequence partial matcher, source-style split control and explicit
+last-match position state. Partial matching succeeds when text ends at a
+matching prefix. Split removes one leading delimiter match and a trailing
+empty field while preserving empty fields between adjacent single delimiters.
+No full Str API, captures, backreferences or empty-pattern support is claimed.
+
+OCaml's internal bytecode engine, native matcher and packed regexp representation
+are replaced by SML expression lists and substring indices. Explicit position
+vectors represent the source last-search-result array. Preserve compile/call
+scopes and search/replace order; record this library replacement when comparing
+implementations. No FFI or compiler/runtime prerequisite is introduced.
+
+### Inputs and correctness
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 1000000 | 1:F5C2FBE8 |
+| normal | 20000 | 1000000 | 20000:432E51A5 |
+
+Counts are explicitly selected source parameters; input text and expressions
+remain fixed. Normal reductions and selected large counts are documented.
+Full final large SML repetitions remain unrecorded unless listed separately.
+
+Check exact booleans/positions, complete replaced text and split lists.
+Compiled regex consumers inspect the complete portable literal representation.
+Added Word32 mixing consumes the checked observations. Original compile
+observers verify matching behavior and source compile counts without claiming
+an identical internal regexp representation. Added consumers and the missing
+identical Sys.opaque_identity barrier can affect specialization or hoisting.
+
+### Recorded and planned validation
+
+Original OCaml functions agree with independent literal models on eighteen
+edge-count and fourteen selected profile results. Twenty-one further original
+library observations cover complete/partial matches, offsets, absent/overlapping
+searches, repeated replacement and split boundaries. The 42-check target also
+rejects a corrupt position and a negative partial-match index. Canonical wrapper
+results are distinguished from private pilots in the validation ledger.
+
+### Literature and diagnostic interpretation
+
+The preserved Str implementation establishes the original call scopes and
+split/match state behavior. The suite regex adapter documentation describes
+its bounded replacement. Original observations and independent literal models
+support correctness. No separate regex-engine paper review is claimed.
+Compilation, literal scanning, result-vector allocation, substring copying and
+consumer specialization are source-based performance hypotheses; measurements
+do not isolate the cost of an individual mechanism.
+
+## str_string_match
+
+### Algorithm and workload
+
+Test the original expression against the beginning of the fixed source text.
+
+Preserve test_regex Novum Site and the exact 574-byte source text. The source
+starts its loop at one. Compile on every iteration only for str_regexp;
+other selectors compile once per call. str_split uses @ instead of test_regex.
+The fixed text starts with In, so both initial-match selectors return false.
+Forward search finds position 274; replacement substitutes that ten-byte phrase.
+
+### History, variants and notices
+
+Selector str_string_match comes from [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. These are separate configured selectors, not duplicates.
+The Dune source credits adaptation from OCamlPro's repository; the individual
+source states no author or separate notice. Preserve it, str.inc and the
+Sandmark Unlicense in str_regexp/upstream.
+
+Pin the OCaml 4.14.1 Str implementation, interface, C matcher and full LICENSE
+independently under str_regexp/upstream-library; DEPENDENCIES.json records their
+identities. Those sources credit Xavier Leroy/INRIA, copyright 1996, under
+LGPL 2.1 with the linking exception. The original Str engine and benchmark
+notices are distinct. The input literal and its attribution limits are recorded
+with bytes_get/string_get; no external dataset is required.
+
+### Translation decisions
+
+Reuse the suite's portable regex adapter, with literal compilation, ordered
+matching, leftmost search and nonempty constant replacement. Add a
+literal-sequence partial matcher, source-style split control and explicit
+last-match position state. Partial matching succeeds when text ends at a
+matching prefix. Split removes one leading delimiter match and a trailing
+empty field while preserving empty fields between adjacent single delimiters.
+No full Str API, captures, backreferences or empty-pattern support is claimed.
+
+OCaml's internal bytecode engine, native matcher and packed regexp representation
+are replaced by SML expression lists and substring indices. Explicit position
+vectors represent the source last-search-result array. Preserve compile/call
+scopes and search/replace order; record this library replacement when comparing
+implementations. No FFI or compiler/runtime prerequisite is introduced.
+
+### Inputs and correctness
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 50000000 | 1:50C5D1F |
+| normal | 200000 | 50000000 | 200000:3FE20EC5 |
+
+Counts are explicitly selected source parameters; input text and expressions
+remain fixed. Normal reductions and selected large counts are documented.
+Full final large SML repetitions remain unrecorded unless listed separately.
+
+Check exact booleans/positions, complete replaced text and split lists.
+Compiled regex consumers inspect the complete portable literal representation.
+Added Word32 mixing consumes the checked observations. Original compile
+observers verify matching behavior and source compile counts without claiming
+an identical internal regexp representation. Added consumers and the missing
+identical Sys.opaque_identity barrier can affect specialization or hoisting.
+
+### Recorded and planned validation
+
+Original OCaml functions agree with independent literal models on eighteen
+edge-count and fourteen selected profile results. Twenty-one further original
+library observations cover complete/partial matches, offsets, absent/overlapping
+searches, repeated replacement and split boundaries. The 42-check target also
+rejects a corrupt position and a negative partial-match index. Canonical wrapper
+results are distinguished from private pilots in the validation ledger.
+
+### Literature and diagnostic interpretation
+
+The preserved Str implementation establishes the original call scopes and
+split/match state behavior. The suite regex adapter documentation describes
+its bounded replacement. Original observations and independent literal models
+support correctness. No separate regex-engine paper review is claimed.
+Compilation, literal scanning, result-vector allocation, substring copying and
+consumer specialization are source-based performance hypotheses; measurements
+do not isolate the cost of an individual mechanism.
+
+## str_search_forward
+
+### Algorithm and workload
+
+Search forward for the original literal phrase in the fixed source text.
+
+Preserve test_regex Novum Site and the exact 574-byte source text. The source
+starts its loop at one. Compile on every iteration only for str_regexp;
+other selectors compile once per call. str_split uses @ instead of test_regex.
+The fixed text starts with In, so both initial-match selectors return false.
+Forward search finds position 274; replacement substitutes that ten-byte phrase.
+
+### History, variants and notices
+
+Selector str_search_forward comes from [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. These are separate configured selectors, not duplicates.
+The Dune source credits adaptation from OCamlPro's repository; the individual
+source states no author or separate notice. Preserve it, str.inc and the
+Sandmark Unlicense in str_regexp/upstream.
+
+Pin the OCaml 4.14.1 Str implementation, interface, C matcher and full LICENSE
+independently under str_regexp/upstream-library; DEPENDENCIES.json records their
+identities. Those sources credit Xavier Leroy/INRIA, copyright 1996, under
+LGPL 2.1 with the linking exception. The original Str engine and benchmark
+notices are distinct. The input literal and its attribution limits are recorded
+with bytes_get/string_get; no external dataset is required.
+
+### Translation decisions
+
+Reuse the suite's portable regex adapter, with literal compilation, ordered
+matching, leftmost search and nonempty constant replacement. Add a
+literal-sequence partial matcher, source-style split control and explicit
+last-match position state. Partial matching succeeds when text ends at a
+matching prefix. Split removes one leading delimiter match and a trailing
+empty field while preserving empty fields between adjacent single delimiters.
+No full Str API, captures, backreferences or empty-pattern support is claimed.
+
+OCaml's internal bytecode engine, native matcher and packed regexp representation
+are replaced by SML expression lists and substring indices. Explicit position
+vectors represent the source last-search-result array. Preserve compile/call
+scopes and search/replace order; record this library replacement when comparing
+implementations. No FFI or compiler/runtime prerequisite is introduced.
+
+### Inputs and correctness
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 5000000 | 1:170AE675 |
+| normal | 2000 | 5000000 | 2000:42FE4C5 |
+| large | 100000 | 5000000 | 100000:CAD433C5 |
+
+Counts are explicitly selected source parameters; input text and expressions
+remain fixed. Normal reductions and selected large counts are documented.
+Full final large SML repetitions remain unrecorded unless listed separately.
+
+Check exact booleans/positions, complete replaced text and split lists.
+Compiled regex consumers inspect the complete portable literal representation.
+Added Word32 mixing consumes the checked observations. Original compile
+observers verify matching behavior and source compile counts without claiming
+an identical internal regexp representation. Added consumers and the missing
+identical Sys.opaque_identity barrier can affect specialization or hoisting.
+
+### Recorded and planned validation
+
+Original OCaml functions agree with independent literal models on eighteen
+edge-count and fourteen selected profile results. Twenty-one further original
+library observations cover complete/partial matches, offsets, absent/overlapping
+searches, repeated replacement and split boundaries. The 42-check target also
+rejects a corrupt position and a negative partial-match index. Canonical wrapper
+results are distinguished from private pilots in the validation ledger.
+
+### Literature and diagnostic interpretation
+
+The preserved Str implementation establishes the original call scopes and
+split/match state behavior. The suite regex adapter documentation describes
+its bounded replacement. Original observations and independent literal models
+support correctness. No separate regex-engine paper review is claimed.
+Compilation, literal scanning, result-vector allocation, substring copying and
+consumer specialization are source-based performance hypotheses; measurements
+do not isolate the cost of an individual mechanism.
+
+## str_string_partial_match
+
+### Algorithm and workload
+
+Test complete or truncated-prefix matching at the beginning of the fixed source text.
+
+Preserve test_regex Novum Site and the exact 574-byte source text. The source
+starts its loop at one. Compile on every iteration only for str_regexp;
+other selectors compile once per call. str_split uses @ instead of test_regex.
+The fixed text starts with In, so both initial-match selectors return false.
+Forward search finds position 274; replacement substitutes that ten-byte phrase.
+
+### History, variants and notices
+
+Selector str_string_partial_match comes from [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. These are separate configured selectors, not duplicates.
+The Dune source credits adaptation from OCamlPro's repository; the individual
+source states no author or separate notice. Preserve it, str.inc and the
+Sandmark Unlicense in str_regexp/upstream.
+
+Pin the OCaml 4.14.1 Str implementation, interface, C matcher and full LICENSE
+independently under str_regexp/upstream-library; DEPENDENCIES.json records their
+identities. Those sources credit Xavier Leroy/INRIA, copyright 1996, under
+LGPL 2.1 with the linking exception. The original Str engine and benchmark
+notices are distinct. The input literal and its attribution limits are recorded
+with bytes_get/string_get; no external dataset is required.
+
+### Translation decisions
+
+Reuse the suite's portable regex adapter, with literal compilation, ordered
+matching, leftmost search and nonempty constant replacement. Add a
+literal-sequence partial matcher, source-style split control and explicit
+last-match position state. Partial matching succeeds when text ends at a
+matching prefix. Split removes one leading delimiter match and a trailing
+empty field while preserving empty fields between adjacent single delimiters.
+No full Str API, captures, backreferences or empty-pattern support is claimed.
+
+OCaml's internal bytecode engine, native matcher and packed regexp representation
+are replaced by SML expression lists and substring indices. Explicit position
+vectors represent the source last-search-result array. Preserve compile/call
+scopes and search/replace order; record this library replacement when comparing
+implementations. No FFI or compiler/runtime prerequisite is introduced.
+
+### Inputs and correctness
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 25000000 | 1:50C5D1F |
+| normal | 200000 | 25000000 | 200000:3FE20EC5 |
+
+Counts are explicitly selected source parameters; input text and expressions
+remain fixed. Normal reductions and selected large counts are documented.
+Full final large SML repetitions remain unrecorded unless listed separately.
+
+Check exact booleans/positions, complete replaced text and split lists.
+Compiled regex consumers inspect the complete portable literal representation.
+Added Word32 mixing consumes the checked observations. Original compile
+observers verify matching behavior and source compile counts without claiming
+an identical internal regexp representation. Added consumers and the missing
+identical Sys.opaque_identity barrier can affect specialization or hoisting.
+
+### Recorded and planned validation
+
+Original OCaml functions agree with independent literal models on eighteen
+edge-count and fourteen selected profile results. Twenty-one further original
+library observations cover complete/partial matches, offsets, absent/overlapping
+searches, repeated replacement and split boundaries. The 42-check target also
+rejects a corrupt position and a negative partial-match index. Canonical wrapper
+results are distinguished from private pilots in the validation ledger.
+
+### Literature and diagnostic interpretation
+
+The preserved Str implementation establishes the original call scopes and
+split/match state behavior. The suite regex adapter documentation describes
+its bounded replacement. Original observations and independent literal models
+support correctness. No separate regex-engine paper review is claimed.
+Compilation, literal scanning, result-vector allocation, substring copying and
+consumer specialization are source-based performance hypotheses; measurements
+do not isolate the cost of an individual mechanism.
+
+## str_global_replace
+
+### Algorithm and workload
+
+Replace every occurrence of the original literal phrase with a period.
+
+Preserve test_regex Novum Site and the exact 574-byte source text. The source
+starts its loop at one. Compile on every iteration only for str_regexp;
+other selectors compile once per call. str_split uses @ instead of test_regex.
+The fixed text starts with In, so both initial-match selectors return false.
+Forward search finds position 274; replacement substitutes that ten-byte phrase.
+
+### History, variants and notices
+
+Selector str_global_replace comes from [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. These are separate configured selectors, not duplicates.
+The Dune source credits adaptation from OCamlPro's repository; the individual
+source states no author or separate notice. Preserve it, str.inc and the
+Sandmark Unlicense in str_regexp/upstream.
+
+Pin the OCaml 4.14.1 Str implementation, interface, C matcher and full LICENSE
+independently under str_regexp/upstream-library; DEPENDENCIES.json records their
+identities. Those sources credit Xavier Leroy/INRIA, copyright 1996, under
+LGPL 2.1 with the linking exception. The original Str engine and benchmark
+notices are distinct. The input literal and its attribution limits are recorded
+with bytes_get/string_get; no external dataset is required.
+
+### Translation decisions
+
+Reuse the suite's portable regex adapter, with literal compilation, ordered
+matching, leftmost search and nonempty constant replacement. Add a
+literal-sequence partial matcher, source-style split control and explicit
+last-match position state. Partial matching succeeds when text ends at a
+matching prefix. Split removes one leading delimiter match and a trailing
+empty field while preserving empty fields between adjacent single delimiters.
+No full Str API, captures, backreferences or empty-pattern support is claimed.
+
+OCaml's internal bytecode engine, native matcher and packed regexp representation
+are replaced by SML expression lists and substring indices. Explicit position
+vectors represent the source last-search-result array. Preserve compile/call
+scopes and search/replace order; record this library replacement when comparing
+implementations. No FFI or compiler/runtime prerequisite is introduced.
+
+### Inputs and correctness
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 1000000 | 1:6D93D262 |
+| normal | 2000 | 1000000 | 2000:812CF275 |
+| large | 100000 | 1000000 | 100000:B4DE40E5 |
+
+Counts are explicitly selected source parameters; input text and expressions
+remain fixed. Normal reductions and selected large counts are documented.
+Full final large SML repetitions remain unrecorded unless listed separately.
+
+Check exact booleans/positions, complete replaced text and split lists.
+Compiled regex consumers inspect the complete portable literal representation.
+Added Word32 mixing consumes the checked observations. Original compile
+observers verify matching behavior and source compile counts without claiming
+an identical internal regexp representation. Added consumers and the missing
+identical Sys.opaque_identity barrier can affect specialization or hoisting.
+
+### Recorded and planned validation
+
+Original OCaml functions agree with independent literal models on eighteen
+edge-count and fourteen selected profile results. Twenty-one further original
+library observations cover complete/partial matches, offsets, absent/overlapping
+searches, repeated replacement and split boundaries. The 42-check target also
+rejects a corrupt position and a negative partial-match index. Canonical wrapper
+results are distinguished from private pilots in the validation ledger.
+
+### Literature and diagnostic interpretation
+
+The preserved Str implementation establishes the original call scopes and
+split/match state behavior. The suite regex adapter documentation describes
+its bounded replacement. Original observations and independent literal models
+support correctness. No separate regex-engine paper review is claimed.
+Compilation, literal scanning, result-vector allocation, substring copying and
+consumer specialization are source-based performance hypotheses; measurements
+do not isolate the cost of an individual mechanism.
+
+## str_split
+
+### Algorithm and workload
+
+Split the fixed source text with the original absent at-sign expression.
+
+Preserve test_regex Novum Site and the exact 574-byte source text. The source
+starts its loop at one. Compile on every iteration only for str_regexp;
+other selectors compile once per call. str_split uses @ instead of test_regex.
+The fixed text starts with In, so both initial-match selectors return false.
+Forward search finds position 274; replacement substitutes that ten-byte phrase.
+
+### History, variants and notices
+
+Selector str_split comes from [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. These are separate configured selectors, not duplicates.
+The Dune source credits adaptation from OCamlPro's repository; the individual
+source states no author or separate notice. Preserve it, str.inc and the
+Sandmark Unlicense in str_regexp/upstream.
+
+Pin the OCaml 4.14.1 Str implementation, interface, C matcher and full LICENSE
+independently under str_regexp/upstream-library; DEPENDENCIES.json records their
+identities. Those sources credit Xavier Leroy/INRIA, copyright 1996, under
+LGPL 2.1 with the linking exception. The original Str engine and benchmark
+notices are distinct. The input literal and its attribution limits are recorded
+with bytes_get/string_get; no external dataset is required.
+
+### Translation decisions
+
+Reuse the suite's portable regex adapter, with literal compilation, ordered
+matching, leftmost search and nonempty constant replacement. Add a
+literal-sequence partial matcher, source-style split control and explicit
+last-match position state. Partial matching succeeds when text ends at a
+matching prefix. Split removes one leading delimiter match and a trailing
+empty field while preserving empty fields between adjacent single delimiters.
+No full Str API, captures, backreferences or empty-pattern support is claimed.
+
+OCaml's internal bytecode engine, native matcher and packed regexp representation
+are replaced by SML expression lists and substring indices. Explicit position
+vectors represent the source last-search-result array. Preserve compile/call
+scopes and search/replace order; record this library replacement when comparing
+implementations. No FFI or compiler/runtime prerequisite is introduced.
+
+### Inputs and correctness
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 2000000 | 1:CFAD7398 |
+| normal | 2000 | 2000000 | 2000:D1528D55 |
+
+Counts are explicitly selected source parameters; input text and expressions
+remain fixed. Normal reductions and selected large counts are documented.
+Full final large SML repetitions remain unrecorded unless listed separately.
+
+Check exact booleans/positions, complete replaced text and split lists.
+Compiled regex consumers inspect the complete portable literal representation.
+Added Word32 mixing consumes the checked observations. Original compile
+observers verify matching behavior and source compile counts without claiming
+an identical internal regexp representation. Added consumers and the missing
+identical Sys.opaque_identity barrier can affect specialization or hoisting.
+
+### Recorded and planned validation
+
+Original OCaml functions agree with independent literal models on eighteen
+edge-count and fourteen selected profile results. Twenty-one further original
+library observations cover complete/partial matches, offsets, absent/overlapping
+searches, repeated replacement and split boundaries. The 42-check target also
+rejects a corrupt position and a negative partial-match index. Canonical wrapper
+results are distinguished from private pilots in the validation ledger.
+
+### Literature and diagnostic interpretation
+
+The preserved Str implementation establishes the original call scopes and
+split/match state behavior. The suite regex adapter documentation describes
+its bounded replacement. Original observations and independent literal models
+support correctness. No separate regex-engine paper review is claimed.
+Compilation, literal scanning, result-vector allocation, substring copying and
+consumer specialization are source-based performance hypotheses; measurements
+do not isolate the cost of an individual mechanism.
+
+## int_find1
+
+### Algorithm and workload
+
+Run inclusive batches of lookups in the original empty generic integer-key table.
+
+Preserve source bucket insertion, first-binding replacement/removal, duplicate
+entries, three unrolled lookup comparisons, ascending bucket traversal and
+growth when binding count exceeds twice the bucket count. Initial capacity is
+the power of two at least sixteen and at least the requested size. Resizing
+retains bucket-chain order, tail arrays and the traversal-dependent choice
+between reusing cells and copying them.
+
+### History, variants and notices
+
+Selector int_find1 is from [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. The source notes adaptation from OCamlPro's repository;
+no individual benchmark author or separate notice is stated. Preserve the
+benchmark, build include and Sandmark Unlicense under hashtbl_iter/upstream.
+
+Pin OCaml 4.14.1 hashtbl.ml/.mli, runtime/hash.c and full LICENSE under
+hashtbl_iter/upstream-library, with complete identities in DEPENDENCIES.json.
+The selected library/runtime headers credit Xavier Leroy/INRIA, copyright
+1996, and declare LGPL 2.1 with the linking exception. hash.c identifies its
+MurmurHash3 ancestry. Library/runtime and benchmark notices remain separate.
+There is no external dataset.
+
+### Translation and numeric decisions
+
+Use SML97 mutable bucket links, arrays and callbacks. Refs replace inline
+mutable OCaml fields, adding allocation/indirection; equal integer keys are
+immutable because replacement cannot change an equal integer's value.
+Specialize key equality/comparison to integers. Preserve traversal flags and
+restore them on exceptions. No FFI or compiler/runtime feature is required.
+
+Generic key hashing retains the exact tagged-integer MurmurHash3 mixing,
+tuple header, field order, final avalanche and nonnegative thirty-bit result.
+Explicit Word32 operations preserve modular arithmetic. The two known domains
+specialize away the generic C runtime object queue, object tags and count/limit
+dispatch; no identical generic hashing primitive or runtime overhead is claimed.
+The specialized IntHash path uses low key bits at the table mask, preserving
+the source key-and-max_int result for these indices. Randomized tables are not
+part of this deterministic seed-zero workload.
+
+Only filter_map values use IntInf with explicit signed 63-bit modular doubling,
+matching the pinned 64-bit OCaml semantics even on 31-bit SML hosts. This changes
+numeric representation and allocation costs; it does not substitute unbounded
+mathematical growth for wrapping arithmetic. Other source counters/keys/values
+fit signed 31-bit integers in the selected profiles. Added result mixing uses
+Word32 independently of source arithmetic.
+
+### Source quirks, inputs and correctness
+
+Main's generic and specialized tables are created empty before dispatch.
+The find1/find2 selectors do not invoke their sibling replace closures, so every
+lookup misses. Replace closures fill zero through 999 on the first batch and
+reuse those tables on subsequent calls. These four selectors and both hash
+selectors run outer loops from zero through iterations inclusive: zero still
+performs a thousand operations. Other operation loops start at one.
+
+Remove always performs iterations div 1000 + 1 complete build/remove batches.
+Filter_map retains a thousand entries; signed overflow and eventual zero
+values are part of the source workload. Find crosses the populated 1..1000
+range. Duplicate insertion retains both bindings rather than overwriting one.
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 0 | 20000 | 0:6D0D00D7 |
+| normal | 1000 | 20000 | 1000:E92AE3F7 |
+
+Profiles select explicit source counts; they do not change the thousand-entry
+baselines or use a universal size argument. Normal reductions and selected
+large counts are recorded. Full final large SML runs remain unrecorded unless
+listed separately in validation.
+
+Full binding multiplicities, values and cardinalities are checked after builds;
+lookups, fold scalars and callback counts are checked as consumed. Filter_map
+checks every final signed value. Hash consumers use the reviewed original
+results and independent modular model. Extra full consumers, reference cells,
+domain specialization and absence of an identical Sys.opaque_identity barrier
+are explicit adaptations.
+
+### Validation evidence
+
+Original snapshots and independent duplicate-binding models cover 23 update
+sequences, including resizing and signed keys. Exact original bucket layouts
+before/after filtering and 1005 integer/tuple hash pairs support the port.
+Original source observers and independent iteration/binding/modular models
+agree on 56 edge-count cases and all 33 selected profiles. Tests cover the
+unrolled lookup tail, exact traversal order across callback-triggered resizing,
+duplicate removal, exception restoration, corrupted
+bindings and both signed63 boundary transitions. The validation ledger separates
+private pilots from canonical wrapper checks and resource failures.
+
+### Literature and diagnostic interpretation
+
+Preserved OCaml source establishes these bucket and hash algorithms; its
+MurmurHash3 pointer records ancestry rather than a newly claimed paper review.
+Independent models and exact source observations support correctness.
+Bucket distribution, resize/cell reuse, indirect mutable fields, key/hash
+specialization, tagged arithmetic and added consumers are source-based
+performance questions. Recorded counts and timings do not isolate their costs.
+
+## int_find2
+
+### Algorithm and workload
+
+Run inclusive batches of lookups in the original empty specialized integer-hash table.
+
+Preserve source bucket insertion, first-binding replacement/removal, duplicate
+entries, three unrolled lookup comparisons, ascending bucket traversal and
+growth when binding count exceeds twice the bucket count. Initial capacity is
+the power of two at least sixteen and at least the requested size. Resizing
+retains bucket-chain order, tail arrays and the traversal-dependent choice
+between reusing cells and copying them.
+
+### History, variants and notices
+
+Selector int_find2 is from [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. The source notes adaptation from OCamlPro's repository;
+no individual benchmark author or separate notice is stated. Preserve the
+benchmark, build include and Sandmark Unlicense under hashtbl_iter/upstream.
+
+Pin OCaml 4.14.1 hashtbl.ml/.mli, runtime/hash.c and full LICENSE under
+hashtbl_iter/upstream-library, with complete identities in DEPENDENCIES.json.
+The selected library/runtime headers credit Xavier Leroy/INRIA, copyright
+1996, and declare LGPL 2.1 with the linking exception. hash.c identifies its
+MurmurHash3 ancestry. Library/runtime and benchmark notices remain separate.
+There is no external dataset.
+
+### Translation and numeric decisions
+
+Use SML97 mutable bucket links, arrays and callbacks. Refs replace inline
+mutable OCaml fields, adding allocation/indirection; equal integer keys are
+immutable because replacement cannot change an equal integer's value.
+Specialize key equality/comparison to integers. Preserve traversal flags and
+restore them on exceptions. No FFI or compiler/runtime feature is required.
+
+Generic key hashing retains the exact tagged-integer MurmurHash3 mixing,
+tuple header, field order, final avalanche and nonnegative thirty-bit result.
+Explicit Word32 operations preserve modular arithmetic. The two known domains
+specialize away the generic C runtime object queue, object tags and count/limit
+dispatch; no identical generic hashing primitive or runtime overhead is claimed.
+The specialized IntHash path uses low key bits at the table mask, preserving
+the source key-and-max_int result for these indices. Randomized tables are not
+part of this deterministic seed-zero workload.
+
+Only filter_map values use IntInf with explicit signed 63-bit modular doubling,
+matching the pinned 64-bit OCaml semantics even on 31-bit SML hosts. This changes
+numeric representation and allocation costs; it does not substitute unbounded
+mathematical growth for wrapping arithmetic. Other source counters/keys/values
+fit signed 31-bit integers in the selected profiles. Added result mixing uses
+Word32 independently of source arithmetic.
+
+### Source quirks, inputs and correctness
+
+Main's generic and specialized tables are created empty before dispatch.
+The find1/find2 selectors do not invoke their sibling replace closures, so every
+lookup misses. Replace closures fill zero through 999 on the first batch and
+reuse those tables on subsequent calls. These four selectors and both hash
+selectors run outer loops from zero through iterations inclusive: zero still
+performs a thousand operations. Other operation loops start at one.
+
+Remove always performs iterations div 1000 + 1 complete build/remove batches.
+Filter_map retains a thousand entries; signed overflow and eventual zero
+values are part of the source workload. Find crosses the populated 1..1000
+range. Duplicate insertion retains both bindings rather than overwriting one.
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 0 | 300000 | 0:6D0D00D7 |
+| normal | 1000 | 300000 | 1000:E92AE3F7 |
+
+Profiles select explicit source counts; they do not change the thousand-entry
+baselines or use a universal size argument. Normal reductions and selected
+large counts are recorded. Full final large SML runs remain unrecorded unless
+listed separately in validation.
+
+Full binding multiplicities, values and cardinalities are checked after builds;
+lookups, fold scalars and callback counts are checked as consumed. Filter_map
+checks every final signed value. Hash consumers use the reviewed original
+results and independent modular model. Extra full consumers, reference cells,
+domain specialization and absence of an identical Sys.opaque_identity barrier
+are explicit adaptations.
+
+### Validation evidence
+
+Original snapshots and independent duplicate-binding models cover 23 update
+sequences, including resizing and signed keys. Exact original bucket layouts
+before/after filtering and 1005 integer/tuple hash pairs support the port.
+Original source observers and independent iteration/binding/modular models
+agree on 56 edge-count cases and all 33 selected profiles. Tests cover the
+unrolled lookup tail, exact traversal order across callback-triggered resizing,
+duplicate removal, exception restoration, corrupted
+bindings and both signed63 boundary transitions. The validation ledger separates
+private pilots from canonical wrapper checks and resource failures.
+
+### Literature and diagnostic interpretation
+
+Preserved OCaml source establishes these bucket and hash algorithms; its
+MurmurHash3 pointer records ancestry rather than a newly claimed paper review.
+Independent models and exact source observations support correctness.
+Bucket distribution, resize/cell reuse, indirect mutable fields, key/hash
+specialization, tagged arithmetic and added consumers are source-based
+performance questions. Recorded counts and timings do not isolate their costs.
+
+## int_replace1
+
+### Algorithm and workload
+
+Run inclusive batches of replacements in the original shared generic integer-key table.
+
+Preserve source bucket insertion, first-binding replacement/removal, duplicate
+entries, three unrolled lookup comparisons, ascending bucket traversal and
+growth when binding count exceeds twice the bucket count. Initial capacity is
+the power of two at least sixteen and at least the requested size. Resizing
+retains bucket-chain order, tail arrays and the traversal-dependent choice
+between reusing cells and copying them.
+
+### History, variants and notices
+
+Selector int_replace1 is from [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. The source notes adaptation from OCamlPro's repository;
+no individual benchmark author or separate notice is stated. Preserve the
+benchmark, build include and Sandmark Unlicense under hashtbl_iter/upstream.
+
+Pin OCaml 4.14.1 hashtbl.ml/.mli, runtime/hash.c and full LICENSE under
+hashtbl_iter/upstream-library, with complete identities in DEPENDENCIES.json.
+The selected library/runtime headers credit Xavier Leroy/INRIA, copyright
+1996, and declare LGPL 2.1 with the linking exception. hash.c identifies its
+MurmurHash3 ancestry. Library/runtime and benchmark notices remain separate.
+There is no external dataset.
+
+### Translation and numeric decisions
+
+Use SML97 mutable bucket links, arrays and callbacks. Refs replace inline
+mutable OCaml fields, adding allocation/indirection; equal integer keys are
+immutable because replacement cannot change an equal integer's value.
+Specialize key equality/comparison to integers. Preserve traversal flags and
+restore them on exceptions. No FFI or compiler/runtime feature is required.
+
+Generic key hashing retains the exact tagged-integer MurmurHash3 mixing,
+tuple header, field order, final avalanche and nonnegative thirty-bit result.
+Explicit Word32 operations preserve modular arithmetic. The two known domains
+specialize away the generic C runtime object queue, object tags and count/limit
+dispatch; no identical generic hashing primitive or runtime overhead is claimed.
+The specialized IntHash path uses low key bits at the table mask, preserving
+the source key-and-max_int result for these indices. Randomized tables are not
+part of this deterministic seed-zero workload.
+
+Only filter_map values use IntInf with explicit signed 63-bit modular doubling,
+matching the pinned 64-bit OCaml semantics even on 31-bit SML hosts. This changes
+numeric representation and allocation costs; it does not substitute unbounded
+mathematical growth for wrapping arithmetic. Other source counters/keys/values
+fit signed 31-bit integers in the selected profiles. Added result mixing uses
+Word32 independently of source arithmetic.
+
+### Source quirks, inputs and correctness
+
+Main's generic and specialized tables are created empty before dispatch.
+The find1/find2 selectors do not invoke their sibling replace closures, so every
+lookup misses. Replace closures fill zero through 999 on the first batch and
+reuse those tables on subsequent calls. These four selectors and both hash
+selectors run outer loops from zero through iterations inclusive: zero still
+performs a thousand operations. Other operation loops start at one.
+
+Remove always performs iterations div 1000 + 1 complete build/remove batches.
+Filter_map retains a thousand entries; signed overflow and eventual zero
+values are part of the source workload. Find crosses the populated 1..1000
+range. Duplicate insertion retains both bindings rather than overwriting one.
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 0 | 10000 | 0:6D0D00D7 |
+| normal | 1000 | 10000 | 1000:E92AE3F7 |
+
+Profiles select explicit source counts; they do not change the thousand-entry
+baselines or use a universal size argument. Normal reductions and selected
+large counts are recorded. Full final large SML runs remain unrecorded unless
+listed separately in validation.
+
+Full binding multiplicities, values and cardinalities are checked after builds;
+lookups, fold scalars and callback counts are checked as consumed. Filter_map
+checks every final signed value. Hash consumers use the reviewed original
+results and independent modular model. Extra full consumers, reference cells,
+domain specialization and absence of an identical Sys.opaque_identity barrier
+are explicit adaptations.
+
+### Validation evidence
+
+Original snapshots and independent duplicate-binding models cover 23 update
+sequences, including resizing and signed keys. Exact original bucket layouts
+before/after filtering and 1005 integer/tuple hash pairs support the port.
+Original source observers and independent iteration/binding/modular models
+agree on 56 edge-count cases and all 33 selected profiles. Tests cover the
+unrolled lookup tail, exact traversal order across callback-triggered resizing,
+duplicate removal, exception restoration, corrupted
+bindings and both signed63 boundary transitions. The validation ledger separates
+private pilots from canonical wrapper checks and resource failures.
+
+### Literature and diagnostic interpretation
+
+Preserved OCaml source establishes these bucket and hash algorithms; its
+MurmurHash3 pointer records ancestry rather than a newly claimed paper review.
+Independent models and exact source observations support correctness.
+Bucket distribution, resize/cell reuse, indirect mutable fields, key/hash
+specialization, tagged arithmetic and added consumers are source-based
+performance questions. Recorded counts and timings do not isolate their costs.
+
+## int_replace2
+
+### Algorithm and workload
+
+Run inclusive batches of replacements in the original shared specialized integer-hash table.
+
+Preserve source bucket insertion, first-binding replacement/removal, duplicate
+entries, three unrolled lookup comparisons, ascending bucket traversal and
+growth when binding count exceeds twice the bucket count. Initial capacity is
+the power of two at least sixteen and at least the requested size. Resizing
+retains bucket-chain order, tail arrays and the traversal-dependent choice
+between reusing cells and copying them.
+
+### History, variants and notices
+
+Selector int_replace2 is from [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. The source notes adaptation from OCamlPro's repository;
+no individual benchmark author or separate notice is stated. Preserve the
+benchmark, build include and Sandmark Unlicense under hashtbl_iter/upstream.
+
+Pin OCaml 4.14.1 hashtbl.ml/.mli, runtime/hash.c and full LICENSE under
+hashtbl_iter/upstream-library, with complete identities in DEPENDENCIES.json.
+The selected library/runtime headers credit Xavier Leroy/INRIA, copyright
+1996, and declare LGPL 2.1 with the linking exception. hash.c identifies its
+MurmurHash3 ancestry. Library/runtime and benchmark notices remain separate.
+There is no external dataset.
+
+### Translation and numeric decisions
+
+Use SML97 mutable bucket links, arrays and callbacks. Refs replace inline
+mutable OCaml fields, adding allocation/indirection; equal integer keys are
+immutable because replacement cannot change an equal integer's value.
+Specialize key equality/comparison to integers. Preserve traversal flags and
+restore them on exceptions. No FFI or compiler/runtime feature is required.
+
+Generic key hashing retains the exact tagged-integer MurmurHash3 mixing,
+tuple header, field order, final avalanche and nonnegative thirty-bit result.
+Explicit Word32 operations preserve modular arithmetic. The two known domains
+specialize away the generic C runtime object queue, object tags and count/limit
+dispatch; no identical generic hashing primitive or runtime overhead is claimed.
+The specialized IntHash path uses low key bits at the table mask, preserving
+the source key-and-max_int result for these indices. Randomized tables are not
+part of this deterministic seed-zero workload.
+
+Only filter_map values use IntInf with explicit signed 63-bit modular doubling,
+matching the pinned 64-bit OCaml semantics even on 31-bit SML hosts. This changes
+numeric representation and allocation costs; it does not substitute unbounded
+mathematical growth for wrapping arithmetic. Other source counters/keys/values
+fit signed 31-bit integers in the selected profiles. Added result mixing uses
+Word32 independently of source arithmetic.
+
+### Source quirks, inputs and correctness
+
+Main's generic and specialized tables are created empty before dispatch.
+The find1/find2 selectors do not invoke their sibling replace closures, so every
+lookup misses. Replace closures fill zero through 999 on the first batch and
+reuse those tables on subsequent calls. These four selectors and both hash
+selectors run outer loops from zero through iterations inclusive: zero still
+performs a thousand operations. Other operation loops start at one.
+
+Remove always performs iterations div 1000 + 1 complete build/remove batches.
+Filter_map retains a thousand entries; signed overflow and eventual zero
+values are part of the source workload. Find crosses the populated 1..1000
+range. Duplicate insertion retains both bindings rather than overwriting one.
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 0 | 100000 | 0:6D0D00D7 |
+| normal | 1000 | 100000 | 1000:E92AE3F7 |
+
+Profiles select explicit source counts; they do not change the thousand-entry
+baselines or use a universal size argument. Normal reductions and selected
+large counts are recorded. Full final large SML runs remain unrecorded unless
+listed separately in validation.
+
+Full binding multiplicities, values and cardinalities are checked after builds;
+lookups, fold scalars and callback counts are checked as consumed. Filter_map
+checks every final signed value. Hash consumers use the reviewed original
+results and independent modular model. Extra full consumers, reference cells,
+domain specialization and absence of an identical Sys.opaque_identity barrier
+are explicit adaptations.
+
+### Validation evidence
+
+Original snapshots and independent duplicate-binding models cover 23 update
+sequences, including resizing and signed keys. Exact original bucket layouts
+before/after filtering and 1005 integer/tuple hash pairs support the port.
+Original source observers and independent iteration/binding/modular models
+agree on 56 edge-count cases and all 33 selected profiles. Tests cover the
+unrolled lookup tail, exact traversal order across callback-triggered resizing,
+duplicate removal, exception restoration, corrupted
+bindings and both signed63 boundary transitions. The validation ledger separates
+private pilots from canonical wrapper checks and resource failures.
+
+### Literature and diagnostic interpretation
+
+Preserved OCaml source establishes these bucket and hash algorithms; its
+MurmurHash3 pointer records ancestry rather than a newly claimed paper review.
+Independent models and exact source observations support correctness.
+Bucket distribution, resize/cell reuse, indirect mutable fields, key/hash
+specialization, tagged arithmetic and added consumers are source-based
+performance questions. Recorded counts and timings do not isolate their costs.
+
+## caml_hash_int
+
+### Algorithm and workload
+
+Hash the original thousand integer values in inclusive outer batches.
+
+Preserve source bucket insertion, first-binding replacement/removal, duplicate
+entries, three unrolled lookup comparisons, ascending bucket traversal and
+growth when binding count exceeds twice the bucket count. Initial capacity is
+the power of two at least sixteen and at least the requested size. Resizing
+retains bucket-chain order, tail arrays and the traversal-dependent choice
+between reusing cells and copying them.
+
+### History, variants and notices
+
+Selector caml_hash_int is from [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. The source notes adaptation from OCamlPro's repository;
+no individual benchmark author or separate notice is stated. Preserve the
+benchmark, build include and Sandmark Unlicense under hashtbl_iter/upstream.
+
+Pin OCaml 4.14.1 hashtbl.ml/.mli, runtime/hash.c and full LICENSE under
+hashtbl_iter/upstream-library, with complete identities in DEPENDENCIES.json.
+The selected library/runtime headers credit Xavier Leroy/INRIA, copyright
+1996, and declare LGPL 2.1 with the linking exception. hash.c identifies its
+MurmurHash3 ancestry. Library/runtime and benchmark notices remain separate.
+There is no external dataset.
+
+### Translation and numeric decisions
+
+Use SML97 mutable bucket links, arrays and callbacks. Refs replace inline
+mutable OCaml fields, adding allocation/indirection; equal integer keys are
+immutable because replacement cannot change an equal integer's value.
+Specialize key equality/comparison to integers. Preserve traversal flags and
+restore them on exceptions. No FFI or compiler/runtime feature is required.
+
+Generic key hashing retains the exact tagged-integer MurmurHash3 mixing,
+tuple header, field order, final avalanche and nonnegative thirty-bit result.
+Explicit Word32 operations preserve modular arithmetic. The two known domains
+specialize away the generic C runtime object queue, object tags and count/limit
+dispatch; no identical generic hashing primitive or runtime overhead is claimed.
+The specialized IntHash path uses low key bits at the table mask, preserving
+the source key-and-max_int result for these indices. Randomized tables are not
+part of this deterministic seed-zero workload.
+
+Only filter_map values use IntInf with explicit signed 63-bit modular doubling,
+matching the pinned 64-bit OCaml semantics even on 31-bit SML hosts. This changes
+numeric representation and allocation costs; it does not substitute unbounded
+mathematical growth for wrapping arithmetic. Other source counters/keys/values
+fit signed 31-bit integers in the selected profiles. Added result mixing uses
+Word32 independently of source arithmetic.
+
+### Source quirks, inputs and correctness
+
+Main's generic and specialized tables are created empty before dispatch.
+The find1/find2 selectors do not invoke their sibling replace closures, so every
+lookup misses. Replace closures fill zero through 999 on the first batch and
+reuse those tables on subsequent calls. These four selectors and both hash
+selectors run outer loops from zero through iterations inclusive: zero still
+performs a thousand operations. Other operation loops start at one.
+
+Remove always performs iterations div 1000 + 1 complete build/remove batches.
+Filter_map retains a thousand entries; signed overflow and eventual zero
+values are part of the source workload. Find crosses the populated 1..1000
+range. Duplicate insertion retains both bindings rather than overwriting one.
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 0 | 200000 | 0:9B985B07 |
+| normal | 1000 | 200000 | 1000:FA768787 |
+| large | 10000 | 200000 | 10000:89515C07 |
+
+Profiles select explicit source counts; they do not change the thousand-entry
+baselines or use a universal size argument. Normal reductions and selected
+large counts are recorded. Full final large SML runs remain unrecorded unless
+listed separately in validation.
+
+Full binding multiplicities, values and cardinalities are checked after builds;
+lookups, fold scalars and callback counts are checked as consumed. Filter_map
+checks every final signed value. Hash consumers use the reviewed original
+results and independent modular model. Extra full consumers, reference cells,
+domain specialization and absence of an identical Sys.opaque_identity barrier
+are explicit adaptations.
+
+### Validation evidence
+
+Original snapshots and independent duplicate-binding models cover 23 update
+sequences, including resizing and signed keys. Exact original bucket layouts
+before/after filtering and 1005 integer/tuple hash pairs support the port.
+Original source observers and independent iteration/binding/modular models
+agree on 56 edge-count cases and all 33 selected profiles. Tests cover the
+unrolled lookup tail, exact traversal order across callback-triggered resizing,
+duplicate removal, exception restoration, corrupted
+bindings and both signed63 boundary transitions. The validation ledger separates
+private pilots from canonical wrapper checks and resource failures.
+
+### Literature and diagnostic interpretation
+
+Preserved OCaml source establishes these bucket and hash algorithms; its
+MurmurHash3 pointer records ancestry rather than a newly claimed paper review.
+Independent models and exact source observations support correctness.
+Bucket distribution, resize/cell reuse, indirect mutable fields, key/hash
+specialization, tagged arithmetic and added consumers are source-based
+performance questions. Recorded counts and timings do not isolate their costs.
+
+## caml_hash_tuple
+
+### Algorithm and workload
+
+Hash the original thousand two-integer tuples in inclusive outer batches.
+
+Preserve source bucket insertion, first-binding replacement/removal, duplicate
+entries, three unrolled lookup comparisons, ascending bucket traversal and
+growth when binding count exceeds twice the bucket count. Initial capacity is
+the power of two at least sixteen and at least the requested size. Resizing
+retains bucket-chain order, tail arrays and the traversal-dependent choice
+between reusing cells and copying them.
+
+### History, variants and notices
+
+Selector caml_hash_tuple is from [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. The source notes adaptation from OCamlPro's repository;
+no individual benchmark author or separate notice is stated. Preserve the
+benchmark, build include and Sandmark Unlicense under hashtbl_iter/upstream.
+
+Pin OCaml 4.14.1 hashtbl.ml/.mli, runtime/hash.c and full LICENSE under
+hashtbl_iter/upstream-library, with complete identities in DEPENDENCIES.json.
+The selected library/runtime headers credit Xavier Leroy/INRIA, copyright
+1996, and declare LGPL 2.1 with the linking exception. hash.c identifies its
+MurmurHash3 ancestry. Library/runtime and benchmark notices remain separate.
+There is no external dataset.
+
+### Translation and numeric decisions
+
+Use SML97 mutable bucket links, arrays and callbacks. Refs replace inline
+mutable OCaml fields, adding allocation/indirection; equal integer keys are
+immutable because replacement cannot change an equal integer's value.
+Specialize key equality/comparison to integers. Preserve traversal flags and
+restore them on exceptions. No FFI or compiler/runtime feature is required.
+
+Generic key hashing retains the exact tagged-integer MurmurHash3 mixing,
+tuple header, field order, final avalanche and nonnegative thirty-bit result.
+Explicit Word32 operations preserve modular arithmetic. The two known domains
+specialize away the generic C runtime object queue, object tags and count/limit
+dispatch; no identical generic hashing primitive or runtime overhead is claimed.
+The specialized IntHash path uses low key bits at the table mask, preserving
+the source key-and-max_int result for these indices. Randomized tables are not
+part of this deterministic seed-zero workload.
+
+Only filter_map values use IntInf with explicit signed 63-bit modular doubling,
+matching the pinned 64-bit OCaml semantics even on 31-bit SML hosts. This changes
+numeric representation and allocation costs; it does not substitute unbounded
+mathematical growth for wrapping arithmetic. Other source counters/keys/values
+fit signed 31-bit integers in the selected profiles. Added result mixing uses
+Word32 independently of source arithmetic.
+
+### Source quirks, inputs and correctness
+
+Main's generic and specialized tables are created empty before dispatch.
+The find1/find2 selectors do not invoke their sibling replace closures, so every
+lookup misses. Replace closures fill zero through 999 on the first batch and
+reuse those tables on subsequent calls. These four selectors and both hash
+selectors run outer loops from zero through iterations inclusive: zero still
+performs a thousand operations. Other operation loops start at one.
+
+Remove always performs iterations div 1000 + 1 complete build/remove batches.
+Filter_map retains a thousand entries; signed overflow and eventual zero
+values are part of the source workload. Find crosses the populated 1..1000
+range. Duplicate insertion retains both bindings rather than overwriting one.
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 0 | 100000 | 0:2B9727C5 |
+| normal | 1000 | 100000 | 1000:E89117C5 |
+
+Profiles select explicit source counts; they do not change the thousand-entry
+baselines or use a universal size argument. Normal reductions and selected
+large counts are recorded. Full final large SML runs remain unrecorded unless
+listed separately in validation.
+
+Full binding multiplicities, values and cardinalities are checked after builds;
+lookups, fold scalars and callback counts are checked as consumed. Filter_map
+checks every final signed value. Hash consumers use the reviewed original
+results and independent modular model. Extra full consumers, reference cells,
+domain specialization and absence of an identical Sys.opaque_identity barrier
+are explicit adaptations.
+
+### Validation evidence
+
+Original snapshots and independent duplicate-binding models cover 23 update
+sequences, including resizing and signed keys. Exact original bucket layouts
+before/after filtering and 1005 integer/tuple hash pairs support the port.
+Original source observers and independent iteration/binding/modular models
+agree on 56 edge-count cases and all 33 selected profiles. Tests cover the
+unrolled lookup tail, exact traversal order across callback-triggered resizing,
+duplicate removal, exception restoration, corrupted
+bindings and both signed63 boundary transitions. The validation ledger separates
+private pilots from canonical wrapper checks and resource failures.
+
+### Literature and diagnostic interpretation
+
+Preserved OCaml source establishes these bucket and hash algorithms; its
+MurmurHash3 pointer records ancestry rather than a newly claimed paper review.
+Independent models and exact source observations support correctness.
+Bucket distribution, resize/cell reuse, indirect mutable fields, key/hash
+specialization, tagged arithmetic and added consumers are source-based
+performance questions. Recorded counts and timings do not isolate their costs.
+
+## hashtbl_iter
+
+### Algorithm and workload
+
+Traverse the freshly built thousand-entry hash table with the original callback.
+
+Preserve source bucket insertion, first-binding replacement/removal, duplicate
+entries, three unrolled lookup comparisons, ascending bucket traversal and
+growth when binding count exceeds twice the bucket count. Initial capacity is
+the power of two at least sixteen and at least the requested size. Resizing
+retains bucket-chain order, tail arrays and the traversal-dependent choice
+between reusing cells and copying them.
+
+### History, variants and notices
+
+Selector hashtbl_iter is from [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. The source notes adaptation from OCamlPro's repository;
+no individual benchmark author or separate notice is stated. Preserve the
+benchmark, build include and Sandmark Unlicense under hashtbl_iter/upstream.
+
+Pin OCaml 4.14.1 hashtbl.ml/.mli, runtime/hash.c and full LICENSE under
+hashtbl_iter/upstream-library, with complete identities in DEPENDENCIES.json.
+The selected library/runtime headers credit Xavier Leroy/INRIA, copyright
+1996, and declare LGPL 2.1 with the linking exception. hash.c identifies its
+MurmurHash3 ancestry. Library/runtime and benchmark notices remain separate.
+There is no external dataset.
+
+### Translation and numeric decisions
+
+Use SML97 mutable bucket links, arrays and callbacks. Refs replace inline
+mutable OCaml fields, adding allocation/indirection; equal integer keys are
+immutable because replacement cannot change an equal integer's value.
+Specialize key equality/comparison to integers. Preserve traversal flags and
+restore them on exceptions. No FFI or compiler/runtime feature is required.
+
+Generic key hashing retains the exact tagged-integer MurmurHash3 mixing,
+tuple header, field order, final avalanche and nonnegative thirty-bit result.
+Explicit Word32 operations preserve modular arithmetic. The two known domains
+specialize away the generic C runtime object queue, object tags and count/limit
+dispatch; no identical generic hashing primitive or runtime overhead is claimed.
+The specialized IntHash path uses low key bits at the table mask, preserving
+the source key-and-max_int result for these indices. Randomized tables are not
+part of this deterministic seed-zero workload.
+
+Only filter_map values use IntInf with explicit signed 63-bit modular doubling,
+matching the pinned 64-bit OCaml semantics even on 31-bit SML hosts. This changes
+numeric representation and allocation costs; it does not substitute unbounded
+mathematical growth for wrapping arithmetic. Other source counters/keys/values
+fit signed 31-bit integers in the selected profiles. Added result mixing uses
+Word32 independently of source arithmetic.
+
+### Source quirks, inputs and correctness
+
+Main's generic and specialized tables are created empty before dispatch.
+The find1/find2 selectors do not invoke their sibling replace closures, so every
+lookup misses. Replace closures fill zero through 999 on the first batch and
+reuse those tables on subsequent calls. These four selectors and both hash
+selectors run outer loops from zero through iterations inclusive: zero still
+performs a thousand operations. Other operation loops start at one.
+
+Remove always performs iterations div 1000 + 1 complete build/remove batches.
+Filter_map retains a thousand entries; signed overflow and eventual zero
+values are part of the source workload. Find crosses the populated 1..1000
+range. Duplicate insertion retains both bindings rather than overwriting one.
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 200000 | 1:6D0D00D7 |
+| normal | 1000 | 200000 | 1000:9F09A165 |
+
+Profiles select explicit source counts; they do not change the thousand-entry
+baselines or use a universal size argument. Normal reductions and selected
+large counts are recorded. Full final large SML runs remain unrecorded unless
+listed separately in validation.
+
+Full binding multiplicities, values and cardinalities are checked after builds;
+lookups, fold scalars and callback counts are checked as consumed. Filter_map
+checks every final signed value. Hash consumers use the reviewed original
+results and independent modular model. Extra full consumers, reference cells,
+domain specialization and absence of an identical Sys.opaque_identity barrier
+are explicit adaptations.
+
+### Validation evidence
+
+Original snapshots and independent duplicate-binding models cover 23 update
+sequences, including resizing and signed keys. Exact original bucket layouts
+before/after filtering and 1005 integer/tuple hash pairs support the port.
+Original source observers and independent iteration/binding/modular models
+agree on 56 edge-count cases and all 33 selected profiles. Tests cover the
+unrolled lookup tail, exact traversal order across callback-triggered resizing,
+duplicate removal, exception restoration, corrupted
+bindings and both signed63 boundary transitions. The validation ledger separates
+private pilots from canonical wrapper checks and resource failures.
+
+### Literature and diagnostic interpretation
+
+Preserved OCaml source establishes these bucket and hash algorithms; its
+MurmurHash3 pointer records ancestry rather than a newly claimed paper review.
+Independent models and exact source observations support correctness.
+Bucket distribution, resize/cell reuse, indirect mutable fields, key/hash
+specialization, tagged arithmetic and added consumers are source-based
+performance questions. Recorded counts and timings do not isolate their costs.
+
+## hashtbl_fold
+
+### Algorithm and workload
+
+Sum keys, values and accumulator over a freshly built thousand-entry hash table.
+
+Preserve source bucket insertion, first-binding replacement/removal, duplicate
+entries, three unrolled lookup comparisons, ascending bucket traversal and
+growth when binding count exceeds twice the bucket count. Initial capacity is
+the power of two at least sixteen and at least the requested size. Resizing
+retains bucket-chain order, tail arrays and the traversal-dependent choice
+between reusing cells and copying them.
+
+### History, variants and notices
+
+Selector hashtbl_fold is from [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. The source notes adaptation from OCamlPro's repository;
+no individual benchmark author or separate notice is stated. Preserve the
+benchmark, build include and Sandmark Unlicense under hashtbl_iter/upstream.
+
+Pin OCaml 4.14.1 hashtbl.ml/.mli, runtime/hash.c and full LICENSE under
+hashtbl_iter/upstream-library, with complete identities in DEPENDENCIES.json.
+The selected library/runtime headers credit Xavier Leroy/INRIA, copyright
+1996, and declare LGPL 2.1 with the linking exception. hash.c identifies its
+MurmurHash3 ancestry. Library/runtime and benchmark notices remain separate.
+There is no external dataset.
+
+### Translation and numeric decisions
+
+Use SML97 mutable bucket links, arrays and callbacks. Refs replace inline
+mutable OCaml fields, adding allocation/indirection; equal integer keys are
+immutable because replacement cannot change an equal integer's value.
+Specialize key equality/comparison to integers. Preserve traversal flags and
+restore them on exceptions. No FFI or compiler/runtime feature is required.
+
+Generic key hashing retains the exact tagged-integer MurmurHash3 mixing,
+tuple header, field order, final avalanche and nonnegative thirty-bit result.
+Explicit Word32 operations preserve modular arithmetic. The two known domains
+specialize away the generic C runtime object queue, object tags and count/limit
+dispatch; no identical generic hashing primitive or runtime overhead is claimed.
+The specialized IntHash path uses low key bits at the table mask, preserving
+the source key-and-max_int result for these indices. Randomized tables are not
+part of this deterministic seed-zero workload.
+
+Only filter_map values use IntInf with explicit signed 63-bit modular doubling,
+matching the pinned 64-bit OCaml semantics even on 31-bit SML hosts. This changes
+numeric representation and allocation costs; it does not substitute unbounded
+mathematical growth for wrapping arithmetic. Other source counters/keys/values
+fit signed 31-bit integers in the selected profiles. Added result mixing uses
+Word32 independently of source arithmetic.
+
+### Source quirks, inputs and correctness
+
+Main's generic and specialized tables are created empty before dispatch.
+The find1/find2 selectors do not invoke their sibling replace closures, so every
+lookup misses. Replace closures fill zero through 999 on the first batch and
+reuse those tables on subsequent calls. These four selectors and both hash
+selectors run outer loops from zero through iterations inclusive: zero still
+performs a thousand operations. Other operation loops start at one.
+
+Remove always performs iterations div 1000 + 1 complete build/remove batches.
+Filter_map retains a thousand entries; signed overflow and eventual zero
+values are part of the source workload. Find crosses the populated 1..1000
+range. Duplicate insertion retains both bindings rather than overwriting one.
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 200000 | 1:1F433617 |
+| normal | 1000 | 200000 | 1000:842D7265 |
+
+Profiles select explicit source counts; they do not change the thousand-entry
+baselines or use a universal size argument. Normal reductions and selected
+large counts are recorded. Full final large SML runs remain unrecorded unless
+listed separately in validation.
+
+Full binding multiplicities, values and cardinalities are checked after builds;
+lookups, fold scalars and callback counts are checked as consumed. Filter_map
+checks every final signed value. Hash consumers use the reviewed original
+results and independent modular model. Extra full consumers, reference cells,
+domain specialization and absence of an identical Sys.opaque_identity barrier
+are explicit adaptations.
+
+### Validation evidence
+
+Original snapshots and independent duplicate-binding models cover 23 update
+sequences, including resizing and signed keys. Exact original bucket layouts
+before/after filtering and 1005 integer/tuple hash pairs support the port.
+Original source observers and independent iteration/binding/modular models
+agree on 56 edge-count cases and all 33 selected profiles. Tests cover the
+unrolled lookup tail, exact traversal order across callback-triggered resizing,
+duplicate removal, exception restoration, corrupted
+bindings and both signed63 boundary transitions. The validation ledger separates
+private pilots from canonical wrapper checks and resource failures.
+
+### Literature and diagnostic interpretation
+
+Preserved OCaml source establishes these bucket and hash algorithms; its
+MurmurHash3 pointer records ancestry rather than a newly claimed paper review.
+Independent models and exact source observations support correctness.
+Bucket distribution, resize/cell reuse, indirect mutable fields, key/hash
+specialization, tagged arithmetic and added consumers are source-based
+performance questions. Recorded counts and timings do not isolate their costs.
+
+## hashtbl_add_resizing
+
+### Algorithm and workload
+
+Insert ascending integer bindings while growing a minimal hash table.
+
+Preserve source bucket insertion, first-binding replacement/removal, duplicate
+entries, three unrolled lookup comparisons, ascending bucket traversal and
+growth when binding count exceeds twice the bucket count. Initial capacity is
+the power of two at least sixteen and at least the requested size. Resizing
+retains bucket-chain order, tail arrays and the traversal-dependent choice
+between reusing cells and copying them.
+
+### History, variants and notices
+
+Selector hashtbl_add_resizing is from [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. The source notes adaptation from OCamlPro's repository;
+no individual benchmark author or separate notice is stated. Preserve the
+benchmark, build include and Sandmark Unlicense under hashtbl_iter/upstream.
+
+Pin OCaml 4.14.1 hashtbl.ml/.mli, runtime/hash.c and full LICENSE under
+hashtbl_iter/upstream-library, with complete identities in DEPENDENCIES.json.
+The selected library/runtime headers credit Xavier Leroy/INRIA, copyright
+1996, and declare LGPL 2.1 with the linking exception. hash.c identifies its
+MurmurHash3 ancestry. Library/runtime and benchmark notices remain separate.
+There is no external dataset.
+
+### Translation and numeric decisions
+
+Use SML97 mutable bucket links, arrays and callbacks. Refs replace inline
+mutable OCaml fields, adding allocation/indirection; equal integer keys are
+immutable because replacement cannot change an equal integer's value.
+Specialize key equality/comparison to integers. Preserve traversal flags and
+restore them on exceptions. No FFI or compiler/runtime feature is required.
+
+Generic key hashing retains the exact tagged-integer MurmurHash3 mixing,
+tuple header, field order, final avalanche and nonnegative thirty-bit result.
+Explicit Word32 operations preserve modular arithmetic. The two known domains
+specialize away the generic C runtime object queue, object tags and count/limit
+dispatch; no identical generic hashing primitive or runtime overhead is claimed.
+The specialized IntHash path uses low key bits at the table mask, preserving
+the source key-and-max_int result for these indices. Randomized tables are not
+part of this deterministic seed-zero workload.
+
+Only filter_map values use IntInf with explicit signed 63-bit modular doubling,
+matching the pinned 64-bit OCaml semantics even on 31-bit SML hosts. This changes
+numeric representation and allocation costs; it does not substitute unbounded
+mathematical growth for wrapping arithmetic. Other source counters/keys/values
+fit signed 31-bit integers in the selected profiles. Added result mixing uses
+Word32 independently of source arithmetic.
+
+### Source quirks, inputs and correctness
+
+Main's generic and specialized tables are created empty before dispatch.
+The find1/find2 selectors do not invoke their sibling replace closures, so every
+lookup misses. Replace closures fill zero through 999 on the first batch and
+reuse those tables on subsequent calls. These four selectors and both hash
+selectors run outer loops from zero through iterations inclusive: zero still
+performs a thousand operations. Other operation loops start at one.
+
+Remove always performs iterations div 1000 + 1 complete build/remove batches.
+Filter_map retains a thousand entries; signed overflow and eventual zero
+values are part of the source workload. Find crosses the populated 1..1000
+range. Duplicate insertion retains both bindings rather than overwriting one.
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 33 | 4000000 | 33:E705E1E5 |
+| normal | 100000 | 4000000 | 100000:D04873FF |
+| large | 1000000 | 4000000 | 1000000:5DBEAE5F |
+
+Profiles select explicit source counts; they do not change the thousand-entry
+baselines or use a universal size argument. Normal reductions and selected
+large counts are recorded. Full final large SML runs remain unrecorded unless
+listed separately in validation.
+
+Full binding multiplicities, values and cardinalities are checked after builds;
+lookups, fold scalars and callback counts are checked as consumed. Filter_map
+checks every final signed value. Hash consumers use the reviewed original
+results and independent modular model. Extra full consumers, reference cells,
+domain specialization and absence of an identical Sys.opaque_identity barrier
+are explicit adaptations.
+
+### Validation evidence
+
+Original snapshots and independent duplicate-binding models cover 23 update
+sequences, including resizing and signed keys. Exact original bucket layouts
+before/after filtering and 1005 integer/tuple hash pairs support the port.
+Original source observers and independent iteration/binding/modular models
+agree on 56 edge-count cases and all 33 selected profiles. Tests cover the
+unrolled lookup tail, exact traversal order across callback-triggered resizing,
+duplicate removal, exception restoration, corrupted
+bindings and both signed63 boundary transitions. The validation ledger separates
+private pilots from canonical wrapper checks and resource failures.
+
+### Literature and diagnostic interpretation
+
+Preserved OCaml source establishes these bucket and hash algorithms; its
+MurmurHash3 pointer records ancestry rather than a newly claimed paper review.
+Independent models and exact source observations support correctness.
+Bucket distribution, resize/cell reuse, indirect mutable fields, key/hash
+specialization, tagged arithmetic and added consumers are source-based
+performance questions. Recorded counts and timings do not isolate their costs.
+
+## hashtbl_add_sized
+
+### Algorithm and workload
+
+Insert ascending integer bindings into a pre-sized hash table.
+
+Preserve source bucket insertion, first-binding replacement/removal, duplicate
+entries, three unrolled lookup comparisons, ascending bucket traversal and
+growth when binding count exceeds twice the bucket count. Initial capacity is
+the power of two at least sixteen and at least the requested size. Resizing
+retains bucket-chain order, tail arrays and the traversal-dependent choice
+between reusing cells and copying them.
+
+### History, variants and notices
+
+Selector hashtbl_add_sized is from [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. The source notes adaptation from OCamlPro's repository;
+no individual benchmark author or separate notice is stated. Preserve the
+benchmark, build include and Sandmark Unlicense under hashtbl_iter/upstream.
+
+Pin OCaml 4.14.1 hashtbl.ml/.mli, runtime/hash.c and full LICENSE under
+hashtbl_iter/upstream-library, with complete identities in DEPENDENCIES.json.
+The selected library/runtime headers credit Xavier Leroy/INRIA, copyright
+1996, and declare LGPL 2.1 with the linking exception. hash.c identifies its
+MurmurHash3 ancestry. Library/runtime and benchmark notices remain separate.
+There is no external dataset.
+
+### Translation and numeric decisions
+
+Use SML97 mutable bucket links, arrays and callbacks. Refs replace inline
+mutable OCaml fields, adding allocation/indirection; equal integer keys are
+immutable because replacement cannot change an equal integer's value.
+Specialize key equality/comparison to integers. Preserve traversal flags and
+restore them on exceptions. No FFI or compiler/runtime feature is required.
+
+Generic key hashing retains the exact tagged-integer MurmurHash3 mixing,
+tuple header, field order, final avalanche and nonnegative thirty-bit result.
+Explicit Word32 operations preserve modular arithmetic. The two known domains
+specialize away the generic C runtime object queue, object tags and count/limit
+dispatch; no identical generic hashing primitive or runtime overhead is claimed.
+The specialized IntHash path uses low key bits at the table mask, preserving
+the source key-and-max_int result for these indices. Randomized tables are not
+part of this deterministic seed-zero workload.
+
+Only filter_map values use IntInf with explicit signed 63-bit modular doubling,
+matching the pinned 64-bit OCaml semantics even on 31-bit SML hosts. This changes
+numeric representation and allocation costs; it does not substitute unbounded
+mathematical growth for wrapping arithmetic. Other source counters/keys/values
+fit signed 31-bit integers in the selected profiles. Added result mixing uses
+Word32 independently of source arithmetic.
+
+### Source quirks, inputs and correctness
+
+Main's generic and specialized tables are created empty before dispatch.
+The find1/find2 selectors do not invoke their sibling replace closures, so every
+lookup misses. Replace closures fill zero through 999 on the first batch and
+reuse those tables on subsequent calls. These four selectors and both hash
+selectors run outer loops from zero through iterations inclusive: zero still
+performs a thousand operations. Other operation loops start at one.
+
+Remove always performs iterations div 1000 + 1 complete build/remove batches.
+Filter_map retains a thousand entries; signed overflow and eventual zero
+values are part of the source workload. Find crosses the populated 1..1000
+range. Duplicate insertion retains both bindings rather than overwriting one.
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 33 | 6000000 | 33:E705E1E5 |
+| normal | 100000 | 6000000 | 100000:D04873FF |
+| large | 1000000 | 6000000 | 1000000:5DBEAE5F |
+
+Profiles select explicit source counts; they do not change the thousand-entry
+baselines or use a universal size argument. Normal reductions and selected
+large counts are recorded. Full final large SML runs remain unrecorded unless
+listed separately in validation.
+
+Full binding multiplicities, values and cardinalities are checked after builds;
+lookups, fold scalars and callback counts are checked as consumed. Filter_map
+checks every final signed value. Hash consumers use the reviewed original
+results and independent modular model. Extra full consumers, reference cells,
+domain specialization and absence of an identical Sys.opaque_identity barrier
+are explicit adaptations.
+
+### Validation evidence
+
+Original snapshots and independent duplicate-binding models cover 23 update
+sequences, including resizing and signed keys. Exact original bucket layouts
+before/after filtering and 1005 integer/tuple hash pairs support the port.
+Original source observers and independent iteration/binding/modular models
+agree on 56 edge-count cases and all 33 selected profiles. Tests cover the
+unrolled lookup tail, exact traversal order across callback-triggered resizing,
+duplicate removal, exception restoration, corrupted
+bindings and both signed63 boundary transitions. The validation ledger separates
+private pilots from canonical wrapper checks and resource failures.
+
+### Literature and diagnostic interpretation
+
+Preserved OCaml source establishes these bucket and hash algorithms; its
+MurmurHash3 pointer records ancestry rather than a newly claimed paper review.
+Independent models and exact source observations support correctness.
+Bucket distribution, resize/cell reuse, indirect mutable fields, key/hash
+specialization, tagged arithmetic and added consumers are source-based
+performance questions. Recorded counts and timings do not isolate their costs.
+
+## hashtbl_add_duplicate
+
+### Algorithm and workload
+
+Insert each ascending integer binding twice while retaining duplicate bucket entries.
+
+Preserve source bucket insertion, first-binding replacement/removal, duplicate
+entries, three unrolled lookup comparisons, ascending bucket traversal and
+growth when binding count exceeds twice the bucket count. Initial capacity is
+the power of two at least sixteen and at least the requested size. Resizing
+retains bucket-chain order, tail arrays and the traversal-dependent choice
+between reusing cells and copying them.
+
+### History, variants and notices
+
+Selector hashtbl_add_duplicate is from [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. The source notes adaptation from OCamlPro's repository;
+no individual benchmark author or separate notice is stated. Preserve the
+benchmark, build include and Sandmark Unlicense under hashtbl_iter/upstream.
+
+Pin OCaml 4.14.1 hashtbl.ml/.mli, runtime/hash.c and full LICENSE under
+hashtbl_iter/upstream-library, with complete identities in DEPENDENCIES.json.
+The selected library/runtime headers credit Xavier Leroy/INRIA, copyright
+1996, and declare LGPL 2.1 with the linking exception. hash.c identifies its
+MurmurHash3 ancestry. Library/runtime and benchmark notices remain separate.
+There is no external dataset.
+
+### Translation and numeric decisions
+
+Use SML97 mutable bucket links, arrays and callbacks. Refs replace inline
+mutable OCaml fields, adding allocation/indirection; equal integer keys are
+immutable because replacement cannot change an equal integer's value.
+Specialize key equality/comparison to integers. Preserve traversal flags and
+restore them on exceptions. No FFI or compiler/runtime feature is required.
+
+Generic key hashing retains the exact tagged-integer MurmurHash3 mixing,
+tuple header, field order, final avalanche and nonnegative thirty-bit result.
+Explicit Word32 operations preserve modular arithmetic. The two known domains
+specialize away the generic C runtime object queue, object tags and count/limit
+dispatch; no identical generic hashing primitive or runtime overhead is claimed.
+The specialized IntHash path uses low key bits at the table mask, preserving
+the source key-and-max_int result for these indices. Randomized tables are not
+part of this deterministic seed-zero workload.
+
+Only filter_map values use IntInf with explicit signed 63-bit modular doubling,
+matching the pinned 64-bit OCaml semantics even on 31-bit SML hosts. This changes
+numeric representation and allocation costs; it does not substitute unbounded
+mathematical growth for wrapping arithmetic. Other source counters/keys/values
+fit signed 31-bit integers in the selected profiles. Added result mixing uses
+Word32 independently of source arithmetic.
+
+### Source quirks, inputs and correctness
+
+Main's generic and specialized tables are created empty before dispatch.
+The find1/find2 selectors do not invoke their sibling replace closures, so every
+lookup misses. Replace closures fill zero through 999 on the first batch and
+reuse those tables on subsequent calls. These four selectors and both hash
+selectors run outer loops from zero through iterations inclusive: zero still
+performs a thousand operations. Other operation loops start at one.
+
+Remove always performs iterations div 1000 + 1 complete build/remove batches.
+Filter_map retains a thousand entries; signed overflow and eventual zero
+values are part of the source workload. Find crosses the populated 1..1000
+range. Duplicate insertion retains both bindings rather than overwriting one.
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 17 | 2000000 | 17:E10F4A73 |
+| normal | 100000 | 2000000 | 100000:19E4295F |
+| large | 500000 | 2000000 | 500000:3B50C65F |
+
+Profiles select explicit source counts; they do not change the thousand-entry
+baselines or use a universal size argument. Normal reductions and selected
+large counts are recorded. Full final large SML runs remain unrecorded unless
+listed separately in validation.
+
+Full binding multiplicities, values and cardinalities are checked after builds;
+lookups, fold scalars and callback counts are checked as consumed. Filter_map
+checks every final signed value. Hash consumers use the reviewed original
+results and independent modular model. Extra full consumers, reference cells,
+domain specialization and absence of an identical Sys.opaque_identity barrier
+are explicit adaptations.
+
+### Validation evidence
+
+Original snapshots and independent duplicate-binding models cover 23 update
+sequences, including resizing and signed keys. Exact original bucket layouts
+before/after filtering and 1005 integer/tuple hash pairs support the port.
+Original source observers and independent iteration/binding/modular models
+agree on 56 edge-count cases and all 33 selected profiles. Tests cover the
+unrolled lookup tail, exact traversal order across callback-triggered resizing,
+duplicate removal, exception restoration, corrupted
+bindings and both signed63 boundary transitions. The validation ledger separates
+private pilots from canonical wrapper checks and resource failures.
+
+### Literature and diagnostic interpretation
+
+Preserved OCaml source establishes these bucket and hash algorithms; its
+MurmurHash3 pointer records ancestry rather than a newly claimed paper review.
+Independent models and exact source observations support correctness.
+Bucket distribution, resize/cell reuse, indirect mutable fields, key/hash
+specialization, tagged arithmetic and added consumers are source-based
+performance questions. Recorded counts and timings do not isolate their costs.
+
+## hashtbl_remove
+
+### Algorithm and workload
+
+Build and empty thousand-entry tables in the original rounded-up batch loop.
+
+Preserve source bucket insertion, first-binding replacement/removal, duplicate
+entries, three unrolled lookup comparisons, ascending bucket traversal and
+growth when binding count exceeds twice the bucket count. Initial capacity is
+the power of two at least sixteen and at least the requested size. Resizing
+retains bucket-chain order, tail arrays and the traversal-dependent choice
+between reusing cells and copying them.
+
+### History, variants and notices
+
+Selector hashtbl_remove is from [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. The source notes adaptation from OCamlPro's repository;
+no individual benchmark author or separate notice is stated. Preserve the
+benchmark, build include and Sandmark Unlicense under hashtbl_iter/upstream.
+
+Pin OCaml 4.14.1 hashtbl.ml/.mli, runtime/hash.c and full LICENSE under
+hashtbl_iter/upstream-library, with complete identities in DEPENDENCIES.json.
+The selected library/runtime headers credit Xavier Leroy/INRIA, copyright
+1996, and declare LGPL 2.1 with the linking exception. hash.c identifies its
+MurmurHash3 ancestry. Library/runtime and benchmark notices remain separate.
+There is no external dataset.
+
+### Translation and numeric decisions
+
+Use SML97 mutable bucket links, arrays and callbacks. Refs replace inline
+mutable OCaml fields, adding allocation/indirection; equal integer keys are
+immutable because replacement cannot change an equal integer's value.
+Specialize key equality/comparison to integers. Preserve traversal flags and
+restore them on exceptions. No FFI or compiler/runtime feature is required.
+
+Generic key hashing retains the exact tagged-integer MurmurHash3 mixing,
+tuple header, field order, final avalanche and nonnegative thirty-bit result.
+Explicit Word32 operations preserve modular arithmetic. The two known domains
+specialize away the generic C runtime object queue, object tags and count/limit
+dispatch; no identical generic hashing primitive or runtime overhead is claimed.
+The specialized IntHash path uses low key bits at the table mask, preserving
+the source key-and-max_int result for these indices. Randomized tables are not
+part of this deterministic seed-zero workload.
+
+Only filter_map values use IntInf with explicit signed 63-bit modular doubling,
+matching the pinned 64-bit OCaml semantics even on 31-bit SML hosts. This changes
+numeric representation and allocation costs; it does not substitute unbounded
+mathematical growth for wrapping arithmetic. Other source counters/keys/values
+fit signed 31-bit integers in the selected profiles. Added result mixing uses
+Word32 independently of source arithmetic.
+
+### Source quirks, inputs and correctness
+
+Main's generic and specialized tables are created empty before dispatch.
+The find1/find2 selectors do not invoke their sibling replace closures, so every
+lookup misses. Replace closures fill zero through 999 on the first batch and
+reuse those tables on subsequent calls. These four selectors and both hash
+selectors run outer loops from zero through iterations inclusive: zero still
+performs a thousand operations. Other operation loops start at one.
+
+Remove always performs iterations div 1000 + 1 complete build/remove batches.
+Filter_map retains a thousand entries; signed overflow and eventual zero
+values are part of the source workload. Find crosses the populated 1..1000
+range. Duplicate insertion retains both bindings rather than overwriting one.
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 0 | 4000000 | 0:50C5D1F |
+| normal | 100000 | 4000000 | 100000:8297AA8F |
+
+Profiles select explicit source counts; they do not change the thousand-entry
+baselines or use a universal size argument. Normal reductions and selected
+large counts are recorded. Full final large SML runs remain unrecorded unless
+listed separately in validation.
+
+Full binding multiplicities, values and cardinalities are checked after builds;
+lookups, fold scalars and callback counts are checked as consumed. Filter_map
+checks every final signed value. Hash consumers use the reviewed original
+results and independent modular model. Extra full consumers, reference cells,
+domain specialization and absence of an identical Sys.opaque_identity barrier
+are explicit adaptations.
+
+### Validation evidence
+
+Original snapshots and independent duplicate-binding models cover 23 update
+sequences, including resizing and signed keys. Exact original bucket layouts
+before/after filtering and 1005 integer/tuple hash pairs support the port.
+Original source observers and independent iteration/binding/modular models
+agree on 56 edge-count cases and all 33 selected profiles. Tests cover the
+unrolled lookup tail, exact traversal order across callback-triggered resizing,
+duplicate removal, exception restoration, corrupted
+bindings and both signed63 boundary transitions. The validation ledger separates
+private pilots from canonical wrapper checks and resource failures.
+
+### Literature and diagnostic interpretation
+
+Preserved OCaml source establishes these bucket and hash algorithms; its
+MurmurHash3 pointer records ancestry rather than a newly claimed paper review.
+Independent models and exact source observations support correctness.
+Bucket distribution, resize/cell reuse, indirect mutable fields, key/hash
+specialization, tagged arithmetic and added consumers are source-based
+performance questions. Recorded counts and timings do not isolate their costs.
+
+## hashtbl_find
+
+### Algorithm and workload
+
+Search ascending keys in the fixed populated table, including later misses.
+
+Preserve source bucket insertion, first-binding replacement/removal, duplicate
+entries, three unrolled lookup comparisons, ascending bucket traversal and
+growth when binding count exceeds twice the bucket count. Initial capacity is
+the power of two at least sixteen and at least the requested size. Resizing
+retains bucket-chain order, tail arrays and the traversal-dependent choice
+between reusing cells and copying them.
+
+### History, variants and notices
+
+Selector hashtbl_find is from [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. The source notes adaptation from OCamlPro's repository;
+no individual benchmark author or separate notice is stated. Preserve the
+benchmark, build include and Sandmark Unlicense under hashtbl_iter/upstream.
+
+Pin OCaml 4.14.1 hashtbl.ml/.mli, runtime/hash.c and full LICENSE under
+hashtbl_iter/upstream-library, with complete identities in DEPENDENCIES.json.
+The selected library/runtime headers credit Xavier Leroy/INRIA, copyright
+1996, and declare LGPL 2.1 with the linking exception. hash.c identifies its
+MurmurHash3 ancestry. Library/runtime and benchmark notices remain separate.
+There is no external dataset.
+
+### Translation and numeric decisions
+
+Use SML97 mutable bucket links, arrays and callbacks. Refs replace inline
+mutable OCaml fields, adding allocation/indirection; equal integer keys are
+immutable because replacement cannot change an equal integer's value.
+Specialize key equality/comparison to integers. Preserve traversal flags and
+restore them on exceptions. No FFI or compiler/runtime feature is required.
+
+Generic key hashing retains the exact tagged-integer MurmurHash3 mixing,
+tuple header, field order, final avalanche and nonnegative thirty-bit result.
+Explicit Word32 operations preserve modular arithmetic. The two known domains
+specialize away the generic C runtime object queue, object tags and count/limit
+dispatch; no identical generic hashing primitive or runtime overhead is claimed.
+The specialized IntHash path uses low key bits at the table mask, preserving
+the source key-and-max_int result for these indices. Randomized tables are not
+part of this deterministic seed-zero workload.
+
+Only filter_map values use IntInf with explicit signed 63-bit modular doubling,
+matching the pinned 64-bit OCaml semantics even on 31-bit SML hosts. This changes
+numeric representation and allocation costs; it does not substitute unbounded
+mathematical growth for wrapping arithmetic. Other source counters/keys/values
+fit signed 31-bit integers in the selected profiles. Added result mixing uses
+Word32 independently of source arithmetic.
+
+### Source quirks, inputs and correctness
+
+Main's generic and specialized tables are created empty before dispatch.
+The find1/find2 selectors do not invoke their sibling replace closures, so every
+lookup misses. Replace closures fill zero through 999 on the first batch and
+reuse those tables on subsequent calls. These four selectors and both hash
+selectors run outer loops from zero through iterations inclusive: zero still
+performs a thousand operations. Other operation loops start at one.
+
+Remove always performs iterations div 1000 + 1 complete build/remove batches.
+Filter_map retains a thousand entries; signed overflow and eventual zero
+values are part of the source workload. Find crosses the populated 1..1000
+range. Duplicate insertion retains both bindings rather than overwriting one.
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1001 | 6000000 | 1001:3E1A5517 |
+| normal | 100000 | 6000000 | 100000:1DDDEB4D |
+
+Profiles select explicit source counts; they do not change the thousand-entry
+baselines or use a universal size argument. Normal reductions and selected
+large counts are recorded. Full final large SML runs remain unrecorded unless
+listed separately in validation.
+
+Full binding multiplicities, values and cardinalities are checked after builds;
+lookups, fold scalars and callback counts are checked as consumed. Filter_map
+checks every final signed value. Hash consumers use the reviewed original
+results and independent modular model. Extra full consumers, reference cells,
+domain specialization and absence of an identical Sys.opaque_identity barrier
+are explicit adaptations.
+
+### Validation evidence
+
+Original snapshots and independent duplicate-binding models cover 23 update
+sequences, including resizing and signed keys. Exact original bucket layouts
+before/after filtering and 1005 integer/tuple hash pairs support the port.
+Original source observers and independent iteration/binding/modular models
+agree on 56 edge-count cases and all 33 selected profiles. Tests cover the
+unrolled lookup tail, exact traversal order across callback-triggered resizing,
+duplicate removal, exception restoration, corrupted
+bindings and both signed63 boundary transitions. The validation ledger separates
+private pilots from canonical wrapper checks and resource failures.
+
+### Literature and diagnostic interpretation
+
+Preserved OCaml source establishes these bucket and hash algorithms; its
+MurmurHash3 pointer records ancestry rather than a newly claimed paper review.
+Independent models and exact source observations support correctness.
+Bucket distribution, resize/cell reuse, indirect mutable fields, key/hash
+specialization, tagged arithmetic and added consumers are source-based
+performance questions. Recorded counts and timings do not isolate their costs.
+
+## hashtbl_filter_map
+
+### Algorithm and workload
+
+Repeatedly double all table values using the source signed 63-bit wraparound.
+
+Preserve source bucket insertion, first-binding replacement/removal, duplicate
+entries, three unrolled lookup comparisons, ascending bucket traversal and
+growth when binding count exceeds twice the bucket count. Initial capacity is
+the power of two at least sixteen and at least the requested size. Resizing
+retains bucket-chain order, tail arrays and the traversal-dependent choice
+between reusing cells and copying them.
+
+### History, variants and notices
+
+Selector hashtbl_filter_map is from [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. The source notes adaptation from OCamlPro's repository;
+no individual benchmark author or separate notice is stated. Preserve the
+benchmark, build include and Sandmark Unlicense under hashtbl_iter/upstream.
+
+Pin OCaml 4.14.1 hashtbl.ml/.mli, runtime/hash.c and full LICENSE under
+hashtbl_iter/upstream-library, with complete identities in DEPENDENCIES.json.
+The selected library/runtime headers credit Xavier Leroy/INRIA, copyright
+1996, and declare LGPL 2.1 with the linking exception. hash.c identifies its
+MurmurHash3 ancestry. Library/runtime and benchmark notices remain separate.
+There is no external dataset.
+
+### Translation and numeric decisions
+
+Use SML97 mutable bucket links, arrays and callbacks. Refs replace inline
+mutable OCaml fields, adding allocation/indirection; equal integer keys are
+immutable because replacement cannot change an equal integer's value.
+Specialize key equality/comparison to integers. Preserve traversal flags and
+restore them on exceptions. No FFI or compiler/runtime feature is required.
+
+Generic key hashing retains the exact tagged-integer MurmurHash3 mixing,
+tuple header, field order, final avalanche and nonnegative thirty-bit result.
+Explicit Word32 operations preserve modular arithmetic. The two known domains
+specialize away the generic C runtime object queue, object tags and count/limit
+dispatch; no identical generic hashing primitive or runtime overhead is claimed.
+The specialized IntHash path uses low key bits at the table mask, preserving
+the source key-and-max_int result for these indices. Randomized tables are not
+part of this deterministic seed-zero workload.
+
+Only filter_map values use IntInf with explicit signed 63-bit modular doubling,
+matching the pinned 64-bit OCaml semantics even on 31-bit SML hosts. This changes
+numeric representation and allocation costs; it does not substitute unbounded
+mathematical growth for wrapping arithmetic. Other source counters/keys/values
+fit signed 31-bit integers in the selected profiles. Added result mixing uses
+Word32 independently of source arithmetic.
+
+### Source quirks, inputs and correctness
+
+Main's generic and specialized tables are created empty before dispatch.
+The find1/find2 selectors do not invoke their sibling replace closures, so every
+lookup misses. Replace closures fill zero through 999 on the first batch and
+reuse those tables on subsequent calls. These four selectors and both hash
+selectors run outer loops from zero through iterations inclusive: zero still
+performs a thousand operations. Other operation loops start at one.
+
+Remove always performs iterations div 1000 + 1 complete build/remove batches.
+Filter_map retains a thousand entries; signed overflow and eventual zero
+values are part of the source workload. Find crosses the populated 1..1000
+range. Duplicate insertion retains both bindings rather than overwriting one.
+
+| Profile | Iterations | Published iterations | Expected count and digest |
+|---|---:|---:|---|
+| smoke | 1 | 100000 | 1:1C7623FB |
+| normal | 100 | 100000 | 100:EE3E303 |
+| large | 10000 | 100000 | 10000:EE3E303 |
+
+Profiles select explicit source counts; they do not change the thousand-entry
+baselines or use a universal size argument. Normal reductions and selected
+large counts are recorded. Full final large SML runs remain unrecorded unless
+listed separately in validation.
+
+Full binding multiplicities, values and cardinalities are checked after builds;
+lookups, fold scalars and callback counts are checked as consumed. Filter_map
+checks every final signed value. Hash consumers use the reviewed original
+results and independent modular model. Extra full consumers, reference cells,
+domain specialization and absence of an identical Sys.opaque_identity barrier
+are explicit adaptations.
+
+### Validation evidence
+
+Original snapshots and independent duplicate-binding models cover 23 update
+sequences, including resizing and signed keys. Exact original bucket layouts
+before/after filtering and 1005 integer/tuple hash pairs support the port.
+Original source observers and independent iteration/binding/modular models
+agree on 56 edge-count cases and all 33 selected profiles. Tests cover the
+unrolled lookup tail, exact traversal order across callback-triggered resizing,
+duplicate removal, exception restoration, corrupted
+bindings and both signed63 boundary transitions. The validation ledger separates
+private pilots from canonical wrapper checks and resource failures.
+
+### Literature and diagnostic interpretation
+
+Preserved OCaml source establishes these bucket and hash algorithms; its
+MurmurHash3 pointer records ancestry rather than a newly claimed paper review.
+Independent models and exact source observations support correctness.
+Bucket distribution, resize/cell reuse, indirect mutable fields, key/hash
+specialization, tagged arithmetic and added consumers are source-based
+performance questions. Recorded counts and timings do not isolate their costs.

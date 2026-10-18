@@ -1,0 +1,1 @@
+str_string_partial_match	30	1048576	shared/input.sml shared/ocaml-stdlib-text-input.sml shared/ocaml-stdlib-text.sml shared/ocaml-stdlib-text-program.sml shared/sandmark-regexredux-str.sml shared/ocaml-stdlib-str.sml str_string_partial_match/benchmark.sml shared/main.sml	1	str_string_partial_match/smoke.expected	-

@@ -1,0 +1,33 @@
+structure StdlibTextTests=struct
+ structure B=BenchStdlibText
+ structure A=B.Bytes
+ fun check label f=T.check("stdlib-text/"^label,f)
+ val _=check "original-constant-length"(fn()=>String.size B.text=574)
+ val _=check "original-index"(fn()=>B.indexString B.text #"r"=7)
+ val _=check "bytes-roundtrip"(fn()=>A.toString(A.ofString B.text)=B.text)
+ val _=check "left-overlap"(fn()=>let val a=A.ofString"abcdef" val _=A.blit(a,2,a,0,4)
+   in A.toString a="cdefef"end)
+ val _=check "right-overlap"(fn()=>let val a=A.ofString"abcdef" val _=A.blit(a,0,a,2,4)
+   in A.toString a="ababcd"end)
+ val _=check "same-position-blit"(fn()=>let val a=A.ofString"abcdef" val _=A.blit(a,1,a,1,4)
+   in A.toString a="abcdef"end)
+ val _=check "copy-persistence"(fn()=>let val a=A.ofString"source" val b=A.copy a val _=A.set b 0 #"!"
+   in A.toString a="source"andalso A.toString b="!ource"end)
+ val _=check "copy-bounds"(fn()=>((A.sub(A.ofString"xy")1 2;false)handle Subscript=>true))
+ val _=check "sub-source-bound"(fn()=>A.toString(A.sub(A.ofString"abcd")1 2)="bc")
+ val _=check "empty-sub"(fn()=>A.toString(A.sub(A.ofString"abcd")4 0)="")
+ val _=check "cat-segments"(fn()=>A.toString(A.cat(A.ofString"ab")(A.ofString"cd"))="abcd")
+ val _=check "source-fish-concat"(fn()=>A.toString(A.concat(A.ofString" ")(List.map A.ofString["I","AM","A","FISH"]))="I AM A FISH")
+ val _=check "empty-concat"(fn()=>A.toString(A.concat(A.ofString",")[])="")
+ val _=check "trim-source"(fn()=>B.trimString"We need a trim\n\n\n\n\n"="We need a trim")
+ val _=check "trim-ascii-whitespace"(fn()=>A.toString(A.trim(A.ofString"\t \012x\r\n"))="x")
+ val _=check "trim-all-whitespace"(fn()=>A.toString(A.trim(A.ofString" \t\r\n"))="")
+ val _=check "uppercase-ascii"(fn()=>A.toString(A.map B.uppercase(A.ofString"aZ0!?z"))="AZ0!?Z")
+ val _=check "map-source"(fn()=>A.toString(A.map(fn _=> #"!")(A.ofString"abcd"))="!!!!")
+ val _=check "iterator-order"(fn()=>let val seen=ref"" val _=A.app(fn c=>seen:= !seen^String.str c)(A.ofString"abc")
+   in !seen="abc"end)
+ val _=check "contains-source"(fn()=>A.contains(A.ofString B.text) #"r")
+ val _=check "contains-absent"(fn()=>not(A.contains(A.ofString B.text) #"@"))
+ val _=check "split-preserves-empty-fields"(fn()=>B.splitOnChar #" "" a  b "=["","a","","b",""])
+ val _=check "normalized-compare"(fn()=>B.compareStrings("a","z")= ~1 andalso B.compareStrings("z","a")=1 andalso B.compareStrings("a","a")=0)
+end

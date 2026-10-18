@@ -1,0 +1,1 @@
+hashtbl_filter_map	30	1048576	shared/input.sml shared/ocaml-stdlib-hash.sml shared/ocaml-stdlib-hashtbl.sml shared/ocaml-stdlib-hashtbl-program.sml hashtbl_filter_map/benchmark.sml shared/main.sml	1	hashtbl_filter_map/smoke.expected	-

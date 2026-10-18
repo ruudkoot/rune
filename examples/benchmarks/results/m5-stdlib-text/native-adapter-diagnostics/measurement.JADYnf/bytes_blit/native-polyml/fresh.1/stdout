@@ -1,0 +1,4 @@
+RESULT 575:1DB491D0
+PASS bytes_blit
+SAMPLE 1 0.000431000
+SUMMARY 1 checks, 0 failed

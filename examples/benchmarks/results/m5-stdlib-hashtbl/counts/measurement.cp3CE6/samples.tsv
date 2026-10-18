@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+hashtbl_find	normal	rune	O2	compile	0	0	pass	2.82	2.43	0.17	135060	-	-	-	hashtbl_find/rune/build/compile
+hashtbl_find	normal	rune	O2	correctness	0	0	pass	0.17	0.17	0.00	2412	18082056	259296	5674	hashtbl_find/rune/correctness.0
+hashtbl_find	normal	rune	O2	count	1	1	pass	0.18	0.17	0.00	2468	18082056	259296	5674	hashtbl_find/rune/fresh.1
+hashtbl_find	normal	rune:opt	O2	compile	0	0	pass	3.66	3.31	0.20	135184	-	-	-	hashtbl_find/rune-opt/build/compile
+hashtbl_find	normal	rune:opt	O2	native-compile	0	0	pass	0.65	0.32	0.07	15800	-	-	-	hashtbl_find/rune-opt/build/native-compile
+hashtbl_find	normal	rune:opt	O2	correctness	0	0	pass	0.04	0.03	0.00	3064	18082056	259296	5674	hashtbl_find/rune-opt/correctness.0
+hashtbl_find	normal	rune:opt	O2	count	1	1	pass	0.05	0.04	0.00	3084	18082056	259296	5674	hashtbl_find/rune-opt/fresh.1
+hashtbl_find	normal	rune:new	O2	compile	0	0	pass	2.56	2.36	0.15	135352	-	-	-	hashtbl_find/rune-new/build/compile
+hashtbl_find	normal	rune:new	O2	correctness	0	0	pass	0.12	0.11	0.00	2732	12927125	259296	5674	hashtbl_find/rune-new/correctness.0
+hashtbl_find	normal	rune:new	O2	count	1	1	pass	0.12	0.12	0.00	2628	12927125	259296	5674	hashtbl_find/rune-new/fresh.1
+hashtbl_find	normal	rune:jit	O2	compile	0	0	pass	3.17	2.43	0.20	134932	-	-	-	hashtbl_find/rune-jit/build/compile
+hashtbl_find	normal	rune:jit	O2	correctness	0	0	pass	0.08	0.05	0.00	3968	12927125	259296	5674	hashtbl_find/rune-jit/correctness.0
+hashtbl_find	normal	rune:jit	O2	count	1	1	pass	0.09	0.05	0.00	4016	12927125	259296	5674	hashtbl_find/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

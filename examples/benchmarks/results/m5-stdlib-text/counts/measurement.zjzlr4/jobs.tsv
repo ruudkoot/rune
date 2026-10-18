@@ -1,0 +1,1 @@
+string_uppercase_ascii	600	4194304	shared/input.sml shared/ocaml-stdlib-text-input.sml shared/ocaml-stdlib-text.sml shared/ocaml-stdlib-text-program.sml string_uppercase_ascii/benchmark.sml shared/main.sml	2000	string_uppercase_ascii/normal.expected	-

@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+string_uppercase_ascii	normal	rune	O2	compile	0	0	pass	3.76	2.48	0.20	135096	-	-	-	string_uppercase_ascii/rune/build/compile
+string_uppercase_ascii	normal	rune	O2	correctness	0	0	pass	0.81	0.75	0.02	10452	94706725	93162208	2302706	string_uppercase_ascii/rune/correctness.0
+string_uppercase_ascii	normal	rune	O2	count	1	1	pass	0.74	0.68	0.01	10476	94706725	93162208	2302706	string_uppercase_ascii/rune/fresh.1
+string_uppercase_ascii	normal	rune:opt	O2	compile	0	0	pass	2.59	2.48	0.16	135248	-	-	-	string_uppercase_ascii/rune-opt/build/compile
+string_uppercase_ascii	normal	rune:opt	O2	native-compile	0	0	pass	0.53	0.26	0.06	12396	-	-	-	string_uppercase_ascii/rune-opt/build/native-compile
+string_uppercase_ascii	normal	rune:opt	O2	correctness	0	0	pass	0.25	0.24	0.01	10856	94706725	93162208	2302706	string_uppercase_ascii/rune-opt/correctness.0
+string_uppercase_ascii	normal	rune:opt	O2	count	1	1	pass	0.21	0.20	0.00	10884	94706725	93162208	2302706	string_uppercase_ascii/rune-opt/fresh.1
+string_uppercase_ascii	normal	rune:new	O2	compile	0	0	pass	2.46	2.54	0.13	135084	-	-	-	string_uppercase_ascii/rune-new/build/compile
+string_uppercase_ascii	normal	rune:new	O2	correctness	0	0	pass	0.60	0.64	0.00	10584	62470641	93162208	2302706	string_uppercase_ascii/rune-new/correctness.0
+string_uppercase_ascii	normal	rune:new	O2	count	1	1	pass	0.63	0.64	0.03	10592	62470641	93162208	2302706	string_uppercase_ascii/rune-new/fresh.1
+string_uppercase_ascii	normal	rune:jit	O2	compile	0	0	pass	2.71	2.72	0.18	135308	-	-	-	string_uppercase_ascii/rune-jit/build/compile
+string_uppercase_ascii	normal	rune:jit	O2	correctness	0	0	pass	0.27	0.16	0.01	11708	62470641	93162208	2302706	string_uppercase_ascii/rune-jit/correctness.0
+string_uppercase_ascii	normal	rune:jit	O2	count	1	1	pass	0.33	0.29	0.03	11732	62470641	93162208	2302706	string_uppercase_ascii/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

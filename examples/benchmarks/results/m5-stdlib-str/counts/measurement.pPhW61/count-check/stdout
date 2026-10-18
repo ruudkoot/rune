@@ -1,0 +1,5 @@
+COUNT unbudgeted str_split normal rune
+COUNT unbudgeted str_split normal rune:opt
+COUNT unbudgeted str_split normal rune:new
+COUNT unbudgeted str_split normal rune:jit
+COUNT comparisons agree

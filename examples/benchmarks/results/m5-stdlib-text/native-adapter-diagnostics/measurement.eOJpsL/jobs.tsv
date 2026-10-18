@@ -1,0 +1,1 @@
+string_blit	30	1048576	shared/input.sml shared/ocaml-stdlib-text-input.sml shared/ocaml-stdlib-text.sml shared/ocaml-stdlib-text-program.sml string_blit/benchmark.sml shared/main.sml	575	string_blit/smoke.expected	-

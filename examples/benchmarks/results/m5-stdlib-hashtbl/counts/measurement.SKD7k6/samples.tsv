@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+int_replace2	normal	rune	O2	compile	0	0	pass	2.97	2.60	0.25	135472	-	-	-	int_replace2/rune/build/compile
+int_replace2	normal	rune	O2	correctness	0	0	pass	1.21	1.14	0.04	10440	191315913	104530760	1009667	int_replace2/rune/correctness.0
+int_replace2	normal	rune	O2	count	1	1	pass	1.33	1.22	0.04	10200	191315913	104530760	1009667	int_replace2/rune/fresh.1
+int_replace2	normal	rune:opt	O2	compile	0	0	pass	2.43	2.30	0.16	135352	-	-	-	int_replace2/rune-opt/build/compile
+int_replace2	normal	rune:opt	O2	native-compile	0	0	pass	0.93	0.38	0.07	15924	-	-	-	int_replace2/rune-opt/build/native-compile
+int_replace2	normal	rune:opt	O2	correctness	0	0	pass	0.50	0.47	0.01	10864	191315913	104530760	1009667	int_replace2/rune-opt/correctness.0
+int_replace2	normal	rune:opt	O2	count	1	1	pass	0.42	0.42	0.00	10996	191315913	104530760	1009667	int_replace2/rune-opt/fresh.1
+int_replace2	normal	rune:new	O2	compile	0	0	pass	3.07	2.94	0.20	135384	-	-	-	int_replace2/rune-new/build/compile
+int_replace2	normal	rune:new	O2	correctness	0	0	pass	1.27	1.15	0.08	10320	116804123	104530760	1009667	int_replace2/rune-new/correctness.0
+int_replace2	normal	rune:new	O2	count	1	1	pass	1.08	1.03	0.01	10576	116804123	104530760	1009667	int_replace2/rune-new/fresh.1
+int_replace2	normal	rune:jit	O2	compile	0	0	pass	3.00	2.68	0.22	135348	-	-	-	int_replace2/rune-jit/build/compile
+int_replace2	normal	rune:jit	O2	correctness	0	0	pass	0.52	0.48	0.02	12012	116804123	104530760	1009667	int_replace2/rune-jit/correctness.0
+int_replace2	normal	rune:jit	O2	count	1	1	pass	0.45	0.39	0.02	12032	116804123	104530760	1009667	int_replace2/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

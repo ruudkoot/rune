@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+int_find2	smoke	native:mlton@20241230	O2	compile	0	0	pass	7.16	5.84	1.24	671884	-	-	-	int_find2/native-mlton/build/compile
+int_find2	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2056	-	-	-	int_find2/native-mlton/correctness.0
+int_find2	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2216	-	-	-	int_find2/native-mlton/fresh.1
+int_find2	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.47	0.43	0.03	35212	-	-	-	int_find2/native-smlnj-legacy/build/compile
+int_find2	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.02	0.00	0.00	3792	-	-	-	int_find2/native-smlnj-legacy/correctness.0
+int_find2	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.02	0.00	0.01	3816	-	-	-	int_find2/native-smlnj-legacy/fresh.1
+int_find2	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.49	0.28	0.08	31616	-	-	-	int_find2/native-polyml/build/compile
+int_find2	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.01	0.00	0.00	5496	-	-	-	int_find2/native-polyml/correctness.0
+int_find2	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	5552	-	-	-	int_find2/native-polyml/fresh.1

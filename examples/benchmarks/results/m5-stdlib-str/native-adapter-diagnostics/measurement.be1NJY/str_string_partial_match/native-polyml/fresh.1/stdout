@@ -1,0 +1,4 @@
+RESULT 1:50C5D1F
+PASS str_string_partial_match
+SAMPLE 1 0.000017000
+SUMMARY 1 checks, 0 failed

@@ -1,0 +1,107 @@
+{
+  "bytes_get": {
+    "smoke": 575,
+    "normal": 200000
+  },
+  "bytes_set": {
+    "smoke": 575,
+    "normal": 200000,
+    "large": 1000000
+  },
+  "bytes_cat": {
+    "smoke": 1,
+    "normal": 2000
+  },
+  "bytes_sub": {
+    "smoke": 575,
+    "normal": 20000
+  },
+  "bytes_blit": {
+    "smoke": 575,
+    "normal": 20000
+  },
+  "bytes_concat": {
+    "smoke": 1,
+    "normal": 20000
+  },
+  "bytes_iter": {
+    "smoke": 1,
+    "normal": 2000
+  },
+  "bytes_map": {
+    "smoke": 1,
+    "normal": 2000,
+    "large": 100000
+  },
+  "bytes_trim": {
+    "smoke": 1,
+    "normal": 20000
+  },
+  "bytes_index": {
+    "smoke": 1,
+    "normal": 200000
+  },
+  "bytes_contains": {
+    "smoke": 1,
+    "normal": 200000
+  },
+  "bytes_uppercase_ascii": {
+    "smoke": 1,
+    "normal": 2000
+  },
+  "string_get": {
+    "smoke": 575,
+    "normal": 200000
+  },
+  "string_sub": {
+    "smoke": 575,
+    "normal": 20000
+  },
+  "string_blit": {
+    "smoke": 575,
+    "normal": 20000
+  },
+  "string_concat": {
+    "smoke": 1,
+    "normal": 20000
+  },
+  "string_iter": {
+    "smoke": 1,
+    "normal": 2000
+  },
+  "string_map": {
+    "smoke": 1,
+    "normal": 2000,
+    "large": 100000
+  },
+  "string_trim": {
+    "smoke": 1,
+    "normal": 20000
+  },
+  "string_index": {
+    "smoke": 1,
+    "normal": 200000
+  },
+  "string_contains": {
+    "smoke": 1,
+    "normal": 200000
+  },
+  "string_uppercase_ascii": {
+    "smoke": 1,
+    "normal": 2000
+  },
+  "string_split_on_char": {
+    "smoke": 1,
+    "normal": 2000,
+    "large": 50000
+  },
+  "string_compare": {
+    "smoke": 1,
+    "normal": 100,
+    "large": 10000
+  },
+  "string_equal": {
+    "smoke": 1,
+    "normal": 100
+  }
+}

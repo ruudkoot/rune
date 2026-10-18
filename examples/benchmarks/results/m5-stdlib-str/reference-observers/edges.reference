@@ -1,0 +1,21 @@
+true:0:10
+false:none
+true:1:11
+false:none
+true:0:5
+true:0:0
+true:0:10
+false:none
+true:1:6
+1:11
+none
+6:16
+11:21
+. / .
+absent
+
+
+a
+a
+a||b
+|a|

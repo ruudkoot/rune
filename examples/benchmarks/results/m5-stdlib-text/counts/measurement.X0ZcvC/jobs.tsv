@@ -1,0 +1,1 @@
+string_get	600	4194304	shared/input.sml shared/ocaml-stdlib-text-input.sml shared/ocaml-stdlib-text.sml shared/ocaml-stdlib-text-program.sml string_get/benchmark.sml shared/main.sml	200000	string_get/normal.expected	-

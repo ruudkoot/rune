@@ -1,0 +1,1 @@
+string_contains	30	1048576	shared/input.sml shared/ocaml-stdlib-text-input.sml shared/ocaml-stdlib-text.sml shared/ocaml-stdlib-text-program.sml string_contains/benchmark.sml shared/main.sml	1	string_contains/smoke.expected	-

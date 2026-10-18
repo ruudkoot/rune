@@ -1,0 +1,4 @@
+RESULT 1:6D0D00D7
+PASS hashtbl_iter
+SAMPLE 1 0.000670000
+SUMMARY 1 checks, 0 failed

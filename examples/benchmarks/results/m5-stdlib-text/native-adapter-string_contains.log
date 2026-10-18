@@ -1,0 +1,6 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1316 profiles)
+BENCH_PROFILE=smoke BENCH_CONFIGS=native:mlton,native:smlnj-legacy,native:polyml BENCH_FILTER='=string_contains' BENCH_LEVEL= BENCH_MODE=fresh BENCH_SAMPLES=1 BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh time
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.B11KHT
+BENCH MEASURE string_contains smoke time
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.B11KHT/report.md

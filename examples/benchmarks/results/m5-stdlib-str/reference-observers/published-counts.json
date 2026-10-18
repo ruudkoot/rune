@@ -1,0 +1,8 @@
+{
+  "str_string_partial_match": 25000000,
+  "str_regexp": 1000000,
+  "str_string_match": 50000000,
+  "str_global_replace": 1000000,
+  "str_search_forward": 5000000,
+  "str_split": 2000000
+}

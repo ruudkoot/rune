@@ -1,0 +1,233 @@
+[
+  {
+    "benchmark": "int_find1",
+    "profile": "smoke",
+    "iterations": 0,
+    "published": 20000,
+    "expected": "0:6D0D00D7"
+  },
+  {
+    "benchmark": "int_find1",
+    "profile": "normal",
+    "iterations": 1000,
+    "published": 20000,
+    "expected": "1000:E92AE3F7"
+  },
+  {
+    "benchmark": "int_find2",
+    "profile": "smoke",
+    "iterations": 0,
+    "published": 300000,
+    "expected": "0:6D0D00D7"
+  },
+  {
+    "benchmark": "int_find2",
+    "profile": "normal",
+    "iterations": 1000,
+    "published": 300000,
+    "expected": "1000:E92AE3F7"
+  },
+  {
+    "benchmark": "int_replace1",
+    "profile": "smoke",
+    "iterations": 0,
+    "published": 10000,
+    "expected": "0:6D0D00D7"
+  },
+  {
+    "benchmark": "int_replace1",
+    "profile": "normal",
+    "iterations": 1000,
+    "published": 10000,
+    "expected": "1000:E92AE3F7"
+  },
+  {
+    "benchmark": "int_replace2",
+    "profile": "smoke",
+    "iterations": 0,
+    "published": 100000,
+    "expected": "0:6D0D00D7"
+  },
+  {
+    "benchmark": "int_replace2",
+    "profile": "normal",
+    "iterations": 1000,
+    "published": 100000,
+    "expected": "1000:E92AE3F7"
+  },
+  {
+    "benchmark": "caml_hash_int",
+    "profile": "smoke",
+    "iterations": 0,
+    "published": 200000,
+    "expected": "0:9B985B07"
+  },
+  {
+    "benchmark": "caml_hash_int",
+    "profile": "normal",
+    "iterations": 1000,
+    "published": 200000,
+    "expected": "1000:FA768787"
+  },
+  {
+    "benchmark": "caml_hash_int",
+    "profile": "large",
+    "iterations": 10000,
+    "published": 200000,
+    "expected": "10000:89515C07"
+  },
+  {
+    "benchmark": "caml_hash_tuple",
+    "profile": "smoke",
+    "iterations": 0,
+    "published": 100000,
+    "expected": "0:2B9727C5"
+  },
+  {
+    "benchmark": "caml_hash_tuple",
+    "profile": "normal",
+    "iterations": 1000,
+    "published": 100000,
+    "expected": "1000:E89117C5"
+  },
+  {
+    "benchmark": "hashtbl_iter",
+    "profile": "smoke",
+    "iterations": 1,
+    "published": 200000,
+    "expected": "1:6D0D00D7"
+  },
+  {
+    "benchmark": "hashtbl_iter",
+    "profile": "normal",
+    "iterations": 1000,
+    "published": 200000,
+    "expected": "1000:9F09A165"
+  },
+  {
+    "benchmark": "hashtbl_fold",
+    "profile": "smoke",
+    "iterations": 1,
+    "published": 200000,
+    "expected": "1:1F433617"
+  },
+  {
+    "benchmark": "hashtbl_fold",
+    "profile": "normal",
+    "iterations": 1000,
+    "published": 200000,
+    "expected": "1000:842D7265"
+  },
+  {
+    "benchmark": "hashtbl_add_resizing",
+    "profile": "smoke",
+    "iterations": 33,
+    "published": 4000000,
+    "expected": "33:E705E1E5"
+  },
+  {
+    "benchmark": "hashtbl_add_resizing",
+    "profile": "normal",
+    "iterations": 100000,
+    "published": 4000000,
+    "expected": "100000:D04873FF"
+  },
+  {
+    "benchmark": "hashtbl_add_resizing",
+    "profile": "large",
+    "iterations": 1000000,
+    "published": 4000000,
+    "expected": "1000000:5DBEAE5F"
+  },
+  {
+    "benchmark": "hashtbl_add_sized",
+    "profile": "smoke",
+    "iterations": 33,
+    "published": 6000000,
+    "expected": "33:E705E1E5"
+  },
+  {
+    "benchmark": "hashtbl_add_sized",
+    "profile": "normal",
+    "iterations": 100000,
+    "published": 6000000,
+    "expected": "100000:D04873FF"
+  },
+  {
+    "benchmark": "hashtbl_add_sized",
+    "profile": "large",
+    "iterations": 1000000,
+    "published": 6000000,
+    "expected": "1000000:5DBEAE5F"
+  },
+  {
+    "benchmark": "hashtbl_add_duplicate",
+    "profile": "smoke",
+    "iterations": 17,
+    "published": 2000000,
+    "expected": "17:E10F4A73"
+  },
+  {
+    "benchmark": "hashtbl_add_duplicate",
+    "profile": "normal",
+    "iterations": 100000,
+    "published": 2000000,
+    "expected": "100000:19E4295F"
+  },
+  {
+    "benchmark": "hashtbl_add_duplicate",
+    "profile": "large",
+    "iterations": 500000,
+    "published": 2000000,
+    "expected": "500000:3B50C65F"
+  },
+  {
+    "benchmark": "hashtbl_remove",
+    "profile": "smoke",
+    "iterations": 0,
+    "published": 4000000,
+    "expected": "0:50C5D1F"
+  },
+  {
+    "benchmark": "hashtbl_remove",
+    "profile": "normal",
+    "iterations": 100000,
+    "published": 4000000,
+    "expected": "100000:8297AA8F"
+  },
+  {
+    "benchmark": "hashtbl_find",
+    "profile": "smoke",
+    "iterations": 1001,
+    "published": 6000000,
+    "expected": "1001:3E1A5517"
+  },
+  {
+    "benchmark": "hashtbl_find",
+    "profile": "normal",
+    "iterations": 100000,
+    "published": 6000000,
+    "expected": "100000:1DDDEB4D"
+  },
+  {
+    "benchmark": "hashtbl_filter_map",
+    "profile": "smoke",
+    "iterations": 1,
+    "published": 100000,
+    "expected": "1:1C7623FB"
+  },
+  {
+    "benchmark": "hashtbl_filter_map",
+    "profile": "normal",
+    "iterations": 100,
+    "published": 100000,
+    "expected": "100:EE3E303"
+  },
+  {
+    "benchmark": "hashtbl_filter_map",
+    "profile": "large",
+    "iterations": 10000,
+    "published": 100000,
+    "expected": "10000:EE3E303"
+  }
+]

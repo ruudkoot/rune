@@ -1,0 +1,249 @@
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 1001:3E1A5517
+PASS hashtbl_find
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-hash.sml]
+structure BenchStdlibHash : sig
+  val rotate : Word32.word -> int -> Word32.word
+  val mix : Word32.word -> Word32.word -> Word32.word
+  val finish : Word32.word -> int
+  val tagged : int -> Word32.word
+  val integer : int -> int
+  val pair : int * int -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-hashtbl.sml]
+[autoloading]
+[autoloading done]
+structure BenchStdlibHashtbl : sig
+  datatype 'a bucket = Cons of int * 'a ref * 'a bucket ref | Empty
+  datatype mode = Generic | Integer
+  datatype 'a table
+    = Table of {data:'a bucket array ref, initial:int ref, mode:mode,
+                 size:int ref}
+  val power : int -> int -> int
+  val create : mode -> int -> 'a table
+  val length : 'a table -> int
+  val bucketCount : 'a table -> int
+  val index : 'a table -> int -> int
+  val resize : 'a table -> unit
+  val add : 'a table -> int -> 'a -> unit
+  val replace : 'a table -> int -> 'a -> unit
+  val remove : 'a table -> int -> unit
+  val findOpt : 'a table -> int -> 'a option
+  val traversing : 'a table -> (unit -> 'b) -> 'b
+  val iter : (int -> 'a -> 'b) -> 'a table -> unit
+  val fold : (int -> 'a -> 'b -> 'b) -> 'a table -> 'b -> 'b
+  val filterMap : (int -> 'a -> 'a option) -> 'a table -> unit
+  val contents : 'a table -> (int * 'a) list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-hashtbl-program.sml]
+structure BenchStdlibHashtblPrograms : sig
+  structure H : <sig>
+  structure Hash : <sig>
+  val seed : Word32.word
+  val mix : Word32.word -> Word32.word -> Word32.word
+  val loop : int -> int -> (int -> 'a) -> unit
+  val genericTable : int BenchStdlibHashtbl.table
+  val integerTable : int BenchStdlibHashtbl.table
+  val populated : unit -> int BenchStdlibHashtbl.table
+  val reject : bool -> unit
+  val checkRange : int BenchStdlibHashtbl.table -> int -> int -> int -> unit
+  val digest : int BenchStdlibHashtbl.table -> Word32.word
+  val modulus : IntInf.int
+  val sign : IntInf.int
+  val double : IntInf.int -> IntInf.int
+  val low32 : IntInf.int -> Word32.word
+  val run : string -> int -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/hashtbl_find/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+[autoloading]
+[autoloading done]
+RESULT 1001:3E1A5517
+PASS hashtbl_find
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-hash.sml]
+structure BenchStdlibHash : sig
+  val rotate : Word32.word -> int -> Word32.word
+  val mix : Word32.word -> Word32.word -> Word32.word
+  val finish : Word32.word -> int
+  val tagged : int -> Word32.word
+  val integer : int -> int
+  val pair : int * int -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-hashtbl.sml]
+[autoloading]
+[autoloading done]
+structure BenchStdlibHashtbl : sig
+  datatype 'a bucket = Cons of int * 'a ref * 'a bucket ref | Empty
+  datatype mode = Generic | Integer
+  datatype 'a table
+    = Table of {data:'a bucket array ref, initial:int ref, mode:mode,
+                 size:int ref}
+  val power : int -> int -> int
+  val create : mode -> int -> 'a table
+  val length : 'a table -> int
+  val bucketCount : 'a table -> int
+  val index : 'a table -> int -> int
+  val resize : 'a table -> unit
+  val add : 'a table -> int -> 'a -> unit
+  val replace : 'a table -> int -> 'a -> unit
+  val remove : 'a table -> int -> unit
+  val findOpt : 'a table -> int -> 'a option
+  val traversing : 'a table -> (unit -> 'b) -> 'b
+  val iter : (int -> 'a -> 'b) -> 'a table -> unit
+  val fold : (int -> 'a -> 'b -> 'b) -> 'a table -> 'b -> 'b
+  val filterMap : (int -> 'a -> 'a option) -> 'a table -> unit
+  val contents : 'a table -> (int * 'a) list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-hashtbl-program.sml]
+structure BenchStdlibHashtblPrograms : sig
+  structure H : <sig>
+  structure Hash : <sig>
+  val seed : Word32.word
+  val mix : Word32.word -> Word32.word -> Word32.word
+  val loop : int -> int -> (int -> 'a) -> unit
+  val genericTable : int BenchStdlibHashtbl.table
+  val integerTable : int BenchStdlibHashtbl.table
+  val populated : unit -> int BenchStdlibHashtbl.table
+  val reject : bool -> unit
+  val checkRange : int BenchStdlibHashtbl.table -> int -> int -> int -> unit
+  val digest : int BenchStdlibHashtbl.table -> Word32.word
+  val modulus : IntInf.int
+  val sign : IntInf.int
+  val double : IntInf.int -> IntInf.int
+  val low32 : IntInf.int -> Word32.word
+  val run : string -> int -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/hashtbl_find/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+[autoloading]
+[autoloading done]
+RESULT 1001:3E1A5517
+PASS hashtbl_find
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-hash.sml]
+structure BenchStdlibHash : 
+  sig
+    val rotate : Word32.word -> int -> Word32.word
+    val mix : Word32.word -> Word32.word -> Word32.word
+    val finish : Word32.word -> int
+    val tagged : int -> Word32.word
+    val integer : int -> int
+    val pair : int * int -> int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-hashtbl.sml]
+structure BenchStdlibHashtbl : 
+  sig
+    datatype 'a bucket = Cons of int * 'a ref * 'a bucket ref | Empty
+    datatype mode = Generic | Integer
+    datatype 'a table
+      = Table of {data:'a bucket array ref, initial:int ref, mode:mode,
+                   size:int ref}
+    val power : int -> int -> int
+    val create : mode -> int -> 'a table
+    val length : 'a table -> int
+    val bucketCount : 'a table -> int
+    val index : 'a table -> int -> int
+    val resize : 'a table -> unit
+    val add : 'a table -> int -> 'a -> unit
+    val replace : 'a table -> int -> 'a -> unit
+    val remove : 'a table -> int -> unit
+    val findOpt : 'a table -> int -> 'a option
+    val traversing : 'a table -> (unit -> 'b) -> 'b
+    val iter : (int -> 'a -> 'b) -> 'a table -> unit
+    val fold : (int -> 'a -> 'b -> 'b) -> 'a table -> 'b -> 'b
+    val filterMap : (int -> 'a -> 'a option) -> 'a table -> unit
+    val contents : 'a table -> (int * 'a) list
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-hashtbl-program.sml]
+structure BenchStdlibHashtblPrograms : 
+  sig
+    structure H : <sig>
+    structure Hash : <sig>
+    val seed : Word32.word
+    val mix : Word32.word -> Word32.word -> Word32.word
+    val loop : int -> int -> (int -> 'a) -> unit
+    val genericTable : int BenchStdlibHashtbl.table
+    val integerTable : int BenchStdlibHashtbl.table
+    val populated : unit -> int BenchStdlibHashtbl.table
+    val reject : bool -> unit
+    val checkRange : int BenchStdlibHashtbl.table -> int -> int -> int -> unit
+    val digest : int BenchStdlibHashtbl.table -> Word32.word
+    val modulus : IntInf.int
+    val sign : IntInf.int
+    val double : IntInf.int -> IntInf.int
+    val low32 : IntInf.int -> Word32.word
+    val run : string -> int -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/hashtbl_find/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 1001:3E1A5517
+PASS hashtbl_find
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+RESULT 1001:3E1A5517
+PASS hashtbl_find
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 1001:3E1A5517
+PASS hashtbl_find
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

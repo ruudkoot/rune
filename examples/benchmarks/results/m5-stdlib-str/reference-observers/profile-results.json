@@ -1,0 +1,86 @@
+[
+  {
+    "benchmark": "str_regexp",
+    "profile": "smoke",
+    "iterations": 1,
+    "expected": "1:F5C2FBE8"
+  },
+  {
+    "benchmark": "str_regexp",
+    "profile": "normal",
+    "iterations": 20000,
+    "expected": "20000:432E51A5"
+  },
+  {
+    "benchmark": "str_string_match",
+    "profile": "smoke",
+    "iterations": 1,
+    "expected": "1:50C5D1F"
+  },
+  {
+    "benchmark": "str_string_match",
+    "profile": "normal",
+    "iterations": 200000,
+    "expected": "200000:3FE20EC5"
+  },
+  {
+    "benchmark": "str_search_forward",
+    "profile": "smoke",
+    "iterations": 1,
+    "expected": "1:170AE675"
+  },
+  {
+    "benchmark": "str_search_forward",
+    "profile": "normal",
+    "iterations": 2000,
+    "expected": "2000:42FE4C5"
+  },
+  {
+    "benchmark": "str_search_forward",
+    "profile": "large",
+    "iterations": 100000,
+    "expected": "100000:CAD433C5"
+  },
+  {
+    "benchmark": "str_string_partial_match",
+    "profile": "smoke",
+    "iterations": 1,
+    "expected": "1:50C5D1F"
+  },
+  {
+    "benchmark": "str_string_partial_match",
+    "profile": "normal",
+    "iterations": 200000,
+    "expected": "200000:3FE20EC5"
+  },
+  {
+    "benchmark": "str_global_replace",
+    "profile": "smoke",
+    "iterations": 1,
+    "expected": "1:6D93D262"
+  },
+  {
+    "benchmark": "str_global_replace",
+    "profile": "normal",
+    "iterations": 2000,
+    "expected": "2000:812CF275"
+  },
+  {
+    "benchmark": "str_global_replace",
+    "profile": "large",
+    "iterations": 100000,
+    "expected": "100000:B4DE40E5"
+  },
+  {
+    "benchmark": "str_split",
+    "profile": "smoke",
+    "iterations": 1,
+    "expected": "1:CFAD7398"
+  },
+  {
+    "benchmark": "str_split",
+    "profile": "normal",
+    "iterations": 2000,
+    "expected": "2000:D1528D55"
+  }
+]

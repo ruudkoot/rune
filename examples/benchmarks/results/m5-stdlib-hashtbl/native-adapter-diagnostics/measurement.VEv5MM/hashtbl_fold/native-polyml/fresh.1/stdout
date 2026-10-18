@@ -1,0 +1,4 @@
+RESULT 1:1F433617
+PASS hashtbl_fold
+SAMPLE 1 0.000164000
+SUMMARY 1 checks, 0 failed

@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+hashtbl_remove	smoke	native:mlton@20241230	O2	compile	0	0	pass	8.49	5.80	1.54	671752	-	-	-	hashtbl_remove/native-mlton/build/compile
+hashtbl_remove	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2344	-	-	-	hashtbl_remove/native-mlton/correctness.0
+hashtbl_remove	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2188	-	-	-	hashtbl_remove/native-mlton/fresh.1
+hashtbl_remove	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.47	0.42	0.03	36256	-	-	-	hashtbl_remove/native-smlnj-legacy/build/compile
+hashtbl_remove	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.02	0.00	0.01	4052	-	-	-	hashtbl_remove/native-smlnj-legacy/correctness.0
+hashtbl_remove	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.02	0.00	0.01	4096	-	-	-	hashtbl_remove/native-smlnj-legacy/fresh.1
+hashtbl_remove	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.48	0.30	0.07	34224	-	-	-	hashtbl_remove/native-polyml/build/compile
+hashtbl_remove	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.01	0.00	0.00	5624	-	-	-	hashtbl_remove/native-polyml/correctness.0
+hashtbl_remove	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	5496	-	-	-	hashtbl_remove/native-polyml/fresh.1

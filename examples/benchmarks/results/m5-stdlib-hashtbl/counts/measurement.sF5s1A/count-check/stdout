@@ -1,0 +1,5 @@
+COUNT unbudgeted hashtbl_add_duplicate normal rune
+COUNT unbudgeted hashtbl_add_duplicate normal rune:opt
+COUNT unbudgeted hashtbl_add_duplicate normal rune:new
+COUNT unbudgeted hashtbl_add_duplicate normal rune:jit
+COUNT comparisons agree

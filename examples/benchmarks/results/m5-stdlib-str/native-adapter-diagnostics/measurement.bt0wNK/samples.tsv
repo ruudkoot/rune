@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+str_regexp	smoke	native:mlton@20241230	O2	compile	0	0	pass	7.40	5.43	1.15	666640	-	-	-	str_regexp/native-mlton/build/compile
+str_regexp	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	1956	-	-	-	str_regexp/native-mlton/correctness.0
+str_regexp	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	1944	-	-	-	str_regexp/native-mlton/fresh.1
+str_regexp	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.63	0.59	0.06	38944	-	-	-	str_regexp/native-smlnj-legacy/build/compile
+str_regexp	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.02	0.01	0.00	3952	-	-	-	str_regexp/native-smlnj-legacy/correctness.0
+str_regexp	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.02	0.00	0.00	3920	-	-	-	str_regexp/native-smlnj-legacy/fresh.1
+str_regexp	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.59	0.39	0.14	48532	-	-	-	str_regexp/native-polyml/build/compile
+str_regexp	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	5520	-	-	-	str_regexp/native-polyml/correctness.0
+str_regexp	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	5584	-	-	-	str_regexp/native-polyml/fresh.1

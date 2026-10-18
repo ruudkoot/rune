@@ -1,0 +1,1317 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS stdlib-hashtbl/source-buckets/0
+PASS stdlib-hashtbl/source-buckets/1
+PASS stdlib-hashtbl/source-buckets/2
+PASS stdlib-hashtbl/source-buckets/3
+PASS stdlib-hashtbl/source-buckets/4
+PASS stdlib-hashtbl/source-buckets/5
+PASS stdlib-hashtbl/source-buckets/6
+PASS stdlib-hashtbl/source-buckets/7
+PASS stdlib-hashtbl/source-buckets/8
+PASS stdlib-hashtbl/source-buckets/9
+PASS stdlib-hashtbl/source-buckets/10
+PASS stdlib-hashtbl/source-buckets/11
+PASS stdlib-hashtbl/source-buckets/12
+PASS stdlib-hashtbl/source-buckets/13
+PASS stdlib-hashtbl/source-buckets/14
+PASS stdlib-hashtbl/source-buckets/15
+PASS stdlib-hashtbl/source-buckets/16
+PASS stdlib-hashtbl/source-buckets/17
+PASS stdlib-hashtbl/source-buckets/18
+PASS stdlib-hashtbl/source-buckets/19
+PASS stdlib-hashtbl/source-buckets/20
+PASS stdlib-hashtbl/source-buckets/21
+PASS stdlib-hashtbl/source-buckets/22
+PASS stdlib-hashtbl/original-1005-integer-hashes
+PASS stdlib-hashtbl/original-1005-tuple-hashes
+PASS stdlib-hashtbl/unrolled-find-and-tail
+PASS stdlib-hashtbl/duplicate-remove-reveals-older
+PASS stdlib-hashtbl/traversal-restored-after-exception
+PASS stdlib-hashtbl/source-resize-during-iter
+PASS stdlib-hashtbl/source-resize-during-fold
+PASS stdlib-hashtbl-program/int_find1/0
+PASS stdlib-hashtbl-program/int_find1/1
+PASS stdlib-hashtbl-program/int_find1/5
+PASS stdlib-hashtbl-program/int_find1/65
+PASS stdlib-hashtbl-program/int_find2/0
+PASS stdlib-hashtbl-program/int_find2/1
+PASS stdlib-hashtbl-program/int_find2/5
+PASS stdlib-hashtbl-program/int_find2/65
+PASS stdlib-hashtbl-program/int_replace1/0
+PASS stdlib-hashtbl-program/int_replace1/1
+PASS stdlib-hashtbl-program/int_replace1/5
+PASS stdlib-hashtbl-program/int_replace1/65
+PASS stdlib-hashtbl-program/int_replace2/0
+PASS stdlib-hashtbl-program/int_replace2/1
+PASS stdlib-hashtbl-program/int_replace2/5
+PASS stdlib-hashtbl-program/int_replace2/65
+PASS stdlib-hashtbl-program/caml_hash_int/0
+PASS stdlib-hashtbl-program/caml_hash_int/1
+PASS stdlib-hashtbl-program/caml_hash_int/5
+PASS stdlib-hashtbl-program/caml_hash_int/65
+PASS stdlib-hashtbl-program/caml_hash_tuple/0
+PASS stdlib-hashtbl-program/caml_hash_tuple/1
+PASS stdlib-hashtbl-program/caml_hash_tuple/5
+PASS stdlib-hashtbl-program/caml_hash_tuple/65
+PASS stdlib-hashtbl-program/hashtbl_iter/0
+PASS stdlib-hashtbl-program/hashtbl_iter/1
+PASS stdlib-hashtbl-program/hashtbl_iter/5
+PASS stdlib-hashtbl-program/hashtbl_iter/65
+PASS stdlib-hashtbl-program/hashtbl_fold/0
+PASS stdlib-hashtbl-program/hashtbl_fold/1
+PASS stdlib-hashtbl-program/hashtbl_fold/5
+PASS stdlib-hashtbl-program/hashtbl_fold/65
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/0
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/1
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/5
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/65
+PASS stdlib-hashtbl-program/hashtbl_add_sized/0
+PASS stdlib-hashtbl-program/hashtbl_add_sized/1
+PASS stdlib-hashtbl-program/hashtbl_add_sized/5
+PASS stdlib-hashtbl-program/hashtbl_add_sized/65
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/0
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/1
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/5
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/65
+PASS stdlib-hashtbl-program/hashtbl_remove/0
+PASS stdlib-hashtbl-program/hashtbl_remove/1
+PASS stdlib-hashtbl-program/hashtbl_remove/5
+PASS stdlib-hashtbl-program/hashtbl_remove/65
+PASS stdlib-hashtbl-program/hashtbl_find/0
+PASS stdlib-hashtbl-program/hashtbl_find/1
+PASS stdlib-hashtbl-program/hashtbl_find/5
+PASS stdlib-hashtbl-program/hashtbl_find/65
+PASS stdlib-hashtbl-program/hashtbl_filter_map/0
+PASS stdlib-hashtbl-program/hashtbl_filter_map/1
+PASS stdlib-hashtbl-program/hashtbl_filter_map/5
+PASS stdlib-hashtbl-program/hashtbl_filter_map/65
+PASS stdlib-hashtbl-program/reject-corrupt-bindings
+PASS stdlib-hashtbl-program/signed63-boundary
+PASS stdlib-hashtbl-program/signed63-wrap-zero
+SUMMARY 89 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+PASS stdlib-hashtbl/source-buckets/0
+PASS stdlib-hashtbl/source-buckets/1
+PASS stdlib-hashtbl/source-buckets/2
+PASS stdlib-hashtbl/source-buckets/3
+PASS stdlib-hashtbl/source-buckets/4
+PASS stdlib-hashtbl/source-buckets/5
+PASS stdlib-hashtbl/source-buckets/6
+PASS stdlib-hashtbl/source-buckets/7
+PASS stdlib-hashtbl/source-buckets/8
+PASS stdlib-hashtbl/source-buckets/9
+PASS stdlib-hashtbl/source-buckets/10
+PASS stdlib-hashtbl/source-buckets/11
+PASS stdlib-hashtbl/source-buckets/12
+PASS stdlib-hashtbl/source-buckets/13
+PASS stdlib-hashtbl/source-buckets/14
+PASS stdlib-hashtbl/source-buckets/15
+PASS stdlib-hashtbl/source-buckets/16
+PASS stdlib-hashtbl/source-buckets/17
+PASS stdlib-hashtbl/source-buckets/18
+PASS stdlib-hashtbl/source-buckets/19
+PASS stdlib-hashtbl/source-buckets/20
+PASS stdlib-hashtbl/source-buckets/21
+PASS stdlib-hashtbl/source-buckets/22
+PASS stdlib-hashtbl/original-1005-integer-hashes
+PASS stdlib-hashtbl/original-1005-tuple-hashes
+PASS stdlib-hashtbl/unrolled-find-and-tail
+PASS stdlib-hashtbl/duplicate-remove-reveals-older
+PASS stdlib-hashtbl/traversal-restored-after-exception
+PASS stdlib-hashtbl/source-resize-during-iter
+PASS stdlib-hashtbl/source-resize-during-fold
+PASS stdlib-hashtbl-program/int_find1/0
+PASS stdlib-hashtbl-program/int_find1/1
+PASS stdlib-hashtbl-program/int_find1/5
+PASS stdlib-hashtbl-program/int_find1/65
+PASS stdlib-hashtbl-program/int_find2/0
+PASS stdlib-hashtbl-program/int_find2/1
+PASS stdlib-hashtbl-program/int_find2/5
+PASS stdlib-hashtbl-program/int_find2/65
+PASS stdlib-hashtbl-program/int_replace1/0
+PASS stdlib-hashtbl-program/int_replace1/1
+PASS stdlib-hashtbl-program/int_replace1/5
+PASS stdlib-hashtbl-program/int_replace1/65
+PASS stdlib-hashtbl-program/int_replace2/0
+PASS stdlib-hashtbl-program/int_replace2/1
+PASS stdlib-hashtbl-program/int_replace2/5
+PASS stdlib-hashtbl-program/int_replace2/65
+PASS stdlib-hashtbl-program/caml_hash_int/0
+PASS stdlib-hashtbl-program/caml_hash_int/1
+PASS stdlib-hashtbl-program/caml_hash_int/5
+PASS stdlib-hashtbl-program/caml_hash_int/65
+PASS stdlib-hashtbl-program/caml_hash_tuple/0
+PASS stdlib-hashtbl-program/caml_hash_tuple/1
+PASS stdlib-hashtbl-program/caml_hash_tuple/5
+PASS stdlib-hashtbl-program/caml_hash_tuple/65
+PASS stdlib-hashtbl-program/hashtbl_iter/0
+PASS stdlib-hashtbl-program/hashtbl_iter/1
+PASS stdlib-hashtbl-program/hashtbl_iter/5
+PASS stdlib-hashtbl-program/hashtbl_iter/65
+PASS stdlib-hashtbl-program/hashtbl_fold/0
+PASS stdlib-hashtbl-program/hashtbl_fold/1
+PASS stdlib-hashtbl-program/hashtbl_fold/5
+PASS stdlib-hashtbl-program/hashtbl_fold/65
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/0
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/1
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/5
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/65
+PASS stdlib-hashtbl-program/hashtbl_add_sized/0
+PASS stdlib-hashtbl-program/hashtbl_add_sized/1
+PASS stdlib-hashtbl-program/hashtbl_add_sized/5
+PASS stdlib-hashtbl-program/hashtbl_add_sized/65
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/0
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/1
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/5
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/65
+PASS stdlib-hashtbl-program/hashtbl_remove/0
+PASS stdlib-hashtbl-program/hashtbl_remove/1
+PASS stdlib-hashtbl-program/hashtbl_remove/5
+PASS stdlib-hashtbl-program/hashtbl_remove/65
+PASS stdlib-hashtbl-program/hashtbl_find/0
+PASS stdlib-hashtbl-program/hashtbl_find/1
+PASS stdlib-hashtbl-program/hashtbl_find/5
+PASS stdlib-hashtbl-program/hashtbl_find/65
+PASS stdlib-hashtbl-program/hashtbl_filter_map/0
+PASS stdlib-hashtbl-program/hashtbl_filter_map/1
+PASS stdlib-hashtbl-program/hashtbl_filter_map/5
+PASS stdlib-hashtbl-program/hashtbl_filter_map/65
+PASS stdlib-hashtbl-program/reject-corrupt-bindings
+PASS stdlib-hashtbl-program/signed63-boundary
+PASS stdlib-hashtbl-program/signed63-wrap-zero
+SUMMARY 89 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+PASS stdlib-hashtbl/source-buckets/0
+PASS stdlib-hashtbl/source-buckets/1
+PASS stdlib-hashtbl/source-buckets/2
+PASS stdlib-hashtbl/source-buckets/3
+PASS stdlib-hashtbl/source-buckets/4
+PASS stdlib-hashtbl/source-buckets/5
+PASS stdlib-hashtbl/source-buckets/6
+PASS stdlib-hashtbl/source-buckets/7
+PASS stdlib-hashtbl/source-buckets/8
+PASS stdlib-hashtbl/source-buckets/9
+PASS stdlib-hashtbl/source-buckets/10
+PASS stdlib-hashtbl/source-buckets/11
+PASS stdlib-hashtbl/source-buckets/12
+PASS stdlib-hashtbl/source-buckets/13
+PASS stdlib-hashtbl/source-buckets/14
+PASS stdlib-hashtbl/source-buckets/15
+PASS stdlib-hashtbl/source-buckets/16
+PASS stdlib-hashtbl/source-buckets/17
+PASS stdlib-hashtbl/source-buckets/18
+PASS stdlib-hashtbl/source-buckets/19
+PASS stdlib-hashtbl/source-buckets/20
+PASS stdlib-hashtbl/source-buckets/21
+PASS stdlib-hashtbl/source-buckets/22
+PASS stdlib-hashtbl/original-1005-integer-hashes
+PASS stdlib-hashtbl/original-1005-tuple-hashes
+PASS stdlib-hashtbl/unrolled-find-and-tail
+PASS stdlib-hashtbl/duplicate-remove-reveals-older
+PASS stdlib-hashtbl/traversal-restored-after-exception
+PASS stdlib-hashtbl/source-resize-during-iter
+PASS stdlib-hashtbl/source-resize-during-fold
+PASS stdlib-hashtbl-program/int_find1/0
+PASS stdlib-hashtbl-program/int_find1/1
+PASS stdlib-hashtbl-program/int_find1/5
+PASS stdlib-hashtbl-program/int_find1/65
+PASS stdlib-hashtbl-program/int_find2/0
+PASS stdlib-hashtbl-program/int_find2/1
+PASS stdlib-hashtbl-program/int_find2/5
+PASS stdlib-hashtbl-program/int_find2/65
+PASS stdlib-hashtbl-program/int_replace1/0
+PASS stdlib-hashtbl-program/int_replace1/1
+PASS stdlib-hashtbl-program/int_replace1/5
+PASS stdlib-hashtbl-program/int_replace1/65
+PASS stdlib-hashtbl-program/int_replace2/0
+PASS stdlib-hashtbl-program/int_replace2/1
+PASS stdlib-hashtbl-program/int_replace2/5
+PASS stdlib-hashtbl-program/int_replace2/65
+PASS stdlib-hashtbl-program/caml_hash_int/0
+PASS stdlib-hashtbl-program/caml_hash_int/1
+PASS stdlib-hashtbl-program/caml_hash_int/5
+PASS stdlib-hashtbl-program/caml_hash_int/65
+PASS stdlib-hashtbl-program/caml_hash_tuple/0
+PASS stdlib-hashtbl-program/caml_hash_tuple/1
+PASS stdlib-hashtbl-program/caml_hash_tuple/5
+PASS stdlib-hashtbl-program/caml_hash_tuple/65
+PASS stdlib-hashtbl-program/hashtbl_iter/0
+PASS stdlib-hashtbl-program/hashtbl_iter/1
+PASS stdlib-hashtbl-program/hashtbl_iter/5
+PASS stdlib-hashtbl-program/hashtbl_iter/65
+PASS stdlib-hashtbl-program/hashtbl_fold/0
+PASS stdlib-hashtbl-program/hashtbl_fold/1
+PASS stdlib-hashtbl-program/hashtbl_fold/5
+PASS stdlib-hashtbl-program/hashtbl_fold/65
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/0
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/1
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/5
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/65
+PASS stdlib-hashtbl-program/hashtbl_add_sized/0
+PASS stdlib-hashtbl-program/hashtbl_add_sized/1
+PASS stdlib-hashtbl-program/hashtbl_add_sized/5
+PASS stdlib-hashtbl-program/hashtbl_add_sized/65
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/0
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/1
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/5
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/65
+PASS stdlib-hashtbl-program/hashtbl_remove/0
+PASS stdlib-hashtbl-program/hashtbl_remove/1
+PASS stdlib-hashtbl-program/hashtbl_remove/5
+PASS stdlib-hashtbl-program/hashtbl_remove/65
+PASS stdlib-hashtbl-program/hashtbl_find/0
+PASS stdlib-hashtbl-program/hashtbl_find/1
+PASS stdlib-hashtbl-program/hashtbl_find/5
+PASS stdlib-hashtbl-program/hashtbl_find/65
+PASS stdlib-hashtbl-program/hashtbl_filter_map/0
+PASS stdlib-hashtbl-program/hashtbl_filter_map/1
+PASS stdlib-hashtbl-program/hashtbl_filter_map/5
+PASS stdlib-hashtbl-program/hashtbl_filter_map/65
+PASS stdlib-hashtbl-program/reject-corrupt-bindings
+PASS stdlib-hashtbl-program/signed63-boundary
+PASS stdlib-hashtbl-program/signed63-wrap-zero
+SUMMARY 89 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+PASS stdlib-hashtbl/source-buckets/0
+PASS stdlib-hashtbl/source-buckets/1
+PASS stdlib-hashtbl/source-buckets/2
+PASS stdlib-hashtbl/source-buckets/3
+PASS stdlib-hashtbl/source-buckets/4
+PASS stdlib-hashtbl/source-buckets/5
+PASS stdlib-hashtbl/source-buckets/6
+PASS stdlib-hashtbl/source-buckets/7
+PASS stdlib-hashtbl/source-buckets/8
+PASS stdlib-hashtbl/source-buckets/9
+PASS stdlib-hashtbl/source-buckets/10
+PASS stdlib-hashtbl/source-buckets/11
+PASS stdlib-hashtbl/source-buckets/12
+PASS stdlib-hashtbl/source-buckets/13
+PASS stdlib-hashtbl/source-buckets/14
+PASS stdlib-hashtbl/source-buckets/15
+PASS stdlib-hashtbl/source-buckets/16
+PASS stdlib-hashtbl/source-buckets/17
+PASS stdlib-hashtbl/source-buckets/18
+PASS stdlib-hashtbl/source-buckets/19
+PASS stdlib-hashtbl/source-buckets/20
+PASS stdlib-hashtbl/source-buckets/21
+PASS stdlib-hashtbl/source-buckets/22
+PASS stdlib-hashtbl/original-1005-integer-hashes
+PASS stdlib-hashtbl/original-1005-tuple-hashes
+PASS stdlib-hashtbl/unrolled-find-and-tail
+PASS stdlib-hashtbl/duplicate-remove-reveals-older
+PASS stdlib-hashtbl/traversal-restored-after-exception
+PASS stdlib-hashtbl/source-resize-during-iter
+PASS stdlib-hashtbl/source-resize-during-fold
+PASS stdlib-hashtbl-program/int_find1/0
+PASS stdlib-hashtbl-program/int_find1/1
+PASS stdlib-hashtbl-program/int_find1/5
+PASS stdlib-hashtbl-program/int_find1/65
+PASS stdlib-hashtbl-program/int_find2/0
+PASS stdlib-hashtbl-program/int_find2/1
+PASS stdlib-hashtbl-program/int_find2/5
+PASS stdlib-hashtbl-program/int_find2/65
+PASS stdlib-hashtbl-program/int_replace1/0
+PASS stdlib-hashtbl-program/int_replace1/1
+PASS stdlib-hashtbl-program/int_replace1/5
+PASS stdlib-hashtbl-program/int_replace1/65
+PASS stdlib-hashtbl-program/int_replace2/0
+PASS stdlib-hashtbl-program/int_replace2/1
+PASS stdlib-hashtbl-program/int_replace2/5
+PASS stdlib-hashtbl-program/int_replace2/65
+PASS stdlib-hashtbl-program/caml_hash_int/0
+PASS stdlib-hashtbl-program/caml_hash_int/1
+PASS stdlib-hashtbl-program/caml_hash_int/5
+PASS stdlib-hashtbl-program/caml_hash_int/65
+PASS stdlib-hashtbl-program/caml_hash_tuple/0
+PASS stdlib-hashtbl-program/caml_hash_tuple/1
+PASS stdlib-hashtbl-program/caml_hash_tuple/5
+PASS stdlib-hashtbl-program/caml_hash_tuple/65
+PASS stdlib-hashtbl-program/hashtbl_iter/0
+PASS stdlib-hashtbl-program/hashtbl_iter/1
+PASS stdlib-hashtbl-program/hashtbl_iter/5
+PASS stdlib-hashtbl-program/hashtbl_iter/65
+PASS stdlib-hashtbl-program/hashtbl_fold/0
+PASS stdlib-hashtbl-program/hashtbl_fold/1
+PASS stdlib-hashtbl-program/hashtbl_fold/5
+PASS stdlib-hashtbl-program/hashtbl_fold/65
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/0
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/1
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/5
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/65
+PASS stdlib-hashtbl-program/hashtbl_add_sized/0
+PASS stdlib-hashtbl-program/hashtbl_add_sized/1
+PASS stdlib-hashtbl-program/hashtbl_add_sized/5
+PASS stdlib-hashtbl-program/hashtbl_add_sized/65
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/0
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/1
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/5
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/65
+PASS stdlib-hashtbl-program/hashtbl_remove/0
+PASS stdlib-hashtbl-program/hashtbl_remove/1
+PASS stdlib-hashtbl-program/hashtbl_remove/5
+PASS stdlib-hashtbl-program/hashtbl_remove/65
+PASS stdlib-hashtbl-program/hashtbl_find/0
+PASS stdlib-hashtbl-program/hashtbl_find/1
+PASS stdlib-hashtbl-program/hashtbl_find/5
+PASS stdlib-hashtbl-program/hashtbl_find/65
+PASS stdlib-hashtbl-program/hashtbl_filter_map/0
+PASS stdlib-hashtbl-program/hashtbl_filter_map/1
+PASS stdlib-hashtbl-program/hashtbl_filter_map/5
+PASS stdlib-hashtbl-program/hashtbl_filter_map/65
+PASS stdlib-hashtbl-program/reject-corrupt-bindings
+PASS stdlib-hashtbl-program/signed63-boundary
+PASS stdlib-hashtbl-program/signed63-wrap-zero
+SUMMARY 89 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 1048576 KiB
+PASS stdlib-hashtbl/source-buckets/0
+PASS stdlib-hashtbl/source-buckets/1
+PASS stdlib-hashtbl/source-buckets/2
+PASS stdlib-hashtbl/source-buckets/3
+PASS stdlib-hashtbl/source-buckets/4
+PASS stdlib-hashtbl/source-buckets/5
+PASS stdlib-hashtbl/source-buckets/6
+PASS stdlib-hashtbl/source-buckets/7
+PASS stdlib-hashtbl/source-buckets/8
+PASS stdlib-hashtbl/source-buckets/9
+PASS stdlib-hashtbl/source-buckets/10
+PASS stdlib-hashtbl/source-buckets/11
+PASS stdlib-hashtbl/source-buckets/12
+PASS stdlib-hashtbl/source-buckets/13
+PASS stdlib-hashtbl/source-buckets/14
+PASS stdlib-hashtbl/source-buckets/15
+PASS stdlib-hashtbl/source-buckets/16
+PASS stdlib-hashtbl/source-buckets/17
+PASS stdlib-hashtbl/source-buckets/18
+PASS stdlib-hashtbl/source-buckets/19
+PASS stdlib-hashtbl/source-buckets/20
+PASS stdlib-hashtbl/source-buckets/21
+PASS stdlib-hashtbl/source-buckets/22
+PASS stdlib-hashtbl/original-1005-integer-hashes
+PASS stdlib-hashtbl/original-1005-tuple-hashes
+PASS stdlib-hashtbl/unrolled-find-and-tail
+PASS stdlib-hashtbl/duplicate-remove-reveals-older
+PASS stdlib-hashtbl/traversal-restored-after-exception
+PASS stdlib-hashtbl/source-resize-during-iter
+PASS stdlib-hashtbl/source-resize-during-fold
+PASS stdlib-hashtbl-program/int_find1/0
+PASS stdlib-hashtbl-program/int_find1/1
+PASS stdlib-hashtbl-program/int_find1/5
+PASS stdlib-hashtbl-program/int_find1/65
+PASS stdlib-hashtbl-program/int_find2/0
+PASS stdlib-hashtbl-program/int_find2/1
+PASS stdlib-hashtbl-program/int_find2/5
+PASS stdlib-hashtbl-program/int_find2/65
+PASS stdlib-hashtbl-program/int_replace1/0
+PASS stdlib-hashtbl-program/int_replace1/1
+PASS stdlib-hashtbl-program/int_replace1/5
+PASS stdlib-hashtbl-program/int_replace1/65
+PASS stdlib-hashtbl-program/int_replace2/0
+PASS stdlib-hashtbl-program/int_replace2/1
+PASS stdlib-hashtbl-program/int_replace2/5
+PASS stdlib-hashtbl-program/int_replace2/65
+PASS stdlib-hashtbl-program/caml_hash_int/0
+PASS stdlib-hashtbl-program/caml_hash_int/1
+PASS stdlib-hashtbl-program/caml_hash_int/5
+PASS stdlib-hashtbl-program/caml_hash_int/65
+PASS stdlib-hashtbl-program/caml_hash_tuple/0
+PASS stdlib-hashtbl-program/caml_hash_tuple/1
+PASS stdlib-hashtbl-program/caml_hash_tuple/5
+PASS stdlib-hashtbl-program/caml_hash_tuple/65
+PASS stdlib-hashtbl-program/hashtbl_iter/0
+PASS stdlib-hashtbl-program/hashtbl_iter/1
+PASS stdlib-hashtbl-program/hashtbl_iter/5
+PASS stdlib-hashtbl-program/hashtbl_iter/65
+PASS stdlib-hashtbl-program/hashtbl_fold/0
+PASS stdlib-hashtbl-program/hashtbl_fold/1
+PASS stdlib-hashtbl-program/hashtbl_fold/5
+PASS stdlib-hashtbl-program/hashtbl_fold/65
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/0
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/1
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/5
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/65
+PASS stdlib-hashtbl-program/hashtbl_add_sized/0
+PASS stdlib-hashtbl-program/hashtbl_add_sized/1
+PASS stdlib-hashtbl-program/hashtbl_add_sized/5
+PASS stdlib-hashtbl-program/hashtbl_add_sized/65
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/0
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/1
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/5
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/65
+PASS stdlib-hashtbl-program/hashtbl_remove/0
+PASS stdlib-hashtbl-program/hashtbl_remove/1
+PASS stdlib-hashtbl-program/hashtbl_remove/5
+PASS stdlib-hashtbl-program/hashtbl_remove/65
+PASS stdlib-hashtbl-program/hashtbl_find/0
+PASS stdlib-hashtbl-program/hashtbl_find/1
+PASS stdlib-hashtbl-program/hashtbl_find/5
+PASS stdlib-hashtbl-program/hashtbl_find/65
+PASS stdlib-hashtbl-program/hashtbl_filter_map/0
+PASS stdlib-hashtbl-program/hashtbl_filter_map/1
+PASS stdlib-hashtbl-program/hashtbl_filter_map/5
+PASS stdlib-hashtbl-program/hashtbl_filter_map/65
+PASS stdlib-hashtbl-program/reject-corrupt-bindings
+PASS stdlib-hashtbl-program/signed63-boundary
+PASS stdlib-hashtbl-program/signed63-wrap-zero
+SUMMARY 89 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-hashtbl-originals/hash.sml]
+structure BenchStdlibHash : sig
+  val rotate : Word32.word -> int -> Word32.word
+  val mix : Word32.word -> Word32.word -> Word32.word
+  val finish : Word32.word -> int
+  val tagged : int -> Word32.word
+  val integer : int -> int
+  val pair : int * int -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-hashtbl-originals/table.sml]
+[autoloading]
+[autoloading done]
+structure BenchStdlibHashtbl : sig
+  datatype 'a bucket = Cons of int * 'a ref * 'a bucket ref | Empty
+  datatype mode = Generic | Integer
+  datatype 'a table
+    = Table of {data:'a bucket array ref, initial:int ref, mode:mode,
+                 size:int ref}
+  val power : int -> int -> int
+  val create : mode -> int -> 'a table
+  val length : 'a table -> int
+  val bucketCount : 'a table -> int
+  val index : 'a table -> int -> int
+  val resize : 'a table -> unit
+  val add : 'a table -> int -> 'a -> unit
+  val replace : 'a table -> int -> 'a -> unit
+  val remove : 'a table -> int -> unit
+  val findOpt : 'a table -> int -> 'a option
+  val traversing : 'a table -> (unit -> 'b) -> 'b
+  val iter : (int -> 'a -> 'b) -> 'a table -> unit
+  val fold : (int -> 'a -> 'b -> 'b) -> 'a table -> 'b -> 'b
+  val filterMap : (int -> 'a -> 'a option) -> 'a table -> unit
+  val contents : 'a table -> (int * 'a) list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-hashtbl-originals/program.sml]
+structure BenchStdlibHashtblPrograms : sig
+  structure H : <sig>
+  structure Hash : <sig>
+  val seed : Word32.word
+  val mix : Word32.word -> Word32.word -> Word32.word
+  val loop : int -> int -> (int -> 'a) -> unit
+  val genericTable : int BenchStdlibHashtbl.table
+  val integerTable : int BenchStdlibHashtbl.table
+  val populated : unit -> int BenchStdlibHashtbl.table
+  val reject : bool -> unit
+  val checkRange : int BenchStdlibHashtbl.table -> int -> int -> int -> unit
+  val digest : int BenchStdlibHashtbl.table -> Word32.word
+  val modulus : IntInf.int
+  val sign : IntInf.int
+  val double : IntInf.int -> IntInf.int
+  val low32 : IntInf.int -> Word32.word
+  val run : string -> int -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-hashtbl-originals/tests.sml]
+PASS stdlib-hashtbl/source-buckets/0
+PASS stdlib-hashtbl/source-buckets/1
+PASS stdlib-hashtbl/source-buckets/2
+PASS stdlib-hashtbl/source-buckets/3
+PASS stdlib-hashtbl/source-buckets/4
+PASS stdlib-hashtbl/source-buckets/5
+PASS stdlib-hashtbl/source-buckets/6
+PASS stdlib-hashtbl/source-buckets/7
+PASS stdlib-hashtbl/source-buckets/8
+PASS stdlib-hashtbl/source-buckets/9
+PASS stdlib-hashtbl/source-buckets/10
+PASS stdlib-hashtbl/source-buckets/11
+PASS stdlib-hashtbl/source-buckets/12
+PASS stdlib-hashtbl/source-buckets/13
+PASS stdlib-hashtbl/source-buckets/14
+PASS stdlib-hashtbl/source-buckets/15
+PASS stdlib-hashtbl/source-buckets/16
+PASS stdlib-hashtbl/source-buckets/17
+PASS stdlib-hashtbl/source-buckets/18
+PASS stdlib-hashtbl/source-buckets/19
+PASS stdlib-hashtbl/source-buckets/20
+PASS stdlib-hashtbl/source-buckets/21
+PASS stdlib-hashtbl/source-buckets/22
+PASS stdlib-hashtbl/original-1005-integer-hashes
+PASS stdlib-hashtbl/original-1005-tuple-hashes
+PASS stdlib-hashtbl/unrolled-find-and-tail
+PASS stdlib-hashtbl/duplicate-remove-reveals-older
+PASS stdlib-hashtbl/traversal-restored-after-exception
+PASS stdlib-hashtbl/source-resize-during-iter
+PASS stdlib-hashtbl/source-resize-during-fold
+structure StdlibHashtblTests : sig
+  structure H : <sig>
+  structure Hash : <sig>
+  val number : int -> string
+  val join : string -> string list -> string
+  val snapshot : int BenchStdlibHashtbl.table -> string
+  val run : (int * int * int) list -> string * string
+  val hashes : (int * int * int) list
+end
+structure StdlibHashtblTraversalTests : sig
+  structure H : <sig>
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-hashtbl-originals/program-tests.sml]
+PASS stdlib-hashtbl-program/int_find1/0
+PASS stdlib-hashtbl-program/int_find1/1
+PASS stdlib-hashtbl-program/int_find1/5
+PASS stdlib-hashtbl-program/int_find1/65
+PASS stdlib-hashtbl-program/int_find2/0
+PASS stdlib-hashtbl-program/int_find2/1
+PASS stdlib-hashtbl-program/int_find2/5
+PASS stdlib-hashtbl-program/int_find2/65
+PASS stdlib-hashtbl-program/int_replace1/0
+PASS stdlib-hashtbl-program/int_replace1/1
+PASS stdlib-hashtbl-program/int_replace1/5
+PASS stdlib-hashtbl-program/int_replace1/65
+PASS stdlib-hashtbl-program/int_replace2/0
+PASS stdlib-hashtbl-program/int_replace2/1
+PASS stdlib-hashtbl-program/int_replace2/5
+PASS stdlib-hashtbl-program/int_replace2/65
+PASS stdlib-hashtbl-program/caml_hash_int/0
+PASS stdlib-hashtbl-program/caml_hash_int/1
+PASS stdlib-hashtbl-program/caml_hash_int/5
+PASS stdlib-hashtbl-program/caml_hash_int/65
+PASS stdlib-hashtbl-program/caml_hash_tuple/0
+PASS stdlib-hashtbl-program/caml_hash_tuple/1
+PASS stdlib-hashtbl-program/caml_hash_tuple/5
+PASS stdlib-hashtbl-program/caml_hash_tuple/65
+PASS stdlib-hashtbl-program/hashtbl_iter/0
+PASS stdlib-hashtbl-program/hashtbl_iter/1
+PASS stdlib-hashtbl-program/hashtbl_iter/5
+PASS stdlib-hashtbl-program/hashtbl_iter/65
+PASS stdlib-hashtbl-program/hashtbl_fold/0
+PASS stdlib-hashtbl-program/hashtbl_fold/1
+PASS stdlib-hashtbl-program/hashtbl_fold/5
+PASS stdlib-hashtbl-program/hashtbl_fold/65
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/0
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/1
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/5
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/65
+PASS stdlib-hashtbl-program/hashtbl_add_sized/0
+PASS stdlib-hashtbl-program/hashtbl_add_sized/1
+PASS stdlib-hashtbl-program/hashtbl_add_sized/5
+PASS stdlib-hashtbl-program/hashtbl_add_sized/65
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/0
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/1
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/5
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/65
+PASS stdlib-hashtbl-program/hashtbl_remove/0
+PASS stdlib-hashtbl-program/hashtbl_remove/1
+PASS stdlib-hashtbl-program/hashtbl_remove/5
+PASS stdlib-hashtbl-program/hashtbl_remove/65
+PASS stdlib-hashtbl-program/hashtbl_find/0
+PASS stdlib-hashtbl-program/hashtbl_find/1
+PASS stdlib-hashtbl-program/hashtbl_find/5
+PASS stdlib-hashtbl-program/hashtbl_find/65
+PASS stdlib-hashtbl-program/hashtbl_filter_map/0
+PASS stdlib-hashtbl-program/hashtbl_filter_map/1
+PASS stdlib-hashtbl-program/hashtbl_filter_map/5
+PASS stdlib-hashtbl-program/hashtbl_filter_map/65
+PASS stdlib-hashtbl-program/reject-corrupt-bindings
+PASS stdlib-hashtbl-program/signed63-boundary
+PASS stdlib-hashtbl-program/signed63-wrap-zero
+structure StdlibHashtblProgramTests : sig
+  structure P : <sig>
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 89 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-hashtbl-originals/hash.sml]
+structure BenchStdlibHash : sig
+  val rotate : Word32.word -> int -> Word32.word
+  val mix : Word32.word -> Word32.word -> Word32.word
+  val finish : Word32.word -> int
+  val tagged : int -> Word32.word
+  val integer : int -> int
+  val pair : int * int -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-hashtbl-originals/table.sml]
+[autoloading]
+[autoloading done]
+structure BenchStdlibHashtbl : sig
+  datatype 'a bucket = Cons of int * 'a ref * 'a bucket ref | Empty
+  datatype mode = Generic | Integer
+  datatype 'a table
+    = Table of {data:'a bucket array ref, initial:int ref, mode:mode,
+                 size:int ref}
+  val power : int -> int -> int
+  val create : mode -> int -> 'a table
+  val length : 'a table -> int
+  val bucketCount : 'a table -> int
+  val index : 'a table -> int -> int
+  val resize : 'a table -> unit
+  val add : 'a table -> int -> 'a -> unit
+  val replace : 'a table -> int -> 'a -> unit
+  val remove : 'a table -> int -> unit
+  val findOpt : 'a table -> int -> 'a option
+  val traversing : 'a table -> (unit -> 'b) -> 'b
+  val iter : (int -> 'a -> 'b) -> 'a table -> unit
+  val fold : (int -> 'a -> 'b -> 'b) -> 'a table -> 'b -> 'b
+  val filterMap : (int -> 'a -> 'a option) -> 'a table -> unit
+  val contents : 'a table -> (int * 'a) list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-hashtbl-originals/program.sml]
+structure BenchStdlibHashtblPrograms : sig
+  structure H : <sig>
+  structure Hash : <sig>
+  val seed : Word32.word
+  val mix : Word32.word -> Word32.word -> Word32.word
+  val loop : int -> int -> (int -> 'a) -> unit
+  val genericTable : int BenchStdlibHashtbl.table
+  val integerTable : int BenchStdlibHashtbl.table
+  val populated : unit -> int BenchStdlibHashtbl.table
+  val reject : bool -> unit
+  val checkRange : int BenchStdlibHashtbl.table -> int -> int -> int -> unit
+  val digest : int BenchStdlibHashtbl.table -> Word32.word
+  val modulus : IntInf.int
+  val sign : IntInf.int
+  val double : IntInf.int -> IntInf.int
+  val low32 : IntInf.int -> Word32.word
+  val run : string -> int -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-hashtbl-originals/tests.sml]
+PASS stdlib-hashtbl/source-buckets/0
+PASS stdlib-hashtbl/source-buckets/1
+PASS stdlib-hashtbl/source-buckets/2
+PASS stdlib-hashtbl/source-buckets/3
+PASS stdlib-hashtbl/source-buckets/4
+PASS stdlib-hashtbl/source-buckets/5
+PASS stdlib-hashtbl/source-buckets/6
+PASS stdlib-hashtbl/source-buckets/7
+PASS stdlib-hashtbl/source-buckets/8
+PASS stdlib-hashtbl/source-buckets/9
+PASS stdlib-hashtbl/source-buckets/10
+PASS stdlib-hashtbl/source-buckets/11
+PASS stdlib-hashtbl/source-buckets/12
+PASS stdlib-hashtbl/source-buckets/13
+PASS stdlib-hashtbl/source-buckets/14
+PASS stdlib-hashtbl/source-buckets/15
+PASS stdlib-hashtbl/source-buckets/16
+PASS stdlib-hashtbl/source-buckets/17
+PASS stdlib-hashtbl/source-buckets/18
+PASS stdlib-hashtbl/source-buckets/19
+PASS stdlib-hashtbl/source-buckets/20
+PASS stdlib-hashtbl/source-buckets/21
+PASS stdlib-hashtbl/source-buckets/22
+PASS stdlib-hashtbl/original-1005-integer-hashes
+PASS stdlib-hashtbl/original-1005-tuple-hashes
+PASS stdlib-hashtbl/unrolled-find-and-tail
+PASS stdlib-hashtbl/duplicate-remove-reveals-older
+PASS stdlib-hashtbl/traversal-restored-after-exception
+PASS stdlib-hashtbl/source-resize-during-iter
+PASS stdlib-hashtbl/source-resize-during-fold
+structure StdlibHashtblTests : sig
+  structure H : <sig>
+  structure Hash : <sig>
+  val number : int -> string
+  val join : string -> string list -> string
+  val snapshot : int BenchStdlibHashtbl.table -> string
+  val run : (int * int * int) list -> string * string
+  val hashes : (int * int * int) list
+end
+structure StdlibHashtblTraversalTests : sig
+  structure H : <sig>
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-hashtbl-originals/program-tests.sml]
+PASS stdlib-hashtbl-program/int_find1/0
+PASS stdlib-hashtbl-program/int_find1/1
+PASS stdlib-hashtbl-program/int_find1/5
+PASS stdlib-hashtbl-program/int_find1/65
+PASS stdlib-hashtbl-program/int_find2/0
+PASS stdlib-hashtbl-program/int_find2/1
+PASS stdlib-hashtbl-program/int_find2/5
+PASS stdlib-hashtbl-program/int_find2/65
+PASS stdlib-hashtbl-program/int_replace1/0
+PASS stdlib-hashtbl-program/int_replace1/1
+PASS stdlib-hashtbl-program/int_replace1/5
+PASS stdlib-hashtbl-program/int_replace1/65
+PASS stdlib-hashtbl-program/int_replace2/0
+PASS stdlib-hashtbl-program/int_replace2/1
+PASS stdlib-hashtbl-program/int_replace2/5
+PASS stdlib-hashtbl-program/int_replace2/65
+PASS stdlib-hashtbl-program/caml_hash_int/0
+PASS stdlib-hashtbl-program/caml_hash_int/1
+PASS stdlib-hashtbl-program/caml_hash_int/5
+PASS stdlib-hashtbl-program/caml_hash_int/65
+PASS stdlib-hashtbl-program/caml_hash_tuple/0
+PASS stdlib-hashtbl-program/caml_hash_tuple/1
+PASS stdlib-hashtbl-program/caml_hash_tuple/5
+PASS stdlib-hashtbl-program/caml_hash_tuple/65
+PASS stdlib-hashtbl-program/hashtbl_iter/0
+PASS stdlib-hashtbl-program/hashtbl_iter/1
+PASS stdlib-hashtbl-program/hashtbl_iter/5
+PASS stdlib-hashtbl-program/hashtbl_iter/65
+PASS stdlib-hashtbl-program/hashtbl_fold/0
+PASS stdlib-hashtbl-program/hashtbl_fold/1
+PASS stdlib-hashtbl-program/hashtbl_fold/5
+PASS stdlib-hashtbl-program/hashtbl_fold/65
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/0
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/1
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/5
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/65
+PASS stdlib-hashtbl-program/hashtbl_add_sized/0
+PASS stdlib-hashtbl-program/hashtbl_add_sized/1
+PASS stdlib-hashtbl-program/hashtbl_add_sized/5
+PASS stdlib-hashtbl-program/hashtbl_add_sized/65
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/0
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/1
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/5
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/65
+PASS stdlib-hashtbl-program/hashtbl_remove/0
+PASS stdlib-hashtbl-program/hashtbl_remove/1
+PASS stdlib-hashtbl-program/hashtbl_remove/5
+PASS stdlib-hashtbl-program/hashtbl_remove/65
+PASS stdlib-hashtbl-program/hashtbl_find/0
+PASS stdlib-hashtbl-program/hashtbl_find/1
+PASS stdlib-hashtbl-program/hashtbl_find/5
+PASS stdlib-hashtbl-program/hashtbl_find/65
+PASS stdlib-hashtbl-program/hashtbl_filter_map/0
+PASS stdlib-hashtbl-program/hashtbl_filter_map/1
+PASS stdlib-hashtbl-program/hashtbl_filter_map/5
+PASS stdlib-hashtbl-program/hashtbl_filter_map/65
+PASS stdlib-hashtbl-program/reject-corrupt-bindings
+PASS stdlib-hashtbl-program/signed63-boundary
+PASS stdlib-hashtbl-program/signed63-wrap-zero
+structure StdlibHashtblProgramTests : sig
+  structure P : <sig>
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 89 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-hashtbl-originals/hash.sml]
+structure BenchStdlibHash : 
+  sig
+    val rotate : Word32.word -> int -> Word32.word
+    val mix : Word32.word -> Word32.word -> Word32.word
+    val finish : Word32.word -> int
+    val tagged : int -> Word32.word
+    val integer : int -> int
+    val pair : int * int -> int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-hashtbl-originals/table.sml]
+structure BenchStdlibHashtbl : 
+  sig
+    datatype 'a bucket = Cons of int * 'a ref * 'a bucket ref | Empty
+    datatype mode = Generic | Integer
+    datatype 'a table
+      = Table of {data:'a bucket array ref, initial:int ref, mode:mode,
+                   size:int ref}
+    val power : int -> int -> int
+    val create : mode -> int -> 'a table
+    val length : 'a table -> int
+    val bucketCount : 'a table -> int
+    val index : 'a table -> int -> int
+    val resize : 'a table -> unit
+    val add : 'a table -> int -> 'a -> unit
+    val replace : 'a table -> int -> 'a -> unit
+    val remove : 'a table -> int -> unit
+    val findOpt : 'a table -> int -> 'a option
+    val traversing : 'a table -> (unit -> 'b) -> 'b
+    val iter : (int -> 'a -> 'b) -> 'a table -> unit
+    val fold : (int -> 'a -> 'b -> 'b) -> 'a table -> 'b -> 'b
+    val filterMap : (int -> 'a -> 'a option) -> 'a table -> unit
+    val contents : 'a table -> (int * 'a) list
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-hashtbl-originals/program.sml]
+structure BenchStdlibHashtblPrograms : 
+  sig
+    structure H : <sig>
+    structure Hash : <sig>
+    val seed : Word32.word
+    val mix : Word32.word -> Word32.word -> Word32.word
+    val loop : int -> int -> (int -> 'a) -> unit
+    val genericTable : int BenchStdlibHashtbl.table
+    val integerTable : int BenchStdlibHashtbl.table
+    val populated : unit -> int BenchStdlibHashtbl.table
+    val reject : bool -> unit
+    val checkRange : int BenchStdlibHashtbl.table -> int -> int -> int -> unit
+    val digest : int BenchStdlibHashtbl.table -> Word32.word
+    val modulus : IntInf.int
+    val sign : IntInf.int
+    val double : IntInf.int -> IntInf.int
+    val low32 : IntInf.int -> Word32.word
+    val run : string -> int -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-hashtbl-originals/tests.sml]
+PASS stdlib-hashtbl/source-buckets/0
+PASS stdlib-hashtbl/source-buckets/1
+PASS stdlib-hashtbl/source-buckets/2
+PASS stdlib-hashtbl/source-buckets/3
+PASS stdlib-hashtbl/source-buckets/4
+PASS stdlib-hashtbl/source-buckets/5
+PASS stdlib-hashtbl/source-buckets/6
+PASS stdlib-hashtbl/source-buckets/7
+PASS stdlib-hashtbl/source-buckets/8
+PASS stdlib-hashtbl/source-buckets/9
+PASS stdlib-hashtbl/source-buckets/10
+PASS stdlib-hashtbl/source-buckets/11
+PASS stdlib-hashtbl/source-buckets/12
+PASS stdlib-hashtbl/source-buckets/13
+PASS stdlib-hashtbl/source-buckets/14
+PASS stdlib-hashtbl/source-buckets/15
+PASS stdlib-hashtbl/source-buckets/16
+PASS stdlib-hashtbl/source-buckets/17
+PASS stdlib-hashtbl/source-buckets/18
+PASS stdlib-hashtbl/source-buckets/19
+PASS stdlib-hashtbl/source-buckets/20
+PASS stdlib-hashtbl/source-buckets/21
+PASS stdlib-hashtbl/source-buckets/22
+PASS stdlib-hashtbl/original-1005-integer-hashes
+PASS stdlib-hashtbl/original-1005-tuple-hashes
+PASS stdlib-hashtbl/unrolled-find-and-tail
+PASS stdlib-hashtbl/duplicate-remove-reveals-older
+PASS stdlib-hashtbl/traversal-restored-after-exception
+PASS stdlib-hashtbl/source-resize-during-iter
+PASS stdlib-hashtbl/source-resize-during-fold
+structure StdlibHashtblTests : 
+  sig
+    structure H : <sig>
+    structure Hash : <sig>
+    val number : int -> string
+    val join : string -> string list -> string
+    val snapshot : int BenchStdlibHashtbl.table -> string
+    val run : (int * int * int) list -> string * string
+    val hashes : (int * int * int) list
+  end
+structure StdlibHashtblTraversalTests : 
+  sig
+    structure H : <sig>
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-hashtbl-originals/program-tests.sml]
+PASS stdlib-hashtbl-program/int_find1/0
+PASS stdlib-hashtbl-program/int_find1/1
+PASS stdlib-hashtbl-program/int_find1/5
+PASS stdlib-hashtbl-program/int_find1/65
+PASS stdlib-hashtbl-program/int_find2/0
+PASS stdlib-hashtbl-program/int_find2/1
+PASS stdlib-hashtbl-program/int_find2/5
+PASS stdlib-hashtbl-program/int_find2/65
+PASS stdlib-hashtbl-program/int_replace1/0
+PASS stdlib-hashtbl-program/int_replace1/1
+PASS stdlib-hashtbl-program/int_replace1/5
+PASS stdlib-hashtbl-program/int_replace1/65
+PASS stdlib-hashtbl-program/int_replace2/0
+PASS stdlib-hashtbl-program/int_replace2/1
+PASS stdlib-hashtbl-program/int_replace2/5
+PASS stdlib-hashtbl-program/int_replace2/65
+PASS stdlib-hashtbl-program/caml_hash_int/0
+PASS stdlib-hashtbl-program/caml_hash_int/1
+PASS stdlib-hashtbl-program/caml_hash_int/5
+PASS stdlib-hashtbl-program/caml_hash_int/65
+PASS stdlib-hashtbl-program/caml_hash_tuple/0
+PASS stdlib-hashtbl-program/caml_hash_tuple/1
+PASS stdlib-hashtbl-program/caml_hash_tuple/5
+PASS stdlib-hashtbl-program/caml_hash_tuple/65
+PASS stdlib-hashtbl-program/hashtbl_iter/0
+PASS stdlib-hashtbl-program/hashtbl_iter/1
+PASS stdlib-hashtbl-program/hashtbl_iter/5
+PASS stdlib-hashtbl-program/hashtbl_iter/65
+PASS stdlib-hashtbl-program/hashtbl_fold/0
+PASS stdlib-hashtbl-program/hashtbl_fold/1
+PASS stdlib-hashtbl-program/hashtbl_fold/5
+PASS stdlib-hashtbl-program/hashtbl_fold/65
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/0
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/1
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/5
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/65
+PASS stdlib-hashtbl-program/hashtbl_add_sized/0
+PASS stdlib-hashtbl-program/hashtbl_add_sized/1
+PASS stdlib-hashtbl-program/hashtbl_add_sized/5
+PASS stdlib-hashtbl-program/hashtbl_add_sized/65
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/0
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/1
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/5
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/65
+PASS stdlib-hashtbl-program/hashtbl_remove/0
+PASS stdlib-hashtbl-program/hashtbl_remove/1
+PASS stdlib-hashtbl-program/hashtbl_remove/5
+PASS stdlib-hashtbl-program/hashtbl_remove/65
+PASS stdlib-hashtbl-program/hashtbl_find/0
+PASS stdlib-hashtbl-program/hashtbl_find/1
+PASS stdlib-hashtbl-program/hashtbl_find/5
+PASS stdlib-hashtbl-program/hashtbl_find/65
+PASS stdlib-hashtbl-program/hashtbl_filter_map/0
+PASS stdlib-hashtbl-program/hashtbl_filter_map/1
+PASS stdlib-hashtbl-program/hashtbl_filter_map/5
+PASS stdlib-hashtbl-program/hashtbl_filter_map/65
+PASS stdlib-hashtbl-program/reject-corrupt-bindings
+PASS stdlib-hashtbl-program/signed63-boundary
+PASS stdlib-hashtbl-program/signed63-wrap-zero
+structure StdlibHashtblProgramTests : 
+  sig
+    structure P : <sig>
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 89 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS stdlib-hashtbl/source-buckets/0
+PASS stdlib-hashtbl/source-buckets/1
+PASS stdlib-hashtbl/source-buckets/2
+PASS stdlib-hashtbl/source-buckets/3
+PASS stdlib-hashtbl/source-buckets/4
+PASS stdlib-hashtbl/source-buckets/5
+PASS stdlib-hashtbl/source-buckets/6
+PASS stdlib-hashtbl/source-buckets/7
+PASS stdlib-hashtbl/source-buckets/8
+PASS stdlib-hashtbl/source-buckets/9
+PASS stdlib-hashtbl/source-buckets/10
+PASS stdlib-hashtbl/source-buckets/11
+PASS stdlib-hashtbl/source-buckets/12
+PASS stdlib-hashtbl/source-buckets/13
+PASS stdlib-hashtbl/source-buckets/14
+PASS stdlib-hashtbl/source-buckets/15
+PASS stdlib-hashtbl/source-buckets/16
+PASS stdlib-hashtbl/source-buckets/17
+PASS stdlib-hashtbl/source-buckets/18
+PASS stdlib-hashtbl/source-buckets/19
+PASS stdlib-hashtbl/source-buckets/20
+PASS stdlib-hashtbl/source-buckets/21
+PASS stdlib-hashtbl/source-buckets/22
+PASS stdlib-hashtbl/original-1005-integer-hashes
+PASS stdlib-hashtbl/original-1005-tuple-hashes
+PASS stdlib-hashtbl/unrolled-find-and-tail
+PASS stdlib-hashtbl/duplicate-remove-reveals-older
+PASS stdlib-hashtbl/traversal-restored-after-exception
+PASS stdlib-hashtbl/source-resize-during-iter
+PASS stdlib-hashtbl/source-resize-during-fold
+PASS stdlib-hashtbl-program/int_find1/0
+PASS stdlib-hashtbl-program/int_find1/1
+PASS stdlib-hashtbl-program/int_find1/5
+PASS stdlib-hashtbl-program/int_find1/65
+PASS stdlib-hashtbl-program/int_find2/0
+PASS stdlib-hashtbl-program/int_find2/1
+PASS stdlib-hashtbl-program/int_find2/5
+PASS stdlib-hashtbl-program/int_find2/65
+PASS stdlib-hashtbl-program/int_replace1/0
+PASS stdlib-hashtbl-program/int_replace1/1
+PASS stdlib-hashtbl-program/int_replace1/5
+PASS stdlib-hashtbl-program/int_replace1/65
+PASS stdlib-hashtbl-program/int_replace2/0
+PASS stdlib-hashtbl-program/int_replace2/1
+PASS stdlib-hashtbl-program/int_replace2/5
+PASS stdlib-hashtbl-program/int_replace2/65
+PASS stdlib-hashtbl-program/caml_hash_int/0
+PASS stdlib-hashtbl-program/caml_hash_int/1
+PASS stdlib-hashtbl-program/caml_hash_int/5
+PASS stdlib-hashtbl-program/caml_hash_int/65
+PASS stdlib-hashtbl-program/caml_hash_tuple/0
+PASS stdlib-hashtbl-program/caml_hash_tuple/1
+PASS stdlib-hashtbl-program/caml_hash_tuple/5
+PASS stdlib-hashtbl-program/caml_hash_tuple/65
+PASS stdlib-hashtbl-program/hashtbl_iter/0
+PASS stdlib-hashtbl-program/hashtbl_iter/1
+PASS stdlib-hashtbl-program/hashtbl_iter/5
+PASS stdlib-hashtbl-program/hashtbl_iter/65
+PASS stdlib-hashtbl-program/hashtbl_fold/0
+PASS stdlib-hashtbl-program/hashtbl_fold/1
+PASS stdlib-hashtbl-program/hashtbl_fold/5
+PASS stdlib-hashtbl-program/hashtbl_fold/65
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/0
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/1
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/5
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/65
+PASS stdlib-hashtbl-program/hashtbl_add_sized/0
+PASS stdlib-hashtbl-program/hashtbl_add_sized/1
+PASS stdlib-hashtbl-program/hashtbl_add_sized/5
+PASS stdlib-hashtbl-program/hashtbl_add_sized/65
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/0
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/1
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/5
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/65
+PASS stdlib-hashtbl-program/hashtbl_remove/0
+PASS stdlib-hashtbl-program/hashtbl_remove/1
+PASS stdlib-hashtbl-program/hashtbl_remove/5
+PASS stdlib-hashtbl-program/hashtbl_remove/65
+PASS stdlib-hashtbl-program/hashtbl_find/0
+PASS stdlib-hashtbl-program/hashtbl_find/1
+PASS stdlib-hashtbl-program/hashtbl_find/5
+PASS stdlib-hashtbl-program/hashtbl_find/65
+PASS stdlib-hashtbl-program/hashtbl_filter_map/0
+PASS stdlib-hashtbl-program/hashtbl_filter_map/1
+PASS stdlib-hashtbl-program/hashtbl_filter_map/5
+PASS stdlib-hashtbl-program/hashtbl_filter_map/65
+PASS stdlib-hashtbl-program/reject-corrupt-bindings
+PASS stdlib-hashtbl-program/signed63-boundary
+PASS stdlib-hashtbl-program/signed63-wrap-zero
+SUMMARY 89 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PASS stdlib-hashtbl/source-buckets/0
+PASS stdlib-hashtbl/source-buckets/1
+PASS stdlib-hashtbl/source-buckets/2
+PASS stdlib-hashtbl/source-buckets/3
+PASS stdlib-hashtbl/source-buckets/4
+PASS stdlib-hashtbl/source-buckets/5
+PASS stdlib-hashtbl/source-buckets/6
+PASS stdlib-hashtbl/source-buckets/7
+PASS stdlib-hashtbl/source-buckets/8
+PASS stdlib-hashtbl/source-buckets/9
+PASS stdlib-hashtbl/source-buckets/10
+PASS stdlib-hashtbl/source-buckets/11
+PASS stdlib-hashtbl/source-buckets/12
+PASS stdlib-hashtbl/source-buckets/13
+PASS stdlib-hashtbl/source-buckets/14
+PASS stdlib-hashtbl/source-buckets/15
+PASS stdlib-hashtbl/source-buckets/16
+PASS stdlib-hashtbl/source-buckets/17
+PASS stdlib-hashtbl/source-buckets/18
+PASS stdlib-hashtbl/source-buckets/19
+PASS stdlib-hashtbl/source-buckets/20
+PASS stdlib-hashtbl/source-buckets/21
+PASS stdlib-hashtbl/source-buckets/22
+PASS stdlib-hashtbl/original-1005-integer-hashes
+PASS stdlib-hashtbl/original-1005-tuple-hashes
+PASS stdlib-hashtbl/unrolled-find-and-tail
+PASS stdlib-hashtbl/duplicate-remove-reveals-older
+PASS stdlib-hashtbl/traversal-restored-after-exception
+PASS stdlib-hashtbl/source-resize-during-iter
+PASS stdlib-hashtbl/source-resize-during-fold
+PASS stdlib-hashtbl-program/int_find1/0
+PASS stdlib-hashtbl-program/int_find1/1
+PASS stdlib-hashtbl-program/int_find1/5
+PASS stdlib-hashtbl-program/int_find1/65
+PASS stdlib-hashtbl-program/int_find2/0
+PASS stdlib-hashtbl-program/int_find2/1
+PASS stdlib-hashtbl-program/int_find2/5
+PASS stdlib-hashtbl-program/int_find2/65
+PASS stdlib-hashtbl-program/int_replace1/0
+PASS stdlib-hashtbl-program/int_replace1/1
+PASS stdlib-hashtbl-program/int_replace1/5
+PASS stdlib-hashtbl-program/int_replace1/65
+PASS stdlib-hashtbl-program/int_replace2/0
+PASS stdlib-hashtbl-program/int_replace2/1
+PASS stdlib-hashtbl-program/int_replace2/5
+PASS stdlib-hashtbl-program/int_replace2/65
+PASS stdlib-hashtbl-program/caml_hash_int/0
+PASS stdlib-hashtbl-program/caml_hash_int/1
+PASS stdlib-hashtbl-program/caml_hash_int/5
+PASS stdlib-hashtbl-program/caml_hash_int/65
+PASS stdlib-hashtbl-program/caml_hash_tuple/0
+PASS stdlib-hashtbl-program/caml_hash_tuple/1
+PASS stdlib-hashtbl-program/caml_hash_tuple/5
+PASS stdlib-hashtbl-program/caml_hash_tuple/65
+PASS stdlib-hashtbl-program/hashtbl_iter/0
+PASS stdlib-hashtbl-program/hashtbl_iter/1
+PASS stdlib-hashtbl-program/hashtbl_iter/5
+PASS stdlib-hashtbl-program/hashtbl_iter/65
+PASS stdlib-hashtbl-program/hashtbl_fold/0
+PASS stdlib-hashtbl-program/hashtbl_fold/1
+PASS stdlib-hashtbl-program/hashtbl_fold/5
+PASS stdlib-hashtbl-program/hashtbl_fold/65
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/0
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/1
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/5
+PASS stdlib-hashtbl-program/hashtbl_add_resizing/65
+PASS stdlib-hashtbl-program/hashtbl_add_sized/0
+PASS stdlib-hashtbl-program/hashtbl_add_sized/1
+PASS stdlib-hashtbl-program/hashtbl_add_sized/5
+PASS stdlib-hashtbl-program/hashtbl_add_sized/65
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/0
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/1
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/5
+PASS stdlib-hashtbl-program/hashtbl_add_duplicate/65
+PASS stdlib-hashtbl-program/hashtbl_remove/0
+PASS stdlib-hashtbl-program/hashtbl_remove/1
+PASS stdlib-hashtbl-program/hashtbl_remove/5
+PASS stdlib-hashtbl-program/hashtbl_remove/65
+PASS stdlib-hashtbl-program/hashtbl_find/0
+PASS stdlib-hashtbl-program/hashtbl_find/1
+PASS stdlib-hashtbl-program/hashtbl_find/5
+PASS stdlib-hashtbl-program/hashtbl_find/65
+PASS stdlib-hashtbl-program/hashtbl_filter_map/0
+PASS stdlib-hashtbl-program/hashtbl_filter_map/1
+PASS stdlib-hashtbl-program/hashtbl_filter_map/5
+PASS stdlib-hashtbl-program/hashtbl_filter_map/65
+PASS stdlib-hashtbl-program/reject-corrupt-bindings
+PASS stdlib-hashtbl-program/signed63-boundary
+PASS stdlib-hashtbl-program/signed63-wrap-zero
+SUMMARY 89 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

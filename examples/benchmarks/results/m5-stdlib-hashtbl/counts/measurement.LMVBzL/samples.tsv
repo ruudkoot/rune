@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+hashtbl_add_resizing	normal	rune	O2	compile	0	0	pass	2.61	2.42	0.19	134928	-	-	-	hashtbl_add_resizing/rune/build/compile
+hashtbl_add_resizing	normal	rune	O2	correctness	0	0	pass	0.79	0.58	0.06	34428	54992601	34686640	600726	hashtbl_add_resizing/rune/correctness.0
+hashtbl_add_resizing	normal	rune	O2	count	1	1	pass	0.59	0.55	0.03	34428	54992601	34686640	600726	hashtbl_add_resizing/rune/fresh.1
+hashtbl_add_resizing	normal	rune:opt	O2	compile	0	0	pass	2.97	2.45	0.17	135188	-	-	-	hashtbl_add_resizing/rune-opt/build/compile
+hashtbl_add_resizing	normal	rune:opt	O2	native-compile	0	0	pass	0.76	0.33	0.10	15756	-	-	-	hashtbl_add_resizing/rune-opt/build/native-compile
+hashtbl_add_resizing	normal	rune:opt	O2	correctness	0	0	pass	0.29	0.23	0.04	35060	54992601	34686640	600726	hashtbl_add_resizing/rune-opt/correctness.0
+hashtbl_add_resizing	normal	rune:opt	O2	count	1	1	pass	0.26	0.22	0.04	35056	54992601	34686640	600726	hashtbl_add_resizing/rune-opt/fresh.1
+hashtbl_add_resizing	normal	rune:new	O2	compile	0	0	pass	3.01	2.44	0.16	135080	-	-	-	hashtbl_add_resizing/rune-new/build/compile
+hashtbl_add_resizing	normal	rune:new	O2	correctness	0	0	pass	0.66	0.50	0.06	34636	37670928	34686640	600726	hashtbl_add_resizing/rune-new/correctness.0
+hashtbl_add_resizing	normal	rune:new	O2	count	1	1	pass	0.66	0.41	0.05	34668	37670928	34686640	600726	hashtbl_add_resizing/rune-new/fresh.1
+hashtbl_add_resizing	normal	rune:jit	O2	compile	0	0	pass	2.64	2.26	0.17	134928	-	-	-	hashtbl_add_resizing/rune-jit/build/compile
+hashtbl_add_resizing	normal	rune:jit	O2	correctness	0	0	pass	0.26	0.22	0.04	36120	37670928	34686640	600726	hashtbl_add_resizing/rune-jit/correctness.0
+hashtbl_add_resizing	normal	rune:jit	O2	count	1	1	pass	0.26	0.22	0.04	36080	37670928	34686640	600726	hashtbl_add_resizing/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

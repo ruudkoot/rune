@@ -1,0 +1,4 @@
+RESULT 575:21D9374E
+PASS bytes_set
+SAMPLE 1 0.000121000
+SUMMARY 1 checks, 0 failed

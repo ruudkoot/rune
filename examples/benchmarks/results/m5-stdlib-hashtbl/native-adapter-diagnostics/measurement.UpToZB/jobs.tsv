@@ -1,0 +1,1 @@
+hashtbl_add_duplicate	30	1048576	shared/input.sml shared/ocaml-stdlib-hash.sml shared/ocaml-stdlib-hashtbl.sml shared/ocaml-stdlib-hashtbl-program.sml hashtbl_add_duplicate/benchmark.sml shared/main.sml	17	hashtbl_add_duplicate/smoke.expected	-

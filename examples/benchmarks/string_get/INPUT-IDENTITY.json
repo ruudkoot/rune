@@ -1,0 +1,7 @@
+{
+  "bytes": 574,
+  "sha256": "3f3cc40bd524bf3c4a216ae284252e43a348a42b689618294c8886046af18f61",
+  "source": "benchmarks/stdlib/string_bench.ml",
+  "source_sha256": "8274a344f80f2608e4754d5ed677544e8e79e2d4e8f1a0a10429a9656e2b6b76",
+  "ocaml": "4.14.1"
+}

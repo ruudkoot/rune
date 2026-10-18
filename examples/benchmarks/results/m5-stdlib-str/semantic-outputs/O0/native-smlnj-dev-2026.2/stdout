@@ -1,0 +1,211 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-text-originals/input.sml]
+structure BenchStdlibTextInput : 
+  sig
+    val text : string
+    val equalPairs : int
+    val words : string list
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-text-originals/text.sml]
+structure BenchStdlibText : 
+  sig
+    val text : string
+    val for : int -> int -> (int -> 'a) -> unit
+    val uppercase : char -> char
+    val space : char -> bool
+    val trimBounds : int -> (int -> char) -> int * int
+    val trimString : string -> string
+    val indexString : string -> char -> int
+    val splitOnChar : char -> string -> string list
+    val appString : (char -> 'a) -> string -> unit
+    val concatStrings : string -> string list -> string
+    val compareStrings : string * string -> int
+    structure Bytes : <sig>
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-text-originals/program.sml]
+structure BenchStdlibTextPrograms : 
+  sig
+    structure B : <sig>
+    structure A : <sig>
+    datatype value
+      = Bytes of BenchStdlibText.Bytes.t
+    | Letter of char
+    | Number of int
+    | Parts of string list
+    | Text of string
+    | Truth of bool
+    val seed : Word32.word
+    val mix : Word32.word -> Word32.word -> Word32.word
+    val hashString : string -> Word32.word
+    val hashBytes : Word8Array.array -> Word32.word
+    val hashValue : value -> Word32.word
+    val fish : string
+    val trimInput : string
+    val noFinish : unit -> 'a option
+    val byteOperation : Word8Array.array
+                         -> string -> (int -> value) * (unit -> value option)
+    val stringOperation : string -> (int -> value) * (unit -> 'a option)
+    val equalText : Word8Array.array -> int -> (int -> char) -> bool
+    val equalString : string -> int -> (int -> char) -> bool
+    val expectedArray : string -> int -> int * (int -> char)
+    val expectedText : string -> int -> int * (int -> char)
+    val check : string -> int -> value -> unit
+    val finishCheck : string -> int -> value -> unit
+    val execute : string
+                   -> int -> (int -> value) * (unit -> value option) -> string
+    val runString : string -> int -> string
+    val runBytes : Word8Array.array -> string -> int -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/sandmark-regexredux-str.sml]
+structure BenchRegexReduxStr : 
+  sig
+    datatype atom
+      = Any
+    | Class of bool * char list
+    | Finish
+    | Literal of char
+    | Repeat of atom
+    | Start
+    type regexp = atom list list
+    val compile : string -> atom list list
+    val matchesChar : bool -> atom -> char -> bool
+    val match : bool -> atom list list -> string -> int -> int option
+    val search : bool -> atom list list -> string -> int -> (int * int) option
+    val count : atom list list -> string -> int
+    val replace : atom list list -> string -> string -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-str-originals/str.sml]
+structure BenchStdlibStr : 
+  sig
+    structure R : <sig>
+    structure P : <sig>
+    val pattern : string
+    val text : string
+    val last : int vector ref
+    val save : (int * int) option -> bool
+    val stringMatch : BenchRegexReduxStr.atom list list
+                       -> string -> int -> bool
+    val search : BenchRegexReduxStr.atom list list
+                  -> string -> int -> (int * int) option
+    val partial : BenchRegexReduxStr.atom list list -> string -> int -> bool
+    val replace : BenchRegexReduxStr.atom list list
+                   -> string -> string -> string
+    val split : BenchRegexReduxStr.atom list list -> string -> string list
+    val literalText : BenchRegexReduxStr.atom list list -> string
+    datatype value
+      = Parts of string list
+    | Position of int
+    | Regex of BenchRegexReduxStr.regexp
+    | Text of string
+    | Truth of bool
+    val check : string -> value -> unit
+    val hash : value -> Word32.word
+    val operation : string -> unit -> value
+    val run : string -> int -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-str-originals/tests.sml]
+PASS stdlib-Str/original-edge/0
+PASS stdlib-Str/original-edge/1
+PASS stdlib-Str/original-edge/2
+PASS stdlib-Str/original-edge/3
+PASS stdlib-Str/original-edge/4
+PASS stdlib-Str/original-edge/5
+PASS stdlib-Str/original-edge/6
+PASS stdlib-Str/original-edge/7
+PASS stdlib-Str/original-edge/8
+PASS stdlib-Str/original-edge/9
+PASS stdlib-Str/original-edge/10
+PASS stdlib-Str/original-edge/11
+PASS stdlib-Str/original-edge/12
+PASS stdlib-Str/original-edge/13
+PASS stdlib-Str/original-edge/14
+PASS stdlib-Str/original-edge/15
+PASS stdlib-Str/original-edge/16
+PASS stdlib-Str/original-edge/17
+PASS stdlib-Str/original-edge/18
+PASS stdlib-Str/original-edge/19
+PASS stdlib-Str/original-edge/20
+PASS stdlib-Str/str_regexp/0
+PASS stdlib-Str/str_regexp/1
+PASS stdlib-Str/str_regexp/5
+PASS stdlib-Str/str_string_match/0
+PASS stdlib-Str/str_string_match/1
+PASS stdlib-Str/str_string_match/5
+PASS stdlib-Str/str_search_forward/0
+PASS stdlib-Str/str_search_forward/1
+PASS stdlib-Str/str_search_forward/5
+PASS stdlib-Str/str_string_partial_match/0
+PASS stdlib-Str/str_string_partial_match/1
+PASS stdlib-Str/str_string_partial_match/5
+PASS stdlib-Str/str_global_replace/0
+PASS stdlib-Str/str_global_replace/1
+PASS stdlib-Str/str_global_replace/5
+PASS stdlib-Str/str_split/0
+PASS stdlib-Str/str_split/1
+PASS stdlib-Str/str_split/5
+PASS stdlib-Str/reject-corrupt-position
+PASS stdlib-Str/partial-reject-negative-index
+PASS stdlib-Str/source-split-middle-empty
+structure StdlibStrTests : 
+  sig
+    structure B : <sig>
+    structure R : <sig>
+    val state : unit -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 42 checks, 0 failed

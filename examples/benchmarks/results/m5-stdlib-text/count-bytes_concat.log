@@ -1,0 +1,11 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1316 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=bytes_concat' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.XEdykz
+BENCH MEASURE bytes_concat normal count
+COUNT unbudgeted bytes_concat normal rune
+COUNT unbudgeted bytes_concat normal rune:opt
+COUNT unbudgeted bytes_concat normal rune:new
+COUNT unbudgeted bytes_concat normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.XEdykz/report.md

@@ -1,0 +1,5 @@
+COUNT unbudgeted hashtbl_filter_map normal rune
+COUNT unbudgeted hashtbl_filter_map normal rune:opt
+COUNT unbudgeted hashtbl_filter_map normal rune:new
+COUNT unbudgeted hashtbl_filter_map normal rune:jit
+COUNT comparisons agree

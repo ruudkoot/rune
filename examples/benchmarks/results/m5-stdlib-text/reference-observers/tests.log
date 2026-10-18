@@ -1,0 +1,24 @@
+PASS stdlib-text/original-constant-length
+PASS stdlib-text/original-index
+PASS stdlib-text/bytes-roundtrip
+PASS stdlib-text/left-overlap
+PASS stdlib-text/right-overlap
+PASS stdlib-text/same-position-blit
+PASS stdlib-text/copy-persistence
+PASS stdlib-text/copy-bounds
+PASS stdlib-text/sub-source-bound
+PASS stdlib-text/empty-sub
+PASS stdlib-text/cat-segments
+PASS stdlib-text/source-fish-concat
+PASS stdlib-text/empty-concat
+PASS stdlib-text/trim-source
+PASS stdlib-text/trim-ascii-whitespace
+PASS stdlib-text/trim-all-whitespace
+PASS stdlib-text/uppercase-ascii
+PASS stdlib-text/map-source
+PASS stdlib-text/iterator-order
+PASS stdlib-text/contains-source
+PASS stdlib-text/contains-absent
+PASS stdlib-text/split-preserves-empty-fields
+PASS stdlib-text/normalized-compare
+SUMMARY 23 checks, 0 failed

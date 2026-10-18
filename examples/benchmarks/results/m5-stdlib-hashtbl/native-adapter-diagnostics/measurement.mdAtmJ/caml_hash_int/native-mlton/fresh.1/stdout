@@ -1,0 +1,4 @@
+RESULT 0:9B985B07
+PASS caml_hash_int
+SAMPLE 1 0.000005000
+SUMMARY 1 checks, 0 failed

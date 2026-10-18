@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+bytes_contains	normal	rune	O2	compile	0	0	pass	3.08	2.43	0.19	135076	-	-	-	bytes_contains/rune/build/compile
+bytes_contains	normal	rune	O2	correctness	0	0	pass	0.46	0.46	0.01	10464	59024119	68858432	1801286	bytes_contains/rune/correctness.0
+bytes_contains	normal	rune	O2	count	1	1	pass	0.48	0.47	0.02	10448	59024119	68858432	1801286	bytes_contains/rune/fresh.1
+bytes_contains	normal	rune:opt	O2	compile	0	0	pass	2.66	2.36	0.15	135188	-	-	-	bytes_contains/rune-opt/build/compile
+bytes_contains	normal	rune:opt	O2	native-compile	0	0	pass	2.38	0.33	0.11	12392	-	-	-	bytes_contains/rune-opt/build/native-compile
+bytes_contains	normal	rune:opt	O2	correctness	0	0	pass	0.22	0.16	0.02	10776	59024119	68858432	1801286	bytes_contains/rune-opt/correctness.0
+bytes_contains	normal	rune:opt	O2	count	1	1	pass	0.18	0.15	0.00	10972	59024119	68858432	1801286	bytes_contains/rune-opt/fresh.1
+bytes_contains	normal	rune:new	O2	compile	0	0	pass	3.39	2.60	0.17	135160	-	-	-	bytes_contains/rune-new/build/compile
+bytes_contains	normal	rune:new	O2	correctness	0	0	pass	0.59	0.39	0.00	10576	41015368	68858432	1801286	bytes_contains/rune-new/correctness.0
+bytes_contains	normal	rune:new	O2	count	1	1	pass	0.46	0.38	0.01	10580	41015368	68858432	1801286	bytes_contains/rune-new/fresh.1
+bytes_contains	normal	rune:jit	O2	compile	0	0	pass	4.36	2.66	0.22	135064	-	-	-	bytes_contains/rune-jit/build/compile
+bytes_contains	normal	rune:jit	O2	correctness	0	0	pass	0.24	0.17	0.03	11760	41015368	68858432	1801286	bytes_contains/rune-jit/correctness.0
+bytes_contains	normal	rune:jit	O2	count	1	1	pass	0.22	0.11	0.02	11752	41015368	68858432	1801286	bytes_contains/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

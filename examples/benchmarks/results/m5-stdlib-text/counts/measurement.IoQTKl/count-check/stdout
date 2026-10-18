@@ -1,0 +1,5 @@
+COUNT unbudgeted string_index normal rune
+COUNT unbudgeted string_index normal rune:opt
+COUNT unbudgeted string_index normal rune:new
+COUNT unbudgeted string_index normal rune:jit
+COUNT comparisons agree

@@ -1,0 +1,4 @@
+RESULT 1:F5C2FBE8
+PASS str_regexp
+SAMPLE 1 0.000006000
+SUMMARY 1 checks, 0 failed

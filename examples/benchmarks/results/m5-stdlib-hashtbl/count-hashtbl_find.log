@@ -1,0 +1,11 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1316 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=hashtbl_find' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.cp3CE6
+BENCH MEASURE hashtbl_find normal count
+COUNT unbudgeted hashtbl_find normal rune
+COUNT unbudgeted hashtbl_find normal rune:opt
+COUNT unbudgeted hashtbl_find normal rune:new
+COUNT unbudgeted hashtbl_find normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.cp3CE6/report.md

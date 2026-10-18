@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+bytes_get	smoke	native:mlton@20241230	O2	compile	0	0	pass	4.38	3.51	0.77	671968	-	-	-	bytes_get/native-mlton/build/compile
+bytes_get	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2072	-	-	-	bytes_get/native-mlton/correctness.0
+bytes_get	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2112	-	-	-	bytes_get/native-mlton/fresh.1
+bytes_get	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.31	0.29	0.03	35340	-	-	-	bytes_get/native-smlnj-legacy/build/compile
+bytes_get	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.00	0.00	3816	-	-	-	bytes_get/native-smlnj-legacy/correctness.0
+bytes_get	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.01	0.00	3808	-	-	-	bytes_get/native-smlnj-legacy/fresh.1
+bytes_get	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.33	0.19	0.06	39868	-	-	-	bytes_get/native-polyml/build/compile
+bytes_get	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	5444	-	-	-	bytes_get/native-polyml/correctness.0
+bytes_get	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	5476	-	-	-	bytes_get/native-polyml/fresh.1

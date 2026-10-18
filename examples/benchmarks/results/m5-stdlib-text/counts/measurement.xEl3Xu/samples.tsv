@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+string_map	normal	rune	O2	compile	0	0	pass	2.54	2.47	0.12	135128	-	-	-	string_map/rune/build/compile
+string_map	normal	rune	O2	correctness	0	0	pass	0.68	0.65	0.03	10456	58758517	93162064	2302706	string_map/rune/correctness.0
+string_map	normal	rune	O2	count	1	1	pass	0.43	0.41	0.02	10476	58758517	93162064	2302706	string_map/rune/fresh.1
+string_map	normal	rune:opt	O2	compile	0	0	pass	3.65	3.11	0.20	135100	-	-	-	string_map/rune-opt/build/compile
+string_map	normal	rune:opt	O2	native-compile	0	0	pass	1.00	0.27	0.10	12536	-	-	-	string_map/rune-opt/build/native-compile
+string_map	normal	rune:opt	O2	correctness	0	0	pass	0.21	0.14	0.01	10904	58758517	93162064	2302706	string_map/rune-opt/correctness.0
+string_map	normal	rune:opt	O2	count	1	1	pass	0.22	0.15	0.01	10928	58758517	93162064	2302706	string_map/rune-opt/fresh.1
+string_map	normal	rune:new	O2	compile	0	0	pass	3.37	2.85	0.23	135092	-	-	-	string_map/rune-new/build/compile
+string_map	normal	rune:new	O2	correctness	0	0	pass	0.46	0.37	0.03	10564	40314493	93162064	2302706	string_map/rune-new/correctness.0
+string_map	normal	rune:new	O2	count	1	1	pass	0.41	0.38	0.00	10640	40314493	93162064	2302706	string_map/rune-new/fresh.1
+string_map	normal	rune:jit	O2	compile	0	0	pass	2.63	2.42	0.18	135220	-	-	-	string_map/rune-jit/build/compile
+string_map	normal	rune:jit	O2	correctness	0	0	pass	0.14	0.13	0.01	11724	40314493	93162064	2302706	string_map/rune-jit/correctness.0
+string_map	normal	rune:jit	O2	count	1	1	pass	0.23	0.12	0.02	11700	40314493	93162064	2302706	string_map/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

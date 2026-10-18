@@ -1,0 +1,1 @@
+caml_hash_tuple	600	4194304	shared/input.sml shared/ocaml-stdlib-hash.sml shared/ocaml-stdlib-hashtbl.sml shared/ocaml-stdlib-hashtbl-program.sml caml_hash_tuple/benchmark.sml shared/main.sml	1000	caml_hash_tuple/normal.expected	-

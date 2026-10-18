@@ -1,0 +1,265 @@
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 200000:556E3A05
+PASS string_index
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-text-input.sml]
+structure BenchStdlibTextInput : sig
+  val text : string
+  val equalPairs : int
+  val words : string list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-text.sml]
+[autoloading]
+[autoloading done]
+structure BenchStdlibText : sig
+  val text : string
+  val for : int -> int -> (int -> 'a) -> unit
+  val uppercase : char -> char
+  val space : char -> bool
+  val trimBounds : int -> (int -> char) -> int * int
+  val trimString : string -> string
+  val indexString : string -> char -> int
+  val splitOnChar : char -> string -> string list
+  val appString : (char -> 'a) -> string -> unit
+  val concatStrings : string -> string list -> string
+  val compareStrings : string * string -> int
+  structure Bytes : <sig>
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-text-program.sml]
+[autoloading]
+[autoloading done]
+structure BenchStdlibTextPrograms : sig
+  structure B : <sig>
+  structure A : <sig>
+  datatype value
+    = Bytes of BenchStdlibText.Bytes.t
+    | Letter of char
+    | Number of int
+    | Parts of string list
+    | Text of string
+    | Truth of bool
+  val seed : Word32.word
+  val mix : Word32.word -> Word32.word -> Word32.word
+  val hashString : string -> Word32.word
+  val hashBytes : Word8Array.array -> Word32.word
+  val hashValue : value -> Word32.word
+  val fish : string
+  val trimInput : string
+  val noFinish : unit -> 'a option
+  val byteOperation :
+      Word8Array.array -> string -> (int -> value) * (unit -> value option)
+  val stringOperation : string -> (int -> value) * (unit -> 'a option)
+  val equalText : Word8Array.array -> int -> (int -> char) -> bool
+  val equalString : string -> int -> (int -> char) -> bool
+  val expectedArray : string -> int -> int * (int -> char)
+  val expectedText : string -> int -> int * (int -> char)
+  val check : string -> int -> value -> unit
+  val finishCheck : string -> int -> value -> unit
+  val execute :
+      string -> int -> (int -> value) * (unit -> value option) -> string
+  val runString : string -> int -> string
+  val runBytes : Word8Array.array -> string -> int -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/string_index/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure P : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+[autoloading]
+[autoloading done]
+RESULT 200000:556E3A05
+PASS string_index
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-text-input.sml]
+structure BenchStdlibTextInput : sig
+  val text : string
+  val equalPairs : int
+  val words : string list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-text.sml]
+[autoloading]
+[autoloading done]
+structure BenchStdlibText : sig
+  val text : string
+  val for : int -> int -> (int -> 'a) -> unit
+  val uppercase : char -> char
+  val space : char -> bool
+  val trimBounds : int -> (int -> char) -> int * int
+  val trimString : string -> string
+  val indexString : string -> char -> int
+  val splitOnChar : char -> string -> string list
+  val appString : (char -> 'a) -> string -> unit
+  val concatStrings : string -> string list -> string
+  val compareStrings : string * string -> int
+  structure Bytes : <sig>
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-text-program.sml]
+[autoloading]
+[autoloading done]
+structure BenchStdlibTextPrograms : sig
+  structure B : <sig>
+  structure A : <sig>
+  datatype value
+    = Bytes of BenchStdlibText.Bytes.t
+    | Letter of char
+    | Number of int
+    | Parts of string list
+    | Text of string
+    | Truth of bool
+  val seed : Word32.word
+  val mix : Word32.word -> Word32.word -> Word32.word
+  val hashString : string -> Word32.word
+  val hashBytes : Word8Array.array -> Word32.word
+  val hashValue : value -> Word32.word
+  val fish : string
+  val trimInput : string
+  val noFinish : unit -> 'a option
+  val byteOperation :
+      Word8Array.array -> string -> (int -> value) * (unit -> value option)
+  val stringOperation : string -> (int -> value) * (unit -> 'a option)
+  val equalText : Word8Array.array -> int -> (int -> char) -> bool
+  val equalString : string -> int -> (int -> char) -> bool
+  val expectedArray : string -> int -> int * (int -> char)
+  val expectedText : string -> int -> int * (int -> char)
+  val check : string -> int -> value -> unit
+  val finishCheck : string -> int -> value -> unit
+  val execute :
+      string -> int -> (int -> value) * (unit -> value option) -> string
+  val runString : string -> int -> string
+  val runBytes : Word8Array.array -> string -> int -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/string_index/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure P : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+[autoloading]
+[autoloading done]
+RESULT 200000:556E3A05
+PASS string_index
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-text-input.sml]
+structure BenchStdlibTextInput : 
+  sig
+    val text : string
+    val equalPairs : int
+    val words : string list
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-text.sml]
+structure BenchStdlibText : 
+  sig
+    val text : string
+    val for : int -> int -> (int -> 'a) -> unit
+    val uppercase : char -> char
+    val space : char -> bool
+    val trimBounds : int -> (int -> char) -> int * int
+    val trimString : string -> string
+    val indexString : string -> char -> int
+    val splitOnChar : char -> string -> string list
+    val appString : (char -> 'a) -> string -> unit
+    val concatStrings : string -> string list -> string
+    val compareStrings : string * string -> int
+    structure Bytes : <sig>
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-text-program.sml]
+structure BenchStdlibTextPrograms : 
+  sig
+    structure B : <sig>
+    structure A : <sig>
+    datatype value
+      = Bytes of BenchStdlibText.Bytes.t
+    | Letter of char
+    | Number of int
+    | Parts of string list
+    | Text of string
+    | Truth of bool
+    val seed : Word32.word
+    val mix : Word32.word -> Word32.word -> Word32.word
+    val hashString : string -> Word32.word
+    val hashBytes : Word8Array.array -> Word32.word
+    val hashValue : value -> Word32.word
+    val fish : string
+    val trimInput : string
+    val noFinish : unit -> 'a option
+    val byteOperation : Word8Array.array
+                         -> string -> (int -> value) * (unit -> value option)
+    val stringOperation : string -> (int -> value) * (unit -> 'a option)
+    val equalText : Word8Array.array -> int -> (int -> char) -> bool
+    val equalString : string -> int -> (int -> char) -> bool
+    val expectedArray : string -> int -> int * (int -> char)
+    val expectedText : string -> int -> int * (int -> char)
+    val check : string -> int -> value -> unit
+    val finishCheck : string -> int -> value -> unit
+    val execute : string
+                   -> int -> (int -> value) * (unit -> value option) -> string
+    val runString : string -> int -> string
+    val runBytes : Word8Array.array -> string -> int -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/string_index/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure P : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 200000:556E3A05
+PASS string_index
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+RESULT 200000:556E3A05
+PASS string_index
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 200000:556E3A05
+PASS string_index
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+string_blit	normal	rune	O2	compile	0	0	pass	3.17	2.49	0.19	135220	-	-	-	string_blit/rune/build/compile
+string_blit	normal	rune	O2	correctness	0	0	pass	0.73	0.59	0.00	10476	73210665	101786200	2040709	string_blit/rune/correctness.0
+string_blit	normal	rune	O2	count	1	1	pass	0.83	0.63	0.01	10464	73210665	101786200	2040709	string_blit/rune/fresh.1
+string_blit	normal	rune:opt	O2	compile	0	0	pass	2.68	2.47	0.16	135080	-	-	-	string_blit/rune-opt/build/compile
+string_blit	normal	rune:opt	O2	native-compile	0	0	pass	0.99	0.29	0.07	12404	-	-	-	string_blit/rune-opt/build/native-compile
+string_blit	normal	rune:opt	O2	correctness	0	0	pass	0.24	0.19	0.01	10888	73210665	101786200	2040709	string_blit/rune-opt/correctness.0
+string_blit	normal	rune:opt	O2	count	1	1	pass	0.22	0.18	0.01	10856	73210665	101786200	2040709	string_blit/rune-opt/fresh.1
+string_blit	normal	rune:new	O2	compile	0	0	pass	3.11	2.54	0.20	135052	-	-	-	string_blit/rune-new/build/compile
+string_blit	normal	rune:new	O2	correctness	0	0	pass	0.60	0.52	0.04	10448	52406582	101786200	2040709	string_blit/rune-new/correctness.0
+string_blit	normal	rune:new	O2	count	1	1	pass	0.81	0.62	0.00	10424	52406582	101786200	2040709	string_blit/rune-new/fresh.1
+string_blit	normal	rune:jit	O2	compile	0	0	pass	2.98	2.47	0.19	134956	-	-	-	string_blit/rune-jit/build/compile
+string_blit	normal	rune:jit	O2	correctness	0	0	pass	0.22	0.15	0.01	11736	52406582	101786200	2040709	string_blit/rune-jit/correctness.0
+string_blit	normal	rune:jit	O2	count	1	1	pass	0.20	0.18	0.01	11732	52406582	101786200	2040709	string_blit/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

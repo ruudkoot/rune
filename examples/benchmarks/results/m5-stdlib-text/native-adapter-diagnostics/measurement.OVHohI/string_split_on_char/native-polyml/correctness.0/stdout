@@ -1,0 +1,4 @@
+RESULT 1:C6A9B718
+PASS string_split_on_char
+SAMPLE 1 0.000020000
+SUMMARY 1 checks, 0 failed

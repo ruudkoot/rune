@@ -1,0 +1,110 @@
+[
+  {
+    "benchmark": "str_regexp",
+    "profile": "edge",
+    "iterations": 0,
+    "expected": "0:811C9DC5"
+  },
+  {
+    "benchmark": "str_regexp",
+    "profile": "edge",
+    "iterations": 1,
+    "expected": "1:F5C2FBE8"
+  },
+  {
+    "benchmark": "str_regexp",
+    "profile": "edge",
+    "iterations": 5,
+    "expected": "5:E1BB7F44"
+  },
+  {
+    "benchmark": "str_string_match",
+    "profile": "edge",
+    "iterations": 0,
+    "expected": "0:811C9DC5"
+  },
+  {
+    "benchmark": "str_string_match",
+    "profile": "edge",
+    "iterations": 1,
+    "expected": "1:50C5D1F"
+  },
+  {
+    "benchmark": "str_string_match",
+    "profile": "edge",
+    "iterations": 5,
+    "expected": "5:1210D00F"
+  },
+  {
+    "benchmark": "str_search_forward",
+    "profile": "edge",
+    "iterations": 0,
+    "expected": "0:811C9DC5"
+  },
+  {
+    "benchmark": "str_search_forward",
+    "profile": "edge",
+    "iterations": 1,
+    "expected": "1:170AE675"
+  },
+  {
+    "benchmark": "str_search_forward",
+    "profile": "edge",
+    "iterations": 5,
+    "expected": "5:B23B47B5"
+  },
+  {
+    "benchmark": "str_string_partial_match",
+    "profile": "edge",
+    "iterations": 0,
+    "expected": "0:811C9DC5"
+  },
+  {
+    "benchmark": "str_string_partial_match",
+    "profile": "edge",
+    "iterations": 1,
+    "expected": "1:50C5D1F"
+  },
+  {
+    "benchmark": "str_string_partial_match",
+    "profile": "edge",
+    "iterations": 5,
+    "expected": "5:1210D00F"
+  },
+  {
+    "benchmark": "str_global_replace",
+    "profile": "edge",
+    "iterations": 0,
+    "expected": "0:811C9DC5"
+  },
+  {
+    "benchmark": "str_global_replace",
+    "profile": "edge",
+    "iterations": 1,
+    "expected": "1:6D93D262"
+  },
+  {
+    "benchmark": "str_global_replace",
+    "profile": "edge",
+    "iterations": 5,
+    "expected": "5:1292575E"
+  },
+  {
+    "benchmark": "str_split",
+    "profile": "edge",
+    "iterations": 0,
+    "expected": "0:811C9DC5"
+  },
+  {
+    "benchmark": "str_split",
+    "profile": "edge",
+    "iterations": 1,
+    "expected": "1:CFAD7398"
+  },
+  {
+    "benchmark": "str_split",
+    "profile": "edge",
+    "iterations": 5,
+    "expected": "5:DB4C1674"
+  }
+]

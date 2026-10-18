@@ -1,0 +1,65 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/audit.md
+ M examples/benchmarks/literature.md
+ M examples/benchmarks/manifest.tsv
+ M examples/benchmarks/stdlib-cases.tsv
+?? examples/benchmarks/bytes_blit/
+?? examples/benchmarks/bytes_cat/
+?? examples/benchmarks/bytes_concat/
+?? examples/benchmarks/bytes_contains/
+?? examples/benchmarks/bytes_get/
+?? examples/benchmarks/bytes_index/
+?? examples/benchmarks/bytes_iter/
+?? examples/benchmarks/bytes_map/
+?? examples/benchmarks/bytes_set/
+?? examples/benchmarks/bytes_sub/
+?? examples/benchmarks/bytes_trim/
+?? examples/benchmarks/bytes_uppercase_ascii/
+?? examples/benchmarks/caml_hash_int/
+?? examples/benchmarks/caml_hash_tuple/
+?? examples/benchmarks/hashtbl_add_duplicate/
+?? examples/benchmarks/hashtbl_add_resizing/
+?? examples/benchmarks/hashtbl_add_sized/
+?? examples/benchmarks/hashtbl_filter_map/
+?? examples/benchmarks/hashtbl_find/
+?? examples/benchmarks/hashtbl_fold/
+?? examples/benchmarks/hashtbl_iter/
+?? examples/benchmarks/hashtbl_remove/
+?? examples/benchmarks/int_find1/
+?? examples/benchmarks/int_find2/
+?? examples/benchmarks/int_replace1/
+?? examples/benchmarks/int_replace2/
+?? examples/benchmarks/shared/ocaml-stdlib-hash.sml
+?? examples/benchmarks/shared/ocaml-stdlib-hashtbl-program.sml
+?? examples/benchmarks/shared/ocaml-stdlib-hashtbl.sml
+?? examples/benchmarks/shared/ocaml-stdlib-str.sml
+?? examples/benchmarks/shared/ocaml-stdlib-text-input.sml
+?? examples/benchmarks/shared/ocaml-stdlib-text-program.sml
+?? examples/benchmarks/shared/ocaml-stdlib-text.sml
+?? examples/benchmarks/str_global_replace/
+?? examples/benchmarks/str_regexp/
+?? examples/benchmarks/str_search_forward/
+?? examples/benchmarks/str_split/
+?? examples/benchmarks/str_string_match/
+?? examples/benchmarks/str_string_partial_match/
+?? examples/benchmarks/string_blit/
+?? examples/benchmarks/string_compare/
+?? examples/benchmarks/string_concat/
+?? examples/benchmarks/string_contains/
+?? examples/benchmarks/string_equal/
+?? examples/benchmarks/string_get/
+?? examples/benchmarks/string_index/
+?? examples/benchmarks/string_iter/
+?? examples/benchmarks/string_map/
+?? examples/benchmarks/string_split_on_char/
+?? examples/benchmarks/string_sub/
+?? examples/benchmarks/string_trim/
+?? examples/benchmarks/string_uppercase_ascii/
+?? tests/benchmarks/check-stdlib-hashtbl.sh
+?? tests/benchmarks/check-stdlib-str.sh
+?? tests/benchmarks/check-stdlib-text.sh
+?? tests/benchmarks/stdlib-hashtbl-program-tests.sml
+?? tests/benchmarks/stdlib-hashtbl-tests.sml
+?? tests/benchmarks/stdlib-str-tests.sml
+?? tests/benchmarks/stdlib-text-program-tests.sml
+?? tests/benchmarks/stdlib-text-tests.sml

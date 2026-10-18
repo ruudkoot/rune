@@ -1,0 +1,5 @@
+COUNT unbudgeted str_regexp normal rune
+COUNT unbudgeted str_regexp normal rune:opt
+COUNT unbudgeted str_regexp normal rune:new
+COUNT unbudgeted str_regexp normal rune:jit
+COUNT comparisons agree

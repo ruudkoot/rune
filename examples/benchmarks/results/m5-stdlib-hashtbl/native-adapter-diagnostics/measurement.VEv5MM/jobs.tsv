@@ -1,0 +1,1 @@
+hashtbl_fold	30	1048576	shared/input.sml shared/ocaml-stdlib-hash.sml shared/ocaml-stdlib-hashtbl.sml shared/ocaml-stdlib-hashtbl-program.sml hashtbl_fold/benchmark.sml shared/main.sml	1	hashtbl_fold/smoke.expected	-

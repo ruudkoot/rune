@@ -1,0 +1,28 @@
+{
+  "str_regexp": {
+    "smoke": 1,
+    "normal": 20000
+  },
+  "str_string_match": {
+    "smoke": 1,
+    "normal": 200000
+  },
+  "str_search_forward": {
+    "smoke": 1,
+    "normal": 2000,
+    "large": 100000
+  },
+  "str_string_partial_match": {
+    "smoke": 1,
+    "normal": 200000
+  },
+  "str_global_replace": {
+    "smoke": 1,
+    "normal": 2000,
+    "large": 100000
+  },
+  "str_split": {
+    "smoke": 1,
+    "normal": 2000
+  }
+}

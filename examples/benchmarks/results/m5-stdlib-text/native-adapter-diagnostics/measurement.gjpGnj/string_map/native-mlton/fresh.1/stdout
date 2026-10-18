@@ -1,0 +1,4 @@
+RESULT 1:1B281A12
+PASS string_map
+SAMPLE 1 0.000002000
+SUMMARY 1 checks, 0 failed

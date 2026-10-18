@@ -1,0 +1,4 @@
+RESULT 575:1DB491D0
+PASS string_blit
+SAMPLE 1 0.001024000
+SUMMARY 1 checks, 0 failed

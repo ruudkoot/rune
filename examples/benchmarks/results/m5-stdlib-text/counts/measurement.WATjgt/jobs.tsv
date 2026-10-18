@@ -1,0 +1,1 @@
+string_iter	600	4194304	shared/input.sml shared/ocaml-stdlib-text-input.sml shared/ocaml-stdlib-text.sml shared/ocaml-stdlib-text-program.sml string_iter/benchmark.sml shared/main.sml	2000	string_iter/normal.expected	-

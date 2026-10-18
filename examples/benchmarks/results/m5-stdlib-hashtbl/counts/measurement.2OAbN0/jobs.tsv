@@ -1,0 +1,1 @@
+hashtbl_fold	600	4194304	shared/input.sml shared/ocaml-stdlib-hash.sml shared/ocaml-stdlib-hashtbl.sml shared/ocaml-stdlib-hashtbl-program.sml hashtbl_fold/benchmark.sml shared/main.sml	1000	hashtbl_fold/normal.expected	-

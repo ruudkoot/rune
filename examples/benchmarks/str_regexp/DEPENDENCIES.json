@@ -1,0 +1,12 @@
+{
+  "ocaml": "4.14.1",
+  "remote_base": "https://raw.githubusercontent.com/ocaml/ocaml/4.14.1/",
+  "files": {
+    "upstream-library/LGPL-2.1": "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551",
+    "upstream-library/LICENSE": "65f47d3bf5a921011ac7fa30f23d54f9dffbe7683921eeb116d5ce8dc26ff0c1",
+    "upstream-library/debian-copyright": "e34a4f2c01a1e0fc8d995d14419236e5f6de9cb948eb553595ee64551695e716",
+    "upstream-library/str.ml": "611d0e13b7796e464ec53c10deb97436e526baa72390b2f567cd0245e0fe3dd1",
+    "upstream-library/str.mli": "a0de413dd86ba435caa36835704704a511a73d5f83739cf31c3bdd72ec39f80f",
+    "upstream-library/strstubs.c": "d0c8b0e0e546cc4199b19ca9b36126858ec84e03750df338eb25ab1e58478f89"
+  }
+}

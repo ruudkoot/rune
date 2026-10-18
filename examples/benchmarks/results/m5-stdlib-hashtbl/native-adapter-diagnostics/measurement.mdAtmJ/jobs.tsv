@@ -1,0 +1,1 @@
+caml_hash_int	30	1048576	shared/input.sml shared/ocaml-stdlib-hash.sml shared/ocaml-stdlib-hashtbl.sml shared/ocaml-stdlib-hashtbl-program.sml caml_hash_int/benchmark.sml shared/main.sml	0	caml_hash_int/smoke.expected	-

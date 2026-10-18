@@ -1,0 +1,5 @@
+COUNT unbudgeted caml_hash_tuple normal rune
+COUNT unbudgeted caml_hash_tuple normal rune:opt
+COUNT unbudgeted caml_hash_tuple normal rune:new
+COUNT unbudgeted caml_hash_tuple normal rune:jit
+COUNT comparisons agree

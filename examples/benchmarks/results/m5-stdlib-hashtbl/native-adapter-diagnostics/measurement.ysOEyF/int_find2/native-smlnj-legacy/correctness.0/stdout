@@ -1,0 +1,4 @@
+RESULT 0:6D0D00D7
+PASS int_find2
+SAMPLE 1 0.000120000
+SUMMARY 1 checks, 0 failed

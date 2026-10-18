@@ -1,0 +1,5 @@
+COUNT unbudgeted bytes_set normal rune
+COUNT unbudgeted bytes_set normal rune:opt
+COUNT unbudgeted bytes_set normal rune:new
+COUNT unbudgeted bytes_set normal rune:jit
+COUNT comparisons agree

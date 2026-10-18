@@ -1,0 +1,1 @@
+tests/out/benchmarks/stdlib-str-originals/str.sml:75:7: error: pattern: type mismatch between unit and string (overloaded operator used at type unit)

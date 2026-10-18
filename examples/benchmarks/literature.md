@@ -461,3 +461,19 @@ independent ordered-content models support correctness. Specialization,
 persistent-node allocation, change-flag elimination, global baseline retention
 and additional consumers are source-based performance hypotheses. The recorded
 count agreement and adapter timings do not identify their individual costs.
+
+## OCaml stdlib text, Str and hash adapters, 2026-10-18
+
+The pinned OCaml 4.14.1 implementation sources establish the reviewed byte/
+string operations, Str state and splitting semantics, hash buckets/resizing,
+and tagged-integer/tuple MurmurHash3 mixing. Source notices distinguish
+Leroy/INRIA 1996 components from Doligez/INRIA 2014 String implementation code.
+hash.c records MurmurHash3 ancestry; this is source attribution rather than
+a newly claimed review of a hashing paper.
+
+Original-library observations and independent byte/word, duplicate-binding,
+iteration and modular-arithmetic models support expected results. The portable
+engine, reference cells, domain specialization, byte packing and signed63
+IntInf representation are explicit adapters. Compiler specialization, temporary
+allocation, barrier removal and consumer costs are source-based hypotheses;
+individual cost attribution requires further compiler analysis or experiments.

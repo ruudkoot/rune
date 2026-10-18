@@ -1,0 +1,1 @@
+hashtbl_remove	30	1048576	shared/input.sml shared/ocaml-stdlib-hash.sml shared/ocaml-stdlib-hashtbl.sml shared/ocaml-stdlib-hashtbl-program.sml hashtbl_remove/benchmark.sml shared/main.sml	0	hashtbl_remove/smoke.expected	-

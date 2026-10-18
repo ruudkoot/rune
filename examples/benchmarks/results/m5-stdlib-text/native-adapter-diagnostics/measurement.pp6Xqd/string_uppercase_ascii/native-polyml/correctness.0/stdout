@@ -1,0 +1,4 @@
+RESULT 1:CC561E2E
+PASS string_uppercase_ascii
+SAMPLE 1 0.000030000
+SUMMARY 1 checks, 0 failed

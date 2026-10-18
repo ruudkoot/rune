@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+caml_hash_tuple	smoke	native:mlton@20241230	O2	compile	0	0	pass	7.23	5.51	1.67	671628	-	-	-	caml_hash_tuple/native-mlton/build/compile
+caml_hash_tuple	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2056	-	-	-	caml_hash_tuple/native-mlton/correctness.0
+caml_hash_tuple	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2184	-	-	-	caml_hash_tuple/native-mlton/fresh.1
+caml_hash_tuple	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.40	0.36	0.04	35488	-	-	-	caml_hash_tuple/native-smlnj-legacy/build/compile
+caml_hash_tuple	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.00	0.01	4096	-	-	-	caml_hash_tuple/native-smlnj-legacy/correctness.0
+caml_hash_tuple	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.02	0.01	0.00	3924	-	-	-	caml_hash_tuple/native-smlnj-legacy/fresh.1
+caml_hash_tuple	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.43	0.26	0.07	34992	-	-	-	caml_hash_tuple/native-polyml/build/compile
+caml_hash_tuple	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	5484	-	-	-	caml_hash_tuple/native-polyml/correctness.0
+caml_hash_tuple	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	5560	-	-	-	caml_hash_tuple/native-polyml/fresh.1

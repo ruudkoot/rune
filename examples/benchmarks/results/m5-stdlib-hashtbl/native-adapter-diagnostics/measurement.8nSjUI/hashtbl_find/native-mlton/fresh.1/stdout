@@ -1,0 +1,4 @@
+RESULT 1001:3E1A5517
+PASS hashtbl_find
+SAMPLE 1 0.000236000
+SUMMARY 1 checks, 0 failed

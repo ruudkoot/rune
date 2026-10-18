@@ -1,0 +1,4 @@
+RESULT 1:BAD021D7
+PASS bytes_trim
+SAMPLE 1 0.000015000
+SUMMARY 1 checks, 0 failed

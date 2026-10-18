@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+string_uppercase_ascii	smoke	native:mlton@20241230	O2	compile	0	0	pass	6.25	4.96	1.25	672008	-	-	-	string_uppercase_ascii/native-mlton/build/compile
+string_uppercase_ascii	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2056	-	-	-	string_uppercase_ascii/native-mlton/correctness.0
+string_uppercase_ascii	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2056	-	-	-	string_uppercase_ascii/native-mlton/fresh.1
+string_uppercase_ascii	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.51	0.46	0.07	37504	-	-	-	string_uppercase_ascii/native-smlnj-legacy/build/compile
+string_uppercase_ascii	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.00	0.00	3792	-	-	-	string_uppercase_ascii/native-smlnj-legacy/correctness.0
+string_uppercase_ascii	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.02	0.00	0.00	3812	-	-	-	string_uppercase_ascii/native-smlnj-legacy/fresh.1
+string_uppercase_ascii	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.56	0.37	0.10	42736	-	-	-	string_uppercase_ascii/native-polyml/build/compile
+string_uppercase_ascii	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	5576	-	-	-	string_uppercase_ascii/native-polyml/correctness.0
+string_uppercase_ascii	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	5472	-	-	-	string_uppercase_ascii/native-polyml/fresh.1

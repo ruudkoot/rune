@@ -1,0 +1,47 @@
+{
+  "run_config_sha256": "2acf290d36e665a5148dd2b3a2f437ebd1a0883238494d33e4701edd77c050b3",
+  "entries": [
+    {
+      "index": 76,
+      "entry": {
+        "executable": "benchmarks/stdlib/str_bench.exe",
+        "name": "str_bench",
+        "tags": [
+          "lt_1s"
+        ],
+        "runs": [
+          {
+            "params": "str_string_partial_match 25000000"
+          },
+          {
+            "params": "str_regexp 1000000"
+          },
+          {
+            "params": "str_string_match 50000000"
+          },
+          {
+            "params": "str_global_replace 1000000"
+          }
+        ]
+      }
+    },
+    {
+      "index": 77,
+      "entry": {
+        "executable": "benchmarks/stdlib/str_bench.exe",
+        "name": "str_bench",
+        "tags": [
+          "1s_10s"
+        ],
+        "runs": [
+          {
+            "params": "str_search_forward 5000000"
+          },
+          {
+            "params": "str_split 2000000"
+          }
+        ]
+      }
+    }
+  ]
+}

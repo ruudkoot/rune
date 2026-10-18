@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+bytes_index	normal	rune	O2	compile	0	0	pass	3.83	2.62	0.16	135112	-	-	-	bytes_index/rune/build/compile
+bytes_index	normal	rune	O2	correctness	0	0	pass	0.65	0.56	0.04	10476	61024067	68858416	1801286	bytes_index/rune/correctness.0
+bytes_index	normal	rune	O2	count	1	1	pass	0.51	0.47	0.02	10412	61024067	68858416	1801286	bytes_index/rune/fresh.1
+bytes_index	normal	rune:opt	O2	compile	0	0	pass	2.96	2.74	0.20	135208	-	-	-	bytes_index/rune-opt/build/compile
+bytes_index	normal	rune:opt	O2	native-compile	0	0	pass	0.76	0.28	0.08	12388	-	-	-	bytes_index/rune-opt/build/native-compile
+bytes_index	normal	rune:opt	O2	correctness	0	0	pass	0.17	0.16	0.01	10904	61024067	68858416	1801286	bytes_index/rune-opt/correctness.0
+bytes_index	normal	rune:opt	O2	count	1	1	pass	0.18	0.15	0.00	10860	61024067	68858416	1801286	bytes_index/rune-opt/fresh.1
+bytes_index	normal	rune:new	O2	compile	0	0	pass	2.74	2.61	0.15	134960	-	-	-	bytes_index/rune-new/build/compile
+bytes_index	normal	rune:new	O2	correctness	0	0	pass	0.43	0.44	0.00	10652	42415331	68858416	1801286	bytes_index/rune-new/correctness.0
+bytes_index	normal	rune:new	O2	count	1	1	pass	0.43	0.44	0.01	10584	42415331	68858416	1801286	bytes_index/rune-new/fresh.1
+bytes_index	normal	rune:jit	O2	compile	0	0	pass	2.51	2.47	0.16	134948	-	-	-	bytes_index/rune-jit/build/compile
+bytes_index	normal	rune:jit	O2	correctness	0	0	pass	0.18	0.15	0.02	11736	42415331	68858416	1801286	bytes_index/rune-jit/correctness.0
+bytes_index	normal	rune:jit	O2	count	1	1	pass	0.18	0.14	0.02	11768	42415331	68858416	1801286	bytes_index/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

@@ -1,0 +1,4 @@
+RESULT 0:2B9727C5
+PASS caml_hash_tuple
+SAMPLE 1 0.000492000
+SUMMARY 1 checks, 0 failed

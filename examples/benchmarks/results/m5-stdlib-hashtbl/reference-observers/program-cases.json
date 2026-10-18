@@ -1,0 +1,282 @@
+[
+  {
+    "benchmark": "int_find1",
+    "iterations": 0,
+    "expected": "0:6D0D00D7"
+  },
+  {
+    "benchmark": "int_find1",
+    "iterations": 1,
+    "expected": "1:EA7C1C2D"
+  },
+  {
+    "benchmark": "int_find1",
+    "iterations": 5,
+    "expected": "5:E0728A3D"
+  },
+  {
+    "benchmark": "int_find1",
+    "iterations": 65,
+    "expected": "65:D6F7C52D"
+  },
+  {
+    "benchmark": "int_find2",
+    "iterations": 0,
+    "expected": "0:6D0D00D7"
+  },
+  {
+    "benchmark": "int_find2",
+    "iterations": 1,
+    "expected": "1:EA7C1C2D"
+  },
+  {
+    "benchmark": "int_find2",
+    "iterations": 5,
+    "expected": "5:E0728A3D"
+  },
+  {
+    "benchmark": "int_find2",
+    "iterations": 65,
+    "expected": "65:D6F7C52D"
+  },
+  {
+    "benchmark": "int_replace1",
+    "iterations": 0,
+    "expected": "0:6D0D00D7"
+  },
+  {
+    "benchmark": "int_replace1",
+    "iterations": 1,
+    "expected": "1:EA7C1C2D"
+  },
+  {
+    "benchmark": "int_replace1",
+    "iterations": 5,
+    "expected": "5:E0728A3D"
+  },
+  {
+    "benchmark": "int_replace1",
+    "iterations": 65,
+    "expected": "65:D6F7C52D"
+  },
+  {
+    "benchmark": "int_replace2",
+    "iterations": 0,
+    "expected": "0:6D0D00D7"
+  },
+  {
+    "benchmark": "int_replace2",
+    "iterations": 1,
+    "expected": "1:EA7C1C2D"
+  },
+  {
+    "benchmark": "int_replace2",
+    "iterations": 5,
+    "expected": "5:E0728A3D"
+  },
+  {
+    "benchmark": "int_replace2",
+    "iterations": 65,
+    "expected": "65:D6F7C52D"
+  },
+  {
+    "benchmark": "caml_hash_int",
+    "iterations": 0,
+    "expected": "0:9B985B07"
+  },
+  {
+    "benchmark": "caml_hash_int",
+    "iterations": 1,
+    "expected": "1:B9E554A5"
+  },
+  {
+    "benchmark": "caml_hash_int",
+    "iterations": 5,
+    "expected": "5:E87C865"
+  },
+  {
+    "benchmark": "caml_hash_int",
+    "iterations": 65,
+    "expected": "65:74878A5"
+  },
+  {
+    "benchmark": "caml_hash_tuple",
+    "iterations": 0,
+    "expected": "0:2B9727C5"
+  },
+  {
+    "benchmark": "caml_hash_tuple",
+    "iterations": 1,
+    "expected": "1:AEED99C5"
+  },
+  {
+    "benchmark": "caml_hash_tuple",
+    "iterations": 5,
+    "expected": "5:F48261C5"
+  },
+  {
+    "benchmark": "caml_hash_tuple",
+    "iterations": 65,
+    "expected": "65:177A19C5"
+  },
+  {
+    "benchmark": "hashtbl_iter",
+    "iterations": 0,
+    "expected": "0:811C9DC5"
+  },
+  {
+    "benchmark": "hashtbl_iter",
+    "iterations": 1,
+    "expected": "1:6D0D00D7"
+  },
+  {
+    "benchmark": "hashtbl_iter",
+    "iterations": 5,
+    "expected": "5:303DE507"
+  },
+  {
+    "benchmark": "hashtbl_iter",
+    "iterations": 65,
+    "expected": "65:70D055D7"
+  },
+  {
+    "benchmark": "hashtbl_fold",
+    "iterations": 0,
+    "expected": "0:811C9DC5"
+  },
+  {
+    "benchmark": "hashtbl_fold",
+    "iterations": 1,
+    "expected": "1:1F433617"
+  },
+  {
+    "benchmark": "hashtbl_fold",
+    "iterations": 5,
+    "expected": "5:724E447"
+  },
+  {
+    "benchmark": "hashtbl_fold",
+    "iterations": 65,
+    "expected": "65:6846BD17"
+  },
+  {
+    "benchmark": "hashtbl_add_resizing",
+    "iterations": 0,
+    "expected": "0:50C5D1F"
+  },
+  {
+    "benchmark": "hashtbl_add_resizing",
+    "iterations": 1,
+    "expected": "1:70C6045"
+  },
+  {
+    "benchmark": "hashtbl_add_resizing",
+    "iterations": 5,
+    "expected": "5:1B0C7FC1"
+  },
+  {
+    "benchmark": "hashtbl_add_resizing",
+    "iterations": 65,
+    "expected": "65:46F20205"
+  },
+  {
+    "benchmark": "hashtbl_add_sized",
+    "iterations": 0,
+    "expected": "0:50C5D1F"
+  },
+  {
+    "benchmark": "hashtbl_add_sized",
+    "iterations": 1,
+    "expected": "1:70C6045"
+  },
+  {
+    "benchmark": "hashtbl_add_sized",
+    "iterations": 5,
+    "expected": "5:1B0C7FC1"
+  },
+  {
+    "benchmark": "hashtbl_add_sized",
+    "iterations": 65,
+    "expected": "65:46F20205"
+  },
+  {
+    "benchmark": "hashtbl_add_duplicate",
+    "iterations": 0,
+    "expected": "0:50C5D1F"
+  },
+  {
+    "benchmark": "hashtbl_add_duplicate",
+    "iterations": 1,
+    "expected": "1:10C56D3"
+  },
+  {
+    "benchmark": "hashtbl_add_duplicate",
+    "iterations": 5,
+    "expected": "5:390CAEFB"
+  },
+  {
+    "benchmark": "hashtbl_add_duplicate",
+    "iterations": 65,
+    "expected": "65:813C5A53"
+  },
+  {
+    "benchmark": "hashtbl_remove",
+    "iterations": 0,
+    "expected": "0:50C5D1F"
+  },
+  {
+    "benchmark": "hashtbl_remove",
+    "iterations": 1,
+    "expected": "1:50C5D1F"
+  },
+  {
+    "benchmark": "hashtbl_remove",
+    "iterations": 5,
+    "expected": "5:50C5D1F"
+  },
+  {
+    "benchmark": "hashtbl_remove",
+    "iterations": 65,
+    "expected": "65:50C5D1F"
+  },
+  {
+    "benchmark": "hashtbl_find",
+    "iterations": 0,
+    "expected": "0:811C9DC5"
+  },
+  {
+    "benchmark": "hashtbl_find",
+    "iterations": 1,
+    "expected": "1:40C5B8C"
+  },
+  {
+    "benchmark": "hashtbl_find",
+    "iterations": 5,
+    "expected": "5:BFE534E8"
+  },
+  {
+    "benchmark": "hashtbl_find",
+    "iterations": 65,
+    "expected": "65:9337298C"
+  },
+  {
+    "benchmark": "hashtbl_filter_map",
+    "iterations": 0,
+    "expected": "0:1F433617"
+  },
+  {
+    "benchmark": "hashtbl_filter_map",
+    "iterations": 1,
+    "expected": "1:1C7623FB"
+  },
+  {
+    "benchmark": "hashtbl_filter_map",
+    "iterations": 5,
+    "expected": "5:C58FC783"
+  },
+  {
+    "benchmark": "hashtbl_filter_map",
+    "iterations": 65,
+    "expected": "65:EE3E303"
+  }
+]

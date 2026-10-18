@@ -1,0 +1,5 @@
+COUNT unbudgeted string_map normal rune
+COUNT unbudgeted string_map normal rune:opt
+COUNT unbudgeted string_map normal rune:new
+COUNT unbudgeted string_map normal rune:jit
+COUNT comparisons agree

@@ -1,0 +1,1158 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS stdlib-text/original-constant-length
+PASS stdlib-text/original-index
+PASS stdlib-text/bytes-roundtrip
+PASS stdlib-text/left-overlap
+PASS stdlib-text/right-overlap
+PASS stdlib-text/same-position-blit
+PASS stdlib-text/copy-persistence
+PASS stdlib-text/copy-bounds
+PASS stdlib-text/sub-source-bound
+PASS stdlib-text/empty-sub
+PASS stdlib-text/cat-segments
+PASS stdlib-text/source-fish-concat
+PASS stdlib-text/empty-concat
+PASS stdlib-text/trim-source
+PASS stdlib-text/trim-ascii-whitespace
+PASS stdlib-text/trim-all-whitespace
+PASS stdlib-text/uppercase-ascii
+PASS stdlib-text/map-source
+PASS stdlib-text/iterator-order
+PASS stdlib-text/contains-source
+PASS stdlib-text/contains-absent
+PASS stdlib-text/split-preserves-empty-fields
+PASS stdlib-text/normalized-compare
+PASS stdlib-text-programs/bytes_get/0
+PASS stdlib-text-programs/bytes_get/1
+PASS stdlib-text-programs/bytes_get/5
+PASS stdlib-text-programs/bytes_get/575
+PASS stdlib-text-programs/bytes_set/0
+PASS stdlib-text-programs/bytes_set/1
+PASS stdlib-text-programs/bytes_set/5
+PASS stdlib-text-programs/bytes_set/575
+PASS stdlib-text-programs/bytes_cat/0
+PASS stdlib-text-programs/bytes_cat/1
+PASS stdlib-text-programs/bytes_cat/5
+PASS stdlib-text-programs/bytes_cat/575
+PASS stdlib-text-programs/bytes_sub/0
+PASS stdlib-text-programs/bytes_sub/1
+PASS stdlib-text-programs/bytes_sub/5
+PASS stdlib-text-programs/bytes_sub/575
+PASS stdlib-text-programs/bytes_blit/0
+PASS stdlib-text-programs/bytes_blit/1
+PASS stdlib-text-programs/bytes_blit/5
+PASS stdlib-text-programs/bytes_blit/575
+PASS stdlib-text-programs/bytes_concat/0
+PASS stdlib-text-programs/bytes_concat/1
+PASS stdlib-text-programs/bytes_concat/5
+PASS stdlib-text-programs/bytes_concat/575
+PASS stdlib-text-programs/bytes_iter/0
+PASS stdlib-text-programs/bytes_iter/1
+PASS stdlib-text-programs/bytes_iter/5
+PASS stdlib-text-programs/bytes_iter/575
+PASS stdlib-text-programs/bytes_map/0
+PASS stdlib-text-programs/bytes_map/1
+PASS stdlib-text-programs/bytes_map/5
+PASS stdlib-text-programs/bytes_map/575
+PASS stdlib-text-programs/bytes_trim/0
+PASS stdlib-text-programs/bytes_trim/1
+PASS stdlib-text-programs/bytes_trim/5
+PASS stdlib-text-programs/bytes_trim/575
+PASS stdlib-text-programs/bytes_index/0
+PASS stdlib-text-programs/bytes_index/1
+PASS stdlib-text-programs/bytes_index/5
+PASS stdlib-text-programs/bytes_index/575
+PASS stdlib-text-programs/bytes_contains/0
+PASS stdlib-text-programs/bytes_contains/1
+PASS stdlib-text-programs/bytes_contains/5
+PASS stdlib-text-programs/bytes_contains/575
+PASS stdlib-text-programs/bytes_uppercase_ascii/0
+PASS stdlib-text-programs/bytes_uppercase_ascii/1
+PASS stdlib-text-programs/bytes_uppercase_ascii/5
+PASS stdlib-text-programs/bytes_uppercase_ascii/575
+PASS stdlib-text-programs/string_get/0
+PASS stdlib-text-programs/string_get/1
+PASS stdlib-text-programs/string_get/5
+PASS stdlib-text-programs/string_get/575
+PASS stdlib-text-programs/string_sub/0
+PASS stdlib-text-programs/string_sub/1
+PASS stdlib-text-programs/string_sub/5
+PASS stdlib-text-programs/string_sub/575
+PASS stdlib-text-programs/string_blit/0
+PASS stdlib-text-programs/string_blit/1
+PASS stdlib-text-programs/string_blit/5
+PASS stdlib-text-programs/string_blit/575
+PASS stdlib-text-programs/string_concat/0
+PASS stdlib-text-programs/string_concat/1
+PASS stdlib-text-programs/string_concat/5
+PASS stdlib-text-programs/string_concat/575
+PASS stdlib-text-programs/string_iter/0
+PASS stdlib-text-programs/string_iter/1
+PASS stdlib-text-programs/string_iter/5
+PASS stdlib-text-programs/string_iter/575
+PASS stdlib-text-programs/string_map/0
+PASS stdlib-text-programs/string_map/1
+PASS stdlib-text-programs/string_map/5
+PASS stdlib-text-programs/string_map/575
+PASS stdlib-text-programs/string_trim/0
+PASS stdlib-text-programs/string_trim/1
+PASS stdlib-text-programs/string_trim/5
+PASS stdlib-text-programs/string_trim/575
+PASS stdlib-text-programs/string_index/0
+PASS stdlib-text-programs/string_index/1
+PASS stdlib-text-programs/string_index/5
+PASS stdlib-text-programs/string_index/575
+PASS stdlib-text-programs/string_contains/0
+PASS stdlib-text-programs/string_contains/1
+PASS stdlib-text-programs/string_contains/5
+PASS stdlib-text-programs/string_contains/575
+PASS stdlib-text-programs/string_uppercase_ascii/0
+PASS stdlib-text-programs/string_uppercase_ascii/1
+PASS stdlib-text-programs/string_uppercase_ascii/5
+PASS stdlib-text-programs/string_uppercase_ascii/575
+PASS stdlib-text-programs/string_split_on_char/0
+PASS stdlib-text-programs/string_split_on_char/1
+PASS stdlib-text-programs/string_split_on_char/5
+PASS stdlib-text-programs/string_split_on_char/575
+PASS stdlib-text-programs/string_compare/0
+PASS stdlib-text-programs/string_compare/1
+PASS stdlib-text-programs/string_compare/5
+PASS stdlib-text-programs/string_compare/575
+PASS stdlib-text-programs/string_equal/0
+PASS stdlib-text-programs/string_equal/1
+PASS stdlib-text-programs/string_equal/5
+PASS stdlib-text-programs/string_equal/575
+PASS stdlib-text-programs/global-input-unchanged
+PASS stdlib-text-programs/reject-wrong-character
+PASS stdlib-text-programs/reject-wrong-final-set
+SUMMARY 126 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-text-originals/input.sml]
+structure BenchStdlibTextInput : sig
+  val text : string
+  val equalPairs : int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-text-originals/text.sml]
+[autoloading]
+[autoloading done]
+structure BenchStdlibText : sig
+  val text : string
+  val for : int -> int -> (int -> 'a) -> unit
+  val uppercase : char -> char
+  val space : char -> bool
+  val trimBounds : int -> (int -> char) -> int * int
+  val trimString : string -> string
+  val indexString : string -> char -> int
+  val splitOnChar : char -> string -> string list
+  val appString : (char -> 'a) -> string -> unit
+  val concatStrings : string -> string list -> string
+  val compareStrings : string * string -> int
+  structure Bytes : <sig>
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-text-originals/program.sml]
+structure BenchStdlibTextPrograms : sig
+  structure B : <sig>
+  structure A : <sig>
+  datatype value
+    = Bytes of BenchStdlibText.Bytes.t
+    | Letter of char
+    | Number of int
+    | Parts of string list
+    | Text of string
+    | Truth of bool
+  val seed : Word32.word
+  val mix : Word32.word -> Word32.word -> Word32.word
+  val hashString : string -> Word32.word
+  val hashBytes : Word8Array.array -> Word32.word
+  val hashValue : value -> Word32.word
+  val fish : string
+  val trimInput : string
+  val noFinish : unit -> 'a option
+  val byteOperation :
+      Word8Array.array -> string -> (int -> value) * (unit -> value option)
+  val stringOperation : string -> (int -> value) * (unit -> 'a option)
+  val equalText : Word8Array.array -> int -> (int -> char) -> bool
+  val equalString : string -> int -> (int -> char) -> bool
+  val expectedArray : string -> int -> int * (int -> char)
+  val expectedText : string -> int -> int * (int -> char)
+  val check : string -> int -> value -> unit
+  val finishCheck : string -> int -> value -> unit
+  val execute :
+      string -> int -> (int -> value) * (unit -> value option) -> string
+  val runString : string -> int -> string
+  val runBytes : Word8Array.array -> string -> int -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-text-originals/tests.sml]
+PASS stdlib-text/original-constant-length
+PASS stdlib-text/original-index
+PASS stdlib-text/bytes-roundtrip
+PASS stdlib-text/left-overlap
+PASS stdlib-text/right-overlap
+PASS stdlib-text/same-position-blit
+PASS stdlib-text/copy-persistence
+PASS stdlib-text/copy-bounds
+PASS stdlib-text/sub-source-bound
+PASS stdlib-text/empty-sub
+PASS stdlib-text/cat-segments
+PASS stdlib-text/source-fish-concat
+PASS stdlib-text/empty-concat
+PASS stdlib-text/trim-source
+PASS stdlib-text/trim-ascii-whitespace
+PASS stdlib-text/trim-all-whitespace
+PASS stdlib-text/uppercase-ascii
+PASS stdlib-text/map-source
+PASS stdlib-text/iterator-order
+PASS stdlib-text/contains-source
+PASS stdlib-text/contains-absent
+PASS stdlib-text/split-preserves-empty-fields
+PASS stdlib-text/normalized-compare
+structure StdlibTextTests : sig
+  structure B : <sig>
+  structure A : <sig>
+  val check : string -> (unit -> bool) -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-text-originals/program-tests.sml]
+PASS stdlib-text-programs/bytes_get/0
+PASS stdlib-text-programs/bytes_get/1
+PASS stdlib-text-programs/bytes_get/5
+PASS stdlib-text-programs/bytes_get/575
+PASS stdlib-text-programs/bytes_set/0
+PASS stdlib-text-programs/bytes_set/1
+PASS stdlib-text-programs/bytes_set/5
+PASS stdlib-text-programs/bytes_set/575
+PASS stdlib-text-programs/bytes_cat/0
+PASS stdlib-text-programs/bytes_cat/1
+PASS stdlib-text-programs/bytes_cat/5
+PASS stdlib-text-programs/bytes_cat/575
+PASS stdlib-text-programs/bytes_sub/0
+PASS stdlib-text-programs/bytes_sub/1
+PASS stdlib-text-programs/bytes_sub/5
+PASS stdlib-text-programs/bytes_sub/575
+PASS stdlib-text-programs/bytes_blit/0
+PASS stdlib-text-programs/bytes_blit/1
+PASS stdlib-text-programs/bytes_blit/5
+PASS stdlib-text-programs/bytes_blit/575
+PASS stdlib-text-programs/bytes_concat/0
+PASS stdlib-text-programs/bytes_concat/1
+PASS stdlib-text-programs/bytes_concat/5
+PASS stdlib-text-programs/bytes_concat/575
+PASS stdlib-text-programs/bytes_iter/0
+PASS stdlib-text-programs/bytes_iter/1
+PASS stdlib-text-programs/bytes_iter/5
+PASS stdlib-text-programs/bytes_iter/575
+PASS stdlib-text-programs/bytes_map/0
+PASS stdlib-text-programs/bytes_map/1
+PASS stdlib-text-programs/bytes_map/5
+PASS stdlib-text-programs/bytes_map/575
+PASS stdlib-text-programs/bytes_trim/0
+PASS stdlib-text-programs/bytes_trim/1
+PASS stdlib-text-programs/bytes_trim/5
+PASS stdlib-text-programs/bytes_trim/575
+PASS stdlib-text-programs/bytes_index/0
+PASS stdlib-text-programs/bytes_index/1
+PASS stdlib-text-programs/bytes_index/5
+PASS stdlib-text-programs/bytes_index/575
+PASS stdlib-text-programs/bytes_contains/0
+PASS stdlib-text-programs/bytes_contains/1
+PASS stdlib-text-programs/bytes_contains/5
+PASS stdlib-text-programs/bytes_contains/575
+PASS stdlib-text-programs/bytes_uppercase_ascii/0
+PASS stdlib-text-programs/bytes_uppercase_ascii/1
+PASS stdlib-text-programs/bytes_uppercase_ascii/5
+PASS stdlib-text-programs/bytes_uppercase_ascii/575
+PASS stdlib-text-programs/string_get/0
+PASS stdlib-text-programs/string_get/1
+PASS stdlib-text-programs/string_get/5
+PASS stdlib-text-programs/string_get/575
+PASS stdlib-text-programs/string_sub/0
+PASS stdlib-text-programs/string_sub/1
+PASS stdlib-text-programs/string_sub/5
+PASS stdlib-text-programs/string_sub/575
+PASS stdlib-text-programs/string_blit/0
+PASS stdlib-text-programs/string_blit/1
+PASS stdlib-text-programs/string_blit/5
+PASS stdlib-text-programs/string_blit/575
+PASS stdlib-text-programs/string_concat/0
+PASS stdlib-text-programs/string_concat/1
+PASS stdlib-text-programs/string_concat/5
+PASS stdlib-text-programs/string_concat/575
+PASS stdlib-text-programs/string_iter/0
+PASS stdlib-text-programs/string_iter/1
+PASS stdlib-text-programs/string_iter/5
+PASS stdlib-text-programs/string_iter/575
+PASS stdlib-text-programs/string_map/0
+PASS stdlib-text-programs/string_map/1
+PASS stdlib-text-programs/string_map/5
+PASS stdlib-text-programs/string_map/575
+PASS stdlib-text-programs/string_trim/0
+PASS stdlib-text-programs/string_trim/1
+PASS stdlib-text-programs/string_trim/5
+PASS stdlib-text-programs/string_trim/575
+PASS stdlib-text-programs/string_index/0
+PASS stdlib-text-programs/string_index/1
+PASS stdlib-text-programs/string_index/5
+PASS stdlib-text-programs/string_index/575
+PASS stdlib-text-programs/string_contains/0
+PASS stdlib-text-programs/string_contains/1
+PASS stdlib-text-programs/string_contains/5
+PASS stdlib-text-programs/string_contains/575
+PASS stdlib-text-programs/string_uppercase_ascii/0
+PASS stdlib-text-programs/string_uppercase_ascii/1
+PASS stdlib-text-programs/string_uppercase_ascii/5
+PASS stdlib-text-programs/string_uppercase_ascii/575
+PASS stdlib-text-programs/string_split_on_char/0
+PASS stdlib-text-programs/string_split_on_char/1
+PASS stdlib-text-programs/string_split_on_char/5
+PASS stdlib-text-programs/string_split_on_char/575
+PASS stdlib-text-programs/string_compare/0
+PASS stdlib-text-programs/string_compare/1
+PASS stdlib-text-programs/string_compare/5
+PASS stdlib-text-programs/string_compare/575
+PASS stdlib-text-programs/string_equal/0
+PASS stdlib-text-programs/string_equal/1
+PASS stdlib-text-programs/string_equal/5
+PASS stdlib-text-programs/string_equal/575
+PASS stdlib-text-programs/global-input-unchanged
+PASS stdlib-text-programs/reject-wrong-character
+PASS stdlib-text-programs/reject-wrong-final-set
+structure StdlibTextProgramTests : sig
+  structure P : <sig>
+  val input : Word8Array.array
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 126 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-text-originals/input.sml]
+structure BenchStdlibTextInput : sig
+  val text : string
+  val equalPairs : int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-text-originals/text.sml]
+[autoloading]
+[autoloading done]
+structure BenchStdlibText : sig
+  val text : string
+  val for : int -> int -> (int -> 'a) -> unit
+  val uppercase : char -> char
+  val space : char -> bool
+  val trimBounds : int -> (int -> char) -> int * int
+  val trimString : string -> string
+  val indexString : string -> char -> int
+  val splitOnChar : char -> string -> string list
+  val appString : (char -> 'a) -> string -> unit
+  val concatStrings : string -> string list -> string
+  val compareStrings : string * string -> int
+  structure Bytes : <sig>
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-text-originals/program.sml]
+structure BenchStdlibTextPrograms : sig
+  structure B : <sig>
+  structure A : <sig>
+  datatype value
+    = Bytes of BenchStdlibText.Bytes.t
+    | Letter of char
+    | Number of int
+    | Parts of string list
+    | Text of string
+    | Truth of bool
+  val seed : Word32.word
+  val mix : Word32.word -> Word32.word -> Word32.word
+  val hashString : string -> Word32.word
+  val hashBytes : Word8Array.array -> Word32.word
+  val hashValue : value -> Word32.word
+  val fish : string
+  val trimInput : string
+  val noFinish : unit -> 'a option
+  val byteOperation :
+      Word8Array.array -> string -> (int -> value) * (unit -> value option)
+  val stringOperation : string -> (int -> value) * (unit -> 'a option)
+  val equalText : Word8Array.array -> int -> (int -> char) -> bool
+  val equalString : string -> int -> (int -> char) -> bool
+  val expectedArray : string -> int -> int * (int -> char)
+  val expectedText : string -> int -> int * (int -> char)
+  val check : string -> int -> value -> unit
+  val finishCheck : string -> int -> value -> unit
+  val execute :
+      string -> int -> (int -> value) * (unit -> value option) -> string
+  val runString : string -> int -> string
+  val runBytes : Word8Array.array -> string -> int -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-text-originals/tests.sml]
+PASS stdlib-text/original-constant-length
+PASS stdlib-text/original-index
+PASS stdlib-text/bytes-roundtrip
+PASS stdlib-text/left-overlap
+PASS stdlib-text/right-overlap
+PASS stdlib-text/same-position-blit
+PASS stdlib-text/copy-persistence
+PASS stdlib-text/copy-bounds
+PASS stdlib-text/sub-source-bound
+PASS stdlib-text/empty-sub
+PASS stdlib-text/cat-segments
+PASS stdlib-text/source-fish-concat
+PASS stdlib-text/empty-concat
+PASS stdlib-text/trim-source
+PASS stdlib-text/trim-ascii-whitespace
+PASS stdlib-text/trim-all-whitespace
+PASS stdlib-text/uppercase-ascii
+PASS stdlib-text/map-source
+PASS stdlib-text/iterator-order
+PASS stdlib-text/contains-source
+PASS stdlib-text/contains-absent
+PASS stdlib-text/split-preserves-empty-fields
+PASS stdlib-text/normalized-compare
+structure StdlibTextTests : sig
+  structure B : <sig>
+  structure A : <sig>
+  val check : string -> (unit -> bool) -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-text-originals/program-tests.sml]
+PASS stdlib-text-programs/bytes_get/0
+PASS stdlib-text-programs/bytes_get/1
+PASS stdlib-text-programs/bytes_get/5
+PASS stdlib-text-programs/bytes_get/575
+PASS stdlib-text-programs/bytes_set/0
+PASS stdlib-text-programs/bytes_set/1
+PASS stdlib-text-programs/bytes_set/5
+PASS stdlib-text-programs/bytes_set/575
+PASS stdlib-text-programs/bytes_cat/0
+PASS stdlib-text-programs/bytes_cat/1
+PASS stdlib-text-programs/bytes_cat/5
+PASS stdlib-text-programs/bytes_cat/575
+PASS stdlib-text-programs/bytes_sub/0
+PASS stdlib-text-programs/bytes_sub/1
+PASS stdlib-text-programs/bytes_sub/5
+PASS stdlib-text-programs/bytes_sub/575
+PASS stdlib-text-programs/bytes_blit/0
+PASS stdlib-text-programs/bytes_blit/1
+PASS stdlib-text-programs/bytes_blit/5
+PASS stdlib-text-programs/bytes_blit/575
+PASS stdlib-text-programs/bytes_concat/0
+PASS stdlib-text-programs/bytes_concat/1
+PASS stdlib-text-programs/bytes_concat/5
+PASS stdlib-text-programs/bytes_concat/575
+PASS stdlib-text-programs/bytes_iter/0
+PASS stdlib-text-programs/bytes_iter/1
+PASS stdlib-text-programs/bytes_iter/5
+PASS stdlib-text-programs/bytes_iter/575
+PASS stdlib-text-programs/bytes_map/0
+PASS stdlib-text-programs/bytes_map/1
+PASS stdlib-text-programs/bytes_map/5
+PASS stdlib-text-programs/bytes_map/575
+PASS stdlib-text-programs/bytes_trim/0
+PASS stdlib-text-programs/bytes_trim/1
+PASS stdlib-text-programs/bytes_trim/5
+PASS stdlib-text-programs/bytes_trim/575
+PASS stdlib-text-programs/bytes_index/0
+PASS stdlib-text-programs/bytes_index/1
+PASS stdlib-text-programs/bytes_index/5
+PASS stdlib-text-programs/bytes_index/575
+PASS stdlib-text-programs/bytes_contains/0
+PASS stdlib-text-programs/bytes_contains/1
+PASS stdlib-text-programs/bytes_contains/5
+PASS stdlib-text-programs/bytes_contains/575
+PASS stdlib-text-programs/bytes_uppercase_ascii/0
+PASS stdlib-text-programs/bytes_uppercase_ascii/1
+PASS stdlib-text-programs/bytes_uppercase_ascii/5
+PASS stdlib-text-programs/bytes_uppercase_ascii/575
+PASS stdlib-text-programs/string_get/0
+PASS stdlib-text-programs/string_get/1
+PASS stdlib-text-programs/string_get/5
+PASS stdlib-text-programs/string_get/575
+PASS stdlib-text-programs/string_sub/0
+PASS stdlib-text-programs/string_sub/1
+PASS stdlib-text-programs/string_sub/5
+PASS stdlib-text-programs/string_sub/575
+PASS stdlib-text-programs/string_blit/0
+PASS stdlib-text-programs/string_blit/1
+PASS stdlib-text-programs/string_blit/5
+PASS stdlib-text-programs/string_blit/575
+PASS stdlib-text-programs/string_concat/0
+PASS stdlib-text-programs/string_concat/1
+PASS stdlib-text-programs/string_concat/5
+PASS stdlib-text-programs/string_concat/575
+PASS stdlib-text-programs/string_iter/0
+PASS stdlib-text-programs/string_iter/1
+PASS stdlib-text-programs/string_iter/5
+PASS stdlib-text-programs/string_iter/575
+PASS stdlib-text-programs/string_map/0
+PASS stdlib-text-programs/string_map/1
+PASS stdlib-text-programs/string_map/5
+PASS stdlib-text-programs/string_map/575
+PASS stdlib-text-programs/string_trim/0
+PASS stdlib-text-programs/string_trim/1
+PASS stdlib-text-programs/string_trim/5
+PASS stdlib-text-programs/string_trim/575
+PASS stdlib-text-programs/string_index/0
+PASS stdlib-text-programs/string_index/1
+PASS stdlib-text-programs/string_index/5
+PASS stdlib-text-programs/string_index/575
+PASS stdlib-text-programs/string_contains/0
+PASS stdlib-text-programs/string_contains/1
+PASS stdlib-text-programs/string_contains/5
+PASS stdlib-text-programs/string_contains/575
+PASS stdlib-text-programs/string_uppercase_ascii/0
+PASS stdlib-text-programs/string_uppercase_ascii/1
+PASS stdlib-text-programs/string_uppercase_ascii/5
+PASS stdlib-text-programs/string_uppercase_ascii/575
+PASS stdlib-text-programs/string_split_on_char/0
+PASS stdlib-text-programs/string_split_on_char/1
+PASS stdlib-text-programs/string_split_on_char/5
+PASS stdlib-text-programs/string_split_on_char/575
+PASS stdlib-text-programs/string_compare/0
+PASS stdlib-text-programs/string_compare/1
+PASS stdlib-text-programs/string_compare/5
+PASS stdlib-text-programs/string_compare/575
+PASS stdlib-text-programs/string_equal/0
+PASS stdlib-text-programs/string_equal/1
+PASS stdlib-text-programs/string_equal/5
+PASS stdlib-text-programs/string_equal/575
+PASS stdlib-text-programs/global-input-unchanged
+PASS stdlib-text-programs/reject-wrong-character
+PASS stdlib-text-programs/reject-wrong-final-set
+structure StdlibTextProgramTests : sig
+  structure P : <sig>
+  val input : Word8Array.array
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 126 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-text-originals/input.sml]
+structure BenchStdlibTextInput : 
+  sig
+    val text : string
+    val equalPairs : int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-text-originals/text.sml]
+structure BenchStdlibText : 
+  sig
+    val text : string
+    val for : int -> int -> (int -> 'a) -> unit
+    val uppercase : char -> char
+    val space : char -> bool
+    val trimBounds : int -> (int -> char) -> int * int
+    val trimString : string -> string
+    val indexString : string -> char -> int
+    val splitOnChar : char -> string -> string list
+    val appString : (char -> 'a) -> string -> unit
+    val concatStrings : string -> string list -> string
+    val compareStrings : string * string -> int
+    structure Bytes : <sig>
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-text-originals/program.sml]
+structure BenchStdlibTextPrograms : 
+  sig
+    structure B : <sig>
+    structure A : <sig>
+    datatype value
+      = Bytes of BenchStdlibText.Bytes.t
+    | Letter of char
+    | Number of int
+    | Parts of string list
+    | Text of string
+    | Truth of bool
+    val seed : Word32.word
+    val mix : Word32.word -> Word32.word -> Word32.word
+    val hashString : string -> Word32.word
+    val hashBytes : Word8Array.array -> Word32.word
+    val hashValue : value -> Word32.word
+    val fish : string
+    val trimInput : string
+    val noFinish : unit -> 'a option
+    val byteOperation : Word8Array.array
+                         -> string -> (int -> value) * (unit -> value option)
+    val stringOperation : string -> (int -> value) * (unit -> 'a option)
+    val equalText : Word8Array.array -> int -> (int -> char) -> bool
+    val equalString : string -> int -> (int -> char) -> bool
+    val expectedArray : string -> int -> int * (int -> char)
+    val expectedText : string -> int -> int * (int -> char)
+    val check : string -> int -> value -> unit
+    val finishCheck : string -> int -> value -> unit
+    val execute : string
+                   -> int -> (int -> value) * (unit -> value option) -> string
+    val runString : string -> int -> string
+    val runBytes : Word8Array.array -> string -> int -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-text-originals/tests.sml]
+PASS stdlib-text/original-constant-length
+PASS stdlib-text/original-index
+PASS stdlib-text/bytes-roundtrip
+PASS stdlib-text/left-overlap
+PASS stdlib-text/right-overlap
+PASS stdlib-text/same-position-blit
+PASS stdlib-text/copy-persistence
+PASS stdlib-text/copy-bounds
+PASS stdlib-text/sub-source-bound
+PASS stdlib-text/empty-sub
+PASS stdlib-text/cat-segments
+PASS stdlib-text/source-fish-concat
+PASS stdlib-text/empty-concat
+PASS stdlib-text/trim-source
+PASS stdlib-text/trim-ascii-whitespace
+PASS stdlib-text/trim-all-whitespace
+PASS stdlib-text/uppercase-ascii
+PASS stdlib-text/map-source
+PASS stdlib-text/iterator-order
+PASS stdlib-text/contains-source
+PASS stdlib-text/contains-absent
+PASS stdlib-text/split-preserves-empty-fields
+PASS stdlib-text/normalized-compare
+structure StdlibTextTests : 
+  sig
+    structure B : <sig>
+    structure A : <sig>
+    val check : string -> (unit -> bool) -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/stdlib-text-originals/program-tests.sml]
+PASS stdlib-text-programs/bytes_get/0
+PASS stdlib-text-programs/bytes_get/1
+PASS stdlib-text-programs/bytes_get/5
+PASS stdlib-text-programs/bytes_get/575
+PASS stdlib-text-programs/bytes_set/0
+PASS stdlib-text-programs/bytes_set/1
+PASS stdlib-text-programs/bytes_set/5
+PASS stdlib-text-programs/bytes_set/575
+PASS stdlib-text-programs/bytes_cat/0
+PASS stdlib-text-programs/bytes_cat/1
+PASS stdlib-text-programs/bytes_cat/5
+PASS stdlib-text-programs/bytes_cat/575
+PASS stdlib-text-programs/bytes_sub/0
+PASS stdlib-text-programs/bytes_sub/1
+PASS stdlib-text-programs/bytes_sub/5
+PASS stdlib-text-programs/bytes_sub/575
+PASS stdlib-text-programs/bytes_blit/0
+PASS stdlib-text-programs/bytes_blit/1
+PASS stdlib-text-programs/bytes_blit/5
+PASS stdlib-text-programs/bytes_blit/575
+PASS stdlib-text-programs/bytes_concat/0
+PASS stdlib-text-programs/bytes_concat/1
+PASS stdlib-text-programs/bytes_concat/5
+PASS stdlib-text-programs/bytes_concat/575
+PASS stdlib-text-programs/bytes_iter/0
+PASS stdlib-text-programs/bytes_iter/1
+PASS stdlib-text-programs/bytes_iter/5
+PASS stdlib-text-programs/bytes_iter/575
+PASS stdlib-text-programs/bytes_map/0
+PASS stdlib-text-programs/bytes_map/1
+PASS stdlib-text-programs/bytes_map/5
+PASS stdlib-text-programs/bytes_map/575
+PASS stdlib-text-programs/bytes_trim/0
+PASS stdlib-text-programs/bytes_trim/1
+PASS stdlib-text-programs/bytes_trim/5
+PASS stdlib-text-programs/bytes_trim/575
+PASS stdlib-text-programs/bytes_index/0
+PASS stdlib-text-programs/bytes_index/1
+PASS stdlib-text-programs/bytes_index/5
+PASS stdlib-text-programs/bytes_index/575
+PASS stdlib-text-programs/bytes_contains/0
+PASS stdlib-text-programs/bytes_contains/1
+PASS stdlib-text-programs/bytes_contains/5
+PASS stdlib-text-programs/bytes_contains/575
+PASS stdlib-text-programs/bytes_uppercase_ascii/0
+PASS stdlib-text-programs/bytes_uppercase_ascii/1
+PASS stdlib-text-programs/bytes_uppercase_ascii/5
+PASS stdlib-text-programs/bytes_uppercase_ascii/575
+PASS stdlib-text-programs/string_get/0
+PASS stdlib-text-programs/string_get/1
+PASS stdlib-text-programs/string_get/5
+PASS stdlib-text-programs/string_get/575
+PASS stdlib-text-programs/string_sub/0
+PASS stdlib-text-programs/string_sub/1
+PASS stdlib-text-programs/string_sub/5
+PASS stdlib-text-programs/string_sub/575
+PASS stdlib-text-programs/string_blit/0
+PASS stdlib-text-programs/string_blit/1
+PASS stdlib-text-programs/string_blit/5
+PASS stdlib-text-programs/string_blit/575
+PASS stdlib-text-programs/string_concat/0
+PASS stdlib-text-programs/string_concat/1
+PASS stdlib-text-programs/string_concat/5
+PASS stdlib-text-programs/string_concat/575
+PASS stdlib-text-programs/string_iter/0
+PASS stdlib-text-programs/string_iter/1
+PASS stdlib-text-programs/string_iter/5
+PASS stdlib-text-programs/string_iter/575
+PASS stdlib-text-programs/string_map/0
+PASS stdlib-text-programs/string_map/1
+PASS stdlib-text-programs/string_map/5
+PASS stdlib-text-programs/string_map/575
+PASS stdlib-text-programs/string_trim/0
+PASS stdlib-text-programs/string_trim/1
+PASS stdlib-text-programs/string_trim/5
+PASS stdlib-text-programs/string_trim/575
+PASS stdlib-text-programs/string_index/0
+PASS stdlib-text-programs/string_index/1
+PASS stdlib-text-programs/string_index/5
+PASS stdlib-text-programs/string_index/575
+PASS stdlib-text-programs/string_contains/0
+PASS stdlib-text-programs/string_contains/1
+PASS stdlib-text-programs/string_contains/5
+PASS stdlib-text-programs/string_contains/575
+PASS stdlib-text-programs/string_uppercase_ascii/0
+PASS stdlib-text-programs/string_uppercase_ascii/1
+PASS stdlib-text-programs/string_uppercase_ascii/5
+PASS stdlib-text-programs/string_uppercase_ascii/575
+PASS stdlib-text-programs/string_split_on_char/0
+PASS stdlib-text-programs/string_split_on_char/1
+PASS stdlib-text-programs/string_split_on_char/5
+PASS stdlib-text-programs/string_split_on_char/575
+PASS stdlib-text-programs/string_compare/0
+PASS stdlib-text-programs/string_compare/1
+PASS stdlib-text-programs/string_compare/5
+PASS stdlib-text-programs/string_compare/575
+PASS stdlib-text-programs/string_equal/0
+PASS stdlib-text-programs/string_equal/1
+PASS stdlib-text-programs/string_equal/5
+PASS stdlib-text-programs/string_equal/575
+PASS stdlib-text-programs/global-input-unchanged
+PASS stdlib-text-programs/reject-wrong-character
+PASS stdlib-text-programs/reject-wrong-final-set
+structure StdlibTextProgramTests : 
+  sig
+    structure P : <sig>
+    val input : Word8Array.array
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 126 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS stdlib-text/original-constant-length
+PASS stdlib-text/original-index
+PASS stdlib-text/bytes-roundtrip
+PASS stdlib-text/left-overlap
+PASS stdlib-text/right-overlap
+PASS stdlib-text/same-position-blit
+PASS stdlib-text/copy-persistence
+PASS stdlib-text/copy-bounds
+PASS stdlib-text/sub-source-bound
+PASS stdlib-text/empty-sub
+PASS stdlib-text/cat-segments
+PASS stdlib-text/source-fish-concat
+PASS stdlib-text/empty-concat
+PASS stdlib-text/trim-source
+PASS stdlib-text/trim-ascii-whitespace
+PASS stdlib-text/trim-all-whitespace
+PASS stdlib-text/uppercase-ascii
+PASS stdlib-text/map-source
+PASS stdlib-text/iterator-order
+PASS stdlib-text/contains-source
+PASS stdlib-text/contains-absent
+PASS stdlib-text/split-preserves-empty-fields
+PASS stdlib-text/normalized-compare
+PASS stdlib-text-programs/bytes_get/0
+PASS stdlib-text-programs/bytes_get/1
+PASS stdlib-text-programs/bytes_get/5
+PASS stdlib-text-programs/bytes_get/575
+PASS stdlib-text-programs/bytes_set/0
+PASS stdlib-text-programs/bytes_set/1
+PASS stdlib-text-programs/bytes_set/5
+PASS stdlib-text-programs/bytes_set/575
+PASS stdlib-text-programs/bytes_cat/0
+PASS stdlib-text-programs/bytes_cat/1
+PASS stdlib-text-programs/bytes_cat/5
+PASS stdlib-text-programs/bytes_cat/575
+PASS stdlib-text-programs/bytes_sub/0
+PASS stdlib-text-programs/bytes_sub/1
+PASS stdlib-text-programs/bytes_sub/5
+PASS stdlib-text-programs/bytes_sub/575
+PASS stdlib-text-programs/bytes_blit/0
+PASS stdlib-text-programs/bytes_blit/1
+PASS stdlib-text-programs/bytes_blit/5
+PASS stdlib-text-programs/bytes_blit/575
+PASS stdlib-text-programs/bytes_concat/0
+PASS stdlib-text-programs/bytes_concat/1
+PASS stdlib-text-programs/bytes_concat/5
+PASS stdlib-text-programs/bytes_concat/575
+PASS stdlib-text-programs/bytes_iter/0
+PASS stdlib-text-programs/bytes_iter/1
+PASS stdlib-text-programs/bytes_iter/5
+PASS stdlib-text-programs/bytes_iter/575
+PASS stdlib-text-programs/bytes_map/0
+PASS stdlib-text-programs/bytes_map/1
+PASS stdlib-text-programs/bytes_map/5
+PASS stdlib-text-programs/bytes_map/575
+PASS stdlib-text-programs/bytes_trim/0
+PASS stdlib-text-programs/bytes_trim/1
+PASS stdlib-text-programs/bytes_trim/5
+PASS stdlib-text-programs/bytes_trim/575
+PASS stdlib-text-programs/bytes_index/0
+PASS stdlib-text-programs/bytes_index/1
+PASS stdlib-text-programs/bytes_index/5
+PASS stdlib-text-programs/bytes_index/575
+PASS stdlib-text-programs/bytes_contains/0
+PASS stdlib-text-programs/bytes_contains/1
+PASS stdlib-text-programs/bytes_contains/5
+PASS stdlib-text-programs/bytes_contains/575
+PASS stdlib-text-programs/bytes_uppercase_ascii/0
+PASS stdlib-text-programs/bytes_uppercase_ascii/1
+PASS stdlib-text-programs/bytes_uppercase_ascii/5
+PASS stdlib-text-programs/bytes_uppercase_ascii/575
+PASS stdlib-text-programs/string_get/0
+PASS stdlib-text-programs/string_get/1
+PASS stdlib-text-programs/string_get/5
+PASS stdlib-text-programs/string_get/575
+PASS stdlib-text-programs/string_sub/0
+PASS stdlib-text-programs/string_sub/1
+PASS stdlib-text-programs/string_sub/5
+PASS stdlib-text-programs/string_sub/575
+PASS stdlib-text-programs/string_blit/0
+PASS stdlib-text-programs/string_blit/1
+PASS stdlib-text-programs/string_blit/5
+PASS stdlib-text-programs/string_blit/575
+PASS stdlib-text-programs/string_concat/0
+PASS stdlib-text-programs/string_concat/1
+PASS stdlib-text-programs/string_concat/5
+PASS stdlib-text-programs/string_concat/575
+PASS stdlib-text-programs/string_iter/0
+PASS stdlib-text-programs/string_iter/1
+PASS stdlib-text-programs/string_iter/5
+PASS stdlib-text-programs/string_iter/575
+PASS stdlib-text-programs/string_map/0
+PASS stdlib-text-programs/string_map/1
+PASS stdlib-text-programs/string_map/5
+PASS stdlib-text-programs/string_map/575
+PASS stdlib-text-programs/string_trim/0
+PASS stdlib-text-programs/string_trim/1
+PASS stdlib-text-programs/string_trim/5
+PASS stdlib-text-programs/string_trim/575
+PASS stdlib-text-programs/string_index/0
+PASS stdlib-text-programs/string_index/1
+PASS stdlib-text-programs/string_index/5
+PASS stdlib-text-programs/string_index/575
+PASS stdlib-text-programs/string_contains/0
+PASS stdlib-text-programs/string_contains/1
+PASS stdlib-text-programs/string_contains/5
+PASS stdlib-text-programs/string_contains/575
+PASS stdlib-text-programs/string_uppercase_ascii/0
+PASS stdlib-text-programs/string_uppercase_ascii/1
+PASS stdlib-text-programs/string_uppercase_ascii/5
+PASS stdlib-text-programs/string_uppercase_ascii/575
+PASS stdlib-text-programs/string_split_on_char/0
+PASS stdlib-text-programs/string_split_on_char/1
+PASS stdlib-text-programs/string_split_on_char/5
+PASS stdlib-text-programs/string_split_on_char/575
+PASS stdlib-text-programs/string_compare/0
+PASS stdlib-text-programs/string_compare/1
+PASS stdlib-text-programs/string_compare/5
+PASS stdlib-text-programs/string_compare/575
+PASS stdlib-text-programs/string_equal/0
+PASS stdlib-text-programs/string_equal/1
+PASS stdlib-text-programs/string_equal/5
+PASS stdlib-text-programs/string_equal/575
+PASS stdlib-text-programs/global-input-unchanged
+PASS stdlib-text-programs/reject-wrong-character
+PASS stdlib-text-programs/reject-wrong-final-set
+SUMMARY 126 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PASS stdlib-text/original-constant-length
+PASS stdlib-text/original-index
+PASS stdlib-text/bytes-roundtrip
+PASS stdlib-text/left-overlap
+PASS stdlib-text/right-overlap
+PASS stdlib-text/same-position-blit
+PASS stdlib-text/copy-persistence
+PASS stdlib-text/copy-bounds
+PASS stdlib-text/sub-source-bound
+PASS stdlib-text/empty-sub
+PASS stdlib-text/cat-segments
+PASS stdlib-text/source-fish-concat
+PASS stdlib-text/empty-concat
+PASS stdlib-text/trim-source
+PASS stdlib-text/trim-ascii-whitespace
+PASS stdlib-text/trim-all-whitespace
+PASS stdlib-text/uppercase-ascii
+PASS stdlib-text/map-source
+PASS stdlib-text/iterator-order
+PASS stdlib-text/contains-source
+PASS stdlib-text/contains-absent
+PASS stdlib-text/split-preserves-empty-fields
+PASS stdlib-text/normalized-compare
+PASS stdlib-text-programs/bytes_get/0
+PASS stdlib-text-programs/bytes_get/1
+PASS stdlib-text-programs/bytes_get/5
+PASS stdlib-text-programs/bytes_get/575
+PASS stdlib-text-programs/bytes_set/0
+PASS stdlib-text-programs/bytes_set/1
+PASS stdlib-text-programs/bytes_set/5
+PASS stdlib-text-programs/bytes_set/575
+PASS stdlib-text-programs/bytes_cat/0
+PASS stdlib-text-programs/bytes_cat/1
+PASS stdlib-text-programs/bytes_cat/5
+PASS stdlib-text-programs/bytes_cat/575
+PASS stdlib-text-programs/bytes_sub/0
+PASS stdlib-text-programs/bytes_sub/1
+PASS stdlib-text-programs/bytes_sub/5
+PASS stdlib-text-programs/bytes_sub/575
+PASS stdlib-text-programs/bytes_blit/0
+PASS stdlib-text-programs/bytes_blit/1
+PASS stdlib-text-programs/bytes_blit/5
+PASS stdlib-text-programs/bytes_blit/575
+PASS stdlib-text-programs/bytes_concat/0
+PASS stdlib-text-programs/bytes_concat/1
+PASS stdlib-text-programs/bytes_concat/5
+PASS stdlib-text-programs/bytes_concat/575
+PASS stdlib-text-programs/bytes_iter/0
+PASS stdlib-text-programs/bytes_iter/1
+PASS stdlib-text-programs/bytes_iter/5
+PASS stdlib-text-programs/bytes_iter/575
+PASS stdlib-text-programs/bytes_map/0
+PASS stdlib-text-programs/bytes_map/1
+PASS stdlib-text-programs/bytes_map/5
+PASS stdlib-text-programs/bytes_map/575
+PASS stdlib-text-programs/bytes_trim/0
+PASS stdlib-text-programs/bytes_trim/1
+PASS stdlib-text-programs/bytes_trim/5
+PASS stdlib-text-programs/bytes_trim/575
+PASS stdlib-text-programs/bytes_index/0
+PASS stdlib-text-programs/bytes_index/1
+PASS stdlib-text-programs/bytes_index/5
+PASS stdlib-text-programs/bytes_index/575
+PASS stdlib-text-programs/bytes_contains/0
+PASS stdlib-text-programs/bytes_contains/1
+PASS stdlib-text-programs/bytes_contains/5
+PASS stdlib-text-programs/bytes_contains/575
+PASS stdlib-text-programs/bytes_uppercase_ascii/0
+PASS stdlib-text-programs/bytes_uppercase_ascii/1
+PASS stdlib-text-programs/bytes_uppercase_ascii/5
+PASS stdlib-text-programs/bytes_uppercase_ascii/575
+PASS stdlib-text-programs/string_get/0
+PASS stdlib-text-programs/string_get/1
+PASS stdlib-text-programs/string_get/5
+PASS stdlib-text-programs/string_get/575
+PASS stdlib-text-programs/string_sub/0
+PASS stdlib-text-programs/string_sub/1
+PASS stdlib-text-programs/string_sub/5
+PASS stdlib-text-programs/string_sub/575
+PASS stdlib-text-programs/string_blit/0
+PASS stdlib-text-programs/string_blit/1
+PASS stdlib-text-programs/string_blit/5
+PASS stdlib-text-programs/string_blit/575
+PASS stdlib-text-programs/string_concat/0
+PASS stdlib-text-programs/string_concat/1
+PASS stdlib-text-programs/string_concat/5
+PASS stdlib-text-programs/string_concat/575
+PASS stdlib-text-programs/string_iter/0
+PASS stdlib-text-programs/string_iter/1
+PASS stdlib-text-programs/string_iter/5
+PASS stdlib-text-programs/string_iter/575
+PASS stdlib-text-programs/string_map/0
+PASS stdlib-text-programs/string_map/1
+PASS stdlib-text-programs/string_map/5
+PASS stdlib-text-programs/string_map/575
+PASS stdlib-text-programs/string_trim/0
+PASS stdlib-text-programs/string_trim/1
+PASS stdlib-text-programs/string_trim/5
+PASS stdlib-text-programs/string_trim/575
+PASS stdlib-text-programs/string_index/0
+PASS stdlib-text-programs/string_index/1
+PASS stdlib-text-programs/string_index/5
+PASS stdlib-text-programs/string_index/575
+PASS stdlib-text-programs/string_contains/0
+PASS stdlib-text-programs/string_contains/1
+PASS stdlib-text-programs/string_contains/5
+PASS stdlib-text-programs/string_contains/575
+PASS stdlib-text-programs/string_uppercase_ascii/0
+PASS stdlib-text-programs/string_uppercase_ascii/1
+PASS stdlib-text-programs/string_uppercase_ascii/5
+PASS stdlib-text-programs/string_uppercase_ascii/575
+PASS stdlib-text-programs/string_split_on_char/0
+PASS stdlib-text-programs/string_split_on_char/1
+PASS stdlib-text-programs/string_split_on_char/5
+PASS stdlib-text-programs/string_split_on_char/575
+PASS stdlib-text-programs/string_compare/0
+PASS stdlib-text-programs/string_compare/1
+PASS stdlib-text-programs/string_compare/5
+PASS stdlib-text-programs/string_compare/575
+PASS stdlib-text-programs/string_equal/0
+PASS stdlib-text-programs/string_equal/1
+PASS stdlib-text-programs/string_equal/5
+PASS stdlib-text-programs/string_equal/575
+PASS stdlib-text-programs/global-input-unchanged
+PASS stdlib-text-programs/reject-wrong-character
+PASS stdlib-text-programs/reject-wrong-final-set
+SUMMARY 126 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

@@ -1,0 +1,1 @@
+hashtbl_find	30	1048576	shared/input.sml shared/ocaml-stdlib-hash.sml shared/ocaml-stdlib-hashtbl.sml shared/ocaml-stdlib-hashtbl-program.sml hashtbl_find/benchmark.sml shared/main.sml	1001	hashtbl_find/smoke.expected	-

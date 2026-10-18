@@ -1,0 +1,71 @@
+{
+  "run_config_sha256": "2acf290d36e665a5148dd2b3a2f437ebd1a0883238494d33e4701edd77c050b3",
+  "entries": [
+    {
+      "index": 71,
+      "entry": {
+        "executable": "benchmarks/stdlib/hashtbl_bench.exe",
+        "name": "hashtbl_bench",
+        "tags": [
+          "lt_1s"
+        ],
+        "runs": [
+          {
+            "params": "int_replace1 10000"
+          },
+          {
+            "params": "hashtbl_remove 4000000"
+          },
+          {
+            "params": "hashtbl_find 6000000"
+          },
+          {
+            "params": "int_find1 20000"
+          }
+        ]
+      }
+    },
+    {
+      "index": 72,
+      "entry": {
+        "executable": "benchmarks/stdlib/hashtbl_bench.exe",
+        "name": "hashtbl_bench",
+        "tags": [
+          "1s_10s"
+        ],
+        "runs": [
+          {
+            "params": "caml_hash_int 200000"
+          },
+          {
+            "params": "caml_hash_tuple 100000"
+          },
+          {
+            "params": "int_replace2 100000"
+          },
+          {
+            "params": "int_find2 300000"
+          },
+          {
+            "params": "hashtbl_iter 200000"
+          },
+          {
+            "params": "hashtbl_fold 200000"
+          },
+          {
+            "params": "hashtbl_add_resizing 4000000"
+          },
+          {
+            "params": "hashtbl_add_sized 6000000"
+          },
+          {
+            "params": "hashtbl_add_duplicate 2000000"
+          },
+          {
+            "params": "hashtbl_filter_map 100000"
+          }
+        ]
+      }
+    }
+  ]
+}

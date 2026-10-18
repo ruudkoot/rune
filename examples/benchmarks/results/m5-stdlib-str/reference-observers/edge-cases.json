@@ -1,0 +1,149 @@
+[
+  {
+    "mode": "match",
+    "pattern": "Novum Site",
+    "text": "Novum Site",
+    "start": 0,
+    "expected": "true:0:10"
+  },
+  {
+    "mode": "match",
+    "pattern": "Novum Site",
+    "text": "Wrong",
+    "start": 0,
+    "expected": "false:none"
+  },
+  {
+    "mode": "match",
+    "pattern": "Novum Site",
+    "text": "xNovum Site",
+    "start": 1,
+    "expected": "true:1:11"
+  },
+  {
+    "mode": "match",
+    "pattern": "Novum Site",
+    "text": "Novum",
+    "start": 0,
+    "expected": "false:none"
+  },
+  {
+    "mode": "partial",
+    "pattern": "Novum Site",
+    "text": "Novum",
+    "start": 0,
+    "expected": "true:0:5"
+  },
+  {
+    "mode": "partial",
+    "pattern": "Novum Site",
+    "text": "",
+    "start": 0,
+    "expected": "true:0:0"
+  },
+  {
+    "mode": "partial",
+    "pattern": "Novum Site",
+    "text": "Novum Site",
+    "start": 0,
+    "expected": "true:0:10"
+  },
+  {
+    "mode": "partial",
+    "pattern": "Novum Site",
+    "text": "Novem",
+    "start": 0,
+    "expected": "false:none"
+  },
+  {
+    "mode": "partial",
+    "pattern": "Novum Site",
+    "text": "xNovum",
+    "start": 1,
+    "expected": "true:1:6"
+  },
+  {
+    "mode": "search",
+    "pattern": "Novum Site",
+    "text": "xNovum Site",
+    "start": 0,
+    "expected": "1:11"
+  },
+  {
+    "mode": "search",
+    "pattern": "Novum Site",
+    "text": "absent",
+    "start": 0,
+    "expected": "none"
+  },
+  {
+    "mode": "search",
+    "pattern": "Novum Site",
+    "text": "Novum Novum Site",
+    "start": 1,
+    "expected": "6:16"
+  },
+  {
+    "mode": "search",
+    "pattern": "Novum Site",
+    "text": "Novum Site Novum Site",
+    "start": 1,
+    "expected": "11:21"
+  },
+  {
+    "mode": "replace",
+    "pattern": "Novum Site",
+    "text": "Novum Site / Novum Site",
+    "start": 0,
+    "expected": ". / ."
+  },
+  {
+    "mode": "replace",
+    "pattern": "Novum Site",
+    "text": "absent",
+    "start": 0,
+    "expected": "absent"
+  },
+  {
+    "mode": "split",
+    "pattern": "@",
+    "text": "",
+    "start": 0,
+    "expected": ""
+  },
+  {
+    "mode": "split",
+    "pattern": "@",
+    "text": "@",
+    "start": 0,
+    "expected": ""
+  },
+  {
+    "mode": "split",
+    "pattern": "@",
+    "text": "@a",
+    "start": 0,
+    "expected": "a"
+  },
+  {
+    "mode": "split",
+    "pattern": "@",
+    "text": "a@",
+    "start": 0,
+    "expected": "a"
+  },
+  {
+    "mode": "split",
+    "pattern": "@",
+    "text": "a@@b",
+    "start": 0,
+    "expected": "a||b"
+  },
+  {
+    "mode": "split",
+    "pattern": "@",
+    "text": "@@a@@",
+    "start": 0,
+    "expected": "|a|"
+  }
+]

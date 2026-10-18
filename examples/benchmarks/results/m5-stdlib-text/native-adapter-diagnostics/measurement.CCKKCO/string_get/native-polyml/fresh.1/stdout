@@ -1,0 +1,4 @@
+RESULT 575:D89F0437
+PASS string_get
+SAMPLE 1 0.000048000
+SUMMARY 1 checks, 0 failed

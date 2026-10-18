@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+hashtbl_add_duplicate	normal	rune	O2	compile	0	0	pass	2.59	2.38	0.15	135256	-	-	-	hashtbl_add_duplicate/rune/build/compile
+hashtbl_add_duplicate	normal	rune	O2	correctness	0	0	pass	1.19	1.07	0.13	58888	106423253	67681104	1200730	hashtbl_add_duplicate/rune/correctness.0
+hashtbl_add_duplicate	normal	rune	O2	count	1	1	pass	1.19	1.05	0.13	58892	106423253	67681104	1200730	hashtbl_add_duplicate/rune/fresh.1
+hashtbl_add_duplicate	normal	rune:opt	O2	compile	0	0	pass	3.07	2.56	0.34	135252	-	-	-	hashtbl_add_duplicate/rune-opt/build/compile
+hashtbl_add_duplicate	normal	rune:opt	O2	native-compile	0	0	pass	0.80	0.38	0.06	15856	-	-	-	hashtbl_add_duplicate/rune-opt/build/native-compile
+hashtbl_add_duplicate	normal	rune:opt	O2	correctness	0	0	pass	0.53	0.44	0.09	59484	106423253	67681104	1200730	hashtbl_add_duplicate/rune-opt/correctness.0
+hashtbl_add_duplicate	normal	rune:opt	O2	count	1	1	pass	0.54	0.45	0.09	59528	106423253	67681104	1200730	hashtbl_add_duplicate/rune-opt/fresh.1
+hashtbl_add_duplicate	normal	rune:new	O2	compile	0	0	pass	3.17	2.48	0.32	135108	-	-	-	hashtbl_add_duplicate/rune-new/build/compile
+hashtbl_add_duplicate	normal	rune:new	O2	correctness	0	0	pass	1.11	0.85	0.12	59096	73109968	67681104	1200730	hashtbl_add_duplicate/rune-new/correctness.0
+hashtbl_add_duplicate	normal	rune:new	O2	count	1	1	pass	1.75	0.84	0.11	59040	73109968	67681104	1200730	hashtbl_add_duplicate/rune-new/fresh.1
+hashtbl_add_duplicate	normal	rune:jit	O2	compile	0	0	pass	2.64	2.59	0.12	135384	-	-	-	hashtbl_add_duplicate/rune-jit/build/compile
+hashtbl_add_duplicate	normal	rune:jit	O2	correctness	0	0	pass	0.58	0.48	0.11	60576	73109968	67681104	1200730	hashtbl_add_duplicate/rune-jit/correctness.0
+hashtbl_add_duplicate	normal	rune:jit	O2	count	1	1	pass	0.65	0.49	0.14	60584	73109968	67681104	1200730	hashtbl_add_duplicate/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

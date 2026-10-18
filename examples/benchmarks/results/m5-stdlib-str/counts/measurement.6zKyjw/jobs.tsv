@@ -1,0 +1,1 @@
+str_search_forward	600	4194304	shared/input.sml shared/ocaml-stdlib-text-input.sml shared/ocaml-stdlib-text.sml shared/ocaml-stdlib-text-program.sml shared/sandmark-regexredux-str.sml shared/ocaml-stdlib-str.sml str_search_forward/benchmark.sml shared/main.sml	2000	str_search_forward/normal.expected	-

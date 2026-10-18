@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+int_find1	normal	rune	O2	compile	0	0	pass	2.77	2.38	0.16	135052	-	-	-	int_find1/rune/build/compile
+int_find1	normal	rune	O2	correctness	0	0	pass	1.36	1.19	0.05	2532	147218826	170592	2664	int_find1/rune/correctness.0
+int_find1	normal	rune	O2	count	1	1	pass	2.35	1.31	0.02	2404	147218826	170592	2664	int_find1/rune/fresh.1
+int_find1	normal	rune:opt	O2	compile	0	0	pass	3.61	2.56	0.29	134908	-	-	-	int_find1/rune-opt/build/compile
+int_find1	normal	rune:opt	O2	native-compile	0	0	pass	0.74	0.32	0.10	15856	-	-	-	int_find1/rune-opt/build/native-compile
+int_find1	normal	rune:opt	O2	correctness	0	0	pass	0.54	0.34	0.00	3136	147218826	170592	2664	int_find1/rune-opt/correctness.0
+int_find1	normal	rune:opt	O2	count	1	1	pass	0.41	0.32	0.00	3136	147218826	170592	2664	int_find1/rune-opt/fresh.1
+int_find1	normal	rune:new	O2	compile	0	0	pass	2.73	2.32	0.18	135076	-	-	-	int_find1/rune-new/build/compile
+int_find1	normal	rune:new	O2	correctness	0	0	pass	1.05	0.91	0.02	2556	111160466	170592	2664	int_find1/rune-new/correctness.0
+int_find1	normal	rune:new	O2	count	1	1	pass	1.02	0.91	0.00	2732	111160466	170592	2664	int_find1/rune-new/fresh.1
+int_find1	normal	rune:jit	O2	compile	0	0	pass	2.93	2.52	0.23	135072	-	-	-	int_find1/rune-jit/build/compile
+int_find1	normal	rune:jit	O2	correctness	0	0	pass	0.32	0.22	0.01	3936	111160466	170592	2664	int_find1/rune-jit/correctness.0
+int_find1	normal	rune:jit	O2	count	1	1	pass	0.29	0.25	0.00	4012	111160466	170592	2664	int_find1/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

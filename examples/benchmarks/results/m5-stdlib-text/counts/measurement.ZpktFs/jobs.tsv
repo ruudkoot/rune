@@ -1,0 +1,1 @@
+string_equal	600	4194304	shared/input.sml shared/ocaml-stdlib-text-input.sml shared/ocaml-stdlib-text.sml shared/ocaml-stdlib-text-program.sml string_equal/benchmark.sml shared/main.sml	100	string_equal/normal.expected	-

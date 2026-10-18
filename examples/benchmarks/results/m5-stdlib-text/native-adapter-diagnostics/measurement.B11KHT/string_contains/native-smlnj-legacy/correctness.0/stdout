@@ -1,0 +1,4 @@
+RESULT 1:40C5B8C
+PASS string_contains
+SAMPLE 1 0.000004000
+SUMMARY 1 checks, 0 failed

@@ -1,0 +1,5 @@
+COUNT unbudgeted hashtbl_find normal rune
+COUNT unbudgeted hashtbl_find normal rune:opt
+COUNT unbudgeted hashtbl_find normal rune:new
+COUNT unbudgeted hashtbl_find normal rune:jit
+COUNT comparisons agree

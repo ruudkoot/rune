@@ -1,0 +1,3 @@
+RESULT 33:E705E1E5
+PASS hashtbl_add_sized
+SUMMARY 1 checks, 0 failed

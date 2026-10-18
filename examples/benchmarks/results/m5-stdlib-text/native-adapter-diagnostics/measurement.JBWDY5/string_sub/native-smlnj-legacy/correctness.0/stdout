@@ -1,0 +1,4 @@
+RESULT 575:F2DD3CD1
+PASS string_sub
+SAMPLE 1 0.000162000
+SUMMARY 1 checks, 0 failed

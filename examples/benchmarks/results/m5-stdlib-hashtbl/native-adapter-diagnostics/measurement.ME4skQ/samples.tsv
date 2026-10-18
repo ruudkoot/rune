@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+hashtbl_add_resizing	smoke	native:mlton@20241230	O2	compile	0	0	pass	5.84	4.80	1.04	671860	-	-	-	hashtbl_add_resizing/native-mlton/build/compile
+hashtbl_add_resizing	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2084	-	-	-	hashtbl_add_resizing/native-mlton/correctness.0
+hashtbl_add_resizing	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2060	-	-	-	hashtbl_add_resizing/native-mlton/fresh.1
+hashtbl_add_resizing	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.43	0.37	0.06	36048	-	-	-	hashtbl_add_resizing/native-smlnj-legacy/build/compile
+hashtbl_add_resizing	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.00	0.00	3820	-	-	-	hashtbl_add_resizing/native-smlnj-legacy/correctness.0
+hashtbl_add_resizing	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.00	0.00	3808	-	-	-	hashtbl_add_resizing/native-smlnj-legacy/fresh.1
+hashtbl_add_resizing	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.40	0.20	0.09	36068	-	-	-	hashtbl_add_resizing/native-polyml/build/compile
+hashtbl_add_resizing	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	5560	-	-	-	hashtbl_add_resizing/native-polyml/correctness.0
+hashtbl_add_resizing	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	5564	-	-	-	hashtbl_add_resizing/native-polyml/fresh.1
