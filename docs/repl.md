@@ -41,7 +41,7 @@ with the reasons for what it does.
 ## The command line
 
 ```
-rune-repl [-q] [-e DECLARATIONS]... [--no-init] [--color=WHEN] [--basic] [FILE]...
+rune-repl [-q] [-e DECLARATIONS]... [--no-init] [--color=WHEN] [--basic] [--unicode[=ENC]] [FILE]...
 ```
 
 * `-q`: no banner on a terminal.
@@ -57,6 +57,12 @@ rune-repl [-q] [-e DECLARATIONS]... [--no-init] [--color=WHEN] [--basic] [FILE].
   [diagnostics.md](diagnostics.md) (a terminal, `NO_COLOR`, `FORCE_COLOR`,
   `TERM`), each stream by itself.
 * `--basic`: the basic mode on a terminal too.
+* `--unicode[=ENC]`: the files the REPL uses -- by `use`, `:reload` and
+  the command line -- are read in the mode `rune --unicode[=ENC]` reads
+  its inputs in, Unicode text in the encoding `utf8` (the default) or
+  `latin1`, and what is typed is read as UTF-8 ([units.md](units.md),
+  *Source modes*). The encoding is taken only after an `=`, as by `rune`:
+  `--unicode latin1` uses a file `latin1`.
 
 On Windows, `rune-repl.cmd` beside `runevm.exe` is `rune-repl` for the
 command prompt and PowerShell.
@@ -311,8 +317,12 @@ reader gives, up to a `;` that ends a declaration or to the reader's end:
 the function it returns runs them, and raises `Fail` where one does not
 compile. It is what a program that reads its source itself -- HOL4 puts
 its quotations through a filter of its own -- compiles with, as Poly/ML's
-`PolyML.compiler` is. At a `Compiler.printDepth` of 0 the REPL says
-nothing of what a declaration declared.
+`PolyML.compiler` is. It reads the characters in the default mode, and
+`Compiler.compileIn MODE {read, file, line}` in the one that `MODE` names
+as a build file's annotation does (`"ascii"`, `"unicode"`,
+`"unicode=latin1"`; [units.md](units.md), *Source modes*). At a
+`Compiler.printDepth` of 0 the REPL says nothing of what a declaration
+declared.
 
 A file's declarations are units named by the file and their place in it,
 kept in the cache of units -- `$RUNE_CACHE`, else `.rune` beside the file

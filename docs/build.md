@@ -72,6 +72,7 @@ hosts' build files are made from (`scripts/gen-build-files.sh`).
 |---|---|
 | `allowPrim` | the units may use `_prim` and `_overload` (the Basis Library's) |
 | `noWarnings` | their warnings are not printed |
+| `ascii`, `unicode` (or `unicode=utf8`), `unicode=latin1` | the mode the units are read in, over the command line's `--unicode[=ENC]`; the last such annotation in force wins ([units.md](units.md), *Source modes*) |
 
 Levels per unit (`O0` ... `O2`) are not built: a build has the level of
 its command line.

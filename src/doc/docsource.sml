@@ -10,8 +10,10 @@ struct
   (* A comment: from its "(*" to after the matching "*)". *)
   type comment = {start : int, stop : int}
 
+  (* a library's file, read in the default mode, as the compiler reads a
+     library's (Source.mode) *)
   fun load (path : string) : t =
-    let val file = Source.load path
+    let val file = Source.load (Source.Ascii, path)
     in {file = file, toks = Lexer.tokenize file} end
 
   fun text ({file, ...} : t) : string = #text file

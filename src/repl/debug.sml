@@ -282,7 +282,7 @@ struct
                  less `val x =` where it is a declaration *)
               val user =
                 let
-                  val f = Source.fromString (name, text)
+                  val f = Source.fromStringIn (ReplSession.typedMode (), name, text)
                   val () = Source.register f
                   val ts = Lexer.tokenize f
                   val n = Vector.length ts - 1

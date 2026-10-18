@@ -9,11 +9,36 @@ struct
   fun join (a : span, b : span) : span =
     {file = #file a, start = Int.min (#start a, #start b), stop = Int.max (#stop a, #stop b)}
 
+  (* How a source is read (docs/plans/utf8.md, D1): the default, ASCII
+     outside comments, or Unicode in an encoding, UTF-8 or Latin-1
+     (--unicode=ENC). A mode is a file's, not the compile's: the Basis
+     Library and the libraries are read in the default, a program's files
+     in the mode that its command line, its build file or Compiler.compile
+     says (docs/units.md). As yet every mode reads a text alike: the
+     roadmap's M3 and M4 give them their rules. *)
+  datatype encoding = Utf8 | Latin1
+  datatype mode = Ascii | Unicode of encoding
+
+  (* a mode by its name, as a build file's annotation, the command line's
+     --unicode=ENC and Compiler.compile write it *)
+  fun modeName (m : mode) : string =
+    case m of
+      Ascii => "ascii"
+    | Unicode Utf8 => "unicode"
+    | Unicode Latin1 => "unicode=latin1"
+  fun modeNamed (s : string) : mode option =
+    case s of
+      "ascii" => SOME Ascii
+    | "unicode" => SOME (Unicode Utf8)
+    | "unicode=utf8" => SOME (Unicode Utf8)
+    | "unicode=latin1" => SOME (Unicode Latin1)
+    | _ => NONE
+
   (* A loaded source file with a table of line start offsets; line is the
      number, less one, of its first line in the file it is from: 0 for a
      whole file, more for a part of one compiled on its own
-     (Compiler.compile). *)
-  type file = {name : string, text : string, lineStarts : int vector, line : int}
+     (Compiler.compile); mode is how it is read. *)
+  type file = {name : string, text : string, lineStarts : int vector, line : int, mode : mode}
 
   fun computeLineStarts (text : string) : int vector =
     let
@@ -30,27 +55,30 @@ struct
       Vector.fromList (List.rev (!starts))
     end
 
-  fun fromString (name, text) : file =
-    {name = name, text = text, lineStarts = computeLineStarts text, line = 0}
+  fun fromStringIn (mode, name, text) : file =
+    {name = name, text = text, lineStarts = computeLineStarts text, line = 0, mode = mode}
+
+  (* a text the compiler makes for itself, which is read in the default *)
+  fun fromString (name, text) : file = fromStringIn (Ascii, name, text)
 
   (* a part of a file that begins at its line `line` (from 1) *)
-  fun fromStringAt (name, text, line) : file =
-    {name = name, text = text, lineStarts = computeLineStarts text, line = Int.max (line - 1, 0)}
+  fun fromStringAt (mode, name, text, line) : file =
+    {name = name, text = text, lineStarts = computeLineStarts text, line = Int.max (line - 1, 0), mode = mode}
 
   (* the text of a file that is other than the file system's: an editor's
      buffer, which the compiler as a service compiles (Serve) *)
   val overlays : string StringMap.map ref = ref StringMap.empty
 
-  fun readFile (name : string) : file =
+  fun readFile (mode : mode, name : string) : file =
     case StringMap.find (!overlays, name) of
-      SOME text => fromString (name, text)
+      SOME text => fromStringIn (mode, name, text)
     | NONE =>
         let
           val ins = TextIO.openIn name
           val text = TextIO.inputAll ins
           val () = TextIO.closeIn ins
         in
-          fromString (name, text)
+          fromStringIn (mode, name, text)
         end
 
   (* 1-based line and column for a byte offset. *)
@@ -82,15 +110,16 @@ struct
      spans, and not its text; and nothing of one it made for itself. *)
   fun keepLines (name : string) =
     case StringMap.find (!files, name) of
-      SOME {lineStarts, line, ...} =>
-        (files := StringMap.insert (!files, name, {name = name, text = "", lineStarts = lineStarts, line = line});
+      SOME {lineStarts, line, mode, ...} =>
+        (files := StringMap.insert (!files, name, {name = name, text = "", lineStarts = lineStarts, line = line,
+                                                   mode = mode});
          lastFile := NONE)
     | NONE => ()
   fun unregister (name : string) =
     (files := (if StringMap.member (!files, name) then StringMap.remove (!files, name) else !files); lastFile := NONE)
 
-  fun load (name : string) : file =
-    let val f = readFile name in register f; f end
+  fun load (mode : mode, name : string) : file =
+    let val f = readFile (mode, name) in register f; f end
 
   fun findFile (name : string) : file option =
     case !lastFile of

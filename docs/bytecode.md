@@ -218,8 +218,10 @@ compiles after it need of it ([units.md](units.md), *The export basis*):
 ```
 used        3 × varint   what the unit's compile used of each kind of name
 source      varint len, bytes   the hash of its source
+mode        varint len, bytes   how the source was read: ascii, unicode or
+                                unicode=latin1 (units.md, Source modes)
 magic       3 bytes   "RBI"
-version     varint    1
+version     varint    5
 name        varint len, bytes   the unit's name
 units       varint n, n × string   the identities of the units it names
 counts      3 × varint   its own names of each kind

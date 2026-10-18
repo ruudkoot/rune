@@ -64,12 +64,14 @@ struct
   (* A character by its code point, as Unicode writes it: U+03BB. *)
   fun codePoint c = "U+" ^ StringCvt.padLeft #"0" 4 (Int.fmt StringCvt.HEX c)
 
-  (* The lexer of a text: the token at an index, with its span and the index
-     after it (whitespace and comments before it skipped), and the index
-     after a comment that begins at an index. Both raise Error.CompileError
-     where the text is not SML. tokenize reads a file with it, and scan a
-     line to colour. *)
-  fun lexerOf (name : string, text : string) : {next : int -> token * Source.span * int, skipComment : int -> int} =
+  (* The lexer of a text read in a mode (Source.mode): the token at an
+     index, with its span and the index after it (whitespace and comments
+     before it skipped), and the index after a comment that begins at an
+     index. Both raise Error.CompileError where the text is not SML.
+     tokenize reads a file with it, in the file's mode, and scan a line to
+     colour. Every mode is lexed alike as yet (Source.mode). *)
+  fun lexerOf (_ : Source.mode, name : string, text : string)
+      : {next : int -> token * Source.span * int, skipComment : int -> int} =
     let
       val n = String.size text
       fun span (a, b) : Source.span = {file = name, start = a, stop = b}
@@ -322,7 +324,7 @@ struct
 
   fun tokenize (file : Source.file) : item vector =
     let
-      val {next, ...} = lexerOf (#name file, #text file)
+      val {next, ...} = lexerOf (#mode file, #name file, #text file)
       fun loop (i, acc) =
         let val (t, sp, j) = next i
         in case t of EOF => List.rev ((t, sp) :: acc) | _ => loop (j, (t, sp) :: acc) end
@@ -338,17 +340,18 @@ struct
      unexpected character by itself. A text is scanned from the state its
      first line begins in, and scan gives the state its end leaves, so that
      an editor scans a line again only where it or the state before it
-     changed. *)
+     changed. A line is lexed in the mode of the text it is from: the
+     REPL's typed input is UTF-8 under --unicode (ReplSession.typedMode). *)
   datatype class = Keyword | Name | LongName | Operator | TyVar | Number | Text | Comment | Bad | Other
 
   (* where a line begins: in code, in a comment that many deep, or in a
      string's gap (`\` whitespace `\`) *)
   datatype state = Code | InComment of int | InGap
 
-  fun scan (text : string, state : state) : (int * int * class) list * state =
+  fun scan (mode : Source.mode, text : string, state : state) : (int * int * class) list * state =
     let
       val n = String.size text
-      val {next, ...} = lexerOf ("", text)
+      val {next, ...} = lexerOf (mode, "", text)
       fun ch i = if i < n then String.sub (text, i) else #"\000"
       (* the index after a comment's end, from i at depth d; 0 for the depth
          where it ends, else the depth at the text's end *)

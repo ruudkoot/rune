@@ -9,6 +9,9 @@ struct
   val basisCheck = ref false       (* --basis-check: verify lib/basis/MANIFEST *)
   val allowPrim = ref false
   val orPatterns = ref false
+  (* --unicode, --unicode=ENC: the mode of the input files; the libraries are
+     read in the default (Source.mode) *)
+  val sourceMode = ref Source.Ascii
   val defaultInt64 = ref false     (* --default-type=int64 *)
   val defaultWord64 = ref false    (* --default-type=word64 *)
   (* No default: every bin/rune* is a wrapper that passes --lib. *)
@@ -65,6 +68,8 @@ struct
     \  --int-bits=N      the precision of int and word on the VM: 63 (default), or\n\
     \                    64 for a VM built with -DRUNE_INT64\n\
     \  --or-patterns     allow or-patterns (p1 | p2), which are not Standard ML\n\
+    \  --unicode[=ENC]   read the input files as Unicode text in the encoding ENC:\n\
+    \                    utf8 (the default) or latin1 (docs/units.md, Source modes)\n\
     \  --default-type=T  in the input files, the type of an int or word constant or\n\
     \                    operator that its declaration leaves open: int (default)\n\
     \                    or int64, word (default) or word64\n\
@@ -137,6 +142,13 @@ struct
 
   exception Usage of string
 
+  (* The message for an input that cannot be read: `--unicode latin1`
+     reads latin1 as an input, since --unicode takes its encoding only
+     after an = (docs/plans/utf8.md, D1). *)
+  fun cannotRead (path : string) : string =
+    "cannot read " ^ path
+    ^ (if path = "utf8" orelse path = "latin1" then " (did you mean --unicode=" ^ path ^ "?)" else "")
+
   (* An option of the form --name=value, as (--name, value). *)
   fun valued (a : string) : (string * string) option =
     if String.isPrefix "--" a then
@@ -177,6 +189,7 @@ struct
     | "--int-bits=63" :: rest => (Overload.setIntBits 63; Target.intBits := 63; parse rest)
     | "--int-bits=64" :: rest => (Overload.setIntBits 64; Target.intBits := 64; parse rest)
     | "--or-patterns" :: rest => (orPatterns := true; parse rest)
+    | "--unicode" :: rest => (sourceMode := Source.Unicode Source.Utf8; parse rest)
     | "--default-type=int" :: rest => (defaultInt64 := false; parse rest)
     | "--default-type=int64" :: rest => (defaultInt64 := true; parse rest)
     | "--default-type=word" :: rest => (defaultWord64 := false; parse rest)
@@ -234,6 +247,10 @@ struct
          | SOME ("--target", v) =>
              if v = "stack" orelse v = "registers" then (target := v; parse rest)
              else raise Usage "--target requires stack or registers"
+         | SOME ("--unicode", v) =>
+             (case Source.modeNamed ("unicode=" ^ v) of
+                SOME m => (sourceMode := m; parse rest)
+              | NONE => raise Usage ("--unicode=ENC requires utf8 or latin1, not " ^ v))
          | SOME ("--color", v) =>
              (case Color.choiceNamed v of
                 SOME c => (color := c; parse rest)

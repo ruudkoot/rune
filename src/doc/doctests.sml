@@ -207,7 +207,7 @@ struct
 
   (* ---- a suite ---- *)
   fun parse (path : string) : Ast.program =
-    #1 (Parser.parseTokensWith (Lexer.tokenize (Source.load path), Fixity.initial))
+    #1 (Parser.parseTokensWith (Lexer.tokenize (Source.load (Source.Ascii, path)), Fixity.initial))
 
   fun filesOf (dir : string) : string list =
     let

@@ -806,5 +806,33 @@ val () = print (Int64.toString x ^ "\n")'
   build; fails
 fi
 
+# S63, the mode a unit is read in (docs/plans/utf8.md, D1): the
+# configuration does not say it, since the libraries are read in the
+# default; a unit's key does, where it is not the default. Built under
+# --unicode and then, through the same cache, without it, the file is
+# compiled again, and once more under --unicode=latin1; under --unicode
+# again it is found. A build file's annotation says a unit's mode over the
+# command line's
+if run S63; then
+  own S63 p.sml
+  put p.sml 'val () = print "read\n"'
+  build --unicode; want "p.sml"
+  prints read
+  build; want "p.sml"
+  build --unicode=latin1; want "p.sml"
+  build --unicode; want ""
+  build; want ""
+  prints read
+  own S63b --build p.build
+  put p.sml 'val () = print "built\n"'
+  put p.build 'annotate "unicode" in p.sml end'
+  build; want "p.sml"
+  prints built
+  build --unicode; want ""
+  put p.build 'annotate "ascii" in p.sml end'
+  build --unicode; want "p.sml"
+  build; want ""
+fi
+
 echo "incremental: passed $pass, failed $fail"
 [ $fail = 0 ]

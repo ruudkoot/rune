@@ -56,6 +56,35 @@ from 0 in each unit, in the order the unit first names them. No function of
 a unit before is inlined into this one, nor specialised for it: what the
 units after a unit see of it is its basis (below), which holds no code.
 
+## Source modes
+
+A source is read in a *mode* (`Source.mode`; the utf8 roadmap's D1): the
+default, or Unicode text in an encoding, UTF-8 or Latin-1. A mode is a
+file's and not the compile's. A unit's comes from:
+
+* its build file's annotation, `ascii`, `unicode` (or `unicode=utf8`) or
+  `unicode=latin1` ([build.md](build.md), *Annotations*); else
+* the command line, `--unicode` or `--unicode=utf8`, and
+  `--unicode=latin1`, the last of them given; else
+* the default.
+
+The encoding is taken only after an `=`: `--unicode latin1` names an input
+file `latin1`, and one that cannot be read is answered "cannot read latin1
+(did you mean --unicode=latin1?)". The Basis Library and the libraries
+beside it (`--library`) are read in the default, whatever the command line
+says. `Compiler.compile` reads in the default, and `Compiler.compileIn`
+in the mode it is given, by the annotations' names. The REPL reads the
+files it uses -- by `use`, `:reload` and its command line -- in the mode
+of `rune-repl --unicode[=ENC]`, and what is typed as UTF-8 under
+`--unicode`, whatever the files' encoding.
+
+A unit's mode is in its key where it is not the default (*The cache*), so
+that a unit read in one mode is not taken for one read in another (S63 of
+`tests/incremental/SCENARIOS.md`), and in its basis beside the hash of its
+source, so that loading the basis reads the source again, for a functor's
+body, as the unit was read (*The export basis*). As yet every mode reads a
+text alike: the roadmap's M3 and M4 give the modes their rules.
+
 ## The export basis
 
 Once a unit is compiled, what the units after it need of it -- its
@@ -68,8 +97,9 @@ constructors, what each opaque type stands for, the primitives some of its
 values are, its functions that may be called by name, and the constructors
 the REPL prints a datatype's values by. A functor's body is not written:
 where it is in the unit's source is, and loading the basis parses the
-source again for it, with the fixity of the unit's start, and checks that
-the source is the one the basis was made from by its hash. A functor's
+source again for it, in the unit's mode (*Source modes*), with the fixity
+of the unit's start, and checks that the source is the one the basis was
+made from by its hash. A functor's
 basis -- the environment it was declared in -- is written as what the unit
 added to its start.
 
@@ -210,7 +240,8 @@ than compiling it again where nothing it depends on changed (`UnitCache`,
 * in that, a directory per *key*, the hash of the unit's name, its source
   and whether it may use `_prim`, and of an input file's unit the settings
   that hold for the input files and not the libraries (`--default-type`,
-  `--or-patterns`; S62); a file of the library is named by its
+  `--or-patterns`; S62), and of any unit its mode where it is not the
+  default (*Source modes*; S63); a file of the library is named by its
   place in the library (`lib/basis/list.sml`), so that a cache follows the
   library where it is moved, and a unit taken from the cache names its
   source in its code's files where it is now -- its own, and those of the

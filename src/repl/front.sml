@@ -26,18 +26,20 @@ struct
   (* ---- the command line (D25) ---- *)
 
   type options = {quiet : bool, exprs : string list, init : bool, color : Color.choice, basic : bool,
-                  files : string list, engine : string option}
+                  files : string list, engine : string option, mode : Source.mode}
 
   exception Usage of string
 
   val usage =
-    "usage: rune-repl [-q] [-e DECLARATIONS]... [--no-init] [--color=always|never|auto] [--basic] [FILE]...\n\
+    "usage: rune-repl [-q] [-e DECLARATIONS]... [--no-init] [--color=always|never|auto] [--basic] [--unicode[=ENC]] [FILE]...\n\
     \       rune-repl --engine | --engine-connect PORT [--no-init] [FILE]...\n\
     \  -q             no banner\n\
     \  -e TEXT        run TEXT's declarations, then end, after the files (a `;` is added where TEXT has none)\n\
     \  --no-init      do not use the init file (~/.config/rune/init.sml)\n\
     \  --color=WHEN   colour the REPL's output and the diagnostics: always, never or auto (on a terminal)\n\
     \  --basic        a prompt and a line at a time, as on a pipe\n\
+    \  --unicode[=ENC]  read the files used as Unicode text in the encoding ENC, utf8 (the default) or latin1,\n\
+    \                 and what is typed as UTF-8 (docs/units.md, Source modes)\n\
     \  --engine       the engine, for a front: JSON-RPC on the descriptors 3 and 4 (docs/repl-protocol.md)\n\
     \  --engine-connect PORT  the same on a connection to 127.0.0.1:PORT, its token in RUNE_ENGINE_TOKEN\n\
     \  FILE           used before the first prompt\n"
@@ -51,6 +53,7 @@ struct
       val basic = ref false
       val files = ref []
       val engine = ref NONE
+      val mode = ref Source.Ascii
       fun colorOf w = case Color.choiceNamed w of SOME c => c | NONE => raise Usage ("--color takes always, never or auto, not " ^ w)
       fun go [] = ()
         | go (a :: rest) =
@@ -72,12 +75,19 @@ struct
             | ("--", _) => files := !files @ rest
             | _ =>
                 if String.isPrefix "--color=" a then (color := colorOf (String.extract (a, 8, NONE)); go rest)
+                (* the encoding only after an =, as rune takes it: a word
+                   after --unicode is a file *)
+                else if a = "--unicode" then (mode := Source.Unicode Source.Utf8; go rest)
+                else if String.isPrefix "--unicode=" a then
+                  (case Source.modeNamed (String.extract (a, 2, NONE)) of
+                     SOME m => (mode := m; go rest)
+                   | NONE => raise Usage ("--unicode=ENC takes utf8 or latin1, not " ^ String.extract (a, 10, NONE)))
                 else if String.isPrefix "-" a andalso a <> "-" then raise Usage ("unknown option " ^ a)
                 else (files := !files @ [a]; go rest)
     in
       go args;
       {quiet = !quiet, exprs = !exprs, init = !init, color = !color, basic = !basic orelse isSome (!engine),
-       files = !files, engine = !engine}
+       files = !files, engine = !engine, mode = !mode}
     end
 
   fun env (name : string) : string = case OS.Process.getEnv name of SOME v => v | NONE => ""

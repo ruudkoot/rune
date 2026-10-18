@@ -23,7 +23,7 @@ struct
 
   fun load (path : string) : file =
     let
-      val text = #text (Source.load path)
+      val text = #text (Source.load (Source.Ascii, path))
       val title = ref defaultTitle
       val intro = ref ""
       (* a line with the offset it begins at, so that a diagnostic names it *)
@@ -135,7 +135,7 @@ struct
           SOME cs => cs
         | NONE =>
             let
-              val toks = Lexer.tokenize (Source.load file) handle _ => Vector.fromList []
+              val toks = Lexer.tokenize (Source.load (Source.Ascii, file)) handle _ => Vector.fromList []
               val cs = Vector.foldr (fn ((Token.STRING c, _), acc) => c :: acc | (_, acc) => acc) [] toks
             in
               constants := StringMap.insert (!constants, file, cs); cs

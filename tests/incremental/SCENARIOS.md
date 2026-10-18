@@ -216,6 +216,12 @@ when the scenarios above were all green
   printer.
 * **S54, the print depth.** A file whose entry was written at print depth
   0 echoes at the default depth.
+* **S63, the mode a unit is read in.** A unit's key says its mode where
+  it is not the default (docs/units.md, *Source modes*): a file built under
+  `--unicode` and then, through the same cache, without it is compiled
+  again, and once more under `--unicode=latin1`, and found under
+  `--unicode` again. A build file's annotation (`unicode`, `ascii`) gives
+  the mode over the command line's.
 * **S62, the input files' own settings.** `--or-patterns` and
   `--default-type` hold for the input files and not the libraries, so a
   unit's key says them, not the configuration: a file built with one and

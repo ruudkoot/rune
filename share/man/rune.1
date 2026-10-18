@@ -50,7 +50,11 @@ skips the init file
 .B \-\-color
 colours the REPL's output always, never or on a terminal (auto), and
 .B \-\-basic
-reads a line at a time, as on a pipe;
+reads a line at a time, as on a pipe,
+.BR \-\-unicode [= \fIENC\fP]
+reads the files it uses as
+.B rune
+reads its inputs under it, and what is typed as UTF-8;
 .B \-\-engine
 is the session for a front in another process, JSON-RPC 2.0 on the
 descriptors 3 and 4
@@ -144,6 +148,28 @@ pattern
 matches what any of its alternatives matches. Every alternative binds the
 same variables at the same types. Without the option the compiler takes
 Standard ML '97 only.
+.TP
+.BR \-\-unicode [= \fIENC\fP]
+Read the input files as Unicode text in the encoding
+.IR ENC :
+.B utf8
+(the default) or
+.BR latin1 .
+Without it they are read in the default mode, which the Basis Library and
+the libraries beside it are always read in. The encoding is taken only
+after an
+.BR = :
+.B "\-\-unicode latin1"
+names an input file
+.BR latin1 .
+A build file's annotation
+.RB ( ascii ,
+.BR unicode ,
+.BR unicode=latin1 )
+gives a unit's mode over the command line's, and the cache keeps a unit
+read in one mode apart from one read in another
+.RI ( docs/units.md ,
+Source modes). As yet every mode reads a text alike.
 .TP
 .BI \-\-default\-type= T
 In the input files, not the libraries, make an integer or word constant, or an

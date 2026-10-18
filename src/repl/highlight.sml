@@ -226,7 +226,7 @@ struct
         SOME r => r
       | NONE =>
           let
-            val (pieces, after) = Lexer.scan (line, state)
+            val (pieces, after) = Lexer.scan (ReplSession.typedMode (), line, state)
             val (roles, ctx') = rolesOf (env, line, pieces, ctx, false)
             val r = (roles, (after, ctx'))
           in
@@ -275,7 +275,7 @@ struct
     List.filter (fn (_, _, r) => r <> "syn.error")
                 (rolesIn (fn (l, (state, c)) =>
                             let
-                              val (pieces, after) = Lexer.scan (l, state)
+                              val (pieces, after) = Lexer.scan (ReplSession.typedMode (), l, state)
                               val (roles, c') = rolesOf (env, l, pieces, c, true)
                             in (roles, (after, c')) end)
                          (text, (Lexer.Code, ctx)))

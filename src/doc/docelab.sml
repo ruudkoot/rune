@@ -25,7 +25,7 @@ struct
     let
       val fixity = ref Fixity.initial
       fun parse d (e : BasisManifest.entry) =
-        let val (prog, fx) = Parser.parseTokensWith (Lexer.tokenize (Source.load (d ^ "/" ^ #file e)), !fixity)
+        let val (prog, fx) = Parser.parseTokensWith (Lexer.tokenize (Source.load (Source.Ascii, d ^ "/" ^ #file e)), !fixity)
         in fixity := fx; prog end
       fun programOf d = List.concat (List.map (parse d) (BasisManifest.readManifest d))
       val basisProg = case #basis prelude of SOME d => programOf d | NONE => []

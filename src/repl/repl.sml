@@ -112,10 +112,10 @@ struct
   datatype parsed = Decs of Ast.dec list * Fixity.env | More | Wrong of Source.span * string
 
   (* The declarations of a text, if it ends with a `;` that ends one; the
-     text is the source name's from its line `line` on. *)
-  fun parseAt (name : string, text : string, line : int) : parsed =
+     text is the source name's from its line `line` on, read in mode. *)
+  fun parseAt (mode : Source.mode, name : string, text : string, line : int) : parsed =
     let
-      val file = Source.fromStringAt (name, text, line)
+      val file = Source.fromStringAt (mode, name, text, line)
       val () = Source.register file
     in
       (let
@@ -137,7 +137,8 @@ struct
         if String.isSubstring "unterminated" msg andalso not (String.isSubstring "string literal" msg) then More
         else Wrong (sp, msg)
     end
-  fun parse (name : string, text : string) : parsed = parseAt (name, text, 1)
+  (* what was typed, which is UTF-8 under --unicode (ReplSession.typedMode) *)
+  fun parse (name : string, text : string) : parsed = parseAt (ReplSession.typedMode (), name, text, 1)
 
   (* run (decs, name, text, cached, stopping): each declaration of the text
      of source name compiled and run in turn; false at the first that fails,
@@ -251,7 +252,7 @@ struct
     let
       val () = lastUsed := SOME file
       (* a file that cannot be read raises IO.Io, as Poly/ML's use does *)
-      val text = #text (Source.readFile file)
+      val text = #text (Source.readFile (!ReplSession.mode, file))
       val top = !useDepth = 0
       val () = if top then noteUsed (file, text) else ()
       val () = useDepth := !useDepth + 1
@@ -260,7 +261,7 @@ struct
     in
       (* parsed, what the parse looked up recorded: each declaration's
          usages have it (ReplSession.compile) *)
-      (case Usage.record (fn () => parse (file, text ^ "\n;")) of
+      (case Usage.record (fn () => parseAt (!ReplSession.mode, file, text ^ "\n;", 1)) of
          (Decs (decs, fx), names) =>
            (ReplSession.fixity := fx;
             if run (decs, file, text ^ "\n;", SOME (file, 0, names), true) then ()
@@ -271,18 +272,24 @@ struct
       done ()
     end
 
-  (* Compiler.compile {read, file, line}: the characters read up to a `;`
-     that ends a declaration at the top level, or to the end of read, parsed
-     as the text of file from line on; the function that runs its
-     declarations as use does, raising Fail where one does not compile. A
-     syntax error is reported, and raises Fail, at once.
+  (* Compiler.compileIn mode {read, file, line}, and Compiler.compile, which
+     is it in the mode "ascii": the characters read up to a `;` that ends a
+     declaration at the top level, or to the end of read, parsed as the
+     text of file from line on, read in the mode named (Source.modeNamed);
+     the function that runs its declarations as use does, raising Fail
+     where one does not compile. A syntax error is reported, and raises
+     Fail, at once.
 
      A part of a file that is there goes through the cache as use's
      declarations do, its units named by the file and the line it begins
      at, and keyed by its text (ReplSession.compile). Once its declarations
      are compiled, the session keeps the file's lines and not the text. *)
-  fun compileReader {read : unit -> char option, file : string, line : int} : unit -> unit =
+  fun compileReader (mode : string) {read : unit -> char option, file : string, line : int} : unit -> unit =
     let
+      val mode = case Source.modeNamed mode of
+                   SOME m => m
+                 | NONE => raise Fail ("Compiler.compileIn: the mode is ascii, unicode, unicode=utf8 or unicode=latin1, not "
+                                       ^ mode)
       fun static msg = (err (msg ^ "\n"); raise Fail ("Static errors in " ^ file))
       fun wrong e = (report e; raise Fail ("Static errors in " ^ file))
       val isFile = (OS.FileSys.access (file, [OS.FileSys.A_READ]) andalso not (OS.FileSys.isDir file))
@@ -297,7 +304,7 @@ struct
              Source.keepLines file;
              if ok then () else raise Fail ("Static errors in " ^ file)
            end)
-      fun parsed text = Usage.record (fn () => parseAt (file, text, line))
+      fun parsed text = Usage.record (fn () => parseAt (mode, file, text, line))
       (* where a `;` may end a declaration at the top level (ReplScan): only
          there is the text parsed, since a structure has a `;` after most of
          its declarations, and parsing the text at each of them made reading
@@ -345,7 +352,7 @@ struct
     | NONE => (ReplFront.freshLine (); TextIO.output (TextIO.stdOut, s); TextIO.flushOut TextIO.stdOut)
   fun ui (s : string) = say (ReplFront.paint "repl.ui" s ^ "\n")
 
-  fun hasChanged ({file, text, ...} : used) = (#text (Source.readFile file) <> text) handle IO.Io _ => true
+  fun hasChanged ({file, text, ...} : used) = (#text (Source.readFile (!ReplSession.mode, file)) <> text) handle IO.Io _ => true
 
   (* the names a text names: its identifiers, and the first part of each
      long one; NONE where it does not lex *)
@@ -354,7 +361,7 @@ struct
                          | ((Token.LONGID (p :: _, _), _), acc) => p :: acc
                          | ((Token.LONGID ([], n), _), acc) => n :: acc
                          | (_, acc) => acc)
-                       [] (Lexer.tokenize (Source.fromString ("<reload>", text))))
+                       [] (Lexer.tokenize (Source.fromStringIn (!ReplSession.mode, "<reload>", text))))
     handle Error.CompileError _ => NONE
 
   (* the session's names a file bound at the top *)
@@ -652,13 +659,19 @@ struct
             ReplFront.parseArgs args
             handle ReplFront.Usage msg => (err ("rune-repl: " ^ msg ^ "\n" ^ ReplFront.usage); OS.Process.exit OS.Process.failure)
           val () = ReplFront.start options
+          val () = ReplSession.mode := #mode options
           (* the files of the REPL's program are the library's: the
              debugger's steps stop only in the session's *)
           val () = RuneRuntime.debugUser ()
           (* where :reload! comes back to, before the init file and the files *)
           val () = mark true
           val () = if init then Option.app (fn f => use f handle e => uncaught e) (ReplFront.initFile ()) else ()
-          val () = List.app (fn f => use f handle e => uncaught e) files
+          (* `--unicode latin1` uses latin1, since --unicode takes its
+             encoding only after an = *)
+          fun hint f = if (f = "utf8" orelse f = "latin1") andalso not (OS.FileSys.access (f, []) handle OS.SysErr _ => false)
+                       then err ("rune-repl: cannot read " ^ f ^ " (did you mean --unicode=" ^ f ^ "?)\n")
+                       else ()
+          val () = List.app (fn f => use f handle e => (hint f; uncaught e)) files
         in
           case (engine, exprs) of
             (SOME how, _) => !engineHook how

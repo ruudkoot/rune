@@ -10,9 +10,11 @@ struct
   val useHook : (string -> unit) ref =
     ref (fn _ => raise Fail "Compiler.use: this program has no compiler beside it (rune-repl has)")
   fun use file = !useHook file
-  val compileHook : ({read : unit -> char option, file : string, line : int} -> unit -> unit) ref =
-    ref (fn _ => raise Fail "Compiler.compile: this program has no compiler beside it (rune-repl has)")
-  fun compile r = !compileHook r
+  (* the mode, by its name, and the reader *)
+  val compileHook : (string -> {read : unit -> char option, file : string, line : int} -> unit -> unit) ref =
+    ref (fn _ => fn _ => raise Fail "Compiler.compile: this program has no compiler beside it (rune-repl has)")
+  fun compileIn mode r = !compileHook mode r
+  fun compile r = compileIn "ascii" r
   val printDepth = ref 20
   val prompt1 = ref "- "
   val prompt2 = ref "= "

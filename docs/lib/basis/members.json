@@ -1005,6 +1005,13 @@
     },
     {
      "kind": "val",
+     "name": "compileIn",
+     "spec": "val compileIn : string -> {read : unit -> char option, file : string, line : int} -> unit -> unit",
+     "doc": "`compileIn mode {read, file, line}` is `compile {read, file, line}`\nwith the characters read in the mode that `mode` names.\n\nThe names are those of a build file's annotations: `\"ascii\"`, the\ndefault, which `compile` reads in; `\"unicode\"` (or `\"unicode=utf8\"`);\nand `\"unicode=latin1\"`. A mode is how `rune --unicode=ENC` reads its\ninputs (docs/units.md, Source modes).\n\n**Raises** `Fail` in a program that has no compiler beside it, or for a\nmode of another name; the function raises `Fail` where a declaration\ndoes not compile.\n\n",
+     "page": "sig/COMPILER.md#val-compilein"
+    },
+    {
+     "kind": "val",
      "name": "printDepth",
      "spec": "val printDepth : int ref",
      "doc": "How deep the REPL prints a value, from the outside in.\n\nThe levels it counts are those of a list, a tuple, a record, a\nconstructor's argument and a `ref`'s content; past them it writes\n`...` for the rest. At 0 or below the REPL says nothing of what a\ndeclaration declared.\n\n",

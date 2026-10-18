@@ -31,4 +31,10 @@ val it = () : unit
 - val z1 = [1, 2] : int list
 val it = () : unit
 - val it = [1, 2] : int list
+- = = val u = fn : unit -> unit
+- val e = 2 : int
+val it = () : unit
+- val it = 2 : int
+- val it = "Compiler.compileIn: the mode is ascii, unicode, unicode=utf8 or unicode=latin1, not utf8"
+  : string
 - 

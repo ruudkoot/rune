@@ -56,6 +56,7 @@
 - `compareReal` (val): [REAL](../sig/REAL.md#val-comparereal)
 - `compareSpeed` (val): [POSIX_TTY](../sig/POSIX_TTY.md#val-comparespeed)
 - `compile` (val): [COMPILER](../sig/COMPILER.md#val-compile)
+- `compileIn` (val): [COMPILER](../sig/COMPILER.md#val-compilein)
 - `compose` (val): [OPTION](../sig/OPTION.md#val-compose)
 - `composePartial` (val): [OPTION](../sig/OPTION.md#val-composepartial)
 - `concat` (val): [LIST](../sig/LIST.md#val-concat), [MONO_VECTOR](../sig/MONO_VECTOR.md#val-concat), [MONO_VECTOR_SLICE](../sig/MONO_VECTOR_SLICE.md#val-concat), [OS_PATH](../sig/OS_PATH.md#val-concat), [STRING](../sig/STRING.md#val-concat), [SUBSTRING](../sig/SUBSTRING.md#val-concat), [VECTOR](../sig/VECTOR.md#val-concat), [VECTOR_SLICE](../sig/VECTOR_SLICE.md#val-concat)
