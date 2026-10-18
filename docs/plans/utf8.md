@@ -160,7 +160,13 @@ under `--unicode` (D7). The default then adds nothing to the Definition's
 escapes.
 
 **The decisions (2026-10-18):** the owner took every recommendation, D1 to
-D20. That includes the departures from the brief listed in *Where this
+D20.
+
+**And, for G2's question (2026-10-18):** the identifier characters that look
+like digits join the frozen lookalikes list, except the 13 that UTS #39
+recommends for identifiers. Those are everyday letters and native digits,
+such as Cyrillic б and З. That makes 116 of the 129 (D10, *The
+architecture*). That includes the departures from the brief listed in *Where this
 roadmap recommends otherwise than the brief*.
 
 | The brief asks | Answered in |
@@ -2009,8 +2015,23 @@ tyvar    ::= ' continue*
   - by hand, `·` U+00B7 and the lookalikes of `|`, which the skeletons miss,
     such as `ǀ` U+01C0.
   
-  Whether the 129 identifier lookalikes of the digits 2 to 9 join it is part
-  of G2.
+  - of the 129 identifier characters that look like the digits 2 to 9, the
+    116 that UTS #39 does not recommend for identifiers, by the owner's
+    decision (2026-10-18): fullwidth, mathematical, outlined and segmented
+    digits, and rare letters such as Cherokee and Canadian Syllabics.
+
+  The other 13 stay allowed:
+  - Cyrillic б, З and Ӡ;
+  - Armenian Յ;
+  - Georgian Ⴧ, Ჷ and Ვ;
+  - Latin Ʒ;
+  - Devanagari ३, Gujarati ૩, Bengali ৪ and ৭;
+  - the Oriya sign visarga U+0B03.
+
+  They are everyday letters and native digits of living scripts, which UTS #39
+  recommends. Refusing them would make Russian names such as `работа`
+  impossible. D13's confusable warnings catch a name that differs from
+  another only by one of them.
 - In UAX #31's terms, Rune declares a profile (UAX31-R1-2):
   - it adds `'`, which is Pattern_Syntax, to Continue;
   - it removes the two frozen sets;
@@ -2487,9 +2508,11 @@ the annotation that also admits its UTF-8 literals (E2).
   - UTS #55 recommends UAX #31's mathematical profile too: `∂ ∇ ∞` and the
     sub- and superscript digits, as in `x₁`. It could join later; its signs
     `⁺ ⁻ ⁼ ₊ ₋ ₌` look like SML symbols and would join the lookalikes.
-  - The lookalikes list is seeded from UTS #39's confusables (85 identifier
-    characters that look like punctuation in 18.0, and perhaps 129 that look
-    like digits), completed by hand (`·`, `ǀ` and the other
+  - The lookalikes list is seeded from UTS #39's confusables, as 18.0 has
+    them: the 85 identifier characters that look like punctuation, and 116 of
+    the 129 that look like digits. The 13 that UTS #39 recommends are left
+    to the warnings (the owner, 2026-10-18; *The architecture*). It is then
+    completed by hand (`·`, `ǀ` and the other
     lookalikes of `|`), and frozen, so it cannot change with Unicode (X4,
     E5).
   - `lib/` keeps its exports ASCII, so every mode can use them (X11).
@@ -2885,7 +2908,8 @@ then confirms that the default becomes ASCII in M4 (D16).
     the budget updated with the reason.
 
 **Gate G2.** The owner sees the cost of the tables to the compiler (E5, M5)
-and the final identifier profile, the lookalikes list included, before M6.
+and the final identifier profile before M6. That includes the lookalikes list
+as built: the owner settled its digits on 2026-10-18 (D10).
 
 ### M6. Unicode identifiers (M, about 800)
 
