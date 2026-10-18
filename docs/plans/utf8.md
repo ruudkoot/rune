@@ -54,8 +54,8 @@ What it rests on:
 | M0 | This roadmap | done |
 | M1 | Fixes that follow the Definition or fix bugs | done 2026-10-18: the Basis part and the source part |
 | M2 | Source modes: the plumbing | done 2026-10-18 |
-| M3 | What a source may hold raw | done 2026-10-18; G1 to see |
-| M4 | Literals by type and mode | |
+| M3 | What a source may hold raw | done 2026-10-18; G1 passed 2026-10-18 |
+| M4 | Literals by type and mode | done 2026-10-18 |
 | M5 | `lib/unicode`: normalisation and identifier tables | done 2026-10-18; G2 passed 2026-10-18 |
 | M6 | Unicode identifiers | |
 | M7 | Showing source and names | |
@@ -3227,6 +3227,109 @@ The sizes are lines of code and tests, not counting generated tables.
     - `examples/benchmarks/sat/upstream/original.sml` takes escapes.
   - The corpora run.
   - `docs/language.md`'s *Strings* row says it all.
+* **Done** (2026-10-18, at `1fd65a9c`):
+  - **G1** passed (2026-10-18): the lead found M3's corpus results as E1
+    and E9 predicted, so the default became ASCII here (D16).
+  - **The default** refuses a raw character above 127 in a literal: "non-ASCII
+    character U+00E9 in string literal (write it as \u00E9, or read the
+    file with --unicode)". Above U+FFFF it says that the escape is
+    `\U0001F600` under `--unicode`. Between tokens such a character was
+    refused already, and comments keep D4's text. `--ascii-rule`, M3's
+    measuring flag, is gone: the default is now the rule, and
+    `scripts/lex-corpus.sh` has the three modes.
+  - **Under `--unicode`** a raw character above 127 is decoded and means its
+    code point.
+    - The lexer marks the literal with its first raw character
+      (`WIDESTRING` and `CHAR` carry an `int option`, as `SWideString` and
+      `SChar` do).
+    - Elaboration refuses the mark at `char` and `string`, with the
+      literal's span and the escapes: "raw character U+00E9 in a string
+      constant of type string: write \233 for the character, or \195\169
+      for its UTF-8". Above 255, or at `char`, it says to give the
+      constant a wide type.
+    - At `WideChar` and `WideString` raw text is its code points: "é" is
+      U+00E9, no longer U+00C3 U+00A9.
+  - **`--unicode=latin1`** (D3).
+    - `Source.readFile` makes a Latin-1 file UTF-8 as it is read
+      (`Source.latin1ToUtf8`), and so does `Compiler.compileIn` with
+      `"unicode=latin1"`. An editor's buffer is its text already.
+    - The lexer refuses a file that holds the UTF-8 of a character: "the
+      text looks like UTF-8: U+00C3 U+00A9 are the bytes of U+00E9 (read
+      the file with --unicode, not --unicode=latin1)". A byte order mark
+      is refused the same way.
+    - Nothing is marked: a raw character is its own byte at `string` and
+      its code point at the wide types.
+    - MLKit's 17 Latin-1 files give the same tokens under
+      `--unicode=latin1` as the compiler before M4 gave them by default,
+      `"(\230|\248|\229)"` of `test/regexp.sml` among them.
+      `tests/lang/lex.string_modes_latin1` writes that literal.
+  - **Surrogates** in `\u` and `\U` are an error at every type and in every
+    mode: "surrogate U+D800 in an escape: a surrogate is no character"
+    (D9). The deviation is pinned by `tests/errors/err.lex_surrogate*`.
+  - **`\U`** by default is "the escape \U needs --unicode" (D7).
+    `ty.overload.literal_wide`, `ty.overload.literal_cached_limits` and
+    M1's two `\U` reject tests take `--unicode` in their `.cargs`.
+    MLton's `regression/widechar.sml` writes `\U001067ab`, so it now
+    lexes under `--unicode` only. Under it, it passes as before (all but
+    test42); its line in `tests/external/mlton-skip.txt` says so.
+  - **Wide constants are made once.**
+    - `MatchComp.sconExp` gives a character or string constant at a type
+      of `_overload ... via` a new global (`MatchComp.hoisted`).
+    - `Translate.transTopLevel` sets that global at the start of the
+      top-level declaration that holds the constant. It does so in a
+      program compiled whole, in each unit, in the REPL, and for each
+      application of a functor.
+    - A loop that evaluates a wide literal of 23 characters 1,000 times
+      took 3,804,446 instructions before and 19,239 now (`runevm
+      --count`).
+    - `RuneWideStringLit` is unchanged.
+  - **Tests:**
+    - `tests/lang/lex.string_modes_{default,unicode,latin1}` cover the
+      four types under each mode: raw text where the mode takes it,
+      `\ddd`, `\u` and `\U`, and X1 (raw text equals its escape).
+    - 16 reject tests:
+      - `err.lex_raw_{string,char,wide,astral}` and
+        `err.lex_escape_bigu_default`;
+      - `err.lex_surrogate{,_unicode,_latin1,_bigu_unicode}`;
+      - `err.literal_raw_{string,char,above255,above255_char}_unicode`;
+      - `err.lex_latin1_{looks_utf8,bom}`.
+  - **A3's other three files.** `tests/diagnostics/wide.sml` and
+    `emoji.sml` keep their characters in a comment; their excerpts still
+    show them, wide and as graphemes. `examples/benchmarks/sat/upstream/
+    original.sml` writes `"\207\134("` (its `port.patch` and
+    `PROVENANCE.md` follow).
+  - **Documents:**
+    - `docs/language.md`: the rows *Strings* (each mode's literals, `\U`,
+      the surrogate deviation), *Integer literals* (wide constants made
+      once), *Source text*, `lex.char`, `lex.string` and `lex.encoding`.
+    - `docs/units.md`, *Source modes*, and the man page say how the modes
+      differ.
+  - **The corpus run** (`scripts/lex-corpus.sh`; the script lexes a file
+    without its `.cargs`):
+
+    | Corpus | Files | default | `--unicode` | `--unicode=latin1` |
+    |---|---|---|---|---|
+    | Rune | 2,270 | 2,180 | 2,183 | 2,177 |
+    | HOL4 | 3,419 | 3,419 | 3,419 | 3,165 |
+    | MLton | 1,787 | 1,784 | 1,785 | 1,783 |
+    | Latin-1 | 17 | 0 | 0 | 16 |
+
+    - Rune's default refuses, besides the tests of `tests/errors` and
+      `eof`, `bidi` and `badbyte`, five tests of `tests/lang` that take
+      another mode in their `.cargs`.
+    - MLton's default refuses `widechar.sml` more than `--unicode` does,
+      for its `\U`.
+    - `--unicode=latin1` now refuses more of the UTF-8 files, as ones that
+      look like UTF-8: 254 of HOL4's, and two of MLton's.
+    - No file that the default took in M3 is refused but for these.
+  - **Not foreseen:**
+    - None of A3's files needed more than a rewrite. The sat benchmark
+      that is compiled, `benchmark.sml`, never held the literal: its port
+      took out the logging that printed it.
+    - The runner's test of `--serve` sent a buffer with `"café → 😀"` in a
+      literal, to check that offsets are bytes. The default refuses it
+      now, so the text is in a comment, where the offsets are tested the
+      same way.
 
 **Gate G1**, between M3 and M4. With M3 built, the corpora, HOL-rune and
 the examples are lexed under the ASCII rule as M4 will apply it. The owner
