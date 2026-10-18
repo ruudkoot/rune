@@ -517,3 +517,16 @@ the benchmark's enumeration workload.
 Persistent lists, paired-result sharing, global finite definitions, suspended
 control and strict/delayed initialization are source-based performance questions.
 Exact result/count agreement does not attribute their individual costs.
+
+## Split wave-state arrays and stencil evidence
+
+The Hartel/Langendoen collection reference supplies translation context at
+the survey scope already recorded above. Pinned wave4main source establishes
+the actual staggered arrays, constants, operation grouping and boundary
+exchange. The independent unsplit-grid model validates the observed states;
+it does not replace the split benchmark or establish a new paper review.
+
+Boxed numerical fields, immutable border views, memoized history retention,
+finite-data specialization and the extra validation consumer are source-based
+performance questions. Passing states and agreeing deterministic counts do
+not attribute their individual costs.
