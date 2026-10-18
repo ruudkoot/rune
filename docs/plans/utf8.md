@@ -52,7 +52,7 @@ What it rests on:
 | Milestone | What | State |
 |---|---|---|
 | M0 | This roadmap | done |
-| M1 | Fixes that follow the Definition or fix bugs | |
+| M1 | Fixes that follow the Definition or fix bugs | Basis part done 2026-10-18 |
 | M2 | Source modes: the plumbing | |
 | M3 | What a source may hold raw | |
 | M4 | Literals by type and mode | |
@@ -2784,6 +2784,62 @@ The sizes are lines of code and tests, not counting generated tables.
   D8 A.
 * **Done when:** the tests above pass on every configuration that runs them,
   and the documents agree with the code.
+* **Done, the Basis part** (2026-10-18, at `362762f7`):
+  - **The decoder** of `WideTextIO` (`lib/basis/widetextio.sml`) takes the
+    well-formed sequences of the Unicode Standard's Table 3-7 and nothing
+    else. Anything else raises `IO.Io` with the cause `Fail "UTF-8"`:
+    - an overlong form, a surrogate, a value past 0x10FFFF;
+    - a lead byte C0, C1 or F5 to FF, a continuation byte where a sequence
+      begins;
+    - a sequence cut short.
+
+    The range of the second byte decides the first three, so no value past
+    0x10FFFF reaches `WideChar.chr`, and `Chr` is gone.
+  - **The encoder refuses a surrogate** with the same `Io` (function
+    `output`), as D9 A has it ("the UTF-8 encoder and decoder of
+    `WideTextIO`"). M1 named only the decoder. Without the encoder,
+    `WideTextIO` would write files that it then refuses to read. A vector is
+    encoded whole before any byte of it is written.
+  - **Tests:** `tests/basis/widetextio_utf8.sml`, 197 checks, with the values
+    made from numbers (xc1):
+    - E4's 85 cases of Kuhn's test and of 3.9.6;
+    - each byte that cannot begin a sequence;
+    - each row of Table 3-7, its second byte at both ends of the range and
+      just outside, and a later byte out of range;
+    - the output of every well-formed case, and five surrogates written.
+
+    The decoder from before fails 39 of them. A strict decoder stops at the
+    first ill-formed sequence, so where a case strings several together
+    (Kuhn 3.2 and 3.4, the tables of 3.9.6) only the first is tested; the
+    rows of lead bytes and of Table 3-7 test each one alone.
+  - **Documents:**
+    - `docs/unicode.md`:
+      - `WideChar` holds code points, surrogates included (D9);
+      - `WideString.scan` reads `WideChar.char`, and `WideChar.scan` reads
+        `Char.char`, as `CHAR` writes it;
+      - MLton's `WideChar` is `Char32` by default, and `Char16` under
+        `-default-type widechar16` (both checked on MLton 20241230).
+    - The row `basis.widetextio` of `docs/language.md` and the note
+      `WideTextIO/files-hold-utf-8` say what is refused.
+  - **Not foreseen:**
+    - The reader loses the characters that come before a bad sequence in
+      the same chunk: `readVec` raises before it returns them. So `input1`
+      on `a` followed by the byte FF raises, and does not give `a` first. It
+      did so before M1 too. M8's decoder, which reads blocks, can give them
+      first.
+    - xc1:mlkit fails 175 checks (`intn_int64` 173,
+      `@section/textio/instream-equality`, `@load/posix_sysdb`) under MLKit
+      4.7.23. The labels are the same as those of E6's run on master
+      `9b327248`, so the failures were there before M1. No deviation line
+      was added.
+    - This machine's `~/.local/rune-hosts/mlkit` is MLKit 4.7.23. The tree
+      needs 4.7.25 (`scripts/fetch-hosts.sh`; `ffb51b95` dropped the
+      work-arounds for 4.7.23), so `make check` stops at
+      `bin/rune-mlkit.bin` on `src/driver/serve.sml`. The checks of M1 were
+      run with `MLKIT=` and `MLKIT_LIB=` of the 4.7.25 beside it.
+  - **Checks:** `make check` and `make matrix-quick` at the commit that
+    records this, with MLKit 4.7.25 (logs `bas-m1-final` and
+    `bas-m1-final-matrix` of the campaign).
 
 ### M2. Source modes: the plumbing (M, about 500)
 
