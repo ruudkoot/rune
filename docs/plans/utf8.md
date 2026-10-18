@@ -11,7 +11,8 @@ own (`MONO_VECTOR_EQ`). The operators every program uses (`^`, `size`,
 `concat`) exist for 8-bit strings only.
 
 This roadmap plans three things:
-- **Source modes.** `--ascii`, `--utf8` and `--latin1`, with a table
+- **Source modes.** an ASCII default, `--unicode` for UTF-8 and
+  `--unicode=latin1`, with a table
   of what each admits, raw, in code, comments and literals.
 - **Unicode identifiers.** Normalised or checked to NFC, and kept safe from
   the lookalikes and invisible characters that Unicode brings.
@@ -61,7 +62,7 @@ What it rests on:
 | M8 | The wide family in the 8-bit order, and its costs | |
 | M9 | The symmetric text signatures, and the change request | |
 | M10 | String operations at both widths | |
-| M11 | The corpora, the default, and the comparison | |
+| M11 | The corpora and the comparison | |
 
 D1 to D20 are undecided (*Decisions*).
 
@@ -133,6 +134,25 @@ The owner's brief, as written:
   normalisation (UAX #15) and display width (UAX #11), and is cited where
   those come up.
 
+**The owner's decision after M0 (2026-10-18):** the brief's three flags
+become one.
+- **No `--ascii`:** the ASCII mode is the default, so it needs no flag.
+- **`--unicode=ENC`,** with `ENC` either `utf8` or `latin1`, in place of
+  `--utf8` and `--latin1`. A bare `--unicode` means `--unicode=utf8`.
+
+The rest of this document uses those names. The modes are still three:
+- the default, ASCII outside comments;
+- `--unicode`, for UTF-8;
+- `--unicode=latin1`.
+
+Two plans changed with them:
+- **The default.** With no `--ascii`, today's rules cannot stay the default
+  while ASCII is asked for by flag. So the ASCII mode becomes the default as
+  its rules land, in M3 and M4, and not in M11 (D16).
+- **How the mode is set.** The name `ascii` stays in the mode's vocabulary,
+  for build files and `Compiler.compile`, which must be able to say it when
+  the command line says `--unicode` (D1).
+
 | The brief asks | Answered in |
 |---|---|
 | a roadmap for Unicode and UTF-8 source | this document |
@@ -149,8 +169,8 @@ The owner's brief, as written:
 | no raw control characters in literals | D5, M3 |
 | Rune's own source keeps to it | A3, E9, M11 |
 | a deviation where this is stricter than SML '97 | *What the specifications say*, D4 |
-| check MLton and HOL4 | C4, D4, E1, E9: both pass `--ascii` if comments may hold UTF-8 |
-| `--ascii`, `--latin1` and `--utf8` | D1, D3, D6, M2 to M4 |
+| check MLton and HOL4 | C4, D4, E1, E9: both pass the ASCII default if comments may hold UTF-8 |
+| `--ascii`, `--latin1` and `--utf8` | the owner's names: the default, `--unicode`, `--unicode=latin1` (*The request*); D1, D3, D6, M2 to M4 |
 | `--latin1` and the Latin-1 code page | C1 to C3, D2, D3 |
 | `--utf8`, with the control characters still restricted | D5, D6 |
 | source read as a stream, with positions counted in code points | *What the brief gets wrong* (W4, W5), *The architecture*, D15 |
@@ -261,7 +281,8 @@ refer to the brief as quoted in *The request*.
   - 16 of MLKit's, three of which hold `"(æ|ø|å)"` in literals;
   - one of Moscow ML's.
   
-  D3 makes `--latin1` an encoding, and keeps their bytes.
+  D3 makes it an encoding, `--unicode=latin1` in the owner's names, and keeps
+  their bytes.
 
 **C2. "To the extend also allowed by the sml97 specification" (line 18).**
 - SML '97 allows no character above 126 in a string constant
@@ -283,8 +304,8 @@ comments.**
   - HOL4's quotation filter, which Holmake runs on every source, escapes the
     bytes of `"α"` as `"\206\177"` and turns quotations into ASCII strings.
   - In MLton, non-ASCII is found only in two comments.
-- So both pass `--ascii` exactly when comments may hold UTF-8 (D4), and need
-  `--utf8` otherwise. They need it for their comments, not their code.
+- So both pass the ASCII default exactly when comments may hold UTF-8 (D4),
+  and need `--unicode` otherwise. They need it for their comments, not their code.
 - For HOL4 as HOL-rune compiles it, the comment rule decides 425 files:
   - 258 of HOL4's 3,742 sources, after the filter;
   - 165 theory files that HOL generates (`⊢ ∀ ∧ ⇒` in their comments), which
@@ -319,7 +340,7 @@ codes" cannot apply to comments, which have no escapes.
 
 **A3. "Rune source code must adhere" (line 13).** Rune's own tree, or every
 program Rune compiles?
-- E9 lists the five files of Rune's tree that `--ascii` refuses: four
+- E9 lists the five files of Rune's tree that the ASCII mode refuses: four
   diagnostics tests, which exist to hold odd characters, and an upstream copy
   of a benchmark.
 - Under D5 and D6 no mode takes four of them as they are. They are
@@ -328,7 +349,8 @@ program Rune compiles?
     literals, or become reject tests;
   - the benchmark copy takes escapes.
   
-  `badbyte.sml` can instead be read under `--latin1`. See M3 and M11.
+  `bidi.sml` and `badbyte.sml` become reject tests of the rules that refuse
+  them. See M3 and M4.
 
 **A4. "Extended ascii" (lines 37, 39).** Rune's `char` is a byte with ASCII's
 classes. `Char.isAlpha #"\233"` is `false` and `toUpper` leaves it alone, so
@@ -350,7 +372,7 @@ every byte below 32 inside a literal, outside a gap (`lexer.sml:156`). The brief
 ### Dangerous
 
 **X1. A raw character and its escape would mean different things.**
-- If `--utf8` lets `"é"` stand at `string` as its UTF-8 bytes, as SML/NJ,
+- If `--unicode` lets `"é"` stand at `string` as its UTF-8 bytes, as SML/NJ,
   MLKit and Moscow ML do (E2), then `"é"` is two bytes and `"\u00E9"` one.
   `"€"` compiles while `"\u20AC"` is an error.
 - `#"é"` would have to stay an error, or `String.sub ("é", 0) <> #"é"`.
@@ -362,8 +384,8 @@ every byte below 32 inside a literal, outside a gap (`lexer.sml:156`). The brief
   may use `_prim`, and its settings (`src/driver/unitcache.sml:140-142`),
   under a directory named by the compiler's configuration. A hit skips the
   lexer.
-- If the mode is not among the settings, a unit compiled under `--utf8` is
-  loaded under `--ascii` without a word.
+- If the mode is not among the settings, a unit compiled under `--unicode` is
+  loaded in the default mode without a word.
 - Loading a unit's basis lexes its source again (`unitbasis.sml:1339-1342`),
   and that needs the unit's own mode.
 - See D1.
@@ -433,15 +455,15 @@ every byte below 32 inside a literal, outside a gap (`lexer.sml:156`). The brief
 - Once identifiers and literals hold more than ASCII, how the REPL, the
   debugger and runedoc print them is a safety question. See D14.
 
-**X10. An `--ascii` default refuses programs Rune takes today.**
+**X10. An ASCII default refuses programs Rune takes today.**
 - HOL-rune would compile only if comments may hold UTF-8 (C4). Even then,
   the sat example and four diagnostics tests are refused (A3), and so is any
   program with UTF-8 in an 8-bit literal.
 - Such programs compile today. A flag helps only those whose UTF-8 is in
   comments, in wide literals or in Latin-1 files. The others need escapes
-  (D6). That is why the default changes only in M11 (D16).
+  (D6). The default changes as M3 and M4 bring its rules, after G1 (D16).
 
-**X11. An `--ascii` unit cannot name what a `--utf8` unit exports.** Standard
+**X11. An ASCII unit cannot name what a `--unicode` unit exports.** Standard
 ML has no escape for identifiers. If `lib/` exported `Foo.λ`, a program in
 the default mode could not use it. Libraries keep their exports ASCII (D10).
 
@@ -454,12 +476,12 @@ asks:
   brief's aim, names compared by their bytes, holds either way. A name
   stays the bytes of its span, and sixteen places that read names from spans
   need no change.
-- **`--latin1` keeps raw bytes in 8-bit literals (lines 18 and 40; D3, D6).**
+- **`--unicode=latin1` keeps raw bytes in 8-bit literals (lines 18 and 40; D3, D6).**
   Line 40 refuses every raw character outside 32-126 in a literal. Under
-  `--latin1` a raw `æ` is its own byte, as its escape `\230` is, and
+  `--unicode=latin1` a raw `æ` is its own byte, as its escape `\230` is, and
   MLKit's Latin-1 tests mean what they mean today.
-- **Comments may hold UTF-8 under `--ascii` (line 11; D4).** Without this,
-  HOL4 and MLton would need `--utf8` for their comments alone.
+- **Comments may hold UTF-8 in the ASCII mode (line 11; D4).** Without this,
+  HOL4 and MLton would need `--unicode` for their comments alone.
 - **Only four string operations are overloaded (line 8; D20).** `^`, `size`,
   `concat` and `substring` are. `str`, `implode` and `explode` need a new
   mechanism in the elaborator, and `chr` and `print` should never be
@@ -822,11 +844,11 @@ the files `WideTextIO` reads.
 
 ### Is SML '97 one of the three modes? (line 24)
 
-No. The Definition fixes no encoding, so it cannot be `--latin1` or `--utf8`.
+No. The Definition fixes no encoding, so it cannot be `--unicode=latin1` or `--unicode`.
 Its repertoire is narrower than either mode and wider than the brief's
 `--ascii`:
 
-| | The Definition | `--ascii` as the brief writes it | `--latin1` | `--utf8` |
+| | The Definition | the brief's `--ascii` | the brief's `--latin1` | the brief's `--utf8` |
 |---|---|---|---|---|
 | encoding of the file | none given | ASCII | Latin-1 | UTF-8 |
 | raw in a literal | 32-126 (space and printable) | 32-126 | 0-255 "to the extent allowed by sml97", which is 32-126 | any but controls |
@@ -839,7 +861,7 @@ Rune takes both today. It is wider in comments, which may hold anything, and
 it requires formfeed.
 
 With two changes, comments that may hold UTF-8 text (D4) and formfeed kept
-as white space (D5), `--ascii` is SML '97 read from a UTF-8 file, with one
+as white space (D5), the ASCII default is SML '97 read from a UTF-8 file, with one
 deviation:
 - **The deviation.** A comment may not hold a control character other than
   TAB, LF, CRLF and FF, a bidi control, a line separator, or bytes that are
@@ -849,7 +871,7 @@ deviation:
 - It is stricter than Rune is today, and stricter than SML/NJ, MLKit and
   Moscow ML, which take raw bytes in literals (E2).
 
-`--utf8` would be a deviation in two places: raw non-ASCII text in literals
+`--unicode` would be a deviation in two places: raw non-ASCII text in literals
 (D6) and Unicode identifiers (D10). It is recorded and pinned as one.
 
 ## What is different for SML, and for Rune
@@ -1159,8 +1181,8 @@ default (`control/control-flags.sml:729-731`).
 - `\u` above 255 is an error, and there is no `\U` (lines 203-222).
 
 Rune today is closest to SML/NJ, with MLton's `\U` and wide types. After this
-roadmap it is closest to Poly/ML and plain MLton in what `--ascii` refuses,
-and to MLton+ext in what `--utf8` admits at the wide types, but with one
+roadmap it is closest to Poly/ML and plain MLton in what its default refuses,
+and to MLton+ext in what `--unicode` admits at the wide types, but with one
 character per code point.
 
 ### Elsewhere
@@ -1276,10 +1298,10 @@ every literal in the 20,149 files Rune can lex.
 
 | Rule | Rune | MLton | HOL4 as HOL-rune compiles it | SML/NJ (110, 2026, tests) | MLKit | Moscow ML |
 |---|---|---|---|---|---|---|
-| `--ascii` as the brief writes it | 7 | 2 | 425 | 15, 16, 1 | 16 | 1 |
-| `--ascii` with UTF-8 comments (D4) and FF (D5) | 5 | 0 | **0** | 0, 0, 1 | 16 | 1 |
-| `--utf8`, lexing only (D6 refuses more: *E9*) | 3 | 0 | 0 | 0, 0, 1 | 16 | 1 |
-| `--latin1` (D3), E9's prototype on the 17 Latin-1 files | - | - | - | - | 1, as today (an unterminated comment) | 0 |
+| the brief's `--ascii` | 7 | 2 | 425 | 15, 16, 1 | 16 | 1 |
+| the default: the brief's `--ascii` with UTF-8 comments (D4) and FF (D5) | 5 | 0 | **0** | 0, 0, 1 | 16 | 1 |
+| `--unicode`, lexing only (D6 refuses more: *E9*) | 3 | 0 | 0 | 0, 0, 1 | 16 | 1 |
+| `--unicode=latin1` (D3), E9's prototype on the 17 Latin-1 files | - | - | - | - | 1, as today (an unterminated comment) | 0 |
 
 **HOL-rune** compiles in three ways:
 - `rune -o` for its nine tools, with no flags (`tools-rune/configure.sh`);
@@ -1296,7 +1318,7 @@ A mode must reach all three (D1).
 - **D5's controls refuse nothing that any source uses**, and FF must stay.
   Its last rows refuse:
   - the 19 files that are not UTF-8 (MLKit's 16 and Moscow ML's one pass
-    under `--latin1`);
+    under `--unicode=latin1`);
   - Rune's `bidi.sml`.
 - **D3 has a use:** MLKit's tests.
 - **D6 refuses one real literal,** in an upstream copy inside Rune's tree.
@@ -1309,7 +1331,7 @@ MLton and SML/NJ read: *What the implementations do* and *Appendix E*.
 
 **What it predicts.**
 - Every system already refuses a raw TAB, non-ASCII identifiers and
-  symbols, and a BOM. Rune's `--ascii` refuses the first three too, and
+  symbols, and a BOM. Rune's default refuses the first three too, and
   drops a leading BOM as the Unicode standard advises. It also refuses DEL
   and non-ASCII bytes in literals, as Poly/ML and plain MLton do, and VT, as
   SML/NJ, MLKit and Moscow ML do. No source of E1 uses any of these.
@@ -1682,17 +1704,17 @@ between one pass and five over the same files, so start-up is not counted.
 
 **What each mode accepts:**
 
-| Corpus | Files | Today | `--ascii` | `--utf8` |
+| Corpus | Files | Today | default | `--unicode` |
 |---|---|---|---|---|
 | the compiler (`rune.build`, 1.1 MB) | 74 | 74 | 74 | 74 |
 | Rune's tracked sources | 2,152 | 2,149 (3 are tests of lexer errors) | 2,144 | 2,147 |
 | HOL4 `src` and `examples`, after `unquote` (104 MB) | 3,419 | 3,419 | 3,419 | 3,419 |
 | MLton's sources (14 MB) | 1,787 | 1,784 | 1,784 | 1,784 |
 
-- **Rune's tree under `--ascii`:** the five files refused are
+- **Rune's tree in the default mode:** the five files refused are
   `examples/benchmarks/sat/upstream/original.sml` (a raw `"φ("`) and the four
   `tests/diagnostics` files that hold odd characters on purpose.
-- **Under `--utf8`,** two of those are still refused: `badbyte.sml` (not
+- **Under `--unicode`,** two of those are still refused: `badbyte.sml` (not
   UTF-8) and `bidi.sml` (U+202E in a literal).
 - **MLton's three files refused today** are refused for reasons this roadmap
   fixes or leaves:
@@ -1711,7 +1733,7 @@ Small probes behave as designed:
 
 **Instructions to lex, per pass:**
 
-| Corpus | Today | Prototype `--ascii` | Optimised `--ascii` | Optimised `--utf8` |
+| Corpus | Today | Prototype, default | Optimised, default | Optimised, `--unicode` |
 |---|---|---|---|---|
 | the compiler, 1.1 MB, 199,176 tokens | 53.6M | 59.4M (+10.8%) | 57.6M (+7.4%) | 57.6M |
 | MLton, 14.1 MB | 595.9M | 666.3M (+11.8%) | 651.8M (+9.4%) | 651.8M |
@@ -1722,12 +1744,12 @@ Small probes behave as designed:
 
 **A whole compile of the compiler** (its 74 files to bytecode) is 1,031M
 instructions today. Lexing is 5.2% of it. With the optimised prototype
-under `--ascii`, it is 1,036M: **0.48% more** than the base compiling the
+in the default mode, it is 1,036M: **0.48% more** than the base compiling the
 same files by the same absolute paths (1,031.0M; E9's summary).
 
 **What it predicts.**
 - The modes cost about 0.5% of a compile in this first form, and
-  `--utf8` costs nothing over `--ascii` for ASCII text. The remaining 7 to 9%
+  `--unicode` costs nothing over the default for ASCII text. The remaining 7 to 9%
   of lexing is in the extra tests on each byte of white space and comments,
   which a lexer written for the modes, rather than patched, can share.
 - Unicode identifiers cost 1.5 to 1.9 times what ASCII ones cost per token,
@@ -1842,7 +1864,8 @@ decoded.
 in order of precedence:
 1. the unit's line in a build file (an annotation, as `allowPrim` is,
    `src/driver/main.sml:772-776`);
-2. the command line (`--ascii`, `--utf8` or `--latin1`);
+2. the command line (`--unicode`, `--unicode=utf8` or `--unicode=latin1`;
+   nothing for ASCII);
 3. the default (D16).
 
 It also comes from:
@@ -1854,9 +1877,9 @@ The mode is stored with a unit in its cache settings, so a cache hit under
 another mode is a miss (X2). The unit basis, which lexes a unit's source
 again to find its functors, uses the unit's mode.
 
-**`--latin1`** is an encoding, not a repertoire (C1, D3).
+**`--unicode=latin1`** is an encoding, not a repertoire (C1, D3).
 - The file is read as Latin-1 and made UTF-8 as it is read (E9's
-  `Source.latin1ToUtf8`, one pass). From there on it is `--utf8` text whose
+  `Source.latin1ToUtf8`, one pass). From there on it is `--unicode` text whose
   characters are all at most 255.
 - A raw character in a literal means its code point, so at `string` it is the
   file's own byte, as today.
@@ -1891,16 +1914,16 @@ be written in a literal as an escape and not raw. What changes from today:
 | explicit bidi controls (U+202A-202E, U+2066-2069), the nine of Trojan Source | no | no | no: escape |
 | bidi marks LRM, RLM, ALM (U+200E, U+200F, U+061C) | no | yes | yes |
 | other default-ignorables (ZWSP, ZWJ, ZWNJ, WJ, variation selectors, U+3164 ...) | no | yes | yes |
-| any other character above 127 | `--utf8`: in an identifier only (D10); `--ascii`: no | yes, in every mode (D4) | `--utf8`: by type (D6); `--ascii`: no |
+| any other character above 127 | `--unicode`: in an identifier only (D10); default: no | yes, in every mode (D4) | `--unicode`: by type (D6); default: no |
 | bytes that are not UTF-8 | no | no | no |
 
-The rows are the same in every mode except the last but one. So `--ascii`
-and `--utf8` differ only in where a non-ASCII character may stand outside a
-comment. That is D2's rule made concrete: a program `--ascii` accepts means
-the same under `--utf8`.
+The rows are the same in every mode except the last but one. So the default
+and `--unicode` differ only in where a non-ASCII character may stand outside a
+comment. That is D2's rule made concrete: a program the default accepts means
+the same under `--unicode`.
 
-`--latin1` is `--utf8` once its file is converted, so it follows the
-`--utf8` column, its characters are all at most 255, and it has no bytes
+`--unicode=latin1` is `--unicode` once its file is converted, so it follows the
+`--unicode` column, its characters are all at most 255, and it has no bytes
 that are not UTF-8. Its C1 bytes, 0x80 to 0x9F, are C1 controls and refused.
 
 Default-ignorables other than the nine controls are allowed in comments and
@@ -1923,9 +1946,9 @@ no editor shows it as a line end.
 | ASCII 32-126 | the byte | the code point |
 | `\ddd` | the byte; above 255 an error | the code point (today: above 255 an error; D8) |
 | `\uXXXX`, `\UXXXXXXXX` | the byte if at most 255, else an error | the code point; a surrogate is an error (D9) |
-| a raw character above 127, `--ascii` | an error: "write it as an escape" | an error: "write it as an escape" |
-| a raw character above 127, `--utf8` | an error (D6: recommended; the brief's line 40) | the code point |
-| a raw character above 127, `--latin1` | the byte, which is its code point (D3, D6) | the code point |
+| a raw character above 127, by default | an error: "write it as an escape" | an error: "write it as an escape" |
+| a raw character above 127, `--unicode` | an error (D6: recommended; the brief's line 40) | the code point |
+| a raw character above 127, `--unicode=latin1` | the byte, which is its code point (D3, D6) | the code point |
 | a raw control | an error (table above) | an error |
 
 Raw text and escapes then never disagree. Wherever a raw character is
@@ -1933,10 +1956,10 @@ allowed, it means its code point, which is what its escape means (X1, D6).
 
 The lexer keeps a literal as a list of code points. The present choice of
 `STRING` or `WIDESTRING`, by "every code point is at most 255", needs one
-more fact: under `--utf8`, whether a raw character above 127 was met. The
+more fact: under `--unicode`, whether a raw character above 127 was met. The
 lexer marks such a literal, and elaboration refuses the mark at `char` and
 `string`, where it knows the type and can give the error with the literal's
-span. Under `--latin1` nothing is marked, because a raw character is its own
+span. Under `--unicode=latin1` nothing is marked, because a raw character is its own
 byte. Today's check at the 8-bit types (`src/elab/elaborate.sml:117-141`)
 grows a case: "raw non-ASCII character at type string".
 
@@ -1951,7 +1974,7 @@ places that each write it again today (*Where we are*, *Appendix A*):
 - runedoc's anchors, resolver, laws, claims, annotations, tests, pages and
   site.
 
-An alphanumeric identifier, under `--utf8`:
+An alphanumeric identifier, under `--unicode`:
 
 ```
 ident    ::= start continue*
@@ -2143,12 +2166,12 @@ it was written with.
 
 | Decision | Recommended |
 |---|---|
-| D1. Where the mode is set | A: per file; flag, build annotation, `Compiler` API; in the cache key |
+| D1. Where the mode is set | A: per file; `--unicode[=ENC]` (the owner's names), build annotation, `Compiler` API; in the cache key |
 | D2. Modes agree where they overlap | A: yes, as a rule the tests check |
-| D3. `--latin1` | B: an encoding, converted as it is read; a raw character means its code point |
-| D4. Comments under `--ascii` | A: any UTF-8 text but the refused code points |
+| D3. `--unicode=latin1` | B: an encoding, converted as it is read; a raw character means its code point |
+| D4. Comments in the ASCII mode | A: any UTF-8 text but the refused code points |
 | D5. What a source may hold raw | A: the table of *The architecture* |
-| D6. Raw non-ASCII in a literal at `string` and `char` | A: an error under `--utf8`; a raw character means its code point |
+| D6. Raw non-ASCII in a literal at `string` and `char` | A: an error under `--unicode`; a raw character means its code point |
 | D7. `\x` | A: no |
 | D8. `\ddd` at the wide types | A: the whole alphabet, as the Definition says |
 | D9. Code points or scalar values | A: `WideChar` holds code points; scalar values at the boundaries |
@@ -2158,7 +2181,7 @@ it was written with.
 | D13. Errors and warnings | A: errors from stable data only; UTS #39 as warnings |
 | D14. Printing non-ASCII | A: names raw; wide strings with controls and invisibles escaped |
 | D15. Columns | A: bytes in machine data; code points shown, UTF-16 for the DAP |
-| D16. The default | A: `--ascii` (with D4), everywhere, from M11; today's rules as `legacy` until then |
+| D16. The default | A: ASCII (with D4), everywhere, as M3 and M4 bring its rules; no `legacy` mode |
 | D17. The Unicode version | A: one pinned version for all tables, in the cache's configuration |
 | D18. The symmetric text signatures | A: generic `TEXT_IO`, `TEXT_STREAM_IO`, `STRING_CVT`; `WideCharVector` pinned to `WideString.string` |
 | D19. The representation of `WideString` | A: as it is, a word per code point |
@@ -2170,13 +2193,21 @@ The mode must reach the lexer for every source: files on the command line,
 units of a build, `use` in the REPL, `Compiler.compile`, and the unit basis
 when it lexes a cached unit's source again.
 
-* **A. Per file.** `Source.file` gets the mode. It is set:
-  - by `--ascii`, `--utf8` or `--latin1` on the command line;
-  - by an annotation on a unit's line in a build file;
+* **A. Per file.** `Source.file` gets the mode, one of `ascii`, `utf8` and
+  `latin1`. It is set:
+  - on the command line, by nothing (`ascii`, the default), `--unicode` or
+    `--unicode=utf8` (`utf8`), or `--unicode=latin1` (`latin1`). The owner
+    decided these names on 2026-10-18 (*The request*). The last flag wins.
+    The value must be joined by `=`: `--unicode latin1` would read `latin1`
+    as an input file, so an input of that name that cannot be read gets the
+    hint "did you mean `--unicode=latin1`?". The REPL's parser, which takes
+    `--color always` with a space, takes `--unicode` only with `=` as well;
+  - by an annotation on a unit's line in a build file, which can also say
+    `ascii` for a unit of a build whose command line says `--unicode`;
   - by a field of `Compiler.compile`'s parameters;
   - and stored in the unit's cache settings. **Recommended.**
-  - One program may mix modes. HOL4's theories can be `--utf8` where Rune's
-    Basis is `--ascii`.
+  - One program may mix modes. HOL4's theories can be read with `--unicode`
+    where Rune's Basis is ASCII.
   - X2 cannot happen. A unit cached under one mode is a miss under another,
     and the unit basis lexes again with the unit's own mode.
   - It is how `--or-patterns` and `allowPrim` work today.
@@ -2190,18 +2221,18 @@ when it lexes a cached unit's source again.
 ### D2. Modes agree where they overlap
 
 * **A. A program that two modes accept means the same in both.** The tests
-  check it: every accept test of `--ascii` runs under `--utf8` with the same
+  check it: every accept test of the default runs under `--unicode` with the same
   output. **Recommended.**
   - A mode only says what is refused. Turning a flag on cannot change what a
     working program does.
-  - `--latin1` (D3) reads another encoding. It is outside the rule, as an
+  - `--unicode=latin1` (D3) reads another encoding. It is outside the rule, as an
     encoding flag must be: the same bytes are other characters.
-  - Within the rule, `--ascii` and `--utf8` agree because D6 refuses a raw
+  - Within the rule, the default and `--unicode` agree because D6 refuses a raw
     non-ASCII character at `string` rather than giving it a meaning that
     its escape does not have (X1).
 * **B. No rule.** Each mode is designed on its own.
 
-### D3. `--latin1`
+### D3. `--unicode=latin1`
 
 The brief has `--latin1` both as a code page to convert (line 18) and as a
 repertoire in a file that is UTF-8 (line 40) (C1). HOL4 and MLton do not need
@@ -2223,13 +2254,13 @@ which Rune keeps today.
   - **The danger** is a UTF-8 file read as Latin-1. `é` would become `Ã©`, and
     both its bytes are above U+009F, so they pass every rule. The mode
     therefore refuses a file that holds a well-formed UTF-8 sequence of two
-    bytes or more, with "this file looks like UTF-8; use `--utf8`". Real
+    bytes or more, with "this file looks like UTF-8; use `--unicode`". Real
     Latin-1 text almost never forms one: `æ` followed by an ASCII letter does
     not.
 * **C. A repertoire.** The file is UTF-8, and only code points up to 255 are
   allowed. This gives neither old files nor any new safety.
 
-### D4. Comments under `--ascii`
+### D4. Comments in the ASCII mode
 
 This decides whether HOL4 and MLton compile under the default (C4).
 
@@ -2266,7 +2297,7 @@ This decides whether HOL4 and MLton compile under the default (C4).
   - Two SML/NJ files use FF between tokens, which stays allowed.
   - Only Rune's own `tests/diagnostics` hold bidi controls and joiners.
   - The row for bytes that are not UTF-8 refuses 19 files. MLKit's 16 and
-    Moscow ML's one are Latin-1 and pass under `--latin1`. The other two are
+    Moscow ML's one are Latin-1 and pass under `--unicode=latin1`. The other two are
     Rune's bad-byte test and an SML/NJ regression test.
   - VT is refused by SML/NJ, MLKit and Moscow ML already (E2).
   - Bare CR is taken by every system, but Rune counts its lines wrongly
@@ -2305,11 +2336,11 @@ escape would:
   - Today Rune, like MLton with `allowExtendedTextConsts`, makes it the two
     code points U+00C3 U+00A9, one per byte (E2). This roadmap leaves that
     reading deliberately.
-- Under `--latin1`, every character is at most 255 and is the file's own
+- Under `--unicode=latin1`, every character is at most 255 and is the file's own
   byte, so at `string` raw text and escapes agree. `"æ"` is the byte E6, as
   today (D3).
 
-Under `--utf8` the file's bytes and the code point disagree: `é` is C3 A9 in
+Under `--unicode` the file's bytes and the code point disagree: `é` is C3 A9 in
 the file and 233 as a character. At `string`:
 
 * **A. An error,** as the brief's line 40 asks. The 8-bit spelling is
@@ -2317,7 +2348,7 @@ the file and 233 as a character. At `string`:
   - Raw text and escapes never disagree (X1).
   - A program that wants bytes says which.
   - HOL4 is unaffected: its filter escapes such bytes (C4).
-  - MLKit's three Latin-1 literals compile under `--latin1`.
+  - MLKit's three Latin-1 literals compile under `--unicode=latin1`.
   - Rune's tree has one raw UTF-8 literal outside its diagnostics tests,
     in an upstream copy of a benchmark
     (`examples/benchmarks/sat/upstream/original.sml`). It takes the
@@ -2495,21 +2526,28 @@ source** (line 29). NFC changes characters that are not combining marks
 
 ### D16. The default
 
-The brief makes `--ascii` the default "for now" (line 16).
+The brief makes `--ascii` the default "for now" (line 16). The owner's flags
+(2026-10-18) have no `--ascii`, so the ASCII mode is what a compile gets
+when no flag asks for more.
 
-* **A. `--ascii` with D4's comments, for the compiler and the REPL. The
-  REPL takes `--utf8` as an option.** **Recommended.**
-  - It is SML '97 read from UTF-8, with one deviation, D5's rules for
+* **A. ASCII with D4's comments, for the compiler and the REPL, from the
+  milestones that bring its rules. The REPL takes `--unicode` as an option.**
+  **Recommended.**
+  - It is SML '97 read from UTF-8, with one deviation: D5's rules for
     comments.
-  - HOL4, MLton and the compiler pass. Five files of Rune's tree are
-    rewritten, or, for the bad-byte test, read under `--latin1` (A3, E9).
-  - Until M11 the default stays today's behaviour, a `legacy` mode that M2
-    keeps. `--ascii`, `--utf8` and `--latin1` are asked for by flag or
-    annotation, so `make check` stays green from milestone to milestone. G1
-    reviews the choice with the corpus results of M3 and M4. M11 makes
-    `--ascii` the default and removes `legacy`.
-* **B. `--utf8`.** More programs compile, and the default is a deviation.
-* **C. `--ascii` for files, `--utf8` for the REPL,** whose input comes from a
+  - HOL4, MLton and the compiler pass (E1, E9).
+  - It arrives in two steps, so that `make check` stays green.
+    - M3 brings the refusals that hold in every mode. Rune's `bidi.sml` and
+      `badbyte.sml` are rewritten then.
+    - M4 brings the ASCII rule outside comments. The other three files of
+      A3 are rewritten then.
+  - G1, before M4, shows the owner the corpus results of M3 against the
+    rule.
+  - There is no `legacy` mode. A program that needs today's handling of raw
+    bytes in an 8-bit literal writes escapes (D6).
+* **B. `--unicode` as the default.** More programs compile, and the default
+  is a deviation.
+* **C. ASCII for files, `--unicode` for the REPL,** whose input comes from a
   terminal that speaks UTF-8. A line pasted from a file could then behave
   otherwise in the REPL, against D2's spirit.
 
@@ -2653,15 +2691,20 @@ The sizes are lines of code and tests, not counting generated tables.
 ### M2. Source modes: the plumbing (M, about 500)
 
 * **What:** D1 and D2, with no change to what any mode accepts.
-  - `Source.file` gets a mode: `Legacy | Ascii | Utf8 | Latin1`. `Legacy`,
-    today's lexer, is the default until M11 (D16).
-  - It is set by `--ascii`, `--utf8` and `--latin1`, by a build-file
-    annotation and by `Compiler.compile`'s parameters, and the REPL's `use`
-    and typed input take the REPL's own.
+  - `Source.file` gets a mode, `Ascii | Unicode of encoding` with `encoding =
+    Utf8 | Latin1`. `Ascii` is the default (D16).
+  - It is set:
+    - by `--unicode` and `--unicode=utf8|latin1`, the owner's names, with the
+      hint for `--unicode latin1` written with a space (D1);
+    - by a build-file annotation (`ascii`, `unicode`, `unicode=latin1`);
+    - by `Compiler.compile`'s parameters.
+    
+    The REPL's `use` and typed input take the REPL's own.
   - The unit cache's settings take the mode, and so do the unit files. The
     unit basis lexes again with a unit's own mode.
   - `lexerOf` takes the mode. Its about 25 callers pass the file's.
-  - Every mode behaves as today; the next milestones give them meaning.
+  - Every mode behaves as today, the default included; M3 and M4 give them
+    their rules.
 * **Why now:** every later milestone of the track needs a mode to read, and
   X2 must be closed before any mode refuses anything.
 * **Done when:**
@@ -2678,7 +2721,6 @@ The sizes are lines of code and tests, not counting generated tables.
     non-ASCII decoded where met.
   - A BOM at the start is dropped. CRLF counts as one line end in
     `Source.computeLineStarts`.
-  - `--ascii` refuses non-ASCII outside comments.
   - Accept and reject tests for each row and each mode: `tests/lang/lex.*`
     and `tests/errors/err.lex_*`, with `.cargs` for the mode. Among them
     are Trojan Source's three patterns with bidi controls, each refused:
@@ -2691,7 +2733,9 @@ The sizes are lines of code and tests, not counting generated tables.
   modes differ.
 * **Done when:**
   - Rune's tree, HOL4 and MLton pass under each mode as E9 found.
-    `make check` stays green under `legacy`, the default until M11.
+  - Rune's two files with a bidi control or a bad byte (`tests/diagnostics/
+    bidi.sml`, `badbyte.sml`) become reject tests of those rules. Their
+    excerpts still show the character escaped, which is what they test.
   - `docs/language.md` has a row for each rule. The deviation of D5's rules
     for comments, where the Definition allows any character, is pinned by
     tests.
@@ -2700,17 +2744,19 @@ The sizes are lines of code and tests, not counting generated tables.
 ### M4. Literals by type and mode (S-M, about 400)
 
 * **What:** D3, D6, D7 and D9's boundary at the lexer.
-  - The lexer keeps every literal as code points. Under `--utf8` it marks one
-    that holds a raw character above 127.
+  - The default refuses non-ASCII outside comments. From here the ASCII mode
+    is what a compile without a flag gets (D16).
+  - The lexer keeps every literal as code points. Under `--unicode` it marks
+    one that holds a raw character above 127.
   - Elaboration refuses that mark at `char` and `string`, with the
     literal's span and the escapes that would say it.
   - A surrogate in `\u` or `\U` is an error at every type, a deviation pinned by a
     test (D9).
-  - Under `--utf8`, raw text in a wide literal is its code points: U+00E9,
+  - Under `--unicode`, raw text in a wide literal is its code points: U+00E9,
     no longer U+00C3 U+00A9.
   - Wide literals become constants. The compiler encodes them once, not
     through `fromString` at each evaluation (E8).
-  - `--latin1` (D3):
+  - `--unicode=latin1` (D3):
     - conversion as the file is read;
     - the "looks like UTF-8" refusal;
     - tests on MLKit's Latin-1 regexp tests, which must mean what they mean
@@ -2718,15 +2764,20 @@ The sizes are lines of code and tests, not counting generated tables.
     - accept and reject tests of its own: raw Latin-1 at `string` and
       `WideString`, C1 bytes refused, and a UTF-8 file refused as "looks like
       UTF-8".
-* **Why now:** the first visible difference between `--ascii` and `--utf8`.
+* **Why now:** the first visible difference between the default and
+  `--unicode`.
 * **Done when:**
   - Tests at the four types under the three modes, including the cases of X1.
+  - Rune's three other files of A3 are rewritten:
+    - `tests/diagnostics/wide.sml` and `emoji.sml` keep their characters in
+      comments or wide literals under `--unicode`;
+    - `examples/benchmarks/sat/upstream/original.sml` takes escapes.
   - The corpora run.
   - `docs/language.md`'s *Strings* row says it all.
 
-**Gate G1.** With M3 and M4 built, the corpora, HOL-rune and the examples are
-compiled under `--ascii`. The owner then confirms the default that M11 sets
-(D16).
+**Gate G1**, between M3 and M4. With M3 built, the corpora, HOL-rune and
+the examples are lexed under the ASCII rule as M4 will apply it. The owner
+then confirms that the default becomes ASCII in M4 (D16).
 
 ### M5. `lib/unicode`: normalisation and identifier tables (M, about 1,500 with tests)
 
@@ -2763,7 +2814,7 @@ and the final identifier profile, the lookalikes list included, before M6.
 * **What:** D10 to D13.
   - `Ident` in `src/util`, used by the lexer and by the sixteen places that
     test identifier characters themselves (*Appendix A*).
-  - Under `--utf8`, alphanumeric identifiers by the grammar of *The
+  - Under `--unicode`, alphanumeric identifiers by the grammar of *The
     architecture*, required in NFC, through a property table built at first
     use.
   - The UTS #39 warnings, with a flag to turn them off.
@@ -2880,15 +2931,9 @@ sees the list before M9.
 
 **Gate G4** comes before M10: the owner sees E7's design and costs.
 
-### M11. The corpora, the default, and the comparison (S, about 200 and documents)
+### M11. The corpora and the comparison (S, about 200 and documents)
 
 * **What:**
-  - The default of D16 is set, and `legacy` goes.
-  - Rune's five files are rewritten (A3):
-    - the four diagnostics tests keep their odd characters in comments or
-      wide literals, or become reject tests;
-    - `badbyte.sml` is read under `--latin1`;
-    - the sat benchmark's upstream copy takes escapes.
   - HOL-rune is built under the default, and MLton's sources are compiled
     under it.
   - The comparison of the brief's line 23 is completed in
@@ -2919,8 +2964,8 @@ sees the list before M9.
 - **M1** fixes what is wrong whatever is decided.
 - **M2** before any rule, so that no rule can be bypassed by the cache (X2).
 - **M3** before M4, because its safety rules hold in every mode.
-- **M4** gives the modes their first difference; G1 then settles the default
-  on facts.
+- **G1** before M4, because M4 makes the ASCII rule the default.
+- **M4** gives the modes their first difference.
 - **M5** can go first. It is a library with its own tests, and M6 needs it.
 - **M6** after G2, which shows its cost and its profile.
 - **M7** after M6, which brings the first non-ASCII names.
@@ -2934,12 +2979,12 @@ sees the list before M9.
 
 | Flag or annotation | Milestone | Meaning |
 |---|---|---|
-| `--ascii` | M2 | the mode of the files that follow; the default (D16) |
-| `--utf8` | M2 | the mode of the files that follow |
-| `--latin1` | M2, M4 (D3) | read as Latin-1 and converted; a raw character is its code point |
-| a mode on a unit's line in a build file | M2 | the unit's mode, over the command line's |
+| no flag | M2, M3, M4 | the ASCII mode, the default (D16) |
+| `--unicode`, `--unicode=utf8` | M2 | a UTF-8 file, Unicode outside comments |
+| `--unicode=latin1` | M2, M4 (D3) | a Latin-1 file, converted as it is read; a raw character is its code point |
+| a mode on a unit's line in a build file: `ascii`, `unicode`, `unicode=latin1` | M2 | the unit's mode, over the command line's |
 | `Compiler.compile`'s `mode` | M2 | the mode of what it compiles |
-| `rune -i --utf8` | M2 | the REPL's mode for typed input and `use` |
+| `rune -i --unicode` | M2 | the REPL's mode for typed input and `use`; typed input is always UTF-8, so `=latin1` applies only to files it `use`s |
 | `--no-unicode-lints` (name to be settled) | M6 | turns off D13's warnings |
 
 No new tool is needed. The UCD files come from unicode.org through the
@@ -3000,12 +3045,12 @@ existing generator. The hosts are those of `make hosts`.
 
 - **Accept and reject, per mode.** Each row of the table of *What a source
   may hold raw* has a test in `tests/lang` (accepted) or `tests/errors`
-  (refused), with `.cargs` naming the mode. Every accept test of `--ascii`
-  also runs under `--utf8` with the same output (D2).
+  (refused), with `.cargs` naming the mode. Every accept test of the default
+  also runs under `--unicode` with the same output (D2).
 - **Literals.**
   - A matrix: the four types × raw, `\ddd`, `\u` and `\U` × the three
     modes × in range, out of range and surrogate.
-  - `--latin1`: raw Latin-1 at both widths, C1 bytes refused, a UTF-8 file
+  - `--unicode=latin1`: raw Latin-1 at both widths, C1 bytes refused, a UTF-8 file
     refused as "looks like UTF-8", and MLKit's Latin-1 tests.
   - Wide literals checked by their code points, not their printing.
 - **Identifiers.**
@@ -3217,7 +3262,7 @@ recommendation is taken.
 - "today" is Rune at `9b327248`.
 - "+ext" is MLton with `allowExtendedTextConsts`.
 
-| | Def. | Rune today | `--ascii` | `--latin1` | `--utf8` | MLton | +ext | SML/NJ | Poly/ML | MLKit | Moscow ML | HaMLet |
+| | Def. | Rune today | default | `--unicode=latin1` | `--unicode` | MLton | +ext | SML/NJ | Poly/ML | MLKit | Moscow ML | HaMLet |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | encoding of the file | none | bytes (Latin-1 in literals) | UTF-8 | Latin-1 | UTF-8 | bytes | bytes, UTF-8 shapes in literals | bytes | bytes | bytes | bytes | bytes |
 | invalid UTF-8 refused | - | no | yes | - | yes | in literals (all non-ASCII) | in literals | no | in literals (all non-ASCII) | no | no | no |
@@ -3254,7 +3299,7 @@ Notes:
   - A surrogate in `\u` is refused, a deviation pinned (D9).
   
   It is also wider in one place: `\U`, an extension Rune already has.
-- `--utf8` departs from the Definition in two rows: non-ASCII identifiers and
+- `--unicode` departs from the Definition in two rows: non-ASCII identifiers and
   raw non-ASCII at `WideString`. Each is pinned by a test, with its row in
   `docs/language.md`.
 - Unicode in a literal at `WideString` follows the Definition's rule for
@@ -3504,6 +3549,9 @@ Code points (files). L letter, M mark, N number, P punctuation, S symbol, C othe
 | manticore-git | comment | 11 (5) |  |  |  | 9 (3) | 2 (2) |  |  |  |
 
 ### The files each rule refuses
+
+The census named the modes as the brief does: its `--ascii` with UTF-8
+comments is the default, and its `--utf8` is `--unicode`.
 
 | policy | rune | mlton | hol-raw | hol-unquoted | hol-rune-unfiltered | hol-rune-generated | corpus-sml97-own | corpus-packages | corpus-programs | smlnj-110.99.9 | smlnj-2026.2 | smlnj-regressions | polyml-5.9.2 | hamlet-2.0.1 | mosml-2.10.1 | mlkit-git | manticore-git |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
