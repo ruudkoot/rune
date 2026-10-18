@@ -481,3 +481,25 @@ Original complete observations and an independent unsplit-grid oracle agree.
 The source supplies no individual author or separate program notice; complete
 Main, shim, Makefile and fixtures remain available without inferred authorship.
 The catalogue contains 461 programs and 1337 profiles. M3/M4 remain in progress.
+
+## Fulsom and Symalg portable applications, 2026-10-18
+
+Four Fulsom ports preserve distinct GC/raw and real/repeated-hash consumers,
+with separately named finite-data policies and one shared reachable renderer.
+Complete original module notices credit Duncan Sinclair; README.nofib credits
+Will Partain's directory flattening. Four guarded inventory regressions verify
+the individual author/permission heading. All 118 discovery tests and the
+five-pin 861-entry replay pass. Original unused scene/library definitions and
+excluded Bah tests remain accounted for. Two raster-to-PGM viewing utilities
+are explicitly excluded ancillary tools, with source identities/notices.
+
+Two Symalg ports retain its command interpreter, exact-real approximation
+trees and IntInf arithmetic. Complete numeric strings supplement original
+hashed transcripts. Original and independent integer-square-root references
+agree through 40000 digits; selected profiles reduce repetition/precision
+explicitly. Neither the source zero-product magnitude loop nor SML/NJ's
+documented auxiliary failures are silently repaired.
+
+The catalogue contains 467 programs and 1355 profiles. Code coverage does not
+by itself establish pending full repository acceptance. M3/M4 remain in
+progress and M8 remains planned.
