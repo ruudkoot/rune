@@ -1,0 +1,5 @@
+COUNT unbudgeted comp_lab_nozift-strict normal rune
+COUNT unbudgeted comp_lab_nozift-strict normal rune:opt
+COUNT unbudgeted comp_lab_nozift-strict normal rune:new
+COUNT unbudgeted comp_lab_nozift-strict normal rune:jit
+COUNT comparisons agree

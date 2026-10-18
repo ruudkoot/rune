@@ -1,0 +1,96 @@
+error: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-comp-lab-originals/host-tests-O0/native-mlkit-4.7.23/program/src/7/kernel.sml, line 15, column 30: Overloading not resolved in record containing the record wildcard (...).
+
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-comp-lab-originals/host-tests-O0/native-mlkit-4.7.23/program/src/7/kernel.sml, line 15, column 30:
+   fun left pair=F.defer(fn()=> #1(L.force pair))
+                                ^^
+Overloading not resolved in record containing the record wildcard (...).
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-comp-lab-originals/host-tests-O0/native-mlkit-4.7.23/program/src/7/kernel.sml, line 16, column 31:
+   fun right pair=F.defer(fn()=> #2(L.force pair))
+                                 ^^
+Overloading not resolved in record containing the record wildcard (...).
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-comp-lab-originals/host-tests-O0/native-mlkit-4.7.23/program/src/7/kernel.sml, line 159, column 50:
+   fun pixelFieldSeq pixels count gen=D.delay(fn()=>case view pixels of NONE=>raise Fail"empty pixel field"
+                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      (text omitted)
+             in D.force(unionFields first last)end)
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Type clash,
+   operand suggests operator type: (int t * int node t) option -> fieldNode
+   but I found operator type:      (lenRow t * 'a node t) option -> fieldNode
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-comp-lab-originals/host-tests-O0/native-mlkit-4.7.23/program/src/7/kernel.sml, line 182, column 27:
+                 val leftSum=sumRows first val rightSum=sumRows last
+                             ^^^^^^^^^^^^^
+Type clash,
+   operand suggests operator type: int node t -> int
+   but I found operator type:      lenRow node t -> int
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-comp-lab-originals/host-tests-O0/native-mlkit-4.7.23/program/src/7/kernel.sml, line 182, column 54:
+                 val leftSum=sumRows first val rightSum=sumRows last
+                                                        ^^^^^^^^^^^^
+Type clash,
+   operand suggests operator type: int node t -> int
+   but I found operator type:      lenRow node t -> int
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-comp-lab-originals/host-tests-O0/native-mlkit-4.7.23/program/src/7/kernel.sml, line 193, column 68:
+   fun mapLabel sift labels count gen objects threshold=F.defer(fn()=>case view labels of NONE=>raise Fail"empty label field"
+                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      (text omitted)
+                else mapLabelSeq labels objects end)
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Type clash,
+   operand suggests operator type: (int t * int node t) option -> labRange node t node t
+   but I found operator type:      (lenLab t * 'a node t) option -> labRange node t node t
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-comp-lab-originals/host-tests-O0/native-mlkit-4.7.23/program/src/7/kernel.sml, line 197, column 27:
+                 val leftSum=sumLabels first val rightSum=sumLabels last
+                             ^^^^^^^^^^^^^^^
+Type clash,
+   operand suggests operator type: int node t -> int
+   but I found operator type:      lenLab node t -> int
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-comp-lab-originals/host-tests-O0/native-mlkit-4.7.23/program/src/7/kernel.sml, line 197, column 56:
+                 val leftSum=sumLabels first val rightSum=sumLabels last
+                                                          ^^^^^^^^^^^^^^
+Type clash,
+   operand suggests operator type: int node t -> int
+   but I found operator type:      lenLab node t -> int
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-comp-lab-originals/host-tests-O0/native-mlkit-4.7.23/program/src/7/kernel.sml, line 203, column 71:
+                else if leftSum>threshold then F.append(recursiveLeft())(mapLabelSeq last objects)
+                                                                         ^^^^^^^^^^^^^^^^
+Type clash,
+   operand suggests operator type: int node t -> setNode t node t -> labRange node t node t
+   but I found operator type:      lenLab node t -> setNode t node t -> labRange node t node t
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-comp-lab-originals/host-tests-O0/native-mlkit-4.7.23/program/src/7/kernel.sml, line 204, column 55:
+                else if rightSum>threshold then F.append(mapLabelSeq first objects)(recursiveRight())
+                                                         ^^^^^^^^^^^^^^^^^
+Type clash,
+   operand suggests operator type: int node t -> setNode t node t -> labRange node t node t
+   but I found operator type:      lenLab node t -> setNode t node t -> labRange node t node t
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-comp-lab-originals/host-tests-O0/native-mlkit-4.7.23/program/src/7/kernel.sml, line 205, column 19:
+                else mapLabelSeq labels objects end)
+                     ^^^^^^^^^^^^^^^^^^
+Type clash,
+   operand suggests operator type: int node t -> setNode t node t -> labRange node t node t
+   but I found operator type:      lenLab node t -> setNode t node t -> labRange node t node t
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-comp-lab-originals/host-tests-O0/native-mlkit-4.7.23/program/src/7/kernel.sml, line 233, column 17:
+         val field=pixelField pixels count gen threshold
+                   ^^^^^^^^^^^^^^^^^
+Type clash,
+   operand suggests operator type: lenRow node t -> int -> genNode state ref -> 'a -> fieldNode t
+   but I found operator type:      int node t -> int -> genNode state ref -> int -> fieldNode t
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-comp-lab-originals/host-tests-O0/native-mlkit-4.7.23/program/src/7/kernel.sml, line 236, column 18:
+         val labels=mapLabel(if useSift then sift else noSift)raw count gen objects threshold
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Type clash,
+   operand suggests operator type: lenLab node t -> int -> genNode state ref -> setNode t node t -> 'a -> 'b
+   but I found operator type:      int node t -> int -> genNode state ref -> setNode t node t -> int -> labRange node t node t
+Stopping compilation of MLB-file due to error (code 1).

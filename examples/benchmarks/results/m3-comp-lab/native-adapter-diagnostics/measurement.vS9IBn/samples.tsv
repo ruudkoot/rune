@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+comp_lab_nozift-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	7.33	4.94	1.03	661124	-	-	-	comp_lab_nozift-strict/native-mlton/build/compile
+comp_lab_nozift-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2184	-	-	-	comp_lab_nozift-strict/native-mlton/correctness.0
+comp_lab_nozift-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2260	-	-	-	comp_lab_nozift-strict/native-mlton/fresh.1
+comp_lab_nozift-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.81	0.77	0.07	39200	-	-	-	comp_lab_nozift-strict/native-smlnj-legacy/build/compile
+comp_lab_nozift-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.00	0.00	4068	-	-	-	comp_lab_nozift-strict/native-smlnj-legacy/correctness.0
+comp_lab_nozift-strict	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.01	0.00	4068	-	-	-	comp_lab_nozift-strict/native-smlnj-legacy/fresh.1
+comp_lab_nozift-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.42	0.31	0.09	45688	-	-	-	comp_lab_nozift-strict/native-polyml/build/compile
+comp_lab_nozift-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.01	0.00	0.02	6016	-	-	-	comp_lab_nozift-strict/native-polyml/correctness.0
+comp_lab_nozift-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	5908	-	-	-	comp_lab_nozift-strict/native-polyml/fresh.1

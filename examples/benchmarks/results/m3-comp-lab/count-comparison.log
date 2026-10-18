@@ -1,0 +1,17 @@
+COUNT unbudgeted comp_lab_zift-lazy normal rune
+COUNT unbudgeted comp_lab_zift-lazy normal rune:opt
+COUNT unbudgeted comp_lab_zift-lazy normal rune:new
+COUNT unbudgeted comp_lab_zift-lazy normal rune:jit
+COUNT unbudgeted comp_lab_zift-strict normal rune
+COUNT unbudgeted comp_lab_zift-strict normal rune:opt
+COUNT unbudgeted comp_lab_zift-strict normal rune:new
+COUNT unbudgeted comp_lab_zift-strict normal rune:jit
+COUNT unbudgeted comp_lab_nozift-lazy normal rune
+COUNT unbudgeted comp_lab_nozift-lazy normal rune:opt
+COUNT unbudgeted comp_lab_nozift-lazy normal rune:new
+COUNT unbudgeted comp_lab_nozift-lazy normal rune:jit
+COUNT unbudgeted comp_lab_nozift-strict normal rune
+COUNT unbudgeted comp_lab_nozift-strict normal rune:opt
+COUNT unbudgeted comp_lab_nozift-strict normal rune:new
+COUNT unbudgeted comp_lab_nozift-strict normal rune:jit
+COUNT comparisons agree

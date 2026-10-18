@@ -1,0 +1,4 @@
+Exception- InternalError: entryNumber - not a record raised while compiling
+
+Exception- Fail "Exception- InternalError: entryNumber - not a record raised while compiling" raised
+Error trying to use the file: '/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-comp-lab-originals/poly-prefix-113-driver.sml'

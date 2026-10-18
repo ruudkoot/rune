@@ -1,0 +1,17 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+comp_lab_zift-lazy	normal	rune	O2	count	1	1	pass	28.38	28.12	0.04	35128	4882903626	13437960184	424135805	counts/measurement.IgjLuX/comp_lab_zift-lazy/rune/fresh.1
+comp_lab_zift-lazy	normal	rune:opt	O2	count	1	1	pass	14.90	15.44	0.05	35868	4882903626	13437960184	424135805	counts/measurement.IgjLuX/comp_lab_zift-lazy/rune-opt/fresh.1
+comp_lab_zift-lazy	normal	rune:new	O2	count	1	1	pass	50.40	50.97	0.08	35448	2867718009	13437960184	424135805	counts/measurement.IgjLuX/comp_lab_zift-lazy/rune-new/fresh.1
+comp_lab_zift-lazy	normal	rune:jit	O2	count	1	1	pass	21.93	21.37	0.07	36716	2867718009	13437960184	424135805	counts/measurement.IgjLuX/comp_lab_zift-lazy/rune-jit/fresh.1
+comp_lab_zift-strict	normal	rune	O2	count	1	1	pass	16.21	15.35	0.05	18860	1881929856	4941525696	141602264	counts/measurement.77mpbl/comp_lab_zift-strict/rune/fresh.1
+comp_lab_zift-strict	normal	rune:opt	O2	count	1	1	pass	5.85	6.07	0.01	19544	1881929856	4941525696	141602264	counts/measurement.77mpbl/comp_lab_zift-strict/rune-opt/fresh.1
+comp_lab_zift-strict	normal	rune:new	O2	count	1	1	pass	15.66	16.22	0.05	19012	1065277686	4941525696	141602264	counts/measurement.77mpbl/comp_lab_zift-strict/rune-new/fresh.1
+comp_lab_zift-strict	normal	rune:jit	O2	count	1	1	pass	6.00	6.20	0.04	20288	1065277686	4941525696	141602264	counts/measurement.77mpbl/comp_lab_zift-strict/rune-jit/fresh.1
+comp_lab_nozift-lazy	normal	rune	O2	count	1	1	pass	50.45	50.96	0.12	35144	4882903558	13437960184	424135805	counts/measurement.cnfg2e/comp_lab_nozift-lazy/rune/fresh.1
+comp_lab_nozift-lazy	normal	rune:opt	O2	count	1	1	pass	26.89	25.27	0.30	35844	4882903558	13437960184	424135805	counts/measurement.cnfg2e/comp_lab_nozift-lazy/rune-opt/fresh.1
+comp_lab_nozift-lazy	normal	rune:new	O2	count	1	1	pass	48.70	47.78	0.14	35448	2867717931	13437960184	424135805	counts/measurement.cnfg2e/comp_lab_nozift-lazy/rune-new/fresh.1
+comp_lab_nozift-lazy	normal	rune:jit	O2	count	1	1	pass	21.09	21.87	0.06	36844	2867717931	13437960184	424135805	counts/measurement.cnfg2e/comp_lab_nozift-lazy/rune-jit/fresh.1
+comp_lab_nozift-strict	normal	rune	O2	count	1	1	pass	14.13	14.67	0.03	18868	1881929788	4941525696	141602264	counts/measurement.f9Aj00/comp_lab_nozift-strict/rune/fresh.1
+comp_lab_nozift-strict	normal	rune:opt	O2	count	1	1	pass	6.40	6.45	0.06	19504	1881929788	4941525696	141602264	counts/measurement.f9Aj00/comp_lab_nozift-strict/rune-opt/fresh.1
+comp_lab_nozift-strict	normal	rune:new	O2	count	1	1	pass	14.99	15.54	0.04	19028	1065277608	4941525696	141602264	counts/measurement.f9Aj00/comp_lab_nozift-strict/rune-new/fresh.1
+comp_lab_nozift-strict	normal	rune:jit	O2	count	1	1	pass	7.85	6.65	0.05	20340	1065277608	4941525696	141602264	counts/measurement.f9Aj00/comp_lab_nozift-strict/rune-jit/fresh.1

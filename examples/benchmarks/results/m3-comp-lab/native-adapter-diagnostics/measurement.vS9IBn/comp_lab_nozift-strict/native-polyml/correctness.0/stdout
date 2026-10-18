@@ -1,0 +1,4 @@
+RESULT 1:2103
+PASS comp_lab_nozift-strict
+SAMPLE 1 0.000598000
+SUMMARY 1 checks, 0 failed

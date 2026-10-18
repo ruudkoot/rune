@@ -1,0 +1,592 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 15470ef91..e7c9be0b0 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -480,6 +480,10 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [cacheprof-strict](#cacheprof-strict) | [nofib gc/cacheprof](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/cacheprof) | Annotate assembly with counters and cache hooks using strict finite pipeline data and the gc consumer. |
+ | [cacheprof-nofib-lazy](#cacheprof-nofib-lazy) | [nofib real/cacheprof](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/cacheprof) | Annotate assembly with counters and cache hooks using memoized finite pipeline data and the real consumer. |
+ | [cacheprof-nofib-strict](#cacheprof-nofib-strict) | [nofib real/cacheprof](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/cacheprof) | Annotate assembly with counters and cache hooks using strict finite pipeline data and the real consumer. |
++| [comp_lab_zift-lazy](#comp_lab_zift-lazy) | [nofib Hartel comp_lab_zift](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/comp_lab_zift) | Label tiled binary-image components with memoized persistent data and source sifting. |
++| [comp_lab_zift-strict](#comp_lab_zift-strict) | [nofib Hartel comp_lab_zift](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/comp_lab_zift) | Label tiled binary-image components with strict persistent data and source sifting. |
++| [comp_lab_nozift-lazy](#comp_lab_nozift-lazy) | [nofib Hartel comp_lab_zift](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/comp_lab_zift) | Label tiled binary-image components with memoized persistent data without source sifting. |
++| [comp_lab_nozift-strict](#comp_lab_nozift-strict) | [nofib Hartel comp_lab_zift](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/comp_lab_zift) | Label tiled binary-image components with strict persistent data without source sifting. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -31668,3 +31672,547 @@ history and transformation design. No external cache-profiling paper is
+ claimed as a reviewed derivation. Original executable/fixture and exhaustive
+ source-table observations support correctness; compiler/runtime explanations
+ remain hypotheses until measured separately.
++
++## comp_lab_zift-lazy
++
++### Algorithm and workload
++
++Label four-neighbor connected black regions in tiled binary images. Preserve
++horizontal run extraction, unique row/run labels, balanced recursive field
++union, persistent labelled-set trees, boundary merging, component lookup and
++label mapping. The original zift operation crops the trees inspected by
++recursive label mapping; it is not replaced by a mutable union-find algorithm.
++
++### History, names and source variants
++
++[nofib Hartel comp_lab_zift](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/comp_lab_zift)
++is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. Preserve the complete generated module, Makefile,
++FAST/NORM/SLOW fixtures and parent Fast2haskell shim. The program heading
++states no individual author or separate notice; collection/helper credits
++do not establish individual authorship. No external dataset is needed.
++
++The established comp_lab_zift name denotes the original sifting mode.
++comp_lab_nozift retains the source f_no_zift alternative, separately named
++because it skips generator demand and local tree pruning. The source helper
++f_main_field' selects that alternative with a negative tiling argument, while
++the benchmark Main itself tiles positive sizes. The portable explicit mode
++uses positive tiling and the original f_comp_lab_diff' plus f_no_zift, with
++the same complete renderer. It does not run a divergent negative repetition
++loop or invent another component-labelling algorithm.
++
++Each mode has explicit -lazy/-strict finite-data names. The unused parallel
++prediction fields and sandwich calls use the source no-op miraseq shim.
++Execution is sequential and requires no parallel runtime.
++
++### Translation, sharing and tree semantics
++
++Use SML97 tagged datatypes and policy-controlled memoized finite lists, trees,
++labels, ranges, fields and paired results. Strict variants materialize these
++finite values. Paired splits, generator views, shared base-image handles and
++ignored prediction hints retain delayed control where required. Preserve
++memoized mapped integer fold accumulators, rather than forcing every lazy
++accumulator at construction.
++
++Base figures remain shared global values; each requested tiling and labelling
++computation constructs fresh derived data. Tiling grows both width and height.
++Repetitions, tiling factor and branch threshold remain distinct parameters.
++ASCII base strings replace literal Haskell character lists at the input
++boundary; rendering uses SML strings and documented finite bridges.
++
++Retain source tree behavior even where its names suggest a more general set
++operation: merging does not remove duplicate keys; selecting a leaf outside
++the interval retains it; cropping keeps the global representative while
++changing local membership. The filter_set helper maps over objects rather
++than deleting nonintersecting objects. Keep the original representative and
++object-list ordering, avoiding a substitute canonical/minimum-label scheme.
++
++Guarded disjoint borders must not find objects or demand their labels.
++Ordered-tree union must avoid its unused flatten/sort fallback. Membership
++and selection avoid irrelevant subtrees. Non-sifting label mapping leaves
++generator arguments undemanded; sifting needs them. Ignored sandwich prediction
++values remain unforced in both policies.
++
++Indices, label arithmetic, source checksums and selected aggregate byte counts
++fit signed 31-bit integers. No floating-point, modular or arbitrary-precision
++kernel arithmetic is introduced.
++
++### Inputs, profiles and complete checks
++
++| Profile | Repetitions | Tiling factor | Branch threshold |
++|---|---:|---:|---:|
++| Smoke | 1 | 1 | 0 |
++| Normal | 100 | 5 | 1280 |
++| Large | 100 | 9 | 2304 |
++
++Normal and large retain the original fixed 100 repetitions and NORM/SLOW
++tiling parameters. Their threshold is the source factor times the 256-pixel
++base area. Smoke reduces original FAST 100-by-two to one-by-one and explicitly
++selects zero threshold to exercise recursive sifting/control. Both modes
++use identical selected images and thresholds.
++
++Require the complete original component image, raw run labels and every final
++object-tree rendering to agree byte for byte, then check the source sumcode.
++The coarse original checksum is not the sole oracle. Each repetition consumes
++and validates its complete output; the driver returns checked repetition/byte
++counts instead of repeated stdout.
++
++Argument/reference reads move outside the repetition loop, replacing repeated
++getArgs. Whole output strings and equality checks add validation/retention work.
++No opaque optimization barrier is assumed: repeat-invariant specialization or
++hoisting remains a compiler question to examine through separate counts.
++All compilers in the standard report receive identical SML sources.
++
++Unmodified Haskell FAST/NORM/SLOW outputs match all source fixtures.
++Read-only observers cover 46 complete states across five base figures,
++thresholds, tiling factors and both modes. An independent four-neighbor BFS,
++row-run extractor and tree-membership/split-invariant checker validates all
++129950 observed pixels. The oracle does not use the benchmark's persistent
++tree union or sifting algorithms.
++
++### Compiler/runtime concerns and recorded validation
++
++Investigate persistent allocation, shared splits, delayed paired fields,
++integer fold chains, tree lookup/merge, sifting, closure specialization,
++strict materialization and whole-string consumers. These are source-based
++hypotheses until source/count/timing evidence supports a narrower finding.
++
++Direct tests preserve source duplicate/leaf/representative quirks and check
++ignored hints, unused generators, dead subtrees, memoization, zero work and
++deliberately wrong full results/checksums. Complete state and profile checks
++remain separate from their smaller semantic controls. Native group labels
++use host-default settings; Rune O0/O2 levels are explicit.
++
++Private normal pilots preserve all 100 repetitions in both modes/policies.
++Canonical engine/host outcomes, counts and repository acceptance are recorded
++separately in the validation ledger. Single large states do not establish
++completion of full 100-repetition selected large runs.
++
++Poly/ML 5.9.2 compiles the full kernel and all four normal application pilots,
++but reports an entryNumber compiler internal error for an auxiliary strict-tree
++test with external tuple projection. The first 98 assertions, including all
++92 complete original-state comparisons, compile and pass as a diagnostic
++prefix. Preserve the full valid test and failure; the prefix does not replace
++the full semantic target. Other host/engine outcomes are recorded separately.
++
++Initial tuple projections left their pair arity unspecified; explicit pair
++and integer-sequence annotations resolve that portability issue. Earlier
++compile attempts remain separate development evidence.
++
++### Literature and evidence scope
++
++[Hartel and Langendoen (1993)](https://doi.org/10.1145/165180.165230)
++supplies collection/translation context at the survey scope recorded in the
++suite bibliography. The particular connected-component algorithm, object
++representation, thresholds and ignored scheduling wrappers come from pinned
++source inspection. No separate image-labelling paper is claimed as reviewed
++for this program. Original/independent result agreement establishes
++correctness at the recorded inputs; individual performance effects remain
++hypotheses pending separate evidence.
++
++## comp_lab_zift-strict
++
++### Algorithm and workload
++
++Label four-neighbor connected black regions in tiled binary images. Preserve
++horizontal run extraction, unique row/run labels, balanced recursive field
++union, persistent labelled-set trees, boundary merging, component lookup and
++label mapping. The original zift operation crops the trees inspected by
++recursive label mapping; it is not replaced by a mutable union-find algorithm.
++
++### History, names and source variants
++
++[nofib Hartel comp_lab_zift](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/comp_lab_zift)
++is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. Preserve the complete generated module, Makefile,
++FAST/NORM/SLOW fixtures and parent Fast2haskell shim. The program heading
++states no individual author or separate notice; collection/helper credits
++do not establish individual authorship. No external dataset is needed.
++
++The established comp_lab_zift name denotes the original sifting mode.
++comp_lab_nozift retains the source f_no_zift alternative, separately named
++because it skips generator demand and local tree pruning. The source helper
++f_main_field' selects that alternative with a negative tiling argument, while
++the benchmark Main itself tiles positive sizes. The portable explicit mode
++uses positive tiling and the original f_comp_lab_diff' plus f_no_zift, with
++the same complete renderer. It does not run a divergent negative repetition
++loop or invent another component-labelling algorithm.
++
++Each mode has explicit -lazy/-strict finite-data names. The unused parallel
++prediction fields and sandwich calls use the source no-op miraseq shim.
++Execution is sequential and requires no parallel runtime.
++
++### Translation, sharing and tree semantics
++
++Use SML97 tagged datatypes and policy-controlled memoized finite lists, trees,
++labels, ranges, fields and paired results. Strict variants materialize these
++finite values. Paired splits, generator views, shared base-image handles and
++ignored prediction hints retain delayed control where required. Preserve
++memoized mapped integer fold accumulators, rather than forcing every lazy
++accumulator at construction.
++
++Base figures remain shared global values; each requested tiling and labelling
++computation constructs fresh derived data. Tiling grows both width and height.
++Repetitions, tiling factor and branch threshold remain distinct parameters.
++ASCII base strings replace literal Haskell character lists at the input
++boundary; rendering uses SML strings and documented finite bridges.
++
++Retain source tree behavior even where its names suggest a more general set
++operation: merging does not remove duplicate keys; selecting a leaf outside
++the interval retains it; cropping keeps the global representative while
++changing local membership. The filter_set helper maps over objects rather
++than deleting nonintersecting objects. Keep the original representative and
++object-list ordering, avoiding a substitute canonical/minimum-label scheme.
++
++Guarded disjoint borders must not find objects or demand their labels.
++Ordered-tree union must avoid its unused flatten/sort fallback. Membership
++and selection avoid irrelevant subtrees. Non-sifting label mapping leaves
++generator arguments undemanded; sifting needs them. Ignored sandwich prediction
++values remain unforced in both policies.
++
++Indices, label arithmetic, source checksums and selected aggregate byte counts
++fit signed 31-bit integers. No floating-point, modular or arbitrary-precision
++kernel arithmetic is introduced.
++
++### Inputs, profiles and complete checks
++
++| Profile | Repetitions | Tiling factor | Branch threshold |
++|---|---:|---:|---:|
++| Smoke | 1 | 1 | 0 |
++| Normal | 100 | 5 | 1280 |
++| Large | 100 | 9 | 2304 |
++
++Normal and large retain the original fixed 100 repetitions and NORM/SLOW
++tiling parameters. Their threshold is the source factor times the 256-pixel
++base area. Smoke reduces original FAST 100-by-two to one-by-one and explicitly
++selects zero threshold to exercise recursive sifting/control. Both modes
++use identical selected images and thresholds.
++
++Require the complete original component image, raw run labels and every final
++object-tree rendering to agree byte for byte, then check the source sumcode.
++The coarse original checksum is not the sole oracle. Each repetition consumes
++and validates its complete output; the driver returns checked repetition/byte
++counts instead of repeated stdout.
++
++Argument/reference reads move outside the repetition loop, replacing repeated
++getArgs. Whole output strings and equality checks add validation/retention work.
++No opaque optimization barrier is assumed: repeat-invariant specialization or
++hoisting remains a compiler question to examine through separate counts.
++All compilers in the standard report receive identical SML sources.
++
++Unmodified Haskell FAST/NORM/SLOW outputs match all source fixtures.
++Read-only observers cover 46 complete states across five base figures,
++thresholds, tiling factors and both modes. An independent four-neighbor BFS,
++row-run extractor and tree-membership/split-invariant checker validates all
++129950 observed pixels. The oracle does not use the benchmark's persistent
++tree union or sifting algorithms.
++
++### Compiler/runtime concerns and recorded validation
++
++Investigate persistent allocation, shared splits, delayed paired fields,
++integer fold chains, tree lookup/merge, sifting, closure specialization,
++strict materialization and whole-string consumers. These are source-based
++hypotheses until source/count/timing evidence supports a narrower finding.
++
++Direct tests preserve source duplicate/leaf/representative quirks and check
++ignored hints, unused generators, dead subtrees, memoization, zero work and
++deliberately wrong full results/checksums. Complete state and profile checks
++remain separate from their smaller semantic controls. Native group labels
++use host-default settings; Rune O0/O2 levels are explicit.
++
++Private normal pilots preserve all 100 repetitions in both modes/policies.
++Canonical engine/host outcomes, counts and repository acceptance are recorded
++separately in the validation ledger. Single large states do not establish
++completion of full 100-repetition selected large runs.
++
++Poly/ML 5.9.2 compiles the full kernel and all four normal application pilots,
++but reports an entryNumber compiler internal error for an auxiliary strict-tree
++test with external tuple projection. The first 98 assertions, including all
++92 complete original-state comparisons, compile and pass as a diagnostic
++prefix. Preserve the full valid test and failure; the prefix does not replace
++the full semantic target. Other host/engine outcomes are recorded separately.
++
++Initial tuple projections left their pair arity unspecified; explicit pair
++and integer-sequence annotations resolve that portability issue. Earlier
++compile attempts remain separate development evidence.
++
++### Literature and evidence scope
++
++[Hartel and Langendoen (1993)](https://doi.org/10.1145/165180.165230)
++supplies collection/translation context at the survey scope recorded in the
++suite bibliography. The particular connected-component algorithm, object
++representation, thresholds and ignored scheduling wrappers come from pinned
++source inspection. No separate image-labelling paper is claimed as reviewed
++for this program. Original/independent result agreement establishes
++correctness at the recorded inputs; individual performance effects remain
++hypotheses pending separate evidence.
++
++## comp_lab_nozift-lazy
++
++### Algorithm and workload
++
++Label four-neighbor connected black regions in tiled binary images. Preserve
++horizontal run extraction, unique row/run labels, balanced recursive field
++union, persistent labelled-set trees, boundary merging, component lookup and
++label mapping. The original zift operation crops the trees inspected by
++recursive label mapping; it is not replaced by a mutable union-find algorithm.
++
++### History, names and source variants
++
++[nofib Hartel comp_lab_zift](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/comp_lab_zift)
++is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. Preserve the complete generated module, Makefile,
++FAST/NORM/SLOW fixtures and parent Fast2haskell shim. The program heading
++states no individual author or separate notice; collection/helper credits
++do not establish individual authorship. No external dataset is needed.
++
++The established comp_lab_zift name denotes the original sifting mode.
++comp_lab_nozift retains the source f_no_zift alternative, separately named
++because it skips generator demand and local tree pruning. The source helper
++f_main_field' selects that alternative with a negative tiling argument, while
++the benchmark Main itself tiles positive sizes. The portable explicit mode
++uses positive tiling and the original f_comp_lab_diff' plus f_no_zift, with
++the same complete renderer. It does not run a divergent negative repetition
++loop or invent another component-labelling algorithm.
++
++Each mode has explicit -lazy/-strict finite-data names. The unused parallel
++prediction fields and sandwich calls use the source no-op miraseq shim.
++Execution is sequential and requires no parallel runtime.
++
++### Translation, sharing and tree semantics
++
++Use SML97 tagged datatypes and policy-controlled memoized finite lists, trees,
++labels, ranges, fields and paired results. Strict variants materialize these
++finite values. Paired splits, generator views, shared base-image handles and
++ignored prediction hints retain delayed control where required. Preserve
++memoized mapped integer fold accumulators, rather than forcing every lazy
++accumulator at construction.
++
++Base figures remain shared global values; each requested tiling and labelling
++computation constructs fresh derived data. Tiling grows both width and height.
++Repetitions, tiling factor and branch threshold remain distinct parameters.
++ASCII base strings replace literal Haskell character lists at the input
++boundary; rendering uses SML strings and documented finite bridges.
++
++Retain source tree behavior even where its names suggest a more general set
++operation: merging does not remove duplicate keys; selecting a leaf outside
++the interval retains it; cropping keeps the global representative while
++changing local membership. The filter_set helper maps over objects rather
++than deleting nonintersecting objects. Keep the original representative and
++object-list ordering, avoiding a substitute canonical/minimum-label scheme.
++
++Guarded disjoint borders must not find objects or demand their labels.
++Ordered-tree union must avoid its unused flatten/sort fallback. Membership
++and selection avoid irrelevant subtrees. Non-sifting label mapping leaves
++generator arguments undemanded; sifting needs them. Ignored sandwich prediction
++values remain unforced in both policies.
++
++Indices, label arithmetic, source checksums and selected aggregate byte counts
++fit signed 31-bit integers. No floating-point, modular or arbitrary-precision
++kernel arithmetic is introduced.
++
++### Inputs, profiles and complete checks
++
++| Profile | Repetitions | Tiling factor | Branch threshold |
++|---|---:|---:|---:|
++| Smoke | 1 | 1 | 0 |
++| Normal | 100 | 5 | 1280 |
++| Large | 100 | 9 | 2304 |
++
++Normal and large retain the original fixed 100 repetitions and NORM/SLOW
++tiling parameters. Their threshold is the source factor times the 256-pixel
++base area. Smoke reduces original FAST 100-by-two to one-by-one and explicitly
++selects zero threshold to exercise recursive sifting/control. Both modes
++use identical selected images and thresholds.
++
++Require the complete original component image, raw run labels and every final
++object-tree rendering to agree byte for byte, then check the source sumcode.
++The coarse original checksum is not the sole oracle. Each repetition consumes
++and validates its complete output; the driver returns checked repetition/byte
++counts instead of repeated stdout.
++
++Argument/reference reads move outside the repetition loop, replacing repeated
++getArgs. Whole output strings and equality checks add validation/retention work.
++No opaque optimization barrier is assumed: repeat-invariant specialization or
++hoisting remains a compiler question to examine through separate counts.
++All compilers in the standard report receive identical SML sources.
++
++Unmodified Haskell FAST/NORM/SLOW outputs match all source fixtures.
++Read-only observers cover 46 complete states across five base figures,
++thresholds, tiling factors and both modes. An independent four-neighbor BFS,
++row-run extractor and tree-membership/split-invariant checker validates all
++129950 observed pixels. The oracle does not use the benchmark's persistent
++tree union or sifting algorithms.
++
++### Compiler/runtime concerns and recorded validation
++
++Investigate persistent allocation, shared splits, delayed paired fields,
++integer fold chains, tree lookup/merge, sifting, closure specialization,
++strict materialization and whole-string consumers. These are source-based
++hypotheses until source/count/timing evidence supports a narrower finding.
++
++Direct tests preserve source duplicate/leaf/representative quirks and check
++ignored hints, unused generators, dead subtrees, memoization, zero work and
++deliberately wrong full results/checksums. Complete state and profile checks
++remain separate from their smaller semantic controls. Native group labels
++use host-default settings; Rune O0/O2 levels are explicit.
++
++Private normal pilots preserve all 100 repetitions in both modes/policies.
++Canonical engine/host outcomes, counts and repository acceptance are recorded
++separately in the validation ledger. Single large states do not establish
++completion of full 100-repetition selected large runs.
++
++Poly/ML 5.9.2 compiles the full kernel and all four normal application pilots,
++but reports an entryNumber compiler internal error for an auxiliary strict-tree
++test with external tuple projection. The first 98 assertions, including all
++92 complete original-state comparisons, compile and pass as a diagnostic
++prefix. Preserve the full valid test and failure; the prefix does not replace
++the full semantic target. Other host/engine outcomes are recorded separately.
++
++Initial tuple projections left their pair arity unspecified; explicit pair
++and integer-sequence annotations resolve that portability issue. Earlier
++compile attempts remain separate development evidence.
++
++### Literature and evidence scope
++
++[Hartel and Langendoen (1993)](https://doi.org/10.1145/165180.165230)
++supplies collection/translation context at the survey scope recorded in the
++suite bibliography. The particular connected-component algorithm, object
++representation, thresholds and ignored scheduling wrappers come from pinned
++source inspection. No separate image-labelling paper is claimed as reviewed
++for this program. Original/independent result agreement establishes
++correctness at the recorded inputs; individual performance effects remain
++hypotheses pending separate evidence.
++
++## comp_lab_nozift-strict
++
++### Algorithm and workload
++
++Label four-neighbor connected black regions in tiled binary images. Preserve
++horizontal run extraction, unique row/run labels, balanced recursive field
++union, persistent labelled-set trees, boundary merging, component lookup and
++label mapping. The original zift operation crops the trees inspected by
++recursive label mapping; it is not replaced by a mutable union-find algorithm.
++
++### History, names and source variants
++
++[nofib Hartel comp_lab_zift](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/comp_lab_zift)
++is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. Preserve the complete generated module, Makefile,
++FAST/NORM/SLOW fixtures and parent Fast2haskell shim. The program heading
++states no individual author or separate notice; collection/helper credits
++do not establish individual authorship. No external dataset is needed.
++
++The established comp_lab_zift name denotes the original sifting mode.
++comp_lab_nozift retains the source f_no_zift alternative, separately named
++because it skips generator demand and local tree pruning. The source helper
++f_main_field' selects that alternative with a negative tiling argument, while
++the benchmark Main itself tiles positive sizes. The portable explicit mode
++uses positive tiling and the original f_comp_lab_diff' plus f_no_zift, with
++the same complete renderer. It does not run a divergent negative repetition
++loop or invent another component-labelling algorithm.
++
++Each mode has explicit -lazy/-strict finite-data names. The unused parallel
++prediction fields and sandwich calls use the source no-op miraseq shim.
++Execution is sequential and requires no parallel runtime.
++
++### Translation, sharing and tree semantics
++
++Use SML97 tagged datatypes and policy-controlled memoized finite lists, trees,
++labels, ranges, fields and paired results. Strict variants materialize these
++finite values. Paired splits, generator views, shared base-image handles and
++ignored prediction hints retain delayed control where required. Preserve
++memoized mapped integer fold accumulators, rather than forcing every lazy
++accumulator at construction.
++
++Base figures remain shared global values; each requested tiling and labelling
++computation constructs fresh derived data. Tiling grows both width and height.
++Repetitions, tiling factor and branch threshold remain distinct parameters.
++ASCII base strings replace literal Haskell character lists at the input
++boundary; rendering uses SML strings and documented finite bridges.
++
++Retain source tree behavior even where its names suggest a more general set
++operation: merging does not remove duplicate keys; selecting a leaf outside
++the interval retains it; cropping keeps the global representative while
++changing local membership. The filter_set helper maps over objects rather
++than deleting nonintersecting objects. Keep the original representative and
++object-list ordering, avoiding a substitute canonical/minimum-label scheme.
++
++Guarded disjoint borders must not find objects or demand their labels.
++Ordered-tree union must avoid its unused flatten/sort fallback. Membership
++and selection avoid irrelevant subtrees. Non-sifting label mapping leaves
++generator arguments undemanded; sifting needs them. Ignored sandwich prediction
++values remain unforced in both policies.
++
++Indices, label arithmetic, source checksums and selected aggregate byte counts
++fit signed 31-bit integers. No floating-point, modular or arbitrary-precision
++kernel arithmetic is introduced.
++
++### Inputs, profiles and complete checks
++
++| Profile | Repetitions | Tiling factor | Branch threshold |
++|---|---:|---:|---:|
++| Smoke | 1 | 1 | 0 |
++| Normal | 100 | 5 | 1280 |
++| Large | 100 | 9 | 2304 |
++
++Normal and large retain the original fixed 100 repetitions and NORM/SLOW
++tiling parameters. Their threshold is the source factor times the 256-pixel
++base area. Smoke reduces original FAST 100-by-two to one-by-one and explicitly
++selects zero threshold to exercise recursive sifting/control. Both modes
++use identical selected images and thresholds.
++
++Require the complete original component image, raw run labels and every final
++object-tree rendering to agree byte for byte, then check the source sumcode.
++The coarse original checksum is not the sole oracle. Each repetition consumes
++and validates its complete output; the driver returns checked repetition/byte
++counts instead of repeated stdout.
++
++Argument/reference reads move outside the repetition loop, replacing repeated
++getArgs. Whole output strings and equality checks add validation/retention work.
++No opaque optimization barrier is assumed: repeat-invariant specialization or
++hoisting remains a compiler question to examine through separate counts.
++All compilers in the standard report receive identical SML sources.
++
++Unmodified Haskell FAST/NORM/SLOW outputs match all source fixtures.
++Read-only observers cover 46 complete states across five base figures,
++thresholds, tiling factors and both modes. An independent four-neighbor BFS,
++row-run extractor and tree-membership/split-invariant checker validates all
++129950 observed pixels. The oracle does not use the benchmark's persistent
++tree union or sifting algorithms.
++
++### Compiler/runtime concerns and recorded validation
++
++Investigate persistent allocation, shared splits, delayed paired fields,
++integer fold chains, tree lookup/merge, sifting, closure specialization,
++strict materialization and whole-string consumers. These are source-based
++hypotheses until source/count/timing evidence supports a narrower finding.
++
++Direct tests preserve source duplicate/leaf/representative quirks and check
++ignored hints, unused generators, dead subtrees, memoization, zero work and
++deliberately wrong full results/checksums. Complete state and profile checks
++remain separate from their smaller semantic controls. Native group labels
++use host-default settings; Rune O0/O2 levels are explicit.
++
++Private normal pilots preserve all 100 repetitions in both modes/policies.
++Canonical engine/host outcomes, counts and repository acceptance are recorded
++separately in the validation ledger. Single large states do not establish
++completion of full 100-repetition selected large runs.
++
++Poly/ML 5.9.2 compiles the full kernel and all four normal application pilots,
++but reports an entryNumber compiler internal error for an auxiliary strict-tree
++test with external tuple projection. The first 98 assertions, including all
++92 complete original-state comparisons, compile and pass as a diagnostic
++prefix. Preserve the full valid test and failure; the prefix does not replace
++the full semantic target. Other host/engine outcomes are recorded separately.
++
++Initial tuple projections left their pair arity unspecified; explicit pair
++and integer-sequence annotations resolve that portability issue. Earlier
++compile attempts remain separate development evidence.
++
++### Literature and evidence scope
++
++[Hartel and Langendoen (1993)](https://doi.org/10.1145/165180.165230)
++supplies collection/translation context at the survey scope recorded in the
++suite bibliography. The particular connected-component algorithm, object
++representation, thresholds and ignored scheduling wrappers come from pinned
++source inspection. No separate image-labelling paper is claimed as reviewed
++for this program. Original/independent result agreement establishes
++correctness at the recorded inputs; individual performance effects remain
++hypotheses pending separate evidence.
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 2250c5108..fb450494d 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -1366,3 +1366,15 @@ cacheprof-nofib-lazy	large	nofib	real/cacheprof	200 large.s large.reference hook
+ cacheprof-nofib-strict	smoke	nofib	real/cacheprof	1 smoke.s smoke.reference hooks.s	cacheprof-nofib-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/cacheprof-architecture.sml,shared/cacheprof-kernel.sml,shared/cacheprof-check.sml,cacheprof-nofib-strict/benchmark.sml,shared/main.sml	30	1048576	applications,parsing,symbolic-processing,code-generation,sharing,allocation-lifetimes	smoke.s,smoke.reference,hooks.s	exact	implemented
+ cacheprof-nofib-strict	normal	nofib	real/cacheprof	200 normal.s normal.reference hooks.s	cacheprof-nofib-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/cacheprof-architecture.sml,shared/cacheprof-kernel.sml,shared/cacheprof-check.sml,cacheprof-nofib-strict/benchmark.sml,shared/main.sml	600	4194304	applications,parsing,symbolic-processing,code-generation,sharing,allocation-lifetimes	normal.s,normal.reference,hooks.s	exact	implemented
+ cacheprof-nofib-strict	large	nofib	real/cacheprof	200 large.s large.reference hooks.s	cacheprof-nofib-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/cacheprof-architecture.sml,shared/cacheprof-kernel.sml,shared/cacheprof-check.sml,cacheprof-nofib-strict/benchmark.sml,shared/main.sml	3600	8388608	applications,parsing,symbolic-processing,code-generation,sharing,allocation-lifetimes	large.s,large.reference,hooks.s	exact	implemented
++comp_lab_zift-lazy	smoke	nofib	spectral/hartel/comp_lab_zift	1 1 0 smoke.reference 119390/2103	comp_lab_zift-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/hartel-comp-lab-figures.sml,shared/hartel-comp-lab-kernel.sml,shared/hartel-comp-lab-check.sml,comp_lab_zift-lazy/benchmark.sml,shared/main.sml	30	1048576	graphs,persistent-trees,component-labelling,sharing,allocation-lifetimes,hartel	smoke.reference	exact	implemented
++comp_lab_zift-lazy	normal	nofib	spectral/hartel/comp_lab_zift	100 5 1280 normal.reference 2899651/52401	comp_lab_zift-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/hartel-comp-lab-figures.sml,shared/hartel-comp-lab-kernel.sml,shared/hartel-comp-lab-check.sml,comp_lab_zift-lazy/benchmark.sml,shared/main.sml	600	4194304	graphs,persistent-trees,component-labelling,sharing,allocation-lifetimes,hartel	normal.reference	exact	implemented
++comp_lab_zift-lazy	large	nofib	spectral/hartel/comp_lab_zift	100 9 2304 large.reference 9937267/179845	comp_lab_zift-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/hartel-comp-lab-figures.sml,shared/hartel-comp-lab-kernel.sml,shared/hartel-comp-lab-check.sml,comp_lab_zift-lazy/benchmark.sml,shared/main.sml	3600	8388608	graphs,persistent-trees,component-labelling,sharing,allocation-lifetimes,hartel	large.reference	exact	implemented
++comp_lab_zift-strict	smoke	nofib	spectral/hartel/comp_lab_zift	1 1 0 smoke.reference 119390/2103	comp_lab_zift-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/hartel-comp-lab-figures.sml,shared/hartel-comp-lab-kernel.sml,shared/hartel-comp-lab-check.sml,comp_lab_zift-strict/benchmark.sml,shared/main.sml	30	1048576	graphs,persistent-trees,component-labelling,sharing,allocation-lifetimes,hartel	smoke.reference	exact	implemented
++comp_lab_zift-strict	normal	nofib	spectral/hartel/comp_lab_zift	100 5 1280 normal.reference 2899651/52401	comp_lab_zift-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/hartel-comp-lab-figures.sml,shared/hartel-comp-lab-kernel.sml,shared/hartel-comp-lab-check.sml,comp_lab_zift-strict/benchmark.sml,shared/main.sml	600	4194304	graphs,persistent-trees,component-labelling,sharing,allocation-lifetimes,hartel	normal.reference	exact	implemented
++comp_lab_zift-strict	large	nofib	spectral/hartel/comp_lab_zift	100 9 2304 large.reference 9937267/179845	comp_lab_zift-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/hartel-comp-lab-figures.sml,shared/hartel-comp-lab-kernel.sml,shared/hartel-comp-lab-check.sml,comp_lab_zift-strict/benchmark.sml,shared/main.sml	3600	8388608	graphs,persistent-trees,component-labelling,sharing,allocation-lifetimes,hartel	large.reference	exact	implemented
++comp_lab_nozift-lazy	smoke	nofib	spectral/hartel/comp_lab_zift	1 1 0 smoke.reference 119390/2103	comp_lab_nozift-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/hartel-comp-lab-figures.sml,shared/hartel-comp-lab-kernel.sml,shared/hartel-comp-lab-check.sml,comp_lab_nozift-lazy/benchmark.sml,shared/main.sml	30	1048576	graphs,persistent-trees,component-labelling,sharing,allocation-lifetimes,hartel	smoke.reference	exact	implemented
++comp_lab_nozift-lazy	normal	nofib	spectral/hartel/comp_lab_zift	100 5 1280 normal.reference 2899651/52401	comp_lab_nozift-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/hartel-comp-lab-figures.sml,shared/hartel-comp-lab-kernel.sml,shared/hartel-comp-lab-check.sml,comp_lab_nozift-lazy/benchmark.sml,shared/main.sml	600	4194304	graphs,persistent-trees,component-labelling,sharing,allocation-lifetimes,hartel	normal.reference	exact	implemented
++comp_lab_nozift-lazy	large	nofib	spectral/hartel/comp_lab_zift	100 9 2304 large.reference 9937267/179845	comp_lab_nozift-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/hartel-comp-lab-figures.sml,shared/hartel-comp-lab-kernel.sml,shared/hartel-comp-lab-check.sml,comp_lab_nozift-lazy/benchmark.sml,shared/main.sml	3600	8388608	graphs,persistent-trees,component-labelling,sharing,allocation-lifetimes,hartel	large.reference	exact	implemented
++comp_lab_nozift-strict	smoke	nofib	spectral/hartel/comp_lab_zift	1 1 0 smoke.reference 119390/2103	comp_lab_nozift-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/hartel-comp-lab-figures.sml,shared/hartel-comp-lab-kernel.sml,shared/hartel-comp-lab-check.sml,comp_lab_nozift-strict/benchmark.sml,shared/main.sml	30	1048576	graphs,persistent-trees,component-labelling,sharing,allocation-lifetimes,hartel	smoke.reference	exact	implemented
++comp_lab_nozift-strict	normal	nofib	spectral/hartel/comp_lab_zift	100 5 1280 normal.reference 2899651/52401	comp_lab_nozift-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/hartel-comp-lab-figures.sml,shared/hartel-comp-lab-kernel.sml,shared/hartel-comp-lab-check.sml,comp_lab_nozift-strict/benchmark.sml,shared/main.sml	600	4194304	graphs,persistent-trees,component-labelling,sharing,allocation-lifetimes,hartel	normal.reference	exact	implemented
++comp_lab_nozift-strict	large	nofib	spectral/hartel/comp_lab_zift	100 9 2304 large.reference 9937267/179845	comp_lab_nozift-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/hartel-comp-lab-figures.sml,shared/hartel-comp-lab-kernel.sml,shared/hartel-comp-lab-check.sml,comp_lab_nozift-strict/benchmark.sml,shared/main.sml	3600	8388608	graphs,persistent-trees,component-labelling,sharing,allocation-lifetimes,hartel	large.reference	exact	implemented
+diff --git a/examples/benchmarks/source-variants.tsv b/examples/benchmarks/source-variants.tsv
+index 24d2d5a3a..e2a94f4e8 100644
+--- a/examples/benchmarks/source-variants.tsv
++++ b/examples/benchmarks/source-variants.tsv
+@@ -30,3 +30,4 @@ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/multiplier	spectral/mult
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/dom-lt	spectral/dom-lt/Dom.hs	dom-lt-unrepaired	Haskell	unrepaired semidominator threshold	Matt Morrow	ae7675a60f6915fee3f62c6e329b696e7f7a24324fc1cfac98fcaa1eff9094a1	defer	unmodified kernel returns incorrect parents on 15 of 17 supplied graphs and a three-node counterexample; list-length checksums conceal the error; only the reviewed minimum-threshold repair is runnable; reconsider unrepaired baseline only after an upstream revision fixes the defect and full parent results pass independent checks	Copyright Matt Morrow 2009; BSD3 declaration retained
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	gc/fulsom/Main.hs	gc/fulsom/raster/raster.c	fulsom-gc-raster-viewer	C	ancillary raster-to-PGM output converter	Duncan Sinclair	fa64d19a2d5fafd196d5640f65fabd235a8abed5ed96c2aaee117ce9286c7ee0	exclude	README.original describes this separate output-viewing utility; neither benchmark Main nor its Makefile invokes it; retain source and protocol provenance rather than claim a runnable renderer variant	Copyright 1990,1992 Duncan Sinclair; no separate permission grant stated in this C file
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/fulsom/Main.hs	real/fulsom/raster/raster.c	fulsom-real-raster-viewer	C	ancillary raster-to-PGM output converter	Duncan Sinclair	fa64d19a2d5fafd196d5640f65fabd235a8abed5ed96c2aaee117ce9286c7ee0	exclude	README.original describes this separate output-viewing utility; neither benchmark Main nor its Makefile invokes it; retain source and protocol provenance rather than claim a runnable renderer variant	Copyright 1990,1992 Duncan Sinclair; no separate permission grant stated in this C file
++nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/hartel/comp_lab_zift	spectral/hartel/comp_lab_zift/Main.hs	comp_lab_nozift	Haskell	inactive non-sifting label mapping	not stated in source heading	b20f91a38894f5ffcc3651066bb1453c713d252b5c08913df932c247a76a1eb3	import	ported as comp_lab_nozift-lazy/strict using the original f_comp_lab_diff-prime with f_no_zift; retain positive tiling and full renderer; no new algorithm replaces source trees; source helper f_main_field-prime also selects this mode with negative size but the benchmark Main itself requires positive tiling	no separate individual program notice stated; retain complete module and Fast2haskell shim

@@ -1,0 +1,1 @@
+comp_lab_nozift-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/hartel-ida-finite.sml shared/hartel-comp-lab-figures.sml shared/hartel-comp-lab-kernel.sml shared/hartel-comp-lab-check.sml comp_lab_nozift-strict/benchmark.sml shared/main.sml	100 5 1280 normal.reference 2899651/52401	comp_lab_nozift-strict/normal.expected	normal.reference

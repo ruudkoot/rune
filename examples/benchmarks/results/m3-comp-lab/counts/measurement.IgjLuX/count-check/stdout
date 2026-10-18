@@ -1,0 +1,5 @@
+COUNT unbudgeted comp_lab_zift-lazy normal rune
+COUNT unbudgeted comp_lab_zift-lazy normal rune:opt
+COUNT unbudgeted comp_lab_zift-lazy normal rune:new
+COUNT unbudgeted comp_lab_zift-lazy normal rune:jit
+COUNT comparisons agree

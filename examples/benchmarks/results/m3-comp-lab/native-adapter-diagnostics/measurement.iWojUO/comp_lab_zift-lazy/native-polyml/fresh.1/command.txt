@@ -1,0 +1,7 @@
+./prog
+-H
+16
+--maxheap
+512
+--stackspace
+64

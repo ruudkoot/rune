@@ -1,0 +1,3 @@
+Exception- InternalError: entryNumber - not a record raised while compiling
+
+uncaught exception Fail [Fail "Exception- InternalError: entryNumber - not a record raised while compiling"]

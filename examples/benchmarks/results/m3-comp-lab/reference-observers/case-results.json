@@ -1,0 +1,370 @@
+[
+  {
+    "key": "0-1-0-zift",
+    "selector": 0,
+    "size": 1,
+    "threshold": 0,
+    "mode": "zift",
+    "bytes": 69
+  },
+  {
+    "key": "0-1-0-plain",
+    "selector": 0,
+    "size": 1,
+    "threshold": 0,
+    "mode": "plain",
+    "bytes": 69
+  },
+  {
+    "key": "0-1-1-zift",
+    "selector": 0,
+    "size": 1,
+    "threshold": 1,
+    "mode": "zift",
+    "bytes": 69
+  },
+  {
+    "key": "0-1-1-plain",
+    "selector": 0,
+    "size": 1,
+    "threshold": 1,
+    "mode": "plain",
+    "bytes": 69
+  },
+  {
+    "key": "0-1-10000-zift",
+    "selector": 0,
+    "size": 1,
+    "threshold": 10000,
+    "mode": "zift",
+    "bytes": 69
+  },
+  {
+    "key": "0-1-10000-plain",
+    "selector": 0,
+    "size": 1,
+    "threshold": 10000,
+    "mode": "plain",
+    "bytes": 69
+  },
+  {
+    "key": "1-1-0-zift",
+    "selector": 1,
+    "size": 1,
+    "threshold": 0,
+    "mode": "zift",
+    "bytes": 103
+  },
+  {
+    "key": "1-1-0-plain",
+    "selector": 1,
+    "size": 1,
+    "threshold": 0,
+    "mode": "plain",
+    "bytes": 103
+  },
+  {
+    "key": "1-1-1-zift",
+    "selector": 1,
+    "size": 1,
+    "threshold": 1,
+    "mode": "zift",
+    "bytes": 103
+  },
+  {
+    "key": "1-1-1-plain",
+    "selector": 1,
+    "size": 1,
+    "threshold": 1,
+    "mode": "plain",
+    "bytes": 103
+  },
+  {
+    "key": "1-1-10000-zift",
+    "selector": 1,
+    "size": 1,
+    "threshold": 10000,
+    "mode": "zift",
+    "bytes": 103
+  },
+  {
+    "key": "1-1-10000-plain",
+    "selector": 1,
+    "size": 1,
+    "threshold": 10000,
+    "mode": "plain",
+    "bytes": 103
+  },
+  {
+    "key": "2-1-0-zift",
+    "selector": 2,
+    "size": 1,
+    "threshold": 0,
+    "mode": "zift",
+    "bytes": 570
+  },
+  {
+    "key": "2-1-0-plain",
+    "selector": 2,
+    "size": 1,
+    "threshold": 0,
+    "mode": "plain",
+    "bytes": 570
+  },
+  {
+    "key": "2-1-1-zift",
+    "selector": 2,
+    "size": 1,
+    "threshold": 1,
+    "mode": "zift",
+    "bytes": 570
+  },
+  {
+    "key": "2-1-1-plain",
+    "selector": 2,
+    "size": 1,
+    "threshold": 1,
+    "mode": "plain",
+    "bytes": 570
+  },
+  {
+    "key": "2-1-10000-zift",
+    "selector": 2,
+    "size": 1,
+    "threshold": 10000,
+    "mode": "zift",
+    "bytes": 570
+  },
+  {
+    "key": "2-1-10000-plain",
+    "selector": 2,
+    "size": 1,
+    "threshold": 10000,
+    "mode": "plain",
+    "bytes": 570
+  },
+  {
+    "key": "3-1-0-zift",
+    "selector": 3,
+    "size": 1,
+    "threshold": 0,
+    "mode": "zift",
+    "bytes": 2103
+  },
+  {
+    "key": "3-1-0-plain",
+    "selector": 3,
+    "size": 1,
+    "threshold": 0,
+    "mode": "plain",
+    "bytes": 2103
+  },
+  {
+    "key": "3-1-1-zift",
+    "selector": 3,
+    "size": 1,
+    "threshold": 1,
+    "mode": "zift",
+    "bytes": 2103
+  },
+  {
+    "key": "3-1-1-plain",
+    "selector": 3,
+    "size": 1,
+    "threshold": 1,
+    "mode": "plain",
+    "bytes": 2103
+  },
+  {
+    "key": "3-1-10000-zift",
+    "selector": 3,
+    "size": 1,
+    "threshold": 10000,
+    "mode": "zift",
+    "bytes": 2103
+  },
+  {
+    "key": "3-1-10000-plain",
+    "selector": 3,
+    "size": 1,
+    "threshold": 10000,
+    "mode": "plain",
+    "bytes": 2103
+  },
+  {
+    "key": "4-1-0-zift",
+    "selector": 4,
+    "size": 1,
+    "threshold": 0,
+    "mode": "zift",
+    "bytes": 8023
+  },
+  {
+    "key": "4-1-0-plain",
+    "selector": 4,
+    "size": 1,
+    "threshold": 0,
+    "mode": "plain",
+    "bytes": 8023
+  },
+  {
+    "key": "4-1-1-zift",
+    "selector": 4,
+    "size": 1,
+    "threshold": 1,
+    "mode": "zift",
+    "bytes": 8023
+  },
+  {
+    "key": "4-1-1-plain",
+    "selector": 4,
+    "size": 1,
+    "threshold": 1,
+    "mode": "plain",
+    "bytes": 8023
+  },
+  {
+    "key": "4-1-10000-zift",
+    "selector": 4,
+    "size": 1,
+    "threshold": 10000,
+    "mode": "zift",
+    "bytes": 8023
+  },
+  {
+    "key": "4-1-10000-plain",
+    "selector": 4,
+    "size": 1,
+    "threshold": 10000,
+    "mode": "plain",
+    "bytes": 8023
+  },
+  {
+    "key": "3-2-0-zift",
+    "selector": 3,
+    "size": 2,
+    "threshold": 0,
+    "mode": "zift",
+    "bytes": 8023
+  },
+  {
+    "key": "3-2-0-plain",
+    "selector": 3,
+    "size": 2,
+    "threshold": 0,
+    "mode": "plain",
+    "bytes": 8023
+  },
+  {
+    "key": "3-2-512-zift",
+    "selector": 3,
+    "size": 2,
+    "threshold": 512,
+    "mode": "zift",
+    "bytes": 8023
+  },
+  {
+    "key": "3-2-512-plain",
+    "selector": 3,
+    "size": 2,
+    "threshold": 512,
+    "mode": "plain",
+    "bytes": 8023
+  },
+  {
+    "key": "3-3-0-zift",
+    "selector": 3,
+    "size": 3,
+    "threshold": 0,
+    "mode": "zift",
+    "bytes": 18717
+  },
+  {
+    "key": "3-3-0-plain",
+    "selector": 3,
+    "size": 3,
+    "threshold": 0,
+    "mode": "plain",
+    "bytes": 18717
+  },
+  {
+    "key": "3-3-768-zift",
+    "selector": 3,
+    "size": 3,
+    "threshold": 768,
+    "mode": "zift",
+    "bytes": 18717
+  },
+  {
+    "key": "3-3-768-plain",
+    "selector": 3,
+    "size": 3,
+    "threshold": 768,
+    "mode": "plain",
+    "bytes": 18717
+  },
+  {
+    "key": "3-5-0-zift",
+    "selector": 3,
+    "size": 5,
+    "threshold": 0,
+    "mode": "zift",
+    "bytes": 52401
+  },
+  {
+    "key": "3-5-0-plain",
+    "selector": 3,
+    "size": 5,
+    "threshold": 0,
+    "mode": "plain",
+    "bytes": 52401
+  },
+  {
+    "key": "3-5-1280-zift",
+    "selector": 3,
+    "size": 5,
+    "threshold": 1280,
+    "mode": "zift",
+    "bytes": 52401
+  },
+  {
+    "key": "3-5-1280-plain",
+    "selector": 3,
+    "size": 5,
+    "threshold": 1280,
+    "mode": "plain",
+    "bytes": 52401
+  },
+  {
+    "key": "3-9-0-zift",
+    "selector": 3,
+    "size": 9,
+    "threshold": 0,
+    "mode": "zift",
+    "bytes": 179845
+  },
+  {
+    "key": "3-9-0-plain",
+    "selector": 3,
+    "size": 9,
+    "threshold": 0,
+    "mode": "plain",
+    "bytes": 179845
+  },
+  {
+    "key": "3-9-2304-zift",
+    "selector": 3,
+    "size": 9,
+    "threshold": 2304,
+    "mode": "zift",
+    "bytes": 179845
+  },
+  {
+    "key": "3-9-2304-plain",
+    "selector": 3,
+    "size": 9,
+    "threshold": 2304,
+    "mode": "plain",
+    "bytes": 179845
+  }
+]

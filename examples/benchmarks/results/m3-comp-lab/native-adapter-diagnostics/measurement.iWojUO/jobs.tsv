@@ -1,0 +1,1 @@
+comp_lab_zift-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/hartel-ida-finite.sml shared/hartel-comp-lab-figures.sml shared/hartel-comp-lab-kernel.sml shared/hartel-comp-lab-check.sml comp_lab_zift-lazy/benchmark.sml shared/main.sml	1 1 0 smoke.reference 119390/2103	comp_lab_zift-lazy/smoke.expected	smoke.reference

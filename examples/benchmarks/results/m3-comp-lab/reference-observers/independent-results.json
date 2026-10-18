@@ -1,0 +1,324 @@
+[
+  {
+    "key": "0-1-0-zift",
+    "pixels": 1,
+    "components": 1,
+    "runs": 1,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "0-1-0-plain",
+    "pixels": 1,
+    "components": 1,
+    "runs": 1,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "0-1-1-zift",
+    "pixels": 1,
+    "components": 1,
+    "runs": 1,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "0-1-1-plain",
+    "pixels": 1,
+    "components": 1,
+    "runs": 1,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "0-1-10000-zift",
+    "pixels": 1,
+    "components": 1,
+    "runs": 1,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "0-1-10000-plain",
+    "pixels": 1,
+    "components": 1,
+    "runs": 1,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "1-1-0-zift",
+    "pixels": 4,
+    "components": 1,
+    "runs": 2,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "1-1-0-plain",
+    "pixels": 4,
+    "components": 1,
+    "runs": 2,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "1-1-1-zift",
+    "pixels": 4,
+    "components": 1,
+    "runs": 2,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "1-1-1-plain",
+    "pixels": 4,
+    "components": 1,
+    "runs": 2,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "1-1-10000-zift",
+    "pixels": 4,
+    "components": 1,
+    "runs": 2,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "1-1-10000-plain",
+    "pixels": 4,
+    "components": 1,
+    "runs": 2,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "2-1-0-zift",
+    "pixels": 64,
+    "components": 3,
+    "runs": 16,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "2-1-0-plain",
+    "pixels": 64,
+    "components": 3,
+    "runs": 16,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "2-1-1-zift",
+    "pixels": 64,
+    "components": 3,
+    "runs": 16,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "2-1-1-plain",
+    "pixels": 64,
+    "components": 3,
+    "runs": 16,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "2-1-10000-zift",
+    "pixels": 64,
+    "components": 3,
+    "runs": 16,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "2-1-10000-plain",
+    "pixels": 64,
+    "components": 3,
+    "runs": 16,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "3-1-0-zift",
+    "pixels": 256,
+    "components": 6,
+    "runs": 62,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "3-1-0-plain",
+    "pixels": 256,
+    "components": 6,
+    "runs": 62,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "3-1-1-zift",
+    "pixels": 256,
+    "components": 6,
+    "runs": 62,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "3-1-1-plain",
+    "pixels": 256,
+    "components": 6,
+    "runs": 62,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "3-1-10000-zift",
+    "pixels": 256,
+    "components": 6,
+    "runs": 62,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "3-1-10000-plain",
+    "pixels": 256,
+    "components": 6,
+    "runs": 62,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "4-1-0-zift",
+    "pixels": 1024,
+    "components": 19,
+    "runs": 230,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "4-1-0-plain",
+    "pixels": 1024,
+    "components": 19,
+    "runs": 230,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "4-1-1-zift",
+    "pixels": 1024,
+    "components": 19,
+    "runs": 230,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "4-1-1-plain",
+    "pixels": 1024,
+    "components": 19,
+    "runs": 230,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "4-1-10000-zift",
+    "pixels": 1024,
+    "components": 19,
+    "runs": 230,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "4-1-10000-plain",
+    "pixels": 1024,
+    "components": 19,
+    "runs": 230,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "3-2-0-zift",
+    "pixels": 1024,
+    "components": 19,
+    "runs": 230,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "3-2-0-plain",
+    "pixels": 1024,
+    "components": 19,
+    "runs": 230,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "3-2-512-zift",
+    "pixels": 1024,
+    "components": 19,
+    "runs": 230,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "3-2-512-plain",
+    "pixels": 1024,
+    "components": 19,
+    "runs": 230,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "3-3-0-zift",
+    "pixels": 2304,
+    "components": 40,
+    "runs": 504,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "3-3-0-plain",
+    "pixels": 2304,
+    "components": 40,
+    "runs": 504,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "3-3-768-zift",
+    "pixels": 2304,
+    "components": 40,
+    "runs": 504,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "3-3-768-plain",
+    "pixels": 2304,
+    "components": 40,
+    "runs": 504,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "3-5-0-zift",
+    "pixels": 6400,
+    "components": 106,
+    "runs": 1370,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "3-5-0-plain",
+    "pixels": 6400,
+    "components": 106,
+    "runs": 1370,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "3-5-1280-zift",
+    "pixels": 6400,
+    "components": 106,
+    "runs": 1370,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "3-5-1280-plain",
+    "pixels": 6400,
+    "components": 106,
+    "runs": 1370,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "3-9-0-zift",
+    "pixels": 20736,
+    "components": 334,
+    "runs": 4374,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "3-9-0-plain",
+    "pixels": 20736,
+    "components": 334,
+    "runs": 4374,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "3-9-2304-zift",
+    "pixels": 20736,
+    "components": 334,
+    "runs": 4374,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  },
+  {
+    "key": "3-9-2304-plain",
+    "pixels": 20736,
+    "components": 334,
+    "runs": 4374,
+    "method": "four-neighbor BFS, independent row runs, forest membership and ordered-split invariants"
+  }
+]

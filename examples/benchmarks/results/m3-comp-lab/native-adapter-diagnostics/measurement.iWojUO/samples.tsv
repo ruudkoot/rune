@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+comp_lab_zift-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	9.75	6.98	1.49	661712	-	-	-	comp_lab_zift-lazy/native-mlton/build/compile
+comp_lab_zift-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2992	-	-	-	comp_lab_zift-lazy/native-mlton/correctness.0
+comp_lab_zift-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2944	-	-	-	comp_lab_zift-lazy/native-mlton/fresh.1
+comp_lab_zift-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	1.04	0.99	0.06	46236	-	-	-	comp_lab_zift-lazy/native-smlnj-legacy/build/compile
+comp_lab_zift-lazy	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.02	0.00	0.01	4336	-	-	-	comp_lab_zift-lazy/native-smlnj-legacy/correctness.0
+comp_lab_zift-lazy	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.01	0.01	0.00	4396	-	-	-	comp_lab_zift-lazy/native-smlnj-legacy/fresh.1
+comp_lab_zift-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.64	0.57	0.14	59688	-	-	-	comp_lab_zift-lazy/native-polyml/build/compile
+comp_lab_zift-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	7140	-	-	-	comp_lab_zift-lazy/native-polyml/correctness.0
+comp_lab_zift-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	7324	-	-	-	comp_lab_zift-lazy/native-polyml/fresh.1

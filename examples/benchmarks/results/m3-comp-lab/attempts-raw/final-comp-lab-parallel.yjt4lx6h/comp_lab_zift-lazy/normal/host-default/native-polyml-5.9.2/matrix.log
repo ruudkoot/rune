@@ -1,0 +1,1059 @@
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 100:5240100
+PASS comp_lab_zift-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml:19.32 Warning: calling polyEqual
+functor BenchIdaFiniteFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a seq
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t * 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val defer : (unit -> 'a D.t) -> 'a D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val nth : 'a <BaseFct>.<resultStr>.node D.t -> int -> 'a
+  val update :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val unify :
+      ''a <BaseFct>.<resultStr>.node D.t
+       -> ''a -> ''a <BaseFct>.<resultStr>.node D.t
+  val foldl :
+      ('a D.t -> 'b -> 'a D.t)
+       -> 'a D.t -> 'b <BaseFct>.<resultStr>.node D.t -> 'a D.t
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val filter :
+      ('a -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val length : 'a <BaseFct>.<resultStr>.node D.t -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-comp-lab-figures.sml]
+[autoloading]
+[autoloading done]
+structure BenchCompLabData : sig
+  val figures : string list vector
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-comp-lab-kernel.sml]
+[autoloading]
+[autoloading done]
+functor BenchCompLabFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure F : <sig>
+  structure L : <sig>
+  val view :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a D.t * 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t) option
+  val null : 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> bool
+  val singleton : 'a -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val split :
+      int
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val left :
+      ('a <BaseFct>.<resultStr>.F.<returnStr>.seq
+          * 'a <BaseFct>.<resultStr>.F.<returnStr>.seq) BenchLazy.delay
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val right :
+      ('a <BaseFct>.<resultStr>.F.<returnStr>.seq
+          * 'a <BaseFct>.<resultStr>.F.<returnStr>.seq) BenchLazy.delay
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val concat :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val repeat :
+      int
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val merge :
+      int <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  type treeNode
+  type tree
+  type setNode
+  type object
+  val empty : unit -> <BaseFct>.<resultStr>.setNode D.t
+  val singletonSet : int D.t -> <BaseFct>.<resultStr>.setNode D.t
+  val top : <BaseFct>.<resultStr>.setNode D.t -> int
+  val setEqual :
+      <BaseFct>.<resultStr>.setNode D.t
+       -> <BaseFct>.<resultStr>.setNode D.t -> bool
+  val member : <BaseFct>.<resultStr>.treeNode D.t -> int -> bool
+  val setMember : <BaseFct>.<resultStr>.setNode D.t -> int -> bool
+  val treeMax : <BaseFct>.<resultStr>.treeNode D.t -> int
+  val treeMin : <BaseFct>.<resultStr>.treeNode D.t -> int
+  val flatten :
+      <BaseFct>.<resultStr>.treeNode D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val makeTree :
+      int
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (int D.t * <BaseFct>.<resultStr>.treeNode D.t) D.t
+  val treeUnion :
+      <BaseFct>.<resultStr>.treeNode D.t
+       -> <BaseFct>.<resultStr>.treeNode D.t
+       -> <BaseFct>.<resultStr>.treeNode D.t
+  val unionSet :
+      <BaseFct>.<resultStr>.setNode D.t
+       -> <BaseFct>.<resultStr>.setNode D.t
+       -> <BaseFct>.<resultStr>.setNode D.t
+  val selectTree :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.treeNode D.t
+       -> <BaseFct>.<resultStr>.treeNode D.t
+  val selectSet :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.setNode D.t
+       -> <BaseFct>.<resultStr>.setNode D.t
+  val extract :
+      <BaseFct>.<resultStr>.setNode D.t
+       -> <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val extract2 :
+      <BaseFct>.<resultStr>.setNode D.t
+       -> <BaseFct>.<resultStr>.setNode D.t
+       -> <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val find :
+      <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int -> <BaseFct>.<resultStr>.setNode D.t
+  val unionObjects :
+      <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.setNode D.t
+       -> <BaseFct>.<resultStr>.setNode D.t
+       -> <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  type genNode
+  type gen
+  val generator :
+      int -> int -> int -> <BaseFct>.<resultStr>.genNode BenchLazy.state ref
+  val splitBuy :
+      <BaseFct>.<resultStr>.genNode BenchLazy.state ref
+       -> int
+       -> (<BaseFct>.<resultStr>.genNode BenchLazy.state ref
+            * <BaseFct>.<resultStr>.genNode BenchLazy.state ref) 
+           BenchLazy.state ref
+  val createLabel :
+      <BaseFct>.<resultStr>.genNode BenchLazy.state ref
+       -> (int D.t * <BaseFct>.<resultStr>.genNode BenchLazy.state ref) D.t
+  val sift :
+      <BaseFct>.<resultStr>.genNode BenchLazy.state ref
+       -> int
+       -> <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val noSift : 'a -> 'b -> 'c -> 'c
+  type range
+  type lenRow
+  type labRange
+  type labRow
+  type lenLab
+  type fieldNode
+  type field
+  val rowLength : <BaseFct>.<resultStr>.lenRow -> int
+  val labelsLength : <BaseFct>.<resultStr>.lenLab -> int
+  val ranges :
+      <BaseFct>.<resultStr>.lenRow
+       -> <BaseFct>.<resultStr>.range <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val findWhite :
+      bool <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int
+       -> (int * bool <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val findBlack :
+      bool <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int
+       -> <BaseFct>.<resultStr>.range <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+  val pixelsToRanges :
+      bool <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.lenRow
+  val assignRow :
+      <BaseFct>.<resultStr>.range <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.genNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.labRow D.t
+  val labelOf : <BaseFct>.<resultStr>.labRange -> int
+  val rangeOf : <BaseFct>.<resultStr>.labRange -> <BaseFct>.<resultStr>.range
+  val apLabel :
+      <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.labRange -> <BaseFct>.<resultStr>.labRange
+  val unionBorder :
+      <BaseFct>.<resultStr>.labRange <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> <BaseFct>.<resultStr>.labRange 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val unionFields :
+      <BaseFct>.<resultStr>.fieldNode D.t
+       -> <BaseFct>.<resultStr>.fieldNode D.t
+       -> <BaseFct>.<resultStr>.fieldNode D.t
+  val fieldLeft :
+      <BaseFct>.<resultStr>.fieldNode D.t
+       -> <BaseFct>.<resultStr>.labRange 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val fieldRight :
+      <BaseFct>.<resultStr>.fieldNode D.t
+       -> <BaseFct>.<resultStr>.labRange 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val fieldObjects :
+      <BaseFct>.<resultStr>.fieldNode D.t
+       -> <BaseFct>.<resultStr>.object <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val fieldLabels :
+      <BaseFct>.<resultStr>.fieldNode D.t
+       -> <BaseFct>.<resultStr>.lenLab <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val pixelFieldSeq :
+      <BaseFct>.<resultStr>.lenRow <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> int
+       -> <BaseFct>.<resultStr>.genNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.fieldNode D.t
+  val sumMapped :
+      ('a -> int) -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> int
+  val sumRows :
+      <BaseFct>.<resultStr>.lenRow <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> int
+  type 'a sandArg
+  val sandwich :
+      ('a -> 'b -> 'c)
+       -> 'a <BaseFct>.<resultStr>.sandArg
+       -> 'b <BaseFct>.<resultStr>.sandArg -> 'c
+  val pixelField :
+      <BaseFct>.<resultStr>.lenRow <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> int
+       -> <BaseFct>.<resultStr>.genNode BenchLazy.state ref
+       -> int -> <BaseFct>.<resultStr>.fieldNode D.t
+  val mapLabelSeq :
+      <BaseFct>.<resultStr>.lenLab <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.labRange 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val sumLabels :
+      <BaseFct>.<resultStr>.lenLab <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> int
+  val mapLabel :
+      (<BaseFct>.<resultStr>.genNode BenchLazy.state ref
+        -> int
+        -> <BaseFct>.<resultStr>.setNode D.t 
+            <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+        -> <BaseFct>.<resultStr>.setNode D.t 
+            <BaseFct>.<resultStr>.F.<returnStr>.node D.t)
+       -> <BaseFct>.<resultStr>.lenLab 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int
+       -> <BaseFct>.<resultStr>.genNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int
+       -> <BaseFct>.<resultStr>.labRange 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val decimal : int -> string
+  val toPixels :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.labRange 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val showTree : <BaseFct>.<resultStr>.treeNode D.t -> string
+  val showSet : <BaseFct>.<resultStr>.setNode D.t -> string
+  val showRange : <BaseFct>.<resultStr>.range -> string
+  val showLabRange : <BaseFct>.<resultStr>.labRange -> string
+  val showLenLab : <BaseFct>.<resultStr>.lenLab -> string
+  val figures :
+      bool <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+                 <BaseFct>.<resultStr>.F.<returnStr>.node D.t BenchLazy.state 
+           ref vector
+  val figure :
+      int
+       -> bool <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val tile :
+      int
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val components :
+      bool
+       -> int
+       -> int
+       -> int
+       -> (<BaseFct>.<resultStr>.labRange 
+                  <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+              <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+          * <BaseFct>.<resultStr>.lenLab 
+              <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+          * <BaseFct>.<resultStr>.object 
+              <BaseFct>.<resultStr>.F.<returnStr>.node D.t * int) D.t
+  val rendered : bool -> int -> int -> int -> string
+  val sumcode : string -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-comp-lab-check.sml]
+[autoloading]
+[autoloading done]
+functor BenchCompLabCheckFn(K: sig
+  val rendered : bool -> int -> int -> int -> string
+  val sumcode : string -> string
+end) :
+sig
+  val read : string -> TextIO.vector
+  val run : bool -> string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/comp_lab_zift-lazy/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Check : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 100:5240100
+PASS comp_lab_zift-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml:19.32 Warning: calling polyEqual
+functor BenchIdaFiniteFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a seq
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t * 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val defer : (unit -> 'a D.t) -> 'a D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val nth : 'a <BaseFct>.<resultStr>.node D.t -> int -> 'a
+  val update :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val unify :
+      ''a <BaseFct>.<resultStr>.node D.t
+       -> ''a -> ''a <BaseFct>.<resultStr>.node D.t
+  val foldl :
+      ('a D.t -> 'b -> 'a D.t)
+       -> 'a D.t -> 'b <BaseFct>.<resultStr>.node D.t -> 'a D.t
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val filter :
+      ('a -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val length : 'a <BaseFct>.<resultStr>.node D.t -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-comp-lab-figures.sml]
+[autoloading]
+[autoloading done]
+structure BenchCompLabData : sig
+  val figures : string list vector
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-comp-lab-kernel.sml]
+[autoloading]
+[autoloading done]
+functor BenchCompLabFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure F : <sig>
+  structure L : <sig>
+  val view :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a D.t * 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t) option
+  val null : 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> bool
+  val singleton : 'a -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val split :
+      int
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val left :
+      ('a <BaseFct>.<resultStr>.F.<returnStr>.seq
+          * 'a <BaseFct>.<resultStr>.F.<returnStr>.seq) BenchLazy.delay
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val right :
+      ('a <BaseFct>.<resultStr>.F.<returnStr>.seq
+          * 'a <BaseFct>.<resultStr>.F.<returnStr>.seq) BenchLazy.delay
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val concat :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val repeat :
+      int
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val merge :
+      int <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  type treeNode
+  type tree
+  type setNode
+  type object
+  val empty : unit -> <BaseFct>.<resultStr>.setNode D.t
+  val singletonSet : int D.t -> <BaseFct>.<resultStr>.setNode D.t
+  val top : <BaseFct>.<resultStr>.setNode D.t -> int
+  val setEqual :
+      <BaseFct>.<resultStr>.setNode D.t
+       -> <BaseFct>.<resultStr>.setNode D.t -> bool
+  val member : <BaseFct>.<resultStr>.treeNode D.t -> int -> bool
+  val setMember : <BaseFct>.<resultStr>.setNode D.t -> int -> bool
+  val treeMax : <BaseFct>.<resultStr>.treeNode D.t -> int
+  val treeMin : <BaseFct>.<resultStr>.treeNode D.t -> int
+  val flatten :
+      <BaseFct>.<resultStr>.treeNode D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val makeTree :
+      int
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (int D.t * <BaseFct>.<resultStr>.treeNode D.t) D.t
+  val treeUnion :
+      <BaseFct>.<resultStr>.treeNode D.t
+       -> <BaseFct>.<resultStr>.treeNode D.t
+       -> <BaseFct>.<resultStr>.treeNode D.t
+  val unionSet :
+      <BaseFct>.<resultStr>.setNode D.t
+       -> <BaseFct>.<resultStr>.setNode D.t
+       -> <BaseFct>.<resultStr>.setNode D.t
+  val selectTree :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.treeNode D.t
+       -> <BaseFct>.<resultStr>.treeNode D.t
+  val selectSet :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.setNode D.t
+       -> <BaseFct>.<resultStr>.setNode D.t
+  val extract :
+      <BaseFct>.<resultStr>.setNode D.t
+       -> <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val extract2 :
+      <BaseFct>.<resultStr>.setNode D.t
+       -> <BaseFct>.<resultStr>.setNode D.t
+       -> <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val find :
+      <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int -> <BaseFct>.<resultStr>.setNode D.t
+  val unionObjects :
+      <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.setNode D.t
+       -> <BaseFct>.<resultStr>.setNode D.t
+       -> <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  type genNode
+  type gen
+  val generator :
+      int -> int -> int -> <BaseFct>.<resultStr>.genNode BenchLazy.state ref
+  val splitBuy :
+      <BaseFct>.<resultStr>.genNode BenchLazy.state ref
+       -> int
+       -> (<BaseFct>.<resultStr>.genNode BenchLazy.state ref
+            * <BaseFct>.<resultStr>.genNode BenchLazy.state ref) 
+           BenchLazy.state ref
+  val createLabel :
+      <BaseFct>.<resultStr>.genNode BenchLazy.state ref
+       -> (int D.t * <BaseFct>.<resultStr>.genNode BenchLazy.state ref) D.t
+  val sift :
+      <BaseFct>.<resultStr>.genNode BenchLazy.state ref
+       -> int
+       -> <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val noSift : 'a -> 'b -> 'c -> 'c
+  type range
+  type lenRow
+  type labRange
+  type labRow
+  type lenLab
+  type fieldNode
+  type field
+  val rowLength : <BaseFct>.<resultStr>.lenRow -> int
+  val labelsLength : <BaseFct>.<resultStr>.lenLab -> int
+  val ranges :
+      <BaseFct>.<resultStr>.lenRow
+       -> <BaseFct>.<resultStr>.range <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val findWhite :
+      bool <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int
+       -> (int * bool <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val findBlack :
+      bool <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int
+       -> <BaseFct>.<resultStr>.range <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+  val pixelsToRanges :
+      bool <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.lenRow
+  val assignRow :
+      <BaseFct>.<resultStr>.range <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.genNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.labRow D.t
+  val labelOf : <BaseFct>.<resultStr>.labRange -> int
+  val rangeOf : <BaseFct>.<resultStr>.labRange -> <BaseFct>.<resultStr>.range
+  val apLabel :
+      <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.labRange -> <BaseFct>.<resultStr>.labRange
+  val unionBorder :
+      <BaseFct>.<resultStr>.labRange <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> <BaseFct>.<resultStr>.labRange 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val unionFields :
+      <BaseFct>.<resultStr>.fieldNode D.t
+       -> <BaseFct>.<resultStr>.fieldNode D.t
+       -> <BaseFct>.<resultStr>.fieldNode D.t
+  val fieldLeft :
+      <BaseFct>.<resultStr>.fieldNode D.t
+       -> <BaseFct>.<resultStr>.labRange 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val fieldRight :
+      <BaseFct>.<resultStr>.fieldNode D.t
+       -> <BaseFct>.<resultStr>.labRange 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val fieldObjects :
+      <BaseFct>.<resultStr>.fieldNode D.t
+       -> <BaseFct>.<resultStr>.object <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val fieldLabels :
+      <BaseFct>.<resultStr>.fieldNode D.t
+       -> <BaseFct>.<resultStr>.lenLab <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val pixelFieldSeq :
+      <BaseFct>.<resultStr>.lenRow <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> int
+       -> <BaseFct>.<resultStr>.genNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.fieldNode D.t
+  val sumMapped :
+      ('a -> int) -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> int
+  val sumRows :
+      <BaseFct>.<resultStr>.lenRow <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> int
+  type 'a sandArg
+  val sandwich :
+      ('a -> 'b -> 'c)
+       -> 'a <BaseFct>.<resultStr>.sandArg
+       -> 'b <BaseFct>.<resultStr>.sandArg -> 'c
+  val pixelField :
+      <BaseFct>.<resultStr>.lenRow <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> int
+       -> <BaseFct>.<resultStr>.genNode BenchLazy.state ref
+       -> int -> <BaseFct>.<resultStr>.fieldNode D.t
+  val mapLabelSeq :
+      <BaseFct>.<resultStr>.lenLab <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.labRange 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val sumLabels :
+      <BaseFct>.<resultStr>.lenLab <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> int
+  val mapLabel :
+      (<BaseFct>.<resultStr>.genNode BenchLazy.state ref
+        -> int
+        -> <BaseFct>.<resultStr>.setNode D.t 
+            <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+        -> <BaseFct>.<resultStr>.setNode D.t 
+            <BaseFct>.<resultStr>.F.<returnStr>.node D.t)
+       -> <BaseFct>.<resultStr>.lenLab 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int
+       -> <BaseFct>.<resultStr>.genNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.setNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int
+       -> <BaseFct>.<resultStr>.labRange 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val decimal : int -> string
+  val toPixels :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.labRange 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val showTree : <BaseFct>.<resultStr>.treeNode D.t -> string
+  val showSet : <BaseFct>.<resultStr>.setNode D.t -> string
+  val showRange : <BaseFct>.<resultStr>.range -> string
+  val showLabRange : <BaseFct>.<resultStr>.labRange -> string
+  val showLenLab : <BaseFct>.<resultStr>.lenLab -> string
+  val figures :
+      bool <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+                 <BaseFct>.<resultStr>.F.<returnStr>.node D.t BenchLazy.state 
+           ref vector
+  val figure :
+      int
+       -> bool <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val tile :
+      int
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val components :
+      bool
+       -> int
+       -> int
+       -> int
+       -> (<BaseFct>.<resultStr>.labRange 
+                  <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+              <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+          * <BaseFct>.<resultStr>.lenLab 
+              <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+          * <BaseFct>.<resultStr>.object 
+              <BaseFct>.<resultStr>.F.<returnStr>.node D.t * int) D.t
+  val rendered : bool -> int -> int -> int -> string
+  val sumcode : string -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-comp-lab-check.sml]
+[autoloading]
+[autoloading done]
+functor BenchCompLabCheckFn(K: sig
+  val rendered : bool -> int -> int -> int -> string
+  val sumcode : string -> string
+end) :
+sig
+  val read : string -> TextIO.vector
+  val run : bool -> string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/comp_lab_zift-lazy/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Check : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 100:5240100
+PASS comp_lab_zift-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml:19.32 Warning: calling polyEqual
+functor BenchIdaFiniteFn(D: sig
+                            type 'a t
+                            val delay : (unit -> 'a) -> 'a t
+                            val force : 'a t -> 'a
+                          end) :
+                        
+                          sig
+                            type 'a node
+                            type 'a seq
+                            val empty : unit -> 'a node D.t
+                            val cons : 'a D.t * 'a node D.t -> 'a node D.t
+                            val fromList : 'a list -> 'a node D.t
+                            val defer : (unit -> 'a D.t) -> 'a D.t
+                            val append : 'a node D.t
+                                          -> 'a node D.t -> 'a node D.t
+                            val take : int -> 'a node D.t -> 'a node D.t
+                            val drop : int -> 'a node D.t -> 'a node D.t
+                            val nth : 'a node D.t -> int -> 'a
+                            val update : 'a node D.t
+                                          -> int -> 'a D.t -> 'a node D.t
+                            val unify : ''a node D.t -> ''a -> ''a node D.t
+                            val foldl : ('a D.t -> 'b -> 'a D.t)
+                                         -> 'a D.t -> 'b node D.t -> 'a D.t
+                            val toList : 'a node D.t -> 'a list
+                            val map : ('a -> 'b) -> 'a node D.t -> 'b node D.t
+                            val filter : ('a -> bool)
+                                          -> 'a node D.t -> 'a node D.t
+                            val length : 'a node D.t -> int
+                          end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-comp-lab-figures.sml]
+structure BenchCompLabData : sig val figures : string list vector end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-comp-lab-kernel.sml]
+functor BenchCompLabFn(D: sig
+                          type 'a t
+                          val delay : (unit -> 'a) -> 'a t
+                          val force : 'a t -> 'a
+                        end) :
+                      
+                        sig
+                          structure F : <sig>
+                          structure L : <sig>
+                          val view : 'a F.node D.t
+                                      -> ('a D.t * 'a F.node D.t) option
+                          val null : 'a F.node D.t -> bool
+                          val singleton : 'a -> 'a F.node D.t
+                          val split : int
+                                       -> 'a F.node D.t
+                                       -> ('a F.node D.t * 'a F.node D.t) 
+                                           BenchLazy.state ref
+                          val left : ('a F.seq * 'a F.seq) BenchLazy.delay
+                                      -> 'a F.node D.t
+                          val right : ('a F.seq * 'a F.seq) BenchLazy.delay
+                                       -> 'a F.node D.t
+                          val concat : 'a F.node D.t F.node D.t
+                                        -> 'a F.node D.t
+                          val repeat : int -> 'a F.node D.t -> 'a F.node D.t
+                          val merge : int F.seq -> int F.seq -> int F.node D.t
+                          type treeNode
+                          type tree
+                          type setNode
+                          type object
+                          val empty : unit -> setNode D.t
+                          val singletonSet : int D.t -> setNode D.t
+                          val top : setNode D.t -> int
+                          val setEqual : setNode D.t -> setNode D.t -> bool
+                          val member : treeNode D.t -> int -> bool
+                          val setMember : setNode D.t -> int -> bool
+                          val treeMax : treeNode D.t -> int
+                          val treeMin : treeNode D.t -> int
+                          val flatten : treeNode D.t -> int F.node D.t
+                          val makeTree : int
+                                          -> int F.node D.t
+                                          -> (int D.t * treeNode D.t) D.t
+                          val treeUnion : treeNode D.t
+                                           -> treeNode D.t -> treeNode D.t
+                          val unionSet : setNode D.t
+                                          -> setNode D.t -> setNode D.t
+                          val selectTree : int
+                                            -> int
+                                            -> treeNode D.t -> treeNode D.t
+                          val selectSet : int
+                                           -> int
+                                           -> setNode D.t -> setNode D.t
+                          val extract : setNode D.t
+                                         -> setNode D.t F.node D.t
+                                         -> setNode D.t F.node D.t
+                          val extract2 : setNode D.t
+                                          -> setNode D.t
+                                          -> setNode D.t F.node D.t
+                                          -> setNode D.t F.node D.t
+                          val find : setNode D.t F.node D.t
+                                      -> int -> setNode D.t
+                          val unionObjects : setNode D.t F.node D.t
+                                              -> setNode D.t
+                                              -> setNode D.t
+                                              -> setNode D.t F.node D.t
+                          type genNode
+                          type gen
+                          val generator : int
+                                           -> int
+                                           -> int
+                                           -> genNode BenchLazy.state ref
+                          val splitBuy : genNode BenchLazy.state ref
+                                          -> int
+                                          -> (genNode BenchLazy.state ref
+                                               * genNode BenchLazy.state ref) 
+                                              BenchLazy.state ref
+                          val createLabel : genNode BenchLazy.state ref
+                                             -> (int D.t
+                                                * genNode BenchLazy.state ref) 
+                                               D.t
+                          val sift : genNode BenchLazy.state ref
+                                      -> int
+                                      -> setNode D.t F.node D.t
+                                      -> setNode D.t F.node D.t
+                          val noSift : 'a -> 'b -> 'c -> 'c
+                          type range
+                          type lenRow
+                          type labRange
+                          type labRow
+                          type lenLab
+                          type fieldNode
+                          type field
+                          val rowLength : lenRow -> int
+                          val labelsLength : lenLab -> int
+                          val ranges : lenRow -> range F.seq
+                          val findWhite : bool F.node D.t
+                                           -> int
+                                           -> (int * bool F.node D.t) 
+                                               BenchLazy.state ref
+                          val findBlack : bool F.node D.t
+                                           -> int -> range F.node D.t
+                          val pixelsToRanges : bool F.node D.t -> lenRow
+                          val assignRow : range F.node D.t
+                                           -> genNode BenchLazy.state ref
+                                           -> labRow D.t
+                          val labelOf : labRange -> int
+                          val rangeOf : labRange -> range
+                          val apLabel : setNode D.t F.node D.t
+                                         -> labRange -> labRange
+                          val unionBorder : labRange F.node D.t
+                                             -> labRange F.node D.t
+                                             -> setNode D.t F.node D.t
+                                             -> setNode D.t F.node D.t
+                          val unionFields : fieldNode D.t
+                                             -> fieldNode D.t -> fieldNode D.t
+                          val fieldLeft : fieldNode D.t -> labRange F.seq
+                          val fieldRight : fieldNode D.t -> labRange F.seq
+                          val fieldObjects : fieldNode D.t -> object F.seq
+                          val fieldLabels : fieldNode D.t -> lenLab F.seq
+                          val pixelFieldSeq : lenRow F.node D.t
+                                               -> int
+                                               -> genNode BenchLazy.state ref
+                                               -> fieldNode D.t
+                          val sumMapped : ('a -> int) -> 'a F.node D.t -> int
+                          val sumRows : lenRow F.node D.t -> int
+                          type 'a sandArg
+                          val sandwich : ('a -> 'b -> 'c)
+                                          -> 'a sandArg -> 'b sandArg -> 'c
+                          val pixelField : lenRow F.node D.t
+                                            -> int
+                                            -> genNode BenchLazy.state ref
+                                            -> int -> fieldNode D.t
+                          val mapLabelSeq : lenLab F.node D.t
+                                             -> setNode D.t F.node D.t
+                                             -> labRange F.node D.t F.node D.t
+                          val sumLabels : lenLab F.node D.t -> int
+                          val mapLabel : (genNode BenchLazy.state ref
+                                           -> int
+                                           -> setNode D.t F.node D.t
+                                           -> setNode D.t F.node D.t)
+                                          -> lenLab F.node D.t
+                                          -> int
+                                          -> genNode BenchLazy.state ref
+                                          -> setNode D.t F.node D.t
+                                          -> int
+                                          -> labRange F.node D.t F.node D.t
+                          val decimal : int -> string
+                          val toPixels : int
+                                          -> int
+                                          -> labRange F.node D.t
+                                          -> int F.node D.t
+                          val showTree : treeNode D.t -> string
+                          val showSet : setNode D.t -> string
+                          val showRange : range -> string
+                          val showLabRange : labRange -> string
+                          val showLenLab : lenLab -> string
+                          val figures : bool F.node D.t F.node D.t 
+                                               BenchLazy.state ref vector
+                          val figure : int -> bool F.node D.t F.node D.t
+                          val tile : int
+                                      -> 'a F.node D.t F.node D.t
+                                      -> 'a F.node D.t F.node D.t
+                          val components : bool
+                                            -> int
+                                            -> int
+                                            -> int
+                                            -> (labRange F.node D.t F.node D.t
+                                               * lenLab F.node D.t
+                                               * object F.node D.t * int) D.t
+                          val rendered : bool -> int -> int -> int -> string
+                          val sumcode : string -> string
+                        end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-comp-lab-check.sml]
+functor BenchCompLabCheckFn(K: sig
+                               val rendered : bool
+                                               -> int -> int -> int -> string
+                               val sumcode : string -> string
+                             end) :
+                           
+                             sig
+                               val read : string -> TextIO.vector
+                               val run : bool -> string list -> string
+                             end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/comp_lab_zift-lazy/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Kernel : <sig>
+    structure Check : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 100:5240100
+PASS comp_lab_zift-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+RESULT 100:5240100
+PASS comp_lab_zift-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 100:5240100
+PASS comp_lab_zift-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

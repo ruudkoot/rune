@@ -1,0 +1,291 @@
+make[1]: Nothing to be done for 'host-builds'.
+make[1]: Nothing to be done for 'vm'.
+make[1]: Nothing to be done for 'boot'.
+make[1]: Nothing to be done for 'runedoc'.
+make[1]: Nothing to be done for 'runeopt'.
+python3 tests/compiler/run-tests.py --rune bin/rune
+bin/rune-boot -o bin/rune.stage2.rbc build/config.sml src/util/scon.sml src/util/ordmap.sml src/util/inttable.sml src/util/source.sml src/util/error.sml src/util/pass.sml src/frontend/token.sml src/frontend/lexer.sml src/elab/types.sml src/core/ty.sml src/elab/overload.sml src/frontend/ast.sml src/frontend/fixity.sml src/frontend/parser.sml src/elab/unifyexn.sml src/elab/unify.sml src/elab/env.sml src/elab/sigmatch.sml src/elab/exhaust.sml src/backend/opcodes.sml src/backend/prims.sml src/elab/elaborate.sml src/core/lambda.sml src/core/lambdalint.sml src/core/matchcomp.sml src/core/translate.sml src/core/mid.sml src/core/midlint.sml src/core/midtext.sml src/core/tomid.sml src/core/target.sml src/core/shake.sml src/core/lift.sml src/core/simplify.sml src/core/workers.sml src/backend/code.sml src/backend/low.sml src/backend/target.sml src/backend/lowlint.sml src/backend/rep.sml src/backend/lower.sml src/backend/stack.sml src/backend/regcodes.sml src/backend/regs.sml src/backend/emit.sml src/driver/basismanifest.sml src/driver/options.sml src/driver/main.sml src/main/rune-main.sml
+PASS compiler output protection and resource budgets
+python3 tests/vm/run-limits.py --rune bin/rune --vm bin/runevm
+PASS saved resource policies and stricter restore limits
+sh tests/run-tests.sh -j 4 --rune bin/rune --vm bin/runevm
+cmp bin/rune.rbc bin/rune.stage2.rbc
+bootstrap: bin/rune.rbc reproduces itself
+passed 331, failed 0
+sh tests/vm/run-vm-tests.sh --vm bin/runevm
+vm: passed 30, failed 0
+RUNEDOC=bin/runedoc sh tests/doc/run-doc-tests.sh
+test-doc: passed 55, failed 0
+RUNE=bin/rune RUNEVM=bin/runevm RUNEDOC=bin/runedoc sh tests/lib/run-lib-tests.sh
+test-lib: passed 22, failed 0
+=== testing with mlton build ===
+PASS compiler output protection and resource budgets
+passed 331, failed 0
+=== testing with smlnj-legacy build ===
+PASS compiler output protection and resource budgets
+passed 331, failed 0
+=== testing with smlnj32 build ===
+PASS compiler output protection and resource budgets
+passed 331, failed 0
+=== testing with smlnj-dev build ===
+PASS compiler output protection and resource budgets
+passed 331, failed 0
+=== testing with polyml build ===
+PASS compiler output protection and resource budgets
+passed 331, failed 0
+=== testing with mlkit build ===
+PASS compiler output protection and resource budgets
+passed 331, failed 0
+RUNE=/home/ruud/rune/.worktrees/benchmarks/bin/rune RUNEVM=/home/ruud/rune/.worktrees/benchmarks/bin/runevm \
+  sh tests/basis/run-matrix.sh -j 4 --configs rune
+rune                         139211 checks: 139211 pass,    0 explained,    0 FAILED, 0 skipped; of 221 tests 0 absent, 0 n/a
+timing: 121.0 s for the programs and probes on 4 job slots, busy 98% of the time (475.7 s of work)
+  configuration                work s  fallback s  slowest program
+  rune                           475.7         3.5  mono.word32 (13.6 s)
+  by host: rune 475.7 s
+  slowest programs: rune mono.word32 13.6 s, rune mono.word16 12.8 s, rune mono.largereal 12.4 s, rune mono.int 11.4 s, rune mono.int64 10.4 s, rune mono.word 10.3 s, rune mono.largeint 10.1 s, rune mono.word64 10.0 s, rune mono.int16 10.0 s, rune mono.real32 9.9 s, rune mono.real 9.6 s, rune mono.int32 9.6 s
+timing: report 0.197 s, all 121.217 s
+report: tests/out/matrix/report.md
+RUNE=bin/rune RUNEVM=bin/runevm RUNEDOC=bin/runedoc sh tests/basis/run-examples.sh
+test-examples: 795 examples of 65 signatures hold, 0 do not
+sh tests/opt/run-opt-tests.sh -j 4 --runeopt bin/runeopt --rune bin/rune --vm bin/runevm
+opt: passed 514, failed 0 (488 programs checked and disassembled)
+sh tests/ir/run-ir-tests.sh --rune bin/rune
+sh scripts/check-levels.sh --rune bin/rune --vm bin/runevm -j 4
+ir: passed 25, failed 0
+check-levels: 273 programs, the same at -O0 and -O2
+python3 tests/vm/run-limits.py --rune bin/rune --vm bin/runevm-opt
+PASS saved resource policies and stricter restore limits
+sh tests/run-tests.sh -j 4 --rune bin/rune --vm bin/runevm-opt --skip tests/opt-skip.txt
+passed 331, failed 0
+sh tests/opt/run-counts.sh -j 4 $(for t in tests/lang/*.sml; do echo tests/out/$(basename $t .sml).rbc; done)
+counts: 264 programs agree with runevm, 0 differ
+RUNE=/home/ruud/rune/.worktrees/benchmarks/bin/rune RUNE_MATRIX_BYTECODE="/home/ruud/rune/.worktrees/benchmarks/tests/out/matrix/rune" \
+  sh tests/basis/run-matrix.sh -j 4 --configs rune:opt
+rune:opt                     139211 checks: 139211 pass,    0 explained,    0 FAILED, 0 skipped; of 221 tests 0 absent, 0 n/a
+timing: 22.0 s for the programs and probes on 4 job slots, busy 90% of the time (79.5 s of work)
+  configuration                work s  fallback s  slowest program
+  rune:opt                        79.5         4.0  posix_process (4.4 s)
+  by host: opt 79.5 s
+  slowest programs: rune:opt posix_process 4.4 s, rune:opt unix 2.4 s, rune:opt mono.largeint 2.1 s, rune:opt mono.word16 2.0 s, rune:opt mono.int8 2.0 s, rune:opt mono.int32 2.0 s, rune:opt mono.int16 2.0 s, rune:opt mono.word64 1.9 s, rune:opt mono.word 1.9 s, rune:opt mono.real64 1.9 s, rune:opt mono.real 1.9 s, rune:opt mono.real32 1.9 s
+timing: report 0.224 s, all 22.214 s
+report: tests/out/matrix/report.md
+RUNE_HEAP=67108864 sh tests/opt/run-bootstrap.sh
+opt-bootstrap: the compiler as native code reproduces bin/rune.rbc
+bin/rune examples/nqueens.sml -o tests/out/opt-debug/nqueens.rbc
+sh tests/opt/run-debug.sh -j 4 --debuggers tests/out/opt-debug/nqueens.rbc bin/rune.rbc \
+  $(for t in tests/lang/*.sml; do echo tests/out/$(basename $t .sml).rbc; done)
+debug: 266 programs have the line table of their bytecode, and the debuggers stop at a line
+python3 tests/vm/run-limits.py --rune bin/rune-new --vm bin/runevm-new
+PASS saved resource policies and stricter restore limits
+sh tests/run-tests.sh -j 4 --rune bin/rune-new --vm bin/runevm-new --out tests/out/new
+passed 331, failed 0
+sh scripts/check-new.sh -j 4
+check-new: 273 programs allocate the same on vm/new and runevm, the compiler on vm/new makes the bytecode it makes on runevm, and the primitives done in the loop print the same
+RUNE_NEW=/home/ruud/rune/.worktrees/benchmarks/bin/rune-new RUNEVM_NEW=/home/ruud/rune/.worktrees/benchmarks/bin/runevm-new sh tests/basis/run-matrix.sh -j 4 --configs rune:new
+rune:new                     139211 checks: 139210 pass,    1 explained,    0 FAILED, 0 skipped; of 221 tests 0 absent, 0 n/a
+timing: 76.3 s for the programs and probes on 4 job slots, busy 98% of the time (300.6 s of work)
+  configuration                work s  fallback s  slowest program
+  rune:new                       300.6         2.0  mono.real32 (7.6 s)
+  by host: new 300.6 s
+  slowest programs: rune:new mono.real32 7.6 s, rune:new mono.real64 7.6 s, rune:new mono.largereal 7.1 s, rune:new mono.word 6.9 s, rune:new mono.int 6.8 s, rune:new mono.int16 6.8 s, rune:new mono.int8 6.6 s, rune:new mono.word64 6.6 s, rune:new mono.int32 6.2 s, rune:new mono.word16 6.2 s, rune:new mono.int64 6.1 s, rune:new mono.largeword 6.0 s
+timing: report 0.118 s, all 76.441 s
+report: tests/out/matrix/report.md
+printf '#!/bin/sh\nexec "/home/ruud/rune/.worktrees/benchmarks/bin/runevm-new" --jit=all "$@"\n' > bin/runevm-new-jit
+chmod +x bin/runevm-new-jit
+sh tests/run-tests.sh -j 4 --rune bin/rune-new --vm bin/runevm-new-jit --out tests/out/new-jit
+passed 331, failed 0
+printf '#!/bin/sh\nexec "/home/ruud/rune/.worktrees/benchmarks/bin/runevm-new" --jit=all --jit-tier=2 "$@"\n' > bin/runevm-new-opt
+chmod +x bin/runevm-new-opt
+sh tests/run-tests.sh -j 4 --rune bin/rune-new --vm bin/runevm-new-opt --out tests/out/new-opt
+passed 331, failed 0
+sh scripts/check-jit.sh -j 4
+check-jit: 276 programs print and count the same under --jit=off, --jit=all, with every other function compiled, under --jit-stress, at tier 2 and under --deopt-stress, and use every instruction
+check-asm: the emitters name no encoder
+RUNE_NEW=/home/ruud/rune/.worktrees/benchmarks/bin/rune-new RUNEVM_NEW_JIT=/home/ruud/rune/.worktrees/benchmarks/bin/runevm-new-opt sh tests/basis/run-matrix.sh -j 4 --configs rune:jit
+rune:jit                     139211 checks: 139210 pass,    1 explained,    0 FAILED, 0 skipped; of 221 tests 0 absent, 0 n/a
+timing: 74.7 s for the programs and probes on 4 job slots, busy 98% of the time (294.5 s of work)
+  configuration                work s  fallback s  slowest program
+  rune:jit                       294.5         2.0  mono.real (6.3 s)
+  by host: jit 294.5 s
+  slowest programs: rune:jit mono.real 6.3 s, rune:jit mono.int16 6.2 s, rune:jit posix_process 6.1 s, rune:jit mono.real64 6.1 s, rune:jit mono.word32 6.0 s, rune:jit mono.int 6.0 s, rune:jit mono.real32 5.9 s, rune:jit mono.int64 5.8 s, rune:jit mono.widechar 5.8 s, rune:jit mono.int8 5.7 s, rune:jit mono.largereal 5.6 s, rune:jit mono.largeint 5.6 s
+timing: report 0.124 s, all 74.882 s
+report: tests/out/matrix/report.md
+bin/runevm-new --jit-check
+jit-check: ok
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Ivm -Ivm/new -Ivm/new/jit -o build/new/x64_test tests/new/x64_test.c vm/new/jit/x64.c vm/sys_posix.c
+build/new/x64_test
+x64: ok
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Ivm -Ivm/new -Ivm/new/jit -o build/new/a64_test tests/new/a64_test.c vm/new/jit/a64.c
+build/new/a64_test
+a64: ok
+cc -std=c17 -O2 -Wall -Wextra -pedantic -Ivm -Ivm/new -Ivm/new/jit -o build/new/masm_test tests/new/masm_test.c vm/new/jit/masm.c vm/new/jit/x64.c vm/new/jit/asm_x64.c vm/sys_posix.c
+build/new/masm_test
+masm: ok
+bin/rune-new tests/lang/rt.deeprec_stack.sml -o tests/out/new-jit/deeprec.rbc
+(ulimit -s 1024 && bin/runevm-new --jit=all tests/out/new-jit/deeprec.rbc > tests/out/new-jit/deeprec.out) && \
+  cmp tests/out/new-jit/deeprec.out tests/lang/rt.deeprec_stack.expected && echo "test-new-jit: the driver never nests"
+test-new-jit: the driver never nests
+(ulimit -s 1024 && bin/runevm-new --jit=baseline --jit-calls=1 --jit-work=1 --jit-stress=3 tests/out/new-jit/deeprec.rbc > tests/out/new-jit/deeprec-tiered.out) && \
+  cmp tests/out/new-jit/deeprec-tiered.out tests/lang/rt.deeprec_stack.expected && echo "test-new-jit: nor while tiering up and invalidating"
+test-new-jit: nor while tiering up and invalidating
+RUNE=bin/rune RUNEVM=bin/runevm sh tests/perf/run-perf.sh
+ok   array_sieve: 3083863 instructions 1881600 bytes 18208 objects, n^1.01
+ok   bootstrap: 951799395 instructions 1170663568 bytes 25986774 objects
+ok   compile-hello: 3095249 instructions 3559344 bytes 54072 objects
+ok   compile-sigs: 88663633 instructions 95132152 bytes 2040223 objects
+ok   fib: 1501424 instructions 608 bytes 24 objects
+ok   intinf_fact: 15634263 instructions 25329192 bytes 635499 objects
+ok   list_ops: 1724765 instructions 2830064 bytes 70766 objects, n^0.79
+ok   real_nbody: 1000995 instructions 752 bytes 28 objects
+ok   runedoc-ir: 42935517 instructions 41337576 bytes 918487 objects
+ok   runedoc-page: 59791549 instructions 76678760 bytes 1643095 objects
+ok   string_ops: 2412626 instructions 6828960 bytes 184520 objects, n^1.00
+ok   tak: 700632 instructions 584 bytes 23 objects
+ok   word_bits: 1526870 instructions 4624 bytes 126 objects
+perf-check: within budget
+RUNE=bin/rune sh tests/perf/run-perf.sh --new
+ok   array_sieve: 1844333 instructions 1881600 bytes 18208 objects, n^1.02
+ok   bootstrap: 515362636 instructions 1170687920 bytes 25987382 objects
+ok   compile-hello: 1779786 instructions 3560176 bytes 54092 objects
+ok   compile-sigs: 49814094 instructions 95132984 bytes 2040243 objects
+ok   fib: 1125986 instructions 608 bytes 24 objects
+ok   intinf_fact: 8524003 instructions 25329192 bytes 635499 objects
+ok   list_ops: 1008344 instructions 2830064 bytes 70766 objects, n^0.83
+ok   real_nbody: 600671 instructions 752 bytes 28 objects
+ok   runedoc-ir: 24957765 instructions 41337592 bytes 918487 objects
+ok   runedoc-page: 33980224 instructions 76678776 bytes 1643095 objects
+ok   string_ops: 1491103 instructions 6828960 bytes 184520 objects, n^1.00
+ok   tak: 382273 instructions 584 bytes 23 objects
+ok   word_bits: 1134578 instructions 4624 bytes 126 objects
+perf-check: within budget
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1379 profiles)
+sh tests/benchmarks/check-catalog.sh
+bench-catalog: unknown/duplicate routine entries, missing reason, duplicate profiles and missing fixtures rejected
+RUNE_BENCH_COMPILE_OPTIONS=-O2 sh scripts/run-benchmarks.sh --routine --configs rune
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.DesQ8V
+BENCH tak smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 7
+PASS tak
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH kittmergesort smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 100 98940 43BE5438
+PASS kittmergesort
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH primes-lazy smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 31
+PASS primes-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH primes-strict smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 31
+PASS primes-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH bdd smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 8 382 100
+PASS bdd
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH md5 smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT b2d3f56bc197fd985d5965079b5e7148
+PASS md5
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH fft smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 1
+PASS fft
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH binary-trees smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 255 4016 127
+PASS binary-trees
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH smith-normal-form smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 1 ~1 1 ~7506
+PASS smith-normal-form
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH nqueens smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 2
+PASS nqueens
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH kahan smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 4 100
+PASS kahan
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH wheel-sieve2-lazy smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 137
+PASS wheel-sieve2-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH sequence_cps smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 1160
+PASS sequence_cps
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH maillist smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 630:0
+PASS maillist
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH floyd_warshall smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 64:6016:83290D80
+PASS floyd_warshall
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH grep-lazy smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 1:32:3544485218340229504
+PASS grep-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+sh scripts/check-positions.sh -j 4 --rune bin/rune --vm bin/runevm
+check-positions: every instruction of 273 programs comes from a line that exists
+sh scripts/check-cross.sh -j 4
+sh scripts/check-docs.sh
+bin/runeisa-mlton --root . --check
+bin/runevm bin/runeisa.rbc --root . --check
+check-docs: OK (177 documented features, 264 tests, 221 Basis Library suite files)
+RUNE=bin/rune sh scripts/gen-basis-sigs.sh --check
+gen-basis-sigs: OK (65 signatures have the tokens of their transcriptions)
+bin/rune --basis-check
+basis-check: OK (250 files)
+bin/runedoc --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
+lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)
+sh tests/basis/gen-annotations.sh --check
+gen-annotations: annotations.txt is up to date (472 annotations)
+bin/runedoc --lib lib --library basis --tests tests/basis --annotations tests/basis/annotations.txt --out docs/generated/basis --title "The Standard ML Basis Library" --check
+runedoc: docs/generated/basis is up to date (306 files)
+bin/runedoc --lib lib --library random --out docs/generated/random --basis-docs ../basis --title "Random numbers" --check
+runedoc: docs/generated/random is up to date (22 files)
+bin/runedoc --lib lib --library test/property --out docs/generated/test/property --basis-docs ../../basis --title "Property testing" --check
+runedoc: docs/generated/test/property is up to date (195 files)
+sh tests/basis/check-claims.sh
+check-claims: OK (200 pairs of a structure and a signature, claimed and tested)
+sh tests/basis/check-notes.sh
+check-notes: OK (0 rune lines and 0 notes that differ agree; 18 host readings of documented signatures have their note)
+check-cross: 498 programs produce identical bytecode with all builds (mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit boot)
+check-doc-cross: the builds of runedoc agree (mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit boot)
+check-opt-cross: the builds of runeopt agree (mlton smlnj-legacy smlnj32 smlnj-dev polyml mlkit boot)

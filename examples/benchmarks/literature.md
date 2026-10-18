@@ -567,3 +567,17 @@ evaluated opcode metadata and prefix-demand controls establish correctness
 at separate scopes. The mixed-target ML Kit capacity failure and successful
 large-limit probe are observed resource outcomes, not a claimed diagnosis
 of a compiler pass or a generic collector cost.
+
+## Persistent connected-component trees and sifting
+
+The Hartel/Langendoen collection survey supplies the already recorded
+translation context. Pinned comp_lab_zift source establishes its run-based
+connected-component algorithm, persistent labelled sets, branch thresholds,
+source-level non-sifting alternative and ignored prediction fields.
+
+Independent BFS, row runs and ordered-tree invariants validate full results;
+they do not replace the benchmark kernel with a mutable disjoint-set algorithm.
+Sifting/generator demand, persistent sharing, memoized fold chains, strict
+materialization and whole-string consumers are source-based performance
+questions. Isolated compiler failures and measured counter agreement remain
+separate kinds of evidence.

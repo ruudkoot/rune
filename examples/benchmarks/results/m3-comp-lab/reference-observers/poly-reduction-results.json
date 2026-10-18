@@ -1,0 +1,49 @@
+{
+  "runs": [
+    {
+      "checks": 0,
+      "exit": 0,
+      "internal_error": false
+    },
+    {
+      "checks": 113,
+      "exit": 1,
+      "internal_error": true
+    },
+    {
+      "checks": 56,
+      "exit": 0,
+      "internal_error": false
+    },
+    {
+      "checks": 84,
+      "exit": 0,
+      "internal_error": false
+    },
+    {
+      "checks": 98,
+      "exit": 0,
+      "internal_error": false
+    },
+    {
+      "checks": 105,
+      "exit": 1,
+      "internal_error": true
+    },
+    {
+      "checks": 101,
+      "exit": 1,
+      "internal_error": true
+    },
+    {
+      "checks": 99,
+      "exit": 1,
+      "internal_error": true
+    }
+  ],
+  "reduction": {
+    "last_good": 98,
+    "first_bad": 99,
+    "assertion": " val _=check\"merge-retains-duplicates/E\"(fn()=>\n let val a=E.makeTree 2(E.F.fromList[1,2])\n     val b=E.makeTree 2(E.F.fromList[2,3])\n     val tree=E.treeUnion(#2(BenchStrict.force a))(#2(BenchStrict.force b))\n in E.F.toList(E.flatten tree)=[1,2,2,3]end)\n"
+  }
+}

@@ -1,0 +1,6 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1379 profiles)
+BENCH_PROFILE=smoke BENCH_CONFIGS=native:mlton,native:smlnj-legacy,native:polyml BENCH_FILTER='=comp_lab_nozift-lazy' BENCH_LEVEL= BENCH_MODE=fresh BENCH_SAMPLES=1 BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh time
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.ogCVGt
+BENCH MEASURE comp_lab_nozift-lazy smoke time
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.ogCVGt/report.md

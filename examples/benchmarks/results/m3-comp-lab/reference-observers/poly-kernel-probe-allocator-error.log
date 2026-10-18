@@ -1,0 +1,25 @@
+
+Unable to initialise memory allocator
+-H <Initial heap size (MB)>
+--minheap <Minimum heap size (MB)>
+--maxheap <Maximum heap size (MB)>
+--gcpercent <Target percentage time in GC (1-99)>
+--stackspace <Space to reserve for thread stacks and C++ heap(MB)>
+--gcthreads <Number of threads to use for garbage collection>
+--debug <Debug options: checkmem, gc, x>
+--logfile <Logging file (default is to log to stdout)>
+--exportstats <Enable another process to read the statistics>
+Debug options:
+checkmem <Perform additional debugging checks on memory>
+gc <Log summary garbage-collector information>
+gcenhanced <Log enhanced garbage-collector information>
+gcdetail <Log detailed garbage-collector information>
+memmgr <Memory manager information>
+threads <Thread related information>
+gctasks <Log multi-thread GC information>
+heapsize <Log heap resizing data>
+x <Log X-windows information>
+sharing <Information from PolyML.shareCommonData>
+locks <Information about contended locks>
+rts <General run-time system calls>
+saving <Saving and loading state; exporting>

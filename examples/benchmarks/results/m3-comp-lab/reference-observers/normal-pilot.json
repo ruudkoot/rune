@@ -1,0 +1,33 @@
+{
+  "command": [
+    "timeout",
+    "1500",
+    "sh",
+    "-c",
+    "cd tests/out/benchmarks/hartel-comp-lab-originals && ../../../../bin/runevm normal.rbc"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 38868,
+  "observed_minimum_available_kib": 22389344,
+  "peak_processes": [
+    {
+      "pid": 8,
+      "name": "timeout",
+      "rss_kib": 1796
+    },
+    {
+      "pid": 9,
+      "name": "sh",
+      "rss_kib": 1808
+    },
+    {
+      "pid": 10,
+      "name": "runevm",
+      "rss_kib": 35264
+    }
+  ],
+  "elapsed_seconds": 181.4873812099977
+}

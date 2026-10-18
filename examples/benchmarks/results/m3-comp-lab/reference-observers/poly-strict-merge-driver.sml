@@ -1,0 +1,6 @@
+use "/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml";
+use "/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml";
+use "/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml";
+use "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-comp-lab-originals/figures.sml";
+use "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-comp-lab-originals/kernel.sml";
+use "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-comp-lab-originals/poly-strict-merge.sml";

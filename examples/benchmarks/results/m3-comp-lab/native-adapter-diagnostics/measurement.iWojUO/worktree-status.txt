@@ -1,0 +1,13 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+ M examples/benchmarks/source-variants.tsv
+?? examples/benchmarks/comp_lab_nozift-lazy/
+?? examples/benchmarks/comp_lab_nozift-strict/
+?? examples/benchmarks/comp_lab_zift-lazy/
+?? examples/benchmarks/comp_lab_zift-strict/
+?? examples/benchmarks/shared/hartel-comp-lab-check.sml
+?? examples/benchmarks/shared/hartel-comp-lab-figures.sml
+?? examples/benchmarks/shared/hartel-comp-lab-kernel.sml
+?? tests/benchmarks/check-comp-lab.sh
+?? tests/benchmarks/comp-lab-tests.sml
+?? tests/benchmarks/data/comp-lab/

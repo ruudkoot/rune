@@ -1,0 +1,11 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1379 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=comp_lab_nozift-lazy' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.cnfg2e
+BENCH MEASURE comp_lab_nozift-lazy normal count
+COUNT unbudgeted comp_lab_nozift-lazy normal rune
+COUNT unbudgeted comp_lab_nozift-lazy normal rune:opt
+COUNT unbudgeted comp_lab_nozift-lazy normal rune:new
+COUNT unbudgeted comp_lab_nozift-lazy normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.cnfg2e/report.md
