@@ -60,7 +60,7 @@ What it rests on:
 | M6 | Unicode identifiers | |
 | M7 | Showing source and names | |
 | M8 | The wide family in the 8-bit order, and its costs | done 2026-10-18 |
-| M9 | The symmetric text signatures, and the change request | |
+| M9 | The symmetric text signatures, and the change request | done 2026-10-18 |
 | M10 | String operations at both widths | |
 | M11 | The corpora and the comparison | |
 
@@ -3467,6 +3467,42 @@ nothing.
     matrix-quick` and xc2:mlton pass, as they did for E6.
   - The bootstrap's bytecode is unchanged but for its line table.
   - The change request names every signature and declaration it changes.
+* **Done** (2026-10-18, at `81178771`):
+  - **E6's stage 2, the rest of it,** applied as E6 left it, with no change
+    of substance:
+    - `TEXT_STREAM_IO`, `TEXT_IO` and `STRING_CVT` are generic;
+    - `TextIO` and `StringCvt` are sealed with the `where type`s that give
+      back the specification's types;
+    - `WideTextIO` is sealed with `TEXT_IO`, and `WideStringCvt` is new;
+    - the four deviations are pinned, and
+      `TEXT_IO/WideTextIO-not-matched` is gone;
+    - `tests/basis/spec-sigs/scr/` holds the change request's
+      transcriptions;
+    - the tests and the three lines of `law-skips.txt` are E6's.
+  - **`docs/unicode.md`** describes what Rune does now, and has the change
+    request of *Appendix C* as its own section. The rows `basis.textio`,
+    `basis.stringcvt`, `basis.widestringcvt` (new) and `basis.widetextio`
+    of `docs/language.md` say so too.
+  - **Not foreseen: the laws of `STRING_CVT` at `WideStringCvt`.**
+    - `takel` and `dropl` drew their reader as a random function from `int`
+      to `(WideChar.char * int) option`. A stream of such a reader need not
+      end, and the watchdog stopped cases after 60 s: 270 s for the
+      program, and a law stopped outright on an unlucky seed.
+    - `WideTextArb.reader` (`lib/test/property/basis`) is now a reader
+      over a drawn wide string, as `BasisDataArb.reader` is over a string,
+      and runedoc draws it for a reader of wide characters. The test is a
+      law of `tests/doc/laws.lib`.
+    - The program takes seconds now. `make test-laws` passes 230 of 230.
+  - **The bootstrap:** the compiler compiled against M8's library and
+    against M9's, from paths of one shape, is 7 bytes longer with M9's.
+    `--dump-code` differs only in the positions of its comments, which is
+    the line table.
+  - **Checks,** with MLKit 4.7.25 (logs `bas-m9`, `bas-m9-matrix` and
+    `bas-m9-xc2` of the campaign): `make check`, which runs `test-basis`,
+    `test-laws` and `check-docs`; `make matrix-quick`; and xc2:mlton, all
+    passing before the rebase on M2. After it, `make check` and
+    `make matrix-quick` again, on M10's last commit (`bas-m10-rebased`,
+    `bas-m10-rebased-matrix`).
 
 ### M10. String operations at both widths (S, about 300)
 
