@@ -152,10 +152,12 @@ include $(GMP_DIR)/config.mk
 GMP_FLAGS = $(GMP_CPPFLAGS) -include $(GMP_DIR)/config.h
 .PHONY: gmp-force gmp-dep
 gmp-force:
+# Remade by every make, and the runner starts several at once in one tree:
+# each writes a temporary file of its own (the shell's PID; one recipe line,
+# so one shell) and renames it over the old one only where it differs.
 build/gmp/selected: gmp-force
 	@mkdir -p build/gmp
-	@printf '%s\n' '$(GMP_KEY)' > $@.tmp
-	@cmp -s $@.tmp $@ && rm $@.tmp || mv $@.tmp $@
+	@t=$@.tmp.$$$$; printf '%s\n' '$(GMP_KEY)' > $$t && { cmp -s $$t $@ && rm -f $$t || mv -f $$t $@; }
 gmp-dep:
 	python3 scripts/build-gmp.py $(if $(filter x86_64 i686 i386,$(shell uname -m)),--enable-fat) --jobs $(JOBS)
 $(GMP_DIR)/intinf.o: runtime/intinf.c $(VM_HDRS) $(GMP_DIR)/config.mk
