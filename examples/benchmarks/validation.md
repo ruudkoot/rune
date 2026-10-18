@@ -3181,3 +3181,35 @@ adapted sources, full results, diagnostics and canonical fixture identities.
 exits zero with 1397 profiles, performance budgets, JIT checks, generated
 documentation and all compiler/runedoc/runeopt cross-build comparisons.
 M3/M4 remain in progress and M8 remains planned.
+
+## Parstof combinator parser workloads, 2026-10-18
+
+All 56 primary smoke/normal cases and all 1620 semantic assertions pass
+across both policies, Rune O0/O2 engines and six managed SML hosts. Registered
+sources match the semantic subjects byte for byte; the public Rune O0/O2
+copy target also passes. Complete original token/AST/error observations and
+independent lexer/structural checks supplement demand, sharing, recovery,
+zero-work and deliberately incorrect input/checksum controls.
+
+Eight full-normal Rune count samples agree, with zero-exit uninterrupted
+guards. Six serial single fresh-process native smoke diagnostics and all
+preflights pass before heavy validation. They are adapter checks, not a
+ten-sample comparison. The final same-source private normal runs both pass;
+its default Rune O1 timing is a separate calibration. Full selected large
+SML profiles remain unrecorded.
+
+Initial character-overload and weak parser-cache typing errors remain in
+development evidence. Common explicit character/nonterminal types restore
+full host coverage without algorithm or expected-answer changes.
+[Details](validation/parstof-portability.md) distinguish incomplete earlier
+attempts from the passing final matrix.
+
+All 132 inventory regressions and the five-pin 861-entry replay pass.
+[Archived evidence](results/m3-parstof/README.md) retains complete source,
+embedded-data origins, translation/type-query scripts, raw outcomes, source
+identities and byte-verified canonical fixture maps.
+
+[Full make JOBS=4 check](validation/oct18-parstof-1403-acceptance.log)
+exits zero with 1403 profiles, performance budgets, JIT checks, generated
+documentation and all compiler/runedoc/runeopt cross-build comparisons.
+M3/M4 remain in progress and M8 remains planned.

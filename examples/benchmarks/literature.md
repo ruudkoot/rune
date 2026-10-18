@@ -629,3 +629,18 @@ than claimed to terminate under that evaluator. Allocation, higher-order
 printer fusion, annotation retention and pass-boundary materialization remain
 source-based performance hypotheses. No general transformation correctness
 proof or identical cross-language specialization/barrier behavior is claimed.
+
+## Hartel Parstof recognition and parser demand
+
+The previously reviewed Hartel and Langendoen translation paper provides
+collection context. Pinned source supplies the lexer dispatch, combinator
+grammar, recovery/error rules and recognition-only consumer. Original full
+token/AST observations, an independent ordered-regex lexer and structural
+checks establish the tested scope. No separate parser-construction paper or
+general parser-equivalence proof is claimed.
+
+Unused AST attributes, strict finite construction, shared input/token tails,
+cached higher-order grammar closures and checksum accumulators are diagnostic
+questions grounded in source inspection. Compiler-specific constant motion,
+allocation or specialization effects remain hypotheses rather than conclusions
+from single-sample adapter diagnostics.
