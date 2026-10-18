@@ -2787,3 +2787,33 @@ original/corrected observations.
 [Full make JOBS=4 check](validation/oct18-dom-lt-1174-acceptance.log) exits zero
 with 1174 profiles and all cross-build comparisons. M3/M4/M5 remain in progress
 and M8 remains planned; final SML large repetitions are unrecorded.
+
+## Free-group completion and rewriting, 2026-10-18
+
+The catalogue now contains 396 programs and 1180 profiles.
+[Final wrapper coverage](results/m3-rewrite/coverage.tsv) records 54/56
+passing smoke/normal cases. All Rune O0/O2 engines and five native SML hosts
+pass. Both normal ML Kit attempts report allocation failure at the 4 GiB
+limit; their raw failures remain in the ledger.
+
+[Semantic results](results/m3-rewrite/semantic-summary.tsv) record all 6880
+assertions passing across twenty invocations of the 344-check target, with
+none failed or unreached. The original ten-rule theory, full normal forms and
+an independent free-group cancellation model agree. Demand controls include
+the shared completion, unused agenda costs and short-circuiting; each repeated
+driver result is fully checked.
+
+[The repository acceptance run](validation/oct18-rewrite-1180-acceptance.log)
+exits zero with 1180 profiles and all compiler/runedoc/runeopt cross-build
+comparisons. Its bounded routine set is separate from the new ports' explicit
+final profile and semantic runs; those runs include the final agenda-cost fix.
+[The evidence report](results/m3-rewrite/README.md) distinguishes final records
+from provisional names, the initial fixture-path mistake and earlier cost
+handling. Final SML large repetitions remain unrecorded. M3/M4/M5 remain in
+progress; M8 remains planned.
+
+Eight final normal count samples agree, with both guard processes exiting zero.
+Six serial single fresh-process native smoke adapter samples pass after the
+heavy jobs completed. Their complete records are retained as diagnostics.
+Earlier names, fixture-path failures, eager-cost behavior and host-reserve guard
+interruptions are separate development evidence and do not supply final results.

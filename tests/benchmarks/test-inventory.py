@@ -228,6 +228,20 @@ class InventoryTest(unittest.TestCase):
                   "% Crown Copyright 1992\n\\author{Another author\\\\\n\n> main = print 0\n")
         self.assertNotIn("N. D. North", self.build("nofib")[0]["authors"])
 
+    def test_rewrite_orwell_author_and_conversion_are_recorded(self):
+        self.nofib_roots()
+        self.file("spectral/rewrite/Makefile", "\\n")
+        self.file("spectral/rewrite/Main.lhs", "[converted to Haskell by partain]\\nMike Spivey,\\nSt. George's Day, 1991.\\n> main = print True\\n")
+        row = self.build("nofib")[0]
+        self.assertIn("Mike Spivey", row["authors"])
+        self.assertIn("partain (Haskell conversion)", row["authors"])
+
+    def test_changed_rewrite_heading_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/rewrite/Makefile", "\\n")
+        self.file("spectral/rewrite/Main.lhs", "Another author\\n> main = print True\\n")
+        self.assertNotIn("Mike Spivey", self.build("nofib")[0]["authors"])
+
     def test_dominator_algorithm_author_is_recorded(self):
         self.nofib_roots()
         self.file("spectral/dom-lt/Makefile", "\n")

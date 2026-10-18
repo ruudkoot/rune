@@ -377,3 +377,18 @@ containers 0.6.7 is pinned separately by archive hash with complete selected
 module notices and LICENSE; graph data retain their original bytes and stated
 limits of upstream attribution. The corrected import preserves Patricia maps,
 bitmap sets, immutable environment updates and continuation/state callbacks.
+
+## Spivey's completion workload, 2026-10-18
+
+Two guarded notice regressions record the joint Orwell/1991/Mike Spivey and
+partain Haskell-conversion heading; changed headings do not inherit those
+credits. All 108 inventory tests pass and all five pinned trees reproduce
+861 primary entries. The established name rewrite has no collision in that
+inventory, so the final ports are rewrite-lazy and rewrite-strict.
+
+The port retains the active lexicographic RPO extension, numbered theory,
+discrimination net and shared completion. Computed agenda costs remain lazy;
+a singleton agenda leaves an unused cost undemanded. A regression distinguishes
+that behavior from the preliminary eager-cost implementation. The source's
+map/zip classification uses shared tagged pairs in SML; the separate Boolean
+map spine is omitted and recorded as a representation adaptation.
