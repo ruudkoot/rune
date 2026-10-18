@@ -57,7 +57,7 @@ What it rests on:
 | M3 | What a source may hold raw | done 2026-10-18; G1 passed 2026-10-18 |
 | M4 | Literals by type and mode | done 2026-10-18 |
 | M5 | `lib/unicode`: normalisation and identifier tables | done 2026-10-18; G2 passed 2026-10-18 |
-| M6 | Unicode identifiers | |
+| M6 | Unicode identifiers | done 2026-10-18 |
 | M7 | Showing source and names | |
 | M8 | The wide family in the 8-bit order, and its costs | done 2026-10-18 |
 | M9 | The symmetric text signatures, and the change request | done 2026-10-18 |
@@ -3532,6 +3532,145 @@ lookalikes, and the lints' data goes into the compiler (*The request*).
   - runedoc makes anchors for them.
   - The bootstrap stays within the budget M5 set, and an ASCII source
     decodes no table.
+* **Done** (2026-10-18, at `f40833fd`):
+  - **`Ident`** (`src/util/ident.sml`) is the one test of an identifier's
+    characters:
+    - ASCII as Standard ML has it (`isStartAscii`, `isContinueAscii`), and
+      the profile of `Identifier` under `--unicode` (`isStart`,
+      `isContinue`, `isAlphanumeric`);
+    - `isSymbolic`, `isNameByte` and `isStartByte` for the places that scan
+      a text: a byte above 127 is part of a name, which the lexer checked;
+    - `refusal`, why the profile leaves a code point out, in an error's
+      words, and `asciiSpelling`, for D14's anchors.
+
+    The lexer uses it, and so do the sixteen places of *Appendix A*: the
+    REPL's printer, completion, highlighter (`Lexer.classOf`), line scanner,
+    commands and debugger, the Jupyter kernel, and runedoc's anchors,
+    resolver, laws, claims, annotations, tests, pages and site.
+  - **The files join the compiler.** `rune.build` and `runedoc.build` take
+    `Normalize`, `Identifier` and `UnicodeSecurity`, with their data, after
+    `grapheme.sml`, and then `Ident`. The kernel's rule in the `Makefile`
+    takes `--library unicode`.
+  - **Names** (D10, D12). Under `--unicode` and `--unicode=latin1` the lexer
+    takes a name's ASCII characters as before and, at a byte above 127, the
+    code points of the profile. A name that holds one is checked by
+    `Normalize.quickCheck`, and a Maybe by `isNFC`. The errors:
+    - a lookalike or an ignorable inside a name: "the character U+01C3 in a
+      name is a lookalike of !", "the character U+200D in a name is a
+      default ignorable character, which shows nothing";
+    - at a name's start: "the character U+3164 cannot be part of a name: it
+      is a default ignorable character, which shows nothing", Trojan
+      Source's invisible identifier;
+    - a name not in NFC: "the name été is not in NFC, the form names are
+      written in: write it as été";
+    - by default: "unexpected character U+03BB (a letter, which a name holds
+      under --unicode)";
+    - a record label stays ASCII: "a record label is ASCII, and λ is not".
+      So do symbolic identifiers and numbers (D11).
+  - **The warnings** (D13), turned off by `--no-unicode-lints`, of `rune` and
+    `rune-repl`. They are found as a source is lexed, on its distinct names,
+    when one of them holds a character above ASCII:
+    - "the name ʃell holds U+0283, which UTS #39 restricts in names
+      (technical)";
+    - "the name xλ mixes scripts, which UTS #39's moderately restrictive
+      profile refuses", judged on each part between `_` and `'`, so
+      `get_λ` does not warn;
+    - "the name vаl looks like the reserved word val", and "the name
+      ノ looks like /", a skeleton of punctuation or symbols;
+    - "the name ѕсоре looks like scope, a name on line 2 (UTS #39's
+      confusables)", Trojan Source's homoglyph function among them;
+    - and in every mode, UTS #55's "a lookalike of *) in a comment, which
+      does not end it".
+
+    They are given when the source is compiled (`Lexer.report`), in the
+    order of the text. An entry of the cache keeps a unit's warnings, so an
+    input file's key says `--no-unicode-lints` (S64), as the REPL's does.
+  - **The REPL and the debugger** print names as they are written
+    (`tests/repl/unicode`: `λ`, `合計`, `Σ.α`, `Σ.работа`, `संख्या`, and
+    the locals `半径` and `π` of a function `面積` at a breakpoint). The REPL
+    lexes the text it echoes for `:locals` and frames as UTF-8.
+  - **runedoc** takes `--unicode[=ENC]`. An anchor spells a character above
+    127 as `u` and its code point: `val-u3bb`, `type-u3c4`,
+    `val-u3a3.u3b1` (`tests/doc/anchors-unicode`, whose `.args` the runner
+    now reads). The cross-check of runedoc's IR runs with `--unicode`.
+  - **Tests:**
+    - 13 reject tests `err.lex_name_*`: the lookalikes of punctuation, of a
+      prime, of the digits 2 to 9, of 0 (a decimal digit), and the two by
+      hand (`·` and `ǀ`); two ignorables (a joiner and a variation
+      selector); Trojan Source's invisible identifier; a decomposed
+      spelling; a name by default; a label; and a name in UTF-8 read as
+      Latin-1.
+    - `tests/lang/lex.ident_unicode` (Greek, Cyrillic, CJK and Devanagari
+      names as values, functions, type variables, structures, long
+      identifiers and constructors) and `lex.ident_latin1`.
+    - The warnings on and off: `lex.ident_lint{mixed,confusable,homoglyph}`
+      and `lex.comments_lookalike`, each with an `off` twin;
+      `lex.ident_lint{lookalike,restricted}` on.
+  - **Documents:** `docs/language.md` (the deviation *Identifiers*, the
+    rows `lex.ident` and `lex.comments`, *Strings*), `docs/units.md`,
+    `docs/repl.md`, `docs/architecture.md`, the man pages of `rune` and
+    `runedoc`, and the anchors on `docs/lib/conventions.md`. **The rule that
+    `lib/` exports stay ASCII** (X11) is in `docs/build.md`, *A library's
+    build file*, and in `AGENTS.md`, where a library's author reads.
+  - **The cost of lexing**, measured as E9 measured the prototype's
+    (`scripts/lex-corpus.sh --cost 2`, the instructions to lex each corpus
+    once, against the compiler of `4b9e954b`, on the files both take):
+
+    | Corpus | Before | Default | `--unicode` |
+    |---|---|---|---|
+    | Rune (2,183 files) | 934.5M | 954.1M (+2.1%) | 954.1M (+2.1%) |
+    | MLton (1,784 files) | 612.5M | 623.7M (+1.8%) | 623.7M (+1.8%) |
+    | HOL4 (3,419 files) | 4,709.1M | 4,787.6M (+1.7%) | 4,787.6M (+1.7%) |
+
+    E9's 20,000 lines (1.0 to 1.2 MB, a new name on every line):
+
+    | Names | E9's prototype | Now, no lints | Now, with the lints |
+    |---|---|---|---|
+    | ASCII | 38.9M | 39.3M (+0.8%), both modes | the same |
+    | Greek | 78.7M | 158.1M | 1,151.7M |
+    | CJK | 62.3M | 102.2M | 772.6M |
+
+    - An ASCII source decodes no table: the first lex of the ASCII file,
+      startup included, costs 0.32M more than before, as every lex does
+      (638 instructions apart), where the smallest table, the quick
+      check's, decodes in 77K. A compile of `hello.sml` takes 1,959,557
+      instructions, against 1,956,257 (register), and allocates 112 KB
+      more, the text of the tables.
+    - A Unicode name costs about twice the prototype's: the quick check on
+      every name holding a character above ASCII, which the prototype did
+      not make.
+    - The lints cost about 25K instructions a distinct name of a source
+      (the skeleton, the restriction level and the status of each
+      character), so a file where every name is new, as these are, takes
+      seven times as long to lex. A source of real names repeats them, and
+      `--no-unicode-lints` takes it away.
+  - **The bootstrap** (`tests/perf/run-perf.sh`, compile of the compiler):
+
+    | | Before (`4b9e954b`) | Now | Change |
+    |---|---|---|---|
+    | register (budget 1,134.2M) | 1,053.9M | 1,094.4M | +3.84% |
+    | stack (budget 1,688.7M) | 1,640.6M | 1,709.2M | +4.18% |
+
+    The base compiler takes 1,090.0M to compile the new sources (+3.42%,
+    `lib/unicode`'s files, as M5 measured: +3.04%), and the new compiler
+    1,057.5M to compile the old (+0.34%: the lexer, and the confusables
+    decoded for `grapheme.sml`'s comments). The stack VM's measure is over
+    its budget, so both budgets are rewritten from the measures plus 10%
+    (1,203.8M and 1,880.1M), with that reason in the commit.
+  - **Not foreseen:**
+    - `err.lex_latin1_bom` failed at first: under `--unicode=latin1` the
+      byte order mark's `ï` is a letter, and the name took it before the
+      check of text that looks like UTF-8. A name's characters are now
+      checked as any text's.
+    - An entry of the cache keeps a unit's warnings, so the flag that
+      turns warnings off had to join the key (S64).
+    - The lookalike of `*)` is looked for in every mode, so a comment with
+      a character above 127 decodes the confusables (1.4M, once a compile),
+      the compiler's own bootstrap among them.
+    - Taking a name's ASCII characters as before (`digitsWhile`) and then
+      testing for more costs more (+3.0% to lex four of the compiler's
+      largest files) than one scan that returns the end and whether it met
+      a character above ASCII (+2.4%), so the lexer keeps the one scan.
 
 ### M7. Showing source and names (S, about 300)
 
@@ -3834,7 +3973,7 @@ was passed on 2026-10-18 with D20.
 | a mode on a unit's line in a build file: `ascii`, `unicode`, `unicode=latin1` | M2 | the unit's mode, over the command line's |
 | `Compiler.compile`'s `mode` | M2 | the mode of what it compiles |
 | `rune -i --unicode` | M2 | the REPL's mode for typed input and `use`; typed input is always UTF-8, so `=latin1` applies only to files it `use`s |
-| `--no-unicode-lints` (name to be settled) | M6 | turns off D13's warnings |
+| `--no-unicode-lints` (settled in M6), for `rune` and `rune-repl` | M6 | turns off D13's warnings, and is in an input file's key |
 
 No new tool is needed. The UCD files come from unicode.org through the
 existing generator. The hosts are those of `make hosts`.
