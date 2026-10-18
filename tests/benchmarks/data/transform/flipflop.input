@@ -1,0 +1,19 @@
+%module  "flipflop"
+%include "~pieter/lib/fast2mira"
+%include "~pieter/mira/synch/misc"
+%include "~pieter/mira/setreset/setreset"
+one_of_two x y     = x;
+two_of_two x y     = y;
+one_of_three x y z = x;
+nand s xs ys       = maps one_of_three notand s xs ys;
+buffer s xs        = maps one_of_two two_of_two s xs;
+notand s a b       = bnot (band a b);
+a1     = buffer 0 data;
+a2     = buffer 0 clock;
+a3     = nand 0 a1 a1;
+a6     = nand 0 (nand 0 a1 a2) a7;
+a7     = nand 1 a6 (nand 0 a3 a2);
+a8     = nand 0 a2 a2;
+a11    = nand 0 (nand 0 a6 a8) output;
+a12    = nand 1 a11 (nand 0 a8 a7);
+output = (:) 1 a12;

@@ -1,0 +1,18 @@
+%module  "gamma"
+%include "~pieter/lib/fast2mira"
+%include "~pieter/mira/synch/misc"
+%include "~pieter/mira/gamma/gamma"
+mkpair a b         = (a,b)    ;
+perm_2 xs          = perm 2 xs;
+map_divides xs     = map1 divides xs;
+p0     = (:) lownumbers p6   ;
+p1     = map perm_2      p0   ;
+p2     = map map_divides p1   ;
+p3     = map select      p2 p1;
+p4     = map (--)        p0 p3;
+p5     = map remove1     p3   ;
+p6     = map (++)        p5 p4;
+p7     = map or          p2   ;
+p8     = map (~)         p7   ;
+p9     = map mkpair      p8 p0;
+output = (:) dummy_output  p9;

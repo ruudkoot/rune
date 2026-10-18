@@ -1,0 +1,66 @@
+cat - <<'end' > fib.dir/v.m
+|| fib.dir v = v
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+||
+output	= ((:) 0 b);
+b	= ((:) 1 c);
+c	= (map_2 (+) output b);
+end
+cat - <<'end' > fib.dir/v0.m
+|| fib.dir v0 = inl v
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+||
+output	= ((:) 0 b);
+b	= ((:) 1 c);
+c	= (map_2 (+) output b);
+end
+cat - <<'end' > fib.dir/v1.m
+|| fib.dir v1 = t1 v0
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+||
+output	= ((:) 0 b);
+b	= ((:) 1 c);
+c	= (map_2 (+) output b);
+end
+cat - <<'end' > fib.dir/v3.m
+|| fib.dir v3 = t3 v1
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+||
+output	= ((:) 0 b);
+b	= ((:) 1 c);
+c	= (map_2 (+) output b);
+end
+cat - <<'end' > fib.dir/v5.m
+|| fib.dir v5 = t5 v3
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+||
+output	= ((:) 0 b);
+b	= ((:) 1 c);
+c	= (map_2 (+) output b);
+end
+cat - <<'end' > fib.dir/v6.m
+|| fib.dir v6 = t6 v5
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+||
+output1	= (map_1 sel_2 (maps_0 id_1 nextstate (0,1) ));
+nextstate s
+= (b,c)
+  where
+  (output,b)	= s;
+  c	= ((+) output b);;
+output	= ((:) 0 b);
+b	= ((:) 1 c);
+c	= (map_2 (+) output b);
+end

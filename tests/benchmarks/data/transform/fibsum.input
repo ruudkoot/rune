@@ -1,0 +1,7 @@
+%module  "fibsum"
+%include "~pieter/lib/fast2mira"
+%include "~pieter/mira/synch/misc"
+a      = (:) 0 b;
+b      = (:) 1 c;
+c      = map (+) a (tl a);
+output = maps (+) (+) 0 a;

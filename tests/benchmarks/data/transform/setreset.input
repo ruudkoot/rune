@@ -1,0 +1,10 @@
+%module  "setreset"
+%include "~pieter/lib/fast2mira"
+%include "~pieter/mira/synch/misc"
+%include "~pieter/mira/setreset/setreset"
+one_of_three x y z = x;
+nand s xs ys       = maps one_of_three notand s xs ys;
+notand s a b       = bnot (band a b);
+as     = nand 0 ds bs;
+bs     = nand 1 as cs;
+output = (:) 1 as;

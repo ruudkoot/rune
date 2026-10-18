@@ -612,3 +612,22 @@ passing final 56 primary and 1620 semantic cases. No expected result changes.
 
 The catalogue contains 483 programs and 1403 profiles. M3/M4 remain in progress
 and M8 remains planned.
+
+## Hartel Transform symbolic compiler workload, 2026-10-18
+
+Two finite-data policies preserve actual lexical analysis, prefix parsing,
+labelled ASTs, alias/use passes, inlining, stream/state rewrites and six
+rendered versions. Generated commands and numerical-network programs remain
+text data. All eleven embedded examples have full semantic observations;
+the original eight-example cycle remains the timed input. No separate
+individual program/input author or permission notice is stated.
+
+All 132 inventory regressions and the five-pin 861-entry replay pass.
+Transform is classified as a compiler application. Of 56 primary cases,
+54 pass; ML Kit lazy compilation has one diagnosed normal memory failure
+and one empty-log smoke error. The semantic matrix has 4914 passes and
+546 assertions incomplete because of ML Kit compilation-memory failures.
+No incorrect-result assertion is observed. See the archived raw outcomes.
+
+The catalogue contains 485 programs and 1409 profiles. M3/M4 remain in progress
+and M8 remains planned.

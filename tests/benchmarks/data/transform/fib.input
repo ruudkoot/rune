@@ -1,0 +1,6 @@
+%module  "fib"
+%include "~pieter/lib/fast2mira"
+%include "~pieter/mira/synch/misc"
+output = (:) 0 b;
+b      = (:) 1 c;
+c      = map (+) output b;

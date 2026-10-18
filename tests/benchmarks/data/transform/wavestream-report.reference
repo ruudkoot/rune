@@ -1,0 +1,265 @@
+cat - <<'end' > wavestream.dir/v.m
+|| wavestream.dir v = v
+||
+%include "~pieter/lib/fast2mira.m"
+%include "../synch/misc.m"
+%include "wavematrix.m"
+%include "wavelib.m"
+||
+ho1	= (map_1 getho ts3);
+ho2	= (map_1 getho ts4);
+hs1	= (map_3 fh vs1 v'b1 ur1);
+hs2	= (map_3 fh vs2 v'b2 ur2);
+hs3	= (map_3 fh vs3 v'b3 ur3);
+hs4	= (map_3 fh vs4 v'b4 ur4);
+ts1	= ((:) tb1 hs1);
+ts2	= ((:) tb2 hs2);
+ts3	= ((:) tb3 hs3);
+ts4	= ((:) tb4 hs4);
+uo1	= (map_1 getuo us3);
+uo2	= (map_1 getuo us4);
+uor1	= (map_1 getuor uo2);
+ur1	= (map_1 getur us2);
+ur3	= (map_1 getur us4);
+us1	= (map_4 fu ts1 vhl1 vbl1 vb1);
+us2	= (map_4 fu ts2 vhl2 vbl2 vb2);
+us3	= (map_4 fu ts3 vhl3 vbl3 vb3);
+us4	= (map_4 fu ts4 vhl4 vbl4 vb4);
+v'b3	= (map_1 getvb vs1);
+v'b4	= (map_1 getvb vs2);
+vb3	= (map_1 getvb ts1);
+vb4	= (map_1 getvb ts2);
+vbl4	= (map_1 getvbl vb3);
+vhl2	= (map_1 getvhl ts1);
+vhl4	= (map_1 getvhl ts3);
+vs1	= (map_5 fv us1 uo1 ho1 uor1 ur1);
+vs2	= (map_5 fv us2 uo2 ho2 uor2 ur2);
+vs3	= (map_5 fv us3 uo3 ho3 uor3 ur3);
+vs4	= (map_5 fv us4 uo4 ho4 uor4 ur4);
+end
+cat - <<'end' > wavestream.dir/v0.m
+|| wavestream.dir v0 = inl v
+||
+%include "~pieter/lib/fast2mira.m"
+%include "../synch/misc.m"
+%include "wavematrix.m"
+%include "wavelib.m"
+||
+ho1	= (map_1 getho ts3);
+ho2	= (map_1 getho ts4);
+hs1	= (map_3 fh vs1 v'b1 ur1);
+hs2	= (map_3 fh vs2 v'b2 ur2);
+hs3	= (map_3 fh vs3 v'b3 ur3);
+hs4	= (map_3 fh vs4 v'b4 ur4);
+ts1	= ((:) tb1 hs1);
+ts2	= ((:) tb2 hs2);
+ts3	= ((:) tb3 hs3);
+ts4	= ((:) tb4 hs4);
+uo1	= (map_1 getuo us3);
+uo2	= (map_1 getuo us4);
+uor1	= (map_1 getuor uo2);
+ur1	= (map_1 getur us2);
+ur3	= (map_1 getur us4);
+us1	= (map_4 fu ts1 vhl1 vbl1 vb1);
+us2	= (map_4 fu ts2 vhl2 vbl2 vb2);
+us3	= (map_4 fu ts3 vhl3 vbl3 vb3);
+us4	= (map_4 fu ts4 vhl4 vbl4 vb4);
+v'b3	= (map_1 getvb vs1);
+v'b4	= (map_1 getvb vs2);
+vb3	= (map_1 getvb ts1);
+vb4	= (map_1 getvb ts2);
+vbl4	= (map_1 getvbl vb3);
+vhl2	= (map_1 getvhl ts1);
+vhl4	= (map_1 getvhl ts3);
+vs1	= (map_5 fv us1 uo1 ho1 uor1 ur1);
+vs2	= (map_5 fv us2 uo2 ho2 uor2 ur2);
+vs3	= (map_5 fv us3 uo3 ho3 uor3 ur3);
+vs4	= (map_5 fv us4 uo4 ho4 uor4 ur4);
+end
+cat - <<'end' > wavestream.dir/v1.m
+|| wavestream.dir v1 = t1 v0
+||
+%include "~pieter/lib/fast2mira.m"
+%include "../synch/misc.m"
+%include "wavematrix.m"
+%include "wavelib.m"
+||
+ho1	= (map_1 getho ts3);
+ho2	= (map_1 getho ts4);
+hs1	= (map_3 fh vs1 v'b1 ur1);
+hs2	= (map_3 fh vs2 v'b2 ur2);
+hs3	= (map_3 fh vs3 v'b3 ur3);
+hs4	= (map_3 fh vs4 v'b4 ur4);
+ts1	= ((:) tb1 hs1);
+ts2	= ((:) tb2 hs2);
+ts3	= ((:) tb3 hs3);
+ts4	= ((:) tb4 hs4);
+uo1	= (map_1 getuo us3);
+uo2	= (map_1 getuo us4);
+uor1	= (map_1 getuor uo2);
+ur1	= (map_1 getur us2);
+ur3	= (map_1 getur us4);
+us1	= (map_4 fu ts1 vhl1 vbl1 vb1);
+us2	= (map_4 fu ts2 vhl2 vbl2 vb2);
+us3	= (map_4 fu ts3 vhl3 vbl3 vb3);
+us4	= (map_4 fu ts4 vhl4 vbl4 vb4);
+v'b3	= (map_1 getvb vs1);
+v'b4	= (map_1 getvb vs2);
+vb3	= (map_1 getvb ts1);
+vb4	= (map_1 getvb ts2);
+vbl4	= (map_1 getvbl vb3);
+vhl2	= (map_1 getvhl ts1);
+vhl4	= (map_1 getvhl ts3);
+vs1	= (map_5 fv us1 uo1 ho1 uor1 ur1);
+vs2	= (map_5 fv us2 uo2 ho2 uor2 ur2);
+vs3	= (map_5 fv us3 uo3 ho3 uor3 ur3);
+vs4	= (map_5 fv us4 uo4 ho4 uor4 ur4);
+end
+cat - <<'end' > wavestream.dir/v3.m
+|| wavestream.dir v3 = t3 v1
+||
+%include "~pieter/lib/fast2mira.m"
+%include "../synch/misc.m"
+%include "wavematrix.m"
+%include "wavelib.m"
+||
+ho1	= (map_1 getho ts3);
+ho2	= (map_1 getho ts4);
+hs1	= (map_3 fh vs1 v'b1 ur1);
+hs2	= (map_3 fh vs2 v'b2 ur2);
+hs3	= (map_3 fh vs3 v'b3 ur3);
+hs4	= (map_3 fh vs4 v'b4 ur4);
+ts1	= ((:) tb1 hs1);
+ts2	= ((:) tb2 hs2);
+ts3	= ((:) tb3 hs3);
+ts4	= ((:) tb4 hs4);
+uo1	= (map_1 getuo us3);
+uo2	= (map_1 getuo us4);
+uor1	= (map_1 getuor uo2);
+ur1	= (map_1 getur us2);
+ur3	= (map_1 getur us4);
+us1	= (map_4 fu ts1 vhl1 vbl1 vb1);
+us2	= (map_4 fu ts2 vhl2 vbl2 vb2);
+us3	= (map_4 fu ts3 vhl3 vbl3 vb3);
+us4	= (map_4 fu ts4 vhl4 vbl4 vb4);
+v'b3	= (map_1 getvb vs1);
+v'b4	= (map_1 getvb vs2);
+vb3	= (map_1 getvb ts1);
+vb4	= (map_1 getvb ts2);
+vbl4	= (map_1 getvbl vb3);
+vhl2	= (map_1 getvhl ts1);
+vhl4	= (map_1 getvhl ts3);
+vs1	= (map_5 fv us1 uo1 ho1 uor1 ur1);
+vs2	= (map_5 fv us2 uo2 ho2 uor2 ur2);
+vs3	= (map_5 fv us3 uo3 ho3 uor3 ur3);
+vs4	= (map_5 fv us4 uo4 ho4 uor4 ur4);
+end
+cat - <<'end' > wavestream.dir/v5.m
+|| wavestream.dir v5 = t5 v3
+||
+%include "~pieter/lib/fast2mira.m"
+%include "../synch/misc.m"
+%include "wavematrix.m"
+%include "wavelib.m"
+||
+ts1	= ((:) tb1 hs1);
+ts2	= ((:) tb2 hs2);
+ts3	= ((:) tb3 hs3);
+ts4	= ((:) tb4 hs4);
+ho1	= (map_1 getho ts3);
+ho2	= (map_1 getho ts4);
+hs1	= (map_3 fh vs1 v'b1 ur1);
+hs2	= (map_3 fh vs2 v'b2 ur2);
+hs3	= (map_3 fh vs3 v'b3 ur3);
+hs4	= (map_3 fh vs4 v'b4 ur4);
+uo1	= (map_1 getuo us3);
+uo2	= (map_1 getuo us4);
+uor1	= (map_1 getuor uo2);
+ur1	= (map_1 getur us2);
+ur3	= (map_1 getur us4);
+us1	= (map_4 fu ts1 vhl1 vbl1 vb1);
+us2	= (map_4 fu ts2 vhl2 vbl2 vb2);
+us3	= (map_4 fu ts3 vhl3 vbl3 vb3);
+us4	= (map_4 fu ts4 vhl4 vbl4 vb4);
+v'b3	= (map_1 getvb vs1);
+v'b4	= (map_1 getvb vs2);
+vb3	= (map_1 getvb ts1);
+vb4	= (map_1 getvb ts2);
+vbl4	= (map_1 getvbl vb3);
+vhl2	= (map_1 getvhl ts1);
+vhl4	= (map_1 getvhl ts3);
+vs1	= (map_5 fv us1 uo1 ho1 uor1 ur1);
+vs2	= (map_5 fv us2 uo2 ho2 uor2 ur2);
+vs3	= (map_5 fv us3 uo3 ho3 uor3 ur3);
+vs4	= (map_5 fv us4 uo4 ho4 uor4 ur4);
+end
+cat - <<'end' > wavestream.dir/v6.m
+|| wavestream.dir v6 = t6 v5
+||
+%include "~pieter/lib/fast2mira.m"
+%include "../synch/misc.m"
+%include "wavematrix.m"
+%include "wavelib.m"
+||
+output1	= (map_1 sel_4 (maps_18 id_19 nextstate (tb1,tb2,tb3,tb4) ho3 ho4 uo3 uo4 uor2 uor3 uor4 ur2 ur4 v'b1 v'b2 vb1 vb2 vbl1 vbl2 vbl3 vhl1 vhl3));
+nextstate s ho3 ho4 uo3 uo4 uor2 uor3 uor4 ur2 ur4 v'b1 v'b2 vb1 vb2 vbl1 vbl2 vbl3 vhl1 vhl3
+= (hs1,hs2,hs3,hs4)
+  where
+  (ts1,ts2,ts3,ts4)	= s;
+  ho1	= (getho ts3);
+  ho2	= (getho ts4);
+  hs1	= (fh vs1 v'b1 ur1);
+  hs2	= (fh vs2 v'b2 ur2);
+  hs3	= (fh vs3 v'b3 ur3);
+  hs4	= (fh vs4 v'b4 ur4);
+  uo1	= (getuo us3);
+  uo2	= (getuo us4);
+  uor1	= (getuor uo2);
+  ur1	= (getur us2);
+  ur3	= (getur us4);
+  us1	= (fu ts1 vhl1 vbl1 vb1);
+  us2	= (fu ts2 vhl2 vbl2 vb2);
+  us3	= (fu ts3 vhl3 vbl3 vb3);
+  us4	= (fu ts4 vhl4 vbl4 vb4);
+  v'b3	= (getvb vs1);
+  v'b4	= (getvb vs2);
+  vb3	= (getvb ts1);
+  vb4	= (getvb ts2);
+  vbl4	= (getvbl vb3);
+  vhl2	= (getvhl ts1);
+  vhl4	= (getvhl ts3);
+  vs1	= (fv us1 uo1 ho1 uor1 ur1);
+  vs2	= (fv us2 uo2 ho2 uor2 ur2);
+  vs3	= (fv us3 uo3 ho3 uor3 ur3);
+  vs4	= (fv us4 uo4 ho4 uor4 ur4);;
+ts1	= ((:) tb1 hs1);
+ts2	= ((:) tb2 hs2);
+ts3	= ((:) tb3 hs3);
+ts4	= ((:) tb4 hs4);
+ho1	= (map_1 getho ts3);
+ho2	= (map_1 getho ts4);
+hs1	= (map_3 fh vs1 v'b1 ur1);
+hs2	= (map_3 fh vs2 v'b2 ur2);
+hs3	= (map_3 fh vs3 v'b3 ur3);
+hs4	= (map_3 fh vs4 v'b4 ur4);
+uo1	= (map_1 getuo us3);
+uo2	= (map_1 getuo us4);
+uor1	= (map_1 getuor uo2);
+ur1	= (map_1 getur us2);
+ur3	= (map_1 getur us4);
+us1	= (map_4 fu ts1 vhl1 vbl1 vb1);
+us2	= (map_4 fu ts2 vhl2 vbl2 vb2);
+us3	= (map_4 fu ts3 vhl3 vbl3 vb3);
+us4	= (map_4 fu ts4 vhl4 vbl4 vb4);
+v'b3	= (map_1 getvb vs1);
+v'b4	= (map_1 getvb vs2);
+vb3	= (map_1 getvb ts1);
+vb4	= (map_1 getvb ts2);
+vbl4	= (map_1 getvbl vb3);
+vhl2	= (map_1 getvhl ts1);
+vhl4	= (map_1 getvhl ts3);
+vs1	= (map_5 fv us1 uo1 ho1 uor1 ur1);
+vs2	= (map_5 fv us2 uo2 ho2 uor2 ur2);
+vs3	= (map_5 fv us3 uo3 ho3 uor3 ur3);
+vs4	= (map_5 fv us4 uo4 ho4 uor4 ur4);
+end

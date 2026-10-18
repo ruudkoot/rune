@@ -1,0 +1,6 @@
+%module  "tailtest"
+%include "~pieter/lib/fast2mira"
+%include "~pieter/mira/synch/misc"
+b      = tl output;
+a      = (:) 2 b;
+output = maps (*) (+) 0 ((:) 1 a);
