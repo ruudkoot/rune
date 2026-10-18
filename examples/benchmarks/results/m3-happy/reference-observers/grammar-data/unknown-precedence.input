@@ -1,0 +1,4 @@
+%tokentype {T}
+%token x {X}
+%%
+a : x %prec other {$1}

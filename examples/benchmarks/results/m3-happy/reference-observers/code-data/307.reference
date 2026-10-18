@@ -1,0 +1,1 @@
+["ok","% checkPattern happy_var_2 >>= \\ p -> \u000a\u0009\u0009\u0009   return (sL (comb2 happy_var_1 happy_var_4) $ HsProc p (sL (comb2 happy_var_1 happy_var_4) $ HsCmdTop happy_var_4 [] \u000a\u0009\u0009\u0009\u0009\u0009\u0009   placeHolderType undefined))",[4,4,1,4,1,2]]

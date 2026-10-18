@@ -1,0 +1,1 @@
+["ok","% let (n, doc) = getDOCSECTION happy_var_1 in\u000a        case parseHaddockString (tokenise doc) of {\u000a      Left  err -> parseError (getLoc happy_var_1) err;\u000a      Right doc -> return (sL (getLoc happy_var_1) (n, doc)) }",[1,1,1]]

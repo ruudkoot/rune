@@ -1,0 +1,1 @@
+["ok","sL (getLoc happy_var_1) $ let (mod,c) = getQCONID happy_var_1 in\u000a\u0009\u0009\u0009\u0009  mkModuleNameFS\u000a\u0009\u0009\u0009\u0009   (mkFastString\u000a\u0009\u0009\u0009\u0009     (unpackFS mod ++ '.':unpackFS c))",[1,1]]

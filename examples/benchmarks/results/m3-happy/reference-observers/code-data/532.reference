@@ -1,0 +1,1 @@
+["ok","% case parseHaddockParagraphs (tokenise (getDOCNEXT happy_var_1)) of {\u000a      Left  err -> parseError (getLoc happy_var_1) err;\u000a      Right doc -> return (sL (getLoc happy_var_1) doc) }",[1,1,1]]

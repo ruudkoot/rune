@@ -1,0 +1,4 @@
+% do { (tc, tvs, _) <- checkSynHdr $2 False
+		      ; return (L (comb3 $1 $2 $3) 
+				  (TyFamily TypeFamily tc tvs (unLoc $3)))
+		      }

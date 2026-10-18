@@ -1,0 +1,34 @@
+[1 of 8] Compiling AbsSyn           ( AbsSyn.lhs, AbsSyn.o )
+[2 of 8] Compiling GenUtils         ( GenUtils.lhs, GenUtils.o )
+[3 of 8] Compiling ParseMonad       ( ParseMonad.lhs, ParseMonad.o )
+
+ParseMonad.lhs:25:9: warning: [-Wnoncanonical-monad-instances]
+    Noncanonical ‘pure = return’ definition detected
+    in the instance declaration for ‘Applicative P’.
+    Move definition from ‘return’ to ‘pure’
+    See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/monad-of-no-return
+   |
+25 | >       pure = return
+   |         ^^^^^^^^^^^^^
+
+ParseMonad.lhs:29:9: warning: [-Wnoncanonical-monad-instances]
+    Noncanonical ‘return’ definition detected
+    in the instance declaration for ‘Monad P’.
+    ‘return’ will eventually be removed in favour of ‘pure’
+    Either remove definition for ‘return’ (recommended) or define as ‘return = pure’
+    See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/monad-of-no-return
+   |
+29 | >       return m = P $ \ _ _ -> OkP m
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[4 of 8] Compiling AttrGrammar      ( AttrGrammar.lhs, AttrGrammar.o )
+[5 of 8] Compiling AttrGrammarParser ( AttrGrammarParser.hs, AttrGrammarParser.o )
+
+AttrGrammarParser.hs:553:9: warning: [-Woverlapping-patterns]
+    Pattern match is redundant
+    In a case alternative: _ -> ...
+    |
+553 |         _ -> happyError' tk
+    |         ^^^^^^^^^^^^^^^^^^^
+[6 of 8] Compiling Grammar          ( Grammar.lhs, Grammar.o )
+[7 of 8] Compiling Main             ( ObserveCode.hs, ObserveCode.o )
+[8 of 8] Linking observe-code

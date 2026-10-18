@@ -1,0 +1,1 @@
+sL (getLoc $1) $! mkQual tcClsName (getQCONID $1)

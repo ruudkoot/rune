@@ -1,0 +1,3 @@
+% fileSrcSpan >>= \ loc ->
+		   return (L loc (HsModule Nothing Nothing $2 [] Nothing 
+                   Nothing emptyHaddockModInfo Nothing))

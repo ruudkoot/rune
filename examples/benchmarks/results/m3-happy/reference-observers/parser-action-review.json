@@ -1,0 +1,1109 @@
+{
+  "states": {
+    "0": [
+      [
+        "33",
+        "shift action_3"
+      ],
+      [
+        "4",
+        "goto action_4"
+      ],
+      [
+        "16",
+        "goto action_2"
+      ],
+      [
+        "_",
+        "reduce_40"
+      ]
+    ],
+    "1": [
+      [
+        "33",
+        "shift action_3"
+      ],
+      [
+        "16",
+        "goto action_2"
+      ],
+      [
+        "_",
+        "failure"
+      ]
+    ],
+    "2": [
+      [
+        "18",
+        "shift action_7"
+      ],
+      [
+        "19",
+        "shift action_8"
+      ],
+      [
+        "20",
+        "shift action_9"
+      ],
+      [
+        "21",
+        "shift action_10"
+      ],
+      [
+        "22",
+        "shift action_11"
+      ],
+      [
+        "23",
+        "shift action_12"
+      ],
+      [
+        "24",
+        "shift action_13"
+      ],
+      [
+        "25",
+        "shift action_14"
+      ],
+      [
+        "26",
+        "shift action_15"
+      ],
+      [
+        "27",
+        "shift action_16"
+      ],
+      [
+        "29",
+        "shift action_17"
+      ],
+      [
+        "30",
+        "shift action_18"
+      ],
+      [
+        "31",
+        "shift action_19"
+      ],
+      [
+        "32",
+        "shift action_20"
+      ],
+      [
+        "10",
+        "goto action_5"
+      ],
+      [
+        "11",
+        "goto action_6"
+      ],
+      [
+        "_",
+        "failure"
+      ]
+    ],
+    "3": [
+      [
+        "_",
+        "reduce_39"
+      ]
+    ],
+    "4": [
+      [
+        "40",
+        "accept"
+      ],
+      [
+        "_",
+        "failure"
+      ]
+    ],
+    "5": [
+      [
+        "18",
+        "shift action_7"
+      ],
+      [
+        "19",
+        "shift action_8"
+      ],
+      [
+        "20",
+        "shift action_9"
+      ],
+      [
+        "21",
+        "shift action_10"
+      ],
+      [
+        "22",
+        "shift action_11"
+      ],
+      [
+        "23",
+        "shift action_12"
+      ],
+      [
+        "24",
+        "shift action_13"
+      ],
+      [
+        "25",
+        "shift action_14"
+      ],
+      [
+        "26",
+        "shift action_15"
+      ],
+      [
+        "27",
+        "shift action_16"
+      ],
+      [
+        "29",
+        "shift action_17"
+      ],
+      [
+        "30",
+        "shift action_18"
+      ],
+      [
+        "31",
+        "shift action_19"
+      ],
+      [
+        "32",
+        "shift action_20"
+      ],
+      [
+        "38",
+        "shift action_38"
+      ],
+      [
+        "11",
+        "goto action_37"
+      ],
+      [
+        "_",
+        "failure"
+      ]
+    ],
+    "6": [
+      [
+        "_",
+        "reduce_14"
+      ]
+    ],
+    "7": [
+      [
+        "33",
+        "shift action_36"
+      ],
+      [
+        "_",
+        "failure"
+      ]
+    ],
+    "8": [
+      [
+        "17",
+        "shift action_35"
+      ],
+      [
+        "13",
+        "goto action_33"
+      ],
+      [
+        "14",
+        "goto action_34"
+      ],
+      [
+        "_",
+        "failure"
+      ]
+    ],
+    "9": [
+      [
+        "17",
+        "shift action_32"
+      ],
+      [
+        "_",
+        "failure"
+      ]
+    ],
+    "10": [
+      [
+        "17",
+        "shift action_31"
+      ],
+      [
+        "_",
+        "failure"
+      ]
+    ],
+    "11": [
+      [
+        "33",
+        "shift action_30"
+      ],
+      [
+        "_",
+        "failure"
+      ]
+    ],
+    "12": [
+      [
+        "_",
+        "reduce_19"
+      ]
+    ],
+    "13": [
+      [
+        "33",
+        "shift action_29"
+      ],
+      [
+        "_",
+        "failure"
+      ]
+    ],
+    "14": [
+      [
+        "17",
+        "shift action_26"
+      ],
+      [
+        "15",
+        "goto action_28"
+      ],
+      [
+        "_",
+        "reduce_38"
+      ]
+    ],
+    "15": [
+      [
+        "17",
+        "shift action_26"
+      ],
+      [
+        "15",
+        "goto action_27"
+      ],
+      [
+        "_",
+        "reduce_38"
+      ]
+    ],
+    "16": [
+      [
+        "17",
+        "shift action_26"
+      ],
+      [
+        "15",
+        "goto action_25"
+      ],
+      [
+        "_",
+        "reduce_38"
+      ]
+    ],
+    "17": [
+      [
+        "34",
+        "shift action_24"
+      ],
+      [
+        "_",
+        "failure"
+      ]
+    ],
+    "18": [
+      [
+        "33",
+        "shift action_23"
+      ],
+      [
+        "_",
+        "failure"
+      ]
+    ],
+    "19": [
+      [
+        "17",
+        "shift action_22"
+      ],
+      [
+        "_",
+        "failure"
+      ]
+    ],
+    "20": [
+      [
+        "33",
+        "shift action_21"
+      ],
+      [
+        "_",
+        "failure"
+      ]
+    ],
+    "21": [
+      [
+        "_",
+        "reduce_30"
+      ]
+    ],
+    "22": [
+      [
+        "33",
+        "shift action_50"
+      ],
+      [
+        "_",
+        "failure"
+      ]
+    ],
+    "23": [
+      [
+        "_",
+        "reduce_29"
+      ]
+    ],
+    "24": [
+      [
+        "_",
+        "reduce_28"
+      ]
+    ],
+    "25": [
+      [
+        "_",
+        "reduce_26"
+      ]
+    ],
+    "26": [
+      [
+        "17",
+        "shift action_26"
+      ],
+      [
+        "15",
+        "goto action_49"
+      ],
+      [
+        "_",
+        "reduce_38"
+      ]
+    ],
+    "27": [
+      [
+        "_",
+        "reduce_27"
+      ]
+    ],
+    "28": [
+      [
+        "_",
+        "reduce_25"
+      ]
+    ],
+    "29": [
+      [
+        "33",
+        "shift action_48"
+      ],
+      [
+        "_",
+        "reduce_21"
+      ]
+    ],
+    "30": [
+      [
+        "33",
+        "shift action_47"
+      ],
+      [
+        "_",
+        "failure"
+      ]
+    ],
+    "31": [
+      [
+        "17",
+        "shift action_45"
+      ],
+      [
+        "12",
+        "goto action_46"
+      ],
+      [
+        "_",
+        "reduce_33"
+      ]
+    ],
+    "32": [
+      [
+        "17",
+        "shift action_45"
+      ],
+      [
+        "12",
+        "goto action_44"
+      ],
+      [
+        "_",
+        "reduce_33"
+      ]
+    ],
+    "33": [
+      [
+        "_",
+        "reduce_16"
+      ]
+    ],
+    "34": [
+      [
+        "17",
+        "shift action_35"
+      ],
+      [
+        "13",
+        "goto action_43"
+      ],
+      [
+        "14",
+        "goto action_34"
+      ],
+      [
+        "_",
+        "reduce_35"
+      ]
+    ],
+    "35": [
+      [
+        "33",
+        "shift action_42"
+      ],
+      [
+        "_",
+        "failure"
+      ]
+    ],
+    "36": [
+      [
+        "_",
+        "reduce_15"
+      ]
+    ],
+    "37": [
+      [
+        "_",
+        "reduce_13"
+      ]
+    ],
+    "38": [
+      [
+        "17",
+        "shift action_41"
+      ],
+      [
+        "5",
+        "goto action_39"
+      ],
+      [
+        "6",
+        "goto action_40"
+      ],
+      [
+        "_",
+        "failure"
+      ]
+    ],
+    "39": [
+      [
+        "17",
+        "shift action_41"
+      ],
+      [
+        "33",
+        "shift action_3"
+      ],
+      [
+        "6",
+        "goto action_54"
+      ],
+      [
+        "16",
+        "goto action_55"
+      ],
+      [
+        "_",
+        "reduce_40"
+      ]
+    ],
+    "40": [
+      [
+        "_",
+        "reduce_3"
+      ]
+    ],
+    "41": [
+      [
+        "35",
+        "shift action_52"
+      ],
+      [
+        "37",
+        "shift action_53"
+      ],
+      [
+        "_",
+        "failure"
+      ]
+    ],
+    "42": [
+      [
+        "_",
+        "reduce_36"
+      ]
+    ],
+    "43": [
+      [
+        "_",
+        "reduce_34"
+      ]
+    ],
+    "44": [
+      [
+        "_",
+        "reduce_17"
+      ]
+    ],
+    "45": [
+      [
+        "_",
+        "reduce_32"
+      ]
+    ],
+    "46": [
+      [
+        "_",
+        "reduce_18"
+      ]
+    ],
+    "47": [
+      [
+        "_",
+        "reduce_20"
+      ]
+    ],
+    "48": [
+      [
+        "33",
+        "shift action_51"
+      ],
+      [
+        "_",
+        "reduce_22"
+      ]
+    ],
+    "49": [
+      [
+        "_",
+        "reduce_37"
+      ]
+    ],
+    "50": [
+      [
+        "_",
+        "reduce_31"
+      ]
+    ],
+    "51": [
+      [
+        "33",
+        "shift action_60"
+      ],
+      [
+        "_",
+        "reduce_23"
+      ]
+    ],
+    "52": [
+      [
+        "17",
+        "shift action_26"
+      ],
+      [
+        "7",
+        "goto action_57"
+      ],
+      [
+        "8",
+        "goto action_58"
+      ],
+      [
+        "15",
+        "goto action_59"
+      ],
+      [
+        "_",
+        "reduce_38"
+      ]
+    ],
+    "53": [
+      [
+        "33",
+        "shift action_56"
+      ],
+      [
+        "_",
+        "failure"
+      ]
+    ],
+    "54": [
+      [
+        "_",
+        "reduce_2"
+      ]
+    ],
+    "55": [
+      [
+        "_",
+        "reduce_1"
+      ]
+    ],
+    "56": [
+      [
+        "17",
+        "shift action_64"
+      ],
+      [
+        "35",
+        "shift action_65"
+      ],
+      [
+        "_",
+        "failure"
+      ]
+    ],
+    "57": [
+      [
+        "_",
+        "reduce_6"
+      ]
+    ],
+    "58": [
+      [
+        "39",
+        "shift action_63"
+      ],
+      [
+        "_",
+        "reduce_8"
+      ]
+    ],
+    "59": [
+      [
+        "28",
+        "shift action_62"
+      ],
+      [
+        "9",
+        "goto action_61"
+      ],
+      [
+        "_",
+        "reduce_12"
+      ]
+    ],
+    "60": [
+      [
+        "_",
+        "reduce_24"
+      ]
+    ],
+    "61": [
+      [
+        "33",
+        "shift action_70"
+      ],
+      [
+        "_",
+        "failure"
+      ]
+    ],
+    "62": [
+      [
+        "17",
+        "shift action_69"
+      ],
+      [
+        "_",
+        "failure"
+      ]
+    ],
+    "63": [
+      [
+        "17",
+        "shift action_26"
+      ],
+      [
+        "7",
+        "goto action_68"
+      ],
+      [
+        "8",
+        "goto action_58"
+      ],
+      [
+        "15",
+        "goto action_59"
+      ],
+      [
+        "_",
+        "reduce_38"
+      ]
+    ],
+    "64": [
+      [
+        "35",
+        "shift action_67"
+      ],
+      [
+        "_",
+        "failure"
+      ]
+    ],
+    "65": [
+      [
+        "17",
+        "shift action_26"
+      ],
+      [
+        "7",
+        "goto action_66"
+      ],
+      [
+        "8",
+        "goto action_58"
+      ],
+      [
+        "15",
+        "goto action_59"
+      ],
+      [
+        "_",
+        "reduce_38"
+      ]
+    ],
+    "66": [
+      [
+        "_",
+        "reduce_4"
+      ]
+    ],
+    "67": [
+      [
+        "17",
+        "shift action_26"
+      ],
+      [
+        "7",
+        "goto action_72"
+      ],
+      [
+        "8",
+        "goto action_58"
+      ],
+      [
+        "15",
+        "goto action_59"
+      ],
+      [
+        "_",
+        "reduce_38"
+      ]
+    ],
+    "68": [
+      [
+        "_",
+        "reduce_7"
+      ]
+    ],
+    "69": [
+      [
+        "_",
+        "reduce_11"
+      ]
+    ],
+    "70": [
+      [
+        "36",
+        "shift action_71"
+      ],
+      [
+        "_",
+        "reduce_10"
+      ]
+    ],
+    "71": [
+      [
+        "_",
+        "reduce_9"
+      ]
+    ],
+    "72": [
+      [
+        "_",
+        "reduce_5"
+      ]
+    ]
+  },
+  "reductions": [
+    [
+      1,
+      "happyReduce",
+      5,
+      4
+    ],
+    [
+      2,
+      "happySpecReduce_2",
+      2,
+      5
+    ],
+    [
+      3,
+      "happySpecReduce_1",
+      1,
+      5
+    ],
+    [
+      4,
+      "happyReduce",
+      5,
+      6
+    ],
+    [
+      5,
+      "happyReduce",
+      6,
+      6
+    ],
+    [
+      6,
+      "happySpecReduce_3",
+      3,
+      6
+    ],
+    [
+      7,
+      "happySpecReduce_3",
+      3,
+      7
+    ],
+    [
+      8,
+      "happySpecReduce_1",
+      1,
+      7
+    ],
+    [
+      9,
+      "happyMonadReduce",
+      4,
+      8
+    ],
+    [
+      10,
+      "happyMonadReduce",
+      3,
+      8
+    ],
+    [
+      11,
+      "happySpecReduce_2",
+      2,
+      9
+    ],
+    [
+      12,
+      "happySpecReduce_0",
+      0,
+      9
+    ],
+    [
+      13,
+      "happySpecReduce_2",
+      2,
+      10
+    ],
+    [
+      14,
+      "happySpecReduce_1",
+      1,
+      10
+    ],
+    [
+      15,
+      "happySpecReduce_2",
+      2,
+      11
+    ],
+    [
+      16,
+      "happySpecReduce_2",
+      2,
+      11
+    ],
+    [
+      17,
+      "happySpecReduce_3",
+      3,
+      11
+    ],
+    [
+      18,
+      "happySpecReduce_3",
+      3,
+      11
+    ],
+    [
+      19,
+      "happySpecReduce_1",
+      1,
+      11
+    ],
+    [
+      20,
+      "happySpecReduce_3",
+      3,
+      11
+    ],
+    [
+      21,
+      "happySpecReduce_2",
+      2,
+      11
+    ],
+    [
+      22,
+      "happySpecReduce_3",
+      3,
+      11
+    ],
+    [
+      23,
+      "happyReduce",
+      4,
+      11
+    ],
+    [
+      24,
+      "happyReduce",
+      5,
+      11
+    ],
+    [
+      25,
+      "happySpecReduce_2",
+      2,
+      11
+    ],
+    [
+      26,
+      "happySpecReduce_2",
+      2,
+      11
+    ],
+    [
+      27,
+      "happySpecReduce_2",
+      2,
+      11
+    ],
+    [
+      28,
+      "happySpecReduce_2",
+      2,
+      11
+    ],
+    [
+      29,
+      "happySpecReduce_2",
+      2,
+      11
+    ],
+    [
+      30,
+      "happySpecReduce_2",
+      2,
+      11
+    ],
+    [
+      31,
+      "happySpecReduce_3",
+      3,
+      11
+    ],
+    [
+      32,
+      "happySpecReduce_1",
+      1,
+      12
+    ],
+    [
+      33,
+      "happySpecReduce_0",
+      0,
+      12
+    ],
+    [
+      34,
+      "happySpecReduce_2",
+      2,
+      13
+    ],
+    [
+      35,
+      "happySpecReduce_1",
+      1,
+      13
+    ],
+    [
+      36,
+      "happySpecReduce_2",
+      2,
+      14
+    ],
+    [
+      37,
+      "happySpecReduce_2",
+      2,
+      15
+    ],
+    [
+      38,
+      "happySpecReduce_0",
+      0,
+      15
+    ],
+    [
+      39,
+      "happySpecReduce_1",
+      1,
+      16
+    ],
+    [
+      40,
+      "happySpecReduce_0",
+      0,
+      16
+    ]
+  ],
+  "source": "pinned gc/happy/Parser.hs; direct higher-order SML action functions, not a runtime table interpreter"
+}

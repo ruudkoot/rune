@@ -1,0 +1,3 @@
+sL (comb2 $1 $>) $ if opt_Hpc
+							then HsTickPragma (unLoc $1) $2
+							else HsPar $2

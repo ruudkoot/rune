@@ -1,0 +1,1 @@
+sL (comb2 $1 $>) $ HsBracket (DecBr (mkGroup $2))

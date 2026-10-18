@@ -1,0 +1,1 @@
+% checkTyClHdr $1         $3 >>= return.sL (comb2 $1 $>)

@@ -1,0 +1,1 @@
+["ok","%\u000a      let string = getDOCNAMED happy_var_1 \u000a          (name, rest) = break isSpace string\u000a      in case parseHaddockParagraphs (tokenise rest) of {\u000a        Left  err -> parseError (getLoc happy_var_1) err;\u000a        Right doc -> return (sL (getLoc happy_var_1) (name, doc)) }",[1,1,1]]

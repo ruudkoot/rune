@@ -1,0 +1,22 @@
+[
+  "default",
+  "empty",
+  "basic",
+  "directives",
+  "punctuation",
+  "comments",
+  "code",
+  "quoted-newline",
+  "escaped",
+  "unterminated-string",
+  "unterminated-char",
+  "unterminated-comment",
+  "unterminated-code",
+  "unknown-directive",
+  "directive-prefix",
+  "bad-symbol",
+  "underscore",
+  "code-trim",
+  "code-prime",
+  "comment-start-line"
+]

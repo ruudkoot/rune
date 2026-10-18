@@ -1,0 +1,12 @@
+{'name': 'default', 'exit': 0, 'bytes': 706113, 'sha256': 'b70da0bb178d71e52aa624e57ae8d0955ab7f905941187c96285e0874639e793', 'stderr_bytes': 55}
+{'name': 'basic', 'exit': 0, 'bytes': 1633, 'sha256': '95ba27d1c85ece16a0bcf2b4e2e9fca581465f775c471ddef9a483118f9e5832', 'stderr_bytes': 0}
+{'name': 'precedence', 'exit': 0, 'bytes': 2575, 'sha256': '543a71618d6f139952ecd80ff5429979cc0b329669ee89619a9b76cac9ef44b0', 'stderr_bytes': 0}
+{'name': 'typed', 'exit': 0, 'bytes': 2201, 'sha256': 'd46579e21227c7219165a30321f10be217ac0f191fa9b9ee4c79399bd88632a7', 'stderr_bytes': 16}
+{'name': 'multiple-starts', 'exit': 0, 'bytes': 2208, 'sha256': 'bea3e9bd3396c41e92698f3e8d3c264060a622cff5b926c9edf866383fd5b04c', 'stderr_bytes': 0}
+{'name': 'quote-normalization', 'exit': 0, 'bytes': 1658, 'sha256': '655846f58d0313d4af7c070db034b9689e38448a9737f130eeb22ada18197aa8', 'stderr_bytes': 0}
+{'name': 'attributes', 'exit': 0, 'bytes': 2024, 'sha256': '1d8b235a55a3ab3e5165efd1e17688ab222ad01e366be4ec5cf584242a1ee002', 'stderr_bytes': 0}
+{'name': 'attribute-groups', 'exit': 0, 'bytes': 2845, 'sha256': 'df0b4820ff43617b4a7d81040c6bd177204d29178bb98fdb76dae06d3b815376', 'stderr_bytes': 0}
+{'name': 'attribute-rightmost', 'exit': 0, 'bytes': 1966, 'sha256': 'fe26c0efb742f549c9c78a4ddf8da06142a1cae9254f8534b704a922d35f93a2', 'stderr_bytes': 0}
+{'name': 'attribute-zero', 'exit': 0, 'bytes': 2003, 'sha256': 'f7279e0b6be4e40a12c4904dd3520840ee00cf1956bed31d7220c6789a8bc87b', 'stderr_bytes': 0}
+{'name': 'attribute-empty', 'exit': 0, 'bytes': 1942, 'sha256': 'ca296c0fdbbeaf340ba835e3bbbd6de58e58718f0c1eec67602ba63799c5496a', 'stderr_bytes': 0}
+{'name': 'monad-lexer', 'exit': 0, 'bytes': 1218, 'sha256': '62da1cd91303feb0b33187b63fe7f29db7c257a981fe95b45da3b73fb8bd6a3e', 'stderr_bytes': 0}

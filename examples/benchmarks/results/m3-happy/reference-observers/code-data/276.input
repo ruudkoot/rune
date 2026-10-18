@@ -1,0 +1,2 @@
+% do { r <- checkValDef $1 $2 $3;
+						return (sL (comb2 $1 $>) $ unitOL (sL (comb2 $1 $>) $ ValD r)) }

@@ -1,0 +1,21 @@
+{ header }
+%tokentype {T}
+%token x {X} y {Y}
+%name p start
+%partial q
+%importedidentity
+%lexer {lex}{eof}
+%monad {M}
+%monad {C}{M}
+%monad {M}{bind}{ret}
+%monad {C}{M}{bind}{ret}
+%nonassoc x
+%right y
+%left x y
+%expect 3
+%error {bad}
+%attributetype {Attrs}
+%attribute value {Int}
+%%
+start : x y %prec x {act}; | {empty}
+{ footer }

@@ -1,0 +1,86 @@
+[
+  {
+    "name": "default",
+    "nonterminals": 214,
+    "states": 980,
+    "gotos": 12359,
+    "items": 1310
+  },
+  {
+    "name": "basic",
+    "nonterminals": 2,
+    "states": 4,
+    "gotos": 3,
+    "items": 4
+  },
+  {
+    "name": "precedence",
+    "nonterminals": 2,
+    "states": 9,
+    "gotos": 16,
+    "items": 16
+  },
+  {
+    "name": "typed",
+    "nonterminals": 3,
+    "states": 4,
+    "gotos": 3,
+    "items": 4
+  },
+  {
+    "name": "multiple-starts",
+    "nonterminals": 4,
+    "states": 7,
+    "gotos": 6,
+    "items": 7
+  },
+  {
+    "name": "quote-normalization",
+    "nonterminals": 2,
+    "states": 4,
+    "gotos": 3,
+    "items": 4
+  },
+  {
+    "name": "attributes",
+    "nonterminals": 2,
+    "states": 4,
+    "gotos": 3,
+    "items": 4
+  },
+  {
+    "name": "attribute-groups",
+    "nonterminals": 3,
+    "states": 6,
+    "gotos": 7,
+    "items": 6
+  },
+  {
+    "name": "attribute-rightmost",
+    "nonterminals": 2,
+    "states": 4,
+    "gotos": 3,
+    "items": 4
+  },
+  {
+    "name": "attribute-zero",
+    "nonterminals": 2,
+    "states": 4,
+    "gotos": 3,
+    "items": 4
+  },
+  {
+    "name": "attribute-empty",
+    "nonterminals": 2,
+    "states": 4,
+    "gotos": 3,
+    "items": 4
+  },
+  {
+    "name": "monad-lexer",
+    "nonterminals": 2,
+    "states": 4,
+    "gotos": 3,
+    "items": 4
+  }
+]

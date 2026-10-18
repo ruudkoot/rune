@@ -1,0 +1,2 @@
+sL (comb2 $1 $>) $ toOL [ sL (comb2 $1 $>) $ SigD (SpecSig $2 t defaultInlineSpec) 
+					    | t <- $4]

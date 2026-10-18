@@ -1,0 +1,2299 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Znbh7D/happy-strict/native-smlnj-legacy/build/export.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Znbh7D/happy-strict/native-smlnj-legacy/build/sources/1.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Znbh7D/happy-strict/native-smlnj-legacy/build/sources/2.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Znbh7D/happy-strict/native-smlnj-legacy/build/sources/3.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Znbh7D/happy-strict/native-smlnj-legacy/build/sources/4.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Znbh7D/happy-strict/native-smlnj-legacy/build/sources/4.sml:19.32 Warning: calling polyEqual
+functor BenchIdaFiniteFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a seq
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t * 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val defer : (unit -> 'a D.t) -> 'a D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val nth : 'a <BaseFct>.<resultStr>.node D.t -> int -> 'a
+  val update :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val unify :
+      ''a <BaseFct>.<resultStr>.node D.t
+       -> ''a -> ''a <BaseFct>.<resultStr>.node D.t
+  val foldl :
+      ('a D.t -> 'b -> 'a D.t)
+       -> 'a D.t -> 'b <BaseFct>.<resultStr>.node D.t -> 'a D.t
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val filter :
+      ('a -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val length : 'a <BaseFct>.<resultStr>.node D.t -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Znbh7D/happy-strict/native-smlnj-legacy/build/sources/5.sml]
+[autoloading]
+[autoloading done]
+functor BenchHappySetFn(<param>: sig
+  type item
+  val compare : item * item -> order
+end) :
+sig
+  type tree
+  val size : <BaseFct>.<resultStr>.tree -> int
+  val node :
+      item
+       -> <BaseFct>.<resultStr>.tree
+       -> <BaseFct>.<resultStr>.tree -> <BaseFct>.<resultStr>.tree
+  val balanceL :
+      item
+       -> <BaseFct>.<resultStr>.tree
+       -> <BaseFct>.<resultStr>.tree -> <BaseFct>.<resultStr>.tree
+  val balanceR :
+      item
+       -> <BaseFct>.<resultStr>.tree
+       -> <BaseFct>.<resultStr>.tree -> <BaseFct>.<resultStr>.tree
+  val insertMax :
+      item -> <BaseFct>.<resultStr>.tree -> <BaseFct>.<resultStr>.tree
+  val insertMin :
+      item -> <BaseFct>.<resultStr>.tree -> <BaseFct>.<resultStr>.tree
+  val link :
+      item
+       -> <BaseFct>.<resultStr>.tree
+       -> <BaseFct>.<resultStr>.tree -> <BaseFct>.<resultStr>.tree
+  val insertNode :
+      item -> <BaseFct>.<resultStr>.tree -> <BaseFct>.<resultStr>.tree
+  val memberNode : item -> <BaseFct>.<resultStr>.tree -> bool
+  val unordered : item -> item list -> bool
+  val fromNative : item list -> <BaseFct>.<resultStr>.tree
+  val validate : <BaseFct>.<resultStr>.tree -> int
+  val insertRight :
+      item -> <BaseFct>.<resultStr>.tree -> <BaseFct>.<resultStr>.tree
+  val split :
+      item
+       -> <BaseFct>.<resultStr>.tree
+       -> <BaseFct>.<resultStr>.tree * <BaseFct>.<resultStr>.tree
+  val minView :
+      <BaseFct>.<resultStr>.tree -> item * <BaseFct>.<resultStr>.tree
+  val maxView :
+      <BaseFct>.<resultStr>.tree -> item * <BaseFct>.<resultStr>.tree
+  val glue :
+      <BaseFct>.<resultStr>.tree
+       -> <BaseFct>.<resultStr>.tree -> <BaseFct>.<resultStr>.tree
+  val merge :
+      <BaseFct>.<resultStr>.tree
+       -> <BaseFct>.<resultStr>.tree -> <BaseFct>.<resultStr>.tree
+  val unionNode :
+      <BaseFct>.<resultStr>.tree
+       -> <BaseFct>.<resultStr>.tree -> <BaseFct>.<resultStr>.tree
+  val differenceNode :
+      <BaseFct>.<resultStr>.tree
+       -> <BaseFct>.<resultStr>.tree -> <BaseFct>.<resultStr>.tree
+  val filterNode :
+      (item -> bool)
+       -> <BaseFct>.<resultStr>.tree -> <BaseFct>.<resultStr>.tree
+  structure L : <sig>
+  type set
+  val empty : <BaseFct>.<resultStr>.set
+  val singleton : item -> <BaseFct>.<resultStr>.tree BenchLazy.state ref
+  val fromList :
+      (unit -> item list) -> <BaseFct>.<resultStr>.tree BenchLazy.state ref
+  val member : item -> <BaseFct>.<resultStr>.tree BenchLazy.state ref -> bool
+  val null : <BaseFct>.<resultStr>.tree BenchLazy.state ref -> bool
+  val cardinality : <BaseFct>.<resultStr>.tree BenchLazy.state ref -> int
+  val union :
+      <BaseFct>.<resultStr>.tree BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.tree BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.tree BenchLazy.state ref
+  val difference :
+      <BaseFct>.<resultStr>.tree BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.tree BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.tree BenchLazy.state ref
+  val filter :
+      (item -> bool)
+       -> <BaseFct>.<resultStr>.tree BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.tree BenchLazy.state ref
+  val fold :
+      (item -> 'a BenchLazy.state ref -> 'a BenchLazy.state ref)
+       -> 'a BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.tree BenchLazy.state ref
+       -> 'a BenchLazy.state ref
+  type listNode
+  val nilStream : <BaseFct>.<resultStr>.listNode BenchLazy.state ref
+  val streamFromList :
+      item list -> <BaseFct>.<resultStr>.listNode BenchLazy.delay
+  val fromStream :
+      <BaseFct>.<resultStr>.listNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.tree BenchLazy.state ref
+  val toAscList :
+      <BaseFct>.<resultStr>.tree BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.listNode BenchLazy.state ref
+  val equal :
+      <BaseFct>.<resultStr>.tree BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.tree BenchLazy.state ref -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Znbh7D/happy-strict/native-smlnj-legacy/build/sources/6.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Znbh7D/happy-strict/native-smlnj-legacy/build/sources/6.sml:37.61 Warning: calling polyEqual
+functor BenchHappyLexerFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure L : <sig>
+  structure F : <sig>
+  structure C : <sig>
+  type text
+  type input
+  type tokenId
+  type token
+  type 'a result
+  type 'a parser
+  val text : string -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val string : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> string
+  val input :
+      string -> char <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val return : 'a -> 'b -> 'c -> 'a <BaseFct>.<resultStr>.result
+  val bind :
+      ('a -> 'b -> 'c <BaseFct>.<resultStr>.result)
+       -> ('c -> 'a -> 'b -> 'd <BaseFct>.<resultStr>.result)
+       -> 'a -> 'b -> 'd <BaseFct>.<resultStr>.result
+  val fmap :
+      ('a -> 'b)
+       -> ('c -> 'd -> 'a <BaseFct>.<resultStr>.result)
+       -> 'c -> 'd -> 'b <BaseFct>.<resultStr>.result
+  val fail : string -> 'a -> 'b -> 'c <BaseFct>.<resultStr>.result
+  val head :
+      'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> ('a * 'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t) 
+         option
+  val error : string -> 'a -> int -> 'b <BaseFct>.<resultStr>.result
+  val span :
+      ('a -> bool)
+       -> 'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> 'a list * 'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val skip :
+      ('a -> bool)
+       -> 'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> 'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val idPart : char -> bool
+  val alpha : char -> bool
+  val prefix :
+      ''a list
+       -> ''a <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> ''a <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t option
+  val quoted :
+      char
+       -> char <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> char list
+       * char <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val strip : char list -> char list
+  val info :
+      <BaseFct>.<resultStr>.text
+       -> <BaseFct>.<resultStr>.tokenId -> <BaseFct>.<resultStr>.token
+  val keyword : <BaseFct>.<resultStr>.tokenId -> <BaseFct>.<resultStr>.token
+  val lexNestedComment :
+      int
+       -> (char <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+        -> int -> 'a <BaseFct>.<resultStr>.result)
+       -> char <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> int -> 'a <BaseFct>.<resultStr>.result
+  val code :
+      (<BaseFct>.<resultStr>.token
+        -> char <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+        -> int -> 'a <BaseFct>.<resultStr>.result)
+       -> char <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> int -> char list -> int -> 'a <BaseFct>.<resultStr>.result
+  val directives : (string * <BaseFct>.<resultStr>.tokenId) list
+  val percent :
+      (<BaseFct>.<resultStr>.token
+        -> char <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+        -> int -> 'a <BaseFct>.<resultStr>.result)
+       -> char <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> int -> 'a <BaseFct>.<resultStr>.result
+  val lexer :
+      (<BaseFct>.<resultStr>.token
+        -> char <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+        -> int -> 'a <BaseFct>.<resultStr>.result)
+       -> char <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> int -> 'a <BaseFct>.<resultStr>.result
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Znbh7D/happy-strict/native-smlnj-legacy/build/sources/7.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Znbh7D/happy-strict/native-smlnj-legacy/build/sources/7.sml:2307.53 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Znbh7D/happy-strict/native-smlnj-legacy/build/sources/7.sml:1826.27 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Znbh7D/happy-strict/native-smlnj-legacy/build/sources/7.sml:1810.16 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Znbh7D/happy-strict/native-smlnj-legacy/build/sources/7.sml:1810.50 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Znbh7D/happy-strict/native-smlnj-legacy/build/sources/7.sml:1668.37 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Znbh7D/happy-strict/native-smlnj-legacy/build/sources/7.sml:1626.37 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Znbh7D/happy-strict/native-smlnj-legacy/build/sources/7.sml:1548.61 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Znbh7D/happy-strict/native-smlnj-legacy/build/sources/7.sml:1402.48 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Znbh7D/happy-strict/native-smlnj-legacy/build/sources/7.sml:1372.67 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Znbh7D/happy-strict/native-smlnj-legacy/build/sources/7.sml:256.25 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Znbh7D/happy-strict/native-smlnj-legacy/build/sources/7.sml:236.26 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Znbh7D/happy-strict/native-smlnj-legacy/build/sources/7.sml:231.30 Warning: calling polyEqual
+functor BenchHappyFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure L : <sig>
+  structure X : <sig>
+  structure F : <sig>
+  type text
+  type rule
+  type production
+  type directive
+  type ast
+  type semanticNode
+  type semantic
+  type stackNode
+  type stack
+  type state
+  type statesNode
+  type states
+  val internal : unit -> 'a
+  val reverse :
+      'a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val singleton : 'a D.t -> 'a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val push :
+      <BaseFct>.<resultStr>.semantic
+       -> <BaseFct>.<resultStr>.stackNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stackNode BenchLazy.state ref
+  val pop :
+      <BaseFct>.<resultStr>.stackNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.semantic
+       * <BaseFct>.<resultStr>.stackNode BenchLazy.delay
+  val pushState :
+      <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.state ref
+  val popState :
+      <BaseFct>.<resultStr>.statesNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.state
+       * <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+  val dropStack :
+      int
+       -> <BaseFct>.<resultStr>.stackNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stackNode BenchLazy.state ref
+  val dropStates :
+      int
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.state ref
+  val info :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokenId
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.X.<returnStr>.text
+  val number : <BaseFct>.<resultStr>.semanticNode D.t -> int D.t
+  val get4 :
+      <BaseFct>.<resultStr>.semanticNode D.t -> <BaseFct>.<resultStr>.ast D.t
+  val get5 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.production 
+         <BaseFct>.<resultStr>.X.<returnStr>.F.seq
+  val get6 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.production D.t
+  val get7 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.rule <BaseFct>.<resultStr>.X.<returnStr>.F.seq
+  val get8 :
+      <BaseFct>.<resultStr>.semanticNode D.t -> <BaseFct>.<resultStr>.rule D.t
+  val get9 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.text option D.t
+  val get10 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.directive 
+         <BaseFct>.<resultStr>.X.<returnStr>.F.seq
+  val get11 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.directive D.t
+  val get13 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> (<BaseFct>.<resultStr>.text * <BaseFct>.<resultStr>.text) 
+         <BaseFct>.<resultStr>.X.<returnStr>.F.seq
+  val get14 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> (<BaseFct>.<resultStr>.text * <BaseFct>.<resultStr>.text) D.t
+  val get15 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.text <BaseFct>.<resultStr>.X.<returnStr>.F.seq
+  val unitContext : char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val monadBind : char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val monadReturn : char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val emptyText : char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val select :
+      ('a -> 'b option)
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> 'b <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val exactly :
+      string -> 'a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t -> 'a
+  val optional :
+      string
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t -> 'a option D.t
+  val getTokenType :
+      <BaseFct>.<resultStr>.directive 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> <BaseFct>.<resultStr>.text
+  val getParserNames :
+      <BaseFct>.<resultStr>.directive 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> <BaseFct>.<resultStr>.directive 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val getTokenSpec :
+      <BaseFct>.<resultStr>.directive 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> (<BaseFct>.<resultStr>.text * <BaseFct>.<resultStr>.text) 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val getLexer :
+      <BaseFct>.<resultStr>.directive 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> (<BaseFct>.<resultStr>.text * <BaseFct>.<resultStr>.text) option D.t
+  val getImportedIdentity :
+      <BaseFct>.<resultStr>.directive 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> bool
+  val getMonad :
+      <BaseFct>.<resultStr>.directive 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> bool * char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       * char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       * char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       * char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val getPrios :
+      <BaseFct>.<resultStr>.directive 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> <BaseFct>.<resultStr>.directive 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val getPrioNames :
+      <BaseFct>.<resultStr>.directive
+       -> <BaseFct>.<resultStr>.text <BaseFct>.<resultStr>.X.<returnStr>.F.seq
+  val getExpect :
+      <BaseFct>.<resultStr>.directive 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> int option D.t
+  val getError :
+      <BaseFct>.<resultStr>.directive 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> <BaseFct>.<resultStr>.text option D.t
+  val getAttributes :
+      <BaseFct>.<resultStr>.directive 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> (<BaseFct>.<resultStr>.text * <BaseFct>.<resultStr>.text) 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val getAttributetype :
+      <BaseFct>.<resultStr>.directive 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> <BaseFct>.<resultStr>.text option D.t
+  val compareText :
+      char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t -> order
+  val sameText :
+      char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t -> bool
+  structure A : <sig>
+  type associativity
+  type priority
+  val noPriority : <BaseFct>.<resultStr>.priority D.t
+  type namedProduction
+  type start
+  type grammar
+  val productions :
+      <BaseFct>.<resultStr>.grammar
+       -> <BaseFct>.<resultStr>.namedProduction 
+         <BaseFct>.<resultStr>.X.<returnStr>.F.seq
+  val lookupProdNo :
+      <BaseFct>.<resultStr>.grammar
+       -> int -> <BaseFct>.<resultStr>.namedProduction D.t
+  val lookupProdsOfName :
+      <BaseFct>.<resultStr>.grammar
+       -> int -> int <BaseFct>.<resultStr>.X.<returnStr>.F.seq
+  val tokenSpecs :
+      <BaseFct>.<resultStr>.grammar
+       -> (int D.t * <BaseFct>.<resultStr>.text) 
+         <BaseFct>.<resultStr>.X.<returnStr>.F.seq
+  val terminals :
+      <BaseFct>.<resultStr>.grammar
+       -> int <BaseFct>.<resultStr>.X.<returnStr>.F.seq
+  val nonterminals :
+      <BaseFct>.<resultStr>.grammar
+       -> int <BaseFct>.<resultStr>.X.<returnStr>.F.seq
+  val starts :
+      <BaseFct>.<resultStr>.grammar
+       -> <BaseFct>.<resultStr>.start 
+         <BaseFct>.<resultStr>.X.<returnStr>.F.seq
+  val types :
+      <BaseFct>.<resultStr>.grammar
+       -> <BaseFct>.<resultStr>.text option D.t <BaseFct>.<resultStr>.A.array
+  val tokenNames :
+      <BaseFct>.<resultStr>.grammar
+       -> <BaseFct>.<resultStr>.text <BaseFct>.<resultStr>.A.array
+  val firstNonterm : <BaseFct>.<resultStr>.grammar -> int
+  val firstTerm : <BaseFct>.<resultStr>.grammar -> int
+  val eof : <BaseFct>.<resultStr>.grammar -> int
+  val priorities :
+      <BaseFct>.<resultStr>.grammar
+       -> (int D.t * <BaseFct>.<resultStr>.priority D.t) 
+         <BaseFct>.<resultStr>.X.<returnStr>.F.seq
+  val tokenType : <BaseFct>.<resultStr>.grammar -> <BaseFct>.<resultStr>.text
+  val importedIdentity : <BaseFct>.<resultStr>.grammar -> bool
+  val monad :
+      <BaseFct>.<resultStr>.grammar
+       -> bool * <BaseFct>.<resultStr>.text * <BaseFct>.<resultStr>.text
+       * <BaseFct>.<resultStr>.text * <BaseFct>.<resultStr>.text
+  val expect : <BaseFct>.<resultStr>.grammar -> int option
+  val attributes :
+      <BaseFct>.<resultStr>.grammar
+       -> (<BaseFct>.<resultStr>.text * <BaseFct>.<resultStr>.text) 
+         <BaseFct>.<resultStr>.X.<returnStr>.F.seq
+  val attributeType :
+      <BaseFct>.<resultStr>.grammar -> <BaseFct>.<resultStr>.text
+  val lexer :
+      <BaseFct>.<resultStr>.grammar
+       -> (<BaseFct>.<resultStr>.text * <BaseFct>.<resultStr>.text) option
+  val errorHandler :
+      <BaseFct>.<resultStr>.grammar -> <BaseFct>.<resultStr>.text option
+  val naturalSortBy : ('a * 'a -> order) -> 'a list -> 'a list
+  val sortFinite :
+      ('a * 'a -> order)
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val flatMap :
+      ('a -> 'b <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t)
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> 'b <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val appendMany :
+      'a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val enumerate :
+      int
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> (int D.t * 'a D.t) <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val length : 'a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t -> int
+  val range : int -> int -> int <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val memberInt :
+      ''a -> ''a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t -> bool
+  val memberText :
+      char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> bool
+  val lookupInt :
+      ''a
+       -> (''a D.t * 'b) <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> 'b option
+  val lookupText :
+      char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> (char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t * 'a) 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> 'a option
+  val priorityOf :
+      int
+       -> <BaseFct>.<resultStr>.directive
+       -> <BaseFct>.<resultStr>.priority D.t
+  val asciiNames : string list
+  val namedEscapes : (string * int) list
+  val uncons :
+      'a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> ('a * 'a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t) option
+  val textPrefix :
+      ''a list
+       -> ''a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> ''a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t option
+  val dropText :
+      ('a -> bool)
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val digit : int -> char -> int option
+  val escapeNumber :
+      int
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> (int * char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t) option
+  val readEscape :
+      char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> (int * char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t) option
+  val readCharItem :
+      char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> (int * bool * char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t) 
+         option
+  val readCharacter :
+      char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> (int list * char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t) 
+         option
+  val readString :
+      char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> (int list * char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t) 
+         option
+  val showEscape : int -> int -> string
+  val showCharacter : int list -> string
+  val showString : int list -> string
+  type 'a outcome
+  val succeeded : 'a -> 'a <BaseFct>.<resultStr>.outcome
+  val thenE :
+      'a <BaseFct>.<resultStr>.outcome
+       -> ('a BenchLazy.delay -> 'b <BaseFct>.<resultStr>.outcome)
+       -> 'b <BaseFct>.<resultStr>.outcome
+  val parE :
+      'a <BaseFct>.<resultStr>.outcome
+       -> ('a BenchLazy.state ref -> 'b <BaseFct>.<resultStr>.outcome)
+       -> 'b <BaseFct>.<resultStr>.outcome
+  val parEs :
+      'a <BaseFct>.<resultStr>.outcome list
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t 
+         <BaseFct>.<resultStr>.outcome
+  val failMap :
+      (<BaseFct>.<resultStr>.text -> <BaseFct>.<resultStr>.text)
+       -> 'a <BaseFct>.<resultStr>.outcome -> 'a <BaseFct>.<resultStr>.outcome
+  val reject : string -> 'a <BaseFct>.<resultStr>.outcome
+  val appendText :
+      'a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val decimal : int -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val happyVar : int -> string
+  val readReference :
+      char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> (int * char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t) option
+  val doCheckCode :
+      int
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> (char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+          * int <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t) 
+         <BaseFct>.<resultStr>.outcome
+  val reduction1 :
+      <BaseFct>.<resultStr>.stackNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.stackNode BenchLazy.state ref
+  val reduction2 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction3 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction4 :
+      <BaseFct>.<resultStr>.stackNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.stackNode BenchLazy.state ref
+  val reduction5 :
+      <BaseFct>.<resultStr>.stackNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.stackNode BenchLazy.state ref
+  val reduction6 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> 'a
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction7 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> 'a
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction8 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction9 :
+      <BaseFct>.<resultStr>.stackNode BenchLazy.state ref
+       -> 'a
+       -> 'b
+       -> int
+       -> <BaseFct>.<resultStr>.semanticNode D.t 
+         <BaseFct>.<resultStr>.X.<returnStr>.result
+  val reduction10 :
+      <BaseFct>.<resultStr>.stackNode BenchLazy.state ref
+       -> 'a
+       -> 'b
+       -> int
+       -> <BaseFct>.<resultStr>.semanticNode D.t 
+         <BaseFct>.<resultStr>.X.<returnStr>.result
+  val reduction11 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> 'a -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction12 : <BaseFct>.<resultStr>.semantic
+  val reduction13 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction14 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction15 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> 'a -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction16 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> 'a -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction17 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+       -> 'a -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction18 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+       -> 'a -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction19 : 'a -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction20 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+       -> 'a -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction21 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> 'a -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction22 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+       -> 'a -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction23 :
+      <BaseFct>.<resultStr>.stackNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.stackNode BenchLazy.state ref
+  val reduction24 :
+      <BaseFct>.<resultStr>.stackNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.stackNode BenchLazy.state ref
+  val reduction25 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> 'a -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction26 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> 'a -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction27 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> 'a -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction28 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> 'a -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction29 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> 'a -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction30 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> 'a -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction31 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+       -> 'a -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction32 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction33 : <BaseFct>.<resultStr>.semantic
+  val reduction34 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction35 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction36 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction37 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction38 : <BaseFct>.<resultStr>.semantic
+  val reduction39 :
+      <BaseFct>.<resultStr>.semanticNode D.t
+       -> <BaseFct>.<resultStr>.semanticNode D.t
+  val reduction40 : <BaseFct>.<resultStr>.semantic
+  val action_0 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_1 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_2 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_3 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_4 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_5 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_6 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_7 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_8 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_9 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_10 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_11 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_12 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_13 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_14 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_15 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_16 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_17 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_18 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_19 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_20 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_21 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_22 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_23 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_24 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_25 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_26 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_27 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_28 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_29 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_30 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_31 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_32 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_33 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_34 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_35 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_36 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_37 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_38 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_39 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_40 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_41 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_42 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_43 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_44 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_45 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_46 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_47 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_48 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_49 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_50 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_51 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_52 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_53 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_54 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_55 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_56 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_57 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_58 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_59 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_60 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_61 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_62 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_63 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_64 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_65 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_66 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_67 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_68 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_69 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_70 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_71 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val action_72 :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_1 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_2 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_3 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_4 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_5 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_6 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_7 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_8 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_9 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_10 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_11 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_12 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_13 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_14 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_15 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_16 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_17 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_18 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_19 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_20 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_21 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_22 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_23 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_24 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_25 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_26 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_27 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_28 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_29 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_30 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_31 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_32 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_33 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_34 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_35 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_36 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_37 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_38 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_39 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce_40 :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val newToken :
+      (int
+        -> int
+        -> <BaseFct>.<resultStr>.X.<returnStr>.token
+        -> <BaseFct>.<resultStr>.state
+        -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+        -> <BaseFct>.<resultStr>.stack
+        -> <BaseFct>.<resultStr>.semantic 
+          <BaseFct>.<resultStr>.X.<returnStr>.parser)
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+       -> int
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.result
+  val shift :
+      (int
+        -> int
+        -> <BaseFct>.<resultStr>.X.<returnStr>.token
+        -> <BaseFct>.<resultStr>.state
+        -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+        -> <BaseFct>.<resultStr>.stack
+        -> <BaseFct>.<resultStr>.semantic 
+          <BaseFct>.<resultStr>.X.<returnStr>.parser)
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val goto :
+      (int
+        -> int
+        -> <BaseFct>.<resultStr>.X.<returnStr>.token
+        -> <BaseFct>.<resultStr>.state
+        -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+        -> <BaseFct>.<resultStr>.stack
+        -> <BaseFct>.<resultStr>.semantic 
+          <BaseFct>.<resultStr>.X.<returnStr>.parser)
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val spec0 :
+      int
+       -> <BaseFct>.<resultStr>.semantic
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val spec1 :
+      int
+       -> (<BaseFct>.<resultStr>.semanticNode D.t
+        -> <BaseFct>.<resultStr>.semanticNode D.t)
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val spec2 :
+      int
+       -> (<BaseFct>.<resultStr>.semanticNode D.t
+        -> <BaseFct>.<resultStr>.semanticNode D.t
+        -> <BaseFct>.<resultStr>.semanticNode D.t)
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val spec3 :
+      int
+       -> (<BaseFct>.<resultStr>.semanticNode D.t
+        -> <BaseFct>.<resultStr>.semanticNode D.t
+        -> <BaseFct>.<resultStr>.semanticNode D.t
+        -> <BaseFct>.<resultStr>.semanticNode D.t)
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val reduce :
+      int
+       -> int
+       -> (<BaseFct>.<resultStr>.stackNode BenchLazy.state ref
+        -> <BaseFct>.<resultStr>.stackNode BenchLazy.state ref)
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val monadReduce :
+      int
+       -> int
+       -> (<BaseFct>.<resultStr>.stackNode BenchLazy.state ref
+        -> <BaseFct>.<resultStr>.X.<returnStr>.token
+        -> <BaseFct>.<resultStr>.X.<returnStr>.input
+        -> int
+        -> <BaseFct>.<resultStr>.semanticNode D.t 
+          <BaseFct>.<resultStr>.X.<returnStr>.result)
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val accept :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val failure :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.state
+       -> <BaseFct>.<resultStr>.statesNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.stack
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val parseError :
+      <BaseFct>.<resultStr>.X.<returnStr>.token
+       -> <BaseFct>.<resultStr>.semantic 
+         <BaseFct>.<resultStr>.X.<returnStr>.parser
+  val parse :
+      char <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+       -> int
+       -> <BaseFct>.<resultStr>.ast D.t 
+         <BaseFct>.<resultStr>.X.<returnStr>.result
+  structure AG : <sig>
+  val rewriteAttributeGrammar :
+      int
+       -> ''a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> ''a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> (char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t * 'b) 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> (char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+          * int <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t) 
+         <BaseFct>.<resultStr>.outcome
+  val errorText : char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val dummyText : char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val eofText : char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val startPrefix : char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val defaultParser : char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val noCode : char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val defaultStart :
+      <BaseFct>.<resultStr>.directive 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val checkRules :
+      char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t 
+             <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t 
+         <BaseFct>.<resultStr>.outcome
+  val zipNames :
+      int
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> (int D.t * 'a) <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val codeWithAttributes :
+      int
+       -> ''a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> ''a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> (char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t * 'b) 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> (char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+          * int <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t) 
+         <BaseFct>.<resultStr>.outcome
+  val mangler :
+      string
+       -> <BaseFct>.<resultStr>.ast D.t
+       -> <BaseFct>.<resultStr>.grammar <BaseFct>.<resultStr>.outcome
+  structure NameSet : <sig>
+  val setFromNames :
+      <AppStrI_arg>.item <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state ref
+  val namesFromSet :
+      <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state ref
+       -> <AppStrI_arg>.item <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val incEmpty :
+      <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state ref
+       -> bool
+  val joinSymSets :
+      ('a
+        -> <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state ref)
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state ref
+  val mkClosure :
+      ('a -> 'a BenchLazy.state ref -> bool) -> ('a -> 'a) -> 'a -> 'a
+  val foldBalanced : ('a -> 'a -> 'a) -> 'a list -> 'a
+  val mkFirst :
+      <BaseFct>.<resultStr>.grammar
+       -> int <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state ref
+  structure C : <sig>
+  type lr0Item
+  structure ItemSet : <sig>
+  val itemsFromList :
+      <AppStrI_arg>.item <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> <BaseFct>.<resultStr>.ItemSet.<returnStr>.tree BenchLazy.state ref
+  val itemsToList :
+      <BaseFct>.<resultStr>.ItemSet.<returnStr>.tree BenchLazy.state ref
+       -> <AppStrI_arg>.item <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val findRule : <BaseFct>.<resultStr>.grammar -> int -> int -> int D.t option
+  val precalcClosure0 :
+      <BaseFct>.<resultStr>.grammar
+       -> int
+       -> (<AppStrI_arg>.item D.t * int D.t) 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val closure0 :
+      <BaseFct>.<resultStr>.grammar
+       -> (int
+        -> (int D.t * int D.t) <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t)
+       -> <BaseFct>.<resultStr>.ItemSet.<returnStr>.tree BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.ItemSet.<returnStr>.tree BenchLazy.state ref
+  val gotoClosure :
+      <BaseFct>.<resultStr>.grammar
+       -> <BaseFct>.<resultStr>.ItemSet.<returnStr>.tree BenchLazy.state ref
+       -> int D.t
+       -> <BaseFct>.<resultStr>.ItemSet.<returnStr>.tree BenchLazy.state ref
+  val cNull :
+      'a <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchLazy.state ref
+       -> bool
+  val cLength :
+      'a <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t -> int
+  val cReverse :
+      'a <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+  val cMap :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+       -> 'b <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+  val cZip :
+      'a <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+       -> 'b <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+       -> ('a * 'b) <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+  val cFoldr :
+      ('a BenchNeed.t -> 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+       -> 'b BenchLazy.state ref
+  type gotoEdge
+  type controlGotos
+  type itemWithGotos
+  type numbered
+  val indexInto :
+      int BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.ItemSet.<returnStr>.tree BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.ItemSet.<returnStr>.tree BenchLazy.state ref 
+           <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+       -> int BenchLazy.state ref option
+  val genLR0items :
+      <BaseFct>.<resultStr>.grammar
+       -> (int
+        -> (int D.t * int D.t) <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t)
+       -> (<BaseFct>.<resultStr>.ItemSet.<returnStr>.tree BenchLazy.state ref
+            * <BaseFct>.<resultStr>.controlGotos) 
+           <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+  type lr1Item
+  val unionItems :
+      (int D.t * int D.t
+            * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state 
+              ref) <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+       -> (int D.t * int D.t
+              * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state 
+                ref) <BaseFct>.<resultStr>.X.<returnStr>.C.node 
+           BenchLazy.state ref
+       -> (int D.t * int D.t
+            * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state 
+              ref) <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+  val subtractItem :
+      (int D.t * int D.t
+            * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state 
+              ref) <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+       -> (int D.t * int D.t
+          * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state ref)
+         BenchNeed.t
+       -> (int D.t * int D.t
+            * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state 
+              ref) <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+       -> (int D.t * int D.t
+            * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state 
+              ref) <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+  val subtractItems :
+      (int D.t * int D.t
+            * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state 
+              ref) <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+       -> (int D.t * int D.t
+            * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state 
+              ref) <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+       -> (int D.t * int D.t
+              * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state 
+                ref) <BaseFct>.<resultStr>.X.<returnStr>.C.node 
+           BenchLazy.state ref
+  val controlFromFinite :
+      'a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> 'a D.t <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+  val closure1 :
+      <BaseFct>.<resultStr>.grammar
+       -> (int <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+        -> <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state ref)
+       -> (int D.t * int D.t
+              * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state 
+                ref) <BaseFct>.<resultStr>.X.<returnStr>.C.node 
+           BenchLazy.state ref
+       -> (int D.t * int D.t
+              * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state 
+                ref) <BaseFct>.<resultStr>.X.<returnStr>.C.node 
+           BenchLazy.state ref
+  type spontaneous
+  type propagation
+  type lookaheadEntries
+  val sameItem : (''a D.t * ''b D.t) * (''a D.t * ''b D.t) -> bool
+  val cFlatMap :
+      ('a -> 'b <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t)
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+       -> 'b <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+  val cEnumerate :
+      int
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+       -> (int * 'a) <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+  val cToList :
+      'a <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchLazy.state ref
+       -> 'a list
+  val controlFromItems :
+      <BaseFct>.<resultStr>.ItemSet.<returnStr>.tree BenchLazy.state ref
+       -> <AppStrI_arg>.item <BaseFct>.<resultStr>.X.<returnStr>.C.node 
+         BenchNeed.t
+  val lookupGoto :
+      ''a D.t
+       -> (''a D.t * 'b) <BaseFct>.<resultStr>.X.<returnStr>.C.node 
+         BenchNeed.t
+       -> 'b option
+  val containsViaList :
+      <AppStrI_arg>.item
+       -> <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state ref
+       -> bool
+  val startLookahead : <BaseFct>.<resultStr>.grammar -> bool D.t -> int
+  val propLookaheads :
+      <BaseFct>.<resultStr>.grammar
+       -> (<BaseFct>.<resultStr>.ItemSet.<returnStr>.tree BenchLazy.state ref
+            * (int D.t * int BenchLazy.state ref) 
+                <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t) 
+           <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+       -> (int <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+        -> <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state ref)
+       -> (int BenchLazy.state ref * (int D.t * int D.t)
+            * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state 
+              ref) <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+       * ((int D.t * int D.t) * int BenchLazy.state ref * (int D.t * int D.t)) 
+                 <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t 
+             <BaseFct>.<resultStr>.A.node BenchLazy.state ref
+  val foldLookahead :
+      (int BenchLazy.state ref * (''a D.t * ''b D.t)
+          * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state ref)
+         BenchNeed.t
+       -> (int BenchLazy.state ref * (''a D.t * ''b D.t)
+            * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state 
+              ref) <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+       -> (int BenchLazy.state ref * (''a D.t * ''b D.t)
+            * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state 
+              ref) <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+  val addLookahead :
+      ''a D.t * ''b D.t
+       -> <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state ref
+       -> ((''a D.t * ''b D.t)
+            * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state 
+              ref) <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+       -> ((''a D.t * ''b D.t)
+            * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state 
+              ref) <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+  val getNewPrime :
+      ('a * (''b D.t * ''c D.t)
+          * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state ref)
+         BenchNeed.t
+       -> ((''b D.t * ''c D.t)
+            * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state 
+              ref) <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+       -> ('a * (''b D.t * ''c D.t)
+            * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state 
+              ref) <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+       -> ('a * (''b D.t * ''c D.t)
+            * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state 
+              ref) <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+  val calcLookaheads :
+      int
+       -> (int BenchLazy.state ref * (int D.t * int D.t)
+            * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state 
+              ref) <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+       -> ((int D.t * int D.t) * int BenchLazy.state ref * (int D.t * int D.t))
+                 <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t 
+             <BaseFct>.<resultStr>.A.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.lookaheadEntries <BaseFct>.<resultStr>.A.node 
+           BenchLazy.state ref
+  val mergeLookaheadInfo :
+      ((int D.t * int D.t)
+                    * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree 
+                        BenchLazy.state ref) 
+                   <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchLazy.state 
+               ref <BaseFct>.<resultStr>.A.node BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.ItemSet.<returnStr>.tree BenchLazy.state ref
+            * 'a) <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+       -> ((int D.t * int D.t
+                 * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree 
+                     BenchLazy.state ref) 
+                <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t * 'a) 
+           <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+  type lrAction
+  type gotoAction
+  val failAction : <BaseFct>.<resultStr>.lrAction D.t
+  val acceptAction : <BaseFct>.<resultStr>.lrAction D.t
+  val noGoto : <BaseFct>.<resultStr>.gotoAction D.t
+  val samePriority :
+      <BaseFct>.<resultStr>.priority D.t
+       -> <BaseFct>.<resultStr>.priority D.t -> bool
+  val sameAction :
+      <BaseFct>.<resultStr>.lrAction D.t
+       -> <BaseFct>.<resultStr>.lrAction D.t -> bool
+  val sameActions :
+      <BaseFct>.<resultStr>.lrAction <BaseFct>.<resultStr>.X.<returnStr>.F.seq
+       -> <BaseFct>.<resultStr>.lrAction 
+         <BaseFct>.<resultStr>.X.<returnStr>.F.seq
+       -> bool
+  val nubActions :
+      <BaseFct>.<resultStr>.lrAction 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> <BaseFct>.<resultStr>.lrAction 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val resolve :
+      <BaseFct>.<resultStr>.lrAction D.t
+       -> <BaseFct>.<resultStr>.lrAction D.t
+       -> <BaseFct>.<resultStr>.lrAction D.t
+  val genGotoTable :
+      <BaseFct>.<resultStr>.grammar
+       -> ('a
+            * (int D.t * int BenchLazy.state ref) 
+                <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t) 
+           <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+       -> <BaseFct>.<resultStr>.gotoAction D.t <BaseFct>.<resultStr>.A.node 
+                 BenchLazy.state ref <BaseFct>.<resultStr>.A.node 
+           BenchLazy.state ref
+  val genActionTable :
+      <BaseFct>.<resultStr>.grammar
+       -> (int <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+        -> <BaseFct>.<resultStr>.NameSet.<returnStr>.tree BenchLazy.state ref)
+       -> ((int D.t * int D.t
+                   * <BaseFct>.<resultStr>.NameSet.<returnStr>.tree 
+                       BenchLazy.state ref) 
+                  <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchLazy.state 
+              ref
+            * (int D.t * int BenchLazy.state ref) 
+                <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t) 
+           <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+       -> <BaseFct>.<resultStr>.lrAction D.t <BaseFct>.<resultStr>.A.node 
+                 BenchLazy.state ref <BaseFct>.<resultStr>.A.node 
+           BenchLazy.state ref
+  val arrayElements :
+      'a <BaseFct>.<resultStr>.A.node BenchLazy.state ref
+       -> 'a <BaseFct>.<resultStr>.X.<returnStr>.C.node BenchNeed.t
+  val countConflicts :
+      <BaseFct>.<resultStr>.lrAction D.t <BaseFct>.<resultStr>.A.node 
+                 BenchLazy.state ref <BaseFct>.<resultStr>.A.node 
+           BenchLazy.state ref
+       -> (int BenchLazy.state ref * int BenchLazy.state ref) BenchLazy.state 
+               ref <BaseFct>.<resultStr>.A.node BenchLazy.state ref
+       * (int BenchLazy.state ref * int BenchLazy.state ref) BenchLazy.state 
+         ref
+  structure B : <sig>
+  val mapDollarDollar :
+      char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> (char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+          -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t) option
+  val getDefault :
+      (int * <BaseFct>.<resultStr>.lrAction D.t) 
+           <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> <BaseFct>.<resultStr>.lrAction D.t
+  val mkAction :
+      <BaseFct>.<resultStr>.lrAction D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val mkActionName :
+      int
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val mkReduceFun :
+      int
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val mkHappyVar :
+      int
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val typeParam :
+      int
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t option D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val produceParser :
+      <BaseFct>.<resultStr>.grammar
+       -> <BaseFct>.<resultStr>.lrAction D.t <BaseFct>.<resultStr>.A.node 
+                 BenchLazy.state ref <BaseFct>.<resultStr>.A.node 
+           BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.gotoAction D.t <BaseFct>.<resultStr>.A.node 
+                 BenchLazy.state ref <BaseFct>.<resultStr>.A.node 
+           BenchLazy.state ref
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t option D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t option D.t
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val firstReduction :
+      <BaseFct>.<resultStr>.lrAction D.t
+       -> int <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val isShift : <BaseFct>.<resultStr>.lrAction D.t -> bool
+  val nubInts :
+      ''a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       -> ''a <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val findRedundancies :
+      <BaseFct>.<resultStr>.grammar
+       -> <BaseFct>.<resultStr>.lrAction D.t <BaseFct>.<resultStr>.A.node 
+                 BenchLazy.state ref <BaseFct>.<resultStr>.A.node 
+           BenchLazy.state ref
+       -> int <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       * <BaseFct>.<resultStr>.text <BaseFct>.<resultStr>.X.<returnStr>.F.node 
+         D.t
+  val generate :
+      string
+       -> char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+       * char <BaseFct>.<resultStr>.X.<returnStr>.F.node D.t
+  val emitOutput : string -> (char -> 'a) -> (char -> 'b) -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Znbh7D/happy-strict/native-smlnj-legacy/build/sources/8.sml]
+[autoloading]
+[autoloading done]
+functor BenchHappyCheckFn(K: sig
+  val emitOutput : string -> (char -> unit) -> (char -> unit) -> unit
+end) :
+sig
+  val read : string -> TextIO.vector
+  val compareFile : string -> string -> int
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Znbh7D/happy-strict/native-smlnj-legacy/build/sources/9.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Check : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.Znbh7D/happy-strict/native-smlnj-legacy/build/sources/10.sml]
+structure BenchMeasure : sig
+  val print : TextIO.vector -> unit
+  val line : unit -> string
+  val main : unit -> OS.Process.status
+end

@@ -1,0 +1,2 @@
+sL (comb2 $1 $>) $ HsApp (sL (getLoc $1) (HsVar (unLoc $1)))
+						     (sL (getLoc $3) (HsType $3))

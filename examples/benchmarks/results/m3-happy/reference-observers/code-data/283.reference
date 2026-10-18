@@ -1,0 +1,1 @@
+["ok","% do s <- checkValSig happy_var_1 happy_var_3; \u000a\u0009\u0009\u0009\u0009      return (sL (comb2 happy_var_1 happy_var_3) $ unitOL (sL (comb2 happy_var_1 happy_var_3) $ SigD s))",[3,1,3,1,3,1]]

@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+happy-lazy	normal	rune	O2	compile	0	0	pass	7.53	7.28	0.63	533672	-	-	-	happy-lazy/rune/build/compile
+happy-lazy	normal	rune	O2	correctness	0	0	pass	88.71	85.12	2.40	1072168	8486609205	13737228992	386195916	happy-lazy/rune/correctness.0
+happy-lazy	normal	rune	O2	count	1	1	pass	75.00	71.89	2.32	1072308	8486609205	13737228992	386195916	happy-lazy/rune/fresh.1
+happy-lazy	normal	rune:opt	O2	compile	0	0	pass	8.20	7.96	0.69	533696	-	-	-	happy-lazy/rune-opt/build/compile
+happy-lazy	normal	rune:opt	O2	native-compile	0	0	pass	3.77	1.49	0.22	75484	-	-	-	happy-lazy/rune-opt/build/native-compile
+happy-lazy	normal	rune:opt	O2	correctness	0	0	pass	28.99	29.77	1.14	1076284	8486609205	13737228992	386195916	happy-lazy/rune-opt/correctness.0
+happy-lazy	normal	rune:opt	O2	count	1	1	pass	36.65	34.93	1.65	1076364	8486609205	13737228992	386195916	happy-lazy/rune-opt/fresh.1
+happy-lazy	normal	rune:new	O2	compile	0	0	pass	9.13	6.96	0.66	531656	-	-	-	happy-lazy/rune-new/build/compile
+happy-lazy	normal	rune:new	O2	correctness	0	0	pass	54.58	54.22	1.58	1078500	4804723176	13737228992	386195916	happy-lazy/rune-new/correctness.0
+happy-lazy	normal	rune:new	O2	count	1	1	pass	56.12	53.77	1.59	1078276	4804723176	13737228992	386195916	happy-lazy/rune-new/fresh.1
+happy-lazy	normal	rune:jit	O2	compile	0	0	pass	7.45	7.09	0.80	531600	-	-	-	happy-lazy/rune-jit/build/compile
+happy-lazy	normal	rune:jit	O2	correctness	0	0	pass	30.28	28.03	2.01	1085788	4804723176	13737228992	386195916	happy-lazy/rune-jit/correctness.0
+happy-lazy	normal	rune:jit	O2	count	1	1	pass	29.51	27.82	1.38	1085756	4804723176	13737228992	386195916	happy-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

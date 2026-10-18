@@ -1,0 +1,1 @@
+% checkPrecP (sL (getLoc $1) (fromInteger (getINTEGER $1)))

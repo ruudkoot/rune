@@ -1,0 +1,6 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1425 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:new,rune:jit,rune:opt,hosts BENCH_FILTER='happy-' sh scripts/run-benchmarks.sh
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.TkTQNQ
+BENCH happy-lazy normal
+make: *** [Makefile:987: bench-check] Terminated

@@ -1,0 +1,3 @@
+normal.y
+normal.reference
+normal.warnings

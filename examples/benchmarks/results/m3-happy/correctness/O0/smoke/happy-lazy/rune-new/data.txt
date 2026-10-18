@@ -1,0 +1,3 @@
+smoke.y
+smoke.reference
+smoke.warnings

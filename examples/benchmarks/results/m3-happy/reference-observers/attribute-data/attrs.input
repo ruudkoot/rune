@@ -1,0 +1,1 @@
+$$.value=$1.value + $2; $1.inherited=$$.inherited; where ok $1

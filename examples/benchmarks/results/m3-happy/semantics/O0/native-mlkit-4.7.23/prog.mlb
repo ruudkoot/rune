@@ -1,0 +1,13 @@
+$(SML_LIB)/basis/basis.mlb
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/happy-checks.30MObx/O0/native-mlkit-4.7.23/program/src/1/harness.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/happy-checks.30MObx/O0/native-mlkit-4.7.23/program/src/2/input.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/happy-checks.30MObx/O0/native-mlkit-4.7.23/program/src/3/lazy.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/happy-checks.30MObx/O0/native-mlkit-4.7.23/program/src/4/suspend.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/happy-checks.30MObx/O0/native-mlkit-4.7.23/program/src/5/hartel-ida-finite.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/happy-checks.30MObx/O0/native-mlkit-4.7.23/program/src/6/happy-set.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/happy-checks.30MObx/O0/native-mlkit-4.7.23/program/src/7/happy-lexer.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/happy-checks.30MObx/O0/native-mlkit-4.7.23/program/src/8/happy-kernel.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/happy-checks.30MObx/O0/native-mlkit-4.7.23/program/src/9/happy-check.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/happy-checks.30MObx/O0/native-mlkit-4.7.23/program/src/10/happy-fixtures.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/happy-checks.30MObx/O0/native-mlkit-4.7.23/program/src/11/happy-tests.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/happy-checks.30MObx/O0/native-mlkit-4.7.23/program/src/12/finish.sml"

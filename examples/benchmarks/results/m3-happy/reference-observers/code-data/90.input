@@ -1,0 +1,9 @@
+% do { let {(ctxt, tc, tvs, tparms) = unLoc $3}
+                      ; checkTyVars tparms            -- no type pattern
+		      ; unless (null (unLoc ctxt)) $  -- and no context
+			  parseError (getLoc ctxt) 
+			    "A family declaration cannot have a context"
+		      ; return $
+			  L (comb3 $1 $2 $4)
+			    (TyFamily (DataFamily (unLoc $1)) tc tvs 
+				      (unLoc $4)) }

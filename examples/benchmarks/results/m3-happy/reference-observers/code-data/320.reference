@@ -1,0 +1,1 @@
+["ok","sL (comb2 happy_var_1 happy_var_4) $ HsApp (sL (getLoc happy_var_1) (HsVar (unLoc happy_var_1)))\u000a\u0009\u0009\u0009\u0009\u0009\u0009     (sL (getLoc happy_var_3) (HsType happy_var_3))",[3,3,1,1,4,1]]

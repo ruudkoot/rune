@@ -1,0 +1,1 @@
+["ok","let (con,details) = unLoc happy_var_1 in \u000a\u0009\u0009  sL (comb2 happy_var_1 happy_var_3) (ConDecl con Implicit [] (noLoc []) details (ResTyGADT happy_var_3) Nothing)",[3,3,1,1]]

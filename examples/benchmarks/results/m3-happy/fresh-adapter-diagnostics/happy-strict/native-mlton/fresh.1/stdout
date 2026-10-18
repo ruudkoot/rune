@@ -1,0 +1,4 @@
+RESULT 2575:0
+PASS happy-strict
+SAMPLE 1 0.001323000
+SUMMARY 1 checks, 0 failed

@@ -1,0 +1,2 @@
+sL (comb2 $1 $>) $ toOL [ sL (comb2 $1 $>) $ SigD (FixSig (FixitySig n (Fixity $2 (unLoc $1))))
+					     | n <- unLoc $3 ]

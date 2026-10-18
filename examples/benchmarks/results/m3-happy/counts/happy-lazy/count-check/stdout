@@ -1,0 +1,5 @@
+COUNT unbudgeted happy-lazy normal rune
+COUNT unbudgeted happy-lazy normal rune:opt
+COUNT unbudgeted happy-lazy normal rune:new
+COUNT unbudgeted happy-lazy normal rune:jit
+COUNT comparisons agree

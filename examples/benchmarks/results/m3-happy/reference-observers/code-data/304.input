@@ -1,0 +1,3 @@
+% let loc = comb2 $1 $2 in
+					   checkDo loc (unLoc $2)  >>= \ (stmts,body) ->
+					   return (L loc (mkHsDo (MDoExpr noPostTcTable) stmts body))

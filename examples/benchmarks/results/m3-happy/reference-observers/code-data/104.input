@@ -1,0 +1,1 @@
+% checkTyClHdr (noLoc []) $1 >>= return.sL (getLoc $1)

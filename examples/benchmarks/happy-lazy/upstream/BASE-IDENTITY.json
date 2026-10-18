@@ -1,0 +1,24 @@
+{
+  "repository": "https://github.com/ghc/ghc",
+  "revision": "ghc-9.4.7-release",
+  "package": "base-4.17.2.0",
+  "compiler": "GHC 9.4.7",
+  "files": [
+    {
+      "path": "base/GHC/Show.hs",
+      "bytes": 23076,
+      "sha256": "69db6abf87e7ae24e06595b0bef39c0fa0411379becadb1669e599b991c52f03"
+    },
+    {
+      "path": "base/LICENSE",
+      "bytes": 3881,
+      "sha256": "768c070bd0b7d820d169ee8153d5487acfc262cbbc10dfce18d05c0bb2d2800d"
+    },
+    {
+      "path": "base/Text/Read/Lex.hs",
+      "bytes": 18914,
+      "sha256": "844b4ecc4707e96006506f0df198c14a2c9f26f930f6154ac37483d765455738"
+    }
+  ],
+  "commit": "00920f176b0235d5bb52a8e054d89a664f8938fe"
+}

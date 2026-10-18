@@ -1,0 +1,2 @@
+% do { d <- mkImport $2 (PlaySafe False) (unLoc $3);
+			return (sL (comb2 $1 $>) d) }

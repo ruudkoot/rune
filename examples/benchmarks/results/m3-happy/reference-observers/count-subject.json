@@ -1,0 +1,9 @@
+{
+  "started": "2026-10-18T18:58:24.194771+00:00",
+  "sources": {
+    "examples/benchmarks/shared/happy-set.sml": "b0f7f1d9f2fb55c10e7831e38f9319d4f7730f70ef2c09a0b1b14e0dfff2f4e1",
+    "examples/benchmarks/shared/happy-lexer.sml": "226478a094a20d0c18fe19e4477007964bef7cfb793d369a8af2ffd833ab7a9c",
+    "examples/benchmarks/shared/happy-kernel.sml": "de6413c0d0d7e3418ace6fda9b72519c08d8f7ef03d23a8e3f664ff4fd40fadc",
+    "examples/benchmarks/shared/happy-check.sml": "5072e5aba23515b933ffdf2bb84ca3ed50c937f8de60cfe0bae24df6cb5d0f11"
+  }
+}

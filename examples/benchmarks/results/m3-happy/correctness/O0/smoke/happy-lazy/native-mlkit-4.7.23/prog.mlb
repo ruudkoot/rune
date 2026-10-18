@@ -1,0 +1,11 @@
+$(SML_LIB)/basis/basis.mlb
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.biYmYG/happy-lazy/matrix/native-mlkit-4.7.23/program/src/1/input.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.biYmYG/happy-lazy/matrix/native-mlkit-4.7.23/program/src/2/lazy.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.biYmYG/happy-lazy/matrix/native-mlkit-4.7.23/program/src/3/suspend.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.biYmYG/happy-lazy/matrix/native-mlkit-4.7.23/program/src/4/hartel-ida-finite.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.biYmYG/happy-lazy/matrix/native-mlkit-4.7.23/program/src/5/happy-set.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.biYmYG/happy-lazy/matrix/native-mlkit-4.7.23/program/src/6/happy-lexer.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.biYmYG/happy-lazy/matrix/native-mlkit-4.7.23/program/src/7/happy-kernel.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.biYmYG/happy-lazy/matrix/native-mlkit-4.7.23/program/src/8/happy-check.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.biYmYG/happy-lazy/matrix/native-mlkit-4.7.23/program/src/9/benchmark.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.biYmYG/happy-lazy/matrix/native-mlkit-4.7.23/program/src/10/main.sml"

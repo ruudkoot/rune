@@ -35,6 +35,15 @@ The [runnable catalogue](../../examples/benchmarks/README.md) contains the M1
 pilots, the validated M2 classic collection and the completed M5 sequential
 Sandmark collection. M3 kernels and M4 applications remain in progress; M8
 coverage closure remains planned.
+The current catalogue has 491 programs and 1425 profiles. The Happy wave
+has [recorded validation](../../examples/benchmarks/results/m3-happy/README.md):
+all normal profiles and 50280 semantic assertions pass, with two unclassified
+ML Kit smoke compile failures retained. Counts, serial adapter diagnostics
+and repository acceptance (498 compiler comparisons plus seven-host
+runedoc/runeopt agreement) are recorded.
+The remaining M3 source workload after this wave is Hartel nucleic2.
+M4 still has anna, fluid, hpg, parser, reptile and veritas; M8 closes the
+inventories, evidence, documentation and maintenance procedures.
 
 ## Sources, naming, and portable programs
 
@@ -373,3 +382,13 @@ The defaults remain broad staged coverage, portable SML97, separately named
 meaningful variants, SML compiler comparisons, and documented deferral of
 unsupported facilities. Performance improvements themselves belong to the
 relevant compiler, JIT, heap-layout, and collector roadmaps.
+
+
+### M8 follow-up discovered during Happy validation
+
+The native correctness runner's ML Kit/MLton compile-failure branches can
+return before recording the compiler exit status. Empty-log failures
+currently report a default zero in the exit field. Preserve those
+observations as unclassified compile failures. Capture actual native
+compile statuses and add independent compile-error/timeout planted checks
+during the final tooling pass; verify final reporting before closing M8.

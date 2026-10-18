@@ -1,0 +1,27 @@
+{
+  "command": [
+    "timeout",
+    "600",
+    "bin/runevm",
+    "tests/out/benchmarks/nofib-happy-originals/end-to-end-probe.rbc"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 1101052,
+  "observed_minimum_available_kib": 23999580,
+  "peak_processes": [
+    {
+      "pid": 3,
+      "name": "timeout",
+      "rss_kib": 1796
+    },
+    {
+      "pid": 4,
+      "name": "runevm",
+      "rss_kib": 1099256
+    }
+  ],
+  "elapsed_seconds": 67.40498021100211
+}

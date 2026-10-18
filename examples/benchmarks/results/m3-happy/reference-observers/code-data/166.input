@@ -1,0 +1,1 @@
+sL (comb2 $1 $>) (L (getLoc $1) (getSTRING $1), $2, $4)

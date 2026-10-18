@@ -1,0 +1,3 @@
+shift/reduce conflicts:  33
+reduce/reduce conflicts: 1
+runevm: count: 3301006277 instructions, 11956667336 bytes, 329798941 objects

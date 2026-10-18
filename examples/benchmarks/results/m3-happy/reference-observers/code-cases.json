@@ -1,0 +1,3332 @@
+[
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:identifier:347",
+    "name": "0"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:identifier:348",
+    "name": "1"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:identifier:349",
+    "name": "2"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:identifier:361",
+    "name": "3"
+  },
+  {
+    "arity": 7,
+    "code": "% fileSrcSpan >>= \\ loc -> case $1 of { (opt, info, doc) -> \n\t\t   return (L loc (HsModule (Just $3) $5 (fst $7) (snd $7) $4 \n                          opt info doc) )}",
+    "origin": "TestInput.y:module:366",
+    "name": "4"
+  },
+  {
+    "arity": 3,
+    "code": "% fileSrcSpan >>= \\ loc ->\n\t\t   return (L loc (HsModule Nothing Nothing \n                          (fst $2) (snd $2) Nothing Nothing emptyHaddockModInfo \n                          Nothing))",
+    "origin": "TestInput.y:module:372",
+    "name": "5"
+  },
+  {
+    "arity": 1,
+    "code": "(Nothing, fst $1, snd $1)",
+    "origin": "TestInput.y:optdoc:374",
+    "name": "6"
+  },
+  {
+    "arity": 1,
+    "code": "(Just $1, emptyHaddockModInfo, Nothing)",
+    "origin": "TestInput.y:optdoc:375",
+    "name": "7"
+  },
+  {
+    "arity": 2,
+    "code": "(Just $1, fst $2, snd $2)",
+    "origin": "TestInput.y:optdoc:376",
+    "name": "8"
+  },
+  {
+    "arity": 2,
+    "code": "(Just $2, fst $1, snd $1)",
+    "origin": "TestInput.y:optdoc:377",
+    "name": "9"
+  },
+  {
+    "arity": 0,
+    "code": "(Nothing, emptyHaddockModInfo, Nothing)",
+    "origin": "TestInput.y:optdoc:379",
+    "name": "10"
+  },
+  {
+    "arity": 0,
+    "code": "% pushCurrentContext",
+    "origin": "TestInput.y:missing_module_keyword:382",
+    "name": "11"
+  },
+  {
+    "arity": 3,
+    "code": "Just (getSTRING $2)",
+    "origin": "TestInput.y:maybemoddeprec:384",
+    "name": "12"
+  },
+  {
+    "arity": 0,
+    "code": "Nothing",
+    "origin": "TestInput.y:maybemoddeprec:386",
+    "name": "13"
+  },
+  {
+    "arity": 3,
+    "code": "$2",
+    "origin": "TestInput.y:body:388",
+    "name": "14"
+  },
+  {
+    "arity": 3,
+    "code": "$2",
+    "origin": "TestInput.y:body:390",
+    "name": "15"
+  },
+  {
+    "arity": 1,
+    "code": "(reverse $1,[])",
+    "origin": "TestInput.y:top:392",
+    "name": "16"
+  },
+  {
+    "arity": 3,
+    "code": "(reverse $1,$3)",
+    "origin": "TestInput.y:top:393",
+    "name": "17"
+  },
+  {
+    "arity": 1,
+    "code": "([],$1)",
+    "origin": "TestInput.y:top:395",
+    "name": "18"
+  },
+  {
+    "arity": 1,
+    "code": "cvTopDecls $1",
+    "origin": "TestInput.y:cvtopdecls:401",
+    "name": "19"
+  },
+  {
+    "arity": 7,
+    "code": "% fileSrcSpan >>= \\ loc -> case $1 of { (opt, info, doc) -> \n\t\t   return (L loc (HsModule (Just $3) $5 $7 [] $4 \n                   opt info doc))}",
+    "origin": "TestInput.y:header:406",
+    "name": "20"
+  },
+  {
+    "arity": 2,
+    "code": "% fileSrcSpan >>= \\ loc ->\n\t\t   return (L loc (HsModule Nothing Nothing $2 [] Nothing \n                   Nothing emptyHaddockModInfo Nothing))",
+    "origin": "TestInput.y:header:411",
+    "name": "21"
+  },
+  {
+    "arity": 2,
+    "code": "$2",
+    "origin": "TestInput.y:header_body:413",
+    "name": "22"
+  },
+  {
+    "arity": 2,
+    "code": "$2",
+    "origin": "TestInput.y:header_body:418",
+    "name": "23"
+  },
+  {
+    "arity": 3,
+    "code": "Just $2",
+    "origin": "TestInput.y:maybeexports:420",
+    "name": "24"
+  },
+  {
+    "arity": 0,
+    "code": "Nothing",
+    "origin": "TestInput.y:maybeexports:422",
+    "name": "25"
+  },
+  {
+    "arity": 3,
+    "code": "$1 ++ $3",
+    "origin": "TestInput.y:exportlist:424",
+    "name": "26"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:exportlist:426",
+    "name": "27"
+  },
+  {
+    "arity": 5,
+    "code": "$1 ++ ($2 : $3) ++ $5",
+    "origin": "TestInput.y:exportlist1:428",
+    "name": "28"
+  },
+  {
+    "arity": 3,
+    "code": "$1 ++ ($2 : $3)",
+    "origin": "TestInput.y:exportlist1:429",
+    "name": "29"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:exportlist1:431",
+    "name": "30"
+  },
+  {
+    "arity": 2,
+    "code": "$1 : $2",
+    "origin": "TestInput.y:expdoclist:433",
+    "name": "31"
+  },
+  {
+    "arity": 0,
+    "code": "[]",
+    "origin": "TestInput.y:expdoclist:435",
+    "name": "32"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (case (unLoc $1) of (n, doc) -> IEGroup n doc)",
+    "origin": "TestInput.y:exp_doc:437",
+    "name": "33"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (IEDocNamed ((fst . unLoc) $1))",
+    "origin": "TestInput.y:exp_doc:438",
+    "name": "34"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (IEDoc (unLoc $1))",
+    "origin": "TestInput.y:exp_doc:442",
+    "name": "35"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (IEVar (unLoc $1))",
+    "origin": "TestInput.y:export:444",
+    "name": "36"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (IEThingAbs (unLoc $1))",
+    "origin": "TestInput.y:export:445",
+    "name": "37"
+  },
+  {
+    "arity": 4,
+    "code": "sL (comb2 $1 $>) (IEThingAll (unLoc $1))",
+    "origin": "TestInput.y:export:446",
+    "name": "38"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (IEThingWith (unLoc $1) [])",
+    "origin": "TestInput.y:export:447",
+    "name": "39"
+  },
+  {
+    "arity": 4,
+    "code": "sL (comb2 $1 $>) (IEThingWith (unLoc $1) (reverse $3))",
+    "origin": "TestInput.y:export:448",
+    "name": "40"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) (IEModuleContents (unLoc $2))",
+    "origin": "TestInput.y:export:450",
+    "name": "41"
+  },
+  {
+    "arity": 3,
+    "code": "unLoc $3 : $1",
+    "origin": "TestInput.y:qcnames:452",
+    "name": "42"
+  },
+  {
+    "arity": 1,
+    "code": "[unLoc $1]",
+    "origin": "TestInput.y:qcnames:454",
+    "name": "43"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:qcname_ext:457",
+    "name": "44"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $2) \n\t\t\t\t\t     (setRdrNameSpace (unLoc $2) \n\t\t\t\t\t\t\t      tcClsName)",
+    "origin": "TestInput.y:qcname_ext:462",
+    "name": "45"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:qcname:464",
+    "name": "46"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:qcname:472",
+    "name": "47"
+  },
+  {
+    "arity": 3,
+    "code": "$3 : $1",
+    "origin": "TestInput.y:importdecls:474",
+    "name": "48"
+  },
+  {
+    "arity": 2,
+    "code": "$1",
+    "origin": "TestInput.y:importdecls:475",
+    "name": "49"
+  },
+  {
+    "arity": 1,
+    "code": "[ $1 ]",
+    "origin": "TestInput.y:importdecls:476",
+    "name": "50"
+  },
+  {
+    "arity": 0,
+    "code": "[]",
+    "origin": "TestInput.y:importdecls:478",
+    "name": "51"
+  },
+  {
+    "arity": 6,
+    "code": "L (comb4 $1 $4 $5 $6) (ImportDecl $4 $2 $3 (unLoc $5) (unLoc $6))",
+    "origin": "TestInput.y:importdecl:482",
+    "name": "52"
+  },
+  {
+    "arity": 2,
+    "code": "True",
+    "origin": "TestInput.y:maybe_src:484",
+    "name": "53"
+  },
+  {
+    "arity": 0,
+    "code": "False",
+    "origin": "TestInput.y:maybe_src:486",
+    "name": "54"
+  },
+  {
+    "arity": 1,
+    "code": "True",
+    "origin": "TestInput.y:optqualified:488",
+    "name": "55"
+  },
+  {
+    "arity": 0,
+    "code": "False",
+    "origin": "TestInput.y:optqualified:490",
+    "name": "56"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) (Just (unLoc $2))",
+    "origin": "TestInput.y:maybeas:492",
+    "name": "57"
+  },
+  {
+    "arity": 0,
+    "code": "noLoc Nothing",
+    "origin": "TestInput.y:maybeas:494",
+    "name": "58"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (Just (unLoc $1))",
+    "origin": "TestInput.y:maybeimpspec:496",
+    "name": "59"
+  },
+  {
+    "arity": 0,
+    "code": "noLoc Nothing",
+    "origin": "TestInput.y:maybeimpspec:498",
+    "name": "60"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (False, $2)",
+    "origin": "TestInput.y:impspec:500",
+    "name": "61"
+  },
+  {
+    "arity": 4,
+    "code": "sL (comb2 $1 $>) (True,  $3)",
+    "origin": "TestInput.y:impspec:505",
+    "name": "62"
+  },
+  {
+    "arity": 0,
+    "code": "9",
+    "origin": "TestInput.y:prec:507",
+    "name": "63"
+  },
+  {
+    "arity": 1,
+    "code": "% checkPrecP (sL (getLoc $1) (fromInteger (getINTEGER $1)))",
+    "origin": "TestInput.y:prec:509",
+    "name": "64"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) InfixN",
+    "origin": "TestInput.y:infix:511",
+    "name": "65"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) InfixL",
+    "origin": "TestInput.y:infix:512",
+    "name": "66"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) InfixR",
+    "origin": "TestInput.y:infix:514",
+    "name": "67"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) ($3 : unLoc $1)",
+    "origin": "TestInput.y:ops:516",
+    "name": "68"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) [$1]",
+    "origin": "TestInput.y:ops:521",
+    "name": "69"
+  },
+  {
+    "arity": 3,
+    "code": "$1 `appOL` $3",
+    "origin": "TestInput.y:topdecls:523",
+    "name": "70"
+  },
+  {
+    "arity": 2,
+    "code": "$1",
+    "origin": "TestInput.y:topdecls:524",
+    "name": "71"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:topdecls:526",
+    "name": "72"
+  },
+  {
+    "arity": 1,
+    "code": "unitOL (sL (getLoc $1) (TyClD (unLoc $1)))",
+    "origin": "TestInput.y:topdecl:528",
+    "name": "73"
+  },
+  {
+    "arity": 1,
+    "code": "unitOL (sL (getLoc $1) (TyClD (unLoc $1)))",
+    "origin": "TestInput.y:topdecl:529",
+    "name": "74"
+  },
+  {
+    "arity": 3,
+    "code": "let (binds, sigs, ats, _) = cvBindsAndSigs (unLoc $3)\n\t      in \n\t      unitOL (L (comb3 $1 $2 $3) (InstD (InstDecl $2 binds sigs ats)))",
+    "origin": "TestInput.y:topdecl:533",
+    "name": "75"
+  },
+  {
+    "arity": 1,
+    "code": "unitOL (sL (comb2 $1 $>) (DerivD (unLoc $1)))",
+    "origin": "TestInput.y:topdecl:534",
+    "name": "76"
+  },
+  {
+    "arity": 4,
+    "code": "unitOL (sL (comb2 $1 $>) $ DefD (DefaultDecl $3))",
+    "origin": "TestInput.y:topdecl:535",
+    "name": "77"
+  },
+  {
+    "arity": 2,
+    "code": "unitOL (sL (comb2 $1 $>) (unLoc $2))",
+    "origin": "TestInput.y:topdecl:536",
+    "name": "78"
+  },
+  {
+    "arity": 3,
+    "code": "$2",
+    "origin": "TestInput.y:topdecl:537",
+    "name": "79"
+  },
+  {
+    "arity": 3,
+    "code": "$2",
+    "origin": "TestInput.y:topdecl:538",
+    "name": "80"
+  },
+  {
+    "arity": 1,
+    "code": "unLoc $1",
+    "origin": "TestInput.y:topdecl:541",
+    "name": "81"
+  },
+  {
+    "arity": 3,
+    "code": "unitOL (sL (comb2 $1 $>) $ SpliceD (SpliceDecl $2))",
+    "origin": "TestInput.y:topdecl:542",
+    "name": "82"
+  },
+  {
+    "arity": 1,
+    "code": "unitOL (sL (comb2 $1 $>) $ SpliceD (SpliceDecl $\n\t\t\t\t\t\t\tsL (getLoc $1) $ HsVar (mkUnqual varName (getTH_ID_SPLICE $1))\n\t\t\t\t\t\t  ))",
+    "origin": "TestInput.y:topdecl:548",
+    "name": "83"
+  },
+  {
+    "arity": 4,
+    "code": "% do { let { (binds, sigs, ats, docs)           = \n\t\t\t        cvBindsAndSigs (unLoc $4)\n\t\t            ; (ctxt, tc, tvs, tparms) = unLoc $2}\n                      ; checkTyVars tparms      -- only type vars allowed\n\t\t      ; checkKindSigs ats\n\t\t      ; return $ L (comb4 $1 $2 $3 $4) \n\t\t\t\t   (mkClassDecl (ctxt, tc, tvs) \n\t\t\t\t\t        (unLoc $3) sigs binds ats docs) }",
+    "origin": "TestInput.y:cl_decl:561",
+    "name": "84"
+  },
+  {
+    "arity": 4,
+    "code": "% do { (tc, tvs, _) <- checkSynHdr $2 False\n\t\t      ; return (L (comb2 $1 $4) \n\t\t\t\t  (TySynonym tc tvs Nothing $4))\n                      }",
+    "origin": "TestInput.y:ty_decl:577",
+    "name": "85"
+  },
+  {
+    "arity": 4,
+    "code": "% do { (tc, tvs, _) <- checkSynHdr $3 False\n\t\t      ; return (L (comb3 $1 $3 $4) \n\t\t\t\t  (TyFamily TypeFamily tc tvs (unLoc $4)))\n\t\t      }",
+    "origin": "TestInput.y:ty_decl:587",
+    "name": "86"
+  },
+  {
+    "arity": 5,
+    "code": "% do { (tc, tvs, typats) <- checkSynHdr $3 True\n\t\t      ; return (L (comb2 $1 $5) \n\t\t\t\t  (TySynonym tc tvs (Just typats) $5)) \n                      }",
+    "origin": "TestInput.y:ty_decl:597",
+    "name": "87"
+  },
+  {
+    "arity": 4,
+    "code": "% do { let {(ctxt, tc, tvs, tparms) = unLoc $2}\n                      ; checkTyVars tparms    -- no type pattern\n\t\t      ; return $\n\t\t\t  L (comb4 $1 $2 $3 $4)\n\t\t\t           -- We need the location on tycl_hdr in case \n\t\t\t\t   -- constrs and deriving are both empty\n\t\t\t    (mkTyData (unLoc $1) (ctxt, tc, tvs, Nothing) \n\t\t\t       Nothing (reverse (unLoc $3)) (unLoc $4)) }",
+    "origin": "TestInput.y:ty_decl:608",
+    "name": "88"
+  },
+  {
+    "arity": 6,
+    "code": "% do { let {(ctxt, tc, tvs, tparms) = unLoc $2}\n                      ; checkTyVars tparms    -- can have type pats\n\t\t      ; return $\n\t\t\t  L (comb4 $1 $2 $4 $5)\n\t\t\t    (mkTyData (unLoc $1) (ctxt, tc, tvs, Nothing) \n\t\t\t      (unLoc $3) (reverse (unLoc $5)) (unLoc $6)) }",
+    "origin": "TestInput.y:ty_decl:619",
+    "name": "89"
+  },
+  {
+    "arity": 4,
+    "code": "% do { let {(ctxt, tc, tvs, tparms) = unLoc $3}\n                      ; checkTyVars tparms            -- no type pattern\n\t\t      ; unless (null (unLoc ctxt)) $  -- and no context\n\t\t\t  parseError (getLoc ctxt) \n\t\t\t    \"A family declaration cannot have a context\"\n\t\t      ; return $\n\t\t\t  L (comb3 $1 $2 $4)\n\t\t\t    (TyFamily (DataFamily (unLoc $1)) tc tvs \n\t\t\t\t      (unLoc $4)) }",
+    "origin": "TestInput.y:ty_decl:631",
+    "name": "90"
+  },
+  {
+    "arity": 5,
+    "code": "% do { let {(ctxt, tc, tvs, tparms) = unLoc $3}\n                                             -- can have type pats\n\t\t      ; return $\n\t\t\t  L (comb4 $1 $3 $4 $5)\n\t\t\t           -- We need the location on tycl_hdr in case \n\t\t\t\t   -- constrs and deriving are both empty\n\t\t\t    (mkTyData (unLoc $1) (ctxt, tc, tvs, Just tparms) \n\t\t\t      Nothing (reverse (unLoc $4)) (unLoc $5)) }",
+    "origin": "TestInput.y:ty_decl:642",
+    "name": "91"
+  },
+  {
+    "arity": 7,
+    "code": "% do { let {(ctxt, tc, tvs, tparms) = unLoc $3}\n                                             -- can have type pats\n\t\t      ; return $\n\t\t\t  L (comb4 $1 $3 $6 $7)\n\t\t\t    (mkTyData (unLoc $1) (ctxt, tc, tvs, Just tparms) \n\t\t\t       (unLoc $4) (reverse (unLoc $6)) (unLoc $7)) }",
+    "origin": "TestInput.y:ty_decl:661",
+    "name": "92"
+  },
+  {
+    "arity": 3,
+    "code": "% do { (tc, tvs, _) <- checkSynHdr $2 False\n\t\t      ; return (L (comb3 $1 $2 $3) \n\t\t\t\t  (TyFamily TypeFamily tc tvs (unLoc $3)))\n\t\t      }",
+    "origin": "TestInput.y:at_decl_cls:673",
+    "name": "93"
+  },
+  {
+    "arity": 4,
+    "code": "% do { (tc, tvs, typats) <- checkSynHdr $2 True\n\t\t      ; return (L (comb2 $1 $4) \n\t\t\t\t  (TySynonym tc tvs (Just typats) $4)) \n                      }",
+    "origin": "TestInput.y:at_decl_cls:683",
+    "name": "94"
+  },
+  {
+    "arity": 3,
+    "code": "% do { let {(ctxt, tc, tvs, tparms) = unLoc $2}\n                      ; checkTyVars tparms            -- no type pattern\n\t\t      ; unless (null (unLoc ctxt)) $  -- and no context\n\t\t\t  parseError (getLoc ctxt) \n\t\t\t    \"A family declaration cannot have a context\"\n\t\t      ; return $\n\t\t\t  L (comb3 $1 $2 $3)\n\t\t\t    (TyFamily (DataFamily (unLoc $1)) tc tvs\n\t\t\t\t      (unLoc $3)) \n                      }",
+    "origin": "TestInput.y:at_decl_cls:697",
+    "name": "95"
+  },
+  {
+    "arity": 4,
+    "code": "% do { (tc, tvs, typats) <- checkSynHdr $2 True\n\t\t      ; return (L (comb2 $1 $4) \n\t\t\t\t  (TySynonym tc tvs (Just typats) $4)) \n                      }",
+    "origin": "TestInput.y:at_decl_inst:709",
+    "name": "96"
+  },
+  {
+    "arity": 4,
+    "code": "% do { let {(ctxt, tc, tvs, tparms) = unLoc $2}\n                                             -- can have type pats\n\t\t      ; return $\n\t\t\t  L (comb4 $1 $2 $3 $4)\n\t\t\t           -- We need the location on tycl_hdr in case \n\t\t\t\t   -- constrs and deriving are both empty\n\t\t\t    (mkTyData (unLoc $1) (ctxt, tc, tvs, Just tparms) \n\t\t\t      Nothing (reverse (unLoc $3)) (unLoc $4)) }",
+    "origin": "TestInput.y:at_decl_inst:720",
+    "name": "97"
+  },
+  {
+    "arity": 6,
+    "code": "% do { let {(ctxt, tc, tvs, tparms) = unLoc $2}\n                                             -- can have type pats\n\t\t      ; return $\n\t\t\t  L (comb4 $1 $2 $5 $6)\n\t\t\t    (mkTyData (unLoc $1) (ctxt, tc, tvs, Just tparms) \n\t\t\t     (unLoc $3) (reverse (unLoc $5)) (unLoc $6)) }",
+    "origin": "TestInput.y:at_decl_inst:730",
+    "name": "98"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) DataType",
+    "origin": "TestInput.y:data_or_newtype:732",
+    "name": "99"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) NewType",
+    "origin": "TestInput.y:data_or_newtype:734",
+    "name": "100"
+  },
+  {
+    "arity": 0,
+    "code": "noLoc Nothing",
+    "origin": "TestInput.y:opt_kind_sig:736",
+    "name": "101"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) (Just (unLoc $2))",
+    "origin": "TestInput.y:opt_kind_sig:745",
+    "name": "102"
+  },
+  {
+    "arity": 3,
+    "code": "% checkTyClHdr $1         $3 >>= return.sL (comb2 $1 $>)",
+    "origin": "TestInput.y:tycl_hdr:750",
+    "name": "103"
+  },
+  {
+    "arity": 1,
+    "code": "% checkTyClHdr (noLoc []) $1 >>= return.sL (getLoc $1)",
+    "origin": "TestInput.y:tycl_hdr:756",
+    "name": "104"
+  },
+  {
+    "arity": 3,
+    "code": "% checkDerivDecl (sL (comb2 $1 $>) (DerivDecl $3))",
+    "origin": "TestInput.y:stand_alone_deriving:764",
+    "name": "105"
+  },
+  {
+    "arity": 1,
+    "code": "sL (comb2 $1 $>) (unitOL (sL (getLoc $1) (TyClD (unLoc $1))))",
+    "origin": "TestInput.y:decl_cls:766",
+    "name": "106"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:decl_cls:768",
+    "name": "107"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $1 `appOL` unLoc $3)",
+    "origin": "TestInput.y:decls_cls:770",
+    "name": "108"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) (unLoc $1)",
+    "origin": "TestInput.y:decls_cls:771",
+    "name": "109"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:decls_cls:772",
+    "name": "110"
+  },
+  {
+    "arity": 0,
+    "code": "noLoc nilOL",
+    "origin": "TestInput.y:decls_cls:775",
+    "name": "111"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:decllist_cls:778",
+    "name": "112"
+  },
+  {
+    "arity": 3,
+    "code": "$2",
+    "origin": "TestInput.y:decllist_cls:782",
+    "name": "113"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:where_cls:786",
+    "name": "114"
+  },
+  {
+    "arity": 0,
+    "code": "noLoc nilOL",
+    "origin": "TestInput.y:where_cls:790",
+    "name": "115"
+  },
+  {
+    "arity": 1,
+    "code": "sL (comb2 $1 $>) (unitOL (sL (getLoc $1) (TyClD (unLoc $1))))",
+    "origin": "TestInput.y:decl_inst:792",
+    "name": "116"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:decl_inst:794",
+    "name": "117"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $1 `appOL` unLoc $3)",
+    "origin": "TestInput.y:decls_inst:796",
+    "name": "118"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) (unLoc $1)",
+    "origin": "TestInput.y:decls_inst:797",
+    "name": "119"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:decls_inst:798",
+    "name": "120"
+  },
+  {
+    "arity": 0,
+    "code": "noLoc nilOL",
+    "origin": "TestInput.y:decls_inst:800",
+    "name": "121"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:decllist_inst:803",
+    "name": "122"
+  },
+  {
+    "arity": 3,
+    "code": "$2",
+    "origin": "TestInput.y:decllist_inst:807",
+    "name": "123"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:where_inst:811",
+    "name": "124"
+  },
+  {
+    "arity": 0,
+    "code": "noLoc nilOL",
+    "origin": "TestInput.y:where_inst:815",
+    "name": "125"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $1 `appOL` unLoc $3)",
+    "origin": "TestInput.y:decls:817",
+    "name": "126"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) (unLoc $1)",
+    "origin": "TestInput.y:decls:818",
+    "name": "127"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:decls:819",
+    "name": "128"
+  },
+  {
+    "arity": 0,
+    "code": "noLoc nilOL",
+    "origin": "TestInput.y:decls:821",
+    "name": "129"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:decllist:823",
+    "name": "130"
+  },
+  {
+    "arity": 3,
+    "code": "$2",
+    "origin": "TestInput.y:decllist:827",
+    "name": "131"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (HsValBinds (cvBindGroup (unLoc $1)))",
+    "origin": "TestInput.y:binds:830",
+    "name": "132"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (HsIPBinds (IPBinds (unLoc $2) emptyLHsBinds))",
+    "origin": "TestInput.y:binds:831",
+    "name": "133"
+  },
+  {
+    "arity": 3,
+    "code": "L (getLoc $2) (HsIPBinds (IPBinds (unLoc $2) emptyLHsBinds))",
+    "origin": "TestInput.y:binds:833",
+    "name": "134"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:wherebinds:836",
+    "name": "135"
+  },
+  {
+    "arity": 0,
+    "code": "noLoc emptyLocalBinds",
+    "origin": "TestInput.y:wherebinds:842",
+    "name": "136"
+  },
+  {
+    "arity": 3,
+    "code": "$1 `snocOL` $3",
+    "origin": "TestInput.y:rules:844",
+    "name": "137"
+  },
+  {
+    "arity": 2,
+    "code": "$1",
+    "origin": "TestInput.y:rules:845",
+    "name": "138"
+  },
+  {
+    "arity": 1,
+    "code": "unitOL $1",
+    "origin": "TestInput.y:rules:846",
+    "name": "139"
+  },
+  {
+    "arity": 0,
+    "code": "nilOL",
+    "origin": "TestInput.y:rules:848",
+    "name": "140"
+  },
+  {
+    "arity": 6,
+    "code": "sL (comb2 $1 $>) $ RuleD (HsRule (getSTRING $1) \n\t\t\t\t  ($2 `orElse` AlwaysActive) \n\t\t\t\t  $3 $4 placeHolderNames $6 placeHolderNames)",
+    "origin": "TestInput.y:rule:854",
+    "name": "141"
+  },
+  {
+    "arity": 0,
+    "code": "Nothing",
+    "origin": "TestInput.y:activation:856",
+    "name": "142"
+  },
+  {
+    "arity": 1,
+    "code": "Just $1",
+    "origin": "TestInput.y:activation:858",
+    "name": "143"
+  },
+  {
+    "arity": 3,
+    "code": "ActiveAfter  (fromInteger (getINTEGER $2))",
+    "origin": "TestInput.y:explicit_activation:860",
+    "name": "144"
+  },
+  {
+    "arity": 4,
+    "code": "ActiveBefore (fromInteger (getINTEGER $3))",
+    "origin": "TestInput.y:explicit_activation:862",
+    "name": "145"
+  },
+  {
+    "arity": 3,
+    "code": "$2",
+    "origin": "TestInput.y:rule_forall:864",
+    "name": "146"
+  },
+  {
+    "arity": 0,
+    "code": "[]",
+    "origin": "TestInput.y:rule_forall:866",
+    "name": "147"
+  },
+  {
+    "arity": 1,
+    "code": "[$1]",
+    "origin": "TestInput.y:rule_var_list:868",
+    "name": "148"
+  },
+  {
+    "arity": 2,
+    "code": "$1 : $2",
+    "origin": "TestInput.y:rule_var_list:870",
+    "name": "149"
+  },
+  {
+    "arity": 1,
+    "code": "RuleBndr $1",
+    "origin": "TestInput.y:rule_var:872",
+    "name": "150"
+  },
+  {
+    "arity": 5,
+    "code": "RuleBndrSig $2 $4",
+    "origin": "TestInput.y:rule_var:877",
+    "name": "151"
+  },
+  {
+    "arity": 3,
+    "code": "$1 `appOL` $3",
+    "origin": "TestInput.y:deprecations:879",
+    "name": "152"
+  },
+  {
+    "arity": 2,
+    "code": "$1",
+    "origin": "TestInput.y:deprecations:880",
+    "name": "153"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:deprecations:881",
+    "name": "154"
+  },
+  {
+    "arity": 0,
+    "code": "nilOL",
+    "origin": "TestInput.y:deprecations:884",
+    "name": "155"
+  },
+  {
+    "arity": 2,
+    "code": "toOL [ sL (comb2 $1 $>) $ DeprecD (Deprecation n (getSTRING $2)) \n\t\t       | n <- unLoc $1 ]",
+    "origin": "TestInput.y:deprecation:893",
+    "name": "156"
+  },
+  {
+    "arity": 4,
+    "code": "% mkImport $2 $3 (unLoc $4) >>= return.sL (comb2 $1 $>)",
+    "origin": "TestInput.y:fdecl:896",
+    "name": "157"
+  },
+  {
+    "arity": 3,
+    "code": "% do { d <- mkImport $2 (PlaySafe False) (unLoc $3);\n\t\t\treturn (sL (comb2 $1 $>) d) }",
+    "origin": "TestInput.y:fdecl:899",
+    "name": "158"
+  },
+  {
+    "arity": 3,
+    "code": "% mkExport $2 (unLoc $3) >>= return.sL (comb2 $1 $>)",
+    "origin": "TestInput.y:fdecl:902",
+    "name": "159"
+  },
+  {
+    "arity": 1,
+    "code": "CCall  StdCallConv",
+    "origin": "TestInput.y:callconv:904",
+    "name": "160"
+  },
+  {
+    "arity": 1,
+    "code": "CCall  CCallConv",
+    "origin": "TestInput.y:callconv:905",
+    "name": "161"
+  },
+  {
+    "arity": 1,
+    "code": "DNCall",
+    "origin": "TestInput.y:callconv:907",
+    "name": "162"
+  },
+  {
+    "arity": 1,
+    "code": "PlayRisky",
+    "origin": "TestInput.y:safety:909",
+    "name": "163"
+  },
+  {
+    "arity": 1,
+    "code": "PlaySafe  False",
+    "origin": "TestInput.y:safety:910",
+    "name": "164"
+  },
+  {
+    "arity": 1,
+    "code": "PlaySafe  True",
+    "origin": "TestInput.y:safety:912",
+    "name": "165"
+  },
+  {
+    "arity": 4,
+    "code": "sL (comb2 $1 $>) (L (getLoc $1) (getSTRING $1), $2, $4)",
+    "origin": "TestInput.y:fspec:914",
+    "name": "166"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (noLoc nilFS, $1, $3)",
+    "origin": "TestInput.y:fspec:922",
+    "name": "167"
+  },
+  {
+    "arity": 0,
+    "code": "Nothing",
+    "origin": "TestInput.y:opt_sig:924",
+    "name": "168"
+  },
+  {
+    "arity": 2,
+    "code": "Just $2",
+    "origin": "TestInput.y:opt_sig:926",
+    "name": "169"
+  },
+  {
+    "arity": 0,
+    "code": "Nothing",
+    "origin": "TestInput.y:opt_asig:928",
+    "name": "170"
+  },
+  {
+    "arity": 2,
+    "code": "Just $2",
+    "origin": "TestInput.y:opt_asig:930",
+    "name": "171"
+  },
+  {
+    "arity": 1,
+    "code": "[ $1 ]",
+    "origin": "TestInput.y:sigtypes1:932",
+    "name": "172"
+  },
+  {
+    "arity": 3,
+    "code": "$1 : $3",
+    "origin": "TestInput.y:sigtypes1:934",
+    "name": "173"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (mkImplicitHsForAllTy (noLoc []) $1)",
+    "origin": "TestInput.y:sigtype:938",
+    "name": "174"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (mkImplicitHsForAllTy (noLoc []) $1)",
+    "origin": "TestInput.y:sigtypedoc:942",
+    "name": "175"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) ($3 : unLoc $1)",
+    "origin": "TestInput.y:sig_vars:944",
+    "name": "176"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) [$1]",
+    "origin": "TestInput.y:sig_vars:949",
+    "name": "177"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ HsOpTy $1 $2 $3",
+    "origin": "TestInput.y:infixtype:951",
+    "name": "178"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ HsOpTy $1 $2 $3",
+    "origin": "TestInput.y:infixtype:953",
+    "name": "179"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:infixtypedoc:955",
+    "name": "180"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) $ HsDocTy $1 $2",
+    "origin": "TestInput.y:infixtypedoc:957",
+    "name": "181"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:gentypedoc:959",
+    "name": "182"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:gentypedoc:960",
+    "name": "183"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:gentypedoc:961",
+    "name": "184"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ HsFunTy $1 $3",
+    "origin": "TestInput.y:gentypedoc:962",
+    "name": "185"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ HsFunTy $1 $3",
+    "origin": "TestInput.y:gentypedoc:964",
+    "name": "186"
+  },
+  {
+    "arity": 4,
+    "code": "sL (comb2 $1 $>) $ mkExplicitHsForAllTy $2 (noLoc []) $4",
+    "origin": "TestInput.y:ctypedoc:966",
+    "name": "187"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ mkImplicitHsForAllTy   $1 $3",
+    "origin": "TestInput.y:ctypedoc:968",
+    "name": "188"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:ctypedoc:970",
+    "name": "189"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) HsStrict",
+    "origin": "TestInput.y:strict_mark:972",
+    "name": "190"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) HsUnbox",
+    "origin": "TestInput.y:strict_mark:975",
+    "name": "191"
+  },
+  {
+    "arity": 4,
+    "code": "sL (comb2 $1 $>) $ mkExplicitHsForAllTy $2 (noLoc []) $4",
+    "origin": "TestInput.y:ctype:977",
+    "name": "192"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ mkImplicitHsForAllTy   $1 $3",
+    "origin": "TestInput.y:ctype:979",
+    "name": "193"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:ctype:988",
+    "name": "194"
+  },
+  {
+    "arity": 3,
+    "code": "% checkContext\n\t\t\t\t\t     (sL (comb2 $1 $>) $ HsPredTy (HsEqualP $1 $3))",
+    "origin": "TestInput.y:context:991",
+    "name": "195"
+  },
+  {
+    "arity": 1,
+    "code": "% checkContext $1",
+    "origin": "TestInput.y:context:993",
+    "name": "196"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (HsPredTy (HsIParam (unLoc $1) $3))",
+    "origin": "TestInput.y:type:995",
+    "name": "197"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:type:997",
+    "name": "198"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:gentype:999",
+    "name": "199"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ HsOpTy $1 $2 $3",
+    "origin": "TestInput.y:gentype:1000",
+    "name": "200"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ HsOpTy $1 $2 $3",
+    "origin": "TestInput.y:gentype:1001",
+    "name": "201"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ HsFunTy $1 $3",
+    "origin": "TestInput.y:gentype:1002",
+    "name": "202"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ HsPredTy (HsEqualP $1 $3)",
+    "origin": "TestInput.y:gentype:1004",
+    "name": "203"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) $ HsAppTy $1 $2",
+    "origin": "TestInput.y:btype:1006",
+    "name": "204"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:btype:1008",
+    "name": "205"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ HsDocTy (L (comb2 $1 $2) (HsAppTy $1 $2)) $3",
+    "origin": "TestInput.y:btypedoc:1010",
+    "name": "206"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) $ HsDocTy $1 $2",
+    "origin": "TestInput.y:btypedoc:1012",
+    "name": "207"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (HsTyVar (unLoc $1))",
+    "origin": "TestInput.y:atype:1014",
+    "name": "208"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (HsTyVar (unLoc $1))",
+    "origin": "TestInput.y:atype:1015",
+    "name": "209"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) (HsBangTy (unLoc $1) $2)",
+    "origin": "TestInput.y:atype:1016",
+    "name": "210"
+  },
+  {
+    "arity": 5,
+    "code": "sL (comb2 $1 $>) $ HsTupleTy Boxed  ($2:$4)",
+    "origin": "TestInput.y:atype:1017",
+    "name": "211"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ HsTupleTy Unboxed $2",
+    "origin": "TestInput.y:atype:1018",
+    "name": "212"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ HsListTy  $2",
+    "origin": "TestInput.y:atype:1019",
+    "name": "213"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ HsPArrTy  $2",
+    "origin": "TestInput.y:atype:1020",
+    "name": "214"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ HsParTy   $2",
+    "origin": "TestInput.y:atype:1021",
+    "name": "215"
+  },
+  {
+    "arity": 5,
+    "code": "sL (comb2 $1 $>) $ HsKindSig $2 (unLoc $4)",
+    "origin": "TestInput.y:atype:1023",
+    "name": "216"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (HsNumTy (getINTEGER $1))",
+    "origin": "TestInput.y:atype:1029",
+    "name": "217"
+  },
+  {
+    "arity": 1,
+    "code": "% checkInstType $1",
+    "origin": "TestInput.y:inst_type:1032",
+    "name": "218"
+  },
+  {
+    "arity": 1,
+    "code": "[$1]",
+    "origin": "TestInput.y:inst_types1:1034",
+    "name": "219"
+  },
+  {
+    "arity": 3,
+    "code": "$1 : $3",
+    "origin": "TestInput.y:inst_types1:1036",
+    "name": "220"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:comma_types0:1038",
+    "name": "221"
+  },
+  {
+    "arity": 0,
+    "code": "[]",
+    "origin": "TestInput.y:comma_types0:1040",
+    "name": "222"
+  },
+  {
+    "arity": 1,
+    "code": "[$1]",
+    "origin": "TestInput.y:comma_types1:1042",
+    "name": "223"
+  },
+  {
+    "arity": 3,
+    "code": "$1 : $3",
+    "origin": "TestInput.y:comma_types1:1044",
+    "name": "224"
+  },
+  {
+    "arity": 2,
+    "code": "$1 : $2",
+    "origin": "TestInput.y:tv_bndrs:1046",
+    "name": "225"
+  },
+  {
+    "arity": 0,
+    "code": "[]",
+    "origin": "TestInput.y:tv_bndrs:1048",
+    "name": "226"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (UserTyVar (unLoc $1))",
+    "origin": "TestInput.y:tv_bndr:1050",
+    "name": "227"
+  },
+  {
+    "arity": 5,
+    "code": "sL (comb2 $1 $>) (KindedTyVar (unLoc $2) \n\t\t\t\t\t\t\t  (unLoc $4))",
+    "origin": "TestInput.y:tv_bndr:1053",
+    "name": "228"
+  },
+  {
+    "arity": 0,
+    "code": "noLoc []",
+    "origin": "TestInput.y:fds:1055",
+    "name": "229"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) (reverse (unLoc $2))",
+    "origin": "TestInput.y:fds:1057",
+    "name": "230"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) ($3 : unLoc $1)",
+    "origin": "TestInput.y:fds1:1059",
+    "name": "231"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) [$1]",
+    "origin": "TestInput.y:fds1:1061",
+    "name": "232"
+  },
+  {
+    "arity": 3,
+    "code": "L (comb3 $1 $2 $3)\n\t\t\t\t\t   (reverse (unLoc $1), reverse (unLoc $3))",
+    "origin": "TestInput.y:fd:1065",
+    "name": "233"
+  },
+  {
+    "arity": 0,
+    "code": "noLoc []",
+    "origin": "TestInput.y:varids0:1067",
+    "name": "234"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) (unLoc $2 : unLoc $1)",
+    "origin": "TestInput.y:varids0:1072",
+    "name": "235"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:kind:1074",
+    "name": "236"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (mkArrowKind (unLoc $1) (unLoc $3))",
+    "origin": "TestInput.y:kind:1076",
+    "name": "237"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) liftedTypeKind",
+    "origin": "TestInput.y:akind:1078",
+    "name": "238"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) unliftedTypeKind",
+    "origin": "TestInput.y:akind:1079",
+    "name": "239"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:akind:1085",
+    "name": "240"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:gadt_constrlist:1087",
+    "name": "241"
+  },
+  {
+    "arity": 3,
+    "code": "$2",
+    "origin": "TestInput.y:gadt_constrlist:1089",
+    "name": "242"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) ($3 : unLoc $1)",
+    "origin": "TestInput.y:gadt_constrs:1091",
+    "name": "243"
+  },
+  {
+    "arity": 2,
+    "code": "$1",
+    "origin": "TestInput.y:gadt_constrs:1092",
+    "name": "244"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) [$1]",
+    "origin": "TestInput.y:gadt_constrs:1100",
+    "name": "245"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (mkGadtDecl $1 $3)",
+    "origin": "TestInput.y:gadt_constr:1106",
+    "name": "246"
+  },
+  {
+    "arity": 3,
+    "code": "let (con,details) = unLoc $1 in \n\t\t  sL (comb2 $1 $>) (ConDecl con Implicit [] (noLoc []) details (ResTyGADT $3) Nothing)",
+    "origin": "TestInput.y:gadt_constr:1119",
+    "name": "247"
+  },
+  {
+    "arity": 0,
+    "code": "noLoc []",
+    "origin": "TestInput.y:constrs:1121",
+    "name": "248"
+  },
+  {
+    "arity": 3,
+    "code": "L (comb2 $2 $3) (addConDocs (unLoc $3) $1)",
+    "origin": "TestInput.y:constrs:1123",
+    "name": "249"
+  },
+  {
+    "arity": 5,
+    "code": "sL (comb2 $1 $>) (addConDoc $5 $2 : addConDocFirst (unLoc $1) $4)",
+    "origin": "TestInput.y:constrs1:1125",
+    "name": "250"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) [$1]",
+    "origin": "TestInput.y:constrs1:1127",
+    "name": "251"
+  },
+  {
+    "arity": 6,
+    "code": "let (con,details) = unLoc $5 in \n\t\t  L (comb4 $2 $3 $4 $5) (ConDecl con Explicit (unLoc $2) $3 details ResTyH98 ($1 `mplus` $6))",
+    "origin": "TestInput.y:constr:1131",
+    "name": "252"
+  },
+  {
+    "arity": 4,
+    "code": "let (con,details) = unLoc $3 in \n\t\t  L (comb2 $2 $3) (ConDecl con Explicit (unLoc $2) (noLoc []) details ResTyH98 ($1 `mplus` $4))",
+    "origin": "TestInput.y:constr:1135",
+    "name": "253"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $2",
+    "origin": "TestInput.y:forall:1137",
+    "name": "254"
+  },
+  {
+    "arity": 0,
+    "code": "noLoc []",
+    "origin": "TestInput.y:forall:1139",
+    "name": "255"
+  },
+  {
+    "arity": 1,
+    "code": "% mkPrefixCon $1 [] >>= return.sL (comb2 $1 $>)",
+    "origin": "TestInput.y:constr_stuff:1148",
+    "name": "256"
+  },
+  {
+    "arity": 3,
+    "code": "% mkRecCon $1 [] >>= return.sL (comb2 $1 $>)",
+    "origin": "TestInput.y:constr_stuff:1149",
+    "name": "257"
+  },
+  {
+    "arity": 4,
+    "code": "% mkRecCon $1 $3 >>= return.sL (comb2 $1 $>)",
+    "origin": "TestInput.y:constr_stuff:1150",
+    "name": "258"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) ($2, InfixCon $1 $3)",
+    "origin": "TestInput.y:constr_stuff:1152",
+    "name": "259"
+  },
+  {
+    "arity": 3,
+    "code": "% mkRecCon $1 [] >>= return.sL (comb2 $1 $>)",
+    "origin": "TestInput.y:constr_stuff_record:1154",
+    "name": "260"
+  },
+  {
+    "arity": 4,
+    "code": "% mkRecCon $1 $3 >>= return.sL (comb2 $1 $>)",
+    "origin": "TestInput.y:constr_stuff_record:1156",
+    "name": "261"
+  },
+  {
+    "arity": 5,
+    "code": "addFieldDoc (unLoc $1) $4 : addFieldDocs $5 $2",
+    "origin": "TestInput.y:fielddecls:1158",
+    "name": "262"
+  },
+  {
+    "arity": 1,
+    "code": "[unLoc $1]",
+    "origin": "TestInput.y:fielddecls:1160",
+    "name": "263"
+  },
+  {
+    "arity": 5,
+    "code": "L (comb3 $2 $3 $4) (reverse (unLoc $2), $4, $1 `mplus` $5)",
+    "origin": "TestInput.y:fielddecl:1167",
+    "name": "264"
+  },
+  {
+    "arity": 0,
+    "code": "noLoc Nothing",
+    "origin": "TestInput.y:deriving:1169",
+    "name": "265"
+  },
+  {
+    "arity": 2,
+    "code": "% do { let { L loc tv = $2 }\n\t\t\t\t      ; p <- checkInstType (L loc (HsTyVar tv))\n\t\t\t\t      ; return (sL (comb2 $1 $>) (Just [p])) }",
+    "origin": "TestInput.y:deriving:1172",
+    "name": "266"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (Just [])",
+    "origin": "TestInput.y:deriving:1173",
+    "name": "267"
+  },
+  {
+    "arity": 4,
+    "code": "sL (comb2 $1 $>) (Just $3)",
+    "origin": "TestInput.y:deriving:1200",
+    "name": "268"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (DocD (unLoc $1))",
+    "origin": "TestInput.y:docdecl:1203",
+    "name": "269"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (DocCommentNext (unLoc $1))",
+    "origin": "TestInput.y:docdecld:1205",
+    "name": "270"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (DocCommentPrev (unLoc $1))",
+    "origin": "TestInput.y:docdecld:1206",
+    "name": "271"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (case (unLoc $1) of (n, doc) -> DocCommentNamed n doc)",
+    "origin": "TestInput.y:docdecld:1207",
+    "name": "272"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (case (unLoc $1) of (n, doc) -> DocGroup n doc)",
+    "origin": "TestInput.y:docdecld:1209",
+    "name": "273"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:decl:1211",
+    "name": "274"
+  },
+  {
+    "arity": 3,
+    "code": "% do { pat <- checkPattern $2;\n\t\t\t\t\t        return (sL (comb2 $1 $>) $ unitOL $ sL (comb2 $1 $>) $ ValD ( \n\t\t\t\t\t\t\tPatBind (sL (comb2 $1 $>) $ BangPat pat) (unLoc $3)\n\t\t\t\t\t\t\t\tplaceHolderType placeHolderNames)) }",
+    "origin": "TestInput.y:decl:1215",
+    "name": "275"
+  },
+  {
+    "arity": 3,
+    "code": "% do { r <- checkValDef $1 $2 $3;\n\t\t\t\t\t\treturn (sL (comb2 $1 $>) $ unitOL (sL (comb2 $1 $>) $ ValD r)) }",
+    "origin": "TestInput.y:decl:1217",
+    "name": "276"
+  },
+  {
+    "arity": 1,
+    "code": "sL (comb2 $1 $>) $ unitOL $1",
+    "origin": "TestInput.y:decl:1219",
+    "name": "277"
+  },
+  {
+    "arity": 3,
+    "code": "L (comb3 $1 $2 $3) $ GRHSs (unguardedRHS $2) (unLoc $3)",
+    "origin": "TestInput.y:rhs:1221",
+    "name": "278"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) $ GRHSs (reverse (unLoc $1)) (unLoc $2)",
+    "origin": "TestInput.y:rhs:1223",
+    "name": "279"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) ($2 : unLoc $1)",
+    "origin": "TestInput.y:gdrhs:1225",
+    "name": "280"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) [$1]",
+    "origin": "TestInput.y:gdrhs:1227",
+    "name": "281"
+  },
+  {
+    "arity": 4,
+    "code": "sL (comb2 $1 $>) $ GRHS (reverse (unLoc $2)) $4",
+    "origin": "TestInput.y:gdrh:1230",
+    "name": "282"
+  },
+  {
+    "arity": 3,
+    "code": "% do s <- checkValSig $1 $3; \n\t\t\t\t      return (sL (comb2 $1 $>) $ unitOL (sL (comb2 $1 $>) $ SigD s))",
+    "origin": "TestInput.y:sigdecl:1235",
+    "name": "283"
+  },
+  {
+    "arity": 5,
+    "code": "sL (comb2 $1 $>) $ toOL [ sL (comb2 $1 $>) $ SigD (TypeSig n $5) | n <- $1 : unLoc $3 ]",
+    "origin": "TestInput.y:sigdecl:1237",
+    "name": "284"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ toOL [ sL (comb2 $1 $>) $ SigD (FixSig (FixitySig n (Fixity $2 (unLoc $1))))\n\t\t\t\t\t     | n <- unLoc $3 ]",
+    "origin": "TestInput.y:sigdecl:1239",
+    "name": "285"
+  },
+  {
+    "arity": 4,
+    "code": "sL (comb2 $1 $>) $ unitOL (sL (comb2 $1 $>) $ SigD (InlineSig $3 (mkInlineSpec $2 (getINLINE $1))))",
+    "origin": "TestInput.y:sigdecl:1241",
+    "name": "286"
+  },
+  {
+    "arity": 5,
+    "code": "sL (comb2 $1 $>) $ toOL [ sL (comb2 $1 $>) $ SigD (SpecSig $2 t defaultInlineSpec) \n\t\t\t\t\t    | t <- $4]",
+    "origin": "TestInput.y:sigdecl:1244",
+    "name": "287"
+  },
+  {
+    "arity": 6,
+    "code": "sL (comb2 $1 $>) $ toOL [ sL (comb2 $1 $>) $ SigD (SpecSig $3 t (mkInlineSpec $2 (getSPEC_INLINE $1)))\n\t\t\t\t\t    | t <- $5]",
+    "origin": "TestInput.y:sigdecl:1247",
+    "name": "288"
+  },
+  {
+    "arity": 4,
+    "code": "sL (comb2 $1 $>) $ unitOL (sL (comb2 $1 $>) $ SigD (SpecInstSig $3))",
+    "origin": "TestInput.y:sigdecl:1253",
+    "name": "289"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ ExprWithTySig $1 $3",
+    "origin": "TestInput.y:exp:1255",
+    "name": "290"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ HsArrApp $1 $3 placeHolderType HsFirstOrderApp True",
+    "origin": "TestInput.y:exp:1256",
+    "name": "291"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ HsArrApp $3 $1 placeHolderType HsFirstOrderApp False",
+    "origin": "TestInput.y:exp:1257",
+    "name": "292"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ HsArrApp $1 $3 placeHolderType HsHigherOrderApp True",
+    "origin": "TestInput.y:exp:1258",
+    "name": "293"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ HsArrApp $3 $1 placeHolderType HsHigherOrderApp False",
+    "origin": "TestInput.y:exp:1259",
+    "name": "294"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:exp:1261",
+    "name": "295"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:infixexp:1263",
+    "name": "296"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (OpApp $1 $2 (panic \"fixity\") $3)",
+    "origin": "TestInput.y:infixexp:1265",
+    "name": "297"
+  },
+  {
+    "arity": 6,
+    "code": "sL (comb2 $1 $>) $ HsLam (mkMatchGroup [sL (comb2 $1 $>) $ Match ($2:$3) $4\n\t\t\t\t\t\t\t   \t(unguardedGRHSs $6)\n\t\t\t\t\t\t\t    ])",
+    "origin": "TestInput.y:exp10:1270",
+    "name": "298"
+  },
+  {
+    "arity": 4,
+    "code": "sL (comb2 $1 $>) $ HsLet (unLoc $2) $4",
+    "origin": "TestInput.y:exp10:1271",
+    "name": "299"
+  },
+  {
+    "arity": 6,
+    "code": "sL (comb2 $1 $>) $ HsIf $2 $4 $6",
+    "origin": "TestInput.y:exp10:1272",
+    "name": "300"
+  },
+  {
+    "arity": 4,
+    "code": "sL (comb2 $1 $>) $ HsCase $2 (mkMatchGroup (unLoc $4))",
+    "origin": "TestInput.y:exp10:1273",
+    "name": "301"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) $ mkHsNegApp $2",
+    "origin": "TestInput.y:exp10:1275",
+    "name": "302"
+  },
+  {
+    "arity": 2,
+    "code": "% let loc = comb2 $1 $2 in\n\t\t\t\t\t   checkDo loc (unLoc $2)  >>= \\ (stmts,body) ->\n\t\t\t\t\t   return (L loc (mkHsDo DoExpr stmts body))",
+    "origin": "TestInput.y:exp10:1278",
+    "name": "303"
+  },
+  {
+    "arity": 2,
+    "code": "% let loc = comb2 $1 $2 in\n\t\t\t\t\t   checkDo loc (unLoc $2)  >>= \\ (stmts,body) ->\n\t\t\t\t\t   return (L loc (mkHsDo (MDoExpr noPostTcTable) stmts body))",
+    "origin": "TestInput.y:exp10:1281",
+    "name": "304"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) $ if opt_SccProfilingOn\n\t\t\t\t\t\t\tthen HsSCC (unLoc $1) $2\n\t\t\t\t\t\t\telse HsPar $2",
+    "origin": "TestInput.y:exp10:1284",
+    "name": "305"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) $ if opt_Hpc\n\t\t\t\t\t\t\tthen HsTickPragma (unLoc $1) $2\n\t\t\t\t\t\t\telse HsPar $2",
+    "origin": "TestInput.y:exp10:1288",
+    "name": "306"
+  },
+  {
+    "arity": 4,
+    "code": "% checkPattern $2 >>= \\ p -> \n\t\t\t   return (sL (comb2 $1 $>) $ HsProc p (sL (comb2 $1 $>) $ HsCmdTop $4 [] \n\t\t\t\t\t\t   placeHolderType undefined))",
+    "origin": "TestInput.y:exp10:1294",
+    "name": "307"
+  },
+  {
+    "arity": 4,
+    "code": "sL (comb2 $1 $>) $ HsCoreAnn (getSTRING $2) $4",
+    "origin": "TestInput.y:exp10:1296",
+    "name": "308"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:exp10:1298",
+    "name": "309"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) $ getSTRING $2",
+    "origin": "TestInput.y:scc_annot:1300",
+    "name": "310"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ getSTRING $2",
+    "origin": "TestInput.y:scc_annot:1302",
+    "name": "311"
+  },
+  {
+    "arity": 10,
+    "code": "sL (comb2 $1 $>) $ (getSTRING $2\n\t\t\t\t\t\t       ,( fromInteger $ getINTEGER $3\n \t\t\t\t\t\t\t, fromInteger $ getINTEGER $5\n\t\t\t\t\t\t\t)\n                         \t\t\t       ,( fromInteger $ getINTEGER $7\n \t\t\t\t\t\t\t, fromInteger $ getINTEGER $9\n\t\t\t\t\t\t\t)\n\t\t\t\t\t\t       )",
+    "origin": "TestInput.y:hpc_annot:1314",
+    "name": "312"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) $ HsApp $1 $2",
+    "origin": "TestInput.y:fexp:1316",
+    "name": "313"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:fexp:1318",
+    "name": "314"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ EAsPat $1 $3",
+    "origin": "TestInput.y:aexp:1320",
+    "name": "315"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) $ ELazyPat $2",
+    "origin": "TestInput.y:aexp:1321",
+    "name": "316"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:aexp:1323",
+    "name": "317"
+  },
+  {
+    "arity": 4,
+    "code": "% do { r <- mkRecConstrOrUpdate $1 (comb2 $2 $4) \n\t\t\t\t\t\t\t$3;\n\t\t\t\t        return (sL (comb2 $1 $>) r) }",
+    "origin": "TestInput.y:aexp1:1327",
+    "name": "318"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:aexp1:1334",
+    "name": "319"
+  },
+  {
+    "arity": 4,
+    "code": "sL (comb2 $1 $>) $ HsApp (sL (getLoc $1) (HsVar (unLoc $1)))\n\t\t\t\t\t\t     (sL (getLoc $3) (HsType $3))",
+    "origin": "TestInput.y:aexp1:1337",
+    "name": "320"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (HsIPVar $! unLoc $1)",
+    "origin": "TestInput.y:aexp2:1339",
+    "name": "321"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (HsVar   $! unLoc $1)",
+    "origin": "TestInput.y:aexp2:1340",
+    "name": "322"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (HsLit   $! unLoc $1)",
+    "origin": "TestInput.y:aexp2:1344",
+    "name": "323"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (HsOverLit $! mkHsIntegral (getINTEGER $1))",
+    "origin": "TestInput.y:aexp2:1345",
+    "name": "324"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (HsOverLit $! mkHsFractional (getRATIONAL $1))",
+    "origin": "TestInput.y:aexp2:1346",
+    "name": "325"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (HsPar $2)",
+    "origin": "TestInput.y:aexp2:1347",
+    "name": "326"
+  },
+  {
+    "arity": 5,
+    "code": "sL (comb2 $1 $>) $ ExplicitTuple ($2 : reverse $4) Boxed",
+    "origin": "TestInput.y:aexp2:1348",
+    "name": "327"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ ExplicitTuple (reverse $2)      Unboxed",
+    "origin": "TestInput.y:aexp2:1349",
+    "name": "328"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:aexp2:1350",
+    "name": "329"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:aexp2:1351",
+    "name": "330"
+  },
+  {
+    "arity": 4,
+    "code": "sL (comb2 $1 $>) $ SectionL $2 $3",
+    "origin": "TestInput.y:aexp2:1352",
+    "name": "331"
+  },
+  {
+    "arity": 4,
+    "code": "sL (comb2 $1 $>) $ SectionR $2 $3",
+    "origin": "TestInput.y:aexp2:1353",
+    "name": "332"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) EWildPat",
+    "origin": "TestInput.y:aexp2:1356",
+    "name": "333"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ HsSpliceE (mkHsSplice \n\t\t\t\t\t(sL (getLoc $1) $ HsVar (mkUnqual varName \n\t\t\t\t\t\t\t(getTH_ID_SPLICE $1))))",
+    "origin": "TestInput.y:aexp2:1359",
+    "name": "334"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ HsSpliceE (mkHsSplice $2)",
+    "origin": "TestInput.y:aexp2:1361",
+    "name": "335"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) $ HsBracket (VarBr (unLoc $2))",
+    "origin": "TestInput.y:aexp2:1362",
+    "name": "336"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) $ HsBracket (VarBr (unLoc $2))",
+    "origin": "TestInput.y:aexp2:1363",
+    "name": "337"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) $ HsBracket (VarBr (unLoc $2))",
+    "origin": "TestInput.y:aexp2:1364",
+    "name": "338"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) $ HsBracket (VarBr (unLoc $2))",
+    "origin": "TestInput.y:aexp2:1365",
+    "name": "339"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ HsBracket (ExpBr $2)",
+    "origin": "TestInput.y:aexp2:1366",
+    "name": "340"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ HsBracket (TypBr $2)",
+    "origin": "TestInput.y:aexp2:1367",
+    "name": "341"
+  },
+  {
+    "arity": 3,
+    "code": "% checkPattern $2 >>= \\p ->\n\t\t\t\t\t   return (sL (comb2 $1 $>) $ HsBracket (PatBr p))",
+    "origin": "TestInput.y:aexp2:1369",
+    "name": "342"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ HsBracket (DecBr (mkGroup $2))",
+    "origin": "TestInput.y:aexp2:1372",
+    "name": "343"
+  },
+  {
+    "arity": 4,
+    "code": "sL (comb2 $1 $>) $ HsArrForm $2 Nothing (reverse $3)",
+    "origin": "TestInput.y:aexp2:1374",
+    "name": "344"
+  },
+  {
+    "arity": 2,
+    "code": "$2 : $1",
+    "origin": "TestInput.y:cmdargs:1376",
+    "name": "345"
+  },
+  {
+    "arity": 0,
+    "code": "[]",
+    "origin": "TestInput.y:cmdargs:1378",
+    "name": "346"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ HsCmdTop $1 [] placeHolderType undefined",
+    "origin": "TestInput.y:acmd:1381",
+    "name": "347"
+  },
+  {
+    "arity": 3,
+    "code": "$2",
+    "origin": "TestInput.y:cvtopbody:1383",
+    "name": "348"
+  },
+  {
+    "arity": 3,
+    "code": "$2",
+    "origin": "TestInput.y:cvtopbody:1385",
+    "name": "349"
+  },
+  {
+    "arity": 0,
+    "code": "[]",
+    "origin": "TestInput.y:cvtopdecls0:1387",
+    "name": "350"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:cvtopdecls0:1389",
+    "name": "351"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:texp:1391",
+    "name": "352"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) $ SectionR $1 $2",
+    "origin": "TestInput.y:texp:1395",
+    "name": "353"
+  },
+  {
+    "arity": 3,
+    "code": "$3 : $1",
+    "origin": "TestInput.y:texps:1397",
+    "name": "354"
+  },
+  {
+    "arity": 1,
+    "code": "[$1]",
+    "origin": "TestInput.y:texps:1406",
+    "name": "355"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ ExplicitList placeHolderType [$1]",
+    "origin": "TestInput.y:list:1408",
+    "name": "356"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ ExplicitList placeHolderType (reverse (unLoc $1))",
+    "origin": "TestInput.y:list:1409",
+    "name": "357"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) $ ArithSeq noPostTcExpr (From $1)",
+    "origin": "TestInput.y:list:1410",
+    "name": "358"
+  },
+  {
+    "arity": 4,
+    "code": "sL (comb2 $1 $>) $ ArithSeq noPostTcExpr (FromThen $1 $3)",
+    "origin": "TestInput.y:list:1411",
+    "name": "359"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ ArithSeq noPostTcExpr (FromTo $1 $3)",
+    "origin": "TestInput.y:list:1412",
+    "name": "360"
+  },
+  {
+    "arity": 5,
+    "code": "sL (comb2 $1 $>) $ ArithSeq noPostTcExpr (FromThenTo $1 $3 $5)",
+    "origin": "TestInput.y:list:1413",
+    "name": "361"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) $ mkHsDo ListComp (reverse (unLoc $2)) $1",
+    "origin": "TestInput.y:list:1415",
+    "name": "362"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) ($3 : unLoc $1)",
+    "origin": "TestInput.y:lexps:1417",
+    "name": "363"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) [$3,$1]",
+    "origin": "TestInput.y:lexps:1422",
+    "name": "364"
+  },
+  {
+    "arity": 1,
+    "code": "case unLoc $1 of\n\t\t\t\t\t    [qs] -> sL (getLoc $1) qs\n\t\t\t\t\t    qss  -> sL (getLoc $1) [sL (getLoc $1) (ParStmt stmtss)]\n\t\t\t\t\t\t where\n\t\t\t\t\t\t    stmtss = [ (reverse qs, undefined) \n\t\t\t\t\t\t    \t     | qs <- qss ]",
+    "origin": "TestInput.y:pquals:1432",
+    "name": "365"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $3 : unLoc $1)",
+    "origin": "TestInput.y:pquals1:1434",
+    "name": "366"
+  },
+  {
+    "arity": 2,
+    "code": "L (getLoc $2) [unLoc $2]",
+    "origin": "TestInput.y:pquals1:1436",
+    "name": "367"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) ($3 : unLoc $1)",
+    "origin": "TestInput.y:quals:1438",
+    "name": "368"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) [$1]",
+    "origin": "TestInput.y:quals:1448",
+    "name": "369"
+  },
+  {
+    "arity": 0,
+    "code": "noLoc (ExplicitPArr placeHolderType [])",
+    "origin": "TestInput.y:parr:1450",
+    "name": "370"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ ExplicitPArr placeHolderType [$1]",
+    "origin": "TestInput.y:parr:1451",
+    "name": "371"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ ExplicitPArr placeHolderType \n\t\t\t\t\t\t       (reverse (unLoc $1))",
+    "origin": "TestInput.y:parr:1453",
+    "name": "372"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ PArrSeq noPostTcExpr (FromTo $1 $3)",
+    "origin": "TestInput.y:parr:1454",
+    "name": "373"
+  },
+  {
+    "arity": 5,
+    "code": "sL (comb2 $1 $>) $ PArrSeq noPostTcExpr (FromThenTo $1 $3 $5)",
+    "origin": "TestInput.y:parr:1455",
+    "name": "374"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) $ mkHsDo PArrComp (reverse (unLoc $2)) $1",
+    "origin": "TestInput.y:parr:1462",
+    "name": "375"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (reverse (unLoc $2))",
+    "origin": "TestInput.y:altslist:1464",
+    "name": "376"
+  },
+  {
+    "arity": 3,
+    "code": "L (getLoc $2) (reverse (unLoc $2))",
+    "origin": "TestInput.y:altslist:1466",
+    "name": "377"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (unLoc $1)",
+    "origin": "TestInput.y:alts:1468",
+    "name": "378"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:alts:1470",
+    "name": "379"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) ($3 : unLoc $1)",
+    "origin": "TestInput.y:alts1:1472",
+    "name": "380"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) (unLoc $1)",
+    "origin": "TestInput.y:alts1:1473",
+    "name": "381"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) [$1]",
+    "origin": "TestInput.y:alts1:1475",
+    "name": "382"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (Match [$1] $2 (unLoc $3))",
+    "origin": "TestInput.y:alt:1478",
+    "name": "383"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) (GRHSs (unLoc $1) (unLoc $2))",
+    "origin": "TestInput.y:alt_rhs:1481",
+    "name": "384"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) (unguardedRHS $2)",
+    "origin": "TestInput.y:ralt:1483",
+    "name": "385"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (reverse (unLoc $1))",
+    "origin": "TestInput.y:ralt:1485",
+    "name": "386"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) ($2 : unLoc $1)",
+    "origin": "TestInput.y:gdpats:1487",
+    "name": "387"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) [$1]",
+    "origin": "TestInput.y:gdpats:1489",
+    "name": "388"
+  },
+  {
+    "arity": 4,
+    "code": "sL (comb2 $1 $>) $ GRHS (reverse (unLoc $2)) $4",
+    "origin": "TestInput.y:gdpat:1496",
+    "name": "389"
+  },
+  {
+    "arity": 1,
+    "code": "% checkPattern $1",
+    "origin": "TestInput.y:pat:1498",
+    "name": "390"
+  },
+  {
+    "arity": 2,
+    "code": "% checkPattern (sL (comb2 $1 $>) (SectionR (sL (getLoc $1) (HsVar bang_RDR)) $2))",
+    "origin": "TestInput.y:pat:1500",
+    "name": "391"
+  },
+  {
+    "arity": 1,
+    "code": "% checkPattern $1",
+    "origin": "TestInput.y:apat:1502",
+    "name": "392"
+  },
+  {
+    "arity": 2,
+    "code": "% checkPattern (sL (comb2 $1 $>) (SectionR (sL (getLoc $1) (HsVar bang_RDR)) $2))",
+    "origin": "TestInput.y:apat:1504",
+    "name": "393"
+  },
+  {
+    "arity": 2,
+    "code": "$1 : $2",
+    "origin": "TestInput.y:apats:1506",
+    "name": "394"
+  },
+  {
+    "arity": 0,
+    "code": "[]",
+    "origin": "TestInput.y:apats:1511",
+    "name": "395"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:stmtlist:1513",
+    "name": "396"
+  },
+  {
+    "arity": 3,
+    "code": "$2",
+    "origin": "TestInput.y:stmtlist:1520",
+    "name": "397"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) ($1 : unLoc $2)",
+    "origin": "TestInput.y:stmts:1522",
+    "name": "398"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:stmts:1523",
+    "name": "399"
+  },
+  {
+    "arity": 0,
+    "code": "noLoc []",
+    "origin": "TestInput.y:stmts:1525",
+    "name": "400"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:stmts_help:1527",
+    "name": "401"
+  },
+  {
+    "arity": 0,
+    "code": "noLoc []",
+    "origin": "TestInput.y:stmts_help:1531",
+    "name": "402"
+  },
+  {
+    "arity": 1,
+    "code": "Just $1",
+    "origin": "TestInput.y:maybe_stmt:1533",
+    "name": "403"
+  },
+  {
+    "arity": 0,
+    "code": "Nothing",
+    "origin": "TestInput.y:maybe_stmt:1535",
+    "name": "404"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:stmt:1538",
+    "name": "405"
+  },
+  {
+    "arity": 3,
+    "code": "% checkPattern $3 >>= \\p ->\n\t\t\t\t\t   return (sL (comb2 $1 $>) $ mkBindStmt p $1)",
+    "origin": "TestInput.y:stmt:1540",
+    "name": "406"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) $ mkRecStmt (unLoc $2)",
+    "origin": "TestInput.y:stmt:1542",
+    "name": "407"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ mkBindStmt $1 $3",
+    "origin": "TestInput.y:qual:1544",
+    "name": "408"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ mkExprStmt $1",
+    "origin": "TestInput.y:qual:1545",
+    "name": "409"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) $ LetStmt (unLoc $2)",
+    "origin": "TestInput.y:qual:1550",
+    "name": "410"
+  },
+  {
+    "arity": 1,
+    "code": "HsRecordBinds (reverse $1)",
+    "origin": "TestInput.y:fbinds:1552",
+    "name": "411"
+  },
+  {
+    "arity": 0,
+    "code": "HsRecordBinds []",
+    "origin": "TestInput.y:fbinds:1554",
+    "name": "412"
+  },
+  {
+    "arity": 3,
+    "code": "$3 : $1",
+    "origin": "TestInput.y:fbinds1:1556",
+    "name": "413"
+  },
+  {
+    "arity": 1,
+    "code": "[$1]",
+    "origin": "TestInput.y:fbinds1:1558",
+    "name": "414"
+  },
+  {
+    "arity": 3,
+    "code": "($1,$3)",
+    "origin": "TestInput.y:fbind:1564",
+    "name": "415"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) ($3 : unLoc $1)",
+    "origin": "TestInput.y:dbinds:1566",
+    "name": "416"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) (unLoc $1)",
+    "origin": "TestInput.y:dbinds:1567",
+    "name": "417"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) [$1]",
+    "origin": "TestInput.y:dbinds:1570",
+    "name": "418"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (IPBind (unLoc $1) $3)",
+    "origin": "TestInput.y:dbind:1573",
+    "name": "419"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) (IPName (mkUnqual varName (getIPDUPVARID $1)))",
+    "origin": "TestInput.y:ipvar:1579",
+    "name": "420"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) [unLoc $1]",
+    "origin": "TestInput.y:depreclist:1581",
+    "name": "421"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $1 : unLoc $3)",
+    "origin": "TestInput.y:depreclist:1583",
+    "name": "422"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:deprec_var:1585",
+    "name": "423"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:deprec_var:1589",
+    "name": "424"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:qcon:1591",
+    "name": "425"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:qcon:1592",
+    "name": "426"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ nameRdrName (dataConName (unLoc $1))",
+    "origin": "TestInput.y:qcon:1595",
+    "name": "427"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:con:1597",
+    "name": "428"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:con:1598",
+    "name": "429"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ nameRdrName (dataConName (unLoc $1))",
+    "origin": "TestInput.y:con:1600",
+    "name": "430"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) unitDataCon",
+    "origin": "TestInput.y:sysdcon:1602",
+    "name": "431"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ tupleCon Boxed $2",
+    "origin": "TestInput.y:sysdcon:1603",
+    "name": "432"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) nilDataCon",
+    "origin": "TestInput.y:sysdcon:1605",
+    "name": "433"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:conop:1607",
+    "name": "434"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:conop:1609",
+    "name": "435"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:qconop:1611",
+    "name": "436"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:qconop:1616",
+    "name": "437"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:gtycon:1618",
+    "name": "438"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) $ getRdrName unitTyCon",
+    "origin": "TestInput.y:gtycon:1619",
+    "name": "439"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ getRdrName (tupleTyCon Boxed $2)",
+    "origin": "TestInput.y:gtycon:1620",
+    "name": "440"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) $ getRdrName funTyCon",
+    "origin": "TestInput.y:gtycon:1621",
+    "name": "441"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) $ listTyCon_RDR",
+    "origin": "TestInput.y:gtycon:1622",
+    "name": "442"
+  },
+  {
+    "arity": 2,
+    "code": "sL (comb2 $1 $>) $ parrTyCon_RDR",
+    "origin": "TestInput.y:gtycon:1624",
+    "name": "443"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:oqtycon:1626",
+    "name": "444"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:oqtycon:1628",
+    "name": "445"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:qtyconop:1630",
+    "name": "446"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:qtyconop:1632",
+    "name": "447"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $! mkQual tcClsName (getQCONID $1)",
+    "origin": "TestInput.y:qtycon:1634",
+    "name": "448"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:qtycon:1636",
+    "name": "449"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $! mkUnqual tcClsName (getCONID $1)",
+    "origin": "TestInput.y:tycon:1639",
+    "name": "450"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $! mkQual tcClsName (getQCONSYM $1)",
+    "origin": "TestInput.y:qtyconsym:1641",
+    "name": "451"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:qtyconsym:1643",
+    "name": "452"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $! mkUnqual tcClsName (getCONSYM $1)",
+    "origin": "TestInput.y:tyconsym:1649",
+    "name": "453"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:op:1651",
+    "name": "454"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:op:1653",
+    "name": "455"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:varop:1655",
+    "name": "456"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:varop:1657",
+    "name": "457"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ HsVar (unLoc $1)",
+    "origin": "TestInput.y:qop:1659",
+    "name": "458"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ HsVar (unLoc $1)",
+    "origin": "TestInput.y:qop:1661",
+    "name": "459"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ HsVar (unLoc $1)",
+    "origin": "TestInput.y:qopm:1663",
+    "name": "460"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ HsVar (unLoc $1)",
+    "origin": "TestInput.y:qopm:1665",
+    "name": "461"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:qvarop:1667",
+    "name": "462"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:qvarop:1669",
+    "name": "463"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:qvaropm:1671",
+    "name": "464"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:qvaropm:1676",
+    "name": "465"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:tyvar:1678",
+    "name": "466"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:tyvar:1680",
+    "name": "467"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:tyvarop:1682",
+    "name": "468"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:tyvarop:1684",
+    "name": "469"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $! mkUnqual tvName (getVARID $1)",
+    "origin": "TestInput.y:tyvarid:1686",
+    "name": "470"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $! mkUnqual tvName (unLoc $1)",
+    "origin": "TestInput.y:tyvarid:1687",
+    "name": "471"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $! mkUnqual tvName FSLIT(\"unsafe\")",
+    "origin": "TestInput.y:tyvarid:1688",
+    "name": "472"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $! mkUnqual tvName FSLIT(\"safe\")",
+    "origin": "TestInput.y:tyvarid:1689",
+    "name": "473"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $! mkUnqual tvName FSLIT(\"threadsafe\")",
+    "origin": "TestInput.y:tyvarid:1691",
+    "name": "474"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $! mkUnqual tvName (getVARSYM $1)",
+    "origin": "TestInput.y:tyvarsym:1700",
+    "name": "475"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:var:1702",
+    "name": "476"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:var:1704",
+    "name": "477"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:qvar:1706",
+    "name": "478"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:qvar:1707",
+    "name": "479"
+  },
+  {
+    "arity": 3,
+    "code": "sL (comb2 $1 $>) (unLoc $2)",
+    "origin": "TestInput.y:qvar:1712",
+    "name": "480"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:qvarid:1714",
+    "name": "481"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ mkQual varName (getQVARID $1)",
+    "origin": "TestInput.y:qvarid:1716",
+    "name": "482"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:varid:1718",
+    "name": "483"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $! mkUnqual varName FSLIT(\"unsafe\")",
+    "origin": "TestInput.y:varid:1719",
+    "name": "484"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $! mkUnqual varName FSLIT(\"safe\")",
+    "origin": "TestInput.y:varid:1720",
+    "name": "485"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $! mkUnqual varName FSLIT(\"threadsafe\")",
+    "origin": "TestInput.y:varid:1722",
+    "name": "486"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $! mkUnqual varName (getVARID $1)",
+    "origin": "TestInput.y:varid_no_unsafe:1724",
+    "name": "487"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $! mkUnqual varName (unLoc $1)",
+    "origin": "TestInput.y:varid_no_unsafe:1725",
+    "name": "488"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $! mkUnqual varName FSLIT(\"forall\")",
+    "origin": "TestInput.y:varid_no_unsafe:1726",
+    "name": "489"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $! mkUnqual varName FSLIT(\"family\")",
+    "origin": "TestInput.y:varid_no_unsafe:1728",
+    "name": "490"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:qvarsym:1730",
+    "name": "491"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:qvarsym:1732",
+    "name": "492"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:qvarsym_no_minus:1734",
+    "name": "493"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:qvarsym_no_minus:1736",
+    "name": "494"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ mkQual varName (getQVARSYM $1)",
+    "origin": "TestInput.y:qvarsym1:1739",
+    "name": "495"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:varsym:1741",
+    "name": "496"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ mkUnqual varName FSLIT(\"-\")",
+    "origin": "TestInput.y:varsym:1743",
+    "name": "497"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ mkUnqual varName (getVARSYM $1)",
+    "origin": "TestInput.y:varsym_no_minus:1745",
+    "name": "498"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ mkUnqual varName (unLoc $1)",
+    "origin": "TestInput.y:varsym_no_minus:1752",
+    "name": "499"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) FSLIT(\"as\")",
+    "origin": "TestInput.y:special_id:1755",
+    "name": "500"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) FSLIT(\"qualified\")",
+    "origin": "TestInput.y:special_id:1756",
+    "name": "501"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) FSLIT(\"hiding\")",
+    "origin": "TestInput.y:special_id:1757",
+    "name": "502"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) FSLIT(\"derive\")",
+    "origin": "TestInput.y:special_id:1758",
+    "name": "503"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) FSLIT(\"export\")",
+    "origin": "TestInput.y:special_id:1759",
+    "name": "504"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) FSLIT(\"label\")",
+    "origin": "TestInput.y:special_id:1760",
+    "name": "505"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) FSLIT(\"dynamic\")",
+    "origin": "TestInput.y:special_id:1761",
+    "name": "506"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) FSLIT(\"stdcall\")",
+    "origin": "TestInput.y:special_id:1762",
+    "name": "507"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) FSLIT(\"ccall\")",
+    "origin": "TestInput.y:special_id:1764",
+    "name": "508"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) FSLIT(\"!\")",
+    "origin": "TestInput.y:special_sym:1766",
+    "name": "509"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) FSLIT(\".\")",
+    "origin": "TestInput.y:special_sym:1767",
+    "name": "510"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) FSLIT(\"*\")",
+    "origin": "TestInput.y:special_sym:1772",
+    "name": "511"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:qconid:1774",
+    "name": "512"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ mkQual dataName (getQCONID $1)",
+    "origin": "TestInput.y:qconid:1776",
+    "name": "513"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ mkUnqual dataName (getCONID $1)",
+    "origin": "TestInput.y:conid:1779",
+    "name": "514"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "TestInput.y:qconsym:1781",
+    "name": "515"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ mkQual dataName (getQCONSYM $1)",
+    "origin": "TestInput.y:qconsym:1783",
+    "name": "516"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ mkUnqual dataName (getCONSYM $1)",
+    "origin": "TestInput.y:consym:1787",
+    "name": "517"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ consDataCon_RDR",
+    "origin": "TestInput.y:consym:1793",
+    "name": "518"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ HsChar       $ getCHAR $1",
+    "origin": "TestInput.y:literal:1795",
+    "name": "519"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ HsString     $ getSTRING $1",
+    "origin": "TestInput.y:literal:1796",
+    "name": "520"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ HsIntPrim    $ getPRIMINTEGER $1",
+    "origin": "TestInput.y:literal:1797",
+    "name": "521"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ HsCharPrim   $ getPRIMCHAR $1",
+    "origin": "TestInput.y:literal:1798",
+    "name": "522"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ HsStringPrim $ getPRIMSTRING $1",
+    "origin": "TestInput.y:literal:1799",
+    "name": "523"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ HsFloatPrim  $ getPRIMFLOAT $1",
+    "origin": "TestInput.y:literal:1800",
+    "name": "524"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ HsDoublePrim $ getPRIMDOUBLE $1",
+    "origin": "TestInput.y:literal:1805",
+    "name": "525"
+  },
+  {
+    "arity": 1,
+    "code": "()",
+    "origin": "TestInput.y:close:1807",
+    "name": "526"
+  },
+  {
+    "arity": 1,
+    "code": "% popContext",
+    "origin": "TestInput.y:close:1812",
+    "name": "527"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ mkModuleNameFS (getCONID $1)",
+    "origin": "TestInput.y:modid:1814",
+    "name": "528"
+  },
+  {
+    "arity": 1,
+    "code": "sL (getLoc $1) $ let (mod,c) = getQCONID $1 in\n\t\t\t\t  mkModuleNameFS\n\t\t\t\t   (mkFastString\n\t\t\t\t     (unpackFS mod ++ '.':unpackFS c))",
+    "origin": "TestInput.y:modid:1820",
+    "name": "529"
+  },
+  {
+    "arity": 2,
+    "code": "$1 + 1",
+    "origin": "TestInput.y:commas:1822",
+    "name": "530"
+  },
+  {
+    "arity": 1,
+    "code": "2",
+    "origin": "TestInput.y:commas:1827",
+    "name": "531"
+  },
+  {
+    "arity": 1,
+    "code": "% case parseHaddockParagraphs (tokenise (getDOCNEXT $1)) of {\n      Left  err -> parseError (getLoc $1) err;\n      Right doc -> return (sL (getLoc $1) doc) }",
+    "origin": "TestInput.y:docnext:1832",
+    "name": "532"
+  },
+  {
+    "arity": 1,
+    "code": "% case parseHaddockParagraphs (tokenise (getDOCPREV $1)) of {\n      Left  err -> parseError (getLoc $1) err;\n      Right doc -> return (sL (getLoc $1) doc) }",
+    "origin": "TestInput.y:docprev:1837",
+    "name": "533"
+  },
+  {
+    "arity": 1,
+    "code": "%\n      let string = getDOCNAMED $1 \n          (name, rest) = break isSpace string\n      in case parseHaddockParagraphs (tokenise rest) of {\n        Left  err -> parseError (getLoc $1) err;\n        Right doc -> return (sL (getLoc $1) (name, doc)) }",
+    "origin": "TestInput.y:docnamed:1845",
+    "name": "534"
+  },
+  {
+    "arity": 1,
+    "code": "% let (n, doc) = getDOCSECTION $1 in\n        case parseHaddockString (tokenise doc) of {\n      Left  err -> parseError (getLoc $1) err;\n      Right doc -> return (sL (getLoc $1) (n, doc)) }",
+    "origin": "TestInput.y:docsection:1851",
+    "name": "535"
+  },
+  {
+    "arity": 1,
+    "code": "getDOCOPTIONS $1",
+    "origin": "TestInput.y:docoptions:1854",
+    "name": "536"
+  },
+  {
+    "arity": 1,
+    "code": "% let string = getDOCNEXT $1 in\n               case parseModuleHeader string of {                       \n                 Right (str, info) ->                                  \n                   case parseHaddockParagraphs (tokenise str) of {               \n                     Left err -> parseError (getLoc $1) err;                    \n                     Right doc -> return (info, Just doc);          \n                   };                                             \n                 Left err -> parseError (getLoc $1) err\n            }",
+    "origin": "TestInput.y:moduleheader:1865",
+    "name": "537"
+  },
+  {
+    "arity": 1,
+    "code": "Just $1",
+    "origin": "TestInput.y:maybe_docprev:1867",
+    "name": "538"
+  },
+  {
+    "arity": 0,
+    "code": "Nothing",
+    "origin": "TestInput.y:maybe_docprev:1869",
+    "name": "539"
+  },
+  {
+    "arity": 1,
+    "code": "Just $1",
+    "origin": "TestInput.y:maybe_docnext:1871",
+    "name": "540"
+  },
+  {
+    "arity": 0,
+    "code": "Nothing",
+    "origin": "TestInput.y:maybe_docnext:1929",
+    "name": "541"
+  },
+  {
+    "arity": 0,
+    "code": "plain",
+    "origin": "synthetic",
+    "name": "542"
+  },
+  {
+    "arity": 1,
+    "code": "$1",
+    "origin": "synthetic",
+    "name": "543"
+  },
+  {
+    "arity": 3,
+    "code": "$1+$3+$>",
+    "origin": "synthetic",
+    "name": "544"
+  },
+  {
+    "arity": 1,
+    "code": "\\$1 + $1",
+    "origin": "synthetic",
+    "name": "545"
+  },
+  {
+    "arity": 1,
+    "code": "\"\\x41\" ++ '\\x42' ++ $1",
+    "origin": "synthetic",
+    "name": "546"
+  },
+  {
+    "arity": 1,
+    "code": "f' $1 g'",
+    "origin": "synthetic",
+    "name": "547"
+  },
+  {
+    "arity": 0,
+    "code": "$> then $2",
+    "origin": "synthetic",
+    "name": "548"
+  },
+  {
+    "arity": 1,
+    "code": "$2+$3",
+    "origin": "synthetic",
+    "name": "549"
+  },
+  {
+    "arity": 3,
+    "code": "$0x2+$0O3",
+    "origin": "synthetic",
+    "name": "550"
+  },
+  {
+    "arity": 1,
+    "code": "\"$1\" '$' $1",
+    "origin": "synthetic",
+    "name": "551"
+  },
+  {
+    "arity": 1,
+    "code": "\"\\SO\\&H\" $1",
+    "origin": "synthetic",
+    "name": "552"
+  },
+  {
+    "arity": 1,
+    "code": "$1.abc",
+    "origin": "synthetic",
+    "name": "553"
+  },
+  {
+    "arity": 1,
+    "code": "$1e2",
+    "origin": "synthetic",
+    "name": "554"
+  }
+]

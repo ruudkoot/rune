@@ -1,0 +1,2 @@
+let (con,details) = unLoc $1 in 
+		  sL (comb2 $1 $>) (ConDecl con Implicit [] (noLoc []) details (ResTyGADT $3) Nothing)

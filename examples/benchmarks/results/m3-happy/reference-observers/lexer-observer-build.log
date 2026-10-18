@@ -1,0 +1,23 @@
+[1 of 4] Compiling ParseMonad       ( ParseMonad.lhs, ParseMonad.o )
+
+ParseMonad.lhs:25:9: warning: [-Wnoncanonical-monad-instances]
+    Noncanonical ‘pure = return’ definition detected
+    in the instance declaration for ‘Applicative P’.
+    Move definition from ‘return’ to ‘pure’
+    See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/monad-of-no-return
+   |
+25 | >       pure = return
+   |         ^^^^^^^^^^^^^
+
+ParseMonad.lhs:29:9: warning: [-Wnoncanonical-monad-instances]
+    Noncanonical ‘return’ definition detected
+    in the instance declaration for ‘Monad P’.
+    ‘return’ will eventually be removed in favour of ‘pure’
+    Either remove definition for ‘return’ (recommended) or define as ‘return = pure’
+    See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/monad-of-no-return
+   |
+29 | >       return m = P $ \ _ _ -> OkP m
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2 of 4] Compiling Lexer            ( Lexer.lhs, Lexer.o )
+[3 of 4] Compiling Main             ( ObserveLexer.hs, ObserveLexer.o )
+[4 of 4] Linking observe-lexer

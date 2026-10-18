@@ -1,0 +1,31 @@
+[1 of 5] Compiling ParseMonad       ( ParseMonad.lhs, ParseMonad.o )
+
+ParseMonad.lhs:25:9: warning: [-Wnoncanonical-monad-instances]
+    Noncanonical ‘pure = return’ definition detected
+    in the instance declaration for ‘Applicative P’.
+    Move definition from ‘return’ to ‘pure’
+    See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/monad-of-no-return
+   |
+25 | >       pure = return
+   |         ^^^^^^^^^^^^^
+
+ParseMonad.lhs:29:9: warning: [-Wnoncanonical-monad-instances]
+    Noncanonical ‘return’ definition detected
+    in the instance declaration for ‘Monad P’.
+    ‘return’ will eventually be removed in favour of ‘pure’
+    Either remove definition for ‘return’ (recommended) or define as ‘return = pure’
+    See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/monad-of-no-return
+   |
+29 | >       return m = P $ \ _ _ -> OkP m
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2 of 5] Compiling AttrGrammar      ( AttrGrammar.lhs, AttrGrammar.o )
+[3 of 5] Compiling AttrGrammarParser ( AttrGrammarParser.hs, AttrGrammarParser.o )
+
+AttrGrammarParser.hs:553:9: warning: [-Woverlapping-patterns]
+    Pattern match is redundant
+    In a case alternative: _ -> ...
+    |
+553 |         _ -> happyError' tk
+    |         ^^^^^^^^^^^^^^^^^^^
+[4 of 5] Compiling Main             ( ObserveAttributes.hs, ObserveAttributes.o )
+[5 of 5] Linking observe-attributes

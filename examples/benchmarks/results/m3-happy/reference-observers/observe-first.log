@@ -1,0 +1,12 @@
+default 1978
+basic 12
+precedence 22
+typed 16
+multiple-starts 18
+quote-normalization 12
+attributes 12
+attribute-groups 16
+attribute-rightmost 12
+attribute-zero 12
+attribute-empty 12
+monad-lexer 12

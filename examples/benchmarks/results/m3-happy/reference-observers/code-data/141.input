@@ -1,0 +1,3 @@
+sL (comb2 $1 $>) $ RuleD (HsRule (getSTRING $1) 
+				  ($2 `orElse` AlwaysActive) 
+				  $3 $4 placeHolderNames $6 placeHolderNames)

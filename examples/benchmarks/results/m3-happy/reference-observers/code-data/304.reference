@@ -1,0 +1,1 @@
+["ok","% let loc = comb2 happy_var_1 happy_var_2 in\u000a\u0009\u0009\u0009\u0009\u0009   checkDo loc (unLoc happy_var_2)  >>= \\ (stmts,body) ->\u000a\u0009\u0009\u0009\u0009\u0009   return (L loc (mkHsDo (MDoExpr noPostTcTable) stmts body))",[2,2,1]]

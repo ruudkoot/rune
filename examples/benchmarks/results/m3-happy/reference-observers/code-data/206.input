@@ -1,0 +1,1 @@
+sL (comb2 $1 $>) $ HsDocTy (L (comb2 $1 $2) (HsAppTy $1 $2)) $3

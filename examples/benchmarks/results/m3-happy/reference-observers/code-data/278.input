@@ -1,0 +1,1 @@
+L (comb3 $1 $2 $3) $ GRHSs (unguardedRHS $2) (unLoc $3)

@@ -1,0 +1,4 @@
+%tokentype {T}
+%token x {X}
+%%
+a : missing {$1}

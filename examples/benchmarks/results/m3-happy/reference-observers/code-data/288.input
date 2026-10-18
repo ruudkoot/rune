@@ -1,0 +1,2 @@
+sL (comb2 $1 $>) $ toOL [ sL (comb2 $1 $>) $ SigD (SpecSig $3 t (mkInlineSpec $2 (getSPEC_INLINE $1)))
+					    | t <- $5]

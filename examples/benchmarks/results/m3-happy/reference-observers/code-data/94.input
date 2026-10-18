@@ -1,0 +1,4 @@
+% do { (tc, tvs, typats) <- checkSynHdr $2 True
+		      ; return (L (comb2 $1 $4) 
+				  (TySynonym tc tvs (Just typats) $4)) 
+                      }

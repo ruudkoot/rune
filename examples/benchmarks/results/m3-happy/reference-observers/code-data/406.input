@@ -1,0 +1,2 @@
+% checkPattern $3 >>= \p ->
+					   return (sL (comb2 $1 $>) $ mkBindStmt p $1)

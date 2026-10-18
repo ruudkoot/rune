@@ -1,0 +1,1 @@
+sL (comb2 $1 $>) (GRHSs (unLoc $1) (unLoc $2))

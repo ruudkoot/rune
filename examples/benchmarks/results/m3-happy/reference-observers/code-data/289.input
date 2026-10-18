@@ -1,0 +1,1 @@
+sL (comb2 $1 $>) $ unitOL (sL (comb2 $1 $>) $ SigD (SpecInstSig $3))

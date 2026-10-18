@@ -1,0 +1,3 @@
+% do { r <- mkRecConstrOrUpdate $1 (comb2 $2 $4) 
+							$3;
+				        return (sL (comb2 $1 $>) r) }

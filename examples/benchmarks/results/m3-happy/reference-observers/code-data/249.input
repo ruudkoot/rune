@@ -1,0 +1,1 @@
+L (comb2 $2 $3) (addConDocs (unLoc $3) $1)

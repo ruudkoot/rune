@@ -1,0 +1,12 @@
+{'name': 'default', 'shift_reduce': 33, 'reduce_reduce': 1, 'action_bytes': 3419482, 'goto_bytes': 1977290}
+{'name': 'basic', 'shift_reduce': 0, 'reduce_reduce': 0, 'action_bytes': 235, 'goto_bytes': 59}
+{'name': 'precedence', 'shift_reduce': 0, 'reduce_reduce': 0, 'action_bytes': 773, 'goto_bytes': 135}
+{'name': 'typed', 'shift_reduce': 0, 'reduce_reduce': 0, 'action_bytes': 273, 'goto_bytes': 91}
+{'name': 'multiple-starts', 'shift_reduce': 0, 'reduce_reduce': 0, 'action_bytes': 527, 'goto_bytes': 161}
+{'name': 'quote-normalization', 'shift_reduce': 0, 'reduce_reduce': 0, 'action_bytes': 235, 'goto_bytes': 59}
+{'name': 'attributes', 'shift_reduce': 0, 'reduce_reduce': 0, 'action_bytes': 235, 'goto_bytes': 59}
+{'name': 'attribute-groups', 'shift_reduce': 0, 'reduce_reduce': 0, 'action_bytes': 409, 'goto_bytes': 141}
+{'name': 'attribute-rightmost', 'shift_reduce': 0, 'reduce_reduce': 0, 'action_bytes': 235, 'goto_bytes': 59}
+{'name': 'attribute-zero', 'shift_reduce': 0, 'reduce_reduce': 0, 'action_bytes': 235, 'goto_bytes': 59}
+{'name': 'attribute-empty', 'shift_reduce': 0, 'reduce_reduce': 0, 'action_bytes': 235, 'goto_bytes': 59}
+{'name': 'monad-lexer', 'shift_reduce': 0, 'reduce_reduce': 0, 'action_bytes': 235, 'goto_bytes': 59}

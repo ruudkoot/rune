@@ -1,0 +1,51 @@
+[ 1 of 18] Compiling AbsSyn           ( AbsSyn.lhs, AbsSyn.o )
+[ 2 of 18] Compiling GenUtils         ( GenUtils.lhs, GenUtils.o )
+[ 3 of 18] Compiling ParseMonad       ( ParseMonad.lhs, ParseMonad.o )
+
+ParseMonad.lhs:25:9: warning: [-Wnoncanonical-monad-instances]
+    Noncanonical ‘pure = return’ definition detected
+    in the instance declaration for ‘Applicative P’.
+    Move definition from ‘return’ to ‘pure’
+    See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/monad-of-no-return
+   |
+25 | >       pure = return
+   |         ^^^^^^^^^^^^^
+
+ParseMonad.lhs:29:9: warning: [-Wnoncanonical-monad-instances]
+    Noncanonical ‘return’ definition detected
+    in the instance declaration for ‘Monad P’.
+    ‘return’ will eventually be removed in favour of ‘pure’
+    Either remove definition for ‘return’ (recommended) or define as ‘return = pure’
+    See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/monad-of-no-return
+   |
+29 | >       return m = P $ \ _ _ -> OkP m
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[ 4 of 18] Compiling Lexer            ( Lexer.lhs, Lexer.o )
+[ 5 of 18] Compiling AttrGrammar      ( AttrGrammar.lhs, AttrGrammar.o )
+[ 6 of 18] Compiling AttrGrammarParser ( AttrGrammarParser.hs, AttrGrammarParser.o )
+
+AttrGrammarParser.hs:553:9: warning: [-Woverlapping-patterns]
+    Pattern match is redundant
+    In a case alternative: _ -> ...
+    |
+553 |         _ -> happyError' tk
+    |         ^^^^^^^^^^^^^^^^^^^
+[ 7 of 18] Compiling Grammar          ( Grammar.lhs, Grammar.o )
+[ 8 of 18] Compiling Parser           ( Parser.hs, Parser.o )
+[ 9 of 18] Compiling Paths_happy      ( Paths_happy.hs, Paths_happy.o )
+
+Paths_happy.hs:9:44: warning: [-Wdeprecations]
+    In the use of ‘versionTags’ (imported from Data.Version):
+    Deprecated: "See GHC ticket #2496"
+  |
+9 | version = Version {versionBranch = [1,16], versionTags = []}
+  |                                            ^^^^^^^^^^^
+[10 of 18] Compiling ProduceGLRCode   ( ProduceGLRCode.lhs, ProduceGLRCode.o )
+[11 of 18] Compiling Set              ( Set.hs, Set.o )
+[12 of 18] Compiling LALR             ( LALR.lhs, LALR.o )
+[13 of 18] Compiling Info             ( Info.lhs, Info.o )
+[14 of 18] Compiling First            ( First.lhs, First.o )
+[15 of 18] Compiling Target           ( Target.lhs, Target.o )
+[16 of 18] Compiling ProduceCode      ( ProduceCode.lhs, ProduceCode.o )
+[17 of 18] Compiling Main             ( Main.lhs, Main.o )
+[18 of 18] Linking original

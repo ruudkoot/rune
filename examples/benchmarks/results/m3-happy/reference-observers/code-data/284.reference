@@ -1,0 +1,1 @@
+["ok","sL (comb2 happy_var_1 happy_var_5) $ toOL [ sL (comb2 happy_var_1 happy_var_5) $ SigD (TypeSig n happy_var_5) | n <- happy_var_1 : unLoc happy_var_3 ]",[3,1,5,5,1,5,1]]

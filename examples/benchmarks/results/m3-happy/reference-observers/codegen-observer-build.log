@@ -1,0 +1,49 @@
+[ 1 of 16] Compiling AbsSyn           ( AbsSyn.lhs, AbsSyn.o )
+[ 2 of 16] Compiling GenUtils         ( GenUtils.lhs, GenUtils.o )
+[ 3 of 16] Compiling ParseMonad       ( ParseMonad.lhs, ParseMonad.o )
+
+ParseMonad.lhs:25:9: warning: [-Wnoncanonical-monad-instances]
+    Noncanonical ‘pure = return’ definition detected
+    in the instance declaration for ‘Applicative P’.
+    Move definition from ‘return’ to ‘pure’
+    See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/monad-of-no-return
+   |
+25 | >       pure = return
+   |         ^^^^^^^^^^^^^
+
+ParseMonad.lhs:29:9: warning: [-Wnoncanonical-monad-instances]
+    Noncanonical ‘return’ definition detected
+    in the instance declaration for ‘Monad P’.
+    ‘return’ will eventually be removed in favour of ‘pure’
+    Either remove definition for ‘return’ (recommended) or define as ‘return = pure’
+    See also: https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/monad-of-no-return
+   |
+29 | >       return m = P $ \ _ _ -> OkP m
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[ 4 of 16] Compiling Lexer            ( Lexer.lhs, Lexer.o )
+[ 5 of 16] Compiling AttrGrammar      ( AttrGrammar.lhs, AttrGrammar.o )
+[ 6 of 16] Compiling AttrGrammarParser ( AttrGrammarParser.hs, AttrGrammarParser.o )
+
+AttrGrammarParser.hs:553:9: warning: [-Woverlapping-patterns]
+    Pattern match is redundant
+    In a case alternative: _ -> ...
+    |
+553 |         _ -> happyError' tk
+    |         ^^^^^^^^^^^^^^^^^^^
+[ 7 of 16] Compiling Grammar          ( Grammar.lhs, Grammar.o )
+[ 8 of 16] Compiling Parser           ( Parser.hs, Parser.o )
+[ 9 of 16] Compiling Paths_happy      ( Paths_happy.hs, Paths_happy.o )
+
+Paths_happy.hs:9:44: warning: [-Wdeprecations]
+    In the use of ‘versionTags’ (imported from Data.Version):
+    Deprecated: "See GHC ticket #2496"
+  |
+9 | version = Version {versionBranch = [1,16], versionTags = []}
+  |                                            ^^^^^^^^^^^
+[10 of 16] Compiling Set              ( Set.hs, Set.o )
+[11 of 16] Compiling LALR             ( LALR.lhs, LALR.o )
+[12 of 16] Compiling First            ( First.lhs, First.o )
+[13 of 16] Compiling Target           ( Target.lhs, Target.o )
+[14 of 16] Compiling ProduceCode      ( ProduceCode.lhs, ProduceCode.o )
+[15 of 16] Compiling Main             ( MainCodegen.hs, MainCodegen.o )
+[16 of 16] Linking observe-codegen [Objects changed]

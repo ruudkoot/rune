@@ -1,0 +1,1 @@
+["ok","let (binds, sigs, ats, _) = cvBindsAndSigs (unLoc happy_var_3)\u000a\u0009      in \u000a\u0009      unitOL (L (comb3 happy_var_1 happy_var_2 happy_var_3) (InstD (InstDecl happy_var_2 binds sigs ats)))",[2,3,2,1,3]]

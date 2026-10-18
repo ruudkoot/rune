@@ -1,0 +1,1 @@
+["ok","% do { let { L loc tv = happy_var_2 }\u000a\u0009\u0009\u0009\u0009      ; p <- checkInstType (L loc (HsTyVar tv))\u000a\u0009\u0009\u0009\u0009      ; return (sL (comb2 happy_var_1 happy_var_2) (Just [p])) }",[2,1,2]]

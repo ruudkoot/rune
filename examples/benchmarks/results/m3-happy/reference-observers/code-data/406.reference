@@ -1,0 +1,1 @@
+["ok","% checkPattern happy_var_3 >>= \\p ->\u000a\u0009\u0009\u0009\u0009\u0009   return (sL (comb2 happy_var_1 happy_var_3) $ mkBindStmt p happy_var_1)",[1,3,1,3]]

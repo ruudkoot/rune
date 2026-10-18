@@ -1,0 +1,3 @@
+% case parseHaddockParagraphs (tokenise (getDOCNEXT $1)) of {
+      Left  err -> parseError (getLoc $1) err;
+      Right doc -> return (sL (getLoc $1) doc) }

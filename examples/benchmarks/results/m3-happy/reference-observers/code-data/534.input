@@ -1,0 +1,6 @@
+%
+      let string = getDOCNAMED $1 
+          (name, rest) = break isSpace string
+      in case parseHaddockParagraphs (tokenise rest) of {
+        Left  err -> parseError (getLoc $1) err;
+        Right doc -> return (sL (getLoc $1) (name, doc)) }

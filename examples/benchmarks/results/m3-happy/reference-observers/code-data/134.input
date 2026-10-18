@@ -1,0 +1,1 @@
+L (getLoc $2) (HsIPBinds (IPBinds (unLoc $2) emptyLHsBinds))

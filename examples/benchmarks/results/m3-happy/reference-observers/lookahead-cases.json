@@ -1,0 +1,86 @@
+[
+  {
+    "name": "default",
+    "spontaneous": 20036,
+    "propagated": 9055,
+    "array_rows": 981,
+    "lookahead_items": 1309
+  },
+  {
+    "name": "basic",
+    "spontaneous": 4,
+    "propagated": 3,
+    "array_rows": 5,
+    "lookahead_items": 3
+  },
+  {
+    "name": "precedence",
+    "spontaneous": 21,
+    "propagated": 21,
+    "array_rows": 10,
+    "lookahead_items": 15
+  },
+  {
+    "name": "typed",
+    "spontaneous": 4,
+    "propagated": 3,
+    "array_rows": 5,
+    "lookahead_items": 3
+  },
+  {
+    "name": "multiple-starts",
+    "spontaneous": 14,
+    "propagated": 6,
+    "array_rows": 8,
+    "lookahead_items": 6
+  },
+  {
+    "name": "quote-normalization",
+    "spontaneous": 4,
+    "propagated": 3,
+    "array_rows": 5,
+    "lookahead_items": 3
+  },
+  {
+    "name": "attributes",
+    "spontaneous": 4,
+    "propagated": 3,
+    "array_rows": 5,
+    "lookahead_items": 3
+  },
+  {
+    "name": "attribute-groups",
+    "spontaneous": 8,
+    "propagated": 5,
+    "array_rows": 7,
+    "lookahead_items": 5
+  },
+  {
+    "name": "attribute-rightmost",
+    "spontaneous": 4,
+    "propagated": 3,
+    "array_rows": 5,
+    "lookahead_items": 3
+  },
+  {
+    "name": "attribute-zero",
+    "spontaneous": 4,
+    "propagated": 3,
+    "array_rows": 5,
+    "lookahead_items": 3
+  },
+  {
+    "name": "attribute-empty",
+    "spontaneous": 4,
+    "propagated": 3,
+    "array_rows": 5,
+    "lookahead_items": 3
+  },
+  {
+    "name": "monad-lexer",
+    "spontaneous": 4,
+    "propagated": 3,
+    "array_rows": 5,
+    "lookahead_items": 3
+  }
+]

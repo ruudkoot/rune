@@ -1,0 +1,142 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index d9cf4f1d7..077048e7d 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -498,6 +498,8 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [simple-nofib-strict](#simple-nofib-strict) | [nofib SIMPLE](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/simple) | Advance immutable hydrodynamic arrays with thirteen scalar reductions and strict finite cells. |
+ | [simple-nofib-report-lazy](#simple-nofib-report-lazy) | [nofib SIMPLE](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/simple) | Advance immutable hydrodynamic arrays with complete state reporting and memoized finite cells. |
+ | [simple-nofib-report-strict](#simple-nofib-report-strict) | [nofib SIMPLE](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/simple) | Advance immutable hydrodynamic arrays with complete state reporting and strict finite cells. |
++| [happy-lazy](#happy-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/happy) | Generate and validate complete Haskell LALR parser source with memoized finite data. |
++| [happy-strict](#happy-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/happy) | Generate and validate complete Haskell LALR parser source with eager finite data. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -34358,3 +34360,17 @@ specific Haskell program, not validation of the physical model. No parallel
+ runtime feature is introduced. Upstream mutable C/Fortran comparisons and the
+ classic SML version need separate numeric/evaluation review before any claim
+ of equivalent costs or exact results.
++
++
++## happy-lazy
++
++See the [complete provenance and workload description](happy-lazy/PROVENANCE.md)
++for the algorithm, historical variants, translation, profiles, validation and
++literature. The normal profile generates the unchanged upstream grammar.
++
++
++## happy-strict
++
++See the [complete provenance and workload description](happy-strict/PROVENANCE.md)
++for the algorithm, historical variants, translation, profiles, validation and
++literature. The normal profile generates the unchanged upstream grammar.
+diff --git a/examples/benchmarks/inventory.tsv b/examples/benchmarks/inventory.tsv
+index 37d7768a9..e910cc9a6 100644
+--- a/examples/benchmarks/inventory.tsv
++++ b/examples/benchmarks/inventory.tsv
+@@ -492,7 +492,7 @@ nofib	gc/fibheaps	fibheaps	fibheaps	M3	import	calls-recursion	nofib:spectral/fib
+ nofib	gc/fulsom/Bah.hs	Bah	Bah	-	exclude	application	nofib:real/fulsom/Bah.hs	Duncan Sinclair	dee4d428691bbf65f391631a984dd56501e45e4483d7d052fde597d707bfca0a	gc/fulsom/Bah.hs;gc/fulsom/Csg.hs;gc/fulsom/Interval.hs;gc/fulsom/Kolor.hs;gc/fulsom/Matrix.hs;gc/fulsom/Oct.hs;gc/fulsom/Quad.hs;gc/fulsom/Raster.hs;gc/fulsom/Shapes.hs;gc/fulsom/Types.hs;gc/fulsom/Vector.hs	gc/fulsom/fulsom.faststdout;gc/fulsom/fulsom.stdout	gc/fulsom/Bah.hs:header;gc/fulsom/Csg.hs:header;gc/fulsom/Interval.hs:header;gc/fulsom/Kolor.hs:header;gc/fulsom/Matrix.hs:header;gc/fulsom/Oct.hs:header;gc/fulsom/Quad.hs:header;gc/fulsom/Raster.hs:header;gc/fulsom/Shapes.hs:header;gc/fulsom/Types.hs:header;gc/fulsom/Vector.hs:header	gc/fulsom/Interval.hs:author-and-individual-permission;gc/fulsom/Makefile	auxiliary test or alternate entrypoint; the directory Makefile excludes it or selects the Main driver, not a separate benchmark invocation
+ nofib	gc/fulsom/Main.hs	fulsom	fulsom	M3	import	application	nofib:real/fulsom/Main.hs	Duncan Sinclair	9a667934091ce6847985daac4192d7f34ffe20c37fd65388af47d5fd1c73d911	gc/fulsom/Csg.hs;gc/fulsom/Interval.hs;gc/fulsom/Kolor.hs;gc/fulsom/Main.hs;gc/fulsom/Matrix.hs;gc/fulsom/Oct.hs;gc/fulsom/Patchlevel.hs;gc/fulsom/Quad.hs;gc/fulsom/Raster.hs;gc/fulsom/Shapes.hs;gc/fulsom/Types.hs;gc/fulsom/Vector.hs	gc/fulsom/fulsom.faststdout;gc/fulsom/fulsom.stdout	gc/fulsom/Csg.hs:header;gc/fulsom/Interval.hs:header;gc/fulsom/Kolor.hs:header;gc/fulsom/Main.hs:header;gc/fulsom/Matrix.hs:header;gc/fulsom/Oct.hs:header;gc/fulsom/Patchlevel.hs:header;gc/fulsom/Quad.hs:header;gc/fulsom/Raster.hs:header;gc/fulsom/Shapes.hs:header;gc/fulsom/Types.hs:header;gc/fulsom/Vector.hs:header	gc/fulsom/Interval.hs:author-and-individual-permission;gc/fulsom/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	gc/gc_bench	gc_bench	gc_bench	M3	import	allocation-lifetimes		John Ellis and Pete Kovac	52ecba8fa77375be0b863d9854ef7fd9b3b112ffd0c675f7c0d129ebb4002e1a	gc/gc_bench/Main.hs		gc/gc_bench/Main.hs:header	gc/gc_bench/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	gc/happy	happy	happy	M3	import	integer-arithmetic		not stated in scanned source headers	09e64ba7140a210f177de61d0916899dbea4b936d52cbee15aa3b6af11fb0de1	gc/happy/AbsSyn.lhs;gc/happy/AttrGrammar.lhs;gc/happy/AttrGrammarParser.hs;gc/happy/First.lhs;gc/happy/GenUtils.lhs;gc/happy/Grammar.lhs;gc/happy/Info.lhs;gc/happy/LALR.lhs;gc/happy/Lexer.lhs;gc/happy/Main.lhs;gc/happy/ParseMonad.lhs;gc/happy/Parser.hs;gc/happy/Paths_happy.hs;gc/happy/ProduceCode.lhs;gc/happy/ProduceGLRCode.lhs;gc/happy/Set.hs;gc/happy/Target.lhs	gc/happy/TestInput.y;gc/happy/happy.expected	gc/happy/Main.lhs:header	gc/happy/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	gc/happy	happy	happy	M3	import	compiler-application		Andy Gill;Simon Marlow;Sven Panne (GHC grammar input)	09e64ba7140a210f177de61d0916899dbea4b936d52cbee15aa3b6af11fb0de1	gc/happy/AbsSyn.lhs;gc/happy/AttrGrammar.lhs;gc/happy/AttrGrammarParser.hs;gc/happy/First.lhs;gc/happy/GenUtils.lhs;gc/happy/Grammar.lhs;gc/happy/Info.lhs;gc/happy/LALR.lhs;gc/happy/Lexer.lhs;gc/happy/Main.lhs;gc/happy/ParseMonad.lhs;gc/happy/Parser.hs;gc/happy/Paths_happy.hs;gc/happy/ProduceCode.lhs;gc/happy/ProduceGLRCode.lhs;gc/happy/Set.hs;gc/happy/Target.lhs	gc/happy/TestInput.y;gc/happy/happy.expected	gc/happy/GenUtils.lhs:public-domain-statement;gc/happy/Main.lhs:header;gc/happy/TestInput.y:Glasgow-copyright-and-grammar-authors	gc/happy/GenUtils.lhs:individual-public-domain-statement;gc/happy/Main.lhs:original-authors;gc/happy/Makefile;gc/happy/Makefile:grammar-input-and-generated-parser-exclusion;gc/happy/TestInput.y:individual-dataset-notice	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	gc/hash	hash	hash	M3	import	integer-arithmetic		not stated in scanned source headers	3ec00ac7589a5899fff59badb575a2620e04aa862e974ea136d86ba0db7d9359	gc/hash/HashTable.hs;gc/hash/hash.hs	gc/hash/hash.stdout	gc/hash/HashTable.hs:header	gc/hash/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	gc/lcss	lcss	lcss	M3	import	kernel	nofib:spectral/lcss	not stated in scanned source headers	b294267623dadeb3d1ae776b7a1603bc5f6e80b20b327c7669a17cf99ed754cc	gc/lcss/Main.hs	gc/lcss/lcss.faststdout;gc/lcss/lcss.slowstdout;gc/lcss/lcss.stdout		gc/lcss/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	gc/linear	linear	linear	M3	import	kernel	nofib:real/linear	Brian D. Moe;Brian D. Moe (Summer 1990;Brian D. Moe (Summer 1990).;Cordelia V. Hall;Dan Vasicek;Dan Vasicek and copied from his directory 6/22/90;Ian R. McLelland;Kamini Shenoi;Roger L. Wainwright	26af39b55cb2c21d1ca09261ab267ddea3f7288cf6d2460a31bcf9886942dd47	gc/linear/AbsCg.lhs;gc/linear/AbsDensematrix.lhs;gc/linear/Absmatlib.lhs;gc/linear/Cg.lhs;gc/linear/Densematrix.lhs;gc/linear/Input.lhs;gc/linear/Main.lhs;gc/linear/Matlib.lhs;gc/linear/Matrix.lhs;gc/linear/Misc.lhs;gc/linear/Utils.lhs	gc/linear/linear.expected;gc/linear/linear.stdout	gc/linear/Input.lhs:header;gc/linear/Main.lhs:header;gc/linear/Matlib.lhs:header;gc/linear/Matrix.lhs:header;gc/linear/Misc.lhs:header	gc/linear/Input.lhs:data-representation-credit;gc/linear/Input.lhs:input-reader-credit;gc/linear/Main.lhs:authorship-and-conversion-roles;gc/linear/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 29100a1d7..ddd6892c2 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -1420,3 +1420,7 @@ simple-nofib-report-lazy	large	nofib	spectral/simple	100 large.reference	simple-
+ simple-nofib-report-strict	smoke	nofib	spectral/simple	1 smoke-8.reference	simple-nofib-report-strict/smoke-8.expected	shared/input.sml,shared/lazy.sml,shared/simple-nofib-arrays.sml,shared/simple-nofib-kernel.sml,shared/simple-nofib-check.sml,simple-nofib-report-strict/smoke-benchmark.sml,shared/main.sml	30	1048576	numerical,binary64,immutable-arrays,recursive-arrays,hydrodynamics,sharing,allocation-lifetimes,formatting,io	smoke-8.reference	exact	implemented
+ simple-nofib-report-strict	normal	nofib	spectral/simple	20 normal.reference	simple-nofib-report-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/simple-nofib-arrays.sml,shared/simple-nofib-kernel.sml,shared/simple-nofib-check.sml,simple-nofib-report-strict/benchmark.sml,shared/main.sml	600	4194304	numerical,binary64,immutable-arrays,recursive-arrays,hydrodynamics,sharing,allocation-lifetimes,formatting,io	normal.reference	exact	implemented
+ simple-nofib-report-strict	large	nofib	spectral/simple	100 large.reference	simple-nofib-report-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/simple-nofib-arrays.sml,shared/simple-nofib-kernel.sml,shared/simple-nofib-check.sml,simple-nofib-report-strict/benchmark.sml,shared/main.sml	3600	8388608	numerical,binary64,immutable-arrays,recursive-arrays,hydrodynamics,sharing,allocation-lifetimes,formatting,io	large.reference	exact	implemented
++happy-lazy	smoke	nofib	gc/happy	smoke.y smoke.reference smoke.warnings	happy-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/happy-set.sml,shared/happy-lexer.sml,shared/happy-kernel.sml,shared/happy-check.sml,happy-lazy/benchmark.sml,shared/main.sml	120	4194304	compiler-application,parsing,lalr,sets,immutable-arrays,sharing,allocation-lifetimes,formatting,io	smoke.y,smoke.reference,smoke.warnings	exact	implemented
++happy-lazy	normal	nofib	gc/happy	normal.y normal.reference normal.warnings	happy-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/happy-set.sml,shared/happy-lexer.sml,shared/happy-kernel.sml,shared/happy-check.sml,happy-lazy/benchmark.sml,shared/main.sml	600	4194304	compiler-application,parsing,lalr,sets,immutable-arrays,sharing,allocation-lifetimes,formatting,io	normal.y,normal.reference,normal.warnings	exact	implemented
++happy-strict	smoke	nofib	gc/happy	smoke.y smoke.reference smoke.warnings	happy-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/happy-set.sml,shared/happy-lexer.sml,shared/happy-kernel.sml,shared/happy-check.sml,happy-strict/benchmark.sml,shared/main.sml	120	4194304	compiler-application,parsing,lalr,sets,immutable-arrays,sharing,allocation-lifetimes,formatting,io	smoke.y,smoke.reference,smoke.warnings	exact	implemented
++happy-strict	normal	nofib	gc/happy	normal.y normal.reference normal.warnings	happy-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/happy-set.sml,shared/happy-lexer.sml,shared/happy-kernel.sml,shared/happy-check.sml,happy-strict/benchmark.sml,shared/main.sml	600	4194304	compiler-application,parsing,lalr,sets,immutable-arrays,sharing,allocation-lifetimes,formatting,io	normal.y,normal.reference,normal.warnings	exact	implemented
+diff --git a/scripts/benchmark-inventory.py b/scripts/benchmark-inventory.py
+index f5b88de5d..ca2bf7d0b 100644
+--- a/scripts/benchmark-inventory.py
++++ b/scripts/benchmark-inventory.py
+@@ -301,7 +301,7 @@ def discover(source, root):
+ 
+ def family(name, text):
+     key = name.lower()
+-    if key in {"lift", "parstof", "transform"}:
++    if key in {"happy", "lift", "parstof", "transform"}:
+         return "compiler-application"
+     if any(x in key for x in ("fft", "nbody", "n-body", "barnes", "mandel", "nucleic", "ray", "simple", "fem", "fluid", "almabench", "matrix", "grammatrix", "decomposition", "durand", "levinson", "minilight", "sphere", "zern", "arith")):
+         return "numerical"
+@@ -558,6 +558,30 @@ def build(source, root, lock):
+                     notices.append(str(notice.relative_to(root)))
+         authors = set()
+         context = [p for p in parent.iterdir() if p.is_file() and p.name in {"README", "README.md", "Makefile", "FILES", "sources.cm"}] if parent.exists() and files else []
++        if source == "nofib" and path == "gc/happy":
++            main = parent / "Main.lhs"
++            if main.is_file():
++                heading = main.read_text(errors="replace")[:1000]
++                if "(c) 1993-2003 Andy Gill, Simon Marlow" in heading:
++                    authors.update({"Andy Gill", "Simon Marlow"})
++                    item["evidence"].append("gc/happy/Main.lhs:original-authors")
++            data = parent / "TestInput.y"
++            if data.is_file():
++                heading = data.read_text(errors="replace")[:1000]
++                if ("(c) The University of Glasgow 1997-2003" in heading
++                        and "Author(s): Simon Marlow, Sven Panne 1997, 1998, 1999" in heading):
++                    authors.add("Sven Panne (GHC grammar input)")
++                    notices.append("gc/happy/TestInput.y:Glasgow-copyright-and-grammar-authors")
++                    item["evidence"].append("gc/happy/TestInput.y:individual-dataset-notice")
++            utilities = parent / "GenUtils.lhs"
++            if utilities.is_file() and "All the code below is understood to be in the public domain." in utilities.read_text(errors="replace")[:1000]:
++                notices.append("gc/happy/GenUtils.lhs:public-domain-statement")
++                item["evidence"].append("gc/happy/GenUtils.lhs:individual-public-domain-statement")
++            makefile = parent / "Makefile"
++            if makefile.is_file():
++                build_text = makefile.read_text()
++                if "NORM_OPTS = TestInput.y" in build_text and "EXCLUDED_SRCS += TestInput.hs" in build_text:
++                    item["evidence"].append("gc/happy/Makefile:grammar-input-and-generated-parser-exclusion")
+         if source == "nofib" and path == "spectral/simple":
+             main = parent / "Main.hs"
+             if main.is_file():
+diff --git a/tests/benchmarks/test-inventory.py b/tests/benchmarks/test-inventory.py
+index e85b885ca..f939ecea5 100644
+--- a/tests/benchmarks/test-inventory.py
++++ b/tests/benchmarks/test-inventory.py
+@@ -286,6 +286,37 @@ class InventoryTest(unittest.TestCase):
+         self.file("spectral/multiplier/Main.hs", "-- Another multiplier author\nmain = print 0\n")
+         self.assertNotIn("John T. O'Donnell", self.build("nofib")[0]["authors"])
+ 
++    def happy_sources(self, original=True):
++        self.nofib_roots()
++        self.file("gc/happy/Makefile", "NORM_OPTS = TestInput.y\nEXCLUDED_SRCS += TestInput.hs\n")
++        self.file("gc/happy/Main.lhs", "(c) 1993-2003 Andy Gill, Simon Marlow\n> main = print 0\n" if original else "> main = print 0\n")
++        self.file("gc/happy/TestInput.y", "-- (c) The University of Glasgow 1997-2003\n-- Author(s): Simon Marlow, Sven Panne 1997, 1998, 1999\n" if original else "-- different grammar\n")
++        self.file("gc/happy/GenUtils.lhs", "All the code below is understood to be in the public domain.\n> helper = 0\n" if original else "> helper = 0\n")
++        return self.build("nofib")[0]
++
++    def test_happy_records_original_authors(self):
++        row = self.happy_sources()
++        self.assertIn("Andy Gill", row["authors"])
++        self.assertIn("Simon Marlow", row["authors"])
++        self.assertEqual("compiler-application", row["family"])
++
++    def test_happy_records_individual_grammar_notice(self):
++        row = self.happy_sources()
++        self.assertIn("Sven Panne (GHC grammar input)", row["authors"])
++        self.assertIn("gc/happy/TestInput.y:Glasgow-copyright-and-grammar-authors", row["notices"])
++
++    def test_happy_records_utility_permission(self):
++        self.assertIn("gc/happy/GenUtils.lhs:public-domain-statement", self.happy_sources()["notices"])
++
++    def test_changed_happy_notices_require_review(self):
++        row = self.happy_sources(original=False)
++        self.assertNotIn("Andy Gill", row["authors"])
++        self.assertNotIn("Sven Panne", row["authors"])
++        self.assertNotIn("public-domain-statement", row["notices"])
++
++    def test_happy_records_generated_source_build_scope(self):
++        self.assertIn("gc/happy/Makefile:grammar-input-and-generated-parser-exclusion", self.happy_sources()["evidence"])
++
+     def simple_sources(self, c_header="Andy Shaw and Kofi Fynn.\nWed Feb  2 14:59:18 EST 1994"):
+         self.nofib_roots()
+         self.file("spectral/simple/Makefile", "SRCS = Main.hs\n")

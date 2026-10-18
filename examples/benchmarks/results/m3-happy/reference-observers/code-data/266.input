@@ -1,0 +1,3 @@
+% do { let { L loc tv = $2 }
+				      ; p <- checkInstType (L loc (HsTyVar tv))
+				      ; return (sL (comb2 $1 $>) (Just [p])) }

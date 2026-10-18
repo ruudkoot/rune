@@ -1,0 +1,1 @@
+["ok","sL (comb2 happy_var_1 happy_var_6) $ toOL [ sL (comb2 happy_var_1 happy_var_6) $ SigD (SpecSig happy_var_3 t (mkInlineSpec happy_var_2 (getSPEC_INLINE happy_var_1)))\u000a\u0009\u0009\u0009\u0009\u0009    | t <- happy_var_5]",[5,1,2,3,6,1,6,1]]

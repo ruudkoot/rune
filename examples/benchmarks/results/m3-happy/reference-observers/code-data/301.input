@@ -1,0 +1,1 @@
+sL (comb2 $1 $>) $ HsCase $2 (mkMatchGroup (unLoc $4))

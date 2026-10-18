@@ -1,0 +1,87 @@
+PROGRAM LIMIT AS 1048576 KiB
+subtract: 1073741822
+combined: 107374182
+separate: 107374182
+constant: 107374182
+SUMMARY 0 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-happy-originals/arithmetic-only.sml]
+[autoloading]
+[autoloading done]
+subtract: 1073741822
+combined: 107374182
+separate: 107374182
+constant: 107374182
+SUMMARY 0 checks, 0 failed
+val report = fn : string -> (unit -> int) -> unit
+val subtract = fn : int -> int
+val combined = fn : int * int -> int
+val separate = fn : int * int -> int
+val base = 10 : int
+val digit = 1 : int
+val it = () : unit
+- 
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-happy-originals/arithmetic-only.sml]
+[autoloading]
+[autoloading done]
+subtract: Overflow
+combined: Overflow
+separate: Overflow
+constant: 107374182
+SUMMARY 0 checks, 0 failed
+val report = fn : string -> (unit -> int) -> unit
+val subtract = fn : int -> int
+val combined = fn : int * int -> int
+val separate = fn : int * int -> int
+val base = 10 : int
+val digit = 1 : int
+val it = () : unit
+- 
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-happy-originals/arithmetic-only.sml]
+subtract: 1073741822
+combined: 107374182
+separate: 107374182
+constant: 107374182
+SUMMARY 0 checks, 0 failed
+val report = <fn> : string -> (unit -> int) -> unit
+val subtract = <fn> : int -> int
+val combined = <fn> : int * int -> int
+val separate = <fn> : int * int -> int
+val base = 10 : int
+val digit = 1 : int
+val it = () : unit
+- 
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+subtract: 1073741822
+combined: 107374182
+separate: 107374182
+constant: 107374182
+SUMMARY 0 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+subtract: 1073741822
+combined: 107374182
+separate: 107374182
+constant: 107374182
+SUMMARY 0 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

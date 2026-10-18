@@ -1,0 +1,1 @@
+happy-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/hartel-ida-finite.sml shared/happy-set.sml shared/happy-lexer.sml shared/happy-kernel.sml shared/happy-check.sml happy-lazy/benchmark.sml shared/main.sml	normal.y normal.reference normal.warnings	happy-lazy/normal.expected	normal.y normal.reference normal.warnings

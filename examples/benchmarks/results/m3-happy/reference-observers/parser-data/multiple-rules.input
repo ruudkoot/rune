@@ -1,0 +1,4 @@
+%token x {X}
+%%
+a : x {A}
+b : a {B} | x {X}

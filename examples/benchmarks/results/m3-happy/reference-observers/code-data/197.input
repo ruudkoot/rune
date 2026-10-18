@@ -1,0 +1,1 @@
+sL (comb2 $1 $>) (HsPredTy (HsIParam (unLoc $1) $3))

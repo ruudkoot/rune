@@ -1,0 +1,1 @@
+["ok","toOL [ sL (comb2 happy_var_1 happy_var_2) $ DeprecD (Deprecation n (getSTRING happy_var_2)) \u000a\u0009\u0009       | n <- unLoc happy_var_1 ]",[1,2,2,1]]

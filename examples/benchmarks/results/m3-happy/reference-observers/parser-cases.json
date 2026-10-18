@@ -1,0 +1,14 @@
+[
+  "default",
+  "basic",
+  "empty",
+  "typed",
+  "directives",
+  "multiple-rules",
+  "syntax-error",
+  "missing-separator",
+  "unknown-directive",
+  "unterminated-code",
+  "missing-id",
+  "extra-code"
+]

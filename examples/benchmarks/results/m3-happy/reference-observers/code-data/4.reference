@@ -1,0 +1,1 @@
+["ok","% fileSrcSpan >>= \\ loc -> case happy_var_1 of { (opt, info, doc) -> \u000a\u0009\u0009   return (L loc (HsModule (Just happy_var_3) happy_var_5 (fst happy_var_7) (snd happy_var_7) happy_var_4 \u000a                          opt info doc) )}",[4,7,7,5,3,1]]

@@ -1,0 +1,1 @@
+sL (comb2 $1 $>) $ toOL [ sL (comb2 $1 $>) $ SigD (TypeSig n $5) | n <- $1 : unLoc $3 ]

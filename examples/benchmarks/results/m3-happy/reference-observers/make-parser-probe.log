@@ -1,0 +1,25 @@
+PASS need default
+PASS need basic
+PASS need empty
+PASS need typed
+PASS need directives
+PASS need multiple-rules
+PASS need syntax-error
+PASS need missing-separator
+PASS need unknown-directive
+PASS need unterminated-code
+PASS need missing-id
+PASS need extra-code
+PASS strict default
+PASS strict basic
+PASS strict empty
+PASS strict typed
+PASS strict directives
+PASS strict multiple-rules
+PASS strict syntax-error
+PASS strict missing-separator
+PASS strict unknown-directive
+PASS strict unterminated-code
+PASS strict missing-id
+PASS strict extra-code
+

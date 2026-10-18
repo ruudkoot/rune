@@ -1,0 +1,2 @@
+% checkContext
+					     (sL (comb2 $1 $>) $ HsPredTy (HsEqualP $1 $3))

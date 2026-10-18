@@ -1,0 +1,50 @@
+[
+  {
+    "name": "default",
+    "bytes": 706113
+  },
+  {
+    "name": "basic",
+    "bytes": 1633
+  },
+  {
+    "name": "precedence",
+    "bytes": 2575
+  },
+  {
+    "name": "typed",
+    "bytes": 2201
+  },
+  {
+    "name": "multiple-starts",
+    "bytes": 2208
+  },
+  {
+    "name": "quote-normalization",
+    "bytes": 1658
+  },
+  {
+    "name": "attributes",
+    "bytes": 2024
+  },
+  {
+    "name": "attribute-groups",
+    "bytes": 2845
+  },
+  {
+    "name": "attribute-rightmost",
+    "bytes": 1966
+  },
+  {
+    "name": "attribute-zero",
+    "bytes": 2003
+  },
+  {
+    "name": "attribute-empty",
+    "bytes": 1942
+  },
+  {
+    "name": "monad-lexer",
+    "bytes": 1218
+  }
+]

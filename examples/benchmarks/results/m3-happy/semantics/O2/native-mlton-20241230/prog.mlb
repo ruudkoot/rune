@@ -1,0 +1,13 @@
+$(SML_LIB)/basis/basis.mlb
+"/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml"
+"/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml"
+"/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml"
+"/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml"
+"/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml"
+"/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/happy-set.sml"
+"/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/happy-lexer.sml"
+"/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/happy-kernel.sml"
+"/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/happy-check.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/happy-fixtures.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/happy-tests.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml"

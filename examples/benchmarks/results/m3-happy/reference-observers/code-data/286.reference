@@ -1,0 +1,1 @@
+["ok","sL (comb2 happy_var_1 happy_var_4) $ unitOL (sL (comb2 happy_var_1 happy_var_4) $ SigD (InlineSig happy_var_3 (mkInlineSpec happy_var_2 (getINLINE happy_var_1))))",[1,2,3,4,1,4,1]]

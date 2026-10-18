@@ -1,0 +1,2 @@
+let (con,details) = unLoc $3 in 
+		  L (comb2 $2 $3) (ConDecl con Explicit (unLoc $2) (noLoc []) details ResTyH98 ($1 `mplus` $4))

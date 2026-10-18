@@ -1,0 +1,6 @@
+% do { let {(ctxt, tc, tvs, tparms) = unLoc $2}
+                                             -- can have type pats
+		      ; return $
+			  L (comb4 $1 $2 $5 $6)
+			    (mkTyData (unLoc $1) (ctxt, tc, tvs, Just tparms) 
+			     (unLoc $3) (reverse (unLoc $5)) (unLoc $6)) }

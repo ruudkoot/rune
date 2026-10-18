@@ -1,0 +1,1 @@
+bench-happy: complete generated parsers, warnings, literals, semantic actions, set shapes, demand and sharing checks hold (/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/happy-checks.30MObx)

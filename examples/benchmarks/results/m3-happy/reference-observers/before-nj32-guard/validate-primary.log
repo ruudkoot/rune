@@ -1,0 +1,3 @@
+RUN O0 smoke
+DONE O0 smoke 2
+RUN O0 normal

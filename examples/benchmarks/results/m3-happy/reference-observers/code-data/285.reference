@@ -1,0 +1,1 @@
+["ok","sL (comb2 happy_var_1 happy_var_3) $ toOL [ sL (comb2 happy_var_1 happy_var_3) $ SigD (FixSig (FixitySig n (Fixity happy_var_2 (unLoc happy_var_1))))\u000a\u0009\u0009\u0009\u0009\u0009     | n <- unLoc happy_var_3 ]",[3,1,2,3,1,3,1]]

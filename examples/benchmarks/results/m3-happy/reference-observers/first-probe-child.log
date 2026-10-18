@@ -1,0 +1,30 @@
+PASS need default 1978
+PASS need basic 12
+PASS need precedence 22
+PASS need typed 16
+PASS need multiple-starts 18
+PASS need quote-normalization 12
+PASS need attributes 12
+PASS need attribute-groups 16
+PASS need attribute-rightmost 12
+PASS need attribute-zero 12
+PASS need attribute-empty 12
+PASS need monad-lexer 12
+PASS need closure-unused-next
+PASS need first-unused-suffix
+PASS need empty-first-skips-function
+PASS strict default 1978
+PASS strict basic 12
+PASS strict precedence 22
+PASS strict typed 16
+PASS strict multiple-starts 18
+PASS strict quote-normalization 12
+PASS strict attributes 12
+PASS strict attribute-groups 16
+PASS strict attribute-rightmost 12
+PASS strict attribute-zero 12
+PASS strict attribute-empty 12
+PASS strict monad-lexer 12
+PASS strict closure-unused-next
+PASS strict first-unused-suffix
+PASS strict empty-first-skips-function

@@ -1,0 +1,1 @@
+%tokentype %token %name %partial %importedidentity %monad %lexer %nonassoc %left %right %prec %expect %error %attributetype %attribute

@@ -1,0 +1,38 @@
+{
+  "primary_profiles": 80,
+  "primary_pass": 78,
+  "primary_failures": [
+    [
+      "happy-lazy",
+      "smoke",
+      "O0",
+      "host-default",
+      "native:mlkit@4.7.23",
+      "compile-failure-unclassified",
+      "results/m3-happy/correctness/O0/smoke/happy-lazy/native-mlkit-4.7.23"
+    ],
+    [
+      "happy-lazy",
+      "smoke",
+      "O2",
+      "host-default",
+      "native:mlkit@4.7.23",
+      "compile-failure-unclassified",
+      "results/m3-happy/correctness/O2/smoke/happy-lazy/native-mlkit-4.7.23"
+    ]
+  ],
+  "semantic_configurations": 20,
+  "semantic_checks": 50280,
+  "semantic_failures": 0,
+  "normal_count_samples": 8,
+  "fresh_adapter_samples": 6,
+  "acceptance": {
+    "command": [
+      "make",
+      "JOBS=4",
+      "check"
+    ],
+    "exit": 0,
+    "elapsed_seconds": 1794.7282950878143
+  }
+}

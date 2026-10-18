@@ -1,0 +1,6 @@
+case unLoc $1 of
+					    [qs] -> sL (getLoc $1) qs
+					    qss  -> sL (getLoc $1) [sL (getLoc $1) (ParStmt stmtss)]
+						 where
+						    stmtss = [ (reverse qs, undefined) 
+						    	     | qs <- qss ]

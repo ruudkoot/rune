@@ -1,0 +1,1 @@
+sL (comb2 $1 $>) $ mkHsDo ListComp (reverse (unLoc $2)) $1

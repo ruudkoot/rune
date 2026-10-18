@@ -1,0 +1,8 @@
+sL (comb2 $1 $>) $ (getSTRING $2
+						       ,( fromInteger $ getINTEGER $3
+ 							, fromInteger $ getINTEGER $5
+							)
+                         			       ,( fromInteger $ getINTEGER $7
+ 							, fromInteger $ getINTEGER $9
+							)
+						       )

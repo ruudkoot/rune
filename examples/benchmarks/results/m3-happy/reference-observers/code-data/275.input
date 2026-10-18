@@ -1,0 +1,4 @@
+% do { pat <- checkPattern $2;
+					        return (sL (comb2 $1 $>) $ unitOL $ sL (comb2 $1 $>) $ ValD ( 
+							PatBind (sL (comb2 $1 $>) $ BangPat pat) (unLoc $3)
+								placeHolderType placeHolderNames)) }

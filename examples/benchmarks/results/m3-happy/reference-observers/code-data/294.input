@@ -1,0 +1,1 @@
+sL (comb2 $1 $>) $ HsArrApp $3 $1 placeHolderType HsHigherOrderApp False

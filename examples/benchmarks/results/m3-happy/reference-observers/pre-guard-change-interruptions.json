@@ -1,0 +1,23 @@
+{
+  "reason": "Confirmed SMLNJ32 dynamic arithmetic false overflow; preserve preliminary subjects and rerun final support guard.",
+  "roots": [
+    2347052,
+    2347671
+  ],
+  "pids": [
+    2347052,
+    2347671,
+    2347676,
+    2382099,
+    2382356,
+    2382357,
+    2383257,
+    2386758,
+    2386781,
+    2386782,
+    2386797,
+    2404601,
+    2404619,
+    2404620
+  ]
+}

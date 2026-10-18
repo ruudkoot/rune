@@ -1,0 +1,1 @@
+sL (comb2 $1 $>) $ ArithSeq noPostTcExpr (From $1)

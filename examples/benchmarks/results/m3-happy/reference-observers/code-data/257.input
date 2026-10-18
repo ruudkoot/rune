@@ -1,0 +1,1 @@
+% mkRecCon $1 [] >>= return.sL (comb2 $1 $>)

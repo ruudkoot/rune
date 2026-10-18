@@ -1,0 +1,2 @@
+sL (comb2 $1 $>) (KindedTyVar (unLoc $2) 
+							  (unLoc $4))

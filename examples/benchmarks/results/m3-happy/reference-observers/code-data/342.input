@@ -1,0 +1,2 @@
+% checkPattern $2 >>= \p ->
+					   return (sL (comb2 $1 $>) $ HsBracket (PatBr p))

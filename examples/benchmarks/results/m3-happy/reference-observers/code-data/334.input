@@ -1,0 +1,3 @@
+sL (getLoc $1) $ HsSpliceE (mkHsSplice 
+					(sL (getLoc $1) $ HsVar (mkUnqual varName 
+							(getTH_ID_SPLICE $1))))

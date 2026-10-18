@@ -1,0 +1,1 @@
+% checkPattern (sL (comb2 $1 $>) (SectionR (sL (getLoc $1) (HsVar bang_RDR)) $2))

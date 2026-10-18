@@ -1,0 +1,26 @@
+[
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "exit": 2,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-happy-originals/primary-O0-smoke.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "exit": 0,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-happy-originals/primary-O0-normal.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "exit": 2,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-happy-originals/primary-O2-smoke.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "exit": 0,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-happy-originals/primary-O2-normal.log"
+  }
+]

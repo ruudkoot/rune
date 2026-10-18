@@ -1,0 +1,3 @@
+sL (comb2 $1 $>) $ HsLam (mkMatchGroup [sL (comb2 $1 $>) $ Match ($2:$3) $4
+							   	(unguardedGRHSs $6)
+							    ])

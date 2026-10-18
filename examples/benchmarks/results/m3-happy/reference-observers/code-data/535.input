@@ -1,0 +1,4 @@
+% let (n, doc) = getDOCSECTION $1 in
+        case parseHaddockString (tokenise doc) of {
+      Left  err -> parseError (getLoc $1) err;
+      Right doc -> return (sL (getLoc $1) (n, doc)) }

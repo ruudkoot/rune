@@ -1,0 +1,1 @@
+sL (comb2 $1 $>) $ PArrSeq noPostTcExpr (FromThenTo $1 $3 $5)

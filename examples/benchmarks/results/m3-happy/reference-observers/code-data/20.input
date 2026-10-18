@@ -1,0 +1,3 @@
+% fileSrcSpan >>= \ loc -> case $1 of { (opt, info, doc) -> 
+		   return (L loc (HsModule (Just $3) $5 $7 [] $4 
+                   opt info doc))}

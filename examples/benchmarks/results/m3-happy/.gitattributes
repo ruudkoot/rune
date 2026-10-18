@@ -1,0 +1,14 @@
+**/stdout whitespace=-trailing-space
+**/stderr whitespace=-trailing-space
+**/worktree.patch -whitespace
+**/report.md whitespace=-blank-at-eof
+**/machine.txt whitespace=-trailing-space
+**/*.tsv whitespace=-trailing-space
+*.log whitespace=-trailing-space
+reference-observers/** -whitespace
+
+# Exact archived runtime inputs, source snapshots and output evidence.
+correctness/** -whitespace
+semantics/** -whitespace
+counts/** -whitespace
+fresh-adapter-diagnostics/** -whitespace

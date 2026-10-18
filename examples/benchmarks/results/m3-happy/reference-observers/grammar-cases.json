@@ -1,0 +1,21 @@
+[
+  "default",
+  "basic",
+  "precedence",
+  "typed",
+  "multiple-starts",
+  "unknown-token",
+  "duplicate-name",
+  "bad-reference",
+  "empty-rightmost",
+  "unknown-precedence",
+  "quote-normalization",
+  "attributes",
+  "attribute-groups",
+  "attribute-rightmost",
+  "attribute-terminal-name",
+  "attribute-range",
+  "attribute-zero",
+  "attribute-empty",
+  "monad-lexer"
+]

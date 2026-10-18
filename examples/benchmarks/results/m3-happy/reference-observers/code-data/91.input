@@ -1,0 +1,8 @@
+% do { let {(ctxt, tc, tvs, tparms) = unLoc $3}
+                                             -- can have type pats
+		      ; return $
+			  L (comb4 $1 $3 $4 $5)
+			           -- We need the location on tycl_hdr in case 
+				   -- constrs and deriving are both empty
+			    (mkTyData (unLoc $1) (ctxt, tc, tvs, Just tparms) 
+			      Nothing (reverse (unLoc $4)) (unLoc $5)) }

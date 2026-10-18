@@ -1,0 +1,2 @@
+toOL [ sL (comb2 $1 $>) $ DeprecD (Deprecation n (getSTRING $2)) 
+		       | n <- unLoc $1 ]

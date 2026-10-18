@@ -1,0 +1,1 @@
+["ok","sL (comb2 happy_var_1 happy_var_2) $ if opt_Hpc\u000a\u0009\u0009\u0009\u0009\u0009\u0009\u0009then HsTickPragma (unLoc happy_var_1) happy_var_2\u000a\u0009\u0009\u0009\u0009\u0009\u0009\u0009else HsPar happy_var_2",[2,2,1,2,1]]

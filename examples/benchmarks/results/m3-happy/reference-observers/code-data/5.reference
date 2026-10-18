@@ -1,0 +1,1 @@
+["ok","% fileSrcSpan >>= \\ loc ->\u000a\u0009\u0009   return (L loc (HsModule Nothing Nothing \u000a                          (fst happy_var_2) (snd happy_var_2) Nothing Nothing emptyHaddockModInfo \u000a                          Nothing))",[2,2]]

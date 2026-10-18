@@ -1,0 +1,21 @@
+[
+  "empty",
+  "whitespace",
+  "simple",
+  "attrs",
+  "right",
+  "nested",
+  "embedded-dollar",
+  "where-prefix",
+  "bad-attr",
+  "dangling-dot",
+  "trailing-dot",
+  "underscore-attr",
+  "char-quotes",
+  "empty-values",
+  "terminal-attrs",
+  "right-inside-braces",
+  "two-values",
+  "zero",
+  "unknown-dollar"
+]

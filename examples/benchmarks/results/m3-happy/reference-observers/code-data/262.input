@@ -1,0 +1,1 @@
+addFieldDoc (unLoc $1) $4 : addFieldDocs $5 $2

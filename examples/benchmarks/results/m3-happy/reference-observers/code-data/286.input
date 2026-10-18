@@ -1,0 +1,1 @@
+sL (comb2 $1 $>) $ unitOL (sL (comb2 $1 $>) $ SigD (InlineSig $3 (mkInlineSpec $2 (getINLINE $1))))

@@ -1,0 +1,9 @@
+% let string = getDOCNEXT $1 in
+               case parseModuleHeader string of {                       
+                 Right (str, info) ->                                  
+                   case parseHaddockParagraphs (tokenise str) of {               
+                     Left err -> parseError (getLoc $1) err;                    
+                     Right doc -> return (info, Just doc);          
+                   };                                             
+                 Left err -> parseError (getLoc $1) err
+            }

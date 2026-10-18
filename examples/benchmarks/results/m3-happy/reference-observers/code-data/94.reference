@@ -1,0 +1,1 @@
+["ok","% do { (tc, tvs, typats) <- checkSynHdr happy_var_2 True\u000a\u0009\u0009      ; return (L (comb2 happy_var_1 happy_var_4) \u000a\u0009\u0009\u0009\u0009  (TySynonym tc tvs (Just typats) happy_var_4)) \u000a                      }",[4,4,1,2]]

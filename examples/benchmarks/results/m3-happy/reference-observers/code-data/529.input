@@ -1,0 +1,4 @@
+sL (getLoc $1) $ let (mod,c) = getQCONID $1 in
+				  mkModuleNameFS
+				   (mkFastString
+				     (unpackFS mod ++ '.':unpackFS c))
