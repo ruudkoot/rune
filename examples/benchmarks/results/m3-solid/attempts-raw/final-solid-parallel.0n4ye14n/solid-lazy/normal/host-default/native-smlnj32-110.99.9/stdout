@@ -1,0 +1,200 @@
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml:19.32 Warning: calling polyEqual
+functor BenchIdaFiniteFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a seq
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t * 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val defer : (unit -> 'a D.t) -> 'a D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val nth : 'a <BaseFct>.<resultStr>.node D.t -> int -> 'a
+  val update :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val unify :
+      ''a <BaseFct>.<resultStr>.node D.t
+       -> ''a -> ''a <BaseFct>.<resultStr>.node D.t
+  val foldl :
+      ('a D.t -> 'b -> 'a D.t)
+       -> 'a D.t -> 'b <BaseFct>.<resultStr>.node D.t -> 'a D.t
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val filter :
+      ('a -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val length : 'a <BaseFct>.<resultStr>.node D.t -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-solid-kernel.sml]
+[autoloading]
+[autoloading done]
+functor BenchSolidFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure L : <sig>
+  structure F : <sig>
+  type pointNode
+  type point
+  type primitiveNode
+  type primitive
+  type operation
+  type csgNode
+  type csg
+  type cellNode
+  type cell
+  type gdtNode
+  type gdt
+  val point : real -> real -> <BaseFct>.<resultStr>.pointNode D.t
+  val cell :
+      real -> real -> real -> real -> <BaseFct>.<resultStr>.cellNode D.t
+  val bounds : <BaseFct>.<resultStr>.cellNode D.t -> real * real * real * real
+  val coordinates : <BaseFct>.<resultStr>.pointNode D.t -> real * real
+  val circle :
+      real -> real -> real -> int -> <BaseFct>.<resultStr>.primitiveNode D.t
+  val line :
+      real -> real -> real -> int -> <BaseFct>.<resultStr>.primitiveNode D.t
+  val full : unit -> <BaseFct>.<resultStr>.csgNode BenchLazy.state ref
+  val empty : unit -> <BaseFct>.<resultStr>.csgNode BenchLazy.state ref
+  val primitive :
+      <BaseFct>.<resultStr>.primitive
+       -> <BaseFct>.<resultStr>.csgNode BenchLazy.state ref
+  val composed :
+      <BaseFct>.<resultStr>.csgNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.operation
+       -> <BaseFct>.<resultStr>.csgNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.csgNode BenchLazy.state ref
+  val universe : <BaseFct>.<resultStr>.cellNode D.t
+  val distance :
+      <BaseFct>.<resultStr>.pointNode D.t
+       -> <BaseFct>.<resultStr>.pointNode D.t -> real
+  val isFull : <BaseFct>.<resultStr>.csgNode BenchLazy.state ref -> bool
+  val isEmpty : <BaseFct>.<resultStr>.csgNode BenchLazy.state ref -> bool
+  val merge :
+      <BaseFct>.<resultStr>.csgNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.operation
+       -> <BaseFct>.<resultStr>.csgNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.csgNode BenchLazy.state ref
+  val prunePrimitive :
+      <BaseFct>.<resultStr>.primitiveNode D.t
+       -> <BaseFct>.<resultStr>.cellNode D.t
+       -> <BaseFct>.<resultStr>.csgNode BenchLazy.state ref
+  val prune :
+      <BaseFct>.<resultStr>.cellNode D.t
+       -> <BaseFct>.<resultStr>.csgNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.csgNode BenchLazy.state ref
+  val unionTable : int vector
+  val intersectionTable : int vector
+  val differenceTable : int vector
+  val combine : int -> <BaseFct>.<resultStr>.operation -> int -> int
+  val classifyPrimitive :
+      <BaseFct>.<resultStr>.primitiveNode D.t
+       -> <BaseFct>.<resultStr>.pointNode D.t -> int
+  val classify :
+      <BaseFct>.<resultStr>.pointNode D.t
+       -> <BaseFct>.<resultStr>.csgNode BenchLazy.delay -> int
+  val approximate :
+      <BaseFct>.<resultStr>.cellNode D.t
+       -> <BaseFct>.<resultStr>.csgNode BenchLazy.delay
+       -> <BaseFct>.<resultStr>.csgNode BenchLazy.state ref
+  val split :
+      <BaseFct>.<resultStr>.cellNode D.t
+       -> <BaseFct>.<resultStr>.cellNode D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val simple : <BaseFct>.<resultStr>.csgNode BenchLazy.state ref -> bool
+  val build :
+      int
+       -> <BaseFct>.<resultStr>.cellNode D.t
+       -> <BaseFct>.<resultStr>.csgNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.gdtNode BenchLazy.delay
+  val leafArea :
+      <BaseFct>.<resultStr>.cellNode D.t
+       -> <BaseFct>.<resultStr>.csgNode BenchLazy.state ref -> real
+  val area : <BaseFct>.<resultStr>.gdtNode BenchLazy.state ref -> real
+  val shape : <BaseFct>.<resultStr>.gdtNode BenchLazy.state ref -> string
+  val operation : char -> <BaseFct>.<resultStr>.operation
+  val parse : string -> <BaseFct>.<resultStr>.csgNode BenchLazy.state ref
+  val solution :
+      string -> int -> <BaseFct>.<resultStr>.gdtNode BenchLazy.delay
+  val evaluate : string -> int -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-solid-check.sml]
+[autoloading]
+[autoloading done]
+functor BenchSolidCheckFn(K: sig
+  val evaluate : string -> int -> real
+end) :
+sig
+  val read : string -> TextIO.vector
+  val integer : string -> int
+  val power : int -> int -> int
+  val references : string -> (int * int * string) vector
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/solid-lazy/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Check : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+FAIL solid-lazy -- Fail: incorrect result: solid area formatting
+SUMMARY 1 checks, 1 failed

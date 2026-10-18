@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+solid-lazy	normal	rune	O2	count	1	1	pass	98.56	95.96	0.42	19040	10533453905	22166946272	679183104	counts/measurement.SLN1LT/solid-lazy/rune/fresh.1
+solid-lazy	normal	rune:opt	O2	count	1	1	pass	52.44	43.37	0.32	19520	10533453905	22166946272	679183104	counts/measurement.SLN1LT/solid-lazy/rune-opt/fresh.1
+solid-lazy	normal	rune:new	O2	count	1	1	pass	114.48	90.57	1.48	19152	5900752808	22166946272	679183104	counts/measurement.SLN1LT/solid-lazy/rune-new/fresh.1
+solid-lazy	normal	rune:jit	O2	count	1	1	pass	36.35	35.29	0.16	19996	5900752808	22166946272	679183104	counts/measurement.SLN1LT/solid-lazy/rune-jit/fresh.1
+solid-strict	normal	rune	O2	count	1	1	pass	38.84	39.04	0.03	10800	6091110225	11708433784	327012683	counts/measurement.a6Ip3I/solid-strict/rune/fresh.1
+solid-strict	normal	rune:opt	O2	count	1	1	pass	11.80	12.35	0.01	11284	6091110225	11708433784	327012683	counts/measurement.a6Ip3I/solid-strict/rune-opt/fresh.1
+solid-strict	normal	rune:new	O2	count	1	1	pass	26.57	26.08	0.04	11000	3382024763	11708433784	327012683	counts/measurement.a6Ip3I/solid-strict/rune-new/fresh.1
+solid-strict	normal	rune:jit	O2	count	1	1	pass	10.98	11.30	0.04	11868	3382024763	11708433784	327012683	counts/measurement.a6Ip3I/solid-strict/rune-jit/fresh.1

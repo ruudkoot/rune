@@ -1,0 +1,465 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml:19.32 Warning: calling polyEqual
+functor BenchIdaFiniteFn(D: sig
+                            type 'a t
+                            val delay : (unit -> 'a) -> 'a t
+                            val force : 'a t -> 'a
+                          end) :
+                        
+                          sig
+                            type 'a node
+                            type 'a seq
+                            val empty : unit -> 'a node D.t
+                            val cons : 'a D.t * 'a node D.t -> 'a node D.t
+                            val fromList : 'a list -> 'a node D.t
+                            val defer : (unit -> 'a D.t) -> 'a D.t
+                            val append : 'a node D.t
+                                          -> 'a node D.t -> 'a node D.t
+                            val take : int -> 'a node D.t -> 'a node D.t
+                            val drop : int -> 'a node D.t -> 'a node D.t
+                            val nth : 'a node D.t -> int -> 'a
+                            val update : 'a node D.t
+                                          -> int -> 'a D.t -> 'a node D.t
+                            val unify : ''a node D.t -> ''a -> ''a node D.t
+                            val foldl : ('a D.t -> 'b -> 'a D.t)
+                                         -> 'a D.t -> 'b node D.t -> 'a D.t
+                            val toList : 'a node D.t -> 'a list
+                            val map : ('a -> 'b) -> 'a node D.t -> 'b node D.t
+                            val filter : ('a -> bool)
+                                          -> 'a node D.t -> 'a node D.t
+                            val length : 'a node D.t -> int
+                          end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-solid-originals/kernel.sml]
+functor BenchSolidFn(D: sig
+                        type 'a t
+                        val delay : (unit -> 'a) -> 'a t
+                        val force : 'a t -> 'a
+                      end) :
+                    
+                      sig
+                        structure L : <sig>
+                        structure F : <sig>
+                        type pointNode
+                        type point
+                        type primitiveNode
+                        type primitive
+                        type operation
+                        type csgNode
+                        type csg
+                        type cellNode
+                        type cell
+                        type gdtNode
+                        type gdt
+                        val point : real -> real -> pointNode D.t
+                        val cell : real
+                                    -> real -> real -> real -> cellNode D.t
+                        val bounds : cellNode D.t -> real * real * real * real
+                        val coordinates : pointNode D.t -> real * real
+                        val circle : real
+                                      -> real
+                                      -> real -> int -> primitiveNode D.t
+                        val line : real
+                                    -> real
+                                    -> real -> int -> primitiveNode D.t
+                        val full : unit -> csgNode BenchLazy.state ref
+                        val empty : unit -> csgNode BenchLazy.state ref
+                        val primitive : primitive
+                                         -> csgNode BenchLazy.state ref
+                        val composed : csgNode BenchLazy.delay
+                                        -> operation
+                                        -> csgNode BenchLazy.delay
+                                        -> csgNode BenchLazy.state ref
+                        val universe : cellNode D.t
+                        val distance : pointNode D.t -> pointNode D.t -> real
+                        val isFull : csgNode BenchLazy.state ref -> bool
+                        val isEmpty : csgNode BenchLazy.state ref -> bool
+                        val merge : csgNode BenchLazy.state ref
+                                     -> operation
+                                     -> csgNode BenchLazy.state ref
+                                     -> csgNode BenchLazy.state ref
+                        val prunePrimitive : primitiveNode D.t
+                                              -> cellNode D.t
+                                              -> csgNode BenchLazy.state ref
+                        val prune : cellNode D.t
+                                     -> csgNode BenchLazy.delay
+                                     -> csgNode BenchLazy.state ref
+                        val unionTable : int vector
+                        val intersectionTable : int vector
+                        val differenceTable : int vector
+                        val combine : int -> operation -> int -> int
+                        val classifyPrimitive : primitiveNode D.t
+                                                 -> pointNode D.t -> int
+                        val classify : pointNode D.t
+                                        -> csgNode BenchLazy.delay -> int
+                        val approximate : cellNode D.t
+                                           -> csgNode BenchLazy.delay
+                                           -> csgNode BenchLazy.state ref
+                        val split : cellNode D.t -> cellNode D.t F.node D.t
+                        val simple : csgNode BenchLazy.state ref -> bool
+                        val build : int
+                                     -> cellNode D.t
+                                     -> csgNode BenchLazy.state ref
+                                     -> gdtNode BenchLazy.delay
+                        val leafArea : cellNode D.t
+                                        -> csgNode BenchLazy.state ref -> real
+                        val area : gdtNode BenchLazy.state ref -> real
+                        val shape : gdtNode BenchLazy.state ref -> string
+                        val operation : char -> operation
+                        val parse : string -> csgNode BenchLazy.state ref
+                        val solution : string
+                                        -> int -> gdtNode BenchLazy.delay
+                        val evaluate : string -> int -> real
+                      end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-solid-originals/check.sml]
+functor BenchSolidCheckFn(K: sig val evaluate : string -> int -> real end) :
+                         
+                           sig
+                             val read : string -> TextIO.vector
+                             val integer : string -> int
+                             val power : int -> int -> int
+                             val references : string
+                                               -> (int * int * string) vector
+                             val run : string list -> string
+                           end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-solid-originals/tests.sml]
+PASS solid/original-area/N/0
+PASS solid/original-shape/N/0
+PASS solid/original-area/E/0
+PASS solid/original-shape/E/0
+PASS solid/original-area/N/1
+PASS solid/original-shape/N/1
+PASS solid/original-area/E/1
+PASS solid/original-shape/E/1
+PASS solid/original-area/N/2
+PASS solid/original-shape/N/2
+PASS solid/original-area/E/2
+PASS solid/original-shape/E/2
+PASS solid/original-area/N/3
+PASS solid/original-shape/N/3
+PASS solid/original-area/E/3
+PASS solid/original-shape/E/3
+PASS solid/original-area/N/4
+PASS solid/original-shape/N/4
+PASS solid/original-area/E/4
+PASS solid/original-shape/E/4
+PASS solid/original-area/N/5
+PASS solid/original-shape/N/5
+PASS solid/original-area/E/5
+PASS solid/original-shape/E/5
+PASS solid/original-area/N/6
+PASS solid/original-shape/N/6
+PASS solid/original-area/E/6
+PASS solid/original-shape/E/6
+PASS solid/original-area/N/7
+PASS solid/original-shape/N/7
+PASS solid/original-area/E/7
+PASS solid/original-shape/E/7
+PASS solid/original-area/N/8
+PASS solid/original-shape/N/8
+PASS solid/original-area/E/8
+PASS solid/original-shape/E/8
+PASS solid/original-area/N/9
+PASS solid/original-shape/N/9
+PASS solid/original-area/E/9
+PASS solid/original-shape/E/9
+PASS solid/original-area/N/10
+PASS solid/original-area/E/10
+PASS solid/original-area/N/11
+PASS solid/original-area/E/11
+PASS solid/original-area/N/12
+PASS solid/original-area/E/12
+PASS solid/table/N/union/0/0
+PASS solid/table/E/union/0/0
+PASS solid/table/N/union/0/1
+PASS solid/table/E/union/0/1
+PASS solid/table/N/union/0/2
+PASS solid/table/E/union/0/2
+PASS solid/table/N/union/0/3
+PASS solid/table/E/union/0/3
+PASS solid/table/N/union/1/0
+PASS solid/table/E/union/1/0
+PASS solid/table/N/union/1/1
+PASS solid/table/E/union/1/1
+PASS solid/table/N/union/1/2
+PASS solid/table/E/union/1/2
+PASS solid/table/N/union/1/3
+PASS solid/table/E/union/1/3
+PASS solid/table/N/union/2/0
+PASS solid/table/E/union/2/0
+PASS solid/table/N/union/2/1
+PASS solid/table/E/union/2/1
+PASS solid/table/N/union/2/2
+PASS solid/table/E/union/2/2
+PASS solid/table/N/union/2/3
+PASS solid/table/E/union/2/3
+PASS solid/table/N/union/3/0
+PASS solid/table/E/union/3/0
+PASS solid/table/N/union/3/1
+PASS solid/table/E/union/3/1
+PASS solid/table/N/union/3/2
+PASS solid/table/E/union/3/2
+PASS solid/table/N/union/3/3
+PASS solid/table/E/union/3/3
+PASS solid/table/N/intersect/0/0
+PASS solid/table/E/intersect/0/0
+PASS solid/table/N/intersect/0/1
+PASS solid/table/E/intersect/0/1
+PASS solid/table/N/intersect/0/2
+PASS solid/table/E/intersect/0/2
+PASS solid/table/N/intersect/0/3
+PASS solid/table/E/intersect/0/3
+PASS solid/table/N/intersect/1/0
+PASS solid/table/E/intersect/1/0
+PASS solid/table/N/intersect/1/1
+PASS solid/table/E/intersect/1/1
+PASS solid/table/N/intersect/1/2
+PASS solid/table/E/intersect/1/2
+PASS solid/table/N/intersect/1/3
+PASS solid/table/E/intersect/1/3
+PASS solid/table/N/intersect/2/0
+PASS solid/table/E/intersect/2/0
+PASS solid/table/N/intersect/2/1
+PASS solid/table/E/intersect/2/1
+PASS solid/table/N/intersect/2/2
+PASS solid/table/E/intersect/2/2
+PASS solid/table/N/intersect/2/3
+PASS solid/table/E/intersect/2/3
+PASS solid/table/N/intersect/3/0
+PASS solid/table/E/intersect/3/0
+PASS solid/table/N/intersect/3/1
+PASS solid/table/E/intersect/3/1
+PASS solid/table/N/intersect/3/2
+PASS solid/table/E/intersect/3/2
+PASS solid/table/N/intersect/3/3
+PASS solid/table/E/intersect/3/3
+PASS solid/table/N/diff/0/0
+PASS solid/table/E/diff/0/0
+PASS solid/table/N/diff/0/1
+PASS solid/table/E/diff/0/1
+PASS solid/table/N/diff/0/2
+PASS solid/table/E/diff/0/2
+PASS solid/table/N/diff/0/3
+PASS solid/table/E/diff/0/3
+PASS solid/table/N/diff/1/0
+PASS solid/table/E/diff/1/0
+PASS solid/table/N/diff/1/1
+PASS solid/table/E/diff/1/1
+PASS solid/table/N/diff/1/2
+PASS solid/table/E/diff/1/2
+PASS solid/table/N/diff/1/3
+PASS solid/table/E/diff/1/3
+PASS solid/table/N/diff/2/0
+PASS solid/table/E/diff/2/0
+PASS solid/table/N/diff/2/1
+PASS solid/table/E/diff/2/1
+PASS solid/table/N/diff/2/2
+PASS solid/table/E/diff/2/2
+PASS solid/table/N/diff/2/3
+PASS solid/table/E/diff/2/3
+PASS solid/table/N/diff/3/0
+PASS solid/table/E/diff/3/0
+PASS solid/table/N/diff/3/1
+PASS solid/table/E/diff/3/1
+PASS solid/table/N/diff/3/2
+PASS solid/table/E/diff/3/2
+PASS solid/table/N/diff/3/3
+PASS solid/table/E/diff/3/3
+PASS solid/synthetic-area/N/circle/0
+PASS solid/synthetic-area/E/circle/0
+PASS solid/synthetic-area/N/circle/1
+PASS solid/synthetic-area/E/circle/1
+PASS solid/synthetic-area/N/circle/2
+PASS solid/synthetic-area/E/circle/2
+PASS solid/synthetic-area/N/circle/3
+PASS solid/synthetic-area/E/circle/3
+PASS solid/synthetic-area/N/circle/4
+PASS solid/synthetic-area/E/circle/4
+PASS solid/synthetic-area/N/circle/5
+PASS solid/synthetic-area/E/circle/5
+PASS solid/synthetic-area/N/circle/6
+PASS solid/synthetic-area/E/circle/6
+PASS solid/synthetic-area/N/union/0
+PASS solid/synthetic-area/E/union/0
+PASS solid/synthetic-area/N/union/1
+PASS solid/synthetic-area/E/union/1
+PASS solid/synthetic-area/N/union/2
+PASS solid/synthetic-area/E/union/2
+PASS solid/synthetic-area/N/union/3
+PASS solid/synthetic-area/E/union/3
+PASS solid/synthetic-area/N/union/4
+PASS solid/synthetic-area/E/union/4
+PASS solid/synthetic-area/N/union/5
+PASS solid/synthetic-area/E/union/5
+PASS solid/synthetic-area/N/union/6
+PASS solid/synthetic-area/E/union/6
+PASS solid/synthetic-area/N/intersect/0
+PASS solid/synthetic-area/E/intersect/0
+PASS solid/synthetic-area/N/intersect/1
+PASS solid/synthetic-area/E/intersect/1
+PASS solid/synthetic-area/N/intersect/2
+PASS solid/synthetic-area/E/intersect/2
+PASS solid/synthetic-area/N/intersect/3
+PASS solid/synthetic-area/E/intersect/3
+PASS solid/synthetic-area/N/intersect/4
+PASS solid/synthetic-area/E/intersect/4
+PASS solid/synthetic-area/N/intersect/5
+PASS solid/synthetic-area/E/intersect/5
+PASS solid/synthetic-area/N/intersect/6
+PASS solid/synthetic-area/E/intersect/6
+PASS solid/synthetic-area/N/diff/0
+PASS solid/synthetic-area/E/diff/0
+PASS solid/synthetic-area/N/diff/1
+PASS solid/synthetic-area/E/diff/1
+PASS solid/synthetic-area/N/diff/2
+PASS solid/synthetic-area/E/diff/2
+PASS solid/synthetic-area/N/diff/3
+PASS solid/synthetic-area/E/diff/3
+PASS solid/synthetic-area/N/diff/4
+PASS solid/synthetic-area/E/diff/4
+PASS solid/synthetic-area/N/diff/5
+PASS solid/synthetic-area/E/diff/5
+PASS solid/synthetic-area/N/diff/6
+PASS solid/synthetic-area/E/diff/6
+PASS solid/synthetic-area/N/full/0
+PASS solid/synthetic-area/E/full/0
+PASS solid/synthetic-area/N/full/1
+PASS solid/synthetic-area/E/full/1
+PASS solid/synthetic-area/N/full/2
+PASS solid/synthetic-area/E/full/2
+PASS solid/synthetic-area/N/full/3
+PASS solid/synthetic-area/E/full/3
+PASS solid/synthetic-area/N/full/4
+PASS solid/synthetic-area/E/full/4
+PASS solid/synthetic-area/N/full/5
+PASS solid/synthetic-area/E/full/5
+PASS solid/synthetic-area/N/full/6
+PASS solid/synthetic-area/E/full/6
+PASS solid/synthetic-area/N/empty/0
+PASS solid/synthetic-area/E/empty/0
+PASS solid/synthetic-area/N/empty/1
+PASS solid/synthetic-area/E/empty/1
+PASS solid/synthetic-area/N/empty/2
+PASS solid/synthetic-area/E/empty/2
+PASS solid/synthetic-area/N/empty/3
+PASS solid/synthetic-area/E/empty/3
+PASS solid/synthetic-area/N/empty/4
+PASS solid/synthetic-area/E/empty/4
+PASS solid/synthetic-area/N/empty/5
+PASS solid/synthetic-area/E/empty/5
+PASS solid/synthetic-area/N/empty/6
+PASS solid/synthetic-area/E/empty/6
+PASS solid/union-full-skips-right/N
+PASS solid/diff-empty-skips-right/N
+PASS solid/intersection-checks-right-before-empty-left/N
+PASS solid/point-classification-does-not-boolean-shortcut/N
+PASS solid/depth-cutoff-still-demands-simple-test/N
+PASS solid/parse-ignores-declared-primitive-count/N
+PASS solid/source-line-classification-grouping/N
+PASS solid/union-full-skips-right/E
+PASS solid/diff-empty-skips-right/E
+PASS solid/intersection-checks-right-before-empty-left/E
+PASS solid/point-classification-does-not-boolean-shortcut/E
+PASS solid/depth-cutoff-still-demands-simple-test/E
+PASS solid/parse-ignores-declared-primitive-count/E
+PASS solid/source-line-classification-grouping/E
+PASS solid/empty-area-skips-cell
+PASS solid/simple-full-shape-skips-midpoint
+PASS solid/strict-finite-coordinates
+PASS solid/zero-repetitions
+PASS solid/reject-incorrect-area
+structure SolidTests : 
+  sig
+    structure N : <sig>
+    structure E : <sig>
+    structure NC : <sig>
+    structure EC : <sig>
+    structure L : <sig>
+    val check : string -> (unit -> bool) -> unit
+    val read : string -> TextIO.vector
+    val scene : TextIO.vector
+    structure Bad : <sig>
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 245 checks, 0 failed

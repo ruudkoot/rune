@@ -1,0 +1,11 @@
+shape 0 2
+shape 1 7
+shape 2 22
+shape 3 57
+shape 4 137
+shape 5 302
+shape 6 692
+shape 7 1637
+shape 8 3637
+shape 9 7947
+PASS all10independent uniform-grid membership counts afterone-line index correction

@@ -1,0 +1,92 @@
+table union 0 0 0
+table union 0 1 0
+table union 0 2 0
+table union 0 3 0
+table union 1 0 0
+table union 1 1 3
+table union 1 2 1
+table union 1 3 3
+table union 2 0 0
+table union 2 1 1
+table union 2 2 2
+table union 2 3 3
+table union 3 0 0
+table union 3 1 3
+table union 3 2 3
+table union 3 3 3
+table intersect 0 0 0
+table intersect 0 1 1
+table intersect 0 2 2
+table intersect 0 3 3
+table intersect 1 0 1
+table intersect 1 1 3
+table intersect 1 2 2
+table intersect 1 3 3
+table intersect 2 0 2
+table intersect 2 1 2
+table intersect 2 2 2
+table intersect 2 3 2
+table intersect 3 0 3
+table intersect 3 1 3
+table intersect 3 2 2
+table intersect 3 3 3
+table diff 0 0 2
+table diff 0 1 1
+table diff 0 2 0
+table diff 0 3 3
+table diff 1 0 2
+table diff 1 1 3
+table diff 1 2 1
+table diff 1 3 3
+table diff 2 0 2
+table diff 2 1 2
+table diff 2 2 2
+table diff 2 3 2
+table diff 3 0 2
+table diff 3 1 3
+table diff 3 2 3
+table diff 3 3 3
+area circle 0 1
+area circle 1 4
+area circle 2 12
+area circle 3 52
+area circle 4 208
+area circle 5 812
+area circle 6 3228
+area union 0 1
+area union 1 4
+area union 2 13
+area union 3 54
+area union 4 217
+area union 5 851
+area union 6 3380
+area intersect 0 0
+area intersect 1 1
+area intersect 2 3
+area intersect 3 10
+area intersect 4 43
+area intersect 5 169
+area intersect 6 660
+area diff 0 1
+area diff 1 3
+area diff 2 9
+area diff 3 42
+area diff 4 165
+area diff 5 643
+area diff 6 2568
+area full 0 1
+area full 1 4
+area full 2 16
+area full 3 64
+area full 4 256
+area full 5 1024
+area full 6 4096
+area empty 0 0
+area empty 1 0
+area empty 2 0
+area empty 3 0
+area empty 4 0
+area empty 5 0
+area empty 6 0
+line-source 1
+line-prune E

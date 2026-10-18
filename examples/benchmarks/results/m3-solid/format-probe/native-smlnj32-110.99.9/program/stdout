@@ -1,0 +1,14 @@
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-solid-originals/format-probe.sml]
+[autoloading]
+[autoloading done]
+0.963394165039062500000000
+0.963493347167968800000000
+0.963510453701019300000000
+val it = () : unit
+- 

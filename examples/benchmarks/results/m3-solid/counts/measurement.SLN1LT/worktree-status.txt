@@ -1,0 +1,10 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+ M examples/benchmarks/source-variants.tsv
+?? examples/benchmarks/shared/hartel-solid-check.sml
+?? examples/benchmarks/shared/hartel-solid-kernel.sml
+?? examples/benchmarks/solid-lazy/
+?? examples/benchmarks/solid-strict/
+?? tests/benchmarks/check-solid.sh
+?? tests/benchmarks/data/solid/
+?? tests/benchmarks/solid-tests.sml

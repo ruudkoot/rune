@@ -1,0 +1,8 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-solid-originals/format-probe.sml]
+0.963394165039062500000000
+0.963493347167968800000000
+0.963510453701019300000000
+val it = () : unit
+- 

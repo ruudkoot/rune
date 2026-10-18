@@ -1,0 +1,10 @@
+{'depth': 0, 'samples': 1, 'independent_inside': 1, 'original_inside': 1, 'difference': 0}
+{'depth': 1, 'samples': 4, 'independent_inside': 4, 'original_inside': 4, 'difference': 0}
+{'depth': 2, 'samples': 16, 'independent_inside': 16, 'original_inside': 16, 'difference': 0}
+{'depth': 3, 'samples': 64, 'independent_inside': 62, 'original_inside': 64, 'difference': 2}
+{'depth': 4, 'samples': 256, 'independent_inside': 249, 'original_inside': 254, 'difference': 5}
+{'depth': 5, 'samples': 1024, 'independent_inside': 991, 'original_inside': 1010, 'difference': 19}
+{'depth': 6, 'samples': 4096, 'independent_inside': 3948, 'original_inside': 3993, 'difference': 45}
+{'depth': 7, 'samples': 16384, 'independent_inside': 15798, 'original_inside': 15841, 'difference': 43}
+{'depth': 8, 'samples': 65536, 'independent_inside': 63137, 'original_inside': 63194, 'difference': 57}
+{'depth': 9, 'samples': 262144, 'independent_inside': 252574, 'original_inside': 252639, 'difference': 65}

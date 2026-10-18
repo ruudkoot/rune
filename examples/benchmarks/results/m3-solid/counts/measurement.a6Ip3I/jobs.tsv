@@ -1,0 +1,1 @@
+solid-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/hartel-ida-finite.sml shared/hartel-solid-kernel.sml shared/hartel-solid-check.sml solid-strict/benchmark.sml shared/main.sml	200 9 scene.input areas.reference	solid-strict/normal.expected	scene.input areas.reference

@@ -1,0 +1,4 @@
+PASS fmt/depth8
+PASS fmt/depth9
+PASS fmt/depth12
+SUMMARY 3 checks, 0 failed

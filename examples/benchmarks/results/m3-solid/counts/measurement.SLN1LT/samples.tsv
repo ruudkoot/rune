@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+solid-lazy	normal	rune	O2	compile	0	0	pass	2.82	2.72	0.21	135312	-	-	-	solid-lazy/rune/build/compile
+solid-lazy	normal	rune	O2	correctness	0	0	pass	105.68	100.50	0.32	18928	10533453905	22166946272	679183104	solid-lazy/rune/correctness.0
+solid-lazy	normal	rune	O2	count	1	1	pass	98.56	95.96	0.42	19040	10533453905	22166946272	679183104	solid-lazy/rune/fresh.1
+solid-lazy	normal	rune:opt	O2	compile	0	0	pass	2.43	2.41	0.13	135320	-	-	-	solid-lazy/rune-opt/build/compile
+solid-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.63	0.33	0.06	12580	-	-	-	solid-lazy/rune-opt/build/native-compile
+solid-lazy	normal	rune:opt	O2	correctness	0	0	pass	48.24	41.65	0.15	19672	10533453905	22166946272	679183104	solid-lazy/rune-opt/correctness.0
+solid-lazy	normal	rune:opt	O2	count	1	1	pass	52.44	43.37	0.32	19520	10533453905	22166946272	679183104	solid-lazy/rune-opt/fresh.1
+solid-lazy	normal	rune:new	O2	compile	0	0	pass	6.76	3.75	0.29	135072	-	-	-	solid-lazy/rune-new/build/compile
+solid-lazy	normal	rune:new	O2	correctness	0	0	pass	107.58	95.35	0.54	19160	5900752808	22166946272	679183104	solid-lazy/rune-new/correctness.0
+solid-lazy	normal	rune:new	O2	count	1	1	pass	114.48	90.57	1.48	19152	5900752808	22166946272	679183104	solid-lazy/rune-new/fresh.1
+solid-lazy	normal	rune:jit	O2	compile	0	0	pass	2.56	2.44	0.19	135176	-	-	-	solid-lazy/rune-jit/build/compile
+solid-lazy	normal	rune:jit	O2	correctness	0	0	pass	38.01	36.46	0.14	20148	5900752808	22166946272	679183104	solid-lazy/rune-jit/correctness.0
+solid-lazy	normal	rune:jit	O2	count	1	1	pass	36.35	35.29	0.16	19996	5900752808	22166946272	679183104	solid-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

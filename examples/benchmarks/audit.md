@@ -561,3 +561,21 @@ maintained nofib invocation, with its whole source/data/timing tree preserved.
 Legacy 64-bit default numerical failures and separate nursery diagnostics
 remain visible. The catalogue contains 477 programs and 1385 profiles.
 M3/M4 remain in progress and M8 remains planned.
+
+## Hartel Solid classification repair, 2026-10-18
+
+Two ports preserve adaptive CSG geometry with memoized/strict finite data.
+The original table adapter applies one-based offsets to a zero-based list;
+union(OUT,OUT) and a 65-cell normal-scene overcount demonstrate the defect.
+A reviewed one-line index correction agrees with corrected Haskell and an
+independent direct geometric scan. The unrepaired baseline is explicitly
+deferred for correctness, with its original fixtures and reconsideration
+condition preserved in source-variants.tsv.
+
+The fixed scene contains 300 circles and 599 postfix operations. No separate
+individual author or input notice is stated. The unused line-expression
+grouping remains source-faithful and separately observed. SML/NJ formatting
+and legacy numerical failures remain visible; no expected answer is relaxed.
+
+The catalogue contains 479 programs and 1391 profiles. M3/M4 remain in progress
+and M8 remains planned.

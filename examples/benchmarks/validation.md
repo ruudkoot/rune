@@ -3121,3 +3121,31 @@ Repeated archive fixture copies use verified canonical identity/group maps.
 [Full make JOBS=4 check](validation/oct18-fem-1385-acceptance.log)
 exits zero with 1385 profiles and all compiler/runedoc/runeopt cross-build
 comparisons. M3/M4 remain in progress and M8 remains planned.
+
+## Solid corrected-index CSG workloads, 2026-10-18
+
+The primary matrix records 50 passes in 56 attempts across two smoke/normal
+ports. All Rune O0/O2 engines, MLton, Poly/ML and ML Kit pass. Six SML/NJ normal
+attempts reject incorrect results: five formatting failures and one legacy
+strict area-count failure. Six serial single fresh-process native smoke
+diagnostics pass all phases; small-profile success does not establish normal
+correctness or a ten-sample comparison.
+
+All twenty semantic invocations reach 245 assertions: 4899 pass, one legacy
+64-bit depth-eight area fails and none are incomplete. A repeated host-default
+group passes. A separate kernel-independent formatter probe confirms FIX24
+rounding differences in all three SML/NJ builds. [Host details](validation/solid-host-results.md)
+keep output-library differences distinct from the variable numerical failure.
+
+Eight full-normal Rune count samples agree with uninterrupted zero-exit guards.
+Original defective fixtures, the one-line index repair, thirteen corrected
+areas, ten complete trees, independent midpoint-grid counts and all table/
+synthetic/demand/checker controls are [archived](results/m3-solid/README.md).
+The source's unused line grouping remains; no tolerance accepts wrong results.
+Full selected large profiles remain unrecorded. Public Rune O0/O2 checks,
+128 inventory regressions and the five-pin 861-entry replay pass.
+
+[Full make JOBS=4 check](validation/oct18-solid-1391-acceptance.log)
+exits zero with 1391 profiles, performance budgets, JIT checks, generated
+documentation and all compiler/runedoc/runeopt cross-build comparisons.
+M3/M4 remain in progress and M8 remains planned.

@@ -1,0 +1,4 @@
+RESULT 1:3:81
+PASS solid-strict
+SAMPLE 1 0.006951000
+SUMMARY 1 checks, 0 failed

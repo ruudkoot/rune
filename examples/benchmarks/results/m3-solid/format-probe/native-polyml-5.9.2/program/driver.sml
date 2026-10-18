@@ -1,0 +1,1 @@
+(use "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-solid-originals/format-probe.sml") handle e => (print ("uncaught exception " ^ exnName e ^ " [" ^ exnMessage e ^ "]\n"); OS.Process.exit OS.Process.failure);

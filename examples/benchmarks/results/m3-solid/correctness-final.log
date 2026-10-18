@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-solid-parallel.0n4ye14n
+PASS solid-lazy smoke O2
+PASS solid-lazy smoke O0
+PASS solid-lazy smoke hosts
+PASS solid-lazy normal O2
+FAIL solid-lazy normal hosts
+PASS solid-lazy normal O0
+PASS solid-strict smoke O0
+PASS solid-strict smoke O2
+PASS solid-strict smoke hosts
+PASS solid-strict normal O2
+FAIL solid-strict normal hosts
+PASS solid-strict normal O0
