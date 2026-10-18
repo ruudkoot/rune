@@ -1,0 +1,471 @@
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 64:48:8
+PASS contrast
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-hash.sml]
+structure BenchStdlibHash : sig
+  val rotate : Word32.word -> int -> Word32.word
+  val mix : Word32.word -> Word32.word -> Word32.word
+  val finish : Word32.word -> int
+  val tagged : int -> Word32.word
+  val integer : int -> int
+  val pair : int * int -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-image.sml]
+[autoloading]
+[autoloading done]
+structure BenchSauvolaImage : sig
+  type rgb = {b:int, g:int, r:int}
+  datatype image = Image of {data:Word8Array.array, height:int, width:int}
+  val width : image -> int
+  val height : image -> int
+  val create : int -> int -> image
+  val index : image -> int -> int -> int
+  val get : image -> int -> int -> rgb
+  val set : image -> int -> int -> rgb -> unit
+  val loop : int -> int -> (int -> 'a) -> unit
+  val sub : image -> int -> int -> int -> int -> image
+  val brightness : rgb -> int
+  val read : string -> image
+  val writeP3 : string -> image -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-hash.sml]
+[autoloading]
+[autoloading done]
+structure BenchSauvolaHash : sig
+  structure H : <sig>
+  val fractionUnit : IntInf.int
+  val wordUnit : IntInf.int
+  val words : real -> ?.word32 * ?.word32
+  val real : Word32.word -> real -> Word32.word
+  val pairReal : real * real -> int
+  val pairInt : int * int -> int
+  val equalReal : real * real -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-memo-table.sml]
+[autoloading]
+[autoloading done]
+functor BenchSauvolaMemoFn(Key: sig
+  type key
+  val hash : key -> int
+  val equal : key * key -> bool
+end) :
+sig
+  type 'a bucket
+  type 'a table
+  exception NotFound
+  val create : unit -> 'a <BaseFct>.<resultStr>.table
+  val index : Key.key -> int
+  val find : 'a <BaseFct>.<resultStr>.table -> Key.key -> 'a
+  val clear : 'a <BaseFct>.<resultStr>.table -> unit
+  val add : 'a <BaseFct>.<resultStr>.table -> Key.key -> 'a -> unit
+  val memo : (Key.key -> 'a) -> Key.key -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-memo-real.sml]
+structure BenchSauvolaRealMemo : sig
+  datatype 'a bucket
+    = Cons of Key.key * 'a * 'a <BaseFct>.<resultStr>.bucket
+    | Empty
+  type 'a table = {buckets:'a bucket array, size:int ref}
+  exception NotFound
+  val create : unit -> 'a <BaseFct>.<resultStr>.table
+  val index : Key.key -> int
+  val find : 'a <BaseFct>.<resultStr>.table -> Key.key -> 'a
+  val clear : 'a <BaseFct>.<resultStr>.table -> unit
+  val add : 'a <BaseFct>.<resultStr>.table -> Key.key -> 'a -> unit
+  val memo : (Key.key -> 'a) -> Key.key -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-memo-int.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-memo-int.sml:4.26 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-memo-int.sml:4.38 Warning: calling polyEqual
+structure BenchSauvolaIntMemo : sig
+  datatype 'a bucket
+    = Cons of Key.key * 'a * 'a <BaseFct>.<resultStr>.bucket
+    | Empty
+  type 'a table = {buckets:'a bucket array, size:int ref}
+  exception NotFound
+  val create : unit -> 'a <BaseFct>.<resultStr>.table
+  val index : Key.key -> int
+  val find : 'a <BaseFct>.<resultStr>.table -> Key.key -> 'a
+  val clear : 'a <BaseFct>.<resultStr>.table -> unit
+  val add : 'a <BaseFct>.<resultStr>.table -> Key.key -> 'a -> unit
+  val memo : (Key.key -> 'a) -> Key.key -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-kernel.sml]
+[autoloading]
+[autoloading done]
+structure BenchSauvola : sig
+  structure I : <sig>
+  type window = {x0:int, x1:int, y0:int, y1:int}
+  type statistics =
+    {bMean:real, bStd:real, gMean:real, gStd:real, rMean:real, rStd:real}
+  val loop : int -> int -> (int -> 'a) -> unit
+  val stddev : real -> real -> real -> real
+  val statistics : BenchSauvolaImage.image -> statistics
+  val window : int -> int -> int -> int -> window
+  val requireDimensions : BenchSauvolaImage.image -> unit
+  val localStatistics : BenchSauvolaImage.image -> int -> int -> statistics
+  val thresholdColor :
+      BenchSauvolaImage.rgb -> real * real * real -> BenchSauvolaImage.rgb
+  val monochrome : int -> BenchSauvolaImage.rgb
+  val adaptive : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  val niblackGlobal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  val niblackLocal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  type cache = {n:int ref, qsum:int ref, sum:int ref, x:int ref, y:int ref}
+  val cache : unit -> cache
+  val windowValues :
+      BenchSauvolaImage.image -> int -> int -> cache -> int * int
+  val niblackMono : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  val sauvolaThreshold : real -> real -> real
+  val sauvolaGlobal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  val sauvolaGlobalMono : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  val sauvolaLocal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  val sauvolaMono : BenchSauvolaImage.image -> BenchSauvolaImage.image
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-driver.sml]
+structure BenchSauvolaDriver : sig
+  structure I : <sig>
+  structure K : <sig>
+  val programs :
+      (string * (BenchSauvolaImage.image -> BenchSauvolaImage.image)) list
+  val read : string -> TextIO.vector
+  val check : BenchSauvolaImage.image -> string -> unit
+  val run : string -> string -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/contrast/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+FAIL contrast -- Fail: incorrect result: contrast pixel
+SUMMARY 1 checks, 1 failed
+PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 0, exit 1)
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-hash.sml]
+structure BenchStdlibHash : sig
+  val rotate : Word32.word -> int -> Word32.word
+  val mix : Word32.word -> Word32.word -> Word32.word
+  val finish : Word32.word -> int
+  val tagged : int -> Word32.word
+  val integer : int -> int
+  val pair : int * int -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-image.sml]
+[autoloading]
+[autoloading done]
+structure BenchSauvolaImage : sig
+  type rgb = {b:int, g:int, r:int}
+  datatype image = Image of {data:Word8Array.array, height:int, width:int}
+  val width : image -> int
+  val height : image -> int
+  val create : int -> int -> image
+  val index : image -> int -> int -> int
+  val get : image -> int -> int -> rgb
+  val set : image -> int -> int -> rgb -> unit
+  val loop : int -> int -> (int -> 'a) -> unit
+  val sub : image -> int -> int -> int -> int -> image
+  val brightness : rgb -> int
+  val read : string -> image
+  val writeP3 : string -> image -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-hash.sml]
+[autoloading]
+[autoloading done]
+structure BenchSauvolaHash : sig
+  structure H : <sig>
+  val fractionUnit : IntInf.int
+  val wordUnit : IntInf.int
+  val words : real -> ?.word32 * ?.word32
+  val real : Word32.word -> real -> Word32.word
+  val pairReal : real * real -> int
+  val pairInt : int * int -> int
+  val equalReal : real * real -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-memo-table.sml]
+[autoloading]
+[autoloading done]
+functor BenchSauvolaMemoFn(Key: sig
+  type key
+  val hash : key -> int
+  val equal : key * key -> bool
+end) :
+sig
+  type 'a bucket
+  type 'a table
+  exception NotFound
+  val create : unit -> 'a <BaseFct>.<resultStr>.table
+  val index : Key.key -> int
+  val find : 'a <BaseFct>.<resultStr>.table -> Key.key -> 'a
+  val clear : 'a <BaseFct>.<resultStr>.table -> unit
+  val add : 'a <BaseFct>.<resultStr>.table -> Key.key -> 'a -> unit
+  val memo : (Key.key -> 'a) -> Key.key -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-memo-real.sml]
+structure BenchSauvolaRealMemo : sig
+  datatype 'a bucket
+    = Cons of Key.key * 'a * 'a <BaseFct>.<resultStr>.bucket
+    | Empty
+  type 'a table = {buckets:'a bucket array, size:int ref}
+  exception NotFound
+  val create : unit -> 'a <BaseFct>.<resultStr>.table
+  val index : Key.key -> int
+  val find : 'a <BaseFct>.<resultStr>.table -> Key.key -> 'a
+  val clear : 'a <BaseFct>.<resultStr>.table -> unit
+  val add : 'a <BaseFct>.<resultStr>.table -> Key.key -> 'a -> unit
+  val memo : (Key.key -> 'a) -> Key.key -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-memo-int.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-memo-int.sml:4.26 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-memo-int.sml:4.38 Warning: calling polyEqual
+structure BenchSauvolaIntMemo : sig
+  datatype 'a bucket
+    = Cons of Key.key * 'a * 'a <BaseFct>.<resultStr>.bucket
+    | Empty
+  type 'a table = {buckets:'a bucket array, size:int ref}
+  exception NotFound
+  val create : unit -> 'a <BaseFct>.<resultStr>.table
+  val index : Key.key -> int
+  val find : 'a <BaseFct>.<resultStr>.table -> Key.key -> 'a
+  val clear : 'a <BaseFct>.<resultStr>.table -> unit
+  val add : 'a <BaseFct>.<resultStr>.table -> Key.key -> 'a -> unit
+  val memo : (Key.key -> 'a) -> Key.key -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-kernel.sml]
+[autoloading]
+[autoloading done]
+structure BenchSauvola : sig
+  structure I : <sig>
+  type window = {x0:int, x1:int, y0:int, y1:int}
+  type statistics =
+    {bMean:real, bStd:real, gMean:real, gStd:real, rMean:real, rStd:real}
+  val loop : int -> int -> (int -> 'a) -> unit
+  val stddev : real -> real -> real -> real
+  val statistics : BenchSauvolaImage.image -> statistics
+  val window : int -> int -> int -> int -> window
+  val requireDimensions : BenchSauvolaImage.image -> unit
+  val localStatistics : BenchSauvolaImage.image -> int -> int -> statistics
+  val thresholdColor :
+      BenchSauvolaImage.rgb -> real * real * real -> BenchSauvolaImage.rgb
+  val monochrome : int -> BenchSauvolaImage.rgb
+  val adaptive : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  val niblackGlobal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  val niblackLocal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  type cache = {n:int ref, qsum:int ref, sum:int ref, x:int ref, y:int ref}
+  val cache : unit -> cache
+  val windowValues :
+      BenchSauvolaImage.image -> int -> int -> cache -> int * int
+  val niblackMono : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  val sauvolaThreshold : real -> real -> real
+  val sauvolaGlobal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  val sauvolaGlobalMono : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  val sauvolaLocal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  val sauvolaMono : BenchSauvolaImage.image -> BenchSauvolaImage.image
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-driver.sml]
+structure BenchSauvolaDriver : sig
+  structure I : <sig>
+  structure K : <sig>
+  val programs :
+      (string * (BenchSauvolaImage.image -> BenchSauvolaImage.image)) list
+  val read : string -> TextIO.vector
+  val check : BenchSauvolaImage.image -> string -> unit
+  val run : string -> string -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/contrast/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 64:48:8
+PASS contrast
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-hash.sml]
+structure BenchStdlibHash : 
+  sig
+    val rotate : Word32.word -> int -> Word32.word
+    val mix : Word32.word -> Word32.word -> Word32.word
+    val finish : Word32.word -> int
+    val tagged : int -> Word32.word
+    val integer : int -> int
+    val pair : int * int -> int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-image.sml]
+structure BenchSauvolaImage : 
+  sig
+    type rgb = {b:int, g:int, r:int}
+    datatype image = Image of {data:Word8Array.array, height:int, width:int}
+    val width : image -> int
+    val height : image -> int
+    val create : int -> int -> image
+    val index : image -> int -> int -> int
+    val get : image -> int -> int -> rgb
+    val set : image -> int -> int -> rgb -> unit
+    val loop : int -> int -> (int -> 'a) -> unit
+    val sub : image -> int -> int -> int -> int -> image
+    val brightness : rgb -> int
+    val read : string -> image
+    val writeP3 : string -> image -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-hash.sml]
+structure BenchSauvolaHash : 
+  sig
+    structure H : <sig>
+    val fractionUnit : IntInf.int
+    val wordUnit : IntInf.int
+    val words : real -> ?.word32 * ?.word32
+    val real : Word32.word -> real -> Word32.word
+    val pairReal : real * real -> int
+    val pairInt : int * int -> int
+    val equalReal : real * real -> bool
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-memo-table.sml]
+functor BenchSauvolaMemoFn(Key: sig
+                              type key
+                              val hash : key -> int
+                              val equal : key * key -> bool
+                            end) :
+                          
+                            sig
+                              type 'a bucket
+                              type 'a table
+                              exception NotFound
+                              val create : unit -> 'a table
+                              val index : Key.key -> int
+                              val find : 'a table -> Key.key -> 'a
+                              val clear : 'a table -> unit
+                              val add : 'a table -> Key.key -> 'a -> unit
+                              val memo : (Key.key -> 'a) -> Key.key -> 'a
+                            end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-memo-real.sml]
+structure BenchSauvolaRealMemo : 
+  sig
+    datatype 'a bucket = Cons of Key.key * 'a * 'a bucket | Empty
+    type 'a table = {buckets:'a bucket array, size:int ref}
+    exception NotFound
+    val create : unit -> 'a table
+    val index : Key.key -> int
+    val find : 'a table -> Key.key -> 'a
+    val clear : 'a table -> unit
+    val add : 'a table -> Key.key -> 'a -> unit
+    val memo : (Key.key -> 'a) -> Key.key -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-memo-int.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-memo-int.sml:4.26 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-memo-int.sml:4.38 Warning: calling polyEqual
+structure BenchSauvolaIntMemo : 
+  sig
+    datatype 'a bucket = Cons of Key.key * 'a * 'a bucket | Empty
+    type 'a table = {buckets:'a bucket array, size:int ref}
+    exception NotFound
+    val create : unit -> 'a table
+    val index : Key.key -> int
+    val find : 'a table -> Key.key -> 'a
+    val clear : 'a table -> unit
+    val add : 'a table -> Key.key -> 'a -> unit
+    val memo : (Key.key -> 'a) -> Key.key -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-kernel.sml]
+structure BenchSauvola : 
+  sig
+    structure I : <sig>
+    type window = {x0:int, x1:int, y0:int, y1:int}
+    type statistics =
+      {bMean:real, bStd:real, gMean:real, gStd:real, rMean:real, rStd:real}
+    val loop : int -> int -> (int -> 'a) -> unit
+    val stddev : real -> real -> real -> real
+    val statistics : BenchSauvolaImage.image -> statistics
+    val window : int -> int -> int -> int -> window
+    val requireDimensions : BenchSauvolaImage.image -> unit
+    val localStatistics : BenchSauvolaImage.image -> int -> int -> statistics
+    val thresholdColor : BenchSauvolaImage.rgb
+                          -> real * real * real -> BenchSauvolaImage.rgb
+    val monochrome : int -> BenchSauvolaImage.rgb
+    val adaptive : BenchSauvolaImage.image -> BenchSauvolaImage.image
+    val niblackGlobal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+    val niblackLocal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+    type cache = {n:int ref, qsum:int ref, sum:int ref, x:int ref, y:int ref}
+    val cache : unit -> cache
+    val windowValues : BenchSauvolaImage.image
+                        -> int -> int -> cache -> int * int
+    val niblackMono : BenchSauvolaImage.image -> BenchSauvolaImage.image
+    val sauvolaThreshold : real -> real -> real
+    val sauvolaGlobal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+    val sauvolaGlobalMono : BenchSauvolaImage.image -> BenchSauvolaImage.image
+    val sauvolaLocal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+    val sauvolaMono : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/contrast-driver.sml]
+structure BenchSauvolaDriver : 
+  sig
+    structure I : <sig>
+    structure K : <sig>
+    val programs : (string
+                       * (BenchSauvolaImage.image -> BenchSauvolaImage.image)) 
+                      list
+    val read : string -> TextIO.vector
+    val check : BenchSauvolaImage.image -> string -> unit
+    val run : string -> string -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/contrast/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 64:48:8
+PASS contrast
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+RESULT 64:48:8
+PASS contrast
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 64:48:8
+PASS contrast
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

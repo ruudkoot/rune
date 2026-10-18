@@ -1,0 +1,27 @@
+{
+  "command": [
+    "timeout",
+    "120",
+    "bin/runevm",
+    "tests/out/benchmarks/minilight-originals/pilot.rbc"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 42796,
+  "observed_minimum_available_kib": 25862500,
+  "peak_processes": [
+    {
+      "pid": 19,
+      "name": "timeout",
+      "rss_kib": 1792
+    },
+    {
+      "pid": 20,
+      "name": "runevm",
+      "rss_kib": 41004
+    }
+  ],
+  "elapsed_seconds": 1.4767076850002923
+}

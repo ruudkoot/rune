@@ -1,0 +1,9 @@
+normal.ppm
+normal/adaptive_contrast_spreading.bits
+normal/niblack_global_gray.bits
+normal/niblack_local_gray.bits
+normal/niblack_local_monochrome.bits
+normal/sauvola_global_gray.bits
+normal/sauvola_global_monochrome.bits
+normal/sauvola_local_gray.bits
+normal/sauvola_local_monochrome.bits

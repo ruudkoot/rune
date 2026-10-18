@@ -1,0 +1,20 @@
+[
+  {
+    "profile": "smoke",
+    "input_sha256": "6811f1d0ac8c3d4694e676afc6a3f87feff7991175cae3b27d95448e363c9b56",
+    "image_sha256": "a79387b74d4e29176b81ae60dc8535892dbaf83883e5b912b86febf72926a359",
+    "image_bytes": 168
+  },
+  {
+    "profile": "normal",
+    "input_sha256": "f60b1e8af0fcfe8e8ac5da0b58eb24e374faef2e257377b433e599995cbf3191",
+    "image_sha256": "0d56c601f16a1a9109a51aa3247ae4e89cabce1ed0f86e6574447935626c4a3a",
+    "image_bytes": 12200
+  },
+  {
+    "profile": "large",
+    "input_sha256": "1724b7f93ef3efb64588ed21a248a7255121e3b340ab46198d208cf5ea12df41",
+    "image_sha256": "98105728bbe21e05b455320f6b98fa4b1a5a7077d793f7fccc78a900ea755652",
+    "image_bytes": 48652
+  }
+]

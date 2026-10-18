@@ -1,0 +1,4 @@
+  File "<stdin>", line 3
+    printf 'smoke.reference\n' > "$out/data.txt"
+           ^^^^^^^^^^^^^^^^^^^
+SyntaxError: invalid syntax

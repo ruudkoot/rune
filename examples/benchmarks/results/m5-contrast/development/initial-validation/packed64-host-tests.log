@@ -1,0 +1,656 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS contrast/full-original-image/adaptive_contrast_spreading
+PASS contrast/full-original-image/niblack_global_gray
+PASS contrast/full-original-image/niblack_local_gray
+PASS contrast/full-original-image/niblack_local_monochrome
+PASS contrast/full-original-image/sauvola_global_gray
+PASS contrast/full-original-image/sauvola_global_monochrome
+PASS contrast/full-original-image/sauvola_local_gray
+PASS contrast/full-original-image/sauvola_local_monochrome
+SUMMARY 8 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+PASS contrast/full-original-image/adaptive_contrast_spreading
+PASS contrast/full-original-image/niblack_global_gray
+PASS contrast/full-original-image/niblack_local_gray
+PASS contrast/full-original-image/niblack_local_monochrome
+PASS contrast/full-original-image/sauvola_global_gray
+PASS contrast/full-original-image/sauvola_global_monochrome
+PASS contrast/full-original-image/sauvola_local_gray
+PASS contrast/full-original-image/sauvola_local_monochrome
+SUMMARY 8 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+PASS contrast/full-original-image/adaptive_contrast_spreading
+PASS contrast/full-original-image/niblack_global_gray
+PASS contrast/full-original-image/niblack_local_gray
+PASS contrast/full-original-image/niblack_local_monochrome
+PASS contrast/full-original-image/sauvola_global_gray
+PASS contrast/full-original-image/sauvola_global_monochrome
+PASS contrast/full-original-image/sauvola_local_gray
+PASS contrast/full-original-image/sauvola_local_monochrome
+SUMMARY 8 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+PASS contrast/full-original-image/adaptive_contrast_spreading
+PASS contrast/full-original-image/niblack_global_gray
+PASS contrast/full-original-image/niblack_local_gray
+PASS contrast/full-original-image/niblack_local_monochrome
+PASS contrast/full-original-image/sauvola_global_gray
+PASS contrast/full-original-image/sauvola_global_monochrome
+PASS contrast/full-original-image/sauvola_local_gray
+PASS contrast/full-original-image/sauvola_local_monochrome
+SUMMARY 8 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 1048576 KiB
+PASS contrast/full-original-image/adaptive_contrast_spreading
+PASS contrast/full-original-image/niblack_global_gray
+PASS contrast/full-original-image/niblack_local_gray
+PASS contrast/full-original-image/niblack_local_monochrome
+PASS contrast/full-original-image/sauvola_global_gray
+PASS contrast/full-original-image/sauvola_global_monochrome
+PASS contrast/full-original-image/sauvola_local_gray
+PASS contrast/full-original-image/sauvola_local_monochrome
+SUMMARY 8 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-hash.sml]
+structure BenchStdlibHash : sig
+  val rotate : Word32.word -> int -> Word32.word
+  val mix : Word32.word -> Word32.word -> Word32.word
+  val finish : Word32.word -> int
+  val tagged : int -> Word32.word
+  val integer : int -> int
+  val pair : int * int -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/image.sml]
+[autoloading]
+[autoloading done]
+structure BenchSauvolaImage : sig
+  type rgb = {b:int, g:int, r:int}
+  datatype image = Image of {data:Word8Array.array, height:int, width:int}
+  val width : image -> int
+  val height : image -> int
+  val create : int -> int -> image
+  val index : image -> int -> int -> int
+  val get : image -> int -> int -> rgb
+  val set : image -> int -> int -> rgb -> unit
+  val loop : int -> int -> (int -> 'a) -> unit
+  val sub : image -> int -> int -> int -> int -> image
+  val brightness : rgb -> int
+  val read : string -> image
+  val writeP3 : string -> image -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/memo.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/memo.sml:67.26 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/memo.sml:67.38 Warning: calling polyEqual
+structure BenchSauvolaHash : sig
+  structure H : <sig>
+  val half : Word8Vector.vector -> int -> Word32.word
+  val real : Word32.word -> real -> Word32.word
+  val pairReal : real * real -> int
+  val pairInt : int * int -> int
+  val equalReal : real * real -> bool
+end
+functor BenchSauvolaMemoFn(Key: sig
+  type key
+  val hash : key -> int
+  val equal : key * key -> bool
+end) :
+sig
+  type 'a bucket
+  type 'a table
+  exception NotFound
+  val create : unit -> 'a <BaseFct>.<resultStr>.table
+  val index : Key.key -> int
+  val find : 'a <BaseFct>.<resultStr>.table -> Key.key -> 'a
+  val clear : 'a <BaseFct>.<resultStr>.table -> unit
+  val add : 'a <BaseFct>.<resultStr>.table -> Key.key -> 'a -> unit
+  val memo : (Key.key -> 'a) -> Key.key -> 'a
+end
+structure BenchSauvolaRealMemo : sig
+  datatype 'a bucket
+    = Cons of Key.key * 'a * 'a <BaseFct>.<resultStr>.bucket
+    | Empty
+  type 'a table = {buckets:'a bucket array, size:int ref}
+  exception NotFound
+  val create : unit -> 'a <BaseFct>.<resultStr>.table
+  val index : Key.key -> int
+  val find : 'a <BaseFct>.<resultStr>.table -> Key.key -> 'a
+  val clear : 'a <BaseFct>.<resultStr>.table -> unit
+  val add : 'a <BaseFct>.<resultStr>.table -> Key.key -> 'a -> unit
+  val memo : (Key.key -> 'a) -> Key.key -> 'a
+end
+structure BenchSauvolaIntMemo : sig
+  datatype 'a bucket
+    = Cons of Key.key * 'a * 'a <BaseFct>.<resultStr>.bucket
+    | Empty
+  type 'a table = {buckets:'a bucket array, size:int ref}
+  exception NotFound
+  val create : unit -> 'a <BaseFct>.<resultStr>.table
+  val index : Key.key -> int
+  val find : 'a <BaseFct>.<resultStr>.table -> Key.key -> 'a
+  val clear : 'a <BaseFct>.<resultStr>.table -> unit
+  val add : 'a <BaseFct>.<resultStr>.table -> Key.key -> 'a -> unit
+  val memo : (Key.key -> 'a) -> Key.key -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/kernel.sml]
+[autoloading]
+[autoloading done]
+structure BenchSauvola : sig
+  structure I : <sig>
+  type window = {x0:int, x1:int, y0:int, y1:int}
+  type statistics =
+    {bMean:real, bStd:real, gMean:real, gStd:real, rMean:real, rStd:real}
+  val loop : int -> int -> (int -> 'a) -> unit
+  val stddev : real -> real -> real -> real
+  val statistics : BenchSauvolaImage.image -> statistics
+  val window : int -> int -> int -> int -> window
+  val requireDimensions : BenchSauvolaImage.image -> unit
+  val localStatistics : BenchSauvolaImage.image -> int -> int -> statistics
+  val thresholdColor :
+      BenchSauvolaImage.rgb -> real * real * real -> BenchSauvolaImage.rgb
+  val monochrome : int -> BenchSauvolaImage.rgb
+  val adaptive : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  val niblackGlobal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  val niblackLocal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  type cache = {n:int ref, qsum:int ref, sum:int ref, x:int ref, y:int ref}
+  val cache : unit -> cache
+  val windowValues :
+      BenchSauvolaImage.image -> int -> int -> cache -> int * int
+  val niblackMono : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  val sauvolaThreshold : real -> real -> real
+  val sauvolaGlobal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  val sauvolaGlobalMono : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  val sauvolaLocal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  val sauvolaMono : BenchSauvolaImage.image -> BenchSauvolaImage.image
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/image-tests.sml]
+PASS contrast/full-original-image/adaptive_contrast_spreading
+PASS contrast/full-original-image/niblack_global_gray
+PASS contrast/full-original-image/niblack_local_gray
+PASS contrast/full-original-image/niblack_local_monochrome
+PASS contrast/full-original-image/sauvola_global_gray
+PASS contrast/full-original-image/sauvola_global_monochrome
+PASS contrast/full-original-image/sauvola_local_gray
+PASS contrast/full-original-image/sauvola_local_monochrome
+structure SauvolaImageTests : sig
+  structure I : <sig>
+  structure K : <sig>
+  val programs :
+      (string * (BenchSauvolaImage.image -> BenchSauvolaImage.image)) list
+  val image : BenchSauvolaImage.image
+  val bits : BenchSauvolaImage.image -> string
+  val read : string -> TextIO.vector
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 8 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-hash.sml]
+structure BenchStdlibHash : sig
+  val rotate : Word32.word -> int -> Word32.word
+  val mix : Word32.word -> Word32.word -> Word32.word
+  val finish : Word32.word -> int
+  val tagged : int -> Word32.word
+  val integer : int -> int
+  val pair : int * int -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/image.sml]
+[autoloading]
+[autoloading done]
+structure BenchSauvolaImage : sig
+  type rgb = {b:int, g:int, r:int}
+  datatype image = Image of {data:Word8Array.array, height:int, width:int}
+  val width : image -> int
+  val height : image -> int
+  val create : int -> int -> image
+  val index : image -> int -> int -> int
+  val get : image -> int -> int -> rgb
+  val set : image -> int -> int -> rgb -> unit
+  val loop : int -> int -> (int -> 'a) -> unit
+  val sub : image -> int -> int -> int -> int -> image
+  val brightness : rgb -> int
+  val read : string -> image
+  val writeP3 : string -> image -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/memo.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/memo.sml:67.26 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/memo.sml:67.38 Warning: calling polyEqual
+structure BenchSauvolaHash : sig
+  structure H : <sig>
+  val half : Word8Vector.vector -> int -> Word32.word
+  val real : Word32.word -> real -> Word32.word
+  val pairReal : real * real -> int
+  val pairInt : int * int -> int
+  val equalReal : real * real -> bool
+end
+functor BenchSauvolaMemoFn(Key: sig
+  type key
+  val hash : key -> int
+  val equal : key * key -> bool
+end) :
+sig
+  type 'a bucket
+  type 'a table
+  exception NotFound
+  val create : unit -> 'a <BaseFct>.<resultStr>.table
+  val index : Key.key -> int
+  val find : 'a <BaseFct>.<resultStr>.table -> Key.key -> 'a
+  val clear : 'a <BaseFct>.<resultStr>.table -> unit
+  val add : 'a <BaseFct>.<resultStr>.table -> Key.key -> 'a -> unit
+  val memo : (Key.key -> 'a) -> Key.key -> 'a
+end
+structure BenchSauvolaRealMemo : sig
+  datatype 'a bucket
+    = Cons of Key.key * 'a * 'a <BaseFct>.<resultStr>.bucket
+    | Empty
+  type 'a table = {buckets:'a bucket array, size:int ref}
+  exception NotFound
+  val create : unit -> 'a <BaseFct>.<resultStr>.table
+  val index : Key.key -> int
+  val find : 'a <BaseFct>.<resultStr>.table -> Key.key -> 'a
+  val clear : 'a <BaseFct>.<resultStr>.table -> unit
+  val add : 'a <BaseFct>.<resultStr>.table -> Key.key -> 'a -> unit
+  val memo : (Key.key -> 'a) -> Key.key -> 'a
+end
+structure BenchSauvolaIntMemo : sig
+  datatype 'a bucket
+    = Cons of Key.key * 'a * 'a <BaseFct>.<resultStr>.bucket
+    | Empty
+  type 'a table = {buckets:'a bucket array, size:int ref}
+  exception NotFound
+  val create : unit -> 'a <BaseFct>.<resultStr>.table
+  val index : Key.key -> int
+  val find : 'a <BaseFct>.<resultStr>.table -> Key.key -> 'a
+  val clear : 'a <BaseFct>.<resultStr>.table -> unit
+  val add : 'a <BaseFct>.<resultStr>.table -> Key.key -> 'a -> unit
+  val memo : (Key.key -> 'a) -> Key.key -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/kernel.sml]
+[autoloading]
+[autoloading done]
+structure BenchSauvola : sig
+  structure I : <sig>
+  type window = {x0:int, x1:int, y0:int, y1:int}
+  type statistics =
+    {bMean:real, bStd:real, gMean:real, gStd:real, rMean:real, rStd:real}
+  val loop : int -> int -> (int -> 'a) -> unit
+  val stddev : real -> real -> real -> real
+  val statistics : BenchSauvolaImage.image -> statistics
+  val window : int -> int -> int -> int -> window
+  val requireDimensions : BenchSauvolaImage.image -> unit
+  val localStatistics : BenchSauvolaImage.image -> int -> int -> statistics
+  val thresholdColor :
+      BenchSauvolaImage.rgb -> real * real * real -> BenchSauvolaImage.rgb
+  val monochrome : int -> BenchSauvolaImage.rgb
+  val adaptive : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  val niblackGlobal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  val niblackLocal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  type cache = {n:int ref, qsum:int ref, sum:int ref, x:int ref, y:int ref}
+  val cache : unit -> cache
+  val windowValues :
+      BenchSauvolaImage.image -> int -> int -> cache -> int * int
+  val niblackMono : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  val sauvolaThreshold : real -> real -> real
+  val sauvolaGlobal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  val sauvolaGlobalMono : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  val sauvolaLocal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  val sauvolaMono : BenchSauvolaImage.image -> BenchSauvolaImage.image
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/image-tests.sml]
+PASS contrast/full-original-image/adaptive_contrast_spreading
+PASS contrast/full-original-image/niblack_global_gray
+PASS contrast/full-original-image/niblack_local_gray
+PASS contrast/full-original-image/niblack_local_monochrome
+PASS contrast/full-original-image/sauvola_global_gray
+PASS contrast/full-original-image/sauvola_global_monochrome
+PASS contrast/full-original-image/sauvola_local_gray
+PASS contrast/full-original-image/sauvola_local_monochrome
+structure SauvolaImageTests : sig
+  structure I : <sig>
+  structure K : <sig>
+  val programs :
+      (string * (BenchSauvolaImage.image -> BenchSauvolaImage.image)) list
+  val image : BenchSauvolaImage.image
+  val bits : BenchSauvolaImage.image -> string
+  val read : string -> TextIO.vector
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 8 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-hash.sml]
+structure BenchStdlibHash : 
+  sig
+    val rotate : Word32.word -> int -> Word32.word
+    val mix : Word32.word -> Word32.word -> Word32.word
+    val finish : Word32.word -> int
+    val tagged : int -> Word32.word
+    val integer : int -> int
+    val pair : int * int -> int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/image.sml]
+structure BenchSauvolaImage : 
+  sig
+    type rgb = {b:int, g:int, r:int}
+    datatype image = Image of {data:Word8Array.array, height:int, width:int}
+    val width : image -> int
+    val height : image -> int
+    val create : int -> int -> image
+    val index : image -> int -> int -> int
+    val get : image -> int -> int -> rgb
+    val set : image -> int -> int -> rgb -> unit
+    val loop : int -> int -> (int -> 'a) -> unit
+    val sub : image -> int -> int -> int -> int -> image
+    val brightness : rgb -> int
+    val read : string -> image
+    val writeP3 : string -> image -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/memo.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/memo.sml:67.26 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/memo.sml:67.38 Warning: calling polyEqual
+structure BenchSauvolaHash : 
+  sig
+    structure H : <sig>
+    val half : Word8Vector.vector -> int -> Word32.word
+    val real : Word32.word -> real -> Word32.word
+    val pairReal : real * real -> int
+    val pairInt : int * int -> int
+    val equalReal : real * real -> bool
+  end
+functor BenchSauvolaMemoFn(Key: sig
+                              type key
+                              val hash : key -> int
+                              val equal : key * key -> bool
+                            end) :
+                          
+                            sig
+                              type 'a bucket
+                              type 'a table
+                              exception NotFound
+                              val create : unit -> 'a table
+                              val index : Key.key -> int
+                              val find : 'a table -> Key.key -> 'a
+                              val clear : 'a table -> unit
+                              val add : 'a table -> Key.key -> 'a -> unit
+                              val memo : (Key.key -> 'a) -> Key.key -> 'a
+                            end
+structure BenchSauvolaRealMemo : 
+  sig
+    datatype 'a bucket = Cons of Key.key * 'a * 'a bucket | Empty
+    type 'a table = {buckets:'a bucket array, size:int ref}
+    exception NotFound
+    val create : unit -> 'a table
+    val index : Key.key -> int
+    val find : 'a table -> Key.key -> 'a
+    val clear : 'a table -> unit
+    val add : 'a table -> Key.key -> 'a -> unit
+    val memo : (Key.key -> 'a) -> Key.key -> 'a
+  end
+structure BenchSauvolaIntMemo : 
+  sig
+    datatype 'a bucket = Cons of Key.key * 'a * 'a bucket | Empty
+    type 'a table = {buckets:'a bucket array, size:int ref}
+    exception NotFound
+    val create : unit -> 'a table
+    val index : Key.key -> int
+    val find : 'a table -> Key.key -> 'a
+    val clear : 'a table -> unit
+    val add : 'a table -> Key.key -> 'a -> unit
+    val memo : (Key.key -> 'a) -> Key.key -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/kernel.sml]
+structure BenchSauvola : 
+  sig
+    structure I : <sig>
+    type window = {x0:int, x1:int, y0:int, y1:int}
+    type statistics =
+      {bMean:real, bStd:real, gMean:real, gStd:real, rMean:real, rStd:real}
+    val loop : int -> int -> (int -> 'a) -> unit
+    val stddev : real -> real -> real -> real
+    val statistics : BenchSauvolaImage.image -> statistics
+    val window : int -> int -> int -> int -> window
+    val requireDimensions : BenchSauvolaImage.image -> unit
+    val localStatistics : BenchSauvolaImage.image -> int -> int -> statistics
+    val thresholdColor : BenchSauvolaImage.rgb
+                          -> real * real * real -> BenchSauvolaImage.rgb
+    val monochrome : int -> BenchSauvolaImage.rgb
+    val adaptive : BenchSauvolaImage.image -> BenchSauvolaImage.image
+    val niblackGlobal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+    val niblackLocal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+    type cache = {n:int ref, qsum:int ref, sum:int ref, x:int ref, y:int ref}
+    val cache : unit -> cache
+    val windowValues : BenchSauvolaImage.image
+                        -> int -> int -> cache -> int * int
+    val niblackMono : BenchSauvolaImage.image -> BenchSauvolaImage.image
+    val sauvolaThreshold : real -> real -> real
+    val sauvolaGlobal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+    val sauvolaGlobalMono : BenchSauvolaImage.image -> BenchSauvolaImage.image
+    val sauvolaLocal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+    val sauvolaMono : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/image-tests.sml]
+PASS contrast/full-original-image/adaptive_contrast_spreading
+PASS contrast/full-original-image/niblack_global_gray
+PASS contrast/full-original-image/niblack_local_gray
+PASS contrast/full-original-image/niblack_local_monochrome
+PASS contrast/full-original-image/sauvola_global_gray
+PASS contrast/full-original-image/sauvola_global_monochrome
+PASS contrast/full-original-image/sauvola_local_gray
+PASS contrast/full-original-image/sauvola_local_monochrome
+structure SauvolaImageTests : 
+  sig
+    structure I : <sig>
+    structure K : <sig>
+    val programs : (string
+                       * (BenchSauvolaImage.image -> BenchSauvolaImage.image)) 
+                      list
+    val image : BenchSauvolaImage.image
+    val bits : BenchSauvolaImage.image -> string
+    val read : string -> TextIO.vector
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 8 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/memo.sml:14: error: Structure (PackReal64Big) has not been declared
+Found near PackReal64Big.toBytes value
+uncaught exception Fail [Fail "Static Errors"]
+PROGRAM FAIL native:polyml@5.9.2 (load 1, exit 1)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/memo.sml:14: error: Structure (PackReal64Big) has not been declared
+PROGRAM LIMIT AS 1048576 KiB
+PASS contrast/full-original-image/adaptive_contrast_spreading
+PASS contrast/full-original-image/niblack_global_gray
+PASS contrast/full-original-image/niblack_local_gray
+PASS contrast/full-original-image/niblack_local_monochrome
+PASS contrast/full-original-image/sauvola_global_gray
+PASS contrast/full-original-image/sauvola_global_monochrome
+PASS contrast/full-original-image/sauvola_local_gray
+PASS contrast/full-original-image/sauvola_local_monochrome
+SUMMARY 8 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

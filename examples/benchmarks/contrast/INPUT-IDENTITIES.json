@@ -1,0 +1,35 @@
+{
+  "original_sha256": "9a69d15d4f57d132fbe276b29008a3c638b02db64b02406d1579af94cf0ce82c",
+  "profiles": [
+    {
+      "profile": "smoke",
+      "x": 0,
+      "y": 0,
+      "width": 32,
+      "height": 32,
+      "bytes": 12296,
+      "sha256": "bb5535c6cf7be63e635563a46b355c0d2bfd5961414445f278c71e7bf81ea088",
+      "rgb_sha256": "ad99c1fdb4212d1666ab7b582d73e5bcf2967dbc1bfcd7f3e11a0d96d64924ff"
+    },
+    {
+      "profile": "normal",
+      "x": 40,
+      "y": 40,
+      "width": 64,
+      "height": 48,
+      "bytes": 35484,
+      "sha256": "47f96e221c42e25ebfaf38f847c2bab087f4e8499583baa606885d29c94c30bb",
+      "rgb_sha256": "e652c7bd9e3a58665997962d1ee7a36b328117566f33d50591cd0a4048d74bef"
+    },
+    {
+      "profile": "large",
+      "x": 0,
+      "y": 0,
+      "width": 267,
+      "height": 200,
+      "bytes": 573294,
+      "sha256": "f29fe63ca97459480b55e0945ccb0cbd069e813b93e90afa19f3d7035e8279ca",
+      "rgb_sha256": "2e21a6c7f7e86414e13e3668fb775ebef5f38560618505d6e2ab9309aaeedb51"
+    }
+  ]
+}

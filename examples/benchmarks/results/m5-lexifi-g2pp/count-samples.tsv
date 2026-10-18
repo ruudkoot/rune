@@ -1,0 +1,5 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+lexifi-g2pp	normal	rune	O2	count	1	1	pass	134.02	134.00	0.03	10696	26038765444	3638731424	58600828	counts/measurement.V4s3Mv/lexifi-g2pp/rune/fresh.1
+lexifi-g2pp	normal	rune:opt	O2	count	1	1	pass	54.02	53.35	0.02	11772	26038765444	3638731424	58600828	counts/measurement.V4s3Mv/lexifi-g2pp/rune-opt/fresh.1
+lexifi-g2pp	normal	rune:new	O2	count	1	1	pass	131.28	131.05	0.04	11008	16760772634	3638731424	58600828	counts/measurement.V4s3Mv/lexifi-g2pp/rune-new/fresh.1
+lexifi-g2pp	normal	rune:jit	O2	count	1	1	pass	40.20	40.39	0.04	13240	16760772634	3638731424	58600828	counts/measurement.V4s3Mv/lexifi-g2pp/rune-jit/fresh.1

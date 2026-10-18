@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+minilight	smoke	native:mlton@20241230	O2	compile	0	0	pass	8.64	7.30	1.49	663628	-	-	-	minilight/native-mlton/build/compile
+minilight	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.24	0.21	0.04	40844	-	-	-	minilight/native-mlton/correctness.0
+minilight	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.24	0.16	0.09	40840	-	-	-	minilight/native-mlton/fresh.1
+minilight	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.82	0.75	0.09	36500	-	-	-	minilight/native-smlnj-legacy/build/compile
+minilight	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.37	0.37	0.00	11272	-	-	-	minilight/native-smlnj-legacy/correctness.0
+minilight	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.33	0.32	0.02	11276	-	-	-	minilight/native-smlnj-legacy/fresh.1
+minilight	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.99	0.82	0.15	53804	-	-	-	minilight/native-polyml/build/compile
+minilight	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.35	0.43	0.04	32524	-	-	-	minilight/native-polyml/correctness.0
+minilight	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.37	0.38	0.06	38968	-	-	-	minilight/native-polyml/fresh.1

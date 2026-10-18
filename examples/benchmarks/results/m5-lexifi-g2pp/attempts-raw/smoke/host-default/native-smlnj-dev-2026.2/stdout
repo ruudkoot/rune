@@ -1,0 +1,169 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-random.sml]
+structure BenchOCamlRandom : 
+  sig
+    type state = {index:int ref, words:Word32.word array}
+    val defaultWords : Word32.word vector
+    val seed42Words : Word32.word vector
+    val seed512Words : Word32.word vector
+    val make : Word32.word vector -> state
+    val default : unit -> state
+    val seed42 : unit -> state
+    val seed512 : unit -> state
+    val bits : state -> int
+    val integer : state -> int -> int
+    val real : state -> real -> real
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lexifi-g2pp-date.sml]
+structure BenchG2Date : 
+  sig
+    type date = int
+    type gregorian = {day:int, hour:int, minute:int, month:int, year:int}
+    val minutesInDay : int
+    val ofGregorian : {day:int, hour:int, minute:int, month:int, year:int}
+                       -> int
+    val toGregorian : int
+                       -> {day:int, hour:int, minute:int, month:int, year:int}
+    val checkDate : int -> int -> int -> bool
+    val ofString : string -> int
+    val daysBetween : int -> int -> real
+    val act365 : int -> int -> real
+    val leap : int -> bool
+    val endOfMonth : int -> int -> int
+    val addMonths : int -> int -> int
+    val addYears : int -> int -> int
+    val maxDate : int
+    val minDate : int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lexifi-g2pp-math.sml]
+structure BenchG2Math : 
+  sig
+    val erf : real -> real
+    val gaussianP : real -> real
+    datatype error = NotBracketedAbove | NotBracketedBelow
+    exception Rootfinder of error
+    val brent : real -> real -> (real -> real) -> real -> real
+    val hermiteNodes : real vector
+    val hermiteWeights : real vector
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lexifi-g2pp-random.sml]
+structure BenchG2Random : 
+  sig
+    val words : Word32.word vector
+    val create : unit -> BenchOCamlRandom.state
+    val integer : BenchOCamlRandom.state -> int -> int
+    val real : BenchOCamlRandom.state -> real -> real
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lexifi-g2pp-optimization.sml]
+structure BenchG2Optimization : 
+  sig
+    type termination = {maxf:int, maxit:int, target:real}
+    datatype status = MaxEvaluations | MaxIterations | TargetReached
+    type result = {evaluations:int, f:real, status:status, x0:real array}
+    exception Infeasible
+    val loop : int -> int -> (int -> 'a) -> unit
+    val copy : 'a array -> 'a array
+    val blit : 'a array -> 'a array -> unit
+    val parameters : int -> {cr:real, np:int}
+    val optimize : {cr:real, np:int}
+                    -> (real array -> real)
+                    -> real array
+                    -> real array
+                    -> (int -> real -> unit) -> termination -> result
+    type range = {initial:real, lower:real, upper:real}
+    datatype variable = Fixed of real | Optimize of range
+    val leastSquares : bool
+                        -> (string -> unit) option
+                        -> int
+                        -> (real array -> 'a)
+                        -> ('a -> real array -> 'b)
+                        -> variable array
+                        -> real array
+                        -> {calibrated:real array, parameters:'a,
+                         quoted:real array, rms:real}
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lexifi-g2pp-calibration.sml]
+structure BenchG2Calibration : 
+  sig
+    structure D : <sig>
+    structure M : <sig>
+    structure O : <sig>
+    type parameters =
+      {g_a:real, g_b:real, g_nu:real, g_rho:real, g_sigma:real}
+    datatype frequency = Annual | Quarterly | Semiannual
+    type swaption = {frequency:frequency, maturityYears:int, termYears:int}
+    type extended =
+      {maturity:BenchG2Date.date,
+        schedule:(BenchG2Date.date * BenchG2Date.date) list, strike:real}
+    val pi : real
+    val loop : int -> int -> (int -> 'a) -> unit
+    val extended : int -> (int -> real) -> swaption -> extended
+    val bFun : real -> real -> real
+    exception Sdomain
+    val bigV : parameters -> real -> real * real * real
+    val bigMx : parameters -> int -> int -> int -> int -> real
+    val bigMy : parameters -> int -> int -> int -> int -> real
+    val pricer : int -> (int -> real) -> swaption -> parameters -> real
+    val blackPrice : int -> (int -> real) -> swaption -> real -> real
+    val calibrate : (string -> unit) option
+                     -> int
+                     -> int
+                     -> (swaption * real) vector
+                     -> BenchG2Optimization.variable array
+                     -> (int -> real)
+                     -> {calibrated:real array, parameters:parameters,
+                      quoted:real array, rms:real}
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lexifi-g2pp-input.sml]
+structure BenchG2Input : 
+  sig
+    structure C : <sig>
+    val quotes : ({frequency:BenchG2Calibration.frequency, maturityYears:int,
+                      termYears:int} * real) vector
+    val variables : BenchG2Optimization.variable array
+    val today : int
+    val zc : int -> real
+    val join : string -> string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lexifi-g2pp-check.sml]
+structure BenchG2Check : 
+  sig
+    type expected =
+      {limit:int, parameters:real vector, prices:real vector,
+        quoted:real vector, rms:real}
+    val close : real * real * real * real -> bool
+    type result =
+      {calibrated:real array, parameters:BenchG2Calibration.parameters,
+        quoted:real array, rms:real}
+    val valid : result -> expected -> bool
+    val verify : result -> expected -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lexifi-g2pp-driver.sml]
+structure BenchG2Driver : 
+  sig
+    val read : string -> BenchG2Check.expected
+    val calculate : int
+                     -> {calibrated:real array,
+                      parameters:BenchG2Calibration.parameters,
+                      quoted:real array, rms:real}
+    val run : int -> string -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/lexifi-g2pp/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 40:196
+PASS lexifi-g2pp
+SUMMARY 1 checks, 0 failed

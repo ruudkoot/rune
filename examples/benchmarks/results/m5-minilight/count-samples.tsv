@@ -1,0 +1,5 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+minilight	normal	rune	O2	count	1	1	pass	7.28	7.52	0.04	42396	1330008262	4202271448	102266059	counts/measurement.kEIKY9/minilight/rune/fresh.1
+minilight	normal	rune:opt	O2	count	1	1	pass	5.39	4.26	0.02	43308	1330008262	4202271448	102266059	counts/measurement.kEIKY9/minilight/rune-opt/fresh.1
+minilight	normal	rune:new	O2	count	1	1	pass	7.42	7.70	0.03	81652	913479950	4202271448	102266059	counts/measurement.kEIKY9/minilight/rune-new/fresh.1
+minilight	normal	rune:jit	O2	count	1	1	pass	3.53	3.62	0.05	84532	913479950	4202271448	102266059	counts/measurement.kEIKY9/minilight/rune-jit/fresh.1

@@ -1,0 +1,27 @@
+{
+  "command": [
+    "timeout",
+    "600",
+    "bin/runevm",
+    "tests/out/benchmarks/lexifi-g2pp-originals/profile-tests.rbc"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 12420,
+  "observed_minimum_available_kib": 23069240,
+  "peak_processes": [
+    {
+      "pid": 8,
+      "name": "runevm",
+      "rss_kib": 10628
+    },
+    {
+      "pid": 7,
+      "name": "timeout",
+      "rss_kib": 1792
+    }
+  ],
+  "elapsed_seconds": 267.82678763800004
+}

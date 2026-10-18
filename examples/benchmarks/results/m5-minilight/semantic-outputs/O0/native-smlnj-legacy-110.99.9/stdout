@@ -1,0 +1,323 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-random.sml]
+[autoloading]
+[autoloading done]
+structure BenchOCamlRandom : sig
+  type state = {index:int ref, words:Word32.word array}
+  val defaultWords : Word32.word vector
+  val seed42Words : Word32.word vector
+  val seed512Words : Word32.word vector
+  val make : Word32.word vector -> state
+  val default : unit -> state
+  val seed42 : unit -> state
+  val seed512 : unit -> state
+  val bits : state -> int
+  val integer : state -> int -> int
+  val real : state -> real -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/minilight-originals/vector.sml]
+[autoloading]
+[autoloading done]
+structure BenchMiniVector : sig
+  type t = Real64Array.array
+  val create :
+      Real64Array.elem
+       -> Real64Array.elem -> Real64Array.elem -> Real64Array.array
+  val sub : Real64Array.array -> int -> Real64Array.elem
+  val zero : Real64Array.array
+  val one : Real64Array.array
+  val maximum : Real64Array.array
+  val oneX : Real64Array.array
+  val oneY : Real64Array.array
+  val oneZ : Real64Array.array
+  val fold :
+      (Real64Array.elem -> Real64Array.elem -> Real64Array.elem)
+       -> Real64Array.array -> Real64Array.elem
+  val zip :
+      (Real64Array.elem -> Real64Array.elem -> Real64Array.elem)
+       -> Real64Array.array -> Real64Array.array -> Real64Array.array
+  val add : Real64Array.array -> Real64Array.array -> Real64Array.array
+  val subtract : Real64Array.array -> Real64Array.array -> Real64Array.array
+  val multiply : Real64Array.array -> Real64Array.array -> Real64Array.array
+  val divide : Real64Array.array -> Real64Array.array -> Real64Array.array
+  val scale : Real64Array.array -> real -> Real64Array.array
+  val divideScalar : Real64Array.array -> real -> Real64Array.array
+  val dot : Real64Array.array -> Real64Array.array -> real
+  val length : Real64Array.array -> real
+  val negative : Real64Array.array -> Real64Array.array
+  val unitize : Real64Array.array -> Real64Array.array
+  val cross : Real64Array.array -> Real64Array.array -> Real64Array.array
+  val clamp :
+      Real64Array.array
+       -> Real64Array.array -> Real64Array.array -> Real64Array.array
+  val scaleFrame :
+      Real64Array.array array -> Real64Array.array -> Real64Array.array
+  val equal : Real64Array.array -> Real64Array.array -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/minilight-originals/parse.sml]
+[autoloading]
+[autoloading done]
+structure BenchMiniParse : sig
+  datatype input = Input of {position:int ref, tokens:string vector}
+  exception End
+  val read : string -> input
+  val next : input -> string
+  val integer : input -> int
+  val real : input -> real
+  val vector : input -> Real64Array.array
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/minilight-originals/delay.sml]
+structure BenchMiniDelay : sig
+  datatype 'a state
+    = Failed of exn
+    | Forcing
+    | Pending of unit -> 'a
+    | Ready of 'a
+  type 'a t = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/minilight-originals/random.sml]
+structure BenchMiniRandom : sig
+  val words : Word32.word vector
+  val create : unit -> BenchOCamlRandom.state
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/minilight-originals/triangle.sml]
+structure BenchMiniTriangle : sig
+  structure V : <sig>
+  structure L : <sig>
+  datatype t
+    = Triangle of {area:real BenchMiniDelay.t, edge0:BenchMiniVector.t,
+                    edge1:BenchMiniVector.t, edge3:BenchMiniVector.t,
+                    emitivity:BenchMiniVector.t, identity:unit ref,
+                    normal:BenchMiniVector.t BenchMiniDelay.t,
+                    reflectivity:BenchMiniVector.t,
+                    tangent:BenchMiniVector.t BenchMiniDelay.t,
+                    vertices:BenchMiniVector.t array}
+  val tolerance : real
+  val create :
+      Real64Array.array array -> Real64Array.array -> Real64Array.array -> t
+  val read : BenchMiniParse.input -> t
+  val same : t * t -> bool
+  val normal : t -> BenchMiniVector.t
+  val tangent : t -> BenchMiniVector.t
+  val area : t -> real
+  val reflectivity : t -> BenchMiniVector.t
+  val emitivity : t -> BenchMiniVector.t
+  val bounds : t -> Real64Array.array array
+  val intersection :
+      t -> Real64Array.array -> Real64Array.array -> real option
+  val sample : t -> BenchOCamlRandom.state -> Real64Array.array
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/minilight-originals/spatial.sml]
+structure BenchMiniSpatial : sig
+  structure V : <sig>
+  structure T : <sig>
+  datatype tree = Empty | Node of {bound:Real64Array.array, parts:parts}
+  datatype parts = Cells of tree array | Items of BenchMiniTriangle.t array
+  val maxLevels : int
+  val bit : int -> int -> int
+  val flip : int -> int -> int
+  val construct : Real64Array.array -> BenchMiniTriangle.t list -> int -> tree
+  val create : Real64Array.array -> BenchMiniTriangle.t list -> tree
+  val intersection :
+      tree
+       -> Real64Array.array
+       -> Real64Array.array
+       -> BenchMiniTriangle.t option
+       -> (BenchMiniTriangle.t * Real64Array.array) option
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/minilight-originals/scene.sml]
+structure BenchMiniScene : sig
+  structure V : <sig>
+  structure T : <sig>
+  datatype t
+    = Scene of {emitters:BenchMiniTriangle.t array, ground:BenchMiniVector.t,
+                 index:BenchMiniSpatial.tree, sky:BenchMiniVector.t,
+                 triangles:BenchMiniTriangle.t array}
+  val read : BenchMiniParse.input -> Real64Array.array -> t
+  val intersection :
+      t
+       -> Real64Array.array
+       -> Real64Array.array
+       -> BenchMiniTriangle.t option
+       -> (BenchMiniTriangle.t * Real64Array.array) option
+  val emittersCount : t -> int
+  val emitter :
+      t
+       -> BenchOCamlRandom.state
+       -> BenchMiniTriangle.t option * Real64Array.array
+  val defaultEmission : t -> Real64Array.array -> BenchMiniVector.t
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/minilight-originals/surface.sml]
+structure BenchMiniSurface : sig
+  structure V : <sig>
+  structure T : <sig>
+  type t = {position:BenchMiniVector.t, triangle:BenchMiniTriangle.t}
+  val pi : real
+  val emission :
+      t -> Real64Array.array -> Real64Array.array -> bool -> Real64Array.array
+  val reflection :
+      t
+       -> Real64Array.array
+       -> Real64Array.array -> Real64Array.array -> Real64Array.array
+  val nextDirection :
+      t
+       -> Real64Array.array
+       -> BenchOCamlRandom.state -> Real64Array.array * Real64Array.array
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/minilight-originals/ray.sml]
+structure BenchMiniRay : sig
+  structure V : <sig>
+  structure T : <sig>
+  structure S : <sig>
+  structure P : <sig>
+  datatype t = Tracer of BenchMiniScene.t
+  val create : BenchMiniScene.t -> t
+  val emitterSample :
+      t
+       -> Real64Array.array
+       -> BenchMiniSurface.t -> BenchOCamlRandom.state -> Real64Array.array
+  val radiance :
+      t
+       -> BenchMiniVector.t
+       -> Real64Array.array
+       -> BenchMiniTriangle.t option
+       -> BenchOCamlRandom.state -> Real64Array.array
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/minilight-originals/image.sml]
+[autoloading]
+[autoloading done]
+structure BenchMiniImage : sig
+  structure V : <sig>
+  datatype t
+    = Image of {height:int, pixels:BenchMiniVector.t array, width:int}
+  val read : BenchMiniParse.input -> t
+  val width : t -> int
+  val height : t -> int
+  val pixels : t -> BenchMiniVector.t array
+  val add : t -> int -> int -> Real64Array.array -> unit
+  val luminance : Real64Array.array
+  val toneMapping : Real64Array.array array -> real -> real
+  val formatted : t -> int -> string * Word8Vector.vector
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/minilight-originals/camera.sml]
+structure BenchMiniCamera : sig
+  structure V : <sig>
+  datatype t
+    = Camera of {angle:real, direction:BenchMiniVector.t,
+                  position:BenchMiniVector.t, right:BenchMiniVector.t,
+                  up:BenchMiniVector.t}
+  val read : BenchMiniParse.input -> t
+  val eye : t -> BenchMiniVector.t
+  val frame :
+      t
+       -> BenchMiniScene.t
+       -> BenchMiniImage.t -> BenchOCamlRandom.state -> BenchMiniImage.t
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/minilight-originals/check.sml]
+structure BenchMiniCheck : sig
+  structure V : <sig>
+  structure I : <sig>
+  type expected =
+    {first:Real64Vector.vector, firstRGB:Word8Vector.vector, frames:int,
+      height:int, last:Real64Vector.vector, lastRGB:Word8Vector.vector,
+      state:int vector, width:int}
+  val read : string -> expected
+  val close : real * real -> bool
+  val pixels : BenchMiniImage.t -> Real64Vector.vector -> bool
+  val raster : Word8Vector.vector -> Word8Vector.vector -> bool
+  val randomState : BenchOCamlRandom.state -> int vector -> bool
+  val snapshot :
+      BenchMiniImage.t
+       -> int -> Real64Vector.vector -> Word8Vector.vector -> unit
+  val run : string -> string -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/minilight-originals/tests.sml]
+PASS minilight/memoized-geometry-delay-shares
+PASS minilight/failed-delay-is-memoized
+PASS minilight/equal-geometry-has-distinct-object-identity
+PASS minilight/original-lazy-geometry-demand-states
+PASS minilight/triangle-moller-intersection
+PASS minilight/triangle-parallel-ray-misses
+PASS minilight/triangle-geometric-area-and-normal
+PASS minilight/octree-last-hit-is-physical-identity
+PASS minilight/unitization-keeps-zero-shared
+PASS minilight/float-checker-rejects-perturbation
+PASS minilight/float-checker-accepts-small-roundoff
+PASS minilight/float-checker-rejects-NaN
+PASS minilight/raster-checker-rejects-one-byte-corruption
+PASS minilight/raster-checker-rejects-wrong-length
+PASS minilight/fixed-original-smoke-first-last-RNG-and-raster
+structure MiniLightTests : sig
+  structure V : <sig>
+  structure Triangle : <sig>
+  structure L : <sig>
+  structure I : <sig>
+  structure C : <sig>
+  val check : string -> (unit -> bool) -> unit
+  val triangle : unit -> BenchMiniTriangle.t
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 15 checks, 0 failed

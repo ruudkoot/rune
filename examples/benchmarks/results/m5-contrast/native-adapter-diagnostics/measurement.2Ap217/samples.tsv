@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+contrast	smoke	native:mlton@20241230	O2	compile	0	0	pass	8.74	7.35	1.51	660692	-	-	-	contrast/native-mlton/build/compile
+contrast	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.12	0.11	0.00	3112	-	-	-	contrast/native-mlton/correctness.0
+contrast	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.12	0.12	0.00	3128	-	-	-	contrast/native-mlton/fresh.1
+contrast	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.68	0.65	0.04	37212	-	-	-	contrast/native-smlnj-legacy/build/compile
+contrast	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.49	0.48	0.01	5980	-	-	-	contrast/native-smlnj-legacy/correctness.0
+contrast	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.45	0.46	0.00	6016	-	-	-	contrast/native-smlnj-legacy/fresh.1
+contrast	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.56	0.40	0.10	38896	-	-	-	contrast/native-polyml/build/compile
+contrast	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.12	0.11	0.00	13956	-	-	-	contrast/native-polyml/correctness.0
+contrast	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.12	0.12	0.00	13808	-	-	-	contrast/native-polyml/fresh.1

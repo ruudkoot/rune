@@ -1,0 +1,225 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+- [autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-random.sml]
+[autoloading]
+[autoloading done]
+structure BenchOCamlRandom : sig
+  type state = {index:int ref, words:Word32.word array}
+  val defaultWords : Word32.word vector
+  val seed42Words : Word32.word vector
+  val seed512Words : Word32.word vector
+  val make : Word32.word vector -> state
+  val default : unit -> state
+  val seed42 : unit -> state
+  val seed512 : unit -> state
+  val bits : state -> int
+  val integer : state -> int -> int
+  val real : state -> real -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/lexifi-g2pp-originals/date.sml]
+structure BenchG2Date : sig
+  type date = int
+  type gregorian = {day:int, hour:int, minute:int, month:int, year:int}
+  val minutesInDay : int
+  val ofGregorian :
+      {day:int, hour:int, minute:int, month:int, year:int} -> int
+  val toGregorian :
+      int -> {day:int, hour:int, minute:int, month:int, year:int}
+  val checkDate : int -> int -> int -> bool
+  val ofString : string -> int
+  val daysBetween : int -> int -> real
+  val act365 : int -> int -> real
+  val leap : int -> bool
+  val endOfMonth : int -> int -> int
+  val addMonths : int -> int -> int
+  val addYears : int -> int -> int
+  val maxDate : int
+  val minDate : int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/lexifi-g2pp-originals/math.sml]
+[autoloading]
+[autoloading done]
+structure BenchG2Math : sig
+  val erf : real -> real
+  val gaussianP : real -> real
+  datatype error = NotBracketedAbove | NotBracketedBelow
+  exception Rootfinder of error
+  val brent : real -> real -> (real -> real) -> real -> real
+  val hermiteNodes : real vector
+  val hermiteWeights : real vector
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/lexifi-g2pp-originals/random.sml]
+structure BenchG2Random : sig
+  val words : Word32.word vector
+  val create : unit -> BenchOCamlRandom.state
+  val integer : BenchOCamlRandom.state -> int -> int
+  val real : BenchOCamlRandom.state -> real -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/lexifi-g2pp-originals/optimization.sml]
+structure BenchG2Optimization : sig
+  type termination = {maxf:int, maxit:int, target:real}
+  datatype status = MaxEvaluations | MaxIterations | TargetReached
+  type result = {evaluations:int, f:real, status:status, x0:real array}
+  exception Infeasible
+  val loop : int -> int -> (int -> 'a) -> unit
+  val copy : 'a array -> 'a array
+  val blit : 'a array -> 'a array -> unit
+  val parameters : int -> {cr:real, np:int}
+  val optimize :
+      {cr:real, np:int}
+       -> (real array -> real)
+       -> real array
+       -> real array -> (int -> real -> unit) -> termination -> result
+  type range = {initial:real, lower:real, upper:real}
+  datatype variable = Fixed of real | Optimize of range
+  val leastSquares :
+      bool
+       -> (string -> unit) option
+       -> int
+       -> (real array -> 'a)
+       -> ('a -> real array -> 'b)
+       -> variable array
+       -> real array
+       -> {calibrated:real array, parameters:'a, quoted:real array, rms:real}
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/lexifi-g2pp-originals/calibration.sml]
+structure BenchG2Calibration : sig
+  structure D : <sig>
+  structure M : <sig>
+  structure O : <sig>
+  type parameters = {g_a:real, g_b:real, g_nu:real, g_rho:real, g_sigma:real}
+  datatype frequency = Annual | Quarterly | Semiannual
+  type swaption = {frequency:frequency, maturityYears:int, termYears:int}
+  type extended =
+    {maturity:BenchG2Date.date,
+      schedule:(BenchG2Date.date * BenchG2Date.date) list, strike:real}
+  val pi : real
+  val loop : int -> int -> (int -> 'a) -> unit
+  val extended : int -> (int -> real) -> swaption -> extended
+  val bFun : real -> real -> real
+  exception Sdomain
+  val bigV : parameters -> real -> real * real * real
+  val bigMx : parameters -> int -> int -> int -> int -> real
+  val bigMy : parameters -> int -> int -> int -> int -> real
+  val pricer : int -> (int -> real) -> swaption -> parameters -> real
+  val blackPrice : int -> (int -> real) -> swaption -> real -> real
+  val calibrate :
+      (string -> unit) option
+       -> int
+       -> int
+       -> (swaption * real) vector
+       -> BenchG2Optimization.variable array
+       -> (int -> real)
+       -> {calibrated:real array, parameters:parameters, quoted:real array,
+        rms:real}
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/lexifi-g2pp-originals/input.sml]
+structure BenchG2Input : sig
+  structure C : <sig>
+  val quotes :
+      ({frequency:BenchG2Calibration.frequency, maturityYears:int,
+           termYears:int} * real) vector
+  val variables : BenchG2Optimization.variable array
+  val today : int
+  val zc : int -> real
+  val join : string -> string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/lexifi-g2pp-originals/check.sml]
+[autoloading]
+[autoloading done]
+structure BenchG2Check : sig
+  type expected =
+    {limit:int, parameters:real vector, prices:real vector,
+      quoted:real vector, rms:real}
+  val close : real * real * real * real -> bool
+  type result =
+    {calibrated:real array, parameters:BenchG2Calibration.parameters,
+      quoted:real array, rms:real}
+  val valid : result -> expected -> bool
+  val verify : result -> expected -> unit
+end
+structure BenchG2Driver : sig
+  val read : string -> BenchG2Check.expected
+  val calculate :
+      int
+       -> {calibrated:real array, parameters:BenchG2Calibration.parameters,
+        quoted:real array, rms:real}
+  val run : int -> string -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/lexifi-g2pp-originals/host-profile-diagnostic.sml]
+[autoloading]
+[autoloading done]
+g_a 0.108116235611102
+g_b 0.544384597153003
+g_sigma 0.04663246520255309
+g_nu 0.11312387143033438
+g_rho ~0.8668063118583207
+rms 25.374728434081117
+max-price-absolute-error 5.393348037618928E~8
+max-market-absolute-error 5.460575741578211E~11
+FAIL G2/host-profile-valid -- false
+structure G2HostProfileDiagnostic : sig
+  val real : string -> real -> unit
+  val run : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 1 checks, 1 failed

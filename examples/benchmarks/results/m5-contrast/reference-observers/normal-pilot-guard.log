@@ -1,0 +1,8 @@
+PASS adaptive_contrast_spreading
+PASS niblack_global_gray
+PASS niblack_local_gray
+PASS niblack_local_monochrome
+PASS sauvola_global_gray
+PASS sauvola_global_monochrome
+PASS sauvola_local_gray
+PASS sauvola_local_monochrome

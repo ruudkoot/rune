@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+lexifi-g2pp	smoke	native:mlton@20241230	O2	compile	0	0	pass	9.37	7.78	1.76	660172	-	-	-	lexifi-g2pp/native-mlton/build/compile
+lexifi-g2pp	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.59	0.60	0.00	3144	-	-	-	lexifi-g2pp/native-mlton/correctness.0
+lexifi-g2pp	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.55	0.57	0.00	3092	-	-	-	lexifi-g2pp/native-mlton/fresh.1
+lexifi-g2pp	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.75	0.71	0.06	37332	-	-	-	lexifi-g2pp/native-smlnj-legacy/build/compile
+lexifi-g2pp	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	runtime-failure	0.89	0.90	0.01	9240	-	-	-	lexifi-g2pp/native-smlnj-legacy/correctness.0
+lexifi-g2pp	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.60	0.45	0.10	45640	-	-	-	lexifi-g2pp/native-polyml/build/compile
+lexifi-g2pp	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	1.68	1.59	0.28	105024	-	-	-	lexifi-g2pp/native-polyml/correctness.0
+lexifi-g2pp	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	1.61	1.57	0.24	117792	-	-	-	lexifi-g2pp/native-polyml/fresh.1

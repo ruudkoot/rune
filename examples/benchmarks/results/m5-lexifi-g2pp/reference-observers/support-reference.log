@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/lexifi-g2pp-originals/support-reference.py", line 20, in <module>
+    with(d/'support-build.log').open('w')as f:subprocess.run(['ocamlopt','-o','support-observer','date.cmx','math.cmx','Support.ml'],cwd=d,stdout=f,stderr=subprocess.STDOUT,check=True)
+                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['ocamlopt', '-o', 'support-observer', 'date.cmx', 'math.cmx', 'Support.ml']' returned non-zero exit status 2.

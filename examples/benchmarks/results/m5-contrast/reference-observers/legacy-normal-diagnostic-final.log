@@ -1,0 +1,6 @@
+default 1 FAIL
+default 2 PASS
+default 3 FAIL
+nursery64m 1 PASS
+nursery64m 2 PASS
+nursery64m 3 PASS

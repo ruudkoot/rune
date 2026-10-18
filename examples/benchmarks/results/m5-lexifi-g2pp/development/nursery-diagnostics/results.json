@@ -1,0 +1,97 @@
+[
+  {
+    "mode": "default",
+    "run": 1,
+    "exit": 1,
+    "passed": false,
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml"
+    ]
+  },
+  {
+    "mode": "default",
+    "run": 2,
+    "exit": 1,
+    "passed": false,
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml"
+    ]
+  },
+  {
+    "mode": "default",
+    "run": 3,
+    "exit": 1,
+    "passed": false,
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml"
+    ]
+  },
+  {
+    "mode": "default",
+    "run": 4,
+    "exit": 1,
+    "passed": false,
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml"
+    ]
+  },
+  {
+    "mode": "default",
+    "run": 5,
+    "exit": 1,
+    "passed": false,
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml"
+    ]
+  },
+  {
+    "mode": "nursery64m",
+    "run": 1,
+    "exit": 0,
+    "passed": true,
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml",
+      "@SMLalloc=64m"
+    ]
+  },
+  {
+    "mode": "nursery64m",
+    "run": 2,
+    "exit": 0,
+    "passed": true,
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml",
+      "@SMLalloc=64m"
+    ]
+  },
+  {
+    "mode": "nursery64m",
+    "run": 3,
+    "exit": 0,
+    "passed": true,
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml",
+      "@SMLalloc=64m"
+    ]
+  },
+  {
+    "mode": "nursery64m",
+    "run": 4,
+    "exit": 0,
+    "passed": true,
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml",
+      "@SMLalloc=64m"
+    ]
+  },
+  {
+    "mode": "nursery64m",
+    "run": 5,
+    "exit": 0,
+    "passed": true,
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml",
+      "@SMLalloc=64m"
+    ]
+  }
+]

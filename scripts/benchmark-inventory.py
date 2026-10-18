@@ -616,6 +616,30 @@ def build(source, root, lock):
                         and "-- Copyright (c) 1992 by John T. O'Donnell" in heading):
                     authors.add("John T. O'Donnell")
                     item["evidence"].append("spectral/multiplier/Main.hs:author-and-copyright-heading")
+        if source == "sandmark" and path == "benchmarks/lexifi-g2pp/main.exe":
+            module = parent / "main.ml"
+            if module.is_file():
+                heading = module.read_text(errors="replace")[:2500]
+                if ("Copyright (C) 2000-2013 LexiFi SAS. All rights reserved." in heading
+                        and "either version 3 of the License" in heading):
+                    authors.add("LexiFi SAS (copyright holder)")
+                    item["evidence"].append("benchmarks/lexifi-g2pp/main.ml:copyright-holder-and-GPL3-heading")
+        if source == "sandmark" and path == "benchmarks/multicore-minilight/sequential/minilight.exe":
+            module = parent / "minilight.ml"
+            if module.is_file():
+                heading = module.read_text(errors="replace")[:1000]
+                if ("MiniLight OCaml : minimal global illumination renderer" in heading
+                        and "Copyright (c) 2006-2008, Harrison Ainsworth / HXA7241." in heading):
+                    authors.add("Harrison Ainsworth / HXA7241")
+                    item["evidence"].append("benchmarks/multicore-minilight/sequential/minilight.ml:author-and-release-heading")
+        if source == "sandmark" and path == "benchmarks/sauvola/contrast.exe":
+            module = parent / "contrast.ml"
+            if module.is_file():
+                heading = module.read_text(errors="replace")[:2500]
+                if ("(c) 2009-12 Andreas Romeyke" in heading
+                        and "GNU General Public License" in heading and "(v2.0 or higher)" in heading):
+                    authors.add("Andreas Romeyke")
+                    item["evidence"].append("benchmarks/sauvola/contrast.ml:author-and-GPL2-heading")
         if source == "sandmark" and path == "benchmarks/benchmarksgame/regexredux2.exe":
             main = parent / "regexredux2.ml"
             if main.is_file():

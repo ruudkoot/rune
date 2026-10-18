@@ -1,0 +1,16 @@
+PASS minilight/memoized-geometry-delay-shares
+PASS minilight/failed-delay-is-memoized
+PASS minilight/equal-geometry-has-distinct-object-identity
+PASS minilight/original-lazy-geometry-demand-states
+PASS minilight/triangle-moller-intersection
+PASS minilight/triangle-parallel-ray-misses
+PASS minilight/triangle-geometric-area-and-normal
+PASS minilight/octree-last-hit-is-physical-identity
+PASS minilight/unitization-keeps-zero-shared
+PASS minilight/float-checker-rejects-perturbation
+PASS minilight/float-checker-accepts-small-roundoff
+PASS minilight/float-checker-rejects-NaN
+PASS minilight/raster-checker-rejects-one-byte-corruption
+PASS minilight/raster-checker-rejects-wrong-length
+PASS minilight/fixed-original-smoke-first-last-RNG-and-raster
+SUMMARY 15 checks, 0 failed

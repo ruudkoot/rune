@@ -1,0 +1,65 @@
+[
+  {
+    "mode": "default",
+    "run": 1,
+    "exit": 1,
+    "pass_check": false,
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml",
+      "driver.sml"
+    ]
+  },
+  {
+    "mode": "default",
+    "run": 2,
+    "exit": 0,
+    "pass_check": true,
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml",
+      "driver.sml"
+    ]
+  },
+  {
+    "mode": "default",
+    "run": 3,
+    "exit": 1,
+    "pass_check": false,
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml",
+      "driver.sml"
+    ]
+  },
+  {
+    "mode": "nursery64m",
+    "run": 1,
+    "exit": 0,
+    "pass_check": true,
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml",
+      "@SMLalloc=64m",
+      "driver.sml"
+    ]
+  },
+  {
+    "mode": "nursery64m",
+    "run": 2,
+    "exit": 0,
+    "pass_check": true,
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml",
+      "@SMLalloc=64m",
+      "driver.sml"
+    ]
+  },
+  {
+    "mode": "nursery64m",
+    "run": 3,
+    "exit": 0,
+    "pass_check": true,
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml",
+      "@SMLalloc=64m",
+      "driver.sml"
+    ]
+  }
+]

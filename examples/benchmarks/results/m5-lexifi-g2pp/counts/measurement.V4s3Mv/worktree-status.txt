@@ -1,0 +1,47 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/inventory.tsv
+ M examples/benchmarks/manifest.tsv
+ M scripts/benchmark-inventory.py
+ M tests/benchmarks/test-inventory.py
+?? examples/benchmarks/contrast/
+?? examples/benchmarks/lexifi-g2pp/
+?? examples/benchmarks/minilight/
+?? examples/benchmarks/shared/contrast-driver.sml
+?? examples/benchmarks/shared/contrast-hash.sml
+?? examples/benchmarks/shared/contrast-image.sml
+?? examples/benchmarks/shared/contrast-kernel.sml
+?? examples/benchmarks/shared/contrast-memo-int.sml
+?? examples/benchmarks/shared/contrast-memo-real.sml
+?? examples/benchmarks/shared/contrast-memo-table.sml
+?? examples/benchmarks/shared/lexifi-g2pp-calibration.sml
+?? examples/benchmarks/shared/lexifi-g2pp-check.sml
+?? examples/benchmarks/shared/lexifi-g2pp-date.sml
+?? examples/benchmarks/shared/lexifi-g2pp-driver.sml
+?? examples/benchmarks/shared/lexifi-g2pp-input.sml
+?? examples/benchmarks/shared/lexifi-g2pp-math.sml
+?? examples/benchmarks/shared/lexifi-g2pp-optimization.sml
+?? examples/benchmarks/shared/lexifi-g2pp-random.sml
+?? examples/benchmarks/shared/minilight-camera.sml
+?? examples/benchmarks/shared/minilight-check.sml
+?? examples/benchmarks/shared/minilight-delay.sml
+?? examples/benchmarks/shared/minilight-image.sml
+?? examples/benchmarks/shared/minilight-parse.sml
+?? examples/benchmarks/shared/minilight-random.sml
+?? examples/benchmarks/shared/minilight-ray.sml
+?? examples/benchmarks/shared/minilight-scene.sml
+?? examples/benchmarks/shared/minilight-spatial.sml
+?? examples/benchmarks/shared/minilight-surface.sml
+?? examples/benchmarks/shared/minilight-triangle.sml
+?? examples/benchmarks/shared/minilight-vector.sml
+?? tests/benchmarks/check-contrast.sh
+?? tests/benchmarks/check-lexifi-g2pp.sh
+?? tests/benchmarks/check-minilight.sh
+?? tests/benchmarks/contrast-image-tests.sml
+?? tests/benchmarks/contrast-support-tests.sml
+?? tests/benchmarks/data/contrast/
+?? tests/benchmarks/data/lexifi-g2pp/
+?? tests/benchmarks/data/minilight/
+?? tests/benchmarks/lexifi-g2pp-check-tests.sml
+?? tests/benchmarks/lexifi-g2pp-de-tests.sml
+?? tests/benchmarks/lexifi-g2pp-support-tests.sml
+?? tests/benchmarks/minilight-tests.sml

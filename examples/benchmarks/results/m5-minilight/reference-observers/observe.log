@@ -1,0 +1,3 @@
+PASS smoke all original linear RGB accumulations, final random state and unmodified P6 agreement
+PASS normal all original linear RGB accumulations, final random state and unmodified P6 agreement
+PASS large all original linear RGB accumulations, final random state and unmodified P6 agreement

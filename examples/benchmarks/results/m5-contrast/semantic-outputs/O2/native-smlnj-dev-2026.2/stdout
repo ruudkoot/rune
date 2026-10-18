@@ -1,0 +1,299 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-hash.sml]
+structure BenchStdlibHash : 
+  sig
+    val rotate : Word32.word -> int -> Word32.word
+    val mix : Word32.word -> Word32.word -> Word32.word
+    val finish : Word32.word -> int
+    val tagged : int -> Word32.word
+    val integer : int -> int
+    val pair : int * int -> int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/image.sml]
+structure BenchSauvolaImage : 
+  sig
+    type rgb = {b:int, g:int, r:int}
+    datatype image = Image of {data:Word8Array.array, height:int, width:int}
+    val width : image -> int
+    val height : image -> int
+    val create : int -> int -> image
+    val index : image -> int -> int -> int
+    val get : image -> int -> int -> rgb
+    val set : image -> int -> int -> rgb -> unit
+    val loop : int -> int -> (int -> 'a) -> unit
+    val sub : image -> int -> int -> int -> int -> image
+    val brightness : rgb -> int
+    val read : string -> image
+    val writeP3 : string -> image -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/memo.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/memo.sml:80.26 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/memo.sml:80.38 Warning: calling polyEqual
+structure BenchSauvolaHash : 
+  sig
+    structure H : <sig>
+    val fractionUnit : IntInf.int
+    val wordUnit : IntInf.int
+    val words : real -> ?.word32 * ?.word32
+    val real : Word32.word -> real -> Word32.word
+    val pairReal : real * real -> int
+    val pairInt : int * int -> int
+    val equalReal : real * real -> bool
+  end
+functor BenchSauvolaMemoFn(Key: sig
+                              type key
+                              val hash : key -> int
+                              val equal : key * key -> bool
+                            end) :
+                          
+                            sig
+                              type 'a bucket
+                              type 'a table
+                              exception NotFound
+                              val create : unit -> 'a table
+                              val index : Key.key -> int
+                              val find : 'a table -> Key.key -> 'a
+                              val clear : 'a table -> unit
+                              val add : 'a table -> Key.key -> 'a -> unit
+                              val memo : (Key.key -> 'a) -> Key.key -> 'a
+                            end
+structure BenchSauvolaRealMemo : 
+  sig
+    datatype 'a bucket = Cons of Key.key * 'a * 'a bucket | Empty
+    type 'a table = {buckets:'a bucket array, size:int ref}
+    exception NotFound
+    val create : unit -> 'a table
+    val index : Key.key -> int
+    val find : 'a table -> Key.key -> 'a
+    val clear : 'a table -> unit
+    val add : 'a table -> Key.key -> 'a -> unit
+    val memo : (Key.key -> 'a) -> Key.key -> 'a
+  end
+structure BenchSauvolaIntMemo : 
+  sig
+    datatype 'a bucket = Cons of Key.key * 'a * 'a bucket | Empty
+    type 'a table = {buckets:'a bucket array, size:int ref}
+    exception NotFound
+    val create : unit -> 'a table
+    val index : Key.key -> int
+    val find : 'a table -> Key.key -> 'a
+    val clear : 'a table -> unit
+    val add : 'a table -> Key.key -> 'a -> unit
+    val memo : (Key.key -> 'a) -> Key.key -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/kernel.sml]
+structure BenchSauvola : 
+  sig
+    structure I : <sig>
+    type window = {x0:int, x1:int, y0:int, y1:int}
+    type statistics =
+      {bMean:real, bStd:real, gMean:real, gStd:real, rMean:real, rStd:real}
+    val loop : int -> int -> (int -> 'a) -> unit
+    val stddev : real -> real -> real -> real
+    val statistics : BenchSauvolaImage.image -> statistics
+    val window : int -> int -> int -> int -> window
+    val requireDimensions : BenchSauvolaImage.image -> unit
+    val localStatistics : BenchSauvolaImage.image -> int -> int -> statistics
+    val thresholdColor : BenchSauvolaImage.rgb
+                          -> real * real * real -> BenchSauvolaImage.rgb
+    val monochrome : int -> BenchSauvolaImage.rgb
+    val adaptive : BenchSauvolaImage.image -> BenchSauvolaImage.image
+    val niblackGlobal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+    val niblackLocal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+    type cache = {n:int ref, qsum:int ref, sum:int ref, x:int ref, y:int ref}
+    val cache : unit -> cache
+    val windowValues : BenchSauvolaImage.image
+                        -> int -> int -> cache -> int * int
+    val niblackMono : BenchSauvolaImage.image -> BenchSauvolaImage.image
+    val sauvolaThreshold : real -> real -> real
+    val sauvolaGlobal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+    val sauvolaGlobalMono : BenchSauvolaImage.image -> BenchSauvolaImage.image
+    val sauvolaLocal : BenchSauvolaImage.image -> BenchSauvolaImage.image
+    val sauvolaMono : BenchSauvolaImage.image -> BenchSauvolaImage.image
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/driver.sml]
+structure BenchSauvolaDriver : 
+  sig
+    structure I : <sig>
+    structure K : <sig>
+    val programs : (string
+                       * (BenchSauvolaImage.image -> BenchSauvolaImage.image)) 
+                      list
+    val read : string -> TextIO.vector
+    val check : BenchSauvolaImage.image -> string -> unit
+    val run : string -> string -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/support-tests-final.sml]
+PASS contrast/source-float-hash/0
+PASS contrast/source-float-hash/1
+PASS contrast/source-float-hash/2
+PASS contrast/source-float-hash/3
+PASS contrast/source-float-hash/4
+PASS contrast/source-float-hash/5
+PASS contrast/source-float-hash/6
+PASS contrast/source-float-hash/7
+PASS contrast/source-float-hash/8
+PASS contrast/source-float-hash/9
+PASS contrast/source-float-hash/10
+PASS contrast/source-float-hash/11
+PASS contrast/source-float-hash/12
+PASS contrast/source-float-hash/13
+PASS contrast/source-float-hash/14
+PASS contrast/source-float-hash/15
+PASS contrast/source-float-hash/16
+PASS contrast/source-float-hash/17
+PASS contrast/source-float-hash/18
+PASS contrast/source-float-hash/19
+PASS contrast/source-float-hash/20
+PASS contrast/source-float-hash/21
+PASS contrast/source-float-hash/22
+PASS contrast/source-float-hash/23
+PASS contrast/source-float-hash/24
+PASS contrast/source-float-hash/25
+PASS contrast/source-float-hash/26
+PASS contrast/source-float-hash/27
+PASS contrast/source-float-hash/28
+PASS contrast/source-float-hash/29
+PASS contrast/source-float-hash/30
+PASS contrast/source-float-hash/31
+PASS contrast/source-float-hash/32
+PASS contrast/source-float-hash/33
+PASS contrast/source-float-hash/34
+PASS contrast/source-float-hash/35
+PASS contrast/source-float-hash/36
+PASS contrast/source-float-hash/37
+PASS contrast/source-float-hash/38
+PASS contrast/source-float-hash/39
+PASS contrast/source-float-hash/40
+PASS contrast/source-float-hash/41
+PASS contrast/source-float-hash/42
+PASS contrast/source-float-hash/43
+PASS contrast/source-float-hash/44
+PASS contrast/source-float-hash/45
+PASS contrast/source-float-hash/46
+PASS contrast/source-float-hash/47
+PASS contrast/source-float-hash/48
+PASS contrast/source-float-hash/49
+PASS contrast/source-float-hash/50
+PASS contrast/source-float-hash/51
+PASS contrast/source-float-hash/52
+PASS contrast/source-float-hash/53
+PASS contrast/source-float-hash/54
+PASS contrast/source-float-hash/55
+PASS contrast/source-float-hash/56
+PASS contrast/source-float-hash/57
+PASS contrast/source-float-hash/58
+PASS contrast/source-float-hash/59
+PASS contrast/source-float-hash/60
+PASS contrast/source-float-hash/61
+PASS contrast/source-float-hash/62
+PASS contrast/source-float-hash/63
+PASS contrast/source-float-hash/64
+PASS contrast/source-float-hash/65
+PASS contrast/source-float-hash/66
+PASS contrast/source-float-hash/67
+PASS contrast/source-float-hash/68
+PASS contrast/source-float-hash/69
+PASS contrast/source-float-hash/70
+PASS contrast/source-float-hash/71
+PASS contrast/source-float-hash/72
+PASS contrast/source-float-hash/73
+PASS contrast/source-float-hash/74
+PASS contrast/source-float-hash/75
+PASS contrast/source-float-hash/76
+PASS contrast/source-float-hash/77
+PASS contrast/source-float-hash/78
+PASS contrast/source-float-hash/79
+PASS contrast/source-float-hash/80
+PASS contrast/source-memo-sharing-and-clear-bound
+PASS contrast/brightness-source-weights
+PASS contrast/subimage-copy-isolation
+PASS contrast/out-of-range-color-rejected
+PASS contrast/source-window-edges
+PASS contrast/binary64-zero-normalization
+PASS contrast/checker-rejects-corrupt-pixel
+PASS contrast/checker-rejects-reference-length
+PASS contrast/checker-rejects-reference-nonbit
+structure SauvolaSupportTests : 
+  sig
+    structure I : <sig>
+    structure K : <sig>
+    structure H : <sig>
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/sauvola-originals/image-tests.sml]
+PASS contrast/full-original-image/adaptive_contrast_spreading
+PASS contrast/full-original-image/niblack_global_gray
+PASS contrast/full-original-image/niblack_local_gray
+PASS contrast/full-original-image/niblack_local_monochrome
+PASS contrast/full-original-image/sauvola_global_gray
+PASS contrast/full-original-image/sauvola_global_monochrome
+PASS contrast/full-original-image/sauvola_local_gray
+PASS contrast/full-original-image/sauvola_local_monochrome
+structure SauvolaImageTests : 
+  sig
+    structure I : <sig>
+    structure K : <sig>
+    val programs : (string
+                       * (BenchSauvolaImage.image -> BenchSauvolaImage.image)) 
+                      list
+    val image : BenchSauvolaImage.image
+    val bits : BenchSauvolaImage.image -> string
+    val read : string -> TextIO.vector
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 98 checks, 0 failed

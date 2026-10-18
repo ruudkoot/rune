@@ -1,0 +1,9 @@
+smoke.ppm
+smoke/adaptive_contrast_spreading.bits
+smoke/niblack_global_gray.bits
+smoke/niblack_local_gray.bits
+smoke/niblack_local_monochrome.bits
+smoke/sauvola_global_gray.bits
+smoke/sauvola_global_monochrome.bits
+smoke/sauvola_local_gray.bits
+smoke/sauvola_local_monochrome.bits

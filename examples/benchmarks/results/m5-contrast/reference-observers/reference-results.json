@@ -1,0 +1,185 @@
+[
+  {
+    "profile": "smoke",
+    "outputs": [
+      {
+        "name": "adaptive_contrast_spreading",
+        "width": 32,
+        "height": 32,
+        "sha256": "0a95c45a3fb3ffd7e61328557f39d732802a7a358258911e9a0717ef9e96a852",
+        "ones": 1704
+      },
+      {
+        "name": "niblack_global_gray",
+        "width": 32,
+        "height": 32,
+        "sha256": "25ec307a32b0d825cd9d3c17118eb671e84695ffbe0b5fbcd80208d8f7dc5654",
+        "ones": 2101
+      },
+      {
+        "name": "niblack_local_gray",
+        "width": 32,
+        "height": 32,
+        "sha256": "2bba7998d19648daedbedb1b20783d27a6aeaa2d5af638e2187daea2560a696e",
+        "ones": 1971
+      },
+      {
+        "name": "niblack_local_monochrome",
+        "width": 32,
+        "height": 32,
+        "sha256": "139df75aead84e89da0745111757c7df08c4fe2e5f6b82bfca7104ed6c8a749f",
+        "ones": 2406
+      },
+      {
+        "name": "sauvola_global_gray",
+        "width": 32,
+        "height": 32,
+        "sha256": "2a3baac622d4d7ca2097f623990e281a8110f6b80b1d55e4617be582b315f280",
+        "ones": 1862
+      },
+      {
+        "name": "sauvola_global_monochrome",
+        "width": 32,
+        "height": 32,
+        "sha256": "e1895cd9669626427f8ebec68f1949c32dc63743d62650b2c3831504980086e1",
+        "ones": 1998
+      },
+      {
+        "name": "sauvola_local_gray",
+        "width": 32,
+        "height": 32,
+        "sha256": "1a7493ff2f2bde5f78405d46eb01abfeaea9b0a95fa5b6cec211b05faa0cf1d3",
+        "ones": 3072
+      },
+      {
+        "name": "sauvola_local_monochrome",
+        "width": 32,
+        "height": 32,
+        "sha256": "1a7493ff2f2bde5f78405d46eb01abfeaea9b0a95fa5b6cec211b05faa0cf1d3",
+        "ones": 3072
+      }
+    ]
+  },
+  {
+    "profile": "normal",
+    "outputs": [
+      {
+        "name": "adaptive_contrast_spreading",
+        "width": 64,
+        "height": 48,
+        "sha256": "98b98cd228884622ff4533f2035ae61764df53dff60555eddc2af3a2c8528e76",
+        "ones": 4987
+      },
+      {
+        "name": "niblack_global_gray",
+        "width": 64,
+        "height": 48,
+        "sha256": "bc207a47d0c150902ba23e1b5568bc660a04a074a92ffd6833e77e0171114aa2",
+        "ones": 5387
+      },
+      {
+        "name": "niblack_local_gray",
+        "width": 64,
+        "height": 48,
+        "sha256": "f8f6eee6880d8fc9bab4bbc061d0d502f8f4a893673e38040c61113c0f2dca15",
+        "ones": 5500
+      },
+      {
+        "name": "niblack_local_monochrome",
+        "width": 64,
+        "height": 48,
+        "sha256": "f5fe290f1a8c9cf13fda84256466b59dc70867be6f111edb8452be49fb316c74",
+        "ones": 5655
+      },
+      {
+        "name": "sauvola_global_gray",
+        "width": 64,
+        "height": 48,
+        "sha256": "3d74630481806b4528a9476f2694481bf9855199a0dadf6a7dfa6299890d07db",
+        "ones": 4498
+      },
+      {
+        "name": "sauvola_global_monochrome",
+        "width": 64,
+        "height": 48,
+        "sha256": "8208f0cce47f1ccd6906a8aa57c5b6fab8e331bfb914828ffa448ddffebd7ffb",
+        "ones": 6099
+      },
+      {
+        "name": "sauvola_local_gray",
+        "width": 64,
+        "height": 48,
+        "sha256": "303a0f72f9feb2c74a9858b7a8280121e7c2d8739c4674025561e8dd9e7018a0",
+        "ones": 7525
+      },
+      {
+        "name": "sauvola_local_monochrome",
+        "width": 64,
+        "height": 48,
+        "sha256": "057d4b27b0e21979006fb207f2794e5a19d5f9fd6f09ac6cbaf23c8c8646cec7",
+        "ones": 8037
+      }
+    ]
+  },
+  {
+    "profile": "large",
+    "outputs": [
+      {
+        "name": "adaptive_contrast_spreading",
+        "width": 267,
+        "height": 200,
+        "sha256": "fd42c8dbcf071d00ab829fde813edf7a0ce28cebda6076e5a52302d17d97da84",
+        "ones": 83866
+      },
+      {
+        "name": "niblack_global_gray",
+        "width": 267,
+        "height": 200,
+        "sha256": "50fa95b62daa2afe828c065b2eee37e55b25cec50b13c87360e1389fd0e87b7a",
+        "ones": 86526
+      },
+      {
+        "name": "niblack_local_gray",
+        "width": 267,
+        "height": 200,
+        "sha256": "dcf3e00f04a45e1befb2fa96d7f2ed23c8ee0fb89b5fe926ae688627a6893cfb",
+        "ones": 96977
+      },
+      {
+        "name": "niblack_local_monochrome",
+        "width": 267,
+        "height": 200,
+        "sha256": "7026134b26a6c4ad51332c81b4d1ae06b191270dd3c675a94121c7a2075c9490",
+        "ones": 105393
+      },
+      {
+        "name": "sauvola_global_gray",
+        "width": 267,
+        "height": 200,
+        "sha256": "ddca7f0e423eea3cff8b98de5dd36154b9a4269f87587d13201043f15c483e5a",
+        "ones": 76144
+      },
+      {
+        "name": "sauvola_global_monochrome",
+        "width": 267,
+        "height": 200,
+        "sha256": "b8ca2a59c42dce92fc6980965daa27652416a9949fe2b38a5b2b146f664c6e2c",
+        "ones": 91701
+      },
+      {
+        "name": "sauvola_local_gray",
+        "width": 267,
+        "height": 200,
+        "sha256": "55adc17a272798870b9d675a4d3ca33c44fcd628f1d1b3fb1b08a9c72cfdee0a",
+        "ones": 134261
+      },
+      {
+        "name": "sauvola_local_monochrome",
+        "width": 267,
+        "height": 200,
+        "sha256": "7422b4ebfe8fffbf76f32e1d641f9fe17075cd1fb4e003656cdcd13bf112dd34",
+        "ones": 134925
+      }
+    ]
+  }
+]

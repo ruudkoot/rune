@@ -1,0 +1,357 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 5eea74c8..8c126015 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -463,6 +463,9 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [hashtbl_remove](#hashtbl_remove) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Build and empty thousand-entry tables in the original rounded-up batch loop. |
+ | [hashtbl_find](#hashtbl_find) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Search ascending keys in the fixed populated table, including later misses. |
+ | [hashtbl_filter_map](#hashtbl_filter_map) | [Sandmark stdlib](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Repeatedly double all table values using the source signed 63-bit wraparound. |
++| [lexifi-g2pp](#lexifi-g2pp) | [Sandmark LexiFi](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/lexifi-g2pp) | Calibrate the five-parameter G2++ model against the original 196 swaption quotes with differential evolution. |
++| [contrast](#contrast) | [Sandmark Sauvola](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/sauvola) | Apply eight source contrast-enhancement pipelines to fixed RGB image profiles. |
++| [minilight](#minilight) | [Sandmark sequential MiniLight](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-minilight/sequential) | Render the original scene with sequential Monte Carlo path tracing, emitter samples and an octree. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -29731,3 +29734,325 @@ Independent models and exact source observations support correctness.
+ Bucket distribution, resize/cell reuse, indirect mutable fields, key/hash
+ specialization, tagged arithmetic and added consumers are source-based
+ performance questions. Recorded counts and timings do not isolate their costs.
++
++## lexifi-g2pp
++
++### Algorithm and workload
++
++Calibrate the source five-parameter G2++ model against its 196 embedded
++swaption quotes. Retain Gregorian-minute dates, fixed schedules, the
++error-function approximation, Brent-style root search, eleven-point Gaussian
++quadrature and differential-evolution least-squares optimization. Each
++calibration creates its pricer closures and mutable work arrays; do not cache
++a completed calibration across Benchmark.run calls.
++
++### History, aliases and notices
++
++[LexiFi's Sandmark workload](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/lexifi-g2pp),
++pinned at 5605805954a00497ed197c930641cddd580e1507, credits LexiFi SAS, copyright 2000-2013, under GPL version
++3 or later. Preserve all selected .ml/.mli files, README, Dune, output fixture
++and COPYING under upstream. The supplied 196 quote records remain in source
++order. No separate quote-provider credit or dataset notice is stated there;
++the fixture is historical input rather than current market data.
++
++The executable main.exe is named lexifi-g2pp by its established collection
++name. It is distinct from unrelated main executables. The source README
++describes a stripped-down calibration application; do not replace it with a
++small root-finding or optimizer-only kernel.
++
++### Translation, parameters and numeric behavior
++
++Use portable SML97 records, arrays, closures, exceptions and default binary64
++reals. Read-only schedule/quadrature/quote containers use vectors; mutable
++population and pricer arrays retain their update scopes and ordering.
++Methods of the OCaml modules become explicit SML structures and functions.
++The fixed Random.State.make [|0|] state is independently observed and stored as
++55 initial words; all subsequent source draws, rejection loops and their order
++remain in the common OCaml-random adapter. Precomputation replaces the source
++seed-expansion work, not the generated sequence.
++
++Preserve tuple/right-operand order where callbacks affect observations.
++Original observations establish initial Brent evaluation order and complete
++sphere-optimizer improvement traces. Population mutation/recombination order,
++strict improvements, source best/random base selection and inclusive stopping
++conditions remain. A full generation precedes the maxf < ncalls check:
++the published budget 2000 finishes at 2040 evaluations.
++
++The source black_price variable sqrtt contains a year fraction without a
++square root; preserve its actual expression. Source date division truncates
++toward zero, including negative-epoch helper observations. Profiles retain
++today 2012-01-01 and finite bounded dates. Integer calculations fit signed
++31-bit values; floating operations remain binary64. Source feedback text and
++optional OCAML_GC_STATS file output are suppressed; complete checked numerical
++results replace rounded progress printing. No compiler/runtime prerequisite
++is introduced.
++
++### Fixed inputs and result checks
++
++| Profile | Evaluation-budget parameter | View of the source workload |
++|---|---:|---|
++| Smoke | 40 | All 196 quotes; reduced optimizer budget. |
++| Normal | 2000 | Original published budget and quote set. |
++| Large | 20000 | Explicit optimizer scaling selection; same quotes. |
++
++The parameter is the source optimizer budget, not a universal data size.
++Profiles include reviewed reference files containing all five parameters,
++RMS, and every calibrated/market price pair. All values must be finite.
++Parameters use 1e-8 absolute plus 1e-8 relative error; RMS uses 1e-7 absolute
++plus 1e-8 relative error; both price arrays use 1e-9 absolute plus 1e-8
++relative error. The shared price bound is much narrower than the original
++0.01/10000 printed-price resolution. CDF support observations use 1e-10
++absolute plus relative tolerance; exact dates, counters and draw sequences
++remain exact.
++
++Original export-only observers supply full precision, and a separate model
++recomputes RMS from all 196 price pairs. Independent calendar differences,
++erf/square-root observations and original optimizer traces support smaller
++components. Checker controls reject two-bound perturbations, NaN, infinity,
++wrong model parameters and wrong RMS; small roundoff remains accepted.
++Raw original stdout is preserved separately from the full-precision oracle.
++
++### Compiler/runtime behavior and validation
++
++Investigate closure specialization, shared scratch arrays, transcendental
++operations, root-search branches, numeric boxing and population updates.
++These are source-based questions rather than attributed timing explanations.
++Compare identical SML sources on the standard host set; use OCaml as an
++independent correctness reference.
++
++The private Rune smoke and original normal-budget pilot validates complete
++results. Final semantic probes distinguish the known native 32-bit SML/NJ
++bounded-random Overflow from legacy 64-bit numerical/GC failures. Five
++default legacy diagnostics fail and five 64 MiB nursery diagnostics pass;
++this is consistent with the existing GC report, not a causal reduction or a
++changed suite default. SML/NJ 2026.2 passes the uniform price bounds. Retain
++all default failures and exclude incorrect results from measurements.
++The initial tighter market-price-only bound and optional diagnostics remain
++development evidence. Full final SML large runs remain unrecorded unless
++listed explicitly in the validation ledger.
++
++### Literature and evidence scope
++
++[Storn and Price (1997)](https://link.springer.com/article/10.1023/A:1008202821328),
++publisher abstract inspected, supplies global-optimization context.
++[Brigo and Mercurio, second edition](https://link.springer.com/book/10.1007/978-3-540-34604-3),
++publisher metadata inspected, records 2006; the source comment gives 2005.
++No full article/book derivation review is claimed. Preserved source, independent
++numerical observations and measured validation results remain distinct from
++these literature anchors and from performance hypotheses.
++
++## contrast
++
++### Algorithm and workload
++
++Run the eight source image contrast pipelines in their original order:
++adaptive contrast spreading; Niblack global RGB, local RGB and local monochrome;
++Sauvola global RGB, global monochrome, local RGB and local monochrome.
++Each method receives the same original RGB image and builds a fresh output.
++Do not combine the passes or substitute integral-image statistics.
++
++### History, names and notices
++
++[Sandmark sauvola/contrast.exe](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/sauvola),
++pinned at 5605805954a00497ed197c930641cddd580e1507, credits Andreas Romeyke, copyright 2009-2012,
++under GPL version 2 or later. contrast is the executable name; Sauvola and
++Niblack describe constituent algorithm families, not duplicate executables.
++Preserve contrast.ml, its build files and complete LICENSE.
++
++The input derives from the source example2_small.ppm, 267 by 200 RGB pixels.
++The individual image states no separate author or dataset notice; record this
++attribution limit alongside its pinned source path and original byte hash.
++The JPEG example is an alternative encoding, not a separate runnable workload.
++
++CamlImages 5.0.4 is pinned independently by archive SHA-256 in
++LIBRARY-ARCHIVE.json. Selected source headers credit Francois Pessaux, Pierre
++Weis and Jun Furuse/INRIA, copyright 1999-2004. Preserve those full headers and
++License.txt, which supplies Library GPL version 2 and its linking exception.
++The OCaml 4.14.1 hash adapter has its separate LGPL 2.1/linking-exception notices
++under hashtbl_iter/upstream-library. Do not conflate these grants with the
++contrast program's GPL notice.
++
++### Portable translation and source variants
++
++Use SML97 Word8Array RGB storage, records, loops, arrays, memoized thresholds
++and portable PPM I/O. The original reference builds against pinned CamlImages
++core with PPM support; the unused external image formats are not prerequisites
++of the SML program. No FFI/compiler/runtime feature is introduced.
++
++Contiguous byte storage replaces CamlImages' managed block storage. Subimages
++are still materialized and RGB records are still returned from pixel reads.
++Additional initialization, record construction and SML library costs are explicit.
++Pixel brightness retains the active integer weights (54R+182G+19B)/255.
++The source statistics scan columns before rows. Three squared sums use IntInf
++to preserve source 64-bit integer values on 31-bit hosts; other selected integer
++operations fit signed 31-bit values. Exact truncating division remains explicit.
++
++Keep the source window radius fifteen, RGB subimage upper-border exclusion,
++monochrome inclusive windows and rolling cache update, retained cache counts,
++strict comparisons and bright-pixel skips. Preserve the distinct global and
++local Sauvola formulas and constants. They are literal source variants rather
++than claimed canonical formulas from a paper.
++
++Threshold memoization retains one 1024-bucket table per method call, first-match
++lookup and the source rule that the next miss clears a table with more than
++1000 bindings. At most 1001 entries are possible, so table resizing and traversal
++mutation are unreachable in this fragment. Integer/float tuple hashing retains
++tag/header order, Murmur mixing, signed-zero and NaN normalization. Optional
++packed-real structure names differ across hosts; a common SML97 binary64-word
++encoder replaces the native reinterpretation. This adds arithmetic/conversion
++cost and is explicitly a library representation adapter.
++
++### Fixed profiles, input conversion and validation
++
++| Profile | Image | Origin |
++|---|---|---|
++| Smoke | 32 by 32 | Original crop at (0,0). |
++| Normal | 64 by 48 | Original crop at (40,40). |
++| Large | 267 by 200 | Complete original image. |
++
++Profiles select input files, retaining the source image parameter rather than
++a universal size argument. A portable SML generator re-encodes pixels as ASCII
++P3. Independent byte comparisons establish exact RGB preservation and crop
++coordinates; the original OCaml program produces identical complete-image
++outputs from P3 and P6. Encoding changes I/O cost, not pixel values.
++INPUT-IDENTITIES.json records original/converted data and RGB identities.
++
++Validate every RGB channel of all eight complete binary output images, with
++exact geometry and reviewed zero/255 reference bits. No floating tolerance
++is applied to these final discrete values. Additional checker work replaces
++source progress/timing output and eight PPM filesystem writes. Returned
++dimensions/pass counts consume only fully checked outputs.
++
++Original reference programs establish all profile rasters, 81 float-pair hash
++values and memo hit/clear traces. An independent bit/Murmur model agrees with
++those hashes. Tests cover cache sharing, source window edges, brightness
++weights, copy isolation, invalid colors, corrupted output, wrong reference
++lengths and nonbinary reference data. The smoke and normal Rune pilots match
++all eight original rasters; final configuration evidence and large runs are
++recorded separately.
++
++### Compiler/runtime behavior
++
++Investigate repeated subimage allocation, boxed versus packed channel access,
++wide squared-sum arithmetic, real-key encoding, memo collisions/clearing,
++cache reuse and branch behavior on bright pixels. Source inspection motivates
++these questions. Recorded measurements do not attribute individual costs.
++The common SML sources are the standard compiler comparison; OCaml remains
++a correctness reference.
++
++### Literature and evidence scope
++
++[Sauvola and Pietikainen (2000)](https://www.sciencedirect.com/science/article/pii/S0031320399000552),
++publisher abstract and opening material inspected, supplies adaptive document
++binarization context. The source additionally cites Niblack (1986) and
++Sezgin/Sankur (2004); these are declared references, not newly claimed full
++reviews. The particular eight formulas, window boundaries and caches come
++from source inspection. Original raster/hash observations and independent
++models support the translation; performance explanations remain hypotheses.
++
++## minilight
++
++### Algorithm and workload
++
++Render the original roomfront triangle scene with sequential Monte Carlo
++path tracing, emitter samples, Russian-roulette reflection, an octree and
++progressive RGB accumulation. Preserve camera jitter, shadow rays, triangle
++tests, material/sky handling and the source image tone-map/gamma/quantizer.
++The complete application remains, rather than a triangle-intersection kernel.
++
++### History, aliases and notices
++
++[Sandmark's sequential MiniLight](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/multicore-minilight/sequential),
++pinned at 5605805954a00497ed197c930641cddd580e1507, identifies MiniLight 1.5.2 OCaml and credits Harrison
++Ainsworth/HXA7241, copyright 2006-2008. Preserve all modules, original CRLF
++roomfront.ml.txt, build files and the BSD three-clause LICENSE.txt.
++The individual scene states no separate author or dataset notice.
++Later author-site downloads advertise CC0; that does not replace the notice
++on this pinned historical source.
++
++The sequential program contains no Domain/Task call. Its unused Dune
++domainslib link dependency is omitted; the original also builds with plain
++ocamlopt. Parallel MiniLight variants retain their separate feature-policy
++disposition and are not silently represented by this sequential executable.
++
++### Translation, demand and numeric decisions
++
++Use SML97 RealArray three-vectors and ordinary arrays for vertex/frame/item
++containers and image pixels. Records/datatypes/functions replace objects and
++method dispatch. Explicit per-frame tracer environments and surface records
++retain their construction scopes. Triangle identity uses a unique reference;
++equal geometry does not make two triangles the same last-hit object.
++
++Normal, tangent and area retain separate memoized delays. Original Lazy.is_val
++observations establish their independent forcing order; repeated forces share
++the result. Keep source octree depth/leaf limits, bounds/tolerances, stable
++item order, subdivision controls and nearest-hit tie decisions.
++
++Original observations establish OCaml's evaluation order. Preserve stochastic
++tuple draws explicitly: camera y before x, triangle r2 before sqrt(r1), and
++hemisphere radius before angle. Simultaneous let-and groups remain left first.
++Pure operand/constructor allocation order and temporary representation can
++differ under SML evaluation; record this when interpreting allocation costs.
++The fixed Random.State.make [|1|] state is precomputed as 55 words; subsequent
++draws and rejection logic use the common unchanged OCaml-random adapter.
++
++Model parsing uses portable text tokens instead of Scanf; selected coordinates,
++materials, light and camera values remain unchanged. Default reals are binary64
++on the configured hosts. Selected indices/frame counts fit signed 31-bit
++integers. No parallelism, FFI or compiler/runtime prerequisite is introduced.
++
++### Fixed profiles, deterministic checkpoints and checks
++
++| Profile | Frames | Viewport | Original scene |
++|---|---:|---|---|
++| Smoke | 1 | 8 by 5 | Unchanged geometry/material/light/camera records. |
++| Normal | 2 | 81 by 50 | Unchanged scene; original 1.62 aspect ratio. |
++| Large | 4 | 162 by 100 | Unchanged scene; original 1.62 aspect ratio. |
++
++The source model requests 100 frames at 324 by 200. These are explicit smaller
++frame/viewport selections, not a universal size loop. A portable SML generator
++replaces only those header parameters and retains the original geometry suffix.
++Input identities and original references accompany the profiles.
++
++Replace wall-clock periodic saves with deterministic first/last-frame
++checkpoints, merging them for a one-frame run. This retains the source start/
++end image work without clock-dependent extra saves. Intermediate files and UI
++progress are suppressed; both complete checkpoint images are consumed and
++checked. The stopping rule remains a fixed frame count.
++
++References contain every first/final linear RGB accumulation, both complete
++quantized rasters and the exact final 55-word random state/index. Linear values
++must be finite and within 1e-8 absolute plus 1e-8 relative error; quantized bytes,
++header, geometry and random state are exact. Incorrect output contributes no
++measurement. Original export-only observations agree byte-for-byte with the
++unmodified executable's final P6 images. The initial exploratory byte tolerance
++was tightened to exact equality before final validation.
++
++### Validation and compiler/runtime interpretation
++
++The private Rune smoke/normal pilots validate complete original results.
++Controls cover demand sharing, exception caching, independent geometry identity,
++known intersections, parallel misses, octree last-hit handling, numerical
++perturbations, NaN, wrong byte/length and all source geometry forcing states.
++Native 32-bit SML/NJ retains the known bounded-random Overflow; do not rewrite
++its arithmetic or accept an alternate result.
++
++Investigate method/closure specialization, vector and temporary allocation,
++memoized geometry, octree traversal, object identity, random draws, recursion
++and tone-map operations. These are source-based hypotheses; measurements alone
++do not identify their individual costs. Complete target/profile outcomes and
++full large-run coverage are recorded separately.
++
++### Literature and evidence scope
++
++[The author's description](https://www.hxa.name/minilight/), algorithm section
++inspected, supplies renderer context and identifies its sampling, spatial
++index and tone-mapping components. The current page and historical source have
++different release/license contexts, recorded above.
++
++[Moller and Trumbore (1997)](https://my.eng.utah.edu/~cs6965/papers/MT97.pdf),
++abstract and opening page inspected, describes finding ray distance and
++triangle coordinates without storing plane equations. This is an algorithm
++anchor rather than a full review of its performance claims. The port's actual
++tolerances, octree, sampling order and demand policy come from source analysis
++and original/model observations.
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index e05ac9bb..f1834639 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -1315,3 +1315,12 @@ int_replace1	smoke	sandmark	benchmarks/stdlib/hashtbl_bench.exe	0	int_replace1/s
+ int_replace1	normal	sandmark	benchmarks/stdlib/hashtbl_bench.exe	1000	int_replace1/normal.expected	shared/input.sml,shared/ocaml-stdlib-hash.sml,shared/ocaml-stdlib-hashtbl.sml,shared/ocaml-stdlib-hashtbl-program.sml,int_replace1/benchmark.sml,shared/main.sml	600	4194304	stdlib,hashing,mutable-collections,allocation,modular-arithmetic,library-replacement	-	exact	implemented
+ int_replace2	smoke	sandmark	benchmarks/stdlib/hashtbl_bench.exe	0	int_replace2/smoke.expected	shared/input.sml,shared/ocaml-stdlib-hash.sml,shared/ocaml-stdlib-hashtbl.sml,shared/ocaml-stdlib-hashtbl-program.sml,int_replace2/benchmark.sml,shared/main.sml	30	1048576	stdlib,hashing,mutable-collections,allocation,modular-arithmetic,library-replacement	-	exact	implemented
+ int_replace2	normal	sandmark	benchmarks/stdlib/hashtbl_bench.exe	1000	int_replace2/normal.expected	shared/input.sml,shared/ocaml-stdlib-hash.sml,shared/ocaml-stdlib-hashtbl.sml,shared/ocaml-stdlib-hashtbl-program.sml,int_replace2/benchmark.sml,shared/main.sml	600	4194304	stdlib,hashing,mutable-collections,allocation,modular-arithmetic,library-replacement	-	exact	implemented
++lexifi-g2pp	smoke	sandmark	benchmarks/lexifi-g2pp/main.exe	40 smoke.reference	lexifi-g2pp/smoke.expected	shared/input.sml,shared/ocaml-random.sml,shared/lexifi-g2pp-date.sml,shared/lexifi-g2pp-math.sml,shared/lexifi-g2pp-random.sml,shared/lexifi-g2pp-optimization.sml,shared/lexifi-g2pp-calibration.sml,shared/lexifi-g2pp-input.sml,shared/lexifi-g2pp-check.sml,shared/lexifi-g2pp-driver.sml,lexifi-g2pp/benchmark.sml,shared/main.sml	30	1048576	numerical,optimization,closures,arrays,floating-point,random-seed,library-replacement	smoke.reference	exact	implemented
++lexifi-g2pp	normal	sandmark	benchmarks/lexifi-g2pp/main.exe	2000 normal.reference	lexifi-g2pp/normal.expected	shared/input.sml,shared/ocaml-random.sml,shared/lexifi-g2pp-date.sml,shared/lexifi-g2pp-math.sml,shared/lexifi-g2pp-random.sml,shared/lexifi-g2pp-optimization.sml,shared/lexifi-g2pp-calibration.sml,shared/lexifi-g2pp-input.sml,shared/lexifi-g2pp-check.sml,shared/lexifi-g2pp-driver.sml,lexifi-g2pp/benchmark.sml,shared/main.sml	600	4194304	numerical,optimization,closures,arrays,floating-point,random-seed,library-replacement	normal.reference	exact	implemented
++lexifi-g2pp	large	sandmark	benchmarks/lexifi-g2pp/main.exe	20000 large.reference	lexifi-g2pp/large.expected	shared/input.sml,shared/ocaml-random.sml,shared/lexifi-g2pp-date.sml,shared/lexifi-g2pp-math.sml,shared/lexifi-g2pp-random.sml,shared/lexifi-g2pp-optimization.sml,shared/lexifi-g2pp-calibration.sml,shared/lexifi-g2pp-input.sml,shared/lexifi-g2pp-check.sml,shared/lexifi-g2pp-driver.sml,lexifi-g2pp/benchmark.sml,shared/main.sml	3600	8388608	numerical,optimization,closures,arrays,floating-point,random-seed,library-replacement	large.reference	exact	implemented
++contrast	smoke	sandmark	benchmarks/sauvola/contrast.exe	smoke.ppm smoke/	contrast/smoke.expected	shared/input.sml,shared/ocaml-stdlib-hash.sml,shared/contrast-image.sml,shared/contrast-hash.sml,shared/contrast-memo-table.sml,shared/contrast-memo-real.sml,shared/contrast-memo-int.sml,shared/contrast-kernel.sml,shared/contrast-driver.sml,contrast/benchmark.sml,shared/main.sml	30	1048576	image-processing,arrays,numerical,memoization,library-replacement,allocation	smoke.ppm,smoke/adaptive_contrast_spreading.bits,smoke/niblack_global_gray.bits,smoke/niblack_local_gray.bits,smoke/niblack_local_monochrome.bits,smoke/sauvola_global_gray.bits,smoke/sauvola_global_monochrome.bits,smoke/sauvola_local_gray.bits,smoke/sauvola_local_monochrome.bits	exact	implemented
++contrast	normal	sandmark	benchmarks/sauvola/contrast.exe	normal.ppm normal/	contrast/normal.expected	shared/input.sml,shared/ocaml-stdlib-hash.sml,shared/contrast-image.sml,shared/contrast-hash.sml,shared/contrast-memo-table.sml,shared/contrast-memo-real.sml,shared/contrast-memo-int.sml,shared/contrast-kernel.sml,shared/contrast-driver.sml,contrast/benchmark.sml,shared/main.sml	600	4194304	image-processing,arrays,numerical,memoization,library-replacement,allocation	normal.ppm,normal/adaptive_contrast_spreading.bits,normal/niblack_global_gray.bits,normal/niblack_local_gray.bits,normal/niblack_local_monochrome.bits,normal/sauvola_global_gray.bits,normal/sauvola_global_monochrome.bits,normal/sauvola_local_gray.bits,normal/sauvola_local_monochrome.bits	exact	implemented
++contrast	large	sandmark	benchmarks/sauvola/contrast.exe	large.ppm large/	contrast/large.expected	shared/input.sml,shared/ocaml-stdlib-hash.sml,shared/contrast-image.sml,shared/contrast-hash.sml,shared/contrast-memo-table.sml,shared/contrast-memo-real.sml,shared/contrast-memo-int.sml,shared/contrast-kernel.sml,shared/contrast-driver.sml,contrast/benchmark.sml,shared/main.sml	3600	8388608	image-processing,arrays,numerical,memoization,library-replacement,allocation	large.ppm,large/adaptive_contrast_spreading.bits,large/niblack_global_gray.bits,large/niblack_local_gray.bits,large/niblack_local_monochrome.bits,large/sauvola_global_gray.bits,large/sauvola_global_monochrome.bits,large/sauvola_local_gray.bits,large/sauvola_local_monochrome.bits	exact	implemented
++minilight	smoke	sandmark	benchmarks/multicore-minilight/sequential/minilight.exe	smoke.model smoke.reference	minilight/smoke.expected	shared/input.sml,shared/ocaml-random.sml,shared/minilight-vector.sml,shared/minilight-parse.sml,shared/minilight-delay.sml,shared/minilight-random.sml,shared/minilight-triangle.sml,shared/minilight-spatial.sml,shared/minilight-scene.sml,shared/minilight-surface.sml,shared/minilight-ray.sml,shared/minilight-image.sml,shared/minilight-camera.sml,shared/minilight-check.sml,minilight/benchmark.sml,shared/main.sml	30	1048576	rendering,geometry,arrays,memoization,closures,random-seed,numerical,allocation	smoke.model,smoke.reference	exact	implemented
++minilight	normal	sandmark	benchmarks/multicore-minilight/sequential/minilight.exe	normal.model normal.reference	minilight/normal.expected	shared/input.sml,shared/ocaml-random.sml,shared/minilight-vector.sml,shared/minilight-parse.sml,shared/minilight-delay.sml,shared/minilight-random.sml,shared/minilight-triangle.sml,shared/minilight-spatial.sml,shared/minilight-scene.sml,shared/minilight-surface.sml,shared/minilight-ray.sml,shared/minilight-image.sml,shared/minilight-camera.sml,shared/minilight-check.sml,minilight/benchmark.sml,shared/main.sml	600	4194304	rendering,geometry,arrays,memoization,closures,random-seed,numerical,allocation	normal.model,normal.reference	exact	implemented
++minilight	large	sandmark	benchmarks/multicore-minilight/sequential/minilight.exe	large.model large.reference	minilight/large.expected	shared/input.sml,shared/ocaml-random.sml,shared/minilight-vector.sml,shared/minilight-parse.sml,shared/minilight-delay.sml,shared/minilight-random.sml,shared/minilight-triangle.sml,shared/minilight-spatial.sml,shared/minilight-scene.sml,shared/minilight-surface.sml,shared/minilight-ray.sml,shared/minilight-image.sml,shared/minilight-camera.sml,shared/minilight-check.sml,minilight/benchmark.sml,shared/main.sml	3600	8388608	rendering,geometry,arrays,memoization,closures,random-seed,numerical,allocation	large.model,large.reference	exact	implemented

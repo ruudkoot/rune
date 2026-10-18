@@ -1,0 +1,3 @@
+PASS smoke eight full original binary rasters; fixed crop
+PASS normal eight full original binary rasters; fixed crop
+PASS large eight full original binary rasters; P3/P6 pixel-identical

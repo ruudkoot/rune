@@ -1,0 +1,5 @@
+COUNT unbudgeted lexifi-g2pp normal rune
+COUNT unbudgeted lexifi-g2pp normal rune:opt
+COUNT unbudgeted lexifi-g2pp normal rune:new
+COUNT unbudgeted lexifi-g2pp normal rune:jit
+COUNT comparisons agree

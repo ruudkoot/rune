@@ -435,3 +435,21 @@ This closes the stdlib selector inventory, not milestone M5: LexiFi G2++,
 sequential MiniLight and Sauvola remain pending. M3 and M4 also remain in
 progress. Canonical validation and outstanding checks are recorded separately
 in the validation ledger.
+
+## Sandmark applications and source credits, 2026-10-18
+
+The final three suitable primary executables now have portable imports:
+LexiFi G2++, contrast and sequential MiniLight. The pinned executable inventory
+has no remaining suitable Sandmark import; parallel/effect/FFI and ecosystem
+dispositions retain their explicit capability conditions. This code coverage
+does not by itself establish the pending repository acceptance result.
+
+Six guarded notice regressions record LexiFi SAS as copyright holder,
+Harrison Ainsworth/HXA7241 and Andreas Romeyke. Changed headings do not inherit
+those credits. All 114 inventory tests pass and five clean source pins reproduce
+861 entries. The catalogue contains 457 programs and 1325 profiles.
+
+Original numerical/image observations, independent component models and
+complete result checks support the ports. Known native 32-bit random arithmetic
+failures and default legacy 64-bit numeric/image failures remain explicit.
+Diagnostic nursery changes do not alter suite defaults or passing expectations.

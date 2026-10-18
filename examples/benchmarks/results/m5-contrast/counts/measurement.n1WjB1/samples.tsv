@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+contrast	normal	rune	O2	compile	0	0	pass	2.11	2.08	0.10	135560	-	-	-	contrast/rune/build/compile
+contrast	normal	rune	O2	correctness	0	0	pass	23.03	22.60	0.02	10464	5244606692	7049198328	156185779	contrast/rune/correctness.0
+contrast	normal	rune	O2	count	1	1	pass	20.58	21.33	0.04	10380	5244606692	7049198328	156185779	contrast/rune/fresh.1
+contrast	normal	rune:opt	O2	compile	0	0	pass	2.20	2.19	0.09	135428	-	-	-	contrast/rune-opt/build/compile
+contrast	normal	rune:opt	O2	native-compile	0	0	pass	0.42	0.25	0.05	17600	-	-	-	contrast/rune-opt/build/native-compile
+contrast	normal	rune:opt	O2	correctness	0	0	pass	10.04	9.12	0.01	11252	5244606692	7049198328	156185779	contrast/rune-opt/correctness.0
+contrast	normal	rune:opt	O2	count	1	1	pass	8.69	9.01	0.02	11120	5244606692	7049198328	156185779	contrast/rune-opt/fresh.1
+contrast	normal	rune:new	O2	compile	0	0	pass	2.29	2.27	0.10	135432	-	-	-	contrast/rune-new/build/compile
+contrast	normal	rune:new	O2	correctness	0	0	pass	20.10	19.55	0.03	10604	3038274517	7049198328	156185779	contrast/rune-new/correctness.0
+contrast	normal	rune:new	O2	count	1	1	pass	16.83	17.47	0.01	10660	3038274517	7049198328	156185779	contrast/rune-new/fresh.1
+contrast	normal	rune:jit	O2	compile	0	0	pass	1.86	1.88	0.04	135380	-	-	-	contrast/rune-jit/build/compile
+contrast	normal	rune:jit	O2	correctness	0	0	pass	7.06	7.30	0.02	12336	3038274517	7049198328	156185779	contrast/rune-jit/correctness.0
+contrast	normal	rune:jit	O2	count	1	1	pass	8.21	7.21	0.02	12480	3038274517	7049198328	156185779	contrast/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

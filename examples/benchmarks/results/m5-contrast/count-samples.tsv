@@ -1,0 +1,5 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+contrast	normal	rune	O2	count	1	1	pass	20.58	21.33	0.04	10380	5244606692	7049198328	156185779	counts/measurement.n1WjB1/contrast/rune/fresh.1
+contrast	normal	rune:opt	O2	count	1	1	pass	8.69	9.01	0.02	11120	5244606692	7049198328	156185779	counts/measurement.n1WjB1/contrast/rune-opt/fresh.1
+contrast	normal	rune:new	O2	count	1	1	pass	16.83	17.47	0.01	10660	3038274517	7049198328	156185779	counts/measurement.n1WjB1/contrast/rune-new/fresh.1
+contrast	normal	rune:jit	O2	count	1	1	pass	8.21	7.21	0.02	12480	3038274517	7049198328	156185779	counts/measurement.n1WjB1/contrast/rune-jit/fresh.1
