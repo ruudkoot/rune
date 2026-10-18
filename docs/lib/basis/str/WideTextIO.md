@@ -7,7 +7,7 @@
 | Signatures | none: it matches no signature of the library |
 | Status | optional |
 | Members | 37 |
-| Tests | 46 checks |
+| Tests | 51 checks |
 | Source | [lib/basis/widetextio.sml](../../../../lib/basis/widetextio.sml) |
 
 WideTextIO (optional in the specification): the imperative streams of the
@@ -18,11 +18,16 @@ members are those of TEXT\_IO over [`WideString.string`](../sig/STRING.md#type-s
 
 > **Implementation** `WideTextIO/files-hold-utf-8`. The specification names no
 > encoding, so a stream of [`WideTextIO`](WideTextIO.md) is a stream of [`TextIO`](../str/TextIO.md) encoded in
-> UTF-8: one byte for a code point below 128, up to four above it. A byte
-> sequence that is not UTF-8 raises [`IO.Io`](../sig/IO.md#exn-io) with the cause `Fail "UTF-8"`. A
-> stream made with `mkInstream` over a reader of one's own carries wide
-> characters as they are, without an encoding. No host has a [`WideTextIO`](WideTextIO.md) to
-> compare with.
+> UTF-8: one byte for a code point below 128, up to four above it. What is
+> not UTF-8 raises [`IO.Io`](../sig/IO.md#exn-io) with the cause `Fail "UTF-8"`. On input that is a
+> byte sequence that the Unicode Standard's Table 3-7 does not list: an
+> overlong form, a surrogate, a value past 0x10FFFF, a lead byte C0, C1 or
+> F5 to FF, a continuation byte where a sequence begins, a sequence cut
+> short. On output it is a surrogate, which a [`WideChar.char`](../sig/CHAR.md#type-char) may be (it
+> holds every code point) and UTF-8 does not hold. A stream made with
+> `mkInstream` over a reader of one's own carries wide characters as they
+> are, surrogates included, without an encoding. No host has a [`WideTextIO`](WideTextIO.md)
+> to compare with.
 
 > **Limitation** `WideTextIO/file-streams-have-no-positions`. The reader and
 > the writer of a file of wide characters have no positions, no `ioDesc`,

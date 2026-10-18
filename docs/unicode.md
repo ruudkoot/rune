@@ -17,9 +17,13 @@ In Rune:
 
 * `Char.char` is an 8-bit character (0 to 255), and `String.string` is a
   `CharVector.vector` of 8-bit bytes.
-* `WideChar.char` represents a Unicode scalar value (0 to `0x10FFFF`, excluding
-  surrogate code points `0xD800`–`0xDFFF`).
-* `WideString.string` is a `WideCharVector.vector` of Unicode scalar values.
+* `WideChar.char` represents a Unicode code point, 0 to `0x10FFFF`, as MLton's
+  does. The surrogates `0xD800`–`0xDFFF` are among them: the `CHAR` law
+  `ord (chr i) = i` holds for every `i` up to `maxOrd`, so `WideChar.chr`
+  takes them. They are refused where text meets the world: `WideTextIO`
+  neither reads nor writes one, for UTF-8 holds the scalar values, the code
+  points that are not surrogates.
+* `WideString.string` is a `WideCharVector.vector` of code points.
 * `WideSubstring.substring` is a `WideCharVectorSlice.slice`.
 * `WideText` packages these structures together under `TEXT`.
 * `WideTextPrimIO` provides primitive readers and writers of wide characters
@@ -152,10 +156,16 @@ contents.
 In Rune:
 
 * Files opened with `WideTextIO.openIn`, `openOut`, or `openAppend` are encoded
-  in UTF-8. A byte sequence that is not valid UTF-8 raises `IO.Io` with cause
-  `Fail "UTF-8"`.
+  in UTF-8. What is not UTF-8 raises `IO.Io` with cause `Fail "UTF-8"`:
+  * on input, a byte sequence that is not one of the well-formed sequences of
+    the Unicode Standard's Table 3-7: an overlong form, a surrogate, a value
+    past `0x10FFFF`, a lead byte `C0`, `C1` or `F5` to `FF`, a continuation
+    byte where a sequence begins, or a sequence cut short;
+  * on output, a surrogate, which a `WideChar.char` may be and UTF-8 cannot
+    encode.
 * Streams constructed with `mkInstream` over a custom `WideTextPrimIO.reader`
-  carry wide characters in memory without encoding translation.
+  carry wide characters in memory without encoding translation, surrogates
+  included.
 
 Because UTF-8 is a variable-length encoding (1 to 4 bytes per code point):
 
@@ -177,14 +187,21 @@ exchange format, leaving wide text asymmetric:
   ASCII string using `\uXXXX` or `\UXXXXXXXX` escape sequences.
 * `WideString.fromString : String.string -> WideString.string option` parses an
   8-bit string containing escape sequences into a wide string.
-* `WideString.scan : (Char.char, 'a) StringCvt.reader -> (WideString.string, 'a) StringCvt.reader`
-  reads 8-bit `Char.char` input, not wide characters.
 * `WideChar.toString` and `WideChar.fromString` similarly translate through
-  8-bit `String.string`.
+  8-bit `String.string`, and `WideChar.scan : (Char.char, 'a) StringCvt.reader
+  -> (WideChar.char, 'a) StringCvt.reader` reads 8-bit `Char.char` input, as
+  `CHAR` writes it.
 
-Wide strings and characters are therefore converted to and from printable
-representations via 8-bit ASCII escape conventions rather than native wide-text
-streams.
+`WideString.scan` is the exception. `STRING` writes it over the structure's
+own `char`, so it is `WideString.scan : (WideChar.char, 'a) StringCvt.reader
+-> (WideString.string, 'a) StringCvt.reader` and reads wide characters. In
+that stream an escape is written with ASCII characters, and a character that
+needs none stands for itself, those above 255 too. MLton's `WideString.scan`
+reads 8-bit `Char.char` input instead.
+
+Apart from `WideString.scan`, wide strings and characters are therefore
+converted to and from printable representations via 8-bit ASCII escape
+conventions rather than native wide-text streams.
 
 ## Host support comparison
 
@@ -192,11 +209,14 @@ Among traditional SML implementations:
 
 * **SML/NJ, Poly/ML, and MLKit** do not provide `WideChar`, `WideString`,
   `WideText`, `WideTextPrimIO`, or `WideTextIO`.
-* **MLton** provides `WideChar` and `WideString` (backed by 16-bit `Char16` and
-  `String16`), and `WideText`. For `WideTextIO` and `WideTextPrimIO`, MLton
-  includes declarations in its signature files but comments out the sharing
-  constraints in `basis.sig` and provides no implementation.
-* **Rune** provides the complete wide text family: 21-bit Unicode scalar values
-  in `WideChar`, UTF-8-encoded file streams in `WideTextIO`, and full `PRIM_IO`
-  readers and writers in `WideTextPrimIO`.
+* **MLton** provides `WideChar`, `WideString` and `WideText`. Its `WideChar` and
+  `WideString` are by default `Char32` and `String32`, whose characters are
+  the code points 0 to `0x10FFFF`, surrogates included;
+  `-default-type widechar16` makes them the 16-bit `Char16` and `String16`.
+  For `WideTextIO` and `WideTextPrimIO`, MLton includes declarations in its
+  signature files but comments out the sharing constraints in `basis.sig`
+  and provides no implementation.
+* **Rune** provides the complete wide text family: the code points 0 to
+  `0x10FFFF` in `WideChar`, UTF-8-encoded file streams in `WideTextIO`, and
+  full `PRIM_IO` readers and writers in `WideTextPrimIO`.
 

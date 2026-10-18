@@ -27,15 +27,21 @@ structure WideTextPrimIO =
 
    Implementation: `WideTextIO/files-hold-utf-8`. The specification names no
    encoding, so a stream of `WideTextIO` is a stream of `TextIO` encoded in
-   UTF-8: one byte for a code point below 128, up to four above it. A byte
-   sequence that is not UTF-8 raises `IO.Io` with the cause `Fail "UTF-8"`. A
-   stream made with `mkInstream` over a reader of one's own carries wide
-   characters as they are, without an encoding. No host has a `WideTextIO` to
-   compare with.
+   UTF-8: one byte for a code point below 128, up to four above it. What is
+   not UTF-8 raises `IO.Io` with the cause `Fail "UTF-8"`. On input that is a
+   byte sequence that the Unicode Standard's Table 3-7 does not list: an
+   overlong form, a surrogate, a value past 0x10FFFF, a lead byte C0, C1 or
+   F5 to FF, a continuation byte where a sequence begins, a sequence cut
+   short. On output it is a surrogate, which a `WideChar.char` may be (it
+   holds every code point) and UTF-8 does not hold. A stream made with
+   `mkInstream` over a reader of one's own carries wide characters as they
+   are, surrogates included, without an encoding. No host has a `WideTextIO`
+   to compare with.
 
    Pinned by: `WideTextIO.output/writes-utf-8`,
    `WideTextIO.inputAll/reads-utf-8`,
-   `WideTextIO.inputN/counts-characters-not-bytes`
+   `WideTextIO.inputN/counts-characters-not-bytes`,
+   `WideTextIO.inputAll/refuses-*`, `WideTextIO.output/refuses-surrogate-*`
 
    Limitation: `WideTextIO/file-streams-have-no-positions`. The reader and
    the writer of a file of wide characters have no positions, no `ioDesc`,
@@ -121,14 +127,21 @@ struct
   val setPosOut = Imperative.setPosOut
 
   local
-    (* ---- UTF-8 ---- *)
+    (* ---- UTF-8 ----
+       A wide character is a code point, surrogates included; UTF-8 holds
+       the scalar values, which are the code points that are not surrogates
+       (the Unicode Standard, 3.9). So neither direction takes a surrogate,
+       and each raises Io with the cause Fail "UTF-8" on what is not UTF-8. *)
+    fun notUtf8 (name, function) = raise IO.Io {name = name, function = function, cause = Fail "UTF-8"}
+    fun isSurrogate n = Int.>= (n, 0xD800) andalso Int.<= (n, 0xDFFF)
     fun byte n = Char.chr (Int.mod (n, 256))
-    fun encode c =
+    fun encode name c =
       let val n = WideChar.ord c
       in
         if Int.< (n, 0x80) then String.str (Char.chr n)
         else if Int.< (n, 0x800) then
           String.implode [byte (Int.+ (0xC0, Int.div (n, 64))), byte (Int.+ (0x80, Int.mod (n, 64)))]
+        else if isSurrogate n then notUtf8 (name, "output")
         else if Int.< (n, 0x10000) then
           String.implode [byte (Int.+ (0xE0, Int.div (n, 4096))),
                           byte (Int.+ (0x80, Int.mod (Int.div (n, 64), 64))),
@@ -139,17 +152,30 @@ struct
                           byte (Int.+ (0x80, Int.mod (Int.div (n, 64), 64))),
                           byte (Int.+ (0x80, Int.mod (n, 64)))]
       end
-    fun encodeString v = String.concat (List.map encode (WideString.explode v))
-    fun malformed name = raise IO.Io {name = name, function = "input", cause = Fail "UTF-8"}
-    (* one code point from the bytes that next () gives, NONE at the end *)
+    (* the whole vector is encoded before a byte of it is written *)
+    fun encodeString (name, v) = String.concat (List.map (encode name) (WideString.explode v))
+    (* one code point from the bytes that next () gives, NONE at the end. The
+       sequences taken are the well-formed ones of the Unicode Standard's
+       Table 3-7, and anything else raises: a byte 80 to BF where a sequence
+       begins, a lead byte C0, C1 or F5 to FF, a second byte out of its lead
+       byte's range (which is what an overlong form, a surrogate and a value
+       past 0x10FFFF have), a later byte that is not 80 to BF, and a sequence
+       that the end cuts short. *)
     fun decode (name, next) =
       let
-        fun continuation () =
+        fun malformed () = notUtf8 (name, "input")
+        (* the next byte, from lo to hi, as the six bits it carries *)
+        fun continuation (lo, hi) =
           case next () of
-            SOME c => let val n = Char.ord c in if Int.div (n, 64) = 2 then Int.mod (n, 64) else malformed name end
-          | NONE => malformed name
-        fun follow (acc, 0) = acc
-          | follow (acc, k) = follow (Int.+ (Int.* (acc, 64), continuation ()), Int.- (k, 1))
+            SOME c =>
+              let val n = Char.ord c
+              in if Int.>= (n, lo) andalso Int.<= (n, hi) then Int.- (n, 0x80) else malformed () end
+          | NONE => malformed ()
+        fun more (acc, k) =
+          if k = 0 then acc else more (Int.+ (Int.* (acc, 64), continuation (0x80, 0xBF)), Int.- (k, 1))
+        (* the bits of the lead byte, the range of the second byte, and how
+           many bytes follow that *)
+        fun sequence (bits, lo, hi, k) = more (Int.+ (Int.* (bits, 64), continuation (lo, hi)), k)
       in
         case next () of
           NONE => NONE
@@ -158,11 +184,15 @@ struct
             in
               SOME (WideChar.chr
                       (if Int.< (n, 0x80) then n
-                       else if Int.< (n, 0xC0) then malformed name
-                       else if Int.< (n, 0xE0) then follow (Int.- (n, 0xC0), 1)
-                       else if Int.< (n, 0xF0) then follow (Int.- (n, 0xE0), 2)
-                       else if Int.< (n, 0xF8) then follow (Int.- (n, 0xF0), 3)
-                       else malformed name))
+                       else if Int.< (n, 0xC2) then malformed ()
+                       else if Int.< (n, 0xE0) then sequence (Int.- (n, 0xC0), 0x80, 0xBF, 0)
+                       else if n = 0xE0 then sequence (0, 0xA0, 0xBF, 1)
+                       else if n = 0xED then sequence (0xD, 0x80, 0x9F, 1)
+                       else if Int.< (n, 0xF0) then sequence (Int.- (n, 0xE0), 0x80, 0xBF, 1)
+                       else if n = 0xF0 then sequence (0, 0x90, 0xBF, 2)
+                       else if Int.< (n, 0xF4) then sequence (Int.- (n, 0xF0), 0x80, 0xBF, 2)
+                       else if n = 0xF4 then sequence (4, 0x80, 0x8F, 2)
+                       else malformed ()))
             end
       end
 
@@ -187,13 +217,13 @@ struct
       let
         fun writeVec sl =
           let val v = WideCharVectorSlice.vector sl
-          in TextIO.output (outs, encodeString v); WideCharVector.length v end
+          in TextIO.output (outs, encodeString (name, v)); WideCharVector.length v end
       in
         (WideTextPrimIO.WR {name = name, chunkSize = 1024, writeVec = SOME writeVec, writeArr = NONE,
                             writeVecNB = NONE, writeArrNB = NONE, block = NONE, canOutput = NONE,
                             getPos = NONE, setPos = NONE, endPos = NONE, verifyPos = NONE,
                             close = fn () => TextIO.closeOut outs, ioDesc = NONE},
-         {write = fn v => TextIO.output (outs, encodeString v), flush = fn () => TextIO.flushOut outs})
+         {write = fn v => TextIO.output (outs, encodeString (name, v)), flush = fn () => TextIO.flushOut outs})
       end
     val empty = WideCharVector.fromList []
     fun instreamOf (ins, name) = mkInstream (StreamIO.mkInstream (reader (ins, name), empty))
