@@ -551,3 +551,19 @@ from the original small output hash.
 Retention, specialization, finite-field forcing, arbitrary-precision costs and
 extra validation consumers remain source-based performance questions. Resource-
 limited pilots and successful smaller profiles are distinct observations.
+
+## Cacheprof annotation and allocation scope
+
+Seward's original 1999 notices and source stage comments establish the
+assembly annotator's provenance and design; Partain supplies the previously
+reviewed nofib context. No external cache-profiling paper is claimed as the
+derivation of this implementation. The program operates on assembly text,
+so generating hook calls does not make it an FFI benchmark.
+
+Persistent stage spines, grouped output, descriptor rollup, closure
+specialization, string/list adapters and strict materialization are
+source-based performance questions. Original full output, independently
+evaluated opcode metadata and prefix-demand controls establish correctness
+at separate scopes. The mixed-target ML Kit capacity failure and successful
+large-limit probe are observed resource outcomes, not a claimed diagnosis
+of a compiler pass or a generic collector cost.

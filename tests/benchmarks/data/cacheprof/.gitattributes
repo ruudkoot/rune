@@ -1,0 +1,4 @@
+*.s -text -whitespace
+*.annotated -text -whitespace
+*.reference -text -whitespace
+cases/** -text -whitespace

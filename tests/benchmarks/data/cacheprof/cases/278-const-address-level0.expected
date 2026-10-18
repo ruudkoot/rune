@@ -1,0 +1,2 @@
+	movl $-3+4*8,(%eax,%ebx,4)
+	leal symbol+2(,%ecx,4),%eax

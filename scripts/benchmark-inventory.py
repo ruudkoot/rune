@@ -551,6 +551,19 @@ def build(source, root, lock):
                     notices.append(str(notice.relative_to(root)))
         authors = set()
         context = [p for p in parent.iterdir() if p.is_file() and p.name in {"README", "README.md", "Makefile", "FILES", "sources.cm"}] if parent.exists() and files else []
+        if source == "nofib" and path in {"gc/cacheprof", "real/cacheprof"}:
+            module = parent / "Main.hs"
+            if module.is_file():
+                heading = module.read_text(errors="replace")[:2500]
+                if ("Copyright (C) 1999 Julian Seward (jseward@acm.org)" in heading
+                        and "either version 2 of the" in heading
+                        and "License, or (at your option) any later version." in heading):
+                    authors.add("Julian Seward")
+                    item["evidence"].append(path + "/Main.hs:author-and-GPL2-or-later-heading")
+            full = parent / "cacheprof.full"
+            if full.is_file():
+                inputs.add(str(full.relative_to(root)))
+                item["evidence"].append(path + "/cacheprof.full:complete-assembly-input-reservoir")
         if source == "nofib" and path in {"gc/fulsom/Main.hs", "real/fulsom/Main.hs",
                                           "gc/fulsom/Bah.hs", "real/fulsom/Bah.hs"}:
             module = parent / "Interval.hs"

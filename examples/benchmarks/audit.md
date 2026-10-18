@@ -503,3 +503,25 @@ documented auxiliary failures are silently repaired.
 The catalogue contains 467 programs and 1355 profiles. Code coverage does not
 by itself establish pending full repository acceptance. M3/M4 remain in
 progress and M8 remains planned.
+
+## Cacheprof input/fixture reconciliation, 2026-10-18
+
+Four variants retain distinct GC/raw and real/200-iteration forced consumers
+of one shared text-annotation pipeline, with memoized/strict finite data.
+No generated assembly is executed. All original opcode/effect entries and the
+explicit 67-member basic-block classification are retained.
+
+The current GC stdin is a 600-line prefix, while its complete stdout fixture
+belongs to the 13708-line cacheprof.full reservoir. The unmodified original
+reproduces that golden fixture exactly with the full input. Preserve the
+pairing for GC large; use reviewed normal output rather than excluding the
+workload or overwriting the fixture. Both input identities remain explicit.
+
+Six new notice/input regressions bring inventory tests to 124; all pass.
+Five source pins reproduce 861 entries. Julian Seward's individual GPL2-or-later
+notices, missing upstream LICENSE reference, supplied GPL2 COPYING text and
+unattributed assembly-data origin are documented without inferred credits.
+
+The catalogue reaches 471 programs and 1367 profiles. Bounded semantic checks
+and explicit large checks are separated by their resource scope; the earlier
+ML Kit 1 GiB memory failure remains visible. M3/M4 remain in progress.

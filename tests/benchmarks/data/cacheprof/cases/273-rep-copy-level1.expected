@@ -1,0 +1,32 @@
+	pushfl
+.Lcacheprof_x86_rep_expansion0:
+	testl %ecx,%ecx
+	jz .Lcacheprof_x86_rep_expansion1
+	decl %ecx
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	addl $1,cacheprof_level1_reads
+	adcl $0,4+cacheprof_level1_reads
+	addl $1,cacheprof_level1_writes
+	adcl $0,4+cacheprof_level1_writes
+	popfl
+	movsb
+	jmp .Lcacheprof_x86_rep_expansion0
+.Lcacheprof_x86_rep_expansion1:
+	popfl
+	pushfl
+.Lcacheprof_x86_rep_expansion2:
+	testl %ecx,%ecx
+	jz .Lcacheprof_x86_rep_expansion3
+	decl %ecx
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	addl $1,cacheprof_level1_writes
+	adcl $0,4+cacheprof_level1_writes
+	popfl
+	stosl
+	jmp .Lcacheprof_x86_rep_expansion2
+.Lcacheprof_x86_rep_expansion3:
+	popfl
