@@ -53,7 +53,7 @@ What it rests on:
 |---|---|---|
 | M0 | This roadmap | done |
 | M1 | Fixes that follow the Definition or fix bugs | done 2026-10-18: the Basis part and the source part |
-| M2 | Source modes: the plumbing | |
+| M2 | Source modes: the plumbing | done 2026-10-18 |
 | M3 | What a source may hold raw | |
 | M4 | Literals by type and mode | |
 | M5 | `lib/unicode`: normalisation and identifier tables | done 2026-10-18; G2 passed 2026-10-18 |
@@ -2964,6 +2964,86 @@ The sizes are lines of code and tests, not counting generated tables.
     and on `tests/lang`.
   - A test caches a unit under one mode and finds it a miss under the other.
   - `docs/units.md` and the man page say where a mode comes from.
+* **Done** (2026-10-18, at `54552075`):
+  - **The mode** is a field of `Source.file`: `Ascii | Unicode of
+    encoding`, with `encoding = Utf8 | Latin1`. Its names are those of the
+    annotations: `ascii`, `unicode` (or `unicode=utf8`) and
+    `unicode=latin1` (`Source.modeName`, `Source.modeNamed`).
+    - `Source.load`, `readFile` and `fromStringAt` take a mode, and
+      `fromStringIn` is `fromString` with one. `fromString` is left for the
+      text the compiler makes for itself, which is read in the default.
+    - `Lexer.lexerOf` and `Lexer.scan` take the mode, and `tokenize` uses
+      the file's. As yet the lexer reads every mode alike.
+  - **Where it comes from:**
+    - `--unicode`, `--unicode=utf8` and `--unicode=latin1`, the last of
+      them given. A value without `=` is an error, and `--unicode latin1`
+      gives "cannot read latin1 (did you mean --unicode=latin1?)".
+    - A build file's annotation, over the command line's. The last one in
+      force wins.
+    - `Compiler.compileIn : string -> {read, file, line} -> unit -> unit`,
+      new, with the mode by the annotations' names. Another name raises
+      `Fail`. `Compiler.compile` keeps its type and is `compileIn "ascii"`
+      (*Not foreseen*, below).
+    - `rune-repl --unicode[=ENC]` (and `rune -i`, which runs it), with `=`
+      as `rune` wants it. It is the mode of the files the REPL uses, by
+      `use`, `:reload` and its command line (`ReplSession.mode`). What is
+      typed is read as UTF-8 under `--unicode`, whatever the encoding
+      (`ReplSession.typedMode`): in the highlighter, completion, the
+      engine's queries and the debugger too.
+    - The Basis Library and the libraries are read in the default, in the
+      compiler and in runedoc.
+  - **The cache.**
+    - A unit's key has its mode in its settings where the mode is not the
+      default, so the keys of the default are those of before. The same
+      holds for the REPL's units.
+    - A unit's basis writes the mode after the hash of its source, where
+      it is in no identity. Loading reads a functor's body again in that
+      mode. `UnitBasis.version` is 5, and `docs/bytecode.md` shows the
+      field.
+  - **Tests:**
+    - Scenario S63 of `tests/incremental` builds a file under `--unicode`,
+      then without it, then under `--unicode=latin1`. Each is a miss, and
+      `--unicode` again is a hit. A build file's `unicode` annotation is a
+      hit under the command line's `--unicode`, and `ascii` is a miss.
+    - `tests/repl/compilecache` compiles a part again by `compileIn` in
+      another mode, and gets an entry more. `tests/repl/compile` compiles
+      under `unicode=latin1`, and a mode of another name is refused.
+    - `tests/lang/basis.compiler` and `tests/basis/compiler.sml` cover
+      `compileIn`.
+  - **The bytecode is the same.** The compiler before (`f322ed7e`), in the
+    default, was compared with this one under no flag, `--unicode`,
+    `--unicode=utf8` and `--unicode=latin1`. Both ran on the same VM and
+    library.
+    - All 290 programs of `tests/lang`, for both targets: the same bytes
+      in every case.
+    - The compiler compiled by itself: the same 2,146,487 bytes all five
+      times.
+  - **The corpus run** (E9's check with `--dump-tokens`, under each of the
+    three modes). Each corpus refuses the same files in every mode:
+    - Rune's tracked tree: 2,167 of 2,188 lex. The 21 refused are
+      `tests/diagnostics/eof.sml` and the 20 lexer tests of `tests/errors`.
+    - HOL4 after `unquote`: 3,419 of 3,419.
+    - MLton: 1,785 of 1,787.
+    - The Latin-1 files: 16 of 17.
+  - **Documents:** a section *Source modes* in `docs/units.md`, with the
+    cache key and the export basis. Also the annotations in
+    `docs/build.md`, `--unicode` in the man page and in `docs/repl.md`,
+    `Compiler.compileIn` in `docs/repl.md` and in the row
+    `basis.compiler`, and the usage texts of `rune` and `rune-repl`.
+  - **Not foreseen:**
+    - **A deviation from D1's wording.** D1 and the flag table say the
+      mode is "a field of `Compiler.compile`'s parameters". A field would
+      change `compile`'s type, and every caller would then have to give a
+      mode. HOL-rune's calls (`tools-rune/rune-polyml.ML`,
+      `tools-rune/Holmake/CompilerSpecific.ML`) are outside Rune's trees
+      and must not change. HOL4 needs no mode either: it reads in the
+      ASCII default, with UTF-8 in comments. So, as the lead decided
+      (2026-10-18), `compile` keeps `{read, file, line}` and reads in the
+      default, and the mode comes by a function beside it, `compileIn`,
+      which adds to the signature and changes nothing in it.
+    - `docs/bytecode.md` gave a basis's version as 1, though it was 4.
+    - `rune -i` exists: the wrapper runs `rune-repl` with what follows it.
+      So the flag table's `rune -i --unicode` works as it stands.
 
 ### M3. What a source may hold raw (M, about 600)
 
