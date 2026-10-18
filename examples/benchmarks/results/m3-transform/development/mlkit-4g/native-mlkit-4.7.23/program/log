@@ -1,0 +1,4 @@
+I could not allocate more memory; either no more memory is
+available or the memory subsystem is detectively corrupted
+: Cannot allocate memory
+Stopping compilation of MLB-file due to error (code 255).

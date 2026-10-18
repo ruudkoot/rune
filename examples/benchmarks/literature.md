@@ -644,3 +644,22 @@ cached higher-order grammar closures and checksum accumulators are diagnostic
 questions grounded in source inspection. Compiler-specific constant motion,
 allocation or specialization effects remain hypotheses rather than conclusions
 from single-sample adapter diagnostics.
+
+## Hartel Transform dataflow compiler and source consumers
+
+The previously reviewed Hartel and Langendoen translation account supplies
+collection context. The pinned program establishes its own lexical/parser
+rules, symbolic transformation pipeline and length consumer. Numerical papers
+for FFT or wave algorithms do not describe this executed compiler workload:
+the generated networks are rendered, not evaluated.
+
+Source inspection establishes prefix parsing, first-result cuts, ordered
+comparisons, ignored state fields in variable analysis, reversed rewrite
+prefixes, shared labels and character-list demand. Complete original
+observations support the tested cases; independent AST/cycle checks add a
+separate structural/arithmetic check without proving general equivalence.
+
+Parser closure caching, tree copying, literal sharing, retained prepared
+inputs and finite materialization are performance hypotheses. Single-sample
+adapter runs and ML Kit compilation failures do not establish runtime
+optimization mechanisms or steady-state performance.

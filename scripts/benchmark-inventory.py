@@ -301,7 +301,7 @@ def discover(source, root):
 
 def family(name, text):
     key = name.lower()
-    if key in {"lift", "parstof"}:
+    if key in {"lift", "parstof", "transform"}:
         return "compiler-application"
     if any(x in key for x in ("fft", "nbody", "n-body", "barnes", "mandel", "nucleic", "ray", "simple", "fem", "fluid", "almabench", "matrix", "grammatrix", "decomposition", "durand", "levinson", "minilight", "sphere", "zern", "arith")):
         return "numerical"

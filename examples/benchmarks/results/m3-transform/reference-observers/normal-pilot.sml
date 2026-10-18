@@ -1,0 +1,6 @@
+structure N=BenchTransformFn(BenchNeed)
+structure E=BenchTransformFn(BenchStrict)
+structure NC=BenchTransformCheckFn(N)
+structure EC=BenchTransformCheckFn(E)
+val _=print(NC.run["3000"]^"\n")
+val _=print(EC.run["3000"]^"\n")

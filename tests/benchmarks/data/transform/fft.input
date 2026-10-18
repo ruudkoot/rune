@@ -1,0 +1,13 @@
+%module  "fft"
+%include "~pieter/lib/fast2mira"
+%include "~pieter/mira/synch/misc"
+%include "~pieter/mira/fft/fftaux"
+%include "~pieter/mira/fft/fftnet"
+ns     = (:) 0 (map incmod5 ns);
+ms     = (:) (# netinput div 4) ms;
+ixs    = (:) (reorderindex (# netinput div 4)) ixs;
+as     = (:) xs0 (map fftstep0 ns ms ixs    as bs cs);
+bs     = (:) xs1 (map fftstep1 ns ms ixs cs bs as ds);
+cs     = (:) xs2 (map fftstep2 ns ms ixs bs cs ds as);
+ds     = (:) xs3 (map fftstep3 ns ms ixs    ds cs bs);
+output = map concat4 as bs cs ds;

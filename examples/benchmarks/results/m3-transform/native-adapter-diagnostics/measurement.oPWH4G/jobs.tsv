@@ -1,0 +1,1 @@
+transform-strict	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/hartel-ida-finite.sml shared/transform-inputs.sml shared/transform-kernel.sml shared/transform-check.sml transform-strict/benchmark.sml shared/main.sml	8	transform-strict/smoke.expected	-

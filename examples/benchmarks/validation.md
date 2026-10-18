@@ -3213,3 +3213,28 @@ identities and byte-verified canonical fixture maps.
 exits zero with 1403 profiles, performance budgets, JIT checks, generated
 documentation and all compiler/runedoc/runeopt cross-build comparisons.
 M3/M4 remain in progress and M8 remains planned.
+
+## Hartel Transform compiler workloads, 2026-10-18
+
+Of 56 primary smoke/normal cases, 54 pass. Both policies pass Rune O0/O2
+engines, MLton, three SML/NJ builds and Poly/ML; strict also passes ML Kit.
+Lazy ML Kit compilation records a normal allocation failure and an empty-log
+smoke error. The semantic matrix completes 4914 assertions with no failures;
+546 remain incomplete after ML Kit compilation-memory failures.
+[Details](validation/transform-mlkit.md) preserve the classification limits.
+
+Complete original tokens, AST stages and reports agree under both policies.
+Independent structural and cycle checks, demand/sharing controls and negative
+length checks supplement the original fixtures. Public Rune O0/O2 checks,
+132 inventory regressions and the five-pin 861-entry replay pass.
+
+Eight full-normal count samples agree with uninterrupted guards. Six serial
+single fresh-process native smoke samples and all preflights pass; they are
+adapter checks rather than ten-sample comparisons. Both private normal runs
+pass under default Rune O1. Full selected large SML runs remain unrecorded.
+[Archived evidence](results/m3-transform/README.md) retains all raw outcomes.
+
+[Full make JOBS=4 check](validation/oct18-transform-1409-acceptance.log)
+exits zero with 1409 profiles, performance budgets, JIT checks, generated
+documentation and all compiler/runedoc/runeopt cross-build comparisons.
+M3/M4 remain in progress and M8 remains planned.

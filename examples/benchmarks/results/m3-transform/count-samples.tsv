@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+transform-lazy	normal	rune	O2	count	1	1	pass	76.27	75.87	0.37	21424	6558673533	17112233616	521521734	counts/measurement.DL47b6/transform-lazy/rune/fresh.1
+transform-lazy	normal	rune:opt	O2	count	1	1	pass	39.19	38.99	0.26	23032	6558673533	17112233616	521521734	counts/measurement.DL47b6/transform-lazy/rune-opt/fresh.1
+transform-lazy	normal	rune:new	O2	count	1	1	pass	67.21	62.52	0.32	39020	3844958876	17112233616	521521734	counts/measurement.DL47b6/transform-lazy/rune-new/fresh.1
+transform-lazy	normal	rune:jit	O2	count	1	1	pass	26.03	25.97	0.11	41800	3844958876	17112233616	521521734	counts/measurement.DL47b6/transform-lazy/rune-jit/fresh.1
+transform-strict	normal	rune	O2	count	1	1	pass	14.32	14.54	0.09	11720	2049196753	4070447736	102108895	counts/measurement.qSqMry/transform-strict/rune/fresh.1
+transform-strict	normal	rune:opt	O2	count	1	1	pass	6.93	5.84	0.05	12896	2049196753	4070447736	102108895	counts/measurement.qSqMry/transform-strict/rune-opt/fresh.1
+transform-strict	normal	rune:new	O2	count	1	1	pass	16.47	15.20	0.19	12632	1160579837	4070447736	102108895	counts/measurement.qSqMry/transform-strict/rune-new/fresh.1
+transform-strict	normal	rune:jit	O2	count	1	1	pass	6.01	6.22	0.05	15040	1160579837	4070447736	102108895	counts/measurement.qSqMry/transform-strict/rune-jit/fresh.1

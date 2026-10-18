@@ -1,0 +1,1 @@
+Three trailing spaces removed from the registered kernel after full acceptance; token sequences and line numbers unchanged. Public O0/O2 semantic target repeated after cleanup. Raw earlier source subjects remain in archived attempts.

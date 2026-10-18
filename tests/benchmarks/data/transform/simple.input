@@ -1,0 +1,5 @@
+%module  "simple"
+%include "~pieter/lib/fast2mira"
+%include "~pieter/mira/synch/misc"
+v      = map inc output;
+output = (:) 1 v;

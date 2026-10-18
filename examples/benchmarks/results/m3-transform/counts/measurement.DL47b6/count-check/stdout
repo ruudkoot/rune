@@ -1,0 +1,5 @@
+COUNT unbudgeted transform-lazy normal rune
+COUNT unbudgeted transform-lazy normal rune:opt
+COUNT unbudgeted transform-lazy normal rune:new
+COUNT unbudgeted transform-lazy normal rune:jit
+COUNT comparisons agree

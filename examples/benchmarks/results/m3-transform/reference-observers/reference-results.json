@@ -1,0 +1,23 @@
+[
+  {
+    "profile": "source-fast",
+    "repetitions": 1,
+    "bytes": 8,
+    "seconds": 0.4274464169975545,
+    "programs": 300
+  },
+  {
+    "profile": "normal",
+    "repetitions": 1,
+    "bytes": 9,
+    "seconds": 2.5685661649986287,
+    "programs": 3000
+  },
+  {
+    "profile": "source-slow",
+    "repetitions": 1,
+    "bytes": 9,
+    "seconds": 11.19271680500242,
+    "programs": 15000
+  }
+]

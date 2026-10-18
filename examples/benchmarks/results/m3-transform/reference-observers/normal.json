@@ -1,0 +1,20 @@
+{
+  "command": [
+    "/home/ruud/rune/.worktrees/benchmarks/bin/runevm",
+    "normal.rbc"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 22120,
+  "observed_minimum_available_kib": 23029512,
+  "peak_processes": [
+    {
+      "pid": 12,
+      "name": "runevm",
+      "rss_kib": 22120
+    }
+  ],
+  "elapsed_seconds": 66.73881960799918
+}

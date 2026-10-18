@@ -1,0 +1,1 @@
+transform-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/hartel-ida-finite.sml shared/transform-inputs.sml shared/transform-kernel.sml shared/transform-check.sml transform-lazy/benchmark.sml shared/main.sml	3000	transform-lazy/normal.expected	-

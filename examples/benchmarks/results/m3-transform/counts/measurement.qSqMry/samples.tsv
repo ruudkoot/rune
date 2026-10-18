@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+transform-strict	normal	rune	O2	compile	0	0	pass	3.68	3.59	0.19	135580	-	-	-	transform-strict/rune/build/compile
+transform-strict	normal	rune	O2	correctness	0	0	pass	15.52	14.35	0.06	11692	2049196753	4070447736	102108895	transform-strict/rune/correctness.0
+transform-strict	normal	rune	O2	count	1	1	pass	14.32	14.54	0.09	11720	2049196753	4070447736	102108895	transform-strict/rune/fresh.1
+transform-strict	normal	rune:opt	O2	compile	0	0	pass	3.31	3.28	0.14	135580	-	-	-	transform-strict/rune-opt/build/compile
+transform-strict	normal	rune:opt	O2	native-compile	0	0	pass	0.90	0.59	0.14	23376	-	-	-	transform-strict/rune-opt/build/native-compile
+transform-strict	normal	rune:opt	O2	correctness	0	0	pass	6.02	6.19	0.05	12928	2049196753	4070447736	102108895	transform-strict/rune-opt/correctness.0
+transform-strict	normal	rune:opt	O2	count	1	1	pass	6.93	5.84	0.05	12896	2049196753	4070447736	102108895	transform-strict/rune-opt/fresh.1
+transform-strict	normal	rune:new	O2	compile	0	0	pass	3.62	3.60	0.14	135676	-	-	-	transform-strict/rune-new/build/compile
+transform-strict	normal	rune:new	O2	correctness	0	0	pass	13.17	13.74	0.05	12664	1160579837	4070447736	102108895	transform-strict/rune-new/correctness.0
+transform-strict	normal	rune:new	O2	count	1	1	pass	16.47	15.20	0.19	12632	1160579837	4070447736	102108895	transform-strict/rune-new/fresh.1
+transform-strict	normal	rune:jit	O2	compile	0	0	pass	4.25	4.15	0.18	135580	-	-	-	transform-strict/rune-jit/build/compile
+transform-strict	normal	rune:jit	O2	correctness	0	0	pass	6.72	6.97	0.04	15056	1160579837	4070447736	102108895	transform-strict/rune-jit/correctness.0
+transform-strict	normal	rune:jit	O2	count	1	1	pass	6.01	6.22	0.05	15040	1160579837	4070447736	102108895	transform-strict/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

@@ -1,0 +1,1 @@
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-transform-originals/prepared-check.sml:234:35: error: function argument: type mismatch between defNode t -> int t -> (defNode t * int t) state ref and exprNode t -> int t -> (exprNode t * int t) state ref (type constructor mismatch: defNode vs exprNode)

@@ -1,0 +1,1452 @@
+{
+  "states": [
+    {
+      "name": "simple",
+      "stage": "parse",
+      "nodes": 7,
+      "labels": 2,
+      "maximum_label": 1,
+      "constructors": {
+        "F_Caf": 2,
+        "F_Cons": 1,
+        "F_Lit": 1,
+        "F_Map": 1,
+        "F_Var": 2
+      }
+    },
+    {
+      "name": "simple",
+      "stage": "prepared",
+      "nodes": 7,
+      "labels": 2,
+      "maximum_label": 3,
+      "constructors": {
+        "F_Caf": 2,
+        "F_Cons": 1,
+        "F_Lit": 1,
+        "F_Map": 1,
+        "F_Var": 2
+      }
+    },
+    {
+      "name": "simple",
+      "stage": "v",
+      "nodes": 7,
+      "labels": 2,
+      "maximum_label": 3,
+      "constructors": {
+        "F_Caf": 2,
+        "F_Cons": 1,
+        "F_Lit": 1,
+        "F_Map": 1,
+        "F_Var": 2
+      }
+    },
+    {
+      "name": "simple",
+      "stage": "v0",
+      "nodes": 7,
+      "labels": 2,
+      "maximum_label": 3,
+      "constructors": {
+        "F_Caf": 2,
+        "F_Cons": 1,
+        "F_Lit": 1,
+        "F_Map": 1,
+        "F_Var": 2
+      }
+    },
+    {
+      "name": "simple",
+      "stage": "v1",
+      "nodes": 7,
+      "labels": 2,
+      "maximum_label": 3,
+      "constructors": {
+        "F_Caf": 2,
+        "F_Cons": 1,
+        "F_Lit": 1,
+        "F_Map": 1,
+        "F_Var": 2
+      }
+    },
+    {
+      "name": "simple",
+      "stage": "v3",
+      "nodes": 7,
+      "labels": 2,
+      "maximum_label": 3,
+      "constructors": {
+        "F_Caf": 2,
+        "F_Cons": 1,
+        "F_Lit": 1,
+        "F_Map": 1,
+        "F_Var": 2
+      }
+    },
+    {
+      "name": "simple",
+      "stage": "v5",
+      "nodes": 7,
+      "labels": 2,
+      "maximum_label": 3,
+      "constructors": {
+        "F_Caf": 2,
+        "F_Cons": 1,
+        "F_Lit": 1,
+        "F_Map": 1,
+        "F_Var": 2
+      }
+    },
+    {
+      "name": "simple",
+      "stage": "v6",
+      "nodes": 21,
+      "labels": 4,
+      "maximum_label": 3,
+      "constructors": {
+        "F_Ap": 1,
+        "F_Caf": 5,
+        "F_Cons": 1,
+        "F_Def": 1,
+        "F_Lit": 2,
+        "F_Map": 2,
+        "F_Maps": 1,
+        "F_Tuple": 2,
+        "F_Var": 5,
+        "F_Where": 1
+      }
+    },
+    {
+      "name": "fib",
+      "stage": "parse",
+      "nodes": 12,
+      "labels": 3,
+      "maximum_label": 1,
+      "constructors": {
+        "F_Caf": 3,
+        "F_Cons": 2,
+        "F_Lit": 2,
+        "F_Map": 1,
+        "F_Var": 4
+      }
+    },
+    {
+      "name": "fib",
+      "stage": "prepared",
+      "nodes": 12,
+      "labels": 3,
+      "maximum_label": 5,
+      "constructors": {
+        "F_Caf": 3,
+        "F_Cons": 2,
+        "F_Lit": 2,
+        "F_Map": 1,
+        "F_Var": 4
+      }
+    },
+    {
+      "name": "fib",
+      "stage": "v",
+      "nodes": 12,
+      "labels": 3,
+      "maximum_label": 5,
+      "constructors": {
+        "F_Caf": 3,
+        "F_Cons": 2,
+        "F_Lit": 2,
+        "F_Map": 1,
+        "F_Var": 4
+      }
+    },
+    {
+      "name": "fib",
+      "stage": "v0",
+      "nodes": 12,
+      "labels": 3,
+      "maximum_label": 5,
+      "constructors": {
+        "F_Caf": 3,
+        "F_Cons": 2,
+        "F_Lit": 2,
+        "F_Map": 1,
+        "F_Var": 4
+      }
+    },
+    {
+      "name": "fib",
+      "stage": "v1",
+      "nodes": 12,
+      "labels": 3,
+      "maximum_label": 5,
+      "constructors": {
+        "F_Caf": 3,
+        "F_Cons": 2,
+        "F_Lit": 2,
+        "F_Map": 1,
+        "F_Var": 4
+      }
+    },
+    {
+      "name": "fib",
+      "stage": "v3",
+      "nodes": 12,
+      "labels": 3,
+      "maximum_label": 5,
+      "constructors": {
+        "F_Caf": 3,
+        "F_Cons": 2,
+        "F_Lit": 2,
+        "F_Map": 1,
+        "F_Var": 4
+      }
+    },
+    {
+      "name": "fib",
+      "stage": "v5",
+      "nodes": 12,
+      "labels": 3,
+      "maximum_label": 5,
+      "constructors": {
+        "F_Caf": 3,
+        "F_Cons": 2,
+        "F_Lit": 2,
+        "F_Map": 1,
+        "F_Var": 4
+      }
+    },
+    {
+      "name": "fib",
+      "stage": "v6",
+      "nodes": 29,
+      "labels": 5,
+      "maximum_label": 5,
+      "constructors": {
+        "F_Ap": 1,
+        "F_Caf": 6,
+        "F_Cons": 2,
+        "F_Def": 1,
+        "F_Lit": 4,
+        "F_Map": 2,
+        "F_Maps": 1,
+        "F_Tuple": 2,
+        "F_Var": 9,
+        "F_Where": 1
+      }
+    },
+    {
+      "name": "fibsum",
+      "stage": "parse",
+      "nodes": 17,
+      "labels": 5,
+      "maximum_label": 1,
+      "constructors": {
+        "F_Caf": 4,
+        "F_Cons": 2,
+        "F_Lit": 3,
+        "F_Map": 1,
+        "F_Maps": 1,
+        "F_Tail": 1,
+        "F_Var": 5
+      }
+    },
+    {
+      "name": "fibsum",
+      "stage": "prepared",
+      "nodes": 17,
+      "labels": 5,
+      "maximum_label": 9,
+      "constructors": {
+        "F_Caf": 4,
+        "F_Cons": 2,
+        "F_Lit": 3,
+        "F_Map": 1,
+        "F_Maps": 1,
+        "F_Tail": 1,
+        "F_Var": 5
+      }
+    },
+    {
+      "name": "fibsum",
+      "stage": "v",
+      "nodes": 17,
+      "labels": 5,
+      "maximum_label": 9,
+      "constructors": {
+        "F_Caf": 4,
+        "F_Cons": 2,
+        "F_Lit": 3,
+        "F_Map": 1,
+        "F_Maps": 1,
+        "F_Tail": 1,
+        "F_Var": 5
+      }
+    },
+    {
+      "name": "fibsum",
+      "stage": "v0",
+      "nodes": 17,
+      "labels": 5,
+      "maximum_label": 9,
+      "constructors": {
+        "F_Caf": 4,
+        "F_Cons": 2,
+        "F_Lit": 3,
+        "F_Map": 1,
+        "F_Maps": 1,
+        "F_Tail": 1,
+        "F_Var": 5
+      }
+    },
+    {
+      "name": "fibsum",
+      "stage": "v1",
+      "nodes": 19,
+      "labels": 5,
+      "maximum_label": 9,
+      "constructors": {
+        "F_Caf": 5,
+        "F_Cons": 2,
+        "F_Lit": 3,
+        "F_Map": 1,
+        "F_Maps": 1,
+        "F_Tail": 1,
+        "F_Var": 6
+      }
+    },
+    {
+      "name": "fibsum",
+      "stage": "v3",
+      "nodes": 23,
+      "labels": 6,
+      "maximum_label": 11,
+      "constructors": {
+        "F_Caf": 6,
+        "F_Cons": 3,
+        "F_Lit": 3,
+        "F_Map": 2,
+        "F_Tail": 1,
+        "F_Var": 8
+      }
+    },
+    {
+      "name": "fibsum",
+      "stage": "v5",
+      "nodes": 28,
+      "labels": 6,
+      "maximum_label": 11,
+      "constructors": {
+        "F_Ap": 3,
+        "F_Caf": 6,
+        "F_Cons": 4,
+        "F_Lit": 3,
+        "F_Map": 2,
+        "F_Var": 10
+      }
+    },
+    {
+      "name": "fibsum",
+      "stage": "v6",
+      "nodes": 55,
+      "labels": 8,
+      "maximum_label": 11,
+      "constructors": {
+        "F_Ap": 8,
+        "F_Caf": 10,
+        "F_Cons": 4,
+        "F_Def": 1,
+        "F_Lit": 5,
+        "F_Map": 3,
+        "F_Maps": 1,
+        "F_Tuple": 2,
+        "F_Var": 20,
+        "F_Where": 1
+      }
+    },
+    {
+      "name": "tailtest",
+      "stage": "parse",
+      "nodes": 13,
+      "labels": 4,
+      "maximum_label": 1,
+      "constructors": {
+        "F_Caf": 3,
+        "F_Cons": 2,
+        "F_Lit": 3,
+        "F_Maps": 1,
+        "F_Tail": 1,
+        "F_Var": 3
+      }
+    },
+    {
+      "name": "tailtest",
+      "stage": "prepared",
+      "nodes": 13,
+      "labels": 4,
+      "maximum_label": 7,
+      "constructors": {
+        "F_Caf": 3,
+        "F_Cons": 2,
+        "F_Lit": 3,
+        "F_Maps": 1,
+        "F_Tail": 1,
+        "F_Var": 3
+      }
+    },
+    {
+      "name": "tailtest",
+      "stage": "v",
+      "nodes": 13,
+      "labels": 4,
+      "maximum_label": 7,
+      "constructors": {
+        "F_Caf": 3,
+        "F_Cons": 2,
+        "F_Lit": 3,
+        "F_Maps": 1,
+        "F_Tail": 1,
+        "F_Var": 3
+      }
+    },
+    {
+      "name": "tailtest",
+      "stage": "v0",
+      "nodes": 13,
+      "labels": 4,
+      "maximum_label": 7,
+      "constructors": {
+        "F_Caf": 3,
+        "F_Cons": 2,
+        "F_Lit": 3,
+        "F_Maps": 1,
+        "F_Tail": 1,
+        "F_Var": 3
+      }
+    },
+    {
+      "name": "tailtest",
+      "stage": "v1",
+      "nodes": 15,
+      "labels": 4,
+      "maximum_label": 7,
+      "constructors": {
+        "F_Caf": 4,
+        "F_Cons": 2,
+        "F_Lit": 3,
+        "F_Maps": 1,
+        "F_Tail": 1,
+        "F_Var": 4
+      }
+    },
+    {
+      "name": "tailtest",
+      "stage": "v3",
+      "nodes": 23,
+      "labels": 6,
+      "maximum_label": 11,
+      "constructors": {
+        "F_Caf": 6,
+        "F_Cons": 3,
+        "F_Lit": 3,
+        "F_Map": 2,
+        "F_Tail": 1,
+        "F_Var": 8
+      }
+    },
+    {
+      "name": "tailtest",
+      "stage": "v5",
+      "nodes": 28,
+      "labels": 6,
+      "maximum_label": 11,
+      "constructors": {
+        "F_Ap": 3,
+        "F_Caf": 6,
+        "F_Cons": 4,
+        "F_Lit": 3,
+        "F_Map": 2,
+        "F_Var": 10
+      }
+    },
+    {
+      "name": "tailtest",
+      "stage": "v6",
+      "nodes": 57,
+      "labels": 8,
+      "maximum_label": 11,
+      "constructors": {
+        "F_Ap": 8,
+        "F_Caf": 10,
+        "F_Cons": 4,
+        "F_Def": 1,
+        "F_Lit": 6,
+        "F_Map": 3,
+        "F_Maps": 1,
+        "F_Tuple": 2,
+        "F_Var": 21,
+        "F_Where": 1
+      }
+    },
+    {
+      "name": "setreset",
+      "stage": "parse",
+      "nodes": 29,
+      "labels": 2,
+      "maximum_label": 1,
+      "constructors": {
+        "C_NoWhere": 3,
+        "F_Ap": 4,
+        "F_Caf": 3,
+        "F_Cons": 1,
+        "F_Def": 3,
+        "F_Lit": 3,
+        "F_Maps": 1,
+        "F_Var": 11
+      }
+    },
+    {
+      "name": "setreset",
+      "stage": "prepared",
+      "nodes": 29,
+      "labels": 2,
+      "maximum_label": 3,
+      "constructors": {
+        "C_NoWhere": 3,
+        "F_Ap": 4,
+        "F_Caf": 3,
+        "F_Cons": 1,
+        "F_Def": 3,
+        "F_Lit": 3,
+        "F_Maps": 1,
+        "F_Var": 11
+      }
+    },
+    {
+      "name": "setreset",
+      "stage": "v",
+      "nodes": 29,
+      "labels": 2,
+      "maximum_label": 3,
+      "constructors": {
+        "C_NoWhere": 3,
+        "F_Ap": 4,
+        "F_Caf": 3,
+        "F_Cons": 1,
+        "F_Def": 3,
+        "F_Lit": 3,
+        "F_Maps": 1,
+        "F_Var": 11
+      }
+    },
+    {
+      "name": "setreset",
+      "stage": "v0",
+      "nodes": 29,
+      "labels": 4,
+      "maximum_label": 7,
+      "constructors": {
+        "C_NoWhere": 3,
+        "F_Ap": 2,
+        "F_Caf": 3,
+        "F_Cons": 1,
+        "F_Def": 3,
+        "F_Lit": 3,
+        "F_Maps": 3,
+        "F_Var": 11
+      }
+    },
+    {
+      "name": "setreset",
+      "stage": "v1",
+      "nodes": 29,
+      "labels": 4,
+      "maximum_label": 7,
+      "constructors": {
+        "C_NoWhere": 3,
+        "F_Ap": 2,
+        "F_Caf": 3,
+        "F_Cons": 1,
+        "F_Def": 3,
+        "F_Lit": 3,
+        "F_Maps": 3,
+        "F_Var": 11
+      }
+    },
+    {
+      "name": "setreset",
+      "stage": "v3",
+      "nodes": 47,
+      "labels": 8,
+      "maximum_label": 15,
+      "constructors": {
+        "C_NoWhere": 3,
+        "F_Ap": 2,
+        "F_Caf": 7,
+        "F_Cons": 3,
+        "F_Def": 3,
+        "F_Lit": 3,
+        "F_Map": 4,
+        "F_Maps": 1,
+        "F_Var": 21
+      }
+    },
+    {
+      "name": "setreset",
+      "stage": "v5",
+      "nodes": 47,
+      "labels": 8,
+      "maximum_label": 15,
+      "constructors": {
+        "C_NoWhere": 3,
+        "F_Ap": 2,
+        "F_Caf": 7,
+        "F_Cons": 3,
+        "F_Def": 3,
+        "F_Lit": 3,
+        "F_Map": 4,
+        "F_Maps": 1,
+        "F_Var": 21
+      }
+    },
+    {
+      "name": "setreset",
+      "stage": "v6",
+      "nodes": 78,
+      "labels": 10,
+      "maximum_label": 15,
+      "constructors": {
+        "C_NoWhere": 3,
+        "F_Ap": 6,
+        "F_Caf": 13,
+        "F_Cons": 3,
+        "F_Def": 4,
+        "F_Lit": 6,
+        "F_Map": 5,
+        "F_Maps": 2,
+        "F_Tuple": 2,
+        "F_Var": 33,
+        "F_Where": 1
+      }
+    },
+    {
+      "name": "flipflop",
+      "stage": "parse",
+      "nodes": 80,
+      "labels": 3,
+      "maximum_label": 1,
+      "constructors": {
+        "C_NoWhere": 6,
+        "F_Ap": 14,
+        "F_Caf": 9,
+        "F_Cons": 1,
+        "F_Def": 6,
+        "F_Lit": 13,
+        "F_Maps": 2,
+        "F_Var": 29
+      }
+    },
+    {
+      "name": "flipflop",
+      "stage": "prepared",
+      "nodes": 80,
+      "labels": 3,
+      "maximum_label": 5,
+      "constructors": {
+        "C_NoWhere": 6,
+        "F_Ap": 14,
+        "F_Caf": 9,
+        "F_Cons": 1,
+        "F_Def": 6,
+        "F_Lit": 13,
+        "F_Maps": 2,
+        "F_Var": 29
+      }
+    },
+    {
+      "name": "flipflop",
+      "stage": "v",
+      "nodes": 80,
+      "labels": 3,
+      "maximum_label": 5,
+      "constructors": {
+        "C_NoWhere": 6,
+        "F_Ap": 14,
+        "F_Caf": 9,
+        "F_Cons": 1,
+        "F_Def": 6,
+        "F_Lit": 13,
+        "F_Maps": 2,
+        "F_Var": 29
+      }
+    },
+    {
+      "name": "flipflop",
+      "stage": "v0",
+      "nodes": 80,
+      "labels": 15,
+      "maximum_label": 29,
+      "constructors": {
+        "C_NoWhere": 6,
+        "F_Ap": 2,
+        "F_Caf": 9,
+        "F_Cons": 1,
+        "F_Def": 6,
+        "F_Lit": 13,
+        "F_Maps": 14,
+        "F_Var": 29
+      }
+    },
+    {
+      "name": "flipflop",
+      "stage": "v1",
+      "nodes": 88,
+      "labels": 15,
+      "maximum_label": 29,
+      "constructors": {
+        "C_NoWhere": 6,
+        "F_Ap": 2,
+        "F_Caf": 13,
+        "F_Cons": 1,
+        "F_Def": 6,
+        "F_Lit": 13,
+        "F_Maps": 14,
+        "F_Var": 33
+      }
+    },
+    {
+      "name": "flipflop",
+      "stage": "v3",
+      "nodes": 194,
+      "labels": 39,
+      "maximum_label": 77,
+      "constructors": {
+        "C_NoWhere": 6,
+        "F_Ap": 2,
+        "F_Caf": 37,
+        "F_Cons": 13,
+        "F_Def": 6,
+        "F_Lit": 13,
+        "F_Map": 24,
+        "F_Maps": 2,
+        "F_Var": 91
+      }
+    },
+    {
+      "name": "flipflop",
+      "stage": "v5",
+      "nodes": 194,
+      "labels": 39,
+      "maximum_label": 77,
+      "constructors": {
+        "C_NoWhere": 6,
+        "F_Ap": 2,
+        "F_Caf": 37,
+        "F_Cons": 13,
+        "F_Def": 6,
+        "F_Lit": 13,
+        "F_Map": 24,
+        "F_Maps": 2,
+        "F_Var": 91
+      }
+    },
+    {
+      "name": "flipflop",
+      "stage": "v6",
+      "nodes": 309,
+      "labels": 41,
+      "maximum_label": 77,
+      "constructors": {
+        "C_NoWhere": 6,
+        "F_Ap": 22,
+        "F_Caf": 63,
+        "F_Cons": 13,
+        "F_Def": 7,
+        "F_Lit": 26,
+        "F_Map": 25,
+        "F_Maps": 3,
+        "F_Tuple": 2,
+        "F_Var": 141,
+        "F_Where": 1
+      }
+    },
+    {
+      "name": "wave4",
+      "stage": "parse",
+      "nodes": 42,
+      "labels": 10,
+      "maximum_label": 1,
+      "constructors": {
+        "C_NoWhere": 2,
+        "F_Caf": 10,
+        "F_Cons": 1,
+        "F_Def": 2,
+        "F_Map": 7,
+        "F_Maps": 2,
+        "F_Var": 18
+      }
+    },
+    {
+      "name": "wave4",
+      "stage": "prepared",
+      "nodes": 42,
+      "labels": 10,
+      "maximum_label": 19,
+      "constructors": {
+        "C_NoWhere": 2,
+        "F_Caf": 10,
+        "F_Cons": 1,
+        "F_Def": 2,
+        "F_Map": 7,
+        "F_Maps": 2,
+        "F_Var": 18
+      }
+    },
+    {
+      "name": "wave4",
+      "stage": "v",
+      "nodes": 42,
+      "labels": 10,
+      "maximum_label": 19,
+      "constructors": {
+        "C_NoWhere": 2,
+        "F_Caf": 10,
+        "F_Cons": 1,
+        "F_Def": 2,
+        "F_Map": 7,
+        "F_Maps": 2,
+        "F_Var": 18
+      }
+    },
+    {
+      "name": "wave4",
+      "stage": "v0",
+      "nodes": 42,
+      "labels": 10,
+      "maximum_label": 19,
+      "constructors": {
+        "C_NoWhere": 2,
+        "F_Caf": 10,
+        "F_Cons": 1,
+        "F_Def": 2,
+        "F_Map": 7,
+        "F_Maps": 2,
+        "F_Var": 18
+      }
+    },
+    {
+      "name": "wave4",
+      "stage": "v1",
+      "nodes": 42,
+      "labels": 10,
+      "maximum_label": 19,
+      "constructors": {
+        "C_NoWhere": 2,
+        "F_Caf": 10,
+        "F_Cons": 1,
+        "F_Def": 2,
+        "F_Map": 7,
+        "F_Maps": 2,
+        "F_Var": 18
+      }
+    },
+    {
+      "name": "wave4",
+      "stage": "v3",
+      "nodes": 58,
+      "labels": 14,
+      "maximum_label": 27,
+      "constructors": {
+        "C_NoWhere": 2,
+        "F_Caf": 14,
+        "F_Cons": 3,
+        "F_Def": 2,
+        "F_Map": 11,
+        "F_Var": 26
+      }
+    },
+    {
+      "name": "wave4",
+      "stage": "v5",
+      "nodes": 58,
+      "labels": 14,
+      "maximum_label": 27,
+      "constructors": {
+        "C_NoWhere": 2,
+        "F_Caf": 14,
+        "F_Cons": 3,
+        "F_Def": 2,
+        "F_Map": 11,
+        "F_Var": 26
+      }
+    },
+    {
+      "name": "wave4",
+      "stage": "v6",
+      "nodes": 105,
+      "labels": 16,
+      "maximum_label": 27,
+      "constructors": {
+        "C_NoWhere": 2,
+        "F_Ap": 7,
+        "F_Caf": 27,
+        "F_Cons": 3,
+        "F_Def": 3,
+        "F_Map": 12,
+        "F_Maps": 1,
+        "F_Tuple": 2,
+        "F_Var": 47,
+        "F_Where": 1
+      }
+    },
+    {
+      "name": "wavestream",
+      "stage": "parse",
+      "nodes": 130,
+      "labels": 30,
+      "maximum_label": 1,
+      "constructors": {
+        "F_Caf": 30,
+        "F_Cons": 4,
+        "F_Map": 26,
+        "F_Var": 70
+      }
+    },
+    {
+      "name": "wavestream",
+      "stage": "prepared",
+      "nodes": 130,
+      "labels": 30,
+      "maximum_label": 59,
+      "constructors": {
+        "F_Caf": 30,
+        "F_Cons": 4,
+        "F_Map": 26,
+        "F_Var": 70
+      }
+    },
+    {
+      "name": "wavestream",
+      "stage": "v",
+      "nodes": 130,
+      "labels": 30,
+      "maximum_label": 59,
+      "constructors": {
+        "F_Caf": 30,
+        "F_Cons": 4,
+        "F_Map": 26,
+        "F_Var": 70
+      }
+    },
+    {
+      "name": "wavestream",
+      "stage": "v0",
+      "nodes": 130,
+      "labels": 30,
+      "maximum_label": 59,
+      "constructors": {
+        "F_Caf": 30,
+        "F_Cons": 4,
+        "F_Map": 26,
+        "F_Var": 70
+      }
+    },
+    {
+      "name": "wavestream",
+      "stage": "v1",
+      "nodes": 130,
+      "labels": 30,
+      "maximum_label": 59,
+      "constructors": {
+        "F_Caf": 30,
+        "F_Cons": 4,
+        "F_Map": 26,
+        "F_Var": 70
+      }
+    },
+    {
+      "name": "wavestream",
+      "stage": "v3",
+      "nodes": 130,
+      "labels": 30,
+      "maximum_label": 59,
+      "constructors": {
+        "F_Caf": 30,
+        "F_Cons": 4,
+        "F_Map": 26,
+        "F_Var": 70
+      }
+    },
+    {
+      "name": "wavestream",
+      "stage": "v5",
+      "nodes": 130,
+      "labels": 30,
+      "maximum_label": 59,
+      "constructors": {
+        "F_Caf": 30,
+        "F_Cons": 4,
+        "F_Map": 26,
+        "F_Var": 70
+      }
+    },
+    {
+      "name": "wavestream",
+      "stage": "v6",
+      "nodes": 279,
+      "labels": 32,
+      "maximum_label": 59,
+      "constructors": {
+        "F_Ap": 26,
+        "F_Caf": 58,
+        "F_Cons": 4,
+        "F_Def": 1,
+        "F_Map": 27,
+        "F_Maps": 1,
+        "F_Tuple": 2,
+        "F_Var": 159,
+        "F_Where": 1
+      }
+    },
+    {
+      "name": "hamming",
+      "stage": "parse",
+      "nodes": 31,
+      "labels": 2,
+      "maximum_label": 1,
+      "constructors": {
+        "C_NoWhere": 2,
+        "F_Ap": 8,
+        "F_Caf": 3,
+        "F_Cons": 1,
+        "F_Def": 2,
+        "F_Lit": 3,
+        "F_Maps": 1,
+        "F_Var": 11
+      }
+    },
+    {
+      "name": "hamming",
+      "stage": "prepared",
+      "nodes": 31,
+      "labels": 2,
+      "maximum_label": 3,
+      "constructors": {
+        "C_NoWhere": 2,
+        "F_Ap": 8,
+        "F_Caf": 3,
+        "F_Cons": 1,
+        "F_Def": 2,
+        "F_Lit": 3,
+        "F_Maps": 1,
+        "F_Var": 11
+      }
+    },
+    {
+      "name": "hamming",
+      "stage": "v",
+      "nodes": 31,
+      "labels": 2,
+      "maximum_label": 3,
+      "constructors": {
+        "C_NoWhere": 2,
+        "F_Ap": 8,
+        "F_Caf": 3,
+        "F_Cons": 1,
+        "F_Def": 2,
+        "F_Lit": 3,
+        "F_Maps": 1,
+        "F_Var": 11
+      }
+    },
+    {
+      "name": "hamming",
+      "stage": "v0",
+      "nodes": 31,
+      "labels": 2,
+      "maximum_label": 3,
+      "constructors": {
+        "C_NoWhere": 2,
+        "F_Ap": 8,
+        "F_Caf": 3,
+        "F_Cons": 1,
+        "F_Def": 2,
+        "F_Lit": 3,
+        "F_Maps": 1,
+        "F_Var": 11
+      }
+    },
+    {
+      "name": "hamming",
+      "stage": "v1",
+      "nodes": 33,
+      "labels": 2,
+      "maximum_label": 3,
+      "constructors": {
+        "C_NoWhere": 2,
+        "F_Ap": 8,
+        "F_Caf": 4,
+        "F_Cons": 1,
+        "F_Def": 2,
+        "F_Lit": 3,
+        "F_Maps": 1,
+        "F_Var": 12
+      }
+    },
+    {
+      "name": "hamming",
+      "stage": "v3",
+      "nodes": 42,
+      "labels": 4,
+      "maximum_label": 7,
+      "constructors": {
+        "C_NoWhere": 2,
+        "F_Ap": 8,
+        "F_Caf": 6,
+        "F_Cons": 2,
+        "F_Def": 2,
+        "F_Lit": 3,
+        "F_Map": 2,
+        "F_Var": 17
+      }
+    },
+    {
+      "name": "hamming",
+      "stage": "v5",
+      "nodes": 42,
+      "labels": 4,
+      "maximum_label": 7,
+      "constructors": {
+        "C_NoWhere": 2,
+        "F_Ap": 8,
+        "F_Caf": 6,
+        "F_Cons": 2,
+        "F_Def": 2,
+        "F_Lit": 3,
+        "F_Map": 2,
+        "F_Var": 17
+      }
+    },
+    {
+      "name": "hamming",
+      "stage": "v6",
+      "nodes": 69,
+      "labels": 6,
+      "maximum_label": 7,
+      "constructors": {
+        "C_NoWhere": 2,
+        "F_Ap": 12,
+        "F_Caf": 10,
+        "F_Cons": 2,
+        "F_Def": 3,
+        "F_Lit": 4,
+        "F_Map": 3,
+        "F_Maps": 1,
+        "F_Tuple": 2,
+        "F_Var": 29,
+        "F_Where": 1
+      }
+    },
+    {
+      "name": "gamma",
+      "stage": "parse",
+      "nodes": 54,
+      "labels": 11,
+      "maximum_label": 1,
+      "constructors": {
+        "C_NoWhere": 3,
+        "F_Ap": 2,
+        "F_Caf": 11,
+        "F_Cons": 2,
+        "F_Def": 3,
+        "F_Lit": 1,
+        "F_Map": 9,
+        "F_Tuple": 1,
+        "F_Var": 22
+      }
+    },
+    {
+      "name": "gamma",
+      "stage": "prepared",
+      "nodes": 54,
+      "labels": 11,
+      "maximum_label": 21,
+      "constructors": {
+        "C_NoWhere": 3,
+        "F_Ap": 2,
+        "F_Caf": 11,
+        "F_Cons": 2,
+        "F_Def": 3,
+        "F_Lit": 1,
+        "F_Map": 9,
+        "F_Tuple": 1,
+        "F_Var": 22
+      }
+    },
+    {
+      "name": "gamma",
+      "stage": "v",
+      "nodes": 54,
+      "labels": 11,
+      "maximum_label": 21,
+      "constructors": {
+        "C_NoWhere": 3,
+        "F_Ap": 2,
+        "F_Caf": 11,
+        "F_Cons": 2,
+        "F_Def": 3,
+        "F_Lit": 1,
+        "F_Map": 9,
+        "F_Tuple": 1,
+        "F_Var": 22
+      }
+    },
+    {
+      "name": "gamma",
+      "stage": "v0",
+      "nodes": 54,
+      "labels": 11,
+      "maximum_label": 21,
+      "constructors": {
+        "C_NoWhere": 3,
+        "F_Ap": 2,
+        "F_Caf": 11,
+        "F_Cons": 2,
+        "F_Def": 3,
+        "F_Lit": 1,
+        "F_Map": 9,
+        "F_Tuple": 1,
+        "F_Var": 22
+      }
+    },
+    {
+      "name": "gamma",
+      "stage": "v1",
+      "nodes": 54,
+      "labels": 11,
+      "maximum_label": 21,
+      "constructors": {
+        "C_NoWhere": 3,
+        "F_Ap": 2,
+        "F_Caf": 11,
+        "F_Cons": 2,
+        "F_Def": 3,
+        "F_Lit": 1,
+        "F_Map": 9,
+        "F_Tuple": 1,
+        "F_Var": 22
+      }
+    },
+    {
+      "name": "gamma",
+      "stage": "v3",
+      "nodes": 54,
+      "labels": 11,
+      "maximum_label": 21,
+      "constructors": {
+        "C_NoWhere": 3,
+        "F_Ap": 2,
+        "F_Caf": 11,
+        "F_Cons": 2,
+        "F_Def": 3,
+        "F_Lit": 1,
+        "F_Map": 9,
+        "F_Tuple": 1,
+        "F_Var": 22
+      }
+    },
+    {
+      "name": "gamma",
+      "stage": "v5",
+      "nodes": 54,
+      "labels": 11,
+      "maximum_label": 21,
+      "constructors": {
+        "C_NoWhere": 3,
+        "F_Ap": 2,
+        "F_Caf": 11,
+        "F_Cons": 2,
+        "F_Def": 3,
+        "F_Lit": 1,
+        "F_Map": 9,
+        "F_Tuple": 1,
+        "F_Var": 22
+      }
+    },
+    {
+      "name": "gamma",
+      "stage": "v6",
+      "nodes": 100,
+      "labels": 13,
+      "maximum_label": 21,
+      "constructors": {
+        "C_NoWhere": 3,
+        "F_Ap": 10,
+        "F_Caf": 22,
+        "F_Cons": 2,
+        "F_Def": 4,
+        "F_Lit": 2,
+        "F_Map": 10,
+        "F_Maps": 1,
+        "F_Tuple": 4,
+        "F_Var": 41,
+        "F_Where": 1
+      }
+    },
+    {
+      "name": "fft",
+      "stage": "parse",
+      "nodes": 68,
+      "labels": 13,
+      "maximum_label": 1,
+      "constructors": {
+        "F_Ap": 3,
+        "F_Caf": 8,
+        "F_Cons": 7,
+        "F_Lit": 3,
+        "F_Map": 6,
+        "F_Var": 41
+      }
+    },
+    {
+      "name": "fft",
+      "stage": "prepared",
+      "nodes": 68,
+      "labels": 13,
+      "maximum_label": 25,
+      "constructors": {
+        "F_Ap": 3,
+        "F_Caf": 8,
+        "F_Cons": 7,
+        "F_Lit": 3,
+        "F_Map": 6,
+        "F_Var": 41
+      }
+    },
+    {
+      "name": "fft",
+      "stage": "v",
+      "nodes": 68,
+      "labels": 13,
+      "maximum_label": 25,
+      "constructors": {
+        "F_Ap": 3,
+        "F_Caf": 8,
+        "F_Cons": 7,
+        "F_Lit": 3,
+        "F_Map": 6,
+        "F_Var": 41
+      }
+    },
+    {
+      "name": "fft",
+      "stage": "v0",
+      "nodes": 68,
+      "labels": 13,
+      "maximum_label": 25,
+      "constructors": {
+        "F_Ap": 3,
+        "F_Caf": 8,
+        "F_Cons": 7,
+        "F_Lit": 3,
+        "F_Map": 6,
+        "F_Var": 41
+      }
+    },
+    {
+      "name": "fft",
+      "stage": "v1",
+      "nodes": 78,
+      "labels": 13,
+      "maximum_label": 25,
+      "constructors": {
+        "F_Ap": 3,
+        "F_Caf": 13,
+        "F_Cons": 7,
+        "F_Lit": 3,
+        "F_Map": 6,
+        "F_Var": 46
+      }
+    },
+    {
+      "name": "fft",
+      "stage": "v3",
+      "nodes": 78,
+      "labels": 13,
+      "maximum_label": 25,
+      "constructors": {
+        "F_Ap": 3,
+        "F_Caf": 13,
+        "F_Cons": 7,
+        "F_Lit": 3,
+        "F_Map": 6,
+        "F_Var": 46
+      }
+    },
+    {
+      "name": "fft",
+      "stage": "v5",
+      "nodes": 90,
+      "labels": 14,
+      "maximum_label": 25,
+      "constructors": {
+        "F_Ap": 8,
+        "F_Caf": 14,
+        "F_Cons": 8,
+        "F_Lit": 3,
+        "F_Map": 6,
+        "F_Var": 51
+      }
+    },
+    {
+      "name": "fft",
+      "stage": "v6",
+      "nodes": 173,
+      "labels": 16,
+      "maximum_label": 25,
+      "constructors": {
+        "F_Ap": 22,
+        "F_Caf": 22,
+        "F_Cons": 8,
+        "F_Def": 1,
+        "F_Lit": 6,
+        "F_Map": 7,
+        "F_Maps": 1,
+        "F_Tuple": 2,
+        "F_Var": 103,
+        "F_Where": 1
+      }
+    }
+  ],
+  "cycle": [
+    "fft",
+    "fib",
+    "fibsum",
+    "flipflop",
+    "gamma",
+    "hamming",
+    "setreset",
+    "wave4"
+  ],
+  "lengths": {
+    "fib": 1283,
+    "hamming": 2683,
+    "wavestream": 7273,
+    "setreset": 2899,
+    "flipflop": 8146,
+    "tailtest": 1736,
+    "gamma": 3523,
+    "simple": 1203,
+    "fibsum": 1692,
+    "wave4": 3665,
+    "fft": 4384
+  },
+  "totals": {
+    "0": 0,
+    "1": 4384,
+    "8": 28275,
+    "9": 32659,
+    "300": 1061680,
+    "3000": 10603125,
+    "15000": 53015625
+  }
+}

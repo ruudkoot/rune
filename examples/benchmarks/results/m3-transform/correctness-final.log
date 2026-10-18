@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-transform-parallel.3vqnvrku
+PASS transform-lazy smoke O0
+PASS transform-lazy smoke O2
+FAIL transform-lazy smoke hosts
+PASS transform-lazy normal O0
+PASS transform-lazy normal O2
+PASS transform-strict smoke O0
+PASS transform-strict smoke O2
+PASS transform-strict smoke hosts
+PASS transform-strict normal O0
+PASS transform-strict normal O2
+PASS transform-strict normal hosts
+FAIL transform-lazy normal hosts

@@ -1,0 +1,4 @@
+RESULT 28275
+PASS transform-strict
+SAMPLE 1 0.013826000
+SUMMARY 1 checks, 0 failed

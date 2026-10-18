@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+transform-lazy	normal	rune	O2	compile	0	0	pass	5.82	5.29	0.57	267216	-	-	-	transform-lazy/rune/build/compile
+transform-lazy	normal	rune	O2	correctness	0	0	pass	81.18	76.71	0.80	21432	6558673533	17112233616	521521734	transform-lazy/rune/correctness.0
+transform-lazy	normal	rune	O2	count	1	1	pass	76.27	75.87	0.37	21424	6558673533	17112233616	521521734	transform-lazy/rune/fresh.1
+transform-lazy	normal	rune:opt	O2	compile	0	0	pass	6.51	5.37	0.83	267100	-	-	-	transform-lazy/rune-opt/build/compile
+transform-lazy	normal	rune:opt	O2	native-compile	0	0	pass	2.54	1.42	0.36	29168	-	-	-	transform-lazy/rune-opt/build/native-compile
+transform-lazy	normal	rune:opt	O2	correctness	0	0	pass	45.38	41.39	0.88	23176	6558673533	17112233616	521521734	transform-lazy/rune-opt/correctness.0
+transform-lazy	normal	rune:opt	O2	count	1	1	pass	39.19	38.99	0.26	23032	6558673533	17112233616	521521734	transform-lazy/rune-opt/fresh.1
+transform-lazy	normal	rune:new	O2	compile	0	0	pass	4.81	4.44	0.46	266920	-	-	-	transform-lazy/rune-new/build/compile
+transform-lazy	normal	rune:new	O2	correctness	0	0	pass	70.62	70.34	0.16	39392	3844958876	17112233616	521521734	transform-lazy/rune-new/correctness.0
+transform-lazy	normal	rune:new	O2	count	1	1	pass	67.21	62.52	0.32	39020	3844958876	17112233616	521521734	transform-lazy/rune-new/fresh.1
+transform-lazy	normal	rune:jit	O2	compile	0	0	pass	6.20	4.70	0.54	266356	-	-	-	transform-lazy/rune-jit/build/compile
+transform-lazy	normal	rune:jit	O2	correctness	0	0	pass	29.42	28.10	0.29	41168	3844958876	17112233616	521521734	transform-lazy/rune-jit/correctness.0
+transform-lazy	normal	rune:jit	O2	count	1	1	pass	26.03	25.97	0.11	41800	3844958876	17112233616	521521734	transform-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

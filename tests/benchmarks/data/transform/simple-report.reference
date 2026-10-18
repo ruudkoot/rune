@@ -1,0 +1,60 @@
+cat - <<'end' > simple.dir/v.m
+|| simple.dir v = v
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+||
+output	= ((:) 1 v);
+v	= (map_1 inc output);
+end
+cat - <<'end' > simple.dir/v0.m
+|| simple.dir v0 = inl v
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+||
+output	= ((:) 1 v);
+v	= (map_1 inc output);
+end
+cat - <<'end' > simple.dir/v1.m
+|| simple.dir v1 = t1 v0
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+||
+output	= ((:) 1 v);
+v	= (map_1 inc output);
+end
+cat - <<'end' > simple.dir/v3.m
+|| simple.dir v3 = t3 v1
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+||
+output	= ((:) 1 v);
+v	= (map_1 inc output);
+end
+cat - <<'end' > simple.dir/v5.m
+|| simple.dir v5 = t5 v3
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+||
+output	= ((:) 1 v);
+v	= (map_1 inc output);
+end
+cat - <<'end' > simple.dir/v6.m
+|| simple.dir v6 = t6 v5
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+||
+output1	= (map_1 sel_1 (maps_0 id_1 nextstate 1 ));
+nextstate s
+= v
+  where
+  output	= s;
+  v	= (inc output);;
+output	= ((:) 1 v);
+v	= (map_1 inc output);
+end

@@ -1,0 +1,5 @@
+COUNT unbudgeted transform-strict normal rune
+COUNT unbudgeted transform-strict normal rune:opt
+COUNT unbudgeted transform-strict normal rune:new
+COUNT unbudgeted transform-strict normal rune:jit
+COUNT comparisons agree

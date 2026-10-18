@@ -1,0 +1,16 @@
+%module  "wave4"
+%include "~pieter/lib/fast2mira"
+%include "~pieter/mira/synch/misc"
+%include "~pieter/mira/wave4/wave4"
+one_of_two x y     = x;
+two_of_two x y     = y;
+a1     = maps one_of_two two_of_two mf0 a7;
+a2     = maps one_of_two two_of_two mg0 a8;
+a3     = map first_borders a2    ;
+a4     = map fu            a1  a3;
+a5     = map gu            a2    ;
+a6     = map last_borders  a4    ;
+a7     = map fvh           a4    ;
+a8     = map gvh           a5  a6;
+a9     = map join          a1  a2;
+output = (:) dummy_output a9;
