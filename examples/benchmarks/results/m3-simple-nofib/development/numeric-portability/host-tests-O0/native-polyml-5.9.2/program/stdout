@@ -1,0 +1,9 @@
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/check.sml:10: error: Structure (PackReal64Big) has not been declared
+Found near
+  if
+  String.size text <> 16
+     orelse
+     not (List.all Char.isHexDigit (String.explode text)) then
+  raise Fail "invalid SIMPLE binary64 field" else
+  PackReal64Big.fromBytes (Word8Vector.tabulate (8, fn ...))
+uncaught exception Fail [Fail "Static Errors"]

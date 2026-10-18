@@ -1,0 +1,9 @@
+$(SML_LIB)/basis/basis.mlb
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/host-tests-O2/native-mlkit-4.7.23/program/src/1/harness.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/host-tests-O2/native-mlkit-4.7.23/program/src/2/input.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/host-tests-O2/native-mlkit-4.7.23/program/src/3/lazy.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/host-tests-O2/native-mlkit-4.7.23/program/src/4/arrays.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/host-tests-O2/native-mlkit-4.7.23/program/src/5/kernel.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/host-tests-O2/native-mlkit-4.7.23/program/src/6/check.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/host-tests-O2/native-mlkit-4.7.23/program/src/7/tests.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/host-tests-O2/native-mlkit-4.7.23/program/src/8/finish.sml"

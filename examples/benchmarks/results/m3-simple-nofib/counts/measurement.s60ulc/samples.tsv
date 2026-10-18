@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+simple-nofib-lazy	normal	rune	O2	compile	0	0	pass	6.90	3.67	0.42	266476	-	-	-	simple-nofib-lazy/rune/build/compile
+simple-nofib-lazy	normal	rune	O2	correctness	0	0	pass	90.38	60.99	1.97	265764	6462101665	6499344000	161425188	simple-nofib-lazy/rune/correctness.0
+simple-nofib-lazy	normal	rune	O2	count	1	1	pass	115.05	79.78	3.28	265844	6462101665	6499344000	161425188	simple-nofib-lazy/rune/fresh.1
+simple-nofib-lazy	normal	rune:opt	O2	compile	0	0	pass	8.04	5.18	0.83	266100	-	-	-	simple-nofib-lazy/rune-opt/build/compile
+simple-nofib-lazy	normal	rune:opt	O2	native-compile	0	0	pass	2.27	0.96	0.21	24528	-	-	-	simple-nofib-lazy/rune-opt/build/native-compile
+simple-nofib-lazy	normal	rune:opt	O2	correctness	0	0	pass	47.11	32.24	1.67	267268	6462101665	6499344000	161425188	simple-nofib-lazy/rune-opt/correctness.0
+simple-nofib-lazy	normal	rune:opt	O2	count	1	1	pass	44.26	30.06	1.45	267248	6462101665	6499344000	161425188	simple-nofib-lazy/rune-opt/fresh.1
+simple-nofib-lazy	normal	rune:new	O2	compile	0	0	pass	8.42	5.12	0.70	266496	-	-	-	simple-nofib-lazy/rune-new/build/compile
+simple-nofib-lazy	normal	rune:new	O2	correctness	0	0	pass	92.96	64.37	2.40	266776	3365263457	6499344000	161425188	simple-nofib-lazy/rune-new/correctness.0
+simple-nofib-lazy	normal	rune:new	O2	count	1	1	pass	93.70	67.07	3.44	266596	3365263457	6499344000	161425188	simple-nofib-lazy/rune-new/fresh.1
+simple-nofib-lazy	normal	rune:jit	O2	compile	0	0	pass	5.73	4.81	0.70	266652	-	-	-	simple-nofib-lazy/rune-jit/build/compile
+simple-nofib-lazy	normal	rune:jit	O2	correctness	0	0	pass	26.90	24.15	0.85	268604	3365263457	6499344000	161425188	simple-nofib-lazy/rune-jit/correctness.0
+simple-nofib-lazy	normal	rune:jit	O2	count	1	1	pass	21.56	21.69	0.55	268752	3365263457	6499344000	161425188	simple-nofib-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

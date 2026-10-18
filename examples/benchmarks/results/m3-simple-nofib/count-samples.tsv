@@ -1,0 +1,17 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+simple-nofib-lazy	normal	rune	O2	count	1	1	pass	59.24	58.04	0.39	268672	7550718755	10755290528	297273470	counts/measurement.cEdzTg/simple-nofib-lazy/rune/fresh.1
+simple-nofib-lazy	normal	rune:opt	O2	count	1	1	pass	27.95	27.05	0.36	270092	7550718755	10755290528	297273470	counts/measurement.cEdzTg/simple-nofib-lazy/rune-opt/fresh.1
+simple-nofib-lazy	normal	rune:new	O2	count	1	1	pass	52.76	52.79	0.62	274080	4092090803	10755290528	297273470	counts/measurement.cEdzTg/simple-nofib-lazy/rune-new/fresh.1
+simple-nofib-lazy	normal	rune:jit	O2	count	1	1	pass	23.46	22.40	0.50	275304	4092090803	10755290528	297273470	counts/measurement.cEdzTg/simple-nofib-lazy/rune-jit/fresh.1
+simple-nofib-strict	normal	rune	O2	count	1	1	pass	53.45	53.79	0.46	265920	7829487509	11014329672	301969885	counts/measurement.2mpSho/simple-nofib-strict/rune/fresh.1
+simple-nofib-strict	normal	rune:opt	O2	count	1	1	pass	22.94	22.00	0.38	267100	7829487509	11014329672	301969885	counts/measurement.2mpSho/simple-nofib-strict/rune-opt/fresh.1
+simple-nofib-strict	normal	rune:new	O2	count	1	1	pass	56.72	55.74	0.75	267084	4249205798	11014329672	301969885	counts/measurement.2mpSho/simple-nofib-strict/rune-new/fresh.1
+simple-nofib-strict	normal	rune:jit	O2	count	1	1	pass	23.25	22.10	0.51	269328	4249205798	11014329672	301969885	counts/measurement.2mpSho/simple-nofib-strict/rune-jit/fresh.1
+simple-nofib-report-lazy	normal	rune	O2	count	1	1	pass	121.81	117.81	0.85	573912	15066222443	19947075160	538288473	counts/measurement.q0b9lR/simple-nofib-report-lazy/rune/fresh.1
+simple-nofib-report-lazy	normal	rune:opt	O2	count	1	1	pass	49.56	49.24	0.84	575232	15066222443	19947075160	538288473	counts/measurement.q0b9lR/simple-nofib-report-lazy/rune-opt/fresh.1
+simple-nofib-report-lazy	normal	rune:new	O2	count	1	1	pass	105.00	104.13	0.81	590884	8466117320	19947075160	538288473	counts/measurement.q0b9lR/simple-nofib-report-lazy/rune-new/fresh.1
+simple-nofib-report-lazy	normal	rune:jit	O2	count	1	1	pass	30.68	29.82	0.68	599060	8466117320	19947075160	538288473	counts/measurement.q0b9lR/simple-nofib-report-lazy/rune-jit/fresh.1
+simple-nofib-report-strict	normal	rune	O2	count	1	1	pass	120.52	118.92	0.43	298272	15343781153	20206114304	542984888	counts/measurement.FtEvms/simple-nofib-report-strict/rune/fresh.1
+simple-nofib-report-strict	normal	rune:opt	O2	count	1	1	pass	47.72	47.66	0.52	299336	15343781153	20206114304	542984888	counts/measurement.FtEvms/simple-nofib-report-strict/rune-opt/fresh.1
+simple-nofib-report-strict	normal	rune:new	O2	count	1	1	pass	101.32	100.76	0.40	319432	8622572291	20206114304	542984888	counts/measurement.FtEvms/simple-nofib-report-strict/rune-new/fresh.1
+simple-nofib-report-strict	normal	rune:jit	O2	count	1	1	pass	30.85	30.32	0.36	326268	8622572291	20206114304	542984888	counts/measurement.FtEvms/simple-nofib-report-strict/rune-jit/fresh.1

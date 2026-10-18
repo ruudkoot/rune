@@ -1,0 +1,9 @@
+/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml: Error -- unable to map 619184128 bytes, errno = 12
+/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml: Error -- unable to allocate to-space for generation 1; trying smaller size
+/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml: Error -- unable to map 458752000 bytes, errno = 12
+/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml: Error -- unable to allocate to-space for generation 1; trying smaller size
+/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml: Error -- unable to map 9175040 bytes, errno = 12
+/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml: Error -- unable to allocate to-space for generation 4; trying smaller size
+/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml: Error -- unable to map 9175040 bytes, errno = 12
+/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml: Fatal error -- unable to allocate minimum size
+

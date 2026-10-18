@@ -1,0 +1,10 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/total-diagnostics/packing-control/smlnj-dev.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/total-diagnostics/packing-control/probe.sml]
+BIG-FLAG	true
+BIG-BYTES-ONE	000000000000F03F
+LITTLE-BYTES-ONE	3FF0000000000000
+BIG-FROM-BIG-IS-ONE	false
+BIG-SUB-BIG-IS-ONE	false
+val hex = <fn> : Word8Vector.vector -> string
+val big = <word8vector> : Word8Vector.vector

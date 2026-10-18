@@ -1,0 +1,11 @@
+[
+  "/usr/bin/time",
+  "-f",
+  "%e\t%U\t%S\t%M",
+  "-o",
+  "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/report-smoke-calibration-os.tsv",
+  "timeout",
+  "120",
+  "/home/ruud/rune/.worktrees/benchmarks/bin/runevm",
+  "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-simple-nofib-parallel.72fw2syz/simple-nofib-report-lazy/smoke/O0/matrix/rune/program/prog.rbc"
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "file": "pilot-need.state",
+    "steps": 1,
+    "cells_and_totals": 110017,
+    "bit_differences": 0,
+    "max_absolute": 0,
+    "max_scaled": 0,
+    "outside_provisional_bounds": 0,
+    "first_bad": []
+  },
+  {
+    "file": "pilot-strict.state",
+    "steps": 1,
+    "cells_and_totals": 110017,
+    "bit_differences": 0,
+    "max_absolute": 0,
+    "max_scaled": 0,
+    "outside_provisional_bounds": 0,
+    "first_bad": []
+  }
+]

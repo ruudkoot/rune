@@ -1,0 +1,8 @@
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/arrays.sml:29: error: Can't find a fixed record type. Found near #1
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/arrays.sml:30: error: Can't find a fixed record type. Found near #2
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/arrays.sml:35: error: Can't find a fixed record type. Found near #1
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/arrays.sml:36: error: Can't find a fixed record type. Found near #2
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/arrays.sml:42: error: Can't find a fixed record type. Found near #1
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/arrays.sml:43: error: Can't find a fixed record type. Found near #2
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/arrays.sml:44: error: Can't find a fixed record type. Found near #3
+uncaught exception Fail [Fail "Static Errors"]

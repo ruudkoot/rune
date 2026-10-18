@@ -1,0 +1,268 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/arrays.sml]
+functor BenchSimpleArraysFn(<param>: sig val strict : bool end) :
+                           
+                             sig
+                               structure L : <sig>
+                               type zone
+                               type bounds
+                               type 'a store
+                               type 'a grid
+                               val range : int -> int -> int list
+                               val positions : (int * int) * (int * int)
+                                                -> (int * int) list
+                               val raw : (int * int) * (int * int)
+                                          -> (int * int -> 'a)
+                                          -> 'a store BenchLazy.state ref
+                               val sub : 'a store BenchLazy.state ref
+                                          -> int * int -> 'a
+                               val bounds : 'a store BenchLazy.state ref
+                                             -> bounds
+                               val force : 'a store BenchLazy.state ref
+                                            -> unit
+                               val materialize : 'a store BenchLazy.state ref
+                                                  -> unit
+                               val make : (int * int) * (int * int)
+                                           -> (int * int -> 'a)
+                                           -> 'a store BenchLazy.state ref
+                               val recursive : (int * int) * (int * int)
+                                                -> ('a store BenchLazy.state 
+                                                   ref
+                                                 -> int * int -> 'a)
+                                                -> 'a store BenchLazy.state 
+                                                  ref
+                               val pair : (int * int) * (int * int)
+                                           -> (int * int
+                                            -> 'a BenchLazy.state ref
+                                            * 'b BenchLazy.state ref)
+                                           -> 'a store BenchLazy.state ref
+                                           * 'b store BenchLazy.state ref
+                               val recursivePair : (int * int) * (int * int)
+                                                    -> ('a store 
+                                                         BenchLazy.state ref
+                                                     * 'b store 
+                                                         BenchLazy.state ref
+                                                     -> int * int
+                                                     -> 'a BenchLazy.state ref
+                                                     * 'b BenchLazy.state ref)
+                                                    -> 'a store 
+                                                        BenchLazy.state ref
+                                                    * 'b store BenchLazy.state 
+                                                      ref
+                               val recursiveTriple : (int * int) * (int * int)
+                                                      -> ('a store 
+                                                           BenchLazy.state ref
+                                                       * 'b store 
+                                                           BenchLazy.state ref
+                                                       * 'c store 
+                                                           BenchLazy.state ref
+                                                       -> int * int
+                                                       -> 'a BenchLazy.state 
+                                                         ref
+                                                       * 'b BenchLazy.state 
+                                                         ref
+                                                       * 'c BenchLazy.state 
+                                                         ref)
+                                                      -> 'a store 
+                                                          BenchLazy.state ref
+                                                      * 'b store 
+                                                          BenchLazy.state ref
+                                                      * 'c store 
+                                                          BenchLazy.state ref
+                               val total : real store BenchLazy.state ref
+                                            -> real
+                             end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/kernel.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/kernel.sml:25.6-25.28 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/kernel.sml:26.6-26.28 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/kernel.sml:27.6-27.25 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/kernel.sml:28.6-28.25 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/kernel.sml:102.15-105.44 Error: types of if branches do not agree [tycon mismatch]
+  then branch: (int * int -> int * int) * (int * int -> int * int)
+                * (int * ?.X1 -> int * ?.X1)
+  else branch: (int * int -> int * int) * (int * int -> int * int)
+                * (?.X1 * int -> ?.X1 * int)
+  in expression:
+    if (k = kmax + 1) andalso (l = lmax)
+  then (north,northwest,farnorth)
+  else if (k = kmax) andalso (l = lmax + 1)
+  then (west,northwest,farwest)
+  else if (k = kmax) andalso (l = lmin - 1)
+  then (east,northeast,fareast)
+  else raise (Fail "position coverage")
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/kernel.sml:100.15-105.44 Error: types of if branches do not agree [tycon mismatch]
+  then branch: (int * int -> int * int) * (int * int -> int * int)
+                * (?.X1 * int -> ?.X1 * int)
+  else branch: (int * int -> int * int) * (int * int -> int * int)
+                * (int * ?.X1 -> int * ?.X1)
+  in expression:
+    if (k = kmax + 1) andalso (l = lmin - 1)
+  then (northeast,east,fareast)
+  else if (k = kmin - 1) andalso (l = lmax)
+  then (south,southwest,farsouth)
+  else if (k = kmax + 1) andalso (l = lmax)
+  then (north,northwest,farnorth)
+  else if (k = kmax) andalso (l = lmax + 1)
+  then (west,northwest,farwest)
+  else if (k = kmax) andalso (l = lmin - 1)
+  then (east,northeast,fareast)
+  else raise (Fail "position coverage")
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/kernel.sml:98.15-105.44 Error: types of if branches do not agree [tycon mismatch]
+  then branch: (int * int -> int * int) * (int * int -> int * int)
+                * (?.X1 * int -> ?.X1 * int)
+  else branch: (int * int -> int * int) * (int * int -> int * int)
+                * (int * ?.X1 -> int * ?.X1)
+  in expression:
+    if (k = kmax + 1) andalso (l = lmax + 1)
+  then (northwest,west,farwest)
+  else if (k = kmin - 1) andalso (l = lmin - 1)
+  then (southeast,south,farsouth)
+  else if (k = kmax + 1) andalso (l = lmin - 1)
+  then (northeast,east,fareast)
+  else if (k = kmin - 1) andalso (l = lmax)
+  then (south,southwest,farsouth)
+  else if (k = kmax + 1) andalso (l = lmax)
+  then (north,northwest,farnorth)
+  else if (k = kmax) andalso (l = lmax + 1)
+  then (west,northwest,farwest)
+  else if (k = kmax) andalso (l = <exp> - <exp>)
+  then (east,northeast,fareast)
+  else raise (Fail "position coverage")
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/kernel.sml:94.15-105.44 Error: types of if branches do not agree [tycon mismatch]
+  then branch: (int * int -> int * int) * (int * int -> int * int)
+                * (int * ?.X1 -> int * ?.X1)
+  else branch: (int * int -> int * int) * (int * int -> int * int)
+                * (?.X1 * int -> ?.X1 * int)
+  in expression:
+    if (k = kmax + 1) andalso ((l >= lmin) andalso (l < lmax))
+  then (north,northeast,farnorth)
+  else if (l = lmax + 1) andalso ((k >= kmin) andalso (k < kmax))
+  then (west,southwest,farwest)
+  else if (l = lmin - 1) andalso ((k >= kmin) andalso (k < kmax))
+  then (east,southeast,fareast)
+  else if (k = kmin - 1) andalso (l = lmax + 1)
+  then (southwest,west,farwest)
+  else if (k = kmax + 1) andalso (l = lmax + 1)
+  then (northwest,west,farwest)
+  else if (k = kmin - 1) andalso (l = lmin - 1)
+  then (southeast,south,farsouth)
+  else if (k = <exp> + <exp>) andalso (l = <exp> - <exp>)
+  then (northeast,east,fareast)
+  else if (<exp> = <exp>) andalso (<exp> = <exp>)
+  then (south,southwest,farsouth)
+  else if <exp> andalso <exp>
+  then (<exp>,<exp>,<exp>)
+  else if <exp> then <exp> else <exp>
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/kernel.sml:107.59-107.68 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: int * ?.X1
+  operand:         int * int
+  in expression:
+    adir node
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/kernel.sml:107.78-107.87 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: int * ?.X1
+  operand:         int * int
+  in expression:
+    adir node
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/kernel.sml:137.38-137.88 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: real * real
+  operand:         int * real
+  in expression:
+    (~ (((lineIntegral p) z) node) - ((lineIntegral q) z) node) / d
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/kernel.sml:138.38-138.85 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: real * real
+  operand:         int * real
+  in expression:
+    (((lineIntegral p) r) node + ((lineIntegral q) r) node) / d
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/kernel.sml:286.33-286.73 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: int A.store BenchLazy.state ref
+                    * int A.store BenchLazy.state ref
+  operand:         array * array
+  in expression:
+    makeVelocity v
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/kernel.sml:309.12-309.39 Error: right-hand-side of function clause does not agree with function result type [tycon mismatch]
+  expression:  real BenchLazy.state ref list
+  result type:  int BenchLazy.state ref list
+  in declaration:
+    totalsOf = (fn state => totals state)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/kernel.sml:311.7-311.36 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: int BenchLazy.state ref list
+  operand:         real BenchLazy.state ref list
+  in expression:
+    (loop state) (totals state)
+uncaught exception CompileError [CompileError]

@@ -1,0 +1,17 @@
+error: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/host-tests-O2/native-mlkit-4.7.23/program/src/5/kernel.sml, line 336, column 11: Type mismatch,
+
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/host-tests-O2/native-mlkit-4.7.23/program/src/5/kernel.sml, line 336, column 11:
+         and totalsOf state=totals state
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Type mismatch,
+   expecting: (real store state ref * real store state ref) * (real store state ref * real store state ref) * real store state ref * real store state ref * real store state ref * real store state ref * real store state ref * real store state ref * real store state ref * real state ref * real state ref -> (int state ref * int state ref * int state ref * int state ref * int state ref * int state ref * int state ref * int state ref * int state ref * int state ref * int state ref * int state ref * int state ref) state ref
+   found:     (real store state ref * real store state ref) * (real store state ref * real store state ref) * real store state ref * real store state ref * real store state ref * real store state ref * real store state ref * real store state ref * real store state ref * real state ref * real state ref -> (real state ref * real state ref * real state ref * real state ref * real state ref * real state ref * real state ref * real state ref * real state ref * real state ref * real state ref * real state ref * real state ref) state ref
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/host-tests-O2/native-mlkit-4.7.23/program/src/5/kernel.sml, line 338, column 6:
+     in loop state(totals state)count end
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+Type clash,
+   operand suggests operator type: (real state ref * real state ref * real state ref * real state ref * real state ref * real state ref * real state ref * real state ref * real state ref * real state ref * real state ref * real state ref * real state ref) state ref -> 'a -> 'b
+   but I found operator type:      (int state ref * int state ref * int state ref * int state ref * int state ref * int state ref * int state ref * int state ref * int state ref * int state ref * int state ref * int state ref * int state ref) state ref -> int -> (int state ref * int state ref * int state ref * int state ref * int state ref * int state ref * int state ref * int state ref * int state ref * int state ref * int state ref * int state ref * int state ref) state ref * ((real store state ref * real store state ref) * (real store state ref * real store state ref) * real store state ref * real store state ref * real store state ref * real store state ref * real store state ref * real store state ref * real store state ref * real state ref * real state ref)
+Stopping compilation of MLB-file due to error (code 1).

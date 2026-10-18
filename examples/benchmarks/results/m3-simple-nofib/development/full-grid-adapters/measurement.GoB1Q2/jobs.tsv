@@ -1,0 +1,1 @@
+simple-nofib-strict	30	1048576	shared/input.sml shared/lazy.sml shared/simple-nofib-arrays.sml shared/simple-nofib-kernel.sml shared/simple-nofib-check.sml simple-nofib-strict/benchmark.sml shared/main.sml	1 smoke.reference	simple-nofib-strict/smoke.expected	smoke.reference

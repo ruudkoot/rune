@@ -1,0 +1,1 @@
+val _=((use "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/total-diagnostics/packing-control/probe.sml"; OS.Process.exit OS.Process.success) handle e=>OS.Process.exit OS.Process.failure);

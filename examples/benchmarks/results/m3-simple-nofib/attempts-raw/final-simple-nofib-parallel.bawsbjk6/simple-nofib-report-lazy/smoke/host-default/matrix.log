@@ -1,0 +1,1445 @@
+PROGRAM LIMIT AS 1048576 KiB
+"RESULT "
+"U"
+array ((2,2),(8,8)) [((2,2),-7.5525375824840588e-20),((2,3),0),((2,4),-6.042030065987247e-19),((2,5),6.0420300659872499e-19),((2,6),0),((2,7),0),((2,8),7.5525375824840588e-20),((3,2),-7.2092404196438772e-20),((3,3),0),((3,4),0),((3,5),0),((3,6),-5.7673923357151018e-19),((3,7),5.7673923357150999e-19),((3,8),7.2092404196438772e-20),((4,2),0),((4,3),2.6433881538694215e-19),((4,4),5.2867763077388421e-19),((4,5),0),((4,6),0),((4,7),0),((4,8),0),((5,2),-1.2200253017858863e-19),((5,3),2.4400506035717721e-19),((5,4),0),((5,5),0),((5,6),0),((5,7),0),((5,8),-6.1001265089294327e-20),((6,2),0),((6,3),0),((6,4),0),((6,5),0),((6,6),0),((6,7),4.5315225494904362e-19),((6,8),0),((7,2),5.2867763077388443e-20),((7,3),4.2294210461910745e-19),((7,4),4.2294210461910735e-19),((7,5),0),((7,6),0),((7,7),0),((7,8),-5.2867763077388437e-20),((8,2),5.0139104337910308e-18),((8,3),-0.018662783410138245),((8,4),-0.032324889077012996),((8,5),-0.037325566820276497),((8,6),-0.032324889077012989),((8,7),-0.018662783410138249),((8,8),4.092988109217167e-18)]
+"V"
+array ((2,2),(8,8)) [((2,2),-6.042030065987247e-19),((2,3),0),((2,4),3.0210150329936235e-19),((2,5),7.5525375824840624e-20),((2,6),0),((2,7),0),((2,8),6.042030065987247e-19),((3,2),0),((3,3),0),((3,4),0),((3,5),7.2092404196438797e-20),((3,6),0),((3,7),0),((3,8),0),((4,2),0),((4,3),-5.2867763077388431e-19),((4,4),-2.6433881538694211e-19),((4,5),0),((4,6),2.6433881538694215e-19),((4,7),5.2867763077388421e-19),((4,8),0),((5,2),0),((5,3),0),((5,4),0),((5,5),-1.2200253017858865e-19),((5,6),0),((5,7),0),((5,8),0),((6,2),0),((6,3),4.5315225494904362e-19),((6,4),2.2657612747452181e-19),((6,5),-1.1328806373726095e-19),((6,6),4.5315225494904362e-19),((6,7),0),((6,8),0),((7,2),0),((7,3),-4.2294210461910745e-19),((7,4),-2.1147105230955367e-19),((7,5),5.2867763077388431e-20),((7,6),0),((7,7),0),((7,8),0),((8,2),0.037325566820276504),((8,3),0.032324889077012989),((8,4),0.018662783410138245),((8,5),5.01391043379103e-18),((8,6),-0.018662783410138242),((8,7),-0.032324889077012975),((8,8),-0.03732556682027649)]
+"R"
+array ((1,1),(9,9)) [((1,1),-4.9999999999999973),((1,2),-0.49999999999999922),((1,3),4.1339745962155598),((1,4),7.6602540378443846),((1,5),9.1339745962155607),((1,6),8.1602540378443873),((1,7),4.9999999999999991),((1,8),-0.49999999999999922),((1,9),-4.5262794416288266),((2,1),-4.9999999999999973),((2,2),6.1232264431991835e-16),((2,3),4.9999999999999991),((2,4),8.6602540378443855),((2,5),10),((2,6),8.6602540378443873),((2,7),4.9999999999999991),((2,8),6.123241548274349e-16),((2,9),-4.9999999999999973),((3,1),-5.4999999999999973),((3,2),6.7355501860700235e-16),((3,3),5.4999999999999991),((3,4),9.5262794416288248),((3,5),11),((3,6),9.5262794416288266),((3,7),5.4999999999999991),((3,8),6.7355646045508625e-16),((3,9),-5.4999999999999973),((4,1),-5.9999999999999964),((4,2),7.3478807948841188e-16),((4,3),5.9999999999999982),((4,4),10.392304845413264),((4,5),12),((4,6),10.392304845413264),((4,7),5.9999999999999982),((4,8),7.3478807948841188e-16),((4,9),-5.9999999999999964),((5,1),-6.4999999999999964),((5,2),7.9601919942047774e-16),((5,3),6.4999999999999982),((5,4),11.258330249197702),((5,5),13),((5,6),11.258330249197703),((5,7),6.4999999999999982),((5,8),7.960198094331287e-16),((5,9),-6.4999999999999964),((6,1),-6.9999999999999964),((6,2),8.5725275940314722e-16),((6,3),6.9999999999999982),((6,4),12.124355652982141),((6,5),14),((6,6),12.124355652982143),((6,7),6.9999999999999982),((6,8),8.5725275940314722e-16),((6,9),-6.9999999999999964),((7,1),-7.4999999999999964),((7,2),9.1848562803814578e-16),((7,3),7.4999999999999982),((7,4),12.990381056766578),((7,5),15),((7,6),12.99038105676658),((7,7),7.4999999999999982),((7,8),9.184845706828842e-16),((7,9),-7.4999999999999964),((8,1),-7.9998133721658951),((8,2),9.7976757842222039e-16),((8,3),7.9998133721658968),((8,4),13.856083211660247),((8,5),15.999626744331797),((8,6),13.856083211660248),((8,7),7.9998133721658968),((8,8),9.7975836919897473e-16),((8,9),-7.9998133721658951),((9,1),-5.8562698394943542),((9,2),0.49981337216589966),((9,3),8.8655155270595642),((9,4),14.855709955992044),((9,5),16.865328899225467),((9,6),14.355896583826148),((9,7),7.9998133721658968),((9,8),0.49981337216589966),((9,9),-4.9905676846006886)]
+"Z"
+array ((1,1),(9,9)) [((1,1),-7.6602540378443873),((1,2),-9.1339745962155607),((1,3),-8.1602540378443873),((1,4),-4.9999999999999991),((1,5),-0.49999999999999994),((1,6),4.133974596215559),((1,7),7.6602540378443864),((1,8),9.1339745962155607),((1,9),13.160254037844382),((2,1),-8.6602540378443873),((2,2),-10),((2,3),-8.6602540378443873),((2,4),-5),((2,5),7.5525375824840622e-22),((2,6),4.9999999999999982),((2,7),8.6602540378443873),((2,8),10),((2,9),8.6602540378443873),((3,1),-9.5262794416288266),((3,2),-11),((3,3),-9.5262794416288266),((3,4),-5.5),((3,5),7.2092404196438797e-22),((3,6),5.4999999999999982),((3,7),9.5262794416288266),((3,8),11),((3,9),9.5262794416288266),((4,1),-10.392304845413264),((4,2),-12),((4,3),-10.392304845413264),((4,4),-6),((4,5),0),((4,6),5.9999999999999982),((4,7),10.392304845413264),((4,8),12),((4,9),10.392304845413264),((5,1),-11.258330249197705),((5,2),-13),((5,3),-11.258330249197703),((5,4),-6.5),((5,5),-1.2200253017858866e-21),((5,6),6.4999999999999982),((5,7),11.258330249197703),((5,8),13),((5,9),11.258330249197705),((6,1),-12.124355652982143),((6,2),-14),((6,3),-12.124355652982143),((6,4),-7),((6,5),-1.1328806373726095e-21),((6,6),6.9999999999999973),((6,7),12.124355652982143),((6,8),14),((6,9),12.124355652982143),((7,1),-12.99038105676658),((7,2),-15),((7,3),-12.99038105676658),((7,4),-7.5),((7,5),5.2867763077388431e-22),((7,6),7.4999999999999973),((7,7),12.99038105676658),((7,8),15),((7,9),12.99038105676658),((8,1),-13.856083211660248),((8,2),-15.999626744331797),((8,3),-13.856083211660248),((8,4),-7.9998133721658986),((8,5),5.0139104337910299e-20),((8,6),7.9998133721658959),((8,7),13.856083211660248),((8,8),15.999626744331797),((8,9),13.856083211660248),((9,1),-22.855523328157933),((9,2),-16.865328899225467),((9,3),-14.355896583826148),((9,4),-7.9998133721658986),((9,5),0.49981337216589872),((9,6),8.8655155270595642),((9,7),14.855709955992046),((9,8),16.865328899225467),((9,9),22.355709955992037)]
+"Alpha"
+array ((2,2),(9,9)) [((2,2),5.25),((2,3),5.25),((2,4),5.25),((2,5),5.25),((2,6),5.2499999999999964),((2,7),5.2500000000000071),((2,8),5.25),((2,9),5.25),((3,2),5.25),((3,3),5.25),((3,4),5.25),((3,5),5.25),((3,6),5.2499999999999964),((3,7),5.2500000000000071),((3,8),5.25),((3,9),5.25),((4,2),5.7499999999999947),((4,3),5.7499999999999947),((4,4),5.75),((4,5),5.75),((4,6),5.7499999999999893),((4,7),5.7499999999999964),((4,8),5.7499999999999947),((4,9),5.7499999999999947),((5,2),6.25),((5,3),6.25),((5,4),6.25),((5,5),6.25),((5,6),6.25),((5,7),6.2500000000000071),((5,8),6.2499999999999991),((5,9),6.2499999999999991),((6,2),6.75),((6,3),6.75),((6,4),6.7500000000000071),((6,5),6.75),((6,6),6.7499999999999929),((6,7),6.7500000000000036),((6,8),6.7499999999999991),((6,9),6.7499999999999991),((7,2),7.2499999999999929),((7,3),7.2499999999999929),((7,4),7.2499999999999964),((7,5),7.2499999999999929),((7,6),7.25),((7,7),7.25),((7,8),7.2499999999999929),((7,9),7.2499999999999929),((8,2),7.7470139894843237),((8,3),7.7470139894843237),((8,4),7.7470139894843264),((8,5),7.7470139894843228),((8,6),7.7470139894843228),((8,7),7.7470139894843335),((8,8),7.7470139894843228),((8,9),7.7470139894843228),((9,2),7.7470139894843237),((9,3),7.7470139894843237),((9,4),7.7470139894843264),((9,5),7.7470139894843228),((9,6),7.7470139894843228),((9,7),7.7470139894843335),((9,8),7.7470139894843228),((9,9),7.7470139894843228)]
+"S"
+array ((2,2),(9,9)) [((2,2),86.655597361518474),((2,3),86.655597361518474),((2,4),236.74749475189992),((2,5),323.40309211341838),((2,6),323.40309211341821),((2,7),236.74749475190032),((2,8),86.655597361518474),((2,9),86.655597361518474),((3,2),86.655597361518474),((3,3),86.655597361518474),((3,4),236.74749475189992),((3,5),323.40309211341838),((3,6),323.40309211341821),((3,7),236.74749475190032),((3,8),86.655597361518474),((3,9),86.655597361518474),((4,2),103.93435695626219),((4,3),103.93435695626219),((4,4),283.95394385650843),((4,5),387.88830081277075),((4,6),387.88830081277001),((4,7),283.95394385650832),((4,8),103.93435695626219),((4,9),103.93435695626219),((5,2),122.78391287780109),((5,3),122.78391287780109),((5,4),335.45188833426306),((5,5),458.23580121206419),((5,6),458.23580121206419),((5,7),335.45188833426346),((5,8),122.78391287780101),((5,9),122.78391287780101),((6,2),143.20426512613471),((6,3),143.20426512613471),((6,4),391.24132818516438),((6,5),534.44559331129869),((6,6),534.44559331129824),((6,7),391.24132818516421),((6,8),143.20426512613469),((6,9),143.20426512613469),((7,2),165.19541370126305),((7,3),165.19541370126305),((7,4),451.3222634092109),((7,5),616.51767711047376),((7,6),616.51767711047444),((7,7),451.32226340921119),((7,8),165.19541370126305),((7,9),165.19541370126305),((8,2),188.68231284894844),((8,3),188.68231284894844),((8,4),515.48966519293333),((8,5),704.17197804188163),((8,6),704.17197804188163),((8,7),515.4896651929339),((8,8),188.68231284894844),((8,9),188.68231284894844),((9,2),188.68231284894844),((9,3),188.68231284894844),((9,4),515.48966519293333),((9,5),704.17197804188163),((9,6),704.17197804188163),((9,7),515.4896651929339),((9,8),188.68231284894844),((9,9),188.68231284894844)]
+"Rho"
+array ((2,2),(9,9)) [((2,2),1.3999999999999999),((2,3),1.3999999999999999),((2,4),1.3999999999999999),((2,5),1.3999999999999999),((2,6),1.3999999999999999),((2,7),1.3999999999999999),((2,8),1.3999999999999999),((2,9),1.3999999999999999),((3,2),1.3999999999999999),((3,3),1.3999999999999999),((3,4),1.3999999999999999),((3,5),1.3999999999999999),((3,6),1.3999999999999999),((3,7),1.3999999999999999),((3,8),1.3999999999999999),((3,9),1.3999999999999999),((4,2),1.4000000000000001),((4,3),1.4000000000000001),((4,4),1.3999999999999999),((4,5),1.3999999999999997),((4,6),1.3999999999999999),((4,7),1.3999999999999999),((4,8),1.4000000000000001),((4,9),1.4000000000000001),((5,2),1.3999999999999999),((5,3),1.3999999999999999),((5,4),1.3999999999999999),((5,5),1.3999999999999999),((5,6),1.3999999999999999),((5,7),1.3999999999999999),((5,8),1.3999999999999999),((5,9),1.3999999999999999),((6,2),1.3999999999999999),((6,3),1.3999999999999999),((6,4),1.3999999999999999),((6,5),1.3999999999999999),((6,6),1.3999999999999999),((6,7),1.3999999999999999),((6,8),1.3999999999999999),((6,9),1.3999999999999999),((7,2),1.3999999999999999),((7,3),1.3999999999999999),((7,4),1.3999999999999999),((7,5),1.3999999999999999),((7,6),1.3999999999999999),((7,7),1.4000000000000001),((7,8),1.3999999999999999),((7,9),1.3999999999999999),((8,2),1.400556830443443),((8,3),1.400556830443443),((8,4),1.4005568304434433),((8,5),1.4005568304434433),((8,6),1.4005568304434433),((8,7),1.4005568304434428),((8,8),1.4005568304434433),((8,9),1.4005568304434433),((9,2),1.400556830443443),((9,3),1.400556830443443),((9,4),1.4005568304434433),((9,5),1.4005568304434433),((9,6),1.4005568304434433),((9,7),1.4005568304434428),((9,8),1.4005568304434433),((9,9),1.4005568304434433)]
+"P"
+array ((2,2),(9,9)) [((2,2),0.93771999983483223),((2,3),0.93771999983483223),((2,4),0.93771999902025993),((2,5),0.93771999902064251),((2,6),0.93771999983458343),((2,7),0.93771999999940125),((2,8),0.93771999999943845),((2,9),0.93771999999943845),((3,2),0.93771999983483223),((3,3),0.93771999983483223),((3,4),0.93771999902025993),((3,5),0.93771999902064251),((3,6),0.93771999983458343),((3,7),0.93771999999940125),((3,8),0.93771999999943845),((3,9),0.93771999999943845),((4,2),0.93771999156833996),((4,3),0.93771999156833996),((4,4),0.93771996308942807),((4,5),0.93771996310155481),((4,6),0.93771999156238339),((4,7),0.93771999992989841),((4,8),0.9377200000762328),((4,9),0.9377200000762328),((5,2),0.93771961182639862),((5,3),0.93771961182639862),((5,4),0.93771873776091175),((5,5),0.93771873810128148),((5,6),0.93771961174256513),((5,7),0.93771999188920996),((5,8),0.93771999091042346),((5,9),0.93771999091042346),((6,2),0.93770326437282614),((6,3),0.93770326437282614),((6,4),0.93767953079483968),((6,5),0.93767953930939729),((6,6),0.93770326569906837),((6,7),0.93771909037948031),((6,8),0.93772100776868217),((6,9),0.93772100776868217),((7,2),0.93704192588546431),((7,3),0.93704192588546431),((7,4),0.93649954945690028),((7,5),0.93649972972835027),((7,6),0.93704208015581214),((7,7),0.9376228329430466),((7,8),0.93761532567077155),((7,9),0.93761532567077155),((8,2),0.91216433335287739),((8,3),0.91216433335287739),((8,4),0.9033241511987179),((8,5),0.90332680888860495),((8,6),0.912170217062514),((8,7),0.92828279320592222),((8,8),0.94828764208921601),((8,9),0.94828764208921601),((9,2),6),((9,3),6),((9,4),6),((9,5),6),((9,6),6),((9,7),6),((9,8),6),((9,9),6)]
+"Q"
+array ((2,2),(9,9)) [((2,2),1.092869093447191e-19),((2,3),1.092869093447191e-19),((2,4),4.0062778241005435e-20),((2,5),0),((2,6),2.140985664298929e-19),((2,7),1.5296697146565713e-19),((2,8),8.1625283200664455e-20),((2,9),8.1625283200664455e-20),((3,2),1.092869093447191e-19),((3,3),1.092869093447191e-19),((3,4),4.0062778241005435e-20),((3,5),0),((3,6),2.140985664298929e-19),((3,7),1.5296697146565713e-19),((3,8),8.1625283200664455e-20),((3,9),8.1625283200664455e-20),((4,2),0),((4,3),0),((4,4),0),((4,5),0),((4,6),0),((4,7),1.1791204050477737e-19),((4,8),0),((4,9),0),((5,2),1.0268084988841525e-19),((5,3),1.0268084988841525e-19),((5,4),1.7797118795523576e-19),((5,5),1.026808498884152e-19),((5,6),1.8752993071710851e-20),((5,7),1.051647928826393e-19),((5,8),9.9808159566142162e-20),((5,9),9.9808159566142162e-20),((6,2),8.8012157047213022e-20),((6,3),8.8012157047213022e-20),((6,4),1.3747948242932922e-19),((6,5),8.4444715284420487e-20),((6,6),0),((6,7),1.2018833472301632e-19),((6,8),0),((6,9),0),((7,2),0),((7,3),0),((7,4),2.0031389120502743e-21),((7,5),3.4211285621195605e-20),((7,6),1.3930794853270909e-20),((7,7),1.6997197300432686e-19),((7,8),2.4562190925503978e-20),((7,9),2.4562190925503978e-20),((8,2),0.014732092039144608),((8,3),0.014732092039144608),((8,4),0.014732092039144603),((8,5),0.014732092039144603),((8,6),0.014732092039144606),((8,7),0.014732092039144599),((8,8),0.014732092039144596),((8,9),0.014732092039144596),((9,2),0),((9,3),0),((9,4),0),((9,5),0),((9,6),0),((9,7),0),((9,8),0),((9,9),0)]
+"epsilon"
+array ((2,2),(9,9)) [((2,2),0.99999999982386256),((2,3),0.99999999982386256),((2,4),0.99999999895518921),((2,5),0.99999999895559721),((2,6),0.99999999982359711),((2,7),0.99999999999936162),((2,8),0.99999999999940126),((2,9),0.99999999999940126),((3,2),0.99999999982386256),((3,3),0.99999999982386256),((3,4),0.99999999895518921),((3,5),0.99999999895559721),((3,6),0.99999999982359711),((3,7),0.99999999999936162),((3,8),0.99999999999940126),((3,9),0.99999999999940126),((4,2),0.99999999100833925),((4,3),0.99999999100833925),((4,4),0.99999996063796037),((4,5),0.99999996065089258),((4,6),0.99999999100198722),((4,7),0.99999999992524258),((4,8),1.0000000000812959),((4,9),1.0000000000812959),((5,2),0.99999958604530004),((5,3),0.99999958604530004),((5,4),0.99999865392751763),((5,5),0.9999986542904935),((5,6),0.99999958595589866),((5,7),0.99999999135052053),((5,8),0.99999999030672648),((5,9),0.99999999030672648),((6,2),0.9999821528524786),((6,3),0.9999821528524786),((6,4),0.99995684297534426),((6,5),0.99995685205540819),((6,6),0.99998215426680503),((6,7),0.99999902996574708),((6,8),1.0000010747010646),((6,9),1.0000010747010646),((7,2),0.99927689063415992),((7,3),0.99927689063415992),((7,4),0.99869849150801981),((7,5),0.99869868375245319),((7,6),0.99927705515059095),((7,7),0.99989637945553744),((7,8),0.99988837357715699),((7,9),0.99988837357715699),((8,2),0.97236027489313559),((8,3),0.97236027489313559),((8,4),0.96293670763094286),((8,5),0.96293954070824561),((8,6),0.97236654688307245),((8,7),0.98954243109074869),((8,8),1.0108674485772962),((8,9),1.0108674485772962),((9,2),0.97236027489313559),((9,3),0.97236027489313559),((9,4),0.96293670763094286),((9,5),0.96293954070824561),((9,6),0.97236654688307245),((9,7),0.98954243109074869),((9,8),1.0108674485772962),((9,9),1.0108674485772962)]
+theta
+array ((2,2),(9,9)) [((2,2),0),((2,3),0),((2,4),0),((2,5),0),((2,6),0),((2,7),0),((2,8),0),((2,9),0),((3,2),0),((3,3),9.999999998238625),((3,4),9.9999999895518918),((3,5),9.9999999895559721),((3,6),9.9999999982359711),((3,7),9.9999999999936158),((3,8),9.9999999999940119),((3,9),0),((4,2),0),((4,3),9.9999999100833925),((4,4),9.9999996063796033),((4,5),9.9999996065089256),((4,6),9.9999999100198718),((4,7),9.9999999992524256),((4,8),10.000000000812959),((4,9),0),((5,2),0),((5,3),9.9999958604529997),((5,4),9.9999865392751754),((5,5),9.999986542904935),((5,6),9.999995859558986),((5,7),9.9999999135052047),((5,8),9.9999999030672644),((5,9),0),((6,2),0),((6,3),9.9998215285247856),((6,4),9.9995684297534417),((6,5),9.9995685205540816),((6,6),9.9998215426680499),((6,7),9.9999902996574708),((6,8),10.000010747010645),((6,9),0),((7,2),0),((7,3),9.992768906341599),((7,4),9.9869849150801979),((7,5),9.9869868375245314),((7,6),9.9927705515059095),((7,7),9.9989637945553742),((7,8),9.9988837357715692),((7,9),0),((8,2),0),((8,3),9.7236027489313557),((8,4),9.6293670763094283),((8,5),9.6293954070824554),((8,6),9.723665468830724),((8,7),9.8954243109074866),((8,8),10.10867448577296),((8,9),0),((9,2),0),((9,3),0),((9,4),0),((9,5),0),((9,6),0),((9,7),0),((9,8),0),((9,9),0)]
+0.01
+341.25853171453173
+done
+RESULT 1:708
+PASS simple-nofib-report-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/simple-nofib-arrays.sml]
+[autoloading]
+[autoloading done]
+functor BenchSimpleArraysFn(<param>: sig
+  val strict : bool
+end) :
+sig
+  structure L : <sig>
+  type zone
+  type bounds
+  type 'a store
+  type 'a grid
+  val range : int -> int -> int list
+  val positions : (int * int) * (int * int) -> (int * int) list
+  val raw :
+      (int * int) * (int * int)
+       -> (int * int -> 'a)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+  val associations :
+      (int * int) * (int * int)
+       -> (unit -> ((int * int) * 'a BenchLazy.state ref) list)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+  val sub :
+      'a <BaseFct>.<resultStr>.store BenchLazy.state ref -> int * int -> 'a
+  val bounds :
+      'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.bounds
+  val force : 'a <BaseFct>.<resultStr>.store BenchLazy.state ref -> unit
+  val materialize : 'a <BaseFct>.<resultStr>.store BenchLazy.state ref -> unit
+  val make :
+      (int * int) * (int * int)
+       -> (int * int -> 'a)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+  val recursive :
+      (int * int) * (int * int)
+       -> ('a <BaseFct>.<resultStr>.store BenchLazy.state ref
+        -> int * int -> 'a)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+  val pair :
+      (int * int) * (int * int)
+       -> (int * int -> 'a BenchLazy.state ref * 'b BenchLazy.state ref)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+       * 'b <BaseFct>.<resultStr>.store BenchLazy.state ref
+  val recursivePair :
+      (int * int) * (int * int)
+       -> ('a <BaseFct>.<resultStr>.store BenchLazy.state ref
+        * 'b <BaseFct>.<resultStr>.store BenchLazy.state ref
+        -> int * int -> 'a BenchLazy.state ref * 'b BenchLazy.state ref)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+       * 'b <BaseFct>.<resultStr>.store BenchLazy.state ref
+  val recursiveTriple :
+      (int * int) * (int * int)
+       -> ('a <BaseFct>.<resultStr>.store BenchLazy.state ref
+        * 'b <BaseFct>.<resultStr>.store BenchLazy.state ref
+        * 'c <BaseFct>.<resultStr>.store BenchLazy.state ref
+        -> int * int
+        -> 'a BenchLazy.state ref * 'b BenchLazy.state ref
+        * 'c BenchLazy.state ref)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+       * 'b <BaseFct>.<resultStr>.store BenchLazy.state ref
+       * 'c <BaseFct>.<resultStr>.store BenchLazy.state ref
+  type 'a seqNode
+  type 'a seq
+  val mapList :
+      ('a -> 'b)
+       -> 'a list -> 'b <BaseFct>.<resultStr>.seqNode BenchLazy.delay
+  val elements :
+      'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+       -> 'a <BaseFct>.<resultStr>.seqNode BenchLazy.state ref
+  val head : 'a <BaseFct>.<resultStr>.seqNode BenchLazy.state ref -> 'a
+  val foldl :
+      ('a * 'b -> 'a)
+       -> 'a BenchLazy.state ref
+       -> 'b <BaseFct>.<resultStr>.seqNode BenchLazy.delay -> 'a
+  val total : real <BaseFct>.<resultStr>.store BenchLazy.state ref -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/simple-nofib-kernel.sml]
+[autoloading]
+[autoloading done]
+functor BenchSimpleNofibFn(<param>: sig
+  val strict : bool
+  val gridMax : int
+end) :
+sig
+  structure A : <sig>
+  structure L : <sig>
+  type array
+  type vector
+  type state
+  val delay : (unit -> 'a) -> 'a BenchLazy.state ref
+  val force : 'a BenchLazy.state ref -> 'a
+  val sq : real -> real
+  val pow : real * int -> real
+  val range : int -> int -> int list
+  val coords : 'a list -> 'b list -> ('a * 'b) list
+  val north : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val south : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val east : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val west : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val northeast : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val northwest : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val southeast : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val southwest : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val farnorth : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val farsouth : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val fareast : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val farwest : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val zoneA : 'a -> 'a
+  val zoneB : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val zoneC : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val zoneD : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val cornerNE : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val cornerNW : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val cornerSE : 'a -> 'a
+  val cornerSW : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val kmin : int
+  val lmin : int
+  val kmax : int
+  val lmax : int
+  val allNodes : (int * int) * (int * int)
+  val interiorNodes : (int * int) * (int * int)
+  val allZones : (int * int) * (int * int)
+  val interiorZones : (int * int) * (int * int)
+  val nodes : (int * int) list
+  val zones : (int * int) list
+  val northZones : (int * int) list
+  val southZones : (int * int) list
+  val eastZones : (int * int) list
+  val westZones : (int * int) list
+  val zoneDirection :
+      int * int -> <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val isInterior : int * int -> bool
+  val constantHeat : real
+  val dtMaximum : real
+  val specificHeat : real
+  val pi : real
+  val pCoeffs :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val eCoeffs :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val pPoly :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref 
+             <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val ePoly :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref 
+             <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val rhoTable : real Vector.vector
+  val thetaTable : real Vector.vector
+  val pbb : real Vector.vector
+  val pb : real Vector.vector
+  val qb : real Vector.vector
+  val vectorSub : 'a Vector.vector -> int -> 'a
+  val boundaryTable :
+      int -> int <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val nbc : int <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val boundaryCode : int * int -> int
+  val sum :
+      real <BaseFct>.<resultStr>.A.<returnStr>.seqNode BenchLazy.delay -> real
+  val sumMap : ('a -> real) -> 'a list -> real
+  val minimum : real * real -> real
+  val maximum : real * real -> real
+  val minList :
+      real <BaseFct>.<resultStr>.A.<returnStr>.seqNode BenchLazy.state ref
+       -> real
+  val maxList :
+      real <BaseFct>.<resultStr>.A.<returnStr>.seqNode BenchLazy.state ref
+       -> real
+  val polynomial :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref 
+             <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> int -> real -> real -> real
+  val zonalPressure : real -> real -> real
+  val zonalEnergy : real -> real -> real
+  val newton : (real -> real) -> real -> real
+  val boundaryPosition :
+      real * real * real * real * real * real
+       -> real BenchLazy.state ref * real BenchLazy.state ref
+  val positionMatrix :
+      (int * int -> real BenchLazy.state ref * real BenchLazy.state ref)
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val zoneAreaVolume :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.A.<returnStr>.zone
+       -> real BenchLazy.state ref * real BenchLazy.state ref
+  val lineIntegral :
+      <BaseFct>.<resultStr>.array
+       -> <BaseFct>.<resultStr>.array
+       -> <BaseFct>.<resultStr>.A.<returnStr>.zone -> real
+  val makePressure :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeEnergy :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeVelocity :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.array * <BaseFct>.<resultStr>.array
+       -> <BaseFct>.<resultStr>.array
+       -> <BaseFct>.<resultStr>.array
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makePosition :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeAreaDensity :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeViscosity :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeTemperature :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeCc :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeSigma :
+      real
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeGamma :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> (int * int -> int * int)
+       -> (int * int -> int * int)
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeAb :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> (int * int -> int * int)
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeTheta :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> (int * int -> int * int)
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val heatConduction :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref 
+           BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref 
+           BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref 
+           BenchLazy.state ref
+  val energyError :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real -> real
+  val timestep :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real
+  val suspend : (unit -> 'a BenchLazy.state ref) -> 'a BenchLazy.state ref
+  val pairSuspend :
+      (unit -> 'a BenchLazy.state ref * 'b BenchLazy.state ref)
+       -> 'a BenchLazy.state ref * 'b BenchLazy.state ref
+  val tripleSuspend :
+      (unit
+        -> 'a BenchLazy.state ref * 'b BenchLazy.state ref
+        * 'c BenchLazy.state ref)
+       -> 'a BenchLazy.state ref * 'b BenchLazy.state ref
+       * 'c BenchLazy.state ref
+  val initial : unit -> <BaseFct>.<resultStr>.state
+  val next : <BaseFct>.<resultStr>.state -> <BaseFct>.<resultStr>.state
+  val arrays :
+      <BaseFct>.<resultStr>.state
+       -> (string * <BaseFct>.<resultStr>.array) list
+  type totalValues
+  type totals
+  val totals : <BaseFct>.<resultStr>.state -> <BaseFct>.<resultStr>.totals
+  val totalTotal : <BaseFct>.<resultStr>.totals -> real
+  val totalsList :
+      ('a * 'a * 'a * 'a * 'a * 'a * 'a * 'a * 'a * 'a * 'a * 'a * 'a) 
+           BenchLazy.state ref
+       -> 'a list
+  val computeRaw :
+      int -> <BaseFct>.<resultStr>.totals * <BaseFct>.<resultStr>.state
+  val compute : int -> real BenchLazy.delay list * <BaseFct>.<resultStr>.state
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/simple-nofib-check.sml]
+[autoloading]
+[autoloading done]
+structure BenchSimpleReference : sig
+  val absolute : real
+  val relative : real
+  val close : real -> real -> bool
+  val decode : string -> real
+  val read : string -> string list
+  val scalar : real -> real -> unit
+  val unitRoundoff : real
+  val aggregateBound : int -> real -> real
+  val aggregate : real -> int -> real -> real -> unit
+  val totals : string list -> real BenchLazy.state ref list -> unit
+end
+functor BenchSimpleCheckFn(<param>: sig
+  val strict : bool
+  val report : bool
+  val gridMax : int
+end) :
+sig
+  structure K : <sig>
+  structure R : <sig>
+  val integer : string -> int
+  val parseHeader : string -> int -> string list -> int * string list
+  val verifyState :
+      int -> <BaseFct>.<resultStr>.K.<returnStr>.state -> string list -> int
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/simple-nofib-report-lazy/smoke-benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Check : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+"RESULT "
+"U"
+array ((2,2),(8,8)) [((2,2),-7.552537582484059e-20),((2,3),0),((2,4),-6.042030065987251e-19),((2,5),6.042030065987248e-19),((2,6),0),((2,7),0),((2,8),7.552537582484059e-20),((3,2),-7.209240419643877e-20),((3,3),0),((3,4),5.7673923357151e-19),((3,5),0),((3,6),0),((3,7),0),((3,8),7.209240419643877e-20),((4,2),0),((4,3),2.643388153869422e-19),((4,4),0),((4,5),0),((4,6),5.286776307738842e-19),((4,7),0),((4,8),0),((5,2),0),((5,3),2.440050603571772e-19),((5,4),-4.880101207143543e-19),((5,5),0),((5,6),0),((5,7),0),((5,8),0),((6,2),0),((6,3),0),((6,4),0),((6,5),0),((6,6),4.531522549490436e-19),((6,7),4.531522549490435e-19),((6,8),0),((7,2),5.2867763077388437e-20),((7,3),4.2294210461910745e-19),((7,4),4.2294210461910725e-19),((7,5),0),((7,6),0),((7,7),0),((7,8),-5.286776307738843e-20),((8,2),5.013910433791031e-18),((8,3),-0.018662783410138245),((8,4),-0.032324889077012996),((8,5),-0.037325566820276476),((8,6),-0.03232488907701296),((8,7),-0.01866278341013824),((8,8),4.092988109217167e-18)]
+"V"
+array ((2,2),(8,8)) [((2,2),-6.042030065987247e-19),((2,3),0),((2,4),-3.0210150329936254e-19),((2,5),7.55253758248406e-20),((2,6),0),((2,7),-6.042030065987242e-19),((2,8),6.042030065987247e-19),((3,2),0),((3,3),0),((3,4),0),((3,5),-7.209240419643875e-20),((3,6),0),((3,7),-5.7673923357151e-19),((3,8),0),((4,2),0),((4,3),0),((4,4),0),((4,5),-1.3216940769347098e-19),((4,6),2.643388153869421e-19),((4,7),5.286776307738842e-19),((4,8),0),((5,2),0),((5,3),0),((5,4),0),((5,5),-1.220025301785886e-19),((5,6),0),((5,7),0),((5,8),0),((6,2),0),((6,3),0),((6,4),2.2657612747452167e-19),((6,5),-1.1328806373726086e-19),((6,6),4.531522549490436e-19),((6,7),4.531522549490435e-19),((6,8),0),((7,2),0),((7,3),-4.2294210461910745e-19),((7,4),-2.1147105230955363e-19),((7,5),5.2867763077388407e-20),((7,6),0),((7,7),0),((7,8),0),((8,2),0.037325566820276504),((8,3),0.032324889077012996),((8,4),0.018662783410138245),((8,5),8.288300921164759e-18),((8,6),-0.018662783410138235),((8,7),-0.032324889077012975),((8,8),-0.03732556682027649)]
+"R"
+array ((1,1),(9,9)) [((1,1),-4.999999999999997),((1,2),-0.4999999999999998),((1,3),4.13397459621556),((1,4),7.660254037844386),((1,5),9.13397459621556),((1,6),8.160254037844387),((1,7),4.999999999999999),((1,8),-0.4999999999999998),((1,9),-4.5262794416288274),((2,1),-4.999999999999999),((2,2),-7.552537582484059e-22),((2,3),4.999999999999999),((2,4),8.660254037844386),((2,5),10),((2,6),8.660254037844387),((2,7),4.999999999999999),((2,8),7.552537582484059e-22),((2,9),-4.999999999999999),((3,1),-5.499999999999999),((3,2),-7.209240419643878e-22),((3,3),5.499999999999999),((3,4),9.526279441628823),((3,5),11),((3,6),9.526279441628827),((3,7),5.499999999999999),((3,8),7.209240419643878e-22),((3,9),-5.499999999999999),((4,1),-5.999999999999998),((4,2),0),((4,3),5.999999999999998),((4,4),10.392304845413262),((4,5),12),((4,6),10.392304845413264),((4,7),5.999999999999998),((4,8),0),((4,9),-5.999999999999998),((5,1),-6.499999999999998),((5,2),0),((5,3),6.499999999999998),((5,4),11.2583302491977),((5,5),13),((5,6),11.258330249197703),((5,7),6.499999999999998),((5,8),0),((5,9),-6.499999999999998),((6,1),-6.999999999999998),((6,2),0),((6,3),6.999999999999998),((6,4),12.124355652982139),((6,5),14),((6,6),12.124355652982143),((6,7),6.999999999999998),((6,8),0),((6,9),-6.999999999999998),((7,1),-7.499999999999998),((7,2),5.286776307738844e-22),((7,3),7.499999999999998),((7,4),12.990381056766577),((7,5),15),((7,6),12.99038105676658),((7,7),7.499999999999998),((7,8),-5.286776307738843e-22),((7,9),-7.499999999999998),((8,1),-7.999813372165897),((8,2),5.013910433791031e-20),((8,3),7.999813372165897),((8,4),13.856083211660245),((8,5),15.999626744331797),((8,6),13.856083211660248),((8,7),7.999813372165897),((8,8),4.092988109217167e-20),((8,9),-7.999813372165897),((9,1),-5.856269839494358),((9,2),0.49981337216589866),((9,3),8.865515527059564),((9,4),14.855709955992042),((9,5),16.865328899225467),((9,6),14.355896583826148),((9,7),7.999813372165897),((9,8),0.49981337216589866),((9,9),-4.9905676846006894)]
+"Z"
+array ((1,1),(9,9)) [((1,1),-7.660254037844387),((1,2),-9.13397459621556),((1,3),-8.160254037844387),((1,4),-5.000000000000001),((1,5),-0.4999999999999998),((1,6),4.13397459621556),((1,7),7.660254037844386),((1,8),9.13397459621556),((1,9),13.160254037844382),((2,1),-8.660254037844387),((2,2),-10),((2,3),-8.660254037844387),((2,4),-5.000000000000001),((2,5),7.55253758248406e-22),((2,6),4.999999999999999),((2,7),8.660254037844387),((2,8),10),((2,9),8.660254037844387),((3,1),-9.526279441628827),((3,2),-11),((3,3),-9.526279441628827),((3,4),-5.500000000000001),((3,5),-7.209240419643875e-22),((3,6),5.499999999999999),((3,7),9.526279441628827),((3,8),11),((3,9),9.526279441628827),((4,1),-10.392304845413264),((4,2),-12),((4,3),-10.392304845413264),((4,4),-6.000000000000002),((4,5),-1.3216940769347098e-21),((4,6),5.999999999999998),((4,7),10.392304845413264),((4,8),12),((4,9),10.392304845413264),((5,1),-11.258330249197703),((5,2),-13),((5,3),-11.258330249197703),((5,4),-6.500000000000002),((5,5),-1.220025301785886e-21),((5,6),6.499999999999998),((5,7),11.258330249197703),((5,8),13),((5,9),11.258330249197703),((6,1),-12.124355652982143),((6,2),-14),((6,3),-12.124355652982143),((6,4),-7.000000000000002),((6,5),-1.1328806373726085e-21),((6,6),6.999999999999998),((6,7),12.124355652982143),((6,8),14),((6,9),12.124355652982143),((7,1),-12.99038105676658),((7,2),-15),((7,3),-12.99038105676658),((7,4),-7.500000000000002),((7,5),5.286776307738841e-22),((7,6),7.499999999999998),((7,7),12.99038105676658),((7,8),15),((7,9),12.99038105676658),((8,1),-13.856083211660248),((8,2),-15.999626744331797),((8,3),-13.856083211660248),((8,4),-7.9998133721659),((8,5),8.28830092116476e-20),((8,6),7.999813372165897),((8,7),13.856083211660248),((8,8),15.999626744331797),((8,9),13.856083211660248),((9,1),-22.855523328157933),((9,2),-16.865328899225467),((9,3),-14.355896583826148),((9,4),-7.999813372165901),((9,5),0.49981337216589866),((9,6),8.865515527059564),((9,7),14.855709955992046),((9,8),16.865328899225467),((9,9),22.355709955992037)]
+"Alpha"
+array ((2,2),(9,9)) [((2,2),5.25),((2,3),5.25),((2,4),5.2499999999999964),((2,5),5.2499999999999964),((2,6),5.25),((2,7),5.250000000000007),((2,8),5.25),((2,9),5.25),((3,2),5.25),((3,3),5.25),((3,4),5.2499999999999964),((3,5),5.2499999999999964),((3,6),5.25),((3,7),5.250000000000007),((3,8),5.25),((3,9),5.25),((4,2),5.749999999999995),((4,3),5.749999999999995),((4,4),5.7499999999999964),((4,5),5.750000000000011),((4,6),5.749999999999993),((4,7),5.7499999999999964),((4,8),5.749999999999995),((4,9),5.749999999999995),((5,2),6.250000000000001),((5,3),6.250000000000001),((5,4),6.249999999999998),((5,5),6.25),((5,6),6.25),((5,7),6.250000000000007),((5,8),6.25),((5,9),6.25),((6,2),6.75),((6,3),6.75),((6,4),6.7500000000000036),((6,5),6.750000000000007),((6,6),6.75),((6,7),6.750000000000007),((6,8),6.75),((6,9),6.75),((7,2),7.249999999999994),((7,3),7.249999999999994),((7,4),7.2499999999999964),((7,5),7.25),((7,6),7.249999999999993),((7,7),7.2499999999999964),((7,8),7.249999999999994),((7,9),7.249999999999994),((8,2),7.747013989484325),((8,3),7.747013989484325),((8,4),7.747013989484323),((8,5),7.747013989484323),((8,6),7.747013989484323),((8,7),7.747013989484326),((8,8),7.747013989484324),((8,9),7.747013989484324),((9,2),7.747013989484325),((9,3),7.747013989484325),((9,4),7.747013989484323),((9,5),7.747013989484323),((9,6),7.747013989484323),((9,7),7.747013989484326),((9,8),7.747013989484324),((9,9),7.747013989484324)]
+"S"
+array ((2,2),(9,9)) [((2,2),86.65559736151845),((2,3),86.65559736151845),((2,4),236.74749475189975),((2,5),323.4030921134182),((2,6),323.40309211341844),((2,7),236.74749475190032),((2,8),86.65559736151847),((2,9),86.65559736151847),((3,2),86.65559736151845),((3,3),86.65559736151845),((3,4),236.74749475189975),((3,5),323.4030921134182),((3,6),323.40309211341844),((3,7),236.74749475190032),((3,8),86.65559736151847),((3,9),86.65559736151847),((4,2),103.93435695626218),((4,3),103.93435695626218),((4,4),283.9539438565082),((4,5),387.8883008127715),((4,6),387.8883008127703),((4,7),283.9539438565083),((4,8),103.93435695626218),((4,9),103.93435695626218),((5,2),122.78391287780107),((5,3),122.78391287780107),((5,4),335.4518883342629),((5,5),458.2358012120642),((5,6),458.2358012120642),((5,7),335.45188833426346),((5,8),122.78391287780104),((5,9),122.78391287780104),((6,2),143.20426512613471),((6,3),143.20426512613471),((6,4),391.24132818516415),((6,5),534.4455933112993),((6,6),534.4455933112988),((6,7),391.2413281851644),((6,8),143.20426512613471),((6,9),143.20426512613471),((7,2),165.19541370126305),((7,3),165.19541370126305),((7,4),451.32226340921085),((7,5),616.5176771104742),((7,6),616.5176771104739),((7,7),451.3222634092109),((7,8),165.19541370126305),((7,9),165.19541370126305),((8,2),188.68231284894844),((8,3),188.68231284894844),((8,4),515.489665192933),((8,5),704.1719780418816),((8,6),704.1719780418816),((8,7),515.4896651929333),((8,8),188.68231284894844),((8,9),188.68231284894844),((9,2),188.68231284894844),((9,3),188.68231284894844),((9,4),515.489665192933),((9,5),704.1719780418816),((9,6),704.1719780418816),((9,7),515.4896651929333),((9,8),188.68231284894844),((9,9),188.68231284894844)]
+"Rho"
+array ((2,2),(9,9)) [((2,2),1.4),((2,3),1.4),((2,4),1.4),((2,5),1.4),((2,6),1.4),((2,7),1.4),((2,8),1.4),((2,9),1.4),((3,2),1.4),((3,3),1.4),((3,4),1.4),((3,5),1.4),((3,6),1.4),((3,7),1.4),((3,8),1.4),((3,9),1.4),((4,2),1.4),((4,3),1.4),((4,4),1.4),((4,5),1.3999999999999997),((4,6),1.4),((4,7),1.4),((4,8),1.4),((4,9),1.4),((5,2),1.4),((5,3),1.4),((5,4),1.4),((5,5),1.4),((5,6),1.4),((5,7),1.4),((5,8),1.4),((5,9),1.4),((6,2),1.4),((6,3),1.4),((6,4),1.4),((6,5),1.4),((6,6),1.4),((6,7),1.4),((6,8),1.4),((6,9),1.4),((7,2),1.4),((7,3),1.4),((7,4),1.4),((7,5),1.4),((7,6),1.4),((7,7),1.4),((7,8),1.4),((7,9),1.4),((8,2),1.400556830443443),((8,3),1.400556830443443),((8,4),1.4005568304434441),((8,5),1.4005568304434433),((8,6),1.4005568304434446),((8,7),1.4005568304434441),((8,8),1.4005568304434433),((8,9),1.4005568304434433),((9,2),1.400556830443443),((9,3),1.400556830443443),((9,4),1.4005568304434441),((9,5),1.4005568304434433),((9,6),1.4005568304434446),((9,7),1.4005568304434441),((9,8),1.4005568304434433),((9,9),1.4005568304434433)]
+"P"
+array ((2,2),(9,9)) [((2,2),0.9377199998348322),((2,3),0.9377199998348322),((2,4),0.9377199990202599),((2,5),0.9377199990206425),((2,6),0.9377199998345834),((2,7),0.9377199999994013),((2,8),0.9377199999994384),((2,9),0.9377199999994384),((3,2),0.9377199998348322),((3,3),0.9377199998348322),((3,4),0.9377199990202599),((3,5),0.9377199990206425),((3,6),0.9377199998345834),((3,7),0.9377199999994013),((3,8),0.9377199999994384),((3,9),0.9377199999994384),((4,2),0.9377199915683396),((4,3),0.9377199915683396),((4,4),0.9377199630894277),((4,5),0.9377199631015546),((4,6),0.9377199915623834),((4,7),0.9377199999298984),((4,8),0.9377200000762329),((4,9),0.9377200000762329),((5,2),0.9377196118263986),((5,3),0.9377196118263986),((5,4),0.9377187377609119),((5,5),0.9377187381012815),((5,6),0.9377196117425651),((5,7),0.93771999188921),((5,8),0.9377199909104235),((5,9),0.9377199909104235),((6,2),0.9377032643728261),((6,3),0.9377032643728261),((6,4),0.9376795307948397),((6,5),0.9376795393093973),((6,6),0.9377032656990684),((6,7),0.9377190903794803),((6,8),0.9377210077686822),((6,9),0.9377210077686822),((7,2),0.9370419258854643),((7,3),0.9370419258854643),((7,4),0.9364995494569003),((7,5),0.9364997297283502),((7,6),0.9370420801558119),((7,7),0.9376228329430465),((7,8),0.9376153256707715),((7,9),0.9376153256707715),((8,2),0.9121643333528774),((8,3),0.9121643333528774),((8,4),0.9033241511987188),((8,5),0.903326808888605),((8,6),0.912170217062515),((8,7),0.928282793205923),((8,8),0.9482876420892163),((8,9),0.9482876420892163),((9,2),6),((9,3),6),((9,4),6),((9,5),6),((9,6),6),((9,7),6),((9,8),6),((9,9),6)]
+"Q"
+array ((2,2),(9,9)) [((2,2),1.092869093447191e-19),((2,3),1.092869093447191e-19),((2,4),4.3704848990187796e-20),((2,5),0),((2,6),1.1661890663591434e-19),((2,7),1.5660904221483934e-19),((2,8),1.0464502078310122e-19),((2,9),1.0464502078310122e-19),((3,2),1.092869093447191e-19),((3,3),1.092869093447191e-19),((3,4),4.3704848990187796e-20),((3,5),0),((3,6),1.1661890663591434e-19),((3,7),1.5660904221483934e-19),((3,8),1.0464502078310122e-19),((3,9),1.0464502078310122e-19),((4,2),0),((4,3),0),((4,4),4.1428554771948785e-20),((4,5),1.205802067355475e-19),((4,6),0),((4,7),0),((4,8),1.072688983111191e-20),((4,9),1.072688983111191e-20),((5,2),9.869996353532127e-22),((5,3),9.869996353532127e-22),((5,4),1.4833383520815418e-19),((5,5),9.166626232849755e-20),((5,6),1.081093478828578e-19),((5,7),1.752746548043988e-19),((5,8),9.915031758585733e-20),((5,9),9.915031758585733e-20),((6,2),1.1843995624238421e-20),((6,3),1.1843995624238421e-20),((6,4),6.702810974937443e-20),((6,5),5.998082489498412e-20),((6,6),0),((6,7),0),((6,8),0),((6,9),0),((7,2),0),((7,3),0),((7,4),0),((7,5),3.421128562119556e-20),((7,6),9.602095408836475e-20),((7,7),2.403766694460326e-19),((7,8),1.0665235016059775e-19),((7,9),1.0665235016059775e-19),((8,2),0.014732092039144608),((8,3),0.014732092039144608),((8,4),0.014732092039144606),((8,5),0.014732092039144596),((8,6),0.014732092039144596),((8,7),0.014732092039144594),((8,8),0.014732092039144596),((8,9),0.014732092039144596),((9,2),0),((9,3),0),((9,4),0),((9,5),0),((9,6),0),((9,7),0),((9,8),0),((9,9),0)]
+"epsilon"
+array ((2,2),(9,9)) [((2,2),0.9999999998238626),((2,3),0.9999999998238626),((2,4),0.9999999989551892),((2,5),0.9999999989555972),((2,6),0.9999999998235971),((2,7),0.9999999999993616),((2,8),0.9999999999994013),((2,9),0.9999999999994013),((3,2),0.9999999998238626),((3,3),0.9999999998238626),((3,4),0.9999999989551892),((3,5),0.9999999989555972),((3,6),0.9999999998235971),((3,7),0.9999999999993616),((3,8),0.9999999999994013),((3,9),0.9999999999994013),((4,2),0.9999999910083391),((4,3),0.9999999910083391),((4,4),0.99999996063796),((4,5),0.9999999606508925),((4,6),0.9999999910019872),((4,7),0.9999999999252426),((4,8),1.000000000081296),((4,9),1.000000000081296),((5,2),0.9999995860453),((5,3),0.9999995860453),((5,4),0.9999986539275177),((5,5),0.9999986542904935),((5,6),0.9999995859558987),((5,7),0.9999999913505205),((5,8),0.9999999903067265),((5,9),0.9999999903067265),((6,2),0.9999821528524786),((6,3),0.9999821528524786),((6,4),0.9999568429753443),((6,5),0.9999568520554082),((6,6),0.999982154266805),((6,7),0.9999990299657471),((6,8),1.0000010747010646),((6,9),1.0000010747010646),((7,2),0.9992768906341599),((7,3),0.9992768906341599),((7,4),0.9986984915080198),((7,5),0.998698683752453),((7,6),0.9992770551505908),((7,7),0.9998963794555374),((7,8),0.999888373577157),((7,9),0.999888373577157),((8,2),0.9723602748931356),((8,3),0.9723602748931356),((8,4),0.9629367076309432),((8,5),0.9629395407082456),((8,6),0.9723665468830724),((8,7),0.9895424310907487),((8,8),1.0108674485772964),((8,9),1.0108674485772964),((9,2),0.9723602748931356),((9,3),0.9723602748931356),((9,4),0.9629367076309432),((9,5),0.9629395407082456),((9,6),0.9723665468830724),((9,7),0.9895424310907487),((9,8),1.0108674485772964),((9,9),1.0108674485772964)]
+theta
+array ((2,2),(9,9)) [((2,2),0),((2,3),0),((2,4),0),((2,5),0),((2,6),0),((2,7),0),((2,8),0),((2,9),0),((3,2),0),((3,3),9.999999998238625),((3,4),9.999999989551892),((3,5),9.999999989555972),((3,6),9.999999998235971),((3,7),9.999999999993616),((3,8),9.999999999994012),((3,9),0),((4,2),0),((4,3),9.99999991008339),((4,4),9.9999996063796),((4,5),9.999999606508924),((4,6),9.999999910019872),((4,7),9.999999999252426),((4,8),10.00000000081296),((4,9),0),((5,2),0),((5,3),9.999995860453),((5,4),9.999986539275177),((5,5),9.999986542904935),((5,6),9.999995859558986),((5,7),9.999999913505205),((5,8),9.999999903067264),((5,9),0),((6,2),0),((6,3),9.999821528524786),((6,4),9.999568429753442),((6,5),9.999568520554082),((6,6),9.99982154266805),((6,7),9.99999029965747),((6,8),10.000010747010645),((6,9),0),((7,2),0),((7,3),9.992768906341599),((7,4),9.986984915080198),((7,5),9.98698683752453),((7,6),9.992770551505908),((7,7),9.998963794555374),((7,8),9.99888373577157),((7,9),0),((8,2),0),((8,3),9.723602748931356),((8,4),9.629367076309432),((8,5),9.629395407082455),((8,6),9.723665468830724),((8,7),9.895424310907487),((8,8),10.108674485772964),((8,9),0),((9,2),0),((9,3),0),((9,4),0),((9,5),0),((9,6),0),((9,7),0),((9,8),0),((9,9),0)]
+0.01
+341.2585317145318
+done
+RESULT 1:708
+PASS simple-nofib-report-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/simple-nofib-arrays.sml]
+[autoloading]
+[autoloading done]
+functor BenchSimpleArraysFn(<param>: sig
+  val strict : bool
+end) :
+sig
+  structure L : <sig>
+  type zone
+  type bounds
+  type 'a store
+  type 'a grid
+  val range : int -> int -> int list
+  val positions : (int * int) * (int * int) -> (int * int) list
+  val raw :
+      (int * int) * (int * int)
+       -> (int * int -> 'a)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+  val associations :
+      (int * int) * (int * int)
+       -> (unit -> ((int * int) * 'a BenchLazy.state ref) list)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+  val sub :
+      'a <BaseFct>.<resultStr>.store BenchLazy.state ref -> int * int -> 'a
+  val bounds :
+      'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.bounds
+  val force : 'a <BaseFct>.<resultStr>.store BenchLazy.state ref -> unit
+  val materialize : 'a <BaseFct>.<resultStr>.store BenchLazy.state ref -> unit
+  val make :
+      (int * int) * (int * int)
+       -> (int * int -> 'a)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+  val recursive :
+      (int * int) * (int * int)
+       -> ('a <BaseFct>.<resultStr>.store BenchLazy.state ref
+        -> int * int -> 'a)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+  val pair :
+      (int * int) * (int * int)
+       -> (int * int -> 'a BenchLazy.state ref * 'b BenchLazy.state ref)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+       * 'b <BaseFct>.<resultStr>.store BenchLazy.state ref
+  val recursivePair :
+      (int * int) * (int * int)
+       -> ('a <BaseFct>.<resultStr>.store BenchLazy.state ref
+        * 'b <BaseFct>.<resultStr>.store BenchLazy.state ref
+        -> int * int -> 'a BenchLazy.state ref * 'b BenchLazy.state ref)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+       * 'b <BaseFct>.<resultStr>.store BenchLazy.state ref
+  val recursiveTriple :
+      (int * int) * (int * int)
+       -> ('a <BaseFct>.<resultStr>.store BenchLazy.state ref
+        * 'b <BaseFct>.<resultStr>.store BenchLazy.state ref
+        * 'c <BaseFct>.<resultStr>.store BenchLazy.state ref
+        -> int * int
+        -> 'a BenchLazy.state ref * 'b BenchLazy.state ref
+        * 'c BenchLazy.state ref)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+       * 'b <BaseFct>.<resultStr>.store BenchLazy.state ref
+       * 'c <BaseFct>.<resultStr>.store BenchLazy.state ref
+  type 'a seqNode
+  type 'a seq
+  val mapList :
+      ('a -> 'b)
+       -> 'a list -> 'b <BaseFct>.<resultStr>.seqNode BenchLazy.delay
+  val elements :
+      'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+       -> 'a <BaseFct>.<resultStr>.seqNode BenchLazy.state ref
+  val head : 'a <BaseFct>.<resultStr>.seqNode BenchLazy.state ref -> 'a
+  val foldl :
+      ('a * 'b -> 'a)
+       -> 'a BenchLazy.state ref
+       -> 'b <BaseFct>.<resultStr>.seqNode BenchLazy.delay -> 'a
+  val total : real <BaseFct>.<resultStr>.store BenchLazy.state ref -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/simple-nofib-kernel.sml]
+[autoloading]
+[autoloading done]
+functor BenchSimpleNofibFn(<param>: sig
+  val strict : bool
+  val gridMax : int
+end) :
+sig
+  structure A : <sig>
+  structure L : <sig>
+  type array
+  type vector
+  type state
+  val delay : (unit -> 'a) -> 'a BenchLazy.state ref
+  val force : 'a BenchLazy.state ref -> 'a
+  val sq : real -> real
+  val pow : real * int -> real
+  val range : int -> int -> int list
+  val coords : 'a list -> 'b list -> ('a * 'b) list
+  val north : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val south : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val east : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val west : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val northeast : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val northwest : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val southeast : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val southwest : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val farnorth : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val farsouth : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val fareast : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val farwest : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val zoneA : 'a -> 'a
+  val zoneB : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val zoneC : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val zoneD : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val cornerNE : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val cornerNW : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val cornerSE : 'a -> 'a
+  val cornerSW : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val kmin : int
+  val lmin : int
+  val kmax : int
+  val lmax : int
+  val allNodes : (int * int) * (int * int)
+  val interiorNodes : (int * int) * (int * int)
+  val allZones : (int * int) * (int * int)
+  val interiorZones : (int * int) * (int * int)
+  val nodes : (int * int) list
+  val zones : (int * int) list
+  val northZones : (int * int) list
+  val southZones : (int * int) list
+  val eastZones : (int * int) list
+  val westZones : (int * int) list
+  val zoneDirection :
+      int * int -> <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val isInterior : int * int -> bool
+  val constantHeat : real
+  val dtMaximum : real
+  val specificHeat : real
+  val pi : real
+  val pCoeffs :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val eCoeffs :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val pPoly :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref 
+             <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val ePoly :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref 
+             <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val rhoTable : real Vector.vector
+  val thetaTable : real Vector.vector
+  val pbb : real Vector.vector
+  val pb : real Vector.vector
+  val qb : real Vector.vector
+  val vectorSub : 'a Vector.vector -> int -> 'a
+  val boundaryTable :
+      int -> int <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val nbc : int <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val boundaryCode : int * int -> int
+  val sum :
+      real <BaseFct>.<resultStr>.A.<returnStr>.seqNode BenchLazy.delay -> real
+  val sumMap : ('a -> real) -> 'a list -> real
+  val minimum : real * real -> real
+  val maximum : real * real -> real
+  val minList :
+      real <BaseFct>.<resultStr>.A.<returnStr>.seqNode BenchLazy.state ref
+       -> real
+  val maxList :
+      real <BaseFct>.<resultStr>.A.<returnStr>.seqNode BenchLazy.state ref
+       -> real
+  val polynomial :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref 
+             <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> int -> real -> real -> real
+  val zonalPressure : real -> real -> real
+  val zonalEnergy : real -> real -> real
+  val newton : (real -> real) -> real -> real
+  val boundaryPosition :
+      real * real * real * real * real * real
+       -> real BenchLazy.state ref * real BenchLazy.state ref
+  val positionMatrix :
+      (int * int -> real BenchLazy.state ref * real BenchLazy.state ref)
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val zoneAreaVolume :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.A.<returnStr>.zone
+       -> real BenchLazy.state ref * real BenchLazy.state ref
+  val lineIntegral :
+      <BaseFct>.<resultStr>.array
+       -> <BaseFct>.<resultStr>.array
+       -> <BaseFct>.<resultStr>.A.<returnStr>.zone -> real
+  val makePressure :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeEnergy :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeVelocity :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.array * <BaseFct>.<resultStr>.array
+       -> <BaseFct>.<resultStr>.array
+       -> <BaseFct>.<resultStr>.array
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makePosition :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeAreaDensity :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeViscosity :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeTemperature :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeCc :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeSigma :
+      real
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeGamma :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> (int * int -> int * int)
+       -> (int * int -> int * int)
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeAb :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> (int * int -> int * int)
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeTheta :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> (int * int -> int * int)
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val heatConduction :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref 
+           BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref 
+           BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref 
+           BenchLazy.state ref
+  val energyError :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real -> real
+  val timestep :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real
+  val suspend : (unit -> 'a BenchLazy.state ref) -> 'a BenchLazy.state ref
+  val pairSuspend :
+      (unit -> 'a BenchLazy.state ref * 'b BenchLazy.state ref)
+       -> 'a BenchLazy.state ref * 'b BenchLazy.state ref
+  val tripleSuspend :
+      (unit
+        -> 'a BenchLazy.state ref * 'b BenchLazy.state ref
+        * 'c BenchLazy.state ref)
+       -> 'a BenchLazy.state ref * 'b BenchLazy.state ref
+       * 'c BenchLazy.state ref
+  val initial : unit -> <BaseFct>.<resultStr>.state
+  val next : <BaseFct>.<resultStr>.state -> <BaseFct>.<resultStr>.state
+  val arrays :
+      <BaseFct>.<resultStr>.state
+       -> (string * <BaseFct>.<resultStr>.array) list
+  type totalValues
+  type totals
+  val totals : <BaseFct>.<resultStr>.state -> <BaseFct>.<resultStr>.totals
+  val totalTotal : <BaseFct>.<resultStr>.totals -> real
+  val totalsList :
+      ('a * 'a * 'a * 'a * 'a * 'a * 'a * 'a * 'a * 'a * 'a * 'a * 'a) 
+           BenchLazy.state ref
+       -> 'a list
+  val computeRaw :
+      int -> <BaseFct>.<resultStr>.totals * <BaseFct>.<resultStr>.state
+  val compute : int -> real BenchLazy.delay list * <BaseFct>.<resultStr>.state
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/simple-nofib-check.sml]
+[autoloading]
+[autoloading done]
+structure BenchSimpleReference : sig
+  val absolute : real
+  val relative : real
+  val close : real -> real -> bool
+  val decode : string -> real
+  val read : string -> string list
+  val scalar : real -> real -> unit
+  val unitRoundoff : real
+  val aggregateBound : int -> real -> real
+  val aggregate : real -> int -> real -> real -> unit
+  val totals : string list -> real BenchLazy.state ref list -> unit
+end
+functor BenchSimpleCheckFn(<param>: sig
+  val strict : bool
+  val report : bool
+  val gridMax : int
+end) :
+sig
+  structure K : <sig>
+  structure R : <sig>
+  val integer : string -> int
+  val parseHeader : string -> int -> string list -> int * string list
+  val verifyState :
+      int -> <BaseFct>.<resultStr>.K.<returnStr>.state -> string list -> int
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/simple-nofib-report-lazy/smoke-benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Check : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+"RESULT "
+"U"
+array ((2,2),(8,8)) [((2,2),-7.552537582484059e-20),((2,3),0),((2,4),-6.042030065987251e-19),((2,5),6.042030065987248e-19),((2,6),0),((2,7),0),((2,8),7.552537582484059e-20),((3,2),-7.209240419643877e-20),((3,3),0),((3,4),5.7673923357151e-19),((3,5),0),((3,6),0),((3,7),0),((3,8),7.209240419643877e-20),((4,2),0),((4,3),2.643388153869422e-19),((4,4),0),((4,5),0),((4,6),5.286776307738842e-19),((4,7),0),((4,8),0),((5,2),0),((5,3),2.440050603571772e-19),((5,4),-4.880101207143543e-19),((5,5),0),((5,6),0),((5,7),0),((5,8),0),((6,2),0),((6,3),0),((6,4),0),((6,5),0),((6,6),4.531522549490436e-19),((6,7),4.531522549490435e-19),((6,8),0),((7,2),5.2867763077388437e-20),((7,3),4.2294210461910745e-19),((7,4),4.2294210461910725e-19),((7,5),0),((7,6),0),((7,7),0),((7,8),-5.286776307738843e-20),((8,2),5.013910433791031e-18),((8,3),-0.018662783410138245),((8,4),-0.032324889077012996),((8,5),-0.037325566820276476),((8,6),-0.03232488907701296),((8,7),-0.01866278341013824),((8,8),4.092988109217167e-18)]
+"V"
+array ((2,2),(8,8)) [((2,2),-6.042030065987247e-19),((2,3),0),((2,4),-3.0210150329936254e-19),((2,5),7.55253758248406e-20),((2,6),0),((2,7),-6.042030065987242e-19),((2,8),6.042030065987247e-19),((3,2),0),((3,3),0),((3,4),0),((3,5),-7.209240419643875e-20),((3,6),0),((3,7),-5.7673923357151e-19),((3,8),0),((4,2),0),((4,3),0),((4,4),0),((4,5),-1.3216940769347098e-19),((4,6),2.643388153869421e-19),((4,7),5.286776307738842e-19),((4,8),0),((5,2),0),((5,3),0),((5,4),0),((5,5),-1.220025301785886e-19),((5,6),0),((5,7),0),((5,8),0),((6,2),0),((6,3),0),((6,4),2.2657612747452167e-19),((6,5),-1.1328806373726086e-19),((6,6),4.531522549490436e-19),((6,7),4.531522549490435e-19),((6,8),0),((7,2),0),((7,3),-4.2294210461910745e-19),((7,4),-2.1147105230955363e-19),((7,5),5.2867763077388407e-20),((7,6),0),((7,7),0),((7,8),0),((8,2),0.037325566820276504),((8,3),0.032324889077012996),((8,4),0.018662783410138245),((8,5),8.288300921164759e-18),((8,6),-0.018662783410138235),((8,7),-0.032324889077012975),((8,8),-0.03732556682027649)]
+"R"
+array ((1,1),(9,9)) [((1,1),-4.999999999999997),((1,2),-0.4999999999999998),((1,3),4.13397459621556),((1,4),7.660254037844386),((1,5),9.13397459621556),((1,6),8.160254037844387),((1,7),4.999999999999999),((1,8),-0.4999999999999998),((1,9),-4.5262794416288274),((2,1),-4.999999999999999),((2,2),-7.552537582484059e-22),((2,3),4.999999999999999),((2,4),8.660254037844386),((2,5),10),((2,6),8.660254037844387),((2,7),4.999999999999999),((2,8),7.552537582484059e-22),((2,9),-4.999999999999999),((3,1),-5.499999999999999),((3,2),-7.209240419643878e-22),((3,3),5.499999999999999),((3,4),9.526279441628823),((3,5),11),((3,6),9.526279441628827),((3,7),5.499999999999999),((3,8),7.209240419643878e-22),((3,9),-5.499999999999999),((4,1),-5.999999999999998),((4,2),0),((4,3),5.999999999999998),((4,4),10.392304845413262),((4,5),12),((4,6),10.392304845413264),((4,7),5.999999999999998),((4,8),0),((4,9),-5.999999999999998),((5,1),-6.499999999999998),((5,2),0),((5,3),6.499999999999998),((5,4),11.2583302491977),((5,5),13),((5,6),11.258330249197703),((5,7),6.499999999999998),((5,8),0),((5,9),-6.499999999999998),((6,1),-6.999999999999998),((6,2),0),((6,3),6.999999999999998),((6,4),12.124355652982139),((6,5),14),((6,6),12.124355652982143),((6,7),6.999999999999998),((6,8),0),((6,9),-6.999999999999998),((7,1),-7.499999999999998),((7,2),5.286776307738844e-22),((7,3),7.499999999999998),((7,4),12.990381056766577),((7,5),15),((7,6),12.99038105676658),((7,7),7.499999999999998),((7,8),-5.286776307738843e-22),((7,9),-7.499999999999998),((8,1),-7.999813372165897),((8,2),5.013910433791031e-20),((8,3),7.999813372165897),((8,4),13.856083211660245),((8,5),15.999626744331797),((8,6),13.856083211660248),((8,7),7.999813372165897),((8,8),4.092988109217167e-20),((8,9),-7.999813372165897),((9,1),-5.856269839494358),((9,2),0.49981337216589866),((9,3),8.865515527059564),((9,4),14.855709955992042),((9,5),16.865328899225467),((9,6),14.355896583826148),((9,7),7.999813372165897),((9,8),0.49981337216589866),((9,9),-4.9905676846006894)]
+"Z"
+array ((1,1),(9,9)) [((1,1),-7.660254037844387),((1,2),-9.13397459621556),((1,3),-8.160254037844387),((1,4),-5.000000000000001),((1,5),-0.4999999999999998),((1,6),4.13397459621556),((1,7),7.660254037844386),((1,8),9.13397459621556),((1,9),13.160254037844382),((2,1),-8.660254037844387),((2,2),-10),((2,3),-8.660254037844387),((2,4),-5.000000000000001),((2,5),7.55253758248406e-22),((2,6),4.999999999999999),((2,7),8.660254037844387),((2,8),10),((2,9),8.660254037844387),((3,1),-9.526279441628827),((3,2),-11),((3,3),-9.526279441628827),((3,4),-5.500000000000001),((3,5),-7.209240419643875e-22),((3,6),5.499999999999999),((3,7),9.526279441628827),((3,8),11),((3,9),9.526279441628827),((4,1),-10.392304845413264),((4,2),-12),((4,3),-10.392304845413264),((4,4),-6.000000000000002),((4,5),-1.3216940769347098e-21),((4,6),5.999999999999998),((4,7),10.392304845413264),((4,8),12),((4,9),10.392304845413264),((5,1),-11.258330249197703),((5,2),-13),((5,3),-11.258330249197703),((5,4),-6.500000000000002),((5,5),-1.220025301785886e-21),((5,6),6.499999999999998),((5,7),11.258330249197703),((5,8),13),((5,9),11.258330249197703),((6,1),-12.124355652982143),((6,2),-14),((6,3),-12.124355652982143),((6,4),-7.000000000000002),((6,5),-1.1328806373726085e-21),((6,6),6.999999999999998),((6,7),12.124355652982143),((6,8),14),((6,9),12.124355652982143),((7,1),-12.99038105676658),((7,2),-15),((7,3),-12.99038105676658),((7,4),-7.500000000000002),((7,5),5.286776307738841e-22),((7,6),7.499999999999998),((7,7),12.99038105676658),((7,8),15),((7,9),12.99038105676658),((8,1),-13.856083211660248),((8,2),-15.999626744331797),((8,3),-13.856083211660248),((8,4),-7.9998133721659),((8,5),8.28830092116476e-20),((8,6),7.999813372165897),((8,7),13.856083211660248),((8,8),15.999626744331797),((8,9),13.856083211660248),((9,1),-22.855523328157933),((9,2),-16.865328899225467),((9,3),-14.355896583826148),((9,4),-7.999813372165901),((9,5),0.49981337216589866),((9,6),8.865515527059564),((9,7),14.855709955992046),((9,8),16.865328899225467),((9,9),22.355709955992037)]
+"Alpha"
+array ((2,2),(9,9)) [((2,2),5.25),((2,3),5.25),((2,4),5.2499999999999964),((2,5),5.2499999999999964),((2,6),5.25),((2,7),5.250000000000007),((2,8),5.25),((2,9),5.25),((3,2),5.25),((3,3),5.25),((3,4),5.2499999999999964),((3,5),5.2499999999999964),((3,6),5.25),((3,7),5.250000000000007),((3,8),5.25),((3,9),5.25),((4,2),5.749999999999995),((4,3),5.749999999999995),((4,4),5.7499999999999964),((4,5),5.750000000000011),((4,6),5.749999999999993),((4,7),5.7499999999999964),((4,8),5.749999999999995),((4,9),5.749999999999995),((5,2),6.250000000000001),((5,3),6.250000000000001),((5,4),6.249999999999998),((5,5),6.25),((5,6),6.25),((5,7),6.250000000000007),((5,8),6.25),((5,9),6.25),((6,2),6.75),((6,3),6.75),((6,4),6.7500000000000036),((6,5),6.750000000000007),((6,6),6.75),((6,7),6.750000000000007),((6,8),6.75),((6,9),6.75),((7,2),7.249999999999994),((7,3),7.249999999999994),((7,4),7.2499999999999964),((7,5),7.25),((7,6),7.249999999999993),((7,7),7.2499999999999964),((7,8),7.249999999999994),((7,9),7.249999999999994),((8,2),7.747013989484325),((8,3),7.747013989484325),((8,4),7.747013989484323),((8,5),7.747013989484323),((8,6),7.747013989484323),((8,7),7.747013989484326),((8,8),7.747013989484324),((8,9),7.747013989484324),((9,2),7.747013989484325),((9,3),7.747013989484325),((9,4),7.747013989484323),((9,5),7.747013989484323),((9,6),7.747013989484323),((9,7),7.747013989484326),((9,8),7.747013989484324),((9,9),7.747013989484324)]
+"S"
+array ((2,2),(9,9)) [((2,2),86.65559736151845),((2,3),86.65559736151845),((2,4),236.74749475189975),((2,5),323.4030921134182),((2,6),323.40309211341844),((2,7),236.74749475190032),((2,8),86.65559736151847),((2,9),86.65559736151847),((3,2),86.65559736151845),((3,3),86.65559736151845),((3,4),236.74749475189975),((3,5),323.4030921134182),((3,6),323.40309211341844),((3,7),236.74749475190032),((3,8),86.65559736151847),((3,9),86.65559736151847),((4,2),103.93435695626218),((4,3),103.93435695626218),((4,4),283.9539438565082),((4,5),387.8883008127715),((4,6),387.8883008127703),((4,7),283.9539438565083),((4,8),103.93435695626218),((4,9),103.93435695626218),((5,2),122.78391287780107),((5,3),122.78391287780107),((5,4),335.4518883342629),((5,5),458.2358012120642),((5,6),458.2358012120642),((5,7),335.45188833426346),((5,8),122.78391287780104),((5,9),122.78391287780104),((6,2),143.20426512613471),((6,3),143.20426512613471),((6,4),391.24132818516415),((6,5),534.4455933112993),((6,6),534.4455933112988),((6,7),391.2413281851644),((6,8),143.20426512613471),((6,9),143.20426512613471),((7,2),165.19541370126305),((7,3),165.19541370126305),((7,4),451.32226340921085),((7,5),616.5176771104742),((7,6),616.5176771104739),((7,7),451.3222634092109),((7,8),165.19541370126305),((7,9),165.19541370126305),((8,2),188.68231284894844),((8,3),188.68231284894844),((8,4),515.489665192933),((8,5),704.1719780418816),((8,6),704.1719780418816),((8,7),515.4896651929333),((8,8),188.68231284894844),((8,9),188.68231284894844),((9,2),188.68231284894844),((9,3),188.68231284894844),((9,4),515.489665192933),((9,5),704.1719780418816),((9,6),704.1719780418816),((9,7),515.4896651929333),((9,8),188.68231284894844),((9,9),188.68231284894844)]
+"Rho"
+array ((2,2),(9,9)) [((2,2),1.4),((2,3),1.4),((2,4),1.4),((2,5),1.4),((2,6),1.4),((2,7),1.4),((2,8),1.4),((2,9),1.4),((3,2),1.4),((3,3),1.4),((3,4),1.4),((3,5),1.4),((3,6),1.4),((3,7),1.4),((3,8),1.4),((3,9),1.4),((4,2),1.4),((4,3),1.4),((4,4),1.4),((4,5),1.3999999999999997),((4,6),1.4),((4,7),1.4),((4,8),1.4),((4,9),1.4),((5,2),1.4),((5,3),1.4),((5,4),1.4),((5,5),1.4),((5,6),1.4),((5,7),1.4),((5,8),1.4),((5,9),1.4),((6,2),1.4),((6,3),1.4),((6,4),1.4),((6,5),1.4),((6,6),1.4),((6,7),1.4),((6,8),1.4),((6,9),1.4),((7,2),1.4),((7,3),1.4),((7,4),1.4),((7,5),1.4),((7,6),1.4),((7,7),1.4),((7,8),1.4),((7,9),1.4),((8,2),1.400556830443443),((8,3),1.400556830443443),((8,4),1.4005568304434441),((8,5),1.4005568304434433),((8,6),1.4005568304434446),((8,7),1.4005568304434441),((8,8),1.4005568304434433),((8,9),1.4005568304434433),((9,2),1.400556830443443),((9,3),1.400556830443443),((9,4),1.4005568304434441),((9,5),1.4005568304434433),((9,6),1.4005568304434446),((9,7),1.4005568304434441),((9,8),1.4005568304434433),((9,9),1.4005568304434433)]
+"P"
+array ((2,2),(9,9)) [((2,2),0.9377199998348322),((2,3),0.9377199998348322),((2,4),0.9377199990202599),((2,5),0.9377199990206425),((2,6),0.9377199998345834),((2,7),0.9377199999994013),((2,8),0.9377199999994384),((2,9),0.9377199999994384),((3,2),0.9377199998348322),((3,3),0.9377199998348322),((3,4),0.9377199990202599),((3,5),0.9377199990206425),((3,6),0.9377199998345834),((3,7),0.9377199999994013),((3,8),0.9377199999994384),((3,9),0.9377199999994384),((4,2),0.9377199915683396),((4,3),0.9377199915683396),((4,4),0.9377199630894277),((4,5),0.9377199631015546),((4,6),0.9377199915623834),((4,7),0.9377199999298984),((4,8),0.9377200000762329),((4,9),0.9377200000762329),((5,2),0.9377196118263986),((5,3),0.9377196118263986),((5,4),0.9377187377609119),((5,5),0.9377187381012815),((5,6),0.9377196117425651),((5,7),0.93771999188921),((5,8),0.9377199909104235),((5,9),0.9377199909104235),((6,2),0.9377032643728261),((6,3),0.9377032643728261),((6,4),0.9376795307948397),((6,5),0.9376795393093973),((6,6),0.9377032656990684),((6,7),0.9377190903794803),((6,8),0.9377210077686822),((6,9),0.9377210077686822),((7,2),0.9370419258854643),((7,3),0.9370419258854643),((7,4),0.9364995494569003),((7,5),0.9364997297283502),((7,6),0.9370420801558119),((7,7),0.9376228329430465),((7,8),0.9376153256707715),((7,9),0.9376153256707715),((8,2),0.9121643333528774),((8,3),0.9121643333528774),((8,4),0.9033241511987188),((8,5),0.903326808888605),((8,6),0.912170217062515),((8,7),0.928282793205923),((8,8),0.9482876420892163),((8,9),0.9482876420892163),((9,2),6),((9,3),6),((9,4),6),((9,5),6),((9,6),6),((9,7),6),((9,8),6),((9,9),6)]
+"Q"
+array ((2,2),(9,9)) [((2,2),1.092869093447191e-19),((2,3),1.092869093447191e-19),((2,4),4.3704848990187796e-20),((2,5),0),((2,6),1.1661890663591434e-19),((2,7),1.5660904221483934e-19),((2,8),1.0464502078310122e-19),((2,9),1.0464502078310122e-19),((3,2),1.092869093447191e-19),((3,3),1.092869093447191e-19),((3,4),4.3704848990187796e-20),((3,5),0),((3,6),1.1661890663591434e-19),((3,7),1.5660904221483934e-19),((3,8),1.0464502078310122e-19),((3,9),1.0464502078310122e-19),((4,2),0),((4,3),0),((4,4),4.1428554771948785e-20),((4,5),1.205802067355475e-19),((4,6),0),((4,7),0),((4,8),1.072688983111191e-20),((4,9),1.072688983111191e-20),((5,2),9.869996353532127e-22),((5,3),9.869996353532127e-22),((5,4),1.4833383520815418e-19),((5,5),9.166626232849755e-20),((5,6),1.081093478828578e-19),((5,7),1.752746548043988e-19),((5,8),9.915031758585733e-20),((5,9),9.915031758585733e-20),((6,2),1.1843995624238421e-20),((6,3),1.1843995624238421e-20),((6,4),6.702810974937443e-20),((6,5),5.998082489498412e-20),((6,6),0),((6,7),0),((6,8),0),((6,9),0),((7,2),0),((7,3),0),((7,4),0),((7,5),3.421128562119556e-20),((7,6),9.602095408836475e-20),((7,7),2.403766694460326e-19),((7,8),1.0665235016059775e-19),((7,9),1.0665235016059775e-19),((8,2),0.014732092039144608),((8,3),0.014732092039144608),((8,4),0.014732092039144606),((8,5),0.014732092039144596),((8,6),0.014732092039144596),((8,7),0.014732092039144594),((8,8),0.014732092039144596),((8,9),0.014732092039144596),((9,2),0),((9,3),0),((9,4),0),((9,5),0),((9,6),0),((9,7),0),((9,8),0),((9,9),0)]
+"epsilon"
+array ((2,2),(9,9)) [((2,2),0.9999999998238626),((2,3),0.9999999998238626),((2,4),0.9999999989551892),((2,5),0.9999999989555972),((2,6),0.9999999998235971),((2,7),0.9999999999993616),((2,8),0.9999999999994013),((2,9),0.9999999999994013),((3,2),0.9999999998238626),((3,3),0.9999999998238626),((3,4),0.9999999989551892),((3,5),0.9999999989555972),((3,6),0.9999999998235971),((3,7),0.9999999999993616),((3,8),0.9999999999994013),((3,9),0.9999999999994013),((4,2),0.9999999910083391),((4,3),0.9999999910083391),((4,4),0.99999996063796),((4,5),0.9999999606508925),((4,6),0.9999999910019872),((4,7),0.9999999999252426),((4,8),1.000000000081296),((4,9),1.000000000081296),((5,2),0.9999995860453),((5,3),0.9999995860453),((5,4),0.9999986539275177),((5,5),0.9999986542904935),((5,6),0.9999995859558987),((5,7),0.9999999913505205),((5,8),0.9999999903067265),((5,9),0.9999999903067265),((6,2),0.9999821528524786),((6,3),0.9999821528524786),((6,4),0.9999568429753443),((6,5),0.9999568520554082),((6,6),0.999982154266805),((6,7),0.9999990299657471),((6,8),1.0000010747010646),((6,9),1.0000010747010646),((7,2),0.9992768906341599),((7,3),0.9992768906341599),((7,4),0.9986984915080198),((7,5),0.998698683752453),((7,6),0.9992770551505908),((7,7),0.9998963794555374),((7,8),0.999888373577157),((7,9),0.999888373577157),((8,2),0.9723602748931356),((8,3),0.9723602748931356),((8,4),0.9629367076309432),((8,5),0.9629395407082456),((8,6),0.9723665468830724),((8,7),0.9895424310907487),((8,8),1.0108674485772964),((8,9),1.0108674485772964),((9,2),0.9723602748931356),((9,3),0.9723602748931356),((9,4),0.9629367076309432),((9,5),0.9629395407082456),((9,6),0.9723665468830724),((9,7),0.9895424310907487),((9,8),1.0108674485772964),((9,9),1.0108674485772964)]
+theta
+array ((2,2),(9,9)) [((2,2),0),((2,3),0),((2,4),0),((2,5),0),((2,6),0),((2,7),0),((2,8),0),((2,9),0),((3,2),0),((3,3),9.999999998238625),((3,4),9.999999989551892),((3,5),9.999999989555972),((3,6),9.999999998235971),((3,7),9.999999999993616),((3,8),9.999999999994012),((3,9),0),((4,2),0),((4,3),9.99999991008339),((4,4),9.9999996063796),((4,5),9.999999606508924),((4,6),9.999999910019872),((4,7),9.999999999252426),((4,8),10.00000000081296),((4,9),0),((5,2),0),((5,3),9.999995860453),((5,4),9.999986539275177),((5,5),9.999986542904935),((5,6),9.999995859558986),((5,7),9.999999913505205),((5,8),9.999999903067264),((5,9),0),((6,2),0),((6,3),9.999821528524786),((6,4),9.999568429753442),((6,5),9.999568520554082),((6,6),9.99982154266805),((6,7),9.99999029965747),((6,8),10.000010747010645),((6,9),0),((7,2),0),((7,3),9.992768906341599),((7,4),9.986984915080198),((7,5),9.98698683752453),((7,6),9.992770551505908),((7,7),9.998963794555374),((7,8),9.99888373577157),((7,9),0),((8,2),0),((8,3),9.723602748931356),((8,4),9.629367076309432),((8,5),9.629395407082455),((8,6),9.723665468830724),((8,7),9.895424310907487),((8,8),10.108674485772964),((8,9),0),((9,2),0),((9,3),0),((9,4),0),((9,5),0),((9,6),0),((9,7),0),((9,8),0),((9,9),0)]
+0.01
+341.2585317145318
+done
+RESULT 1:708
+PASS simple-nofib-report-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/simple-nofib-arrays.sml]
+functor BenchSimpleArraysFn(<param>: sig val strict : bool end) :
+                           
+                             sig
+                               structure L : <sig>
+                               type zone
+                               type bounds
+                               type 'a store
+                               type 'a grid
+                               val range : int -> int -> int list
+                               val positions : (int * int) * (int * int)
+                                                -> (int * int) list
+                               val raw : (int * int) * (int * int)
+                                          -> (int * int -> 'a)
+                                          -> 'a store BenchLazy.state ref
+                               val associations : (int * int) * (int * int)
+                                                   -> (unit
+                                                    -> ((int * int)
+                                                       * 'a BenchLazy.state 
+                                                         ref) list)
+                                                   -> 'a store BenchLazy.state 
+                                                     ref
+                               val sub : 'a store BenchLazy.state ref
+                                          -> int * int -> 'a
+                               val bounds : 'a store BenchLazy.state ref
+                                             -> bounds
+                               val force : 'a store BenchLazy.state ref
+                                            -> unit
+                               val materialize : 'a store BenchLazy.state ref
+                                                  -> unit
+                               val make : (int * int) * (int * int)
+                                           -> (int * int -> 'a)
+                                           -> 'a store BenchLazy.state ref
+                               val recursive : (int * int) * (int * int)
+                                                -> ('a store BenchLazy.state 
+                                                   ref
+                                                 -> int * int -> 'a)
+                                                -> 'a store BenchLazy.state 
+                                                  ref
+                               val pair : (int * int) * (int * int)
+                                           -> (int * int
+                                            -> 'a BenchLazy.state ref
+                                            * 'b BenchLazy.state ref)
+                                           -> 'a store BenchLazy.state ref
+                                           * 'b store BenchLazy.state ref
+                               val recursivePair : (int * int) * (int * int)
+                                                    -> ('a store 
+                                                         BenchLazy.state ref
+                                                     * 'b store 
+                                                         BenchLazy.state ref
+                                                     -> int * int
+                                                     -> 'a BenchLazy.state ref
+                                                     * 'b BenchLazy.state ref)
+                                                    -> 'a store 
+                                                        BenchLazy.state ref
+                                                    * 'b store BenchLazy.state 
+                                                      ref
+                               val recursiveTriple : (int * int) * (int * int)
+                                                      -> ('a store 
+                                                           BenchLazy.state ref
+                                                       * 'b store 
+                                                           BenchLazy.state ref
+                                                       * 'c store 
+                                                           BenchLazy.state ref
+                                                       -> int * int
+                                                       -> 'a BenchLazy.state 
+                                                         ref
+                                                       * 'b BenchLazy.state 
+                                                         ref
+                                                       * 'c BenchLazy.state 
+                                                         ref)
+                                                      -> 'a store 
+                                                          BenchLazy.state ref
+                                                      * 'b store 
+                                                          BenchLazy.state ref
+                                                      * 'c store 
+                                                          BenchLazy.state ref
+                               type 'a seqNode
+                               type 'a seq
+                               val mapList : ('a -> 'b)
+                                              -> 'a list
+                                              -> 'b seqNode BenchLazy.delay
+                               val elements : 'a store BenchLazy.state ref
+                                               -> 'a seqNode BenchLazy.state 
+                                                 ref
+                               val head : 'a seqNode BenchLazy.state ref -> 'a
+                               val foldl : ('a * 'b -> 'a)
+                                            -> 'a BenchLazy.state ref
+                                            -> 'b seqNode BenchLazy.delay
+                                            -> 'a
+                               val total : real store BenchLazy.state ref
+                                            -> real
+                             end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/simple-nofib-kernel.sml]
+functor BenchSimpleNofibFn(<param>: sig
+                              val strict : bool
+                              val gridMax : int
+                            end) :
+                          
+                            sig
+                              structure A : <sig>
+                              structure L : <sig>
+                              type array
+                              type vector
+                              type state
+                              val delay : (unit -> 'a)
+                                           -> 'a BenchLazy.state ref
+                              val force : 'a BenchLazy.state ref -> 'a
+                              val sq : real -> real
+                              val pow : real * int -> real
+                              val range : int -> int -> int list
+                              val coords : 'a list
+                                            -> 'b list -> ('a * 'b) list
+                              val north : A.zone -> int * int
+                              val south : A.zone -> int * int
+                              val east : A.zone -> int * int
+                              val west : A.zone -> int * int
+                              val northeast : A.zone -> int * int
+                              val northwest : A.zone -> int * int
+                              val southeast : A.zone -> int * int
+                              val southwest : A.zone -> int * int
+                              val farnorth : A.zone -> int * int
+                              val farsouth : A.zone -> int * int
+                              val fareast : A.zone -> int * int
+                              val farwest : A.zone -> int * int
+                              val zoneA : 'a -> 'a
+                              val zoneB : A.zone -> int * int
+                              val zoneC : A.zone -> int * int
+                              val zoneD : A.zone -> int * int
+                              val cornerNE : A.zone -> int * int
+                              val cornerNW : A.zone -> int * int
+                              val cornerSE : 'a -> 'a
+                              val cornerSW : A.zone -> int * int
+                              val kmin : int
+                              val lmin : int
+                              val kmax : int
+                              val lmax : int
+                              val allNodes : (int * int) * (int * int)
+                              val interiorNodes : (int * int) * (int * int)
+                              val allZones : (int * int) * (int * int)
+                              val interiorZones : (int * int) * (int * int)
+                              val nodes : (int * int) list
+                              val zones : (int * int) list
+                              val northZones : (int * int) list
+                              val southZones : (int * int) list
+                              val eastZones : (int * int) list
+                              val westZones : (int * int) list
+                              val zoneDirection : int * int
+                                                   -> A.zone -> int * int
+                              val isInterior : int * int -> bool
+                              val constantHeat : real
+                              val dtMaximum : real
+                              val specificHeat : real
+                              val pi : real
+                              val pCoeffs : real A.store BenchLazy.state ref
+                              val eCoeffs : real A.store BenchLazy.state ref
+                              val pPoly : real A.store BenchLazy.state ref 
+                                                 A.store BenchLazy.state ref
+                              val ePoly : real A.store BenchLazy.state ref 
+                                                 A.store BenchLazy.state ref
+                              val rhoTable : real Vector.vector
+                              val thetaTable : real Vector.vector
+                              val pbb : real Vector.vector
+                              val pb : real Vector.vector
+                              val qb : real Vector.vector
+                              val vectorSub : 'a Vector.vector -> int -> 'a
+                              val boundaryTable : int
+                                                   -> int A.store 
+                                                       BenchLazy.state ref
+                              val nbc : int A.store BenchLazy.state ref
+                              val boundaryCode : int * int -> int
+                              val sum : real A.seqNode BenchLazy.delay -> real
+                              val sumMap : ('a -> real) -> 'a list -> real
+                              val minimum : real * real -> real
+                              val maximum : real * real -> real
+                              val minList : real A.seqNode BenchLazy.state ref
+                                             -> real
+                              val maxList : real A.seqNode BenchLazy.state ref
+                                             -> real
+                              val polynomial : real A.store BenchLazy.state 
+                                                        ref A.store 
+                                                    BenchLazy.state ref
+                                                -> int -> real -> real -> real
+                              val zonalPressure : real -> real -> real
+                              val zonalEnergy : real -> real -> real
+                              val newton : (real -> real) -> real -> real
+                              val boundaryPosition : real * real * real * real
+                                                      * real * real
+                                                      -> real BenchLazy.state 
+                                                        ref
+                                                      * real BenchLazy.state 
+                                                        ref
+                              val positionMatrix : (int * int
+                                                     -> real BenchLazy.state 
+                                                       ref
+                                                     * real BenchLazy.state 
+                                                       ref)
+                                                    -> real A.store 
+                                                        BenchLazy.state ref
+                                                    * real A.store 
+                                                        BenchLazy.state ref
+                              val zoneAreaVolume : real A.store 
+                                                        BenchLazy.state ref
+                                                    * real A.store 
+                                                        BenchLazy.state ref
+                                                    -> A.zone
+                                                    -> real BenchLazy.state 
+                                                      ref
+                                                    * real BenchLazy.state ref
+                              val lineIntegral : array
+                                                  -> array -> A.zone -> real
+                              val makePressure : real A.store BenchLazy.state 
+                                                    ref
+                                                  -> real A.store 
+                                                      BenchLazy.state ref
+                                                  -> real A.store 
+                                                      BenchLazy.state ref
+                              val makeEnergy : real A.store BenchLazy.state 
+                                                  ref
+                                                -> real A.store 
+                                                    BenchLazy.state ref
+                                                -> real A.store 
+                                                    BenchLazy.state ref
+                              val makeVelocity : real A.store BenchLazy.state 
+                                                    ref
+                                                  * real A.store 
+                                                      BenchLazy.state ref
+                                                  -> array * array
+                                                  -> array
+                                                  -> array
+                                                  -> real A.store 
+                                                      BenchLazy.state ref
+                                                  -> real A.store 
+                                                      BenchLazy.state ref
+                                                  -> real
+                                                  -> real A.store 
+                                                      BenchLazy.state ref
+                                                  * real A.store 
+                                                      BenchLazy.state ref
+                              val makePosition : real A.store BenchLazy.state 
+                                                    ref
+                                                  * real A.store 
+                                                      BenchLazy.state ref
+                                                  -> real
+                                                  -> real A.store 
+                                                      BenchLazy.state ref
+                                                  * real A.store 
+                                                      BenchLazy.state ref
+                                                  -> real A.store 
+                                                      BenchLazy.state ref
+                                                  * real A.store 
+                                                      BenchLazy.state ref
+                              val makeAreaDensity : real A.store 
+                                                         BenchLazy.state ref
+                                                     -> real A.store 
+                                                         BenchLazy.state ref
+                                                     -> real A.store 
+                                                         BenchLazy.state ref
+                                                     * real A.store 
+                                                         BenchLazy.state ref
+                                                     -> real A.store 
+                                                         BenchLazy.state ref
+                                                     * real A.store 
+                                                         BenchLazy.state ref
+                                                     * real A.store 
+                                                         BenchLazy.state ref
+                              val makeViscosity : real A.store BenchLazy.state 
+                                                     ref
+                                                   -> real A.store 
+                                                       BenchLazy.state ref
+                                                   * real A.store 
+                                                       BenchLazy.state ref
+                                                   -> real A.store 
+                                                       BenchLazy.state ref
+                                                   * real A.store 
+                                                       BenchLazy.state ref
+                                                   -> real A.store 
+                                                       BenchLazy.state ref
+                                                   -> real A.store 
+                                                       BenchLazy.state ref
+                                                   -> real A.store 
+                                                       BenchLazy.state ref
+                                                   * real A.store 
+                                                       BenchLazy.state ref
+                              val makeTemperature : real A.store 
+                                                         BenchLazy.state ref
+                                                     -> real A.store 
+                                                         BenchLazy.state ref
+                                                     -> real A.store 
+                                                         BenchLazy.state ref
+                                                     -> real A.store 
+                                                         BenchLazy.state ref
+                                                     -> real A.store 
+                                                         BenchLazy.state ref
+                                                     -> real A.store 
+                                                         BenchLazy.state ref
+                                                     -> real A.store 
+                                                         BenchLazy.state ref
+                              val makeCc : real A.store BenchLazy.state ref
+                                            -> real A.store BenchLazy.state 
+                                              ref
+                                            -> real A.store BenchLazy.state 
+                                              ref
+                              val makeSigma : real
+                                               -> real A.store BenchLazy.state 
+                                                 ref
+                                               -> real A.store BenchLazy.state 
+                                                 ref
+                                               -> real A.store BenchLazy.state 
+                                                 ref
+                              val makeGamma : real A.store BenchLazy.state ref
+                                               * real A.store BenchLazy.state 
+                                                 ref
+                                               -> real A.store BenchLazy.state 
+                                                 ref
+                                               -> (int * int -> int * int)
+                                               -> (int * int -> int * int)
+                                               -> real A.store BenchLazy.state 
+                                                 ref
+                              val makeAb : real A.store BenchLazy.state ref
+                                            -> real A.store BenchLazy.state 
+                                              ref
+                                            -> real A.store BenchLazy.state 
+                                              ref
+                                            -> (int * int -> int * int)
+                                            -> real A.store BenchLazy.state 
+                                              ref
+                                            * real A.store BenchLazy.state ref
+                              val makeTheta : real A.store BenchLazy.state ref
+                                               -> real A.store BenchLazy.state 
+                                                 ref
+                                               -> (int * int -> int * int)
+                                               -> real A.store BenchLazy.state 
+                                                 ref
+                              val heatConduction : real A.store 
+                                                        BenchLazy.state ref
+                                                    -> real
+                                                    -> real A.store 
+                                                        BenchLazy.state ref
+                                                    * real A.store 
+                                                        BenchLazy.state ref
+                                                    -> real A.store 
+                                                        BenchLazy.state ref
+                                                    -> real A.store 
+                                                        BenchLazy.state ref
+                                                    -> real A.store 
+                                                            BenchLazy.state 
+                                                          ref BenchLazy.state 
+                                                      ref
+                                                    * real A.store 
+                                                            BenchLazy.state 
+                                                          ref BenchLazy.state 
+                                                      ref
+                                                    * real A.store 
+                                                            BenchLazy.state 
+                                                          ref BenchLazy.state 
+                                                      ref
+                              val energyError : real A.store BenchLazy.state 
+                                                   ref
+                                                 * real A.store 
+                                                     BenchLazy.state ref
+                                                 -> real A.store 
+                                                     BenchLazy.state ref
+                                                 * real A.store 
+                                                     BenchLazy.state ref
+                                                 -> real A.store 
+                                                     BenchLazy.state ref
+                                                 -> real A.store 
+                                                     BenchLazy.state ref
+                                                 -> real A.store 
+                                                     BenchLazy.state ref
+                                                 -> real A.store 
+                                                     BenchLazy.state ref
+                                                 -> real A.store 
+                                                     BenchLazy.state ref
+                                                 -> real A.store 
+                                                     BenchLazy.state ref
+                                                 -> real A.store 
+                                                     BenchLazy.state ref
+                                                 -> real A.store 
+                                                     BenchLazy.state ref
+                                                 -> real -> real
+                              val timestep : real A.store BenchLazy.state ref
+                                              -> real A.store BenchLazy.state 
+                                                ref
+                                              -> real A.store BenchLazy.state 
+                                                ref
+                                              -> real
+                              val suspend : (unit -> 'a BenchLazy.state ref)
+                                             -> 'a BenchLazy.state ref
+                              val pairSuspend : (unit
+                                                  -> 'a BenchLazy.state ref
+                                                  * 'b BenchLazy.state ref)
+                                                 -> 'a BenchLazy.state ref
+                                                 * 'b BenchLazy.state ref
+                              val tripleSuspend : (unit
+                                                    -> 'a BenchLazy.state ref
+                                                    * 'b BenchLazy.state ref
+                                                    * 'c BenchLazy.state ref)
+                                                   -> 'a BenchLazy.state ref
+                                                   * 'b BenchLazy.state ref
+                                                   * 'c BenchLazy.state ref
+                              val initial : unit -> state
+                              val next : state -> state
+                              val arrays : state -> (string * array) list
+                              type totalValues
+                              type totals
+                              val totals : state -> totals
+                              val totalTotal : totals -> real
+                              val totalsList : ('a * 'a * 'a * 'a * 'a * 'a
+                                                     * 'a * 'a * 'a * 'a * 'a
+                                                     * 'a * 'a) 
+                                                    BenchLazy.state ref
+                                                -> 'a list
+                              val computeRaw : int -> totals * state
+                              val compute : int
+                                             -> real BenchLazy.delay list
+                                             * state
+                            end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/simple-nofib-check.sml]
+structure BenchSimpleReference : 
+  sig
+    val absolute : real
+    val relative : real
+    val close : real -> real -> bool
+    val decode : string -> real
+    val read : string -> string list
+    val scalar : real -> real -> unit
+    val unitRoundoff : real
+    val aggregateBound : int -> real -> real
+    val aggregate : real -> int -> real -> real -> unit
+    val totals : string list -> real BenchLazy.state ref list -> unit
+  end
+functor BenchSimpleCheckFn(<param>: sig
+                              val strict : bool
+                              val report : bool
+                              val gridMax : int
+                            end) :
+                          
+                            sig
+                              structure K : <sig>
+                              structure R : <sig>
+                              val integer : string -> int
+                              val parseHeader : string
+                                                 -> int
+                                                 -> string list
+                                                 -> int * string list
+                              val verifyState : int
+                                                 -> K.state
+                                                 -> string list -> int
+                              val run : string list -> string
+                            end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/simple-nofib-report-lazy/smoke-benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Check : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+"RESULT "
+"U"
+array ((2,2),(8,8)) [((2,2),-7.552537582484059e-20),((2,3),0),((2,4),-6.042030065987251e-19),((2,5),6.042030065987248e-19),((2,6),0),((2,7),0),((2,8),7.552537582484059e-20),((3,2),-7.209240419643877e-20),((3,3),0),((3,4),5.7673923357151e-19),((3,5),0),((3,6),0),((3,7),0),((3,8),7.209240419643877e-20),((4,2),0),((4,3),2.643388153869422e-19),((4,4),0),((4,5),0),((4,6),5.286776307738842e-19),((4,7),0),((4,8),0),((5,2),0),((5,3),2.440050603571772e-19),((5,4),-4.880101207143543e-19),((5,5),0),((5,6),0),((5,7),0),((5,8),0),((6,2),0),((6,3),0),((6,4),0),((6,5),0),((6,6),4.531522549490436e-19),((6,7),4.531522549490435e-19),((6,8),0),((7,2),5.2867763077388437e-20),((7,3),4.2294210461910745e-19),((7,4),4.2294210461910725e-19),((7,5),0),((7,6),0),((7,7),0),((7,8),-5.286776307738843e-20),((8,2),5.013910433791031e-18),((8,3),-0.018662783410138245),((8,4),-0.032324889077012996),((8,5),-0.037325566820276476),((8,6),-0.03232488907701296),((8,7),-0.01866278341013824),((8,8),4.092988109217167e-18)]
+"V"
+array ((2,2),(8,8)) [((2,2),-6.042030065987247e-19),((2,3),0),((2,4),-3.0210150329936254e-19),((2,5),7.55253758248406e-20),((2,6),0),((2,7),-6.042030065987242e-19),((2,8),6.042030065987247e-19),((3,2),0),((3,3),0),((3,4),0),((3,5),-7.209240419643875e-20),((3,6),0),((3,7),-5.7673923357151e-19),((3,8),0),((4,2),0),((4,3),0),((4,4),0),((4,5),-1.3216940769347098e-19),((4,6),2.643388153869421e-19),((4,7),5.286776307738842e-19),((4,8),0),((5,2),0),((5,3),0),((5,4),0),((5,5),-1.220025301785886e-19),((5,6),0),((5,7),0),((5,8),0),((6,2),0),((6,3),0),((6,4),2.2657612747452167e-19),((6,5),-1.1328806373726086e-19),((6,6),4.531522549490436e-19),((6,7),4.531522549490435e-19),((6,8),0),((7,2),0),((7,3),-4.2294210461910745e-19),((7,4),-2.1147105230955363e-19),((7,5),5.2867763077388407e-20),((7,6),0),((7,7),0),((7,8),0),((8,2),0.037325566820276504),((8,3),0.032324889077012996),((8,4),0.018662783410138245),((8,5),8.288300921164759e-18),((8,6),-0.018662783410138235),((8,7),-0.032324889077012975),((8,8),-0.03732556682027649)]
+"R"
+array ((1,1),(9,9)) [((1,1),-4.999999999999997),((1,2),-0.4999999999999998),((1,3),4.13397459621556),((1,4),7.660254037844386),((1,5),9.13397459621556),((1,6),8.160254037844387),((1,7),4.999999999999999),((1,8),-0.4999999999999998),((1,9),-4.5262794416288274),((2,1),-4.999999999999999),((2,2),-7.552537582484059e-22),((2,3),4.999999999999999),((2,4),8.660254037844386),((2,5),10),((2,6),8.660254037844387),((2,7),4.999999999999999),((2,8),7.552537582484059e-22),((2,9),-4.999999999999999),((3,1),-5.499999999999999),((3,2),-7.209240419643878e-22),((3,3),5.499999999999999),((3,4),9.526279441628823),((3,5),11),((3,6),9.526279441628827),((3,7),5.499999999999999),((3,8),7.209240419643878e-22),((3,9),-5.499999999999999),((4,1),-5.999999999999998),((4,2),0),((4,3),5.999999999999998),((4,4),10.392304845413262),((4,5),12),((4,6),10.392304845413264),((4,7),5.999999999999998),((4,8),0),((4,9),-5.999999999999998),((5,1),-6.499999999999998),((5,2),0),((5,3),6.499999999999998),((5,4),11.2583302491977),((5,5),13),((5,6),11.258330249197703),((5,7),6.499999999999998),((5,8),0),((5,9),-6.499999999999998),((6,1),-6.999999999999998),((6,2),0),((6,3),6.999999999999998),((6,4),12.124355652982139),((6,5),14),((6,6),12.124355652982143),((6,7),6.999999999999998),((6,8),0),((6,9),-6.999999999999998),((7,1),-7.499999999999998),((7,2),5.286776307738844e-22),((7,3),7.499999999999998),((7,4),12.990381056766577),((7,5),15),((7,6),12.99038105676658),((7,7),7.499999999999998),((7,8),-5.286776307738843e-22),((7,9),-7.499999999999998),((8,1),-7.999813372165897),((8,2),5.013910433791031e-20),((8,3),7.999813372165897),((8,4),13.856083211660245),((8,5),15.999626744331797),((8,6),13.856083211660248),((8,7),7.999813372165897),((8,8),4.092988109217167e-20),((8,9),-7.999813372165897),((9,1),-5.856269839494358),((9,2),0.49981337216589866),((9,3),8.865515527059564),((9,4),14.855709955992042),((9,5),16.865328899225467),((9,6),14.355896583826148),((9,7),7.999813372165897),((9,8),0.49981337216589866),((9,9),-4.9905676846006894)]
+"Z"
+array ((1,1),(9,9)) [((1,1),-7.660254037844387),((1,2),-9.13397459621556),((1,3),-8.160254037844387),((1,4),-5.000000000000001),((1,5),-0.4999999999999998),((1,6),4.13397459621556),((1,7),7.660254037844386),((1,8),9.13397459621556),((1,9),13.160254037844382),((2,1),-8.660254037844387),((2,2),-10),((2,3),-8.660254037844387),((2,4),-5.000000000000001),((2,5),7.55253758248406e-22),((2,6),4.999999999999999),((2,7),8.660254037844387),((2,8),10),((2,9),8.660254037844387),((3,1),-9.526279441628827),((3,2),-11),((3,3),-9.526279441628827),((3,4),-5.500000000000001),((3,5),-7.209240419643875e-22),((3,6),5.499999999999999),((3,7),9.526279441628827),((3,8),11),((3,9),9.526279441628827),((4,1),-10.392304845413264),((4,2),-12),((4,3),-10.392304845413264),((4,4),-6.000000000000002),((4,5),-1.3216940769347098e-21),((4,6),5.999999999999998),((4,7),10.392304845413264),((4,8),12),((4,9),10.392304845413264),((5,1),-11.258330249197703),((5,2),-13),((5,3),-11.258330249197703),((5,4),-6.500000000000002),((5,5),-1.220025301785886e-21),((5,6),6.499999999999998),((5,7),11.258330249197703),((5,8),13),((5,9),11.258330249197703),((6,1),-12.124355652982143),((6,2),-14),((6,3),-12.124355652982143),((6,4),-7.000000000000002),((6,5),-1.1328806373726085e-21),((6,6),6.999999999999998),((6,7),12.124355652982143),((6,8),14),((6,9),12.124355652982143),((7,1),-12.99038105676658),((7,2),-15),((7,3),-12.99038105676658),((7,4),-7.500000000000002),((7,5),5.286776307738841e-22),((7,6),7.499999999999998),((7,7),12.99038105676658),((7,8),15),((7,9),12.99038105676658),((8,1),-13.856083211660248),((8,2),-15.999626744331797),((8,3),-13.856083211660248),((8,4),-7.9998133721659),((8,5),8.28830092116476e-20),((8,6),7.999813372165897),((8,7),13.856083211660248),((8,8),15.999626744331797),((8,9),13.856083211660248),((9,1),-22.855523328157933),((9,2),-16.865328899225467),((9,3),-14.355896583826148),((9,4),-7.999813372165901),((9,5),0.49981337216589866),((9,6),8.865515527059564),((9,7),14.855709955992046),((9,8),16.865328899225467),((9,9),22.355709955992037)]
+"Alpha"
+array ((2,2),(9,9)) [((2,2),5.25),((2,3),5.25),((2,4),5.2499999999999964),((2,5),5.2499999999999964),((2,6),5.25),((2,7),5.250000000000007),((2,8),5.25),((2,9),5.25),((3,2),5.25),((3,3),5.25),((3,4),5.2499999999999964),((3,5),5.2499999999999964),((3,6),5.25),((3,7),5.250000000000007),((3,8),5.25),((3,9),5.25),((4,2),5.749999999999995),((4,3),5.749999999999995),((4,4),5.7499999999999964),((4,5),5.750000000000011),((4,6),5.749999999999993),((4,7),5.7499999999999964),((4,8),5.749999999999995),((4,9),5.749999999999995),((5,2),6.250000000000001),((5,3),6.250000000000001),((5,4),6.249999999999998),((5,5),6.25),((5,6),6.25),((5,7),6.250000000000007),((5,8),6.25),((5,9),6.25),((6,2),6.75),((6,3),6.75),((6,4),6.7500000000000036),((6,5),6.750000000000007),((6,6),6.75),((6,7),6.750000000000007),((6,8),6.75),((6,9),6.75),((7,2),7.249999999999994),((7,3),7.249999999999994),((7,4),7.2499999999999964),((7,5),7.25),((7,6),7.249999999999993),((7,7),7.2499999999999964),((7,8),7.249999999999994),((7,9),7.249999999999994),((8,2),7.747013989484325),((8,3),7.747013989484325),((8,4),7.747013989484323),((8,5),7.747013989484323),((8,6),7.747013989484323),((8,7),7.747013989484326),((8,8),7.747013989484324),((8,9),7.747013989484324),((9,2),7.747013989484325),((9,3),7.747013989484325),((9,4),7.747013989484323),((9,5),7.747013989484323),((9,6),7.747013989484323),((9,7),7.747013989484326),((9,8),7.747013989484324),((9,9),7.747013989484324)]
+"S"
+array ((2,2),(9,9)) [((2,2),86.65559736151845),((2,3),86.65559736151845),((2,4),236.74749475189975),((2,5),323.4030921134182),((2,6),323.40309211341844),((2,7),236.74749475190032),((2,8),86.65559736151847),((2,9),86.65559736151847),((3,2),86.65559736151845),((3,3),86.65559736151845),((3,4),236.74749475189975),((3,5),323.4030921134182),((3,6),323.40309211341844),((3,7),236.74749475190032),((3,8),86.65559736151847),((3,9),86.65559736151847),((4,2),103.93435695626218),((4,3),103.93435695626218),((4,4),283.9539438565082),((4,5),387.8883008127715),((4,6),387.8883008127703),((4,7),283.9539438565083),((4,8),103.93435695626218),((4,9),103.93435695626218),((5,2),122.78391287780107),((5,3),122.78391287780107),((5,4),335.4518883342629),((5,5),458.2358012120642),((5,6),458.2358012120642),((5,7),335.45188833426346),((5,8),122.78391287780104),((5,9),122.78391287780104),((6,2),143.20426512613471),((6,3),143.20426512613471),((6,4),391.24132818516415),((6,5),534.4455933112993),((6,6),534.4455933112988),((6,7),391.2413281851644),((6,8),143.20426512613471),((6,9),143.20426512613471),((7,2),165.19541370126305),((7,3),165.19541370126305),((7,4),451.32226340921085),((7,5),616.5176771104742),((7,6),616.5176771104739),((7,7),451.3222634092109),((7,8),165.19541370126305),((7,9),165.19541370126305),((8,2),188.68231284894844),((8,3),188.68231284894844),((8,4),515.489665192933),((8,5),704.1719780418816),((8,6),704.1719780418816),((8,7),515.4896651929333),((8,8),188.68231284894844),((8,9),188.68231284894844),((9,2),188.68231284894844),((9,3),188.68231284894844),((9,4),515.489665192933),((9,5),704.1719780418816),((9,6),704.1719780418816),((9,7),515.4896651929333),((9,8),188.68231284894844),((9,9),188.68231284894844)]
+"Rho"
+array ((2,2),(9,9)) [((2,2),1.4),((2,3),1.4),((2,4),1.4),((2,5),1.4),((2,6),1.4),((2,7),1.4),((2,8),1.4),((2,9),1.4),((3,2),1.4),((3,3),1.4),((3,4),1.4),((3,5),1.4),((3,6),1.4),((3,7),1.4),((3,8),1.4),((3,9),1.4),((4,2),1.4),((4,3),1.4),((4,4),1.4),((4,5),1.3999999999999997),((4,6),1.4),((4,7),1.4),((4,8),1.4),((4,9),1.4),((5,2),1.4),((5,3),1.4),((5,4),1.4),((5,5),1.4),((5,6),1.4),((5,7),1.4),((5,8),1.4),((5,9),1.4),((6,2),1.4),((6,3),1.4),((6,4),1.4),((6,5),1.4),((6,6),1.4),((6,7),1.4),((6,8),1.4),((6,9),1.4),((7,2),1.4),((7,3),1.4),((7,4),1.4),((7,5),1.4),((7,6),1.4),((7,7),1.4),((7,8),1.4),((7,9),1.4),((8,2),1.400556830443443),((8,3),1.400556830443443),((8,4),1.4005568304434441),((8,5),1.4005568304434433),((8,6),1.4005568304434446),((8,7),1.4005568304434441),((8,8),1.4005568304434433),((8,9),1.4005568304434433),((9,2),1.400556830443443),((9,3),1.400556830443443),((9,4),1.4005568304434441),((9,5),1.4005568304434433),((9,6),1.4005568304434446),((9,7),1.4005568304434441),((9,8),1.4005568304434433),((9,9),1.4005568304434433)]
+"P"
+array ((2,2),(9,9)) [((2,2),0.9377199998348322),((2,3),0.9377199998348322),((2,4),0.9377199990202599),((2,5),0.9377199990206425),((2,6),0.9377199998345834),((2,7),0.9377199999994013),((2,8),0.9377199999994384),((2,9),0.9377199999994384),((3,2),0.9377199998348322),((3,3),0.9377199998348322),((3,4),0.9377199990202599),((3,5),0.9377199990206425),((3,6),0.9377199998345834),((3,7),0.9377199999994013),((3,8),0.9377199999994384),((3,9),0.9377199999994384),((4,2),0.9377199915683396),((4,3),0.9377199915683396),((4,4),0.9377199630894277),((4,5),0.9377199631015546),((4,6),0.9377199915623834),((4,7),0.9377199999298984),((4,8),0.9377200000762329),((4,9),0.9377200000762329),((5,2),0.9377196118263986),((5,3),0.9377196118263986),((5,4),0.9377187377609119),((5,5),0.9377187381012815),((5,6),0.9377196117425651),((5,7),0.93771999188921),((5,8),0.9377199909104235),((5,9),0.9377199909104235),((6,2),0.9377032643728261),((6,3),0.9377032643728261),((6,4),0.9376795307948397),((6,5),0.9376795393093973),((6,6),0.9377032656990684),((6,7),0.9377190903794803),((6,8),0.9377210077686822),((6,9),0.9377210077686822),((7,2),0.9370419258854643),((7,3),0.9370419258854643),((7,4),0.9364995494569003),((7,5),0.9364997297283502),((7,6),0.9370420801558119),((7,7),0.9376228329430465),((7,8),0.9376153256707715),((7,9),0.9376153256707715),((8,2),0.9121643333528774),((8,3),0.9121643333528774),((8,4),0.9033241511987188),((8,5),0.903326808888605),((8,6),0.912170217062515),((8,7),0.928282793205923),((8,8),0.9482876420892163),((8,9),0.9482876420892163),((9,2),6),((9,3),6),((9,4),6),((9,5),6),((9,6),6),((9,7),6),((9,8),6),((9,9),6)]
+"Q"
+array ((2,2),(9,9)) [((2,2),1.092869093447191e-19),((2,3),1.092869093447191e-19),((2,4),4.3704848990187796e-20),((2,5),0),((2,6),1.1661890663591434e-19),((2,7),1.5660904221483934e-19),((2,8),1.0464502078310122e-19),((2,9),1.0464502078310122e-19),((3,2),1.092869093447191e-19),((3,3),1.092869093447191e-19),((3,4),4.3704848990187796e-20),((3,5),0),((3,6),1.1661890663591434e-19),((3,7),1.5660904221483934e-19),((3,8),1.0464502078310122e-19),((3,9),1.0464502078310122e-19),((4,2),0),((4,3),0),((4,4),4.1428554771948785e-20),((4,5),1.205802067355475e-19),((4,6),0),((4,7),0),((4,8),1.072688983111191e-20),((4,9),1.072688983111191e-20),((5,2),9.869996353532127e-22),((5,3),9.869996353532127e-22),((5,4),1.4833383520815418e-19),((5,5),9.166626232849755e-20),((5,6),1.081093478828578e-19),((5,7),1.752746548043988e-19),((5,8),9.915031758585733e-20),((5,9),9.915031758585733e-20),((6,2),1.1843995624238421e-20),((6,3),1.1843995624238421e-20),((6,4),6.702810974937443e-20),((6,5),5.998082489498412e-20),((6,6),0),((6,7),0),((6,8),0),((6,9),0),((7,2),0),((7,3),0),((7,4),0),((7,5),3.421128562119556e-20),((7,6),9.602095408836475e-20),((7,7),2.403766694460326e-19),((7,8),1.0665235016059775e-19),((7,9),1.0665235016059775e-19),((8,2),0.014732092039144608),((8,3),0.014732092039144608),((8,4),0.014732092039144606),((8,5),0.014732092039144596),((8,6),0.014732092039144596),((8,7),0.014732092039144594),((8,8),0.014732092039144596),((8,9),0.014732092039144596),((9,2),0),((9,3),0),((9,4),0),((9,5),0),((9,6),0),((9,7),0),((9,8),0),((9,9),0)]
+"epsilon"
+array ((2,2),(9,9)) [((2,2),0.9999999998238626),((2,3),0.9999999998238626),((2,4),0.9999999989551892),((2,5),0.9999999989555972),((2,6),0.9999999998235971),((2,7),0.9999999999993616),((2,8),0.9999999999994013),((2,9),0.9999999999994013),((3,2),0.9999999998238626),((3,3),0.9999999998238626),((3,4),0.9999999989551892),((3,5),0.9999999989555972),((3,6),0.9999999998235971),((3,7),0.9999999999993616),((3,8),0.9999999999994013),((3,9),0.9999999999994013),((4,2),0.9999999910083391),((4,3),0.9999999910083391),((4,4),0.99999996063796),((4,5),0.9999999606508925),((4,6),0.9999999910019872),((4,7),0.9999999999252426),((4,8),1.000000000081296),((4,9),1.000000000081296),((5,2),0.9999995860453),((5,3),0.9999995860453),((5,4),0.9999986539275177),((5,5),0.9999986542904935),((5,6),0.9999995859558987),((5,7),0.9999999913505205),((5,8),0.9999999903067265),((5,9),0.9999999903067265),((6,2),0.9999821528524786),((6,3),0.9999821528524786),((6,4),0.9999568429753443),((6,5),0.9999568520554082),((6,6),0.999982154266805),((6,7),0.9999990299657471),((6,8),1.0000010747010646),((6,9),1.0000010747010646),((7,2),0.9992768906341599),((7,3),0.9992768906341599),((7,4),0.9986984915080198),((7,5),0.998698683752453),((7,6),0.9992770551505908),((7,7),0.9998963794555374),((7,8),0.999888373577157),((7,9),0.999888373577157),((8,2),0.9723602748931356),((8,3),0.9723602748931356),((8,4),0.9629367076309432),((8,5),0.9629395407082456),((8,6),0.9723665468830724),((8,7),0.9895424310907487),((8,8),1.0108674485772964),((8,9),1.0108674485772964),((9,2),0.9723602748931356),((9,3),0.9723602748931356),((9,4),0.9629367076309432),((9,5),0.9629395407082456),((9,6),0.9723665468830724),((9,7),0.9895424310907487),((9,8),1.0108674485772964),((9,9),1.0108674485772964)]
+theta
+array ((2,2),(9,9)) [((2,2),0),((2,3),0),((2,4),0),((2,5),0),((2,6),0),((2,7),0),((2,8),0),((2,9),0),((3,2),0),((3,3),9.999999998238625),((3,4),9.999999989551892),((3,5),9.999999989555972),((3,6),9.999999998235971),((3,7),9.999999999993616),((3,8),9.999999999994012),((3,9),0),((4,2),0),((4,3),9.99999991008339),((4,4),9.9999996063796),((4,5),9.999999606508924),((4,6),9.999999910019872),((4,7),9.999999999252426),((4,8),10.00000000081296),((4,9),0),((5,2),0),((5,3),9.999995860453),((5,4),9.999986539275177),((5,5),9.999986542904935),((5,6),9.999995859558986),((5,7),9.999999913505205),((5,8),9.999999903067264),((5,9),0),((6,2),0),((6,3),9.999821528524786),((6,4),9.999568429753442),((6,5),9.999568520554082),((6,6),9.99982154266805),((6,7),9.99999029965747),((6,8),10.000010747010645),((6,9),0),((7,2),0),((7,3),9.992768906341599),((7,4),9.986984915080198),((7,5),9.98698683752453),((7,6),9.992770551505908),((7,7),9.998963794555374),((7,8),9.99888373577157),((7,9),0),((8,2),0),((8,3),9.723602748931356),((8,4),9.629367076309432),((8,5),9.629395407082455),((8,6),9.723665468830724),((8,7),9.895424310907487),((8,8),10.108674485772964),((8,9),0),((9,2),0),((9,3),0),((9,4),0),((9,5),0),((9,6),0),((9,7),0),((9,8),0),((9,9),0)]
+0.01
+341.2585317145318
+done
+RESULT 1:708
+PASS simple-nofib-report-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+"RESULT "
+"U"
+array ((2,2),(8,8)) [((2,2),-7.5525375824840588e-20),((2,3),0.0),((2,4),-6.042030065987247e-19),((2,5),6.0420300659872499e-19),((2,6),0.0),((2,7),0.0),((2,8),7.5525375824840588e-20),((3,2),-7.2092404196438772e-20),((3,3),0.0),((3,4),0.0),((3,5),0.0),((3,6),-5.7673923357151018e-19),((3,7),5.7673923357150999e-19),((3,8),7.2092404196438772e-20),((4,2),0.0),((4,3),2.6433881538694215e-19),((4,4),5.2867763077388421e-19),((4,5),0.0),((4,6),0.0),((4,7),0.0),((4,8),0.0),((5,2),-1.2200253017858863e-19),((5,3),2.4400506035717721e-19),((5,4),0.0),((5,5),0.0),((5,6),0.0),((5,7),0.0),((5,8),-6.1001265089294327e-20),((6,2),0.0),((6,3),0.0),((6,4),0.0),((6,5),0.0),((6,6),0.0),((6,7),4.5315225494904362e-19),((6,8),0.0),((7,2),5.2867763077388443e-20),((7,3),4.2294210461910745e-19),((7,4),4.2294210461910735e-19),((7,5),0.0),((7,6),0.0),((7,7),0.0),((7,8),-5.2867763077388437e-20),((8,2),5.0139104337910308e-18),((8,3),-0.018662783410138245),((8,4),-0.032324889077012996),((8,5),-0.037325566820276497),((8,6),-0.032324889077012989),((8,7),-0.018662783410138249),((8,8),4.092988109217167e-18)]
+"V"
+array ((2,2),(8,8)) [((2,2),-6.042030065987247e-19),((2,3),0.0),((2,4),3.0210150329936235e-19),((2,5),7.5525375824840624e-20),((2,6),0.0),((2,7),0.0),((2,8),6.042030065987247e-19),((3,2),0.0),((3,3),0.0),((3,4),0.0),((3,5),7.2092404196438797e-20),((3,6),0.0),((3,7),0.0),((3,8),0.0),((4,2),0.0),((4,3),-5.2867763077388431e-19),((4,4),-2.6433881538694211e-19),((4,5),0.0),((4,6),2.6433881538694215e-19),((4,7),5.2867763077388421e-19),((4,8),0.0),((5,2),0.0),((5,3),0.0),((5,4),0.0),((5,5),-1.2200253017858865e-19),((5,6),0.0),((5,7),0.0),((5,8),0.0),((6,2),0.0),((6,3),4.5315225494904362e-19),((6,4),2.2657612747452181e-19),((6,5),-1.1328806373726095e-19),((6,6),4.5315225494904362e-19),((6,7),0.0),((6,8),0.0),((7,2),0.0),((7,3),-4.2294210461910745e-19),((7,4),-2.1147105230955367e-19),((7,5),5.2867763077388431e-20),((7,6),0.0),((7,7),0.0),((7,8),0.0),((8,2),0.037325566820276504),((8,3),0.032324889077012989),((8,4),0.018662783410138245),((8,5),5.01391043379103e-18),((8,6),-0.018662783410138242),((8,7),-0.032324889077012975),((8,8),-0.03732556682027649)]
+"R"
+array ((1,1),(9,9)) [((1,1),-4.9999999999999973),((1,2),-0.49999999999999922),((1,3),4.1339745962155598),((1,4),7.6602540378443846),((1,5),9.1339745962155607),((1,6),8.1602540378443873),((1,7),4.9999999999999991),((1,8),-0.49999999999999922),((1,9),-4.5262794416288266),((2,1),-4.9999999999999973),((2,2),6.1232264431991835e-16),((2,3),4.9999999999999991),((2,4),8.6602540378443855),((2,5),10.0),((2,6),8.6602540378443873),((2,7),4.9999999999999991),((2,8),6.123241548274349e-16),((2,9),-4.9999999999999973),((3,1),-5.4999999999999973),((3,2),6.7355501860700235e-16),((3,3),5.4999999999999991),((3,4),9.5262794416288248),((3,5),11.0),((3,6),9.5262794416288266),((3,7),5.4999999999999991),((3,8),6.7355646045508625e-16),((3,9),-5.4999999999999973),((4,1),-5.9999999999999964),((4,2),7.3478807948841188e-16),((4,3),5.9999999999999982),((4,4),10.392304845413264),((4,5),12.0),((4,6),10.392304845413264),((4,7),5.9999999999999982),((4,8),7.3478807948841188e-16),((4,9),-5.9999999999999964),((5,1),-6.4999999999999964),((5,2),7.9601919942047774e-16),((5,3),6.4999999999999982),((5,4),11.258330249197702),((5,5),13.0),((5,6),11.258330249197703),((5,7),6.4999999999999982),((5,8),7.960198094331287e-16),((5,9),-6.4999999999999964),((6,1),-6.9999999999999964),((6,2),8.5725275940314722e-16),((6,3),6.9999999999999982),((6,4),12.124355652982141),((6,5),14.0),((6,6),12.124355652982143),((6,7),6.9999999999999982),((6,8),8.5725275940314722e-16),((6,9),-6.9999999999999964),((7,1),-7.4999999999999964),((7,2),9.1848562803814578e-16),((7,3),7.4999999999999982),((7,4),12.990381056766578),((7,5),15.0),((7,6),12.99038105676658),((7,7),7.4999999999999982),((7,8),9.184845706828842e-16),((7,9),-7.4999999999999964),((8,1),-7.9998133721658951),((8,2),9.7976757842222039e-16),((8,3),7.9998133721658968),((8,4),13.856083211660247),((8,5),15.999626744331797),((8,6),13.856083211660248),((8,7),7.9998133721658968),((8,8),9.7975836919897473e-16),((8,9),-7.9998133721658951),((9,1),-5.8562698394943542),((9,2),0.49981337216589966),((9,3),8.8655155270595642),((9,4),14.855709955992044),((9,5),16.865328899225467),((9,6),14.355896583826148),((9,7),7.9998133721658968),((9,8),0.49981337216589966),((9,9),-4.9905676846006886)]
+"Z"
+array ((1,1),(9,9)) [((1,1),-7.6602540378443873),((1,2),-9.1339745962155607),((1,3),-8.1602540378443873),((1,4),-4.9999999999999991),((1,5),-0.49999999999999994),((1,6),4.133974596215559),((1,7),7.6602540378443864),((1,8),9.1339745962155607),((1,9),13.160254037844382),((2,1),-8.6602540378443873),((2,2),-10.0),((2,3),-8.6602540378443873),((2,4),-5.0),((2,5),7.5525375824840622e-22),((2,6),4.9999999999999982),((2,7),8.6602540378443873),((2,8),10.0),((2,9),8.6602540378443873),((3,1),-9.5262794416288266),((3,2),-11.0),((3,3),-9.5262794416288266),((3,4),-5.5),((3,5),7.2092404196438797e-22),((3,6),5.4999999999999982),((3,7),9.5262794416288266),((3,8),11.0),((3,9),9.5262794416288266),((4,1),-10.392304845413264),((4,2),-12.0),((4,3),-10.392304845413264),((4,4),-6.0),((4,5),0.0),((4,6),5.9999999999999982),((4,7),10.392304845413264),((4,8),12.0),((4,9),10.392304845413264),((5,1),-11.258330249197705),((5,2),-13.0),((5,3),-11.258330249197703),((5,4),-6.5),((5,5),-1.2200253017858866e-21),((5,6),6.4999999999999982),((5,7),11.258330249197703),((5,8),13.0),((5,9),11.258330249197705),((6,1),-12.124355652982143),((6,2),-14.0),((6,3),-12.124355652982143),((6,4),-7.0),((6,5),-1.1328806373726095e-21),((6,6),6.9999999999999973),((6,7),12.124355652982143),((6,8),14.0),((6,9),12.124355652982143),((7,1),-12.99038105676658),((7,2),-15.0),((7,3),-12.99038105676658),((7,4),-7.5),((7,5),5.2867763077388431e-22),((7,6),7.4999999999999973),((7,7),12.99038105676658),((7,8),15.0),((7,9),12.99038105676658),((8,1),-13.856083211660248),((8,2),-15.999626744331797),((8,3),-13.856083211660248),((8,4),-7.9998133721658986),((8,5),5.0139104337910299e-20),((8,6),7.9998133721658959),((8,7),13.856083211660248),((8,8),15.999626744331797),((8,9),13.856083211660248),((9,1),-22.855523328157933),((9,2),-16.865328899225467),((9,3),-14.355896583826148),((9,4),-7.9998133721658986),((9,5),0.49981337216589872),((9,6),8.8655155270595642),((9,7),14.855709955992046),((9,8),16.865328899225467),((9,9),22.355709955992037)]
+"Alpha"
+array ((2,2),(9,9)) [((2,2),5.25),((2,3),5.25),((2,4),5.25),((2,5),5.25),((2,6),5.2499999999999964),((2,7),5.2500000000000071),((2,8),5.25),((2,9),5.25),((3,2),5.25),((3,3),5.25),((3,4),5.25),((3,5),5.25),((3,6),5.2499999999999964),((3,7),5.2500000000000071),((3,8),5.25),((3,9),5.25),((4,2),5.7499999999999947),((4,3),5.7499999999999947),((4,4),5.75),((4,5),5.75),((4,6),5.7499999999999893),((4,7),5.7499999999999964),((4,8),5.7499999999999947),((4,9),5.7499999999999947),((5,2),6.25),((5,3),6.25),((5,4),6.25),((5,5),6.25),((5,6),6.25),((5,7),6.2500000000000071),((5,8),6.2499999999999991),((5,9),6.2499999999999991),((6,2),6.75),((6,3),6.75),((6,4),6.7500000000000071),((6,5),6.75),((6,6),6.7499999999999929),((6,7),6.7500000000000036),((6,8),6.7499999999999991),((6,9),6.7499999999999991),((7,2),7.2499999999999929),((7,3),7.2499999999999929),((7,4),7.2499999999999964),((7,5),7.2499999999999929),((7,6),7.25),((7,7),7.25),((7,8),7.2499999999999929),((7,9),7.2499999999999929),((8,2),7.7470139894843237),((8,3),7.7470139894843237),((8,4),7.7470139894843264),((8,5),7.7470139894843228),((8,6),7.7470139894843228),((8,7),7.7470139894843335),((8,8),7.7470139894843228),((8,9),7.7470139894843228),((9,2),7.7470139894843237),((9,3),7.7470139894843237),((9,4),7.7470139894843264),((9,5),7.7470139894843228),((9,6),7.7470139894843228),((9,7),7.7470139894843335),((9,8),7.7470139894843228),((9,9),7.7470139894843228)]
+"S"
+array ((2,2),(9,9)) [((2,2),86.655597361518474),((2,3),86.655597361518474),((2,4),236.74749475189992),((2,5),323.40309211341838),((2,6),323.40309211341821),((2,7),236.74749475190032),((2,8),86.655597361518474),((2,9),86.655597361518474),((3,2),86.655597361518474),((3,3),86.655597361518474),((3,4),236.74749475189992),((3,5),323.40309211341838),((3,6),323.40309211341821),((3,7),236.74749475190032),((3,8),86.655597361518474),((3,9),86.655597361518474),((4,2),103.93435695626219),((4,3),103.93435695626219),((4,4),283.95394385650843),((4,5),387.88830081277075),((4,6),387.88830081277001),((4,7),283.95394385650832),((4,8),103.93435695626219),((4,9),103.93435695626219),((5,2),122.78391287780109),((5,3),122.78391287780109),((5,4),335.45188833426306),((5,5),458.23580121206419),((5,6),458.23580121206419),((5,7),335.45188833426346),((5,8),122.78391287780101),((5,9),122.78391287780101),((6,2),143.20426512613471),((6,3),143.20426512613471),((6,4),391.24132818516438),((6,5),534.44559331129869),((6,6),534.44559331129824),((6,7),391.24132818516421),((6,8),143.20426512613469),((6,9),143.20426512613469),((7,2),165.19541370126305),((7,3),165.19541370126305),((7,4),451.3222634092109),((7,5),616.51767711047376),((7,6),616.51767711047444),((7,7),451.32226340921119),((7,8),165.19541370126305),((7,9),165.19541370126305),((8,2),188.68231284894844),((8,3),188.68231284894844),((8,4),515.48966519293333),((8,5),704.17197804188163),((8,6),704.17197804188163),((8,7),515.4896651929339),((8,8),188.68231284894844),((8,9),188.68231284894844),((9,2),188.68231284894844),((9,3),188.68231284894844),((9,4),515.48966519293333),((9,5),704.17197804188163),((9,6),704.17197804188163),((9,7),515.4896651929339),((9,8),188.68231284894844),((9,9),188.68231284894844)]
+"Rho"
+array ((2,2),(9,9)) [((2,2),1.3999999999999999),((2,3),1.3999999999999999),((2,4),1.3999999999999999),((2,5),1.3999999999999999),((2,6),1.3999999999999999),((2,7),1.3999999999999999),((2,8),1.3999999999999999),((2,9),1.3999999999999999),((3,2),1.3999999999999999),((3,3),1.3999999999999999),((3,4),1.3999999999999999),((3,5),1.3999999999999999),((3,6),1.3999999999999999),((3,7),1.3999999999999999),((3,8),1.3999999999999999),((3,9),1.3999999999999999),((4,2),1.4000000000000001),((4,3),1.4000000000000001),((4,4),1.3999999999999999),((4,5),1.3999999999999997),((4,6),1.3999999999999999),((4,7),1.3999999999999999),((4,8),1.4000000000000001),((4,9),1.4000000000000001),((5,2),1.3999999999999999),((5,3),1.3999999999999999),((5,4),1.3999999999999999),((5,5),1.3999999999999999),((5,6),1.3999999999999999),((5,7),1.3999999999999999),((5,8),1.3999999999999999),((5,9),1.3999999999999999),((6,2),1.3999999999999999),((6,3),1.3999999999999999),((6,4),1.3999999999999999),((6,5),1.3999999999999999),((6,6),1.3999999999999999),((6,7),1.3999999999999999),((6,8),1.3999999999999999),((6,9),1.3999999999999999),((7,2),1.3999999999999999),((7,3),1.3999999999999999),((7,4),1.3999999999999999),((7,5),1.3999999999999999),((7,6),1.3999999999999999),((7,7),1.4000000000000001),((7,8),1.3999999999999999),((7,9),1.3999999999999999),((8,2),1.400556830443443),((8,3),1.400556830443443),((8,4),1.4005568304434433),((8,5),1.4005568304434433),((8,6),1.4005568304434433),((8,7),1.4005568304434428),((8,8),1.4005568304434433),((8,9),1.4005568304434433),((9,2),1.400556830443443),((9,3),1.400556830443443),((9,4),1.4005568304434433),((9,5),1.4005568304434433),((9,6),1.4005568304434433),((9,7),1.4005568304434428),((9,8),1.4005568304434433),((9,9),1.4005568304434433)]
+"P"
+array ((2,2),(9,9)) [((2,2),0.93771999983483223),((2,3),0.93771999983483223),((2,4),0.93771999902025993),((2,5),0.93771999902064251),((2,6),0.93771999983458343),((2,7),0.93771999999940125),((2,8),0.93771999999943845),((2,9),0.93771999999943845),((3,2),0.93771999983483223),((3,3),0.93771999983483223),((3,4),0.93771999902025993),((3,5),0.93771999902064251),((3,6),0.93771999983458343),((3,7),0.93771999999940125),((3,8),0.93771999999943845),((3,9),0.93771999999943845),((4,2),0.93771999156833996),((4,3),0.93771999156833996),((4,4),0.93771996308942807),((4,5),0.93771996310155481),((4,6),0.93771999156238339),((4,7),0.93771999992989841),((4,8),0.9377200000762328),((4,9),0.9377200000762328),((5,2),0.93771961182639862),((5,3),0.93771961182639862),((5,4),0.93771873776091175),((5,5),0.93771873810128148),((5,6),0.93771961174256513),((5,7),0.93771999188920996),((5,8),0.93771999091042346),((5,9),0.93771999091042346),((6,2),0.93770326437282614),((6,3),0.93770326437282614),((6,4),0.93767953079483968),((6,5),0.93767953930939729),((6,6),0.93770326569906837),((6,7),0.93771909037948031),((6,8),0.93772100776868217),((6,9),0.93772100776868217),((7,2),0.93704192588546431),((7,3),0.93704192588546431),((7,4),0.93649954945690028),((7,5),0.93649972972835027),((7,6),0.93704208015581214),((7,7),0.9376228329430466),((7,8),0.93761532567077155),((7,9),0.93761532567077155),((8,2),0.91216433335287739),((8,3),0.91216433335287739),((8,4),0.9033241511987179),((8,5),0.90332680888860495),((8,6),0.912170217062514),((8,7),0.92828279320592222),((8,8),0.94828764208921601),((8,9),0.94828764208921601),((9,2),6.0),((9,3),6.0),((9,4),6.0),((9,5),6.0),((9,6),6.0),((9,7),6.0),((9,8),6.0),((9,9),6.0)]
+"Q"
+array ((2,2),(9,9)) [((2,2),1.092869093447191e-19),((2,3),1.092869093447191e-19),((2,4),4.0062778241005435e-20),((2,5),0.0),((2,6),2.140985664298929e-19),((2,7),1.5296697146565713e-19),((2,8),8.1625283200664455e-20),((2,9),8.1625283200664455e-20),((3,2),1.092869093447191e-19),((3,3),1.092869093447191e-19),((3,4),4.0062778241005435e-20),((3,5),0.0),((3,6),2.140985664298929e-19),((3,7),1.5296697146565713e-19),((3,8),8.1625283200664455e-20),((3,9),8.1625283200664455e-20),((4,2),0.0),((4,3),0.0),((4,4),0.0),((4,5),0.0),((4,6),0.0),((4,7),1.1791204050477737e-19),((4,8),0.0),((4,9),0.0),((5,2),1.0268084988841525e-19),((5,3),1.0268084988841525e-19),((5,4),1.7797118795523576e-19),((5,5),1.026808498884152e-19),((5,6),1.8752993071710851e-20),((5,7),1.051647928826393e-19),((5,8),9.9808159566142162e-20),((5,9),9.9808159566142162e-20),((6,2),8.8012157047213022e-20),((6,3),8.8012157047213022e-20),((6,4),1.3747948242932922e-19),((6,5),8.4444715284420487e-20),((6,6),0.0),((6,7),1.2018833472301632e-19),((6,8),0.0),((6,9),0.0),((7,2),0.0),((7,3),0.0),((7,4),2.0031389120502743e-21),((7,5),3.4211285621195605e-20),((7,6),1.3930794853270909e-20),((7,7),1.6997197300432686e-19),((7,8),2.4562190925503978e-20),((7,9),2.4562190925503978e-20),((8,2),0.014732092039144608),((8,3),0.014732092039144608),((8,4),0.014732092039144603),((8,5),0.014732092039144603),((8,6),0.014732092039144606),((8,7),0.014732092039144599),((8,8),0.014732092039144596),((8,9),0.014732092039144596),((9,2),0.0),((9,3),0.0),((9,4),0.0),((9,5),0.0),((9,6),0.0),((9,7),0.0),((9,8),0.0),((9,9),0.0)]
+"epsilon"
+array ((2,2),(9,9)) [((2,2),0.99999999982386256),((2,3),0.99999999982386256),((2,4),0.99999999895518921),((2,5),0.99999999895559721),((2,6),0.99999999982359711),((2,7),0.99999999999936162),((2,8),0.99999999999940126),((2,9),0.99999999999940126),((3,2),0.99999999982386256),((3,3),0.99999999982386256),((3,4),0.99999999895518921),((3,5),0.99999999895559721),((3,6),0.99999999982359711),((3,7),0.99999999999936162),((3,8),0.99999999999940126),((3,9),0.99999999999940126),((4,2),0.99999999100833925),((4,3),0.99999999100833925),((4,4),0.99999996063796037),((4,5),0.99999996065089258),((4,6),0.99999999100198722),((4,7),0.99999999992524258),((4,8),1.0000000000812959),((4,9),1.0000000000812959),((5,2),0.99999958604530004),((5,3),0.99999958604530004),((5,4),0.99999865392751763),((5,5),0.9999986542904935),((5,6),0.99999958595589866),((5,7),0.99999999135052053),((5,8),0.99999999030672648),((5,9),0.99999999030672648),((6,2),0.9999821528524786),((6,3),0.9999821528524786),((6,4),0.99995684297534426),((6,5),0.99995685205540819),((6,6),0.99998215426680503),((6,7),0.99999902996574708),((6,8),1.0000010747010646),((6,9),1.0000010747010646),((7,2),0.99927689063415992),((7,3),0.99927689063415992),((7,4),0.99869849150801981),((7,5),0.99869868375245319),((7,6),0.99927705515059095),((7,7),0.99989637945553744),((7,8),0.99988837357715699),((7,9),0.99988837357715699),((8,2),0.97236027489313559),((8,3),0.97236027489313559),((8,4),0.96293670763094286),((8,5),0.96293954070824561),((8,6),0.97236654688307245),((8,7),0.98954243109074869),((8,8),1.0108674485772962),((8,9),1.0108674485772962),((9,2),0.97236027489313559),((9,3),0.97236027489313559),((9,4),0.96293670763094286),((9,5),0.96293954070824561),((9,6),0.97236654688307245),((9,7),0.98954243109074869),((9,8),1.0108674485772962),((9,9),1.0108674485772962)]
+theta
+array ((2,2),(9,9)) [((2,2),0.0),((2,3),0.0),((2,4),0.0),((2,5),0.0),((2,6),0.0),((2,7),0.0),((2,8),0.0),((2,9),0.0),((3,2),0.0),((3,3),9.999999998238625),((3,4),9.9999999895518918),((3,5),9.9999999895559721),((3,6),9.9999999982359711),((3,7),9.9999999999936158),((3,8),9.9999999999940119),((3,9),0.0),((4,2),0.0),((4,3),9.9999999100833925),((4,4),9.9999996063796033),((4,5),9.9999996065089256),((4,6),9.9999999100198718),((4,7),9.9999999992524256),((4,8),10.000000000812959),((4,9),0.0),((5,2),0.0),((5,3),9.9999958604529997),((5,4),9.9999865392751754),((5,5),9.999986542904935),((5,6),9.999995859558986),((5,7),9.9999999135052047),((5,8),9.9999999030672644),((5,9),0.0),((6,2),0.0),((6,3),9.9998215285247856),((6,4),9.9995684297534417),((6,5),9.9995685205540816),((6,6),9.9998215426680499),((6,7),9.9999902996574708),((6,8),10.000010747010645),((6,9),0.0),((7,2),0.0),((7,3),9.992768906341599),((7,4),9.9869849150801979),((7,5),9.9869868375245314),((7,6),9.9927705515059095),((7,7),9.9989637945553742),((7,8),9.9988837357715692),((7,9),0.0),((8,2),0.0),((8,3),9.7236027489313557),((8,4),9.6293670763094283),((8,5),9.6293954070824554),((8,6),9.723665468830724),((8,7),9.8954243109074866),((8,8),10.10867448577296),((8,9),0.0),((9,2),0.0),((9,3),0.0),((9,4),0.0),((9,5),0.0),((9,6),0.0),((9,7),0.0),((9,8),0.0),((9,9),0.0)]
+0.01
+341.25853171453173
+done
+RESULT 1:708
+PASS simple-nofib-report-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+"RESULT "
+"U"
+array ((2,2),(8,8)) [((2,2),-7.5525375824840588e-20),((2,3),0.0),((2,4),-6.042030065987247e-19),((2,5),6.0420300659872499e-19),((2,6),0.0),((2,7),0.0),((2,8),7.5525375824840588e-20),((3,2),-7.2092404196438772e-20),((3,3),0.0),((3,4),0.0),((3,5),0.0),((3,6),-5.7673923357151018e-19),((3,7),5.7673923357150999e-19),((3,8),7.2092404196438772e-20),((4,2),0.0),((4,3),2.6433881538694215e-19),((4,4),5.2867763077388421e-19),((4,5),0.0),((4,6),0.0),((4,7),0.0),((4,8),0.0),((5,2),-1.2200253017858863e-19),((5,3),2.4400506035717721e-19),((5,4),0.0),((5,5),0.0),((5,6),0.0),((5,7),0.0),((5,8),-6.1001265089294327e-20),((6,2),0.0),((6,3),0.0),((6,4),0.0),((6,5),0.0),((6,6),0.0),((6,7),4.5315225494904362e-19),((6,8),0.0),((7,2),5.2867763077388443e-20),((7,3),4.2294210461910745e-19),((7,4),4.2294210461910735e-19),((7,5),0.0),((7,6),0.0),((7,7),0.0),((7,8),-5.2867763077388437e-20),((8,2),5.0139104337910308e-18),((8,3),-0.018662783410138245),((8,4),-0.032324889077012996),((8,5),-0.037325566820276497),((8,6),-0.032324889077012989),((8,7),-0.018662783410138249),((8,8),4.092988109217167e-18)]
+"V"
+array ((2,2),(8,8)) [((2,2),-6.042030065987247e-19),((2,3),0.0),((2,4),3.0210150329936235e-19),((2,5),7.5525375824840624e-20),((2,6),0.0),((2,7),0.0),((2,8),6.042030065987247e-19),((3,2),0.0),((3,3),0.0),((3,4),0.0),((3,5),7.2092404196438797e-20),((3,6),0.0),((3,7),0.0),((3,8),0.0),((4,2),0.0),((4,3),-5.2867763077388431e-19),((4,4),-2.6433881538694211e-19),((4,5),0.0),((4,6),2.6433881538694215e-19),((4,7),5.2867763077388421e-19),((4,8),0.0),((5,2),0.0),((5,3),0.0),((5,4),0.0),((5,5),-1.2200253017858865e-19),((5,6),0.0),((5,7),0.0),((5,8),0.0),((6,2),0.0),((6,3),4.5315225494904362e-19),((6,4),2.2657612747452181e-19),((6,5),-1.1328806373726095e-19),((6,6),4.5315225494904362e-19),((6,7),0.0),((6,8),0.0),((7,2),0.0),((7,3),-4.2294210461910745e-19),((7,4),-2.1147105230955367e-19),((7,5),5.2867763077388431e-20),((7,6),0.0),((7,7),0.0),((7,8),0.0),((8,2),0.037325566820276504),((8,3),0.032324889077012989),((8,4),0.018662783410138245),((8,5),5.01391043379103e-18),((8,6),-0.018662783410138242),((8,7),-0.032324889077012975),((8,8),-0.03732556682027649)]
+"R"
+array ((1,1),(9,9)) [((1,1),-4.9999999999999973),((1,2),-0.49999999999999922),((1,3),4.1339745962155598),((1,4),7.6602540378443846),((1,5),9.1339745962155607),((1,6),8.1602540378443873),((1,7),4.9999999999999991),((1,8),-0.49999999999999922),((1,9),-4.5262794416288266),((2,1),-4.9999999999999973),((2,2),6.1232264431991835e-16),((2,3),4.9999999999999991),((2,4),8.6602540378443855),((2,5),10.0),((2,6),8.6602540378443873),((2,7),4.9999999999999991),((2,8),6.123241548274349e-16),((2,9),-4.9999999999999973),((3,1),-5.4999999999999973),((3,2),6.7355501860700235e-16),((3,3),5.4999999999999991),((3,4),9.5262794416288248),((3,5),11.0),((3,6),9.5262794416288266),((3,7),5.4999999999999991),((3,8),6.7355646045508625e-16),((3,9),-5.4999999999999973),((4,1),-5.9999999999999964),((4,2),7.3478807948841188e-16),((4,3),5.9999999999999982),((4,4),10.392304845413264),((4,5),12.0),((4,6),10.392304845413264),((4,7),5.9999999999999982),((4,8),7.3478807948841188e-16),((4,9),-5.9999999999999964),((5,1),-6.4999999999999964),((5,2),7.9601919942047774e-16),((5,3),6.4999999999999982),((5,4),11.258330249197702),((5,5),13.0),((5,6),11.258330249197703),((5,7),6.4999999999999982),((5,8),7.960198094331287e-16),((5,9),-6.4999999999999964),((6,1),-6.9999999999999964),((6,2),8.5725275940314722e-16),((6,3),6.9999999999999982),((6,4),12.124355652982141),((6,5),14.0),((6,6),12.124355652982143),((6,7),6.9999999999999982),((6,8),8.5725275940314722e-16),((6,9),-6.9999999999999964),((7,1),-7.4999999999999964),((7,2),9.1848562803814578e-16),((7,3),7.4999999999999982),((7,4),12.990381056766578),((7,5),15.0),((7,6),12.99038105676658),((7,7),7.4999999999999982),((7,8),9.184845706828842e-16),((7,9),-7.4999999999999964),((8,1),-7.9998133721658951),((8,2),9.7976757842222039e-16),((8,3),7.9998133721658968),((8,4),13.856083211660247),((8,5),15.999626744331797),((8,6),13.856083211660248),((8,7),7.9998133721658968),((8,8),9.7975836919897473e-16),((8,9),-7.9998133721658951),((9,1),-5.8562698394943542),((9,2),0.49981337216589966),((9,3),8.8655155270595642),((9,4),14.855709955992044),((9,5),16.865328899225467),((9,6),14.355896583826148),((9,7),7.9998133721658968),((9,8),0.49981337216589966),((9,9),-4.9905676846006886)]
+"Z"
+array ((1,1),(9,9)) [((1,1),-7.6602540378443873),((1,2),-9.1339745962155607),((1,3),-8.1602540378443873),((1,4),-4.9999999999999991),((1,5),-0.49999999999999994),((1,6),4.133974596215559),((1,7),7.6602540378443864),((1,8),9.1339745962155607),((1,9),13.160254037844382),((2,1),-8.6602540378443873),((2,2),-10.0),((2,3),-8.6602540378443873),((2,4),-5.0),((2,5),7.5525375824840622e-22),((2,6),4.9999999999999982),((2,7),8.6602540378443873),((2,8),10.0),((2,9),8.6602540378443873),((3,1),-9.5262794416288266),((3,2),-11.0),((3,3),-9.5262794416288266),((3,4),-5.5),((3,5),7.2092404196438797e-22),((3,6),5.4999999999999982),((3,7),9.5262794416288266),((3,8),11.0),((3,9),9.5262794416288266),((4,1),-10.392304845413264),((4,2),-12.0),((4,3),-10.392304845413264),((4,4),-6.0),((4,5),0.0),((4,6),5.9999999999999982),((4,7),10.392304845413264),((4,8),12.0),((4,9),10.392304845413264),((5,1),-11.258330249197705),((5,2),-13.0),((5,3),-11.258330249197703),((5,4),-6.5),((5,5),-1.2200253017858866e-21),((5,6),6.4999999999999982),((5,7),11.258330249197703),((5,8),13.0),((5,9),11.258330249197705),((6,1),-12.124355652982143),((6,2),-14.0),((6,3),-12.124355652982143),((6,4),-7.0),((6,5),-1.1328806373726095e-21),((6,6),6.9999999999999973),((6,7),12.124355652982143),((6,8),14.0),((6,9),12.124355652982143),((7,1),-12.99038105676658),((7,2),-15.0),((7,3),-12.99038105676658),((7,4),-7.5),((7,5),5.2867763077388431e-22),((7,6),7.4999999999999973),((7,7),12.99038105676658),((7,8),15.0),((7,9),12.99038105676658),((8,1),-13.856083211660248),((8,2),-15.999626744331797),((8,3),-13.856083211660248),((8,4),-7.9998133721658986),((8,5),5.0139104337910299e-20),((8,6),7.9998133721658959),((8,7),13.856083211660248),((8,8),15.999626744331797),((8,9),13.856083211660248),((9,1),-22.855523328157933),((9,2),-16.865328899225467),((9,3),-14.355896583826148),((9,4),-7.9998133721658986),((9,5),0.49981337216589872),((9,6),8.8655155270595642),((9,7),14.855709955992046),((9,8),16.865328899225467),((9,9),22.355709955992037)]
+"Alpha"
+array ((2,2),(9,9)) [((2,2),5.25),((2,3),5.25),((2,4),5.25),((2,5),5.25),((2,6),5.2499999999999964),((2,7),5.2500000000000071),((2,8),5.25),((2,9),5.25),((3,2),5.25),((3,3),5.25),((3,4),5.25),((3,5),5.25),((3,6),5.2499999999999964),((3,7),5.2500000000000071),((3,8),5.25),((3,9),5.25),((4,2),5.7499999999999947),((4,3),5.7499999999999947),((4,4),5.75),((4,5),5.75),((4,6),5.7499999999999893),((4,7),5.7499999999999964),((4,8),5.7499999999999947),((4,9),5.7499999999999947),((5,2),6.25),((5,3),6.25),((5,4),6.25),((5,5),6.25),((5,6),6.25),((5,7),6.2500000000000071),((5,8),6.2499999999999991),((5,9),6.2499999999999991),((6,2),6.75),((6,3),6.75),((6,4),6.7500000000000071),((6,5),6.75),((6,6),6.7499999999999929),((6,7),6.7500000000000036),((6,8),6.7499999999999991),((6,9),6.7499999999999991),((7,2),7.2499999999999929),((7,3),7.2499999999999929),((7,4),7.2499999999999964),((7,5),7.2499999999999929),((7,6),7.25),((7,7),7.25),((7,8),7.2499999999999929),((7,9),7.2499999999999929),((8,2),7.7470139894843237),((8,3),7.7470139894843237),((8,4),7.7470139894843264),((8,5),7.7470139894843228),((8,6),7.7470139894843228),((8,7),7.7470139894843335),((8,8),7.7470139894843228),((8,9),7.7470139894843228),((9,2),7.7470139894843237),((9,3),7.7470139894843237),((9,4),7.7470139894843264),((9,5),7.7470139894843228),((9,6),7.7470139894843228),((9,7),7.7470139894843335),((9,8),7.7470139894843228),((9,9),7.7470139894843228)]
+"S"
+array ((2,2),(9,9)) [((2,2),86.655597361518474),((2,3),86.655597361518474),((2,4),236.74749475189992),((2,5),323.40309211341838),((2,6),323.40309211341821),((2,7),236.74749475190032),((2,8),86.655597361518474),((2,9),86.655597361518474),((3,2),86.655597361518474),((3,3),86.655597361518474),((3,4),236.74749475189992),((3,5),323.40309211341838),((3,6),323.40309211341821),((3,7),236.74749475190032),((3,8),86.655597361518474),((3,9),86.655597361518474),((4,2),103.93435695626219),((4,3),103.93435695626219),((4,4),283.95394385650843),((4,5),387.88830081277075),((4,6),387.88830081277001),((4,7),283.95394385650832),((4,8),103.93435695626219),((4,9),103.93435695626219),((5,2),122.78391287780109),((5,3),122.78391287780109),((5,4),335.45188833426306),((5,5),458.23580121206419),((5,6),458.23580121206419),((5,7),335.45188833426346),((5,8),122.78391287780101),((5,9),122.78391287780101),((6,2),143.20426512613471),((6,3),143.20426512613471),((6,4),391.24132818516438),((6,5),534.44559331129869),((6,6),534.44559331129824),((6,7),391.24132818516421),((6,8),143.20426512613469),((6,9),143.20426512613469),((7,2),165.19541370126305),((7,3),165.19541370126305),((7,4),451.3222634092109),((7,5),616.51767711047376),((7,6),616.51767711047444),((7,7),451.32226340921119),((7,8),165.19541370126305),((7,9),165.19541370126305),((8,2),188.68231284894844),((8,3),188.68231284894844),((8,4),515.48966519293333),((8,5),704.17197804188163),((8,6),704.17197804188163),((8,7),515.4896651929339),((8,8),188.68231284894844),((8,9),188.68231284894844),((9,2),188.68231284894844),((9,3),188.68231284894844),((9,4),515.48966519293333),((9,5),704.17197804188163),((9,6),704.17197804188163),((9,7),515.4896651929339),((9,8),188.68231284894844),((9,9),188.68231284894844)]
+"Rho"
+array ((2,2),(9,9)) [((2,2),1.3999999999999999),((2,3),1.3999999999999999),((2,4),1.3999999999999999),((2,5),1.3999999999999999),((2,6),1.3999999999999999),((2,7),1.3999999999999999),((2,8),1.3999999999999999),((2,9),1.3999999999999999),((3,2),1.3999999999999999),((3,3),1.3999999999999999),((3,4),1.3999999999999999),((3,5),1.3999999999999999),((3,6),1.3999999999999999),((3,7),1.3999999999999999),((3,8),1.3999999999999999),((3,9),1.3999999999999999),((4,2),1.4000000000000001),((4,3),1.4000000000000001),((4,4),1.3999999999999999),((4,5),1.3999999999999997),((4,6),1.3999999999999999),((4,7),1.3999999999999999),((4,8),1.4000000000000001),((4,9),1.4000000000000001),((5,2),1.3999999999999999),((5,3),1.3999999999999999),((5,4),1.3999999999999999),((5,5),1.3999999999999999),((5,6),1.3999999999999999),((5,7),1.3999999999999999),((5,8),1.3999999999999999),((5,9),1.3999999999999999),((6,2),1.3999999999999999),((6,3),1.3999999999999999),((6,4),1.3999999999999999),((6,5),1.3999999999999999),((6,6),1.3999999999999999),((6,7),1.3999999999999999),((6,8),1.3999999999999999),((6,9),1.3999999999999999),((7,2),1.3999999999999999),((7,3),1.3999999999999999),((7,4),1.3999999999999999),((7,5),1.3999999999999999),((7,6),1.3999999999999999),((7,7),1.4000000000000001),((7,8),1.3999999999999999),((7,9),1.3999999999999999),((8,2),1.400556830443443),((8,3),1.400556830443443),((8,4),1.4005568304434433),((8,5),1.4005568304434433),((8,6),1.4005568304434433),((8,7),1.4005568304434428),((8,8),1.4005568304434433),((8,9),1.4005568304434433),((9,2),1.400556830443443),((9,3),1.400556830443443),((9,4),1.4005568304434433),((9,5),1.4005568304434433),((9,6),1.4005568304434433),((9,7),1.4005568304434428),((9,8),1.4005568304434433),((9,9),1.4005568304434433)]
+"P"
+array ((2,2),(9,9)) [((2,2),0.93771999983483223),((2,3),0.93771999983483223),((2,4),0.93771999902025993),((2,5),0.93771999902064251),((2,6),0.93771999983458343),((2,7),0.93771999999940125),((2,8),0.93771999999943845),((2,9),0.93771999999943845),((3,2),0.93771999983483223),((3,3),0.93771999983483223),((3,4),0.93771999902025993),((3,5),0.93771999902064251),((3,6),0.93771999983458343),((3,7),0.93771999999940125),((3,8),0.93771999999943845),((3,9),0.93771999999943845),((4,2),0.93771999156833996),((4,3),0.93771999156833996),((4,4),0.93771996308942807),((4,5),0.93771996310155481),((4,6),0.93771999156238339),((4,7),0.93771999992989841),((4,8),0.9377200000762328),((4,9),0.9377200000762328),((5,2),0.93771961182639862),((5,3),0.93771961182639862),((5,4),0.93771873776091175),((5,5),0.93771873810128148),((5,6),0.93771961174256513),((5,7),0.93771999188920996),((5,8),0.93771999091042346),((5,9),0.93771999091042346),((6,2),0.93770326437282614),((6,3),0.93770326437282614),((6,4),0.93767953079483968),((6,5),0.93767953930939729),((6,6),0.93770326569906837),((6,7),0.93771909037948031),((6,8),0.93772100776868217),((6,9),0.93772100776868217),((7,2),0.93704192588546431),((7,3),0.93704192588546431),((7,4),0.93649954945690028),((7,5),0.93649972972835027),((7,6),0.93704208015581214),((7,7),0.9376228329430466),((7,8),0.93761532567077155),((7,9),0.93761532567077155),((8,2),0.91216433335287739),((8,3),0.91216433335287739),((8,4),0.9033241511987179),((8,5),0.90332680888860495),((8,6),0.912170217062514),((8,7),0.92828279320592222),((8,8),0.94828764208921601),((8,9),0.94828764208921601),((9,2),6.0),((9,3),6.0),((9,4),6.0),((9,5),6.0),((9,6),6.0),((9,7),6.0),((9,8),6.0),((9,9),6.0)]
+"Q"
+array ((2,2),(9,9)) [((2,2),1.092869093447191e-19),((2,3),1.092869093447191e-19),((2,4),4.0062778241005435e-20),((2,5),0.0),((2,6),2.140985664298929e-19),((2,7),1.5296697146565713e-19),((2,8),8.1625283200664455e-20),((2,9),8.1625283200664455e-20),((3,2),1.092869093447191e-19),((3,3),1.092869093447191e-19),((3,4),4.0062778241005435e-20),((3,5),0.0),((3,6),2.140985664298929e-19),((3,7),1.5296697146565713e-19),((3,8),8.1625283200664455e-20),((3,9),8.1625283200664455e-20),((4,2),0.0),((4,3),0.0),((4,4),0.0),((4,5),0.0),((4,6),0.0),((4,7),1.1791204050477737e-19),((4,8),0.0),((4,9),0.0),((5,2),1.0268084988841525e-19),((5,3),1.0268084988841525e-19),((5,4),1.7797118795523576e-19),((5,5),1.026808498884152e-19),((5,6),1.8752993071710851e-20),((5,7),1.051647928826393e-19),((5,8),9.9808159566142162e-20),((5,9),9.9808159566142162e-20),((6,2),8.8012157047213022e-20),((6,3),8.8012157047213022e-20),((6,4),1.3747948242932922e-19),((6,5),8.4444715284420487e-20),((6,6),0.0),((6,7),1.2018833472301632e-19),((6,8),0.0),((6,9),0.0),((7,2),0.0),((7,3),0.0),((7,4),2.0031389120502743e-21),((7,5),3.4211285621195605e-20),((7,6),1.3930794853270909e-20),((7,7),1.6997197300432686e-19),((7,8),2.4562190925503978e-20),((7,9),2.4562190925503978e-20),((8,2),0.014732092039144608),((8,3),0.014732092039144608),((8,4),0.014732092039144603),((8,5),0.014732092039144603),((8,6),0.014732092039144606),((8,7),0.014732092039144599),((8,8),0.014732092039144596),((8,9),0.014732092039144596),((9,2),0.0),((9,3),0.0),((9,4),0.0),((9,5),0.0),((9,6),0.0),((9,7),0.0),((9,8),0.0),((9,9),0.0)]
+"epsilon"
+array ((2,2),(9,9)) [((2,2),0.99999999982386256),((2,3),0.99999999982386256),((2,4),0.99999999895518921),((2,5),0.99999999895559721),((2,6),0.99999999982359711),((2,7),0.99999999999936162),((2,8),0.99999999999940126),((2,9),0.99999999999940126),((3,2),0.99999999982386256),((3,3),0.99999999982386256),((3,4),0.99999999895518921),((3,5),0.99999999895559721),((3,6),0.99999999982359711),((3,7),0.99999999999936162),((3,8),0.99999999999940126),((3,9),0.99999999999940126),((4,2),0.99999999100833925),((4,3),0.99999999100833925),((4,4),0.99999996063796037),((4,5),0.99999996065089258),((4,6),0.99999999100198722),((4,7),0.99999999992524258),((4,8),1.0000000000812959),((4,9),1.0000000000812959),((5,2),0.99999958604530004),((5,3),0.99999958604530004),((5,4),0.99999865392751763),((5,5),0.9999986542904935),((5,6),0.99999958595589866),((5,7),0.99999999135052053),((5,8),0.99999999030672648),((5,9),0.99999999030672648),((6,2),0.9999821528524786),((6,3),0.9999821528524786),((6,4),0.99995684297534426),((6,5),0.99995685205540819),((6,6),0.99998215426680503),((6,7),0.99999902996574708),((6,8),1.0000010747010646),((6,9),1.0000010747010646),((7,2),0.99927689063415992),((7,3),0.99927689063415992),((7,4),0.99869849150801981),((7,5),0.99869868375245319),((7,6),0.99927705515059095),((7,7),0.99989637945553744),((7,8),0.99988837357715699),((7,9),0.99988837357715699),((8,2),0.97236027489313559),((8,3),0.97236027489313559),((8,4),0.96293670763094286),((8,5),0.96293954070824561),((8,6),0.97236654688307245),((8,7),0.98954243109074869),((8,8),1.0108674485772962),((8,9),1.0108674485772962),((9,2),0.97236027489313559),((9,3),0.97236027489313559),((9,4),0.96293670763094286),((9,5),0.96293954070824561),((9,6),0.97236654688307245),((9,7),0.98954243109074869),((9,8),1.0108674485772962),((9,9),1.0108674485772962)]
+theta
+array ((2,2),(9,9)) [((2,2),0.0),((2,3),0.0),((2,4),0.0),((2,5),0.0),((2,6),0.0),((2,7),0.0),((2,8),0.0),((2,9),0.0),((3,2),0.0),((3,3),9.999999998238625),((3,4),9.9999999895518918),((3,5),9.9999999895559721),((3,6),9.9999999982359711),((3,7),9.9999999999936158),((3,8),9.9999999999940119),((3,9),0.0),((4,2),0.0),((4,3),9.9999999100833925),((4,4),9.9999996063796033),((4,5),9.9999996065089256),((4,6),9.9999999100198718),((4,7),9.9999999992524256),((4,8),10.000000000812959),((4,9),0.0),((5,2),0.0),((5,3),9.9999958604529997),((5,4),9.9999865392751754),((5,5),9.999986542904935),((5,6),9.999995859558986),((5,7),9.9999999135052047),((5,8),9.9999999030672644),((5,9),0.0),((6,2),0.0),((6,3),9.9998215285247856),((6,4),9.9995684297534417),((6,5),9.9995685205540816),((6,6),9.9998215426680499),((6,7),9.9999902996574708),((6,8),10.000010747010645),((6,9),0.0),((7,2),0.0),((7,3),9.992768906341599),((7,4),9.9869849150801979),((7,5),9.9869868375245314),((7,6),9.9927705515059095),((7,7),9.9989637945553742),((7,8),9.9988837357715692),((7,9),0.0),((8,2),0.0),((8,3),9.7236027489313557),((8,4),9.6293670763094283),((8,5),9.6293954070824554),((8,6),9.723665468830724),((8,7),9.8954243109074866),((8,8),10.10867448577296),((8,9),0.0),((9,2),0.0),((9,3),0.0),((9,4),0.0),((9,5),0.0),((9,6),0.0),((9,7),0.0),((9,8),0.0),((9,9),0.0)]
+0.01
+341.25853171453173
+done
+RESULT 1:708
+PASS simple-nofib-report-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

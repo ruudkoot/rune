@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+simple-nofib-report-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	9.88	9.18	1.45	670972	-	-	-	simple-nofib-report-lazy/native-mlton/build/compile
+simple-nofib-report-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	5380	-	-	-	simple-nofib-report-lazy/native-mlton/correctness.0
+simple-nofib-report-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.01	0.00	0.00	5420	-	-	-	simple-nofib-report-lazy/native-mlton/fresh.1
+simple-nofib-report-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	1.35	1.30	0.10	40736	-	-	-	simple-nofib-report-lazy/native-smlnj-legacy/build/compile
+simple-nofib-report-lazy	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.06	0.06	0.00	5272	-	-	-	simple-nofib-report-lazy/native-smlnj-legacy/correctness.0
+simple-nofib-report-lazy	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.07	0.06	0.01	5148	-	-	-	simple-nofib-report-lazy/native-smlnj-legacy/fresh.1
+simple-nofib-report-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	1.15	1.12	0.17	63620	-	-	-	simple-nofib-report-lazy/native-polyml/build/compile
+simple-nofib-report-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.01	0.00	0.00	10832	-	-	-	simple-nofib-report-lazy/native-polyml/correctness.0
+simple-nofib-report-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.02	0.01	0.00	10660	-	-	-	simple-nofib-report-lazy/native-polyml/fresh.1

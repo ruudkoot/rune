@@ -1,0 +1,5 @@
+COUNT unbudgeted simple-nofib-report-lazy normal rune
+COUNT unbudgeted simple-nofib-report-lazy normal rune:opt
+COUNT unbudgeted simple-nofib-report-lazy normal rune:new
+COUNT unbudgeted simple-nofib-report-lazy normal rune:jit
+COUNT comparisons agree

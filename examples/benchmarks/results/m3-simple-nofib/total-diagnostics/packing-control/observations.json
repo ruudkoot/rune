@@ -1,0 +1,35 @@
+[
+  {
+    "host": "smlnj32",
+    "exit": 0,
+    "observations": [
+      "BIG-FLAG\ttrue",
+      "BIG-BYTES-ONE\t000000000000F03F",
+      "LITTLE-BYTES-ONE\t3FF0000000000000",
+      "BIG-FROM-BIG-IS-ONE\tfalse",
+      "BIG-SUB-BIG-IS-ONE\tfalse"
+    ]
+  },
+  {
+    "host": "smlnj-dev",
+    "exit": 0,
+    "observations": [
+      "BIG-FLAG\ttrue",
+      "BIG-BYTES-ONE\t000000000000F03F",
+      "LITTLE-BYTES-ONE\t3FF0000000000000",
+      "BIG-FROM-BIG-IS-ONE\tfalse",
+      "BIG-SUB-BIG-IS-ONE\tfalse"
+    ]
+  },
+  {
+    "host": "smlnj-legacy",
+    "exit": 0,
+    "observations": [
+      "BIG-FLAG\ttrue",
+      "BIG-BYTES-ONE\t000000000000F03F",
+      "LITTLE-BYTES-ONE\t3FF0000000000000",
+      "BIG-FROM-BIG-IS-ONE\tfalse",
+      "BIG-SUB-BIG-IS-ONE\tfalse"
+    ]
+  }
+]

@@ -1,0 +1,7 @@
+runevm: uncaught exception Fail "array bounds 100,~1 in 1,1..101,101"
+  in BenchLazy.force at examples/benchmarks/shared/lazy.sml:14:62
+  in fn at tests/out/benchmarks/nofib-simple-originals/kernel.sml:302:46
+  in foldl at bin/../lib/basis/pervasive.sml:64:41
+  in Need.loop at tests/out/benchmarks/nofib-simple-originals/kernel.sml:305:22
+  in emit at tests/out/benchmarks/nofib-simple-originals/pilot-debug.sml:9:25
+  in <toplevel> at tests/out/benchmarks/nofib-simple-originals/pilot-debug.sml:17:7

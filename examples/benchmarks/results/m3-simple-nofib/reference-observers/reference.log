@@ -1,0 +1,3 @@
+{'profile': 'source-fast', 'steps': 1, 'stdout_bytes': 0, 'seconds': 0.15613379800197436, 'fixture': 'no upstream stdout fixture; source total-scalar consumer prints nothing'}
+{'profile': 'normal', 'steps': 20, 'stdout_bytes': 0, 'seconds': 2.5278400640017935, 'fixture': 'no upstream stdout fixture; source total-scalar consumer prints nothing'}
+{'profile': 'source-slow', 'steps': 100, 'stdout_bytes': 0, 'seconds': 10.78183617600007, 'fixture': 'no upstream stdout fixture; source total-scalar consumer prints nothing'}

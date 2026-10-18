@@ -1,0 +1,21 @@
+{
+  "unit_checks": 108,
+  "source_files": [
+    {
+      "private": "tests/out/benchmarks/nofib-simple-originals/arrays.sml",
+      "registered": "examples/benchmarks/shared/simple-nofib-arrays.sml",
+      "sha256": "888c78fca869329c43ae5dc967441fc0948ddc672a53cc9468d40b28a320d659"
+    },
+    {
+      "private": "tests/out/benchmarks/nofib-simple-originals/kernel.sml",
+      "registered": "examples/benchmarks/shared/simple-nofib-kernel.sml",
+      "sha256": "2ff95c253dc2fd26bcfaf3a14cb6a89dc53bd45861aa6b3bfedeadf7ffc1b529"
+    },
+    {
+      "private": "tests/out/benchmarks/nofib-simple-originals/check.sml",
+      "registered": "examples/benchmarks/shared/simple-nofib-check.sml",
+      "sha256": "626d45bf6547f35281ee3b68092919873df626e18d1ed37c109f9950a203f03b"
+    }
+  ],
+  "scope": "source tables/holes/aliases, lazy folds, totals tuple and shared first revised energy; explicit real-valued totalTotal annotation"
+}

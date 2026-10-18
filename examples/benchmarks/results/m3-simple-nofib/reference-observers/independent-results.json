@@ -1,0 +1,68 @@
+{
+  "states": [
+    {
+      "steps": 0,
+      "arrays": 11,
+      "cells": 110804,
+      "totals": 13,
+      "finite": true,
+      "row_major_sums_match": true
+    },
+    {
+      "steps": 1,
+      "arrays": 11,
+      "cells": 110004,
+      "totals": 13,
+      "finite": true,
+      "row_major_sums_match": true
+    },
+    {
+      "steps": 2,
+      "arrays": 11,
+      "cells": 110004,
+      "totals": 13,
+      "finite": true,
+      "row_major_sums_match": true
+    },
+    {
+      "steps": 5,
+      "arrays": 11,
+      "cells": 110004,
+      "totals": 13,
+      "finite": true,
+      "row_major_sums_match": true
+    },
+    {
+      "steps": 20,
+      "arrays": 11,
+      "cells": 110004,
+      "totals": 13,
+      "finite": true,
+      "row_major_sums_match": true
+    },
+    {
+      "steps": 100,
+      "arrays": 11,
+      "cells": 110004,
+      "totals": 13,
+      "finite": true,
+      "row_major_sums_match": true
+    }
+  ],
+  "initial_formula_checks": 38810,
+  "rejected_perturbations": [
+    [
+      0.0,
+      2e-12
+    ],
+    [
+      1e-09,
+      1.002e-09
+    ],
+    [
+      1000000.0,
+      1000000.00002
+    ]
+  ],
+  "scope": "Independent geometry, initial equations, finite states and scalar reductions; not a second full solver or physical-model proof"
+}

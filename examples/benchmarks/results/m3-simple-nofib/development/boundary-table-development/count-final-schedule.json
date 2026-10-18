@@ -1,0 +1,8 @@
+{
+  "mode": "instrumented count validation",
+  "schedule": "four independent benchmark runs in parallel; configurations serial within each run",
+  "other_work": "two primary correctness workers; no headline timing runs",
+  "timing_use": "OS samples in count runs are diagnostics, not headline execution or compilation comparisons",
+  "guards": "unchanged 2 GiB process-tree RSS and 8 GiB host available-memory floor",
+  "serial_native_smoke": "all twelve final native fresh/preflight diagnostics finished successfully before these heavy jobs started"
+}

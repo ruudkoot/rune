@@ -1,0 +1,9 @@
+attempts-raw/** -whitespace
+counts/** -whitespace
+native-adapter-diagnostics/** -whitespace
+semantics/** -whitespace
+semantics-*.log -whitespace
+reference-observers/** -text -whitespace
+legacy-diagnostics/** -text -whitespace
+development/** -text -whitespace
+total-diagnostics/** -text -whitespace

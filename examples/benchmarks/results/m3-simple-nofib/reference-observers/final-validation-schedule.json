@@ -1,0 +1,16 @@
+{
+  "subject": "final-fidelity-subject.json",
+  "acceptance_session": 67103,
+  "profiles_session": 65664,
+  "count_sessions": {
+    "simple-nofib-lazy": 87020,
+    "simple-nofib-strict": 63327,
+    "simple-nofib-report-lazy": 72770,
+    "simple-nofib-report-strict": 84394
+  },
+  "public_semantic_session": 32906,
+  "serial_native_session": 9106,
+  "serial_native_exit": 0,
+  "serial_native_samples": 12,
+  "orchestration": "native diagnostics finished before heavy gates; four isolated count validations run concurrently with profile and acceptance checks; count OS times are not headline comparisons"
+}

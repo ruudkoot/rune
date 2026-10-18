@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+simple-nofib-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	9.87	7.29	1.28	666256	-	-	-	simple-nofib-strict/native-mlton/build/compile
+simple-nofib-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.42	0.30	0.13	125756	-	-	-	simple-nofib-strict/native-mlton/correctness.0
+simple-nofib-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.42	0.29	0.15	125768	-	-	-	simple-nofib-strict/native-mlton/fresh.1
+simple-nofib-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	1.33	1.27	0.11	40708	-	-	-	simple-nofib-strict/native-smlnj-legacy/build/compile
+simple-nofib-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	incorrect-result	0.35	0.29	0.06	32764	-	-	-	simple-nofib-strict/native-smlnj-legacy/correctness.0
+simple-nofib-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	1.25	1.15	0.15	71024	-	-	-	simple-nofib-strict/native-polyml/build/compile
+simple-nofib-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.66	1.01	0.17	56876	-	-	-	simple-nofib-strict/native-polyml/correctness.0
+simple-nofib-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.52	0.90	0.13	60624	-	-	-	simple-nofib-strict/native-polyml/fresh.1

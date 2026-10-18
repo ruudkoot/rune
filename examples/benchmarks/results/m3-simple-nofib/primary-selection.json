@@ -1,0 +1,11 @@
+{
+  "initial": "final-simple-nofib-parallel.72fw2syz",
+  "final_smoke": "final-simple-nofib-smoke.z0py2w0q",
+  "canonical_normal_grid": 100,
+  "canonical_smoke_grid": 8,
+  "canonical_attempts": 112,
+  "final_checker": "final-simple-nofib-parallel.bawsbjk6",
+  "all_attempts": 392,
+  "passing": 107,
+  "scope": "Only final conditioning-aware checker attempts supply canonical coverage. Initial grid-100 smoke and grid-8 point-sum-checker attempts remain development evidence."
+}

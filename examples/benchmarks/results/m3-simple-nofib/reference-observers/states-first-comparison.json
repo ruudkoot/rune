@@ -1,0 +1,62 @@
+[
+  {
+    "file": "state-0-need.state",
+    "steps": 0,
+    "cells_and_totals": 110817,
+    "bit_differences": 0,
+    "max_absolute": 0,
+    "max_scaled": 0,
+    "outside_provisional_bounds": 0,
+    "first_bad": []
+  },
+  {
+    "file": "state-0-strict.state",
+    "steps": 0,
+    "cells_and_totals": 110817,
+    "bit_differences": 0,
+    "max_absolute": 0,
+    "max_scaled": 0,
+    "outside_provisional_bounds": 0,
+    "first_bad": []
+  },
+  {
+    "file": "state-2-need.state",
+    "steps": 2,
+    "cells_and_totals": 110017,
+    "bit_differences": 0,
+    "max_absolute": 0,
+    "max_scaled": 0,
+    "outside_provisional_bounds": 0,
+    "first_bad": []
+  },
+  {
+    "file": "state-2-strict.state",
+    "steps": 2,
+    "cells_and_totals": 110017,
+    "bit_differences": 0,
+    "max_absolute": 0,
+    "max_scaled": 0,
+    "outside_provisional_bounds": 0,
+    "first_bad": []
+  },
+  {
+    "file": "state-5-need.state",
+    "steps": 5,
+    "cells_and_totals": 110017,
+    "bit_differences": 0,
+    "max_absolute": 0,
+    "max_scaled": 0,
+    "outside_provisional_bounds": 0,
+    "first_bad": []
+  },
+  {
+    "file": "state-5-strict.state",
+    "steps": 5,
+    "cells_and_totals": 110017,
+    "bit_differences": 0,
+    "max_absolute": 0,
+    "max_scaled": 0,
+    "outside_provisional_bounds": 0,
+    "first_bad": []
+  }
+]

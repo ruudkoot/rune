@@ -1,0 +1,20 @@
+{
+  "sources": [
+    {
+      "source": "examples/benchmarks/shared/simple-nofib-arrays.sml",
+      "sha256": "888c78fca869329c43ae5dc967441fc0948ddc672a53cc9468d40b28a320d659"
+    },
+    {
+      "source": "examples/benchmarks/shared/simple-nofib-kernel.sml",
+      "sha256": "2ff95c253dc2fd26bcfaf3a14cb6a89dc53bd45861aa6b3bfedeadf7ffc1b529"
+    },
+    {
+      "source": "examples/benchmarks/shared/simple-nofib-check.sml",
+      "sha256": "626d45bf6547f35281ee3b68092919873df626e18d1ed37c109f9950a203f03b"
+    }
+  ],
+  "semantic_checks": 2160,
+  "semantic_passed": 2158,
+  "semantic_failed": 2,
+  "semantic_incomplete": 0
+}

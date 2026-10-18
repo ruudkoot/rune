@@ -1,0 +1,6 @@
+{
+  "exit": 124,
+  "timeout_seconds": 120,
+  "memory_bytes": 1073741824,
+  "phase": "diagnostic with other correctness/acceptance jobs active; not a timing comparison"
+}

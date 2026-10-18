@@ -1,0 +1,726 @@
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/arrays.sml]
+[autoloading]
+[autoloading done]
+functor BenchSimpleArraysFn(<param>: sig
+  val strict : bool
+end) :
+sig
+  structure L : <sig>
+  type zone
+  type bounds
+  type 'a store
+  type 'a grid
+  val range : int -> int -> int list
+  val positions : (int * int) * (int * int) -> (int * int) list
+  val raw :
+      (int * int) * (int * int)
+       -> (int * int -> 'a)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+  val sub :
+      'a <BaseFct>.<resultStr>.store BenchLazy.state ref -> int * int -> 'a
+  val bounds :
+      'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.bounds
+  val force : 'a <BaseFct>.<resultStr>.store BenchLazy.state ref -> unit
+  val materialize : 'a <BaseFct>.<resultStr>.store BenchLazy.state ref -> unit
+  val make :
+      (int * int) * (int * int)
+       -> (int * int -> 'a)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+  val recursive :
+      (int * int) * (int * int)
+       -> ('a <BaseFct>.<resultStr>.store BenchLazy.state ref
+        -> int * int -> 'a)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+  val pair :
+      (int * int) * (int * int)
+       -> (int * int -> 'a BenchLazy.state ref * 'b BenchLazy.state ref)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+       * 'b <BaseFct>.<resultStr>.store BenchLazy.state ref
+  val recursivePair :
+      (int * int) * (int * int)
+       -> ('a <BaseFct>.<resultStr>.store BenchLazy.state ref
+        * 'b <BaseFct>.<resultStr>.store BenchLazy.state ref
+        -> int * int -> 'a BenchLazy.state ref * 'b BenchLazy.state ref)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+       * 'b <BaseFct>.<resultStr>.store BenchLazy.state ref
+  val recursiveTriple :
+      (int * int) * (int * int)
+       -> ('a <BaseFct>.<resultStr>.store BenchLazy.state ref
+        * 'b <BaseFct>.<resultStr>.store BenchLazy.state ref
+        * 'c <BaseFct>.<resultStr>.store BenchLazy.state ref
+        -> int * int
+        -> 'a BenchLazy.state ref * 'b BenchLazy.state ref
+        * 'c BenchLazy.state ref)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+       * 'b <BaseFct>.<resultStr>.store BenchLazy.state ref
+       * 'c <BaseFct>.<resultStr>.store BenchLazy.state ref
+  val total : real <BaseFct>.<resultStr>.store BenchLazy.state ref -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/kernel.sml]
+[autoloading]
+[autoloading done]
+functor BenchSimpleNofibFn(<param>: sig
+  val strict : bool
+  val gridMax : int
+end) :
+sig
+  structure A : <sig>
+  structure L : <sig>
+  type array
+  type vector
+  type state
+  val delay : (unit -> 'a) -> 'a BenchLazy.state ref
+  val force : 'a BenchLazy.state ref -> 'a
+  val sq : real -> real
+  val pow : real * int -> real
+  val range : int -> int -> int list
+  val coords : 'a list -> 'b list -> ('a * 'b) list
+  val north : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val south : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val east : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val west : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val northeast : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val northwest : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val southeast : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val southwest : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val farnorth : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val farsouth : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val fareast : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val farwest : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val zoneA : 'a -> 'a
+  val zoneB : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val zoneC : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val zoneD : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val cornerNE : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val cornerNW : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val cornerSE : 'a -> 'a
+  val cornerSW : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val kmin : int
+  val lmin : int
+  val kmax : int
+  val lmax : int
+  val allNodes : (int * int) * (int * int)
+  val interiorNodes : (int * int) * (int * int)
+  val allZones : (int * int) * (int * int)
+  val interiorZones : (int * int) * (int * int)
+  val nodes : (int * int) list
+  val zones : (int * int) list
+  val northZones : (int * int) list
+  val southZones : (int * int) list
+  val eastZones : (int * int) list
+  val westZones : (int * int) list
+  val zoneDirection :
+      int * int -> <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val isInterior : int * int -> bool
+  val boundaryCode : int * int -> int
+  val constantHeat : real
+  val dtMaximum : real
+  val specificHeat : real
+  val pi : real
+  val pCoeffs :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val eCoeffs :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val pPoly :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref 
+             <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val ePoly :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref 
+             <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val rhoTable : real Vector.vector
+  val thetaTable : real Vector.vector
+  val polynomial :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref 
+             <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> int -> real -> real -> real
+  val zonalPressure : real -> real -> real
+  val zonalEnergy : real -> real -> real
+  val newton : (real -> real) -> real -> real
+  val boundaryPosition :
+      real * real * real * real * real * real
+       -> real BenchLazy.state ref * real BenchLazy.state ref
+  val positionMatrix :
+      (int * int -> real BenchLazy.state ref * real BenchLazy.state ref)
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val zoneAreaVolume :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.A.<returnStr>.zone
+       -> real BenchLazy.state ref * real BenchLazy.state ref
+  val lineIntegral :
+      <BaseFct>.<resultStr>.array
+       -> <BaseFct>.<resultStr>.array
+       -> <BaseFct>.<resultStr>.A.<returnStr>.zone -> real
+  val makePressure :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeEnergy :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeVelocity :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.array * <BaseFct>.<resultStr>.array
+       -> <BaseFct>.<resultStr>.array
+       -> <BaseFct>.<resultStr>.array
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makePosition :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeAreaDensity :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeViscosity :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeTemperature :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeCc :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeSigma :
+      real
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeGamma :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> (int * int -> int * int)
+       -> (int * int -> int * int)
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeAb :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> (int * int -> int * int)
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeTheta :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> (int * int -> int * int)
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val heatConduction :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref 
+           BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref 
+           BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref 
+           BenchLazy.state ref
+  val sum : real list -> real
+  val energyError :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real -> real
+  val timestep :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real
+  val suspend : (unit -> 'a BenchLazy.state ref) -> 'a BenchLazy.state ref
+  val pairSuspend :
+      (unit -> 'a BenchLazy.state ref * 'b BenchLazy.state ref)
+       -> 'a BenchLazy.state ref * 'b BenchLazy.state ref
+  val tripleSuspend :
+      (unit
+        -> 'a BenchLazy.state ref * 'b BenchLazy.state ref
+        * 'c BenchLazy.state ref)
+       -> 'a BenchLazy.state ref * 'b BenchLazy.state ref
+       * 'c BenchLazy.state ref
+  val initial : unit -> <BaseFct>.<resultStr>.state
+  val next : <BaseFct>.<resultStr>.state -> <BaseFct>.<resultStr>.state
+  val arrays :
+      <BaseFct>.<resultStr>.state
+       -> (string * <BaseFct>.<resultStr>.array) list
+  val totals : <BaseFct>.<resultStr>.state -> real BenchLazy.state ref list
+  val totalTotal : real BenchLazy.delay list -> real
+  val compute : int -> real BenchLazy.delay list * <BaseFct>.<resultStr>.state
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/check.sml]
+[autoloading]
+[autoloading done]
+structure BenchSimpleReference : sig
+  val absolute : real
+  val relative : real
+  val close : real -> real -> bool
+  val decode : string -> real
+  val read : string -> string list
+  val scalar : real -> real -> unit
+  val totals : string list -> real BenchLazy.state ref list -> unit
+end
+functor BenchSimpleCheckFn(<param>: sig
+  val strict : bool
+  val report : bool
+  val gridMax : int
+end) :
+sig
+  structure K : <sig>
+  structure R : <sig>
+  val integer : string -> int
+  val parseHeader : string -> int -> string list -> int * string list
+  val verifyState :
+      int -> <BaseFct>.<resultStr>.K.<returnStr>.state -> string list -> int
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/total-diagnostics/probe.sml]
+[autoloading]
+[autoloading done]
+TOTAL	0	16D222CF9FA146C0	18D222CF9FA146C0	c046a19fcf22d218
+TOTAL	1	001047A5415D54BF	004C46A5415D54BF	bf545d41a5464c00
+TOTAL	2	88AEA81248AA1641	88AEA81248AA1641	4116aa4812a8ae88
+TOTAL	3	008CA2C77DA0BBBF	008CA5C77DA0BBBF	bfbba07dc7a58c00
+TOTAL	4	7C387CCE026AD240	7C387CCE026AD240	40d26a02ce7c387c
+TOTAL	5	1C51700DBB965441	1751700DBB965441	415496bb0d705117
+TOTAL	6	1501FAC10E64CB40	1301FAC10E64CB40	40cb640ec1fa0113
+TOTAL	7	34D9F2345825C340	32D9F2345825C340	40c3255834f2d932
+TOTAL	8	D9CE21E4E22F4840	DACE21E4E22F4840	40482fe2e421ceda
+TOTAL	9	6EC99F1EB444C340	6EC99F1EB444C340	40c344b41e9fc96e
+TOTAL	10	ABD8D07AC339F740	ABD8D07AC339F740	40f739c37ad0d8ab
+TOTAL	11	7B14AE47E17A843F	7B14AE47E17A843F	3f847ae147ae147b
+TOTAL	12	5F7374FF48CBD840	577374FF48CBD840	40d8cb48ff747357
+ABS	u	F0C1EB2C480A4840
+ABS	v	6B7C02F0F1F84740
+ABS	r	7284D86938B61641
+ABS	z	AFA85B7D7BC71741
+ABS	alpha	7C387CCE026AD240
+ABS	s	1C51700DBB965441
+ABS	rho	1501FAC10E64CB40
+ABS	p	34D9F2345825C340
+ABS	q	D9CE21E4E22F4840
+ABS	epsilon	6EC99F1EB444C340
+ABS	theta	ABD8D07AC339F740
+structure K : sig
+  structure A : <sig>
+  structure L : <sig>
+  type array = real A.grid
+  type vector = real Vector.vector
+  type state =
+    (array * array) * (array * array) * array * array * array * array * array
+     * array * array * real BenchLazy.delay * real BenchLazy.delay
+  val delay : (unit -> 'a) -> 'a BenchLazy.state ref
+  val force : 'a BenchLazy.state ref -> 'a
+  val sq : real -> real
+  val pow : real * int -> real
+  val range : int -> int -> int list
+  val coords : 'a list -> 'b list -> ('a * 'b) list
+  val north : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val south : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val east : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val west : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val northeast : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val northwest : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val southeast : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val southwest : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val farnorth : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val farsouth : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val fareast : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val farwest : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val zoneA : 'a -> 'a
+  val zoneB : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val zoneC : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val zoneD : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val cornerNE : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val cornerNW : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val cornerSE : 'a -> 'a
+  val cornerSW : <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val kmin : int
+  val lmin : int
+  val kmax : int
+  val lmax : int
+  val allNodes : (int * int) * (int * int)
+  val interiorNodes : (int * int) * (int * int)
+  val allZones : (int * int) * (int * int)
+  val interiorZones : (int * int) * (int * int)
+  val nodes : (int * int) list
+  val zones : (int * int) list
+  val northZones : (int * int) list
+  val southZones : (int * int) list
+  val eastZones : (int * int) list
+  val westZones : (int * int) list
+  val zoneDirection :
+      int * int -> <BaseFct>.<resultStr>.A.<returnStr>.zone -> int * int
+  val isInterior : int * int -> bool
+  val boundaryCode : int * int -> int
+  val constantHeat : real
+  val dtMaximum : real
+  val specificHeat : real
+  val pi : real
+  val pCoeffs :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val eCoeffs :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val pPoly :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref 
+             <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val ePoly :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref 
+             <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val rhoTable : real Vector.vector
+  val thetaTable : real Vector.vector
+  val polynomial :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref 
+             <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> int -> real -> real -> real
+  val zonalPressure : real -> real -> real
+  val zonalEnergy : real -> real -> real
+  val newton : (real -> real) -> real -> real
+  val boundaryPosition :
+      real * real * real * real * real * real
+       -> real BenchLazy.state ref * real BenchLazy.state ref
+  val positionMatrix :
+      (int * int -> real BenchLazy.state ref * real BenchLazy.state ref)
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val zoneAreaVolume :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.A.<returnStr>.zone
+       -> real BenchLazy.state ref * real BenchLazy.state ref
+  val lineIntegral :
+      <BaseFct>.<resultStr>.array
+       -> <BaseFct>.<resultStr>.array
+       -> <BaseFct>.<resultStr>.A.<returnStr>.zone -> real
+  val makePressure :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeEnergy :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeVelocity :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.array * <BaseFct>.<resultStr>.array
+       -> <BaseFct>.<resultStr>.array
+       -> <BaseFct>.<resultStr>.array
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makePosition :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeAreaDensity :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeViscosity :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeTemperature :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeCc :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeSigma :
+      real
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeGamma :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> (int * int -> int * int)
+       -> (int * int -> int * int)
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeAb :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> (int * int -> int * int)
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val makeTheta :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> (int * int -> int * int)
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+  val heatConduction :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref 
+           BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref 
+           BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref 
+           BenchLazy.state ref
+  val sum : real list -> real
+  val energyError :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       * real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real -> real
+  val timestep :
+      real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real <BaseFct>.<resultStr>.A.<returnStr>.store BenchLazy.state ref
+       -> real
+  val suspend : (unit -> 'a BenchLazy.state ref) -> 'a BenchLazy.state ref
+  val pairSuspend :
+      (unit -> 'a BenchLazy.state ref * 'b BenchLazy.state ref)
+       -> 'a BenchLazy.state ref * 'b BenchLazy.state ref
+  val tripleSuspend :
+      (unit
+        -> 'a BenchLazy.state ref * 'b BenchLazy.state ref
+        * 'c BenchLazy.state ref)
+       -> 'a BenchLazy.state ref * 'b BenchLazy.state ref
+       * 'c BenchLazy.state ref
+  val initial : unit -> <BaseFct>.<resultStr>.state
+  val next : <BaseFct>.<resultStr>.state -> <BaseFct>.<resultStr>.state
+  val arrays :
+      <BaseFct>.<resultStr>.state
+       -> (string * <BaseFct>.<resultStr>.array) list
+  val totals : <BaseFct>.<resultStr>.state -> real BenchLazy.state ref list
+  val totalTotal : real BenchLazy.delay list -> real
+  val compute : int -> real BenchLazy.delay list * <BaseFct>.<resultStr>.state
+end
+val bits = fn : real -> string
+val ts =
+  [ref (Value ~45.2626894875),ref (Value ~1.2429371901E~3),
+   ref (Value 371346.018222),ref (Value ~0.107917653312),
+   ref (Value 18856.0438529),ref (Value 5397228.20998),
+   ref (Value 14024.1152947),ref (Value 9802.68911586),
+   ref (Value 48.3741116681),ref (Value 9865.40718458),
+   ref (Value 95132.2174843),ref (Value 0.01),ref (Value 25389.1405917)]
+  : real BenchLazy.delay list
+val state =
+  ((ref
+      (Value
+         (Store
+            (((2,2),(100,100)),
+             #[ref (Value 2.35636999945E~17),ref (Value 1.46305886424E~16),
+              ref (Value ~8.99693791589E~18),ref (Value ~1.02287560623E~16),
+              ref (Value ~1.92971645688E~16),ref (Value 1.36700912892E~16),
+              ref (Value 2.09711910993E~16),ref (Value ~1.18976689906E~17),
+              ref (Value ~4.70905862106E~17),ref (Value 9.18262868197E~17),
+              ref (Value ~2.12850713135E~17),ref (Value 1.3996628737E~16),
+              ref (Value ~2.11528581535E~16),ref (Value 1.18409598639E~17),
+              ref (Value 7.08639153782E~17),
+              ref (Value ~8.58724042511E~18),...]))),
+    ref
+      (Value
+         (Store
+            (((2,2),(100,100)),
+             #[ref (Value 1.00145724977E~17),ref (Value 2.2168876545E~17),
+              ref (Value ~1.25044363046E~17),ref (Value ~9.97383917215E~18),
+              ref (Value ~2.96650000384E~17),ref (Value 2.06238412701E~17),
+              ref (Value 4.11006297989E~17),ref (Value 1.46420153838E~17),
+              ref (Value ~1.17715629242E~17),ref (Value 4.71047239467E~17),
+              ref (Value ~2.72028638544E~20),ref (Value 5.2713129453E~17),
+              ref (Value ~7.76108838884E~17),ref (Value ~1.16649496159E~17),
+              ref (Value 1.1868512721E~17),ref (Value ~2.82202522655E~17),...])))),
+   (ref
+      (Value
+         (Store
+            (((1,1),(101,101)),
+             #[ref (Value ~0.320515775717),ref (Value ~0.0320515775717),
+              ref (Value 0.256445555736),ref (Value 0.544679173899),
+              ref (Value 0.832353097392),ref (Value 1.11917172181),
+              ref (Value 1.40484032163),ref (Value 1.68906535306),
+              ref (Value 1.97155475565),ref (Value 2.25201825246),
+              ref (Value 2.53016764829),ref (Value 2.80571712581),
+              ref (Value 3.07838353933),ref (Value 3.34788670567),
+              ref (Value 3.61394969211),ref (Value 3.87629910093),...]))),
+    ref
+      (Value
+         (Store
+            (((1,1),(101,101)),
+             #[ref (Value ~8.99486216201),ref (Value ~9.0005137838),
+              ref (Value ~8.99691676926),ref (Value ~8.98407481455),
+              ref (Value ~8.96200111567),ref (Value ~8.93071835482),
+              ref (Value ~8.89025867715),ref (Value ~8.84066365773),
+              ref (Value ~8.78198425878),ref (Value ~8.71428077735),
+              ref (Value ~8.63762278336),ref (Value ~8.55208904806),
+              ref (Value ~8.45776746315),ref (Value ~8.35475495044),
+              ref (Value ~8.24315736226),ref (Value ~8.12308937265),...])))),
+   ref
+     (Value
+        (Store
+           (((2,2),(101,101)),
+            #[ref (Value 0.336541564502),ref (Value 0.336541564502),
+             ref (Value 0.336541564502),ref (Value 0.336541564502),
+             ref (Value 0.336541564502),ref (Value 0.336541564502),
+             ref (Value 0.336541564502),ref (Value 0.336541564502),
+             ref (Value 0.336541564502),ref (Value 0.336541564502),
+             ref (Value 0.336541564502),ref (Value 0.336541564502),
+             ref (Value 0.336541564502),ref (Value 0.336541564502),
+             ref (Value 0.336541564502),ref (Value 0.336541564502),...]))),
+   ref
+     (Value
+        (Store
+           (((2,2),(101,101)),
+            #[ref (Value 0.356086437126),ref (Value 0.356086437126),
+             ref (Value 1.06789340849),ref (Value 1.77860304719),
+             ref (Value 2.48748505103),ref (Value 3.19381099583),
+             ref (Value 3.89685508393),ref (Value 4.59589489002),
+             ref (Value 5.29021210342),ref (Value 5.97909326628),
+             ref (Value 6.66183050663),ref (Value 7.33772226581),
+             ref (Value 8.00607401933),ref (Value 8.6661989906),
+             ref (Value 9.31741885659),ref (Value 9.95906444485),...]))),
+   ref
+     (Value
+        (Store
+           (((2,2),(101,101)),
+            #[ref (Value 1.4),ref (Value 1.4),ref (Value 1.4),ref (Value 1.4),
+             ref (Value 1.4),ref (Value 1.4),ref (Value 1.4),ref (Value 1.4),
+             ref (Value 1.4),ref (Value 1.4),ref (Value 1.4),ref (Value 1.4),
+             ref (Value 1.4),ref (Value 1.4),ref (Value 1.4),
+             ref (Value 1.4),...]))),
+   ref
+     (Value
+        (Store
+           (((2,2),(101,101)),
+            #[ref (Value 0.93772),ref (Value 0.93772),ref (Value 0.93772),
+             ref (Value 0.93772),ref (Value 0.93772),ref (Value 0.93772),
+             ref (Value 0.93772),ref (Value 0.93772),ref (Value 0.93772),
+             ref (Value 0.93772),ref (Value 0.93772),ref (Value 0.93772),
+             ref (Value 0.93772),ref (Value 0.93772),ref (Value 0.93772),
+             ref (Value 0.93772),...]))),
+   ref
+     (Value
+        (Store
+           (((2,2),(101,101)),
+            #[ref (Value 0),ref (Value 0),ref (Value 2.627573043E~17),
+             ref (Value 7.26705527982E~17),ref (Value 1.62181081795E~17),
+             ref (Value 0),ref (Value 0),ref (Value 6.234568082E~17),
+             ref (Value 0),ref (Value 0),ref (Value 0),
+             ref (Value 8.12848872363E~19),ref (Value 1.13764543054E~16),
+             ref (Value 1.23746461531E~17),ref (Value 2.48753177912E~17),
+             ref (Value 2.32447707455E~17),...]))),
+   ref
+     (Value
+        (Store
+           (((2,2),(101,101)),
+            #[ref (Value 1),ref (Value 1),ref (Value 1),ref (Value 1),
+             ref (Value 1),ref (Value 1),ref (Value 1),ref (Value 1),
+             ref (Value 1),ref (Value 1),ref (Value 1),ref (Value 1),
+             ref (Value 1),ref (Value 1),ref (Value 1),ref (Value 1),...]))),
+   ref
+     (Value
+        (Store
+           (((2,2),(101,101)),
+            #[ref (Value 0),ref (Value 0),ref (Value 0),ref (Value 0),
+             ref (Value 0),ref (Value 0),ref (Value 0),ref (Value 0),
+             ref (Value 0),ref (Value 0),ref (Value 0),ref (Value 0),
+             ref (Value 0),ref (Value 0),ref (Value 0),ref (Value 0),...]))),
+   ref (Value 0.01),ref (Value 25389.1405917)) : K.state
+val refs =
+  ["c046a19fcf22d218","bf545d41a5464c00","4116aa4812a8ae88",
+   "bfbba07dc7a58c00","40d26a02ce7c387c","415496bb0d705117",
+   "40cb640ec1fa0113","40c3255834f2d932","40482fe2e421ceda",
+   "40c344b41e9fc96e","40f739c37ad0d8ab","3f847ae147ae147b",
+   "40d8cb48ff747357"] : string list
+val loop = fn : int -> real BenchLazy.state ref list -> string list -> unit

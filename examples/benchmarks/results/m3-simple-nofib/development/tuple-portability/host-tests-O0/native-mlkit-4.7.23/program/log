@@ -1,0 +1,38 @@
+error: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/host-tests-O0/native-mlkit-4.7.23/program/src/4/arrays.sml, line 29, column 33: Overloading not resolved in record containing the record wildcard (...).
+
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/host-tests-O0/native-mlkit-4.7.23/program/src/4/arrays.sml, line 29, column 33:
+         val a=raw b(fn z=>L.force(#1(sub shared z)))
+                                   ^^
+Overloading not resolved in record containing the record wildcard (...).
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/host-tests-O0/native-mlkit-4.7.23/program/src/4/arrays.sml, line 30, column 33:
+         val c=raw b(fn z=>L.force(#2(sub shared z)))
+                                   ^^
+Overloading not resolved in record containing the record wildcard (...).
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/host-tests-O0/native-mlkit-4.7.23/program/src/4/arrays.sml, line 35, column 33:
+         val a=raw b(fn z=>L.force(#1(sub shared z)))
+                                   ^^
+Overloading not resolved in record containing the record wildcard (...).
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/host-tests-O0/native-mlkit-4.7.23/program/src/4/arrays.sml, line 36, column 33:
+         val c=raw b(fn z=>L.force(#2(sub shared z)))
+                                   ^^
+Overloading not resolved in record containing the record wildcard (...).
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/host-tests-O0/native-mlkit-4.7.23/program/src/4/arrays.sml, line 42, column 33:
+         val a=raw b(fn z=>L.force(#1(sub shared z)))
+                                   ^^
+Overloading not resolved in record containing the record wildcard (...).
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/host-tests-O0/native-mlkit-4.7.23/program/src/4/arrays.sml, line 43, column 33:
+         val c=raw b(fn z=>L.force(#2(sub shared z)))
+                                   ^^
+Overloading not resolved in record containing the record wildcard (...).
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/host-tests-O0/native-mlkit-4.7.23/program/src/4/arrays.sml, line 44, column 33:
+         val d=raw b(fn z=>L.force(#3(sub shared z)))
+                                   ^^
+Overloading not resolved in record containing the record wildcard (...).
+Stopping compilation of MLB-file due to error (code 1).

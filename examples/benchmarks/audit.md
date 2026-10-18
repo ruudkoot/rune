@@ -631,3 +631,46 @@ No incorrect-result assertion is observed. See the archived raw outcomes.
 
 The catalogue contains 485 programs and 1409 profiles. M3/M4 remain in progress
 and M8 remains planned.
+
+## nofib SIMPLE variants and historical comparators, 2026-10-18
+
+Four ports preserve immutable boxed arrays and both source consumers: thirteen
+scalar reductions and complete array reporting, each with lazy and strict
+finite-cell policies. Step counts remain 1/20/100; smoke selects grid maximum
+8 and normal/large retain the original grid maximum 100.
+The size-ten comment is stale. Classic mutable SML implementations remain
+separate. Source recursive stores, arithmetic order, Newton stopping/residual
+quirks and boundary-work variable choices are retained.
+
+The complete individual source, MAIL and C/Fortran comparators are preserved.
+C explicitly credits Andy Shaw and Kofi Fynn; MAIL establishes RPaul Johnson's
+Haskell/pH correspondence and Olaf Lubeck's role as Fortran supplier without
+asserting sole authorship. Makefile's SRCS=Main.hs excludes both ancillary
+comparators from this nofib executable. The Fortran joins source identities.
+Six discovery guards bring inventory regressions to 138; all five pins replay
+861 entries. No additional individual permission notice is invented.
+
+Both initial policies agree bit for bit with complete original grid-100
+states at 0/1/2/5/20/100 steps. Independent initial geometry/equation checks,
+finite states, row-major scalar reductions and tolerance perturbations
+supplement the original observers. Physical-model correctness is not claimed.
+
+The catalogue contains 489 programs and 1421 profiles. M3/M4 remain in progress
+and M8 remains planned. Final profile/count/acceptance outcomes are recorded
+separately when their running gates finish.
+
+Final SIMPLE validation records 107 of 112 selected primary passes and
+2158 of 2160 semantic assertions, with remaining numerical failures on
+legacy 64-bit SML/NJ and one unclassified ML Kit lazy totals smoke compile error.
+Sixteen normal count samples agree and all twelve final serial native
+smoke diagnostics pass. Final repository acceptance exits zero with all compiler, runedoc and runeopt\ncross-build comparisons recorded.
+The earlier cancelled-sum false rejections are corrected by independently
+reviewed aggregate bounds, without changing per-cell limits or algorithms.
+Initial full-grid smoke attempts remain separate from selected grid-8 smoke.
+
+A final independent source-fidelity review restores nbc/pbb/pb/qb lookup
+tables and undefined entries, explicit lazy fold pipelines, the delayed
+thirteen-tuple of totals and the shared first revised-energy binding.
+The preliminary table-folded/strict-reduction encodings remain development
+evidence. Original complete table snapshots and demand/fault controls
+supplement result agreement; no compiler/runtime prerequisite is introduced.

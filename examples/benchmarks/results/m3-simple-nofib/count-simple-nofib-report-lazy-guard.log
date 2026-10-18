@@ -1,0 +1,11 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1421 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=simple-nofib-report-lazy' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.q0b9lR
+BENCH MEASURE simple-nofib-report-lazy normal count
+COUNT unbudgeted simple-nofib-report-lazy normal rune
+COUNT unbudgeted simple-nofib-report-lazy normal rune:opt
+COUNT unbudgeted simple-nofib-report-lazy normal rune:new
+COUNT unbudgeted simple-nofib-report-lazy normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.q0b9lR/report.md

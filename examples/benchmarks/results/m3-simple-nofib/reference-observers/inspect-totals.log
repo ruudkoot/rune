@@ -1,0 +1,3 @@
+{'host': 'smlnj32', 'exit': 0, 'limit_bytes': 4294967296, 'timeout_seconds': 600}
+{'host': 'smlnj-dev', 'exit': 0, 'limit_bytes': 4294967296, 'timeout_seconds': 600}
+{'host': 'smlnj-legacy', 'exit': 0, 'limit_bytes': 4294967296, 'timeout_seconds': 600}

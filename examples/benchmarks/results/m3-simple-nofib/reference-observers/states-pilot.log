@@ -1,0 +1,1 @@
+{"command": ["bin/runevm", "tests/out/benchmarks/nofib-simple-originals/states-pilot.rbc"], "exit": 0, "guard_reason": null, "rss_limit_kib": 2097152, "minimum_available_kib": 8388608, "observed_peak_tree_rss_kib": 266068, "observed_minimum_available_kib": 22309076, "peak_processes": [{"pid": 7, "name": "runevm", "rss_kib": 266068}], "elapsed_seconds": 641.030508722004}

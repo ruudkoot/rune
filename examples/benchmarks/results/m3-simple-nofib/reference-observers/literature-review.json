@@ -1,0 +1,13 @@
+{
+  "review_date": "2026-10-18",
+  "source": "https://research.ibm.com/publications/future-scientific-programming-on-parallel-machines",
+  "title": "Future scientific programming on parallel machines",
+  "authors": [
+    "Arvind",
+    "Kattamuri Ekanadham"
+  ],
+  "year": 1988,
+  "scope": "IBM Research abstract and metadata reviewed; full paper not reviewed",
+  "supports": "Id Nouveau SIMPLE excerpt, composition from small functions, historical inlining transformations; no claim about this port performance",
+  "unavailable_full_report": "Guessed CSG 273 PDF URL could not be opened; do not claim to have reviewed its body"
+}

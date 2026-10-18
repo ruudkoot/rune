@@ -1,0 +1,16 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/total-diagnostics/packing-control/smlnj-legacy.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/total-diagnostics/packing-control/probe.sml]
+[autoloading]
+[autoloading done]
+BIG-FLAG	true
+BIG-BYTES-ONE	000000000000F03F
+LITTLE-BYTES-ONE	3FF0000000000000
+BIG-FROM-BIG-IS-ONE	false
+BIG-SUB-BIG-IS-ONE	false
+val hex = fn : Word8Vector.vector -> string
+val big = - : Word8Vector.vector

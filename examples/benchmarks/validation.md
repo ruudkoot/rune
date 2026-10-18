@@ -3238,3 +3238,37 @@ pass under default Rune O1. Full selected large SML runs remain unrecorded.
 exits zero with 1409 profiles, performance budgets, JIT checks, generated
 documentation and all compiler/runedoc/runeopt cross-build comparisons.
 M3/M4 remain in progress and M8 remains planned.
+
+## Immutable SIMPLE consumers, 2026-10-18
+
+The final smoke/normal matrix records 107 passes in 112 attempts. All Rune
+O0/O2 engines, MLton, 32-bit/development SML/NJ and Poly/ML pass. ML Kit passes
+four normal and three smoke applications; its lazy totals smoke compilation
+fails with an empty log and unclassified cause. Legacy 64-bit SML/NJ passes
+smoke and rejects four normal numerical results. All 2160 semantic checks
+execute: 2158 pass and two fail on legacy only.
+[Host details](validation/simple-nofib-hosts.md) distinguish these results.
+
+Final source review preserves the sparse boundary tables, their undefined
+entries and aliases, memoized numeric folds, fixed thirteen-tuple of totals
+and shared energy term. Independent original table snapshots, a planted lookup
+fault, demand/sharing tests and complete state/report observations supplement
+the numerical references. The earlier cancelled-sum checker is corrected using
+independently reviewed conditioning bounds; expected values, summation order
+and per-cell limits are unchanged.
+
+All sixteen final normal Rune count samples agree with uninterrupted guards.
+All twelve serial single fresh-process native smoke diagnostics and preflights
+pass before heavy validation. These are adapter/count checks rather than
+ten-sample performance comparisons. Initial full large-state observations
+are retained separately; final-driver large runs remain unrecorded.
+
+The public Rune semantic target, 138 inventory regressions and five-pin
+861-entry replay pass. [Archived evidence](results/m3-simple-nofib/README.md)
+retains all 392 primary attempts, final canonical coverage, earlier source
+subjects, diagnostics, historical credits and fixture/matrix-log maps.
+
+[Full make JOBS=4 check](validation/oct18-simple-nofib-1421-acceptance.log)
+exits zero with 1421 profiles, performance budgets, JIT checks, generated
+documentation and all compiler/runedoc/runeopt cross-build comparisons.
+M3/M4 remain in progress and M8 remains planned.

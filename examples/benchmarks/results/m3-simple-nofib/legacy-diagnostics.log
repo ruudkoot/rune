@@ -1,0 +1,6 @@
+{'setting': 'default-1', 'exit': 1, 'compile_and_run': True, 'limit_bytes': 1073741824, 'timeout_seconds': 60}
+{'setting': 'default-2', 'exit': 1, 'compile_and_run': True, 'limit_bytes': 1073741824, 'timeout_seconds': 60}
+{'setting': 'default-3', 'exit': 1, 'compile_and_run': True, 'limit_bytes': 1073741824, 'timeout_seconds': 60}
+{'setting': 'nursery64m-1', 'exit': 1, 'compile_and_run': True, 'limit_bytes': 1073741824, 'timeout_seconds': 60}
+{'setting': 'nursery64m-2', 'exit': 1, 'compile_and_run': True, 'limit_bytes': 1073741824, 'timeout_seconds': 60}
+{'setting': 'nursery64m-3', 'exit': 1, 'compile_and_run': True, 'limit_bytes': 1073741824, 'timeout_seconds': 60}

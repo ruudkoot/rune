@@ -1,0 +1,17 @@
+[
+  {
+    "private": "tests/out/benchmarks/nofib-simple-originals/arrays.sml",
+    "registered": "examples/benchmarks/shared/simple-nofib-arrays.sml",
+    "sha256": "3c4ea65485d9665f11dbe8ede8fcd558bcff4d27119fdee440dda4a4fae5eb9c"
+  },
+  {
+    "private": "tests/out/benchmarks/nofib-simple-originals/kernel.sml",
+    "registered": "examples/benchmarks/shared/simple-nofib-kernel.sml",
+    "sha256": "25185688a19d47439c6d4eab6f1c824e077c589d507b92d3f489b93020c66c97"
+  },
+  {
+    "private": "tests/out/benchmarks/nofib-simple-originals/check.sml",
+    "registered": "examples/benchmarks/shared/simple-nofib-check.sml",
+    "sha256": "f5dc49191fa0ff7f800a50ad3b069ec82c1bc59518b00b45649dcabc2a08cc76"
+  }
+]

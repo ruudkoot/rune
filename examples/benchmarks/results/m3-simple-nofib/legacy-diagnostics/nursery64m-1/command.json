@@ -1,0 +1,5 @@
+[
+  "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml",
+  "@SMLalloc=64m",
+  "driver.sml"
+]\n

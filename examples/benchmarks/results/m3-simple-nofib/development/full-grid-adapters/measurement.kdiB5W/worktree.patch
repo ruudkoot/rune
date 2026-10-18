@@ -1,0 +1,786 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 4e41bcbcf..8b3cd67e4 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -494,6 +494,10 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [parstof-strict](#parstof-strict) | [nofib Hartel parstof](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/parstof) | Lex and parse a functional scheduling program with backtracking combinators and strict finite attributes. |
+ | [transform-lazy](#transform-lazy) | [nofib Hartel transform](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/transform) | Parse and rewrite dataflow programs through six rendered versions with memoized finite data and source length consumers. |
+ | [transform-strict](#transform-strict) | [nofib Hartel transform](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/transform) | Parse and rewrite dataflow programs through six rendered versions with strict finite data and source length consumers. |
++| [simple-nofib-lazy](#simple-nofib-lazy) | [nofib SIMPLE](https://gitlab.haskell.org/ghc/nofib/-/tree/master/spectral/simple) | Advance immutable hydrodynamic arrays with thirteen scalar reductions and memoized finite cells. |
++| [simple-nofib-strict](#simple-nofib-strict) | [nofib SIMPLE](https://gitlab.haskell.org/ghc/nofib/-/tree/master/spectral/simple) | Advance immutable hydrodynamic arrays with thirteen scalar reductions and strict finite cells. |
++| [simple-nofib-report-lazy](#simple-nofib-report-lazy) | [nofib SIMPLE](https://gitlab.haskell.org/ghc/nofib/-/tree/master/spectral/simple) | Advance immutable hydrodynamic arrays with complete state reporting and memoized finite cells. |
++| [simple-nofib-report-strict](#simple-nofib-report-strict) | [nofib SIMPLE](https://gitlab.haskell.org/ghc/nofib/-/tree/master/spectral/simple) | Advance immutable hydrodynamic arrays with complete state reporting and strict finite cells. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -33554,3 +33558,631 @@ claimed as a derivation of the executed transformation code. Original full
+ observations and independent structural/cycle checks establish the recorded
+ scope; no general transformation-correctness proof or measured compiler
+ mechanism is implied.
++
++## simple-nofib-lazy
++
++### Algorithm and workload
++
++Advance the original two-dimensional SIMPLE hydrodynamics/heat-conduction
++state using immutable boxed arrays: velocity and position, area/volume and
++density, artificial viscosity, temperature, pressure/energy, two directional
++heat sweeps, energy error and adaptive time step. Retain polynomial table
++searches, finite-difference Newton updates and every source arithmetic order.
++
++The totals consumer forces thirteen final scalar sums without printing the
++original state. The report consumer formats every coordinate/value in eleven
++arrays plus time step and error, constructs the complete report and writes it
++to standard output. Both consumers force the thirteen totals of each
++intermediate state before advancing. They share one numerical implementation
++but remain separate workloads because final traversal, formatting and I/O
++differ materially.
++
++### History, authorship, aliases and source variants
++
++[nofib spectral/simple](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/simple)
++is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. The Id source credits Kattamuri Ekanadham and carries
++1989 correspondence/edit history. Its Haskell translation is described as an
++Id-to-pH translator with hand-added types and strictness annotations; do not
++invent a named translator from that description. Historical MAIL documents
++RPaul Johnson's Haskell/pH correspondence, Andy Shaw's C submission, and a
++Fortran version supplied by Olaf Lubeck. The C file explicitly credits both
++Andy Shaw and Kofi Fynn. Supplying the Fortran is not proof of sole authorship.
++
++Preserve Main.hs, Makefile, MAIL, simple.c and simple.f in full. No separate
++permission notice is stated for these individual files. The repository-level
++nofib notices remain recorded in the pinned inventory. Embedded numeric
++constants and geometry are the input; no external historical dataset is
++silently substituted.
++
++Makefile explicitly selects SRCS = Main.hs to exclude the C comparator.
++The Fortran source is likewise outside that build. Both ancillary comparators
++are preserved and inventoried with this concrete build-scope exclusion,
++rather than claimed as additional passing nofib executables. The C pi
++constant differs and Fortran declares single-precision REAL; neither is an
++exact binary64 oracle for this Haskell program.
++
++The classic unsuffixed simple and simple-smlnj imports retain their mutable
++SML implementations and original profiles. This port uses the -nofib collision
++suffix. Memoized and strict finite-array policies receive -lazy and -strict;
++the reporting consumer adds -report before the policy suffix. Similar ancestry
++does not establish identical representations, evaluation or input profiles.
++
++### Translation, numeric semantics and demand
++
++Keep the original boxed, immutable arrays with inclusive tuple-index bounds,
++row-major enumeration, shared pair/triple results and memoized real cells.
++Recursive boundary arrays and forward/backward heat recurrences install their
++shared stores before optional strict materialization. Lazy projections do not
++force unused tuple fields. A strict policy materializes finite array cells
++when its array root is demanded; memoized state/control roots remain shared.
++
++The source strictArray evaluates only the first constructor of map evalValue
++(elems array). It does not traverse and force every element, despite its
++comment. The lazy policy follows actual demand; the strict policy is a
++separately named finite-materialization experiment. Do not repair the source
++helper according to its name.
++
++Preserve the source's positive-residual-only Newton stopping test and its
++reuse of the previous residual argument. Preserve the energy-error boundary
++work calculation that reads pressure into its u1/u2 variables and position z
++into w1/w2. These are source behaviors, not corrections to a physical model.
++Retain exact operation grouping, table coefficients, boundary classifications,
++reflection directions, sweep dependencies and traversal/reduction order.
++The upstream source contains a stale size-10 comment; its actual grid_max is
++100 and all registered profiles retain that value.
++
++Use binary64 real arithmetic, including source powers, sqrt, trigonometric
++initialization and fractional power. Do not round to binary32 or reuse the
++classic imperative implementation. Integer coordinates, counters and cell
++counts fit signed 31-bit integers. Reference hexadecimal bits decode using
++portable IntInf arithmetic and Real.fromManExp, avoiding optional packing
++structures. Explicit tuple patterns and numeric types resolve Standard ML
++record overloading/value restrictions without host-specific kernels.
++
++The original positive consumer emits nothing. Add a checked compact summary
++for the common runner. The report consumer retains the complete headings,
++bounds, coordinates, order, eleven arrays, scalars and done marker. Map its
++Haskell shortest floating printer to SML97 Real.fmt GEN17, normalize sign and
++exponent spelling, and verify every rendered number parses back within the
++same documented error bound. Decimal spellings can differ by host; numerical
++values and structure supply the oracle, not one host's formatted text.
++The full report still reaches controlled standard output before the common
++RESULT/PASS/SUMMARY protocol. Formatting and I/O remain part of this workload.
++
++### Profiles, input generation and result validation
++
++| Profile | Grid maximum | Steps |
++|---|---:|---:|
++| Smoke | 100 | 1 |
++| Normal | 100 | 20 |
++| Large | 100 | 100 |
++
++All three preserve the original FAST/NORM/SLOW step counts. The driver accepts
++bounded step counts 0..100 and requires an explicit reviewed reference.
++Inputs preserve source constants, polar geometry and boundary distributions.
++All main checks use the actual grid of 100; the bounded semantic target also
++uses a separately recorded source-constant configuration with grid 8.
++
++Totals require thirteen finite results. Reports require the exact eleven
++names, inclusive bounds, row-major coordinates, number of cells and finite
++scalar values, then validate each formatted numeric token. For each expected
++binary64 value e and observed value x, require abs(x-e) <= 1e-12 + 1e-11*abs(e).
++This conservative per-value compatibility bound accommodates library/rounding
++variation; it is not a proved physical-error or accumulated-stability bound.
++Deliberately perturbed near-zero and large values, NaN, infinity, malformed
++bits, bad counts/shapes/steps and incorrect references must be rejected.
++Do not widen this bound to hide a host failure.
++
++Unmodified original totals-mode executions at 1/20/100 steps return no stdout
++as required. Read-only observers capture every array cell and all thirteen
++totals at 0/1/2/5/20/100 steps. Both initial SML policies agree bit for bit on
++every captured full-grid state, including the complete 100-step large state;
++this is observed agreement, not a requirement to substitute approximate
++golden aggregates. Original reporting-mode outputs at 1/20/100 steps decode
++to the same 110004 final array cells; complete source reports are preserved.
++The zero-step state has 800 additional velocity boundary cells.
++
++### Compiler/runtime questions and evidence limits
++
++Investigate immutable-array construction, thunk memoization, shared tuple
++projections, recursive array lifetimes, direction-dependent sweeps, reduction
++chains, floating-point primitives and complete report allocation/I/O.
++These are hypotheses from source analysis. Same-source SML engines/hosts are
++the performance comparison; Haskell is a correctness reference. Source and
++adapter differences prohibit attributing cross-language times solely to
++compiler quality.
++
++Full-grid state observations, bounded semantic checks, primary profiles,
++guarded counts, serial timing-adapter diagnostics and repository acceptance
++are recorded separately. A passing initial private pilot does not establish
++that a later host/profile passed. Retain compile errors, incorrect numerical
++results and resource failures explicitly; no failed case contributes timings.
++
++### Literature and review scope
++
++Arvind and Kattamuri Ekanadham, [Future scientific programming on parallel
++machines](https://research.ibm.com/publications/future-scientific-programming-on-parallel-machines),
++Journal of Parallel and Distributed Computing (1988), supplies background.
++The reviewed IBM abstract describes composing a SIMPLE excerpt from Id
++Nouveau functions and discusses transformations such as inlining. That is
++paper-supported context rather than a measured explanation for this port.
++Only the abstract/metadata was reviewed here; do not imply a full paper review.
++
++The pinned program references CSG 273 and contains specific equation/edit
++history. Its MAIL warns about the historical physical correctness question
++and small-grid long-run NaNs. Validation establishes agreement with this
++specific Haskell program, not validation of the physical model. No parallel
++runtime feature is introduced. Upstream mutable C/Fortran comparisons and the
++classic SML version need separate numeric/evaluation review before any claim
++of equivalent costs or exact results.
++
++## simple-nofib-strict
++
++### Algorithm and workload
++
++Advance the original two-dimensional SIMPLE hydrodynamics/heat-conduction
++state using immutable boxed arrays: velocity and position, area/volume and
++density, artificial viscosity, temperature, pressure/energy, two directional
++heat sweeps, energy error and adaptive time step. Retain polynomial table
++searches, finite-difference Newton updates and every source arithmetic order.
++
++The totals consumer forces thirteen final scalar sums without printing the
++original state. The report consumer formats every coordinate/value in eleven
++arrays plus time step and error, constructs the complete report and writes it
++to standard output. Both consumers force the thirteen totals of each
++intermediate state before advancing. They share one numerical implementation
++but remain separate workloads because final traversal, formatting and I/O
++differ materially.
++
++### History, authorship, aliases and source variants
++
++[nofib spectral/simple](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/simple)
++is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. The Id source credits Kattamuri Ekanadham and carries
++1989 correspondence/edit history. Its Haskell translation is described as an
++Id-to-pH translator with hand-added types and strictness annotations; do not
++invent a named translator from that description. Historical MAIL documents
++RPaul Johnson's Haskell/pH correspondence, Andy Shaw's C submission, and a
++Fortran version supplied by Olaf Lubeck. The C file explicitly credits both
++Andy Shaw and Kofi Fynn. Supplying the Fortran is not proof of sole authorship.
++
++Preserve Main.hs, Makefile, MAIL, simple.c and simple.f in full. No separate
++permission notice is stated for these individual files. The repository-level
++nofib notices remain recorded in the pinned inventory. Embedded numeric
++constants and geometry are the input; no external historical dataset is
++silently substituted.
++
++Makefile explicitly selects SRCS = Main.hs to exclude the C comparator.
++The Fortran source is likewise outside that build. Both ancillary comparators
++are preserved and inventoried with this concrete build-scope exclusion,
++rather than claimed as additional passing nofib executables. The C pi
++constant differs and Fortran declares single-precision REAL; neither is an
++exact binary64 oracle for this Haskell program.
++
++The classic unsuffixed simple and simple-smlnj imports retain their mutable
++SML implementations and original profiles. This port uses the -nofib collision
++suffix. Memoized and strict finite-array policies receive -lazy and -strict;
++the reporting consumer adds -report before the policy suffix. Similar ancestry
++does not establish identical representations, evaluation or input profiles.
++
++### Translation, numeric semantics and demand
++
++Keep the original boxed, immutable arrays with inclusive tuple-index bounds,
++row-major enumeration, shared pair/triple results and memoized real cells.
++Recursive boundary arrays and forward/backward heat recurrences install their
++shared stores before optional strict materialization. Lazy projections do not
++force unused tuple fields. A strict policy materializes finite array cells
++when its array root is demanded; memoized state/control roots remain shared.
++
++The source strictArray evaluates only the first constructor of map evalValue
++(elems array). It does not traverse and force every element, despite its
++comment. The lazy policy follows actual demand; the strict policy is a
++separately named finite-materialization experiment. Do not repair the source
++helper according to its name.
++
++Preserve the source's positive-residual-only Newton stopping test and its
++reuse of the previous residual argument. Preserve the energy-error boundary
++work calculation that reads pressure into its u1/u2 variables and position z
++into w1/w2. These are source behaviors, not corrections to a physical model.
++Retain exact operation grouping, table coefficients, boundary classifications,
++reflection directions, sweep dependencies and traversal/reduction order.
++The upstream source contains a stale size-10 comment; its actual grid_max is
++100 and all registered profiles retain that value.
++
++Use binary64 real arithmetic, including source powers, sqrt, trigonometric
++initialization and fractional power. Do not round to binary32 or reuse the
++classic imperative implementation. Integer coordinates, counters and cell
++counts fit signed 31-bit integers. Reference hexadecimal bits decode using
++portable IntInf arithmetic and Real.fromManExp, avoiding optional packing
++structures. Explicit tuple patterns and numeric types resolve Standard ML
++record overloading/value restrictions without host-specific kernels.
++
++The original positive consumer emits nothing. Add a checked compact summary
++for the common runner. The report consumer retains the complete headings,
++bounds, coordinates, order, eleven arrays, scalars and done marker. Map its
++Haskell shortest floating printer to SML97 Real.fmt GEN17, normalize sign and
++exponent spelling, and verify every rendered number parses back within the
++same documented error bound. Decimal spellings can differ by host; numerical
++values and structure supply the oracle, not one host's formatted text.
++The full report still reaches controlled standard output before the common
++RESULT/PASS/SUMMARY protocol. Formatting and I/O remain part of this workload.
++
++### Profiles, input generation and result validation
++
++| Profile | Grid maximum | Steps |
++|---|---:|---:|
++| Smoke | 100 | 1 |
++| Normal | 100 | 20 |
++| Large | 100 | 100 |
++
++All three preserve the original FAST/NORM/SLOW step counts. The driver accepts
++bounded step counts 0..100 and requires an explicit reviewed reference.
++Inputs preserve source constants, polar geometry and boundary distributions.
++All main checks use the actual grid of 100; the bounded semantic target also
++uses a separately recorded source-constant configuration with grid 8.
++
++Totals require thirteen finite results. Reports require the exact eleven
++names, inclusive bounds, row-major coordinates, number of cells and finite
++scalar values, then validate each formatted numeric token. For each expected
++binary64 value e and observed value x, require abs(x-e) <= 1e-12 + 1e-11*abs(e).
++This conservative per-value compatibility bound accommodates library/rounding
++variation; it is not a proved physical-error or accumulated-stability bound.
++Deliberately perturbed near-zero and large values, NaN, infinity, malformed
++bits, bad counts/shapes/steps and incorrect references must be rejected.
++Do not widen this bound to hide a host failure.
++
++Unmodified original totals-mode executions at 1/20/100 steps return no stdout
++as required. Read-only observers capture every array cell and all thirteen
++totals at 0/1/2/5/20/100 steps. Both initial SML policies agree bit for bit on
++every captured full-grid state, including the complete 100-step large state;
++this is observed agreement, not a requirement to substitute approximate
++golden aggregates. Original reporting-mode outputs at 1/20/100 steps decode
++to the same 110004 final array cells; complete source reports are preserved.
++The zero-step state has 800 additional velocity boundary cells.
++
++### Compiler/runtime questions and evidence limits
++
++Investigate immutable-array construction, thunk memoization, shared tuple
++projections, recursive array lifetimes, direction-dependent sweeps, reduction
++chains, floating-point primitives and complete report allocation/I/O.
++These are hypotheses from source analysis. Same-source SML engines/hosts are
++the performance comparison; Haskell is a correctness reference. Source and
++adapter differences prohibit attributing cross-language times solely to
++compiler quality.
++
++Full-grid state observations, bounded semantic checks, primary profiles,
++guarded counts, serial timing-adapter diagnostics and repository acceptance
++are recorded separately. A passing initial private pilot does not establish
++that a later host/profile passed. Retain compile errors, incorrect numerical
++results and resource failures explicitly; no failed case contributes timings.
++
++### Literature and review scope
++
++Arvind and Kattamuri Ekanadham, [Future scientific programming on parallel
++machines](https://research.ibm.com/publications/future-scientific-programming-on-parallel-machines),
++Journal of Parallel and Distributed Computing (1988), supplies background.
++The reviewed IBM abstract describes composing a SIMPLE excerpt from Id
++Nouveau functions and discusses transformations such as inlining. That is
++paper-supported context rather than a measured explanation for this port.
++Only the abstract/metadata was reviewed here; do not imply a full paper review.
++
++The pinned program references CSG 273 and contains specific equation/edit
++history. Its MAIL warns about the historical physical correctness question
++and small-grid long-run NaNs. Validation establishes agreement with this
++specific Haskell program, not validation of the physical model. No parallel
++runtime feature is introduced. Upstream mutable C/Fortran comparisons and the
++classic SML version need separate numeric/evaluation review before any claim
++of equivalent costs or exact results.
++
++## simple-nofib-report-lazy
++
++### Algorithm and workload
++
++Advance the original two-dimensional SIMPLE hydrodynamics/heat-conduction
++state using immutable boxed arrays: velocity and position, area/volume and
++density, artificial viscosity, temperature, pressure/energy, two directional
++heat sweeps, energy error and adaptive time step. Retain polynomial table
++searches, finite-difference Newton updates and every source arithmetic order.
++
++The totals consumer forces thirteen final scalar sums without printing the
++original state. The report consumer formats every coordinate/value in eleven
++arrays plus time step and error, constructs the complete report and writes it
++to standard output. Both consumers force the thirteen totals of each
++intermediate state before advancing. They share one numerical implementation
++but remain separate workloads because final traversal, formatting and I/O
++differ materially.
++
++### History, authorship, aliases and source variants
++
++[nofib spectral/simple](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/simple)
++is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. The Id source credits Kattamuri Ekanadham and carries
++1989 correspondence/edit history. Its Haskell translation is described as an
++Id-to-pH translator with hand-added types and strictness annotations; do not
++invent a named translator from that description. Historical MAIL documents
++RPaul Johnson's Haskell/pH correspondence, Andy Shaw's C submission, and a
++Fortran version supplied by Olaf Lubeck. The C file explicitly credits both
++Andy Shaw and Kofi Fynn. Supplying the Fortran is not proof of sole authorship.
++
++Preserve Main.hs, Makefile, MAIL, simple.c and simple.f in full. No separate
++permission notice is stated for these individual files. The repository-level
++nofib notices remain recorded in the pinned inventory. Embedded numeric
++constants and geometry are the input; no external historical dataset is
++silently substituted.
++
++Makefile explicitly selects SRCS = Main.hs to exclude the C comparator.
++The Fortran source is likewise outside that build. Both ancillary comparators
++are preserved and inventoried with this concrete build-scope exclusion,
++rather than claimed as additional passing nofib executables. The C pi
++constant differs and Fortran declares single-precision REAL; neither is an
++exact binary64 oracle for this Haskell program.
++
++The classic unsuffixed simple and simple-smlnj imports retain their mutable
++SML implementations and original profiles. This port uses the -nofib collision
++suffix. Memoized and strict finite-array policies receive -lazy and -strict;
++the reporting consumer adds -report before the policy suffix. Similar ancestry
++does not establish identical representations, evaluation or input profiles.
++
++### Translation, numeric semantics and demand
++
++Keep the original boxed, immutable arrays with inclusive tuple-index bounds,
++row-major enumeration, shared pair/triple results and memoized real cells.
++Recursive boundary arrays and forward/backward heat recurrences install their
++shared stores before optional strict materialization. Lazy projections do not
++force unused tuple fields. A strict policy materializes finite array cells
++when its array root is demanded; memoized state/control roots remain shared.
++
++The source strictArray evaluates only the first constructor of map evalValue
++(elems array). It does not traverse and force every element, despite its
++comment. The lazy policy follows actual demand; the strict policy is a
++separately named finite-materialization experiment. Do not repair the source
++helper according to its name.
++
++Preserve the source's positive-residual-only Newton stopping test and its
++reuse of the previous residual argument. Preserve the energy-error boundary
++work calculation that reads pressure into its u1/u2 variables and position z
++into w1/w2. These are source behaviors, not corrections to a physical model.
++Retain exact operation grouping, table coefficients, boundary classifications,
++reflection directions, sweep dependencies and traversal/reduction order.
++The upstream source contains a stale size-10 comment; its actual grid_max is
++100 and all registered profiles retain that value.
++
++Use binary64 real arithmetic, including source powers, sqrt, trigonometric
++initialization and fractional power. Do not round to binary32 or reuse the
++classic imperative implementation. Integer coordinates, counters and cell
++counts fit signed 31-bit integers. Reference hexadecimal bits decode using
++portable IntInf arithmetic and Real.fromManExp, avoiding optional packing
++structures. Explicit tuple patterns and numeric types resolve Standard ML
++record overloading/value restrictions without host-specific kernels.
++
++The original positive consumer emits nothing. Add a checked compact summary
++for the common runner. The report consumer retains the complete headings,
++bounds, coordinates, order, eleven arrays, scalars and done marker. Map its
++Haskell shortest floating printer to SML97 Real.fmt GEN17, normalize sign and
++exponent spelling, and verify every rendered number parses back within the
++same documented error bound. Decimal spellings can differ by host; numerical
++values and structure supply the oracle, not one host's formatted text.
++The full report still reaches controlled standard output before the common
++RESULT/PASS/SUMMARY protocol. Formatting and I/O remain part of this workload.
++
++### Profiles, input generation and result validation
++
++| Profile | Grid maximum | Steps |
++|---|---:|---:|
++| Smoke | 100 | 1 |
++| Normal | 100 | 20 |
++| Large | 100 | 100 |
++
++All three preserve the original FAST/NORM/SLOW step counts. The driver accepts
++bounded step counts 0..100 and requires an explicit reviewed reference.
++Inputs preserve source constants, polar geometry and boundary distributions.
++All main checks use the actual grid of 100; the bounded semantic target also
++uses a separately recorded source-constant configuration with grid 8.
++
++Totals require thirteen finite results. Reports require the exact eleven
++names, inclusive bounds, row-major coordinates, number of cells and finite
++scalar values, then validate each formatted numeric token. For each expected
++binary64 value e and observed value x, require abs(x-e) <= 1e-12 + 1e-11*abs(e).
++This conservative per-value compatibility bound accommodates library/rounding
++variation; it is not a proved physical-error or accumulated-stability bound.
++Deliberately perturbed near-zero and large values, NaN, infinity, malformed
++bits, bad counts/shapes/steps and incorrect references must be rejected.
++Do not widen this bound to hide a host failure.
++
++Unmodified original totals-mode executions at 1/20/100 steps return no stdout
++as required. Read-only observers capture every array cell and all thirteen
++totals at 0/1/2/5/20/100 steps. Both initial SML policies agree bit for bit on
++every captured full-grid state, including the complete 100-step large state;
++this is observed agreement, not a requirement to substitute approximate
++golden aggregates. Original reporting-mode outputs at 1/20/100 steps decode
++to the same 110004 final array cells; complete source reports are preserved.
++The zero-step state has 800 additional velocity boundary cells.
++
++### Compiler/runtime questions and evidence limits
++
++Investigate immutable-array construction, thunk memoization, shared tuple
++projections, recursive array lifetimes, direction-dependent sweeps, reduction
++chains, floating-point primitives and complete report allocation/I/O.
++These are hypotheses from source analysis. Same-source SML engines/hosts are
++the performance comparison; Haskell is a correctness reference. Source and
++adapter differences prohibit attributing cross-language times solely to
++compiler quality.
++
++Full-grid state observations, bounded semantic checks, primary profiles,
++guarded counts, serial timing-adapter diagnostics and repository acceptance
++are recorded separately. A passing initial private pilot does not establish
++that a later host/profile passed. Retain compile errors, incorrect numerical
++results and resource failures explicitly; no failed case contributes timings.
++
++### Literature and review scope
++
++Arvind and Kattamuri Ekanadham, [Future scientific programming on parallel
++machines](https://research.ibm.com/publications/future-scientific-programming-on-parallel-machines),
++Journal of Parallel and Distributed Computing (1988), supplies background.
++The reviewed IBM abstract describes composing a SIMPLE excerpt from Id
++Nouveau functions and discusses transformations such as inlining. That is
++paper-supported context rather than a measured explanation for this port.
++Only the abstract/metadata was reviewed here; do not imply a full paper review.
++
++The pinned program references CSG 273 and contains specific equation/edit
++history. Its MAIL warns about the historical physical correctness question
++and small-grid long-run NaNs. Validation establishes agreement with this
++specific Haskell program, not validation of the physical model. No parallel
++runtime feature is introduced. Upstream mutable C/Fortran comparisons and the
++classic SML version need separate numeric/evaluation review before any claim
++of equivalent costs or exact results.
++
++## simple-nofib-report-strict
++
++### Algorithm and workload
++
++Advance the original two-dimensional SIMPLE hydrodynamics/heat-conduction
++state using immutable boxed arrays: velocity and position, area/volume and
++density, artificial viscosity, temperature, pressure/energy, two directional
++heat sweeps, energy error and adaptive time step. Retain polynomial table
++searches, finite-difference Newton updates and every source arithmetic order.
++
++The totals consumer forces thirteen final scalar sums without printing the
++original state. The report consumer formats every coordinate/value in eleven
++arrays plus time step and error, constructs the complete report and writes it
++to standard output. Both consumers force the thirteen totals of each
++intermediate state before advancing. They share one numerical implementation
++but remain separate workloads because final traversal, formatting and I/O
++differ materially.
++
++### History, authorship, aliases and source variants
++
++[nofib spectral/simple](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/simple)
++is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. The Id source credits Kattamuri Ekanadham and carries
++1989 correspondence/edit history. Its Haskell translation is described as an
++Id-to-pH translator with hand-added types and strictness annotations; do not
++invent a named translator from that description. Historical MAIL documents
++RPaul Johnson's Haskell/pH correspondence, Andy Shaw's C submission, and a
++Fortran version supplied by Olaf Lubeck. The C file explicitly credits both
++Andy Shaw and Kofi Fynn. Supplying the Fortran is not proof of sole authorship.
++
++Preserve Main.hs, Makefile, MAIL, simple.c and simple.f in full. No separate
++permission notice is stated for these individual files. The repository-level
++nofib notices remain recorded in the pinned inventory. Embedded numeric
++constants and geometry are the input; no external historical dataset is
++silently substituted.
++
++Makefile explicitly selects SRCS = Main.hs to exclude the C comparator.
++The Fortran source is likewise outside that build. Both ancillary comparators
++are preserved and inventoried with this concrete build-scope exclusion,
++rather than claimed as additional passing nofib executables. The C pi
++constant differs and Fortran declares single-precision REAL; neither is an
++exact binary64 oracle for this Haskell program.
++
++The classic unsuffixed simple and simple-smlnj imports retain their mutable
++SML implementations and original profiles. This port uses the -nofib collision
++suffix. Memoized and strict finite-array policies receive -lazy and -strict;
++the reporting consumer adds -report before the policy suffix. Similar ancestry
++does not establish identical representations, evaluation or input profiles.
++
++### Translation, numeric semantics and demand
++
++Keep the original boxed, immutable arrays with inclusive tuple-index bounds,
++row-major enumeration, shared pair/triple results and memoized real cells.
++Recursive boundary arrays and forward/backward heat recurrences install their
++shared stores before optional strict materialization. Lazy projections do not
++force unused tuple fields. A strict policy materializes finite array cells
++when its array root is demanded; memoized state/control roots remain shared.
++
++The source strictArray evaluates only the first constructor of map evalValue
++(elems array). It does not traverse and force every element, despite its
++comment. The lazy policy follows actual demand; the strict policy is a
++separately named finite-materialization experiment. Do not repair the source
++helper according to its name.
++
++Preserve the source's positive-residual-only Newton stopping test and its
++reuse of the previous residual argument. Preserve the energy-error boundary
++work calculation that reads pressure into its u1/u2 variables and position z
++into w1/w2. These are source behaviors, not corrections to a physical model.
++Retain exact operation grouping, table coefficients, boundary classifications,
++reflection directions, sweep dependencies and traversal/reduction order.
++The upstream source contains a stale size-10 comment; its actual grid_max is
++100 and all registered profiles retain that value.
++
++Use binary64 real arithmetic, including source powers, sqrt, trigonometric
++initialization and fractional power. Do not round to binary32 or reuse the
++classic imperative implementation. Integer coordinates, counters and cell
++counts fit signed 31-bit integers. Reference hexadecimal bits decode using
++portable IntInf arithmetic and Real.fromManExp, avoiding optional packing
++structures. Explicit tuple patterns and numeric types resolve Standard ML
++record overloading/value restrictions without host-specific kernels.
++
++The original positive consumer emits nothing. Add a checked compact summary
++for the common runner. The report consumer retains the complete headings,
++bounds, coordinates, order, eleven arrays, scalars and done marker. Map its
++Haskell shortest floating printer to SML97 Real.fmt GEN17, normalize sign and
++exponent spelling, and verify every rendered number parses back within the
++same documented error bound. Decimal spellings can differ by host; numerical
++values and structure supply the oracle, not one host's formatted text.
++The full report still reaches controlled standard output before the common
++RESULT/PASS/SUMMARY protocol. Formatting and I/O remain part of this workload.
++
++### Profiles, input generation and result validation
++
++| Profile | Grid maximum | Steps |
++|---|---:|---:|
++| Smoke | 100 | 1 |
++| Normal | 100 | 20 |
++| Large | 100 | 100 |
++
++All three preserve the original FAST/NORM/SLOW step counts. The driver accepts
++bounded step counts 0..100 and requires an explicit reviewed reference.
++Inputs preserve source constants, polar geometry and boundary distributions.
++All main checks use the actual grid of 100; the bounded semantic target also
++uses a separately recorded source-constant configuration with grid 8.
++
++Totals require thirteen finite results. Reports require the exact eleven
++names, inclusive bounds, row-major coordinates, number of cells and finite
++scalar values, then validate each formatted numeric token. For each expected
++binary64 value e and observed value x, require abs(x-e) <= 1e-12 + 1e-11*abs(e).
++This conservative per-value compatibility bound accommodates library/rounding
++variation; it is not a proved physical-error or accumulated-stability bound.
++Deliberately perturbed near-zero and large values, NaN, infinity, malformed
++bits, bad counts/shapes/steps and incorrect references must be rejected.
++Do not widen this bound to hide a host failure.
++
++Unmodified original totals-mode executions at 1/20/100 steps return no stdout
++as required. Read-only observers capture every array cell and all thirteen
++totals at 0/1/2/5/20/100 steps. Both initial SML policies agree bit for bit on
++every captured full-grid state, including the complete 100-step large state;
++this is observed agreement, not a requirement to substitute approximate
++golden aggregates. Original reporting-mode outputs at 1/20/100 steps decode
++to the same 110004 final array cells; complete source reports are preserved.
++The zero-step state has 800 additional velocity boundary cells.
++
++### Compiler/runtime questions and evidence limits
++
++Investigate immutable-array construction, thunk memoization, shared tuple
++projections, recursive array lifetimes, direction-dependent sweeps, reduction
++chains, floating-point primitives and complete report allocation/I/O.
++These are hypotheses from source analysis. Same-source SML engines/hosts are
++the performance comparison; Haskell is a correctness reference. Source and
++adapter differences prohibit attributing cross-language times solely to
++compiler quality.
++
++Full-grid state observations, bounded semantic checks, primary profiles,
++guarded counts, serial timing-adapter diagnostics and repository acceptance
++are recorded separately. A passing initial private pilot does not establish
++that a later host/profile passed. Retain compile errors, incorrect numerical
++results and resource failures explicitly; no failed case contributes timings.
++
++### Literature and review scope
++
++Arvind and Kattamuri Ekanadham, [Future scientific programming on parallel
++machines](https://research.ibm.com/publications/future-scientific-programming-on-parallel-machines),
++Journal of Parallel and Distributed Computing (1988), supplies background.
++The reviewed IBM abstract describes composing a SIMPLE excerpt from Id
++Nouveau functions and discusses transformations such as inlining. That is
++paper-supported context rather than a measured explanation for this port.
++Only the abstract/metadata was reviewed here; do not imply a full paper review.
++
++The pinned program references CSG 273 and contains specific equation/edit
++history. Its MAIL warns about the historical physical correctness question
++and small-grid long-run NaNs. Validation establishes agreement with this
++specific Haskell program, not validation of the physical model. No parallel
++runtime feature is introduced. Upstream mutable C/Fortran comparisons and the
++classic SML version need separate numeric/evaluation review before any claim
++of equivalent costs or exact results.
+diff --git a/examples/benchmarks/inventory.tsv b/examples/benchmarks/inventory.tsv
+index e66623332..37d7768a9 100644
+--- a/examples/benchmarks/inventory.tsv
++++ b/examples/benchmarks/inventory.tsv
+@@ -668,7 +668,7 @@ nofib	spectral/puzzle	puzzle	puzzle	M3	import	kernel		not stated in scanned sour
+ nofib	spectral/rewrite	rewrite	rewrite	M3	import	symbolic-search		Mike Spivey;partain (Haskell conversion)	43803650d3e4505fcd238a981ede8821ef4912bad06cab96c382b8abd47715c4	spectral/rewrite/Main.lhs	spectral/rewrite/rewrite.stdout		spectral/rewrite/Main.lhs:Orwell-author-and-Haskell-conversion-heading;spectral/rewrite/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/scc	scc	scc	M3	import	kernel		not stated in scanned source headers	bb6373dc6cb21d9771bb06885f561545d13094a8fb79b0681bf33929b96cf794	spectral/scc/Digraph.hs;spectral/scc/Main.hs	spectral/scc/scc.stdout		spectral/scc/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/secretary	secretary	secretary	M3	import	integer-arithmetic		not stated in scanned source headers	97d86d7e6fc123947cd0a0b22c7713f787ae543b9ad47aed052adf47a36a8344	spectral/secretary/Main.lhs	spectral/secretary/secretary.stdout		spectral/secretary/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	spectral/simple	simple	simple-nofib	M3	import	numerical	mlton:benchmark/tests/simple.sml;smlnj:programs/simple	Kattamuri Ekanadham <EKNATH@ibm.com>;an id to ph translator, hand annotated for toplevel	df027b488c7bd727c92459ffdfc789b86ebc1102b8100a7358e8d0c52980fcba	spectral/simple/Main.hs;spectral/simple/simple.c		spectral/simple/Main.hs:header	spectral/simple/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	spectral/simple	simple	simple-nofib	M3	import	numerical	mlton:benchmark/tests/simple.sml;smlnj:programs/simple	Andy Shaw (C comparator);Kattamuri Ekanadham <EKNATH@ibm.com>;Kofi Fynn (C comparator);Olaf Lubeck (Fortran supplier, not asserted sole author);RPaul Johnson (Haskell/pH correspondence);an id to ph translator, hand annotated for toplevel	fefd2406ea962e836b0ccf1bfbe3d05f84f55cbac6634ac5c413eb5a07e8a69a	spectral/simple/Main.hs;spectral/simple/simple.c;spectral/simple/simple.f		spectral/simple/MAIL:header;spectral/simple/Main.hs:header	spectral/simple/MAIL;spectral/simple/MAIL:Fortran-supplier;spectral/simple/MAIL:Haskell-port-correspondence;spectral/simple/Main.hs:Id-author-and-anonymous-translator-role;spectral/simple/Makefile;spectral/simple/Makefile:excludes-C-and-Fortran-comparators;spectral/simple/simple.c:C-comparator-authors	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/sorting	sorting	sorting	M3	import	lists-streams		not stated in scanned source headers	19a835d1f78c10d38550aab6fb5915e61c3b7e43114550d4b634977a51c79775	spectral/sorting/Main.hs;spectral/sorting/NofibUtils.hs;spectral/sorting/Sort.hs	spectral/sorting/Main.hs;spectral/sorting/Sort.hs;spectral/sorting/sorting.faststdout;spectral/sorting/sorting.slowstdout;spectral/sorting/sorting.stdout		spectral/sorting/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/sphere	sphere	sphere	M3	import	numerical		David J. King	39c099a56b5f89044393bc3266dbffb1e1722412dde89ba1b9dc28e0aec2bdb8	spectral/sphere/Main.lhs	spectral/sphere/sphere.faststdout;spectral/sphere/sphere.slowstdout;spectral/sphere/sphere.stdout		spectral/sphere/Main.lhs:authorship-and-port-history;spectral/sphere/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/treejoin	treejoin	treejoin-nofib	M3	import	allocation-lifetimes	nofib:gc/treejoin	not stated in scanned source headers	3ef1a47569e2ad9dcf617e9253a4e03bf0e3fa30c83a8dab805a793e21ade1c7	spectral/treejoin/Main.hs	spectral/treejoin/runtime_files/1500.1;spectral/treejoin/runtime_files/1500.2;spectral/treejoin/runtime_files/27000.1;spectral/treejoin/runtime_files/27000.2;spectral/treejoin/runtime_files/8000.1;spectral/treejoin/runtime_files/8000.2;spectral/treejoin/treejoin.stdout		spectral/treejoin/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 199a6003b..d8025d1f5 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -1408,3 +1408,15 @@ transform-lazy	large	nofib	spectral/hartel/transform	15000	transform-lazy/large.
+ transform-strict	smoke	nofib	spectral/hartel/transform	8	transform-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/transform-inputs.sml,shared/transform-kernel.sml,shared/transform-check.sml,transform-strict/benchmark.sml,shared/main.sml	30	1048576	compiler-application,parsing,rewriting,dataflow,streams,higher-order,sharing,allocation-lifetimes,hartel	-	exact	implemented
+ transform-strict	normal	nofib	spectral/hartel/transform	3000	transform-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/transform-inputs.sml,shared/transform-kernel.sml,shared/transform-check.sml,transform-strict/benchmark.sml,shared/main.sml	600	4194304	compiler-application,parsing,rewriting,dataflow,streams,higher-order,sharing,allocation-lifetimes,hartel	-	exact	implemented
+ transform-strict	large	nofib	spectral/hartel/transform	15000	transform-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/transform-inputs.sml,shared/transform-kernel.sml,shared/transform-check.sml,transform-strict/benchmark.sml,shared/main.sml	3600	8388608	compiler-application,parsing,rewriting,dataflow,streams,higher-order,sharing,allocation-lifetimes,hartel	-	exact	implemented
++simple-nofib-lazy	smoke	nofib	spectral/simple	1 smoke.reference	simple-nofib-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/simple-nofib-arrays.sml,shared/simple-nofib-kernel.sml,shared/simple-nofib-check.sml,simple-nofib-lazy/benchmark.sml,shared/main.sml	30	1048576	numerical,binary64,immutable-arrays,recursive-arrays,hydrodynamics,sharing,allocation-lifetimes,reductions	smoke.reference	exact	implemented
++simple-nofib-lazy	normal	nofib	spectral/simple	20 normal.reference	simple-nofib-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/simple-nofib-arrays.sml,shared/simple-nofib-kernel.sml,shared/simple-nofib-check.sml,simple-nofib-lazy/benchmark.sml,shared/main.sml	600	4194304	numerical,binary64,immutable-arrays,recursive-arrays,hydrodynamics,sharing,allocation-lifetimes,reductions	normal.reference	exact	implemented
++simple-nofib-lazy	large	nofib	spectral/simple	100 large.reference	simple-nofib-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/simple-nofib-arrays.sml,shared/simple-nofib-kernel.sml,shared/simple-nofib-check.sml,simple-nofib-lazy/benchmark.sml,shared/main.sml	3600	8388608	numerical,binary64,immutable-arrays,recursive-arrays,hydrodynamics,sharing,allocation-lifetimes,reductions	large.reference	exact	implemented
++simple-nofib-strict	smoke	nofib	spectral/simple	1 smoke.reference	simple-nofib-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/simple-nofib-arrays.sml,shared/simple-nofib-kernel.sml,shared/simple-nofib-check.sml,simple-nofib-strict/benchmark.sml,shared/main.sml	30	1048576	numerical,binary64,immutable-arrays,recursive-arrays,hydrodynamics,sharing,allocation-lifetimes,reductions	smoke.reference	exact	implemented
++simple-nofib-strict	normal	nofib	spectral/simple	20 normal.reference	simple-nofib-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/simple-nofib-arrays.sml,shared/simple-nofib-kernel.sml,shared/simple-nofib-check.sml,simple-nofib-strict/benchmark.sml,shared/main.sml	600	4194304	numerical,binary64,immutable-arrays,recursive-arrays,hydrodynamics,sharing,allocation-lifetimes,reductions	normal.reference	exact	implemented
++simple-nofib-strict	large	nofib	spectral/simple	100 large.reference	simple-nofib-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/simple-nofib-arrays.sml,shared/simple-nofib-kernel.sml,shared/simple-nofib-check.sml,simple-nofib-strict/benchmark.sml,shared/main.sml	3600	8388608	numerical,binary64,immutable-arrays,recursive-arrays,hydrodynamics,sharing,allocation-lifetimes,reductions	large.reference	exact	implemented
++simple-nofib-report-lazy	smoke	nofib	spectral/simple	1 smoke.reference	simple-nofib-report-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/simple-nofib-arrays.sml,shared/simple-nofib-kernel.sml,shared/simple-nofib-check.sml,simple-nofib-report-lazy/benchmark.sml,shared/main.sml	30	1048576	numerical,binary64,immutable-arrays,recursive-arrays,hydrodynamics,sharing,allocation-lifetimes,formatting,io	smoke.reference	exact	implemented
++simple-nofib-report-lazy	normal	nofib	spectral/simple	20 normal.reference	simple-nofib-report-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/simple-nofib-arrays.sml,shared/simple-nofib-kernel.sml,shared/simple-nofib-check.sml,simple-nofib-report-lazy/benchmark.sml,shared/main.sml	600	4194304	numerical,binary64,immutable-arrays,recursive-arrays,hydrodynamics,sharing,allocation-lifetimes,formatting,io	normal.reference	exact	implemented
++simple-nofib-report-lazy	large	nofib	spectral/simple	100 large.reference	simple-nofib-report-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/simple-nofib-arrays.sml,shared/simple-nofib-kernel.sml,shared/simple-nofib-check.sml,simple-nofib-report-lazy/benchmark.sml,shared/main.sml	3600	8388608	numerical,binary64,immutable-arrays,recursive-arrays,hydrodynamics,sharing,allocation-lifetimes,formatting,io	large.reference	exact	implemented
++simple-nofib-report-strict	smoke	nofib	spectral/simple	1 smoke.reference	simple-nofib-report-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/simple-nofib-arrays.sml,shared/simple-nofib-kernel.sml,shared/simple-nofib-check.sml,simple-nofib-report-strict/benchmark.sml,shared/main.sml	30	1048576	numerical,binary64,immutable-arrays,recursive-arrays,hydrodynamics,sharing,allocation-lifetimes,formatting,io	smoke.reference	exact	implemented
++simple-nofib-report-strict	normal	nofib	spectral/simple	20 normal.reference	simple-nofib-report-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/simple-nofib-arrays.sml,shared/simple-nofib-kernel.sml,shared/simple-nofib-check.sml,simple-nofib-report-strict/benchmark.sml,shared/main.sml	600	4194304	numerical,binary64,immutable-arrays,recursive-arrays,hydrodynamics,sharing,allocation-lifetimes,formatting,io	normal.reference	exact	implemented
++simple-nofib-report-strict	large	nofib	spectral/simple	100 large.reference	simple-nofib-report-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/simple-nofib-arrays.sml,shared/simple-nofib-kernel.sml,shared/simple-nofib-check.sml,simple-nofib-report-strict/benchmark.sml,shared/main.sml	3600	8388608	numerical,binary64,immutable-arrays,recursive-arrays,hydrodynamics,sharing,allocation-lifetimes,formatting,io	large.reference	exact	implemented
+diff --git a/scripts/benchmark-inventory.py b/scripts/benchmark-inventory.py
+index 997c780b9..f5b88de5d 100644
+--- a/scripts/benchmark-inventory.py
++++ b/scripts/benchmark-inventory.py
+@@ -524,6 +524,11 @@ def build(source, root, lock):
+                                                 files.append(member)
+         else:
+             files = source_files(root, path)
++        if source == "nofib" and path == "spectral/simple":
++            # Reviewed historical Fortran comparator, outside SRCS=Main.hs.
++            fortran = root / path / "simple.f"
++            if fortran.is_file():
++                files.append(fortran)
+         files = sorted(set(files))
+         text = "\n".join(p.read_text(errors="replace") for p in files if p.suffix in EXTENSIONS and p.suffix not in {".cm", ".mlb"})
+         code = "\n".join(nofib_feature_code(root, p) for p in files) if source == "nofib" else code_only(text)
+@@ -553,6 +558,34 @@ def build(source, root, lock):
+                     notices.append(str(notice.relative_to(root)))
+         authors = set()
+         context = [p for p in parent.iterdir() if p.is_file() and p.name in {"README", "README.md", "Makefile", "FILES", "sources.cm"}] if parent.exists() and files else []
++        if source == "nofib" and path == "spectral/simple":
++            main = parent / "Main.hs"
++            if main.is_file():
++                heading = main.read_text(errors="replace")
++                if ("Original Author: Kattamuri Ekanadham <EKNATH@ibm.com>" in heading
++                        and "translated to haskell by an id to ph translator" in heading):
++                    item["evidence"].append("spectral/simple/Main.hs:Id-author-and-anonymous-translator-role")
++            c_source = parent / "simple.c"
++            if c_source.is_file():
++                heading = c_source.read_text(errors="replace")[:1000]
++                if ("Andy Shaw and Kofi Fynn." in heading
++                        and "Wed Feb  2 14:59:18 EST 1994" in heading):
++                    authors.update({"Andy Shaw (C comparator)", "Kofi Fynn (C comparator)"})
++                    item["evidence"].append("spectral/simple/simple.c:C-comparator-authors")
++            mail = parent / "MAIL"
++            if mail.is_file():
++                context.append(mail)
++                correspondence = mail.read_text(errors="replace")
++                if ("RPaul Johnson told me" in correspondence
++                        and "This version may be useful because it is in 1.2 Haskell" in correspondence):
++                    authors.add("RPaul Johnson (Haskell/pH correspondence)")
++                    item["evidence"].append("spectral/simple/MAIL:Haskell-port-correspondence")
++                if "Here is the fortran in its original form from Olaf Lubeck:" in correspondence:
++                    authors.add("Olaf Lubeck (Fortran supplier, not asserted sole author)")
++                    item["evidence"].append("spectral/simple/MAIL:Fortran-supplier")
++            makefile = parent / "Makefile"
++            if makefile.is_file() and "SRCS = Main.hs" in makefile.read_text():
++                item["evidence"].append("spectral/simple/Makefile:excludes-C-and-Fortran-comparators")
+         if source == "nofib" and path == "real/lift":
+             paper = parent / "LambdaLift.lhs"
+             if paper.is_file():
+diff --git a/tests/benchmarks/test-inventory.py b/tests/benchmarks/test-inventory.py
+index ce0ad2562..e85b885ca 100644
+--- a/tests/benchmarks/test-inventory.py
++++ b/tests/benchmarks/test-inventory.py
+@@ -286,6 +286,50 @@ class InventoryTest(unittest.TestCase):
+         self.file("spectral/multiplier/Main.hs", "-- Another multiplier author\nmain = print 0\n")
+         self.assertNotIn("John T. O'Donnell", self.build("nofib")[0]["authors"])
+ 
++    def simple_sources(self, c_header="Andy Shaw and Kofi Fynn.\nWed Feb  2 14:59:18 EST 1994"):
++        self.nofib_roots()
++        self.file("spectral/simple/Makefile", "SRCS = Main.hs\n")
++        self.file("spectral/simple/Main.hs", "main = print 0\n")
++        self.file("spectral/simple/simple.c", "/* " + c_header + " */\n")
++        self.file("spectral/simple/simple.f", "      PARAMETER(II=101,JJ=100)\n")
++        return self.root / "spectral/simple"
++
++    def test_simple_records_both_C_comparator_authors(self):
++        self.simple_sources()
++        row = self.build("nofib")[0]
++        self.assertIn("Andy Shaw (C comparator)", row["authors"])
++        self.assertIn("Kofi Fynn (C comparator)", row["authors"])
++
++    def test_simple_changed_C_header_requires_review(self):
++        self.simple_sources("Other authors")
++        self.assertNotIn("Kofi Fynn (C comparator)", self.build("nofib")[0]["authors"])
++
++    def test_simple_preserves_Fortran_comparator_and_build_scope(self):
++        self.simple_sources()
++        row = self.build("nofib")[0]
++        self.assertIn("spectral/simple/simple.f", row["members"])
++        self.assertIn("spectral/simple/Makefile:excludes-C-and-Fortran-comparators", row["evidence"])
++
++    def test_simple_Fortran_identity_changes_with_source(self):
++        directory = self.simple_sources()
++        before = self.build("nofib")[0]["sha256"]
++        (directory / "simple.f").write_text("      PARAMETER(II=102,JJ=100)\n")
++        self.assertNotEqual(before, self.build("nofib")[0]["sha256"])
++
++    def test_simple_records_correspondence_roles(self):
++        self.simple_sources()
++        self.file("spectral/simple/MAIL", "RPaul Johnson told me\n"
++                  "This version may be useful because it is in 1.2 Haskell\n"
++                  "Here is the fortran in its original form from Olaf Lubeck:\n")
++        row = self.build("nofib")[0]
++        self.assertIn("RPaul Johnson (Haskell/pH correspondence)", row["authors"])
++        self.assertIn("Olaf Lubeck (Fortran supplier, not asserted sole author)", row["authors"])
++
++    def test_simple_changed_correspondence_does_not_invent_roles(self):
++        self.simple_sources()
++        self.file("spectral/simple/MAIL", "A different correspondence.\n")
++        self.assertNotIn("Olaf Lubeck", self.build("nofib")[0]["authors"])
++
+     def fem_header(self, heading, data=False):
+         self.nofib_roots()
+         self.file("real/fem/Makefile", "\n")

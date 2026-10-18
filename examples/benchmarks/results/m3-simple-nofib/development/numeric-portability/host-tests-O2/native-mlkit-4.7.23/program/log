@@ -1,0 +1,38 @@
+error: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/host-tests-O2/native-mlkit-4.7.23/program/src/5/kernel.sml, line 137, column 37: Type clash,
+
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/host-tests-O2/native-mlkit-4.7.23/program/src/5/kernel.sml, line 137, column 37:
+       in(delay(fn()=>A.sub u node+dt*((~(lineIntegral p z node)-lineIntegral q z node)/d)),
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Type clash,
+   operand suggests operator type: int * real -> int
+   but I found operator type:      real * real -> real
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/host-tests-O2/native-mlkit-4.7.23/program/src/5/kernel.sml, line 138, column 37:
+          delay(fn()=>A.sub w node+dt*((lineIntegral p r node+lineIntegral q r node)/d)))end)
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Type clash,
+   operand suggests operator type: int * real -> int
+   but I found operator type:      real * real -> real
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/host-tests-O2/native-mlkit-4.7.23/program/src/5/kernel.sml, line 286, column 32:
+     let val v'=pairSuspend(fn()=>makeVelocity v x p q alpha rho(force dt))
+                                  ^^^^^^^^^^^^^^
+Type clash,
+   operand suggests operator type: real store state ref * real store state ref -> real store state ref * real store state ref -> real store state ref -> real store state ref -> real store state ref -> real store state ref -> real -> real store state ref * real store state ref
+   but I found operator type:      int store state ref * int store state ref -> int store state ref * int store state ref -> int store state ref -> int store state ref -> real store state ref -> real store state ref -> int -> int store state ref * int store state ref
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/host-tests-O2/native-mlkit-4.7.23/program/src/5/kernel.sml, line 309, column 11:
+         and totalsOf state=totals state
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Type mismatch,
+   expecting: (real store state ref * real store state ref) * (real store state ref * real store state ref) * real store state ref * real store state ref * real store state ref * real store state ref * real store state ref * real store state ref * real store state ref * real state ref * real state ref -> int state ref list
+   found:     (real store state ref * real store state ref) * (real store state ref * real store state ref) * real store state ref * real store state ref * real store state ref * real store state ref * real store state ref * real store state ref * real store state ref * real state ref * real state ref -> real state ref list
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/host-tests-O2/native-mlkit-4.7.23/program/src/5/kernel.sml, line 311, column 6:
+     in loop state(totals state)count end
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+Type clash,
+   operand suggests operator type: real state ref list -> 'a -> 'b
+   but I found operator type:      int state ref list -> int -> int state ref list * ((real store state ref * real store state ref) * (real store state ref * real store state ref) * real store state ref * real store state ref * real store state ref * real store state ref * real store state ref * real store state ref * real store state ref * real state ref * real state ref)
+Stopping compilation of MLB-file due to error (code 1).

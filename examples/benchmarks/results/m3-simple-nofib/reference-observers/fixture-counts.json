@@ -1,0 +1,62 @@
+[
+  {
+    "grid": 100,
+    "steps": 0,
+    "cells": 110804,
+    "totals": 13
+  },
+  {
+    "grid": 100,
+    "steps": 1,
+    "cells": 110004,
+    "totals": 13
+  },
+  {
+    "grid": 100,
+    "steps": 2,
+    "cells": 110004,
+    "totals": 13
+  },
+  {
+    "grid": 100,
+    "steps": 5,
+    "cells": 110004,
+    "totals": 13
+  },
+  {
+    "grid": 100,
+    "steps": 20,
+    "cells": 110004,
+    "totals": 13
+  },
+  {
+    "grid": 100,
+    "steps": 100,
+    "cells": 110004,
+    "totals": 13
+  },
+  {
+    "grid": 8,
+    "steps": 0,
+    "cells": 772,
+    "totals": 13
+  },
+  {
+    "grid": 8,
+    "steps": 1,
+    "cells": 708,
+    "totals": 13
+  },
+  {
+    "grid": 8,
+    "steps": 2,
+    "cells": 708,
+    "totals": 13
+  },
+  {
+    "grid": 8,
+    "steps": 5,
+    "cells": 708,
+    "totals": 13
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "benchmark": "simple-nofib-lazy",
+    "exit": 0,
+    "guard_reason": null
+  },
+  {
+    "benchmark": "simple-nofib-strict",
+    "exit": 0,
+    "guard_reason": null
+  },
+  {
+    "benchmark": "simple-nofib-report-lazy",
+    "exit": 0,
+    "guard_reason": null
+  },
+  {
+    "benchmark": "simple-nofib-report-strict",
+    "exit": 0,
+    "guard_reason": null
+  }
+]

@@ -663,3 +663,48 @@ Parser closure caching, tree copying, literal sharing, retained prepared
 inputs and finite materialization are performance hypotheses. Single-sample
 adapter runs and ML Kit compilation failures do not establish runtime
 optimization mechanisms or steady-state performance.
+
+## SIMPLE: source ancestry, functions and numeric validation
+
+Arvind and Kattamuri Ekanadham, [Future scientific programming on parallel
+machines](https://research.ibm.com/publications/future-scientific-programming-on-parallel-machines),
+Journal of Parallel and Distributed Computing (1988). The IBM abstract and
+metadata were reviewed; the full paper was not. Its SIMPLE excerpt and Id
+Nouveau function composition provide historical context. No historical
+parallelism or inlining claim is presented as a measured mechanism in Rune.
+
+The pinned program and historical MAIL establish its own equation/edit
+history, translator/correspondence roles, actual grid/step parameters and
+physical-correctness caveats. Full original state and report observations
+establish program agreement. Independent initial geometry, polynomial
+values and scalar reductions add checks without constituting a second full
+hydrodynamics solver or validation of the physical model.
+
+Memoized immutable-array cells, recursive projections, directional sweeps,
+finite strict materialization, retained old-state data, floating primitives
+and full report construction/I/O remain source-based diagnostic hypotheses.
+Numerical values and structure, rather than a particular host's decimal
+spelling, determine correctness. Legacy SML/NJ failures remain observable
+under the fixed bounds and do not contribute accepted timing samples.
+
+## SIMPLE aggregate conditioning
+
+Higham, [The Accuracy of Floating Point Summation](https://nhigham.com/wp-content/uploads/2023/10/high93s.pdf),
+1993, section 2, gives the recursive-summation error model. The first three
+pages and equation 2.6 were reviewed. We retain source row-major left folds.
+
+Our separate application combines unchanged componentwise compatibility
+a+r*abs(e) with two floating reductions. For n values and an upward reference
+one-norm S, define B=n*a+r*S and gamma=n*u/(1-n*u), u=2^-53.
+The aggregate bound is (1+gamma)*B+2*gamma*S, rounded outward. This is
+conditional on compatible components, not physical-model validation.
+Exact rational checks cover every recorded scale/bound and reject injected
+out-of-bound perturbations. Time step and energy-error scalars keep their
+per-value limits.
+
+The earlier checker incorrectly applied a per-cell bound to a cancelled
+sum. Source snapshots show one small z-total discrepancy on each of 32-bit
+and development SML/NJ; their complete per-cell reports pass. It falls inside
+the derived sum bound. Separate legacy 64-bit snapshots contain eight totals
+outside even that bound. Neither the summation algorithm nor expected values
+change, and the numerical failures are kept separate from checker correction.

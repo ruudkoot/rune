@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-simple-nofib-smoke.z0py2w0q
+PASS simple-nofib-lazy smoke O2
+PASS simple-nofib-lazy smoke O0
+PASS simple-nofib-strict smoke O0
+PASS simple-nofib-strict smoke O2
+FAIL simple-nofib-lazy smoke hosts
+PASS simple-nofib-report-lazy smoke O0
+FAIL simple-nofib-strict smoke hosts
+PASS simple-nofib-report-lazy smoke O2
+PASS simple-nofib-report-strict smoke O0
+PASS simple-nofib-report-strict smoke O2
+FAIL simple-nofib-report-lazy smoke hosts
+FAIL simple-nofib-report-strict smoke hosts

@@ -1,0 +1,1110 @@
+{
+  "unit_roundoff": "2^-53",
+  "reference_norm": "sum of exact binary64 magnitudes rounded upward",
+  "cell_bound": "a+r*abs(e), a=1e-12,r=1e-11",
+  "sum_bound": "(1+gamma_n)*(n*a+r*S)+2*gamma_n*S, gamma_n=n*u/(1-n*u)",
+  "rounding_padding": "multiply by 1+64*u; exact Fraction checks verify outward rounding for every fixture",
+  "scope": "conditional on componentwise compatibility; dt/error retain scalar checks",
+  "records": [
+    {
+      "grid": 100,
+      "steps": 0,
+      "component": 0,
+      "count": 10201,
+      "reference_sum": 0.0,
+      "absolute_sum_upper": 0.0,
+      "bound": 1.0201000000011627e-08,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 0,
+      "component": 1,
+      "count": 10201,
+      "reference_sum": 0.0,
+      "absolute_sum_upper": 0.0,
+      "bound": 1.0201000000011627e-08,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 0,
+      "component": 2,
+      "count": 10201,
+      "reference_sum": 371360.666092029,
+      "absolute_sum_upper": 372124.7608146424,
+      "bound": 4.5743398505258075e-06,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 0,
+      "component": 3,
+      "count": 10201,
+      "reference_sum": 0.020546072495136514,
+      "absolute_sum_upper": 389614.05451925326,
+      "bound": 4.788847384748264e-06,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 0,
+      "component": 4,
+      "count": 10000,
+      "reference_sum": 18910.43076727672,
+      "absolute_sum_upper": 18910.430767276554,
+      "bound": 2.4109389895985567e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 0,
+      "component": 5,
+      "count": 10000,
+      "reference_sum": 5420479.558016126,
+      "absolute_sum_upper": 5420479.5580161195,
+      "bound": 6.62506779998742e-05,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 0,
+      "component": 6,
+      "count": 10000,
+      "reference_sum": 13999.999999997615,
+      "absolute_sum_upper": 14000.0,
+      "bound": 1.810862446897067e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 0,
+      "component": 7,
+      "count": 10000,
+      "reference_sum": 9883.427999999127,
+      "absolute_sum_upper": 9883.428,
+      "bound": 1.3077989865579603e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 0,
+      "component": 8,
+      "count": 10000,
+      "reference_sum": 0.0,
+      "absolute_sum_upper": 0.0,
+      "bound": 1.0000000000011174e-08,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 0,
+      "component": 9,
+      "count": 10000,
+      "reference_sum": 10000.0,
+      "absolute_sum_upper": 10000.0,
+      "bound": 1.322044604926508e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 0,
+      "component": 10,
+      "count": 10000,
+      "reference_sum": 96040.0,
+      "absolute_sum_upper": 96040.0,
+      "bound": 1.1836516385713226e-06,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 1,
+      "component": 0,
+      "count": 9801,
+      "reference_sum": -2.2662218507181406,
+      "absolute_sum_upper": 2.2662218507181433,
+      "bound": 9.82859410460833e-09,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 1,
+      "component": 1,
+      "count": 9801,
+      "reference_sum": -5.967448757360216e-16,
+      "absolute_sum_upper": 2.3025491756350864,
+      "bound": 9.829036435531576e-09,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 1,
+      "component": 2,
+      "count": 10201,
+      "reference_sum": 371360.59811700473,
+      "absolute_sum_upper": 372124.6927930684,
+      "bound": 4.5743390162359635e-06,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 1,
+      "component": 3,
+      "count": 10201,
+      "reference_sum": 0.01982045902340701,
+      "absolute_sum_upper": 389613.98326332535,
+      "bound": 4.788846510788821e-06,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 1,
+      "component": 4,
+      "count": 10000,
+      "reference_sum": 18910.179268515803,
+      "absolute_sum_upper": 18910.17926851586,
+      "bound": 2.410908255328192e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 1,
+      "component": 5,
+      "count": 10000,
+      "reference_sum": 5420373.038098174,
+      "absolute_sum_upper": 5420373.038098161,
+      "bound": 6.624937627896362e-05,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 1,
+      "component": 6,
+      "count": 10000,
+      "reference_sum": 14000.10270147848,
+      "absolute_sum_upper": 14000.102701480844,
+      "bound": 1.8108749974761256e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 1,
+      "component": 7,
+      "count": 10000,
+      "reference_sum": 9871.00152949301,
+      "absolute_sum_upper": 9871.00152949374,
+      "bound": 1.3062804164339152e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 1,
+      "component": 8,
+      "count": 10000,
+      "reference_sum": 1.4319026901564607,
+      "absolute_sum_upper": 1.4319026901564609,
+      "bound": 1.0017498489584026e-08,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 1,
+      "component": 9,
+      "count": 10000,
+      "reference_sum": 9975.269961008136,
+      "absolute_sum_upper": 9975.26996100813,
+      "bound": 1.319022483853545e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 1,
+      "component": 10,
+      "count": 10000,
+      "reference_sum": 95907.23515697249,
+      "absolute_sum_upper": 95907.23515697214,
+      "bound": 1.1820291929698617e-06,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 2,
+      "component": 0,
+      "count": 9801,
+      "reference_sum": -4.53204552703233,
+      "absolute_sum_upper": 4.63740367680692,
+      "bound": 9.857466229068819e-09,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 2,
+      "component": 1,
+      "count": 9801,
+      "reference_sum": -1.1670773017197211e-05,
+      "absolute_sum_upper": 4.672304457067971,
+      "bound": 9.857891190014613e-09,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 2,
+      "component": 2,
+      "count": 10201,
+      "reference_sum": 371360.4606976775,
+      "absolute_sum_upper": 372124.55528091855,
+      "bound": 4.574337329638855e-06,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 2,
+      "component": 3,
+      "count": 10201,
+      "reference_sum": 0.018396728754936476,
+      "absolute_sum_upper": 389613.83979125717,
+      "bound": 4.788844751092855e-06,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 2,
+      "component": 4,
+      "count": 10000,
+      "reference_sum": 18909.66975661303,
+      "absolute_sum_upper": 18909.66975661302,
+      "bound": 2.4108459907009906e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 2,
+      "component": 5,
+      "count": 10000,
+      "reference_sum": 5420156.527996498,
+      "absolute_sum_upper": 5420156.527996513,
+      "bound": 6.624673042894731e-05,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 2,
+      "component": 6,
+      "count": 10000,
+      "reference_sum": 14000.31097270135,
+      "absolute_sum_upper": 14000.310972703342,
+      "bound": 1.810900449148507e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 2,
+      "component": 7,
+      "count": 10000,
+      "reference_sum": 9862.049704923269,
+      "absolute_sum_upper": 9862.04970492406,
+      "bound": 1.305186463541953e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 2,
+      "component": 8,
+      "count": 10000,
+      "reference_sum": 2.7405542712676567,
+      "absolute_sum_upper": 2.740554271267658,
+      "bound": 1.0033490795628278e-08,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 2,
+      "component": 9,
+      "count": 10000,
+      "reference_sum": 9958.670489942331,
+      "absolute_sum_upper": 9958.670489942313,
+      "bound": 1.3169939544474836e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 2,
+      "component": 10,
+      "count": 10000,
+      "reference_sum": 95811.26864299727,
+      "absolute_sum_upper": 95811.26864299698,
+      "bound": 1.180856439363292e-06,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 5,
+      "component": 0,
+      "count": 9801,
+      "reference_sum": -11.327548856206063,
+      "absolute_sum_upper": 12.004700175782192,
+      "bound": 9.94717234064382e-09,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 5,
+      "component": 1,
+      "count": 9801,
+      "reference_sum": -9.840619344311796e-05,
+      "absolute_sum_upper": 11.965123690094018,
+      "bound": 9.94669044709693e-09,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 5,
+      "component": 2,
+      "count": 10201,
+      "reference_sum": 371359.62611790164,
+      "absolute_sum_upper": 372123.72014726436,
+      "bound": 4.574327086660269e-06,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 5,
+      "component": 3,
+      "count": 10201,
+      "reference_sum": 0.010129114619942925,
+      "absolute_sum_upper": 389612.97194109287,
+      "bound": 4.788834106843753e-06,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 5,
+      "component": 4,
+      "count": 10000,
+      "reference_sum": 18906.566980713982,
+      "absolute_sum_upper": 18906.56698071387,
+      "bound": 2.410466817646205e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 5,
+      "component": 5,
+      "count": 10000,
+      "reference_sum": 5418833.639690183,
+      "absolute_sum_upper": 5418833.639690158,
+      "bound": 6.62305641437703e-05,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 5,
+      "component": 6,
+      "count": 10000,
+      "reference_sum": 14001.585911404629,
+      "absolute_sum_upper": 14001.585911406546,
+      "bound": 1.8110562523448932e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 5,
+      "component": 7,
+      "count": 10000,
+      "reference_sum": 9844.251048259901,
+      "absolute_sum_upper": 9844.251048260541,
+      "bound": 1.3030113883068936e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 5,
+      "component": 8,
+      "count": 10000,
+      "reference_sum": 7.1083070886911335,
+      "absolute_sum_upper": 7.108307088691134,
+      "bound": 1.0086866683290125e-08,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 5,
+      "component": 9,
+      "count": 10000,
+      "reference_sum": 9928.772901759032,
+      "absolute_sum_upper": 9928.772901759023,
+      "bound": 1.3133403358135134e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 5,
+      "component": 10,
+      "count": 10000,
+      "reference_sum": 95618.59877589872,
+      "absolute_sum_upper": 95618.59877589841,
+      "bound": 1.1785019276470954e-06,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 20,
+      "component": 0,
+      "count": 9801,
+      "reference_sum": -45.262689487459454,
+      "absolute_sum_upper": 48.08032762061691,
+      "bound": 1.0386438530236519e-08,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 20,
+      "component": 1,
+      "count": 9801,
+      "reference_sum": -0.0012429371900892772,
+      "absolute_sum_upper": 47.944883347715276,
+      "bound": 1.0384789325666184e-08,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 20,
+      "component": 2,
+      "count": 10201,
+      "reference_sum": 371346.01822159486,
+      "absolute_sum_upper": 372110.103365011,
+      "bound": 4.574160075777237e-06,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 20,
+      "component": 3,
+      "count": 10201,
+      "reference_sum": -0.10791765331445902,
+      "absolute_sum_upper": 389598.8724199634,
+      "bound": 4.7886611751312264e-06,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 20,
+      "component": 4,
+      "count": 10000,
+      "reference_sum": 18856.043852858696,
+      "absolute_sum_upper": 18856.04385285867,
+      "bound": 2.40429266606426e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 20,
+      "component": 5,
+      "count": 10000,
+      "reference_sum": 5397228.209980271,
+      "absolute_sum_upper": 5397228.209980272,
+      "bound": 6.596653615562947e-05,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 20,
+      "component": 6,
+      "count": 10000,
+      "reference_sum": 14024.1152946954,
+      "absolute_sum_upper": 14024.115294697043,
+      "bound": 1.8138094434751407e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 20,
+      "component": 7,
+      "count": 10000,
+      "reference_sum": 9802.68911586385,
+      "absolute_sum_upper": 9802.689115864481,
+      "bound": 1.2979323347814017e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 20,
+      "component": 8,
+      "count": 10000,
+      "reference_sum": 48.37411166811735,
+      "absolute_sum_upper": 48.374111668117365,
+      "bound": 1.0591153221832472e-08,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 20,
+      "component": 9,
+      "count": 10000,
+      "reference_sum": 9865.407184575419,
+      "absolute_sum_upper": 9865.407184575428,
+      "bound": 1.3055967625313631e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 20,
+      "component": 10,
+      "count": 10000,
+      "reference_sum": 95132.21748432766,
+      "absolute_sum_upper": 95132.2174843277,
+      "bound": 1.1725581313140841e-06,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 100,
+      "component": 0,
+      "count": 9801,
+      "reference_sum": -61.67360244994693,
+      "absolute_sum_upper": 66.18423081024278,
+      "bound": 1.0606876347514198e-08,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 100,
+      "component": 1,
+      "count": 9801,
+      "reference_sum": -0.0020830447339981184,
+      "absolute_sum_upper": 65.89993274807773,
+      "bound": 1.0603414660626928e-08,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 100,
+      "component": 2,
+      "count": 10201,
+      "reference_sum": 371334.08932877163,
+      "absolute_sum_upper": 372098.1665536892,
+      "bound": 4.574013669867064e-06,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 100,
+      "component": 3,
+      "count": 10201,
+      "reference_sum": -0.19949525344968322,
+      "absolute_sum_upper": 389586.5227687941,
+      "bound": 4.7885097057085294e-06,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 100,
+      "component": 4,
+      "count": 10000,
+      "reference_sum": 18812.199037323848,
+      "absolute_sum_upper": 18812.199037323822,
+      "bound": 2.3989346340364246e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 100,
+      "component": 5,
+      "count": 10000,
+      "reference_sum": 5378471.772158877,
+      "absolute_sum_upper": 5378471.772158908,
+      "bound": 6.57373241191571e-05,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 100,
+      "component": 6,
+      "count": 10000,
+      "reference_sum": 14046.746765025953,
+      "absolute_sum_upper": 14046.746765027485,
+      "bound": 1.816575110097027e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 100,
+      "component": 7,
+      "count": 10000,
+      "reference_sum": 9791.692700063588,
+      "absolute_sum_upper": 9791.692700064184,
+      "bound": 1.2965885237211738e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 100,
+      "component": 8,
+      "count": 10000,
+      "reference_sum": 80.57641085095788,
+      "absolute_sum_upper": 80.5764108509579,
+      "bound": 1.0984679681658632e-08,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 100,
+      "component": 9,
+      "count": 10000,
+      "reference_sum": 9846.53517986621,
+      "absolute_sum_upper": 9846.535179866205,
+      "bound": 1.303290519377458e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 100,
+      "steps": 100,
+      "component": 10,
+      "count": 10000,
+      "reference_sum": 94974.7753203231,
+      "absolute_sum_upper": 94974.77532032302,
+      "bound": 1.1706341178429855e-06,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 0,
+      "component": 0,
+      "count": 81,
+      "reference_sum": 0.0,
+      "absolute_sum_upper": 0.0,
+      "bound": 8.100000000000132e-11,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 0,
+      "component": 1,
+      "count": 81,
+      "reference_sum": 0.0,
+      "absolute_sum_upper": 0.0,
+      "bound": 8.100000000000132e-11,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 0,
+      "component": 2,
+      "count": 81,
+      "reference_sum": 325.27687752661217,
+      "absolute_sum_upper": 550.0230114445051,
+      "bound": 5.591122615469486e-09,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 0,
+      "component": 3,
+      "count": 81,
+      "reference_sum": 4.999999999999982,
+      "absolute_sum_upper": 778.2998889711173,
+      "bound": 7.877997090311442e-09,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 0,
+      "component": 4,
+      "count": 64,
+      "reference_sum": 415.99999999999994,
+      "absolute_sum_upper": 416.0,
+      "bound": 4.229911715561583e-09,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 0,
+      "component": 5,
+      "count": 64,
+      "reference_sum": 18383.078368752253,
+      "absolute_sum_upper": 18383.078368752253,
+      "bound": 1.8415602294344163e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 0,
+      "component": 6,
+      "count": 64,
+      "reference_sum": 89.60000000000007,
+      "absolute_sum_upper": 89.6,
+      "bound": 9.612732925824958e-10,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 0,
+      "component": 7,
+      "count": 64,
+      "reference_sum": 100.51231999999996,
+      "absolute_sum_upper": 100.51232,
+      "bound": 1.070551565976623e-09,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 0,
+      "component": 8,
+      "count": 64,
+      "reference_sum": 0.0,
+      "absolute_sum_upper": 0.0,
+      "bound": 6.40000000000009e-11,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 0,
+      "component": 9,
+      "count": 64,
+      "reference_sum": 64.0,
+      "absolute_sum_upper": 64.0,
+      "bound": 7.049094947017828e-10,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 0,
+      "component": 10,
+      "count": 64,
+      "reference_sum": 360.0,
+      "absolute_sum_upper": 360.0,
+      "bound": 3.669115907697525e-09,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 1,
+      "component": 0,
+      "count": 49,
+      "reference_sum": -0.13930091179457899,
+      "absolute_sum_upper": 0.139300911794579,
+      "bound": 5.0394524737726756e-11,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 1,
+      "component": 1,
+      "count": 49,
+      "reference_sum": 2.7755575615628914e-17,
+      "absolute_sum_upper": 0.17662647861485548,
+      "bound": 5.07681865150257e-11,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 1,
+      "component": 2,
+      "count": 81,
+      "reference_sum": 325.27283512031494,
+      "absolute_sum_upper": 550.0183225404263,
+      "bound": 5.591075642095884e-09,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 1,
+      "component": 3,
+      "count": 81,
+      "reference_sum": 4.9994901232751126,
+      "absolute_sum_upper": 778.2924140488027,
+      "bound": 7.877922206647236e-09,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 1,
+      "component": 4,
+      "count": 64,
+      "reference_sum": 415.95222383174945,
+      "absolute_sum_upper": 415.95222383174917,
+      "bound": 4.2294332749388885e-09,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 1,
+      "component": 5,
+      "count": 64,
+      "reference_sum": 18380.53758919363,
+      "absolute_sum_upper": 18380.537589193624,
+      "bound": 1.8413057904120617e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 1,
+      "component": 6,
+      "count": 64,
+      "reference_sum": 89.60890928709516,
+      "absolute_sum_upper": 89.60890928709509,
+      "bound": 9.61362512062031e-10,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 1,
+      "component": 7,
+      "count": 64,
+      "reference_sum": 100.3736527681292,
+      "absolute_sum_upper": 100.37365276812922,
+      "bound": 1.0691629230780295e-09,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 1,
+      "component": 8,
+      "count": 64,
+      "reference_sum": 0.11785673631315682,
+      "absolute_sum_upper": 0.11785673631315682,
+      "bound": 6.518024220808946e-11,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 1,
+      "component": 9,
+      "count": 64,
+      "reference_sum": 63.70323974655175,
+      "absolute_sum_upper": 63.70323974655176,
+      "bound": 7.019376749504534e-10,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 1,
+      "component": 10,
+      "count": 64,
+      "reference_sum": 358.66623293417393,
+      "absolute_sum_upper": 358.66623293417393,
+      "bound": 3.6557592830692676e-09,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 2,
+      "component": 0,
+      "count": 49,
+      "reference_sum": -0.27857413340890264,
+      "absolute_sum_upper": 0.2792254349154366,
+      "bound": 5.179529237372268e-11,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 2,
+      "component": 1,
+      "count": 49,
+      "reference_sum": -1.0148741226026492e-05,
+      "absolute_sum_upper": 0.35376475814466657,
+      "bound": 5.25414966076893e-11,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 2,
+      "component": 2,
+      "count": 81,
+      "reference_sum": 325.2647474556229,
+      "absolute_sum_upper": 550.0089349226811,
+      "bound": 5.5909815970763725e-09,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 2,
+      "component": 3,
+      "count": 81,
+      "reference_sum": 4.998489345062392,
+      "absolute_sum_upper": 778.2774678584682,
+      "bound": 7.877772475927495e-09,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 2,
+      "component": 4,
+      "count": 64,
+      "reference_sum": 415.856640749267,
+      "absolute_sum_upper": 415.856640749267,
+      "bound": 4.228476085796769e-09,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 2,
+      "component": 5,
+      "count": 64,
+      "reference_sum": 18375.45146428394,
+      "absolute_sum_upper": 18375.451464283942,
+      "bound": 1.8407964551392718e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 2,
+      "component": 6,
+      "count": 64,
+      "reference_sum": 89.6267553043585,
+      "absolute_sum_upper": 89.62675530435844,
+      "bound": 9.615412258418233e-10,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 2,
+      "component": 7,
+      "count": 64,
+      "reference_sum": 100.24905317553521,
+      "absolute_sum_upper": 100.24905317553522,
+      "bound": 1.0679151564853815e-09,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 2,
+      "component": 8,
+      "count": 64,
+      "reference_sum": 0.24368002502547853,
+      "absolute_sum_upper": 0.2436800250254785,
+      "bound": 6.644026315168838e-11,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 2,
+      "component": 9,
+      "count": 64,
+      "reference_sum": 63.43512708030218,
+      "absolute_sum_upper": 63.43512708030217,
+      "bound": 6.992527381778102e-10,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 2,
+      "component": 10,
+      "count": 64,
+      "reference_sum": 357.4330860314901,
+      "absolute_sum_upper": 357.4330860314901,
+      "bound": 3.6434102899709533e-09,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 5,
+      "component": 0,
+      "count": 49,
+      "reference_sum": -0.696154465796085,
+      "absolute_sum_upper": 0.7008952372178976,
+      "bound": 5.601657824247574e-11,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 5,
+      "component": 1,
+      "count": 49,
+      "reference_sum": -0.00010139678394124885,
+      "absolute_sum_upper": 0.886874523365555,
+      "bound": 5.787839459311107e-11,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 5,
+      "component": 2,
+      "count": 81,
+      "reference_sum": 325.21623841059966,
+      "absolute_sum_upper": 549.9525343691323,
+      "bound": 5.590416577142356e-09,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 5,
+      "component": 3,
+      "count": 81,
+      "reference_sum": 4.992728950532108,
+      "absolute_sum_upper": 778.1879100825653,
+      "bound": 7.876875287416968e-09,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 5,
+      "component": 4,
+      "count": 64,
+      "reference_sum": 415.2835169621106,
+      "absolute_sum_upper": 415.28351696211047,
+      "bound": 4.222736703346331e-09,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 5,
+      "component": 5,
+      "count": 64,
+      "reference_sum": 18344.920969344723,
+      "absolute_sum_upper": 18344.92096934472,
+      "bound": 1.83773906700107e-07,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 5,
+      "component": 6,
+      "count": 64,
+      "reference_sum": 89.73436366377217,
+      "absolute_sum_upper": 89.73436366377211,
+      "bound": 9.626188386427217e-10,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 5,
+      "component": 7,
+      "count": 64,
+      "reference_sum": 99.94788265818721,
+      "absolute_sum_upper": 99.94788265818724,
+      "bound": 1.0648991714214352e-09,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 5,
+      "component": 8,
+      "count": 64,
+      "reference_sum": 0.6753955827524606,
+      "absolute_sum_upper": 0.6753955827524605,
+      "bound": 7.07635537760274e-11,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 5,
+      "component": 9,
+      "count": 64,
+      "reference_sum": 62.77399010893482,
+      "absolute_sum_upper": 62.77399010893481,
+      "bound": 6.926319731426896e-10,
+      "derived_bound_rounded_outward": true
+    },
+    {
+      "grid": 8,
+      "steps": 5,
+      "component": 10,
+      "count": 64,
+      "reference_sum": 354.2350251859877,
+      "absolute_sum_upper": 354.2350251859877,
+      "bound": 3.6113842343378824e-09,
+      "derived_bound_rounded_outward": true
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+simple-nofib-report-lazy	normal	rune	O2	compile	0	0	pass	7.44	3.68	0.42	266732	-	-	-	simple-nofib-report-lazy/rune/build/compile
+simple-nofib-report-lazy	normal	rune	O2	correctness	0	0	pass	199.82	137.30	4.19	573928	13972594304	15701561120	402877054	simple-nofib-report-lazy/rune/correctness.0
+simple-nofib-report-lazy	normal	rune	O2	count	1	1	pass	242.50	169.52	6.84	573632	13972594304	15701561120	402877054	simple-nofib-report-lazy/rune/fresh.1
+simple-nofib-report-lazy	normal	rune:opt	O2	compile	0	0	pass	6.89	4.61	0.74	266584	-	-	-	simple-nofib-report-lazy/rune-opt/build/compile
+simple-nofib-report-lazy	normal	rune:opt	O2	native-compile	0	0	pass	1.78	0.78	0.17	24756	-	-	-	simple-nofib-report-lazy/rune-opt/build/native-compile
+simple-nofib-report-lazy	normal	rune:opt	O2	correctness	0	0	pass	72.92	56.06	4.07	574764	13972594304	15701561120	402877054	simple-nofib-report-lazy/rune-opt/correctness.0
+simple-nofib-report-lazy	normal	rune:opt	O2	count	1	1	pass	50.56	48.40	1.09	574996	13972594304	15701561120	402877054	simple-nofib-report-lazy/rune-opt/fresh.1
+simple-nofib-report-lazy	normal	rune:new	O2	compile	0	0	pass	3.83	3.55	0.39	266672	-	-	-	simple-nofib-report-lazy/rune-new/build/compile
+simple-nofib-report-lazy	normal	rune:new	O2	correctness	0	0	pass	104.16	101.67	2.04	590572	7738484176	15701561120	402877054	simple-nofib-report-lazy/rune-new/correctness.0
+simple-nofib-report-lazy	normal	rune:new	O2	count	1	1	pass	113.96	113.04	1.27	590696	7738484176	15701561120	402877054	simple-nofib-report-lazy/rune-new/fresh.1
+simple-nofib-report-lazy	normal	rune:jit	O2	compile	0	0	pass	6.70	4.73	0.52	266488	-	-	-	simple-nofib-report-lazy/rune-jit/build/compile
+simple-nofib-report-lazy	normal	rune:jit	O2	correctness	0	0	pass	42.42	41.41	1.26	598780	7738484176	15701561120	402877054	simple-nofib-report-lazy/rune-jit/correctness.0
+simple-nofib-report-lazy	normal	rune:jit	O2	count	1	1	pass	38.98	38.31	0.92	598992	7738484176	15701561120	402877054	simple-nofib-report-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

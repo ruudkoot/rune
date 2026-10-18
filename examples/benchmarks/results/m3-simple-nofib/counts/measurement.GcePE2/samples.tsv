@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+simple-nofib-report-strict	normal	rune	O2	compile	0	0	pass	7.50	3.82	0.51	266568	-	-	-	simple-nofib-report-strict/rune/build/compile
+simple-nofib-report-strict	normal	rune	O2	correctness	0	0	pass	197.64	137.47	4.11	311744	14119761062	15960600264	407573469	simple-nofib-report-strict/rune/correctness.0
+simple-nofib-report-strict	normal	rune	O2	count	1	1	pass	230.84	161.63	5.49	311432	14119761062	15960600264	407573469	simple-nofib-report-strict/rune/fresh.1
+simple-nofib-report-strict	normal	rune:opt	O2	compile	0	0	pass	9.50	4.97	0.69	266612	-	-	-	simple-nofib-report-strict/rune-opt/build/compile
+simple-nofib-report-strict	normal	rune:opt	O2	native-compile	0	0	pass	2.36	1.00	0.29	24692	-	-	-	simple-nofib-report-strict/rune-opt/build/native-compile
+simple-nofib-report-strict	normal	rune:opt	O2	correctness	0	0	pass	72.78	53.98	2.91	312912	14119761062	15960600264	407573469	simple-nofib-report-strict/rune-opt/correctness.0
+simple-nofib-report-strict	normal	rune:opt	O2	count	1	1	pass	49.55	47.88	1.11	312608	14119761062	15960600264	407573469	simple-nofib-report-strict/rune-opt/fresh.1
+simple-nofib-report-strict	normal	rune:new	O2	compile	0	0	pass	5.65	3.76	0.46	266280	-	-	-	simple-nofib-report-strict/rune-new/build/compile
+simple-nofib-report-strict	normal	rune:new	O2	correctness	0	0	pass	106.22	104.60	1.16	328792	7823816336	15960600264	407573469	simple-nofib-report-strict/rune-new/correctness.0
+simple-nofib-report-strict	normal	rune:new	O2	count	1	1	pass	110.51	110.32	0.66	328548	7823816336	15960600264	407573469	simple-nofib-report-strict/rune-new/fresh.1
+simple-nofib-report-strict	normal	rune:jit	O2	compile	0	0	pass	4.98	4.73	0.41	266624	-	-	-	simple-nofib-report-strict/rune-jit/build/compile
+simple-nofib-report-strict	normal	rune:jit	O2	correctness	0	0	pass	41.20	40.86	0.55	336652	7823816336	15960600264	407573469	simple-nofib-report-strict/rune-jit/correctness.0
+simple-nofib-report-strict	normal	rune:jit	O2	count	1	1	pass	37.16	35.16	0.47	336880	7823816336	15960600264	407573469	simple-nofib-report-strict/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

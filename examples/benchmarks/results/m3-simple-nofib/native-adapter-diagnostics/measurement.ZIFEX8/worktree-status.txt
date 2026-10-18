@@ -1,0 +1,22 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/audit.md
+ M examples/benchmarks/inventory.tsv
+ M examples/benchmarks/literature.md
+ M examples/benchmarks/manifest.tsv
+ M examples/benchmarks/validation.md
+ M scripts/benchmark-inventory.py
+ M tests/benchmarks/test-inventory.py
+?? examples/benchmarks/results/m3-simple-nofib/
+?? examples/benchmarks/shared/simple-nofib-arrays.sml
+?? examples/benchmarks/shared/simple-nofib-check.sml
+?? examples/benchmarks/shared/simple-nofib-kernel.sml
+?? examples/benchmarks/simple-nofib-lazy/
+?? examples/benchmarks/simple-nofib-report-lazy/
+?? examples/benchmarks/simple-nofib-report-strict/
+?? examples/benchmarks/simple-nofib-strict/
+?? examples/benchmarks/validation/oct18-simple-nofib-1421-acceptance-exit.json
+?? examples/benchmarks/validation/oct18-simple-nofib-1421-acceptance.log
+?? examples/benchmarks/validation/simple-nofib-hosts.md
+?? tests/benchmarks/check-simple-nofib.sh
+?? tests/benchmarks/data/simple-nofib/
+?? tests/benchmarks/simple-nofib-tests.sml

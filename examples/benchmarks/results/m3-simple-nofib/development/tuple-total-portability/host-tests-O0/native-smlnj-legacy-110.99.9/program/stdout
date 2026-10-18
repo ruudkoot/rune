@@ -1,0 +1,182 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/arrays.sml]
+[autoloading]
+[autoloading done]
+functor BenchSimpleArraysFn(<param>: sig
+  val strict : bool
+end) :
+sig
+  structure L : <sig>
+  type zone
+  type bounds
+  type 'a store
+  type 'a grid
+  val range : int -> int -> int list
+  val positions : (int * int) * (int * int) -> (int * int) list
+  val raw :
+      (int * int) * (int * int)
+       -> (int * int -> 'a)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+  val associations :
+      (int * int) * (int * int)
+       -> (unit -> ((int * int) * 'a BenchLazy.state ref) list)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+  val sub :
+      'a <BaseFct>.<resultStr>.store BenchLazy.state ref -> int * int -> 'a
+  val bounds :
+      'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.bounds
+  val force : 'a <BaseFct>.<resultStr>.store BenchLazy.state ref -> unit
+  val materialize : 'a <BaseFct>.<resultStr>.store BenchLazy.state ref -> unit
+  val make :
+      (int * int) * (int * int)
+       -> (int * int -> 'a)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+  val recursive :
+      (int * int) * (int * int)
+       -> ('a <BaseFct>.<resultStr>.store BenchLazy.state ref
+        -> int * int -> 'a)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+  val pair :
+      (int * int) * (int * int)
+       -> (int * int -> 'a BenchLazy.state ref * 'b BenchLazy.state ref)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+       * 'b <BaseFct>.<resultStr>.store BenchLazy.state ref
+  val recursivePair :
+      (int * int) * (int * int)
+       -> ('a <BaseFct>.<resultStr>.store BenchLazy.state ref
+        * 'b <BaseFct>.<resultStr>.store BenchLazy.state ref
+        -> int * int -> 'a BenchLazy.state ref * 'b BenchLazy.state ref)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+       * 'b <BaseFct>.<resultStr>.store BenchLazy.state ref
+  val recursiveTriple :
+      (int * int) * (int * int)
+       -> ('a <BaseFct>.<resultStr>.store BenchLazy.state ref
+        * 'b <BaseFct>.<resultStr>.store BenchLazy.state ref
+        * 'c <BaseFct>.<resultStr>.store BenchLazy.state ref
+        -> int * int
+        -> 'a BenchLazy.state ref * 'b BenchLazy.state ref
+        * 'c BenchLazy.state ref)
+       -> 'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+       * 'b <BaseFct>.<resultStr>.store BenchLazy.state ref
+       * 'c <BaseFct>.<resultStr>.store BenchLazy.state ref
+  type 'a seqNode
+  type 'a seq
+  val mapList :
+      ('a -> 'b)
+       -> 'a list -> 'b <BaseFct>.<resultStr>.seqNode BenchLazy.delay
+  val elements :
+      'a <BaseFct>.<resultStr>.store BenchLazy.state ref
+       -> 'a <BaseFct>.<resultStr>.seqNode BenchLazy.state ref
+  val head : 'a <BaseFct>.<resultStr>.seqNode BenchLazy.state ref -> 'a
+  val foldl :
+      ('a * 'b -> 'a)
+       -> 'a BenchLazy.state ref
+       -> 'b <BaseFct>.<resultStr>.seqNode BenchLazy.delay -> 'a
+  val total : real <BaseFct>.<resultStr>.store BenchLazy.state ref -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/kernel.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/kernel.sml:336.12-336.39 Error: right-hand-side of clause does not agree with function result type [tycon mismatch]
+  expression:  totals
+  result type:  (int BenchLazy.state ref * int BenchLazy.state ref
+                      * int BenchLazy.state ref * int BenchLazy.state ref
+                      * int BenchLazy.state ref * int BenchLazy.state ref
+                      * int BenchLazy.state ref * int BenchLazy.state ref
+                      * int BenchLazy.state ref * int BenchLazy.state ref
+                      * int BenchLazy.state ref * int BenchLazy.state ref
+                      * int BenchLazy.state ref) BenchLazy.state ref
+  in declaration:
+    totalsOf = (fn state => totals state)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-simple-originals/kernel.sml:338.7-338.36 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: (int BenchLazy.state ref * int BenchLazy.state ref
+                         * int BenchLazy.state ref * int BenchLazy.state ref
+                         * int BenchLazy.state ref * int BenchLazy.state ref
+                         * int BenchLazy.state ref * int BenchLazy.state ref
+                         * int BenchLazy.state ref * int BenchLazy.state ref
+                         * int BenchLazy.state ref * int BenchLazy.state ref
+                         * int BenchLazy.state ref) BenchLazy.state ref
+  operand:         totals
+  in expression:
+    (loop state) (totals state)
+uncaught exception CompileError [CompileError]
