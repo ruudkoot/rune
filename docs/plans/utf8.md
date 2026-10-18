@@ -2962,7 +2962,7 @@ then confirms that the default becomes ASCII in M4 (D16).
     and an existing test that runs out of memory on MLKit.
   - The tables' cost to the bootstrap budget is measured (E5: +2.2%), and
     the budget updated with the reason.
-* **Done** (2026-10-18, at `a12b602b`):
+* **Done** (2026-10-18, at `99df9fc0`):
   - **`Normalize`** (`NORMALIZE`, `lib/unicode/normalize.sml`): `nfd`, `nfc`,
     `nfdList`, `nfcList`, `quickCheck`, `quickCheckList`, `isNFC`,
     `isNFCList` and `combiningClass`, as E4's prototype. NFKC is left out
@@ -3016,7 +3016,11 @@ then confirms that the default becomes ASCII in M4 (D16).
       3-11 of Unicode 18.0. Its old example is now named as Unicode 6.0 to
       10.0's.
   - **On the hosts:** all six programs of `unicode` pass on MLton, SML/NJ
-    110.99.9 (64 and 32 bits), SML/NJ 2026.2, Poly/ML and MLKit.
+    110.99.9 (64 and 32 bits), SML/NJ 2026.2, Poly/ML and MLKit. SML/NJ
+    110.99.9 for 64 bits stops now and then in `normalize_props.sml`, with
+    "bogus overflow fault" (4 runs of 45, none with address randomisation
+    off): a `HOST-FLAKY` line, with a report in
+    `docs/bugreport/smlnj/GC/bogus-overflow-fault`.
   - **MLKit's 7 GB** is MLKit's fault. It binds the region of a value made
     in a `let` around a tail call in its body, although
     `--preserve_tail_calls` is on. Every step of `utf8.sml`'s round trip
