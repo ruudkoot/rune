@@ -54,7 +54,7 @@ What it rests on:
 | M0 | This roadmap | done |
 | M1 | Fixes that follow the Definition or fix bugs | done 2026-10-18: the Basis part and the source part |
 | M2 | Source modes: the plumbing | done 2026-10-18 |
-| M3 | What a source may hold raw | |
+| M3 | What a source may hold raw | done 2026-10-18; G1 to see |
 | M4 | Literals by type and mode | |
 | M5 | `lib/unicode`: normalisation and identifier tables | done 2026-10-18; G2 passed 2026-10-18 |
 | M6 | Unicode identifiers | |
@@ -3072,6 +3072,123 @@ The sizes are lines of code and tests, not counting generated tables.
     for comments, where the Definition allows any character, is pinned by
     tests.
   - The cost of lexing the corpora is within 10% of today's (E9: 7 to 9%).
+* **Done** (2026-10-18, at `c9321e8d`; `--lex-count` alone at `da15c3a5`):
+  - **The lexer** (`src/frontend/lexer.sml`) keeps D5's table in every
+    mode.
+    - Between tokens, white space is space, TAB, LF, FF and CR before LF.
+      A vertical tab or a CR alone is "unexpected character U+000B" (or
+      U+000D, "a carriage return not before a line feed").
+    - A comment is read a byte at a time through a table of 256 classes
+      (`commentClass`). Plain text costs one lookup a byte. A control,
+      DEL or a byte above 127 is looked at: "control character U+0007 in
+      a comment", "bidi control U+2067 in a comment", "invalid UTF-8
+      (byte 0xE9) in a comment".
+    - In a literal, a character above 127 is decoded and checked: "bidi
+      control U+202E in string literal (write it as \u202E)". Then it is
+      taken as its bytes, a character a byte, as before. M4 changes what
+      it means.
+    - A string's gap holds only that white space.
+    - `refusedAbove127` names what no context may hold raw: the C1
+      controls (NEL among them), U+2028, U+2029, the nine explicit bidi
+      controls and U+FEFF. The marks LRM, RLM and ALM and the other
+      default-ignorables stay allowed in comments and literals.
+    - Under `--unicode=latin1` every byte is the character of its number,
+      so the encoding check becomes the refusal of C1 bytes. M4 brings the
+      conversion and the "looks like UTF-8" refusal.
+    - A BOM at the start of UTF-8 text is dropped (`Lexer.tokenize`).
+    - `Source.computeLineStarts` needed no change. Lines end at LF, so
+      CR LF is already one line end, and a CR alone is now refused.
+  - **Tests.**
+    - 62 reject tests in `tests/errors/err.lex_*`, one for each refused
+      row and context, under each mode that can hold it, with `.cargs` for
+      the mode: `space_{vt,cr,nul,bom,bidi,c1}`,
+      `comment_{control,vt,cr,del,c1,ls,ps,bom,bidi,utf8}`,
+      `string_{c1,ls,bom,utf8}`, `char_bidi` and `gap_{vt,cr}`.
+    - 11 accept tests, `tests/lang/lex.{space,bom,comments,bidi,encoding}_*`.
+    - Trojan Source's three patterns are each refused:
+      `err.lex_trojan_early_return`, `_commenting_out` and
+      `_stretched_string`.
+    - `tests/diagnostics/bidi.sml` and `badbyte.sml` are now refused
+      ("bidi control U+202E in string literal", "invalid UTF-8 (byte 0xE9)
+      in string literal"). Their excerpts still show `\u{202E}` and
+      `\xE9`, now with the carets under them.
+    - The files that hold a CR are `-text` in `.gitattributes`, so that
+      Git keeps their CRs.
+  - **`docs/language.md`.**
+    - A deviation row, *Source text*, pins the rules for comments by
+      `err.lex_comment_*` and `err.lex_trojan_*`.
+    - New rows `lex.space`, `lex.bom`, `lex.bidi` and `lex.encoding`.
+    - `lex.comments` and `lex.string` say what they refuse.
+    - `docs/units.md` and the man page say what the modes share.
+  - **`scripts/lex-corpus.sh`**, from E9's `lexable.sh` and `count.sh`.
+    - It lexes each file of a corpus by itself (`rune --lex-count 1`) in
+      the default, `--unicode`, `--unicode=latin1`, and the default under
+      `--ascii-rule`. `--ascii-rule` is M4's refusal of a character above
+      127 outside comments, available as a measure until M4 makes it the
+      default.
+    - It writes the files each mode refuses, with their first errors.
+    - With `--cost K --against DIR`, it compares the instructions to lex
+      the same files (`runevm --count`) with another tree's compiler.
+  - **The corpus run** (Rune's tracked tree, HOL4 after `unquote`, MLton,
+    and the Latin-1 files of E1):
+
+    | Corpus | Files | default | `--unicode` | `--unicode=latin1` | ASCII rule (M4) |
+    |---|---|---|---|---|---|
+    | Rune | 2,270 | 2,183 | 2,183 | 2,184 | 2,179 |
+    | HOL4 | 3,419 | 3,419 | 3,419 | 3,187 | 3,419 |
+    | MLton | 1,787 | 1,785 | 1,785 | 1,784 | 1,785 |
+    | Latin-1 | 17 | 0 | 0 | 16 | 0 |
+
+    - Rune's 87 refused by default are `tests/diagnostics/eof.sml`,
+      `bidi.sml` and `badbyte.sml`, the 82 lexer tests of `tests/errors`
+      (M1's 20 and M3's 62), and M3's two accept tests of
+      `--unicode=latin1`. The script lexes a file without its `.cargs`.
+      Under `--unicode=latin1`, `badbyte.sml`, those two tests and eight
+      of the reject tests pass: a byte is a character there.
+    - MLton's 2 are the files with `Error.: T`, as before.
+    - The Latin-1 files are refused by default as text that is not UTF-8
+      (13 in a comment, 3 in a literal, the bytes E6, A7, DC, F8). Under
+      `--unicode=latin1` the 16 of E9 pass, and MLKit's `cobol.sml` does
+      not (an unterminated comment).
+    - Under `--unicode=latin1`, files in UTF-8 are refused where their
+      bytes read as C1 controls. In Rune's tree these are
+      `lib/unicode/grapheme.sml`, `tests/lib/unicode/graphemes.sml`, A3's
+      three and five of M3's accept tests. Also 232 of HOL4's files and
+      MLton's `lib/mlton/basic/hash.sml`. This is D3's danger, which M4's
+      "looks like UTF-8" names.
+  - **G1's data: what the ASCII rule outside comments would refuse beyond
+    the default.**
+    - In Rune's tree, A3's three files:
+      `examples/benchmarks/sat/upstream/original.sml` (`"φ("`, line 39),
+      `tests/diagnostics/wide.sml` and `tests/diagnostics/emoji.sml`. The
+      fourth, `tests/lang/lex.bidi_marks.sml`, is M3's own and takes
+      `--unicode` in its `.cargs`.
+    - In HOL4 after `unquote` and in MLton, nothing.
+    - The Latin-1 files are refused by the default already, as text that
+      is not UTF-8, and pass only under `--unicode=latin1`, where the rule
+      does not hold.
+  - **The cost**: instructions to lex each corpus once, against the
+    compiler of `da15c3a5` (utf8 with M10, plus `--lex-count`), on the
+    files that both take:
+
+    | Corpus | Bytes | Before | Now | Change |
+    |---|---|---|---|---|
+    | Rune (2,177 files) | 19.8M | 922.6M | 932.5M | +1.1% |
+    | MLton (1,785 files) | 14.1M | 597.6M | 612.6M | +2.5% |
+    | HOL4 (3,419 files) | 103.6M | 4,558.5M | 4,697.4M | +3.0% |
+
+    - The cost is the same under `--unicode` and within 0.001% under the
+      ASCII rule.
+    - E9's prototype cost 7 to 9%. The difference is that comments now
+      take one table lookup a byte, and white space a few comparisons in
+      place of `Char.isSpace`.
+  - **Not foreseen:** `make check` failed once in `repl/off`. The four
+    ways of `tests/repl` ran side by side, and `reload.in` writes its
+    files into `tests/out/repl`, whose names its transcript shows. So one
+    way read the files that another had just written. The commit after
+    this milestone's work puts the ways in one pool of the runner, so they
+    run one at a time. The test had failed so before, in other trees'
+    histories.
 
 ### M4. Literals by type and mode (S-M, about 400)
 
