@@ -1,0 +1,3 @@
+*.report -text -whitespace
+data.* -text -whitespace
+fem.stdin -text -whitespace
