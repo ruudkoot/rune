@@ -2922,3 +2922,30 @@ comparisons. All 114 inventory tests and the five-pin 861-entry replay pass.
 Profile model CRLF geometry bytes are preserved under narrow data-only
 attributes; runnable SML sources retain ordinary whitespace checks.
 Full final SML large-profile runs remain unrecorded.
+
+## Hartel scheduling, 2026-10-18
+
+The catalogue contains 459 programs and 1331 profiles. Both sched policies
+pass all 56 canonical smoke/normal cases on Rune O0/O2 across four engines and
+all six managed native hosts. All twenty final semantic invocations pass
+54 assertions: 1080 passing assertions, none failed or unreached. Native
+O0/O2 groups use host-default compiler settings.
+
+Original complete schedule-tree observations and an independent DAG/affinity/
+event oracle agree. Lazy unused-field, paired-result sharing, no-op hint,
+strict finite-field and driver rejection controls pass. Normal preserves
+100-by-eleven; selected large uses one fourteen-labelled supplied graph for
+tree/memory scaling, with original SLOW500-by-eleven retained separately.
+
+All eight full-normal Rune count samples agree and both guards exit zero
+without interruption. Six serial single fresh-process native smoke diagnostics
+pass before heavy validation. They are not ten-sample comparative performance
+claims. The public semantic shell target passes Rune O0/O2; all 114 inventory
+tests and the five-pin 861-entry replay pass.
+
+[Full make JOBS=4 check](validation/oct18-hartel-sched-1331-acceptance.log)
+exits zero with 1331 profiles and all compiler/runedoc/runeopt cross-build
+comparisons. [Evidence](results/m3-hartel-sched/README.md) retains raw outputs,
+source identities, notices/attribution limits and separate source-order setup
+diagnostics. Final full SML large repetitions remain unrecorded.
+M3/M4 remain in progress and M8 remains planned.

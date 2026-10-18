@@ -453,3 +453,18 @@ Original numerical/image observations, independent component models and
 complete result checks support the ports. Known native 32-bit random arithmetic
 failures and default legacy 64-bit numeric/image failures remain explicit.
 Diagnostic nursery changes do not alter suite defaults or passing expectations.
+
+## Hartel scheduling workload, 2026-10-18
+
+The two sched policies import the sequential two-processor simulation/search.
+Its sandwich shim uses no-op miraseq, requiring no parallel runtime. All seven
+supplied job graphs are accounted for; historical selectors ten/fourteen do
+not equal their literal defined-node counts. Full source, shim and fixtures
+are retained without inferring individual authorship or licensing.
+
+Original complete tree observations and an independent DAG/event model agree.
+Finite data policies remain separate, with shared delayed processing pairs,
+guarded unused fields and lazy branch/hint control. Normal retains source
+100-by-eleven; selected large uses one fourteen-labelled graph for tree-size/
+memory scaling, while source SLOW500-by-eleven remains a recorded reference.
+The catalogue reaches 459 programs and 1331 profiles. M3/M4 remain in progress.
