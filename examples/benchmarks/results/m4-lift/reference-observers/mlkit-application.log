@@ -1,0 +1,5 @@
+PROGRAM LIMIT AS 4194304 KiB
+PASS lift/need4000
+PASS lift/strict4000
+SUMMARY 2 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

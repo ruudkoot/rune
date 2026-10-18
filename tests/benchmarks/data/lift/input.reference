@@ -1,0 +1,18 @@
+letrec
+    p a b = let
+        p = - (+ a b) 20
+    in let
+        m p q = let
+            g = + a 6
+        in let
+            d pp = + (+ pp q) p
+        in let
+            c q = + (- q g) a
+        in - (- (d (+ 1 a)) (c (- a b))) p
+    in letrec
+        f a b = g a (+ b 1);
+        g x y = f x (+ y b)
+    in let
+        h a n = m (+ n 1) (f a n)
+    in h a p
+in p 5 6

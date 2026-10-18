@@ -1,0 +1,1 @@
+[["$main",[],["let",true,[["fac",["app",["fun","SC0"],["var","fac"]]]],["app",["var","fac"],["num",6]]]],["SC0",["fac","n"],["app",["app",["app",["fun","if"],["app",["app",["fun","=="],["var","n"]],["num",0]]],["num",1]],["app",["app",["fun","*"],["var","n"]],["app",["var","fac"],["app",["app",["fun","-"],["var","n"]],["num",1]]]]]]]

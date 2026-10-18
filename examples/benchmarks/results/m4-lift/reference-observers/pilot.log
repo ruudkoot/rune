@@ -1,0 +1,6 @@
+PASS need-input
+PASS strict-input
+PASS need-plain
+PASS strict-plain
+PASS need-full
+PASS strict-full

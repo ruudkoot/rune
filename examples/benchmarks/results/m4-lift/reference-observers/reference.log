@@ -1,0 +1,3 @@
+{'profile': 'source-fast', 'repetitions': 400, 'bytes': 8400, 'seconds': 0.32187979000082123}
+{'profile': 'normal', 'repetitions': 4000, 'bytes': 84000, 'seconds': 2.0130962479997834}
+{'profile': 'source-slow', 'repetitions': 20000, 'bytes': 420000, 'seconds': 11.934216269000899}

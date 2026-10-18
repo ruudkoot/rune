@@ -612,3 +612,20 @@ Original/corrected observers and the independent direct circle-membership
 oracle establish the recorded classification repair and finite-grid results.
 Lazy numeric sharing, parser specialization and allocation effects remain
 performance hypotheses until investigated by separate measurements.
+
+## Executable fully-lazy lambda-lifter paper
+
+The complete pinned LambdaLift.lhs contains *A modular fully-lazy lambda
+lifter in Haskell*, by Simon L. Peyton Jones and David Lester. Its abstract,
+introduction and executable algorithms were reviewed directly. The paper
+separates full laziness from lambda lifting and treats let/letrec rather than
+eliminating them before the transformation. These are paper-supported design
+statements; observed source renaming/supply behavior is recorded separately.
+
+Complete original transformed ASTs and an independent memoized evaluator
+establish the tested examples, including captured/shadowed bindings,
+recursion and factorial. The fixed benchmark is checked structurally rather
+than claimed to terminate under that evaluator. Allocation, higher-order
+printer fusion, annotation retention and pass-boundary materialization remain
+source-based performance hypotheses. No general transformation correctness
+proof or identical cross-language specialization/barrier behavior is claimed.

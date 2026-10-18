@@ -1,0 +1,5 @@
+[1 of 5] Compiling Utilities        ( Utilities.lhs, Utilities.o )
+[2 of 5] Compiling LambdaLift       ( LambdaLift.lhs, LambdaLift.o )
+[3 of 5] Compiling Test             ( Test.hs, Test.o )
+[4 of 5] Compiling Main             ( AstObserver.hs, AstObserver.o )
+[5 of 5] Linking ast-observer

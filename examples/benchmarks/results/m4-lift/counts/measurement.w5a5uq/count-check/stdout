@@ -1,0 +1,5 @@
+COUNT unbudgeted lift-lazy normal rune
+COUNT unbudgeted lift-lazy normal rune:opt
+COUNT unbudgeted lift-lazy normal rune:new
+COUNT unbudgeted lift-lazy normal rune:jit
+COUNT comparisons agree

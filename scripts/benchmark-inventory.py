@@ -301,6 +301,8 @@ def discover(source, root):
 
 def family(name, text):
     key = name.lower()
+    if key == "lift":
+        return "compiler-application"
     if any(x in key for x in ("fft", "nbody", "n-body", "barnes", "mandel", "nucleic", "ray", "simple", "fem", "fluid", "almabench", "matrix", "grammatrix", "decomposition", "durand", "levinson", "minilight", "sphere", "zern", "arith")):
         return "numerical"
     if any(x in key for x in ("sort", "merge", "list", "rev", "sieve", "primes", "hamming", "wheel")):
@@ -551,6 +553,16 @@ def build(source, root, lock):
                     notices.append(str(notice.relative_to(root)))
         authors = set()
         context = [p for p in parent.iterdir() if p.is_file() and p.name in {"README", "README.md", "Makefile", "FILES", "sources.cm"}] if parent.exists() and files else []
+        if source == "nofib" and path == "real/lift":
+            paper = parent / "LambdaLift.lhs"
+            if paper.is_file():
+                heading = paper.read_text(errors="replace")
+                if (r"\title{A modular fully-lazy lambda lifter in \Haskell{}}" in heading
+                        and "Simon L Peyton Jones" in heading
+                        and "David Lester" in heading
+                        and r"\begin{abstract}" in heading):
+                    authors.update({"Simon L. Peyton Jones", "David Lester"})
+                    item["evidence"].append("real/lift/LambdaLift.lhs:executable-paper-title-and-author-block")
         if source == "nofib" and path == "real/fem":
             readme = parent / "README"
             if readme.is_file():

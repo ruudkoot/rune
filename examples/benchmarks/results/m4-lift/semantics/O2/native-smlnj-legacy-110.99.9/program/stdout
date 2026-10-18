@@ -1,0 +1,437 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lift-kernel.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lift-kernel.sml:136.22 Warning: calling polyEqual
+functor BenchLiftFn(<param>: sig
+  val strict : bool
+end) :
+sig
+  structure L : <sig>
+  type name
+  type constant
+  type 'a exprNode
+  type 'a expr
+  type ('a,'b) annNode
+  type ('a,'b) annBody
+  type ('a,'b) ann
+  type sc
+  val named : 'a -> 'a BenchLazy.state ref
+  val cn : IntInf.int -> 'a <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+  val cb : bool -> 'a <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+  val cf : string -> 'a <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+  val variable :
+      string -> 'a <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+  val var :
+      <BaseFct>.<resultStr>.name
+       -> 'a <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+  val app :
+      'a <BaseFct>.<resultStr>.exprNode BenchLazy.delay
+       -> 'a <BaseFct>.<resultStr>.exprNode BenchLazy.delay
+       -> 'a <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+  val lam :
+      'a list
+       -> 'a <BaseFct>.<resultStr>.exprNode BenchLazy.delay
+       -> 'a <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+  val lett :
+      bool
+       -> ('a * 'a <BaseFct>.<resultStr>.exprNode BenchLazy.delay) list
+       -> 'a <BaseFct>.<resultStr>.exprNode BenchLazy.delay
+       -> 'a <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+  val program :
+      unit
+       -> string BenchLazy.state ref <BaseFct>.<resultStr>.exprNode 
+           BenchLazy.state ref
+  val nameCompare :
+      string BenchLazy.state ref -> string BenchLazy.state ref -> order
+  val union :
+      string BenchLazy.state ref list
+       -> string BenchLazy.state ref list -> string BenchLazy.state ref list
+  val difference :
+      string BenchLazy.state ref list
+       -> string BenchLazy.state ref list -> string BenchLazy.state ref list
+  val sortNoDups :
+      string BenchLazy.state ref list -> string BenchLazy.state ref list
+  val unions :
+      string BenchLazy.state ref list list -> string BenchLazy.state ref list
+  val binders : ('a * 'b) list -> 'a list
+  val rhss : ('a * 'b) list -> 'b list
+  val tag : ('a,'b) <BaseFct>.<resultStr>.annNode BenchLazy.state ref -> 'b
+  val payload :
+      ('a,'b) <BaseFct>.<resultStr>.annNode BenchLazy.state ref
+       -> ('a,'b) <BaseFct>.<resultStr>.annBody
+  val annotated :
+      'a BenchLazy.delay
+       -> ('b,'a) <BaseFct>.<resultStr>.annBody BenchLazy.delay
+       -> ('b,'a) <BaseFct>.<resultStr>.annNode BenchLazy.state ref
+  val freeVars :
+      string BenchLazy.state ref <BaseFct>.<resultStr>.exprNode 
+           BenchLazy.state ref
+       -> (string BenchLazy.state ref,string BenchLazy.state ref list) 
+             <BaseFct>.<resultStr>.annNode BenchLazy.state ref
+  val abstract :
+      (<BaseFct>.<resultStr>.name,<BaseFct>.<resultStr>.name list) 
+             <BaseFct>.<resultStr>.annNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.name <BaseFct>.<resultStr>.exprNode 
+         BenchLazy.delay
+  val mapAccum : ('a -> 'b -> 'a * 'c) -> 'a -> 'b list -> 'a * 'c list
+  val newName :
+      int BenchLazy.state ref
+       -> string BenchLazy.state ref
+       -> int BenchLazy.state ref * string BenchLazy.state ref
+  val collect :
+      'a <BaseFct>.<resultStr>.exprNode BenchLazy.delay
+       -> (string BenchLazy.state ref * 'a list
+          * 'a <BaseFct>.<resultStr>.exprNode BenchLazy.delay) list
+  val separate :
+      'a <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+       -> 'a <BaseFct>.<resultStr>.exprNode BenchLazy.delay
+  val lookup :
+      (string BenchLazy.state ref * 'a) list
+       -> string BenchLazy.state ref -> 'a
+  val freeLevel :
+      string BenchLazy.state ref list
+       -> (string BenchLazy.state ref * int BenchLazy.state ref) list -> int
+  val addLevels :
+      string BenchLazy.state ref <BaseFct>.<resultStr>.exprNode 
+           BenchLazy.state ref
+       -> (string BenchLazy.state ref * int BenchLazy.state ref,int) 
+             <BaseFct>.<resultStr>.annNode BenchLazy.state ref
+  val identify :
+      (string BenchLazy.state ref * int BenchLazy.state ref,int) 
+             <BaseFct>.<resultStr>.annNode BenchLazy.state ref
+       -> (string BenchLazy.state ref * int BenchLazy.state ref) 
+             <BaseFct>.<resultStr>.exprNode BenchLazy.state ref
+  val rename :
+      (string BenchLazy.state ref * 'a) <BaseFct>.<resultStr>.exprNode 
+         BenchLazy.delay
+       -> (string BenchLazy.state ref * 'a) <BaseFct>.<resultStr>.exprNode 
+         BenchLazy.delay
+  type floated
+  val install :
+      ('a * bool
+          * ('b * 'b <BaseFct>.<resultStr>.exprNode BenchLazy.delay) list) 
+         list
+       -> 'b <BaseFct>.<resultStr>.exprNode BenchLazy.delay
+       -> 'b <BaseFct>.<resultStr>.exprNode BenchLazy.delay
+  val floatExpr :
+      ('a * int BenchLazy.state ref) <BaseFct>.<resultStr>.exprNode 
+           BenchLazy.state ref
+       -> 'a <BaseFct>.<resultStr>.exprNode BenchLazy.delay
+  val forceName : 'a BenchLazy.state ref -> unit
+  val forceConstant : <BaseFct>.<resultStr>.constant -> unit
+  val forceExpr :
+      ('a -> unit)
+       -> 'a <BaseFct>.<resultStr>.exprNode BenchLazy.delay -> unit
+  val forceAnn :
+      ('a -> unit)
+       -> ('b -> 'c)
+       -> ('a,'b) <BaseFct>.<resultStr>.annNode BenchLazy.delay -> unit
+  val boundaryExpr :
+      ('a -> unit)
+       -> 'a <BaseFct>.<resultStr>.exprNode BenchLazy.delay
+       -> 'a <BaseFct>.<resultStr>.exprNode BenchLazy.delay
+  val boundaryAnn :
+      ('a -> unit)
+       -> ('b -> 'c)
+       -> ('a,'b) <BaseFct>.<resultStr>.annNode BenchLazy.delay
+       -> ('a,'b) <BaseFct>.<resultStr>.annNode BenchLazy.delay
+  val lambdaLift :
+      string BenchLazy.state ref <BaseFct>.<resultStr>.exprNode 
+           BenchLazy.state ref
+       -> (string BenchLazy.state ref * string BenchLazy.state ref list
+          * string BenchLazy.state ref <BaseFct>.<resultStr>.exprNode 
+            BenchLazy.delay) list
+  val fullyLazyLift :
+      string BenchLazy.state ref <BaseFct>.<resultStr>.exprNode 
+           BenchLazy.state ref
+       -> (string BenchLazy.state ref * string BenchLazy.state ref list
+          * string BenchLazy.state ref <BaseFct>.<resultStr>.exprNode 
+            BenchLazy.delay) list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lift-print.sml]
+functor BenchLiftPrintFn(K: sig
+  type name = string BenchLazy.delay
+  datatype constant = CBool of bool | CFun of name | CNum of IntInf.int
+  datatype 'a exprNode
+    = EAp of 'a exprNode BenchLazy.delay * 'a exprNode BenchLazy.delay
+    | EConst of constant
+    | ELam of 'a list * 'a exprNode BenchLazy.delay
+    | ELet of bool * ('a * 'a exprNode BenchLazy.delay) list
+               * 'a exprNode BenchLazy.delay
+    | EVar of name
+  type 'a expr = 'a exprNode BenchLazy.delay
+end) :
+sig
+  structure L : <sig>
+  type oseq
+  type iseq
+  val nilSeq : 'a -> 'a
+  val append : ('a -> 'b) -> ('c -> 'a) -> 'c -> 'b
+  val char : char -> (int -> bool -> char list) -> int -> bool -> char list
+  val text : string -> (int -> bool -> char list) -> int -> bool -> char list
+  val concat : ('a -> 'a) list -> 'a -> 'a
+  val interleave : ('a -> 'a) -> ('a -> 'a) list -> 'a -> 'a
+  val indent :
+      int
+       -> (('a -> 'b -> 'c) -> int -> 'd -> 'e)
+       -> (int -> 'b -> 'c) -> int -> 'd -> 'e
+  val mkstr : (('a -> 'b -> 'c list) -> int -> bool -> char list) -> string
+  val name :
+      string BenchLazy.state ref
+       -> (int -> bool -> char list) -> int -> bool -> char list
+  val number :
+      IntInf.int -> (int -> bool -> char list) -> int -> bool -> char list
+  val space : (int -> bool -> char list) -> int -> bool -> char list
+  val newline : (int -> bool -> char list) -> int -> bool -> char list
+  val ppr :
+      ('a -> (int -> bool -> char list) -> int -> bool -> char list)
+       -> 'a K.exprNode BenchLazy.delay
+       -> (int -> bool -> char list) -> int -> bool -> char list
+  val atomic :
+      ('a -> (int -> bool -> char list) -> int -> bool -> char list)
+       -> 'a K.exprNode BenchLazy.delay
+       -> (int -> bool -> char list) -> int -> bool -> char list
+  val definition :
+      ('a -> (int -> bool -> char list) -> int -> bool -> char list)
+       -> 'a * 'a K.exprNode BenchLazy.delay
+       -> (int -> bool -> char list) -> int -> bool -> char list
+  val expression :
+      string BenchLazy.state ref K.exprNode BenchLazy.delay -> string
+  val sc :
+      string BenchLazy.state ref * string BenchLazy.state ref list
+       * string BenchLazy.state ref K.exprNode BenchLazy.delay
+       -> (int -> bool -> char list) -> int -> bool -> char list
+  val supercombinators :
+      (string BenchLazy.state ref * string BenchLazy.state ref list
+          * string BenchLazy.state ref K.exprNode BenchLazy.delay) list
+       -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lift-check.sml]
+[autoloading]
+[autoloading done]
+functor BenchLiftCheckFn(K: sig
+  type name = string BenchLazy.delay
+  datatype constant = CBool of bool | CFun of name | CNum of IntInf.int
+  datatype 'a exprNode
+    = EAp of 'a exprNode BenchLazy.delay * 'a exprNode BenchLazy.delay
+    | EConst of constant
+    | ELam of 'a list * 'a exprNode BenchLazy.delay
+    | ELet of bool * ('a * 'a exprNode BenchLazy.delay) list
+               * 'a exprNode BenchLazy.delay
+    | EVar of name
+  type 'a expr = 'a exprNode BenchLazy.delay
+  val program : unit -> name expr
+  val lambdaLift : name expr -> (name * name list * name expr) list
+  val fullyLazyLift : name expr -> (name * name list * name expr) list
+end) :
+sig
+  structure L : <sig>
+  structure P : <sig>
+  structure W : <sig>
+  val read : string -> TextIO.vector
+  val hash : string -> Word64.word
+  val report : string BenchLazy.state ref K.exprNode BenchLazy.delay -> string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lift-serialize.sml]
+functor BenchLiftSerializeFn(K: sig
+  type name = string BenchLazy.delay
+  datatype constant = CBool of bool | CFun of name | CNum of IntInf.int
+  datatype 'a exprNode
+    = EAp of 'a exprNode BenchLazy.delay * 'a exprNode BenchLazy.delay
+    | EConst of constant
+    | ELam of 'a list * 'a exprNode BenchLazy.delay
+    | ELet of bool * ('a * 'a exprNode BenchLazy.delay) list
+               * 'a exprNode BenchLazy.delay
+    | EVar of name
+  type 'a expr = 'a exprNode BenchLazy.delay
+end) :
+sig
+  structure L : <sig>
+  val quote : string -> string
+  val array : string list -> string
+  val name : string BenchLazy.state ref -> string
+  val number : IntInf.int -> string
+  val expression : ('a -> string) -> 'a K.exprNode BenchLazy.delay -> string
+  val supercombinators :
+      (string BenchLazy.state ref * string BenchLazy.state ref list
+          * string BenchLazy.state ref K.exprNode BenchLazy.delay) list
+       -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/lift-tests.sml]
+[autoloading]
+[autoloading done]
+PASS lift/need/input/0
+PASS lift/need/plain/0
+PASS lift/need/full/0
+PASS lift/need/input/1
+PASS lift/need/plain/1
+PASS lift/need/full/1
+PASS lift/need/input/2
+PASS lift/need/plain/2
+PASS lift/need/full/2
+PASS lift/need/input/3
+PASS lift/need/plain/3
+PASS lift/need/full/3
+PASS lift/need/input/4
+PASS lift/need/plain/4
+PASS lift/need/full/4
+PASS lift/need/input/5
+PASS lift/need/plain/5
+PASS lift/need/full/5
+PASS lift/need/input/6
+PASS lift/need/plain/6
+PASS lift/need/full/6
+PASS lift/strict/input/0
+PASS lift/strict/plain/0
+PASS lift/strict/full/0
+PASS lift/strict/input/1
+PASS lift/strict/plain/1
+PASS lift/strict/full/1
+PASS lift/strict/input/2
+PASS lift/strict/plain/2
+PASS lift/strict/full/2
+PASS lift/strict/input/3
+PASS lift/strict/plain/3
+PASS lift/strict/full/3
+PASS lift/strict/input/4
+PASS lift/strict/plain/4
+PASS lift/strict/full/4
+PASS lift/strict/input/5
+PASS lift/strict/plain/5
+PASS lift/strict/full/5
+PASS lift/strict/input/6
+PASS lift/strict/plain/6
+PASS lift/strict/full/6
+PASS lift/need-boundary-defers
+PASS lift/shared-node-forced-once
+PASS lift/strict-boundary-demands
+PASS lift/strict-boundary-poison
+PASS lift/need-variable-tag-shared
+PASS lift/free-vars-sorted-deduplicated
+PASS lift/recursive-let-binds-rhs
+PASS lift/nonrecursive-let-retains-rhs-free
+PASS lift/rec-renaming-knot
+PASS lift/source-lambda-supply-quirk
+PASS lift/arbitrary-precision-constant
+PASS lift/pretty-negative
+PASS lift/printer-pending-indent
+PASS lift/printer-delayed-expression
+PASS lift/complete-report-need
+PASS lift/complete-report-strict
+PASS lift/Word64-source-hash
+PASS lift/zero-repetitions
+PASS lift/smoke-both-transforms-need
+PASS lift/smoke-both-transforms-strict
+PASS lift/reject-incorrect-report
+PASS lift/reject-incorrect-hash
+structure LiftTests : sig
+  structure N : <sig>
+  structure E : <sig>
+  structure NCases : <sig>
+  structure NS : <sig>
+  structure ECases : <sig>
+  structure ES : <sig>
+  val read : string -> TextIO.vector
+  val check : string -> string -> string -> unit
+  val need :
+      int * ('a * string BenchLazy.state ref N.exprNode BenchLazy.delay)
+       -> unit
+  val strict :
+      int * ('a * string BenchLazy.state ref E.exprNode BenchLazy.delay)
+       -> unit
+  structure NP : <sig>
+  structure EP : <sig>
+  structure NC : <sig>
+  structure EC : <sig>
+  structure L : <sig>
+  exception Demanded
+  val demanded : exn -> bool
+  val touches : int ref
+  val deferred : N.name N.expr
+  val strictTouches : int ref
+  val strictNode : E.name E.expr
+  val wantedHash : string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 64 checks, 0 failed

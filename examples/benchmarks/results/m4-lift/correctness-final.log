@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-lift-parallel.j032bve2
+PASS lift-lazy smoke O2
+PASS lift-lazy smoke O0
+PASS lift-lazy smoke hosts
+PASS lift-lazy normal O0
+PASS lift-lazy normal O2
+PASS lift-strict smoke O0
+PASS lift-strict smoke O2
+PASS lift-lazy normal hosts
+PASS lift-strict smoke hosts
+PASS lift-strict normal O2
+PASS lift-strict normal O0
+PASS lift-strict normal hosts

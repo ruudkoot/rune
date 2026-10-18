@@ -348,6 +348,35 @@ class InventoryTest(unittest.TestCase):
     def test_absent_cacheprof_reservoir_is_not_invented(self):
         self.assertNotIn("real/cacheprof/cacheprof.full", self.cacheprof_notice("real", "")["inputs"])
 
+    def lift_paper(self, heading):
+        self.nofib_roots()
+        self.file("real/lift/Makefile", "\n")
+        self.file("real/lift/Main.lhs", "> module Main where\n> import LambdaLift\n> main = print 0\n")
+        self.file("real/lift/LambdaLift.lhs", heading + "\n> module LambdaLift where\n")
+        return next(row for row in self.build("nofib") if row["path"] == "real/lift")
+
+    def lift_heading(self):
+        return (ROOT / "examples/benchmarks/lift-lazy/upstream/LambdaLift.lhs").read_text().split(r"\end{abstract}")[0]
+
+    def test_lift_executable_paper_authors_are_recorded(self):
+        row = self.lift_paper(self.lift_heading())
+        self.assertIn("Simon L. Peyton Jones", row["authors"])
+        self.assertIn("David Lester", row["authors"])
+        self.assertIn("real/lift/LambdaLift.lhs:executable-paper-title-and-author-block", row["evidence"])
+        self.assertEqual("compiler-application", row["family"])
+
+    def test_changed_lift_title_requires_review(self):
+        row = self.lift_paper(self.lift_heading().replace("A modular fully-lazy lambda lifter", "Another lifter"))
+        self.assertNotIn("Simon L. Peyton Jones", row["authors"])
+
+    def test_changed_lift_author_requires_review(self):
+        row = self.lift_paper(self.lift_heading().replace("David Lester", "Another author"))
+        self.assertNotIn("David Lester", row["authors"])
+
+    def test_incomplete_lift_paper_heading_requires_review(self):
+        row = self.lift_paper(self.lift_heading().replace(r"\begin{abstract}", ""))
+        self.assertNotIn("Simon L. Peyton Jones", row["authors"])
+
     def fulsom_notice(self, family, heading):
         self.nofib_roots()
         self.file(family + "/fulsom/Makefile", "EXCLUDED_SRCS = Bah.hs\n")

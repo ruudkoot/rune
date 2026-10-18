@@ -1,0 +1,14 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/inventory.tsv
+ M examples/benchmarks/manifest.tsv
+ M scripts/benchmark-inventory.py
+ M tests/benchmarks/test-inventory.py
+?? examples/benchmarks/lift-lazy/
+?? examples/benchmarks/lift-strict/
+?? examples/benchmarks/shared/lift-check.sml
+?? examples/benchmarks/shared/lift-kernel.sml
+?? examples/benchmarks/shared/lift-print.sml
+?? examples/benchmarks/shared/lift-serialize.sml
+?? tests/benchmarks/check-lift.sh
+?? tests/benchmarks/data/lift/
+?? tests/benchmarks/lift-tests.sml

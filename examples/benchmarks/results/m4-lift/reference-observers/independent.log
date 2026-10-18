@@ -1,0 +1,7 @@
+{'name': 'identity', 'plain_closed': True, 'full_closed': True, 'result': 42}
+{'name': 'capture', 'plain_closed': True, 'full_closed': True, 'result': 42}
+{'name': 'multi-lambda', 'plain_closed': True, 'full_closed': True, 'result': 42}
+{'name': 'shadow', 'plain_closed': True, 'full_closed': True, 'result': 42}
+{'name': 'unused-cycle', 'plain_closed': True, 'full_closed': True, 'result': 42}
+{'name': 'factorial', 'plain_closed': True, 'full_closed': True, 'result': 720}
+{'name': 'fixed-program', 'plain_closed': True, 'full_closed': True}

@@ -1,0 +1,590 @@
+oh-oh ... cannot subtract effects
+mulef1: 
+
+{put(r1):1,put(r3):1,put(r214201):1,put(r214243):1}
+mulef2: 
+
+{}Mul: diffef failed
+Impossible: Mul: diffef failed
+
+
+instantiate.doSubst or diffef failed
+
+eps0 is 
+
+e66368eps0' is 
+
+e66830
+app
+ [at r214201,at r214199,at r214247,at r214245,at r214243,at r213979,at r213977,at r213975,at r213971,
+  at r213969,at r213965,at r213961,at r213957,at r213955,at r213951,at r213945,at r213973]
+WHOLE EXPRESSION:
+
+
+let fun read at r1 [r211249:1] file = 
+        let val f = openIn file; region r211251:1
+        in  #0 (inputAll[at r211249] f, closeIn[at r1,at r7,at r6] f)at r211251
+        end; 
+    fun check at r1 [r211265:1, r211263:1] (key, actual, path) = 
+        let region r211269:1, r211271:1
+        in  check[at r211271,at r211269] 
+            (let region r211279:1 in "lift/" ^[at r211269] key end, 
+             fn at r211271 v43745 => 
+             let region r211297:1, r211307:1
+             in  let region r211295:1 in actual ^[at r211297] "\n" end = 
+                 let val f = openIn path; region r211309:1
+                 in  #0 (inputAll[at r211307] f, closeIn[at r1,at r7,at r6] f)at r211309
+                 end
+             end
+            )
+        end; 
+    fun need 
+        at r1 
+        [r211557:1, r211555:1, r211611:1, r211619:1, r211609:1, r211371:1, r211369:1, r211365:1, r211361:1, r211357:1, r211355:1, r211351:1, r211345:1] 
+        (v43711, v43758) = 
+        let val _ = 
+              let region r211383:1; 
+                  val key = 
+                  let region r211379:1, r211381:1 in "need/input/" ^[at r211383] toString[at r211381] v43711 end; 
+                  region r211417:1; 
+                  val actual = 
+                    let region r211397:1, r211399:1
+                    in  expression
+                         [at r211417,at r211371,at r211369,at r211365,at r211361,at r211351,at r211357,at r211355,at r211345,
+                          at r211399,at r211397] 
+                        (fn at r211399 v43683 => name[at r211397,at r211351,at r1,at r211345] v43683, v43758)
+                    end; 
+                  val path = 
+                    let region r211443:1, r211445:1
+                    in  let region r211457:1, r211459:1 in "case-" ^[at r211443] toString[at r211459] v43711 end ^[at r3] 
+                        "-input.json"
+                    end; 
+                  region r211467:1, r211469:1
+              in  check[at r211469,at r211467] 
+                  (let region r211477:1 in "lift/" ^[at r211467] key end, 
+                   fn at r211469 v43746 => 
+                   let region r211495:1, r211505:1
+                   in  let region r211493:1 in actual ^[at r211495] "\n" end = 
+                       let val f = openIn path; region r211507:1
+                       in  #0 (inputAll[at r211505] f, closeIn[at r1,at r7,at r6] f)at r211507
+                       end
+                   end
+                  )
+              end; 
+            val _ = 
+              let region r211521:1; 
+                  val key = 
+                  let region r211517:1, r211519:1 in "need/plain/" ^[at r211521] toString[at r211519] v43711 end; 
+                  region r211567:1; 
+                  val actual = 
+                    let region r211551:1, r211559:1, r211561:1, r211563:1, r211565:1
+                    in  supercombinators
+                         [at r211567,at r211565,at r211563,at r211561,at r211559,at r211557,at r211555,at r211351,at r211551,
+                          at r211355,at r211345,at r211351,at r1,at r211345,at r211355,at r211351,at r1,at r211345,at r211351,
+                          at r1,at r211345] 
+                        let region r211581:1, r211589:1, r211591:1, r211629:1, r211631:1
+                        in  collect
+                             [at r211557,at r211611,at r211609,at r211565,at r211563,at r211561,at r211559,at r1,at r211557,at r211555,
+                              at r211551,at r211591,at r211589,at r211557,at r211555,at r211351,at r211581,at r211355,at r211345] 
+                            abstract
+                             [at r211591,at r211589,at r1,at r211557,at r211555,at r211581,at r211631,at r211629,at r211557,at r211555,
+                              at r211619,at r211355,at r211619,at r211351,at r211345] 
+                            freeVars
+                             [at r211557,at r211611,at r211619,at r211631,at r211629,at r1,at r211557,at r211555,at r211619,at r211619,
+                              at r211371,at r211369,at r211365,at r211361,at r211351,at r211357,at r211355,at r211345,at r211351,
+                              at r1,at r211345] 
+                            v43758
+                        end
+                    end; 
+                  val path = 
+                    let region r211693:1, r211695:1
+                    in  let region r211707:1, r211709:1 in "case-" ^[at r211693] toString[at r211709] v43711 end ^[at r3] 
+                        "-plain.json"
+                    end; 
+                  region r211717:1, r211719:1
+              in  check[at r211719,at r211717] 
+                  (let region r211727:1 in "lift/" ^[at r211717] key end, 
+                   fn at r211719 v43747 => 
+                   let region r211745:1, r211755:1
+                   in  let region r211743:1 in actual ^[at r211745] "\n" end = 
+                       let val f = openIn path; region r211757:1
+                       in  #0 (inputAll[at r211755] f, closeIn[at r1,at r7,at r6] f)at r211757
+                       end
+                   end
+                  )
+              end; 
+            region r211771:1; 
+            val key = 
+            let region r211767:1, r211769:1 in "need/full/" ^[at r211771] toString[at r211769] v43711 end; 
+            region r211817:1; 
+            val actual = 
+              let region r211801:1, r211809:1, r211811:1, r211813:1, r211815:1
+              in  supercombinators
+                   [at r211817,at r211815,at r211813,at r211811,at r211809,at r211557,at r211555,at r211351,at r211801,
+                    at r211355,at r211345,at r211351,at r1,at r211345,at r211355,at r211351,at r1,at r211345,at r211351,
+                    at r1,at r211345] 
+                  let region r211831:1, r211839:1, r211841:1, r211879:1, r211881:1
+                  in  collect
+                       [at r211557,at r211611,at r211609,at r211815,at r211813,at r211811,at r211809,at r1,at r211557,at r211555,
+                        at r211801,at r211841,at r211839,at r211557,at r211555,at r211351,at r211831,at r211355,at r211345] 
+                      abstract
+                       [at r211841,at r211839,at r1,at r211557,at r211555,at r211831,at r211881,at r211879,at r211557,at r211555,
+                        at r211619,at r211355,at r211619,at r211351,at r211345] 
+                      freeVars
+                       [at r211557,at r211611,at r211619,at r211881,at r211879,at r1,at r211557,at r211555,at r211619,at r211619,
+                        at r211351,at r1,at r211557,at r211555,at r211351,at r211619,at r211355,at r211345,at r211351,at r1,
+                        at r211345] 
+                      let region r211955:1, r211963:1, r211965:1
+                      in  floatExpr
+                           [at r211557,at r211555,at r211619,at r211965,at r211963,at r211557,at r211555,at r211351,at r211955,
+                            at r211355,at r211345,at r211619,at r211611,at r211557] 
+                          let region r211991:1, r211999:1, r212001:1, r212053:1, r212055:1
+                          in  rename
+                               [at r211557,at r211611,at r211619,at r211965,at r211963,at r1,at r211557,at r211555,at r211955,at r211619,
+                                at r211351,at r1,at r212001,at r211999,at r211557,at r211555,at r211351,at r211991,at r211355,at r211345,
+                                at r211619,at r211351,at r1,at r211345] 
+                              identify
+                               [at r211557,at r211619,at r212001,at r211999,at r1,at r211557,at r211555,at r211991,at r212055,at r212053,
+                                at r211557,at r211555,at r211351,at r211619,at r211355,at r211345,at r211619,at r211611,at r211557,
+                                at r211351,at r1,at r1,at r211345] 
+                              addLevels
+                               [at r211557,at r211555,at r211611,at r211619,at r212055,at r212053,at r1,at r211557,at r211555,at r211619,
+                                at r211619,at r211611,at r211557,at r211611,at r211557,at r211557,at r211555,at r211351,at r211619,
+                                at r211355,at r211345,at r211351,at r1,at r211345] 
+                              separate
+                               [at r211611,at r211557,at r1,at r211557,at r211555,at r211619,at r211371,at r211369,at r211365,at r211361,
+                                at r211351,at r211357,at r211355,at r211345] 
+                              v43758
+                          end
+                      end
+                  end
+              end; 
+            val path = 
+              let region r212163:1, r212165:1
+              in  let region r212177:1, r212179:1 in "case-" ^[at r212163] toString[at r212179] v43711 end ^[at r3] 
+                  "-full.json"
+              end; 
+            region r212187:1, r212189:1
+        in  check[at r212189,at r212187] 
+            (let region r212197:1 in "lift/" ^[at r212187] key end, 
+             fn at r212189 v43748 => 
+             let region r212215:1, r212225:1
+             in  let region r212213:1 in actual ^[at r212215] "\n" end = 
+                 let val f = openIn path; region r212227:1
+                 in  #0 (inputAll[at r212225] f, closeIn[at r1,at r7,at r6] f)at r212227
+                 end
+             end
+            )
+        end; 
+    fun strict 
+        at r1 
+        [r212475:1, r212473:1, r212521:1, r212519:1, r212517:1, r212289:1, r212287:1, r212283:1, r212279:1, r212275:1, r212273:1, r212269:1, r212263:1] 
+        (v43713, v43759) = 
+        let val _ = 
+              let region r212301:1; 
+                  val key = 
+                  let region r212297:1, r212299:1 in "strict/input/" ^[at r212301] toString[at r212299] v43713 end; 
+                  region r212335:1; 
+                  val actual = 
+                    let region r212315:1, r212317:1
+                    in  expression
+                         [at r212335,at r212289,at r212287,at r212283,at r212279,at r212269,at r212275,at r212273,at r212263,
+                          at r212317,at r212315] 
+                        (fn at r212317 v43689 => name[at r212315,at r212269,at r1,at r212263] v43689, v43759)
+                    end; 
+                  val path = 
+                    let region r212361:1, r212363:1
+                    in  let region r212375:1, r212377:1 in "case-" ^[at r212361] toString[at r212377] v43713 end ^[at r3] 
+                        "-input.json"
+                    end; 
+                  region r212385:1, r212387:1
+              in  check[at r212387,at r212385] 
+                  (let region r212395:1 in "lift/" ^[at r212385] key end, 
+                   fn at r212387 v43749 => 
+                   let region r212413:1, r212423:1
+                   in  let region r212411:1 in actual ^[at r212413] "\n" end = 
+                       let val f = openIn path; region r212425:1
+                       in  #0 (inputAll[at r212423] f, closeIn[at r1,at r7,at r6] f)at r212425
+                       end
+                   end
+                  )
+              end; 
+            val _ = 
+              let region r212439:1; 
+                  val key = 
+                  let region r212435:1, r212437:1 in "strict/plain/" ^[at r212439] toString[at r212437] v43713 end; 
+                  region r212485:1; 
+                  val actual = 
+                    let region r212469:1, r212477:1, r212479:1, r212481:1, r212483:1
+                    in  supercombinators
+                         [at r212485,at r212483,at r212481,at r212479,at r212477,at r212475,at r212473,at r212269,at r212469,
+                          at r212273,at r212263,at r212269,at r1,at r212263,at r212273,at r212269,at r1,at r212263,at r212269,
+                          at r1,at r212263] 
+                        lambdaLift
+                         [at r212475,at r212473,at r212521,at r212519,at r212517,at r212483,at r212481,at r212479,at r212477,
+                          at r212475,at r212473,at r212469,at r212289,at r212287,at r212283,at r212279,at r212275,at r212273,
+                          at r212269,at r212263] 
+                        v43759
+                    end; 
+                  val path = 
+                    let region r212533:1, r212535:1
+                    in  let region r212547:1, r212549:1 in "case-" ^[at r212533] toString[at r212549] v43713 end ^[at r3] 
+                        "-plain.json"
+                    end; 
+                  region r212557:1, r212559:1
+              in  check[at r212559,at r212557] 
+                  (let region r212567:1 in "lift/" ^[at r212557] key end, 
+                   fn at r212559 v43750 => 
+                   let region r212585:1, r212595:1
+                   in  let region r212583:1 in actual ^[at r212585] "\n" end = 
+                       let val f = openIn path; region r212597:1
+                       in  #0 (inputAll[at r212595] f, closeIn[at r1,at r7,at r6] f)at r212597
+                       end
+                   end
+                  )
+              end; 
+            region r212611:1; 
+            val key = 
+            let region r212607:1, r212609:1 in "strict/full/" ^[at r212611] toString[at r212609] v43713 end; 
+            region r212657:1; 
+            val actual = 
+              let region r212641:1, r212649:1, r212651:1, r212653:1, r212655:1
+              in  supercombinators
+                   [at r212657,at r212655,at r212653,at r212651,at r212649,at r212475,at r212473,at r212269,at r212641,
+                    at r212273,at r212263,at r212269,at r1,at r212263,at r212273,at r212269,at r1,at r212263,at r212269,
+                    at r1,at r212263] 
+                  fullyLazyLift
+                   [at r212475,at r212473,at r212519,at r212655,at r212653,at r212651,at r212649,at r212475,at r212473,
+                    at r212641,at r212289,at r212287,at r212283,at r212279,at r212269,at r212275,at r212273,at r212263,
+                    at r212269,at r1,at r212263] 
+                  v43759
+              end; 
+            val path = 
+              let region r212707:1, r212709:1
+              in  let region r212721:1, r212723:1 in "case-" ^[at r212707] toString[at r212723] v43713 end ^[at r3] 
+                  "-full.json"
+              end; 
+            region r212731:1, r212733:1
+        in  check[at r212733,at r212731] 
+            (let region r212741:1 in "lift/" ^[at r212731] key end, 
+             fn at r212733 v43751 => 
+             let region r212759:1, r212769:1
+             in  let region r212757:1 in actual ^[at r212759] "\n" end = 
+                 let val f = openIn path; region r212771:1
+                 in  #0 (inputAll[at r212769] f, closeIn[at r1,at r7,at r6] f)at r212771
+                 end
+             end
+            )
+        end; 
+    val _ = 
+      let region r212777:1; 
+          fun app 
+              at r212777 
+              [r213071:1, r213069:1, r213125:1, r213133:1, r213123:1, r212849:1, r212847:1, r212845:1, r212841:1, r212839:1, r212835:1, r212831:1, r212827:1, r212825:1, r212821:1, r212815:1, r212843:1] 
+              var18 = 
+              case var18 of 
+                nil => ()
+              | :: v348 => 
+                let val v349 = #0 v348; 
+                    val v350 = #1 v348; 
+                    val _ = 
+                      let val v43374 = #0 v349; 
+                          val v43375 = #1 v349; 
+                          val v43376 = #1 v43375; 
+                          val _ = 
+                            let region r212897:1; 
+                                val key = 
+                                let region r212893:1, r212895:1 in "need/input/" ^[at r212897] toString[at r212895] v43374 end; 
+                                region r212931:1; 
+                                val actual = 
+                                  let region r212911:1, r212913:1
+                                  in  expression
+                                       [at r212931,at r212841,at r212839,at r212835,at r212831,at r212821,at r212827,at r212825,at r212815,
+                                        at r212913,at r212911] 
+                                      (fn at r212913 v43695 => name[at r212911,at r212821,at r1,at r212815] v43695, v43376)
+                                  end; 
+                                val path = 
+                                  let region r212957:1, r212959:1
+                                  in  let region r212971:1, r212973:1 in "case-" ^[at r212957] toString[at r212973] v43374 end ^[at r3] 
+                                      "-input.json"
+                                  end; 
+                                region r212981:1, r212983:1
+                            in  check[at r212983,at r212981] 
+                                (let region r212991:1 in "lift/" ^[at r212981] key end, 
+                                 fn at r212983 v43752 => 
+                                 let region r213009:1, r213019:1
+                                 in  let region r213007:1 in actual ^[at r213009] "\n" end = 
+                                     let val f = openIn path; region r213021:1
+                                     in  #0 (inputAll[at r213019] f, closeIn[at r1,at r7,at r6] f)at r213021
+                                     end
+                                 end
+                                )
+                            end; 
+                          val _ = 
+                            let region r213035:1; 
+                                val key = 
+                                let region r213031:1, r213033:1 in "need/plain/" ^[at r213035] toString[at r213033] v43374 end; 
+                                region r213081:1; 
+                                val actual = 
+                                  let region r213065:1, r213073:1, r213075:1, r213077:1, r213079:1
+                                  in  supercombinators
+                                       [at r213081,at r213079,at r213077,at r213075,at r213073,at r213071,at r213069,at r212821,at r213065,
+                                        at r212825,at r212815,at r212821,at r1,at r212815,at r212825,at r212821,at r1,at r212815,at r212821,
+                                        at r1,at r212815] 
+                                      let region r213095:1, r213103:1, r213105:1, r213143:1, r213145:1
+                                      in  collect
+                                           [at r213071,at r213125,at r213123,at r213079,at r213077,at r213075,at r213073,at r1,at r213071,at r213069,
+                                            at r213065,at r213105,at r213103,at r213071,at r213069,at r212821,at r213095,at r212825,at r212815] 
+                                          abstract
+                                           [at r213105,at r213103,at r1,at r213071,at r213069,at r213095,at r213145,at r213143,at r213071,at r213069,
+                                            at r213133,at r212825,at r213133,at r212821,at r212815] 
+                                          freeVars
+                                           [at r213071,at r213125,at r213133,at r213145,at r213143,at r1,at r213071,at r213069,at r213133,at r213133,
+                                            at r212841,at r212839,at r212835,at r212831,at r212821,at r212827,at r212825,at r212815,at r212821,
+                                            at r1,at r212815] 
+                                          v43376
+                                      end
+                                  end; 
+                                val path = 
+                                  let region r213207:1, r213209:1
+                                  in  let region r213221:1, r213223:1 in "case-" ^[at r213207] toString[at r213223] v43374 end ^[at r3] 
+                                      "-plain.json"
+                                  end; 
+                                region r213231:1, r213233:1
+                            in  check[at r213233,at r213231] 
+                                (let region r213241:1 in "lift/" ^[at r213231] key end, 
+                                 fn at r213233 v43753 => 
+                                 let region r213259:1, r213269:1
+                                 in  let region r213257:1 in actual ^[at r213259] "\n" end = 
+                                     let val f = openIn path; region r213271:1
+                                     in  #0 (inputAll[at r213269] f, closeIn[at r1,at r7,at r6] f)at r213271
+                                     end
+                                 end
+                                )
+                            end; 
+                          region r213285:1; 
+                          val key = 
+                          let region r213281:1, r213283:1 in "need/full/" ^[at r213285] toString[at r213283] v43374 end; 
+                          region r213331:1; 
+                          val actual = 
+                            let region r213315:1, r213323:1, r213325:1, r213327:1, r213329:1
+                            in  supercombinators
+                                 [at r213331,at r213329,at r213327,at r213325,at r213323,at r213071,at r213069,at r212821,at r213315,
+                                  at r212825,at r212815,at r212821,at r1,at r212815,at r212825,at r212821,at r1,at r212815,at r212821,
+                                  at r1,at r212815] 
+                                let region r213345:1, r213353:1, r213355:1, r213393:1, r213395:1
+                                in  collect
+                                     [at r213071,at r213125,at r213123,at r213329,at r213327,at r213325,at r213323,at r1,at r213071,at r213069,
+                                      at r213315,at r213355,at r213353,at r213071,at r213069,at r212821,at r213345,at r212825,at r212815] 
+                                    abstract
+                                     [at r213355,at r213353,at r1,at r213071,at r213069,at r213345,at r213395,at r213393,at r213071,at r213069,
+                                      at r213133,at r212825,at r213133,at r212821,at r212815] 
+                                    freeVars
+                                     [at r213071,at r213125,at r213133,at r213395,at r213393,at r1,at r213071,at r213069,at r213133,at r213133,
+                                      at r212821,at r1,at r213071,at r213069,at r212821,at r213133,at r212825,at r212815,at r212821,at r1,
+                                      at r212815] 
+                                    let region r213469:1, r213477:1, r213479:1
+                                    in  floatExpr
+                                         [at r213071,at r213069,at r213133,at r213479,at r213477,at r213071,at r213069,at r212821,at r213469,
+                                          at r212825,at r212815,at r213133,at r213125,at r213071] 
+                                        let region r213505:1, r213513:1, r213515:1, r213567:1, r213569:1
+                                        in  rename
+                                             [at r213071,at r213125,at r213133,at r213479,at r213477,at r1,at r213071,at r213069,at r213469,at r213133,
+                                              at r212821,at r1,at r213515,at r213513,at r213071,at r213069,at r212821,at r213505,at r212825,at r212815,
+                                              at r213133,at r212821,at r1,at r212815] 
+                                            identify
+                                             [at r213071,at r213133,at r213515,at r213513,at r1,at r213071,at r213069,at r213505,at r213569,at r213567,
+                                              at r213071,at r213069,at r212821,at r213133,at r212825,at r212815,at r213133,at r213125,at r213071,
+                                              at r212821,at r1,at r1,at r212815] 
+                                            addLevels
+                                             [at r213071,at r213069,at r213125,at r213133,at r213569,at r213567,at r1,at r213071,at r213069,at r213133,
+                                              at r213133,at r213125,at r213071,at r213125,at r213071,at r213071,at r213069,at r212821,at r213133,
+                                              at r212825,at r212815,at r212821,at r1,at r212815] 
+                                            separate
+                                             [at r213125,at r213071,at r1,at r213071,at r213069,at r213133,at r212841,at r212839,at r212835,at r212831,
+                                              at r212821,at r212827,at r212825,at r212815] 
+                                            v43376
+                                        end
+                                    end
+                                end
+                            end; 
+                          val path = 
+                            let region r213677:1, r213679:1
+                            in  let region r213691:1, r213693:1 in "case-" ^[at r213677] toString[at r213693] v43374 end ^[at r3] 
+                                "-full.json"
+                            end; 
+                          region r213701:1, r213703:1
+                      in  check[at r213703,at r213701] 
+                          (let region r213711:1 in "lift/" ^[at r213701] key end, 
+                           fn at r213703 v43754 => 
+                           let region r213729:1, r213739:1
+                           in  let region r213727:1 in actual ^[at r213729] "\n" end = 
+                               let val f = openIn path; region r213741:1
+                               in  #0 (inputAll[at r213739] f, closeIn[at r1,at r7,at r6] f)at r213741
+                               end
+                           end
+                          )
+                      end
+                in  app
+                     [at r213071,at r213069,at r213125,at r213133,at r213123,at r212849,at r212847,at r212845,at r212841,
+                      at r212839,at r212835,at r212831,at r212827,at r212825,at r212821,at r212815,at r212843] 
+                    v350
+                end; 
+          region    r213783:1, r213785:1, r213787:1, r213789:1, r213791:1, r213793:1, r213795:1, r213797:1, r213799:1, r213801:1, 
+                    r213803:1, r213805:1, r213807:1, r213809:1, r213811:1, r213813:1, r213815:1
+      in  app
+           [at r213815,at r213813,at r213811,at r213809,at r213807,at r213805,at r213803,at r213801,at r213799,
+            at r213797,at r213795,at r213793,at r213791,at r213789,at r213787,at r213785,at r213783] 
+          let region r213849:1, r213851:1
+          in  zip[at r213805,at r213803,at r213851,at r213849] 
+              (let region r213857:1; 
+                   fun h at r213857 [r213861:1] i = 
+                       case i < 7 of true => :: (i, h[at r213861] (i + 1))at r213861 | _ => nil
+               in  h[at r213849] 0
+               end, 
+               cases
+                [at r213851,at r213801,at r213799,at r213797,at r1,at r213795,at r1,at r213793,at r213787,at r213791,
+                 at r213789,at r213785,at r213787,at r1,at r1,at r213785,at r213783] 
+               ()
+              )
+          end
+      end; 
+    val _ = 
+      let region r213907:1; 
+          fun app 
+              at r213907 
+              [r214201:1, r214199:1, r214247:1, r214245:1, r214243:1, r213979:1, r213977:1, r213975:1, r213971:1, r213969:1, r213965:1, r213961:1, r213957:1, r213955:1, r213951:1, r213945:1, r213973:1] 
+              var18 = 
+              case var18 of 
+                nil => ()
+              | :: v348 => 
+                let val v349 = #0 v348; 
+                    val v350 = #1 v348; 
+                    val _ = 
+                      let val v43386 = #0 v349; 
+                          val v43387 = #1 v349; 
+                          val v43388 = #1 v43387; 
+                          val _ = 
+                            let region r214027:1; 
+                                val key = 
+                                let region r214023:1, r214025:1 in "strict/input/" ^[at r214027] toString[at r214025] v43386 end; 
+                                region r214061:1; 
+                                val actual = 
+                                  let region r214041:1, r214043:1
+                                  in  expression
+                                       [at r214061,at r213971,at r213969,at r213965,at r213961,at r213951,at r213957,at r213955,at r213945,
+                                        at r214043,at r214041] 
+                                      (fn at r214043 v43703 => name[at r214041,at r213951,at r1,at r213945] v43703, v43388)
+                                  end; 
+                                val path = 
+                                  let region r214087:1, r214089:1
+                                  in  let region r214101:1, r214103:1 in "case-" ^[at r214087] toString[at r214103] v43386 end ^[at r3] 
+                                      "-input.json"
+                                  end; 
+                                region r214111:1, r214113:1
+                            in  check[at r214113,at r214111] 
+                                (let region r214121:1 in "lift/" ^[at r214111] key end, 
+                                 fn at r214113 v43755 => 
+                                 let region r214139:1, r214149:1
+                                 in  let region r214137:1 in actual ^[at r214139] "\n" end = 
+                                     let val f = openIn path; region r214151:1
+                                     in  #0 (inputAll[at r214149] f, closeIn[at r1,at r7,at r6] f)at r214151
+                                     end
+                                 end
+                                )
+                            end; 
+                          val _ = 
+                            let region r214165:1; 
+                                val key = 
+                                let region r214161:1, r214163:1 in "strict/plain/" ^[at r214165] toString[at r214163] v43386 end; 
+                                region r214211:1; 
+                                val actual = 
+                                  let region r214195:1, r214203:1, r214205:1, r214207:1, r214209:1
+                                  in  supercombinators
+                                       [at r214211,at r214209,at r214207,at r214205,at r214203,at r214201,at r214199,at r213951,at r214195,
+                                        at r213955,at r213945,at r213951,at r1,at r213945,at r213955,at r213951,at r1,at r213945,at r213951,
+                                        at r1,at r213945] 
+                                      lambdaLift
+                                       [at r214201,at r214199,at r214247,at r214245,at r214243,at r214209,at r214207,at r214205,at r214203,
+                                        at r214201,at r214199,at r214195,at r213971,at r213969,at r213965,at r213961,at r213957,at r213955,
+                                        at r213951,at r213945] 
+                                      v43388
+                                  end; 
+                                val path = 
+                                  let region r214259:1, r214261:1
+                                  in  let region r214273:1, r214275:1 in "case-" ^[at r214259] toString[at r214275] v43386 end ^[at r3] 
+                                      "-plain.json"
+                                  end; 
+                                region r214283:1, r214285:1
+                            in  check[at r214285,at r214283] 
+                                (let region r214293:1 in "lift/" ^[at r214283] key end, 
+                                 fn at r214285 v43756 => 
+                                 let region r214311:1, r214321:1
+                                 in  let region r214309:1 in actual ^[at r214311] "\n" end = 
+                                     let val f = openIn path; region r214323:1
+                                     in  #0 (inputAll[at r214321] f, closeIn[at r1,at r7,at r6] f)at r214323
+                                     end
+                                 end
+                                )
+                            end; 
+                          region r214337:1; 
+                          val key = 
+                          let region r214333:1, r214335:1 in "strict/full/" ^[at r214337] toString[at r214335] v43386 end; 
+                          region r214383:1; 
+                          val actual = 
+                            let region r214367:1, r214375:1, r214377:1, r214379:1, r214381:1
+                            in  supercombinators
+                                 [at r214383,at r214381,at r214379,at r214377,at r214375,at r214201,at r214199,at r213951,at r214367,
+                                  at r213955,at r213945,at r213951,at r1,at r213945,at r213955,at r213951,at r1,at r213945,at r213951,
+                                  at r1,at r213945] 
+                                fullyLazyLift
+                                 [at r214201,at r214199,at r214245,at r214381,at r214379,at r214377,at r214375,at r214201,at r214199,
+                                  at r214367,at r213971,at r213969,at r213965,at r213961,at r213951,at r213957,at r213955,at r213945,
+                                  at r213951,at r1,at r213945] 
+                                v43388
+                            end; 
+                          val path = 
+                            let region r214433:1, r214435:1
+                            in  let region r214447:1, r214449:1 in "case-" ^[at r214433] toString[at r214449] v43386 end ^[at r3] 
+                                "-full.json"
+                            end; 
+                          region r214457:1, r214459:1
+                      in  check[at r214459,at r214457] 
+                          (let region r214467:1 in "lift/" ^[at r214457] key end, 
+                           fn at r214459 v43757 => 
+                           let region r214485:1, r214495:1
+                           in  let region r214483:1 in actual ^[at r214485] "\n" end = 
+                               let val f = openIn path; region r214497:1
+                               in  #0 (inputAll[at r214495] f, closeIn[at r1,at r7,at r6] f)at r214497
+                               end
+                           end
+                          )
+                      end
+                in  app
+                     [at r214201,at r214199,at r214247,at r214245,at r214243,at r213979,at r213977,at r213975,at r213971,
+                      at r213969,at r213965,at r213961,at r213957,at r213955,at r213951,at r213945,at r213973] 
+                    v350
+                end; 
+          region    r214539:1, r214541:1, r214543:1, r214545:1, r214547:1, r214549:1, r214551:1, r214553:1, r214555:1, r214557:1, 
+                    r214559:1, r214561:1, r214563:1, r214565:1, r214567:1, r214569:1, r214571:1
+      in  app
+           [at r214571,at r214569,at r214567,at r214565,at r214563,at r214561,at r214559,at r214557,at r214555,
+            at r214553,at r214551,at r214549,at r214547,at r214545,at r214543,at r214541,at r214539] 
+          let region r214605:1, r214607:1
+          in  zip[at r214561,at r214559,at r214607,at r214605] 
+              (let region r214613:1; 
+                   fun h at r214613 [r214617:1] i = 
+                       case i < 7 of true => :: (i, h[at r214617] (i + 1))at r214617 | _ => nil
+               in  h[at r214605] 0
+               end, 
+               cases
+                [at r214607,at r214557,at r214555,at r214553,at r1,at r214551,at r1,at r214549,at r214543,at r214547,
+                 at r214545,at r214541,at r214543,at r1,at r1,at r214541,at r214539] 
+               ()
+              )
+          end
+      end
+in  {|read: (_,r1), check: (_,r1), need: (_,r1), strict: (_,r1)|}
+end[[ERR in sub process:
+  CRASH]]
+Stopping compilation of MLB-file due to error (code 1).

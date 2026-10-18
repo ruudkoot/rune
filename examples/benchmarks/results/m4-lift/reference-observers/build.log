@@ -1,0 +1,7 @@
+[1 of 7] Compiling NofibUtils       ( NofibUtils.hs, NofibUtils.o )
+[2 of 7] Compiling Utilities        ( Utilities.lhs, Utilities.o )
+[3 of 7] Compiling LambdaLift       ( LambdaLift.lhs, LambdaLift.o )
+[4 of 7] Compiling Test             ( Test.hs, Test.o )
+[5 of 7] Compiling Print            ( Print.lhs, Print.o )
+[6 of 7] Compiling Main             ( Main.lhs, Main.o )
+[7 of 7] Linking original

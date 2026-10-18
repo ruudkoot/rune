@@ -1,0 +1,1 @@
+{"command": ["/home/ruud/rune/.worktrees/benchmarks/bin/runevm", "check-pilot.rbc"], "exit": 0, "guard_reason": null, "rss_limit_kib": 2097152, "minimum_available_kib": 8388608, "observed_peak_tree_rss_kib": 10644, "observed_minimum_available_kib": 23369564, "peak_processes": [{"pid": 7, "name": "runevm", "rss_kib": 10644}], "elapsed_seconds": 17.42809457600015}

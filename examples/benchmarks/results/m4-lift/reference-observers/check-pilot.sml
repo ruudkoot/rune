@@ -1,0 +1,6 @@
+structure N=BenchLiftFn(val strict=false)
+structure E=BenchLiftFn(val strict=true)
+structure NC=BenchLiftCheckFn(N)
+structure EC=BenchLiftCheckFn(E)
+val _=print(NC.run["4000","report.reference","8a2cd0a394a3204d"]^"\n")
+val _=print(EC.run["4000","report.reference","8a2cd0a394a3204d"]^"\n")

@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+lift-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	8.51	7.26	1.41	668564	-	-	-	lift-strict/native-mlton/build/compile
+lift-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2396	-	-	-	lift-strict/native-mlton/correctness.0
+lift-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2392	-	-	-	lift-strict/native-mlton/fresh.1
+lift-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.74	0.74	0.03	39100	-	-	-	lift-strict/native-smlnj-legacy/build/compile
+lift-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.01	0.00	0.01	4236	-	-	-	lift-strict/native-smlnj-legacy/correctness.0
+lift-strict	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.02	0.00	0.01	4236	-	-	-	lift-strict/native-smlnj-legacy/fresh.1
+lift-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.43	0.34	0.09	56692	-	-	-	lift-strict/native-polyml/build/compile
+lift-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.00	0.00	0.00	6436	-	-	-	lift-strict/native-polyml/correctness.0
+lift-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	6408	-	-	-	lift-strict/native-polyml/fresh.1

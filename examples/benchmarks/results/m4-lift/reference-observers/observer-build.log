@@ -1,0 +1,6 @@
+[1 of 6] Compiling Utilities        ( Utilities.lhs, Utilities.o )
+[2 of 6] Compiling LambdaLift       ( LambdaLift.lhs, LambdaLift.o )
+[3 of 6] Compiling Test             ( Test.hs, Test.o )
+[4 of 6] Compiling Print            ( Print.lhs, Print.o )
+[5 of 6] Compiling Main             ( Observer.hs, Observer.o )
+[6 of 6] Linking observer

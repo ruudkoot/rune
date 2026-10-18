@@ -3149,3 +3149,35 @@ Full selected large profiles remain unrecorded. Public Rune O0/O2 checks,
 exits zero with 1391 profiles, performance budgets, JIT checks, generated
 documentation and all compiler/runedoc/runeopt cross-build comparisons.
 M3/M4 remain in progress and M8 remains planned.
+
+## Plain and fully-lazy lambda-lifter applications, 2026-10-18
+
+All 56 smoke/normal primary cases pass across both policies, Rune O0/O2
+engines and six managed SML hosts. All twenty final semantic groups pass
+64 assertions: 1280 passes, no failures and none incomplete. Seven complete
+input/plain/full AST observations, the source's exact pretty report and
+independent evaluator/scope checks supplement shared-delay, pass-boundary,
+renaming-knot, name-supply, integer, printing and negative-result tests.
+
+Eight full-normal Rune count samples agree; both guards exit zero without
+interruption. Six serial single fresh-process native smoke samples and all
+preflights pass before heavy checks. Their role is adapter validation, not
+a ten-sample comparison. Original FAST/NORM/SLOW fixtures reproduce exactly;
+both 4000-iteration private SML calibrations pass under default Rune O1.
+Full selected SML large runs remain unrecorded.
+
+The earlier ML Kit region-analysis crash leaves 128 auxiliary assertions
+incomplete in the development evidence. Its full applications and equivalent
+explicit fixture calls pass. The final common target uses explicit calls
+and passes all hosts, preserving every assertion and expected answer.
+[Details](validation/lift-mlkit-region.md) distinguish those outcomes.
+
+The public Rune O0/O2 semantic target, 132 inventory regressions and five-pin
+861-entry replay pass. [Archived evidence](results/m4-lift/README.md) retains
+the complete primary executable paper, guarded author credits, original and
+adapted sources, full results, diagnostics and canonical fixture identities.
+
+[Full make JOBS=4 check](validation/oct18-lift-1397-acceptance.log)
+exits zero with 1397 profiles, performance budgets, JIT checks, generated
+documentation and all compiler/runedoc/runeopt cross-build comparisons.
+M3/M4 remain in progress and M8 remains planned.

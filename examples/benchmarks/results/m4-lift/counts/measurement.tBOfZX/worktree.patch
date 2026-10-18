@@ -1,0 +1,328 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 906e214fd..582dcc95e 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -488,6 +488,8 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [fem-strict](#fem-strict) | [nofib real/fem](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/fem) | Solve a binary32 truss model with variable-bandwidth LL factors and strict finite arrays. |
+ | [solid-lazy](#solid-lazy) | [nofib Hartel solid](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/solid) | Approximate a circle-union area with source CSG pruning, adaptive subdivision and memoized finite data. |
+ | [solid-strict](#solid-strict) | [nofib Hartel solid](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/solid) | Approximate a circle-union area with source CSG pruning, adaptive subdivision and strict finite data. |
++| [lift-lazy](#lift-lazy) | [nofib lift](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/lift) | Run plain and fully-lazy lambda lifting with memoized finite pass results and higher-order pretty-printing. |
++| [lift-strict](#lift-strict) | [nofib lift](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/lift) | Run plain and fully-lazy lambda lifting with strict finite pass results and higher-order pretty-printing. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -32784,3 +32786,227 @@ No separate solid-modelling paper is claimed as the derivation of this code.
+ Corrected original observations, explicit table counterexamples and independent
+ geometric counts establish the recorded repair/correctness scope. Runtime
+ or compiler performance attribution remains a hypothesis.
++
++## lift-lazy
++
++### Algorithm and workload
++
++Transform a fixed nested functional-language AST with both a plain lambda
++lifter and a modular fully-lazy lambda lifter, then pretty-print the input
++and both supercombinator programs. Preserve free-variable analysis,
++abstraction, lambda separation, binding-level annotation, maximal-free-
++expression identification, renaming, floating and final lambda lifting.
++Both algorithms run in every iteration, matching the original driver.
++
++### History, authorship, variants and notices
++
++[nofib real/lift](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/lift)
++is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. LambdaLift.lhs is the executable literate paper
++*A modular fully-lazy lambda lifter in Haskell*, by Simon L. Peyton Jones
++and David Lester. Its title/author block and complete prose/code are retained,
++together with Utilities, Print, Test, Main, the modern NofibUtils adapter,
++Makefile and all FAST/NORM/SLOW golden outputs. No additional individual
++permission grant is inferred from the author block or from a helper.
++
++The paper separates full-laziness transformation from lambda lifting.
++This is algorithmic full laziness, distinct from the port's evaluation-policy
++suffix. Both lift-lazy and lift-strict execute both source transformations.
++They differ in finite intermediate AST/annotation materialization; they do
++not denote plain versus fully-lazy algorithms.
++
++### Translation and semantic decisions
++
++Keep parameterized AST/annotation datatypes, list-based sorted name sets,
++source quicksort/dedup and ordered union/difference, association-list
++environments, list-backed bags, body-first supercombinator collection and
++source definition/name-supply order. No replacement optimizer or parser
++generates the result. Test.hs supplies the fixed AST; the portable
++constructor transcription is checked against the complete original AST.
++
++Both policies use explicit memoized AST/name/annotation/supply delays.
++The strict policy traverses finite results at pass boundaries; the lazy
++policy leaves them demand-driven. Recursive let renaming ties the
++extended environment through deferred name cells, installing fresh names
++before they are demanded. Strict traversal occurs after that knot is ready.
++This source-level support requires no compiler or runtime extension.
++
++The source lambda-renaming branch returns the supply after its arguments,
++rather than the later supply returned from its body. Preserve and test
++that behavior; do not silently repair it or claim the observed examples
++prove a general naming theorem for arbitrary inputs.
++
++Retain arbitrary-precision integer literals with IntInf. Selected name,
++level, repetition and byte counts fit signed 31-bit integers. Replace the
++host-width hash with explicit modular Word64 arithmetic, reproducing the
++original 64-bit GHC outputs even on 32-bit SML hosts.
++
++Preserve higher-order Iseq/Oseq printers, delayed expression inspection,
++pending indentation after newlines, restored outer indentation, definition
++order and complete textual output. Numeric literal formatting explicitly
++uses Haskell's minus spelling.
++
++The original Test.program is a shared top-level value. The portable driver
++creates one memoized input root per invocation and shares it across all
++iterations; zero repetitions do not force it. CLI/reference reads move
++outside the loop. The GHC NOINLINE salt IO barrier has no portable SML
++equivalent and is not claimed; source specialization/loop motion remains
++a compiler concern.
++
++### Inputs, profiles and validation
++
++| Profile | Iterations | Input |
++|---|---:|---|
++| Smoke | 1 | Fixed original Test.program AST |
++| Normal | 4000 | Same fixed AST |
++| Large | 20000 | Same fixed AST |
++
++Normal and large preserve NORM/SLOW repetition counts; smoke explicitly
++reduces the source FAST count of 400. Each iteration validates the entire
++1948-byte input/plain/fully-lazy report and modular hash
++0x8a2cd0a394a3204d. It returns validated iteration/byte counts rather than
++printing one signed hash per iteration. A failed complete result or hash
++is rejected before accepting measurement data.
++
++Read-only GHC observers record all input/plain/full ASTs for seven cases:
++identity, captured variables, nested arguments, shadowing, an unused
++recursive cycle, factorial and the fixed source program. Both policies
++must match all complete structures and the exact source pretty output.
++A separate memoized Python evaluator checks six terminating cases, including
++factorial 720, before and after each transformation; it also checks scoped,
++closed, lambda-free supercombinator programs. The fixed source program is
++structurally validated, not claimed to terminate under that evaluator.
++
++Direct tests cover shared node/name demand, strict pass boundaries,
++recursive renaming knots, the source returned-supply quirk, name sets,
++large integer literals, delayed printing, indentation, zero work and
++deliberately incorrect reports/hashes.
++
++### Compiler/runtime questions and evidence limits
++
++Investigate higher-order printer composition, recursive AST allocation,
++annotation sharing, environment lookups, repeated analyses and pass-boundary
++materialization. These are source-based hypotheses. Count and timing
++evidence must identify input/policy/configuration; cross-language salt,
++fusion, allocation and constant specialization are not assumed equal.
++
++### Literature and review scope
++
++The full primary executable paper is reviewed in the pinned LambdaLift.lhs,
++including its abstract, introduction and algorithm code. It explicitly
++presents full laziness as a separate pass and discusses let/letrec handling.
++The maintained nofib source and previously reviewed Partain suite paper
++supply collection context. Complete original observations and the independent
++evaluator support the recorded cases; they do not prove general equivalence
++for every AST or establish a compiler performance mechanism.
++
++## lift-strict
++
++### Algorithm and workload
++
++Transform a fixed nested functional-language AST with both a plain lambda
++lifter and a modular fully-lazy lambda lifter, then pretty-print the input
++and both supercombinator programs. Preserve free-variable analysis,
++abstraction, lambda separation, binding-level annotation, maximal-free-
++expression identification, renaming, floating and final lambda lifting.
++Both algorithms run in every iteration, matching the original driver.
++
++### History, authorship, variants and notices
++
++[nofib real/lift](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/lift)
++is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. LambdaLift.lhs is the executable literate paper
++*A modular fully-lazy lambda lifter in Haskell*, by Simon L. Peyton Jones
++and David Lester. Its title/author block and complete prose/code are retained,
++together with Utilities, Print, Test, Main, the modern NofibUtils adapter,
++Makefile and all FAST/NORM/SLOW golden outputs. No additional individual
++permission grant is inferred from the author block or from a helper.
++
++The paper separates full-laziness transformation from lambda lifting.
++This is algorithmic full laziness, distinct from the port's evaluation-policy
++suffix. Both lift-lazy and lift-strict execute both source transformations.
++They differ in finite intermediate AST/annotation materialization; they do
++not denote plain versus fully-lazy algorithms.
++
++### Translation and semantic decisions
++
++Keep parameterized AST/annotation datatypes, list-based sorted name sets,
++source quicksort/dedup and ordered union/difference, association-list
++environments, list-backed bags, body-first supercombinator collection and
++source definition/name-supply order. No replacement optimizer or parser
++generates the result. Test.hs supplies the fixed AST; the portable
++constructor transcription is checked against the complete original AST.
++
++Both policies use explicit memoized AST/name/annotation/supply delays.
++The strict policy traverses finite results at pass boundaries; the lazy
++policy leaves them demand-driven. Recursive let renaming ties the
++extended environment through deferred name cells, installing fresh names
++before they are demanded. Strict traversal occurs after that knot is ready.
++This source-level support requires no compiler or runtime extension.
++
++The source lambda-renaming branch returns the supply after its arguments,
++rather than the later supply returned from its body. Preserve and test
++that behavior; do not silently repair it or claim the observed examples
++prove a general naming theorem for arbitrary inputs.
++
++Retain arbitrary-precision integer literals with IntInf. Selected name,
++level, repetition and byte counts fit signed 31-bit integers. Replace the
++host-width hash with explicit modular Word64 arithmetic, reproducing the
++original 64-bit GHC outputs even on 32-bit SML hosts.
++
++Preserve higher-order Iseq/Oseq printers, delayed expression inspection,
++pending indentation after newlines, restored outer indentation, definition
++order and complete textual output. Numeric literal formatting explicitly
++uses Haskell's minus spelling.
++
++The original Test.program is a shared top-level value. The portable driver
++creates one memoized input root per invocation and shares it across all
++iterations; zero repetitions do not force it. CLI/reference reads move
++outside the loop. The GHC NOINLINE salt IO barrier has no portable SML
++equivalent and is not claimed; source specialization/loop motion remains
++a compiler concern.
++
++### Inputs, profiles and validation
++
++| Profile | Iterations | Input |
++|---|---:|---|
++| Smoke | 1 | Fixed original Test.program AST |
++| Normal | 4000 | Same fixed AST |
++| Large | 20000 | Same fixed AST |
++
++Normal and large preserve NORM/SLOW repetition counts; smoke explicitly
++reduces the source FAST count of 400. Each iteration validates the entire
++1948-byte input/plain/fully-lazy report and modular hash
++0x8a2cd0a394a3204d. It returns validated iteration/byte counts rather than
++printing one signed hash per iteration. A failed complete result or hash
++is rejected before accepting measurement data.
++
++Read-only GHC observers record all input/plain/full ASTs for seven cases:
++identity, captured variables, nested arguments, shadowing, an unused
++recursive cycle, factorial and the fixed source program. Both policies
++must match all complete structures and the exact source pretty output.
++A separate memoized Python evaluator checks six terminating cases, including
++factorial 720, before and after each transformation; it also checks scoped,
++closed, lambda-free supercombinator programs. The fixed source program is
++structurally validated, not claimed to terminate under that evaluator.
++
++Direct tests cover shared node/name demand, strict pass boundaries,
++recursive renaming knots, the source returned-supply quirk, name sets,
++large integer literals, delayed printing, indentation, zero work and
++deliberately incorrect reports/hashes.
++
++### Compiler/runtime questions and evidence limits
++
++Investigate higher-order printer composition, recursive AST allocation,
++annotation sharing, environment lookups, repeated analyses and pass-boundary
++materialization. These are source-based hypotheses. Count and timing
++evidence must identify input/policy/configuration; cross-language salt,
++fusion, allocation and constant specialization are not assumed equal.
++
++### Literature and review scope
++
++The full primary executable paper is reviewed in the pinned LambdaLift.lhs,
++including its abstract, introduction and algorithm code. It explicitly
++presents full laziness as a separate pass and discusses let/letrec handling.
++The maintained nofib source and previously reviewed Partain suite paper
++supply collection context. Complete original observations and the independent
++evaluator support the recorded cases; they do not prove general equivalence
++for every AST or establish a compiler performance mechanism.
+diff --git a/examples/benchmarks/inventory.tsv b/examples/benchmarks/inventory.tsv
+index d94862747..00107e2fb 100644
+--- a/examples/benchmarks/inventory.tsv
++++ b/examples/benchmarks/inventory.tsv
+@@ -577,7 +577,7 @@ nofib	real/hpg	hpg	hpg	M4	import	integer-arithmetic		not stated in scanned sourc
+ nofib	real/infer/Main.hs	infer	infer	M4	import	compiler-application		not stated in scanned source headers	179e72dcd88a32dd9e85e0faaa4e66d7224c54335b1efa8289f55febef3f73f3	real/infer/Environment.hs;real/infer/FiniteMap.hs;real/infer/Infer.hs;real/infer/InferMonad.hs;real/infer/Main.hs;real/infer/MaybeM.hs;real/infer/MyList.hs;real/infer/NofibUtils.hs;real/infer/Parse.hs;real/infer/Shows.hs;real/infer/StateX.hs;real/infer/Substitution.hs;real/infer/Term.hs;real/infer/Type.hs	real/infer/infer.faststdin;real/infer/infer.faststdout;real/infer/infer.slowstdin;real/infer/infer.slowstdout;real/infer/infer.stdin;real/infer/infer.stdout		real/infer/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/infer/TestTerm.hs	TestTerm	TestTerm	-	exclude	kernel		not stated in scanned source headers	1bdc4828944541815460444338a91aded693be41368b6a5dde569746a0dd9d35	real/infer/Parse.hs;real/infer/Shows.hs;real/infer/Term.hs;real/infer/TestTerm.hs	real/infer/infer.faststdin;real/infer/infer.faststdout;real/infer/infer.slowstdin;real/infer/infer.slowstdout;real/infer/infer.stdin;real/infer/infer.stdout		real/infer/Makefile	auxiliary test or alternate entrypoint; the directory Makefile excludes it or selects the Main driver, not a separate benchmark invocation
+ nofib	real/infer/TestType.hs	TestType	TestType	-	exclude	kernel		not stated in scanned source headers	3b39d28013aeb14d9b53c76c7abde081ed63b26c93027803f0fdc578355799ab	real/infer/MyList.hs;real/infer/Parse.hs;real/infer/Shows.hs;real/infer/TestType.hs;real/infer/Type.hs	real/infer/infer.faststdin;real/infer/infer.faststdout;real/infer/infer.slowstdin;real/infer/infer.slowstdout;real/infer/infer.stdin;real/infer/infer.stdout		real/infer/Makefile	auxiliary test or alternate entrypoint; the directory Makefile excludes it or selects the Main driver, not a separate benchmark invocation
+-nofib	real/lift	lift	lift	M4	import	integer-arithmetic		not stated in scanned source headers	5176c15e4bd7d44ca446cc7419363b4cd49b4e4681ab7ec0df7124627263472c	real/lift/LambdaLift.lhs;real/lift/Main.lhs;real/lift/NofibUtils.hs;real/lift/Print.lhs;real/lift/Test.hs;real/lift/Utilities.lhs	real/lift/lift.faststdout;real/lift/lift.slowstdout;real/lift/lift.stdout	real/lift/LambdaLift.lhs:header	real/lift/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	real/lift	lift	lift	M4	import	integer-arithmetic		David Lester;Simon L. Peyton Jones	5176c15e4bd7d44ca446cc7419363b4cd49b4e4681ab7ec0df7124627263472c	real/lift/LambdaLift.lhs;real/lift/Main.lhs;real/lift/NofibUtils.hs;real/lift/Print.lhs;real/lift/Test.hs;real/lift/Utilities.lhs	real/lift/lift.faststdout;real/lift/lift.slowstdout;real/lift/lift.stdout	real/lift/LambdaLift.lhs:header	real/lift/LambdaLift.lhs:executable-paper-title-and-author-block;real/lift/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/linear	linear	linear-nofib	M4	import	kernel	nofib:gc/linear	Brian D. Moe;Brian D. Moe (Summer 1990;Brian D. Moe (Summer 1990).;Cordelia V. Hall;Dan Vasicek;Dan Vasicek and copied from his directory 6/22/90;Ian R. McLelland;Kamini Shenoi;Roger L. Wainwright	b02998feda15476d5e6651e2ad3edbd2bffbc842d864228034c83d017e984c8e	real/linear/AbsCg.lhs;real/linear/AbsDensematrix.lhs;real/linear/Absmatlib.lhs;real/linear/Cg.lhs;real/linear/Densematrix.lhs;real/linear/Input.lhs;real/linear/Main.lhs;real/linear/Matlib.lhs;real/linear/Matrix.lhs;real/linear/Misc.lhs;real/linear/NofibUtils.hs;real/linear/Utils.lhs	real/linear/linear.faststdout;real/linear/linear.slowstdout;real/linear/linear.stdout	real/linear/Input.lhs:header;real/linear/Main.lhs:header;real/linear/Matlib.lhs:header;real/linear/Matrix.lhs:header;real/linear/Misc.lhs:header	real/linear/Input.lhs:data-representation-credit;real/linear/Input.lhs:input-reader-credit;real/linear/Main.lhs:authorship-and-conversion-roles;real/linear/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/maillist	maillist	maillist	M4	import	lists-streams		Paul Hudak, January 1992.	7cad251590cd5d44d2e4d14d4236dd93e7f6d4b2967984397455e251167d6aa7	real/maillist/Main.hs	real/maillist/maillist.faststdout;real/maillist/maillist.slowstdout;real/maillist/maillist.stdout;real/maillist/runtime_files/fast;real/maillist/runtime_files/norm;real/maillist/runtime_files/slow	real/maillist/Main.hs:header	real/maillist/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/mkhprog	mkhprog	mkhprog	M4	import	application		N. D. North	05613206770d88d6334b1092b1a5fc49271a78438212f4b743d4607183c71c1b	real/mkhprog/Main.lhs;real/mkhprog/NofibUtils.hs	real/mkhprog/mkhprog.stdin	real/mkhprog/Main.lhs:header	real/mkhprog/Main.lhs:author-and-crown-heading;real/mkhprog/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 372656082..50f727e60 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -1390,3 +1390,9 @@ solid-lazy	large	nofib	spectral/hartel/solid	200 12 scene.input areas.reference
+ solid-strict	smoke	nofib	spectral/hartel/solid	1 3 scene.input areas.reference	solid-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/hartel-solid-kernel.sml,shared/hartel-solid-check.sml,solid-strict/benchmark.sml,shared/main.sml	30	1048576	numerical,geometry,csg,adaptive-trees,sharing,allocation-lifetimes,hartel	scene.input,areas.reference	exact	implemented
+ solid-strict	normal	nofib	spectral/hartel/solid	200 9 scene.input areas.reference	solid-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/hartel-solid-kernel.sml,shared/hartel-solid-check.sml,solid-strict/benchmark.sml,shared/main.sml	600	4194304	numerical,geometry,csg,adaptive-trees,sharing,allocation-lifetimes,hartel	scene.input,areas.reference	exact	implemented
+ solid-strict	large	nofib	spectral/hartel/solid	200 12 scene.input areas.reference	solid-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/hartel-solid-kernel.sml,shared/hartel-solid-check.sml,solid-strict/benchmark.sml,shared/main.sml	3600	8388608	numerical,geometry,csg,adaptive-trees,sharing,allocation-lifetimes,hartel	scene.input,areas.reference	exact	implemented
++lift-lazy	smoke	nofib	real/lift	1 report.reference 8a2cd0a394a3204d	lift-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/lift-kernel.sml,shared/lift-print.sml,shared/lift-check.sml,lift-lazy/benchmark.sml,shared/main.sml	30	1048576	compiler-application,lambda-lifting,full-laziness,higher-order,sharing,symbolic	report.reference	exact	implemented
++lift-lazy	normal	nofib	real/lift	4000 report.reference 8a2cd0a394a3204d	lift-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/lift-kernel.sml,shared/lift-print.sml,shared/lift-check.sml,lift-lazy/benchmark.sml,shared/main.sml	600	4194304	compiler-application,lambda-lifting,full-laziness,higher-order,sharing,symbolic	report.reference	exact	implemented
++lift-lazy	large	nofib	real/lift	20000 report.reference 8a2cd0a394a3204d	lift-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/lift-kernel.sml,shared/lift-print.sml,shared/lift-check.sml,lift-lazy/benchmark.sml,shared/main.sml	3600	8388608	compiler-application,lambda-lifting,full-laziness,higher-order,sharing,symbolic	report.reference	exact	implemented
++lift-strict	smoke	nofib	real/lift	1 report.reference 8a2cd0a394a3204d	lift-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/lift-kernel.sml,shared/lift-print.sml,shared/lift-check.sml,lift-strict/benchmark.sml,shared/main.sml	30	1048576	compiler-application,lambda-lifting,full-laziness,higher-order,sharing,symbolic	report.reference	exact	implemented
++lift-strict	normal	nofib	real/lift	4000 report.reference 8a2cd0a394a3204d	lift-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/lift-kernel.sml,shared/lift-print.sml,shared/lift-check.sml,lift-strict/benchmark.sml,shared/main.sml	600	4194304	compiler-application,lambda-lifting,full-laziness,higher-order,sharing,symbolic	report.reference	exact	implemented
++lift-strict	large	nofib	real/lift	20000 report.reference 8a2cd0a394a3204d	lift-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/lift-kernel.sml,shared/lift-print.sml,shared/lift-check.sml,lift-strict/benchmark.sml,shared/main.sml	3600	8388608	compiler-application,lambda-lifting,full-laziness,higher-order,sharing,symbolic	report.reference	exact	implemented
+diff --git a/scripts/benchmark-inventory.py b/scripts/benchmark-inventory.py
+index a1954b9b7..1c894ca5e 100644
+--- a/scripts/benchmark-inventory.py
++++ b/scripts/benchmark-inventory.py
+@@ -551,6 +551,16 @@ def build(source, root, lock):
+                     notices.append(str(notice.relative_to(root)))
+         authors = set()
+         context = [p for p in parent.iterdir() if p.is_file() and p.name in {"README", "README.md", "Makefile", "FILES", "sources.cm"}] if parent.exists() and files else []
++        if source == "nofib" and path == "real/lift":
++            paper = parent / "LambdaLift.lhs"
++            if paper.is_file():
++                heading = paper.read_text(errors="replace")
++                if (r"\title{A modular fully-lazy lambda lifter in \Haskell{}}" in heading
++                        and "Simon L Peyton Jones" in heading
++                        and "David Lester" in heading
++                        and r"\begin{abstract}" in heading):
++                    authors.update({"Simon L. Peyton Jones", "David Lester"})
++                    item["evidence"].append("real/lift/LambdaLift.lhs:executable-paper-title-and-author-block")
+         if source == "nofib" and path == "real/fem":
+             readme = parent / "README"
+             if readme.is_file():
+diff --git a/tests/benchmarks/test-inventory.py b/tests/benchmarks/test-inventory.py
+index 6ad5e4b59..fbc37b442 100644
+--- a/tests/benchmarks/test-inventory.py
++++ b/tests/benchmarks/test-inventory.py
+@@ -348,6 +348,34 @@ class InventoryTest(unittest.TestCase):
+     def test_absent_cacheprof_reservoir_is_not_invented(self):
+         self.assertNotIn("real/cacheprof/cacheprof.full", self.cacheprof_notice("real", "")["inputs"])
+ 
++    def lift_paper(self, heading):
++        self.nofib_roots()
++        self.file("real/lift/Makefile", "\n")
++        self.file("real/lift/Main.lhs", "> module Main where\n> import LambdaLift\n> main = print 0\n")
++        self.file("real/lift/LambdaLift.lhs", heading + "\n> module LambdaLift where\n")
++        return next(row for row in self.build("nofib") if row["path"] == "real/lift")
++
++    def lift_heading(self):
++        return (ROOT / "examples/benchmarks/lift-lazy/upstream/LambdaLift.lhs").read_text().split(r"\end{abstract}")[0]
++
++    def test_lift_executable_paper_authors_are_recorded(self):
++        row = self.lift_paper(self.lift_heading())
++        self.assertIn("Simon L. Peyton Jones", row["authors"])
++        self.assertIn("David Lester", row["authors"])
++        self.assertIn("real/lift/LambdaLift.lhs:executable-paper-title-and-author-block", row["evidence"])
++
++    def test_changed_lift_title_requires_review(self):
++        row = self.lift_paper(self.lift_heading().replace("A modular fully-lazy lambda lifter", "Another lifter"))
++        self.assertNotIn("Simon L. Peyton Jones", row["authors"])
++
++    def test_changed_lift_author_requires_review(self):
++        row = self.lift_paper(self.lift_heading().replace("David Lester", "Another author"))
++        self.assertNotIn("David Lester", row["authors"])
++
++    def test_incomplete_lift_paper_heading_requires_review(self):
++        row = self.lift_paper(self.lift_heading().replace(r"\begin{abstract}", ""))
++        self.assertNotIn("Simon L. Peyton Jones", row["authors"])
++
+     def fulsom_notice(self, family, heading):
+         self.nofib_roots()
+         self.file(family + "/fulsom/Makefile", "EXCLUDED_SRCS = Bah.hs\n")

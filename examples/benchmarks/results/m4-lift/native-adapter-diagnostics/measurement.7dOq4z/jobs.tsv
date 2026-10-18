@@ -1,0 +1,1 @@
+lift-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/lift-kernel.sml shared/lift-print.sml shared/lift-check.sml lift-lazy/benchmark.sml shared/main.sml	1 report.reference 8a2cd0a394a3204d	lift-lazy/smoke.expected	report.reference

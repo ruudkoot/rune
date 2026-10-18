@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+lift-lazy	normal	rune	O2	count	1	1	pass	17.10	13.45	0.19	10484	1423222959	5334402024	127745823	counts/measurement.w5a5uq/lift-lazy/rune/fresh.1
+lift-lazy	normal	rune:opt	O2	count	1	1	pass	7.17	6.49	0.04	11428	1423222959	5334402024	127745823	counts/measurement.w5a5uq/lift-lazy/rune-opt/fresh.1
+lift-lazy	normal	rune:new	O2	count	1	1	pass	14.72	15.27	0.06	10864	864950142	5334402024	127745823	counts/measurement.w5a5uq/lift-lazy/rune-new/fresh.1
+lift-lazy	normal	rune:jit	O2	count	1	1	pass	6.92	5.71	0.04	12400	864950142	5334402024	127745823	counts/measurement.w5a5uq/lift-lazy/rune-jit/fresh.1
+lift-strict	normal	rune	O2	count	1	1	pass	17.30	16.32	0.11	10644	1683526991	5354402024	128469823	counts/measurement.tBOfZX/lift-strict/rune/fresh.1
+lift-strict	normal	rune:opt	O2	count	1	1	pass	8.03	7.65	0.09	11548	1683526991	5354402024	128469823	counts/measurement.tBOfZX/lift-strict/rune-opt/fresh.1
+lift-strict	normal	rune:new	O2	count	1	1	pass	11.94	12.44	0.01	10812	1000006164	5354402024	128469823	counts/measurement.tBOfZX/lift-strict/rune-new/fresh.1
+lift-strict	normal	rune:jit	O2	count	1	1	pass	4.94	5.13	0.02	12464	1000006164	5354402024	128469823	counts/measurement.tBOfZX/lift-strict/rune-jit/fresh.1

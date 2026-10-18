@@ -1,0 +1,1 @@
+lift-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/lift-kernel.sml shared/lift-print.sml shared/lift-check.sml lift-lazy/benchmark.sml shared/main.sml	4000 report.reference 8a2cd0a394a3204d	lift-lazy/normal.expected	report.reference

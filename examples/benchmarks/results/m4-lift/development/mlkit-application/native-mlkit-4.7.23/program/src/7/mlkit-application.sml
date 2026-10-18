@@ -1,0 +1,6 @@
+structure N=BenchLiftFn(val strict=false)
+structure E=BenchLiftFn(val strict=true)
+structure NC=BenchLiftCheckFn(N)
+structure EC=BenchLiftCheckFn(E)
+val _=T.check("lift/need4000",fn()=>NC.run["4000","report.reference","8a2cd0a394a3204d"]="4000:7792000")
+val _=T.check("lift/strict4000",fn()=>EC.run["4000","report.reference","8a2cd0a394a3204d"]="4000:7792000")

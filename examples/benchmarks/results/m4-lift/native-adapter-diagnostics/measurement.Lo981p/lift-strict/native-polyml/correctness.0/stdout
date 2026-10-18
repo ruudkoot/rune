@@ -1,0 +1,4 @@
+RESULT 1:1948
+PASS lift-strict
+SAMPLE 1 0.000742000
+SUMMARY 1 checks, 0 failed
