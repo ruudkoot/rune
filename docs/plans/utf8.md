@@ -3522,7 +3522,7 @@ nothing.
   - The compiler reaches a fixed point.
   - The Basis suite passes in every configuration.
 
-* **Done** (2026-10-18, at `ef7ce674`):
+* **Done** (2026-10-18, at `2f56b2a3`):
   - **E7's patch,** with its comments made final:
     - `^`, `size`, `concat` and `substring` are builtins of the class
       String in `src/elab/env.sml`, and Overload registers `string`'s
@@ -3547,10 +3547,16 @@ nothing.
     one exception is the new test, which M9 refuses. The bytecode of 352
     differs: a sample of 24 differs in its positions alone, which
     `pervasive.sml`'s shorter text moves.
-  - **Checks,** with MLKit 4.7.25 (logs `bas-m10`, `bas-m10-matrix` and
-    `bas-m10-xc2` of the campaign): `make check`, whose bootstrap is the
-    compiler's fixed point; `make matrix-quick`; and every xc2
-    configuration.
+  - **Not foreseen: the REPL's `:search`.** It took an operator's
+    overloaded type variable for one that any type instantiates, so
+    `:search 'a list -> int` found `size`, now that `size` is overloaded
+    (`tests/repl/commands`). It takes it at the type it defaults to, as the
+    printer shows it.
+  - **Checks,** with MLKit 4.7.25: `make check` (`bas-m10-2`), whose
+    bootstrap is the compiler's fixed point, `make matrix-quick`
+    (`bas-m10-matrix`) and every xc2 configuration (`bas-m10-xc2`) before
+    the rebase on M2; after it, `make check` and `make matrix-quick` again
+    (`bas-m10-rebased`, `bas-m10-rebased-matrix`).
 
 **Gate G4**, the owner accepting overloading as a deviation from Appendix E,
 was passed on 2026-10-18 with D20.
