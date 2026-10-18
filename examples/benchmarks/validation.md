@@ -2880,3 +2880,45 @@ All 108 inventory regressions and the five-pin 861-entry replay pass.
 The complete 71-case stdlib inventory has no suitable planned selector.
 M5 still has three pending applications; M3 and M4 remain in progress,
 M8 remains planned, and full final SML large repetitions remain unrecorded.
+
+## M5 closure: sequential Sandmark applications, 2026-10-18
+
+The catalogue contains 457 programs and 1325 profiles. Every suitable pinned
+Sandmark executable and stdlib selector has a portable implementation.
+Feature-dependent programs retain explicit inventory dispositions. M5 is
+complete with the recorded configuration exceptions below; M3/M4 remain
+in progress and M8 remains planned.
+
+The final applications record 77 passing cases in 84 primary smoke/normal
+attempts. All Rune O0/O2 stack/register/JIT/native cases pass. LexiFi G2++
+records 24/28, contrast 27/28 and MiniLight 26/28. Failures are the known
+native 32-bit SML/NJ random Overflow in G2++/MiniLight and default legacy
+64-bit G2++ runtime/contrast normal-image errors. No expected result or
+runtime default was changed to accept these failures.
+
+The final semantic targets complete every assertion: 3584 pass, sixteen
+fail, none unreached. G2++ has 1326/14, contrast 1960/0 and MiniLight 298/2.
+The helper/smoke targets do not replace broader normal-profile checks.
+Public source-order/data shell targets pass Rune O0/O2.
+
+All twelve full-normal Rune count samples agree and all three guard processes
+exit zero without interruption. Eight serial single fresh-process native
+smoke diagnostics pass before the heavy checks. Legacy G2++ correctness fails
+before its timing phase, contributing zero accepted samples. These are
+adapter diagnostics, not ten-sample comparative performance claims.
+
+[LexiFi evidence](results/m5-lexifi-g2pp/README.md),
+[contrast evidence](results/m5-contrast/README.md) and
+[MiniLight evidence](results/m5-minilight/README.md) retain raw failures,
+full numerical/image/random-state references, independent component models,
+notices, source/input identities and separate development scopes. Original
+observer outputs agree with unmodified executables. Perturbation controls reject
+incorrect numerical values, geometry and pixels. Nursery diagnostics remain
+separate configurations and do not establish a causal reduction.
+
+[Full make JOBS=4 check](validation/oct18-sandmark-applications-1325-acceptance.log)
+exits zero with 1325 profiles and all compiler/runedoc/runeopt cross-build
+comparisons. All 114 inventory tests and the five-pin 861-entry replay pass.
+Profile model CRLF geometry bytes are preserved under narrow data-only
+attributes; runnable SML sources retain ordinary whitespace checks.
+Full final SML large-profile runs remain unrecorded.

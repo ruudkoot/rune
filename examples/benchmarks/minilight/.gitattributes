@@ -1,0 +1,3 @@
+upstream/** -text -whitespace
+# Preserve the original CRLF geometry suffix in generated profile models.
+*.model -text -whitespace

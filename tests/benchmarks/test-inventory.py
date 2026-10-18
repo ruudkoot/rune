@@ -286,6 +286,41 @@ class InventoryTest(unittest.TestCase):
         self.file("spectral/multiplier/Main.hs", "-- Another multiplier author\nmain = print 0\n")
         self.assertNotIn("John T. O'Donnell", self.build("nofib")[0]["authors"])
 
+    def application_notice(self, directory, executable, file, source):
+        self.file("benchmarks/" + directory + "/dune", "(executable (name " + executable + "))\\n")
+        self.file("benchmarks/" + directory + "/" + file, source + "\\nlet () = ()\\n")
+        return self.build("sandmark")[0]
+
+    def test_lexifi_organization_credit_is_recorded(self):
+        text = (ROOT / "examples/benchmarks/lexifi-g2pp/upstream/main.ml").read_text().split("open G2pp_calibration")[0]
+        row = self.application_notice("lexifi-g2pp", "main", "main.ml", text)
+        self.assertIn("LexiFi SAS (copyright holder)", row["authors"])
+
+    def test_changed_lexifi_organization_does_not_inherit_credit(self):
+        text = (ROOT / "examples/benchmarks/lexifi-g2pp/upstream/main.ml").read_text().split("open G2pp_calibration")[0]
+        row = self.application_notice("lexifi-g2pp", "main", "main.ml", text.replace("LexiFi SAS", "Another organization"))
+        self.assertNotIn("LexiFi SAS", row["authors"])
+
+    def test_minilight_author_is_recorded(self):
+        text = (ROOT / "examples/benchmarks/minilight/upstream/minilight.ml").read_text().split("(**")[0]
+        row = self.application_notice("multicore-minilight/sequential", "minilight", "minilight.ml", text)
+        self.assertIn("Harrison Ainsworth / HXA7241", row["authors"])
+
+    def test_changed_minilight_heading_does_not_inherit_credit(self):
+        text = (ROOT / "examples/benchmarks/minilight/upstream/minilight.ml").read_text().split("(**")[0]
+        row = self.application_notice("multicore-minilight/sequential", "minilight", "minilight.ml", text.replace("Harrison Ainsworth", "Another author"))
+        self.assertNotIn("Harrison Ainsworth", row["authors"])
+
+    def test_contrast_author_is_recorded(self):
+        text = (ROOT / "examples/benchmarks/contrast/upstream/contrast.ml").read_text().split("open Images")[0]
+        row = self.application_notice("sauvola", "contrast", "contrast.ml", text)
+        self.assertIn("Andreas Romeyke", row["authors"])
+
+    def test_changed_contrast_heading_does_not_inherit_credit(self):
+        text = (ROOT / "examples/benchmarks/contrast/upstream/contrast.ml").read_text().split("open Images")[0]
+        row = self.application_notice("sauvola", "contrast", "contrast.ml", text.replace("Andreas Romeyke", "Another author"))
+        self.assertNotIn("Andreas Romeyke", row["authors"])
+
     def test_regexredux_bytes_adaptation_credit_is_recorded(self):
         self.file("benchmarks/benchmarksgame/dune", "(executable (name regexredux2))\n")
         self.file("benchmarks/benchmarksgame/regexredux2.ml", "(* regex-dna program contributed by Christophe TROESTLER\nupdated by Roman Kashitsyn: use Bytes instead of String *)\nlet () = ()\n")

@@ -1,0 +1,8 @@
+{
+  "version": "5.0.4",
+  "sha256": "1c9a68bdc3d348c9f859d490dadf384926213e47a584159832f7fc4a20242865",
+  "source": "https://gitlab.com/camlspotter/camlimages/-/archive/5.0.4/camlimages-5.0.4.tar.bz2",
+  "alternates": [
+    "https://opam.ocaml.org/cache/sha256/1c/1c9a68bdc3d348c9f859d490dadf384926213e47a584159832f7fc4a20242865"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "library_version": "5.0.4",
+  "files": {
+    "upstream-library/Changes.txt": "9da81733c9dc9b9deed0ea6ddd812e802e67f5a734c931970fd3e55e2e01d835",
+    "upstream-library/License.txt": "2e2764fd2076989418ce3883592d5aa543f8797a01425857025690b1b583fab4",
+    "upstream-library/README.md": "7d89098144522e9e4fb71fc5dc88d9d0a4b8d6cb3a6fffa862479c55cbfedacd",
+    "upstream-library/bitmap.ml": "829db2b1c0b1057c9aa2167fc78e7cdfc9c561bd6ba9d246ea46b89e0d447af1",
+    "upstream-library/bitmap.mli": "7601e598ba586dd4f1fd7e17de939420b1649e3f5abefb21e90c18fe869f8723",
+    "upstream-library/color.ml": "1753eba9d372ed2aa6e11e02c50bdd1aba6b0d0cb3a81b9c6dcbc00986a401ba",
+    "upstream-library/color.mli": "7557fff9e4704968130ea307cafc1d1b33d86b525927c22c93c5b23deee0c6c6",
+    "upstream-library/genimage.ml": "6830014d380310745d7f689bb4b0138501a2e68c9b800cf0189134c4df1fd691",
+    "upstream-library/genimage.mli": "a2c21544c24b2a4b302ab4935b4092826d51a1c745970322034b3c1a3489c617",
+    "upstream-library/oImages.ml": "9d076b1011bff740442faab273705d0ae1488a4c45ed52c385c32f693729a7e6",
+    "upstream-library/oImages.mli": "9030aa4b6ae9cf8828f6441d1b5407dc4dcbfd554dab7a637283ba6f4663db84",
+    "upstream-library/ppm.ml": "04d79a05d5d2bfcca88f193dce282e7dbd1a08237fb077d937bc6b384d9a236a",
+    "upstream-library/ppm.mli": "25625fc77fecc5e4c4ee9bc600dc0b41e0457c439518d1ef22cb374a511075aa",
+    "upstream-library/rgb24.ml": "53027aaccb9267b4754ac0e53b9553ab08c3bfb7e165276e9e7e43be79eb3852",
+    "upstream-library/rgb24.mli": "363df4cfee5b607e00dfe90a0e8031fcc7abaaed4ceda4b1bd085a10cd1207ee"
+  }
+}

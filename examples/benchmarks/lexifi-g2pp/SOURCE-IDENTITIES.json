@@ -1,0 +1,21 @@
+{
+  "revision": "5605805954a00497ed197c930641cddd580e1507",
+  "files": {
+    "upstream/COPYING": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+    "upstream/README.txt": "a3a38a341ff0f8e08370c4a53440b11e3761e96bce4fa5bd69f4549e56d90975",
+    "upstream/date.ml": "3b155c281cf509daa9d7985766838d41115233e498e41541006143903ef6d905",
+    "upstream/date.mli": "4df9f2b4169112dccaa39602055c3bbf3e00329b2a6491dab44cab347f404d6d",
+    "upstream/dune": "7f30f51cfbd4db3e771eb5d4625a6cb84c3aeadc2120d172bbc56f837a502da9",
+    "upstream/g2pp_calibration.ml": "446cf1818b8981d65e40f40e818d10d8f3095ccb45c118953c6be954f40e990a",
+    "upstream/g2pp_calibration.mli": "9328dbcb445ee460c5505bfb290766ef706c1c5eb11ee39fab8f2fb6de571fbe",
+    "upstream/lexifi-g2pp-bench.output": "32e4f2f7dc35ce411a71ba8c3cb20a0f0f2adfad10f232e6a3eca8f040c99b5b",
+    "upstream/main.ml": "719d8a6c49f6ba6a8c52f140a7100b21c0426262110c71f66147ccfab5312718",
+    "upstream/math.ml": "ebcbe6e2a08ca48bc4203a7a73690df1cad0cff79ed1aca39ec8b5c05693f68d",
+    "upstream/math.mli": "6c82100030a187220702db77ea3aa6057e6a229e04d7f89378bbf6766f4b6076",
+    "upstream/optimization.ml": "fcf476d86055fdc5541c7a8f792b056252d850e888e2a05c45aeef7f70e5d64f",
+    "upstream/optimization.mli": "a00bd6509255050b209c1f35d6faf8576e38b3df1e284dfe13f315d13d00b68a",
+    "large.reference": "7de32c1557abc831ff01cbc26735fe11ed63176a2189c5ffc332b00efa69c04e",
+    "normal.reference": "751f1e077858881372657c720e47fe5ff0752d0a58699adffb2c0650f6764f5b",
+    "smoke.reference": "97cc694bdd13e858d626204ef9ca1d2ec1748a67224d5d278ff80f4d8b791e86"
+  }
+}

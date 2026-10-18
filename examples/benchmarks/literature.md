@@ -477,3 +477,30 @@ engine, reference cells, domain specialization, byte packing and signed63
 IntInf representation are explicit adapters. Compiler specialization, temporary
 allocation, barrier removal and consumer costs are source-based hypotheses;
 individual cost attribution requires further compiler analysis or experiments.
+
+## Calibration and image applications, 2026-10-18
+
+[Storn and Price (1997)](https://link.springer.com/article/10.1023/A:1008202821328),
+publisher abstract inspected, supplies optimization context for LexiFi.
+[Brigo and Mercurio's second edition](https://link.springer.com/book/10.1007/978-3-540-34604-3)
+is bibliographic context only; its publisher records 2006, while the source
+comment gives 2005. Source equations and original numerical observations
+establish the specific workload rather than a claimed full derivation review.
+
+[Sauvola and Pietikainen (2000)](https://www.sciencedirect.com/science/article/pii/S0031320399000552),
+abstract/opening material inspected, provides adaptive binarization context.
+Romeyke's source defines the actual eight formulas, windows and memo/cache
+policies. Niblack and Sezgin/Sankur are retained source-declared references.
+
+[MiniLight's author description](https://www.hxa.name/minilight/), algorithm
+sections inspected, supplies sampling/renderer context.
+[Moller and Trumbore (1997)](https://my.eng.utah.edu/~cs6965/papers/MT97.pdf),
+abstract and first page inspected, anchors ray/triangle intersection.
+The particular geometry, draw/forcing order and checkpoint adaptations come
+from pinned source and original observations.
+
+Per-application provenance separates these review scopes from measured checks.
+Array layout, closure/object specialization, temporary allocation, cache
+behavior and scalar representation remain performance hypotheses. Stable
+elementary-function approximation differences are distinguished from incorrect
+results and exceptions; no uniform Math ulp contract is claimed.
