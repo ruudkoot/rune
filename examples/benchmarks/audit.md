@@ -674,3 +674,32 @@ thirteen-tuple of totals and the shared first revised-energy binding.
 The preliminary table-folded/strict-reduction encodings remain development
 evidence. Original complete table snapshots and demand/fault controls
 supplement result agreement; no compiler/runtime prerequisite is introduced.
+
+
+## Happy parser generator (M3, 2026-10-18)
+
+The catalogue contains 491 programs and 1425 profiles after importing
+happy-lazy and happy-strict. [Recorded evidence](results/m3-happy/README.md)
+includes complete original-language observers, 78 of 80 tagged profile passes,
+50280 semantic assertions, eight agreeing normal count samples, six serial
+native adapter diagnostics and repository acceptance with all compiler,
+runedoc and runeopt comparisons. The two remaining lazy smoke ML Kit
+compiles have empty logs and unclassified causes; the same host passes
+normal profiles and complete semantics. M3/M4 remain in progress and M8
+remains planned.
+
+The pinned gc/happy build generates Haskell parser text from TestInput.y.
+Its optional GLR, array, coercion, debugging and info modes remain original
+source outside the selected build. Main deliberately uses an empty template.
+The grammar's imports/foreign declarations are string data, not runtime
+dependencies. Individual grammar authorship/copyright, GenUtils permission
+and the exact historical release licence are recorded. All 143 inventory
+tests pass; five pinned inventories still contain 861 entries.
+
+Source observers validate complete structures and historical quirks.
+The reader uses equivalent quotient/remainder limits to avoid a reproduced
+SML/NJ32 dynamic subtraction false Overflow. Radix controls also prevent a
+translation-helper overflow from falling back to a decimal prefix.
+The selected source input and normal 706113-byte output stay unchanged.
+Resource overrides and native-runner status-reporting limitations remain
+explicit; failure-status capture is scheduled for M8.

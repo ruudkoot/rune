@@ -3272,3 +3272,49 @@ subjects, diagnostics, historical credits and fixture/matrix-log maps.
 exits zero with 1421 profiles, performance budgets, JIT checks, generated
 documentation and all compiler/runedoc/runeopt cross-build comparisons.
 M3/M4 remain in progress and M8 remains planned.
+
+
+## Happy parser-generator wave, 2026-10-18
+
+Imports happy-lazy and happy-strict: 491 programs and 1425 profiles.
+[Complete evidence and reproduction](results/m3-happy/README.md),
+[all profile outcomes](results/m3-happy/correctness.tsv) and
+[host observations](validation/happy-host-results.md) retain failures
+alongside passing runs. This completes the Happy import wave; M3/M4 remain
+in progress and M8 remains planned.
+
+The 80 tagged profile runs have 78 passes. All 40 normal runs pass.
+The two remaining attempts are lazy smoke ML Kit compiles with empty logs,
+classified as unclassified compile failures. Both normal compiles and both
+complete semantic groups pass on that host. Native O0/O2 labels repeat
+host-default compiler options and are not separate native optimization levels.
+
+All 2514 semantic assertions pass on each of 20 configuration/level groups:
+50280 passes, zero failures. Complete source-stage observers and 24 full
+generated-parser/warning observations agree with GHC. Normal output has
+706113 bytes and SHA-256
+b70da0bb178d71e52aa624e57ae8d0955ab7f905941187c96285e0874639e793.
+
+Eight final normal count samples agree across applicable Rune engines;
+both unchanged process-tree guards exit zero without interruption.
+Six final serial native fresh samples, correctness preflights and
+compilations pass after heavier task work finished. They are adapter
+diagnostics, not headline performance comparisons.
+
+Repository acceptance exits zero after 1794.7 seconds, including compiler,
+Basis/VM/native-optimizer/JIT checks, existing performance budgets, bounded
+benchmark checks, documentation validation, all 498 compiler cross-build
+comparisons and seven-host runedoc/runeopt agreement. All 143 inventory
+regression tests pass; five pinned inventories still contain 861 entries.
+
+Smoke records a 120-second/4-GiB override for compilation of the complete
+generator; normal retains 600 seconds/4 GiB. Earlier limits and source
+epochs are preserved separately. The native correctness runner loses some
+compiler exit codes before returning; its default exit 0 does not establish
+a compiler success. Actual native failure-status capture and planted
+compile-timeout checks remain M8 work.
+
+The final literal helper avoids a reproduced SML/NJ32 dynamic subtraction
+false Overflow with equivalent quotient/remainder limits. Decimal, hex and
+octal boundary tests also reject overflow without decimal-prefix fallback.
+Selected inputs, source algorithms and expected results remain unchanged.

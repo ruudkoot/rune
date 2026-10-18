@@ -506,6 +506,8 @@ inventory entry.
 | [simple-nofib-strict](#simple-nofib-strict) | [nofib SIMPLE](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/simple) | Advance immutable hydrodynamic arrays with thirteen scalar reductions and strict finite cells. |
 | [simple-nofib-report-lazy](#simple-nofib-report-lazy) | [nofib SIMPLE](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/simple) | Advance immutable hydrodynamic arrays with complete state reporting and memoized finite cells. |
 | [simple-nofib-report-strict](#simple-nofib-report-strict) | [nofib SIMPLE](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/simple) | Advance immutable hydrodynamic arrays with complete state reporting and strict finite cells. |
+| [happy-lazy](#happy-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/happy) | Generate and validate complete Haskell LALR parser source with memoized finite data. |
+| [happy-strict](#happy-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/happy) | Generate and validate complete Haskell LALR parser source with eager finite data. |
 
 ## Running and interpreting checks
 
@@ -34456,3 +34458,17 @@ specific Haskell program, not validation of the physical model. No parallel
 runtime feature is introduced. Upstream mutable C/Fortran comparisons and the
 classic SML version need separate numeric/evaluation review before any claim
 of equivalent costs or exact results.
+
+
+## happy-lazy
+
+See the [complete provenance and workload description](happy-lazy/PROVENANCE.md)
+for the algorithm, historical variants, translation, profiles, validation and
+literature. The normal profile generates the unchanged upstream grammar.
+
+
+## happy-strict
+
+See the [complete provenance and workload description](happy-strict/PROVENANCE.md)
+for the algorithm, historical variants, translation, profiles, validation and
+literature. The normal profile generates the unchanged upstream grammar.

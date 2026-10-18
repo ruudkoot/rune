@@ -708,3 +708,24 @@ and development SML/NJ; their complete per-cell reports pass. It falls inside
 the derived sum bound. Separate legacy 64-bit snapshots contain eight totals
 outside even that bound. Neither the summation algorithm nor expected values
 change, and the numerical failures are kept separate from checker correction.
+
+
+## Happy: parser generation and lookahead propagation
+
+The [Happy introduction](https://haskell-happy.readthedocs.io/en/latest/introduction.html)
+describes annotated-grammar input and parser-generation modes; its
+[performance and conflict discussion](https://haskell-happy.readthedocs.io/en/latest/tips.html)
+supplies background questions. The pinned Happy 1.16/nofib sources establish
+the actual selected function backend and deliberately empty template.
+Present-day manual claims do not establish historical configuration or
+benchmark speed.
+
+[DeRemer and Pennello, Efficient Computation of LALR(1) Look-Ahead Sets,
+TOPLAS 4(4), 1982, pp. 615–649](https://3e8.org/pub/scheme/doc/parsing/Efficient%20Computation%20of%20LALR%281%29%20Look-Ahead%20Sets.pdf)
+provides background on lookahead relations, propagation and incorrect
+alternatives. This is not a claim that Happy implements that paper's SCC
+algorithm. Source inspection identifies memoized FIRST/closure fixed points,
+numbering, persistent sets, snapshot-based propagation and output builders
+as diagnostic candidates; causal performance findings require measurements.
+Complete source observers validate actual historical quirks rather than
+repairing them according to a textbook description.

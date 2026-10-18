@@ -301,7 +301,7 @@ def discover(source, root):
 
 def family(name, text):
     key = name.lower()
-    if key in {"lift", "parstof", "transform"}:
+    if key in {"happy", "lift", "parstof", "transform"}:
         return "compiler-application"
     if any(x in key for x in ("fft", "nbody", "n-body", "barnes", "mandel", "nucleic", "ray", "simple", "fem", "fluid", "almabench", "matrix", "grammatrix", "decomposition", "durand", "levinson", "minilight", "sphere", "zern", "arith")):
         return "numerical"
@@ -558,6 +558,30 @@ def build(source, root, lock):
                     notices.append(str(notice.relative_to(root)))
         authors = set()
         context = [p for p in parent.iterdir() if p.is_file() and p.name in {"README", "README.md", "Makefile", "FILES", "sources.cm"}] if parent.exists() and files else []
+        if source == "nofib" and path == "gc/happy":
+            main = parent / "Main.lhs"
+            if main.is_file():
+                heading = main.read_text(errors="replace")[:1000]
+                if "(c) 1993-2003 Andy Gill, Simon Marlow" in heading:
+                    authors.update({"Andy Gill", "Simon Marlow"})
+                    item["evidence"].append("gc/happy/Main.lhs:original-authors")
+            data = parent / "TestInput.y"
+            if data.is_file():
+                heading = data.read_text(errors="replace")[:1000]
+                if ("(c) The University of Glasgow 1997-2003" in heading
+                        and "Author(s): Simon Marlow, Sven Panne 1997, 1998, 1999" in heading):
+                    authors.add("Sven Panne (GHC grammar input)")
+                    notices.append("gc/happy/TestInput.y:Glasgow-copyright-and-grammar-authors")
+                    item["evidence"].append("gc/happy/TestInput.y:individual-dataset-notice")
+            utilities = parent / "GenUtils.lhs"
+            if utilities.is_file() and "All the code below is understood to be in the public domain." in utilities.read_text(errors="replace")[:1000]:
+                notices.append("gc/happy/GenUtils.lhs:public-domain-statement")
+                item["evidence"].append("gc/happy/GenUtils.lhs:individual-public-domain-statement")
+            makefile = parent / "Makefile"
+            if makefile.is_file():
+                build_text = makefile.read_text()
+                if "NORM_OPTS = TestInput.y" in build_text and "EXCLUDED_SRCS += TestInput.hs" in build_text:
+                    item["evidence"].append("gc/happy/Makefile:grammar-input-and-generated-parser-exclusion")
         if source == "nofib" and path == "spectral/simple":
             main = parent / "Main.hs"
             if main.is_file():

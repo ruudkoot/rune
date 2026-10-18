@@ -286,6 +286,37 @@ class InventoryTest(unittest.TestCase):
         self.file("spectral/multiplier/Main.hs", "-- Another multiplier author\nmain = print 0\n")
         self.assertNotIn("John T. O'Donnell", self.build("nofib")[0]["authors"])
 
+    def happy_sources(self, original=True):
+        self.nofib_roots()
+        self.file("gc/happy/Makefile", "NORM_OPTS = TestInput.y\nEXCLUDED_SRCS += TestInput.hs\n")
+        self.file("gc/happy/Main.lhs", "(c) 1993-2003 Andy Gill, Simon Marlow\n> main = print 0\n" if original else "> main = print 0\n")
+        self.file("gc/happy/TestInput.y", "-- (c) The University of Glasgow 1997-2003\n-- Author(s): Simon Marlow, Sven Panne 1997, 1998, 1999\n" if original else "-- different grammar\n")
+        self.file("gc/happy/GenUtils.lhs", "All the code below is understood to be in the public domain.\n> helper = 0\n" if original else "> helper = 0\n")
+        return self.build("nofib")[0]
+
+    def test_happy_records_original_authors(self):
+        row = self.happy_sources()
+        self.assertIn("Andy Gill", row["authors"])
+        self.assertIn("Simon Marlow", row["authors"])
+        self.assertEqual("compiler-application", row["family"])
+
+    def test_happy_records_individual_grammar_notice(self):
+        row = self.happy_sources()
+        self.assertIn("Sven Panne (GHC grammar input)", row["authors"])
+        self.assertIn("gc/happy/TestInput.y:Glasgow-copyright-and-grammar-authors", row["notices"])
+
+    def test_happy_records_utility_permission(self):
+        self.assertIn("gc/happy/GenUtils.lhs:public-domain-statement", self.happy_sources()["notices"])
+
+    def test_changed_happy_notices_require_review(self):
+        row = self.happy_sources(original=False)
+        self.assertNotIn("Andy Gill", row["authors"])
+        self.assertNotIn("Sven Panne", row["authors"])
+        self.assertNotIn("public-domain-statement", row["notices"])
+
+    def test_happy_records_generated_source_build_scope(self):
+        self.assertIn("gc/happy/Makefile:grammar-input-and-generated-parser-exclusion", self.happy_sources()["evidence"])
+
     def simple_sources(self, c_header="Andy Shaw and Kofi Fynn.\nWed Feb  2 14:59:18 EST 1994"):
         self.nofib_roots()
         self.file("spectral/simple/Makefile", "SRCS = Main.hs\n")
