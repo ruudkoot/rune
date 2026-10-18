@@ -153,6 +153,10 @@ Two plans changed with them:
   for build files and `Compiler.compile`, which must be able to say it when
   the command line says `--unicode` (D1).
 
+**And (2026-10-18):** `\U`, Rune's extension from Successor ML, is allowed only
+under `--unicode` (D7). The default then adds nothing to the Definition's
+escapes.
+
 | The brief asks | Answered in |
 |---|---|
 | a roadmap for Unicode and UTF-8 source | this document |
@@ -263,7 +267,8 @@ refer to the brief as quoted in *The request*.
 
 **W6. `\x` is not Standard ML (lines 19, 38, 41).**
 - The Definition's escapes are `\a \b \t \n \v \f \r \^c \ddd \uxxxx \" \\`
-  and the gap `\f...f\`. `\U` is Rune's extension, from Successor ML.
+  and the gap `\f...f\`. `\U` is Rune's extension, from Successor ML, and
+  by the owner's decision only allowed under `--unicode` (D7).
 - Adding `\xHH` is a second extension (D7). The brief's `"\xff"` can be
   written today as `"\255"` or `"\u00FF"`, and its `\x09` as `\t` or
   `\009`.
@@ -861,15 +866,17 @@ Rune takes both today. It is wider in comments, which may hold anything, and
 it requires formfeed.
 
 With two changes, comments that may hold UTF-8 text (D4) and formfeed kept
-as white space (D5), the ASCII default is SML '97 read from a UTF-8 file, with one
-deviation:
-- **The deviation.** A comment may not hold a control character other than
-  TAB, LF, CRLF and FF, a bidi control, a line separator, or bytes that are
-  not UTF-8 (D5). The Definition allows any character there. The deviation
-  is pinned by tests, and no source of the census needs what it refuses
-  (E1).
-- It is stricter than Rune is today, and stricter than SML/NJ, MLKit and
-  Moscow ML, which take raw bytes in literals (E2).
+as white space (D5), the ASCII default is SML '97 read from a UTF-8 file, with two
+deviations, both pinned by tests:
+- **Comments.** A comment may not hold a control character other than TAB,
+  LF, CRLF and FF, a bidi control, a line separator, or bytes that are not
+  UTF-8 (D5). The Definition allows any character there. No source of the
+  census needs what this refuses (E1).
+- **Surrogates.** A surrogate in a `\u` escape is refused at the wide types
+  (D9), where the Definition allows any number of the alphabet.
+It adds nothing to the Definition, because `\U`, Rune's extension, needs
+`--unicode` (D7). It is stricter than Rune is today, and stricter than SML/NJ,
+MLKit and Moscow ML, which take raw bytes in literals (E2).
 
 `--unicode` would be a deviation in two places: raw non-ASCII text in literals
 (D6) and Unicode identifiers (D10). It is recorded and pinned as one.
@@ -1945,7 +1952,8 @@ no editor shows it as a line end.
 |---|---|---|
 | ASCII 32-126 | the byte | the code point |
 | `\ddd` | the byte; above 255 an error | the code point (today: above 255 an error; D8) |
-| `\uXXXX`, `\UXXXXXXXX` | the byte if at most 255, else an error | the code point; a surrogate is an error (D9) |
+| `\uXXXX` | the byte if at most 255, else an error | the code point; a surrogate is an error (D9) |
+| `\UXXXXXXXX` | by default an error, "needs `--unicode`" (D7); under `--unicode`, as `\u` | by default the same error; under `--unicode` the code point, up to U+10FFFF, a surrogate an error |
 | a raw character above 127, by default | an error: "write it as an escape" | an error: "write it as an escape" |
 | a raw character above 127, `--unicode` | an error (D6: recommended; the brief's line 40) | the code point |
 | a raw character above 127, `--unicode=latin1` | the byte, which is its code point (D3, D6) | the code point |
@@ -2172,7 +2180,7 @@ it was written with.
 | D4. Comments in the ASCII mode | A: any UTF-8 text but the refused code points |
 | D5. What a source may hold raw | A: the table of *The architecture* |
 | D6. Raw non-ASCII in a literal at `string` and `char` | A: an error under `--unicode`; a raw character means its code point |
-| D7. `\x` | A: no |
+| D7. `\x` and `\U` | A: no `\x`; `\U` only under `--unicode` (the owner, 2026-10-18) |
 | D8. `\ddd` at the wide types | A: the whole alphabet, as the Definition says |
 | D9. Code points or scalar values | A: `WideChar` holds code points; scalar values at the boundaries |
 | D10. Unicode letters in identifiers | A: XID, less default-ignorables and lookalikes |
@@ -2267,8 +2275,8 @@ This decides whether HOL4 and MLton compile under the default (C4).
 * **A. Any UTF-8 text but the refused code points of D5.** **Recommended.**
   - The Definition allows any character in a comment, so non-ASCII text needs
     no deviation. What D5 refuses there (controls, bidi controls, line
-    separators, invalid UTF-8) is the default's one deviation, pinned by tests
-    in M3.
+    separators, invalid UTF-8) is a deviation of the default, pinned by tests
+    in M3. The other is D9's refusal of surrogates in escapes.
   - HOL4's 425 files as HOL-rune compiles it, MLton's 2, SML/NJ's 13 and Rune's 3 with
     non-ASCII comments compile (E1, E9).
   - Bidi controls, controls and invalid UTF-8 are still refused (X8).
@@ -2370,7 +2378,27 @@ the file and 233 as a character. At `string`:
   - But a UTF-8 file's `"é"`, two bytes today on every system, would
     silently become one.
 
-### D7. `\x`
+### D7. `\x` and `\U`
+
+**`\U`: decided by the owner (2026-10-18).** `\UXXXXXXXX`, Rune's extension from
+Successor ML, is allowed only under `--unicode`. By default it is an error
+that says so ("`\U` needs `--unicode`"). This is as MLton gates it, behind
+the annotation that also admits its UTF-8 literals (E2).
+- With it the default writes only the Definition's escapes, and adds no
+  extension to them. Its two deviations are restrictions: D5's rules for
+  comments, and D9's refusal of surrogates in escapes.
+- A code point above U+FFFF then has no spelling in a literal by default:
+  `\u` has four digits and `\ddd` stops at 999. A program that wants one says
+  `--unicode`, or builds it at run time (`WideChar.chr 0x1F600`).
+- The Basis's run-time conversions have no mode and keep `\U`:
+  `WideChar.toString` and `WideString.toString` write it above U+FFFF, and
+  `fromString` and `scan` read it. What they write is source text only
+  under `--unicode`.
+- Two tests use it as an escape: `tests/lang/ty.overload.literal_wide.sml`
+  and `ty.overload.literal_cached_limits.sml`. They take `--unicode` in their
+  `.cargs` (M4).
+
+**`\x`:**
 
 * **A. No `\x`.** `\ddd` and `\u` say every byte and code point already. No
   host takes `\x`, so the compiler's sources could never use it.
@@ -2533,8 +2561,8 @@ when no flag asks for more.
 * **A. ASCII with D4's comments, for the compiler and the REPL, from the
   milestones that bring its rules. The REPL takes `--unicode` as an option.**
   **Recommended.**
-  - It is SML '97 read from UTF-8, with one deviation: D5's rules for
-    comments.
+  - It is SML '97 read from UTF-8, with two deviations: D5's rules for
+    comments, and D9's refusal of surrogates in escapes.
   - HOL4, MLton and the compiler pass (E1, E9).
   - It arrives in two steps, so that `make check` stays green.
     - M3 brings the refusals that hold in every mode. Rune's `bidi.sml` and
@@ -2752,6 +2780,10 @@ The sizes are lines of code and tests, not counting generated tables.
     literal's span and the escapes that would say it.
   - A surrogate in `\u` or `\U` is an error at every type, a deviation pinned by a
     test (D9).
+  - `\U` is refused by default, with "needs `--unicode`" (D7, the owner's
+    decision). `tests/lang/ty.overload.literal_wide.sml` and
+    `ty.overload.literal_cached_limits.sml` take `--unicode` in their
+    `.cargs`, and `docs/language.md`'s escapes row says when `\U` is allowed.
   - Under `--unicode`, raw text in a wide literal is its code points: U+00E9,
     no longer U+00C3 U+00A9.
   - Wide literals become constants. The compiler encodes them once, not
@@ -3050,6 +3082,7 @@ existing generator. The hosts are those of `make hosts`.
 - **Literals.**
   - A matrix: the four types × raw, `\ddd`, `\u` and `\U` × the three
     modes × in range, out of range and surrogate.
+  - `\U` refused by default and taken under `--unicode`.
   - `--unicode=latin1`: raw Latin-1 at both widths, C1 bytes refused, a UTF-8 file
     refused as "looks like UTF-8", and MLKit's Latin-1 tests.
   - Wide literals checked by their code points, not their printing.
@@ -3280,7 +3313,7 @@ recommendation is taken.
 | identifiers in NFC | - | - | - | required | required | - | - | - | - | - | - | - |
 | Unicode symbols in identifiers | no | no | no | no | no | no | no | no | no | no | no | no |
 | `\uXXXX` | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes |
-| `\U` | no | yes | yes | yes | yes | needs ext | yes | no | no | no | no | no |
+| `\U` | no | yes | no (needs `--unicode`) | yes | yes | needs ext | yes | no | no | no | no | no |
 | `\x` | no | no | no | no | no | no | no | no | no | no | no | no |
 | `\ddd` above 255 at the wide types | yes | no | yes | yes | yes | yes | yes | - | - | - | - | - |
 | surrogates in `\u` | in the range | allowed | refused | refused | refused | not probed | not probed | - | - | - | - | - |
@@ -3298,7 +3331,7 @@ Notes:
     this is no deviation.
   - A surrogate in `\u` is refused, a deviation pinned (D9).
   
-  It is also wider in one place: `\U`, an extension Rune already has.
+  It is nowhere wider: `\U`, Rune's extension, needs `--unicode` (D7).
 - `--unicode` departs from the Definition in two rows: non-ASCII identifiers and
   raw non-ASCII at `WideString`. Each is pinned by a test, with its row in
   `docs/language.md`.
