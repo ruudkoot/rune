@@ -6,12 +6,13 @@
      Default_Ignorable_Code_Point;
    - the frozen default ignorables: XID_Continue and
      Default_Ignorable_Code_Point both, 269 code points;
-   - the frozen lookalikes: the identifier characters above ASCII whose
-     skeleton (UTS #39, made here from confusables.txt, the default
-     ignorables and Normalize.nfdList) is one character of Standard ML's
-     punctuation (85), or a digit where IdentifierType.txt does not say
-     Recommended (116); and by hand, U+00B7 and the lookalikes of `|`
-     listed below, whose skeleton is `l` and which are not Recommended;
+   - the frozen lookalikes, none of them Recommended by IdentifierType.txt:
+     the identifier characters above ASCII whose skeleton (UTS #39, made
+     here from confusables.txt, the default ignorables and
+     Normalize.nfdList) is one character of Standard ML's punctuation (76)
+     or a digit (116); and as listed below, the decimal digits that look
+     like 0 and 1 (21), whose skeletons are O and l, U+00B7, and the
+     lookalikes of `|` (25), whose skeleton is `l`;
    - the profile, isStart and isContinue for every code point, as the
      grammar of docs/plans/utf8.md (The architecture, Identifiers) has it;
    - names of several scripts, taken and refused.
@@ -93,22 +94,33 @@ struct
 
   val punctuation = "!%&$#+-/:<=>?@\\~`^|*()[]{},;.'\"_"
 
-  (* the lookalikes of `|` taken by hand, and the middle dot *)
-  val bars = [0x01C0, 0x07CA, 0x16C1, 0x2D4F, 0xA4F2, 0xFE8D, 0x1028A, 0x10309, 0x10926, 0x10C3E, 0x10CA5,
-              0x11DDA, 0x11DE1, 0x16D63, 0x16F28, 0x1D5C5, 0x1D5F9, 0x1E141, 0x1EE00]
+  (* the lookalikes of `|` taken by hand *)
+  val bars = [0x01C0, 0x07CA, 0x16C1, 0x217C, 0x2C92, 0x2D4F, 0xA4F2, 0xA7FE, 0xFE8D, 0x1028A, 0x10309,
+              0x1050E, 0x10926, 0x10C3E, 0x10CA5, 0x11DDA, 0x11DE1, 0x16D63, 0x16F28, 0x1D5C5, 0x1D5F9,
+              0x1D62D, 0x1D661, 0x1E141, 0x1EE00]
+
+  (* the decimal digits that look like 0 and like 1 *)
+  val zeros = [0x07C0, 0xFF10, 0x118E0, 0x11DE0, 0x1CCF0, 0x1D7CE, 0x1D7D8, 0x1D7E2, 0x1D7EC, 0x1D7F6,
+               0x1E140, 0x1E2F0, 0x1FBF0]
+  val ones = [0xFF11, 0x1CCF1, 0x1D7CF, 0x1D7D9, 0x1D7E3, 0x1D7ED, 0x1D7F7, 0x1FBF1]
+
+  fun among (c, l) = List.exists (fn x => x = c) l
 
   (* what the frozen lists should hold of c, as confusables.txt seeds them:
      the ASCII character c looks like *)
   fun seeded c =
     if c < 0x80 orelse not (xidContinue c) then NONE
     else if c = 0xB7 then SOME #"."
-    else if List.exists (fn b => b = c) bars then SOME #"|"
+    else if among (c, bars) then SOME #"|"
+    else if among (c, zeros) then SOME #"0"
+    else if among (c, ones) then SOME #"1"
+    else if recommended c then NONE
     else
       case skeleton [c] of
         [a] =>
           if a >= 0x80 then NONE
           else if CharVector.exists (fn p => p = Char.chr a) punctuation then SOME (Char.chr a)
-          else if Char.isDigit (Char.chr a) andalso not (recommended c) then SOME (Char.chr a)
+          else if Char.isDigit (Char.chr a) then SOME (Char.chr a)
           else NONE
       | _ => NONE
 
@@ -147,12 +159,18 @@ struct
     in
       Expect.that ("269 default ignorables are left out",
                    count (fn c => Identifier.exclusion c = SOME Identifier.Ignorable) = 269);
-      Expect.that ("221 lookalikes", count (lookalike (fn _ => true)) = 221);
-      Expect.that ("116 of digits", count (lookalike Char.isDigit) = 116);
-      Expect.that ("20 by hand", count (lookalike (fn a => a = #"|")) + 1 = 20);
-      Expect.that ("85 of punctuation", count (lookalike (fn a => not (Char.isDigit a))) - 20 = 85);
+      Expect.that ("239 lookalikes", count (lookalike (fn _ => true)) = 239);
+      Expect.that ("116 of the digits 2 to 9", count (lookalike (fn a => Char.isDigit a andalso a > #"1")) = 116);
+      Expect.that ("13 of 0", count (lookalike (fn a => a = #"0")) = 13);
+      Expect.that ("8 of 1", count (lookalike (fn a => a = #"1")) = 8);
+      Expect.that ("25 of |", count (lookalike (fn a => a = #"|")) = 25);
+      Expect.that ("76 of the rest of the punctuation, and the middle dot",
+                   count (lookalike (fn a => not (Char.isDigit a) andalso a <> #"|")) = 77);
       Expect.that ("the bars are not Recommended and their skeleton is l",
                    List.all (fn b => not (recommended b) andalso skeleton [b] = [0x6C]) bars);
+      Expect.that ("the zeros and ones are not Recommended and look like O and l",
+                   List.all (fn z => not (recommended z) andalso skeleton [z] = [0x4F]) zeros
+                   andalso List.all (fn z => not (recommended z) andalso skeleton [z] = [0x6C]) ones);
       Expect.that ("the middle dot is its own skeleton", skeleton [0xB7] = [0xB7])
     end
 
@@ -166,7 +184,9 @@ struct
     ("Tamil with a vowel sign", "\224\174\149\224\174\190"),
     ("a mark after a letter", "e\204\129"),
     ("ASCII", "x'_1"),
-    ("Cyrillic be, a Recommended lookalike of 6", "\208\177")]
+    ("Cyrillic be, a Recommended lookalike of 6", "\208\177"),
+    ("Hebrew yod, a Recommended lookalike of '", "\215\153\215\149\215\157"),
+    ("Katakana no, a Recommended lookalike of /", "\227\131\142\227\131\188\227\131\137")]
   val refused = [
     ("a Hangul filler", "\227\133\164"),
     ("a joiner", "a\226\128\141b"),
@@ -176,7 +196,8 @@ struct
     ("a dental click like |", "\199\128"),
     ("a middle dot", "l\194\183l"),
     ("a fullwidth digit", "x\239\188\146"),
-    ("Katakana no, a lookalike of /", "\227\131\142\227\131\188\227\131\137"),
+    ("a fullwidth digit zero", "x\239\188\144"),
+    ("a slanted stroke like |", "a\240\157\152\173"),
     ("a subscript digit", "x\226\130\129"),
     ("a mark first", "\204\129e"),
     ("a digit first", "1x"),

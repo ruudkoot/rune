@@ -56,7 +56,7 @@ What it rests on:
 | M2 | Source modes: the plumbing | |
 | M3 | What a source may hold raw | |
 | M4 | Literals by type and mode | |
-| M5 | `lib/unicode`: normalisation and identifier tables | done 2026-10-18; G2 to see |
+| M5 | `lib/unicode`: normalisation and identifier tables | done 2026-10-18; G2 passed 2026-10-18 |
 | M6 | Unicode identifiers | |
 | M7 | Showing source and names | |
 | M8 | The wide family in the 8-bit order, and its costs | |
@@ -168,6 +168,23 @@ recommends for identifiers. Those are everyday letters and native digits,
 such as Cyrillic б and З. That makes 116 of the 129 (D10, *The
 architecture*). That includes the departures from the brief listed in *Where this
 roadmap recommends otherwise than the brief*.
+
+**At G2 (2026-10-18):** the owner took the recommendations of M5's report,
+so that the lookalikes list leaves to the warnings whatever UTS #39
+recommends for identifiers, as it does for the digits:
+- the 9 Recommended characters among the 85 lookalikes of punctuation stay
+  allowed: Hebrew yod U+05D9, Katakana no U+30CE, Armenian feh U+0586, the
+  Arabic-Indic zeros U+0660 and U+06F0, the visargas U+0903 and U+0A83, and
+  CJK U+4E36 and U+4E3F. The other 76 are refused, `ʼ` and `ʻ` among them;
+- the 21 decimal digits that look like 0 and 1 and that UTS #39 does not
+  recommend are refused;
+- all the lookalikes of `|` that M5 found are refused, its 19 and the 7 it
+  left open;
+- `UnicodeSecurity`'s data goes into the compiler in M6, for D13's
+  warnings.
+
+The list holds 239 code points (D10, *The architecture*): U+1FBF1, a
+segmented digit one that is also among the lookalikes of `|`, counts once.
 
 | The brief asks | Answered in |
 |---|---|
@@ -2008,19 +2025,29 @@ tyvar    ::= ' continue*
   could otherwise make a refused identifier valid, or the reverse. Taking it
   out is UAX #31's Default-Ignorable Exclusion Profile (§7.3).
 - **Lookalikes** is a frozen list, written in the source and not derived from
-  data, of identifier characters that look like Standard ML punctuation. It
-  holds:
-  - the 85 identifier characters that UTS #39's skeletons map to one ASCII
-    punctuation or symbol character, such as `ǃ ʼ ʹ ꓸ`;
-  - by hand, `·` U+00B7 and the lookalikes of `|`, which the skeletons miss,
-    such as `ǀ` U+01C0.
-  
+  data, of identifier characters that look like Standard ML punctuation or
+  digits, and that UTS #39 does not recommend for identifiers (the owner,
+  2026-10-18, for the digits and at G2). It holds 239 code points:
+  - of the 85 identifier characters that UTS #39's skeletons map to one
+    ASCII punctuation or symbol character, the 76 that are not Recommended,
+    such as `ǃ ʼ ʹ ꓸ`;
   - of the 129 identifier characters that look like the digits 2 to 9, the
-    116 that UTS #39 does not recommend for identifiers, by the owner's
-    decision (2026-10-18): fullwidth, mathematical, outlined and segmented
-    digits, and rare letters such as Cherokee and Canadian Syllabics.
+    116 that are not Recommended: fullwidth, mathematical, outlined and
+    segmented digits, and rare letters such as Cherokee and Canadian
+    Syllabics;
+  - the 21 decimal digits that look like 0 and 1, which the skeletons map
+    to the letters O and l, and that are not Recommended;
+  - by hand, `·` U+00B7, which the skeletons miss;
+  - by hand, the 26 lookalikes of `|`, which the skeletons map to `l`, that
+    the code charts draw as a stroke and that are not Recommended, such as
+    `ǀ` U+01C0. One of them, U+1FBF1 SEGMENTED DIGIT ONE, is also among the
+    digits.
 
-  The other 13 stay allowed:
+  The 9 Recommended lookalikes of punctuation stay allowed: Hebrew yod
+  U+05D9, Katakana no U+30CE, Armenian feh U+0586, the Arabic-Indic zeros
+  U+0660 and U+06F0, the visargas U+0903 and U+0A83, and CJK U+4E36 and
+  U+4E3F. Refusing them would make most Hebrew names and many Japanese ones
+  impossible. The 13 Recommended lookalikes of digits stay allowed too:
   - Cyrillic б, З and Ӡ;
   - Armenian Յ;
   - Georgian Ⴧ, Ჷ and Ვ;
@@ -2031,7 +2058,8 @@ tyvar    ::= ' continue*
   They are everyday letters and native digits of living scripts, which UTS #39
   recommends. Refusing them would make Russian names such as `работа`
   impossible. D13's confusable warnings catch a name that differs from
-  another only by one of them.
+  another only by one of them, and a name that is one of them alone, such as
+  `ノ`, whose skeleton is `/` (M6).
 - In UAX #31's terms, Rune declares a profile (UAX31-R1-2):
   - it adds `'`, which is Pattern_Syntax, to Continue;
   - it removes the two frozen sets;
@@ -2509,12 +2537,14 @@ the annotation that also admits its UTF-8 literals (E2).
     sub- and superscript digits, as in `x₁`. It could join later; its signs
     `⁺ ⁻ ⁼ ₊ ₋ ₌` look like SML symbols and would join the lookalikes.
   - The lookalikes list is seeded from UTS #39's confusables, as 18.0 has
-    them: the 85 identifier characters that look like punctuation, and 116 of
-    the 129 that look like digits. The 13 that UTS #39 recommends are left
-    to the warnings (the owner, 2026-10-18; *The architecture*). It is then
-    completed by hand (`·`, `ǀ` and the other
-    lookalikes of `|`), and frozen, so it cannot change with Unicode (X4,
-    E5).
+    them, completed by hand, and frozen, so it cannot change with Unicode
+    (X4, E5). What UTS #39 recommends for identifiers is left to the
+    warnings (the owner, 2026-10-18, for the digits and at G2; *The
+    architecture*). It holds 239 code points: 76 of the 85 identifier
+    characters that look like punctuation, 116 of the 129 that look like
+    the digits 2 to 9, the 21 decimal digits that look like 0 and 1, `·`,
+    and the 26 lookalikes of `|`, such as `ǀ`, one of which is also a
+    digit.
   - `lib/` keeps its exports ASCII, so every mode can use them (X11).
 * **B. Plain XID,** as Rust does. It lets `val ㅤ = 1` through, which E9's
   prototype accepts, as well as `ʼa` and the other punctuation lookalikes.
@@ -3134,7 +3164,7 @@ then confirms that the default becomes ASCII in M4 (D16).
     E5 measured +2.2% for 120 KB of tables. Both variants stay within the
     budgets. The budget is not changed here: the files join `rune.build` in
     M6, which updates it with the reason (the campaign's brief).
-  - **Open for G2,** each with what the owner's rule for the digits (leave
+  - **G2's questions,** each with what the owner's rule for the digits (leave
     to the lints what UTS #39 recommends, refuse the rest) would do:
     - Of the 85 lookalikes of punctuation, 9 are Recommended letters and
       digits of living scripts: Hebrew yod U+05D9 (`'`), Katakana no U+30CE
@@ -3157,9 +3187,22 @@ then confirms that the default becomes ASCII in M4 (D16).
       stroke in some fonts). None is Recommended, so the rule would refuse
       all seven.
 
+* **After G2** (2026-10-18, the commit after `7f8a37c6`): the frozen list as
+  the owner decided (*The request*), 239 code points: 76 lookalikes of
+  punctuation, 116 of the digits 2 to 9, 21 of 0 and 1, `·`, and 25 of `|`
+  (U+1FBF1, the 26th, is with the digits as a 1).
+  - `scripts/gen-unicode-tables.py` holds them as `SEEDED_PUNCTUATION`,
+    `SEEDED_DIGITS`, `ZEROS_AND_ONES` and `BY_HAND`. It checks the seeds
+    against 18.0's data, the digits' general category included.
+  - `tests/lib/unicode/identifier.sml` counts each group, and takes Hebrew
+    and Katakana names with yod and no.
+
 **Gate G2.** The owner sees the cost of the tables to the compiler (E5, M5)
 and the final identifier profile before M6. That includes the lookalikes list
 as built: the owner settled its digits on 2026-10-18 (D10).
+
+**Passed** (2026-10-18): the owner took M5's three recommendations on the
+lookalikes, and the lints' data goes into the compiler (*The request*).
 
 ### M6. Unicode identifiers (M, about 800)
 
@@ -3169,14 +3212,20 @@ as built: the owner settled its digits on 2026-10-18 (D10).
   - Under `--unicode`, alphanumeric identifiers by the grammar of *The
     architecture*, required in NFC, through a property table built at first
     use.
-  - The UTS #39 warnings, with a flag to turn them off.
+  - The UTS #39 warnings, with a flag to turn them off. `UnicodeSecurity`
+    joins the compiler for them (G2).
+  - The confusable warning also compares a name's skeleton with Standard
+    ML's punctuation and symbolic identifiers, so that a lone `ノ` (whose
+    skeleton is `/`) or `٠` (`.`) warns: the lookalikes that UTS #39
+    recommends stay allowed (G2).
   - Reject tests: each lookalike, each kind of invisible identifier, a
     decomposed spelling, and Trojan Source's invisible identifier.
   - Warning tests: a mixed-script name, a confusable pair, Trojan Source's
     homoglyph function, and a `*)` lookalike in a comment.
   - The cost of the real lexer measured as E9 measured the prototype's,
     with its `isNFC` on a Maybe and the lints.
-* **Why now:** the brief's line 27, on the tables of M5.
+* **Why now:** the brief's line 27, on the tables of M5. G2 passed on
+  2026-10-18.
 * **Done when:**
   - Programs with Greek, Cyrillic, CJK and Devanagari names compile, run, and
     print their names in the REPL and the debugger.

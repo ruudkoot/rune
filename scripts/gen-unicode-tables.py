@@ -508,9 +508,15 @@ FROZEN_IGNORABLE = [
 # Standard ML's punctuation or a digit, each with the ASCII character it
 # looks like. The profile leaves them out. The list is written here and
 # not derived, so that it cannot change with Unicode's data (D10): it was
-# seeded from UTS #39's confusables of SEED_VERSION, the owner's decisions
-# of 2026-10-18 applied, and completed by hand.
+# seeded from UTS #39's confusables of SEED_VERSION and completed by hand,
+# by the owner's decisions of 2026-10-18 (D10 and G2 of docs/plans/utf8.md):
+# what UTS #39's Identifier_Type calls Recommended is left to the lints.
 SEED_VERSION = "18.0.0"
+# the identifier characters whose skeleton is one character of Standard ML's
+# punctuation, but the 9 that are Recommended, which stay: U+0586 ARMENIAN
+# SMALL LETTER FEH, U+05D9 HEBREW LETTER YOD, U+0660 ARABIC-INDIC DIGIT ZERO,
+# U+06F0 EXTENDED ARABIC-INDIC DIGIT ZERO, U+0903 DEVANAGARI SIGN VISARGA,
+# U+0A83 GUJARATI SIGN VISARGA, U+30CE KATAKANA LETTER NO, U+4E36 and U+4E3F
 SEEDED_PUNCTUATION = {
     0x01C3: '!',  # LATIN LETTER RETROFLEX CLICK
     0x0241: '?',  # LATIN CAPITAL LETTER GLOTTAL STOP
@@ -526,17 +532,11 @@ SEEDED_PUNCTUATION = {
     0x02CB: "'",  # MODIFIER LETTER GRAVE ACCENT
     0x02D0: ':',  # MODIFIER LETTER TRIANGULAR COLON
     0x0374: "'",  # GREEK NUMERAL SIGN
-    0x0586: '$',  # ARMENIAN SMALL LETTER FEH
-    0x05D9: "'",  # HEBREW LETTER YOD
     0x0640: '_',  # ARABIC TATWEEL
-    0x0660: '.',  # ARABIC-INDIC DIGIT ZERO
-    0x06F0: '.',  # EXTENDED ARABIC-INDIC DIGIT ZERO
     0x07F4: "'",  # NKO HIGH TONE APOSTROPHE
     0x07F5: "'",  # NKO LOW TONE APOSTROPHE
     0x07FA: '_',  # NKO LAJANYALAN
-    0x0903: ':',  # DEVANAGARI SIGN VISARGA
     0x097D: '?',  # DEVANAGARI LETTER GLOTTAL STOP
-    0x0A83: ':',  # GUJARATI SIGN VISARGA
     0x13AE: '?',  # CHEROKEE LETTER HE
     0x1429: '+',  # CANADIAN SYLLABICS FINAL PLUS
     0x1433: '>',  # CANADIAN SYLLABICS PO
@@ -556,9 +556,6 @@ SEEDED_PUNCTUATION = {
     0x2D51: '!',  # TIFINAGH LETTER TUAREG YANG
     0x2D66: '<',  # TIFINAGH LETTER YE
     0x3033: '/',  # VERTICAL KANA REPEAT MARK UPPER HALF
-    0x30CE: '/',  # KATAKANA LETTER NO
-    0x4E36: '\\',  # CJK UNIFIED IDEOGRAPH-4E36
-    0x4E3F: '/',  # CJK UNIFIED IDEOGRAPH-4E3F
     0xA4F8: '.',  # LISU LETTER TONE MYA TI
     0xA4F9: ',',  # LISU LETTER TONE NA PO
     0xA4FD: ':',  # LISU LETTER TONE MYA JEU
@@ -716,21 +713,52 @@ SEEDED_DIGITS = {
     0x1FBF8: '8',  # SEGMENTED DIGIT EIGHT
     0x1FBF9: '9',  # SEGMENTED DIGIT NINE
 }
+# the decimal digits that look like 0 and 1, which the skeletons map to the
+# letters O and l, and that are not Recommended; the two digits one that are
+# bare strokes, U+11DE1 and U+1E141, are among the lookalikes of `|` below
+ZEROS_AND_ONES = {
+    0x07C0: '0',  # NKO DIGIT ZERO
+    0xFF10: '0',  # FULLWIDTH DIGIT ZERO
+    0xFF11: '1',  # FULLWIDTH DIGIT ONE
+    0x118E0: '0',  # WARANG CITI DIGIT ZERO
+    0x11DE0: '0',  # TOLONG SIKI DIGIT ZERO
+    0x1CCF0: '0',  # OUTLINED DIGIT ZERO
+    0x1CCF1: '1',  # OUTLINED DIGIT ONE
+    0x1D7CE: '0',  # MATHEMATICAL BOLD DIGIT ZERO
+    0x1D7CF: '1',  # MATHEMATICAL BOLD DIGIT ONE
+    0x1D7D8: '0',  # MATHEMATICAL DOUBLE-STRUCK DIGIT ZERO
+    0x1D7D9: '1',  # MATHEMATICAL DOUBLE-STRUCK DIGIT ONE
+    0x1D7E2: '0',  # MATHEMATICAL SANS-SERIF DIGIT ZERO
+    0x1D7E3: '1',  # MATHEMATICAL SANS-SERIF DIGIT ONE
+    0x1D7EC: '0',  # MATHEMATICAL SANS-SERIF BOLD DIGIT ZERO
+    0x1D7ED: '1',  # MATHEMATICAL SANS-SERIF BOLD DIGIT ONE
+    0x1D7F6: '0',  # MATHEMATICAL MONOSPACE DIGIT ZERO
+    0x1D7F7: '1',  # MATHEMATICAL MONOSPACE DIGIT ONE
+    0x1E140: '0',  # NYIAKENG PUACHUE HMONG DIGIT ZERO
+    0x1E2F0: '0',  # WANCHO DIGIT ZERO
+    0x1FBF0: '0',  # SEGMENTED DIGIT ZERO
+    0x1FBF1: '1',  # SEGMENTED DIGIT ONE
+}
 # By hand: the middle dot, which no skeleton maps (it is the prototype of
 # others), and the lookalikes of `|`, which the skeletons map to `l`: those
-# that the code charts of Unicode 18.0 draw as a bare vertical stroke, with
-# no serif, foot, hook, loop or slant, and whose Identifier_Type is not
-# Recommended (the owner's rule for the digits).
+# that the code charts of Unicode 18.0 draw as a stroke, bare, short,
+# slanted, broken, curled or with serifs, and whose Identifier_Type is not
+# Recommended. U+1FBF1 SEGMENTED DIGIT ONE, a broken bar, is among the digits
+# above.
 BY_HAND = {
     0x00B7: '.',  # MIDDLE DOT
     0x01C0: '|',  # LATIN LETTER DENTAL CLICK
     0x07CA: '|',  # NKO LETTER A
     0x16C1: '|',  # RUNIC LETTER ISAZ IS ISS I
+    0x217C: '|',  # SMALL ROMAN NUMERAL FIFTY
+    0x2C92: '|',  # COPTIC CAPITAL LETTER IAUDA
     0x2D4F: '|',  # TIFINAGH LETTER YAN
     0xA4F2: '|',  # LISU LETTER I
+    0xA7FE: '|',  # LATIN EPIGRAPHIC LETTER I LONGA
     0xFE8D: '|',  # ARABIC LETTER ALEF ISOLATED FORM
     0x1028A: '|',  # LYCIAN LETTER J
     0x10309: '|',  # OLD ITALIC LETTER I
+    0x1050E: '|',  # ELBASAN LETTER JE
     0x10926: '|',  # LYDIAN LETTER I
     0x10C3E: '|',  # OLD TURKIC LETTER ORKHON AES
     0x10CA5: '|',  # OLD HUNGARIAN CAPITAL LETTER ESZ
@@ -740,6 +768,8 @@ BY_HAND = {
     0x16F28: '|',  # MIAO LETTER GHA
     0x1D5C5: '|',  # MATHEMATICAL SANS-SERIF SMALL L
     0x1D5F9: '|',  # MATHEMATICAL SANS-SERIF BOLD SMALL L
+    0x1D62D: '|',  # MATHEMATICAL SANS-SERIF ITALIC SMALL L
+    0x1D661: '|',  # MATHEMATICAL SANS-SERIF BOLD ITALIC SMALL L
     0x1E141: '|',  # NYIAKENG PUACHUE HMONG DIGIT ONE
     0x1EE00: '|',  # ARABIC MATHEMATICAL ALEF
 }
@@ -796,8 +826,9 @@ def identifiers(p):
     ignorable = {c for lo, hi in FROZEN_IGNORABLE for c in range(lo, hi + 1)}
     look = dict(SEEDED_PUNCTUATION)
     look.update(SEEDED_DIGITS)
+    look.update(ZEROS_AND_ONES)
     look.update(BY_HAND)
-    assert len(look) == len(SEEDED_PUNCTUATION) + len(SEEDED_DIGITS) + len(BY_HAND)
+    assert len(look) == len(SEEDED_PUNCTUATION) + len(SEEDED_DIGITS) + len(ZEROS_AND_ONES) + len(BY_HAND)
     if not ignorable <= xc or not set(look) <= xc or min(look) < 0x80:
         sys.exit("a frozen code point is not XID_Continue above ASCII")
     # what the confusables give: the seed, checked while the data is that
@@ -805,28 +836,33 @@ def identifiers(p):
     skeleton = skeleton_of(p)
     types = identifier_types(p)
     recommended = lambda c: "Recommended" in types.get(c, [])
-    seed_p, seed_d, ell = {}, {}, set()
+    digit = {c for lo, hi, f in records(p("DerivedGeneralCategory.txt")) if f[0] == "Nd"
+             for c in range(lo, hi + 1)}
+    seed_p, seed_d, seed_z, ell = {}, {}, {}, set()
     for c in sorted(xc):
-        if c < 0x80:
+        if c < 0x80 or recommended(c):
             continue
         s = skeleton([c])
         if len(s) == 1 and s[0] < 0x80:
             if chr(s[0]) in SML_PUNCTUATION:
                 seed_p[c] = chr(s[0])
-            elif chr(s[0]).isdigit() and not recommended(c):
+            elif chr(s[0]).isdigit():
                 seed_d[c] = chr(s[0])
-            elif chr(s[0]) == "l":
+            elif chr(s[0]) in "Ol" and c in digit:
+                seed_z[c] = "0" if chr(s[0]) == "O" else "1"
+            if chr(s[0]) == "l":
                 ell.add(c)
-    hand_ok = all((c == 0xB7 and ch == ".") or (c in ell and ch == "|" and not recommended(c))
-                  for c, ch in BY_HAND.items())
-    same = seed_p == SEEDED_PUNCTUATION and seed_d == SEEDED_DIGITS and hand_ok
+    hand_ok = all((c == 0xB7 and ch == ".") or (c in ell and ch == "|") for c, ch in BY_HAND.items())
+    seeded = {c: ch for c, ch in seed_z.items() if c not in BY_HAND}
+    same = seed_p == SEEDED_PUNCTUATION and seed_d == SEEDED_DIGITS and seeded == ZEROS_AND_ONES and hand_ok
     if VERSION == SEED_VERSION:
         if not same or ignorable != xc & di:
             sys.exit("the frozen sets are not what Unicode %s's data gives" % VERSION)
     elif not same:
-        print("note: the confusables of %s would seed the lookalikes otherwise: + %s, - %s"
-              % (VERSION, sorted("%04X" % c for c in set(seed_p) | set(seed_d) if c not in look),
-                 sorted("%04X" % c for c in look if c not in seed_p and c not in seed_d and c not in BY_HAND)))
+        seeds = set(seed_p) | set(seed_d) | set(seeded)
+        print("note: the data of %s would seed the lookalikes otherwise: + %s, - %s"
+              % (VERSION, sorted("%04X" % c for c in seeds if c not in look),
+                 sorted("%04X" % c for c in look if c not in seeds and c not in BY_HAND)))
     excluded = ignorable | set(look)
     # the profile, a value of each code point: 0 not XID_Continue, 1
     # XID_Continue only, 2 XID_Start, 3 XID_Continue but left out
@@ -874,9 +910,9 @@ def identifiers(p):
             "end", ""]
     open("lib/unicode/identifier_data.sml", "w").write("\n".join(data))
     return ("XID_Start %d, XID_Continue %d, Default_Ignorable %d; frozen: ignorable %d, lookalikes %d "
-            "(%d punctuation, %d digits, %d by hand); profile %d blocks of %d below 0x%X"
+            "(%d punctuation, %d digits 2 to 9, %d digits 0 and 1, %d by hand); profile %d blocks of %d below 0x%X"
             % (len(xs), len(xc), len(di), len(ignorable), len(look), len(SEEDED_PUNCTUATION),
-               len(SEEDED_DIGITS), len(BY_HAND), len(blocks), BLOCK, limit))
+               len(SEEDED_DIGITS), len(ZEROS_AND_ONES), len(BY_HAND), len(blocks), BLOCK, limit))
 
 
 # ---- UTS #39, Unicode Security Mechanisms: identifier types, scripts,
