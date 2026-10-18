@@ -17,7 +17,7 @@
 - `ceil` (val): [REAL](../sig/REAL.md#val-ceil)
 - `CF` (str): [POSIX_TTY](../sig/POSIX_TTY.md#str-cf)
 - `Char` (str): [TEXT](../sig/TEXT.md#str-char)
-- `char` (type): [CHAR](../sig/CHAR.md#type-char), [STRING](../sig/STRING.md#type-char), [SUBSTRING](../sig/SUBSTRING.md#type-char)
+- `char` (type): [CHAR](../sig/CHAR.md#type-char), [STRING](../sig/STRING.md#type-char), [STRING_CVT](../sig/STRING_CVT.md#type-char), [SUBSTRING](../sig/SUBSTRING.md#type-char)
 - `CharArray` (str): [TEXT](../sig/TEXT.md#str-chararray)
 - `CharArraySlice` (str): [TEXT](../sig/TEXT.md#str-chararrayslice)
 - `charToByte` (val): [BYTE](../sig/BYTE.md#val-chartobyte)

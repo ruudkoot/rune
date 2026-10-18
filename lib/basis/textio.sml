@@ -2,7 +2,11 @@
    character, a line or a string at a time: the imperative text streams of
    TEXT_IO.
 
-   Implements: TEXT_IO
+   Implements: TEXT_IO where type StreamIO.vector = CharVector.vector where
+   type StreamIO.elem = Char.char where type StreamIO.substring =
+   Substring.substring where type StreamIO.reader = TextPrimIO.reader where
+   type StreamIO.writer = TextPrimIO.writer where type StreamIO.pos =
+   TextPrimIO.pos
 
    Implements: IMPERATIVE_IO *)
 structure TextIO =
@@ -16,13 +20,17 @@ struct
     (* TextIO.StreamIO: the functional text streams under `TextIO`, with the
        operations on lines and substrings of TEXT_STREAM_IO.
 
-       Implements: TEXT_STREAM_IO where type reader = TextPrimIO.reader where
-       type writer = TextPrimIO.writer where type pos = TextPrimIO.pos
+       Implements: TEXT_STREAM_IO where type vector = CharVector.vector where
+       type elem = Char.char where type substring = Substring.substring where
+       type reader = TextPrimIO.reader where type writer = TextPrimIO.writer
+       where type pos = TextPrimIO.pos
 
        Implements: STREAM_IO *)
     structure StreamIO =
     struct
       open SI
+
+      type substring = Substring.substring
 
       (* "ln returns all characters from the current position up to and
          including the next newline (#"\n") character. If it detects an
@@ -58,6 +66,7 @@ struct
 
   type vector = string
   type elem = char
+  type substring = Substring.substring
   datatype instream = datatype Imperative.instream
   datatype outstream = datatype Imperative.outstream
 

@@ -1,9 +1,11 @@
 (* StringCvt: the types and helpers of the fmt and scan functions. Written on
    primitives, without another structure, because most others require it.
 
-   Implements: STRING_CVT *)
+   Implements: STRING_CVT where type char = char where type string = string *)
 structure StringCvt =
 struct
+  type char = char
+  type string = string
   datatype radix = BIN | OCT | DEC | HEX
   datatype realfmt = SCI of int option | FIX of int option | GEN of int option | EXACT
   type ('a, 'b) reader = 'b -> ('a * 'b) option

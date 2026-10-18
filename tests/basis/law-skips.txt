@@ -24,6 +24,13 @@ STRING.compare/law-1@WideString | UNTESTED | it names `Char.compare`, and the ch
 STRING.toString/law-1@WideString | UNTESTED | it names `Char.toString`, and the characters of `WideString` are `WideChar.char`.
 STRING.fromString/law-1@WideString | UNTESTED | `StringCvt.scanString` gives `scan` the characters of a `String.string`, and `WideString.scan` reads those of `WideChar.char`.
 SUBSTRING.compare/law-1@WideSubstring | UNTESTED | it names `String.compare`, and the strings of `WideSubstring` are `WideString.string`.
+STRING_CVT.skipWS/law-1@WideStringCvt | UNTESTED | it names `Char.isSpace`, and the characters of `WideStringCvt` are `WideChar.char`.
+
+# ---- The laws of the streams at WideTextIO, which matches TEXT_IO since the
+# deviation TEXT_IO/generic: lib/test/property/basis has the arbitraries of
+# the streams of TextIO (system.sml) and none yet of WideTextIO's.
+IMPERATIVE_IO.*@WideTextIO | UNTESTED | lib/test/property/basis has no arbitrary of a stream of `WideTextIO` yet; those of `TextIO` are in its system.sml.
+STREAM_IO.*@WideTextIO.StreamIO | UNTESTED | lib/test/property/basis has no arbitrary of a stream of `WideTextIO.StreamIO` yet; those of `TextIO.StreamIO` are in its system.sml.
 
 # ---- Laws the tester gives up on: their condition is seldom met (variables
 # drawn together, for later: docs/plans/quickcheck.md, Later)

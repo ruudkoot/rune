@@ -5,28 +5,42 @@
 |  |  |
 | --- | --- |
 | Status | required |
-| Implementations | 1 |
-| Documentation | 2 of 2 entries documented |
-| Tests | 16 checks of 2 entries |
+| Implementations | 2 |
+| Documentation | 3 of 3 entries documented |
+| Tests | 18 checks of 2 entries |
 | Source | [lib/basis/sig\_text\_stream\_io.sml](../../../../lib/basis/sig_text_stream_io.sml) |
 
 ## Synopsis
 
 ```sml
 signature TEXT_STREAM_IO
-structure TextIO.StreamIO : TEXT_STREAM_IO where type reader = TextPrimIO.reader where type writer = TextPrimIO.writer where type pos = TextPrimIO.pos
+structure TextIO.StreamIO : TEXT_STREAM_IO where type vector = CharVector.vector where type elem = Char.char where type substring = Substring.substring where type reader = TextPrimIO.reader where type writer = TextPrimIO.writer where type pos = TextPrimIO.pos
+structure WideTextIO.StreamIO : TEXT_STREAM_IO where type vector = WideCharVector.vector where type elem = WideChar.char where type substring = WideSubstring.substring where type reader = WideTextPrimIO.reader where type writer = WideTextPrimIO.writer where type pos = WideTextPrimIO.pos
 ```
 
 | Implementation |  | Source |
 | --- | --- | --- |
 | [`TextIO.StreamIO`](../str/TextIO.StreamIO.md) | TextIO.StreamIO: the functional text streams under [`TextIO`](../str/TextIO.md), with the operations on lines and substrings of TEXT\_STREAM\_IO. | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
+| [`WideTextIO.StreamIO`](../str/WideTextIO.StreamIO.md) | WideTextIO.StreamIO: the functional streams of wide text under [`WideTextIO`](../str/WideTextIO.md), with the operations on lines and substrings of TEXT\_STREAM\_IO. | [lib/basis/widetextio.sml](../../../../lib/basis/widetextio.sml) |
 
 The functional streams of [`STREAM_IO`](../sig/STREAM_IO.md) where the elements are characters,
 with the two operations that only text has: reading a line and writing a
 substring.
 
-Everything of [`STREAM_IO`](../sig/STREAM_IO.md) holds here unchanged; the `include` fixes the
-elements to `char` and the vectors to `string`.
+Everything of [`STREAM_IO`](../sig/STREAM_IO.md) holds here unchanged. The elements are the
+characters of one kind of text and the vectors its strings: `char` and
+`string` for [`TextIO.StreamIO`](../str/TextIO.StreamIO.md), [`WideChar.char`](../sig/CHAR.md#type-char) and [`WideString.string`](../sig/STRING.md#type-string)
+for [`WideTextIO.StreamIO`](../str/WideTextIO.StreamIO.md).
+
+> **Deviation** `TEXT_STREAM_IO/generic`. The page writes `include STREAM_IO where type vector = CharVector.vector where type elem = Char.char`, and
+> [`substring`](#type-substring) for [`Substring.substring`](../sig/SUBSTRING.md#val-substring), so no stream of wide characters
+> can match it, and the optional [`WideTextIO.StreamIO`](../str/WideTextIO.StreamIO.md) the page declares
+> has no signature. Here the three types are the signature's own --
+> [`substring`](#type-substring) is a type of it, as `vector_slice` is of [`PRIM_IO`](../sig/PRIM_IO.md) \-- and
+> [`TextIO`](../str/TextIO.md) is declared `where type StreamIO.vector = CharVector.vector where type StreamIO.elem = Char.char where type StreamIO.substring = Substring.substring`, which gives [`TextIO.StreamIO`](../str/TextIO.StreamIO.md) the very types of the
+> page. A structure that matches the page's signature matches this one
+> once it has the type [`substring`](#type-substring). The change of the specification it
+> proposes is in docs/unicode.md.
 
 ## Interface
 
@@ -34,16 +48,13 @@ elements to `char` and the vectors to `string`.
 signature TEXT_STREAM_IO =
 sig
   include STREAM_IO
-    where type vector = CharVector.vector
-    where type elem = Char.char
-  val <a href="#val-inputline">inputLine</a> : instream -&gt; (string * instream) option
+  type <a href="#type-substring">substring</a>
+  val <a href="#val-inputline">inputLine</a> : instream -&gt; (vector * instream) option
   val <a href="#val-outputsubstr">outputSubstr</a> : outstream * substring -&gt; unit
 end
 </pre>
 
-**Included from [`STREAM_IO`](../sig/STREAM_IO.md)**: `include STREAM_IO
-  where type vector = CharVector.vector
-  where type elem = Char.char`
+**Included from [`STREAM_IO`](../sig/STREAM_IO.md)**: `include STREAM_IO`
 
 | Member |  |  |
 | --- | --- | --- |
@@ -77,10 +88,19 @@ end
 | [`setPosOut`](../sig/STREAM_IO.md#val-setposout) | val | `setPosOut opos` flushes the stream of `opos`, moves it to that position, and is that stream. |
 | [`filePosOut`](../sig/STREAM_IO.md#val-fileposout) | val | `filePosOut opos` is the position that `opos` records, without its stream. |
 
+### <a name="type-substring"></a>`substring`
+
+```sml
+type substring
+```
+
+The type of the substrings of the vectors: [`Substring.substring`](../sig/SUBSTRING.md#val-substring) for
+[`TextIO.StreamIO`](../str/TextIO.StreamIO.md), [`WideSubstring.substring`](../sig/SUBSTRING.md#val-substring) for [`WideTextIO.StreamIO`](../str/WideTextIO.StreamIO.md).
+
 ### <a name="val-inputline"></a>`inputLine`
 
 ```sml
-val inputLine : instream -> (string * instream) option
+val inputLine : instream -> (vector * instream) option
 ```
 
 `inputLine f` is `SOME` of the next line, with its newline, and the stream after it, or `NONE` at an end of stream.
@@ -94,9 +114,11 @@ val inputLine : instream -> (string * instream) option
 
 **Example** `Option.map #1 (inputLine (TextIO.getInstream (TextIO.openString "a\nb"))) = SOME "a\n"`
 
-<details><summary>Tests (11)</summary>
+<details><summary>Tests (12)</summary>
 
 For `TextIO.StreamIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/basis/textio_streamio.sml): `lines-then-NONE` &middot; `last-line-gets-a-newline` &middot; `empty-stream` &middot; `at-end-of-stream` &middot; `line-ends-at-end-of-stream` &middot; `empty-lines` &middot; `same-result-twice` &middot; `residual-stream` &middot; `does-not-change-the-stream` &middot; `long-line` &middot; `carriage-return-is-kept`
+
+For `WideTextIO.StreamIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `of-a-string`
 
 </details>
 
@@ -108,7 +130,8 @@ val outputSubstr : outstream * substring -> unit
 
 `outputSubstr (f, ss)` writes the characters of the substring `ss`.
 
-It is `output (f, Substring.string ss)`, and so raises what that raises,
+It is `output (f, Substring.string ss)` (of the substrings of its own
+kind of text), and so raises what that raises,
 with `"output"` as the `function` of the [`IO.Io`](../sig/IO.md#exn-io).
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the writer fails, or if the stream is closed or
@@ -120,9 +143,11 @@ terminated.
 
 </details>
 
-<details><summary>Tests (5)</summary>
+<details><summary>Tests (6)</summary>
 
 For `TextIO.StreamIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/basis/textio_streamio.sml): `is-output-of-the-string` &middot; `empty` &middot; `buffered` &middot; `LINE_BUF` &middot; `Io-closed`
+
+For `WideTextIO.StreamIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `writes-a-substring`
 
 </details>
 

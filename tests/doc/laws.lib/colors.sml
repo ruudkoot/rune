@@ -38,6 +38,11 @@ sig
      Int.min (Int.max (m, 0), n)` for `n` from `Arb.intRange (0, 5)` and `m`
      from `Arb.intRange (~2, 7)` *)
   val keep : (int -> bool) * int list -> int list
+
+  (* `count getc s` is how many wide characters `getc` reads from `s`.
+
+     Law: `count getc s >= 0` *)
+  val count : (WideChar.char, 'a) StringCvt.reader -> 'a -> int
 end
 
 (* Implements: COLORS *)
@@ -47,4 +52,5 @@ struct
   fun index Red = 0 | index Green = 1 | index Blue = 2
   fun fromIndex 0 = Red | fromIndex 1 = Green | fromIndex 2 = Blue | fromIndex _ = raise Subscript
   fun keep (f, l) = List.filter f l
+  fun count (getc : (WideChar.char, 'a) StringCvt.reader) s = case getc s of SOME (_, s') => 1 + count getc s' | NONE => 0
 end

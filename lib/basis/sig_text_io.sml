@@ -26,29 +26,45 @@
    substructure first, then the members of `IMPERATIVE_IO` in full, then the
    ones of `TEXT_IO`.
 
-   Deviation: `TEXT_IO/WideTextIO-not-matched`. The optional `WideTextIO` is
-   not matched against this signature, because the types here are written
-   `string` and `char`; the suite checks that its readers and writers match
-   `PRIM_IO`, and that its vectors are the strings of `WideString` and its
-   elements the characters of `WideChar`, instead.
+   Deviation: `TEXT_IO/generic`. The page writes the types of `TEXT_IO` as
+   those of `TextIO` -- `string`, `char`, `substring` and the readers and
+   writers of `TextPrimIO` -- so the optional `WideTextIO`, which the page
+   declares `:> TEXT_IO`, cannot match it. Here they are the signature's
+   own: what is read and written is `vector`, one of it `elem`, a piece of
+   it `substring`, and the readers and writers are left to the declaration,
+   `structure TextIO :> TEXT_IO where type StreamIO.vector =
+   CharVector.vector where type StreamIO.elem = Char.char where type
+   StreamIO.substring = Substring.substring where type StreamIO.reader =
+   TextPrimIO.reader where type StreamIO.writer = TextPrimIO.writer where
+   type StreamIO.pos = TextPrimIO.pos`, which gives `TextIO` the very types
+   of the page; `WideTextIO` is declared the same way with the wide ones.
+   The names of files stay `string`. The change of the specification it
+   proposes is in docs/unicode.md.
 
-   Pinned by: `WideTextIO.vector/is-WideString.string`,
-   `WideTextIO.elem/is-WideChar.char`, `WideTextPrimIO:PRIM_IO/matches` *)
+   Pinned by: `TextIO:TEXT_IO/generic`, `WideTextIO:TEXT_IO/generic`,
+   `TextIO:TEXT_IO/signature-TEXT_IO`,
+   `WideTextIO:TEXT_IO/vector-is-WideString.string`,
+   `WideTextIO:TEXT_IO/elem-is-WideChar.char` *)
 signature TEXT_IO =
 sig
-  (* The functional text streams underneath, with the readers and writers of `TextPrimIO`. *)
+  (* The functional text streams underneath, with the readers and writers of
+     `TextPrimIO` for `TextIO` and of `WideTextPrimIO` for `WideTextIO`. *)
   structure StreamIO : TEXT_STREAM_IO
-    where type reader = TextPrimIO.reader
-    where type writer = TextPrimIO.writer
-    where type pos = TextPrimIO.pos
 
   (* ---- The members of IMPERATIVE_IO ---- *)
 
-  (* The type of what is read and written: `string`. *)
+  (* The type of what is read and written: `string` for `TextIO`,
+     `WideString.string` for `WideTextIO`. *)
   type vector = StreamIO.vector
 
-  (* The type of the elements: `char`. *)
+  (* The type of the elements: `char` for `TextIO`, `WideChar.char` for
+     `WideTextIO`. *)
   type elem = StreamIO.elem
+
+  (* The type of the pieces of what is read and written:
+     `Substring.substring` for `TextIO`, `WideSubstring.substring` for
+     `WideTextIO`. *)
+  type substring = StreamIO.substring
 
   (* The type of the input streams. *)
   type instream
@@ -203,7 +219,7 @@ sig
 
      Example: `let val s = openString "a\nb" in (inputLine s, inputLine s,
      inputLine s) end = (SOME "a\n", SOME "b\n", NONE)` *)
-  val inputLine : instream -> string option
+  val inputLine : instream -> vector option
 
   (* `outputSubstr (f, ss)` writes the characters of the substring `ss`.
 
@@ -242,7 +258,7 @@ sig
   (* `openString s` is a stream reading the characters of `s`, and no file.
 
      Example: `inputAll (openString "xyz") = "xyz"` *)
-  val openString : string -> instream
+  val openString : vector -> instream
 
   (* The standard input of the program. *)
   val stdIn : instream
@@ -255,8 +271,8 @@ sig
 
   (* `print s` writes `s` to `stdOut` and flushes it.
 
-     It is the `print` of the top-level environment. *)
-  val print : string -> unit
+     `TextIO.print` is the `print` of the top-level environment. *)
+  val print : vector -> unit
 
   (* `scanStream scan f` runs a scanner over `f` and moves `f` to where it stopped.
 
@@ -272,7 +288,7 @@ sig
 
      Example: `scanStream (Int.scan StringCvt.DEC) (openString " 42 rest") =
      SOME 42` *)
-  val scanStream : ((Char.char, StreamIO.instream) StringCvt.reader
+  val scanStream : ((elem, StreamIO.instream) StringCvt.reader
                     -> ('a, StreamIO.instream) StringCvt.reader)
                    -> instream -> 'a option
 end

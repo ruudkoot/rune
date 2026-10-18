@@ -41,7 +41,7 @@ What each means is on [`INT_INF`](../sig/INT_INF.md) and [`INTEGER`](../sig/INTE
 | val | [`compare`](../sig/INTEGER.md#val-compare) | `IntInf.int * IntInf.int -> order` |
 | val | [`div`](../sig/INTEGER.md#val-div) | `IntInf.int * IntInf.int -> IntInf.int` |
 | val | [`divMod`](../sig/INT_INF.md#val-divmod) | `IntInf.int * IntInf.int -> IntInf.int * IntInf.int` |
-| val | [`fmt`](../sig/INTEGER.md#val-fmt) | `StringCvt.radix -> IntInf.int -> string` |
+| val | [`fmt`](../sig/INTEGER.md#val-fmt) | `RuneWideStringCvt.radix -> IntInf.int -> string` |
 | val | [`fromInt`](../sig/INTEGER.md#val-fromint) | `int -> IntInf.int` |
 | val | [`fromLarge`](../sig/INTEGER.md#val-fromlarge) | `IntInf.int -> IntInf.int` |
 | val | [`fromString`](../sig/INTEGER.md#val-fromstring) | `string -> IntInf.int option` |
@@ -59,7 +59,7 @@ What each means is on [`INT_INF`](../sig/INT_INF.md) and [`INTEGER`](../sig/INTE
 | val | [`quotRem`](../sig/INT_INF.md#val-quotrem) | `IntInf.int * IntInf.int -> IntInf.int * IntInf.int` |
 | val | [`rem`](../sig/INTEGER.md#val-rem) | `IntInf.int * IntInf.int -> IntInf.int` |
 | val | [`sameSign`](../sig/INTEGER.md#val-samesign) | `IntInf.int * IntInf.int -> bool` |
-| val | [`scan`](../sig/INTEGER.md#val-scan) | `StringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (IntInf.int * 'a) option` |
+| val | [`scan`](../sig/INTEGER.md#val-scan) | `RuneWideStringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (IntInf.int * 'a) option` |
 | val | [`sign`](../sig/INTEGER.md#val-sign) | `IntInf.int -> int` |
 | val | [`toInt`](../sig/INTEGER.md#val-toint) | `IntInf.int -> int` |
 | val | [`toLarge`](../sig/INTEGER.md#val-tolarge) | `IntInf.int -> IntInf.int` |

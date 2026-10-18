@@ -35,7 +35,7 @@ What each means is on [`INTEGER`](../sig/INTEGER.md); the types are this structu
 | val | [`abs`](../sig/INTEGER.md#val-abs) | `Int8.int -> Int8.int` |
 | val | [`compare`](../sig/INTEGER.md#val-compare) | `Int8.int * Int8.int -> order` |
 | val | [`div`](../sig/INTEGER.md#val-div) | `Int8.int * Int8.int -> Int8.int` |
-| val | [`fmt`](../sig/INTEGER.md#val-fmt) | `StringCvt.radix -> Int8.int -> string` |
+| val | [`fmt`](../sig/INTEGER.md#val-fmt) | `RuneWideStringCvt.radix -> Int8.int -> string` |
 | val | [`fromInt`](../sig/INTEGER.md#val-fromint) | `int -> Int8.int` |
 | val | [`fromLarge`](../sig/INTEGER.md#val-fromlarge) | `IntInf.int -> Int8.int` |
 | val | [`fromString`](../sig/INTEGER.md#val-fromstring) | `string -> Int8.int option` |
@@ -48,7 +48,7 @@ What each means is on [`INTEGER`](../sig/INTEGER.md); the types are this structu
 | val | [`quot`](../sig/INTEGER.md#val-quot) | `Int8.int * Int8.int -> Int8.int` |
 | val | [`rem`](../sig/INTEGER.md#val-rem) | `Int8.int * Int8.int -> Int8.int` |
 | val | [`sameSign`](../sig/INTEGER.md#val-samesign) | `Int8.int * Int8.int -> bool` |
-| val | [`scan`](../sig/INTEGER.md#val-scan) | `StringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (Int8.int * 'a) option` |
+| val | [`scan`](../sig/INTEGER.md#val-scan) | `RuneWideStringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (Int8.int * 'a) option` |
 | val | [`sign`](../sig/INTEGER.md#val-sign) | `Int8.int -> int` |
 | val | [`toInt`](../sig/INTEGER.md#val-toint) | `Int8.int -> int` |
 | val | [`toLarge`](../sig/INTEGER.md#val-tolarge) | `Int8.int -> IntInf.int` |

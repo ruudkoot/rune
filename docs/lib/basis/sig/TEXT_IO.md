@@ -5,21 +5,23 @@
 |  |  |
 | --- | --- |
 | Status | required |
-| Implementations | 1 |
-| Documentation | 36 of 36 entries documented |
-| Tests | 234 checks of 35 entries |
+| Implementations | 2 |
+| Documentation | 37 of 37 entries documented |
+| Tests | 270 checks of 35 entries |
 | Source | [lib/basis/sig\_text\_io.sml](../../../../lib/basis/sig_text_io.sml) |
 
 ## Synopsis
 
 ```sml
 signature TEXT_IO
-structure TextIO : TEXT_IO
+structure TextIO : TEXT_IO where type StreamIO.vector = CharVector.vector where type StreamIO.elem = Char.char where type StreamIO.substring = Substring.substring where type StreamIO.reader = TextPrimIO.reader where type StreamIO.writer = TextPrimIO.writer where type StreamIO.pos = TextPrimIO.pos
+structure WideTextIO : TEXT_IO where type StreamIO.vector = WideCharVector.vector where type StreamIO.elem = WideChar.char where type StreamIO.substring = WideSubstring.substring where type StreamIO.reader = WideTextPrimIO.reader where type StreamIO.writer = WideTextPrimIO.writer where type StreamIO.pos = WideTextPrimIO.pos  (* optional *)
 ```
 
 | Implementation |  | Source |
 | --- | --- | --- |
 | [`TextIO`](../str/TextIO.md) | TextIO: text files and the standard streams, read and written a character, a line or a string at a time: the imperative text streams of TEXT\_IO. | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
+| [`WideTextIO`](../str/WideTextIO.md) | WideTextIO (optional in the specification): the imperative streams of the wide character, as TextIO is of `char`: [`TEXT_IO`](TEXT_IO.md) over [`WideString.string`](../sig/STRING.md#type-string) and [`WideChar.char`](../sig/CHAR.md#type-char), with the readers and writers of [`WideTextPrimIO`](../str/WideTextPrimIO.md) (the deviation `TEXT_IO/generic`, which makes that signature one of both). | [lib/basis/widetextio.sml](../../../../lib/basis/widetextio.sml) |
 
 Text files and the standard streams: the imperative streams of characters,
 with the ways of opening a file.
@@ -43,11 +45,16 @@ for newline. [`BIN_IO`](../sig/BIN_IO.md) is the same for bytes.
 > substructure first, then the members of [`IMPERATIVE_IO`](../sig/IMPERATIVE_IO.md) in full, then the
 > ones of [`TEXT_IO`](TEXT_IO.md).
 
-> **Deviation** `TEXT_IO/WideTextIO-not-matched`. The optional [`WideTextIO`](../str/WideTextIO.md) is
-> not matched against this signature, because the types here are written
-> `string` and `char`; the suite checks that its readers and writers match
-> [`PRIM_IO`](../sig/PRIM_IO.md), and that its vectors are the strings of [`WideString`](../str/WideString.md) and its
-> elements the characters of [`WideChar`](../str/WideChar.md), instead.
+> **Deviation** `TEXT_IO/generic`. The page writes the types of [`TEXT_IO`](TEXT_IO.md) as
+> those of [`TextIO`](../str/TextIO.md) \-- `string`, `char`, [`substring`](#type-substring) and the readers and
+> writers of [`TextPrimIO`](../str/TextPrimIO.md) \-- so the optional [`WideTextIO`](../str/WideTextIO.md), which the page
+> declares `:> TEXT_IO`, cannot match it. Here they are the signature's
+> own: what is read and written is [`vector`](#type-vector), one of it [`elem`](#type-elem), a piece of
+> it [`substring`](#type-substring), and the readers and writers are left to the declaration,
+> `structure TextIO :> TEXT_IO where type StreamIO.vector = CharVector.vector where type StreamIO.elem = Char.char where type StreamIO.substring = Substring.substring where type StreamIO.reader = TextPrimIO.reader where type StreamIO.writer = TextPrimIO.writer where type StreamIO.pos = TextPrimIO.pos`, which gives [`TextIO`](../str/TextIO.md) the very types
+> of the page; [`WideTextIO`](../str/WideTextIO.md) is declared the same way with the wide ones.
+> The names of files stay `string`. The change of the specification it
+> proposes is in docs/unicode.md.
 
 ## Contents
 
@@ -60,11 +67,9 @@ for newline. [`BIN_IO`](../sig/BIN_IO.md) is the same for bytes.
 signature TEXT_IO =
 sig
   structure <a href="#str-streamio">StreamIO</a> : TEXT_STREAM_IO
-    where type reader = TextPrimIO.reader
-    where type writer = TextPrimIO.writer
-    where type pos = TextPrimIO.pos
   type <a href="#type-vector">vector</a> = StreamIO.vector
   type <a href="#type-elem">elem</a> = StreamIO.elem
+  type <a href="#type-substring">substring</a> = StreamIO.substring
   type <a href="#type-instream">instream</a>
   type <a href="#type-outstream">outstream</a>
   val <a href="#val-input">input</a> : instream -&gt; vector
@@ -87,17 +92,17 @@ sig
   val <a href="#val-setoutstream">setOutstream</a> : outstream * StreamIO.outstream -&gt; unit
   val <a href="#val-getposout">getPosOut</a> : outstream -&gt; StreamIO.out_pos
   val <a href="#val-setposout">setPosOut</a> : outstream * StreamIO.out_pos -&gt; unit
-  val <a href="#val-inputline">inputLine</a> : instream -&gt; string option
+  val <a href="#val-inputline">inputLine</a> : instream -&gt; vector option
   val <a href="#val-outputsubstr">outputSubstr</a> : outstream * substring -&gt; unit
   val <a href="#val-openin">openIn</a> : string -&gt; instream
   val <a href="#val-openout">openOut</a> : string -&gt; outstream
   val <a href="#val-openappend">openAppend</a> : string -&gt; outstream
-  val <a href="#val-openstring">openString</a> : string -&gt; instream
+  val <a href="#val-openstring">openString</a> : vector -&gt; instream
   val <a href="#val-stdin">stdIn</a> : instream
   val <a href="#val-stdout">stdOut</a> : outstream
   val <a href="#val-stderr">stdErr</a> : outstream
-  val <a href="#val-print">print</a> : string -&gt; unit
-  val <a href="#val-scanstream">scanStream</a> : ((Char.char, StreamIO.instream) StringCvt.reader
+  val <a href="#val-print">print</a> : vector -&gt; unit
+  val <a href="#val-scanstream">scanStream</a> : ((elem, StreamIO.instream) StringCvt.reader
                     -&gt; ('a, StreamIO.instream) StringCvt.reader)
                    -&gt; instream -&gt; 'a option
 end
@@ -107,14 +112,12 @@ end
 
 ```sml
 structure StreamIO : TEXT_STREAM_IO
-  where type reader = TextPrimIO.reader
-  where type writer = TextPrimIO.writer
-  where type pos = TextPrimIO.pos
 ```
 
 A substructure: its members are described on the page of [`TEXT_STREAM_IO`](../sig/TEXT_STREAM_IO.md).
 
-The functional text streams underneath, with the readers and writers of [`TextPrimIO`](../str/TextPrimIO.md).
+The functional text streams underneath, with the readers and writers of
+[`TextPrimIO`](../str/TextPrimIO.md) for [`TextIO`](../str/TextIO.md) and of [`WideTextPrimIO`](../str/WideTextPrimIO.md) for [`WideTextIO`](../str/WideTextIO.md).
 
 ## The members of IMPERATIVE\_IO
 
@@ -124,7 +127,8 @@ The functional text streams underneath, with the readers and writers of [`TextPr
 type vector = StreamIO.vector
 ```
 
-The type of what is read and written: `string`.
+The type of what is read and written: `string` for [`TextIO`](../str/TextIO.md),
+[`WideString.string`](../sig/STRING.md#type-string) for [`WideTextIO`](../str/WideTextIO.md).
 
 <details><summary>Tests (1)</summary>
 
@@ -138,13 +142,24 @@ For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `
 type elem = StreamIO.elem
 ```
 
-The type of the elements: `char`.
+The type of the elements: `char` for [`TextIO`](../str/TextIO.md), [`WideChar.char`](../sig/CHAR.md#type-char) for
+[`WideTextIO`](../str/WideTextIO.md).
 
 <details><summary>Tests (1)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `is-char`
 
 </details>
+
+### <a name="type-substring"></a>`substring`
+
+```sml
+type substring = StreamIO.substring
+```
+
+The type of the pieces of what is read and written:
+[`Substring.substring`](../sig/SUBSTRING.md#val-substring) for [`TextIO`](../str/TextIO.md), [`WideSubstring.substring`](../sig/SUBSTRING.md#val-substring) for
+[`WideTextIO`](../str/WideTextIO.md).
 
 ### <a name="type-instream"></a>`instream`
 
@@ -192,9 +207,13 @@ val input : instream -> vector
 
 </details>
 
-<details><summary>Tests (8)</summary>
+<details><summary>Tests (11)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `at-least-one-character` &middot; `empty-file` &middot; `pieces-make-the-file` &middot; `empty-again-at-end-of-stream` &middot; `large` &middot; `after-inputLine` &middot; `empty-after-input-and-inputAll` &middot; `closed-stream`
+
+For `WideTextIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `what-is-there` &middot; `empty-at-end-of-stream`
+
+For `WideTextIO`, in [tests/basis/widetextio\_utf8.sml](../../../../tests/basis/widetextio_utf8.sml): `gives-the-characters-then-raises`
 
 </details>
 
@@ -218,11 +237,15 @@ val input1 : instream -> elem option
 
 </details>
 
-<details><summary>Tests (12)</summary>
+<details><summary>Tests (15)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `characters-then-NONE` &middot; `empty-file` &middot; `NONE-again-at-end-of-stream` &middot; `newline-NUL-and-high-characters` &middot; `removes-one-character` &middot; `NONE-after-input1-and-inputAll` &middot; `then-inputLine` &middot; `every-character` &middot; `large` &middot; `closed-stream` &middot; `file-grows-after-end-of-stream`
 
-In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`: `passes-an-end-of-stream`
+For `WideTextIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `first-character`
+
+For `WideTextIO`, in [tests/basis/widetextio\_utf8.sml](../../../../tests/basis/widetextio_utf8.sml): `gives-what-comes-before-a-bad-byte` &middot; `gives-what-comes-before-a-sequence-cut-short`
+
+In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`, `WideTextIO`: `passes-an-end-of-stream`
 
 </details>
 
@@ -247,9 +270,13 @@ longer than [`String.maxSize`](../sig/STRING.md#val-maxsize).
 
 </details>
 
-<details><summary>Tests (16)</summary>
+<details><summary>Tests (18)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `pieces-then-empty` &middot; `exactly-the-rest` &middot; `more-than-there-is` &middot; `one` &middot; `zero-reads-nothing` &middot; `empty-after-inputN-and-inputAll` &middot; `empty-file` &middot; `does-not-stop-at-a-newline` &middot; `Size-negative` (raises Size) &middot; `Size-negative-at-end-of-stream` (raises Size) &middot; `negative-reads-nothing` &middot; `more-than-maxSize-of-a-short-file` &middot; `large` &middot; `closed-stream` &middot; `random-mix-of-operations-*` &middot; `random-mix-of-operations-large-*`
+
+For `WideTextIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `counts-characters-not-bytes`
+
+For `WideTextIO`, in [tests/basis/widetextio\_utf8.sml](../../../../tests/basis/widetextio_utf8.sml): `gives-what-comes-before-a-bad-byte-in-a-later-block`
 
 </details>
 
@@ -275,11 +302,15 @@ than [`String.maxSize`](../sig/STRING.md#val-maxsize).
 
 </details>
 
-<details><summary>Tests (14)</summary>
+<details><summary>Tests (19)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `whole-file` &middot; `empty-file` &middot; `again-at-end-of-stream` &middot; `rest-after-inputLine` &middot; `empty-after-inputLine-and-inputAll` &middot; `every-character` &middot; `large` &middot; `no-final-newline-added` &middot; `file-grows-after-end-of-stream` &middot; `empty-after-input1-and-inputAll` &middot; `empty-after-lookahead-and-inputAll` &middot; `empty-after-endOfStream-and-inputAll` &middot; `empty-after-canInput-and-inputAll`
 
-In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`: `up-to-each-end-of-stream`
+For `WideTextIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `reads-utf-8` &middot; `Io-on-bytes-that-are-not-utf-8`
+
+For `WideTextIO`, in [tests/basis/widetextio\_utf8.sml](../../../../tests/basis/widetextio_utf8.sml): `reads-*` &middot; `refuses-*` (raises) &middot; `a-sequence-across-blocks-*`
+
+In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`, `WideTextIO`: `up-to-each-end-of-stream`
 
 </details>
 
@@ -297,9 +328,11 @@ val canInput : instream * int -> int option
 
 **Example** `canInput (openString (CharVector.tabulate (40, fn _ => #"a")), 40) = SOME 40`
 
-<details><summary>Tests (9)</summary>
+<details><summary>Tests (10)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `characters-available` &middot; `one` &middot; `more-than-there-is` &middot; `empty-file` &middot; `at-end-of-stream` &middot; `removes-nothing` &middot; `zero` &middot; `Size-negative` (raises Size) &middot; `closed-stream`
+
+For `WideTextIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `of-a-string`
 
 </details>
 
@@ -321,11 +354,13 @@ val lookahead : instream -> elem option
 
 </details>
 
-<details><summary>Tests (9)</summary>
+<details><summary>Tests (10)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `does-not-remove` &middot; `then-inputAll` &middot; `NONE-after-lookahead-and-inputAll` &middot; `then-inputLine` &middot; `empty-file` &middot; `after-each-line` &middot; `newline-and-NUL` &middot; `closed-stream`
 
-In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`: `does-not-pass-an-end-of-stream`
+For `WideTextIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `does-not-consume`
+
+In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`, `WideTextIO`: `does-not-pass-an-end-of-stream`
 
 </details>
 
@@ -351,7 +386,7 @@ val closeIn : instream -> unit
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `twice` &middot; `then-inputAll-is-empty` &middot; `then-inputLine-is-NONE` &middot; `then-inputAll-again` &middot; `unread-characters-are-dropped` &middot; `unread-lines-are-dropped` &middot; `other-streams-stay-open` &middot; `file-can-be-rewritten`
 
-In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`: `shared-functional-stream` &middot; `closes-the-reader`
+In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`, `WideTextIO`: `shared-functional-stream` &middot; `closes-the-reader`
 
 </details>
 
@@ -373,11 +408,13 @@ val endOfStream : instream -> bool
 
 </details>
 
-<details><summary>Tests (10)</summary>
+<details><summary>Tests (11)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `empty-file` &middot; `characters-available` &middot; `removes-nothing` &middot; `true-after-endOfStream-and-inputAll` &middot; `around-each-line` &middot; `after-inputAll` &middot; `true-then-inputLine-is-NONE` &middot; `closed-stream` &middot; `file-grows-after-end-of-stream`
 
-In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`: `more-after-an-end-of-stream`
+For `WideTextIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `after-everything`
+
+In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`, `WideTextIO`: `more-after-an-end-of-stream`
 
 </details>
 
@@ -405,11 +442,15 @@ nothing written, or if the file cannot be written to.
 
 </details>
 
-<details><summary>Tests (14)</summary>
+<details><summary>Tests (17)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `in-order` &middot; `empty-string` &middot; `every-character` &middot; `no-line-end-translation` &middot; `large` &middot; `large-size` &middot; `Io-closed-stream` (raises) &middot; `Io-closed-stream-cause` &middot; `Io-closed-stream-function` &middot; `Io-closed-stream-name` &middot; `closed-stream-writes-nothing` &middot; `random-chunks-*` &middot; `random-chunks-large`
 
-In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`: `shared-stream`
+For `WideTextIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `writes-utf-8`
+
+For `WideTextIO`, in [tests/basis/widetextio\_utf8.sml](../../../../tests/basis/widetextio_utf8.sml): `writes-*` &middot; `refuses-surrogate-*` (raises)
+
+In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`, `WideTextIO`: `shared-stream`
 
 </details>
 
@@ -429,9 +470,13 @@ val output1 : outstream * elem -> unit
 
 </details>
 
-<details><summary>Tests (8)</summary>
+<details><summary>Tests (10)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `in-order` &middot; `mixed-with-output` &middot; `every-character` &middot; `Io-closed-stream` (raises) &middot; `Io-closed-stream-cause` &middot; `Io-closed-stream-function` &middot; `Io-closed-stream-name` &middot; `large`
+
+For `WideTextIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `one-character-at-a-time`
+
+For `WideTextIO`, in [tests/basis/widetextio\_utf8.sml](../../../../tests/basis/widetextio_utf8.sml): `refuses-a-surrogate` (raises)
 
 </details>
 
@@ -447,11 +492,13 @@ val flushOut : outstream -> unit
 > no-op on terminated streams", and a closed stream is terminated too),
 > flushing a closed outstream does nothing rather than raising.
 
-<details><summary>Tests (5)</summary>
+<details><summary>Tests (6)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `makes-output-visible` &middot; `nothing-to-flush` &middot; `twice` &middot; `closed-stream-is-a-no-op`
 
-In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`: `flushes-the-stream`
+For `WideTextIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `reaches-the-file`
+
+In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`, `WideTextIO`: `flushes-the-stream`
 
 </details>
 
@@ -469,7 +516,7 @@ val closeOut : outstream -> unit
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `flushes` &middot; `twice` &middot; `other-streams-stay-open`
 
-In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`: `shared-stream` (raises) &middot; `flushes-and-closes`
+In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`, `WideTextIO`: `shared-stream` (raises) &middot; `flushes-and-closes`
 
 </details>
 
@@ -483,7 +530,7 @@ val mkInstream : StreamIO.instream -> instream
 
 <details><summary>Tests (3)</summary>
 
-In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`: `reads-the-functional-stream` &middot; `from-a-stream-part-read` &middot; `does-not-change-the-functional-stream`
+In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`, `WideTextIO`: `reads-the-functional-stream` &middot; `from-a-stream-part-read` &middot; `does-not-change-the-functional-stream`
 
 </details>
 
@@ -497,11 +544,13 @@ val getInstream : instream -> StreamIO.instream
 
 **Example** `Option.map #1 (StreamIO.input1 (getInstream (openString "ab"))) = SOME #"a"`
 
-<details><summary>Tests (4)</summary>
+<details><summary>Tests (5)</summary>
 
 For `TextIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/basis/textio_streamio.sml): `file`
 
-In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`: `current-version` &middot; `fresh` &middot; `input-from-it-is-read-again`
+For `WideTextIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `and-setInstream`
+
+In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`, `WideTextIO`: `current-version` &middot; `fresh` &middot; `input-from-it-is-read-again`
 
 </details>
 
@@ -515,7 +564,7 @@ val setInstream : instream * StreamIO.instream -> unit
 
 <details><summary>Tests (3)</summary>
 
-In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`: `redirects` &middot; `after-getInstream-and-input` &middot; `reread`
+In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`, `WideTextIO`: `redirects` &middot; `after-getInstream-and-input` &middot; `reread`
 
 </details>
 
@@ -529,7 +578,7 @@ val mkOutstream : StreamIO.outstream -> outstream
 
 <details><summary>Tests (2)</summary>
 
-In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`: `writes-to-the-stream` &middot; `keeps-the-buffer-mode`
+In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`, `WideTextIO`: `writes-to-the-stream` &middot; `keeps-the-buffer-mode`
 
 </details>
 
@@ -549,7 +598,7 @@ val getOutstream : outstream -> StreamIO.outstream
 
 <details><summary>Tests (2)</summary>
 
-In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`: `the-same-stream` &middot; `flushes`
+In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`, `WideTextIO`: `the-same-stream` &middot; `flushes`
 
 </details>
 
@@ -569,7 +618,7 @@ val setOutstream : outstream * StreamIO.outstream -> unit
 
 <details><summary>Tests (3)</summary>
 
-In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`: `redirects` &middot; `flushes-the-old-stream` &middot; `save-and-restore`
+In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`, `WideTextIO`: `redirects` &middot; `flushes-the-old-stream` &middot; `save-and-restore`
 
 </details>
 
@@ -587,7 +636,7 @@ val getPosOut : outstream -> StreamIO.out_pos
 
 For `TextIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/basis/textio_streamio.sml): `file`
 
-In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`: `Io-without-positions` (raises)
+In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`, `WideTextIO`: `Io-without-positions` (raises)
 
 </details>
 
@@ -609,9 +658,11 @@ What is written afterwards replaces what stood there.
 
 </details>
 
-<details><summary>Tests (1)</summary>
+<details><summary>Tests (2)</summary>
 
 For `TextIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/basis/textio_streamio.sml): `file-overwrites`
+
+For `WideTextIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `file-has-no-positions`
 
 </details>
 
@@ -620,7 +671,7 @@ For `TextIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/basis/text
 ### <a name="val-inputline"></a>`inputLine`
 
 ```sml
-val inputLine : instream -> string option
+val inputLine : instream -> vector option
 ```
 
 `inputLine f` is `SOME` of the next line, with its newline, or `NONE` at an end of stream.
@@ -645,9 +696,11 @@ every line ends in one.
 
 </details>
 
-<details><summary>Tests (15)</summary>
+<details><summary>Tests (16)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `NONE-after-inputLine-and-inputAll` &middot; `lines-then-NONE` &middot; `final-line-gets-newline` &middot; `one-character-without-newline` &middot; `empty-file` &middot; `NONE-again-at-end-of-stream` &middot; `empty-lines` &middot; `carriage-return-is-kept` &middot; `NUL-and-high-characters` &middot; `long-line-without-newline` &middot; `large` &middot; `after-inputAll` &middot; `file-grows-after-end-of-stream` &middot; `random-lines-*` &middot; `reads-on-after-a-consumed-end-of-stream`
+
+For `WideTextIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `to-the-newline`
 
 </details>
 
@@ -671,9 +724,11 @@ val outputSubstr : outstream * substring -> unit
 
 </details>
 
-<details><summary>Tests (9)</summary>
+<details><summary>Tests (10)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `part-of-a-string` &middot; `whole-string` &middot; `empty` &middot; `in-order` &middot; `mixed-with-output` &middot; `large` &middot; `Io-closed-stream-cause` &middot; `Io-closed-stream-function` &middot; `Io-closed-stream-name`
+
+For `WideTextIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `writes-the-substring`
 
 </details>
 
@@ -694,9 +749,11 @@ the cause and `"openIn"` as the `function`.
 
 </details>
 
-<details><summary>Tests (7)</summary>
+<details><summary>Tests (9)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `reads-the-file` &middot; `Io-file-does-not-exist` (raises) &middot; `Io-name` &middot; `Io-function` &middot; `Io-cause` &middot; `does-not-create-the-file` &middot; `Io-empty-name` (raises)
+
+For `WideTextIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `the-reader-has-no-positions` &middot; `Io-missing-file`
 
 </details>
 
@@ -723,9 +780,11 @@ val openOut : string -> outstream
 
 </details>
 
-<details><summary>Tests (9)</summary>
+<details><summary>Tests (10)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `creates-the-file` &middot; `truncates-an-existing-file` &middot; `truncates-at-open` &middot; `nothing-written` &middot; `Io-directory-does-not-exist` (raises) &middot; `Io-name` &middot; `Io-function` &middot; `Io-cause` &middot; `left-open-at-exit`
+
+For `WideTextIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `empties-the-file`
 
 </details>
 
@@ -745,16 +804,18 @@ val openAppend : string -> outstream
 
 </details>
 
-<details><summary>Tests (11)</summary>
+<details><summary>Tests (12)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `creates-the-file` &middot; `appends-to-an-existing-file` &middot; `keeps-the-contents` &middot; `three-times` &middot; `output1` &middot; `Io-directory-does-not-exist` (raises) &middot; `Io-name` &middot; `Io-function` &middot; `Io-cause` &middot; `Io-closed-stream` &middot; `random-pieces`
+
+For `WideTextIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `adds-to-the-file`
 
 </details>
 
 ### <a name="val-openstring"></a>`openString`
 
 ```sml
-val openString : string -> instream
+val openString : vector -> instream
 ```
 
 `openString s` is a stream reading the characters of `s`, and no file.
@@ -768,9 +829,11 @@ val openString : string -> instream
 
 </details>
 
-<details><summary>Tests (12)</summary>
+<details><summary>Tests (13)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `inputAll` &middot; `empty` &middot; `empty-inputLine` &middot; `inputLine` &middot; `streams-are-independent` &middot; `every-character` &middot; `large` &middot; `inputAll-twice` &middot; `closeIn` &middot; `random-lines-*` &middot; `random-mix-of-operations-*` &middot; `random-mix-of-operations-large`
+
+For `WideTextIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `reads-the-characters`
 
 </details>
 
@@ -782,9 +845,11 @@ val stdIn : instream
 
 The standard input of the program.
 
-<details><summary>Tests (5)</summary>
+<details><summary>Tests (6)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `inputLine-at-end-of-stream` &middot; `inputAll-at-end-of-stream` &middot; `input-at-end-of-stream` &middot; `input1-at-end-of-stream` &middot; `endOfStream`
+
+For `WideTextIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `inputAll-at-end-of-stream`
 
 </details>
 
@@ -796,9 +861,11 @@ val stdOut : outstream
 
 The standard output of the program.
 
-<details><summary>Tests (2)</summary>
+<details><summary>Tests (3)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `output-and-flushOut` &middot; `is-the-stream-of-print`
+
+For `WideTextIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `output-and-flushOut`
 
 </details>
 
@@ -810,32 +877,36 @@ val stdErr : outstream
 
 The standard error of the program, which holds nothing back: its mode is `NO_BUF`.
 
-<details><summary>Tests (1)</summary>
+<details><summary>Tests (2)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `output-and-flushOut`
+
+For `WideTextIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `output-and-flushOut`
 
 </details>
 
 ### <a name="val-print"></a>`print`
 
 ```sml
-val print : string -> unit
+val print : vector -> unit
 ```
 
 `print s` writes `s` to [`stdOut`](#val-stdout) and flushes it.
 
-It is the [`print`](#val-print) of the top-level environment.
+[`TextIO.print`](#val-print) is the [`print`](#val-print) of the top-level environment.
 
-<details><summary>Tests (2)</summary>
+<details><summary>Tests (3)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `empty-string` &middot; `returns-unit`
+
+For `WideTextIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `empty-string`
 
 </details>
 
 ### <a name="val-scanstream"></a>`scanStream`
 
 ```sml
-val scanStream : ((Char.char, StreamIO.instream) StringCvt.reader
+val scanStream : ((elem, StreamIO.instream) StringCvt.reader
                   -> ('a, StreamIO.instream) StringCvt.reader)
                  -> instream -> 'a option
 ```
@@ -852,9 +923,11 @@ reader and reads from a source, here the functional stream underneath.
 
 **Example** `scanStream (Int.scan StringCvt.DEC) (openString " 42 rest") = SOME 42`
 
-<details><summary>Tests (16)</summary>
+<details><summary>Tests (17)</summary>
 
 For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `number-then-rest` &middot; `stops-before-the-first-other-character` &middot; `negative-number` &middot; `NONE-reads-nothing` &middot; `NONE-keeps-skipped-whitespace` &middot; `NONE-keeps-a-sign` &middot; `empty-file` &middot; `number-up-to-end-of-stream` &middot; `one-after-another` &middot; `then-inputLine` &middot; `own-scanner` &middot; `own-scanner-fails-at-end-of-stream` &middot; `lookahead-is-not-lost` &middot; `scanner-that-reads-nothing` &middot; `closed-stream` &middot; `large`
+
+For `WideTextIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `scans-a-wide-string`
 
 </details>
 

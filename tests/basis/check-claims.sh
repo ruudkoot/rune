@@ -33,10 +33,10 @@ cat tests/basis/*_sig.sml |
   awk 'held != "" { t = $0; sub(/^[ \t]+/, "", t)
                     if (t ~ /^where /) { held = held " " t; next }
                     print held; held = "" }
-       /^[ \t]*structure [A-Za-z0-9_]* :>* *SPEC_/ { held = $0; next }
+       /^[ \t]*structure [A-Za-z0-9_]* :>* *(SPEC|SCR)_/ { held = $0; next }
        { print }
        END { if (held != "") print held }' |
-  sed -n 's/^[[:space:]]*structure [A-Za-z0-9_]* :>* *SPEC_\([A-Z0-9_]*\)\( .*\)* = \([A-Za-z0-9_.'"'"']*\)[[:space:]]*$/\3 \1/p' |
+  sed -n 's/^[[:space:]]*structure [A-Za-z0-9_]* :>* *\(SPEC\|SCR\)_\([A-Z0-9_]*\)\( .*\)* = \([A-Za-z0-9_.'"'"']*\)[[:space:]]*$/\4 \2/p' |
   grep -v '_IMP$' | sort -u > "$tmp/suite"
 
 awk -F '\t' 'NR > 1 && $2 == "structure" { print $1 " " $3 }' "$claims" | sort -u > "$tmp/all"

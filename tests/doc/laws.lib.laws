@@ -50,4 +50,8 @@ val () = Check.laws [
    fn () => Prop.equalIf (Arb.pair ((Arb.intRange (~2, 7)), (Arb.intRange (0, 5))), IntArb.arb)
      (fn _ => true,
       fn (m, n) => let open Colors in List.length (keep (fn k => k < m, List.tabulate (n, fn k => k))) end,
-      fn (m, n) => let open Colors in Int.min (Int.max (m, 0), n) end))]
+      fn (m, n) => let open Colors in Int.min (Int.max (m, 0), n) end)),
+  ("COLORS.count/law-1@Colors",
+   fn () => Prop.holdsIf (Arb.pair (WideTextArb.reader, IntArb.arb))
+     (fn _ => true,
+      fn (getc, s) => let open Colors in count getc s >= 0 end))]

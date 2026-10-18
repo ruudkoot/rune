@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's MANIFEST records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 607 requirements between the 159 files become 267 arrows.
+library and not a wall of lines: the 606 requirements between the 160 files become 267 arrows.
 The order in which the MANIFEST loads the files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -24,7 +24,7 @@ one need a file of the other.
 ```mermaid
 flowchart LR
   a0["The language<br>(4)"]
-  a1["Text and characters<br>(16)"]
+  a1["Text and characters<br>(17)"]
   a2["Lists and options<br>(6)"]
   a3["Numbers<br>(27)"]
   a4["Sequences<br>(37)"]
@@ -33,7 +33,7 @@ flowchart LR
   a7["The runtime<br>(14)"]
   a6 -- 3 --> a2
   a6 -- 5 --> a3
-  a6 -- 4 --> a4
+  a6 -- 3 --> a4
   a6 -- 2 --> a1
   a6 -- 3 --> a5
   a3 -- 2 --> a2
@@ -90,7 +90,8 @@ flowchart TD
   n134(["SUBSTRING"])
   n144(["TEXT"])
   n156["Wide* (8)"]
-  n157["WideText"]
+  n157["WideStringCvt"]
+  n158["WideText"]
   n2 --> n1
   n21 --> n20
   n30 --> n21
@@ -103,7 +104,9 @@ flowchart TD
   n156 --> n106
   n156 --> n132
   n156 --> n134
+  n157 --> n133
   n157 --> n156
+  n158 --> n156
 ```
 
 It also needs Numbers (1), Lists and options (1), Sequences (6).
@@ -401,7 +404,7 @@ flowchart TD
   n114(["IO"])
   n135(["TEXT_STREAM_IO"])
   n145(["TEXT_IO"])
-  n158["WideTextPrimIO<br>WideTextIO"]
+  n159["WideTextPrimIO<br>WideTextIO"]
   n68 --> n114
   n68 --> n66
   n69 --> n114
@@ -421,11 +424,10 @@ flowchart TD
   n102 --> n72
   n135 --> n68
   n145 --> n135
-  n145 --> n69
-  n158 --> n74
+  n159 --> n74
 ```
 
-It also needs The operating system (3), Numbers (5), Sequences (4), Lists and options (3), Text and characters (2).
+It also needs The operating system (3), Numbers (5), Sequences (3), Lists and options (3), Text and characters (2).
 
 ## The runtime
 

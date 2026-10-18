@@ -18,12 +18,17 @@ structure WideTextPrimIO =
                 val index = SOME {fromInt = RuneWideTextPos.fromInt, toInt = RuneWideTextPos.toInt})
 
 (* WideTextIO (optional in the specification): the imperative streams of the
-   wide character. The specification names no signature for it -- the
-   transcription of TEXT_IO writes its types as `string` and `char`, which are
-   those of `TextIO` -- so this page is where the structure is described. Its
-   members are those of TEXT_IO over `WideString.string` and `WideChar.char`.
+   wide character, as TextIO is of `char`: `TEXT_IO` over `WideString.string`
+   and `WideChar.char`, with the readers and writers of `WideTextPrimIO`
+   (the deviation `TEXT_IO/generic`, which makes that signature one of both).
 
-   Area: Input and output
+   Implements: TEXT_IO where type StreamIO.vector = WideCharVector.vector
+   where type StreamIO.elem = WideChar.char where type StreamIO.substring =
+   WideSubstring.substring where type StreamIO.reader = WideTextPrimIO.reader
+   where type StreamIO.writer = WideTextPrimIO.writer where type StreamIO.pos
+   = WideTextPrimIO.pos
+
+   Implements: IMPERATIVE_IO
 
    Implementation: `WideTextIO/files-hold-utf-8`. The specification names no
    encoding, so a stream of `WideTextIO` is a stream of `TextIO` encoded in
@@ -64,10 +69,20 @@ struct
   in
     (* WideTextIO.StreamIO: the functional streams of wide text under
        `WideTextIO`, with the operations on lines and substrings of
-       TEXT_STREAM_IO. *)
+       TEXT_STREAM_IO.
+
+       Implements: TEXT_STREAM_IO where type vector = WideCharVector.vector
+       where type elem = WideChar.char where type substring =
+       WideSubstring.substring where type reader = WideTextPrimIO.reader where
+       type writer = WideTextPrimIO.writer where type pos =
+       WideTextPrimIO.pos
+
+       Implements: STREAM_IO *)
     structure StreamIO =
     struct
       open SI
+
+      type substring = WideSubstring.substring
 
       (* as TextIO.StreamIO.inputLine: up to and including the newline, with
          one added at an end-of-stream, and NONE when there is nothing left *)
@@ -103,6 +118,7 @@ struct
 
   type vector = WideString.string
   type elem = WideChar.char
+  type substring = WideSubstring.substring
   datatype instream = datatype Imperative.instream
   datatype outstream = datatype Imperative.outstream
 

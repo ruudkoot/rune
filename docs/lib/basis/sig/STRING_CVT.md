@@ -5,21 +5,23 @@
 |  |  |
 | --- | --- |
 | Status | required |
-| Implementations | 1 |
-| Documentation | 11 of 11 entries documented |
-| Tests | 138 checks of 10 entries |
+| Implementations | 2 |
+| Documentation | 13 of 13 entries documented |
+| Tests | 155 checks of 10 entries |
 | Source | [lib/basis/sig\_string\_cvt.sml](../../../../lib/basis/sig_string_cvt.sml) |
 
 ## Synopsis
 
 ```sml
 signature STRING_CVT
-structure StringCvt : STRING_CVT
+structure StringCvt : STRING_CVT where type char = char where type string = string
+structure WideStringCvt :> STRING_CVT where type char = WideChar.char where type string = WideString.string where type radix = StringCvt.radix where type realfmt = StringCvt.realfmt  (* extension *)
 ```
 
 | Implementation |  | Source |
 | --- | --- | --- |
 | [`StringCvt`](../str/StringCvt.md) | StringCvt: the types and helpers of the fmt and scan functions. Written on primitives, without another structure, because most others require it. | [lib/basis/stringcvt.sml](../../../../lib/basis/stringcvt.sml) |
+| [`WideStringCvt`](../str/WideStringCvt.md) | WideStringCvt: the helpers of StringCvt over wide text, which build and take apart strings of [`WideChar.char`](../sig/CHAR.md#type-char). | [lib/basis/widestringcvt.sml](../../../../lib/basis/widestringcvt.sml) |
 
 The types and helpers of the conversions between values and text: the
 formats of `fmt`, the readers of `scan`.
@@ -33,8 +35,18 @@ and a program can build scanners of its own out of those of the library and
 the helpers below. Nothing is consumed by a scan that fails: the caller
 still has the stream it passed.
 
+> **Deviation** `STRING_CVT/generic`. The page writes the types of the helpers
+> that build and take apart text as [`char`](#type-char) and [`string`](#type-string), so there are none
+> for wide text, and a scanner of [`WideChar.char`](../sig/CHAR.md#type-char)s has no [`skipWS`](#val-skipws) or
+> [`scanString`](#val-scanstring). Here the character and the string are the signature's
+> own, [`StringCvt`](../str/StringCvt.md) is declared `where type char = Char.char where type string = String.string`, which gives it the very types of the page, and
+> [`WideStringCvt`](../str/WideStringCvt.md) is the same over [`WideChar.char`](../sig/CHAR.md#type-char) and [`WideString.string`](../sig/STRING.md#type-string),
+> with the same [`radix`](#type-radix) and [`realfmt`](#type-realfmt). The change of the specification it
+> proposes is in docs/unicode.md.
+
 ## Contents
 
+[Text](#text) &middot;
 [Formats](#formats) &middot;
 [Readers](#readers) &middot;
 [Padding](#padding) &middot;
@@ -46,6 +58,8 @@ still has the stream it passed.
 <pre>
 signature STRING_CVT =
 sig
+  eqtype <a href="#type-char">char</a>
+  eqtype <a href="#type-string">string</a>
   datatype <a href="#type-radix">radix</a>
     = <a href="#con-bin">BIN</a>
     | <a href="#con-oct">OCT</a>
@@ -67,6 +81,26 @@ sig
   val <a href="#val-scanstring">scanString</a> : ((char, cs) reader -&gt; ('a, cs) reader) -&gt; string -&gt; 'a option
 end
 </pre>
+
+## Text
+
+### <a name="type-char"></a>`char`
+
+```sml
+eqtype char
+```
+
+The type of the characters the helpers below read and write: [`char`](#type-char) for
+[`StringCvt`](../str/StringCvt.md), [`WideChar.char`](../sig/CHAR.md#type-char) for [`WideStringCvt`](../str/WideStringCvt.md).
+
+### <a name="type-string"></a>`string`
+
+```sml
+eqtype string
+```
+
+The type of the strings of those characters: [`string`](#type-string) for [`StringCvt`](../str/StringCvt.md),
+[`WideString.string`](../sig/STRING.md#type-string) for [`WideStringCvt`](../str/WideStringCvt.md).
 
 ## Formats
 
@@ -173,9 +207,11 @@ than `i`.
 
 </details>
 
-<details><summary>Tests (19)</summary>
+<details><summary>Tests (23)</summary>
 
 For `StringCvt`, in [tests/basis/stringcvt.sml](../../../../tests/basis/stringcvt.sml): `basic` &middot; `other-character` &middot; `one-short` &middot; `empty-string` &middot; `nul-character` &middot; `width-equals-size` &middot; `width-below-size` &middot; `width-one` &middot; `width-zero` &middot; `width-zero-empty-string` &middot; `width-negative` &middot; `width-negative-empty-string` &middot; `width-minInt` &middot; `partial-application` &middot; `long` &middot; `Size` (raises Size) &middot; `Size-empty-string` (raises Size) &middot; `law-*` &middot; `law-size-*`
+
+For `WideStringCvt`, in [tests/basis/widestringcvt.sml](../../../../tests/basis/widestringcvt.sml): `pads-on-the-left` &middot; `long-enough` &middot; `negative-width` &middot; `Size` (raises Size)
 
 </details>
 
@@ -201,9 +237,11 @@ than `i`.
 
 </details>
 
-<details><summary>Tests (19)</summary>
+<details><summary>Tests (22)</summary>
 
 For `StringCvt`, in [tests/basis/stringcvt.sml](../../../../tests/basis/stringcvt.sml): `basic` &middot; `other-character` &middot; `one-short` &middot; `empty-string` &middot; `character-255` &middot; `width-equals-size` &middot; `width-below-size` &middot; `width-one` &middot; `width-zero` &middot; `width-zero-empty-string` &middot; `width-negative` &middot; `width-negative-empty-string` &middot; `width-minInt` &middot; `partial-application` &middot; `long` &middot; `Size` (raises Size) &middot; `Size-empty-string` (raises Size) &middot; `law-*` &middot; `law-size-*`
+
+For `WideStringCvt`, in [tests/basis/widestringcvt.sml](../../../../tests/basis/widestringcvt.sml): `pads-on-the-right` &middot; `long-enough` &middot; `Size` (raises Size)
 
 </details>
 
@@ -227,9 +265,11 @@ The rest begins with the first character that does not satisfy `p`.
 
 **Example** `splitl Char.isDigit List.getItem (explode "12ab") = ("12", [#"a", #"b"])`
 
-<details><summary>Tests (24)</summary>
+<details><summary>Tests (26)</summary>
 
 For `StringCvt`, in [tests/basis/stringcvt.sml](../../../../tests/basis/stringcvt.sml): `list-basic` &middot; `list-none-satisfy` &middot; `list-all-satisfy` &middot; `list-empty-source` &middot; `list-one-satisfies` &middot; `list-one-fails` &middot; `always-true` &middot; `always-false` &middot; `string-basic` &middot; `string-from-the-middle` &middot; `string-to-the-end` &middot; `string-at-the-end` &middot; `string-empty` &middot; `all-256-characters` &middot; `first-of-remainder-is-leftmost-failing` &middot; `other-source` &middot; `predicate-order` &middot; `reads-no-further-than-first-failing` &middot; `reads-from-the-source-given` &middot; `reader-raises` (raises Fail) &middot; `predicate-raises` (raises Div) &middot; `law-string-*` &middot; `law-list-*` &middot; `law-parts-make-the-whole-*`
+
+For `WideStringCvt`, in [tests/basis/widestringcvt.sml](../../../../tests/basis/widestringcvt.sml): `a-prefix-and-the-rest` &middot; `nothing`
 
 </details>
 
@@ -246,9 +286,11 @@ that satisfy `p`.
 
 **Example** `takel Char.isDigit Substring.getc (Substring.full "12ab") = "12"`
 
-<details><summary>Tests (10)</summary>
+<details><summary>Tests (12)</summary>
 
 For `StringCvt`, in [tests/basis/stringcvt.sml](../../../../tests/basis/stringcvt.sml): `list-basic` &middot; `none-satisfy` &middot; `all-satisfy` &middot; `empty-source` &middot; `string-from-the-middle` &middot; `maximal-prefix-only` &middot; `predicate-order` &middot; `reads-no-further-than-first-failing` &middot; `law-*` &middot; `law-is-first-of-splitl-*`
+
+For `WideStringCvt`, in [tests/basis/widestringcvt.sml](../../../../tests/basis/widestringcvt.sml): `a-prefix` &middot; `a-substring-reader`
 
 </details>
 
@@ -265,9 +307,11 @@ satisfy `p`.
 
 **Example** `implode (dropl Char.isSpace List.getItem (explode "  x")) = "x"`
 
-<details><summary>Tests (11)</summary>
+<details><summary>Tests (12)</summary>
 
 For `StringCvt`, in [tests/basis/stringcvt.sml](../../../../tests/basis/stringcvt.sml): `list-basic` &middot; `none-satisfy` &middot; `all-satisfy` &middot; `empty-source` &middot; `string-basic` &middot; `string-from-the-middle` &middot; `maximal-prefix-only` &middot; `predicate-order` &middot; `reads-no-further-than-first-failing` &middot; `law-*` &middot; `law-is-second-of-splitl-*`
+
+For `WideStringCvt`, in [tests/basis/widestringcvt.sml](../../../../tests/basis/widestringcvt.sml): `the-rest`
 
 </details>
 
@@ -279,9 +323,12 @@ val skipWS : (char, 'a) reader -> 'a -> 'a
 
 `skipWS getc strm` is `strm` without the white space at its front.
 
-White space is what [`Char.isSpace`](../sig/CHAR.md#val-isspace) accepts.
+White space is what [`Char.isSpace`](../sig/CHAR.md#val-isspace) accepts, and [`WideChar.isSpace`](../sig/CHAR.md#val-isspace) for
+[`WideStringCvt`](../str/WideStringCvt.md).
 
 **Law** `skipWS getc strm = dropl Char.isSpace getc strm` (for every `getc : 'a -> (char * 'a) option`, `strm : 'a`)
+
+> **Not tested in Rune** at `WideStringCvt`: it names [`Char.isSpace`](../sig/CHAR.md#val-isspace), and the characters of [`WideStringCvt`](../str/WideStringCvt.md) are [`WideChar.char`](../sig/CHAR.md#type-char).
 
 **Example** `Substring.string (skipWS Substring.getc (Substring.full "  a")) = "a"`
 
@@ -291,9 +338,11 @@ White space is what [`Char.isSpace`](../sig/CHAR.md#val-isspace) accepts.
 
 </details>
 
-<details><summary>Tests (15)</summary>
+<details><summary>Tests (17)</summary>
 
 For `StringCvt`, in [tests/basis/stringcvt.sml](../../../../tests/basis/stringcvt.sml): `spaces` &middot; `space-tab-newline` &middot; `wsx-every-whitespace-character` &middot; `no-whitespace` &middot; `only-whitespace` &middot; `empty-source` &middot; `string-basic` &middot; `string-from-the-middle` &middot; `string-at-non-whitespace` &middot; `string-at-the-end` &middot; `wsx-exactly-the-six-characters` &middot; `other-characters-stay` &middot; `reads-no-further-than-first-non-whitespace` &middot; `law-*` &middot; `law-is-dropl-isSpace-*`
+
+For `WideStringCvt`, in [tests/basis/widestringcvt.sml](../../../../tests/basis/widestringcvt.sml): `ascii-white-space` &middot; `no-space-above-127`
 
 </details>
 
@@ -323,9 +372,11 @@ the library is made from its `scan`.
 
 **Example** `scanString (Int.scan DEC) "12abc" = SOME 12`
 
-<details><summary>Tests (33)</summary>
+<details><summary>Tests (36)</summary>
 
 For `StringCvt`, in [tests/basis/stringcvt.sml](../../../../tests/basis/stringcvt.sml): `page-example-splitl` &middot; `splitl-nothing-satisfies` &middot; `splitl-empty-string` &middot; `source-is-the-string` &middot; `source-of-empty-string` &middot; `source-of-all-256-characters` &middot; `source-of-long-string` &middot; `first-character` &middot; `first-character-of-empty-string` &middot; `NONE` &middot; `nothing-read` &middot; `nothing-read-empty-string` &middot; `rest-is-ignored` &middot; `too-short-for-the-scanner` &middot; `state-can-be-read-again` &middot; `end-can-be-read-again` &middot; `scanner-applied-once` &middot; `scanner-raises` (raises Fail) &middot; `skipWS-then-takel` &middot; `skipWS-then-takel-NONE` &middot; `dropl-then-whole` &middot; `splitl-reads-one-character-ahead` &middot; `Bool.scan` &middot; `Bool.scan-rest-is-ignored` &middot; `Bool.scan-NONE` &middot; `Int.scan` &middot; `Int.scan-rest-is-ignored` &middot; `Int.scan-NONE` &middot; `Int.scan-empty-string` &middot; `composed-scanner` &middot; `law-whole-*` &middot; `law-splitl-*` &middot; `law-skipWS-*`
+
+For `WideStringCvt`, in [tests/basis/widestringcvt.sml](../../../../tests/basis/widestringcvt.sml): `reads-the-characters` &middot; `a-scan-that-fails` &middot; `WideString.scan`
 
 </details>
 

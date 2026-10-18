@@ -136,9 +136,15 @@ tokens() {
 
 # The signatures of the transcriptions, renamed, and those of lib/basis.
 : > "$tmp/specfiles"
+# A signature the library changes as the change request of docs/unicode.md
+# proposes (a `Deviation:` of the signature) is held to the request's
+# transcription, tests/basis/spec-sigs/scr/SIG.sml (signature SCR_SIG), and
+# not to the page's.
 for f in tests/basis/spec-sigs/*.sml; do
   case "$f" in *_IMP.sml) continue ;; esac
-  sed 's/SPEC_\([A-Z0-9_]*\)/\1/g' "$f" > "$tmp/spec_$(basename "$f")"
+  scr=tests/basis/spec-sigs/scr/$(basename "$f")
+  [ -f "$scr" ] && f=$scr
+  sed -e 's/SCR_\([A-Z0-9_]*\)/\1/g' -e 's/SPEC_\([A-Z0-9_]*\)/\1/g' "$f" > "$tmp/spec_$(basename "$f")"
   echo "$tmp/spec_$(basename "$f")" >> "$tmp/specfiles"
 done
 compare() {

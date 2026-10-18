@@ -38,7 +38,7 @@ What each means is on [`INTEGER`](../sig/INTEGER.md); the types are this structu
 | val | [`abs`](../sig/INTEGER.md#val-abs) | `int -> int` |
 | val | [`compare`](../sig/INTEGER.md#val-compare) | `int * int -> order` |
 | val | [`div`](../sig/INTEGER.md#val-div) | `int * int -> int` |
-| val | [`fmt`](../sig/INTEGER.md#val-fmt) | `StringCvt.radix -> int -> string` |
+| val | [`fmt`](../sig/INTEGER.md#val-fmt) | `RuneWideStringCvt.radix -> int -> string` |
 | val | [`fromInt`](../sig/INTEGER.md#val-fromint) | `int -> int` |
 | val | [`fromLarge`](../sig/INTEGER.md#val-fromlarge) | `IntInf.int -> int` |
 | val | [`fromString`](../sig/INTEGER.md#val-fromstring) | `string -> int option` |
@@ -51,7 +51,7 @@ What each means is on [`INTEGER`](../sig/INTEGER.md); the types are this structu
 | val | [`quot`](../sig/INTEGER.md#val-quot) | `int * int -> int` |
 | val | [`rem`](../sig/INTEGER.md#val-rem) | `int * int -> int` |
 | val | [`sameSign`](../sig/INTEGER.md#val-samesign) | `int * int -> bool` |
-| val | [`scan`](../sig/INTEGER.md#val-scan) | `StringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (int * 'a) option` |
+| val | [`scan`](../sig/INTEGER.md#val-scan) | `RuneWideStringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (int * 'a) option` |
 | val | [`sign`](../sig/INTEGER.md#val-sign) | `int -> int` |
 | val | [`toInt`](../sig/INTEGER.md#val-toint) | `int -> int` |
 | val | [`toLarge`](../sig/INTEGER.md#val-tolarge) | `int -> IntInf.int` |

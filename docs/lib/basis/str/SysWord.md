@@ -45,7 +45,7 @@ What each means is on [`WORD`](../sig/WORD.md); the types are this structure's o
 | val | [`andb`](../sig/WORD.md#val-andb) | `SysWord.word * SysWord.word -> SysWord.word` |
 | val | [`compare`](../sig/WORD.md#val-compare) | `SysWord.word * SysWord.word -> order` |
 | val | [`div`](../sig/WORD.md#val-div) | `SysWord.word * SysWord.word -> SysWord.word` |
-| val | [`fmt`](../sig/WORD.md#val-fmt) | `StringCvt.radix -> SysWord.word -> string` |
+| val | [`fmt`](../sig/WORD.md#val-fmt) | `RuneWideStringCvt.radix -> SysWord.word -> string` |
 | val | [`fromInt`](../sig/WORD.md#val-fromint) | `int -> SysWord.word` |
 | val | [`fromLarge`](../sig/WORD.md#val-fromlarge) | `Word64.word -> SysWord.word` |
 | val | [`fromLargeInt`](../sig/WORD.md#val-fromlargeint) | `IntInf.int -> SysWord.word` |
@@ -56,7 +56,7 @@ What each means is on [`WORD`](../sig/WORD.md); the types are this structure's o
 | val | [`mod`](../sig/WORD.md#val-mod) | `SysWord.word * SysWord.word -> SysWord.word` |
 | val | [`notb`](../sig/WORD.md#val-notb) | `SysWord.word -> SysWord.word` |
 | val | [`orb`](../sig/WORD.md#val-orb) | `SysWord.word * SysWord.word -> SysWord.word` |
-| val | [`scan`](../sig/WORD.md#val-scan) | `StringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (SysWord.word * 'a) option` |
+| val | [`scan`](../sig/WORD.md#val-scan) | `RuneWideStringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (SysWord.word * 'a) option` |
 | val | [`toInt`](../sig/WORD.md#val-toint) | `SysWord.word -> int` |
 | val | [`toIntX`](../sig/WORD.md#val-tointx) | `SysWord.word -> int` |
 | val | [`toLarge`](../sig/WORD.md#val-tolarge) | `SysWord.word -> Word64.word` |

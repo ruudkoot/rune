@@ -4,6 +4,12 @@
 (* `StreamIO.out_pos` is abstract: no other signature names it. The streams
    are those that the signatures of `Unix`, `Posix` and the readers name. *)
 structure TextIO :> TEXT_IO
+  where type StreamIO.vector = CharVector.vector
+  where type StreamIO.elem = Char.char
+  where type StreamIO.substring = Substring.substring
+  where type StreamIO.reader = TextPrimIO.reader
+  where type StreamIO.writer = TextPrimIO.writer
+  where type StreamIO.pos = TextPrimIO.pos
   where type instream = TextIO.instream
   where type outstream = TextIO.outstream
   where type StreamIO.instream = TextIO.StreamIO.instream

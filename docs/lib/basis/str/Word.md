@@ -43,7 +43,7 @@ What each means is on [`WORD`](../sig/WORD.md); the types are this structure's o
 | val | [`andb`](../sig/WORD.md#val-andb) | `word * word -> word` |
 | val | [`compare`](../sig/WORD.md#val-compare) | `word * word -> order` |
 | val | [`div`](../sig/WORD.md#val-div) | `word * word -> word` |
-| val | [`fmt`](../sig/WORD.md#val-fmt) | `StringCvt.radix -> word -> string` |
+| val | [`fmt`](../sig/WORD.md#val-fmt) | `RuneWideStringCvt.radix -> word -> string` |
 | val | [`fromInt`](../sig/WORD.md#val-fromint) | `int -> word` |
 | val | [`fromLarge`](../sig/WORD.md#val-fromlarge) | `Word64.word -> word` |
 | val | [`fromLargeInt`](../sig/WORD.md#val-fromlargeint) | `IntInf.int -> word` |
@@ -54,7 +54,7 @@ What each means is on [`WORD`](../sig/WORD.md); the types are this structure's o
 | val | [`mod`](../sig/WORD.md#val-mod) | `word * word -> word` |
 | val | [`notb`](../sig/WORD.md#val-notb) | `word -> word` |
 | val | [`orb`](../sig/WORD.md#val-orb) | `word * word -> word` |
-| val | [`scan`](../sig/WORD.md#val-scan) | `StringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (word * 'a) option` |
+| val | [`scan`](../sig/WORD.md#val-scan) | `RuneWideStringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (word * 'a) option` |
 | val | [`toInt`](../sig/WORD.md#val-toint) | `word -> int` |
 | val | [`toIntX`](../sig/WORD.md#val-tointx) | `word -> int` |
 | val | [`toLarge`](../sig/WORD.md#val-tolarge) | `word -> Word64.word` |

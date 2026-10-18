@@ -591,7 +591,8 @@ struct
   (* The arbitrary of a type, as an expression: a type variable at `int`
      (D8), a function type by `Arb.function` (`Arb.pureFunction` for a
      variable that has no effects), tuples by `Arb.pair` and `Arb.triple`, a
-     reader of characters by `BasisDataArb.reader`, the records of `Date.date`
+     reader of characters by `BasisDataArb.reader` and one of wide
+     characters by `WideTextArb.reader`, the records of `Date.date`
      and `Posix.TTY.termios` fields by their arbitraries, and every other type
      by the table or as `XArb.arb` for a type `X.t`. NONE: it has none. *)
   (* The type that `XArb.arb` is the arbitrary of, by the name of `X`: its
@@ -657,7 +658,10 @@ struct
                       (case Types.prune ch of
                          Types.TCon (c, []) =>
                            if named (opt, "option") andalso named (c, "char") andalso isVar st
-                           then SOME "BasisDataArb.reader" else function (a, b)
+                           then SOME "BasisDataArb.reader"
+                           else if named (opt, "option") andalso named (c, "WideChar.char") andalso isVar st
+                           then SOME "WideTextArb.reader"
+                           else function (a, b)
                        | _ => function (a, b))
                   | _ => function (a, b))
              | _ => function (a, b))

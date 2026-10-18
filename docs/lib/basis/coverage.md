@@ -64,13 +64,13 @@ documented when a comment describes it, alone or together with the entry before 
 | [`SOCKET`](sig/SOCKET.md) | 93 | 93 | 100% | 76 | 76 |
 | [`STREAM_IO`](sig/STREAM_IO.md) | 29 | 29 | 100% | 21 | 21 |
 | [`STRING`](sig/STRING.md) | 31 | 31 | 100% | 28 | 28 |
-| [`STRING_CVT`](sig/STRING_CVT.md) | 11 | 11 | 100% | 7 | 7 |
+| [`STRING_CVT`](sig/STRING_CVT.md) | 13 | 13 | 100% | 7 | 7 |
 | [`SUBPROCESS`](sig/SUBPROCESS.md) | 8 | 8 | 100% | 4 | 4 |
 | [`SUBSTRING`](sig/SUBSTRING.md) | 39 | 39 | 100% | 36 | 36 |
 | [`TERMINAL`](sig/TERMINAL.md) | 6 | 6 | 100% | 6 | 6 |
 | [`TEXT`](sig/TEXT.md) | 7 | 7 | 100% | 0 | 0 |
-| [`TEXT_IO`](sig/TEXT_IO.md) | 36 | 36 | 100% | 28 | 28 |
-| [`TEXT_STREAM_IO`](sig/TEXT_STREAM_IO.md) | 2 | 2 | 100% | 2 | 2 |
+| [`TEXT_IO`](sig/TEXT_IO.md) | 37 | 37 | 100% | 28 | 28 |
+| [`TEXT_STREAM_IO`](sig/TEXT_STREAM_IO.md) | 3 | 3 | 100% | 2 | 2 |
 | [`TIME`](sig/TIME.md) | 25 | 25 | 100% | 22 | 22 |
 | [`TIMER`](sig/TIMER.md) | 10 | 10 | 100% | 8 | 8 |
 | [`UNIX`](sig/UNIX.md) | 14 | 14 | 100% | 11 | 11 |
@@ -79,7 +79,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | 24 | 24 | 100% | 23 | 23 |
 | [`WINDOWS`](sig/WINDOWS.md) | 88 | 88 | 100% | 30 | 30 |
 | [`WORD`](sig/WORD.md) | 38 | 38 | 100% | 36 | 36 |
-| **all** | 1686 | 1686 | 100% | 1143 | 1143 |
+| **all** | 1690 | 1690 | 100% | 1143 | 1143 |
 
 ## Members a signature describes
 
@@ -88,12 +88,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-205 structures have a page, with 4423 members, of which 4337 (98%) are described by a signature.
-
-| Structure | Members | Described |  |
-| --- | --- | --- | --- |
-| [`WideTextIO`](str/WideTextIO.md) | 37 | 0 | 0% |
-| [`WideTextIO.StreamIO`](str/WideTextIO.StreamIO.md) | 49 | 0 | 0% |
+206 structures have a page, with 4423 members, of which 4423 (100%) are described by a signature.
 
 ## Examples that are run
 
