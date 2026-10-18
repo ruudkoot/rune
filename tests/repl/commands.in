@@ -27,7 +27,7 @@ down 3;
 :bt
 :history
 :sh echo from the shell
-:save tests/out/repl/commands-saved.sml
+:save @REPL@/commands-saved.sml
 :nonsense
 :h type
 :quit

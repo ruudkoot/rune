@@ -107,13 +107,32 @@ struct
         else (OS.Process.sleep (Time.fromMilliseconds 50); finish ())
     in finish () end
 
+  (* every FROM in S replaced by TO. FROM is not empty, and the search moves
+     past each match, so TO may contain FROM. *)
+  fun replace (from, to, s) =
+    let
+      val n = size from
+      fun go (ss, acc) =
+        let val (pre, rest) = Substring.position from ss
+        in
+          if Substring.isEmpty rest then List.rev (Substring.string ss :: acc)
+          else go (Substring.triml n rest, to :: Substring.string pre :: acc)
+        end
+    in
+      if n = 0 then s else String.concat (go (Substring.full s, []))
+    end
+
   fun repl suffix =
     case List.find (fn (s, _) => s = suffix) replWays of
       NONE => fail ("repl: no way " ^ suffix)
     | SOME (_, vmopts) =>
         let
-          (* where run.sh wrote: the transcripts that save an image name it *)
-          val out = "tests/out/repl" ^ suffix
+          (* where run.sh wrote: the transcripts that save an image name it.
+             The four ways run at once. A transcript writes the files it
+             uses under this directory, as @REPL@, so the ways do not share
+             them. The expected transcripts name tests/out/repl. *)
+          val canon = "tests/out/repl"
+          val out = canon ^ suffix
           val () = mkdirs out
           val cache = out ^ "/cache"
           val () = rmTree cache
@@ -123,30 +142,42 @@ struct
           (* the transcripts in order, which share the cache *)
           val transcripts = List.map basename (List.filter (fn f => String.isSuffix ".in" f) (glob ("tests/repl", ".in")))
           fun name t = String.substring (OS.Path.file t, 0, size (OS.Path.file t) - 3)
+          (* what the REPL printed, with this way's directory written as the
+             directory the expected transcript names *)
+          fun canonical (got, cmp) = write (cmp, replace (out, canon, read got))
           fun one t =
             let
               val n = name t
               val src = "tests/repl/" ^ n ^ ".in"
               val got = out ^ "/" ^ n ^ ".out"
+              val fed = out ^ "/" ^ n ^ ".in"
+              val () = write (fed, replace ("@REPL@", out, read src))
               val () =
                 if List.exists (fn l => String.isPrefix "#!interrupt " l) (lines (read src))
-                then drive (envf, vm ["bin/rune-repl.img", "--", "--no-init"], src, got)
-                else ignore (execEnv envf {cmd = vm (["bin/rune-repl.img", "--"] @ replArgs n), dir = NONE, stdin = src,
+                then drive (envf, vm ["bin/rune-repl.img", "--", "--no-init"], fed, got)
+                else ignore (execEnv envf {cmd = vm (["bin/rune-repl.img", "--"] @ replArgs n), dir = NONE, stdin = fed,
                                            stdout = got, stderr = got, timeout = 600})
               val expected = "tests/repl/" ^ n ^ ".expected"
+              val cmp = out ^ "/" ^ n ^ ".cmp"
+              val () = canonical (got, cmp)
             in
-              if not (same (expected, got)) then
-                if accepting then write (expected, read got)
-                else fail ("repl" ^ suffix ^ "." ^ n ^ " (diff " ^ expected ^ " " ^ got ^ "): " ^ difference (expected, got))
+              if not (same (expected, cmp)) then
+                if accepting then write (expected, read cmp)
+                else fail ("repl" ^ suffix ^ "." ^ n ^ " (diff " ^ expected ^ " " ^ cmp ^ "): " ^ difference (expected, cmp))
               else if exists ("tests/repl/" ^ n ^ ".then") then
                 let
+                  val thenSrc = "tests/repl/" ^ n ^ ".then"
+                  val thenFed = out ^ "/" ^ n ^ ".then.in"
                   val then' = out ^ "/" ^ n ^ ".then.out"
+                  val thenCmp = out ^ "/" ^ n ^ ".then.cmp"
+                  val () = write (thenFed, replace ("@REPL@", out, read thenSrc))
                   val _ = execEnv envf {cmd = vm [out ^ "/" ^ n ^ ".img", "--", "--no-init"], dir = NONE,
-                                        stdin = "tests/repl/" ^ n ^ ".then", stdout = then', stderr = then', timeout = 600}
+                                        stdin = thenFed, stdout = then', stderr = then', timeout = 600}
+                  val () = canonical (then', thenCmp)
                   val texp = "tests/repl/" ^ n ^ ".then.expected"
                 in
-                  if same (texp, then') then ()
-                  else fail ("repl" ^ suffix ^ "." ^ n ^ ", restored (diff " ^ texp ^ " " ^ then' ^ "): " ^ difference (texp, then'))
+                  if same (texp, thenCmp) then ()
+                  else fail ("repl" ^ suffix ^ "." ^ n ^ ", restored (diff " ^ texp ^ " " ^ thenCmp ^ "): " ^ difference (texp, thenCmp))
                 end
               else ()
             end
