@@ -1,0 +1,26 @@
+
+$main  = letrec
+          p = SC6
+      in p 5 6
+SC6 a b = let
+          p = - (+ a b) 20
+      in let
+          m = SC5 a b
+      in letrec
+          f = SC1 g;
+          g = SC2 b f
+      in let
+          h = SC0 f m
+      in h a p
+SC0 f m a n = m (+ n 1) (f a n)
+SC1 g a b = g a (+ b 1)
+SC2 b f x y = f x (+ y b)
+SC5 a b p q = let
+          g = + a 6
+      in let
+          d = SC4 p q
+      in let
+          c = SC3 a g
+      in - (- (d (+ 1 a)) (c (- a b))) p
+SC3 a g q = + (- q g) a
+SC4 p q pp = + (+ pp q) p

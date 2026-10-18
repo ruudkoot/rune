@@ -579,3 +579,19 @@ and legacy numerical failures remain visible; no expected answer is relaxed.
 
 The catalogue contains 479 programs and 1391 profiles. M3/M4 remain in progress
 and M8 remains planned.
+
+## Modular lambda lifting and executable-paper authorship, 2026-10-18
+
+Two evaluation policies retain both plain and fully-lazy lambda lifting,
+source AST/annotation types, recursive renaming, sorted name sets,
+supercombinator order and higher-order printing. The full primary executable
+paper in LambdaLift.lhs credits Simon L. Peyton Jones and David Lester.
+Four title/author/abstract guards bring inventory regressions to 132;
+the classifier maps lift to compiler applications and all five pins replay
+861 entries.
+
+All 56 primary cases and 1280 final semantic checks pass, with independent
+evaluation/scope checks and all original fixtures retained. The earlier ML Kit
+auxiliary region crash remains separate from its passing full applications
+and equivalent explicit fixture calls. The catalogue contains 481 programs
+and 1397 profiles. M3/M4 remain in progress and M8 remains planned.
