@@ -82,8 +82,10 @@ A unit's mode is in its key where it is not the default (*The cache*), so
 that a unit read in one mode is not taken for one read in another (S63 of
 `tests/incremental/SCENARIOS.md`), and in its basis beside the hash of its
 source, so that loading the basis reads the source again, for a functor's
-body, as the unit was read (*The export basis*). As yet every mode reads a
-text alike: the roadmap's M3 and M4 give the modes their rules.
+body, as the unit was read (*The export basis*). What a source may hold
+raw is the same in every mode ([language.md](language.md), *Source text*),
+but that under `--unicode=latin1` each byte is the character of its
+number; the roadmap's M4 gives the modes their differences.
 
 ## The export basis
 

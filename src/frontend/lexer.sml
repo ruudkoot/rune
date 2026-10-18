@@ -64,13 +64,48 @@ struct
   (* A character by its code point, as Unicode writes it: U+03BB. *)
   fun codePoint c = "U+" ^ StringCvt.padLeft #"0" 4 (Int.fmt StringCvt.HEX c)
 
+  (* What no source may hold raw, in any mode and anywhere -- between
+     tokens, in a comment or in a literal -- of the code points above 127
+     (docs/plans/utf8.md, D5): what each is, or NONE. A literal says them by
+     escapes; a comment cannot hold them at all. The marks LRM, RLM and ALM
+     and the other default-ignorables are not among them. *)
+  fun refusedAbove127 (c : int) : string option =
+    if c >= 0x80 andalso c <= 0x9F then SOME "C1 control"
+    else if c < 0x2028 then NONE
+    else if c = 0x2028 then SOME "line separator"
+    else if c = 0x2029 then SOME "paragraph separator"
+    else if (c >= 0x202A andalso c <= 0x202E) orelse (c >= 0x2066 andalso c <= 0x2069) then SOME "bidi control"
+    else if c = 0xFEFF then SOME "byte order mark"
+    else NONE
+
+  (* The bytes of a comment by what its loop does with each: 0 goes on, 1
+     is "(", 2 is "*", and 3 is looked at -- a control but TAB, LF and FF,
+     DEL, or a byte above 127 -- so that a byte of plain text costs one
+     lookup. *)
+  val commentClass =
+    Vector.tabulate (256, fn i => if i = 40 then 1 else if i = 42 then 2
+                                  else if (i >= 32 andalso i < 127) orelse i = 9 orelse i = 10 orelse i = 12 then 0
+                                  else 3)
+
+  (* --ascii-rule (scripts/lex-corpus.sh, the roadmap's gate G1): refuse in
+     the default mode a character above 127 outside comments, as M4 is to.
+     Off but for that measure. *)
+  val asciiRule = ref false
+
   (* The lexer of a text read in a mode (Source.mode): the token at an
      index, with its span and the index after it (whitespace and comments
      before it skipped), and the index after a comment that begins at an
      index. Both raise Error.CompileError where the text is not SML.
      tokenize reads a file with it, in the file's mode, and scan a line to
-     colour. Every mode is lexed alike as yet (Source.mode). *)
-  fun lexerOf (_ : Source.mode, name : string, text : string)
+     colour.
+
+     What a source may hold raw is the same in every mode (D5): between
+     tokens, white space is space, TAB, LF, FF and CR before LF; a comment
+     holds any text but the other controls and what refusedAbove127 names;
+     a literal holds no control, and nothing that refusedAbove127 names.
+     The text is UTF-8, but under --unicode=latin1, where each byte is the
+     character of its number. *)
+  fun lexerOf (mode : Source.mode, name : string, text : string)
       : {next : int -> token * Source.span * int, skipComment : int -> int} =
     let
       val n = String.size text
@@ -78,6 +113,30 @@ struct
       fun err (a, b, msg) = Error.error (span (a, b), msg)
       fun ch i = if i < n then String.sub (text, i) else #"\000"
       fun at i = i < n
+      val latin1 = mode = Source.Unicode Source.Latin1
+      val asciiOnly = !asciiRule andalso mode = Source.Ascii
+
+      (* The character whose bytes begin at i, a byte above 127, by the
+         mode's encoding: its code point and how many bytes it has, once
+         the rules every context shares are checked; context says where it
+         is, for the message *)
+      fun above127 (i, context) : int * int =
+        case (if latin1 then SOME (Char.ord (String.sub (text, i)), 1) else Utf8.decode (text, i)) of
+          NONE => err (i, i + 1, "invalid UTF-8 (byte 0x" ^ Int.fmt StringCvt.HEX (Char.ord (ch i)) ^ ") " ^ context)
+        | SOME (c, k) =>
+            case refusedAbove127 c of
+              SOME what => err (i, i + k, what ^ " " ^ codePoint c ^ " " ^ context
+                                          ^ (if context = "in a comment" then "" else " (write it as \\u"
+                                             ^ StringCvt.padLeft #"0" 4 (Int.fmt StringCvt.HEX c) ^ ")"))
+            | NONE => (c, k)
+
+      (* how many bytes of formatting -- space, TAB, LF, FF, or CR LF -- are
+         at i: the white space between tokens and in a string's gap *)
+      fun formatting i =
+        case ch i of
+          #" " => 1 | #"\n" => 1 | #"\t" => 1 | #"\f" => 1
+        | #"\r" => if ch (i + 1) = #"\n" then 2 else 0
+        | _ => 0
 
       (* The index after the comment that starts at start. The loop has one
          argument and keeps the depth outside it: a tuple of arguments would
@@ -90,11 +149,20 @@ struct
             else
               let val c = String.sub (text, i)
               in
-                if c = #"(" andalso ch (i + 1) = #"*" then (depth := !depth + 1; go (i + 2))
-                else if c = #"*" andalso ch (i + 1) = #")" then
-                  (depth := !depth - 1; if !depth = 0 then i + 2 else go (i + 2))
-                else go (i + 1)
+                case Vector.sub (commentClass, Char.ord c) of
+                  0 => go (i + 1)
+                | 1 => if ch (i + 1) = #"*" then (depth := !depth + 1; go (i + 2)) else go (i + 1)
+                | 2 => if ch (i + 1) = #")" then (depth := !depth - 1; if !depth = 0 then i + 2 else go (i + 2))
+                       else go (i + 1)
+                | _ => go (i + odd (i, c))
               end
+          (* a control, DEL or a byte above 127 in a comment: how many bytes
+             its character has, where the comment may hold it (D4, D5) *)
+          and odd (i, c) =
+            if Char.ord c >= 128 then #2 (above127 (i, "in a comment"))
+            else if c = #"\r" andalso ch (i + 1) = #"\n" then 2
+            else err (i, i + 1, "control character " ^ codePoint (Char.ord c) ^ " in a comment"
+                                ^ (if c = #"\r" then " (a carriage return not before a line feed)" else ""))
         in
           go (start + 2)
         end
@@ -164,7 +232,17 @@ struct
           | c => if Char.ord c < 32 orelse Char.ord c = 127 then
                    err (i, i + 1, "control character " ^ codePoint (Char.ord c) ^ " in string literal (write it as "
                                   ^ Char.toString c ^ ")")
-                 else lexStringBody (start, i + 1, Char.ord c :: acc)
+                 else if Char.ord c < 128 then lexStringBody (start, i + 1, Char.ord c :: acc)
+                 else
+                   (* checked, and then taken as its bytes, a character
+                      each, as the roadmap's M4 is to change *)
+                   let
+                     val (cp, k) = above127 (i, "in string literal")
+                     val () = if asciiOnly then err (i, i + k, "non-ASCII character " ^ codePoint cp
+                                                                ^ " in string literal (write it as an escape)")
+                              else ()
+                     fun bytes (j, acc) = if j = i + k then acc else bytes (j + 1, Char.ord (String.sub (text, j)) :: acc)
+                   in lexStringBody (start, i + k, bytes (i, acc)) end
       and lexEscape (start, i, acc) =
         let fun cont c = lexStringBody (start, i + 1, Char.ord c :: acc)
         in
@@ -199,13 +277,15 @@ struct
               (if Char.isDigit (ch (i + 1)) andalso Char.isDigit (ch (i + 2)) then
                  lexStringBody (start, i + 3, IntInf.toInt (parseInt (String.substring (text, i, 3), 10)) :: acc)
                else err (i - 1, i + 1, "invalid numeric escape"))
-            else if Char.isSpace c then
-              (* string gap: \ whitespace \ *)
+            else if formatting i > 0 then
+              (* string gap: \ formatting \, where formatting is what white
+                 space between tokens may be *)
               let fun skip j =
                     if j >= n then err (start, j, "unterminated string gap")
                     else if ch j = #"\\" then lexStringBody (start, j + 1, acc)
-                    else if Char.isSpace (ch j) then skip (j + 1)
-                    else err (j, j + 1, "invalid character in string gap")
+                    else case formatting j of
+                           0 => err (j, j + 1, "invalid character in string gap")
+                         | k => skip (j + k)
               in skip i end
             else err (i - 1, i + 1, "invalid escape sequence")
         end
@@ -216,10 +296,13 @@ struct
          bytes of a UTF-8 character together, a byte that is not UTF-8 by
          itself. *)
       fun unexpected i =
-        if Char.ord (ch i) < 128 then err (i, i + 1, "unexpected character " ^ codePoint (Char.ord (ch i)))
+        if Char.ord (ch i) < 128 then
+          err (i, i + 1, "unexpected character " ^ codePoint (Char.ord (ch i))
+                         ^ (if ch i = #"\r" then " (a carriage return not before a line feed)" else ""))
         else
-          case Utf8.decode (text, i) of
-            SOME (c, k) => err (i, i + k, "unexpected character " ^ codePoint c)
+          case (if latin1 then SOME (Char.ord (ch i), 1) else Utf8.decode (text, i)) of
+            SOME (c, k) => err (i, i + k, "unexpected character " ^ codePoint c
+                                          ^ (case refusedAbove127 c of SOME what => " (a " ^ what ^ ")" | NONE => ""))
           | NONE => err (i, i + 1, "unexpected byte 0x" ^ Int.fmt StringCvt.HEX (Char.ord (ch i)) ^ " (invalid UTF-8)")
 
       (* Alphanumeric identifier or long identifier. *)
@@ -261,7 +344,8 @@ struct
         else
           let val c = ch i
           in
-            if Char.isSpace c then next (i + 1)
+            if c = #" " orelse c = #"\n" orelse c = #"\t" orelse c = #"\f" then next (i + 1)
+            else if c = #"\r" andalso ch (i + 1) = #"\n" then next (i + 2)
             else if c = #"(" andalso ch (i + 1) = #"*" then next (skipComment i)
             else if Char.isDigit c then lexNumber (i, i, false)
             else if c = #"~" andalso Char.isDigit (ch (i + 1))
@@ -328,8 +412,12 @@ struct
       fun loop (i, acc) =
         let val (t, sp, j) = next i
         in case t of EOF => List.rev ((t, sp) :: acc) | _ => loop (j, (t, sp) :: acc) end
+      (* a byte order mark at the start of UTF-8 text is no part of it
+         (D5); elsewhere it is refused *)
+      val start = if #mode file <> Source.Unicode Source.Latin1 andalso String.isPrefix "\239\187\191" (#text file) then 3
+                  else 0
     in
-      Vector.fromList (loop (0, []))
+      Vector.fromList (loop (start, []))
     end
 
   (* ---- the lexer for the eye (docs/plans/repl.md, D13) ----

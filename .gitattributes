@@ -1,9 +1,16 @@
 # A file is checked out with the LF it is stored with, whatever core.autocrlf
 # says (Git for Windows sets it): the tools compare and compile files byte
-# for byte (docs/building.md, MSYS2). These three keep the CRLF they are
-# stored with, which is what they are about.
+# for byte (docs/building.md, MSYS2). These keep the CRLF or the CR they
+# are stored with, which is what they are about: the source rules of
+# docs/plans/utf8.md, M3, which a carriage return is white space for only
+# before a line feed.
 * text=auto eol=lf
 tests/diagnostics/crlf.sml -text
+tests/lang/lex.space_*.sml -text
+tests/lang/lex.comments_text_*.sml -text
+tests/errors/err.lex_space_cr*.sml -text
+tests/errors/err.lex_comment_cr*.sml -text
+tests/errors/err.lex_gap_cr*.sml -text
 examples/benchmarks/plclub-ray/upstream/test.gml -text
 examples/benchmarks/raytrace/upstream/chess.gml -text
 docs/lib/** linguist-generated=true

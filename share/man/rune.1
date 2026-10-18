@@ -169,7 +169,11 @@ A build file's annotation
 gives a unit's mode over the command line's, and the cache keeps a unit
 read in one mode apart from one read in another
 .RI ( docs/units.md ,
-Source modes). As yet every mode reads a text alike.
+Source modes). What a source may hold raw is the same in every mode
+.RI ( docs/language.md ,
+Source text); under
+.B \-\-unicode=latin1
+each byte is the character of its number.
 .TP
 .BI \-\-default\-type= T
 In the input files, not the libraries, make an integer or word constant, or an

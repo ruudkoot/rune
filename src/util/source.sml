@@ -14,8 +14,9 @@ struct
      (--unicode=ENC). A mode is a file's, not the compile's: the Basis
      Library and the libraries are read in the default, a program's files
      in the mode that its command line, its build file or Compiler.compile
-     says (docs/units.md). As yet every mode reads a text alike: the
-     roadmap's M3 and M4 give them their rules. *)
+     says (docs/units.md). What a text may hold raw is the same in every
+     mode, but that Latin-1 is read a byte a character (Lexer.lexerOf);
+     the roadmap's M4 gives the modes their differences. *)
   datatype encoding = Utf8 | Latin1
   datatype mode = Ascii | Unicode of encoding
 
