@@ -440,6 +440,14 @@ and styles on a terminal ([plans/repl.md](plans/repl.md), D16):
 * an `int`, a `word`, a `char` and a `string` as their `toString` shows
   them, a `word` with `0wx`, a `char` and a `string` quoted; a `real` so
   that it reads back as a real (`5.0`, `1E10`);
+* a `WideString.string` and a `WideChar.char` quoted, their text in UTF-8
+  (`"λx"`, `#"λ"`), but for what would not show or could make the
+  line read otherwise: a control (C0, DEL, C1), a bidirectional control or
+  another default-ignorable character, and a surrogate, as an escape --
+  `\n` and the others of Standard ML, else `\u202E` (`\U000E0001` above
+  U+FFFF) -- and the quote and the backslash escaped
+  (`RuneShow.wideString`; docs/plans/utf8.md, D14). A `string` is bytes,
+  and prints as `String.toString` shows it (`"caf\195\169"`);
 * a type `S.t` of a structure that has `S.toString : t -> string` by it:
   `0wx3 : Word8.word`, an `IntInf.int`, a `Time.time`. A matching formatter
   takes precedence over datatype constructors, so both small and large

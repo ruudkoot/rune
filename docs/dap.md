@@ -27,7 +27,8 @@ shares with the kernel's debugger in `src/dap/translate.sml`.
 * A stop is `stopped`, with the reason `breakpoint`, `step`, `pause` or
   `exception` (and the exception's message); `stackTrace`, `scopes` (the
   frame's variables), `variables` (a value's parts a level at a time) and
-  `evaluate` (in the frame) answer from it, and `continue`, `next`,
+  `evaluate` (in the frame) answer from it -- a frame's column in UTF-16
+  units, as DAP counts them by default -- and `continue`, `next`,
   `stepIn` and `stepOut` end it. `evaluate` while nothing is stopped is an
   entry of the session.
 * `pause` is `SIGINT` to the engine, which pauses rather than interrupts

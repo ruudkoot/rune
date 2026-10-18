@@ -65,7 +65,7 @@ An *outcome* is
  declared: string[],              -- datatypes, types, exceptions, structures, as the REPL says them
  messages: string[],              -- what the REPL would have said (reload's)
  diagnostics: [diagnostic],
- exception: {name, message, trace: [{function, file, line, column}]} | null,
+ exception: {name, message, trace: [{function, file, line, column}]} | null,  -- column in UTF-16 units
  css?: string}                    -- the palette's rules for the roles the bindings' html uses
 ```
 
@@ -109,7 +109,7 @@ compiled for it.
 | `debug/setBreakpoints` | `{path, lines: number[]}` | `{breakpoints: [{line, verified}]}`: the file's breakpoints, in place of those it had; `verified` where code begins the line now |
 | `debug/setRaise` | `{mode: "none" \| "uncaught" \| "all"}` | `null`: whether a raise stops the program, and which |
 | `debug/configure` | `{pause?: boolean}` | `null`: with `pause`, the front's `SIGINT` pauses the program rather than interrupting it |
-| `debug/frames` | `{}` | `[{id, function, file, line, column}]`, innermost first |
+| `debug/frames` | `{}` | `[{id, function, file, line, column}]`, innermost first; `column` in UTF-16 units from 1, as a diagnostic's `range` ([diagnostics.md](diagnostics.md), *Columns*) |
 | `debug/variables` | `{frame?}` | `[{name, type, shown, handle, more}]`: the variables of the frame (0 by default) that hold a value, as `eval`'s bindings; `more` where `value/children` opens it |
 | `debug/evaluate` | `{frame?, text}` | an *outcome*: the text evaluated with the frame's variables in scope |
 | `debug/continue` | `{mode: "continue" \| "stepIn" \| "next" \| "stepOut" \| "abort"}` | `null`, and the program goes on as the mode says |

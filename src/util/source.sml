@@ -119,20 +119,46 @@ struct
      are of the same file as the one before. *)
   val lastFile : (string * file) option ref = ref NONE
 
-  fun register (f : file) = (files := StringMap.insert (!files, #name f, f); lastFile := NONE)
+  (* of a file whose text keepLines let go, the lines that hold a byte
+     above 127, by their index: what its columns are counted in *)
+  val keptLines : string IntMap.map StringMap.map ref = ref StringMap.empty
+  fun forget (name : string) =
+    if StringMap.member (!keptLines, name) then keptLines := StringMap.remove (!keptLines, name) else ()
+
+  fun register (f : file) = (files := StringMap.insert (!files, #name f, f); forget (#name f); lastFile := NONE)
+
+  fun isAscii (s : string) : bool = CharVector.all (fn c => Char.ord c < 128) s
 
   (* What a session that compiles one source after another (the REPL)
      keeps of one it has compiled: its lines, to name the positions of its
-     spans, and not its text; and nothing of one it made for itself. *)
+     spans, and not its text, but for the lines that hold a character
+     above ASCII, whose columns a person reads in characters (shownLineCol);
+     and nothing of one it made for itself. *)
   fun keepLines (name : string) =
     case StringMap.find (!files, name) of
-      SOME {lineStarts, line, mode, ...} =>
-        (files := StringMap.insert (!files, name, {name = name, text = "", lineStarts = lineStarts, line = line,
-                                                   mode = mode});
-         lastFile := NONE)
+      SOME {text, lineStarts, line, mode, ...} =>
+        let
+          val n = Vector.length lineStarts
+          fun lineAt k =
+            let
+              val a = Vector.sub (lineStarts, k)
+              val b = if k + 1 < n then Vector.sub (lineStarts, k + 1) else size text
+            in String.substring (text, a, Int.max (0, Int.min (b, size text) - a)) end
+          val kept =
+            if isAscii text then IntMap.empty
+            else Vector.foldli (fn (k, _, m) => let val l = lineAt k in if isAscii l then m else IntMap.insert (m, k, l) end)
+                               IntMap.empty lineStarts
+        in
+          files := StringMap.insert (!files, name, {name = name, text = "", lineStarts = lineStarts, line = line,
+                                                    mode = mode});
+          forget name;
+          if IntMap.isEmpty kept then () else keptLines := StringMap.insert (!keptLines, name, kept);
+          lastFile := NONE
+        end
     | NONE => ()
   fun unregister (name : string) =
-    (files := (if StringMap.member (!files, name) then StringMap.remove (!files, name) else !files); lastFile := NONE)
+    (files := (if StringMap.member (!files, name) then StringMap.remove (!files, name) else !files);
+     forget name; lastFile := NONE)
 
   fun load (mode : mode, name : string) : file =
     let val f = readFile (mode, name) in register f; f end
@@ -154,10 +180,125 @@ struct
       NONE => NONE
     | SOME f => let val (l, c) = lineCol (f, start) in SOME (file, l, c) end
 
+  (* ---- what a person reads (docs/plans/utf8.md, D15; docs/diagnostics.md) ----
+     Positions are bytes, and so are the columns of the line table
+     (lineCol, lineColOf). A column a person reads counts characters, as
+     rustc and Emacs count them, and one an editor's protocol reads (DAP,
+     Monaco) counts UTF-16 units. Both are counted only where they are
+     shown: counting them for every span of the line table would cost 4.1%
+     of a compile (E10). *)
+
+  (* how many characters bytes a to b of a text hold, a byte that is not
+     UTF-8 being one, as an excerpt shows it (\xE9); and how many UTF-16
+     units they would be *)
+  fun countIn (wide : int -> int) (text : string, a : int, b : int) : int =
+    let
+      val b = Int.min (b, size text)
+      fun go (i, k) =
+        if i >= b then k
+        else if Char.ord (String.sub (text, i)) < 128 then go (i + 1, k + 1)
+        else case Utf8.decode (text, i) of
+               SOME (c, m) => go (i + m, k + wide c)
+             | NONE => go (i + 1, k + 1)
+    in go (Int.max (a, 0), 0) end
+  val charsIn = countIn (fn _ => 1)
+  val utf16In = countIn (fn c => if c > 0xFFFF then 2 else 1)
+
+  (* the text of the line of index k of a file, where it begins in the
+     text and where the next begins: the file's own, or the line
+     keepLines kept; NONE where neither holds it, which keepLines leaves
+     only of an ASCII line *)
+  fun lineOfIndex ({name, text, lineStarts, ...} : file, k : int) : (string * int * int) option =
+    if k < 0 orelse k >= Vector.length lineStarts then NONE
+    else if text <> "" then
+      SOME (text, Vector.sub (lineStarts, k),
+            if k + 1 < Vector.length lineStarts then Vector.sub (lineStarts, k + 1) else size text)
+    else
+      case StringMap.find (!keptLines, name) of
+        SOME m => Option.map (fn l => (l, 0, size l)) (IntMap.find (m, k))
+      | NONE => NONE
+
+  (* the column, from 1, counted by count, of byte column col of the line
+     of index k: the byte column where the line is ASCII or gone, and
+     where the line is shorter than the column, which is then of another
+     text the name was given to (the REPL's entries, stdIn, take one name
+     in turn) *)
+  fun columnIn (count : string * int * int -> int) (f : file, k : int, col : int) : int =
+    case lineOfIndex (f, k) of
+      SOME (text, a, b) => if a + col - 1 > b then col else 1 + count (text, a, a + col - 1)
+    | NONE => col
+
+  (* the line and the column in characters a person reads of a byte
+     offset: what a diagnostic's first line says *)
+  fun shownLineCol (f : file, pos : pos) : int * int =
+    let val (l, c) = lineCol (f, pos)
+    in (l, columnIn charsIn (f, l - #line f - 1, c)) end
+
+  (* the line as it is on disk, for a file that is not registered *)
+  fun lineOnDisk (name : string, line : int) : string option =
+    let
+      val ins = TextIO.openIn name
+      fun go k = case TextIO.inputLine ins of
+                   NONE => NONE
+                 | SOME l => if k = line then SOME l else go (k + 1)
+    in (go 1 before TextIO.closeIn ins) handle e => (TextIO.closeIn ins; raise e) end
+    handle IO.Io _ => NONE
+
+  (* the column, counted by count, of a byte column of a line of a file:
+     where a frame of a trace or of the debugger is, which the line table
+     gives in bytes. A file that is not registered is read from disk; one
+     that cannot be read keeps the byte column. *)
+  fun columnOf (count : string * int * int -> int) (name : string, line : int, col : int) : int =
+    let
+      fun fromDisk () =
+        case lineOnDisk (name, line) of
+          SOME l => if col - 1 > size l then col else 1 + count (l, 0, col - 1)
+        | NONE => col
+    in
+      if col <= 1 then col
+      else
+        case findFile name of
+          SOME f =>
+            (* a part of the file (Compiler.compile) may not hold the line *)
+            let val k = line - #line f - 1
+            in if k < 0 orelse k >= Vector.length (#lineStarts f) then fromDisk () else columnIn count (f, k, col) end
+        | NONE => fromDisk ()
+    end
+  val shownColumn = columnOf charsIn
+  val utf16Column = columnOf utf16In
+
+  (* a file's name as a person reads it in a diagnostic: what would not
+     show, or could make the line read otherwise -- a control (C0, DEL,
+     C1), a bidirectional control or another default-ignorable character,
+     and a byte that is not UTF-8 -- escaped, as an excerpt escapes it:
+     \u{202E}, \xE9 *)
+  fun shownName (name : string) : string =
+    if CharVector.all (fn c => Char.ord c >= 32 andalso Char.ord c < 127) name then name
+    else
+      let
+        fun hex c = Int.fmt StringCvt.HEX c
+        fun go (i, acc) =
+          if i >= size name then String.concat (List.rev acc)
+          else
+            case Utf8.decode (name, i) of
+              NONE => go (i + 1, ("\\x" ^ StringCvt.padLeft #"0" 2 (hex (Char.ord (String.sub (name, i))))) :: acc)
+            | SOME (c, k) =>
+                if c < 32 orelse (c >= 127 andalso c < 160) orelse Identifier.isDefaultIgnorable c
+                then go (i + k, ("\\u{" ^ hex c ^ "}") :: acc)
+                else go (i + k, String.substring (name, i, k) :: acc)
+      in go (0, []) end
+
+  (* file:line:col of a frame as a person reads it: the byte column of the
+     line table in characters, the name escaped *)
+  fun shownPlace (name : string, line : int, col : int) : string =
+    shownName name ^ ":" ^ Int.toString line ^ ":" ^ Int.toString (shownColumn (name, line, col))
+
+  (* file:line:col as a diagnostic's first line says it, the column in
+     characters and the name escaped *)
   fun describe ({file, start, ...} : span) : string =
     case StringMap.find (!files, file) of
-      NONE => if file = "" then "<unknown>" else file
+      NONE => if file = "" then "<unknown>" else shownName file
     | SOME f =>
-      let val (l, c) = lineCol (f, start)
-      in file ^ ":" ^ Int.toString l ^ ":" ^ Int.toString c end
+      let val (l, c) = shownLineCol (f, start)
+      in shownName file ^ ":" ^ Int.toString l ^ ":" ^ Int.toString c end
 end

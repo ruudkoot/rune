@@ -15,11 +15,17 @@ FILE:LINE:COL: error: MESSAGE
 FILE:LINE:COL: warning: MESSAGE
 ```
 
-`LINE` counts from 1 and `COL` counts bytes from 1, as before. Programs and
-editors that read this line need not change: when the standard error is
-not a terminal and nothing asks for more, this line is all that is
-printed, byte for byte as before (`tests/errors` and every other suite
-compare it).
+`LINE` counts from 1 and `COL` counts characters from 1: the code points
+before the position on its line, a byte that is not UTF-8 counting one,
+as rustc and Emacs count (*Columns* below). On a line of ASCII that is
+the byte column it always was, so programs and editors that read this
+line need not change: when the standard error is not a terminal and
+nothing asks for more, this line is all that is printed (`tests/errors`
+and every other suite compare it). `FILE` is the file's name with what
+would not show, or could make the line read otherwise, escaped as in the
+excerpt below: a control (C0, DEL, C1), a bidirectional control or
+another default-ignorable character as `\u{202E}`, a byte that is not
+UTF-8 as `\xE9`.
 
 A type in a message is named as the top level of the program names it. A
 type that the top level does not name by its own name gets the path that
@@ -47,10 +53,40 @@ t.sml:3:9: error: unbound variable or constructor: lenght
   between them when there are lines in between.
 * Control characters and the bidirectional controls (U+202A to U+202E,
   U+2066 to U+2069, U+200E, U+200F, U+061C) are shown escaped, as
-  `\u{202e}`, so a line cannot read otherwise than it is. A byte that is
+  `\u{202E}`, so a line cannot read otherwise than it is. A byte that is
   not UTF-8 is shown as `\xNN`.
 * When the source's text is gone (a warning replayed from the cache, a
   file the REPL `use`d), only the first line is printed.
+
+## Columns
+
+A position is a byte offset of the source everywhere inside the compiler,
+and so is a column in what programs read; a column a person reads counts
+characters, and one an editor's protocol reads counts UTF-16 units, as
+the editor does (docs/plans/utf8.md, D15). Those are counted only where
+they are shown: counting characters for every position of the line table
+would cost 4.1% of a compile (E10).
+
+| Where | A column counts |
+|---|---|
+| a diagnostic's first line, `FILE:LINE:COL` (`rune`, `runedoc`, the REPL) | characters, from 1 |
+| the carets of the excerpt | display columns: a CJK character or an emoji two, a combining mark none |
+| `--diagnostics-json` | `startByte` and `endByte` bytes; `range` UTF-16 units, from 1 |
+| the REPL's traces (`raised in`, `:bt`) and its debugger's frames | characters, from 1 |
+| the REPL's engine ([repl-protocol.md](repl-protocol.md)): the diagnostics' `range`, an exception's `trace` and `debug/frames` | UTF-16 units, from 1; a Jupyter notebook's trace shows these |
+| `rune-dap` ([dap.md](dap.md)) | UTF-16 units, from 1, as DAP counts by default |
+| `rune --serve` | bytes: offsets, and `line` and `column` |
+| the bytecode's line table, `Runtime.trace`'s frames, `Runtime.printTrace` and `runevm`'s trace of an uncaught exception, the native code's DWARF | bytes, from 1 |
+
+The REPL counts a frame's column in the text of its file: one it used
+keeps, once it is compiled, only the lines that hold a character above
+ASCII (`Source.keepLines`), and a file it did not read is read from disk.
+Its entries take one name in turn -- `stdIn` in the basic mode, and an
+entry typed at a stop the name of the entry that stopped -- so a column
+past the end of the line of the text it has is of another text, and
+keeps its bytes.
+The VM has no source, so the traces it prints itself give the line
+table's byte columns, which on a line of ASCII are its characters too.
 
 ## The flags
 
@@ -155,7 +191,8 @@ rune-ide reads (`/home/ruud/rune-ide/docs/ide-protocol.md`):
 
 * `startByte` and `endByte` are offsets in the file; `range` counts lines
   from 1 and columns in UTF-16 units from 1, as an editor does; `range`
-  is `null` when the source's text is gone.
+  is `null` when the source's text is gone. `path` is the file's name as
+  it is, not escaped, so that an editor finds the file by it.
 * `rendered` is the full form without colour.
 * The file is written also when the run succeeds, with no diagnostics or
   with its warnings.
@@ -182,7 +219,12 @@ change them.
 * Every suite compares output that is not to a terminal, byte for byte.
 * `tests/diagnostics/`: programs with errors and warnings, rendered with
   `--color=always --diagnostics=full`; each expected rendering was read
-  line by line. Also the JSON of one run.
+  line by line, its column in characters (`emoji.sml`, `wide.sml`). Also
+  the JSON of one run, a file whose name is Latin-1 (`latin1-name`), and
+  two whose names are escaped in the first line, one with its column
+  after a character above ASCII (`escaped-names`).
+* `tests/repl/unicode`: the REPL's traces and frames in characters;
+  `tests/dap/run.py`: a frame's column in UTF-16 units.
 * `tests/color/contrast.py`: the contrast of every role's colour against
   the backgrounds of the reference palettes, and under simulated
   deficient colour vision (above).

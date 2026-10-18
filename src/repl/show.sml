@@ -203,6 +203,27 @@ struct
       else Option.mapPartial at (pathOfWhen (env, c, fn path => isSome (at path)))
     end
 
+  (* The printer of WideString.string and WideChar.char, where the type of
+     the stamp is one of them as the session names them: their text in
+     UTF-8, with what would not show escaped (RuneShow.wideString; D14) *)
+  fun wideOf (env : Env.env, s : int) : string option =
+    let
+      (* the structure at path, where it has the members *)
+      fun having (path, members) =
+        case structureAt (env, path) of
+          SOME e => if List.all (fn m => StringMap.member (Env.vals e, m)) members then SOME e else NONE
+        | NONE => NONE
+      fun names (e, name) = Option.mapPartial Env.tyconOf (StringMap.find (Env.tys e, name)) = SOME s
+    in
+      case (having (["WideChar"], ["ord"]), having (["WideString"], ["size", "sub"])) of
+        (SOME c, w) =>
+          if names (c, "char") then SOME "(fn _ => fn x => RuneShow.wideChar (WideChar.ord x))"
+          else if (case w of SOME w => names (w, "string") | NONE => false)
+          then SOME "(fn _ => fn x => RuneShow.wideString (WideString.size x, fn i => WideChar.ord (WideString.sub (x, i))))"
+          else NONE
+      | (NONE, _) => NONE
+    end
+
   (* SML text of an `int -> t -> RuneCompiler.pretty` printer for t *)
   fun printer (g : gen, t : ty) : string =
     case prune t of
@@ -240,6 +261,9 @@ struct
             | (_, _, true, _, [a]) => "(RuneShow.array " ^ printer (g, a) ^ ")"
             | (_, _, _, true, [a]) => "(RuneShow.vector " ^ printer (g, a) ^ ")"
             | _ =>
+                case wideOf (#env g, s) of
+                  SOME p => p
+                | NONE =>
                 case shownBy (#env g, c, args) of
                   SOME p => p
                 | NONE => case IntMap.find (!Elaborate.dataCons, s) of

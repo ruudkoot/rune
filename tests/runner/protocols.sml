@@ -239,6 +239,31 @@ struct
       else fail ("diagnostics.latin1-name: " ^ read (dir ^ "/report.json"))
     end
 
+  (* the first line of a diagnostic escapes what a file's name holds that
+     would not show, or could make the line read otherwise (D14): a byte
+     that is not UTF-8, as Latin-1's "caf\233.sml" has, and a bidirectional
+     control, U+202E; the column after a character above ASCII counts it
+     once (D15) *)
+  fun diagnosticsNames () =
+    let
+      val dir = run ^ "/diagnostics-names"
+      val () = (rmTree dir; mkdirs dir)
+      fun one (name, shown, text, col) =
+        let
+          val src = dir ^ "/" ^ name
+          val () = write (src, text)
+          val () = ignore (exec {cmd = ["bin/rune", "--diagnostics=short", "--color=never", src, "-o", dir ^ "/a.rbc"],
+                                 dir = NONE, stdin = "", stdout = "", stderr = dir ^ "/err", timeout = 120})
+          val want = dir ^ "/" ^ shown ^ ":1:" ^ col ^ ": error: "
+        in
+          if String.isPrefix want (read (dir ^ "/err")) then ()
+          else fail ("diagnostics.escaped-names: wanted " ^ want ^ "..., got " ^ read (dir ^ "/err"))
+        end
+    in
+      one ("caf\233.sml", "caf\\xE9.sml", "val x : int = \"a\"\n", "5");
+      one ("a\226\128\174b.sml", "a\\u{202E}b.sml", "(* \206\187 *) val x : int = \"a\"\n", "13")
+    end
+
   (* ---- rune --serve *)
   fun serve () =
     let
@@ -361,6 +386,7 @@ struct
       ["repl", suffix] => SOME (fn () => repl (if suffix = "-" then "" else suffix))
     | ["diagnostics-one", n] => SOME (fn () => diagnosticsOne n)
     | ["diagnostics-latin1"] => SOME diagnosticsLatin1
+    | ["diagnostics-names"] => SOME diagnosticsNames
     | ["serve"] => SOME serve
     | _ => NONE
 
@@ -390,7 +416,8 @@ struct
        tagged ["check", "test-diagnostics", "covers:tests/diagnostics/*"]
          (Test.describe "diagnostics" (List.map (fn f => job (basename f, ["diagnostics-one", basename f], [], 300, 600))
                                                 (glob ("tests/diagnostics", ".sml"))
-                                       @ [job ("latin1-name", ["diagnostics-latin1"], [], 300, 600)])),
+                                       @ [job ("latin1-name", ["diagnostics-latin1"], [], 300, 600),
+                                          job ("escaped-names", ["diagnostics-names"], [], 300, 600)])),
        tagged ["check", "test-serve", "covers:tests/serve/*"] (Test.describe "serve" [job ("rune", ["serve"], [], 500, 600)]),
        Test.requires ["python3"] (tagged ["check", "test-repl-protocol", "covers:tests/repl-protocol/*"]
          (Test.describe "repl-protocol"

@@ -161,7 +161,7 @@ struct
     end
 
   fun whereOf ({function, file, line, column, ...} : frame) : string =
-    function ^ (if file = "" then "" else " at " ^ file ^ ":" ^ Int.toString line ^ ":" ^ Int.toString column)
+    function ^ (if file = "" then "" else " at " ^ Source.shownPlace (file, line, column))
 
   fun selectedFrame () : frame option =
     case !current of

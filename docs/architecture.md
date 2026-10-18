@@ -40,7 +40,9 @@ one intermediate representation to the next, `--dump-before=PASS` and
 Shared utilities: `src/util/ordmap.sml` (AVL maps: `functor OrdMapFn`,
 applied as `StringMap`/`IntMap`), `inttable.sml` (mutable hash tables of
 ints, which are never listed, so their order cannot reach the output),
-`source.sml` (files, spans, line/column), `error.sml` (`CompileError`,
+`source.sml` (files, spans, lines and byte columns, and the columns a person
+reads, in characters, counted only where they are shown: [diagnostics.md](diagnostics.md),
+*Columns*), `error.sml` (`CompileError`,
 `Bug`), `pass.sml` (the passes' options, lints and fuel), `ident.sml`
 (`Ident`, the one test of an identifier's characters, which the lexer,
 the REPL, the kernel and runedoc share: ASCII by default, the profile of

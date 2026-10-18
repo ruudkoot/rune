@@ -187,6 +187,57 @@ struct
     else RuneCompiler.PrettyBlock (0, false, [],
            [role ("syn.string", "\"" ^ String.toString (String.substring (s, 0, Int.max (0, !RuneCompiler.stringLength))) ^ "\""),
             dots])
+  (* A wide character or string as the REPL shows it (docs/plans/utf8.md,
+     D14): its text in UTF-8, as a literal, but for what would not show or
+     could make the line read otherwise -- a control (C0, DEL, C1), a
+     bidirectional control or another default-ignorable character -- and a
+     surrogate, which UTF-8 cannot hold. Those are escapes: \n and the
+     others of Standard ML where it has one, else \uXXXX (\UXXXXXXXX above
+     U+FFFF); the quote and the backslash are escaped too. A string's text
+     is its code points, given as the string's size and a function of an
+     index, so that one longer than stringLength is read only as far as it
+     is shown. The default-ignorables are those of Unicode 18.0.0
+     (Default_Ignorable_Code_Point), as lib/unicode's Identifier has them. *)
+  val ignorables = [(0xAD, 0xAD), (0x34F, 0x34F), (0x61C, 0x61C), (0x115F, 0x1160), (0x17B4, 0x17B5),
+                    (0x180B, 0x180F), (0x200B, 0x200F), (0x202A, 0x202E), (0x2060, 0x206F), (0x3164, 0x3164),
+                    (0xFE00, 0xFE0F), (0xFEFF, 0xFEFF), (0xFFA0, 0xFFA0), (0xFFF0, 0xFFF8), (0x1BCA0, 0x1BCA3),
+                    (0x1D173, 0x1D17A), (0xE0000, 0xE0FFF)]
+  fun escaped (c : int) : bool =
+    c < 0x20 orelse (c >= 0x7F andalso c < 0xA0) orelse (c >= 0xD800 andalso c < 0xE000) orelse c > 0x10FFFF
+    orelse List.exists (fn (a, b) => c >= a andalso c <= b) ignorables
+  fun utf8 (c : int) : string =
+    let fun byte b = String.str (Char.chr b)
+    in
+      if c < 0x80 then byte c
+      else if c < 0x800 then byte (0xC0 + c div 0x40) ^ byte (0x80 + c mod 0x40)
+      else if c < 0x10000 then byte (0xE0 + c div 0x1000) ^ byte (0x80 + c div 0x40 mod 0x40) ^ byte (0x80 + c mod 0x40)
+      else byte (0xF0 + c div 0x40000) ^ byte (0x80 + c div 0x1000 mod 0x40) ^ byte (0x80 + c div 0x40 mod 0x40)
+           ^ byte (0x80 + c mod 0x40)
+    end
+  fun wideText (c : int) : string =
+    case c of
+      7 => "\\a" | 8 => "\\b" | 9 => "\\t" | 10 => "\\n" | 11 => "\\v" | 12 => "\\f" | 13 => "\\r"
+    | 34 => "\\\"" | 92 => "\\\\"
+    | _ =>
+        if not (escaped c) then utf8 c
+        else if c <= 0xFFFF then "\\u" ^ StringCvt.padLeft #"0" 4 (Int.fmt StringCvt.HEX c)
+        else "\\U" ^ StringCvt.padLeft #"0" 8 (Int.fmt StringCvt.HEX c)
+  (* text in the string's role, as wide as its characters *)
+  fun wideRole (s : string, width : int) : pretty =
+    RuneCompiler.PrettyBlock (0, false, [RuneCompiler.ContextProperty ("role", "syn.string")],
+                              [RuneCompiler.PrettyStringWithWidth (s, width)])
+  fun wideChar (c : int) : pretty =
+    let val t = wideText c in wideRole ("#\"" ^ t ^ "\"", 3 + (if escaped c orelse c < 0x80 then size t else 1)) end
+  fun wideString (n : int, at : int -> int) : pretty =
+    let
+      val shown = Int.min (n, Int.max (0, !RuneCompiler.stringLength))
+      val cs = List.tabulate (shown, at)
+      val text = "\"" ^ String.concat (List.map wideText cs) ^ "\""
+      val width = 2 + List.foldl (fn (c, w) => w + (if escaped c orelse c < 0x80 then size (wideText c) else 1)) 0 cs
+    in
+      if n <= shown then wideRole (text, width)
+      else RuneCompiler.PrettyBlock (0, false, [], [wideRole (text, width), dots])
+    end
   fun unit (_ : int) () = str "()"
   fun function (_ : int) (_ : 'a) = role ("syn.keyword", "fn")
   fun hidden (_ : int) (_ : 'a) = role ("repl.ui", "?")

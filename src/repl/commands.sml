@@ -176,7 +176,7 @@ struct
   (* ---- the trace of the last uncaught exception (:bt) ---- *)
 
   fun frame ({function, file, line, column} : Runtime.frame) : string =
-    "  in " ^ function ^ (if file = "" then "" else " at " ^ file ^ ":" ^ Int.toString line ^ ":" ^ Int.toString column)
+    "  in " ^ function ^ (if file = "" then "" else " at " ^ Source.shownPlace (file, line, column))
 
   fun backtrace () : string =
     case !ReplLoop.lastTrace of

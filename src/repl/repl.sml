@@ -59,8 +59,8 @@ struct
       case List.find (fn {file, ...} : Runtime.frame => file <> "") (!lastTrace) of
         SOME {function, file, line, column} =>
           err (ReplFront.paint "repl.ui" ((case e of SML90.Interrupt => "  interrupted in " | _ => "  raised in ")
-                                          ^ function ^ " at " ^ file ^ ":" ^ Int.toString line ^ ":"
-                                          ^ Int.toString column ^ (if List.length (!lastTrace) > 1 then " (:bt for the rest)" else ""))
+                                          ^ function ^ " at " ^ Source.shownPlace (file, line, column)
+                                          ^ (if List.length (!lastTrace) > 1 then " (:bt for the rest)" else ""))
                ^ "\n")
       | NONE => ()
 

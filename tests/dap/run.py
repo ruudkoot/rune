@@ -12,8 +12,9 @@ connection of the loopback, as on Windows it always is.
 
 Two sessions: prog.sml stopped at a breakpoint -- its frames, scopes,
 variables, an expression in its frame, a step --, at a raise its own
-handler takes, and run to its end, its output given as events; and
-loop.sml paused while it runs."""
+handler takes, at a breakpoint whose caller's column follows characters
+above ASCII (in UTF-16 units, as DAP counts), and run to its end, its
+output given as events; and loop.sml paused while it runs."""
 import json
 import os
 import select
@@ -142,8 +143,8 @@ r = a.request("initialize", {"adapterID": "rune", "linesStartAt1": True, "column
 check("initialize", r["success"] and r["body"]["supportsConfigurationDoneRequest"], r)
 a.event("initialized")
 check("launch", a.request("launch", {"program": prog})["success"])
-r = a.request("setBreakpoints", {"source": {"path": prog}, "breakpoints": [{"line": 3}]})
-check("setBreakpoints", r["success"] and len(r["body"]["breakpoints"]) == 1, r)
+r = a.request("setBreakpoints", {"source": {"path": prog}, "breakpoints": [{"line": 3}, {"line": 11}]})
+check("setBreakpoints", r["success"] and len(r["body"]["breakpoints"]) == 2, r)
 check("setExceptionBreakpoints", a.request("setExceptionBreakpoints", {"filters": ["all"]})["success"])
 check("configurationDone", a.request("configurationDone", {})["success"])
 e = a.event("stopped")
@@ -170,6 +171,13 @@ fs = frames(a)
 check("stopped at a raise", e["body"]["reason"] == "exception" and fs[0]["name"] == "h"
       and "zero" in e["body"].get("text", ""), (e, fs))
 check("continue again", a.request("continue", {"threadId": 1})["success"])
+# g's caller on line 12, `val u = (* U+1F600 U+00E9 *) g 1`: the call is at
+# byte 23, character 19 and UTF-16 unit 20, and DAP counts UTF-16 units
+e = a.event("stopped")
+fs = frames(a)
+check("a column in UTF-16 units", e["body"]["reason"] == "breakpoint" and fs[0]["name"] == "g"
+      and fs[1]["line"] == 12 and fs[1]["column"] == 20, (e, fs))
+check("continue to the end", a.request("continue", {"threadId": 1})["success"])
 a.event("terminated")
 check("the program's output", a.outputs() == "r = 63\ndone 4\n", repr(a.outputs()))
 ex = [m for m in a.seen if m.get("event") == "exited"]
