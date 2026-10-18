@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's MANIFEST records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 8 requirements between the 8 files become 7 arrows.
+library and not a wall of lines: the 19 requirements between the 17 files become 17 arrows.
 The order in which the MANIFEST loads the files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -23,7 +23,7 @@ one need a file of the other.
 
 ```mermaid
 flowchart LR
-  a0["Unicode<br>(8)"]
+  a0["Unicode<br>(17)"]
 ```
 
 ## Unicode
@@ -38,6 +38,15 @@ flowchart TD
   n5["UnicodeGraphemeData"]
   n6(["GRAPHEME"])
   n7["Grapheme"]
+  n8["UnicodeNormalizeData"]
+  n9(["NORMALIZE"])
+  n10["Normalize"]
+  n11["UnicodeIdentifierData"]
+  n12(["IDENTIFIER"])
+  n13["Identifier"]
+  n14["UnicodeSecurityData"]
+  n15(["UNICODE_SECURITY"])
+  n16["UnicodeSecurity"]
   n1 --> n0
   n4 --> n3
   n4 --> n2
@@ -45,6 +54,16 @@ flowchart TD
   n7 --> n4
   n7 --> n6
   n7 --> n5
+  n10 --> n9
+  n10 --> n8
+  n10 --> n1
+  n13 --> n12
+  n13 --> n11
+  n13 --> n1
+  n16 --> n13
+  n16 --> n10
+  n16 --> n15
+  n16 --> n14
 ```
 
 ---

@@ -4,7 +4,7 @@
 
 From the **Raises** paragraphs of the documented entries.
 
-- `Chr`: [`encode`](sig/UTF8.md#val-encode) of UTF8, [`implode`](sig/UTF8.md#val-implode) of UTF8
+- `Chr`: [`nfdList`](sig/NORMALIZE.md#val-nfdlist) of NORMALIZE, [`nfcList`](sig/NORMALIZE.md#val-nfclist) of NORMALIZE, [`quickCheckList`](sig/NORMALIZE.md#val-quickchecklist) of NORMALIZE, [`isNFCList`](sig/NORMALIZE.md#val-isnfclist) of NORMALIZE, [`encode`](sig/UTF8.md#val-encode) of UTF8, [`implode`](sig/UTF8.md#val-implode) of UTF8
 - `Subscript`: [`next`](sig/GRAPHEME.md#val-next) of GRAPHEME, [`decode`](sig/UTF8.md#val-decode) of UTF8, [`next`](sig/UTF8.md#val-next) of UTF8
 
 ---

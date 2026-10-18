@@ -25,7 +25,7 @@ Library is what every program starts with.
 
 | Library |  |
 | --- | --- |
-| [Unicode](unicode/README.md) `unicode` | UTF-8, read and written strictly, the display width of a code point, and grapheme clusters as Unicode Standard Annex \#29 defines them. |
+| [Unicode](unicode/README.md) `unicode` | UTF-8, read and written strictly, the display width of a code point, grapheme clusters as Unicode Standard Annex \#29 defines them, the normalisation forms NFC and NFD of Annex \#15, the identifiers of Annex \#31 with the profile that Rune takes for Standard ML, and the security mechanisms of Unicode Technical Standard \#39. |
 | [Pretty printing](pretty/README.md) `pretty` | Documents laid out at a width: Wadler's prettier printer, as Lindig wrote it, with annotations a renderer turns into styles and budgets that cut a deep or long value short. |
 | [Markdown](markdown/README.md) `markdown` | Markdown: CommonMark's blocks and inlines, with GitHub's tables, parsed into a tree and written back as HTML or as a document of `Pretty`. |
 | [Terminal](terminal/README.md) `terminal` | A terminal as a line editor uses it. Colours and attributes, the keys a terminal sends, the device in raw mode, and an emulator for tests. The history of a prompt is kept in a file several sessions share, and the editor draws one line or many. |

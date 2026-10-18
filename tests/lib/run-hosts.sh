@@ -66,6 +66,10 @@ property.shrink|$random $property|tests/lib/property/shrink.sml|props
 unit.core|$unit|tests/lib/unit/core.sml|props
 unicode.utf8|$unit $unicode|tests/lib/unicode/utf8.sml|props
 unicode.graphemes|$unit $unicode|tests/lib/unicode/graphemes.sml|props
+unicode.normalize|$unit $unicode|tests/lib/unicode/normalize.sml|props
+unicode.normalize-props|$unit $unicode|tests/lib/unicode/normalize_props.sml|props
+unicode.identifier|$unit $unicode|tests/lib/unicode/identifier.sml|props
+unicode.security|$unit $unicode|tests/lib/unicode/security.sml|props
 json.suite|$unit $unicode $json|tests/lib/json/suite.sml|props
 json.roundtrip|$unit $unicode $json|tests/lib/json/roundtrip.sml|props
 terminal.key|$unit $unicode $terminal|tests/lib/terminal/key.sml|props

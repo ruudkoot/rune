@@ -16,7 +16,13 @@ the signature names and no others.
 | --- | --- | --- | --- | --- | --- |
 | [`DisplayWidth`](str/DisplayWidth.md) | :> | [`DISPLAY_WIDTH`](sig/DISPLAY_WIDTH.md) |  |  | [lib/unicode/display\_width.sml](../../../lib/unicode/display_width.sml) |
 | [`Grapheme`](str/Grapheme.md) | :> | [`GRAPHEME`](sig/GRAPHEME.md) |  |  | [lib/unicode/grapheme.sml](../../../lib/unicode/grapheme.sml) |
+| [`Identifier`](str/Identifier.md) | :> | [`IDENTIFIER`](sig/IDENTIFIER.md) |  |  | [lib/unicode/identifier.sml](../../../lib/unicode/identifier.sml) |
+| [`Normalize`](str/Normalize.md) | :> | [`NORMALIZE`](sig/NORMALIZE.md) |  |  | [lib/unicode/normalize.sml](../../../lib/unicode/normalize.sml) |
 | [`UnicodeGraphemeData`](str/UnicodeGraphemeData.md) |  | *none* |  |  | [lib/unicode/grapheme\_data.sml](../../../lib/unicode/grapheme_data.sml) |
+| [`UnicodeIdentifierData`](str/UnicodeIdentifierData.md) |  | *none* |  |  | [lib/unicode/identifier\_data.sml](../../../lib/unicode/identifier_data.sml) |
+| [`UnicodeNormalizeData`](str/UnicodeNormalizeData.md) |  | *none* |  |  | [lib/unicode/normalize\_data.sml](../../../lib/unicode/normalize_data.sml) |
+| [`UnicodeSecurity`](str/UnicodeSecurity.md) | :> | [`UNICODE_SECURITY`](sig/UNICODE_SECURITY.md) |  |  | [lib/unicode/security.sml](../../../lib/unicode/security.sml) |
+| [`UnicodeSecurityData`](str/UnicodeSecurityData.md) |  | *none* |  |  | [lib/unicode/security\_data.sml](../../../lib/unicode/security_data.sml) |
 | [`UnicodeWidthData`](str/UnicodeWidthData.md) |  | *none* |  |  | [lib/unicode/width\_data.sml](../../../lib/unicode/width_data.sml) |
 | [`Utf8`](str/Utf8.md) | :> | [`UTF8`](sig/UTF8.md) |  |  | [lib/unicode/utf8.sml](../../../lib/unicode/utf8.sml) |
 

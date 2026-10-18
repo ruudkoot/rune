@@ -1,8 +1,16 @@
 # Index: N
 
-[Overview](../README.md) &middot; [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) **n** [p](p.md) [r](r.md) [s](s.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [l](l.md) [m](m.md) **n** [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [y](y.md)
 
 - `next` (val): [GRAPHEME](../sig/GRAPHEME.md#val-next), [UTF8](../sig/UTF8.md#val-next)
+- `nfc` (val): [NORMALIZE](../sig/NORMALIZE.md#val-nfc)
+- `nfcList` (val): [NORMALIZE](../sig/NORMALIZE.md#val-nfclist)
+- `nfd` (val): [NORMALIZE](../sig/NORMALIZE.md#val-nfd)
+- `nfdList` (val): [NORMALIZE](../sig/NORMALIZE.md#val-nfdlist)
+- `No` (con): [NORMALIZE](../sig/NORMALIZE.md#con-no)
+- `NotCharacter` (con): [UNICODE_SECURITY](../sig/UNICODE_SECURITY.md#con-notcharacter)
+- `NotNFKC` (con): [UNICODE_SECURITY](../sig/UNICODE_SECURITY.md#con-notnfkc)
+- `NotXID` (con): [UNICODE_SECURITY](../sig/UNICODE_SECURITY.md#con-notxid)
 
 ---
 

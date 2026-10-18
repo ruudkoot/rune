@@ -1,7 +1,8 @@
-(* The Unicode library (docs/plans/repl.md, The libraries): UTF-8, the
-   display widths of code points, and grapheme clusters, from the tables
-   that scripts/gen-unicode-tables.py writes; its files in load order, in
-   the form of lib/basis/library.build. The compiler shares utf8,
+(* The Unicode library (docs/plans/repl.md, The libraries; docs/plans/utf8.md,
+   M5): UTF-8, the display widths of code points, grapheme clusters,
+   normalisation, identifiers and the security mechanisms of UTS #39, from
+   the tables that scripts/gen-unicode-tables.py writes; its files in load
+   order, in the form of lib/basis/library.build. The compiler shares utf8,
    width_data, display_width and grapheme (rune.build). *)
 annotate "demand" in
   utf8_sig.sml
@@ -12,4 +13,13 @@ annotate "demand" in
   grapheme_data.sml
   grapheme_sig.sml
   grapheme.sml
+  normalize_data.sml
+  normalize_sig.sml
+  normalize.sml
+  identifier_data.sml
+  identifier_sig.sml
+  identifier.sml
+  security_data.sml
+  security_sig.sml
+  security.sml
 end

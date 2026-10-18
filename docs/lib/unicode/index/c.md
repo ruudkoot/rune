@@ -1,10 +1,11 @@
 # Index: C
 
-[Overview](../README.md) &middot; [b](b.md) **c** [d](d.md) [e](e.md) [f](f.md) [i](i.md) [n](n.md) [p](p.md) [r](r.md) [s](s.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) **c** [d](d.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [y](y.md)
 
 - `clusters` (val): [GRAPHEME](../sig/GRAPHEME.md#val-clusters)
 - `codePoint` (val): [DISPLAY_WIDTH](../sig/DISPLAY_WIDTH.md#val-codepoint)
 - `columns` (val): [DISPLAY_WIDTH](../sig/DISPLAY_WIDTH.md#val-columns)
+- `combiningClass` (val): [NORMALIZE](../sig/NORMALIZE.md#val-combiningclass)
 - `count` (val): [GRAPHEME](../sig/GRAPHEME.md#val-count)
 
 ---

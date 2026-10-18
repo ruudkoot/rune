@@ -1,9 +1,19 @@
 # Unicode
 
-UTF-8, read and written strictly, the display width of a code point, and
-grapheme clusters as Unicode Standard Annex \#29 defines them.
+UTF-8, read and written strictly, the display width of a code point,
+grapheme clusters as Unicode Standard Annex \#29 defines them, the
+normalisation forms NFC and NFD of Annex \#15, the identifiers of Annex \#31
+with the profile that Rune takes for Standard ML, and the security
+mechanisms of Unicode Technical Standard \#39.
 
-[How to read these pages](../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [i](index/i.md) [n](index/n.md) [p](index/p.md) [r](index/r.md) [s](index/s.md) [v](index/v.md) [w](index/w.md)
+The tables are made from the Unicode Character Database by
+`scripts/gen-unicode-tables.py`, all of one version. The profile of
+[`Identifier`](str/Identifier.md) leaves out two sets that the script writes down and freezes
+at Unicode 18.0.0, so that no later version of Unicode changes which names
+are valid; the data of [`UnicodeSecurity`](str/UnicodeSecurity.md) change with every version, and
+suit warnings rather than rules.
+
+[How to read these pages](../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [h](index/h.md) [i](index/i.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [o](index/o.md) [p](index/p.md) [q](index/q.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md) [w](index/w.md) [y](index/y.md)
 
 ## Unicode
 
@@ -11,6 +21,9 @@ grapheme clusters as Unicode Standard Annex \#29 defines them.
 | --- | --- |
 | [`DISPLAY_WIDTH`](sig/DISPLAY_WIDTH.md) | Display widths: how many columns of a terminal a code point takes. |
 | [`GRAPHEME`](sig/GRAPHEME.md) | Grapheme clusters: the characters a reader sees, by the rules of Unicode Standard Annex \#29. |
+| [`IDENTIFIER`](sig/IDENTIFIER.md) | Identifiers: which code points may make a name, by Unicode Standard Annex \#31, and the profile of it that Rune takes for Standard ML. |
+| [`NORMALIZE`](sig/NORMALIZE.md) | Normalisation: the canonical forms of Unicode Standard Annex \#15. |
+| [`UNICODE_SECURITY`](sig/UNICODE_SECURITY.md) | The security mechanisms of Unicode Technical Standard \#39 for identifiers: which code points the standard allows in identifiers and of what type they are, the scripts of a string and how far they mix, and the skeletons by which two strings are confusable. |
 | [`UTF8`](sig/UTF8.md) | UTF-8: code points written as bytes and read back, strictly. |
 
 ---
