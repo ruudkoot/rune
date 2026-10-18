@@ -18,7 +18,12 @@ struct
         | _ => Error.bug "builtin operator without arrow type"
     in
       case Types.resolve opnd of
-        Types.TCon (c, _) => c
+        (* concat: the operand is a list of strings *)
+        Types.TCon (c, [a]) =>
+          if #stamp c = #stamp Types.listTycon
+          then (case Types.resolve a of Types.TCon (c', _) => c' | _ => Types.stringTycon)
+          else c
+      | Types.TCon (c, _) => c
       | _ => Types.intTycon    (* unconstrained: defaulted *)
     end
 
@@ -155,6 +160,14 @@ struct
     | EPrim (name, _, slot, sp) => SOME (name, ty (slot, sp))
     | EVar (_, ref (SOME (VGlobal (s, t))), _) => Option.map (fn p => (p, Ty.fromTypes t)) (IntMap.find (!primAliases, s))
     | EVar (_, ref (SOME (VLocal (s, t))), _) => Option.map (fn p => (p, Ty.fromTypes t)) (IntMap.find (!primAliases, s))
+    (* `val size = size`, and the like, of an operation of the top level on
+       strings (`^`, `size`, `concat`, `substring`) that resolved to a
+       primitive, the 8-bit one's *)
+    | EVar (_, ref (SOME (VBuiltin (name, t))), _) =>
+        if List.exists (fn n => n = name) ["^", "size", "concat", "substring"]
+           andalso not (isSome (builtinGlobal (name, t)))
+        then SOME (builtinPrim (name, t), Ty.fromTypes t)
+        else NONE
     | _ => NONE
 
   fun primArity name =

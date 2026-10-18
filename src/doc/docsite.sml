@@ -697,10 +697,11 @@ struct
       ^ "[" ^ M.escape title ^ "](README.md)\n\n"
       ^ "What a program can name without a structure in front. The types `int`, `word`, `real`, `char`,\n"
       ^ "`string`, `bool`, `list`, `ref`, `array`, `vector`, `exn` and `unit`, the constructors of `bool`,\n"
-      ^ "`list` and `ref`, the arithmetic and comparison operators and the exceptions of the language are\n"
-      ^ "built into the compiler; the rest is declared by the files of the library that every program\n"
-      ^ "loads, and is listed here. A value that is also a member of a structure is described on the page\n"
-      ^ "of that structure's signature.\n\n"
+      ^ "`list` and `ref`, the arithmetic and comparison operators, the operations `^`, `size`, `concat`\n"
+      ^ "and `substring` on strings (overloaded over `string` and `WideString.string`, `string` by\n"
+      ^ "default) and the exceptions of the language are built into the compiler; the rest is declared\n"
+      ^ "by the files of the library that every program loads, and is listed here. A value that is also\n"
+      ^ "a member of a structure is described on the page of that structure's signature.\n\n"
       ^ section ("Types", ["type", "datatype"])
       ^ section ("Exceptions", ["exception"])
       ^ section ("Values", ["val"])

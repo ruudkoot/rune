@@ -61,7 +61,7 @@ What it rests on:
 | M7 | Showing source and names | |
 | M8 | The wide family in the 8-bit order, and its costs | done 2026-10-18 |
 | M9 | The symmetric text signatures, and the change request | done 2026-10-18 |
-| M10 | String operations at both widths | |
+| M10 | String operations at both widths | done 2026-10-18 |
 | M11 | The corpora and the comparison | |
 
 The owner decided D1 to D20 on 2026-10-18, every one as recommended
@@ -3521,6 +3521,36 @@ nothing.
     788 of 788).
   - The compiler reaches a fixed point.
   - The Basis suite passes in every configuration.
+
+* **Done** (2026-10-18, at `ef7ce674`):
+  - **E7's patch,** with its comments made final:
+    - `^`, `size`, `concat` and `substring` are builtins of the class
+      String in `src/elab/env.sml`, and Overload registers `string`'s
+      primitives for them; `WideString`'s `_overload` line registers its
+      own;
+    - translation finds `concat`'s type from its list, and takes a builtin
+      used as a value (`val f = size`) for its primitive;
+    - `lib/basis/pervasive.sml` no longer declares the four.
+  - **The shim for xc1:** `tests/basis/host/gen-host-basis.sh` no longer
+    hides the hosts' own four, which stand for the overloaded ones as `+`
+    and `<` do.
+  - **Documents:** the row `ty.overload.string` and the *Deviations* row
+    on Overloading of `docs/language.md`, the deviation from Appendix E,
+    pinned by `tests/lang/ty.overload.string_wide`, which only Rune runs;
+    a string with a wide string is refused
+    (`tests/errors/err.ty_overload-string-mixed`). runedoc's page of the
+    top-level environment says the four are built in, where it listed
+    them as declarations.
+  - **Programs compile as before:** the 790 programs of `tests/lang` and
+    `examples`, compiled one by one by M9's compiler and by M10's (E7's
+    `typing-compare.sh`), have the same exit status and diagnostics. The
+    one exception is the new test, which M9 refuses. The bytecode of 352
+    differs: a sample of 24 differs in its positions alone, which
+    `pervasive.sml`'s shorter text moves.
+  - **Checks,** with MLKit 4.7.25 (logs `bas-m10`, `bas-m10-matrix` and
+    `bas-m10-xc2` of the campaign): `make check`, whose bootstrap is the
+    compiler's fixed point; `make matrix-quick`; and every xc2
+    configuration.
 
 **Gate G4**, the owner accepting overloading as a deviation from Appendix E,
 was passed on 2026-10-18 with D20.

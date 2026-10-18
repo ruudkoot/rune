@@ -51,6 +51,7 @@ struct
   fun operators "int" = ["+", "-", "*", "div", "mod", "~", "abs"] @ comparisons
     | operators "word" = ["+", "-", "*", "div", "mod", "~"] @ comparisons
     | operators "real" = ["+", "-", "*", "/", "~", "abs"] @ comparisons
+    | operators "string" = ["^", "size", "concat", "substring"] @ comparisons
     | operators _ = comparisons
 
   fun prims (prefix, names) =
@@ -75,5 +76,8 @@ struct
                prims ("real", [("+", "add"), ("-", "sub"), ("*", "mul"), ("/", "div"), ("~", "neg"),
                                ("abs", "abs")] @ cmp), Bits 64);
         register (Types.charTycon, "char", prims ("char", cmp), Bits 8);
-     register (Types.stringTycon, "string", prims ("string", cmp), Bits 8))
+     register (Types.stringTycon, "string",
+               prims ("string", cmp) @
+               [("^", Prim "string_concat"), ("size", Prim "string_size"),
+                ("concat", Prim "string_concat_list"), ("substring", Prim "string_extract")], Bits 8))
 end

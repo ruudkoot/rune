@@ -16,7 +16,16 @@ struct
 
   fun termOf (side : int -> var) (t : Types.ty) : term =
     case Types.prune t of
-      Types.TVar (ref (Types.Unbound {id, ...})) => V (side id)
+      (* an operator overloaded over a class (`+`, `size`) is at the type it
+         defaults to, as the printer shows it, and is no variable that any
+         type instantiates *)
+      Types.TVar (ref (Types.Unbound {kind = Types.KOverload kinds, id, ...})) =>
+        (case List.find (fn (k, _) => List.exists (fn k' => k' = k) kinds)
+                        [("int", Types.intTycon), ("real", Types.realTycon), ("word", Types.wordTycon),
+                         ("char", Types.charTycon), ("string", Types.stringTycon)] of
+           SOME (_, c) => C (#stamp c, [])
+         | NONE => V (side id))
+    | Types.TVar (ref (Types.Unbound {id, ...})) => V (side id)
     | Types.TVar _ => C (~1, [])
     | Types.TCon (c, args) => C (#stamp c, List.map (termOf side) args)
     | Types.TRecord fs => R (List.map (fn (l, a) => (l, termOf side a)) fs)

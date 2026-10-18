@@ -224,6 +224,9 @@ struct
   fun unop (name, class, id) =
     let val o' = overloaded (id, class)
     in (name, Prim {scheme = TArrow (o', o'), name = name}) end
+  fun strop (name, scheme, id) =
+    let val s = overloaded (id, ["string"])
+    in (name, Prim {scheme = scheme s, name = name}) end
   fun cmpop (name, class, id) =
     let val o' = overloaded (id, class)
     in (name, Prim {scheme = TArrow (tupleTy [o', o'], boolTy), name = name}) end
@@ -239,7 +242,15 @@ struct
      ("=", Prim {scheme = TArrow (tupleTy [eqa, eqa], boolTy), name = "="}),
      ("<>", Prim {scheme = TArrow (tupleTy [eqa, eqa], boolTy), name = "<>"}),
      (":=", Prim {scheme = TArrow (tupleTy [refTy a, a], unitTy), name = ":="}),
-     ("!", Prim {scheme = TArrow (refTy a, a), name = "!"})]
+     ("!", Prim {scheme = TArrow (refTy a, a), name = "!"}),
+     (* the operations of the top level on strings, overloaded on the class
+        String as the comparisons are: one type of the class throughout,
+        resolved by the operands, `string` by default (docs/language.md,
+        Deviations, Overloading) *)
+     strop ("^", fn s => TArrow (tupleTy [s, s], s), ~22),
+     strop ("size", fn s => TArrow (s, intTy), ~23),
+     strop ("concat", fn s => TArrow (listTy s, s), ~24),
+     strop ("substring", fn s => TArrow (tupleTy [s, intTy, intTy], s), ~25)]
 
   fun nameStr (c, cons) = TyStr {fcn = TName c, cons = cons}
 
