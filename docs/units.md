@@ -82,10 +82,16 @@ A unit's mode is in its key where it is not the default (*The cache*), so
 that a unit read in one mode is not taken for one read in another (S63 of
 `tests/incremental/SCENARIOS.md`), and in its basis beside the hash of its
 source, so that loading the basis reads the source again, for a functor's
-body, as the unit was read (*The export basis*). What a source may hold
-raw is the same in every mode ([language.md](language.md), *Source text*),
-but that under `--unicode=latin1` each byte is the character of its
-number; the roadmap's M4 gives the modes their differences.
+body, as the unit was read (*The export basis*).
+
+The modes differ in what a literal holds ([language.md](language.md),
+*Strings*). By default it holds ASCII alone, and `\U` is refused. Under
+`--unicode` a raw character above 127 means its code point, which only
+the wide types take, and `\U` is taken. Under `--unicode=latin1` the file
+is Latin-1, made UTF-8 as it is read, and a raw character is its own byte;
+a file that holds the UTF-8 of a character is refused as one that looks
+like UTF-8. What else a source may hold raw is the same in every mode
+(*Source text*).
 
 ## The export basis
 

@@ -7,12 +7,10 @@
 # A CORPUS is rune, this tree's tracked sources; NAME=DIR, the .sml, .sig
 # and .fun files under DIR; or NAME=@LIST, the files LIST names, one a line.
 # Each file is lexed by itself (rune --lex-count 1) in each mode of LIST, a
-# comma-separated list of (default: all four)
+# comma-separated list of (default: all three)
 #   default   no flag
 #   unicode   --unicode
 #   latin1    --unicode=latin1
-#   ascii     --ascii-rule: the default with M4's refusal of a character
-#             above 127 outside comments (the gate G1)
 # and OUT/NAME.MODE.refused lists the files refused, each with the first
 # line of its error. One line a corpus and mode is printed: how many of its
 # files lex. With --cost K, the line also has the instructions to lex, once,
@@ -23,13 +21,13 @@
 # printed: the cost of a lexer against another's. The files are then also
 # those that DIR's compiler takes. The DIR of --rune
 # (default: this tree) and of --against is a built tree whose bin/rune.rbc
-# takes --lex-count; a tree without --ascii-rule or --unicode is measured
-# with --modes default.
+# takes --lex-count; a tree without --unicode is measured with --modes
+# default.
 set -u
 root=$(cd "$(dirname "$0")/.." && pwd)
 tree=$root
 out=$root/tests/out/lex-corpus
-modes=default,unicode,latin1,ascii
+modes=default,unicode,latin1
 cost=0
 against=""
 jobs=$(sh "$root/scripts/ncpus.sh" 2>/dev/null || echo 4)
@@ -53,7 +51,6 @@ flagsOf() {
     default) echo "" ;;
     unicode) echo "--unicode" ;;
     latin1) echo "--unicode=latin1" ;;
-    ascii) echo "--ascii-rule" ;;
     *) echo "lex-corpus: no mode $1" >&2; exit 2 ;;
   esac
 }

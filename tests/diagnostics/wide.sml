@@ -1,1 +1,1 @@
-(* 日本語のコメント *) val s = "東京" val n = size s + lenght s
+(* 日本語のコメント、東京 *) val s = "Tokyo" val n = size s + lenght s

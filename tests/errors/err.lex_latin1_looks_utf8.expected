@@ -1,0 +1,1 @@
+the text looks like UTF-8: U+00C3 U+00A9 are the bytes of U+00E9 (read the file with --unicode, not --unicode=latin1)

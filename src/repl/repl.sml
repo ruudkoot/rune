@@ -305,6 +305,11 @@ struct
              if ok then () else raise Fail ("Static errors in " ^ file)
            end)
       fun parsed text = Usage.record (fn () => parseAt (mode, file, text, line))
+      (* what read gives is the file's bytes: a Latin-1 file's made UTF-8,
+         as Source.readFile makes them *)
+      fun textOf acc =
+        let val t = String.implode (List.rev acc)
+        in if mode = Source.Unicode Source.Latin1 then Source.latin1ToUtf8 t else t end
       (* where a `;` may end a declaration at the top level (ReplScan): only
          there is the text parsed, since a structure has a `;` after most of
          its declarations, and parsing the text at each of them made reading
@@ -313,7 +318,7 @@ struct
       fun gather (acc : char list) =
         case read () of
           NONE =>
-            let val text = String.implode (List.rev acc)
+            let val text = textOf acc
             in
               if CharVector.all Char.isSpace text then (fn () => ())
               else
@@ -329,7 +334,7 @@ struct
             in
               if not (ReplScan.complete scan) then gather acc
               else
-                let val text = String.implode (List.rev acc)
+                let val text = textOf acc
                 in
                   case parsed text of
                     (Decs (decs, fx), names) => run' (decs, fx, text, names)

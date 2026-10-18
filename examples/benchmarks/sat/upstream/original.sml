@@ -36,7 +36,7 @@ structure Main : BMARK =
           val res = phi(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10)
           in
             Log.say [
-                "φ(", String.concatWithMap "," b2s [x1, x2, x3, x4, x5, x6, x7, x8, x9, x10],
+                "\207\134(", String.concatWithMap "," b2s [x1, x2, x3, x4, x5, x6, x7, x8, x9, x10],
                 ") = ", b2s res, "\n"
               ];
             res

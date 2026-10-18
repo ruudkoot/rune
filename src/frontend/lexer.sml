@@ -87,10 +87,10 @@ struct
                                   else if (i >= 32 andalso i < 127) orelse i = 9 orelse i = 10 orelse i = 12 then 0
                                   else 3)
 
-  (* --ascii-rule (scripts/lex-corpus.sh, the roadmap's gate G1): refuse in
-     the default mode a character above 127 outside comments, as M4 is to.
-     Off but for that measure. *)
-  val asciiRule = ref false
+  (* An escape of a code point: \uXXXX, or \UXXXXXXXX above U+FFFF *)
+  fun escapeOf c =
+    if c <= 0xFFFF then "\\u" ^ StringCvt.padLeft #"0" 4 (Int.fmt StringCvt.HEX c)
+    else "\\U" ^ StringCvt.padLeft #"0" 8 (Int.fmt StringCvt.HEX c)
 
   (* The lexer of a text read in a mode (Source.mode): the token at an
      index, with its span and the index after it (whitespace and comments
@@ -103,8 +103,13 @@ struct
      tokens, white space is space, TAB, LF, FF and CR before LF; a comment
      holds any text but the other controls and what refusedAbove127 names;
      a literal holds no control, and nothing that refusedAbove127 names.
-     The text is UTF-8, but under --unicode=latin1, where each byte is the
-     character of its number. *)
+     The modes differ in a literal (D6, D7): by default it holds ASCII
+     alone, and writes the rest as escapes, of which \U is not one; under
+     --unicode a raw character means its code point, which only a wide
+     type takes (the literal's mark, Token); under --unicode=latin1 it is
+     its own byte. The text is UTF-8: a Latin-1 file is made UTF-8 as it is
+     read (Source.readFile), and refused where it looks like UTF-8 itself
+     (D3). *)
   fun lexerOf (mode : Source.mode, name : string, text : string)
       : {next : int -> token * Source.span * int, skipComment : int -> int} =
     let
@@ -114,21 +119,41 @@ struct
       fun ch i = if i < n then String.sub (text, i) else #"\000"
       fun at i = i < n
       val latin1 = mode = Source.Unicode Source.Latin1
-      val asciiOnly = !asciiRule andalso mode = Source.Ascii
+      val utf8Raw = mode = Source.Unicode Source.Utf8
+
+      (* Under --unicode=latin1, the characters from i, each a byte of the
+         file, where they are the UTF-8 of a character: the file was UTF-8
+         and not Latin-1 (D3) *)
+      fun looksUtf8 i =
+        let
+          fun bytes (j, m, acc) =
+            if m = 0 then acc
+            else case Utf8.decode (text, j) handle Subscript => NONE of
+                   SOME (c, k) => if c <= 255 then bytes (j + k, m - 1, (Char.chr c, j + k) :: acc) else acc
+                 | NONE => acc
+          val got = List.rev (bytes (i, 4, []))
+        in
+          case Utf8.decode (String.implode (List.map #1 got), 0) handle Subscript => NONE of
+            SOME (u, k) =>
+              if k < 2 then ()
+              else err (i, #2 (List.nth (got, k - 1)),
+                        "the text looks like UTF-8: " ^ String.concatWith " " (List.map (codePoint o Char.ord o #1) (List.take (got, k)))
+                        ^ " are the bytes of " ^ codePoint u ^ " (read the file with --unicode, not --unicode=latin1)")
+          | NONE => ()
+        end
 
       (* The character whose bytes begin at i, a byte above 127, by the
          mode's encoding: its code point and how many bytes it has, once
          the rules every context shares are checked; context says where it
          is, for the message *)
       fun above127 (i, context) : int * int =
-        case (if latin1 then SOME (Char.ord (String.sub (text, i)), 1) else Utf8.decode (text, i)) of
+        case Utf8.decode (text, i) of
           NONE => err (i, i + 1, "invalid UTF-8 (byte 0x" ^ Int.fmt StringCvt.HEX (Char.ord (ch i)) ^ ") " ^ context)
         | SOME (c, k) =>
             case refusedAbove127 c of
               SOME what => err (i, i + k, what ^ " " ^ codePoint c ^ " " ^ context
-                                          ^ (if context = "in a comment" then "" else " (write it as \\u"
-                                             ^ StringCvt.padLeft #"0" 4 (Int.fmt StringCvt.HEX c) ^ ")"))
-            | NONE => (c, k)
+                                          ^ (if context = "in a comment" then "" else " (write it as " ^ escapeOf c ^ ")"))
+            | NONE => ((if latin1 andalso c >= 0xC2 then looksUtf8 i else ()); (c, k))
 
       (* how many bytes of formatting -- space, TAB, LF, FF, or CR LF -- are
          at i: the white space between tokens and in a string's gap *)
@@ -219,7 +244,10 @@ struct
         end
 
       (* Lex the body of a string literal starting after the opening quote.
-         Returns (chars, index after closing quote). *)
+         Returns (chars, index after closing quote); rawMark is SOME the
+         first raw character above 127 of a literal read under --unicode,
+         which the caller resets. *)
+      val rawMark : int option ref = ref NONE
       fun lexStringBody (start, i, acc) =
         if i >= n orelse ch i = #"\n" then err (start, i, "unterminated string literal")
         else
@@ -234,15 +262,19 @@ struct
                                   ^ Char.toString c ^ ")")
                  else if Char.ord c < 128 then lexStringBody (start, i + 1, Char.ord c :: acc)
                  else
-                   (* checked, and then taken as its bytes, a character
-                      each, as the roadmap's M4 is to change *)
+                   (* a raw character above 127 means its code point (D6):
+                      by default it is refused, under --unicode marked *)
                    let
                      val (cp, k) = above127 (i, "in string literal")
-                     val () = if asciiOnly then err (i, i + k, "non-ASCII character " ^ codePoint cp
-                                                                ^ " in string literal (write it as an escape)")
-                              else ()
-                     fun bytes (j, acc) = if j = i + k then acc else bytes (j + 1, Char.ord (String.sub (text, j)) :: acc)
-                   in lexStringBody (start, i + k, bytes (i, acc)) end
+                     val () =
+                       if mode = Source.Ascii then
+                         err (i, i + k, "non-ASCII character " ^ codePoint cp ^ " in string literal ("
+                                        ^ (if cp <= 0xFFFF then "write it as " ^ escapeOf cp ^ ", or read the file with --unicode"
+                                           else "read the file with --unicode, where it is " ^ escapeOf cp) ^ ")")
+                       else if utf8Raw andalso not (isSome (!rawMark)) then rawMark := SOME cp
+                       else ()
+                   in lexStringBody (start, i + k, cp :: acc) end
+      and surrogate v = "surrogate " ^ codePoint v ^ " in an escape: a surrogate is no character"
       and lexEscape (start, i, acc) =
         let fun cont c = lexStringBody (start, i + 1, Char.ord c :: acc)
         in
@@ -258,14 +290,22 @@ struct
             end
           (* A code point, which only a wide character or string can hold
              above 255 (elaboration decides, with the type). *)
+          (* a surrogate is no character, and is refused at every type
+             (D9): a deviation, since the Definition's alphabet holds it *)
           | #"u" =>
             if isHex (ch (i + 1)) andalso isHex (ch (i + 2)) andalso isHex (ch (i + 3)) andalso isHex (ch (i + 4)) then
-              lexStringBody (start, i + 5, IntInf.toInt (parseInt (String.substring (text, i + 1, 4), 16)) :: acc)
+              let val v = IntInf.toInt (parseInt (String.substring (text, i + 1, 4), 16))
+              in if v >= 0xD800 andalso v <= 0xDFFF then err (i - 1, i + 5, surrogate v)
+                 else lexStringBody (start, i + 5, v :: acc)
+              end
             else err (i - 1, i + 1, "invalid \\u escape")
+          (* Successor ML's \U, under --unicode only (D7) *)
           | #"U" =>
-            if List.all (fn k => isHex (ch (i + k))) [1, 2, 3, 4, 5, 6, 7, 8] then
+            if mode = Source.Ascii then err (i - 1, i + 1, "the escape \\U needs --unicode")
+            else if List.all (fn k => isHex (ch (i + k))) [1, 2, 3, 4, 5, 6, 7, 8] then
               let val v = IntInf.toInt (parseInt (String.substring (text, i + 1, 8), 16))
               in if v > 1114111 then err (i - 1, i + 9, "\\U escape out of range (the largest code point is 0x10FFFF)")
+                 else if v >= 0xD800 andalso v <= 0xDFFF then err (i - 1, i + 9, surrogate v)
                  else lexStringBody (start, i + 9, v :: acc)
               end
             else err (i - 1, i + 1, "invalid \\U escape")
@@ -300,9 +340,10 @@ struct
           err (i, i + 1, "unexpected character " ^ codePoint (Char.ord (ch i))
                          ^ (if ch i = #"\r" then " (a carriage return not before a line feed)" else ""))
         else
-          case (if latin1 then SOME (Char.ord (ch i), 1) else Utf8.decode (text, i)) of
-            SOME (c, k) => err (i, i + k, "unexpected character " ^ codePoint c
-                                          ^ (case refusedAbove127 c of SOME what => " (a " ^ what ^ ")" | NONE => ""))
+          case Utf8.decode (text, i) of
+            SOME (c, k) => ((if latin1 andalso c >= 0xC2 then looksUtf8 i else ());
+                            err (i, i + k, "unexpected character " ^ codePoint c
+                                          ^ (case refusedAbove127 c of SOME what => " (a " ^ what ^ ")" | NONE => "")))
           | NONE => err (i, i + 1, "unexpected byte 0x" ^ Int.fmt StringCvt.HEX (Char.ord (ch i)) ^ " (invalid UTF-8)")
 
       (* Alphanumeric identifier or long identifier. *)
@@ -357,15 +398,19 @@ struct
               let val j = digitsWhile (i + 1, isIdentChar)
               in (TYVAR (String.substring (text, i, j - i)), span (i, j), j) end
             else if c = #"\"" then
-              let val (s, j) = lexStringBody (i, i + 1, [])
-              in (if List.all (fn c => c <= 255) s then STRING (String.implode (List.map Char.chr s))
-                  else WIDESTRING s,
+              let
+                val () = rawMark := NONE
+                val (s, j) = lexStringBody (i, i + 1, [])
+              in (if not (isSome (!rawMark)) andalso List.all (fn c => c <= 255) s then STRING (String.implode (List.map Char.chr s))
+                  else WIDESTRING (s, !rawMark),
                   span (i, j), j)
               end
             else if c = #"#" andalso ch (i + 1) = #"\"" then
-              let val (s, j) = lexStringBody (i, i + 2, [])
+              let
+                val () = rawMark := NONE
+                val (s, j) = lexStringBody (i, i + 2, [])
               in case s of
-                   [c] => (CHAR c, span (i, j), j)
+                   [c] => (CHAR (c, !rawMark), span (i, j), j)
                  | _ => err (i, j, "character literal must contain exactly one character")
               end
             else if c = #"_" then

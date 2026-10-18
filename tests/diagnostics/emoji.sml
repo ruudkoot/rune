@@ -1,1 +1,1 @@
-val s = "é 👩‍💻 🇳🇱" val k = s + 1
+(* é 👩‍💻 🇳🇱 *) val s = "e" val k = s + 1

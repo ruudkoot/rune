@@ -642,8 +642,27 @@ struct
         else LetRec (List.map (fn (pi, e) => (stampOf (pi, e), fnType e, e)) bs, k ())
     end
 
+  (* The program's top-level declarations, as transTopDecs makes them, each
+     with the wide constants it makes set first (MatchComp.hoisted): those
+     made before its continuation is asked for, and those after *)
+  fun transTopLevel (decs : dec list) : lexp =
+    case decs of
+      [] => Unit
+    | d :: rest =>
+        let
+          val () = Types.startWorkOn ("type translation", spanOfDec d)
+          val () = MatchComp.hoisted := []
+          val first = ref []
+          val code = transTopDec (d, fn () => (first := !MatchComp.hoisted; MatchComp.hoisted := [];
+                                                 Rest (transTopLevel rest)))
+          val made = !MatchComp.hoisted @ !first
+        in
+          MatchComp.hoisted := [];
+          List.foldl (fn ((g, e), acc) => Seq (SetGlobal (g, e), acc)) code made
+        end
+
   fun transProgram (decs : dec list) : lexp =
-    (funNames := IntMap.empty; structPath := []; schemes := IntTable.table 4096;
-     let val e = transTopDecs (decs, fn () => Unit) handle x => (Types.stopWork (); raise x)
+    (funNames := IntMap.empty; structPath := []; schemes := IntTable.table 4096; MatchComp.hoisted := [];
+     let val e = transTopLevel decs handle x => (Types.stopWork (); raise x)
      in Types.stopWork (); e end)
 end

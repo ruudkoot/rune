@@ -14,9 +14,9 @@ struct
      (--unicode=ENC). A mode is a file's, not the compile's: the Basis
      Library and the libraries are read in the default, a program's files
      in the mode that its command line, its build file or Compiler.compile
-     says (docs/units.md). What a text may hold raw is the same in every
-     mode, but that Latin-1 is read a byte a character (Lexer.lexerOf);
-     the roadmap's M4 gives the modes their differences. *)
+     says (docs/units.md). The modes differ in what a literal holds
+     (Lexer.lexerOf), and a Latin-1 file is made UTF-8 as it is read
+     (readFile). *)
   datatype encoding = Utf8 | Latin1
   datatype mode = Ascii | Unicode of encoding
 
@@ -70,6 +70,21 @@ struct
      buffer, which the compiler as a service compiles (Serve) *)
   val overlays : string StringMap.map ref = ref StringMap.empty
 
+  (* Latin-1 text made UTF-8, a byte above 127 the two bytes of the
+     character of its number: how a file read under --unicode=latin1 is
+     taken in, so that the lexer, the positions and the diagnostics see
+     UTF-8 alone (D3) *)
+  fun latin1ToUtf8 (s : string) : string =
+    if CharVector.all (fn c => Char.ord c < 128) s then s
+    else
+      String.translate
+        (fn c => let val b = Char.ord c
+                 in if b < 128 then String.str c
+                    else String.implode [Char.chr (0xC0 + b div 64), Char.chr (0x80 + b mod 64)]
+                 end) s
+
+  (* the text of a file read in a mode: a Latin-1 file is made UTF-8; an
+     editor's buffer is its text already *)
   fun readFile (mode : mode, name : string) : file =
     case StringMap.find (!overlays, name) of
       SOME text => fromStringIn (mode, name, text)
@@ -79,7 +94,7 @@ struct
           val text = TextIO.inputAll ins
           val () = TextIO.closeIn ins
         in
-          fromStringIn (mode, name, text)
+          fromStringIn (mode, name, if mode = Unicode Latin1 then latin1ToUtf8 text else text)
         end
 
   (* 1-based line and column for a byte offset. *)

@@ -1,4 +1,4 @@
-\e[1mtests/diagnostics/wide.sml:1:66:\e[0m \e[1;91merror:\e[0m \e[1munbound variable or constructor: lenght\e[0m
+\e[1mtests/diagnostics/wide.sml:1:74:\e[0m \e[1;91merror:\e[0m \e[1munbound variable or constructor: lenght\e[0m
 \e[2m  |\e[0m
-\e[2m1 |\e[0m (* 日本語のコメント *) val s = "東京" val n = size s + lenght s
-\e[2m  |\e[0m                                                        \e[1;91m^^^^^^\e[0m
+\e[2m1 |\e[0m (* 日本語のコメント、東京 *) val s = "Tokyo" val n = size s + lenght s
+\e[2m  |\e[0m                                                               \e[1;91m^^^^^^\e[0m

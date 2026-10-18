@@ -12,8 +12,12 @@ struct
     | SWord of IntInf.int
     | SReal of string
     | SString of string           (* a constant whose characters fit 8 bits *)
-    | SWideString of int list     (* one with a code point above 255 *)
-    | SChar of int                (* the code point of a character constant *)
+    | SWideString of int list * int option
+                                  (* one with a code point above 255, or with
+                                     a raw character above 127 read under
+                                     --unicode: SOME its first (Token) *)
+    | SChar of int * int option   (* the code point of a character constant,
+                                     SOME it where it is raw *)
 
   (* The constants of a type registered with _overload (Overload.literal). *)
   datatype ovliteral = OvBits of int | OvVia of string list * string
@@ -321,8 +325,8 @@ struct
     | SWord w => "0w" ^ IntInf.toString w
     | SReal r => r
     | SString s => "\"" ^ String.toString s ^ "\""
-    | SWideString s => "\"" ^ Scon.text s ^ "\""
-    | SChar c => "#\"" ^ Scon.escape c ^ "\""
+    | SWideString (s, _) => "\"" ^ Scon.text s ^ "\""
+    | SChar (c, _) => "#\"" ^ Scon.escape c ^ "\""
 
   fun expToString e =
     case e of

@@ -305,10 +305,11 @@ struct
                                          andalso (case str (field (r, ["result", "type"])) of SOME t => String.isSuffix "-> 'a" t | NONE => false))
       val r = request (6, "hover", buffer (q good, ", \"offset\": 0"))
       val () = want ("hover-nothing", r, field (r, ["result"]) = SOME Json.Null)
-      (* a buffer of non-ASCII text, sent as Python sends it: \u escapes, a
-         character beyond 16 bits as two; offsets are its bytes in UTF-8 *)
-      val accented = "val s = \"caf\195\169 \226\134\146 \240\159\152\128\"\nval z = alsoUndefined\n"
-      val escaped = "\"val s = \\\"caf\\u00e9 \\u2192 \\ud83d\\ude00\\\"\\nval z = alsoUndefined\\n\""
+      (* a buffer of non-ASCII text, in a comment, where the default takes
+         it, sent as Python sends it: \u escapes, a character beyond 16 bits
+         as two; offsets are its bytes in UTF-8 *)
+      val accented = "(* caf\195\169 \226\134\146 \240\159\152\128 *)\nval z = alsoUndefined\n"
+      val escaped = "\"(* caf\\u00e9 \\u2192 \\ud83d\\ude00 *)\\nval z = alsoUndefined\\n\""
       val r = request (9, "diagnostics", buffer (escaped, ""))
       val () = want ("diagnostics-utf8", r,
                      List.map (fn d => (num (field (d, ["line"])), num (field (d, ["start"])))) (diags r)
