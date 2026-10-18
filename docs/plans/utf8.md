@@ -64,15 +64,17 @@ What it rests on:
 | M10 | String operations at both widths | |
 | M11 | The corpora and the comparison | |
 
-D1 to D20 are undecided (*Decisions*).
+The owner decided D1 to D20 on 2026-10-18, every one as recommended
+(*Decisions*). D1's flag names and D7's `\U` are the owner's own (*The
+request*).
 
 The milestones form two tracks. Neither waits for the other:
 - **The source track** is M2 to M7. It cannot use `WideChar`, because the
   hosts that build the compiler lack it (*Constraints*).
 - **The Basis track** is M8 to M10.
 
-M1 can go first. Two of its items take a recommended option, D5's DEL row and
-D8 A. M5 can start on the first day. M11 closes both tracks.
+M1 can go first; two of its items carry out D5's DEL row and D8. M5 can
+start on the first day. M11 closes both tracks.
 
 ## The request
 
@@ -156,6 +158,10 @@ Two plans changed with them:
 **And (2026-10-18):** `\U`, Rune's extension from Successor ML, is allowed only
 under `--unicode` (D7). The default then adds nothing to the Definition's
 escapes.
+
+**The decisions (2026-10-18):** the owner took every recommendation, D1 to
+D20. That includes the departures from the brief listed in *Where this
+roadmap recommends otherwise than the brief*.
 
 | The brief asks | Answered in |
 |---|---|
@@ -474,8 +480,8 @@ the default mode could not use it. Libraries keep their exports ASCII (D10).
 
 ### Where this roadmap recommends otherwise than the brief
 
-The owner decides these too. Each recommendation departs from what the brief
-asks:
+Each recommendation departs from what the brief asks. The owner took them all
+on 2026-10-18, with the rest of D1 to D20:
 
 - **Identifiers are checked to be in NFC, not converted (line 28; D12).** The
   brief's aim, names compared by their bytes, holds either way. A name
@@ -2170,9 +2176,10 @@ class, as `<` is: one builtin each, resolved by the type and defaulting to
 ## Decisions
 
 Each decision gives the options, what favours each, and the recommendation
-it was written with.
+it was written with. The owner decided all of them on 2026-10-18, each as
+recommended. D1's flags and D7's `\U` are the owner's own (*The request*):
 
-| Decision | Recommended |
+| Decision | Decided |
 |---|---|
 | D1. Where the mode is set | A: per file; `--unicode[=ENC]` (the owner's names), build annotation, `Compiler` API; in the cache key |
 | D2. Modes agree where they overlap | A: yes, as a rule the tests check |
@@ -2196,6 +2203,8 @@ it was written with.
 | D20. Overloading the string operations | A: `^ size concat substring` over the string class; not `str implode explode chr print` |
 
 ### D1. Where the mode is set
+
+**Decided: A** (2026-10-18), as recommended, with the owner's flag names (*The request*).
 
 The mode must reach the lexer for every source: files on the command line,
 units of a build, `use` in the REPL, `Compiler.compile`, and the unit basis
@@ -2228,6 +2237,8 @@ when it lexes a cached unit's source again.
 
 ### D2. Modes agree where they overlap
 
+**Decided: A** (2026-10-18), as recommended.
+
 * **A. A program that two modes accept means the same in both.** The tests
   check it: every accept test of the default runs under `--unicode` with the same
   output. **Recommended.**
@@ -2241,6 +2252,8 @@ when it lexes a cached unit's source again.
 * **B. No rule.** Each mode is designed on its own.
 
 ### D3. `--unicode=latin1`
+
+**Decided: B** (2026-10-18), as recommended.
 
 The brief has `--latin1` both as a code page to convert (line 18) and as a
 repertoire in a file that is UTF-8 (line 40) (C1). HOL4 and MLton do not need
@@ -2270,6 +2283,8 @@ which Rune keeps today.
 
 ### D4. Comments in the ASCII mode
 
+**Decided: A** (2026-10-18), as recommended.
+
 This decides whether HOL4 and MLton compile under the default (C4).
 
 * **A. Any UTF-8 text but the refused code points of D5.** **Recommended.**
@@ -2290,6 +2305,8 @@ This decides whether HOL4 and MLton compile under the default (C4).
   them the commented-out-code attack of Trojan Source.
 
 ### D5. What a source may hold raw
+
+**Decided: A** (2026-10-18), as recommended.
 
 * **A. The table of *The architecture* (*What a source may hold raw*).**
   **Recommended.** In short:
@@ -2338,6 +2355,8 @@ can be opened later without breaking anything.
 
 ### D6. Raw non-ASCII in a literal at `string` and `char`
 
+**Decided: A** (2026-10-18), as recommended.
+
 In every mode, **a raw character in a literal means its code point**, as its
 escape would:
 - At `WideString`, `"é"` is U+00E9.
@@ -2380,6 +2399,8 @@ the file and 233 as a character. At `string`:
 
 ### D7. `\x` and `\U`
 
+**Decided: A** (2026-10-18), as recommended, for `\x`; `\U` as the owner set it, below.
+
 **`\U`: decided by the owner (2026-10-18).** `\UXXXXXXXX`, Rune's extension from
 Successor ML, is allowed only under `--unicode`. By default it is an error
 that says so ("`\U` needs `--unicode`"). This is as MLton gates it, behind
@@ -2410,6 +2431,8 @@ the annotation that also admits its UTF-8 literals (E2).
 
 ### D8. `\ddd` at the wide types
 
+**Decided: A** (2026-10-18), as recommended.
+
 * **A. The alphabet's whole range,** as the Definition says. `\999` is
   U+03E7 at `WideChar`, and an error at `char`. MLton takes it, and its
   regression suite uses it (`regression/widechar.sml:201-202`), which Rune
@@ -2418,6 +2441,8 @@ the annotation that also admits its UTF-8 literals (E2).
   does not make.
 
 ### D9. Code points or scalar values
+
+**Decided: A** (2026-10-18), as recommended.
 
 `WideChar.chr` takes any number from 0 to 0x10FFFF, surrogates included. The
 `CHAR` law `ord (chr i) = i` for every `i` up to `maxOrd` requires it
@@ -2444,6 +2469,8 @@ the annotation that also admits its UTF-8 literals (E2).
   - The gain is a guarantee that the boundaries of A give already.
 
 ### D10. Unicode letters in identifiers
+
+**Decided: A** (2026-10-18), as recommended.
 
 * **A. UAX #31's default syntax, adapted to SML, less the default-ignorables
   and a frozen list of lookalikes** (*The architecture*, *Identifiers*).
@@ -2474,6 +2501,8 @@ the annotation that also admits its UTF-8 literals (E2).
 
 ### D11. Unicode symbols in identifiers
 
+**Decided: A** (2026-10-18), as recommended.
+
 * **A. No: symbolic identifiers stay ASCII.** **Recommended.**
   - Unicode symbols would join ASCII ones in one token, and several look
     like SML's own punctuation (X3).
@@ -2487,6 +2516,8 @@ the annotation that also admits its UTF-8 literals (E2).
   to learn.
 
 ### D12. NFC
+
+**Decided: A** (2026-10-18), as recommended.
 
 * **A. Require NFC.** An identifier with a non-ASCII character must already
   be in NFC, or the lexer gives an error with the NFC spelling, as C++23
@@ -2512,6 +2543,8 @@ source** (line 29). NFC changes characters that are not combining marks
 
 ### D13. Errors and warnings
 
+**Decided: A** (2026-10-18), as recommended.
+
 * **A. Errors come only from stable data:**
   - XID and NFC, which Unicode's stability policy covers;
   - the frozen sets of D10: the default-ignorables of 18.0, a property that
@@ -2530,6 +2563,8 @@ source** (line 29). NFC changes characters that are not combining marks
 
 ### D14. Printing non-ASCII
 
+**Decided: A** (2026-10-18), as recommended.
+
 * **A. Names as they are; `string` values as today; `WideString` values as
   UTF-8, with C0, C1, DEL, the bidi controls and the default-ignorables
   escaped. runedoc's anchors spell code points as `u3BB`.**
@@ -2540,6 +2575,8 @@ source** (line 29). NFC changes characters that are not combining marks
   as `\u03BB`.
 
 ### D15. Columns
+
+**Decided: A** (2026-10-18), as recommended.
 
 * **A. Byte columns in machine data; code-point columns in what a person
   reads; UTF-16 columns for the DAP,** as `--diagnostics-json` already gives
@@ -2553,6 +2590,8 @@ source** (line 29). NFC changes characters that are not combining marks
   every column after a non-ASCII character.
 
 ### D16. The default
+
+**Decided: A** (2026-10-18), as recommended.
 
 The brief makes `--ascii` the default "for now" (line 16). The owner's flags
 (2026-10-18) have no `--ascii`, so the ASCII mode is what a compile gets
@@ -2581,6 +2620,8 @@ when no flag asks for more.
 
 ### D17. The Unicode version
 
+**Decided: A** (2026-10-18), as recommended.
+
 * **A. One version for every table** (`lib/unicode`'s, now 18.0.0), upgraded
   in a milestone of its own, with the version in the unit cache's
   configuration so that a change recompiles. **Recommended.**
@@ -2591,6 +2632,8 @@ when no flag asks for more.
   lexer and refused by the lints, or the reverse.
 
 ### D18. The symmetric text signatures
+
+**Decided: A** (2026-10-18), as recommended.
 
 The brief asks for "the most elegant fix possible", recorded as a change
 request (line 5).
@@ -2627,6 +2670,8 @@ For `STRING_CVT`, a signature over a pair of types beats a separate
 
 ### D19. The representation of `WideString`
 
+**Decided: A** (2026-10-18), as recommended.
+
 * **A. As it is: a word per code point.** **Recommended.**
   - `sub` and slices stay constant time, and are already inlined by the JIT
     and the native code generator.
@@ -2646,6 +2691,8 @@ For `STRING_CVT`, a signature over a pair of types beats a separate
   primitive branches three ways, and one emoji widens a whole string (E8).
 
 ### D20. Overloading the string operations
+
+**Decided: A** (2026-10-18), as recommended.
 
 The brief asks for "the usual string operations (e.g. ^) symmetrically via
 overloading" (line 8). The Definition's list of overloaded identifiers is
@@ -2710,9 +2757,8 @@ The sizes are lines of code and tests, not counting generated tables.
       `WideChar`;
     - `docs/language.md:24-25,49`, which contradict each other.
 * **Why now:** each is a bug, a wrong sentence, or a rule of the Definition
-  that Rune does not keep. Two items take a decision's recommended option,
-  D5's DEL row and D8 A. If the owner decides otherwise, those two move to M3
-  and M4.
+  that Rune does not keep. Two items carry out decisions: D5's DEL row and
+  D8 A.
 * **Done when:** the tests above pass on every configuration that runs them,
   and the documents agree with the code.
 
@@ -2952,16 +2998,16 @@ sees the list before M9.
   - Tests in `tests/lang`, which only Rune runs. `tests/basis` keeps writing
     `WideString.^`, because the hosts' overloading is closed.
   - The deviation from Appendix E, pinned.
-* **Why now:** the brief's line 8. It waits for G4, the owner accepting the
-  deviation, and for M8's primitive, without which `^` at the wide type is
-  slow.
+* **Why now:** the brief's line 8. It waits for M8's primitive, without which
+  `^` at the wide type is slow.
 * **Done when:**
   - Every program of `tests/lang` and `examples` compiles as before (E7:
     788 of 788).
   - The compiler reaches a fixed point.
   - The Basis suite passes in every configuration.
 
-**Gate G4** comes before M10: the owner sees E7's design and costs.
+**Gate G4**, the owner accepting overloading as a deviation from Appendix E,
+was passed on 2026-10-18 with D20.
 
 ### M11. The corpora and the comparison (S, about 200 and documents)
 
@@ -3003,8 +3049,7 @@ sees the list before M9.
 - **M7** after M6, which brings the first non-ASCII names.
 - **M8** before M9, because the signatures rest on the order; it also fixes
   the costs of wide text that E8 measured.
-- **M10** after G4, because it is the only deviation the owner has not yet
-  seen, and after M8's primitive for `^`.
+- **M10** after M8's primitive for `^`.
 - **M11** closes both tracks.
 
 ## Prerequisites and flags
