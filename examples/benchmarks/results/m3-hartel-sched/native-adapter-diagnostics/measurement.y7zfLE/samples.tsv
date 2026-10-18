@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+sched-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	14.82	7.61	1.56	666424	-	-	-	sched-lazy/native-mlton/build/compile
+sched-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.01	0.00	0.00	2104	-	-	-	sched-lazy/native-mlton/correctness.0
+sched-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2060	-	-	-	sched-lazy/native-mlton/fresh.1
+sched-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	1.44	1.03	0.08	40820	-	-	-	sched-lazy/native-smlnj-legacy/build/compile
+sched-lazy	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.07	0.01	0.01	3836	-	-	-	sched-lazy/native-smlnj-legacy/correctness.0
+sched-lazy	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.07	0.01	0.01	3736	-	-	-	sched-lazy/native-smlnj-legacy/fresh.1
+sched-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	1.43	0.81	0.12	55360	-	-	-	sched-lazy/native-polyml/build/compile
+sched-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.03	0.00	0.00	5616	-	-	-	sched-lazy/native-polyml/correctness.0
+sched-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.01	0.00	0.00	5800	-	-	-	sched-lazy/native-polyml/fresh.1

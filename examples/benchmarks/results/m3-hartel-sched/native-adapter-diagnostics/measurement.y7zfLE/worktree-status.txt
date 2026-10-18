@@ -1,0 +1,8 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+?? examples/benchmarks/sched-lazy/
+?? examples/benchmarks/sched-strict/
+?? examples/benchmarks/shared/hartel-sched-driver.sml
+?? examples/benchmarks/shared/hartel-sched-kernel.sml
+?? tests/benchmarks/check-sched.sh
+?? tests/benchmarks/sched-tests.sml

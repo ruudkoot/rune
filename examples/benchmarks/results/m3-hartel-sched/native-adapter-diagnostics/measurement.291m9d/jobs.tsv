@@ -1,0 +1,1 @@
+sched-strict	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/hartel-ida-finite.sml shared/hartel-sched-kernel.sml shared/hartel-sched-driver.sml sched-strict/benchmark.sml shared/main.sml	1 3	sched-strict/smoke.expected	-

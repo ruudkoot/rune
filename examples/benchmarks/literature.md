@@ -504,3 +504,16 @@ Array layout, closure/object specialization, temporary allocation, cache
 behavior and scalar representation remain performance hypotheses. Stable
 elementary-function approximation differences are distinguished from incorrect
 results and exceptions; no uniform Math ulp contract is claimed.
+
+## Scheduling simulation and translated demand
+
+The Hartel/Langendoen collection context cited above does not establish an
+individual author or a general optimal-scheduling theorem for sched.
+Pinned code establishes the source non-delay policy, join affinity and data.
+Original tree structure and an independent event/DAG oracle validate the
+supplied minima. Their different representations distinguish the oracle from
+the benchmark's enumeration workload.
+
+Persistent lists, paired-result sharing, global finite definitions, suspended
+control and strict/delayed initialization are source-based performance questions.
+Exact result/count agreement does not attribute their individual costs.

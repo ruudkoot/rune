@@ -1,0 +1,9 @@
+COUNT unbudgeted sched-lazy normal rune
+COUNT unbudgeted sched-lazy normal rune:opt
+COUNT unbudgeted sched-lazy normal rune:new
+COUNT unbudgeted sched-lazy normal rune:jit
+COUNT unbudgeted sched-strict normal rune
+COUNT unbudgeted sched-strict normal rune:opt
+COUNT unbudgeted sched-strict normal rune:new
+COUNT unbudgeted sched-strict normal rune:jit
+COUNT comparisons agree

@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-hartel-sched-parallel.57f4u1hz
+PASS sched-lazy smoke O2
+PASS sched-lazy smoke O0
+PASS sched-lazy smoke hosts
+PASS sched-lazy normal O2
+PASS sched-lazy normal O0
+PASS sched-strict smoke O0
+PASS sched-strict smoke O2
+PASS sched-strict smoke hosts
+PASS sched-lazy normal hosts
+PASS sched-strict normal O2
+PASS sched-strict normal hosts
+PASS sched-strict normal O0

@@ -1,0 +1,304 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml:19.32 Warning: calling polyEqual
+functor BenchIdaFiniteFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a seq
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t * 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val defer : (unit -> 'a D.t) -> 'a D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val nth : 'a <BaseFct>.<resultStr>.node D.t -> int -> 'a
+  val update :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val unify :
+      ''a <BaseFct>.<resultStr>.node D.t
+       -> ''a -> ''a <BaseFct>.<resultStr>.node D.t
+  val foldl :
+      ('a D.t -> 'b -> 'a D.t)
+       -> 'a D.t -> 'b <BaseFct>.<resultStr>.node D.t -> 'a D.t
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val filter :
+      ('a -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val length : 'a <BaseFct>.<resultStr>.node D.t -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-sched-kernel.sml]
+functor BenchSchedFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure F : <sig>
+  structure L : <sig>
+  type defNode
+  type definition
+  type statNode
+  type status
+  type procNode
+  type processor
+  type jobs
+  type processors
+  type treeNode
+  type tree
+  type 'a pairNode
+  type 'a pair
+  type 'a sandwarg
+  val value : 'a -> 'a D.t
+  val defer : (unit -> 'a D.t) -> 'a D.t
+  val pair :
+      (unit -> 'a) -> (unit -> 'a) -> 'a <BaseFct>.<resultStr>.pairNode D.t
+  val first : 'a <BaseFct>.<resultStr>.pairNode D.t -> 'a
+  val second : 'a <BaseFct>.<resultStr>.pairNode D.t -> 'a
+  val emptyDef : unit -> <BaseFct>.<resultStr>.defNode D.t
+  val emptyStat : unit -> <BaseFct>.<resultStr>.statNode D.t
+  val job :
+      int
+       -> int
+       -> int
+       -> <BaseFct>.<resultStr>.defNode D.t
+       -> <BaseFct>.<resultStr>.defNode D.t
+       -> <BaseFct>.<resultStr>.defNode D.t
+  val defId : <BaseFct>.<resultStr>.defNode D.t -> int
+  val defFork : <BaseFct>.<resultStr>.defNode D.t -> int
+  val defJoin : <BaseFct>.<resultStr>.defNode D.t -> int
+  val defLeft :
+      <BaseFct>.<resultStr>.defNode D.t -> <BaseFct>.<resultStr>.defNode D.t
+  val defRight :
+      <BaseFct>.<resultStr>.defNode D.t -> <BaseFct>.<resultStr>.defNode D.t
+  val isEmptyDef : <BaseFct>.<resultStr>.defNode D.t -> bool
+  val stat :
+      int D.t
+       -> int D.t
+       -> int D.t
+       -> int D.t
+       -> <BaseFct>.<resultStr>.definition
+       -> <BaseFct>.<resultStr>.statNode D.t
+  val isEmptyStat : <BaseFct>.<resultStr>.statNode D.t -> bool
+  val mark : <BaseFct>.<resultStr>.statNode D.t -> int
+  val steps : <BaseFct>.<resultStr>.statNode D.t -> int
+  val owner : <BaseFct>.<resultStr>.statNode D.t -> int
+  val parent : <BaseFct>.<resultStr>.statNode D.t -> int
+  val definition :
+      <BaseFct>.<resultStr>.statNode D.t -> <BaseFct>.<resultStr>.definition
+  val procCell :
+      int D.t
+       -> <BaseFct>.<resultStr>.status -> <BaseFct>.<resultStr>.procNode D.t
+  val proc :
+      int
+       -> <BaseFct>.<resultStr>.status -> <BaseFct>.<resultStr>.procNode D.t
+  val procId : <BaseFct>.<resultStr>.procNode D.t -> int
+  val procStatus :
+      <BaseFct>.<resultStr>.procNode D.t -> <BaseFct>.<resultStr>.status
+  val null : 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> bool
+  val head : 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> 'a D.t
+  val tail :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val addChild :
+      <BaseFct>.<resultStr>.defNode D.t
+       -> int D.t -> <BaseFct>.<resultStr>.statNode D.t
+  val anyJob :
+      <BaseFct>.<resultStr>.statNode <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> <BaseFct>.<resultStr>.statNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int D.t
+       -> <BaseFct>.<resultStr>.statNode 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.pairNode D.t
+  val minZero : int -> int -> int
+  val minimumCycle :
+      <BaseFct>.<resultStr>.procNode <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> int
+  val perform :
+      <BaseFct>.<resultStr>.procNode <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> int
+       -> <BaseFct>.<resultStr>.procNode 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.pairNode D.t
+  val acknowledge :
+      int D.t
+       -> <BaseFct>.<resultStr>.statNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.statNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val addJobs :
+      <BaseFct>.<resultStr>.procNode <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> <BaseFct>.<resultStr>.statNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.statNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val sandwich :
+      ('a * 'b -> 'c)
+       -> 'a <BaseFct>.<resultStr>.sandwarg
+       -> 'b <BaseFct>.<resultStr>.sandwarg -> 'c
+  val allocate :
+      int
+       -> <BaseFct>.<resultStr>.statNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.procNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.statNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.procNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int -> int -> <BaseFct>.<resultStr>.treeNode BenchLazy.state ref
+  val process :
+      int
+       -> <BaseFct>.<resultStr>.statNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.procNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int -> int -> <BaseFct>.<resultStr>.treeNode BenchLazy.state ref
+  val optimum : <BaseFct>.<resultStr>.treeNode BenchLazy.state ref -> int
+  val procs :
+      <BaseFct>.<resultStr>.procNode <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+  val schedule :
+      <BaseFct>.<resultStr>.defNode D.t
+       -> int -> <BaseFct>.<resultStr>.treeNode BenchLazy.state ref
+  val c_solo : <BaseFct>.<resultStr>.defNode D.t
+  val c_job31 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job32 : <BaseFct>.<resultStr>.defNode D.t
+  val c_trio : <BaseFct>.<resultStr>.defNode D.t
+  val c_job74 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job75 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job72 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job76 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job77 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job73 : <BaseFct>.<resultStr>.defNode D.t
+  val c_septiem : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1008 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1009 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1004 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1005 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1002 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1006 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1007 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1003 : <BaseFct>.<resultStr>.defNode D.t
+  val c_deciem : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1108 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1109 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1104 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1110 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1111 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1105 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1102 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1106 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1107 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1103 : <BaseFct>.<resultStr>.defNode D.t
+  val c_undeciem : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1208 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1209 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1204 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1210 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1211 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1205 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1202 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1206 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1207 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1203 : <BaseFct>.<resultStr>.defNode D.t
+  val c_duodeciem : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1412 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1413 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1402 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1407 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1406 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1409 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1408 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1404 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1410 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1411 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1405 : <BaseFct>.<resultStr>.defNode D.t
+  val c_job1403 : <BaseFct>.<resultStr>.defNode D.t
+  val c_quadrideciem : <BaseFct>.<resultStr>.defNode D.t
+  val input : int -> <BaseFct>.<resultStr>.defNode D.t
+  val calculate : int -> int -> int
+  val main : int -> string
+  val statistics :
+      <BaseFct>.<resultStr>.treeNode BenchLazy.delay
+       -> int * int * int * IntInf.int * Word32.word
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-sched-driver.sml]
+functor BenchSchedDriverFn(K: sig
+  val calculate : int -> int -> int
+end) :
+sig
+  val expected : int -> int
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/sched-lazy/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+[autoloading]
+[autoloading done]
+RESULT 100:21800
+PASS sched-lazy
+SUMMARY 1 checks, 0 failed

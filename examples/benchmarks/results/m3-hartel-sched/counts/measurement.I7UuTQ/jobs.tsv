@@ -1,0 +1,1 @@
+sched-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/hartel-ida-finite.sml shared/hartel-sched-kernel.sml shared/hartel-sched-driver.sml sched-strict/benchmark.sml shared/main.sml	100 11	sched-strict/normal.expected	-

@@ -1,0 +1,37 @@
+[
+  {
+    "size": 1,
+    "min_cycles": 10,
+    "distinct_dag_states": 2
+  },
+  {
+    "size": 3,
+    "min_cycles": 60,
+    "distinct_dag_states": 6
+  },
+  {
+    "size": 7,
+    "min_cycles": 148,
+    "distinct_dag_states": 92
+  },
+  {
+    "size": 10,
+    "min_cycles": 190,
+    "distinct_dag_states": 418
+  },
+  {
+    "size": 11,
+    "min_cycles": 218,
+    "distinct_dag_states": 2550
+  },
+  {
+    "size": 12,
+    "min_cycles": 228,
+    "distinct_dag_states": 2242
+  },
+  {
+    "size": 14,
+    "min_cycles": 267,
+    "distinct_dag_states": 30298
+  }
+]

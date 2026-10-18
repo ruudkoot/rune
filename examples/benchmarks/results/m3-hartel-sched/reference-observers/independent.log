@@ -1,0 +1,7 @@
+PASS 1 10 2 independent DAG/affinity/event states
+PASS 3 60 6 independent DAG/affinity/event states
+PASS 7 148 92 independent DAG/affinity/event states
+PASS 10 190 418 independent DAG/affinity/event states
+PASS 11 218 2550 independent DAG/affinity/event states
+PASS 12 228 2242 independent DAG/affinity/event states
+PASS 14 267 30298 independent DAG/affinity/event states

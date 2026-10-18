@@ -1,0 +1,32 @@
+[
+  {
+    "profile": "smoke",
+    "repetitions": 1,
+    "size": 3,
+    "seconds": 0.014872509999804606
+  },
+  {
+    "profile": "source-fast",
+    "repetitions": 200,
+    "size": 10,
+    "seconds": 0.11515304700060369
+  },
+  {
+    "profile": "normal",
+    "repetitions": 100,
+    "size": 11,
+    "seconds": 1.3348663460001262
+  },
+  {
+    "profile": "source-slow",
+    "repetitions": 500,
+    "size": 11,
+    "seconds": 6.185015416999704
+  },
+  {
+    "profile": "large",
+    "repetitions": 1,
+    "size": 14,
+    "expected_min_cycles": 267
+  }
+]

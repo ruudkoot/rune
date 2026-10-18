@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+sched-lazy	normal	rune	O2	count	1	1	pass	148.60	143.84	0.48	10440	14374025719	42296991584	1287478998	counts/measurement.JCAdKI/sched-lazy/rune/fresh.1
+sched-lazy	normal	rune:opt	O2	count	1	1	pass	61.54	60.04	0.29	11304	14374025719	42296991584	1287478998	counts/measurement.JCAdKI/sched-lazy/rune-opt/fresh.1
+sched-lazy	normal	rune:new	O2	count	1	1	pass	138.97	134.29	0.46	10688	8616494669	42296991584	1287478998	counts/measurement.JCAdKI/sched-lazy/rune-new/fresh.1
+sched-lazy	normal	rune:jit	O2	count	1	1	pass	42.36	42.37	0.11	12596	8616494669	42296991584	1287478998	counts/measurement.JCAdKI/sched-lazy/rune-jit/fresh.1
+sched-strict	normal	rune	O2	count	1	1	pass	18.60	19.34	0.04	10580	3614150835	9479372688	195788206	counts/measurement.I7UuTQ/sched-strict/rune/fresh.1
+sched-strict	normal	rune:opt	O2	count	1	1	pass	8.01	6.84	0.02	11084	3614150835	9479372688	195788206	counts/measurement.I7UuTQ/sched-strict/rune-opt/fresh.1
+sched-strict	normal	rune:new	O2	count	1	1	pass	18.78	17.93	0.07	10568	2179445139	9479372688	195788206	counts/measurement.I7UuTQ/sched-strict/rune-new/fresh.1
+sched-strict	normal	rune:jit	O2	count	1	1	pass	7.62	7.87	0.01	12040	2179445139	9479372688	195788206	counts/measurement.I7UuTQ/sched-strict/rune-jit/fresh.1

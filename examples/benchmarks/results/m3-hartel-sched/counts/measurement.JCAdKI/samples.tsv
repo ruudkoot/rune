@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+sched-lazy	normal	rune	O2	compile	0	0	pass	2.85	2.53	0.16	135388	-	-	-	sched-lazy/rune/build/compile
+sched-lazy	normal	rune	O2	correctness	0	0	pass	145.26	139.11	0.61	10508	14374025719	42296991584	1287478998	sched-lazy/rune/correctness.0
+sched-lazy	normal	rune	O2	count	1	1	pass	148.60	143.84	0.48	10440	14374025719	42296991584	1287478998	sched-lazy/rune/fresh.1
+sched-lazy	normal	rune:opt	O2	compile	0	0	pass	2.45	2.39	0.14	135436	-	-	-	sched-lazy/rune-opt/build/compile
+sched-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.74	0.45	0.05	16392	-	-	-	sched-lazy/rune-opt/build/native-compile
+sched-lazy	normal	rune:opt	O2	correctness	0	0	pass	62.05	61.67	0.15	11264	14374025719	42296991584	1287478998	sched-lazy/rune-opt/correctness.0
+sched-lazy	normal	rune:opt	O2	count	1	1	pass	61.54	60.04	0.29	11304	14374025719	42296991584	1287478998	sched-lazy/rune-opt/fresh.1
+sched-lazy	normal	rune:new	O2	compile	0	0	pass	2.40	2.36	0.10	135496	-	-	-	sched-lazy/rune-new/build/compile
+sched-lazy	normal	rune:new	O2	correctness	0	0	pass	136.54	133.37	0.46	10744	8616494669	42296991584	1287478998	sched-lazy/rune-new/correctness.0
+sched-lazy	normal	rune:new	O2	count	1	1	pass	138.97	134.29	0.46	10688	8616494669	42296991584	1287478998	sched-lazy/rune-new/fresh.1
+sched-lazy	normal	rune:jit	O2	compile	0	0	pass	1.93	1.93	0.12	135500	-	-	-	sched-lazy/rune-jit/build/compile
+sched-lazy	normal	rune:jit	O2	correctness	0	0	pass	47.31	46.16	0.11	12676	8616494669	42296991584	1287478998	sched-lazy/rune-jit/correctness.0
+sched-lazy	normal	rune:jit	O2	count	1	1	pass	42.36	42.37	0.11	12596	8616494669	42296991584	1287478998	sched-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check
