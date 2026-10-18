@@ -1,0 +1,5 @@
+COUNT unbudgeted parstof-lazy normal rune
+COUNT unbudgeted parstof-lazy normal rune:opt
+COUNT unbudgeted parstof-lazy normal rune:new
+COUNT unbudgeted parstof-lazy normal rune:jit
+COUNT comparisons agree

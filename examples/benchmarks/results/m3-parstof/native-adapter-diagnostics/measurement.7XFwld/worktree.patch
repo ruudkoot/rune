@@ -1,0 +1,299 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 039f78f94..411621d83 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -490,6 +490,8 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [solid-strict](#solid-strict) | [nofib Hartel solid](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/solid) | Approximate a circle-union area with source CSG pruning, adaptive subdivision and strict finite data. |
+ | [lift-lazy](#lift-lazy) | [nofib lift](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/lift) | Run plain and fully-lazy lambda lifting with memoized finite pass results and higher-order pretty-printing. |
+ | [lift-strict](#lift-strict) | [nofib lift](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/lift) | Run plain and fully-lazy lambda lifting with strict finite pass results and higher-order pretty-printing. |
++| [parstof-lazy](#parstof-lazy) | [nofib Hartel parstof](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/parstof) | Lex and parse a functional scheduling program with backtracking combinators and memoized finite attributes. |
++| [parstof-strict](#parstof-strict) | [nofib Hartel parstof](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/parstof) | Lex and parse a functional scheduling program with backtracking combinators and strict finite attributes. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -33022,3 +33024,245 @@ The maintained nofib source and previously reviewed Partain suite paper
+ supply collection context. Complete original observations and the independent
+ evaluator support the recorded cases; they do not prove general equivalence
+ for every AST or establish a compiler performance mechanism.
++
++## parstof-lazy
++
++### Algorithm and workload
++
++Recognize the source's embedded functional-language scheduling program using
++a character-dispatch lexer and backtracking parser combinators. Preserve
++balanced lexical dispatch by first-character sets, ordered alternatives,
++keyword prefixes, token attributes, right-recursive repetition, precedence,
++associativity, tuple/union constructors, let/case/if syntax, type declarations
++and source error selection/preview behavior.
++
++The original timed consumer observes parser success, not the AST payload.
++The lazy variant retains that recognition workload. The strict variant
++materializes finite lexical/AST attributes as parsing proceeds; complete
++tree comparisons are separate semantic checks rather than extra timed
++tree traversals.
++
++### History, authorship, names and notices
++
++[nofib Hartel parstof](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/parstof)
++is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. The generated module states no separate individual
++author or program/data notice. Preserve the complete module, Makefile,
++FAST/NORM/SLOW fixtures and parent Fast2haskell shim, without assigning
++collection/helper credits to this parser or its embedded program text.
++
++The -lazy/-strict suffixes identify meaningful finite-data demand policies.
++This parser is distinct from the scheduling simulator: its input describes
++scheduling, while its executed algorithm is lexical/syntactic analysis.
++No generated or parsed target program is executed.
++
++### Translation, sharing and semantic decisions
++
++Retain all eighteen typed source AST datatypes, constructor field order and
++source combinator grammar. Portable constructor and grammar transcription
++scripts are archived with the original source and read-only observers.
++Use memoized character/token control for backtracking and shared input.
++A cached closure for each of the 42 nonterminals preserves top-level grammar
++sharing; explicit source-derived result types make these caches portable
++under the value restriction.
++
++Both policies represent semantic attributes with policy-controlled cells.
++Conversion/join callbacks remain delayed in the lazy variant, including
++unused success attributes. The strict variant forces finite attribute
++construction. A character-list attribute materializes its finite SML list
++when demanded; default recognition leaves those payloads unused. Control
++streams retain per-cell memoization and neither policy eagerly expands
++an unbounded parser/control structure.
++
++Preserve left-biased successful alternatives, farther-line known failures
++with left-biased ties, and the source repetition/optional combinators'
++recovery even from known failure messages. Error formatting remains separately
++memoized and takes the first 25 rendered preview characters. Preserve the
++missing inequality entry in the source token-display table and the source
++hex-escape code-subtraction rule; do not replace them with guessed fixes.
++
++Selected text, decoded character values and names are ASCII/byte characters.
++Their identifiers, literals, line numbers, checksums and lengths fit signed
++31-bit integers. Haskell Char is wider than SML Char: escapes whose source
++arithmetic produces code points above 255 are outside these profiles and
++are not claimed to be portable general Unicode parsing. No such escape or
++integer overflow is introduced into a selected profile.
++
++Extract the exact positive-index c_the_program literal into program.input
++through the original module. Share its memoized character root across all
++parses, matching the source constant text. Read CLI/reference files once.
++Each iteration constructs the selected number of parser results and traverses
++the concatenated success messages with the original sum-plus-length checksum;
++lazy numeric accumulators remain delayed. Parser rejection is an immediate
++correctness failure.
++
++### Inputs, profiles and result validation
++
++| Profile | Outer iterations | Programs per iteration |
++|---|---:|---:|
++| Smoke | 1 | 1 |
++| Normal | 100 | 8 |
++| Large | 100 | 40 |
++
++Normal and large preserve the original Main repetition count and NORM/SLOW
++arguments; smoke reduces the source FAST 100 iterations explicitly.
++Every recognized program contributes the exact source success message,
++26 characters. Each iteration checks its full original checksum string,
++2483*n / 26*n with its newline, and returns validated iteration/program/
++checksum-byte counts. Suppress repeated stdout and the additional putStrLn
++newline, recording that output adaptation.
++
++Read-only GHC observers record complete token streams, ASTs, remaining input
++and known errors for ten inputs, including the fixed program, application,
++conditional, let/case, lexical escapes, malformed declarations, missing
++expressions, empty input and an unterminated comment. Both policies must match
++all complete observations. The original FAST/NORM/SLOW executions also match
++their supplied fixtures.
++
++An independent ordered regular-expression lexer agrees on all 1898 observed
++tokens. A separate structural check validates AST constructor ownership,
++arity, primitive types and selected integer bounds. This is not a second
++full parser or a general parsing-equivalence proof.
++
++Direct controls test unused/shared semantic callbacks, strict demand,
++alternative/sequence short circuits, known-error priority and recovery,
++deferred/shared error text, cached grammar use, zero work and rejection of
++incorrect programs/checksums. Read-only JSON renderers support these checks;
++the benchmark driver does not call them.
++
++### Compiler/runtime questions and evidence limits
++
++Investigate backtracking, shared token tails, grammar closures, unused AST
++allocation, finite-field materialization, higher-order combinators and checksum
++accumulators. These are source-based hypotheses. Closed-input specialization,
++constant sharing and allocation are not assumed identical between Haskell
++and SML compilers, and no opaque evaluation barrier is claimed.
++
++### Literature and review scope
++
++The previously reviewed Hartel and Langendoen (1993) translation account
++supplies collection context. Specific lexer/parser algorithms, grammar,
++recovery rules and demand behavior come from pinned source inspection and
++original observations. No separate parser-construction paper is claimed as
++the derivation of this generated module. Correctness observations do not
++establish a compiler performance explanation.
++
++## parstof-strict
++
++### Algorithm and workload
++
++Recognize the source's embedded functional-language scheduling program using
++a character-dispatch lexer and backtracking parser combinators. Preserve
++balanced lexical dispatch by first-character sets, ordered alternatives,
++keyword prefixes, token attributes, right-recursive repetition, precedence,
++associativity, tuple/union constructors, let/case/if syntax, type declarations
++and source error selection/preview behavior.
++
++The original timed consumer observes parser success, not the AST payload.
++The lazy variant retains that recognition workload. The strict variant
++materializes finite lexical/AST attributes as parsing proceeds; complete
++tree comparisons are separate semantic checks rather than extra timed
++tree traversals.
++
++### History, authorship, names and notices
++
++[nofib Hartel parstof](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/parstof)
++is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. The generated module states no separate individual
++author or program/data notice. Preserve the complete module, Makefile,
++FAST/NORM/SLOW fixtures and parent Fast2haskell shim, without assigning
++collection/helper credits to this parser or its embedded program text.
++
++The -lazy/-strict suffixes identify meaningful finite-data demand policies.
++This parser is distinct from the scheduling simulator: its input describes
++scheduling, while its executed algorithm is lexical/syntactic analysis.
++No generated or parsed target program is executed.
++
++### Translation, sharing and semantic decisions
++
++Retain all eighteen typed source AST datatypes, constructor field order and
++source combinator grammar. Portable constructor and grammar transcription
++scripts are archived with the original source and read-only observers.
++Use memoized character/token control for backtracking and shared input.
++A cached closure for each of the 42 nonterminals preserves top-level grammar
++sharing; explicit source-derived result types make these caches portable
++under the value restriction.
++
++Both policies represent semantic attributes with policy-controlled cells.
++Conversion/join callbacks remain delayed in the lazy variant, including
++unused success attributes. The strict variant forces finite attribute
++construction. A character-list attribute materializes its finite SML list
++when demanded; default recognition leaves those payloads unused. Control
++streams retain per-cell memoization and neither policy eagerly expands
++an unbounded parser/control structure.
++
++Preserve left-biased successful alternatives, farther-line known failures
++with left-biased ties, and the source repetition/optional combinators'
++recovery even from known failure messages. Error formatting remains separately
++memoized and takes the first 25 rendered preview characters. Preserve the
++missing inequality entry in the source token-display table and the source
++hex-escape code-subtraction rule; do not replace them with guessed fixes.
++
++Selected text, decoded character values and names are ASCII/byte characters.
++Their identifiers, literals, line numbers, checksums and lengths fit signed
++31-bit integers. Haskell Char is wider than SML Char: escapes whose source
++arithmetic produces code points above 255 are outside these profiles and
++are not claimed to be portable general Unicode parsing. No such escape or
++integer overflow is introduced into a selected profile.
++
++Extract the exact positive-index c_the_program literal into program.input
++through the original module. Share its memoized character root across all
++parses, matching the source constant text. Read CLI/reference files once.
++Each iteration constructs the selected number of parser results and traverses
++the concatenated success messages with the original sum-plus-length checksum;
++lazy numeric accumulators remain delayed. Parser rejection is an immediate
++correctness failure.
++
++### Inputs, profiles and result validation
++
++| Profile | Outer iterations | Programs per iteration |
++|---|---:|---:|
++| Smoke | 1 | 1 |
++| Normal | 100 | 8 |
++| Large | 100 | 40 |
++
++Normal and large preserve the original Main repetition count and NORM/SLOW
++arguments; smoke reduces the source FAST 100 iterations explicitly.
++Every recognized program contributes the exact source success message,
++26 characters. Each iteration checks its full original checksum string,
++2483*n / 26*n with its newline, and returns validated iteration/program/
++checksum-byte counts. Suppress repeated stdout and the additional putStrLn
++newline, recording that output adaptation.
++
++Read-only GHC observers record complete token streams, ASTs, remaining input
++and known errors for ten inputs, including the fixed program, application,
++conditional, let/case, lexical escapes, malformed declarations, missing
++expressions, empty input and an unterminated comment. Both policies must match
++all complete observations. The original FAST/NORM/SLOW executions also match
++their supplied fixtures.
++
++An independent ordered regular-expression lexer agrees on all 1898 observed
++tokens. A separate structural check validates AST constructor ownership,
++arity, primitive types and selected integer bounds. This is not a second
++full parser or a general parsing-equivalence proof.
++
++Direct controls test unused/shared semantic callbacks, strict demand,
++alternative/sequence short circuits, known-error priority and recovery,
++deferred/shared error text, cached grammar use, zero work and rejection of
++incorrect programs/checksums. Read-only JSON renderers support these checks;
++the benchmark driver does not call them.
++
++### Compiler/runtime questions and evidence limits
++
++Investigate backtracking, shared token tails, grammar closures, unused AST
++allocation, finite-field materialization, higher-order combinators and checksum
++accumulators. These are source-based hypotheses. Closed-input specialization,
++constant sharing and allocation are not assumed identical between Haskell
++and SML compilers, and no opaque evaluation barrier is claimed.
++
++### Literature and review scope
++
++The previously reviewed Hartel and Langendoen (1993) translation account
++supplies collection context. Specific lexer/parser algorithms, grammar,
++recovery rules and demand behavior come from pinned source inspection and
++original observations. No separate parser-construction paper is claimed as
++the derivation of this generated module. Correctness observations do not
++establish a compiler performance explanation.
+diff --git a/examples/benchmarks/inventory.tsv b/examples/benchmarks/inventory.tsv
+index c5e7ff6b9..f6374681c 100644
+--- a/examples/benchmarks/inventory.tsv
++++ b/examples/benchmarks/inventory.tsv
+@@ -642,7 +642,7 @@ nofib	spectral/hartel/ida	ida	ida	M3	import	application		not stated in scanned s
+ nofib	spectral/hartel/listcompr	listcompr	listcompr	M3	import	lists-streams		not stated in scanned source headers	2a9617f4b99a155a2dba8e2d3651b8ec8ab5678d2877adf993db7b32f61929d4	spectral/hartel/Fast2haskell.hs;spectral/hartel/listcompr/Main.hs	spectral/hartel/listcompr/listcompr.faststdout;spectral/hartel/listcompr/listcompr.slowstdout;spectral/hartel/listcompr/listcompr.stdout		spectral/hartel/listcompr/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/hartel/listcopy	listcopy	listcopy	M3	import	lists-streams		not stated in scanned source headers	947ea91beecef38a7c1de1bb808b4af50956821cc9f008ddd25fe3dc2fff69b1	spectral/hartel/Fast2haskell.hs;spectral/hartel/listcopy/Main.hs	spectral/hartel/listcopy/listcopy.faststdout;spectral/hartel/listcopy/listcopy.slowstdout;spectral/hartel/listcopy/listcopy.stdout		spectral/hartel/listcopy/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/hartel/nucleic2	nucleic2	nucleic2	M3	import	numerical	mlkit:test/nucleic.mlb;mlton:benchmark/tests/nucleic.sml;smlnj:programs/nucleic	Marc Feeley (feeley@iro.umontreal.ca	0a07093d23e93931ec744787df42beb65927a432a5840ac07a83416d4079f3f0	spectral/hartel/nucleic2/Main.hs;spectral/hartel/nucleic2/RA.hs;spectral/hartel/nucleic2/RC.hs;spectral/hartel/nucleic2/RG.hs;spectral/hartel/nucleic2/RU.hs;spectral/hartel/nucleic2/Types.hs;spectral/hartel/nucleic2/unboxery.h		spectral/hartel/nucleic2/Main.hs:header	spectral/hartel/nucleic2/Makefile;spectral/hartel/nucleic2/README	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	spectral/hartel/parstof	parstof	parstof	M3	import	application		not stated in scanned source headers	e1798eef00523cc85cd8ae61f6b345d0bfbaa5412dfb56888732404ae739f7b3	spectral/hartel/Fast2haskell.hs;spectral/hartel/parstof/Main.hs	spectral/hartel/parstof/parstof.faststdout;spectral/hartel/parstof/parstof.slowstdout;spectral/hartel/parstof/parstof.stdout		spectral/hartel/parstof/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	spectral/hartel/parstof	parstof	parstof	M3	import	compiler-application		not stated in scanned source headers	e1798eef00523cc85cd8ae61f6b345d0bfbaa5412dfb56888732404ae739f7b3	spectral/hartel/Fast2haskell.hs;spectral/hartel/parstof/Main.hs	spectral/hartel/parstof/parstof.faststdout;spectral/hartel/parstof/parstof.slowstdout;spectral/hartel/parstof/parstof.stdout		spectral/hartel/parstof/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/hartel/sched	sched	sched	M3	import	application		not stated in scanned source headers	8a30680096fc1071a910b07b6719fbb882eb4211377ca4dc092e4241f7005852	spectral/hartel/Fast2haskell.hs;spectral/hartel/sched/Main.hs	spectral/hartel/sched/sched.faststdout;spectral/hartel/sched/sched.slowstdout;spectral/hartel/sched/sched.stdout		spectral/hartel/sched/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/hartel/solid	solid	solid	M3	import	application		not stated in scanned source headers	4abefc32000930fc4d2ad8d2238033e16780aa90221e495494ad583d69bb69bc	spectral/hartel/Fast2haskell.hs;spectral/hartel/solid/Main.hs	spectral/hartel/solid/solid.faststdout;spectral/hartel/solid/solid.slowstdout;spectral/hartel/solid/solid.stdout		spectral/hartel/solid/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/hartel/transform	transform	transform	M3	import	application		not stated in scanned source headers	8ce246ac6e2e6524013ba0040902afdd6f93d733fbe611324ee4140e76fc8b63	spectral/hartel/Fast2haskell.hs;spectral/hartel/transform/Main.hs	spectral/hartel/transform/transform.faststdout;spectral/hartel/transform/transform.slowstdout;spectral/hartel/transform/transform.stdout		spectral/hartel/transform/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 50f727e60..6ad568423 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -1396,3 +1396,9 @@ lift-lazy	large	nofib	real/lift	20000 report.reference 8a2cd0a394a3204d	lift-laz
+ lift-strict	smoke	nofib	real/lift	1 report.reference 8a2cd0a394a3204d	lift-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/lift-kernel.sml,shared/lift-print.sml,shared/lift-check.sml,lift-strict/benchmark.sml,shared/main.sml	30	1048576	compiler-application,lambda-lifting,full-laziness,higher-order,sharing,symbolic	report.reference	exact	implemented
+ lift-strict	normal	nofib	real/lift	4000 report.reference 8a2cd0a394a3204d	lift-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/lift-kernel.sml,shared/lift-print.sml,shared/lift-check.sml,lift-strict/benchmark.sml,shared/main.sml	600	4194304	compiler-application,lambda-lifting,full-laziness,higher-order,sharing,symbolic	report.reference	exact	implemented
+ lift-strict	large	nofib	real/lift	20000 report.reference 8a2cd0a394a3204d	lift-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/lift-kernel.sml,shared/lift-print.sml,shared/lift-check.sml,lift-strict/benchmark.sml,shared/main.sml	3600	8388608	compiler-application,lambda-lifting,full-laziness,higher-order,sharing,symbolic	report.reference	exact	implemented
++parstof-lazy	smoke	nofib	spectral/hartel/parstof	1 1 program.input count-1.crc	parstof-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/parstof-lex.sml,shared/parstof-kernel.sml,shared/parstof-check.sml,parstof-lazy/benchmark.sml,shared/main.sml	30	1048576	compiler-application,parsing,backtracking,sharing,allocation-lifetimes,hartel	program.input,count-1.crc	exact	implemented
++parstof-lazy	normal	nofib	spectral/hartel/parstof	100 8 program.input count-8.crc	parstof-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/parstof-lex.sml,shared/parstof-kernel.sml,shared/parstof-check.sml,parstof-lazy/benchmark.sml,shared/main.sml	600	4194304	compiler-application,parsing,backtracking,sharing,allocation-lifetimes,hartel	program.input,count-8.crc	exact	implemented
++parstof-lazy	large	nofib	spectral/hartel/parstof	100 40 program.input count-40.crc	parstof-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/parstof-lex.sml,shared/parstof-kernel.sml,shared/parstof-check.sml,parstof-lazy/benchmark.sml,shared/main.sml	3600	8388608	compiler-application,parsing,backtracking,sharing,allocation-lifetimes,hartel	program.input,count-40.crc	exact	implemented
++parstof-strict	smoke	nofib	spectral/hartel/parstof	1 1 program.input count-1.crc	parstof-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/parstof-lex.sml,shared/parstof-kernel.sml,shared/parstof-check.sml,parstof-strict/benchmark.sml,shared/main.sml	30	1048576	compiler-application,parsing,backtracking,sharing,allocation-lifetimes,hartel	program.input,count-1.crc	exact	implemented
++parstof-strict	normal	nofib	spectral/hartel/parstof	100 8 program.input count-8.crc	parstof-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/parstof-lex.sml,shared/parstof-kernel.sml,shared/parstof-check.sml,parstof-strict/benchmark.sml,shared/main.sml	600	4194304	compiler-application,parsing,backtracking,sharing,allocation-lifetimes,hartel	program.input,count-8.crc	exact	implemented
++parstof-strict	large	nofib	spectral/hartel/parstof	100 40 program.input count-40.crc	parstof-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/parstof-lex.sml,shared/parstof-kernel.sml,shared/parstof-check.sml,parstof-strict/benchmark.sml,shared/main.sml	3600	8388608	compiler-application,parsing,backtracking,sharing,allocation-lifetimes,hartel	program.input,count-40.crc	exact	implemented
+diff --git a/scripts/benchmark-inventory.py b/scripts/benchmark-inventory.py
+index c2a2228ee..4fad0f533 100644
+--- a/scripts/benchmark-inventory.py
++++ b/scripts/benchmark-inventory.py
+@@ -301,7 +301,7 @@ def discover(source, root):
+ 
+ def family(name, text):
+     key = name.lower()
+-    if key == "lift":
++    if key in {"lift", "parstof"}:
+         return "compiler-application"
+     if any(x in key for x in ("fft", "nbody", "n-body", "barnes", "mandel", "nucleic", "ray", "simple", "fem", "fluid", "almabench", "matrix", "grammatrix", "decomposition", "durand", "levinson", "minilight", "sphere", "zern", "arith")):
+         return "numerical"

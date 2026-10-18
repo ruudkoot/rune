@@ -1,0 +1,3 @@
+RESULT 100:800:1000
+PASS parstof-strict
+SUMMARY 1 checks, 0 failed

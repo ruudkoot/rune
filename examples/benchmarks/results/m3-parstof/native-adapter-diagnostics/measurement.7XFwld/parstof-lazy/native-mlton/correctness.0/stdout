@@ -1,0 +1,4 @@
+RESULT 1:1:8
+PASS parstof-lazy
+SAMPLE 1 0.002933000
+SUMMARY 1 checks, 0 failed

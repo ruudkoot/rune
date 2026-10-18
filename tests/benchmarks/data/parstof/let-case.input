@@ -1,0 +1,1 @@
+main x = LET a = 1; IN CASE x { <N> a; <C b bs> b; };

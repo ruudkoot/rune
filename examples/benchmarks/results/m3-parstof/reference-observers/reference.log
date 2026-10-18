@@ -1,0 +1,3 @@
+{'profile': 'source-fast', 'depth': 1, 'repetitions': 100, 'bytes': 900, 'seconds': 0.5757428819997585}
+{'profile': 'normal', 'depth': 8, 'repetitions': 100, 'bytes': 1100, 'seconds': 3.234826146999694}
+{'profile': 'source-slow', 'depth': 40, 'repetitions': 100, 'bytes': 1200, 'seconds': 13.585160082002403}

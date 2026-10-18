@@ -1,0 +1,133 @@
+{
+  "F_Pbindlhs_name": [
+    "T_string"
+  ],
+  "F_Pbindlhs_pvl": [
+    "T_ptpatvarli"
+  ],
+  "F_Pcelse_expr": [
+    "T_ptexpr"
+  ],
+  "C_Pcelse_empty": [],
+  "F_Pdeftype": [
+    "T_string",
+    "T_pttparlist",
+    "T_ptrhs"
+  ],
+  "F_Pexpli_C": [
+    "T_ptexpr",
+    "T_ptexpli"
+  ],
+  "C_Pexpli_N": [],
+  "F_Pexpr_APPLY": [
+    "T_ptexpr",
+    "T_ptexpr"
+  ],
+  "F_Pexpr_TUPLE": [
+    "T_ptexpli"
+  ],
+  "F_Pexpr_UNION": [
+    "T_string",
+    "T_ptexpli"
+  ],
+  "F_Pexpr_CASE": [
+    "T_ptexpr",
+    "T_ptpatli",
+    "T_ptcelse"
+  ],
+  "F_Pexpr_LET": [
+    "T_ptletbinds",
+    "T_ptexpr"
+  ],
+  "F_Pexpr_name": [
+    "T_string"
+  ],
+  "F_Pexpr_int": [
+    "Int"
+  ],
+  "F_Pexpr_char": [
+    "Char"
+  ],
+  "F_Pftype": [
+    "T_string",
+    "T_pttype"
+  ],
+  "F_Pfunction": [
+    "T_string",
+    "T_ptfunparli",
+    "T_ptexpr"
+  ],
+  "F_Pfunparli_C": [
+    "T_string",
+    "T_ptfunparli"
+  ],
+  "C_Pfunparli_N": [],
+  "F_Pletbinds_C": [
+    "T_ptbindlhs",
+    "T_ptexpr",
+    "T_ptletbinds"
+  ],
+  "C_Pletbinds_N": [],
+  "F_Ppatli_C": [
+    "T_string",
+    "T_ptpatvarli",
+    "T_ptexpr",
+    "T_ptpatli"
+  ],
+  "C_Ppatli_N": [],
+  "F_Ppatvarli_C": [
+    "T_string",
+    "T_ptpatvarli"
+  ],
+  "C_Ppatvarli_N": [],
+  "F_Ppr_deftype": [
+    "T_ptdeftype"
+  ],
+  "F_Ppr_ftype": [
+    "T_ptftype"
+  ],
+  "F_Ppr_func": [
+    "T_ptfunction"
+  ],
+  "F_Pproglist": [
+    "T_ptpr",
+    "T_ptproglist"
+  ],
+  "C_Pproglist_empty": [],
+  "F_Prhs_union": [
+    "T_ptunionli"
+  ],
+  "F_Prhs_type": [
+    "T_pttype"
+  ],
+  "F_Ptparlist": [
+    "T_string",
+    "T_pttparlist"
+  ],
+  "C_Ptparlist_empty": [],
+  "F_Ptype_fun": [
+    "T_pttype",
+    "T_pttype"
+  ],
+  "F_Ptype_tuple": [
+    "T_pttypli"
+  ],
+  "F_Ptype_parazd": [
+    "T_string",
+    "T_pttypli"
+  ],
+  "F_Ptype_tparname": [
+    "T_string"
+  ],
+  "F_Ptypli": [
+    "T_pttype",
+    "T_pttypli"
+  ],
+  "C_Ptypli_empty": [],
+  "F_Punion": [
+    "T_string",
+    "T_pttypli",
+    "T_ptunionli"
+  ],
+  "C_Punion_empty": []
+}

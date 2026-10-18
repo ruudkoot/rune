@@ -1,0 +1,1 @@
+parstof-lazy	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/parstof-lex.sml shared/parstof-kernel.sml shared/parstof-check.sml parstof-lazy/benchmark.sml shared/main.sml	1 1 program.input count-1.crc	parstof-lazy/smoke.expected	program.input count-1.crc

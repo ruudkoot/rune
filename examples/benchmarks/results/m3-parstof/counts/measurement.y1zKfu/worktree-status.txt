@@ -1,0 +1,12 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/inventory.tsv
+ M examples/benchmarks/manifest.tsv
+ M scripts/benchmark-inventory.py
+?? examples/benchmarks/parstof-lazy/
+?? examples/benchmarks/parstof-strict/
+?? examples/benchmarks/shared/parstof-check.sml
+?? examples/benchmarks/shared/parstof-kernel.sml
+?? examples/benchmarks/shared/parstof-lex.sml
+?? tests/benchmarks/check-parstof.sh
+?? tests/benchmarks/data/parstof/
+?? tests/benchmarks/parstof-tests.sml

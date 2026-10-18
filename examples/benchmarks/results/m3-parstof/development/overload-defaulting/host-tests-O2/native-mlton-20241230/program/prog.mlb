@@ -1,0 +1,10 @@
+$(SML_LIB)/basis/basis.mlb
+"/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml"
+"/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml"
+"/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml"
+"/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/lex.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/check.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/tests.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml"

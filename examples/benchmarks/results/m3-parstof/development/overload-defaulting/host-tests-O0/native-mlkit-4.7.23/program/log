@@ -1,0 +1,10 @@
+error: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/host-tests-O0/native-mlkit-4.7.23/program/src/5/lex.sml, line 37, column 25: Type clash,
+
+
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/host-tests-O0/native-mlkit-4.7.23/program/src/5/lex.sml, line 37, column 25:
+     let val starts=unique(sort(List.concat(List.map #1 patterns)))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Type clash,
+   operand suggests operator type: char list -> char list
+   but I found operator type:      int list -> int list
+Stopping compilation of MLB-file due to error (code 1).

@@ -1,0 +1,1166 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/lex.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/lex.sml:34.57 Warning: calling polyEqual
+functor BenchParstofLexFn(D: sig
+                             type 'a t
+                             val delay : (unit -> 'a) -> 'a t
+                             val force : 'a t -> 'a
+                           end) :
+                         
+                           sig
+                             structure L : <sig>
+                             type chars
+                             type input
+                             type tokenValue
+                             type token
+                             type tokens
+                             type 'a result
+                             type 'a pattern
+                             val chars : string -> chars BenchLazy.delay
+                             val sequence : ('a D.t -> 'b D.t -> 'c)
+                                             -> ('d -> 'a result)
+                                             -> (input -> 'b result)
+                                             -> 'd -> 'c result
+                             val seq : ('a D.t -> 'b D.t -> 'c)
+                                        -> 'd * ('e -> 'a result)
+                                        -> 'f * (input -> 'b result)
+                                        -> 'd * ('e -> 'c result)
+                             val convertCell : ('a D.t -> 'b)
+                                                -> 'c * ('d -> 'a result)
+                                                -> 'c * ('d -> 'b result)
+                             val convert : ('a -> 'b)
+                                            -> 'c * ('d -> 'a result)
+                                            -> 'c * ('d -> 'b result)
+                             val literal : char
+                                            -> char list
+                                            * (chars BenchLazy.state ref
+                                             -> char result)
+                             val split : int -> 'a list -> 'a list * 'a list
+                             val merge : char list -> char list -> char list
+                             val sort : char list -> char list
+                             val unique : ''a list -> ''a list
+                             val alt : 'a pattern list -> 'a pattern
+                             val repeat : ('a -> 'b -> 'a)
+                                           -> 'a D.t
+                                           -> (input -> 'b result)
+                                           -> input -> 'a result
+                             val plus : ('a -> 'b -> 'a)
+                                         -> 'a
+                                         -> 'c * (input -> 'b result)
+                                         -> 'c * (input -> 'a result)
+                             val select1 : 'a D.t -> 'b -> 'a
+                             val select2 : 'a -> 'b D.t -> 'b
+                             val cons : 'a D.t -> 'a list D.t -> 'a list
+                             val singleton : 'a -> 'a list
+                             val addChar : 'a list -> 'a -> 'a list
+                             val match : string
+                                          -> char list
+                                          * (input -> char list result)
+                             val digits : char pattern
+                             val upper : char pattern
+                             val lower : char pattern
+                             val alphanum : char pattern
+                             val escape : 'a -> char D.t -> char
+                             val escapedChar : char pattern
+                             val hexDigit : char pattern
+                             val hex : char D.t -> char D.t -> char
+                             val escaped : char pattern
+                             val weird : char pattern
+                             val chchar : char pattern
+                             val character : char list
+                                              * (chars BenchLazy.state ref
+                                               -> char result)
+                             val integer : char list * (input -> int result)
+                             val uppid : char list pattern
+                             val lowid : char list pattern
+                             val strchar : char pattern
+                             val endstr : char list pattern
+                             val string : char list
+                                           * (chars BenchLazy.state ref
+                                            -> char list result)
+                             val empty : 'a
+                                          -> 'b * ('c -> 'd result)
+                                          -> 'b
+                                          * ('c -> ('a * tokenValue) result)
+                             val valChar : char D.t -> int * tokenValue
+                             val valInt : int D.t -> int * tokenValue
+                             val valText : 'a
+                                            -> char list D.t
+                                            -> 'a * tokenValue
+                             val punctuation : (int * string) list
+                             val keywords : (int * string) list
+                             val matcher : (int * tokenValue) pattern
+                             val prefix : string
+                                           -> chars BenchLazy.delay -> bool
+                             val scanComment : chars BenchLazy.delay
+                                                -> int
+                                                -> (chars BenchLazy.delay
+                                                   * int) option
+                             val skip : chars BenchLazy.delay
+                                         -> int
+                                         -> (chars BenchLazy.state ref * int) 
+                                           option
+                             val tokenizeAt : chars BenchLazy.delay
+                                               -> int
+                                               -> tokens BenchLazy.delay
+                             val tokenize : string -> tokens BenchLazy.delay
+                           end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:294.5-294.34 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:295.5-295.34 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:296.5-296.34 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:297.5-297.30 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:298.5-298.34 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:299.5-299.34 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:300.5-300.37 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:301.5-301.33 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:302.5-302.31 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:303.5-303.36 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:304.5-304.30 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:305.5-305.33 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:306.5-306.31 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:307.5-307.29 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:308.5-308.29 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:309.5-309.29 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:310.5-310.29 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:311.5-311.29 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:312.5-312.29 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:313.5-313.30 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:314.5-314.34 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:315.5-315.35 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:316.5-316.31 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:317.5-317.30 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:318.5-318.34 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:319.5-319.33 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:320.5-320.32 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:321.5-321.34 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:322.5-322.30 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:323.5-323.33 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:324.5-324.33 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:325.5-325.33 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:326.5-326.33 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:327.5-327.33 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:328.5-328.32 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:329.5-329.34 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:330.5-330.34 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:331.5-331.33 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:332.5-332.33 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:333.5-333.34 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:334.5-334.34 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:335.5-335.34 Warning: type vars not generalized because of
+   value restriction are instantiated to dummy types (X1,X2,...)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:338.145-338.178 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> T_pttype_node D.t parsed) option
+  in expression:
+    cache_c_par_tparname := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:337.3-338.189 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> T_pttype_node D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_tparname)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   ((f_parseq f_fparsel2)
+                       ((f_parlit f_fpardroptok) c_tok_hash))
+                     ((f_parcvt f_m_ptype_tparname)
+                       ((f_parlit f_fpargetname) c_tok_lowid))
+       in (cache_c_par_tparname := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:341.168-341.201 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.delay -> T_pttypli_node D.t parsed) 
+                      option
+  in expression:
+    cache_c_par_typelist := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:340.3-341.212 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.delay -> T_pttypli_node D.t parsed) option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_typelist)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   ((f_parseq f_m_ptypli) c_par_type)
+                     (((f_parrep_right f_m_ptypli) c_m_ptypli_empty)
+                       (((f_parseq <exp>) (<exp> <exp>)) c_par_type))
+       in (cache_c_par_typelist := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:344.391-344.424 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> T_pttype_node D.t parsed) option
+  in expression:
+    cache_c_par_type_sub := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:343.3-344.435 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> T_pttype_node D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_type_sub)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   f_paralt
+                   ((cons ((<exp> <exp>) (<exp> <exp>)))
+                       ((cons c_par_simptype) ((cons <exp>) nil)))
+       in (cache_c_par_type_sub := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:347.212-347.241 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref * ('Z -> T_pttype_node D.t parsed) option
+  in expression:
+    cache_c_par_type := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:346.3-347.252 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: ('Z -> T_pttype_node D.t parsed) option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_type)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   f_paralt
+                   ((cons ((<exp> <exp>) (<exp> <exp>)))
+                       ((cons c_par_type_sub) nil))
+       in (cache_c_par_type := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:350.348-350.381 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> T_pttype_node D.t parsed) option
+  in expression:
+    cache_c_par_simptype := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:349.3-350.392 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> T_pttype_node D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_simptype)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   f_paralt
+                   ((cons ((<exp> <exp>) (<exp> <exp>)))
+                       ((cons c_par_tparname) ((cons <exp>) nil)))
+       in (cache_c_par_simptype := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:353.250-353.283 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> (char list D.t * T_pttypli_node D.t) D.t parsed) 
+                      option
+  in expression:
+    cache_c_par_ttuplety := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:352.3-353.294 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref
+                   -> (char list D.t * T_pttypli_node D.t) D.t parsed) option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_ttuplety)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   f_paralt
+                   ((cons ((<exp> <exp>) (<exp> <exp>)))
+                       ((cons (<exp> <exp>)) nil))
+       in (cache_c_par_ttuplety := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:356.479-356.515 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.delay -> T_ptrhs_node D.t parsed) 
+                      option
+  in expression:
+    cache_c_par_deftype_rhs := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:355.3-356.526 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.delay -> T_ptrhs_node D.t parsed) option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_deftype_rhs)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   f_paralt
+                   ((cons ((f_parcvt <exp>) c_par_type))
+                       ((cons (<exp> <exp>)) nil))
+       in (cache_c_par_deftype_rhs := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:359.368-359.400 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> T_ptdeftype_node D.t parsed) option
+  in expression:
+    cache_c_par_deftype := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:358.3-359.411 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> T_ptdeftype_node D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_deftype)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   ((f_parseq f_fpardeftype_mk)
+                       (((f_parseq <exp>) (<exp> <exp>))
+                         ((<exp> <exp>) (<exp> <exp>))))
+                     (((f_parseq f_fparsel2) ((f_parlit <exp>) c_tok_opdef))
+                       ((f_parfail (f_fparerr <exp>)) c_par_deftype_rhs))
+       in (cache_c_par_deftype := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:362.149-362.179 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> T_ptftype_node D.t parsed) option
+  in expression:
+    cache_c_par_ftype := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:361.3-362.190 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> T_ptftype_node D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_ftype)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   ((f_parseq f_m_pftype)
+                       ((f_parlit f_fpargetname) c_tok_lowid))
+                     (((f_parseq f_fparsel2) ((f_parlit <exp>) c_tok_opdef))
+                       c_par_type)
+       in (cache_c_par_ftype := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:365.226-365.261 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> T_ptpatvarli_node D.t parsed) option
+  in expression:
+    cache_c_par_take_apart := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:364.3-365.272 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> T_ptpatvarli_node D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_take_apart)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   ((f_parseq f_fparsel2)
+                       ((f_parlit f_fpardroptok) c_tok_oplt))
+                     (((f_parseq f_fparsel1) ((<exp> <exp>) (<exp> <exp>)))
+                       ((f_parlit f_fpardroptok) c_tok_opgt))
+       in (cache_c_par_take_apart := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:368.96-368.125 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref -> int D.t parsed) option
+  in expression:
+    cache_c_par_unop := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:367.3-368.136 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> int D.t parsed) option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_unop)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   f_paralt
+                   ((f_map f_fpar_opermk)
+                       ((cons c_tok_opdash) ((cons <exp>) nil)))
+       in (cache_c_par_unop := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:371.320-371.352 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> (char list D.t * T_ptpatvarli_node D.t) D.t parsed) 
+                      option
+  in expression:
+    cache_c_par_pattern := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:370.3-371.363 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref
+                   -> (char list D.t * T_ptpatvarli_node D.t) D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_pattern)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   (f_parfail (f_fparerr c_err_CASEpatt))
+                     (((f_parseq f_fparsel2) ((f_parlit <exp>) c_tok_oplt))
+                       (((f_parseq <exp>) (<exp> <exp>))
+                         ((<exp> <exp>) (<exp> <exp>))))
+       in (cache_c_par_pattern := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:374.236-374.266 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> T_ptexpr_node D.t parsed) option
+  in expression:
+    cache_c_par_const := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:373.3-374.277 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> T_ptexpr_node D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_const)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   f_paralt
+                   ((cons ((f_parcvt <exp>) (<exp> <exp>)))
+                       ((cons (<exp> <exp>)) ((cons <exp>) nil)))
+       in (cache_c_par_const := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:377.114-377.142 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref -> int D.t parsed) option
+  in expression:
+    cache_c_par_op0 := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:376.3-377.153 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> int D.t parsed) option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_op0)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   f_paralt
+                   ((f_map f_fpar_opermk)
+                       ((cons c_tok_opmul) ((cons <exp>) (<exp> <exp>))))
+       in (cache_c_par_op0 := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:380.95-380.123 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref -> int D.t parsed) option
+  in expression:
+    cache_c_par_op1 := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:379.3-380.134 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> int D.t parsed) option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_op1)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   f_paralt
+                   ((f_map f_fpar_opermk)
+                       ((cons c_tok_opadd) ((cons <exp>) nil)))
+       in (cache_c_par_op1 := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:383.165-383.193 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref -> int D.t parsed) option
+  in expression:
+    cache_c_par_op2 := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:382.3-383.204 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> int D.t parsed) option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_op2)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   f_paralt
+                   ((f_map f_fpar_opermk)
+                       ((cons c_tok_ople) ((cons <exp>) (<exp> <exp>))))
+       in (cache_c_par_op2 := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:386.94-386.122 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref -> int D.t parsed) option
+  in expression:
+    cache_c_par_op3 := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:385.3-386.133 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> int D.t parsed) option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_op3)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   f_paralt
+                   ((f_map f_fpar_opermk)
+                       ((cons c_tok_opsep) ((cons <exp>) nil)))
+       in (cache_c_par_op3 := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:389.50-389.78 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref -> int D.t parsed) option
+  in expression:
+    cache_c_par_op4 := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:388.3-389.89 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> int D.t parsed) option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_op4)
+    of SOME parser => parser
+     | NONE =>
+         let val parser = f_fpar_opermk c_tok_opcolon
+       in (cache_c_par_op4 := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:392.49-392.77 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref -> int D.t parsed) option
+  in expression:
+    cache_c_par_ope := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:391.3-392.88 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> int D.t parsed) option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_ope)
+    of SOME parser => parser
+     | NONE =>
+         let val parser = f_fpar_opermk c_tok_opapnd
+       in (cache_c_par_ope := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:395.251-395.280 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> (T_ptbindlhs_node D.t * 'Z D.t) D.t parsed) option
+  in expression:
+    cache_c_par_bind := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:394.3-395.291 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref
+                   -> (T_ptbindlhs_node D.t * 'Z D.t) D.t parsed) option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_bind)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   ((f_parseq f_fpartup2)
+                       (f_paralt ((cons <exp>) (<exp> <exp>))))
+                     (((f_parseq f_fparsel2) ((f_parlit <exp>) c_tok_opdef))
+                       c_par_expr)
+       in (cache_c_par_bind := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:398.154-398.187 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> T_ptexpr_node D.t parsed) option
+  in expression:
+    cache_c_par_unopexpr := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:397.3-398.198 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> T_ptexpr_node D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_unopexpr)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   f_paralt
+                   ((cons ((<exp> <exp>) (<exp> <exp>)))
+                       ((cons c_par_appexpr) nil))
+       in (cache_c_par_unopexpr := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:401.299-401.333 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> (T_ptpatli_node D.t * T_ptcelse_node D.t) D.t parsed)
+                      option
+  in expression:
+    cache_c_par_matchlist := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:400.3-401.344 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref
+                   -> (T_ptpatli_node D.t * T_ptcelse_node D.t) D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_matchlist)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   ((f_parseq f_fpartup2)
+                       ((f_parfail (f_fparerr <exp>))
+                         ((<exp> <exp>) c_par_match)))
+                     ((f_paropt c_m_pcelse_empty)
+                       (((f_parseq <exp>) (<exp> <exp>))
+                         ((f_parfail <exp>) (<exp> <exp>))))
+       in (cache_c_par_matchlist := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:404.163-404.193 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * ('Z -> ('Y * T_ptexpr_node D.t) D.t parsed) option
+  in expression:
+    cache_c_par_match := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:403.3-404.204 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: ('Z -> ('Y * T_ptexpr_node D.t) D.t parsed) option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_match)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   ((f_parseq f_fpartup2) c_par_pattern)
+                     (((f_parseq f_fparsel1) c_par_expr)
+                       ((f_parfail (f_fparerr <exp>))
+                         ((f_parlit <exp>) c_tok_semi)))
+       in (cache_c_par_match := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:407.355-407.384 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> T_ptexpr_node D.t parsed) option
+  in expression:
+    cache_c_par_case := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:406.3-407.395 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> T_ptexpr_node D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_case)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   ((f_parseq f_fpar_case_mk)
+                       (((f_parseq <exp>) (<exp> <exp>))
+                         ((f_parfail <exp>) c_par_expr)))
+                     ((f_parfail (f_fparerr c_err_CASE))
+                       (((f_parseq <exp>) (<exp> <exp>))
+                         ((<exp> <exp>) (<exp> <exp>))))
+       in (cache_c_par_case := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:410.372-410.405 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> T_ptexpr_node D.t parsed) option
+  in expression:
+    cache_c_par_structor := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:409.3-410.416 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> T_ptexpr_node D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_structor)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   ((f_parseq f_fparsel2)
+                       ((f_parlit f_fpardroptok) c_tok_btup))
+                     ((f_parfail (f_fparerr c_err_constr))
+                       (((f_parseq <exp>) (<exp> <exp>))
+                         ((f_parfail <exp>) (<exp> <exp>))))
+       in (cache_c_par_structor := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:413.219-413.251 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> T_ptletbinds_node D.t parsed) option
+  in expression:
+    cache_c_par_letlist := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:412.3-413.262 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> T_ptletbinds_node D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_letlist)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   (f_parfail (f_fparerr c_err_letlist))
+                     (((f_parrepplus_right f_par_letlist_mk) c_m_pletbinds_N)
+                       (((f_parseq <exp>) c_par_bind)
+                         ((f_parfail <exp>) (<exp> <exp>))))
+       in (cache_c_par_letlist := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:416.542-416.573 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> T_ptexpr_node D.t parsed) option
+  in expression:
+    cache_c_par_ifexpr := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:415.3-416.584 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> T_ptexpr_node D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_ifexpr)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   ((f_parseq f_fpar_ifexpr_mk)
+                       (((f_parseq <exp>) (<exp> <exp>))
+                         ((f_parfail <exp>) (<exp> <exp>))))
+                     ((f_parfail (f_fparerr c_err_ELSE))
+                       (((f_parseq <exp>) (<exp> <exp>))
+                         ((<exp> <exp>) (<exp> <exp>))))
+       in (cache_c_par_ifexpr := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:419.227-419.260 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> T_ptexpli_node D.t parsed) option
+  in expression:
+    cache_c_par_exprlist := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:418.3-419.271 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> T_ptexpli_node D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_exprlist)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   (f_parfail (f_fparerr c_err_explist))
+                     ((f_parcvt f_fpar_exprlist_mk)
+                       (((f_parseq <exp>) c_par_expr)
+                         ((<exp> <exp>) (<exp> <exp>))))
+       in (cache_c_par_exprlist := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:422.224-422.253 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> T_ptexpr_node D.t parsed) option
+  in expression:
+    cache_c_par_expr := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:421.3-422.264 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> T_ptexpr_node D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_expr)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   f_paralt
+                   ((cons ((<exp> <exp>) (<exp> <exp>)))
+                       ((cons c_par_opexpr) nil))
+       in (cache_c_par_expr := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:425.207-425.239 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> T_ptexpr_node D.t parsed) option
+  in expression:
+    cache_c_par_opexpr4 := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:424.3-425.250 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> T_ptexpr_node D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_opexpr4)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   (f_parcvt f_fparoptoapp_right)
+                     (((f_parseq f_fpartup2) c_par_opexpr3)
+                       (((f_parrep_right <exp>) (cellNil <exp>))
+                         ((<exp> <exp>) (<exp> <exp>))))
+       in (cache_c_par_opexpr4 := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:428.206-428.238 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> T_ptexpr_node D.t parsed) option
+  in expression:
+    cache_c_par_opexpr3 := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:427.3-428.249 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> T_ptexpr_node D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_opexpr3)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   (f_parcvt f_fparoptoapp_left)
+                     (((f_parseq f_fpartup2) c_par_opexpr2)
+                       (((f_parrep_right <exp>) (cellNil <exp>))
+                         ((<exp> <exp>) (<exp> <exp>))))
+       in (cache_c_par_opexpr3 := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:431.206-431.238 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> T_ptexpr_node D.t parsed) option
+  in expression:
+    cache_c_par_opexpr2 := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:430.3-431.249 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> T_ptexpr_node D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_opexpr2)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   (f_parcvt f_fparoptoapp_left)
+                     (((f_parseq f_fpartup2) c_par_opexpr1)
+                       (((f_parrep_right <exp>) (cellNil <exp>))
+                         ((<exp> <exp>) (<exp> <exp>))))
+       in (cache_c_par_opexpr2 := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:434.206-434.238 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> T_ptexpr_node D.t parsed) option
+  in expression:
+    cache_c_par_opexpr1 := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:433.3-434.249 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> T_ptexpr_node D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_opexpr1)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   (f_parcvt f_fparoptoapp_left)
+                     (((f_parseq f_fpartup2) c_par_opexpr0)
+                       (((f_parrep_right <exp>) (cellNil <exp>))
+                         ((<exp> <exp>) (<exp> <exp>))))
+       in (cache_c_par_opexpr1 := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:437.208-437.240 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> T_ptexpr_node D.t parsed) option
+  in expression:
+    cache_c_par_opexpr0 := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:436.3-437.251 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> T_ptexpr_node D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_opexpr0)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   (f_parcvt f_fparoptoapp_left)
+                     (((f_parseq f_fpartup2) c_par_unopexpr)
+                       (((f_parrep_right <exp>) (cellNil <exp>))
+                         ((<exp> <exp>) (<exp> <exp>))))
+       in (cache_c_par_opexpr0 := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:440.170-440.201 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.delay -> T_ptexpr_node D.t parsed) 
+                      option
+  in expression:
+    cache_c_par_opexpr := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:439.3-440.212 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.delay -> T_ptexpr_node D.t parsed) option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_opexpr)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   (f_parcvt f_fparoptoapp_left)
+                     (((f_parseq f_fpartup2) c_par_opexpr4)
+                       (((f_parrep_right <exp>) (cellNil <exp>))
+                         ((<exp> <exp>) c_par_opexpr4)))
+       in (cache_c_par_opexpr := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:443.219-443.252 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> (T_ptexpr_node D.t * T_ptexpr_node D.t) D.t parsed) 
+                      option
+  in expression:
+    cache_c_par_elifpart := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:442.3-443.263 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref
+                   -> (T_ptexpr_node D.t * T_ptexpr_node D.t) D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_elifpart)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   ((f_parseq f_fpartup2)
+                       (((f_parseq <exp>) (<exp> <exp>)) c_par_expr))
+                     ((f_parfail (f_fparerr c_err_THENELIF))
+                       (((f_parseq <exp>) (<exp> <exp>)) c_par_expr))
+       in (cache_c_par_elifpart := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:446.216-446.249 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> T_ptexpr_node D.t parsed) option
+  in expression:
+    cache_c_par_tuplctor := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:445.3-446.260 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> T_ptexpr_node D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_tuplctor)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   ((f_parseq f_fparsel2)
+                       ((f_parlit f_fpardroptok) c_tok_btup))
+                     (((f_parseq f_fparsel1) ((f_parcvt <exp>) c_par_exprlist))
+                       ((f_parfail (f_fparerr <exp>))
+                         ((f_parlit <exp>) c_tok_etup)))
+       in (cache_c_par_tuplctor := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:449.415-449.447 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> T_ptexpr_node D.t parsed) option
+  in expression:
+    cache_c_par_simexpr := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:448.3-449.458 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> T_ptexpr_node D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_simexpr)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   f_paralt
+                   ((cons ((<exp> <exp>) (<exp> <exp>)))
+                       ((cons c_par_structor) ((cons <exp>) (<exp> <exp>))))
+       in (cache_c_par_simexpr := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:452.104-452.136 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.delay -> T_ptexpr_node D.t parsed) 
+                      option
+  in expression:
+    cache_c_par_appexpr := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:451.3-452.147 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.delay -> T_ptexpr_node D.t parsed) option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_appexpr)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   (f_parcvt f_par_appexpr_mk)
+                     (((f_parrepplus_right cellCons) (cellNil ()))
+                       c_par_simexpr)
+       in (cache_c_par_appexpr := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:455.399-455.432 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> T_ptfunction_node D.t parsed) option
+  in expression:
+    cache_c_par_function := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:454.3-455.443 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> T_ptfunction_node D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_function)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   ((f_parseq f_fpar_function_mk)
+                       (((f_parseq <exp>) (<exp> <exp>))
+                         ((<exp> <exp>) (<exp> <exp>))))
+                     ((f_parfail (f_fparerr c_err_funcdef))
+                       (((f_parseq <exp>) (<exp> <exp>))
+                         ((<exp> <exp>) (<exp> <exp>))))
+       in (cache_c_par_function := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:458.556-458.589 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref -> T_ptpr_node D.t parsed) 
+                      option
+  in expression:
+    cache_c_par_progpart := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:457.3-458.600 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> T_ptpr_node D.t parsed) option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_progpart)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   f_paralt
+                   ((cons ((f_parcvt <exp>) (<exp> <exp>)))
+                       ((cons (<exp> <exp>)) ((cons <exp>) nil)))
+       in (cache_c_par_progpart := SOME parser; parser)
+       end)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:461.208-461.241 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: ?.X1 option ref * ?.X1 option
+  operand:         ?.X1 option ref
+                    * (X.tokens BenchLazy.state ref
+                       -> T_ptproglist_node D.t parsed) option
+  in expression:
+    cache_c_par_proglist := SOME parser
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/kernel-observe.sml:460.3-461.252 Error: case object and rules do not agree [tycon mismatch]
+  rule domain: (X.tokens BenchLazy.state ref -> T_ptproglist_node D.t parsed) 
+                  option
+  object: ?.X1 option
+  in expression:
+    (case (! cache_c_par_proglist)
+    of SOME parser => parser
+     | NONE =>
+         let val parser =
+                   f_paralt
+                   ((cons ((<exp> <exp>) c_par_proglist))
+                       ((cons (<exp> <exp>)) nil))
+       in (cache_c_par_proglist := SOME parser; parser)
+       end)
+uncaught exception CompileError [CompileError]

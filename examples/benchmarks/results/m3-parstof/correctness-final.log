@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-parstof-parallel.8b9d68h1
+PASS parstof-lazy smoke O2
+PASS parstof-lazy smoke O0
+PASS parstof-lazy smoke hosts
+PASS parstof-lazy normal O0
+PASS parstof-lazy normal O2
+PASS parstof-strict smoke O0
+PASS parstof-strict smoke O2
+PASS parstof-lazy normal hosts
+PASS parstof-strict smoke hosts
+PASS parstof-strict normal O2
+PASS parstof-strict normal O0
+PASS parstof-strict normal hosts

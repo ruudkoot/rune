@@ -1,0 +1,323 @@
+main ip =
+  i2str (optim (myMain deciem))
+;
+
+TYPE tJobdef    = [ JOBDEF, int, int, int, tJobdef, tJobdef ] ;
+TYPE tJobstat   = [ JOBSTAT, int, int, int, int, tJobdef ] ;
+TYPE tTree      = [ LEAF, int |
+                    TREE, tTree, tTree ] ;
+TYPE tProc      = [ PROC, int, tJobstat ] ;
+
+
+
+emptyjobdef     = [JOBDEF, 0     , 0 , 0, emptyjobdef, emptyjobdef] ;
+solo            = [JOBDEF, 1     , 0, 10, emptyjobdef, emptyjobdef] ;
+trio            = [JOBDEF, 1    , 10, 20     , child1     , child2] ;
+
+child1          = [JOBDEF, 2     , 0, 30, emptyjobdef, emptyjobdef] ;
+child2          = [JOBDEF, 3     , 0, 10, emptyjobdef, emptyjobdef] ;
+
+septiem         = [JOBDEF, 1    , 20, 20, job2    , job3              ] ;
+
+job2            = [JOBDEF, 2    , 19, 10, job4    , job5              ] ;
+job3            = [JOBDEF, 3    , 18, 30, job6    , job7              ] ;
+job4            = [JOBDEF, 4     , 0, 38, emptyjobdef, emptyjobdef] ;
+job5            = [JOBDEF, 5     , 0, 50, emptyjobdef, emptyjobdef] ;
+job6            = [JOBDEF, 6     , 0, 10, emptyjobdef, emptyjobdef] ;
+job7            = [JOBDEF, 7     , 0, 40, emptyjobdef, emptyjobdef] ;
+
+deciem          = [JOBDEF, 1    , 20, 20, job12   , job13      ] ;
+
+job12           = [JOBDEF, 2    , 19, 10, job14   , job15      ] ;
+job13           = [JOBDEF, 3    , 18, 30, job16   , job17      ] ;
+job14           = [JOBDEF, 4    , 17, 15, job18   , job19      ] ;
+job15           = [JOBDEF, 5     , 0, 50, emptyjobdef, emptyjobdef] ;
+job16           = [JOBDEF, 6     , 0, 10, emptyjobdef, emptyjobdef] ;
+job17           = [JOBDEF, 7     , 0, 40, emptyjobdef, emptyjobdef] ;
+job18           = [JOBDEF, 8     , 0, 30, emptyjobdef, emptyjobdef] ;
+job19           = [JOBDEF, 9     , 0, 60, emptyjobdef, emptyjobdef] ;
+
+duodeciem       = [JOBDEF, 101  , 20, 20, job102          , job103     ] ;
+
+job102          = [JOBDEF, 102  , 19, 10, job104          , job105     ] ;
+job103          = [JOBDEF, 103  , 18, 30, job106          , job107     ] ;
+job104          = [JOBDEF, 104  , 17, 15, job108          , job109     ] ;
+job105          = [JOBDEF, 105  , 25, 12, job110          , job111     ] ;
+job106          = [JOBDEF, 106   , 0, 10, emptyjobdef, emptyjobdef] ;
+job107          = [JOBDEF, 107   , 0, 40, emptyjobdef, emptyjobdef] ;
+job108          = [JOBDEF, 108   , 0, 30, emptyjobdef, emptyjobdef] ;
+job109          = [JOBDEF, 109   , 0, 60, emptyjobdef, emptyjobdef] ;
+job110          = [JOBDEF, 110   , 0, 30, emptyjobdef, emptyjobdef] ;
+job111          = [JOBDEF, 111   , 0, 60, emptyjobdef, emptyjobdef] ;
+
+quadrideciem    = [JOBDEF, 201  , 20, 20, job202          , job203     ] ;
+
+job202          = [JOBDEF, 202  , 19, 10, job212          , job213     ] ;
+job203          = [JOBDEF, 203  , 18, 30, job204          , job205     ] ;
+job204          = [JOBDEF, 204  , 17, 15, job207          , job208     ] ;
+job205          = [JOBDEF, 205  , 25, 12, job210          , job211     ] ;
+job206          = [JOBDEF, 206   , 0, 10, emptyjobdef, emptyjobdef] ;
+job207          = [JOBDEF, 207   , 0, 40, emptyjobdef, emptyjobdef] ;
+job208          = [JOBDEF, 208  , 19, 10, job206          , job209     ] ;
+job209          = [JOBDEF, 209   , 0, 60, emptyjobdef, emptyjobdef] ;
+job210          = [JOBDEF, 210   , 0, 30, emptyjobdef, emptyjobdef] ;
+job211          = [JOBDEF, 211   , 0, 60, emptyjobdef, emptyjobdef] ;
+job212          = [JOBDEF, 212   , 0, 28, emptyjobdef, emptyjobdef] ;
+job213          = [JOBDEF, 213   , 0, 50, emptyjobdef, emptyjobdef] ;
+
+/*  Job administration */
+emptyjobstat    = [JOBSTAT, 0, 0, 0 , 0, emptyjobdef] ;
+
+/*  Processor definitions */
+procs =
+  [PROC, 1, emptyjobstat] :
+  [PROC, 2, emptyjobstat] :
+  [N]
+;
+
+
+/*  Main expression */
+myMain root =
+  LET
+    rootadm = ((addch root  0):[N]) ;
+    totcyc  = 0 ;
+    level   = 0 ;
+  IN
+    alloc rootadm procs [N] [N] totcyc level
+;
+
+
+/*  Job allocator */
+/*  */
+
+/*  No more processes to allocate: */
+/*  */
+alloc jobnew prlist jobold prold totcyc level =
+  CASE prlist {
+    <N>
+        process (append jobold jobnew) prold totcyc level ;
+    <C pr prnew>
+        IF (null jobnew) THEN
+                  /*  There are no jobs to allocate to processor `pr' */
+                  /*  try the next processor: */
+          (alloc jobold prnew [N] (pr:prold) totcyc level)
+        ELSE
+                        /*  Try to allocate jobs to processors until
+                                either all processors */
+                        /*  are active, or the processors which are still
+                                available cannot take up */
+                        /*  the (join) jobs left over: */
+          CASE pr {
+            <PROC pid jstat>
+              CASE jstat {
+                <JOBSTAT jb dum1 dum2 dum3 dum4>
+                  LET
+                    <jobold1 jobnew1> = anyjob jobnew jobold pid ;
+                    job1     = head jobnew1 ;
+                    jobrest1 = tail jobnew1 ;
+                    <jobold2 jobnew2> = anyjob jobrest1 (job1:jobold1) pid ;
+                    nextlevel = level + 1 ;
+                  IN
+                    IF (jb ~= 0) THEN   /* processor busy */
+                        (alloc (append jobold jobnew) prnew [N]
+                               (pr:prold) totcyc level)
+                    ELIF (null jobnew1) THEN    /* no suitable job */
+                        (alloc (append jobold jobnew) prnew [N]
+                               (pr:prold) totcyc level)
+                    ELIF (null jobnew2) THEN    /* no suitable next-job */
+                        (alloc (append jobold1 jobrest1) prnew [N]
+                               ([PROC, pid, job1]:prold) totcyc level)
+                    ELSE [TREE, (alloc (append jobold1 jobrest1) prnew [N]
+                                  ([PROC, pid, job1]:prold) totcyc nextlevel),
+                                (alloc jobnew2 (pr:prnew) jobold2
+                                       prold totcyc nextlevel) ]
+                    FI ;
+              } ;
+          }
+      FI ;
+  }
+;
+
+/*  scan along the list jobold++jobnew to find a job that can run on pid */
+/*  and deliver the pair jobold1,jobnew1 such that the disired job is the */
+/*  hd of jobnew1 and the jobs hot yet scanned are IN the tl of jobnew1 */
+/*  All jobs already scanned are IN jobold1 */
+
+anyjob joblist jobold pid  =
+  CASE joblist {
+    <N>
+      [jobold, [N]] ;
+    <C job jobnew>
+      CASE job {
+        <JOBSTAT mark steps proc dum1 dum2>
+          IF ( (mark == 1) | (mark == 4) &
+               ((pid == proc) | (proc == 0)) ) THEN
+            [jobold, (job : jobnew)]
+          ELSE
+            (anyjob jobnew (job : jobold) pid)
+          FI ;
+      } ;
+  }
+;
+
+/*  Update the job statuses now allocation is complete */
+/*  IF there is no more work to be done, THEN allocation terminates, */
+/*  otherwise the next level of allocation is started: */
+/*  */
+
+process jobs procss totcyc level =
+  LET
+    s                   = mincyc procss ;
+    <prterm prnew>      = perform procss s ;
+    jobnew              = addjob prterm jobs ;
+  IN
+    IF (s == 0) THEN
+      [LEAF, totcyc]
+    ELSE
+      (alloc jobnew  prnew [N] [N] (totcyc + s) level)
+    FI
+;
+
+
+
+/*  Find the minimum number of steps to be done IN parallel: */
+/*  */
+
+/*  Skip idle processor: */
+/*  */
+  mincyc proclist =
+    CASE proclist {
+      <N>
+        0 ;
+      <C proc prest>
+        CASE proc {
+          <PROC dum1 jobstat>
+            CASE jobstat {
+              <JOBSTAT mark steps dum2 dum3 dum4>
+                  IF (mark == 0) THEN (mincyc prest)
+                  ELSE (min steps (mincyc prest))
+                  FI ;
+            } ;
+        } ;
+     }
+   ;
+
+
+min x y =
+  IF x == 0 THEN y
+  ELIF y == 0 THEN x
+  ELIF x < y THEN x
+  ELSE y
+  FI
+;
+
+/*  Add a job to the administration and perform acknowledgements of terminating */
+/*  child jobs to their parents: */
+/*  */
+
+   addjob proclist          jobs =
+     CASE proclist {
+       <N>
+         jobs ;
+       <C proc prest>
+         CASE proc {
+           <PROC pid jobstat>
+           CASE jobstat {
+             <JOBSTAT mark steps dum1 parent jdef>
+             CASE jdef {
+             <JOBDEF jid fs js ch1 ch2>
+              IF steps == 0 THEN
+                IF mark == 1 THEN
+                  [JOBSTAT, 2, js, pid, parent, jdef] :
+                  (addch ch1 jid) :
+                  (addch ch2 jid) :
+                  (addjob prest jobs)
+                ELSE
+                  (addjob prest (ackn parent jobs))
+                FI
+              ELSE
+                [N]
+              FI ; } ;
+           } ;
+         } ;
+      }
+    ;
+
+
+/*  Perform a number of steps, such that at least one processor becomes */
+/*  available: */
+/*  */
+
+   perform proclist          s =
+     CASE proclist {
+       <N>
+         [ [N], [N] ] ;
+       <C proc prest>
+         CASE proc {
+         <PROC pid jobstat>
+           CASE jobstat {
+             <JOBSTAT mark steps pr par job>
+             LET
+               <prterm prnew> = perform prest s ;
+             IN
+              IF (mark == 0) THEN
+                [ prterm , [PROC, pid, emptyjobstat]:prnew ]
+              ELIF (steps == s) THEN
+                [([PROC, pid, [JOBSTAT, mark, 0, pr, par, job]]:prterm),
+                 ([PROC, pid, emptyjobstat]:prnew)]
+              ELSE
+                [ prterm,
+                 [ PROC, pid, [JOBSTAT,mark,(steps-s),pr,par,job]]: prnew ]
+              FI ;
+            } ;
+        } ;
+    }
+  ;
+
+
+/*  Add children: */
+/*  A non forking job is treated as a join job, plus 2 acknowledges, with */
+/*  processor 0. */
+
+addch jobdef parent =
+  CASE jobdef {
+    <JOBDEF jid fs js ch1 ch2>
+      IF (fs == 0) THEN
+        [JOBSTAT, 4, js, 0, parent, jobdef]
+      ELSE
+        [JOBSTAT, 1, fs, 0, parent, jobdef]
+      FI ;
+  }
+;
+
+ 
+/*  Process acknowledgements: */
+
+ackn parent joblist =
+  CASE joblist {
+    <N>
+      [N] ;
+    <C job jobrest>
+      CASE job {
+        <JOBSTAT mark js pid par jdef>
+          CASE jdef {
+            <JOBDEF jid dum1 dum2 dum3 dum4>
+              IF (parent == jid) THEN
+                [ JOBSTAT, (mark+1), js, pid, par, jdef] : jobrest
+              ELSE
+                (job : ackn parent jobrest)
+              FI ;
+          } ;
+      } ;
+  }
+;
+
+optim tree =
+  CASE tree {
+    <LEAF l>
+      l ;
+    <TREE l r>
+      min (optim l) (optim r) ;
+  }
+;
+

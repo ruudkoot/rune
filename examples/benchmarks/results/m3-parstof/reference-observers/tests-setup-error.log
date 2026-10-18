@@ -1,0 +1,1 @@
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/tests.sml:73:1: error: the type of callback, tokens state ref -> 'a state ref parsed, contains a type variable that cannot be generalised (a top-level declaration may not have free type variables)

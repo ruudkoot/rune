@@ -595,3 +595,20 @@ evaluation/scope checks and all original fixtures retained. The earlier ML Kit
 auxiliary region crash remains separate from its passing full applications
 and equivalent explicit fixture calls. The catalogue contains 481 programs
 and 1397 profiles. M3/M4 remain in progress and M8 remains planned.
+
+## Hartel Parstof parser and unused attributes, 2026-10-18
+
+Two policies preserve the original recognition consumer and its materially
+different strict finite-attribute variant. Typed AST constructors, all 42
+nonterminal grammars, shared character/token control and cached grammar
+closures retain source structure. The embedded scheduling program is parsed,
+not executed; the workload is distinct from the scheduling simulator.
+
+Complete source, helper, fixtures and byte-exact extracted input remain.
+No individual parser/input author or notice is stated. All 132 regressions
+and the five-pin 861-entry replay pass; parstof is a compiler application.
+Initial portable sort/cache type errors are retained separately from the
+passing final 56 primary and 1620 semantic cases. No expected result changes.
+
+The catalogue contains 483 programs and 1403 profiles. M3/M4 remain in progress
+and M8 remains planned.

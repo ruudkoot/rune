@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+parstof-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	9.01	7.81	1.43	670400	-	-	-	parstof-strict/native-mlton/build/compile
+parstof-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	3812	-	-	-	parstof-strict/native-mlton/correctness.0
+parstof-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.01	0.00	0.01	3732	-	-	-	parstof-strict/native-mlton/fresh.1
+parstof-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	4.38	4.39	0.20	82028	-	-	-	parstof-strict/native-smlnj-legacy/build/compile
+parstof-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.02	0.00	0.01	5316	-	-	-	parstof-strict/native-smlnj-legacy/correctness.0
+parstof-strict	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.03	0.01	0.01	5408	-	-	-	parstof-strict/native-smlnj-legacy/fresh.1
+parstof-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	1.03	1.16	0.19	72184	-	-	-	parstof-strict/native-polyml/build/compile
+parstof-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.01	0.00	0.00	9260	-	-	-	parstof-strict/native-polyml/correctness.0
+parstof-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.02	0.00	0.01	9332	-	-	-	parstof-strict/native-polyml/fresh.1

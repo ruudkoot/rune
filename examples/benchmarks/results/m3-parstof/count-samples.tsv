@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+parstof-lazy	normal	rune	O2	count	1	1	pass	28.00	27.61	0.05	18632	3302024849	4600391000	135658191	counts/measurement.qyILaN/parstof-lazy/rune/fresh.1
+parstof-lazy	normal	rune:opt	O2	count	1	1	pass	12.88	13.46	0.03	19860	3302024849	4600391000	135658191	counts/measurement.qyILaN/parstof-lazy/rune-opt/fresh.1
+parstof-lazy	normal	rune:new	O2	count	1	1	pass	29.60	28.63	0.18	19040	1880732386	4600391000	135658191	counts/measurement.qyILaN/parstof-lazy/rune-new/fresh.1
+parstof-lazy	normal	rune:jit	O2	count	1	1	pass	14.13	12.92	0.08	21436	1880732386	4600391000	135658191	counts/measurement.qyILaN/parstof-lazy/rune-jit/fresh.1
+parstof-strict	normal	rune	O2	count	1	1	pass	31.28	31.05	0.04	10576	3420315792	3258565288	95047955	counts/measurement.y1zKfu/parstof-strict/rune/fresh.1
+parstof-strict	normal	rune:opt	O2	count	1	1	pass	14.16	13.03	0.03	11556	3420315792	3258565288	95047955	counts/measurement.y1zKfu/parstof-strict/rune-opt/fresh.1
+parstof-strict	normal	rune:new	O2	count	1	1	pass	23.44	24.55	0.02	10776	1932813179	3258565288	95047955	counts/measurement.y1zKfu/parstof-strict/rune-new/fresh.1
+parstof-strict	normal	rune:jit	O2	count	1	1	pass	11.58	12.27	0.02	12968	1932813179	3258565288	95047955	counts/measurement.y1zKfu/parstof-strict/rune-jit/fresh.1

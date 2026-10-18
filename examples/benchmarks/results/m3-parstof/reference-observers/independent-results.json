@@ -1,0 +1,166 @@
+[
+  {
+    "name": "default",
+    "tokens": 1791,
+    "parse": "F_Par_succ",
+    "ast_nodes": 1842,
+    "constructors": {
+      "C_Pcelse_empty": 20,
+      "C_Pexpli_N": 105,
+      "C_Pfunparli_N": 59,
+      "C_Pletbinds_N": 4,
+      "C_Ppatli_N": 20,
+      "C_Ppatvarli_N": 31,
+      "C_Pproglist_empty": 1,
+      "C_Ptparlist_empty": 4,
+      "C_Ptypli_empty": 20,
+      "C_Punion_empty": 4,
+      "F_Pbindlhs_name": 8,
+      "F_Pbindlhs_pvl": 4,
+      "F_Pdeftype": 4,
+      "F_Pexpli_C": 333,
+      "F_Pexpr_APPLY": 202,
+      "F_Pexpr_CASE": 20,
+      "F_Pexpr_LET": 4,
+      "F_Pexpr_TUPLE": 6,
+      "F_Pexpr_UNION": 99,
+      "F_Pexpr_int": 165,
+      "F_Pexpr_name": 363,
+      "F_Pfunction": 59,
+      "F_Pfunparli_C": 27,
+      "F_Pletbinds_C": 12,
+      "F_Ppatli_C": 27,
+      "F_Ppatvarli_C": 76,
+      "F_Ppr_deftype": 4,
+      "F_Ppr_func": 59,
+      "F_Pproglist": 63,
+      "F_Prhs_union": 4,
+      "F_Ptype_parazd": 15,
+      "F_Ptypli": 15,
+      "F_Punion": 5
+    }
+  },
+  {
+    "name": "identity",
+    "tokens": 6,
+    "parse": "F_Par_succ",
+    "ast_nodes": 7,
+    "constructors": {
+      "C_Pfunparli_N": 1,
+      "C_Pproglist_empty": 1,
+      "F_Pexpr_name": 1,
+      "F_Pfunction": 1,
+      "F_Pfunparli_C": 1,
+      "F_Ppr_func": 1,
+      "F_Pproglist": 1
+    }
+  },
+  {
+    "name": "application",
+    "tokens": 11,
+    "parse": "F_Par_succ",
+    "ast_nodes": 13,
+    "constructors": {
+      "C_Pfunparli_N": 1,
+      "C_Pproglist_empty": 1,
+      "F_Pexpr_APPLY": 3,
+      "F_Pexpr_int": 1,
+      "F_Pexpr_name": 3,
+      "F_Pfunction": 1,
+      "F_Pfunparli_C": 1,
+      "F_Ppr_func": 1,
+      "F_Pproglist": 1
+    }
+  },
+  {
+    "name": "types",
+    "tokens": 30,
+    "parse": "F_Par_fail",
+    "ast_nodes": 0,
+    "constructors": {}
+  },
+  {
+    "name": "conditional",
+    "tokens": 20,
+    "parse": "F_Par_succ",
+    "ast_nodes": 27,
+    "constructors": {
+      "C_Pfunparli_N": 1,
+      "C_Pproglist_empty": 1,
+      "F_Pexpr_APPLY": 10,
+      "F_Pexpr_int": 5,
+      "F_Pexpr_name": 6,
+      "F_Pfunction": 1,
+      "F_Pfunparli_C": 1,
+      "F_Ppr_func": 1,
+      "F_Pproglist": 1
+    }
+  },
+  {
+    "name": "let-case",
+    "tokens": 27,
+    "parse": "F_Par_succ",
+    "ast_nodes": 23,
+    "constructors": {
+      "C_Pcelse_empty": 1,
+      "C_Pfunparli_N": 1,
+      "C_Pletbinds_N": 1,
+      "C_Ppatli_N": 1,
+      "C_Ppatvarli_N": 2,
+      "C_Pproglist_empty": 1,
+      "F_Pbindlhs_name": 1,
+      "F_Pexpr_CASE": 1,
+      "F_Pexpr_LET": 1,
+      "F_Pexpr_int": 1,
+      "F_Pexpr_name": 3,
+      "F_Pfunction": 1,
+      "F_Pfunparli_C": 1,
+      "F_Pletbinds_C": 1,
+      "F_Ppatli_C": 2,
+      "F_Ppatvarli_C": 2,
+      "F_Ppr_func": 1,
+      "F_Pproglist": 1
+    }
+  },
+  {
+    "name": "lexemes",
+    "tokens": 6,
+    "parse": "F_Par_succ",
+    "ast_nodes": 18,
+    "constructors": {
+      "C_Pexpli_N": 3,
+      "C_Pfunparli_N": 1,
+      "C_Pproglist_empty": 1,
+      "F_Pexpli_C": 4,
+      "F_Pexpr_UNION": 3,
+      "F_Pexpr_char": 2,
+      "F_Pfunction": 1,
+      "F_Pfunparli_C": 1,
+      "F_Ppr_func": 1,
+      "F_Pproglist": 1
+    }
+  },
+  {
+    "name": "bad",
+    "tokens": 5,
+    "parse": "F_Par_fail",
+    "ast_nodes": 0,
+    "constructors": {}
+  },
+  {
+    "name": "empty",
+    "tokens": 1,
+    "parse": "F_Par_succ",
+    "ast_nodes": 1,
+    "constructors": {
+      "C_Pproglist_empty": 1
+    }
+  },
+  {
+    "name": "unterminated-comment",
+    "tokens": 1,
+    "parse": "F_Par_fail",
+    "ast_nodes": 0,
+    "constructors": {}
+  }
+]

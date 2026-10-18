@@ -1,0 +1,797 @@
+PROGRAM LIMIT AS 1048576 KiB
+PASS parstof/need/tokens/default
+PASS parstof/need/parse/default
+PASS parstof/need/tokens/identity
+PASS parstof/need/parse/identity
+PASS parstof/need/tokens/application
+PASS parstof/need/parse/application
+PASS parstof/need/tokens/types
+PASS parstof/need/parse/types
+PASS parstof/need/tokens/conditional
+PASS parstof/need/parse/conditional
+PASS parstof/need/tokens/let-case
+PASS parstof/need/parse/let-case
+PASS parstof/need/tokens/lexemes
+PASS parstof/need/parse/lexemes
+PASS parstof/need/tokens/bad
+PASS parstof/need/parse/bad
+PASS parstof/need/tokens/empty
+PASS parstof/need/parse/empty
+PASS parstof/need/tokens/unterminated-comment
+PASS parstof/need/parse/unterminated-comment
+PASS parstof/need/attribute-callback-demand
+PASS parstof/need/wrong-token-skips-callback
+PASS parstof/need/alternative-left-success-skips-right
+PASS parstof/need/failed-first-skips-second
+PASS parstof/need/conversion-skips-failure
+PASS parstof/need/best-error-prefers-later-line
+PASS parstof/need/best-error-ties-preserve-left
+PASS parstof/need/repetition-recovers-known-error
+PASS parstof/need/optional-recovers-known-error
+PASS parstof/need/known-error-does-not-reformat
+PASS parstof/need/error-text-deferred-and-shared
+PASS parstof/need/grammar-closure-shared
+PASS parstof/need/source-success-message-checksum
+PASS parstof/need/source-normal-inner-count
+PASS parstof/need/source-zero-programs-skips-input
+PASS parstof/need/driver-zero-repetitions
+PASS parstof/need/driver-one-iteration
+PASS parstof/need/reject-bad-program
+PASS parstof/need/reject-bad-checksum
+PASS parstof/need/lazy-recognition-skips-poison-attribute
+PASS parstof/need/lazy-poison-demanded-by-consumer
+PASS parstof/strict/tokens/default
+PASS parstof/strict/parse/default
+PASS parstof/strict/tokens/identity
+PASS parstof/strict/parse/identity
+PASS parstof/strict/tokens/application
+PASS parstof/strict/parse/application
+PASS parstof/strict/tokens/types
+PASS parstof/strict/parse/types
+PASS parstof/strict/tokens/conditional
+PASS parstof/strict/parse/conditional
+PASS parstof/strict/tokens/let-case
+PASS parstof/strict/parse/let-case
+PASS parstof/strict/tokens/lexemes
+PASS parstof/strict/parse/lexemes
+PASS parstof/strict/tokens/bad
+PASS parstof/strict/parse/bad
+PASS parstof/strict/tokens/empty
+PASS parstof/strict/parse/empty
+PASS parstof/strict/tokens/unterminated-comment
+PASS parstof/strict/parse/unterminated-comment
+PASS parstof/strict/attribute-callback-demand
+PASS parstof/strict/wrong-token-skips-callback
+PASS parstof/strict/alternative-left-success-skips-right
+PASS parstof/strict/failed-first-skips-second
+PASS parstof/strict/conversion-skips-failure
+PASS parstof/strict/best-error-prefers-later-line
+PASS parstof/strict/best-error-ties-preserve-left
+PASS parstof/strict/repetition-recovers-known-error
+PASS parstof/strict/optional-recovers-known-error
+PASS parstof/strict/known-error-does-not-reformat
+PASS parstof/strict/error-text-deferred-and-shared
+PASS parstof/strict/grammar-closure-shared
+PASS parstof/strict/source-success-message-checksum
+PASS parstof/strict/source-normal-inner-count
+PASS parstof/strict/source-zero-programs-skips-input
+PASS parstof/strict/driver-zero-repetitions
+PASS parstof/strict/driver-one-iteration
+PASS parstof/strict/reject-bad-program
+PASS parstof/strict/reject-bad-checksum
+PASS parstof/strict/strict-forces-finite-attribute
+SUMMARY 81 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+PASS parstof/need/tokens/default
+PASS parstof/need/parse/default
+PASS parstof/need/tokens/identity
+PASS parstof/need/parse/identity
+PASS parstof/need/tokens/application
+PASS parstof/need/parse/application
+PASS parstof/need/tokens/types
+PASS parstof/need/parse/types
+PASS parstof/need/tokens/conditional
+PASS parstof/need/parse/conditional
+PASS parstof/need/tokens/let-case
+PASS parstof/need/parse/let-case
+PASS parstof/need/tokens/lexemes
+PASS parstof/need/parse/lexemes
+PASS parstof/need/tokens/bad
+PASS parstof/need/parse/bad
+PASS parstof/need/tokens/empty
+PASS parstof/need/parse/empty
+PASS parstof/need/tokens/unterminated-comment
+PASS parstof/need/parse/unterminated-comment
+PASS parstof/need/attribute-callback-demand
+PASS parstof/need/wrong-token-skips-callback
+PASS parstof/need/alternative-left-success-skips-right
+PASS parstof/need/failed-first-skips-second
+PASS parstof/need/conversion-skips-failure
+PASS parstof/need/best-error-prefers-later-line
+PASS parstof/need/best-error-ties-preserve-left
+PASS parstof/need/repetition-recovers-known-error
+PASS parstof/need/optional-recovers-known-error
+PASS parstof/need/known-error-does-not-reformat
+PASS parstof/need/error-text-deferred-and-shared
+PASS parstof/need/grammar-closure-shared
+PASS parstof/need/source-success-message-checksum
+PASS parstof/need/source-normal-inner-count
+PASS parstof/need/source-zero-programs-skips-input
+PASS parstof/need/driver-zero-repetitions
+PASS parstof/need/driver-one-iteration
+PASS parstof/need/reject-bad-program
+PASS parstof/need/reject-bad-checksum
+PASS parstof/need/lazy-recognition-skips-poison-attribute
+PASS parstof/need/lazy-poison-demanded-by-consumer
+PASS parstof/strict/tokens/default
+PASS parstof/strict/parse/default
+PASS parstof/strict/tokens/identity
+PASS parstof/strict/parse/identity
+PASS parstof/strict/tokens/application
+PASS parstof/strict/parse/application
+PASS parstof/strict/tokens/types
+PASS parstof/strict/parse/types
+PASS parstof/strict/tokens/conditional
+PASS parstof/strict/parse/conditional
+PASS parstof/strict/tokens/let-case
+PASS parstof/strict/parse/let-case
+PASS parstof/strict/tokens/lexemes
+PASS parstof/strict/parse/lexemes
+PASS parstof/strict/tokens/bad
+PASS parstof/strict/parse/bad
+PASS parstof/strict/tokens/empty
+PASS parstof/strict/parse/empty
+PASS parstof/strict/tokens/unterminated-comment
+PASS parstof/strict/parse/unterminated-comment
+PASS parstof/strict/attribute-callback-demand
+PASS parstof/strict/wrong-token-skips-callback
+PASS parstof/strict/alternative-left-success-skips-right
+PASS parstof/strict/failed-first-skips-second
+PASS parstof/strict/conversion-skips-failure
+PASS parstof/strict/best-error-prefers-later-line
+PASS parstof/strict/best-error-ties-preserve-left
+PASS parstof/strict/repetition-recovers-known-error
+PASS parstof/strict/optional-recovers-known-error
+PASS parstof/strict/known-error-does-not-reformat
+PASS parstof/strict/error-text-deferred-and-shared
+PASS parstof/strict/grammar-closure-shared
+PASS parstof/strict/source-success-message-checksum
+PASS parstof/strict/source-normal-inner-count
+PASS parstof/strict/source-zero-programs-skips-input
+PASS parstof/strict/driver-zero-repetitions
+PASS parstof/strict/driver-one-iteration
+PASS parstof/strict/reject-bad-program
+PASS parstof/strict/reject-bad-checksum
+PASS parstof/strict/strict-forces-finite-attribute
+SUMMARY 81 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+PASS parstof/need/tokens/default
+PASS parstof/need/parse/default
+PASS parstof/need/tokens/identity
+PASS parstof/need/parse/identity
+PASS parstof/need/tokens/application
+PASS parstof/need/parse/application
+PASS parstof/need/tokens/types
+PASS parstof/need/parse/types
+PASS parstof/need/tokens/conditional
+PASS parstof/need/parse/conditional
+PASS parstof/need/tokens/let-case
+PASS parstof/need/parse/let-case
+PASS parstof/need/tokens/lexemes
+PASS parstof/need/parse/lexemes
+PASS parstof/need/tokens/bad
+PASS parstof/need/parse/bad
+PASS parstof/need/tokens/empty
+PASS parstof/need/parse/empty
+PASS parstof/need/tokens/unterminated-comment
+PASS parstof/need/parse/unterminated-comment
+PASS parstof/need/attribute-callback-demand
+PASS parstof/need/wrong-token-skips-callback
+PASS parstof/need/alternative-left-success-skips-right
+PASS parstof/need/failed-first-skips-second
+PASS parstof/need/conversion-skips-failure
+PASS parstof/need/best-error-prefers-later-line
+PASS parstof/need/best-error-ties-preserve-left
+PASS parstof/need/repetition-recovers-known-error
+PASS parstof/need/optional-recovers-known-error
+PASS parstof/need/known-error-does-not-reformat
+PASS parstof/need/error-text-deferred-and-shared
+PASS parstof/need/grammar-closure-shared
+PASS parstof/need/source-success-message-checksum
+PASS parstof/need/source-normal-inner-count
+PASS parstof/need/source-zero-programs-skips-input
+PASS parstof/need/driver-zero-repetitions
+PASS parstof/need/driver-one-iteration
+PASS parstof/need/reject-bad-program
+PASS parstof/need/reject-bad-checksum
+PASS parstof/need/lazy-recognition-skips-poison-attribute
+PASS parstof/need/lazy-poison-demanded-by-consumer
+PASS parstof/strict/tokens/default
+PASS parstof/strict/parse/default
+PASS parstof/strict/tokens/identity
+PASS parstof/strict/parse/identity
+PASS parstof/strict/tokens/application
+PASS parstof/strict/parse/application
+PASS parstof/strict/tokens/types
+PASS parstof/strict/parse/types
+PASS parstof/strict/tokens/conditional
+PASS parstof/strict/parse/conditional
+PASS parstof/strict/tokens/let-case
+PASS parstof/strict/parse/let-case
+PASS parstof/strict/tokens/lexemes
+PASS parstof/strict/parse/lexemes
+PASS parstof/strict/tokens/bad
+PASS parstof/strict/parse/bad
+PASS parstof/strict/tokens/empty
+PASS parstof/strict/parse/empty
+PASS parstof/strict/tokens/unterminated-comment
+PASS parstof/strict/parse/unterminated-comment
+PASS parstof/strict/attribute-callback-demand
+PASS parstof/strict/wrong-token-skips-callback
+PASS parstof/strict/alternative-left-success-skips-right
+PASS parstof/strict/failed-first-skips-second
+PASS parstof/strict/conversion-skips-failure
+PASS parstof/strict/best-error-prefers-later-line
+PASS parstof/strict/best-error-ties-preserve-left
+PASS parstof/strict/repetition-recovers-known-error
+PASS parstof/strict/optional-recovers-known-error
+PASS parstof/strict/known-error-does-not-reformat
+PASS parstof/strict/error-text-deferred-and-shared
+PASS parstof/strict/grammar-closure-shared
+PASS parstof/strict/source-success-message-checksum
+PASS parstof/strict/source-normal-inner-count
+PASS parstof/strict/source-zero-programs-skips-input
+PASS parstof/strict/driver-zero-repetitions
+PASS parstof/strict/driver-one-iteration
+PASS parstof/strict/reject-bad-program
+PASS parstof/strict/reject-bad-checksum
+PASS parstof/strict/strict-forces-finite-attribute
+SUMMARY 81 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+PASS parstof/need/tokens/default
+PASS parstof/need/parse/default
+PASS parstof/need/tokens/identity
+PASS parstof/need/parse/identity
+PASS parstof/need/tokens/application
+PASS parstof/need/parse/application
+PASS parstof/need/tokens/types
+PASS parstof/need/parse/types
+PASS parstof/need/tokens/conditional
+PASS parstof/need/parse/conditional
+PASS parstof/need/tokens/let-case
+PASS parstof/need/parse/let-case
+PASS parstof/need/tokens/lexemes
+PASS parstof/need/parse/lexemes
+PASS parstof/need/tokens/bad
+PASS parstof/need/parse/bad
+PASS parstof/need/tokens/empty
+PASS parstof/need/parse/empty
+PASS parstof/need/tokens/unterminated-comment
+PASS parstof/need/parse/unterminated-comment
+PASS parstof/need/attribute-callback-demand
+PASS parstof/need/wrong-token-skips-callback
+PASS parstof/need/alternative-left-success-skips-right
+PASS parstof/need/failed-first-skips-second
+PASS parstof/need/conversion-skips-failure
+PASS parstof/need/best-error-prefers-later-line
+PASS parstof/need/best-error-ties-preserve-left
+PASS parstof/need/repetition-recovers-known-error
+PASS parstof/need/optional-recovers-known-error
+PASS parstof/need/known-error-does-not-reformat
+PASS parstof/need/error-text-deferred-and-shared
+PASS parstof/need/grammar-closure-shared
+PASS parstof/need/source-success-message-checksum
+PASS parstof/need/source-normal-inner-count
+PASS parstof/need/source-zero-programs-skips-input
+PASS parstof/need/driver-zero-repetitions
+PASS parstof/need/driver-one-iteration
+PASS parstof/need/reject-bad-program
+PASS parstof/need/reject-bad-checksum
+PASS parstof/need/lazy-recognition-skips-poison-attribute
+PASS parstof/need/lazy-poison-demanded-by-consumer
+PASS parstof/strict/tokens/default
+PASS parstof/strict/parse/default
+PASS parstof/strict/tokens/identity
+PASS parstof/strict/parse/identity
+PASS parstof/strict/tokens/application
+PASS parstof/strict/parse/application
+PASS parstof/strict/tokens/types
+PASS parstof/strict/parse/types
+PASS parstof/strict/tokens/conditional
+PASS parstof/strict/parse/conditional
+PASS parstof/strict/tokens/let-case
+PASS parstof/strict/parse/let-case
+PASS parstof/strict/tokens/lexemes
+PASS parstof/strict/parse/lexemes
+PASS parstof/strict/tokens/bad
+PASS parstof/strict/parse/bad
+PASS parstof/strict/tokens/empty
+PASS parstof/strict/parse/empty
+PASS parstof/strict/tokens/unterminated-comment
+PASS parstof/strict/parse/unterminated-comment
+PASS parstof/strict/attribute-callback-demand
+PASS parstof/strict/wrong-token-skips-callback
+PASS parstof/strict/alternative-left-success-skips-right
+PASS parstof/strict/failed-first-skips-second
+PASS parstof/strict/conversion-skips-failure
+PASS parstof/strict/best-error-prefers-later-line
+PASS parstof/strict/best-error-ties-preserve-left
+PASS parstof/strict/repetition-recovers-known-error
+PASS parstof/strict/optional-recovers-known-error
+PASS parstof/strict/known-error-does-not-reformat
+PASS parstof/strict/error-text-deferred-and-shared
+PASS parstof/strict/grammar-closure-shared
+PASS parstof/strict/source-success-message-checksum
+PASS parstof/strict/source-normal-inner-count
+PASS parstof/strict/source-zero-programs-skips-input
+PASS parstof/strict/driver-zero-repetitions
+PASS parstof/strict/driver-one-iteration
+PASS parstof/strict/reject-bad-program
+PASS parstof/strict/reject-bad-checksum
+PASS parstof/strict/strict-forces-finite-attribute
+SUMMARY 81 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 1048576 KiB
+PASS parstof/need/tokens/default
+PASS parstof/need/parse/default
+PASS parstof/need/tokens/identity
+PASS parstof/need/parse/identity
+PASS parstof/need/tokens/application
+PASS parstof/need/parse/application
+PASS parstof/need/tokens/types
+PASS parstof/need/parse/types
+PASS parstof/need/tokens/conditional
+PASS parstof/need/parse/conditional
+PASS parstof/need/tokens/let-case
+PASS parstof/need/parse/let-case
+PASS parstof/need/tokens/lexemes
+PASS parstof/need/parse/lexemes
+PASS parstof/need/tokens/bad
+PASS parstof/need/parse/bad
+PASS parstof/need/tokens/empty
+PASS parstof/need/parse/empty
+PASS parstof/need/tokens/unterminated-comment
+PASS parstof/need/parse/unterminated-comment
+PASS parstof/need/attribute-callback-demand
+PASS parstof/need/wrong-token-skips-callback
+PASS parstof/need/alternative-left-success-skips-right
+PASS parstof/need/failed-first-skips-second
+PASS parstof/need/conversion-skips-failure
+PASS parstof/need/best-error-prefers-later-line
+PASS parstof/need/best-error-ties-preserve-left
+PASS parstof/need/repetition-recovers-known-error
+PASS parstof/need/optional-recovers-known-error
+PASS parstof/need/known-error-does-not-reformat
+PASS parstof/need/error-text-deferred-and-shared
+PASS parstof/need/grammar-closure-shared
+PASS parstof/need/source-success-message-checksum
+PASS parstof/need/source-normal-inner-count
+PASS parstof/need/source-zero-programs-skips-input
+PASS parstof/need/driver-zero-repetitions
+PASS parstof/need/driver-one-iteration
+PASS parstof/need/reject-bad-program
+PASS parstof/need/reject-bad-checksum
+PASS parstof/need/lazy-recognition-skips-poison-attribute
+PASS parstof/need/lazy-poison-demanded-by-consumer
+PASS parstof/strict/tokens/default
+PASS parstof/strict/parse/default
+PASS parstof/strict/tokens/identity
+PASS parstof/strict/parse/identity
+PASS parstof/strict/tokens/application
+PASS parstof/strict/parse/application
+PASS parstof/strict/tokens/types
+PASS parstof/strict/parse/types
+PASS parstof/strict/tokens/conditional
+PASS parstof/strict/parse/conditional
+PASS parstof/strict/tokens/let-case
+PASS parstof/strict/parse/let-case
+PASS parstof/strict/tokens/lexemes
+PASS parstof/strict/parse/lexemes
+PASS parstof/strict/tokens/bad
+PASS parstof/strict/parse/bad
+PASS parstof/strict/tokens/empty
+PASS parstof/strict/parse/empty
+PASS parstof/strict/tokens/unterminated-comment
+PASS parstof/strict/parse/unterminated-comment
+PASS parstof/strict/attribute-callback-demand
+PASS parstof/strict/wrong-token-skips-callback
+PASS parstof/strict/alternative-left-success-skips-right
+PASS parstof/strict/failed-first-skips-second
+PASS parstof/strict/conversion-skips-failure
+PASS parstof/strict/best-error-prefers-later-line
+PASS parstof/strict/best-error-ties-preserve-left
+PASS parstof/strict/repetition-recovers-known-error
+PASS parstof/strict/optional-recovers-known-error
+PASS parstof/strict/known-error-does-not-reformat
+PASS parstof/strict/error-text-deferred-and-shared
+PASS parstof/strict/grammar-closure-shared
+PASS parstof/strict/source-success-message-checksum
+PASS parstof/strict/source-normal-inner-count
+PASS parstof/strict/source-zero-programs-skips-input
+PASS parstof/strict/driver-zero-repetitions
+PASS parstof/strict/driver-one-iteration
+PASS parstof/strict/reject-bad-program
+PASS parstof/strict/reject-bad-checksum
+PASS parstof/strict/strict-forces-finite-attribute
+SUMMARY 81 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/lex.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/lex.sml:37.26-37.65 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: int list
+  operand:         char list
+  in expression:
+    sort (List.concat ((List.map (fn {1=1,...} => 1)) patterns))
+uncaught exception CompileError [CompileError]
+PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 1, exit 1)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/lex.sml:37.26-37.65 Error: operator and operand do not agree [tycon mismatch]
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/lex.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/lex.sml:37.26-37.65 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: int list
+  operand:         char list
+  in expression:
+    sort (List.concat ((List.map (fn {1=1,...} => 1)) patterns))
+uncaught exception CompileError [CompileError]
+PROGRAM FAIL native:smlnj32@110.99.9 (load 1, exit 1)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/lex.sml:37.26-37.65 Error: operator and operand do not agree [tycon mismatch]
+PROGRAM LIMIT AS 1048576 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : 
+  sig
+    val passes : int ref
+    val failures : int ref
+    val skips : int ref
+    val skipping : string option ref
+    val skip : string * string -> unit
+    val pass : string -> unit
+    val fail : string * string -> unit
+    val skipUnless : bool * string -> (unit -> unit) -> unit
+    val guard : string -> (unit -> unit) -> unit
+    val unit : unit -> string
+    val int : int -> string
+    val word : word -> string
+    val real : real -> string
+    val bool : bool -> string
+    val char : char -> string
+    val string : string -> string
+    val order : order -> string
+    val option : ('a -> string) -> 'a option -> string
+    val list : ('a -> string) -> 'a list -> string
+    val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+    val triple : ('a -> string) * ('b -> string) * ('c -> string)
+                  -> 'a * 'b * 'c -> string
+    val check : string * (unit -> bool) -> unit
+    val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+    val sameReal : real * real -> bool
+    val eqReal : string * real * (unit -> real) -> unit
+    val approx : string * real * (unit -> real) -> unit
+    val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+    val anyExn : exn -> bool
+    val isBind : exn -> bool
+    val isMatch : exn -> bool
+    val isChr : exn -> bool
+    val isDiv : exn -> bool
+    val isDomain : exn -> bool
+    val isEmpty : exn -> bool
+    val isFail : exn -> bool
+    val isOption : exn -> bool
+    val isOverflow : exn -> bool
+    val isSize : exn -> bool
+    val isSpan : exn -> bool
+    val isSubscript : exn -> bool
+    val modulus : int
+    val state : int ref
+    val seed : int -> unit
+    val rand : unit -> int
+    val range : int * int -> int
+    val oneOf : 'a list -> 'a
+    val repeat : int * (int -> unit) -> unit
+    val summary : unit -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/lex.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/lex.sml:37.26-37.65 Error: operator and operand do not agree [tycon mismatch]
+  operator domain: int list
+  operand:         char list
+  in expression:
+    sort (List.concat ((List.map (fn {1=1,...} => 1)) patterns))
+uncaught exception CompileError [CompileError]
+PROGRAM FAIL native:smlnj-dev@2026.2 (load 1, exit 1)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/lex.sml:37.26-37.65 Error: operator and operand do not agree [tycon mismatch]
+PROGRAM LIMIT DATA 1048576 KiB; ML heap 512 MiB
+PASS parstof/need/tokens/default
+PASS parstof/need/parse/default
+PASS parstof/need/tokens/identity
+PASS parstof/need/parse/identity
+PASS parstof/need/tokens/application
+PASS parstof/need/parse/application
+PASS parstof/need/tokens/types
+PASS parstof/need/parse/types
+PASS parstof/need/tokens/conditional
+PASS parstof/need/parse/conditional
+PASS parstof/need/tokens/let-case
+PASS parstof/need/parse/let-case
+PASS parstof/need/tokens/lexemes
+PASS parstof/need/parse/lexemes
+PASS parstof/need/tokens/bad
+PASS parstof/need/parse/bad
+PASS parstof/need/tokens/empty
+PASS parstof/need/parse/empty
+PASS parstof/need/tokens/unterminated-comment
+PASS parstof/need/parse/unterminated-comment
+PASS parstof/need/attribute-callback-demand
+PASS parstof/need/wrong-token-skips-callback
+PASS parstof/need/alternative-left-success-skips-right
+PASS parstof/need/failed-first-skips-second
+PASS parstof/need/conversion-skips-failure
+PASS parstof/need/best-error-prefers-later-line
+PASS parstof/need/best-error-ties-preserve-left
+PASS parstof/need/repetition-recovers-known-error
+PASS parstof/need/optional-recovers-known-error
+PASS parstof/need/known-error-does-not-reformat
+PASS parstof/need/error-text-deferred-and-shared
+PASS parstof/need/grammar-closure-shared
+PASS parstof/need/source-success-message-checksum
+PASS parstof/need/source-normal-inner-count
+PASS parstof/need/source-zero-programs-skips-input
+PASS parstof/need/driver-zero-repetitions
+PASS parstof/need/driver-one-iteration
+PASS parstof/need/reject-bad-program
+PASS parstof/need/reject-bad-checksum
+PASS parstof/need/lazy-recognition-skips-poison-attribute
+PASS parstof/need/lazy-poison-demanded-by-consumer
+PASS parstof/strict/tokens/default
+PASS parstof/strict/parse/default
+PASS parstof/strict/tokens/identity
+PASS parstof/strict/parse/identity
+PASS parstof/strict/tokens/application
+PASS parstof/strict/parse/application
+PASS parstof/strict/tokens/types
+PASS parstof/strict/parse/types
+PASS parstof/strict/tokens/conditional
+PASS parstof/strict/parse/conditional
+PASS parstof/strict/tokens/let-case
+PASS parstof/strict/parse/let-case
+PASS parstof/strict/tokens/lexemes
+PASS parstof/strict/parse/lexemes
+PASS parstof/strict/tokens/bad
+PASS parstof/strict/parse/bad
+PASS parstof/strict/tokens/empty
+PASS parstof/strict/parse/empty
+PASS parstof/strict/tokens/unterminated-comment
+PASS parstof/strict/parse/unterminated-comment
+PASS parstof/strict/attribute-callback-demand
+PASS parstof/strict/wrong-token-skips-callback
+PASS parstof/strict/alternative-left-success-skips-right
+PASS parstof/strict/failed-first-skips-second
+PASS parstof/strict/conversion-skips-failure
+PASS parstof/strict/best-error-prefers-later-line
+PASS parstof/strict/best-error-ties-preserve-left
+PASS parstof/strict/repetition-recovers-known-error
+PASS parstof/strict/optional-recovers-known-error
+PASS parstof/strict/known-error-does-not-reformat
+PASS parstof/strict/error-text-deferred-and-shared
+PASS parstof/strict/grammar-closure-shared
+PASS parstof/strict/source-success-message-checksum
+PASS parstof/strict/source-normal-inner-count
+PASS parstof/strict/source-zero-programs-skips-input
+PASS parstof/strict/driver-zero-repetitions
+PASS parstof/strict/driver-one-iteration
+PASS parstof/strict/reject-bad-program
+PASS parstof/strict/reject-bad-checksum
+PASS parstof/strict/strict-forces-finite-attribute
+SUMMARY 81 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 1048576 KiB
+PROGRAM FAIL native:mlkit@4.7.23 (load 1, exit 0)
+error: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-parstof-originals/host-tests-O0/native-mlkit-4.7.23/program/src/5/lex.sml, line 37, column 25: Type clash,

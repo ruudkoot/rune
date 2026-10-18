@@ -1,0 +1,1 @@
+parstof-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/parstof-lex.sml shared/parstof-kernel.sml shared/parstof-check.sml parstof-strict/benchmark.sml shared/main.sml	100 8 program.input count-8.crc	parstof-strict/normal.expected	program.input count-8.crc

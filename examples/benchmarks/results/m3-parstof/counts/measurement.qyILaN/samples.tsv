@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+parstof-lazy	normal	rune	O2	compile	0	0	pass	3.79	3.72	0.21	135496	-	-	-	parstof-lazy/rune/build/compile
+parstof-lazy	normal	rune	O2	correctness	0	0	pass	32.23	29.39	0.11	18736	3302024849	4600391000	135658191	parstof-lazy/rune/correctness.0
+parstof-lazy	normal	rune	O2	count	1	1	pass	28.00	27.61	0.05	18632	3302024849	4600391000	135658191	parstof-lazy/rune/fresh.1
+parstof-lazy	normal	rune:opt	O2	compile	0	0	pass	3.77	3.76	0.17	135576	-	-	-	parstof-lazy/rune-opt/build/compile
+parstof-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.99	0.66	0.08	24768	-	-	-	parstof-lazy/rune-opt/build/native-compile
+parstof-lazy	normal	rune:opt	O2	correctness	0	0	pass	15.15	14.17	0.04	19832	3302024849	4600391000	135658191	parstof-lazy/rune-opt/correctness.0
+parstof-lazy	normal	rune:opt	O2	count	1	1	pass	12.88	13.46	0.03	19860	3302024849	4600391000	135658191	parstof-lazy/rune-opt/fresh.1
+parstof-lazy	normal	rune:new	O2	compile	0	0	pass	3.18	3.23	0.09	135616	-	-	-	parstof-lazy/rune-new/build/compile
+parstof-lazy	normal	rune:new	O2	correctness	0	0	pass	26.68	26.23	0.05	18992	1880732386	4600391000	135658191	parstof-lazy/rune-new/correctness.0
+parstof-lazy	normal	rune:new	O2	count	1	1	pass	29.60	28.63	0.18	19040	1880732386	4600391000	135658191	parstof-lazy/rune-new/fresh.1
+parstof-lazy	normal	rune:jit	O2	compile	0	0	pass	4.19	3.89	0.18	135468	-	-	-	parstof-lazy/rune-jit/build/compile
+parstof-lazy	normal	rune:jit	O2	correctness	0	0	pass	13.95	14.35	0.08	21284	1880732386	4600391000	135658191	parstof-lazy/rune-jit/correctness.0
+parstof-lazy	normal	rune:jit	O2	count	1	1	pass	14.13	12.92	0.08	21436	1880732386	4600391000	135658191	parstof-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

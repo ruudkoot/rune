@@ -1,0 +1,4 @@
+RESULT 1:1:8
+PASS parstof-strict
+SAMPLE 1 0.004181000
+SUMMARY 1 checks, 0 failed

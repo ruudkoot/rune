@@ -1,0 +1,45 @@
+c_par_tparname :: [(Int, T_t_tokv, Int)] -> T_t_par T_pttype
+c_par_typelist :: [(Int, T_t_tokv, Int)] -> T_t_par T_pttypli
+c_par_type_sub :: [(Int, T_t_tokv, Int)] -> T_t_par T_pttype
+c_par_type :: [(Int, T_t_tokv, Int)] -> T_t_par T_pttype
+c_par_simptype :: [(Int, T_t_tokv, Int)] -> T_t_par T_pttype
+c_par_ttuplety
+  :: [(Int, T_t_tokv, Int)] -> T_t_par (T_list Char, T_pttypli)
+c_par_deftype_rhs :: [(Int, T_t_tokv, Int)] -> T_t_par T_ptrhs
+c_par_deftype :: [(Int, T_t_tokv, Int)] -> T_t_par T_ptdeftype
+c_par_ftype :: [(Int, T_t_tokv, Int)] -> T_t_par T_ptftype
+c_par_take_apart :: [(Int, T_t_tokv, Int)] -> T_t_par T_ptpatvarli
+c_par_unop :: [(Int, T_t_tokv, Int)] -> T_t_par Int
+c_par_pattern
+  :: [(Int, T_t_tokv, Int)] -> T_t_par (T_list Char, T_ptpatvarli)
+c_par_const :: [(Int, T_t_tokv, Int)] -> T_t_par T_ptexpr
+c_par_op0 :: [(Int, T_t_tokv, Int)] -> T_t_par Int
+c_par_op1 :: [(Int, T_t_tokv, Int)] -> T_t_par Int
+c_par_op2 :: [(Int, T_t_tokv, Int)] -> T_t_par Int
+c_par_op3 :: [(Int, T_t_tokv, Int)] -> T_t_par Int
+c_par_op4 :: [(Int, T_t_tokv, Int)] -> T_t_par Int
+c_par_ope :: [(Int, T_t_tokv, Int)] -> T_t_par Int
+c_par_bind :: [T_token] -> T_t_par (T_ptbindlhs, T_ptexpr)
+c_par_unopexpr :: T_list T_token -> T_t_par T_ptexpr
+c_par_matchlist :: T_list T_token -> T_t_par (T_ptpatli, T_ptcelse)
+c_par_match
+  :: [T_token] -> T_t_par ((T_string, T_ptpatvarli), T_ptexpr)
+c_par_case :: [T_token] -> T_t_par T_ptexpr
+c_par_structor :: [T_token] -> T_t_par T_ptexpr
+c_par_letlist :: T_list T_token -> T_t_par T_ptletbinds
+c_par_ifexpr :: [T_token] -> T_t_par T_ptexpr
+c_par_exprlist :: T_list T_token -> T_t_par T_ptexpli
+c_par_expr :: [(Int, T_t_tokv, Int)] -> T_t_par T_ptexpr
+c_par_opexpr4 :: T_list T_token -> T_t_par T_ptexpr
+c_par_opexpr3 :: T_list T_token -> T_t_par T_ptexpr
+c_par_opexpr2 :: T_list T_token -> T_t_par T_ptexpr
+c_par_opexpr1 :: T_list T_token -> T_t_par T_ptexpr
+c_par_opexpr0 :: T_list T_token -> T_t_par T_ptexpr
+c_par_opexpr :: T_list T_token -> T_t_par T_ptexpr
+c_par_elifpart :: [T_token] -> T_t_par (T_ptexpr, T_ptexpr)
+c_par_tuplctor :: [T_token] -> T_t_par T_ptexpr
+c_par_simexpr :: [T_token] -> T_t_par T_ptexpr
+c_par_appexpr :: [(Int, T_t_tokv, Int)] -> T_t_par T_ptexpr
+c_par_function :: [(Int, T_t_tokv, Int)] -> T_t_par T_ptfunction
+c_par_progpart :: [(Int, T_t_tokv, Int)] -> T_t_par T_ptpr
+c_par_proglist :: [(Int, T_t_tokv, Int)] -> T_t_par T_ptproglist

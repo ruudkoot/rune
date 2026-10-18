@@ -1,0 +1,6 @@
+structure N=BenchParstofFn(BenchNeed)
+structure E=BenchParstofFn(BenchStrict)
+structure NC=BenchParstofCheckFn(N)
+structure EC=BenchParstofCheckFn(E)
+val _=print(NC.run["100","8","program.input","count-8.crc"]^"\n")
+val _=print(EC.run["100","8","program.input","count-8.crc"]^"\n")

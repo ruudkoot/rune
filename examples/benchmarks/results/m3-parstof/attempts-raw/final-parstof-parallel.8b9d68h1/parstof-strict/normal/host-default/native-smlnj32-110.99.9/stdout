@@ -1,0 +1,989 @@
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/parstof-lex.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/parstof-lex.sml:34.57 Warning: calling polyEqual
+functor BenchParstofLexFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure L : <sig>
+  type chars
+  type input
+  type tokenValue
+  type token
+  type tokens
+  type 'a result
+  type 'a pattern
+  val chars : string -> <BaseFct>.<resultStr>.chars BenchLazy.delay
+  val sequence :
+      ('a D.t -> 'b D.t -> 'c)
+       -> ('d -> 'a <BaseFct>.<resultStr>.result)
+       -> (<BaseFct>.<resultStr>.input -> 'b <BaseFct>.<resultStr>.result)
+       -> 'd -> 'c <BaseFct>.<resultStr>.result
+  val seq :
+      ('a D.t -> 'b D.t -> 'c)
+       -> 'd * ('e -> 'a <BaseFct>.<resultStr>.result)
+       -> 'f
+       * (<BaseFct>.<resultStr>.input -> 'b <BaseFct>.<resultStr>.result)
+       -> 'd * ('e -> 'c <BaseFct>.<resultStr>.result)
+  val convertCell :
+      ('a D.t -> 'b)
+       -> 'c * ('d -> 'a <BaseFct>.<resultStr>.result)
+       -> 'c * ('d -> 'b <BaseFct>.<resultStr>.result)
+  val convert :
+      ('a -> 'b)
+       -> 'c * ('d -> 'a <BaseFct>.<resultStr>.result)
+       -> 'c * ('d -> 'b <BaseFct>.<resultStr>.result)
+  val literal :
+      char
+       -> char list
+       * (<BaseFct>.<resultStr>.chars BenchLazy.state ref
+        -> char <BaseFct>.<resultStr>.result)
+  val split : int -> 'a list -> 'a list * 'a list
+  val merge : char list -> char list -> char list
+  val sort : char list -> char list
+  val unique : ''a list -> ''a list
+  val alt :
+      'a <BaseFct>.<resultStr>.pattern list
+       -> 'a <BaseFct>.<resultStr>.pattern
+  val repeat :
+      ('a -> 'b -> 'a)
+       -> 'a D.t
+       -> (<BaseFct>.<resultStr>.input -> 'b <BaseFct>.<resultStr>.result)
+       -> <BaseFct>.<resultStr>.input -> 'a <BaseFct>.<resultStr>.result
+  val plus :
+      ('a -> 'b -> 'a)
+       -> 'a
+       -> 'c
+       * (<BaseFct>.<resultStr>.input -> 'b <BaseFct>.<resultStr>.result)
+       -> 'c
+       * (<BaseFct>.<resultStr>.input -> 'a <BaseFct>.<resultStr>.result)
+  val select1 : 'a D.t -> 'b -> 'a
+  val select2 : 'a -> 'b D.t -> 'b
+  val cons : 'a D.t -> 'a list D.t -> 'a list
+  val singleton : 'a -> 'a list
+  val addChar : 'a list -> 'a -> 'a list
+  val match :
+      string
+       -> char list
+       * (<BaseFct>.<resultStr>.input
+        -> char list <BaseFct>.<resultStr>.result)
+  val digits : char <BaseFct>.<resultStr>.pattern
+  val upper : char <BaseFct>.<resultStr>.pattern
+  val lower : char <BaseFct>.<resultStr>.pattern
+  val alphanum : char <BaseFct>.<resultStr>.pattern
+  val escape : 'a -> char D.t -> char
+  val escapedChar : char <BaseFct>.<resultStr>.pattern
+  val hexDigit : char <BaseFct>.<resultStr>.pattern
+  val hex : char D.t -> char D.t -> char
+  val escaped : char <BaseFct>.<resultStr>.pattern
+  val weird : char <BaseFct>.<resultStr>.pattern
+  val chchar : char <BaseFct>.<resultStr>.pattern
+  val character :
+      char list
+       * (<BaseFct>.<resultStr>.chars BenchLazy.state ref
+        -> char <BaseFct>.<resultStr>.result)
+  val integer :
+      char list
+       * (<BaseFct>.<resultStr>.input -> int <BaseFct>.<resultStr>.result)
+  val uppid : char list <BaseFct>.<resultStr>.pattern
+  val lowid : char list <BaseFct>.<resultStr>.pattern
+  val strchar : char <BaseFct>.<resultStr>.pattern
+  val endstr : char list <BaseFct>.<resultStr>.pattern
+  val string :
+      char list
+       * (<BaseFct>.<resultStr>.chars BenchLazy.state ref
+        -> char list <BaseFct>.<resultStr>.result)
+  val empty :
+      'a
+       -> 'b * ('c -> 'd <BaseFct>.<resultStr>.result)
+       -> 'b
+       * ('c
+        -> ('a * <BaseFct>.<resultStr>.tokenValue) 
+          <BaseFct>.<resultStr>.result)
+  val valChar : char D.t -> int * <BaseFct>.<resultStr>.tokenValue
+  val valInt : int D.t -> int * <BaseFct>.<resultStr>.tokenValue
+  val valText : 'a -> char list D.t -> 'a * <BaseFct>.<resultStr>.tokenValue
+  val punctuation : (int * string) list
+  val keywords : (int * string) list
+  val matcher :
+      (int * <BaseFct>.<resultStr>.tokenValue) <BaseFct>.<resultStr>.pattern
+  val prefix : string -> <BaseFct>.<resultStr>.chars BenchLazy.delay -> bool
+  val scanComment :
+      <BaseFct>.<resultStr>.chars BenchLazy.delay
+       -> int -> (<BaseFct>.<resultStr>.chars BenchLazy.delay * int) option
+  val skip :
+      <BaseFct>.<resultStr>.chars BenchLazy.delay
+       -> int
+       -> (<BaseFct>.<resultStr>.chars BenchLazy.state ref * int) option
+  val tokenizeAt :
+      <BaseFct>.<resultStr>.chars BenchLazy.delay
+       -> int -> <BaseFct>.<resultStr>.tokens BenchLazy.delay
+  val tokenize : string -> <BaseFct>.<resultStr>.tokens BenchLazy.delay
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/parstof-kernel.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/parstof-kernel.sml:82.43 Warning: calling polyEqual
+functor BenchParstofFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure L : <sig>
+  structure X : <sig>
+  type T_ptbindlhs_node
+  type T_ptcelse_node
+  type T_ptdeftype_node
+  type T_ptexpli_node
+  type T_ptexpr_node
+  type T_ptftype_node
+  type T_ptfunction_node
+  type T_ptfunparli_node
+  type T_ptletbinds_node
+  type T_ptpatli_node
+  type T_ptpatvarli_node
+  type T_ptpr_node
+  type T_ptproglist_node
+  type T_ptrhs_node
+  type T_pttparlist_node
+  type T_pttype_node
+  type T_pttypli_node
+  type T_ptunionli_node
+  type stringCell
+  type T_ptbindlhs
+  type T_ptcelse
+  type T_ptdeftype
+  type T_ptexpli
+  type T_ptexpr
+  type T_ptftype
+  type T_ptfunction
+  type T_ptfunparli
+  type T_ptletbinds
+  type T_ptpatli
+  type T_ptpatvarli
+  type T_ptpr
+  type T_ptproglist
+  type T_ptrhs
+  type T_pttparlist
+  type T_pttype
+  type T_pttypli
+  type T_ptunionli
+  type message
+  type 'a parsed
+  val select1 : 'a -> 'b -> 'a
+  val select2 : 'a -> 'b -> 'b
+  val pair : 'a -> 'b -> ('a * 'b) D.t
+  val cellCons : 'a -> 'a list D.t -> 'a list D.t
+  val cellNil : unit -> 'a list D.t
+  val cons : 'a -> 'a list -> 'a list
+  val best :
+      <BaseFct>.<resultStr>.message
+       -> <BaseFct>.<resultStr>.message -> <BaseFct>.<resultStr>.message
+  val alt :
+      ('a -> 'b <BaseFct>.<resultStr>.parsed) list
+       -> 'a -> 'b <BaseFct>.<resultStr>.parsed
+  val sequence :
+      ('a -> 'b -> 'c D.t)
+       -> ('d -> 'a <BaseFct>.<resultStr>.parsed)
+       -> (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+        -> 'b <BaseFct>.<resultStr>.parsed)
+       -> 'd -> 'c D.t <BaseFct>.<resultStr>.parsed
+  val convert :
+      ('a -> 'b D.t)
+       -> ('c -> 'a <BaseFct>.<resultStr>.parsed)
+       -> 'c -> 'b D.t <BaseFct>.<resultStr>.parsed
+  val literal :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokenValue -> 'a D.t)
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> 'a D.t <BaseFct>.<resultStr>.parsed
+  val repeat :
+      ('a -> 'b D.t -> 'b D.t)
+       -> 'b D.t
+       -> (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+        -> 'a <BaseFct>.<resultStr>.parsed)
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+       -> 'b D.t <BaseFct>.<resultStr>.parsed
+  val plus :
+      ('a -> 'b D.t -> 'b D.t)
+       -> 'b D.t
+       -> (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+        -> 'a <BaseFct>.<resultStr>.parsed)
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+       -> 'b D.t <BaseFct>.<resultStr>.parsed
+  val optional :
+      'a
+       -> (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+        -> 'a <BaseFct>.<resultStr>.parsed)
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+       -> 'a <BaseFct>.<resultStr>.parsed
+  val fail :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+        -> string)
+       -> (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+        -> 'a <BaseFct>.<resultStr>.parsed)
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> 'a <BaseFct>.<resultStr>.parsed
+  val dropToken : 'a -> 'b list D.t
+  val getName :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokenValue -> char list D.t
+  val getInteger : <BaseFct>.<resultStr>.X.<returnStr>.tokenValue -> int D.t
+  val getChar : <BaseFct>.<resultStr>.X.<returnStr>.tokenValue -> char D.t
+  val operator :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> int D.t <BaseFct>.<resultStr>.parsed
+  val text : string -> char list D.t
+  val intText : int -> string
+  val findName : ''a -> (''a * string) list -> string
+  val binaryNames : (int * string) list
+  val binName : int D.t -> char list D.t
+  val unName : int D.t -> char list D.t
+  val valueText : <BaseFct>.<resultStr>.X.<returnStr>.tokenValue -> string
+  val tokenNames : (int * string * string) list
+  val printToken :
+      int * <BaseFct>.<resultStr>.X.<returnStr>.tokenValue * 'a -> string
+  val preview :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref -> string
+  val error :
+      string
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> string
+  val f_m_pexpr_CASE :
+      <BaseFct>.<resultStr>.T_ptexpr
+       -> <BaseFct>.<resultStr>.T_ptpatli
+       -> <BaseFct>.<resultStr>.T_ptcelse
+       -> <BaseFct>.<resultStr>.T_ptexpr_node D.t
+  val f_m_punion :
+      <BaseFct>.<resultStr>.stringCell
+       -> <BaseFct>.<resultStr>.T_pttypli
+       -> <BaseFct>.<resultStr>.T_ptunionli
+       -> <BaseFct>.<resultStr>.T_ptunionli_node D.t
+  val f_m_pexpli_C :
+      <BaseFct>.<resultStr>.T_ptexpr
+       -> <BaseFct>.<resultStr>.T_ptexpli
+       -> <BaseFct>.<resultStr>.T_ptexpli_node D.t
+  val c_m_pexpli_N : <BaseFct>.<resultStr>.T_ptexpli_node D.t
+  val f_m_pfunction :
+      <BaseFct>.<resultStr>.stringCell
+       -> <BaseFct>.<resultStr>.T_ptfunparli
+       -> <BaseFct>.<resultStr>.T_ptexpr
+       -> <BaseFct>.<resultStr>.T_ptfunction_node D.t
+  val f_m_pexpr_APPLY :
+      <BaseFct>.<resultStr>.T_ptexpr
+       -> <BaseFct>.<resultStr>.T_ptexpr
+       -> <BaseFct>.<resultStr>.T_ptexpr_node D.t
+  val f_m_pexpr_name :
+      <BaseFct>.<resultStr>.stringCell
+       -> <BaseFct>.<resultStr>.T_ptexpr_node D.t
+  val f_m_ppatli_C :
+      <BaseFct>.<resultStr>.stringCell
+       -> <BaseFct>.<resultStr>.T_ptpatvarli
+       -> <BaseFct>.<resultStr>.T_ptexpr
+       -> <BaseFct>.<resultStr>.T_ptpatli
+       -> <BaseFct>.<resultStr>.T_ptpatli_node D.t
+  val c_m_pproglist_empty : <BaseFct>.<resultStr>.T_ptproglist_node D.t
+  val f_m_ptype_parazd :
+      <BaseFct>.<resultStr>.stringCell
+       -> <BaseFct>.<resultStr>.T_pttypli
+       -> <BaseFct>.<resultStr>.T_pttype_node D.t
+  val c_m_ptypli_empty : <BaseFct>.<resultStr>.T_pttypli_node D.t
+  val f_m_pexpr_UNION :
+      <BaseFct>.<resultStr>.stringCell
+       -> <BaseFct>.<resultStr>.T_ptexpli
+       -> <BaseFct>.<resultStr>.T_ptexpr_node D.t
+  val f_m_pexpr_char : char D.t -> <BaseFct>.<resultStr>.T_ptexpr_node D.t
+  val f_m_pdeftype :
+      <BaseFct>.<resultStr>.stringCell
+       -> <BaseFct>.<resultStr>.T_pttparlist
+       -> <BaseFct>.<resultStr>.T_ptrhs
+       -> <BaseFct>.<resultStr>.T_ptdeftype_node D.t
+  val f_m_pbindlhs_name :
+      <BaseFct>.<resultStr>.stringCell
+       -> <BaseFct>.<resultStr>.T_ptbindlhs_node D.t
+  val f_m_pbindlhs_pvl :
+      <BaseFct>.<resultStr>.T_ptpatvarli
+       -> <BaseFct>.<resultStr>.T_ptbindlhs_node D.t
+  val c_m_pcelse_empty : <BaseFct>.<resultStr>.T_ptcelse_node D.t
+  val f_m_pcelse_expr :
+      <BaseFct>.<resultStr>.T_ptexpr
+       -> <BaseFct>.<resultStr>.T_ptcelse_node D.t
+  val f_m_pexpr_LET :
+      <BaseFct>.<resultStr>.T_ptletbinds
+       -> <BaseFct>.<resultStr>.T_ptexpr
+       -> <BaseFct>.<resultStr>.T_ptexpr_node D.t
+  val f_m_pexpr_TUPLE :
+      <BaseFct>.<resultStr>.T_ptexpli
+       -> <BaseFct>.<resultStr>.T_ptexpr_node D.t
+  val f_m_pexpr_int : int D.t -> <BaseFct>.<resultStr>.T_ptexpr_node D.t
+  val f_m_pftype :
+      <BaseFct>.<resultStr>.stringCell
+       -> <BaseFct>.<resultStr>.T_pttype
+       -> <BaseFct>.<resultStr>.T_ptftype_node D.t
+  val f_m_pfunparli_C :
+      <BaseFct>.<resultStr>.stringCell
+       -> <BaseFct>.<resultStr>.T_ptfunparli
+       -> <BaseFct>.<resultStr>.T_ptfunparli_node D.t
+  val c_m_pfunparli_N : <BaseFct>.<resultStr>.T_ptfunparli_node D.t
+  val f_m_pletbinds_C :
+      <BaseFct>.<resultStr>.T_ptbindlhs
+       -> <BaseFct>.<resultStr>.T_ptexpr
+       -> <BaseFct>.<resultStr>.T_ptletbinds
+       -> <BaseFct>.<resultStr>.T_ptletbinds_node D.t
+  val c_m_pletbinds_N : <BaseFct>.<resultStr>.T_ptletbinds_node D.t
+  val c_m_ppatli_N : <BaseFct>.<resultStr>.T_ptpatli_node D.t
+  val f_m_ppatvarli_C :
+      <BaseFct>.<resultStr>.stringCell
+       -> <BaseFct>.<resultStr>.T_ptpatvarli
+       -> <BaseFct>.<resultStr>.T_ptpatvarli_node D.t
+  val c_m_ppatvarli_N : <BaseFct>.<resultStr>.T_ptpatvarli_node D.t
+  val f_m_ppr_deftype :
+      <BaseFct>.<resultStr>.T_ptdeftype
+       -> <BaseFct>.<resultStr>.T_ptpr_node D.t
+  val f_m_ppr_ftype :
+      <BaseFct>.<resultStr>.T_ptftype -> <BaseFct>.<resultStr>.T_ptpr_node D.t
+  val f_m_ppr_func :
+      <BaseFct>.<resultStr>.T_ptfunction
+       -> <BaseFct>.<resultStr>.T_ptpr_node D.t
+  val f_m_pproglist :
+      <BaseFct>.<resultStr>.T_ptpr
+       -> <BaseFct>.<resultStr>.T_ptproglist
+       -> <BaseFct>.<resultStr>.T_ptproglist_node D.t
+  val f_m_prhs_type :
+      <BaseFct>.<resultStr>.T_pttype -> <BaseFct>.<resultStr>.T_ptrhs_node D.t
+  val f_m_prhs_union :
+      <BaseFct>.<resultStr>.T_ptunionli
+       -> <BaseFct>.<resultStr>.T_ptrhs_node D.t
+  val f_m_ptparlist :
+      <BaseFct>.<resultStr>.stringCell
+       -> <BaseFct>.<resultStr>.T_pttparlist
+       -> <BaseFct>.<resultStr>.T_pttparlist_node D.t
+  val c_m_ptparlist_empty : <BaseFct>.<resultStr>.T_pttparlist_node D.t
+  val f_m_ptype_fun :
+      <BaseFct>.<resultStr>.T_pttype
+       -> <BaseFct>.<resultStr>.T_pttype
+       -> <BaseFct>.<resultStr>.T_pttype_node D.t
+  val f_m_ptype_tparname :
+      <BaseFct>.<resultStr>.stringCell
+       -> <BaseFct>.<resultStr>.T_pttype_node D.t
+  val f_m_ptype_tuple :
+      <BaseFct>.<resultStr>.T_pttypli
+       -> <BaseFct>.<resultStr>.T_pttype_node D.t
+  val f_m_ptypli :
+      <BaseFct>.<resultStr>.T_pttype
+       -> <BaseFct>.<resultStr>.T_pttypli
+       -> <BaseFct>.<resultStr>.T_pttypli_node D.t
+  val c_m_punion_empty : <BaseFct>.<resultStr>.T_ptunionli_node D.t
+  val c_tok_error : int
+  val c_tok_EOF : int
+  val c_tok_char : int
+  val c_tok_int : int
+  val c_tok_TYPE : int
+  val c_tok_FTYPE : int
+  val c_tok_LET : int
+  val c_tok_IN : int
+  val c_tok_IF : int
+  val c_tok_THEN : int
+  val c_tok_ELIF : int
+  val c_tok_ELSE : int
+  val c_tok_FI : int
+  val c_tok_CASE : int
+  val c_tok_uppid : int
+  val c_tok_str : int
+  val c_tok_lowid : int
+  val c_tok_opfunc : int
+  val c_tok_opapnd : int
+  val c_tok_opcolon : int
+  val c_tok_opand : int
+  val c_tok_opsep : int
+  val c_tok_ople : int
+  val c_tok_opneq : int
+  val c_tok_opeq : int
+  val c_tok_opge : int
+  val c_tok_oplt : int
+  val c_tok_opgt : int
+  val c_tok_opdef : int
+  val c_tok_opadd : int
+  val c_tok_opdash : int
+  val c_tok_opmul : int
+  val c_tok_opdiv : int
+  val c_tok_opperc : int
+  val c_tok_optwig : int
+  val c_tok_btup : int
+  val c_tok_etup : int
+  val c_tok_begin : int
+  val c_tok_end : int
+  val c_tok_obrack : int
+  val c_tok_cbrack : int
+  val c_tok_semi : int
+  val c_tok_comma : int
+  val c_tok_hash : int
+  val c_err_comment : string
+  val c_err_lexical : string
+  val c_err_CASE : string
+  val c_err_CASEpatt : string
+  val c_err_ELSE : string
+  val c_err_FI : string
+  val c_err_THEN : string
+  val c_err_THENELIF : string
+  val c_err_cbrack : string
+  val c_err_closbr : string
+  val c_err_constr : string
+  val c_err_endCASE : string
+  val c_err_endtup : string
+  val c_err_endtupl : string
+  val c_err_enduni : string
+  val c_err_explist : string
+  val c_err_funcdef : string
+  val c_err_funtyp : string
+  val c_err_funtype : string
+  val c_err_letlist : string
+  val c_err_nest : string
+  val c_err_nesttype : string
+  val c_err_progterm : string
+  val c_err_rhsop : string
+  val c_err_rhstype : string
+  val c_err_rhsunop : string
+  val c_err_semicol : string
+  val c_err_tuptype : string
+  val c_err_typedef : string
+  val c_err_unitype : string
+  val f_map : ('a -> 'b) -> 'a list -> 'b list
+  val c_fparNILname : char list D.t
+  val f_fpartup2 : 'a -> 'b -> ('a * 'b) D.t
+  val f_fparsel1 : 'a -> 'b -> 'a
+  val f_fparsel2 : 'a -> 'b -> 'b
+  val f_fpardroptok : 'a -> 'b list D.t
+  val f_fpargetchar :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokenValue -> char D.t
+  val f_fpargetint : <BaseFct>.<resultStr>.X.<returnStr>.tokenValue -> int D.t
+  val f_fpargetname :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokenValue -> char list D.t
+  val f_fparerr :
+      string
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> string
+  val f_fpar_opermk :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> int D.t <BaseFct>.<resultStr>.parsed
+  val f_fpar_case_mk :
+      <BaseFct>.<resultStr>.T_ptexpr
+       -> (<BaseFct>.<resultStr>.T_ptpatli * <BaseFct>.<resultStr>.T_ptcelse) 
+         D.t
+       -> <BaseFct>.<resultStr>.T_ptexpr_node D.t
+  val f_fpar_deftype_rhs_mk :
+      (<BaseFct>.<resultStr>.stringCell * <BaseFct>.<resultStr>.T_pttypli) D.t
+       -> <BaseFct>.<resultStr>.T_ptunionli
+       -> <BaseFct>.<resultStr>.T_ptunionli_node D.t
+  val f_fpar_exprlist_mk :
+      <BaseFct>.<resultStr>.T_ptexpr list D.t
+       -> <BaseFct>.<resultStr>.T_ptexpli_node D.t
+  val f_fpar_function_mk :
+      (<BaseFct>.<resultStr>.stringCell * <BaseFct>.<resultStr>.T_ptfunparli) 
+         D.t
+       -> <BaseFct>.<resultStr>.T_ptexpr
+       -> <BaseFct>.<resultStr>.T_ptfunction_node D.t
+  val ifList :
+      (<BaseFct>.<resultStr>.T_ptexpr * <BaseFct>.<resultStr>.T_ptexpr) D.t 
+         list
+       -> <BaseFct>.<resultStr>.T_ptexpr_node D.t
+       -> <BaseFct>.<resultStr>.T_ptexpr
+  val f_fpar_ifexpr_mk :
+      (<BaseFct>.<resultStr>.T_ptexpr
+          * (<BaseFct>.<resultStr>.T_ptexpr
+             * (<BaseFct>.<resultStr>.T_ptexpr
+                    * <BaseFct>.<resultStr>.T_ptexpr) D.t list D.t) D.t) D.t
+       -> <BaseFct>.<resultStr>.T_ptexpr_node D.t
+       -> <BaseFct>.<resultStr>.T_ptexpr_node D.t
+  val f_fpar_pattli_mk :
+      ((<BaseFct>.<resultStr>.stringCell * <BaseFct>.<resultStr>.T_ptpatvarli) 
+            D.t * <BaseFct>.<resultStr>.T_ptexpr) D.t
+       -> <BaseFct>.<resultStr>.T_ptpatli
+       -> <BaseFct>.<resultStr>.T_ptpatli_node D.t
+  val f_fpar_prog_mkempty : 'a -> <BaseFct>.<resultStr>.T_ptproglist_node D.t
+  val f_fpar_simptype_eparaz :
+      <BaseFct>.<resultStr>.stringCell
+       -> <BaseFct>.<resultStr>.T_pttype_node D.t
+  val f_fpar_str_mk : char list D.t -> <BaseFct>.<resultStr>.T_ptexpr
+  val f_fpardeftype_mk :
+      (<BaseFct>.<resultStr>.stringCell * <BaseFct>.<resultStr>.T_pttparlist) 
+         D.t
+       -> <BaseFct>.<resultStr>.T_ptrhs
+       -> <BaseFct>.<resultStr>.T_ptdeftype_node D.t
+  val f_fparttuplety_empty :
+      'a -> ('a * <BaseFct>.<resultStr>.T_pttypli_node D.t) D.t
+  val f_fparoptoapp_left :
+      (<BaseFct>.<resultStr>.T_ptexpr
+          * (int D.t * <BaseFct>.<resultStr>.T_ptexpr) D.t list D.t) D.t
+       -> <BaseFct>.<resultStr>.T_ptexpr_node D.t
+  val f_fparoptoapp_right :
+      (<BaseFct>.<resultStr>.T_ptexpr_node D.t
+          * (int D.t * <BaseFct>.<resultStr>.T_ptexpr_node D.t) D.t list D.t) 
+         D.t
+       -> <BaseFct>.<resultStr>.T_ptexpr
+  val f_par_letlist_mk :
+      (<BaseFct>.<resultStr>.T_ptbindlhs * <BaseFct>.<resultStr>.T_ptexpr) D.t
+       -> <BaseFct>.<resultStr>.T_ptletbinds
+       -> <BaseFct>.<resultStr>.T_ptletbinds_node D.t
+  val f_par_unopexpr_mk :
+      int D.t
+       -> <BaseFct>.<resultStr>.T_ptexpr
+       -> <BaseFct>.<resultStr>.T_ptexpr_node D.t
+  val f_par_appexpr_mk :
+      <BaseFct>.<resultStr>.T_ptexpr list D.t
+       -> <BaseFct>.<resultStr>.T_ptexpr_node D.t
+  val f_paralt :
+      ('a -> 'b <BaseFct>.<resultStr>.parsed) list
+       -> 'a -> 'b <BaseFct>.<resultStr>.parsed
+  val f_parseq :
+      ('a -> 'b -> 'c D.t)
+       -> ('d -> 'a <BaseFct>.<resultStr>.parsed)
+       -> (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+        -> 'b <BaseFct>.<resultStr>.parsed)
+       -> 'd -> 'c D.t <BaseFct>.<resultStr>.parsed
+  val f_parcvt :
+      ('a -> 'b D.t)
+       -> ('c -> 'a <BaseFct>.<resultStr>.parsed)
+       -> 'c -> 'b D.t <BaseFct>.<resultStr>.parsed
+  val f_parlit :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokenValue -> 'a D.t)
+       -> int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> 'a D.t <BaseFct>.<resultStr>.parsed
+  val f_parrep_right :
+      ('a -> 'b D.t -> 'b D.t)
+       -> 'b D.t
+       -> (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+        -> 'a <BaseFct>.<resultStr>.parsed)
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+       -> 'b D.t <BaseFct>.<resultStr>.parsed
+  val f_parrepplus_right :
+      ('a -> 'b D.t -> 'b D.t)
+       -> 'b D.t
+       -> (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+        -> 'a <BaseFct>.<resultStr>.parsed)
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+       -> 'b D.t <BaseFct>.<resultStr>.parsed
+  val f_parfail :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+        -> string)
+       -> (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+        -> 'a <BaseFct>.<resultStr>.parsed)
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> 'a <BaseFct>.<resultStr>.parsed
+  val f_paropt :
+      'a
+       -> (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+        -> 'a <BaseFct>.<resultStr>.parsed)
+       -> <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+       -> 'a <BaseFct>.<resultStr>.parsed
+  val cache_c_par_tparname :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_pttype <BaseFct>.<resultStr>.parsed) 
+           option ref
+  val cache_c_par_typelist :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_pttypli <BaseFct>.<resultStr>.parsed) 
+           option ref
+  val cache_c_par_type_sub :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_pttype <BaseFct>.<resultStr>.parsed) 
+           option ref
+  val cache_c_par_type :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_pttype <BaseFct>.<resultStr>.parsed) 
+           option ref
+  val cache_c_par_simptype :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_pttype <BaseFct>.<resultStr>.parsed) 
+           option ref
+  val cache_c_par_ttuplety :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> (<BaseFct>.<resultStr>.stringCell
+                 * <BaseFct>.<resultStr>.T_pttypli) D.t 
+              <BaseFct>.<resultStr>.parsed) option ref
+  val cache_c_par_deftype_rhs :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_ptrhs <BaseFct>.<resultStr>.parsed) 
+           option ref
+  val cache_c_par_deftype :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_ptdeftype <BaseFct>.<resultStr>.parsed) 
+           option ref
+  val cache_c_par_ftype :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_ptftype <BaseFct>.<resultStr>.parsed) 
+           option ref
+  val cache_c_par_take_apart :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_ptpatvarli <BaseFct>.<resultStr>.parsed)
+           option ref
+  val cache_c_par_unop :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> int D.t <BaseFct>.<resultStr>.parsed) option ref
+  val cache_c_par_pattern :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> (<BaseFct>.<resultStr>.stringCell
+                 * <BaseFct>.<resultStr>.T_ptpatvarli) D.t 
+              <BaseFct>.<resultStr>.parsed) option ref
+  val cache_c_par_const :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_ptexpr <BaseFct>.<resultStr>.parsed) 
+           option ref
+  val cache_c_par_op0 :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> int D.t <BaseFct>.<resultStr>.parsed) option ref
+  val cache_c_par_op1 :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> int D.t <BaseFct>.<resultStr>.parsed) option ref
+  val cache_c_par_op2 :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> int D.t <BaseFct>.<resultStr>.parsed) option ref
+  val cache_c_par_op3 :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> int D.t <BaseFct>.<resultStr>.parsed) option ref
+  val cache_c_par_op4 :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> int D.t <BaseFct>.<resultStr>.parsed) option ref
+  val cache_c_par_ope :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> int D.t <BaseFct>.<resultStr>.parsed) option ref
+  val cache_c_par_bind :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> (<BaseFct>.<resultStr>.T_ptbindlhs
+                 * <BaseFct>.<resultStr>.T_ptexpr) D.t 
+              <BaseFct>.<resultStr>.parsed) option ref
+  val cache_c_par_unopexpr :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_ptexpr <BaseFct>.<resultStr>.parsed) 
+           option ref
+  val cache_c_par_matchlist :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> (<BaseFct>.<resultStr>.T_ptpatli
+                 * <BaseFct>.<resultStr>.T_ptcelse) D.t 
+              <BaseFct>.<resultStr>.parsed) option ref
+  val cache_c_par_match :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> ((<BaseFct>.<resultStr>.stringCell
+                    * <BaseFct>.<resultStr>.T_ptpatvarli) D.t
+                 * <BaseFct>.<resultStr>.T_ptexpr) D.t 
+              <BaseFct>.<resultStr>.parsed) option ref
+  val cache_c_par_case :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_ptexpr <BaseFct>.<resultStr>.parsed) 
+           option ref
+  val cache_c_par_structor :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_ptexpr <BaseFct>.<resultStr>.parsed) 
+           option ref
+  val cache_c_par_letlist :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_ptletbinds <BaseFct>.<resultStr>.parsed)
+           option ref
+  val cache_c_par_ifexpr :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_ptexpr <BaseFct>.<resultStr>.parsed) 
+           option ref
+  val cache_c_par_exprlist :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_ptexpli <BaseFct>.<resultStr>.parsed) 
+           option ref
+  val cache_c_par_expr :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_ptexpr <BaseFct>.<resultStr>.parsed) 
+           option ref
+  val cache_c_par_opexpr4 :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_ptexpr <BaseFct>.<resultStr>.parsed) 
+           option ref
+  val cache_c_par_opexpr3 :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_ptexpr <BaseFct>.<resultStr>.parsed) 
+           option ref
+  val cache_c_par_opexpr2 :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_ptexpr <BaseFct>.<resultStr>.parsed) 
+           option ref
+  val cache_c_par_opexpr1 :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_ptexpr <BaseFct>.<resultStr>.parsed) 
+           option ref
+  val cache_c_par_opexpr0 :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_ptexpr <BaseFct>.<resultStr>.parsed) 
+           option ref
+  val cache_c_par_opexpr :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_ptexpr <BaseFct>.<resultStr>.parsed) 
+           option ref
+  val cache_c_par_elifpart :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> (<BaseFct>.<resultStr>.T_ptexpr
+                 * <BaseFct>.<resultStr>.T_ptexpr) D.t 
+              <BaseFct>.<resultStr>.parsed) option ref
+  val cache_c_par_tuplctor :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_ptexpr <BaseFct>.<resultStr>.parsed) 
+           option ref
+  val cache_c_par_simexpr :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_ptexpr <BaseFct>.<resultStr>.parsed) 
+           option ref
+  val cache_c_par_appexpr :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_ptexpr <BaseFct>.<resultStr>.parsed) 
+           option ref
+  val cache_c_par_function :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_ptfunction <BaseFct>.<resultStr>.parsed)
+           option ref
+  val cache_c_par_progpart :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_ptpr <BaseFct>.<resultStr>.parsed) 
+           option ref
+  val cache_c_par_proglist :
+      (<BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+            -> <BaseFct>.<resultStr>.T_ptproglist <BaseFct>.<resultStr>.parsed)
+           option ref
+  val c_par_tparname :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.T_pttype_node D.t <BaseFct>.<resultStr>.parsed
+  val c_par_typelist :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+       -> <BaseFct>.<resultStr>.T_pttypli_node D.t 
+         <BaseFct>.<resultStr>.parsed
+  val c_par_type_sub :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.T_pttype_node D.t <BaseFct>.<resultStr>.parsed
+  val c_par_type :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+       -> <BaseFct>.<resultStr>.T_pttype <BaseFct>.<resultStr>.parsed
+  val c_par_simptype :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+       -> <BaseFct>.<resultStr>.T_pttype <BaseFct>.<resultStr>.parsed
+  val c_par_ttuplety :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> (char list D.t * <BaseFct>.<resultStr>.T_pttypli_node D.t) D.t 
+         <BaseFct>.<resultStr>.parsed
+  val c_par_deftype_rhs :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+       -> <BaseFct>.<resultStr>.T_ptrhs_node D.t <BaseFct>.<resultStr>.parsed
+  val c_par_deftype :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.T_ptdeftype_node D.t 
+         <BaseFct>.<resultStr>.parsed
+  val c_par_ftype :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.T_ptftype_node D.t 
+         <BaseFct>.<resultStr>.parsed
+  val c_par_take_apart :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.T_ptpatvarli_node D.t 
+         <BaseFct>.<resultStr>.parsed
+  val c_par_unop :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> int D.t <BaseFct>.<resultStr>.parsed
+  val c_par_pattern :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> (char list D.t * <BaseFct>.<resultStr>.T_ptpatvarli_node D.t) D.t 
+         <BaseFct>.<resultStr>.parsed
+  val c_par_const :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.T_ptexpr_node D.t <BaseFct>.<resultStr>.parsed
+  val c_par_op0 :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> int D.t <BaseFct>.<resultStr>.parsed
+  val c_par_op1 :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> int D.t <BaseFct>.<resultStr>.parsed
+  val c_par_op2 :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> int D.t <BaseFct>.<resultStr>.parsed
+  val c_par_op3 :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> int D.t <BaseFct>.<resultStr>.parsed
+  val c_par_op4 :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> int D.t <BaseFct>.<resultStr>.parsed
+  val c_par_ope :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> int D.t <BaseFct>.<resultStr>.parsed
+  val c_par_bind :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.T_ptbindlhs_node D.t
+            * <BaseFct>.<resultStr>.T_ptexpr_node D.t) D.t 
+         <BaseFct>.<resultStr>.parsed
+  val c_par_unopexpr :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.T_ptexpr_node D.t <BaseFct>.<resultStr>.parsed
+  val c_par_matchlist :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.T_ptpatli_node D.t
+            * <BaseFct>.<resultStr>.T_ptcelse_node D.t) D.t 
+         <BaseFct>.<resultStr>.parsed
+  val c_par_match :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+       -> ((<BaseFct>.<resultStr>.stringCell
+               * <BaseFct>.<resultStr>.T_ptpatvarli) D.t
+            * <BaseFct>.<resultStr>.T_ptexpr) D.t <BaseFct>.<resultStr>.parsed
+  val c_par_case :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.T_ptexpr_node D.t <BaseFct>.<resultStr>.parsed
+  val c_par_structor :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.T_ptexpr_node D.t <BaseFct>.<resultStr>.parsed
+  val c_par_letlist :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.T_ptletbinds_node D.t 
+         <BaseFct>.<resultStr>.parsed
+  val c_par_ifexpr :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.T_ptexpr_node D.t <BaseFct>.<resultStr>.parsed
+  val c_par_exprlist :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+       -> <BaseFct>.<resultStr>.T_ptexpli_node D.t 
+         <BaseFct>.<resultStr>.parsed
+  val c_par_expr :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+       -> <BaseFct>.<resultStr>.T_ptexpr_node D.t <BaseFct>.<resultStr>.parsed
+  val c_par_opexpr4 :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.T_ptexpr_node D.t <BaseFct>.<resultStr>.parsed
+  val c_par_opexpr3 :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.T_ptexpr_node D.t <BaseFct>.<resultStr>.parsed
+  val c_par_opexpr2 :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.T_ptexpr <BaseFct>.<resultStr>.parsed
+  val c_par_opexpr1 :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.T_ptexpr <BaseFct>.<resultStr>.parsed
+  val c_par_opexpr0 :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.T_ptexpr <BaseFct>.<resultStr>.parsed
+  val c_par_opexpr :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.T_ptexpr_node D.t <BaseFct>.<resultStr>.parsed
+  val c_par_elifpart :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+       -> (<BaseFct>.<resultStr>.T_ptexpr * <BaseFct>.<resultStr>.T_ptexpr) 
+           D.t <BaseFct>.<resultStr>.parsed
+  val c_par_tuplctor :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.T_ptexpr_node D.t <BaseFct>.<resultStr>.parsed
+  val c_par_simexpr :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.T_ptexpr_node D.t <BaseFct>.<resultStr>.parsed
+  val c_par_appexpr :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.T_ptexpr <BaseFct>.<resultStr>.parsed
+  val c_par_function :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.T_ptfunction_node D.t 
+         <BaseFct>.<resultStr>.parsed
+  val c_par_progpart :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.T_ptpr_node D.t <BaseFct>.<resultStr>.parsed
+  val c_par_proglist :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.delay
+       -> <BaseFct>.<resultStr>.T_ptproglist <BaseFct>.<resultStr>.parsed
+  type input
+  val input :
+      string -> <BaseFct>.<resultStr>.X.<returnStr>.chars BenchLazy.delay
+  val successText : <BaseFct>.<resultStr>.X.<returnStr>.chars BenchLazy.delay
+  val append :
+      <BaseFct>.<resultStr>.X.<returnStr>.chars BenchLazy.delay
+       -> <BaseFct>.<resultStr>.X.<returnStr>.chars BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.X.<returnStr>.chars BenchLazy.delay
+  val benchmark :
+      int
+       -> <BaseFct>.<resultStr>.X.<returnStr>.chars BenchLazy.delay -> string
+  val quote : string -> string
+  val arr : string list -> string
+  val textJSON : char list D.t -> string
+  val intJSON : int D.t -> string
+  val charJSON : char D.t -> string
+  val dump_T_ptbindlhs : <BaseFct>.<resultStr>.T_ptbindlhs_node D.t -> string
+  val dump_T_ptcelse : <BaseFct>.<resultStr>.T_ptcelse_node D.t -> string
+  val dump_T_ptdeftype : <BaseFct>.<resultStr>.T_ptdeftype_node D.t -> string
+  val dump_T_ptexpli : <BaseFct>.<resultStr>.T_ptexpli_node D.t -> string
+  val dump_T_ptexpr : <BaseFct>.<resultStr>.T_ptexpr -> string
+  val dump_T_ptftype : <BaseFct>.<resultStr>.T_ptftype_node D.t -> string
+  val dump_T_ptfunction :
+      <BaseFct>.<resultStr>.T_ptfunction_node D.t -> string
+  val dump_T_ptfunparli : <BaseFct>.<resultStr>.T_ptfunparli -> string
+  val dump_T_ptletbinds : <BaseFct>.<resultStr>.T_ptletbinds -> string
+  val dump_T_ptpatli : <BaseFct>.<resultStr>.T_ptpatli -> string
+  val dump_T_ptpatvarli : <BaseFct>.<resultStr>.T_ptpatvarli -> string
+  val dump_T_ptpr : <BaseFct>.<resultStr>.T_ptpr_node D.t -> string
+  val dump_T_ptproglist :
+      <BaseFct>.<resultStr>.T_ptproglist_node D.t -> string
+  val dump_T_ptrhs : <BaseFct>.<resultStr>.T_ptrhs -> string
+  val dump_T_pttparlist : <BaseFct>.<resultStr>.T_pttparlist -> string
+  val dump_T_pttype : <BaseFct>.<resultStr>.T_pttype -> string
+  val dump_T_pttypli : <BaseFct>.<resultStr>.T_pttypli -> string
+  val dump_T_ptunionli : <BaseFct>.<resultStr>.T_ptunionli -> string
+  val value : <BaseFct>.<resultStr>.X.<returnStr>.tokenValue -> string
+  val dumpTokens :
+      <BaseFct>.<resultStr>.X.<returnStr>.tokens BenchLazy.state ref -> string
+  val parseJSON : string -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/parstof-check.sml]
+[autoloading]
+[autoloading done]
+functor BenchParstofCheckFn(K: sig
+  type input
+  val input : string -> input
+  val benchmark : int -> input -> string
+end) :
+sig
+  val read : string -> TextIO.vector
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/parstof-strict/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Check : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 100:800:1000
+PASS parstof-strict
+SUMMARY 1 checks, 0 failed

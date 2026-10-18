@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+parstof-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	10.93	8.05	1.57	666108	-	-	-	parstof-lazy/native-mlton/build/compile
+parstof-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	3416	-	-	-	parstof-lazy/native-mlton/correctness.0
+parstof-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	3376	-	-	-	parstof-lazy/native-mlton/fresh.1
+parstof-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	4.37	4.38	0.19	70568	-	-	-	parstof-lazy/native-smlnj-legacy/build/compile
+parstof-lazy	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.03	0.02	0.01	9972	-	-	-	parstof-lazy/native-smlnj-legacy/correctness.0
+parstof-lazy	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.03	0.01	0.01	9888	-	-	-	parstof-lazy/native-smlnj-legacy/fresh.1
+parstof-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	1.30	1.19	0.27	70520	-	-	-	parstof-lazy/native-polyml/build/compile
+parstof-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.01	0.01	0.00	10744	-	-	-	parstof-lazy/native-polyml/correctness.0
+parstof-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.01	0.00	0.00	10800	-	-	-	parstof-lazy/native-polyml/fresh.1
