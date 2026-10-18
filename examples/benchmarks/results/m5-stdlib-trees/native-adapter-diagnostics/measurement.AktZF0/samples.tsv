@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+map_fold	smoke	native:mlton@20241230	O2	compile	0	0	pass	9.40	7.49	1.94	671672	-	-	-	map_fold/native-mlton/build/compile
+map_fold	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.01	0.00	0.00	8336	-	-	-	map_fold/native-mlton/correctness.0
+map_fold	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.01	0.00	0.00	8360	-	-	-	map_fold/native-mlton/fresh.1
+map_fold	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.59	0.53	0.06	37092	-	-	-	map_fold/native-smlnj-legacy/build/compile
+map_fold	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.03	0.01	0.01	4540	-	-	-	map_fold/native-smlnj-legacy/correctness.0
+map_fold	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.02	0.02	0.00	4480	-	-	-	map_fold/native-smlnj-legacy/fresh.1
+map_fold	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.70	0.43	0.11	31248	-	-	-	map_fold/native-polyml/build/compile
+map_fold	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.02	0.00	0.00	6208	-	-	-	map_fold/native-polyml/correctness.0
+map_fold	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.02	0.00	0.00	6324	-	-	-	map_fold/native-polyml/fresh.1

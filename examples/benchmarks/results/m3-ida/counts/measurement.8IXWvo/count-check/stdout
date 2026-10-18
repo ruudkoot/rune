@@ -1,0 +1,5 @@
+COUNT unbudgeted ida-lazy normal rune
+COUNT unbudgeted ida-lazy normal rune:opt
+COUNT unbudgeted ida-lazy normal rune:new
+COUNT unbudgeted ida-lazy normal rune:jit
+COUNT comparisons agree

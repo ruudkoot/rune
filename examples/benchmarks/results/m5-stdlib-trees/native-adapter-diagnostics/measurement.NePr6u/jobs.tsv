@@ -1,0 +1,1 @@
+map_find	30	1048576	shared/input.sml shared/ocaml-stdlib-tree-map.sml shared/ocaml-stdlib-tree-set.sml shared/ocaml-stdlib-tree-program.sml map_find/benchmark.sml shared/main.sml	10001	map_find/smoke.expected	-

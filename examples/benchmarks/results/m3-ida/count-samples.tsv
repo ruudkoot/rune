@@ -1,0 +1,9 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+ida-lazy	normal	rune	O2	count	1	1	pass	75.60	58.07	0.70	18608	5193104404	16467274416	512074828	counts/measurement.8IXWvo/ida-lazy/rune/fresh.1
+ida-lazy	normal	rune:opt	O2	count	1	1	pass	49.42	28.49	0.61	19164	5193104404	16467274416	512074828	counts/measurement.8IXWvo/ida-lazy/rune-opt/fresh.1
+ida-lazy	normal	rune:new	O2	count	1	1	pass	75.57	58.17	0.71	18656	3041006870	16467274416	512074828	counts/measurement.8IXWvo/ida-lazy/rune-new/fresh.1
+ida-lazy	normal	rune:jit	O2	count	1	1	pass	52.89	25.51	0.52	19940	3041006870	16467274416	512074828	counts/measurement.8IXWvo/ida-lazy/rune-jit/fresh.1
+ida-strict	normal	rune	O2	count	1	1	pass	45.01	38.61	0.92	10472	3731302834	10203091992	298778427	counts/measurement.NZQsRr/ida-strict/rune/fresh.1
+ida-strict	normal	rune:opt	O2	count	1	1	pass	21.78	15.01	0.14	10900	3731302834	10203091992	298778427	counts/measurement.NZQsRr/ida-strict/rune-opt/fresh.1
+ida-strict	normal	rune:new	O2	count	1	1	pass	48.94	33.09	0.30	10500	2155129090	10203091992	298778427	counts/measurement.NZQsRr/ida-strict/rune-new/fresh.1
+ida-strict	normal	rune:jit	O2	count	1	1	pass	19.49	15.23	0.24	11788	2155129090	10203091992	298778427	counts/measurement.NZQsRr/ida-strict/rune-jit/fresh.1

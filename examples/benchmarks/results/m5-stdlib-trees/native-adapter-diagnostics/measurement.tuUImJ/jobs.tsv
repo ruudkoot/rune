@@ -1,0 +1,1 @@
+set_fold	30	1048576	shared/input.sml shared/ocaml-stdlib-tree-map.sml shared/ocaml-stdlib-tree-set.sml shared/ocaml-stdlib-tree-program.sml set_fold/benchmark.sml shared/main.sml	1	set_fold/smoke.expected	-

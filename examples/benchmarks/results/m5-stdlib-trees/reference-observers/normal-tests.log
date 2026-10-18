@@ -1,0 +1,12 @@
+PASS stdlib-tree-normal/map_iter
+PASS stdlib-tree-normal/map_add
+PASS stdlib-tree-normal/map_add_duplicate
+PASS stdlib-tree-normal/map_remove
+PASS stdlib-tree-normal/map_fold
+PASS stdlib-tree-normal/map_for_all
+PASS stdlib-tree-normal/map_find
+PASS stdlib-tree-normal/map_map
+PASS stdlib-tree-normal/set_fold
+PASS stdlib-tree-normal/set_mem
+PASS stdlib-tree-normal/set_add_rem
+SUMMARY 11 checks, 0 failed

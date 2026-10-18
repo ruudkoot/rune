@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+ida-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	8.94	7.23	1.85	662776	-	-	-	ida-strict/native-mlton/build/compile
+ida-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.00	0.00	0.00	2260	-	-	-	ida-strict/native-mlton/correctness.0
+ida-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.00	0.00	0.00	2328	-	-	-	ida-strict/native-mlton/fresh.1
+ida-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	1.08	1.01	0.07	35512	-	-	-	ida-strict/native-smlnj-legacy/build/compile
+ida-strict	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.02	0.01	0.01	4020	-	-	-	ida-strict/native-smlnj-legacy/correctness.0
+ida-strict	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.02	0.00	0.01	4012	-	-	-	ida-strict/native-smlnj-legacy/fresh.1
+ida-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.62	0.44	0.10	42252	-	-	-	ida-strict/native-polyml/build/compile
+ida-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.01	0.01	0.00	5712	-	-	-	ida-strict/native-polyml/correctness.0
+ida-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.00	0.00	0.00	5648	-	-	-	ida-strict/native-polyml/fresh.1

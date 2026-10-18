@@ -1,0 +1,55 @@
+make[1]: Nothing to be done for 'host-builds'.
+make[1]: Nothing to be done for 'vm'.
+make[1]: Nothing to be done for 'boot'.
+make[1]: Nothing to be done for 'runedoc'.
+make[1]: Nothing to be done for 'runeopt'.
+python3 tests/compiler/run-tests.py --rune bin/rune
+bin/rune-boot -o bin/rune.stage2.rbc build/config.sml src/util/scon.sml src/util/ordmap.sml src/util/inttable.sml src/util/source.sml src/util/error.sml src/util/pass.sml src/frontend/token.sml src/frontend/lexer.sml src/elab/types.sml src/core/ty.sml src/elab/overload.sml src/frontend/ast.sml src/frontend/fixity.sml src/frontend/parser.sml src/elab/unifyexn.sml src/elab/unify.sml src/elab/env.sml src/elab/sigmatch.sml src/elab/exhaust.sml src/backend/opcodes.sml src/backend/prims.sml src/elab/elaborate.sml src/core/lambda.sml src/core/lambdalint.sml src/core/matchcomp.sml src/core/translate.sml src/core/mid.sml src/core/midlint.sml src/core/midtext.sml src/core/tomid.sml src/core/target.sml src/core/shake.sml src/core/lift.sml src/core/simplify.sml src/core/workers.sml src/backend/code.sml src/backend/low.sml src/backend/target.sml src/backend/lowlint.sml src/backend/rep.sml src/backend/lower.sml src/backend/stack.sml src/backend/regcodes.sml src/backend/regs.sml src/backend/emit.sml src/driver/basismanifest.sml src/driver/options.sml src/driver/main.sml src/main/rune-main.sml
+PASS compiler output protection and resource budgets
+python3 tests/vm/run-limits.py --rune bin/rune --vm bin/runevm
+PASS saved resource policies and stricter restore limits
+sh tests/run-tests.sh -j 4 --rune bin/rune --vm bin/runevm
+cmp bin/rune.rbc bin/rune.stage2.rbc
+bootstrap: bin/rune.rbc reproduces itself
+passed 331, failed 0
+sh tests/vm/run-vm-tests.sh --vm bin/runevm
+vm: passed 30, failed 0
+RUNEDOC=bin/runedoc sh tests/doc/run-doc-tests.sh
+test-doc: passed 55, failed 0
+RUNE=bin/rune RUNEVM=bin/runevm RUNEDOC=bin/runedoc sh tests/lib/run-lib-tests.sh
+test-lib: passed 22, failed 0
+=== testing with mlton build ===
+PASS compiler output protection and resource budgets
+passed 331, failed 0
+=== testing with smlnj-legacy build ===
+PASS compiler output protection and resource budgets
+passed 331, failed 0
+=== testing with smlnj32 build ===
+PASS compiler output protection and resource budgets
+passed 331, failed 0
+=== testing with smlnj-dev build ===
+PASS compiler output protection and resource budgets
+passed 331, failed 0
+=== testing with polyml build ===
+PASS compiler output protection and resource budgets
+passed 331, failed 0
+=== testing with mlkit build ===
+PASS compiler output protection and resource budgets
+passed 331, failed 0
+RUNE=/home/ruud/rune/.worktrees/benchmarks/bin/rune RUNEVM=/home/ruud/rune/.worktrees/benchmarks/bin/runevm \
+  sh tests/basis/run-matrix.sh -j 4 --configs rune
+rune                         139211 checks: 139211 pass,    0 explained,    0 FAILED, 0 skipped; of 221 tests 0 absent, 0 n/a
+timing: 208.4 s for the programs and probes on 4 job slots, busy 98% of the time (814.9 s of work)
+  configuration                work s  fallback s  slowest program
+  rune                           814.9         8.8  mono.int16 (22.4 s)
+  by host: rune 814.9 s
+  slowest programs: rune mono.int16 22.4 s, rune mono.int64 22.2 s, rune mono.widechar 21.0 s, rune mono.word16 20.7 s, rune mono.int8 20.2 s, rune mono.largeint 20.1 s, rune mono.real64 19.4 s, rune mono.int 19.2 s, rune mono.real32 19.0 s, rune mono.largereal 18.5 s, rune mono.word 17.3 s, rune mono.word64 17.3 s
+timing: report 0.227 s, all 208.670 s
+report: tests/out/matrix/report.md
+RUNE=bin/rune RUNEVM=bin/runevm RUNEDOC=bin/runedoc sh tests/basis/run-examples.sh
+test-examples: 795 examples of 65 signatures hold, 0 do not
+sh tests/opt/run-opt-tests.sh -j 4 --runeopt bin/runeopt --rune bin/rune --vm bin/runevm
+opt: passed 514, failed 0 (488 programs checked and disassembled)
+sh tests/ir/run-ir-tests.sh --rune bin/rune
+sh scripts/check-levels.sh --rune bin/rune --vm bin/runevm -j 4
+ir: passed 25, failed 0

@@ -1,0 +1,11 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1214 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=map_for_all' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.nHLEnE
+BENCH MEASURE map_for_all normal count
+COUNT unbudgeted map_for_all normal rune
+COUNT unbudgeted map_for_all normal rune:opt
+COUNT unbudgeted map_for_all normal rune:new
+COUNT unbudgeted map_for_all normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.nHLEnE/report.md

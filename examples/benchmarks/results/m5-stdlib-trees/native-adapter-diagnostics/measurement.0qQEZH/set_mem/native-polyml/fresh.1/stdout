@@ -1,0 +1,4 @@
+RESULT 3E8
+PASS set_mem
+SAMPLE 1 0.000439000
+SUMMARY 1 checks, 0 failed

@@ -1,0 +1,987 @@
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/stream.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml:19.32 Warning: calling polyEqual
+functor BenchIdaFiniteFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a seq
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t * 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val defer : (unit -> 'a D.t) -> 'a D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val nth : 'a <BaseFct>.<resultStr>.node D.t -> int -> 'a
+  val update :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val unify :
+      ''a <BaseFct>.<resultStr>.node D.t
+       -> ''a -> ''a <BaseFct>.<resultStr>.node D.t
+  val foldl :
+      ('a D.t -> 'b -> 'a D.t)
+       -> 'a D.t -> 'b <BaseFct>.<resultStr>.node D.t -> 'a D.t
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val filter :
+      ('a -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val length : 'a <BaseFct>.<resultStr>.node D.t -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-kernel.sml]
+functor BenchIdaFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure F : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  type pos
+  type square
+  type board
+  type searchNode
+  type search
+  type solutionNode
+  type solution
+  val delay : (unit -> 'a) -> 'a BenchLazy.state ref
+  val ready : 'a -> 'a BenchLazy.state ref
+  val manhattan : int * int -> int * int -> int
+  val splitFinite :
+      ('a -> bool)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val select :
+      int * int
+       -> ((int * int) * 'a) <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (((int * int) * 'a) <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * ((int * int) * 'a) <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val goal :
+      int
+       -> int
+       -> (int * int)
+       * ((int * int) * (int * int)) <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+  val random : int -> int BenchStream.node BenchLazy.delay
+  val reversedPrefix :
+      int -> 'a list -> 'a BenchStream.node BenchLazy.delay -> 'a list
+  val rotate :
+      int
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val shuffle :
+      (int * int)
+       * ((int * int) * 'a) <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> int
+       -> int BenchStream.node BenchLazy.delay
+       -> (int * int)
+       * ((int * int) * 'a) <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val bound : <BaseFct>.<resultStr>.searchNode BenchLazy.state ref -> int
+  val depth : <BaseFct>.<resultStr>.searchNode BenchLazy.state ref -> int
+  val upper : <BaseFct>.<resultStr>.searchNode BenchLazy.state ref -> int
+  val singleton : <BaseFct>.<resultStr>.searchNode BenchLazy.state ref -> bool
+  val board :
+      <BaseFct>.<resultStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.board BenchLazy.delay
+  val path :
+      <BaseFct>.<resultStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.pos BenchStream.stream
+  val movable :
+      <BaseFct>.<resultStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.square <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val choose :
+      <BaseFct>.<resultStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.searchNode BenchLazy.state ref
+  val divide :
+      <BaseFct>.<resultStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.searchNode BenchLazy.state ref 
+           BenchStream.node BenchLazy.delay
+  val forcedCheck :
+      <BaseFct>.<resultStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.searchNode BenchLazy.state ref
+  val solutionSpace :
+      <BaseFct>.<resultStr>.solutionNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.search
+  val partitions :
+      <BaseFct>.<resultStr>.solutionNode BenchLazy.state ref -> int
+  val collect :
+      <BaseFct>.<resultStr>.solutionNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.solutionNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.solutionNode BenchLazy.state ref
+  val split :
+      ('a -> bool)
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+       * 'a BenchStream.node BenchLazy.delay
+  val foldChoose :
+      <BaseFct>.<resultStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.searchNode BenchLazy.state ref 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.searchNode BenchLazy.state ref
+  val prune :
+      int -> <BaseFct>.<resultStr>.searchNode BenchLazy.state ref -> bool
+  val parallelBranch :
+      int
+       -> <BaseFct>.<resultStr>.searchNode BenchLazy.state ref 
+             BenchStream.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.solutionNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.solutionNode BenchLazy.state ref
+  val branch :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.searchNode BenchLazy.state ref 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.solutionNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.solutionNode BenchLazy.state ref
+  val optimize :
+      <BaseFct>.<resultStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.search
+       -> int -> <BaseFct>.<resultStr>.solutionNode BenchLazy.state ref
+  val solve :
+      (int * int)
+       * ((int * int) * (int * int)) <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> int -> int -> <BaseFct>.<resultStr>.solutionNode BenchLazy.state ref
+  val showPos : int * int -> string
+  val showSquare : (int * int) * (int * int) -> string
+  val initial :
+      int
+       -> int
+       -> int
+       -> int
+       -> (int * int)
+       * ((int * int) * (int * int)) <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+  val showConfiguration :
+      (int * int)
+       * ((int * int) * (int * int)) <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> string
+  val compute :
+      int
+       -> ((int * int)
+        * ((int * int) * (int * int)) <BaseFct>.<resultStr>.F.<returnStr>.node 
+          D.t) * <BaseFct>.<resultStr>.solutionNode BenchLazy.state ref
+  val showResult :
+      ((int * int)
+        * ((int * int) * (int * int)) <BaseFct>.<resultStr>.F.<returnStr>.node 
+          D.t) * <BaseFct>.<resultStr>.solutionNode BenchLazy.state ref
+       -> string
+  val validSolution :
+      ((int * int)
+        * ((int * int) * (int * int)) <BaseFct>.<resultStr>.F.<returnStr>.node 
+          D.t) * <BaseFct>.<resultStr>.solutionNode BenchLazy.state ref
+       -> bool
+  val one : int -> string
+  val calculate : int -> int -> string -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-driver.sml]
+[autoloading]
+[autoloading done]
+functor BenchIdaDriverFn(B: sig
+  val calculate : int -> int -> string -> string
+end) :
+sig
+  val read : string -> TextIO.vector
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/ida-tests.sml]
+PASS ida/original-case/0
+PASS ida/original-case/1
+PASS ida/original-case/2
+PASS ida/original-case/3
+PASS ida/original-case/4
+PASS ida/original-case/5
+PASS ida/original-case/6
+PASS ida/original-case/7
+PASS ida/original-case/8
+PASS ida/original-case/9
+PASS ida/original-case/10
+PASS ida/original-case/11
+PASS ida/original-case/12
+PASS ida/original-case/13
+PASS ida/original-case/14
+PASS ida/original-case/15
+PASS ida/original-case/16
+PASS ida/original-case/17
+PASS ida/original-case/18
+PASS ida/original-case/19
+PASS ida/original-case/20
+PASS ida/original-case/21
+PASS ida/original-case/22
+PASS ida/original-case/23
+PASS ida/original-case/24
+PASS ida/original-case/25
+PASS ida/original-case/26
+PASS ida/original-case/27
+PASS ida/original-case/28
+PASS ida/original-case/29
+PASS ida/original-case/30
+PASS ida/original-case/31
+PASS ida/original-case/32
+PASS ida/original-case/33
+PASS ida/original-case/34
+PASS ida/original-case/35
+PASS ida/original-case/36
+PASS ida/source-smoke-output
+PASS ida/source-normal-output
+PASS ida/source-reversed-random-prefix
+PASS ida/singleton-skips-board-path
+PASS ida/choose-prefers-first-solved-tie
+PASS ida/choose-unequal-skips-depth
+PASS ida/branch-cutoff-skips-pending-space
+PASS ida/collect-matches-both-solution-roots
+PASS ida/partition-shares-source-predicate
+PASS ida/finite-partition-shares-source-predicate
+PASS ida/negative-seed-absolute
+PASS ida/random-zero-prefix-unforced
+PASS ida/zero-repetitions
+PASS ida/consumer-validates-output
+PASS ida/incorrect-reference-rejected
+PASS ida/invalid-path-rejected
+PASS ida/original-case/0
+PASS ida/original-case/1
+PASS ida/original-case/2
+PASS ida/original-case/3
+PASS ida/original-case/4
+PASS ida/original-case/5
+PASS ida/original-case/6
+PASS ida/original-case/7
+PASS ida/original-case/8
+PASS ida/original-case/9
+PASS ida/original-case/10
+PASS ida/original-case/11
+PASS ida/original-case/12
+PASS ida/original-case/13
+PASS ida/original-case/14
+PASS ida/original-case/15
+PASS ida/original-case/16
+PASS ida/original-case/17
+PASS ida/original-case/18
+PASS ida/original-case/19
+PASS ida/original-case/20
+PASS ida/original-case/21
+PASS ida/original-case/22
+PASS ida/original-case/23
+PASS ida/original-case/24
+PASS ida/original-case/25
+PASS ida/original-case/26
+PASS ida/original-case/27
+PASS ida/original-case/28
+PASS ida/original-case/29
+PASS ida/original-case/30
+PASS ida/original-case/31
+PASS ida/original-case/32
+PASS ida/original-case/33
+PASS ida/original-case/34
+PASS ida/original-case/35
+PASS ida/original-case/36
+PASS ida/source-smoke-output
+PASS ida/source-normal-output
+PASS ida/source-reversed-random-prefix
+PASS ida/singleton-skips-board-path
+PASS ida/choose-prefers-first-solved-tie
+PASS ida/choose-unequal-skips-depth
+PASS ida/branch-cutoff-skips-pending-space
+PASS ida/collect-matches-both-solution-roots
+PASS ida/partition-shares-source-predicate
+PASS ida/finite-partition-shares-source-predicate
+PASS ida/negative-seed-absolute
+PASS ida/random-zero-prefix-unforced
+PASS ida/zero-repetitions
+PASS ida/consumer-validates-output
+PASS ida/incorrect-reference-rejected
+PASS ida/invalid-path-rejected
+PASS ida/lazy-finite-field-demand
+PASS ida/strict-finite-field-demand
+functor IdaTestsFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure B : <sig>
+  structure Driver : <sig>
+  structure F : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  type pos
+  type square
+  type board
+  type searchNode
+  type search
+  type solutionNode
+  type solution
+  val delay : (unit -> 'a) -> 'a BenchLazy.state ref
+  val ready : 'a -> 'a BenchLazy.state ref
+  val manhattan : int * int -> int * int -> int
+  val splitFinite :
+      ('a -> bool)
+       -> 'a <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+       -> ('a <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+            * 'a <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t) 
+           BenchLazy.state ref
+  val select :
+      int * int
+       -> ((int * int) * 'a) <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+       -> (((int * int) * 'a) <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+            * ((int * int) * 'a) <BaseFct>.<resultStr>.B.<returnStr>.F.node 
+              D.t) BenchLazy.state ref
+  val goal :
+      int
+       -> int
+       -> (int * int)
+       * ((int * int) * (int * int)) 
+           <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+  val random : int -> int BenchStream.node BenchLazy.delay
+  val reversedPrefix :
+      int -> 'a list -> 'a BenchStream.node BenchLazy.delay -> 'a list
+  val rotate :
+      int
+       -> 'a <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+       -> 'a <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+  val shuffle :
+      (int * int)
+       * ((int * int) * 'a) <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+       -> int
+       -> int BenchStream.node BenchLazy.delay
+       -> (int * int)
+       * ((int * int) * 'a) <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+  val bound :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> int
+  val depth :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> int
+  val upper :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> int
+  val singleton :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> bool
+  val board :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.board BenchLazy.delay
+  val path :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.pos BenchStream.stream
+  val movable :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.square 
+         <BaseFct>.<resultStr>.B.<returnStr>.F.seq
+  val choose :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+  val divide :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref 
+           BenchStream.node BenchLazy.delay
+  val forcedCheck :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+  val solutionSpace :
+      <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.search
+  val partitions :
+      <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+       -> int
+  val collect :
+      <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+  val split :
+      ('a -> bool)
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+       * 'a BenchStream.node BenchLazy.delay
+  val foldChoose :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+  val prune :
+      int
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> bool
+  val parallelBranch :
+      int
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref 
+             BenchStream.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+  val branch :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+  val optimize :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.search
+       -> int
+       -> <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+  val solve :
+      (int * int)
+       * ((int * int) * (int * int)) 
+           <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+       -> int
+       -> int
+       -> <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+  val showPos : int * int -> string
+  val showSquare : (int * int) * (int * int) -> string
+  val initial :
+      int
+       -> int
+       -> int
+       -> int
+       -> (int * int)
+       * ((int * int) * (int * int)) 
+           <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+  val showConfiguration :
+      (int * int)
+       * ((int * int) * (int * int)) 
+           <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+       -> string
+  val compute :
+      int
+       -> ((int * int)
+        * ((int * int) * (int * int)) 
+            <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t)
+       * <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+  val showResult :
+      ((int * int)
+        * ((int * int) * (int * int)) 
+            <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t)
+       * <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+       -> string
+  val validSolution :
+      ((int * int)
+        * ((int * int) * (int * int)) 
+            <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t)
+       * <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+       -> bool
+  val one : int -> string
+  val calculate : int -> int -> string -> string
+  val read : string -> TextIO.vector
+  val base : string
+  val check : string -> (unit -> bool) -> unit
+  val showCase : int * int * int * int -> string
+end
+structure NeedIdaTests : sig
+  structure B : <sig>
+  structure Driver : <sig>
+  structure F : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  type pos = int * int
+  type square = pos * pos
+  type board = square F.seq * square F.seq
+  datatype searchNode
+    = Search of int BenchLazy.delay * int BenchLazy.delay
+                 * <BaseFct>.<resultStr>.B.<returnStr>.board BenchLazy.delay
+                 * <BaseFct>.<resultStr>.B.<returnStr>.pos BenchStream.stream
+  type search = searchNode BenchLazy.delay
+  datatype solutionNode
+    = Solution of <BaseFct>.<resultStr>.B.<returnStr>.search
+                   * int BenchLazy.delay
+  type solution = solutionNode BenchLazy.delay
+  val delay : (unit -> 'a) -> 'a BenchLazy.state ref
+  val ready : 'a -> 'a BenchLazy.state ref
+  val manhattan : int * int -> int * int -> int
+  val splitFinite :
+      ('a -> bool)
+       -> 'a <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+       -> ('a <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+            * 'a <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t) 
+           BenchLazy.state ref
+  val select :
+      int * int
+       -> ((int * int) * 'a) <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+       -> (((int * int) * 'a) <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+            * ((int * int) * 'a) <BaseFct>.<resultStr>.B.<returnStr>.F.node 
+              D.t) BenchLazy.state ref
+  val goal :
+      int
+       -> int
+       -> (int * int)
+       * ((int * int) * (int * int)) 
+           <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+  val random : int -> int BenchStream.node BenchLazy.delay
+  val reversedPrefix :
+      int -> 'a list -> 'a BenchStream.node BenchLazy.delay -> 'a list
+  val rotate :
+      int
+       -> 'a <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+       -> 'a <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+  val shuffle :
+      (int * int)
+       * ((int * int) * 'a) <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+       -> int
+       -> int BenchStream.node BenchLazy.delay
+       -> (int * int)
+       * ((int * int) * 'a) <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+  val bound :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> int
+  val depth :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> int
+  val upper :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> int
+  val singleton :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> bool
+  val board :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.board BenchLazy.delay
+  val path :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.pos BenchStream.stream
+  val movable :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.square 
+         <BaseFct>.<resultStr>.B.<returnStr>.F.seq
+  val choose :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+  val divide :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref 
+           BenchStream.node BenchLazy.delay
+  val forcedCheck :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+  val solutionSpace :
+      <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.search
+  val partitions :
+      <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+       -> int
+  val collect :
+      <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+  val split :
+      ('a -> bool)
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+       * 'a BenchStream.node BenchLazy.delay
+  val foldChoose :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+  val prune :
+      int
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> bool
+  val parallelBranch :
+      int
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref 
+             BenchStream.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+  val branch :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+  val optimize :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.search
+       -> int
+       -> <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+  val solve :
+      (int * int)
+       * ((int * int) * (int * int)) 
+           <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+       -> int
+       -> int
+       -> <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+  val showPos : int * int -> string
+  val showSquare : (int * int) * (int * int) -> string
+  val initial :
+      int
+       -> int
+       -> int
+       -> int
+       -> (int * int)
+       * ((int * int) * (int * int)) 
+           <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+  val showConfiguration :
+      (int * int)
+       * ((int * int) * (int * int)) 
+           <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+       -> string
+  val compute :
+      int
+       -> ((int * int)
+        * ((int * int) * (int * int)) 
+            <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t)
+       * <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+  val showResult :
+      ((int * int)
+        * ((int * int) * (int * int)) 
+            <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t)
+       * <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+       -> string
+  val validSolution :
+      ((int * int)
+        * ((int * int) * (int * int)) 
+            <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t)
+       * <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+       -> bool
+  val one : int -> string
+  val calculate : int -> int -> string -> string
+  val read : string -> TextIO.vector
+  val base : string
+  val check : string -> (unit -> bool) -> unit
+  val showCase : int * int * int * int -> string
+end
+structure StrictIdaTests : sig
+  structure B : <sig>
+  structure Driver : <sig>
+  structure F : <sig>
+  structure L : <sig>
+  structure S : <sig>
+  type pos = int * int
+  type square = pos * pos
+  type board = square F.seq * square F.seq
+  datatype searchNode
+    = Search of int BenchLazy.delay * int BenchLazy.delay
+                 * <BaseFct>.<resultStr>.B.<returnStr>.board BenchLazy.delay
+                 * <BaseFct>.<resultStr>.B.<returnStr>.pos BenchStream.stream
+  type search = searchNode BenchLazy.delay
+  datatype solutionNode
+    = Solution of <BaseFct>.<resultStr>.B.<returnStr>.search
+                   * int BenchLazy.delay
+  type solution = solutionNode BenchLazy.delay
+  val delay : (unit -> 'a) -> 'a BenchLazy.state ref
+  val ready : 'a -> 'a BenchLazy.state ref
+  val manhattan : int * int -> int * int -> int
+  val splitFinite :
+      ('a -> bool)
+       -> 'a <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+       -> ('a <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+            * 'a <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t) 
+           BenchLazy.state ref
+  val select :
+      int * int
+       -> ((int * int) * 'a) <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+       -> (((int * int) * 'a) <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+            * ((int * int) * 'a) <BaseFct>.<resultStr>.B.<returnStr>.F.node 
+              D.t) BenchLazy.state ref
+  val goal :
+      int
+       -> int
+       -> (int * int)
+       * ((int * int) * (int * int)) 
+           <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+  val random : int -> int BenchStream.node BenchLazy.delay
+  val reversedPrefix :
+      int -> 'a list -> 'a BenchStream.node BenchLazy.delay -> 'a list
+  val rotate :
+      int
+       -> 'a <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+       -> 'a <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+  val shuffle :
+      (int * int)
+       * ((int * int) * 'a) <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+       -> int
+       -> int BenchStream.node BenchLazy.delay
+       -> (int * int)
+       * ((int * int) * 'a) <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+  val bound :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> int
+  val depth :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> int
+  val upper :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> int
+  val singleton :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> bool
+  val board :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.board BenchLazy.delay
+  val path :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.pos BenchStream.stream
+  val movable :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.square 
+         <BaseFct>.<resultStr>.B.<returnStr>.F.seq
+  val choose :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+  val divide :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref 
+           BenchStream.node BenchLazy.delay
+  val forcedCheck :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+  val solutionSpace :
+      <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.search
+  val partitions :
+      <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+       -> int
+  val collect :
+      <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+  val split :
+      ('a -> bool)
+       -> 'a BenchStream.node BenchLazy.delay
+       -> 'a BenchStream.node BenchLazy.delay
+       * 'a BenchStream.node BenchLazy.delay
+  val foldChoose :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+  val prune :
+      int
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> bool
+  val parallelBranch :
+      int
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref 
+             BenchStream.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+  val branch :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref 
+           BenchStream.node BenchLazy.delay
+       -> <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+  val optimize :
+      <BaseFct>.<resultStr>.B.<returnStr>.searchNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.B.<returnStr>.search
+       -> int
+       -> <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+  val solve :
+      (int * int)
+       * ((int * int) * (int * int)) 
+           <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+       -> int
+       -> int
+       -> <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+  val showPos : int * int -> string
+  val showSquare : (int * int) * (int * int) -> string
+  val initial :
+      int
+       -> int
+       -> int
+       -> int
+       -> (int * int)
+       * ((int * int) * (int * int)) 
+           <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+  val showConfiguration :
+      (int * int)
+       * ((int * int) * (int * int)) 
+           <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t
+       -> string
+  val compute :
+      int
+       -> ((int * int)
+        * ((int * int) * (int * int)) 
+            <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t)
+       * <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+  val showResult :
+      ((int * int)
+        * ((int * int) * (int * int)) 
+            <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t)
+       * <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+       -> string
+  val validSolution :
+      ((int * int)
+        * ((int * int) * (int * int)) 
+            <BaseFct>.<resultStr>.B.<returnStr>.F.node D.t)
+       * <BaseFct>.<resultStr>.B.<returnStr>.solutionNode BenchLazy.state ref
+       -> bool
+  val one : int -> string
+  val calculate : int -> int -> string -> string
+  val read : string -> TextIO.vector
+  val base : string
+  val check : string -> (unit -> bool) -> unit
+  val showCase : int * int * int * int -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 108 checks, 0 failed

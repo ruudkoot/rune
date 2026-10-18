@@ -1,0 +1,5 @@
+COUNT unbudgeted map_fold normal rune
+COUNT unbudgeted map_fold normal rune:opt
+COUNT unbudgeted map_fold normal rune:new
+COUNT unbudgeted map_fold normal rune:jit
+COUNT comparisons agree

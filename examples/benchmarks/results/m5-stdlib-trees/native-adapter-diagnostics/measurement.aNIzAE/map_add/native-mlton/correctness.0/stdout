@@ -1,0 +1,4 @@
+RESULT 2
+PASS map_add
+SAMPLE 1 0.000002000
+SUMMARY 1 checks, 0 failed

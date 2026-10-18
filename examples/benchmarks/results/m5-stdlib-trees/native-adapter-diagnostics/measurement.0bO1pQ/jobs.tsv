@@ -1,0 +1,1 @@
+map_remove	30	1048576	shared/input.sml shared/ocaml-stdlib-tree-map.sml shared/ocaml-stdlib-tree-set.sml shared/ocaml-stdlib-tree-program.sml map_remove/benchmark.sml shared/main.sml	1	map_remove/smoke.expected	-

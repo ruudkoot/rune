@@ -1,0 +1,1 @@
+map_find	600	4194304	shared/input.sml shared/ocaml-stdlib-tree-map.sml shared/ocaml-stdlib-tree-set.sml shared/ocaml-stdlib-tree-program.sml map_find/benchmark.sml shared/main.sml	1000000	map_find/normal.expected	-

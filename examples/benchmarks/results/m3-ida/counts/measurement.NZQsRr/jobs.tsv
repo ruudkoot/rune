@@ -1,0 +1,1 @@
+ida-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/hartel-ida-finite.sml shared/hartel-ida-kernel.sml shared/hartel-ida-driver.sml ida-strict/benchmark.sml shared/main.sml	600 3 normal.reference	ida-strict/normal.expected	normal.reference

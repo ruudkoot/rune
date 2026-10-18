@@ -413,6 +413,19 @@ inventory entry.
 | [dom-lt](#dom-lt) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/dom-lt) | Compute and fully validate Lengauer–Tarjan dominators with a reviewed minimum-threshold repair and portable Patricia containers. |
 | [rewrite-lazy](#rewrite-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/rewrite) | Complete free-group rewrite rules and normalize repeated queries with lazy finite expression fields. |
 | [rewrite-strict](#rewrite-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/rewrite) | Complete free-group rewrite rules and normalize repeated queries with strict finite expression fields. |
+| [ida-lazy](#ida-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/ida) | Search deterministically shuffled sliding-tile puzzles with lazy finite tile lists and source branch bounds. |
+| [ida-strict](#ida-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/ida) | Search deterministically shuffled sliding-tile puzzles with strict finite tile lists and source branch bounds. |
+| [map_add](#map_add) | [Sandmark](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Build an integer map by inserting descending keys and values into an empty tree. |
+| [map_add_duplicate](#map_add_duplicate) | [Sandmark](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Insert each descending integer key twice, preserving unchanged duplicate paths. |
+| [map_find](#map_find) | [Sandmark](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Look up ascending keys in the fixed integer map, including keys beyond its range. |
+| [map_fold](#map_fold) | [Sandmark](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Fold keys, values and accumulator over the fixed ten-thousand-entry map. |
+| [map_for_all](#map_for_all) | [Sandmark](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Test the source bounds predicate over the fixed integer map. |
+| [map_iter](#map_iter) | [Sandmark](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Traverse the fixed integer map in order and invoke its callback for every binding. |
+| [map_map](#map_map) | [Sandmark](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Rebuild the fixed map while doubling each stored integer value. |
+| [map_remove](#map_remove) | [Sandmark](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Repeatedly remove the original baseline map minimum, including later absent-key attempts. |
+| [set_add_rem](#set_add_rem) | [Sandmark](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Add and immediately remove descending integer keys from a persistent set. |
+| [set_fold](#set_fold) | [Sandmark](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Sum the fixed thousand-entry integer set using the source in-order fold. |
+| [set_mem](#set_mem) | [Sandmark](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib) | Test ascending integer membership in the fixed thousand-entry set. |
 
 ## Running and interpreting checks
 
@@ -24380,3 +24393,1435 @@ and repeated-query optimization. These are source-based diagnostic hypotheses.
 Measurements must establish their actual costs; ratios alone do not identify
 a compiler or collector cause. Retain all samples and distinguish fresh runs
 from repeated execution with cached completion.
+
+## ida-lazy
+
+### Algorithm and workload
+
+Solve deterministically shuffled sliding-tile puzzles by the source
+iterative-deepening/branch-and-bound search. Retain Manhattan bounds, forced
+single moves, persistent movable/fixed tile lists, reversed hole histories,
+the source best-solution tie rule and its two-level branch partitioning.
+Do not substitute the independent breadth-first checker for the benchmark.
+
+### History, authorship and variants
+
+[The Hartel ida source](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/ida) is pinned at
+b7391df4540ac8b11b35e1b2e2c15819b5171798. No individual author or separate
+program notice is stated in its generated module; preserve the complete
+Main.hs, Makefile, FAST/NORM/SLOW fixtures and parent Fast2haskell shim.
+The collection name alone does not establish individual program attribution.
+No external dataset is required.
+
+Names ida-lazy and ida-strict distinguish the finite tile-list policy.
+Both are sequential ports of this pinned source: its sandwich helpers use
+the compatibility shim's no-op miraseq, not an active parallel primitive.
+No runtime/compiler prerequisite is introduced by preserving those helpers'
+sequential result computation and source constructor matching.
+
+### Translation and demand
+
+The lazy variant memoizes finite tile-list heads/spines and their field
+transformations; strict evaluates these finite lists when requested.
+Coordinate pairs and bounded numeric metadata are strict SML values. Search
+records, bounds, distances, board roots, solution fields, branch-control
+streams and hole histories retain explicit memoized delays in both variants.
+
+Preserve source reversed random-prefix consumption, list rotation and stable
+partition ordering. Shared delayed recursive partition pairs avoid testing each tile twice;
+retain the source paired-result structure rather than allocating a separate
+list of tagged classifications. Keep the source right-recursive total Manhattan distance rather
+than introducing a strict accumulator. The shim's fold annotations are no-ops;
+best-candidate folds defer their accumulator. Do not demand a branch entry
+before an already achieved cutoff, or calculate an unused pruned fold before
+the source sandwich branch. Collect matches both solution constructors before
+building its lazy best-state/count fields.
+
+All arithmetic fits signed 31-bit integers for these profiles. The generator
+is seed six with multiplier 4663 and modulus 46199, adding one after remainder.
+Its largest intermediate product fits that bound. A hundred random shifts are
+applied in the source's reversed generation order; no random-distribution or
+initial tile-order replacement is made. Every repetition computes a fresh
+configuration and search; no result cache across repetitions is introduced.
+Read/validate arguments and the result reference once outside the loop, replacing
+the original repeated getArgs lookup inside its IO repetition.
+
+### Inputs, checks and profiles
+
+Smoke selects one repetition at width two and height four, reducing FAST's
+1500 repetitions. Normal retains 600 repetitions at width three/height four;
+large retains 3000 at the same dimensions. Keep shuffle length 100, branch
+delta seven and worst bound 101. These are deterministic work bounds, not
+wall-clock searches. Source solutions report bound/partitions 12/13 for smoke
+and 22/994 for normal and large.
+
+Validate each original two-line result, including exact ordered shuffled tiles,
+against a reviewed original reference. Additionally replay the complete solution
+history, check adjacent legal moves and solved tile positions, and compare the
+move count with the final bound and zero residual distance. Return repetitions
+and checked source bytes instead of printing every repeated result. This
+additional checker has a separate list traversal cost; the kernel remains
+the original persistent list search. All checks are exact.
+
+Original GHC 9.4.7 matches the supplied FAST/NORM/SLOW fixtures. Export-only
+observers record 37 full configurations, bounds, partition counts and solution
+histories. An independent model checks ordered shuffles and all legal complete
+paths; independent breadth-first search verifies optimal lengths for 33 small
+cases. The twelve-tile normal optimum is an original-reference agreement, not
+an independently exhaustive breadth-first proof.
+
+The 108-check target covers both variants, source observations, reversed PRNG
+prefix, tie/cutoff/constructor demand, solved-state field avoidance, zero work,
+finite-list policy and incorrect-result rejection. Full final SML large
+repetitions remain unrecorded unless listed in validation. Private calibration
+and earlier demand refinements are development scopes, separate from final
+registered source identities and canonical checks.
+
+### Literature and diagnostic interpretation
+
+Hartel and Langendoen's 1993 collection paper supplies translated-workload
+context, not individual authorship evidence or measured claims about this port.
+The pinned program and shim establish the particular bound, tie, partition and
+evaluation rules. Exact original paths and independent checks support the
+recorded behavior.
+
+Investigate search-tree allocation, persistent list updates, lazy finite fields,
+shared classifications, higher-order candidate folds and demand at cutoffs.
+These are source-based hypotheses. Counts and timings must be interpreted in
+their recorded engine, instrumentation and fresh/repeated process modes; they
+do not by themselves identify a compiler or collector cause.
+
+## ida-strict
+
+### Algorithm and workload
+
+Solve deterministically shuffled sliding-tile puzzles by the source
+iterative-deepening/branch-and-bound search. Retain Manhattan bounds, forced
+single moves, persistent movable/fixed tile lists, reversed hole histories,
+the source best-solution tie rule and its two-level branch partitioning.
+Do not substitute the independent breadth-first checker for the benchmark.
+
+### History, authorship and variants
+
+[The Hartel ida source](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/ida) is pinned at
+b7391df4540ac8b11b35e1b2e2c15819b5171798. No individual author or separate
+program notice is stated in its generated module; preserve the complete
+Main.hs, Makefile, FAST/NORM/SLOW fixtures and parent Fast2haskell shim.
+The collection name alone does not establish individual program attribution.
+No external dataset is required.
+
+Names ida-lazy and ida-strict distinguish the finite tile-list policy.
+Both are sequential ports of this pinned source: its sandwich helpers use
+the compatibility shim's no-op miraseq, not an active parallel primitive.
+No runtime/compiler prerequisite is introduced by preserving those helpers'
+sequential result computation and source constructor matching.
+
+### Translation and demand
+
+The lazy variant memoizes finite tile-list heads/spines and their field
+transformations; strict evaluates these finite lists when requested.
+Coordinate pairs and bounded numeric metadata are strict SML values. Search
+records, bounds, distances, board roots, solution fields, branch-control
+streams and hole histories retain explicit memoized delays in both variants.
+
+Preserve source reversed random-prefix consumption, list rotation and stable
+partition ordering. Shared delayed recursive partition pairs avoid testing each tile twice;
+retain the source paired-result structure rather than allocating a separate
+list of tagged classifications. Keep the source right-recursive total Manhattan distance rather
+than introducing a strict accumulator. The shim's fold annotations are no-ops;
+best-candidate folds defer their accumulator. Do not demand a branch entry
+before an already achieved cutoff, or calculate an unused pruned fold before
+the source sandwich branch. Collect matches both solution constructors before
+building its lazy best-state/count fields.
+
+All arithmetic fits signed 31-bit integers for these profiles. The generator
+is seed six with multiplier 4663 and modulus 46199, adding one after remainder.
+Its largest intermediate product fits that bound. A hundred random shifts are
+applied in the source's reversed generation order; no random-distribution or
+initial tile-order replacement is made. Every repetition computes a fresh
+configuration and search; no result cache across repetitions is introduced.
+Read/validate arguments and the result reference once outside the loop, replacing
+the original repeated getArgs lookup inside its IO repetition.
+
+### Inputs, checks and profiles
+
+Smoke selects one repetition at width two and height four, reducing FAST's
+1500 repetitions. Normal retains 600 repetitions at width three/height four;
+large retains 3000 at the same dimensions. Keep shuffle length 100, branch
+delta seven and worst bound 101. These are deterministic work bounds, not
+wall-clock searches. Source solutions report bound/partitions 12/13 for smoke
+and 22/994 for normal and large.
+
+Validate each original two-line result, including exact ordered shuffled tiles,
+against a reviewed original reference. Additionally replay the complete solution
+history, check adjacent legal moves and solved tile positions, and compare the
+move count with the final bound and zero residual distance. Return repetitions
+and checked source bytes instead of printing every repeated result. This
+additional checker has a separate list traversal cost; the kernel remains
+the original persistent list search. All checks are exact.
+
+Original GHC 9.4.7 matches the supplied FAST/NORM/SLOW fixtures. Export-only
+observers record 37 full configurations, bounds, partition counts and solution
+histories. An independent model checks ordered shuffles and all legal complete
+paths; independent breadth-first search verifies optimal lengths for 33 small
+cases. The twelve-tile normal optimum is an original-reference agreement, not
+an independently exhaustive breadth-first proof.
+
+The 108-check target covers both variants, source observations, reversed PRNG
+prefix, tie/cutoff/constructor demand, solved-state field avoidance, zero work,
+finite-list policy and incorrect-result rejection. Full final SML large
+repetitions remain unrecorded unless listed in validation. Private calibration
+and earlier demand refinements are development scopes, separate from final
+registered source identities and canonical checks.
+
+### Literature and diagnostic interpretation
+
+Hartel and Langendoen's 1993 collection paper supplies translated-workload
+context, not individual authorship evidence or measured claims about this port.
+The pinned program and shim establish the particular bound, tie, partition and
+evaluation rules. Exact original paths and independent checks support the
+recorded behavior.
+
+Investigate search-tree allocation, persistent list updates, lazy finite fields,
+shared classifications, higher-order candidate folds and demand at cutoffs.
+These are source-based hypotheses. Counts and timings must be interpreted in
+their recorded engine, instrumentation and fresh/repeated process modes; they
+do not by themselves identify a compiler or collector cause.
+
+## map_add
+
+### Algorithm and workload
+
+Build an integer map by inserting descending keys and values into an empty tree.
+
+Retain the source assertion that key size is absent from the global baseline. Check every final ordered key/value and the cardinality.
+
+The source OCaml 4.14.1 library uses height-balanced persistent binary trees,
+with child heights differing by at most two. Preserve rotations, cached heights,
+ordered comparisons, unchanged paths and fold/traversal order. Maps and sets
+retain their distinct node payloads, rather than using one map representation
+for both.
+
+### History, variants and notices
+
+The benchmark is selector map_add in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Its Dune source notes adaptation from OCamlPro's benchmark
+repository; no individual benchmark author or separate notice is stated in the
+selected .ml/.inc files. Preserve those files and the suite LICENSE.md under
+map_iter/upstream. The suite notice and the separate OCaml library grant remain
+separate; do not infer identical licensing for the two components.
+Other selectors in this executable are separate workloads; they do not become
+duplicates merely because they share a library or baseline.
+
+The installed OCaml 4.14.1 map/set source snapshot is pinned independently by
+complete-file hashes in map_iter/DEPENDENCIES.json. The library modules credit Xavier
+Leroy and INRIA, copyright 1996, and declare LGPL 2.1 with the OCaml linking
+exception. Complete selected .ml/.mli files, full LGPL text and the distribution's
+full exception text are retained under map_iter/upstream-library. Benchmark and
+library authorship are distinct. No external dataset is required.
+
+### Translation and library adapters
+
+Port the active integer library operations in SML97. Invoke one ordered
+comparison adapter per visited node; Int.compare replaces the source integer
+Ord.compare implementation. Specialized integer keys/values replace the
+library's generic types. Higher-order iteration, folding, predicates and
+mapping callbacks remain. No compiler/runtime prerequisite is introduced.
+
+The portable code evaluates constructor arguments from left to right.
+This can change the allocation order of the two children in a double rotation
+relative to OCaml's argument evaluation; exact optimized allocation order is
+compiler-dependent. Explicit source let/sequence order remains in map, iter
+and fold. Tree-shape agreement establishes structure, rather than identical
+allocation lifetimes.
+
+Source physical-equality checks avoid rebuilding unchanged paths. Portable
+NONE/SOME change results preserve that decision and sharing; their temporary
+option allocation is an explicit representation cost. Do not use structural
+tree equality or substitute a different balanced-tree algorithm. Host compilers
+may optimize these temporary values differently.
+
+Preserve the map's source tail-recursive ascending association-list generator
+and global ten-thousand-entry baseline. The source fields remain global in the
+portable map wrapper; a compiler may change retention through whole-program
+analysis. Set construction remains inside each run, creating a thousand entries
+in descending order. Do not cache a per-run set or a rebuilt map result.
+
+Sys.opaque_identity has no claimed identical SML97 barrier. Add explicit result
+consumption, callback checks and full-content checks where the source ignored a
+result. This increases validation work; it does not establish identical costs
+to OCaml's runtime primitives or optimizer. The common SML sources are the
+standard compiler comparison.
+
+### Fixed profiles and result checks
+
+| Profile | Iterations | Published iterations | Expected digest |
+|---|---:|---:|---|
+| smoke | 1 | 1000000 | 2 |
+| normal | 100000 | 1000000 | 540D6AA0 |
+| large | 1000000 | 1000000 | D4B45240 |
+
+The tree sizes remain fixed upstream parameters. Normal iteration counts are
+selected explicitly for practical comparative runs, with reductions from the
+published run plan shown by the retained source/configuration records. Large
+is supplied only for selected selectors and uses the corresponding published
+count. Smoke membership cases cross the successful/unsuccessful lookup boundary.
+No universal tree-size argument replaces the source's iteration parameter.
+
+Source fold results, keys, values and iteration controls fit signed 31-bit
+integers in these profiles. The added aggregate digest uses explicit Word32
+modular addition; it is a consumer/check format, not a change to source kernel
+arithmetic. Check exact scalar results, expected booleans or full ordered
+contents and cardinalities on each relevant result. No floating-point tolerance
+is used, and incorrect contents cannot contribute measurements.
+
+Original-library observers agree with independent sorted-map/set models on
+78 operation sequences, including complete tree shapes and invariants.
+Instrumented source selectors agree with independent digest models at 44
+edge-count combinations and all 28 selected profiles. Observer callbacks use
+Obj only in the original OCaml reference process; the runnable SML programs
+require no FFI or representation inspection.
+
+The broader semantic target checks the recorded shapes, contents, balance,
+fold ordering and every selector at boundary counts. A deliberately swapped
+pair of map values has the same digest and is rejected by the full checker. Recorded configuration/
+profile checks are separate from private pilots. Full final SML large runs
+remain unrecorded unless listed explicitly in validation.
+
+### Literature and diagnostic interpretation
+
+The pinned library source establishes this particular balancing, identity and
+traversal policy. Sandmark's suite documentation supplies collection context.
+These source inspections and original/model observations support the port;
+they are not a newly claimed review of a balanced-tree paper.
+
+Investigate comparison specialization, persistent node allocation, cached
+heights, duplicate-path reuse, callback specialization, global baseline
+retention and the cost of explicit consumers. Treat these as source-based
+hypotheses until supported by compiler analysis or measurements. Report fresh
+and repeated modes separately and retain all samples and resource failures.
+
+## map_add_duplicate
+
+### Algorithm and workload
+
+Insert each descending integer key twice, preserving unchanged duplicate paths.
+
+The second insertion reuses the tree when its integer value is identical. Portable change flags retain that decision without traversing trees for equality.
+
+The source OCaml 4.14.1 library uses height-balanced persistent binary trees,
+with child heights differing by at most two. Preserve rotations, cached heights,
+ordered comparisons, unchanged paths and fold/traversal order. Maps and sets
+retain their distinct node payloads, rather than using one map representation
+for both.
+
+### History, variants and notices
+
+The benchmark is selector map_add_duplicate in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Its Dune source notes adaptation from OCamlPro's benchmark
+repository; no individual benchmark author or separate notice is stated in the
+selected .ml/.inc files. Preserve those files and the suite LICENSE.md under
+map_iter/upstream. The suite notice and the separate OCaml library grant remain
+separate; do not infer identical licensing for the two components.
+Other selectors in this executable are separate workloads; they do not become
+duplicates merely because they share a library or baseline.
+
+The installed OCaml 4.14.1 map/set source snapshot is pinned independently by
+complete-file hashes in map_iter/DEPENDENCIES.json. The library modules credit Xavier
+Leroy and INRIA, copyright 1996, and declare LGPL 2.1 with the OCaml linking
+exception. Complete selected .ml/.mli files, full LGPL text and the distribution's
+full exception text are retained under map_iter/upstream-library. Benchmark and
+library authorship are distinct. No external dataset is required.
+
+### Translation and library adapters
+
+Port the active integer library operations in SML97. Invoke one ordered
+comparison adapter per visited node; Int.compare replaces the source integer
+Ord.compare implementation. Specialized integer keys/values replace the
+library's generic types. Higher-order iteration, folding, predicates and
+mapping callbacks remain. No compiler/runtime prerequisite is introduced.
+
+The portable code evaluates constructor arguments from left to right.
+This can change the allocation order of the two children in a double rotation
+relative to OCaml's argument evaluation; exact optimized allocation order is
+compiler-dependent. Explicit source let/sequence order remains in map, iter
+and fold. Tree-shape agreement establishes structure, rather than identical
+allocation lifetimes.
+
+Source physical-equality checks avoid rebuilding unchanged paths. Portable
+NONE/SOME change results preserve that decision and sharing; their temporary
+option allocation is an explicit representation cost. Do not use structural
+tree equality or substitute a different balanced-tree algorithm. Host compilers
+may optimize these temporary values differently.
+
+Preserve the map's source tail-recursive ascending association-list generator
+and global ten-thousand-entry baseline. The source fields remain global in the
+portable map wrapper; a compiler may change retention through whole-program
+analysis. Set construction remains inside each run, creating a thousand entries
+in descending order. Do not cache a per-run set or a rebuilt map result.
+
+Sys.opaque_identity has no claimed identical SML97 barrier. Add explicit result
+consumption, callback checks and full-content checks where the source ignored a
+result. This increases validation work; it does not establish identical costs
+to OCaml's runtime primitives or optimizer. The common SML sources are the
+standard compiler comparison.
+
+### Fixed profiles and result checks
+
+| Profile | Iterations | Published iterations | Expected digest |
+|---|---:|---:|---|
+| smoke | 1 | 1000000 | 2 |
+| normal | 100000 | 1000000 | 540D6AA0 |
+| large | 1000000 | 1000000 | D4B45240 |
+
+The tree sizes remain fixed upstream parameters. Normal iteration counts are
+selected explicitly for practical comparative runs, with reductions from the
+published run plan shown by the retained source/configuration records. Large
+is supplied only for selected selectors and uses the corresponding published
+count. Smoke membership cases cross the successful/unsuccessful lookup boundary.
+No universal tree-size argument replaces the source's iteration parameter.
+
+Source fold results, keys, values and iteration controls fit signed 31-bit
+integers in these profiles. The added aggregate digest uses explicit Word32
+modular addition; it is a consumer/check format, not a change to source kernel
+arithmetic. Check exact scalar results, expected booleans or full ordered
+contents and cardinalities on each relevant result. No floating-point tolerance
+is used, and incorrect contents cannot contribute measurements.
+
+Original-library observers agree with independent sorted-map/set models on
+78 operation sequences, including complete tree shapes and invariants.
+Instrumented source selectors agree with independent digest models at 44
+edge-count combinations and all 28 selected profiles. Observer callbacks use
+Obj only in the original OCaml reference process; the runnable SML programs
+require no FFI or representation inspection.
+
+The broader semantic target checks the recorded shapes, contents, balance,
+fold ordering and every selector at boundary counts. A deliberately swapped
+pair of map values has the same digest and is rejected by the full checker. Recorded configuration/
+profile checks are separate from private pilots. Full final SML large runs
+remain unrecorded unless listed explicitly in validation.
+
+### Literature and diagnostic interpretation
+
+The pinned library source establishes this particular balancing, identity and
+traversal policy. Sandmark's suite documentation supplies collection context.
+These source inspections and original/model observations support the port;
+they are not a newly claimed review of a balanced-tree paper.
+
+Investigate comparison specialization, persistent node allocation, cached
+heights, duplicate-path reuse, callback specialization, global baseline
+retention and the cost of explicit consumers. Treat these as source-based
+hypotheses until supported by compiler analysis or measurements. Report fresh
+and repeated modes separately and retain all samples and resource failures.
+
+## map_find
+
+### Algorithm and workload
+
+Look up ascending keys in the fixed integer map, including keys beyond its range.
+
+The source starts at one, so key zero is not queried; exactly min(iterations,9999) lookups succeed. Smoke crosses the present/absent boundary.
+
+The source OCaml 4.14.1 library uses height-balanced persistent binary trees,
+with child heights differing by at most two. Preserve rotations, cached heights,
+ordered comparisons, unchanged paths and fold/traversal order. Maps and sets
+retain their distinct node payloads, rather than using one map representation
+for both.
+
+### History, variants and notices
+
+The benchmark is selector map_find in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Its Dune source notes adaptation from OCamlPro's benchmark
+repository; no individual benchmark author or separate notice is stated in the
+selected .ml/.inc files. Preserve those files and the suite LICENSE.md under
+map_iter/upstream. The suite notice and the separate OCaml library grant remain
+separate; do not infer identical licensing for the two components.
+Other selectors in this executable are separate workloads; they do not become
+duplicates merely because they share a library or baseline.
+
+The installed OCaml 4.14.1 map/set source snapshot is pinned independently by
+complete-file hashes in map_iter/DEPENDENCIES.json. The library modules credit Xavier
+Leroy and INRIA, copyright 1996, and declare LGPL 2.1 with the OCaml linking
+exception. Complete selected .ml/.mli files, full LGPL text and the distribution's
+full exception text are retained under map_iter/upstream-library. Benchmark and
+library authorship are distinct. No external dataset is required.
+
+### Translation and library adapters
+
+Port the active integer library operations in SML97. Invoke one ordered
+comparison adapter per visited node; Int.compare replaces the source integer
+Ord.compare implementation. Specialized integer keys/values replace the
+library's generic types. Higher-order iteration, folding, predicates and
+mapping callbacks remain. No compiler/runtime prerequisite is introduced.
+
+The portable code evaluates constructor arguments from left to right.
+This can change the allocation order of the two children in a double rotation
+relative to OCaml's argument evaluation; exact optimized allocation order is
+compiler-dependent. Explicit source let/sequence order remains in map, iter
+and fold. Tree-shape agreement establishes structure, rather than identical
+allocation lifetimes.
+
+Source physical-equality checks avoid rebuilding unchanged paths. Portable
+NONE/SOME change results preserve that decision and sharing; their temporary
+option allocation is an explicit representation cost. Do not use structural
+tree equality or substitute a different balanced-tree algorithm. Host compilers
+may optimize these temporary values differently.
+
+Preserve the map's source tail-recursive ascending association-list generator
+and global ten-thousand-entry baseline. The source fields remain global in the
+portable map wrapper; a compiler may change retention through whole-program
+analysis. Set construction remains inside each run, creating a thousand entries
+in descending order. Do not cache a per-run set or a rebuilt map result.
+
+Sys.opaque_identity has no claimed identical SML97 barrier. Add explicit result
+consumption, callback checks and full-content checks where the source ignored a
+result. This increases validation work; it does not establish identical costs
+to OCaml's runtime primitives or optimizer. The common SML sources are the
+standard compiler comparison.
+
+### Fixed profiles and result checks
+
+| Profile | Iterations | Published iterations | Expected digest |
+|---|---:|---:|---|
+| smoke | 10001 | 1000000 | 270F |
+| normal | 1000000 | 1000000 | 270F |
+
+The tree sizes remain fixed upstream parameters. Normal iteration counts are
+selected explicitly for practical comparative runs, with reductions from the
+published run plan shown by the retained source/configuration records. Large
+is supplied only for selected selectors and uses the corresponding published
+count. Smoke membership cases cross the successful/unsuccessful lookup boundary.
+No universal tree-size argument replaces the source's iteration parameter.
+
+Source fold results, keys, values and iteration controls fit signed 31-bit
+integers in these profiles. The added aggregate digest uses explicit Word32
+modular addition; it is a consumer/check format, not a change to source kernel
+arithmetic. Check exact scalar results, expected booleans or full ordered
+contents and cardinalities on each relevant result. No floating-point tolerance
+is used, and incorrect contents cannot contribute measurements.
+
+Original-library observers agree with independent sorted-map/set models on
+78 operation sequences, including complete tree shapes and invariants.
+Instrumented source selectors agree with independent digest models at 44
+edge-count combinations and all 28 selected profiles. Observer callbacks use
+Obj only in the original OCaml reference process; the runnable SML programs
+require no FFI or representation inspection.
+
+The broader semantic target checks the recorded shapes, contents, balance,
+fold ordering and every selector at boundary counts. A deliberately swapped
+pair of map values has the same digest and is rejected by the full checker. Recorded configuration/
+profile checks are separate from private pilots. Full final SML large runs
+remain unrecorded unless listed explicitly in validation.
+
+### Literature and diagnostic interpretation
+
+The pinned library source establishes this particular balancing, identity and
+traversal policy. Sandmark's suite documentation supplies collection context.
+These source inspections and original/model observations support the port;
+they are not a newly claimed review of a balanced-tree paper.
+
+Investigate comparison specialization, persistent node allocation, cached
+heights, duplicate-path reuse, callback specialization, global baseline
+retention and the cost of explicit consumers. Treat these as source-based
+hypotheses until supported by compiler analysis or measurements. Report fresh
+and repeated modes separately and retain all samples and resource failures.
+
+## map_fold
+
+### Algorithm and workload
+
+Fold keys, values and accumulator over the fixed ten-thousand-entry map.
+
+Retain the source callback argument order and in-order fold; its scalar result is 99990000 on every repetition.
+
+The source OCaml 4.14.1 library uses height-balanced persistent binary trees,
+with child heights differing by at most two. Preserve rotations, cached heights,
+ordered comparisons, unchanged paths and fold/traversal order. Maps and sets
+retain their distinct node payloads, rather than using one map representation
+for both.
+
+### History, variants and notices
+
+The benchmark is selector map_fold in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Its Dune source notes adaptation from OCamlPro's benchmark
+repository; no individual benchmark author or separate notice is stated in the
+selected .ml/.inc files. Preserve those files and the suite LICENSE.md under
+map_iter/upstream. The suite notice and the separate OCaml library grant remain
+separate; do not infer identical licensing for the two components.
+Other selectors in this executable are separate workloads; they do not become
+duplicates merely because they share a library or baseline.
+
+The installed OCaml 4.14.1 map/set source snapshot is pinned independently by
+complete-file hashes in map_iter/DEPENDENCIES.json. The library modules credit Xavier
+Leroy and INRIA, copyright 1996, and declare LGPL 2.1 with the OCaml linking
+exception. Complete selected .ml/.mli files, full LGPL text and the distribution's
+full exception text are retained under map_iter/upstream-library. Benchmark and
+library authorship are distinct. No external dataset is required.
+
+### Translation and library adapters
+
+Port the active integer library operations in SML97. Invoke one ordered
+comparison adapter per visited node; Int.compare replaces the source integer
+Ord.compare implementation. Specialized integer keys/values replace the
+library's generic types. Higher-order iteration, folding, predicates and
+mapping callbacks remain. No compiler/runtime prerequisite is introduced.
+
+The portable code evaluates constructor arguments from left to right.
+This can change the allocation order of the two children in a double rotation
+relative to OCaml's argument evaluation; exact optimized allocation order is
+compiler-dependent. Explicit source let/sequence order remains in map, iter
+and fold. Tree-shape agreement establishes structure, rather than identical
+allocation lifetimes.
+
+Source physical-equality checks avoid rebuilding unchanged paths. Portable
+NONE/SOME change results preserve that decision and sharing; their temporary
+option allocation is an explicit representation cost. Do not use structural
+tree equality or substitute a different balanced-tree algorithm. Host compilers
+may optimize these temporary values differently.
+
+Preserve the map's source tail-recursive ascending association-list generator
+and global ten-thousand-entry baseline. The source fields remain global in the
+portable map wrapper; a compiler may change retention through whole-program
+analysis. Set construction remains inside each run, creating a thousand entries
+in descending order. Do not cache a per-run set or a rebuilt map result.
+
+Sys.opaque_identity has no claimed identical SML97 barrier. Add explicit result
+consumption, callback checks and full-content checks where the source ignored a
+result. This increases validation work; it does not establish identical costs
+to OCaml's runtime primitives or optimizer. The common SML sources are the
+standard compiler comparison.
+
+### Fixed profiles and result checks
+
+| Profile | Iterations | Published iterations | Expected digest |
+|---|---:|---:|---|
+| smoke | 1 | 10000 | 5F5B9F0 |
+| normal | 1000 | 10000 | 47DE5180 |
+
+The tree sizes remain fixed upstream parameters. Normal iteration counts are
+selected explicitly for practical comparative runs, with reductions from the
+published run plan shown by the retained source/configuration records. Large
+is supplied only for selected selectors and uses the corresponding published
+count. Smoke membership cases cross the successful/unsuccessful lookup boundary.
+No universal tree-size argument replaces the source's iteration parameter.
+
+Source fold results, keys, values and iteration controls fit signed 31-bit
+integers in these profiles. The added aggregate digest uses explicit Word32
+modular addition; it is a consumer/check format, not a change to source kernel
+arithmetic. Check exact scalar results, expected booleans or full ordered
+contents and cardinalities on each relevant result. No floating-point tolerance
+is used, and incorrect contents cannot contribute measurements.
+
+Original-library observers agree with independent sorted-map/set models on
+78 operation sequences, including complete tree shapes and invariants.
+Instrumented source selectors agree with independent digest models at 44
+edge-count combinations and all 28 selected profiles. Observer callbacks use
+Obj only in the original OCaml reference process; the runnable SML programs
+require no FFI or representation inspection.
+
+The broader semantic target checks the recorded shapes, contents, balance,
+fold ordering and every selector at boundary counts. A deliberately swapped
+pair of map values has the same digest and is rejected by the full checker. Recorded configuration/
+profile checks are separate from private pilots. Full final SML large runs
+remain unrecorded unless listed explicitly in validation.
+
+### Literature and diagnostic interpretation
+
+The pinned library source establishes this particular balancing, identity and
+traversal policy. Sandmark's suite documentation supplies collection context.
+These source inspections and original/model observations support the port;
+they are not a newly claimed review of a balanced-tree paper.
+
+Investigate comparison specialization, persistent node allocation, cached
+heights, duplicate-path reuse, callback specialization, global baseline
+retention and the cost of explicit consumers. Treat these as source-based
+hypotheses until supported by compiler analysis or measurements. Report fresh
+and repeated modes separately and retain all samples and resource failures.
+
+## map_for_all
+
+### Algorithm and workload
+
+Test the source bounds predicate over the fixed integer map.
+
+Preserve root-left-right short-circuit traversal and the predicate key<size and value<size. The deterministic baseline passes every repetition.
+
+The source OCaml 4.14.1 library uses height-balanced persistent binary trees,
+with child heights differing by at most two. Preserve rotations, cached heights,
+ordered comparisons, unchanged paths and fold/traversal order. Maps and sets
+retain their distinct node payloads, rather than using one map representation
+for both.
+
+### History, variants and notices
+
+The benchmark is selector map_for_all in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Its Dune source notes adaptation from OCamlPro's benchmark
+repository; no individual benchmark author or separate notice is stated in the
+selected .ml/.inc files. Preserve those files and the suite LICENSE.md under
+map_iter/upstream. The suite notice and the separate OCaml library grant remain
+separate; do not infer identical licensing for the two components.
+Other selectors in this executable are separate workloads; they do not become
+duplicates merely because they share a library or baseline.
+
+The installed OCaml 4.14.1 map/set source snapshot is pinned independently by
+complete-file hashes in map_iter/DEPENDENCIES.json. The library modules credit Xavier
+Leroy and INRIA, copyright 1996, and declare LGPL 2.1 with the OCaml linking
+exception. Complete selected .ml/.mli files, full LGPL text and the distribution's
+full exception text are retained under map_iter/upstream-library. Benchmark and
+library authorship are distinct. No external dataset is required.
+
+### Translation and library adapters
+
+Port the active integer library operations in SML97. Invoke one ordered
+comparison adapter per visited node; Int.compare replaces the source integer
+Ord.compare implementation. Specialized integer keys/values replace the
+library's generic types. Higher-order iteration, folding, predicates and
+mapping callbacks remain. No compiler/runtime prerequisite is introduced.
+
+The portable code evaluates constructor arguments from left to right.
+This can change the allocation order of the two children in a double rotation
+relative to OCaml's argument evaluation; exact optimized allocation order is
+compiler-dependent. Explicit source let/sequence order remains in map, iter
+and fold. Tree-shape agreement establishes structure, rather than identical
+allocation lifetimes.
+
+Source physical-equality checks avoid rebuilding unchanged paths. Portable
+NONE/SOME change results preserve that decision and sharing; their temporary
+option allocation is an explicit representation cost. Do not use structural
+tree equality or substitute a different balanced-tree algorithm. Host compilers
+may optimize these temporary values differently.
+
+Preserve the map's source tail-recursive ascending association-list generator
+and global ten-thousand-entry baseline. The source fields remain global in the
+portable map wrapper; a compiler may change retention through whole-program
+analysis. Set construction remains inside each run, creating a thousand entries
+in descending order. Do not cache a per-run set or a rebuilt map result.
+
+Sys.opaque_identity has no claimed identical SML97 barrier. Add explicit result
+consumption, callback checks and full-content checks where the source ignored a
+result. This increases validation work; it does not establish identical costs
+to OCaml's runtime primitives or optimizer. The common SML sources are the
+standard compiler comparison.
+
+### Fixed profiles and result checks
+
+| Profile | Iterations | Published iterations | Expected digest |
+|---|---:|---:|---|
+| smoke | 1 | 10000 | 1 |
+| normal | 1000 | 10000 | 3E8 |
+
+The tree sizes remain fixed upstream parameters. Normal iteration counts are
+selected explicitly for practical comparative runs, with reductions from the
+published run plan shown by the retained source/configuration records. Large
+is supplied only for selected selectors and uses the corresponding published
+count. Smoke membership cases cross the successful/unsuccessful lookup boundary.
+No universal tree-size argument replaces the source's iteration parameter.
+
+Source fold results, keys, values and iteration controls fit signed 31-bit
+integers in these profiles. The added aggregate digest uses explicit Word32
+modular addition; it is a consumer/check format, not a change to source kernel
+arithmetic. Check exact scalar results, expected booleans or full ordered
+contents and cardinalities on each relevant result. No floating-point tolerance
+is used, and incorrect contents cannot contribute measurements.
+
+Original-library observers agree with independent sorted-map/set models on
+78 operation sequences, including complete tree shapes and invariants.
+Instrumented source selectors agree with independent digest models at 44
+edge-count combinations and all 28 selected profiles. Observer callbacks use
+Obj only in the original OCaml reference process; the runnable SML programs
+require no FFI or representation inspection.
+
+The broader semantic target checks the recorded shapes, contents, balance,
+fold ordering and every selector at boundary counts. A deliberately swapped
+pair of map values has the same digest and is rejected by the full checker. Recorded configuration/
+profile checks are separate from private pilots. Full final SML large runs
+remain unrecorded unless listed explicitly in validation.
+
+### Literature and diagnostic interpretation
+
+The pinned library source establishes this particular balancing, identity and
+traversal policy. Sandmark's suite documentation supplies collection context.
+These source inspections and original/model observations support the port;
+they are not a newly claimed review of a balanced-tree paper.
+
+Investigate comparison specialization, persistent node allocation, cached
+heights, duplicate-path reuse, callback specialization, global baseline
+retention and the cost of explicit consumers. Treat these as source-based
+hypotheses until supported by compiler analysis or measurements. Report fresh
+and repeated modes separately and retain all samples and resource failures.
+
+## map_iter
+
+### Algorithm and workload
+
+Traverse the fixed integer map in order and invoke its callback for every binding.
+
+The source callback returns opaque unit. The portable consumer counts callbacks and checks key/value agreement; this adds work to prevent an unchecked traversal from supplying a measurement.
+
+The source OCaml 4.14.1 library uses height-balanced persistent binary trees,
+with child heights differing by at most two. Preserve rotations, cached heights,
+ordered comparisons, unchanged paths and fold/traversal order. Maps and sets
+retain their distinct node payloads, rather than using one map representation
+for both.
+
+### History, variants and notices
+
+The benchmark is selector map_iter in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Its Dune source notes adaptation from OCamlPro's benchmark
+repository; no individual benchmark author or separate notice is stated in the
+selected .ml/.inc files. Preserve those files and the suite LICENSE.md under
+map_iter/upstream. The suite notice and the separate OCaml library grant remain
+separate; do not infer identical licensing for the two components.
+Other selectors in this executable are separate workloads; they do not become
+duplicates merely because they share a library or baseline.
+
+The installed OCaml 4.14.1 map/set source snapshot is pinned independently by
+complete-file hashes in map_iter/DEPENDENCIES.json. The library modules credit Xavier
+Leroy and INRIA, copyright 1996, and declare LGPL 2.1 with the OCaml linking
+exception. Complete selected .ml/.mli files, full LGPL text and the distribution's
+full exception text are retained under map_iter/upstream-library. Benchmark and
+library authorship are distinct. No external dataset is required.
+
+### Translation and library adapters
+
+Port the active integer library operations in SML97. Invoke one ordered
+comparison adapter per visited node; Int.compare replaces the source integer
+Ord.compare implementation. Specialized integer keys/values replace the
+library's generic types. Higher-order iteration, folding, predicates and
+mapping callbacks remain. No compiler/runtime prerequisite is introduced.
+
+The portable code evaluates constructor arguments from left to right.
+This can change the allocation order of the two children in a double rotation
+relative to OCaml's argument evaluation; exact optimized allocation order is
+compiler-dependent. Explicit source let/sequence order remains in map, iter
+and fold. Tree-shape agreement establishes structure, rather than identical
+allocation lifetimes.
+
+Source physical-equality checks avoid rebuilding unchanged paths. Portable
+NONE/SOME change results preserve that decision and sharing; their temporary
+option allocation is an explicit representation cost. Do not use structural
+tree equality or substitute a different balanced-tree algorithm. Host compilers
+may optimize these temporary values differently.
+
+Preserve the map's source tail-recursive ascending association-list generator
+and global ten-thousand-entry baseline. The source fields remain global in the
+portable map wrapper; a compiler may change retention through whole-program
+analysis. Set construction remains inside each run, creating a thousand entries
+in descending order. Do not cache a per-run set or a rebuilt map result.
+
+Sys.opaque_identity has no claimed identical SML97 barrier. Add explicit result
+consumption, callback checks and full-content checks where the source ignored a
+result. This increases validation work; it does not establish identical costs
+to OCaml's runtime primitives or optimizer. The common SML sources are the
+standard compiler comparison.
+
+### Fixed profiles and result checks
+
+| Profile | Iterations | Published iterations | Expected digest |
+|---|---:|---:|---|
+| smoke | 1 | 10000 | 2710 |
+| normal | 1000 | 10000 | 989680 |
+
+The tree sizes remain fixed upstream parameters. Normal iteration counts are
+selected explicitly for practical comparative runs, with reductions from the
+published run plan shown by the retained source/configuration records. Large
+is supplied only for selected selectors and uses the corresponding published
+count. Smoke membership cases cross the successful/unsuccessful lookup boundary.
+No universal tree-size argument replaces the source's iteration parameter.
+
+Source fold results, keys, values and iteration controls fit signed 31-bit
+integers in these profiles. The added aggregate digest uses explicit Word32
+modular addition; it is a consumer/check format, not a change to source kernel
+arithmetic. Check exact scalar results, expected booleans or full ordered
+contents and cardinalities on each relevant result. No floating-point tolerance
+is used, and incorrect contents cannot contribute measurements.
+
+Original-library observers agree with independent sorted-map/set models on
+78 operation sequences, including complete tree shapes and invariants.
+Instrumented source selectors agree with independent digest models at 44
+edge-count combinations and all 28 selected profiles. Observer callbacks use
+Obj only in the original OCaml reference process; the runnable SML programs
+require no FFI or representation inspection.
+
+The broader semantic target checks the recorded shapes, contents, balance,
+fold ordering and every selector at boundary counts. A deliberately swapped
+pair of map values has the same digest and is rejected by the full checker. Recorded configuration/
+profile checks are separate from private pilots. Full final SML large runs
+remain unrecorded unless listed explicitly in validation.
+
+### Literature and diagnostic interpretation
+
+The pinned library source establishes this particular balancing, identity and
+traversal policy. Sandmark's suite documentation supplies collection context.
+These source inspections and original/model observations support the port;
+they are not a newly claimed review of a balanced-tree paper.
+
+Investigate comparison specialization, persistent node allocation, cached
+heights, duplicate-path reuse, callback specialization, global baseline
+retention and the cost of explicit consumers. Treat these as source-based
+hypotheses until supported by compiler analysis or measurements. Report fresh
+and repeated modes separately and retain all samples and resource failures.
+
+## map_map
+
+### Algorithm and workload
+
+Rebuild the fixed map while doubling each stored integer value.
+
+Preserve left-value-right evaluation and cached heights. Each repeated result is fully checked for the original keys, doubled values and cardinality before its digest is consumed.
+
+The source OCaml 4.14.1 library uses height-balanced persistent binary trees,
+with child heights differing by at most two. Preserve rotations, cached heights,
+ordered comparisons, unchanged paths and fold/traversal order. Maps and sets
+retain their distinct node payloads, rather than using one map representation
+for both.
+
+### History, variants and notices
+
+The benchmark is selector map_map in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Its Dune source notes adaptation from OCamlPro's benchmark
+repository; no individual benchmark author or separate notice is stated in the
+selected .ml/.inc files. Preserve those files and the suite LICENSE.md under
+map_iter/upstream. The suite notice and the separate OCaml library grant remain
+separate; do not infer identical licensing for the two components.
+Other selectors in this executable are separate workloads; they do not become
+duplicates merely because they share a library or baseline.
+
+The installed OCaml 4.14.1 map/set source snapshot is pinned independently by
+complete-file hashes in map_iter/DEPENDENCIES.json. The library modules credit Xavier
+Leroy and INRIA, copyright 1996, and declare LGPL 2.1 with the OCaml linking
+exception. Complete selected .ml/.mli files, full LGPL text and the distribution's
+full exception text are retained under map_iter/upstream-library. Benchmark and
+library authorship are distinct. No external dataset is required.
+
+### Translation and library adapters
+
+Port the active integer library operations in SML97. Invoke one ordered
+comparison adapter per visited node; Int.compare replaces the source integer
+Ord.compare implementation. Specialized integer keys/values replace the
+library's generic types. Higher-order iteration, folding, predicates and
+mapping callbacks remain. No compiler/runtime prerequisite is introduced.
+
+The portable code evaluates constructor arguments from left to right.
+This can change the allocation order of the two children in a double rotation
+relative to OCaml's argument evaluation; exact optimized allocation order is
+compiler-dependent. Explicit source let/sequence order remains in map, iter
+and fold. Tree-shape agreement establishes structure, rather than identical
+allocation lifetimes.
+
+Source physical-equality checks avoid rebuilding unchanged paths. Portable
+NONE/SOME change results preserve that decision and sharing; their temporary
+option allocation is an explicit representation cost. Do not use structural
+tree equality or substitute a different balanced-tree algorithm. Host compilers
+may optimize these temporary values differently.
+
+Preserve the map's source tail-recursive ascending association-list generator
+and global ten-thousand-entry baseline. The source fields remain global in the
+portable map wrapper; a compiler may change retention through whole-program
+analysis. Set construction remains inside each run, creating a thousand entries
+in descending order. Do not cache a per-run set or a rebuilt map result.
+
+Sys.opaque_identity has no claimed identical SML97 barrier. Add explicit result
+consumption, callback checks and full-content checks where the source ignored a
+result. This increases validation work; it does not establish identical costs
+to OCaml's runtime primitives or optimizer. The common SML sources are the
+standard compiler comparison.
+
+### Fixed profiles and result checks
+
+| Profile | Iterations | Published iterations | Expected digest |
+|---|---:|---:|---|
+| smoke | 1 | 10000 | 8F096E8 |
+| normal | 1000 | 10000 | EBCD7A40 |
+| large | 10000 | 10000 | 3606C680 |
+
+The tree sizes remain fixed upstream parameters. Normal iteration counts are
+selected explicitly for practical comparative runs, with reductions from the
+published run plan shown by the retained source/configuration records. Large
+is supplied only for selected selectors and uses the corresponding published
+count. Smoke membership cases cross the successful/unsuccessful lookup boundary.
+No universal tree-size argument replaces the source's iteration parameter.
+
+Source fold results, keys, values and iteration controls fit signed 31-bit
+integers in these profiles. The added aggregate digest uses explicit Word32
+modular addition; it is a consumer/check format, not a change to source kernel
+arithmetic. Check exact scalar results, expected booleans or full ordered
+contents and cardinalities on each relevant result. No floating-point tolerance
+is used, and incorrect contents cannot contribute measurements.
+
+Original-library observers agree with independent sorted-map/set models on
+78 operation sequences, including complete tree shapes and invariants.
+Instrumented source selectors agree with independent digest models at 44
+edge-count combinations and all 28 selected profiles. Observer callbacks use
+Obj only in the original OCaml reference process; the runnable SML programs
+require no FFI or representation inspection.
+
+The broader semantic target checks the recorded shapes, contents, balance,
+fold ordering and every selector at boundary counts. A deliberately swapped
+pair of map values has the same digest and is rejected by the full checker. Recorded configuration/
+profile checks are separate from private pilots. Full final SML large runs
+remain unrecorded unless listed explicitly in validation.
+
+### Literature and diagnostic interpretation
+
+The pinned library source establishes this particular balancing, identity and
+traversal policy. Sandmark's suite documentation supplies collection context.
+These source inspections and original/model observations support the port;
+they are not a newly claimed review of a balanced-tree paper.
+
+Investigate comparison specialization, persistent node allocation, cached
+heights, duplicate-path reuse, callback specialization, global baseline
+retention and the cost of explicit consumers. Treat these as source-based
+hypotheses until supported by compiler analysis or measurements. Report fresh
+and repeated modes separately and retain all samples and resource failures.
+
+## map_remove
+
+### Algorithm and workload
+
+Repeatedly remove the original baseline map minimum, including later absent-key attempts.
+
+The source recomputes min_binding of the original map, so it always targets zero. After the first removal, 9999 entries remain; the tree does not empty or refresh. Preserve this behavior and check the full final range.
+
+The source OCaml 4.14.1 library uses height-balanced persistent binary trees,
+with child heights differing by at most two. Preserve rotations, cached heights,
+ordered comparisons, unchanged paths and fold/traversal order. Maps and sets
+retain their distinct node payloads, rather than using one map representation
+for both.
+
+### History, variants and notices
+
+The benchmark is selector map_remove in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Its Dune source notes adaptation from OCamlPro's benchmark
+repository; no individual benchmark author or separate notice is stated in the
+selected .ml/.inc files. Preserve those files and the suite LICENSE.md under
+map_iter/upstream. The suite notice and the separate OCaml library grant remain
+separate; do not infer identical licensing for the two components.
+Other selectors in this executable are separate workloads; they do not become
+duplicates merely because they share a library or baseline.
+
+The installed OCaml 4.14.1 map/set source snapshot is pinned independently by
+complete-file hashes in map_iter/DEPENDENCIES.json. The library modules credit Xavier
+Leroy and INRIA, copyright 1996, and declare LGPL 2.1 with the OCaml linking
+exception. Complete selected .ml/.mli files, full LGPL text and the distribution's
+full exception text are retained under map_iter/upstream-library. Benchmark and
+library authorship are distinct. No external dataset is required.
+
+### Translation and library adapters
+
+Port the active integer library operations in SML97. Invoke one ordered
+comparison adapter per visited node; Int.compare replaces the source integer
+Ord.compare implementation. Specialized integer keys/values replace the
+library's generic types. Higher-order iteration, folding, predicates and
+mapping callbacks remain. No compiler/runtime prerequisite is introduced.
+
+The portable code evaluates constructor arguments from left to right.
+This can change the allocation order of the two children in a double rotation
+relative to OCaml's argument evaluation; exact optimized allocation order is
+compiler-dependent. Explicit source let/sequence order remains in map, iter
+and fold. Tree-shape agreement establishes structure, rather than identical
+allocation lifetimes.
+
+Source physical-equality checks avoid rebuilding unchanged paths. Portable
+NONE/SOME change results preserve that decision and sharing; their temporary
+option allocation is an explicit representation cost. Do not use structural
+tree equality or substitute a different balanced-tree algorithm. Host compilers
+may optimize these temporary values differently.
+
+Preserve the map's source tail-recursive ascending association-list generator
+and global ten-thousand-entry baseline. The source fields remain global in the
+portable map wrapper; a compiler may change retention through whole-program
+analysis. Set construction remains inside each run, creating a thousand entries
+in descending order. Do not cache a per-run set or a rebuilt map result.
+
+Sys.opaque_identity has no claimed identical SML97 barrier. Add explicit result
+consumption, callback checks and full-content checks where the source ignored a
+result. This increases validation work; it does not establish identical costs
+to OCaml's runtime primitives or optimizer. The common SML sources are the
+standard compiler comparison.
+
+### Fixed profiles and result checks
+
+| Profile | Iterations | Published iterations | Expected digest |
+|---|---:|---:|---|
+| smoke | 1 | 1000000 | 5F5B9F0 |
+| normal | 1000000 | 1000000 | 5F5B9F0 |
+
+The tree sizes remain fixed upstream parameters. Normal iteration counts are
+selected explicitly for practical comparative runs, with reductions from the
+published run plan shown by the retained source/configuration records. Large
+is supplied only for selected selectors and uses the corresponding published
+count. Smoke membership cases cross the successful/unsuccessful lookup boundary.
+No universal tree-size argument replaces the source's iteration parameter.
+
+Source fold results, keys, values and iteration controls fit signed 31-bit
+integers in these profiles. The added aggregate digest uses explicit Word32
+modular addition; it is a consumer/check format, not a change to source kernel
+arithmetic. Check exact scalar results, expected booleans or full ordered
+contents and cardinalities on each relevant result. No floating-point tolerance
+is used, and incorrect contents cannot contribute measurements.
+
+Original-library observers agree with independent sorted-map/set models on
+78 operation sequences, including complete tree shapes and invariants.
+Instrumented source selectors agree with independent digest models at 44
+edge-count combinations and all 28 selected profiles. Observer callbacks use
+Obj only in the original OCaml reference process; the runnable SML programs
+require no FFI or representation inspection.
+
+The broader semantic target checks the recorded shapes, contents, balance,
+fold ordering and every selector at boundary counts. A deliberately swapped
+pair of map values has the same digest and is rejected by the full checker. Recorded configuration/
+profile checks are separate from private pilots. Full final SML large runs
+remain unrecorded unless listed explicitly in validation.
+
+### Literature and diagnostic interpretation
+
+The pinned library source establishes this particular balancing, identity and
+traversal policy. Sandmark's suite documentation supplies collection context.
+These source inspections and original/model observations support the port;
+they are not a newly claimed review of a balanced-tree paper.
+
+Investigate comparison specialization, persistent node allocation, cached
+heights, duplicate-path reuse, callback specialization, global baseline
+retention and the cost of explicit consumers. Treat these as source-based
+hypotheses until supported by compiler analysis or measurements. Report fresh
+and repeated modes separately and retain all samples and resource failures.
+
+## set_add_rem
+
+### Algorithm and workload
+
+Add and immediately remove descending integer keys from a persistent set.
+
+For keys already in the initial set, add is unchanged and remove deletes the original entry. The final set is empty when iterations>=1000; this is not a no-op add/remove loop.
+
+The source OCaml 4.14.1 library uses height-balanced persistent binary trees,
+with child heights differing by at most two. Preserve rotations, cached heights,
+ordered comparisons, unchanged paths and fold/traversal order. Maps and sets
+retain their distinct node payloads, rather than using one map representation
+for both.
+
+### History, variants and notices
+
+The benchmark is selector set_add_rem in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Its Dune source notes adaptation from OCamlPro's benchmark
+repository; no individual benchmark author or separate notice is stated in the
+selected .ml/.inc files. Preserve those files and the suite LICENSE.md under
+set_fold/upstream. The suite notice and the separate OCaml library grant remain
+separate; do not infer identical licensing for the two components.
+Other selectors in this executable are separate workloads; they do not become
+duplicates merely because they share a library or baseline.
+
+The installed OCaml 4.14.1 map/set source snapshot is pinned independently by
+complete-file hashes in set_fold/DEPENDENCIES.json. The library modules credit Xavier
+Leroy and INRIA, copyright 1996, and declare LGPL 2.1 with the OCaml linking
+exception. Complete selected .ml/.mli files, full LGPL text and the distribution's
+full exception text are retained under set_fold/upstream-library. Benchmark and
+library authorship are distinct. No external dataset is required.
+
+### Translation and library adapters
+
+Port the active integer library operations in SML97. Invoke one ordered
+comparison adapter per visited node; Int.compare replaces the source integer
+Ord.compare implementation. Specialized integer keys/values replace the
+library's generic types. Higher-order iteration, folding, predicates and
+mapping callbacks remain. No compiler/runtime prerequisite is introduced.
+
+The portable code evaluates constructor arguments from left to right.
+This can change the allocation order of the two children in a double rotation
+relative to OCaml's argument evaluation; exact optimized allocation order is
+compiler-dependent. Explicit source let/sequence order remains in map, iter
+and fold. Tree-shape agreement establishes structure, rather than identical
+allocation lifetimes.
+
+Source physical-equality checks avoid rebuilding unchanged paths. Portable
+NONE/SOME change results preserve that decision and sharing; their temporary
+option allocation is an explicit representation cost. Do not use structural
+tree equality or substitute a different balanced-tree algorithm. Host compilers
+may optimize these temporary values differently.
+
+Preserve the map's source tail-recursive ascending association-list generator
+and global ten-thousand-entry baseline. The source fields remain global in the
+portable map wrapper; a compiler may change retention through whole-program
+analysis. Set construction remains inside each run, creating a thousand entries
+in descending order. Do not cache a per-run set or a rebuilt map result.
+
+Sys.opaque_identity has no claimed identical SML97 barrier. Add explicit result
+consumption, callback checks and full-content checks where the source ignored a
+result. This increases validation work; it does not establish identical costs
+to OCaml's runtime primitives or optimizer. The common SML sources are the
+standard compiler comparison.
+
+### Fixed profiles and result checks
+
+| Profile | Iterations | Published iterations | Expected digest |
+|---|---:|---:|---|
+| smoke | 1 | 20000000 | 7A313 |
+| normal | 100000 | 20000000 | 0 |
+| large | 20000000 | 20000000 | 0 |
+
+The tree sizes remain fixed upstream parameters. Normal iteration counts are
+selected explicitly for practical comparative runs, with reductions from the
+published run plan shown by the retained source/configuration records. Large
+is supplied only for selected selectors and uses the corresponding published
+count. Smoke membership cases cross the successful/unsuccessful lookup boundary.
+No universal tree-size argument replaces the source's iteration parameter.
+
+Source fold results, keys, values and iteration controls fit signed 31-bit
+integers in these profiles. The added aggregate digest uses explicit Word32
+modular addition; it is a consumer/check format, not a change to source kernel
+arithmetic. Check exact scalar results, expected booleans or full ordered
+contents and cardinalities on each relevant result. No floating-point tolerance
+is used, and incorrect contents cannot contribute measurements.
+
+Original-library observers agree with independent sorted-map/set models on
+78 operation sequences, including complete tree shapes and invariants.
+Instrumented source selectors agree with independent digest models at 44
+edge-count combinations and all 28 selected profiles. Observer callbacks use
+Obj only in the original OCaml reference process; the runnable SML programs
+require no FFI or representation inspection.
+
+The broader semantic target checks the recorded shapes, contents, balance,
+fold ordering and every selector at boundary counts. A deliberately swapped
+pair of map values has the same digest and is rejected by the full checker. Recorded configuration/
+profile checks are separate from private pilots. Full final SML large runs
+remain unrecorded unless listed explicitly in validation.
+
+### Literature and diagnostic interpretation
+
+The pinned library source establishes this particular balancing, identity and
+traversal policy. Sandmark's suite documentation supplies collection context.
+These source inspections and original/model observations support the port;
+they are not a newly claimed review of a balanced-tree paper.
+
+Investigate comparison specialization, persistent node allocation, cached
+heights, duplicate-path reuse, callback specialization, global baseline
+retention and the cost of explicit consumers. Treat these as source-based
+hypotheses until supported by compiler analysis or measurements. Report fresh
+and repeated modes separately and retain all samples and resource failures.
+
+## set_fold
+
+### Algorithm and workload
+
+Sum the fixed thousand-entry integer set using the source in-order fold.
+
+Build the descending initial set once per call, then retain the scalar result 500500 for each fold.
+
+The source OCaml 4.14.1 library uses height-balanced persistent binary trees,
+with child heights differing by at most two. Preserve rotations, cached heights,
+ordered comparisons, unchanged paths and fold/traversal order. Maps and sets
+retain their distinct node payloads, rather than using one map representation
+for both.
+
+### History, variants and notices
+
+The benchmark is selector set_fold in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Its Dune source notes adaptation from OCamlPro's benchmark
+repository; no individual benchmark author or separate notice is stated in the
+selected .ml/.inc files. Preserve those files and the suite LICENSE.md under
+set_fold/upstream. The suite notice and the separate OCaml library grant remain
+separate; do not infer identical licensing for the two components.
+Other selectors in this executable are separate workloads; they do not become
+duplicates merely because they share a library or baseline.
+
+The installed OCaml 4.14.1 map/set source snapshot is pinned independently by
+complete-file hashes in set_fold/DEPENDENCIES.json. The library modules credit Xavier
+Leroy and INRIA, copyright 1996, and declare LGPL 2.1 with the OCaml linking
+exception. Complete selected .ml/.mli files, full LGPL text and the distribution's
+full exception text are retained under set_fold/upstream-library. Benchmark and
+library authorship are distinct. No external dataset is required.
+
+### Translation and library adapters
+
+Port the active integer library operations in SML97. Invoke one ordered
+comparison adapter per visited node; Int.compare replaces the source integer
+Ord.compare implementation. Specialized integer keys/values replace the
+library's generic types. Higher-order iteration, folding, predicates and
+mapping callbacks remain. No compiler/runtime prerequisite is introduced.
+
+The portable code evaluates constructor arguments from left to right.
+This can change the allocation order of the two children in a double rotation
+relative to OCaml's argument evaluation; exact optimized allocation order is
+compiler-dependent. Explicit source let/sequence order remains in map, iter
+and fold. Tree-shape agreement establishes structure, rather than identical
+allocation lifetimes.
+
+Source physical-equality checks avoid rebuilding unchanged paths. Portable
+NONE/SOME change results preserve that decision and sharing; their temporary
+option allocation is an explicit representation cost. Do not use structural
+tree equality or substitute a different balanced-tree algorithm. Host compilers
+may optimize these temporary values differently.
+
+Preserve the map's source tail-recursive ascending association-list generator
+and global ten-thousand-entry baseline. The source fields remain global in the
+portable map wrapper; a compiler may change retention through whole-program
+analysis. Set construction remains inside each run, creating a thousand entries
+in descending order. Do not cache a per-run set or a rebuilt map result.
+
+Sys.opaque_identity has no claimed identical SML97 barrier. Add explicit result
+consumption, callback checks and full-content checks where the source ignored a
+result. This increases validation work; it does not establish identical costs
+to OCaml's runtime primitives or optimizer. The common SML sources are the
+standard compiler comparison.
+
+### Fixed profiles and result checks
+
+| Profile | Iterations | Published iterations | Expected digest |
+|---|---:|---:|---|
+| smoke | 1 | 1000000 | 7A314 |
+| normal | 10000 | 1000000 | 2A523D40 |
+| large | 1000000 | 1000000 | 881FED00 |
+
+The tree sizes remain fixed upstream parameters. Normal iteration counts are
+selected explicitly for practical comparative runs, with reductions from the
+published run plan shown by the retained source/configuration records. Large
+is supplied only for selected selectors and uses the corresponding published
+count. Smoke membership cases cross the successful/unsuccessful lookup boundary.
+No universal tree-size argument replaces the source's iteration parameter.
+
+Source fold results, keys, values and iteration controls fit signed 31-bit
+integers in these profiles. The added aggregate digest uses explicit Word32
+modular addition; it is a consumer/check format, not a change to source kernel
+arithmetic. Check exact scalar results, expected booleans or full ordered
+contents and cardinalities on each relevant result. No floating-point tolerance
+is used, and incorrect contents cannot contribute measurements.
+
+Original-library observers agree with independent sorted-map/set models on
+78 operation sequences, including complete tree shapes and invariants.
+Instrumented source selectors agree with independent digest models at 44
+edge-count combinations and all 28 selected profiles. Observer callbacks use
+Obj only in the original OCaml reference process; the runnable SML programs
+require no FFI or representation inspection.
+
+The broader semantic target checks the recorded shapes, contents, balance,
+fold ordering and every selector at boundary counts. A deliberately swapped
+pair of map values has the same digest and is rejected by the full checker. Recorded configuration/
+profile checks are separate from private pilots. Full final SML large runs
+remain unrecorded unless listed explicitly in validation.
+
+### Literature and diagnostic interpretation
+
+The pinned library source establishes this particular balancing, identity and
+traversal policy. Sandmark's suite documentation supplies collection context.
+These source inspections and original/model observations support the port;
+they are not a newly claimed review of a balanced-tree paper.
+
+Investigate comparison specialization, persistent node allocation, cached
+heights, duplicate-path reuse, callback specialization, global baseline
+retention and the cost of explicit consumers. Treat these as source-based
+hypotheses until supported by compiler analysis or measurements. Report fresh
+and repeated modes separately and retain all samples and resource failures.
+
+## set_mem
+
+### Algorithm and workload
+
+Test ascending integer membership in the fixed thousand-entry set.
+
+Retain the source assertion that membership equals i<=1000. Smoke crosses the boundary; later misses remain part of the workload.
+
+The source OCaml 4.14.1 library uses height-balanced persistent binary trees,
+with child heights differing by at most two. Preserve rotations, cached heights,
+ordered comparisons, unchanged paths and fold/traversal order. Maps and sets
+retain their distinct node payloads, rather than using one map representation
+for both.
+
+### History, variants and notices
+
+The benchmark is selector set_mem in [Sandmark's stdlib collection](https://github.com/ocaml-bench/sandmark/tree/5605805954a00497ed197c930641cddd580e1507/benchmarks/stdlib),
+pinned at 5605805954a00497ed197c930641cddd580e1507. Its Dune source notes adaptation from OCamlPro's benchmark
+repository; no individual benchmark author or separate notice is stated in the
+selected .ml/.inc files. Preserve those files and the suite LICENSE.md under
+set_fold/upstream. The suite notice and the separate OCaml library grant remain
+separate; do not infer identical licensing for the two components.
+Other selectors in this executable are separate workloads; they do not become
+duplicates merely because they share a library or baseline.
+
+The installed OCaml 4.14.1 map/set source snapshot is pinned independently by
+complete-file hashes in set_fold/DEPENDENCIES.json. The library modules credit Xavier
+Leroy and INRIA, copyright 1996, and declare LGPL 2.1 with the OCaml linking
+exception. Complete selected .ml/.mli files, full LGPL text and the distribution's
+full exception text are retained under set_fold/upstream-library. Benchmark and
+library authorship are distinct. No external dataset is required.
+
+### Translation and library adapters
+
+Port the active integer library operations in SML97. Invoke one ordered
+comparison adapter per visited node; Int.compare replaces the source integer
+Ord.compare implementation. Specialized integer keys/values replace the
+library's generic types. Higher-order iteration, folding, predicates and
+mapping callbacks remain. No compiler/runtime prerequisite is introduced.
+
+The portable code evaluates constructor arguments from left to right.
+This can change the allocation order of the two children in a double rotation
+relative to OCaml's argument evaluation; exact optimized allocation order is
+compiler-dependent. Explicit source let/sequence order remains in map, iter
+and fold. Tree-shape agreement establishes structure, rather than identical
+allocation lifetimes.
+
+Source physical-equality checks avoid rebuilding unchanged paths. Portable
+NONE/SOME change results preserve that decision and sharing; their temporary
+option allocation is an explicit representation cost. Do not use structural
+tree equality or substitute a different balanced-tree algorithm. Host compilers
+may optimize these temporary values differently.
+
+Preserve the map's source tail-recursive ascending association-list generator
+and global ten-thousand-entry baseline. The source fields remain global in the
+portable map wrapper; a compiler may change retention through whole-program
+analysis. Set construction remains inside each run, creating a thousand entries
+in descending order. Do not cache a per-run set or a rebuilt map result.
+
+Sys.opaque_identity has no claimed identical SML97 barrier. Add explicit result
+consumption, callback checks and full-content checks where the source ignored a
+result. This increases validation work; it does not establish identical costs
+to OCaml's runtime primitives or optimizer. The common SML sources are the
+standard compiler comparison.
+
+### Fixed profiles and result checks
+
+| Profile | Iterations | Published iterations | Expected digest |
+|---|---:|---:|---|
+| smoke | 1001 | 50000000 | 3E8 |
+| normal | 1000000 | 50000000 | 3E8 |
+| large | 50000000 | 50000000 | 3E8 |
+
+The tree sizes remain fixed upstream parameters. Normal iteration counts are
+selected explicitly for practical comparative runs, with reductions from the
+published run plan shown by the retained source/configuration records. Large
+is supplied only for selected selectors and uses the corresponding published
+count. Smoke membership cases cross the successful/unsuccessful lookup boundary.
+No universal tree-size argument replaces the source's iteration parameter.
+
+Source fold results, keys, values and iteration controls fit signed 31-bit
+integers in these profiles. The added aggregate digest uses explicit Word32
+modular addition; it is a consumer/check format, not a change to source kernel
+arithmetic. Check exact scalar results, expected booleans or full ordered
+contents and cardinalities on each relevant result. No floating-point tolerance
+is used, and incorrect contents cannot contribute measurements.
+
+Original-library observers agree with independent sorted-map/set models on
+78 operation sequences, including complete tree shapes and invariants.
+Instrumented source selectors agree with independent digest models at 44
+edge-count combinations and all 28 selected profiles. Observer callbacks use
+Obj only in the original OCaml reference process; the runnable SML programs
+require no FFI or representation inspection.
+
+The broader semantic target checks the recorded shapes, contents, balance,
+fold ordering and every selector at boundary counts. A deliberately swapped
+pair of map values has the same digest and is rejected by the full checker. Recorded configuration/
+profile checks are separate from private pilots. Full final SML large runs
+remain unrecorded unless listed explicitly in validation.
+
+### Literature and diagnostic interpretation
+
+The pinned library source establishes this particular balancing, identity and
+traversal policy. Sandmark's suite documentation supplies collection context.
+These source inspections and original/model observations support the port;
+they are not a newly claimed review of a balanced-tree paper.
+
+Investigate comparison specialization, persistent node allocation, cached
+heights, duplicate-path reuse, callback specialization, global baseline
+retention and the cost of explicit consumers. Treat these as source-based
+hypotheses until supported by compiler analysis or measurements. Report fresh
+and repeated modes separately and retain all samples and resource failures.

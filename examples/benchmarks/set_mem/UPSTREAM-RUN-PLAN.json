@@ -1,0 +1,75 @@
+{
+  "source": "sandmark/run_config.json",
+  "sha256": "2acf290d36e665a5148dd2b3a2f437ebd1a0883238494d33e4701edd77c050b3",
+  "entries": [
+    {
+      "index": 70,
+      "entry": {
+        "executable": "benchmarks/stdlib/set_bench.exe",
+        "name": "set_bench",
+        "tags": [
+          "1s_10s"
+        ],
+        "runs": [
+          {
+            "params": "set_fold 1000000"
+          },
+          {
+            "params": "set_add_rem 20000000"
+          },
+          {
+            "params": "set_mem 50000000"
+          }
+        ]
+      }
+    },
+    {
+      "index": 80,
+      "entry": {
+        "executable": "benchmarks/stdlib/map_bench.exe",
+        "name": "map_bench",
+        "tags": [
+          "lt_1s"
+        ],
+        "runs": [
+          {
+            "params": "map_iter 10000"
+          },
+          {
+            "params": "map_add 1000000"
+          },
+          {
+            "params": "map_add_duplicate 1000000"
+          },
+          {
+            "params": "map_remove 1000000"
+          },
+          {
+            "params": "map_fold 10000"
+          },
+          {
+            "params": "map_for_all 10000"
+          },
+          {
+            "params": "map_find 1000000"
+          }
+        ]
+      }
+    },
+    {
+      "index": 81,
+      "entry": {
+        "executable": "benchmarks/stdlib/map_bench.exe",
+        "name": "map_bench",
+        "tags": [
+          "1s_10s"
+        ],
+        "runs": [
+          {
+            "params": "map_map 10000"
+          }
+        ]
+      }
+    }
+  ]
+}

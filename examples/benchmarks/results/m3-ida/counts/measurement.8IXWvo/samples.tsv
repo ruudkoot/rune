@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+ida-lazy	normal	rune	O2	compile	0	0	pass	3.80	2.44	0.24	135216	-	-	-	ida-lazy/rune/build/compile
+ida-lazy	normal	rune	O2	correctness	0	0	pass	82.04	61.18	1.67	18516	5193104404	16467274416	512074828	ida-lazy/rune/correctness.0
+ida-lazy	normal	rune	O2	count	1	1	pass	75.60	58.07	0.70	18608	5193104404	16467274416	512074828	ida-lazy/rune/fresh.1
+ida-lazy	normal	rune:opt	O2	compile	0	0	pass	4.68	2.52	0.25	135344	-	-	-	ida-lazy/rune-opt/build/compile
+ida-lazy	normal	rune:opt	O2	native-compile	0	0	pass	0.79	0.32	0.06	12608	-	-	-	ida-lazy/rune-opt/build/native-compile
+ida-lazy	normal	rune:opt	O2	correctness	0	0	pass	34.20	26.81	0.18	18964	5193104404	16467274416	512074828	ida-lazy/rune-opt/correctness.0
+ida-lazy	normal	rune:opt	O2	count	1	1	pass	49.42	28.49	0.61	19164	5193104404	16467274416	512074828	ida-lazy/rune-opt/fresh.1
+ida-lazy	normal	rune:new	O2	compile	0	0	pass	5.08	2.25	0.21	135096	-	-	-	ida-lazy/rune-new/build/compile
+ida-lazy	normal	rune:new	O2	correctness	0	0	pass	77.28	57.20	0.74	18748	3041006870	16467274416	512074828	ida-lazy/rune-new/correctness.0
+ida-lazy	normal	rune:new	O2	count	1	1	pass	75.57	58.17	0.71	18656	3041006870	16467274416	512074828	ida-lazy/rune-new/fresh.1
+ida-lazy	normal	rune:jit	O2	compile	0	0	pass	2.94	2.36	0.16	135176	-	-	-	ida-lazy/rune-jit/build/compile
+ida-lazy	normal	rune:jit	O2	correctness	0	0	pass	31.34	25.14	0.26	19960	3041006870	16467274416	512074828	ida-lazy/rune-jit/correctness.0
+ida-lazy	normal	rune:jit	O2	count	1	1	pass	52.89	25.51	0.52	19940	3041006870	16467274416	512074828	ida-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

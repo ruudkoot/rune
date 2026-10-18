@@ -1,0 +1,28 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/manifest.tsv
+ M examples/benchmarks/stdlib-cases.tsv
+?? examples/benchmarks/ida-lazy/
+?? examples/benchmarks/ida-strict/
+?? examples/benchmarks/map_add/
+?? examples/benchmarks/map_add_duplicate/
+?? examples/benchmarks/map_find/
+?? examples/benchmarks/map_fold/
+?? examples/benchmarks/map_for_all/
+?? examples/benchmarks/map_iter/
+?? examples/benchmarks/map_map/
+?? examples/benchmarks/map_remove/
+?? examples/benchmarks/set_add_rem/
+?? examples/benchmarks/set_fold/
+?? examples/benchmarks/set_mem/
+?? examples/benchmarks/shared/hartel-ida-driver.sml
+?? examples/benchmarks/shared/hartel-ida-finite.sml
+?? examples/benchmarks/shared/hartel-ida-kernel.sml
+?? examples/benchmarks/shared/ocaml-stdlib-tree-map.sml
+?? examples/benchmarks/shared/ocaml-stdlib-tree-program.sml
+?? examples/benchmarks/shared/ocaml-stdlib-tree-set.sml
+?? tests/benchmarks/check-ida.sh
+?? tests/benchmarks/check-stdlib-trees.sh
+?? tests/benchmarks/data/ida/
+?? tests/benchmarks/ida-tests.sml
+?? tests/benchmarks/stdlib-tree-program-tests.sml
+?? tests/benchmarks/stdlib-tree-tests.sml

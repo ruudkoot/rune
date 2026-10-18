@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+set_mem	normal	rune	O2	compile	0	0	pass	4.74	2.42	0.24	135220	-	-	-	set_mem/rune/build/compile
+set_mem	normal	rune	O2	correctness	0	0	pass	4.13	1.83	0.02	3308	382100958	1143216	23430	set_mem/rune/correctness.0
+set_mem	normal	rune	O2	count	1	1	pass	2.28	1.85	0.04	3408	382100958	1143216	23430	set_mem/rune/fresh.1
+set_mem	normal	rune:opt	O2	compile	0	0	pass	4.33	2.22	0.26	135176	-	-	-	set_mem/rune-opt/build/compile
+set_mem	normal	rune:opt	O2	native-compile	0	0	pass	1.01	0.30	0.07	12360	-	-	-	set_mem/rune-opt/build/native-compile
+set_mem	normal	rune:opt	O2	correctness	0	0	pass	1.45	0.65	0.01	3740	382100958	1143216	23430	set_mem/rune-opt/correctness.0
+set_mem	normal	rune:opt	O2	count	1	1	pass	1.80	0.70	0.01	3736	382100958	1143216	23430	set_mem/rune-opt/fresh.1
+set_mem	normal	rune:new	O2	compile	0	0	pass	4.54	2.53	0.17	135080	-	-	-	set_mem/rune-new/build/compile
+set_mem	normal	rune:new	O2	correctness	0	0	pass	5.52	2.15	0.06	3460	227623864	1143216	23430	set_mem/rune-new/correctness.0
+set_mem	normal	rune:new	O2	count	1	1	pass	2.98	1.68	0.00	3388	227623864	1143216	23430	set_mem/rune-new/fresh.1
+set_mem	normal	rune:jit	O2	compile	0	0	pass	3.33	2.25	0.21	135196	-	-	-	set_mem/rune-jit/build/compile
+set_mem	normal	rune:jit	O2	correctness	0	0	pass	0.76	0.39	0.01	4396	227623864	1143216	23430	set_mem/rune-jit/correctness.0
+set_mem	normal	rune:jit	O2	count	1	1	pass	0.75	0.41	0.00	4368	227623864	1143216	23430	set_mem/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

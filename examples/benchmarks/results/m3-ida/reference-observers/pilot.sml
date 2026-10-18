@@ -1,0 +1,6 @@
+structure Need=BenchIdaFn(BenchNeed)
+structure Strict=BenchIdaFn(BenchStrict)
+val _=print(Need.one 2)
+val _=print(Need.one 3)
+val _=print(Strict.one 2)
+val _=print(Strict.one 3)

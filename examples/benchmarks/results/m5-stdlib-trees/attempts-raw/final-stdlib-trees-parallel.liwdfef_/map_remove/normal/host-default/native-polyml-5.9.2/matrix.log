@@ -1,0 +1,300 @@
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 5F5B9F0
+PASS map_remove
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-tree-map.sml]
+structure BenchStdlibIntMap : sig
+  exception NotFound
+  datatype tree = Empty | Node of tree * int * int * tree * int
+  val compareKey : int * int -> int
+  val height : tree -> int
+  val create : tree -> int -> int -> tree -> tree
+  val balance : tree -> int -> int -> tree -> tree
+  val addChanged : int -> int -> tree -> tree option
+  val add : int -> int -> tree -> tree
+  val find : int -> tree -> int option
+  val minimum : tree -> int * int
+  val removeMinimum : tree -> tree
+  val merge : tree -> tree -> tree
+  val removeChanged : int -> tree -> tree option
+  val remove : int -> tree -> tree
+  val isEmpty : tree -> bool
+  val iter : (int -> int -> 'a) -> tree -> unit
+  val map : (int -> int) -> tree -> tree
+  val fold : (int -> int -> 'a -> 'a) -> tree -> 'a -> 'a
+  val forAll : (int -> int -> bool) -> tree -> bool
+  val bindings : tree -> (int * int) list
+  val decimal : int -> string
+  val shape : tree -> string
+  val invariant : tree -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-tree-set.sml]
+structure BenchStdlibIntSet : sig
+  exception NotFound
+  datatype tree = Empty | Node of tree * int * tree * int
+  val compareKey : int * int -> int
+  val height : tree -> int
+  val create : tree -> int -> tree -> tree
+  val balance : tree -> int -> tree -> tree
+  val addChanged : int -> tree -> tree option
+  val add : int -> tree -> tree
+  val member : int -> tree -> bool
+  val minimum : tree -> int
+  val removeMinimum : tree -> tree
+  val merge : tree -> tree -> tree
+  val removeChanged : int -> tree -> tree option
+  val remove : int -> tree -> tree
+  val isEmpty : tree -> bool
+  val fold : (int -> 'a -> 'a) -> tree -> 'a -> 'a
+  val elements : tree -> int list
+  val decimal : int -> string
+  val shape : tree -> string
+  val invariant : tree -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-tree-program.sml]
+[autoloading]
+[autoloading done]
+structure BenchStdlibTreePrograms : sig
+  structure M : <sig>
+  structure S : <sig>
+  val for : int -> int -> (int -> 'a) -> unit
+  val mapEntries : int -> (int * int) list
+  val denseMapEntries : (int * int) list -> BenchStdlibIntMap.tree
+  val denseMap : int -> BenchStdlibIntMap.tree
+  val initialSet : int -> BenchStdlibIntSet.tree
+  val checkMap : int -> int -> BenchStdlibIntMap.tree -> unit
+  val mapDigest : BenchStdlibIntMap.tree -> Word32.word
+  val setDigest : BenchStdlibIntSet.tree -> Word32.word
+  val mapBindingsRange : int -> int -> BenchStdlibIntMap.tree -> unit
+  val mapRun : string -> BenchStdlibIntMap.tree -> int -> string
+  val setRun : string -> int -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/map_remove/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Program : <sig>
+  val entries : (int * int) list
+  val baseline : BenchStdlibIntMap.tree
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+[autoloading]
+[autoloading done]
+RESULT 5F5B9F0
+PASS map_remove
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-legacy@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-tree-map.sml]
+structure BenchStdlibIntMap : sig
+  exception NotFound
+  datatype tree = Empty | Node of tree * int * int * tree * int
+  val compareKey : int * int -> int
+  val height : tree -> int
+  val create : tree -> int -> int -> tree -> tree
+  val balance : tree -> int -> int -> tree -> tree
+  val addChanged : int -> int -> tree -> tree option
+  val add : int -> int -> tree -> tree
+  val find : int -> tree -> int option
+  val minimum : tree -> int * int
+  val removeMinimum : tree -> tree
+  val merge : tree -> tree -> tree
+  val removeChanged : int -> tree -> tree option
+  val remove : int -> tree -> tree
+  val isEmpty : tree -> bool
+  val iter : (int -> int -> 'a) -> tree -> unit
+  val map : (int -> int) -> tree -> tree
+  val fold : (int -> int -> 'a -> 'a) -> tree -> 'a -> 'a
+  val forAll : (int -> int -> bool) -> tree -> bool
+  val bindings : tree -> (int * int) list
+  val decimal : int -> string
+  val shape : tree -> string
+  val invariant : tree -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-tree-set.sml]
+structure BenchStdlibIntSet : sig
+  exception NotFound
+  datatype tree = Empty | Node of tree * int * tree * int
+  val compareKey : int * int -> int
+  val height : tree -> int
+  val create : tree -> int -> tree -> tree
+  val balance : tree -> int -> tree -> tree
+  val addChanged : int -> tree -> tree option
+  val add : int -> tree -> tree
+  val member : int -> tree -> bool
+  val minimum : tree -> int
+  val removeMinimum : tree -> tree
+  val merge : tree -> tree -> tree
+  val removeChanged : int -> tree -> tree option
+  val remove : int -> tree -> tree
+  val isEmpty : tree -> bool
+  val fold : (int -> 'a -> 'a) -> tree -> 'a -> 'a
+  val elements : tree -> int list
+  val decimal : int -> string
+  val shape : tree -> string
+  val invariant : tree -> bool
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-tree-program.sml]
+[autoloading]
+[autoloading done]
+structure BenchStdlibTreePrograms : sig
+  structure M : <sig>
+  structure S : <sig>
+  val for : int -> int -> (int -> 'a) -> unit
+  val mapEntries : int -> (int * int) list
+  val denseMapEntries : (int * int) list -> BenchStdlibIntMap.tree
+  val denseMap : int -> BenchStdlibIntMap.tree
+  val initialSet : int -> BenchStdlibIntSet.tree
+  val checkMap : int -> int -> BenchStdlibIntMap.tree -> unit
+  val mapDigest : BenchStdlibIntMap.tree -> Word32.word
+  val setDigest : BenchStdlibIntSet.tree -> Word32.word
+  val mapBindingsRange : int -> int -> BenchStdlibIntMap.tree -> unit
+  val mapRun : string -> BenchStdlibIntMap.tree -> int -> string
+  val setRun : string -> int -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/map_remove/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Program : <sig>
+  val entries : (int * int) list
+  val baseline : BenchStdlibIntMap.tree
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+[autoloading]
+[autoloading done]
+RESULT 5F5B9F0
+PASS map_remove
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-tree-map.sml]
+structure BenchStdlibIntMap : 
+  sig
+    exception NotFound
+    datatype tree = Empty | Node of tree * int * int * tree * int
+    val compareKey : int * int -> int
+    val height : tree -> int
+    val create : tree -> int -> int -> tree -> tree
+    val balance : tree -> int -> int -> tree -> tree
+    val addChanged : int -> int -> tree -> tree option
+    val add : int -> int -> tree -> tree
+    val find : int -> tree -> int option
+    val minimum : tree -> int * int
+    val removeMinimum : tree -> tree
+    val merge : tree -> tree -> tree
+    val removeChanged : int -> tree -> tree option
+    val remove : int -> tree -> tree
+    val isEmpty : tree -> bool
+    val iter : (int -> int -> 'a) -> tree -> unit
+    val map : (int -> int) -> tree -> tree
+    val fold : (int -> int -> 'a -> 'a) -> tree -> 'a -> 'a
+    val forAll : (int -> int -> bool) -> tree -> bool
+    val bindings : tree -> (int * int) list
+    val decimal : int -> string
+    val shape : tree -> string
+    val invariant : tree -> bool
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-tree-set.sml]
+structure BenchStdlibIntSet : 
+  sig
+    exception NotFound
+    datatype tree = Empty | Node of tree * int * tree * int
+    val compareKey : int * int -> int
+    val height : tree -> int
+    val create : tree -> int -> tree -> tree
+    val balance : tree -> int -> tree -> tree
+    val addChanged : int -> tree -> tree option
+    val add : int -> tree -> tree
+    val member : int -> tree -> bool
+    val minimum : tree -> int
+    val removeMinimum : tree -> tree
+    val merge : tree -> tree -> tree
+    val removeChanged : int -> tree -> tree option
+    val remove : int -> tree -> tree
+    val isEmpty : tree -> bool
+    val fold : (int -> 'a -> 'a) -> tree -> 'a -> 'a
+    val elements : tree -> int list
+    val decimal : int -> string
+    val shape : tree -> string
+    val invariant : tree -> bool
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/ocaml-stdlib-tree-program.sml]
+structure BenchStdlibTreePrograms : 
+  sig
+    structure M : <sig>
+    structure S : <sig>
+    val for : int -> int -> (int -> 'a) -> unit
+    val mapEntries : int -> (int * int) list
+    val denseMapEntries : (int * int) list -> BenchStdlibIntMap.tree
+    val denseMap : int -> BenchStdlibIntMap.tree
+    val initialSet : int -> BenchStdlibIntSet.tree
+    val checkMap : int -> int -> BenchStdlibIntMap.tree -> unit
+    val mapDigest : BenchStdlibIntMap.tree -> Word32.word
+    val setDigest : BenchStdlibIntSet.tree -> Word32.word
+    val mapBindingsRange : int -> int -> BenchStdlibIntMap.tree -> unit
+    val mapRun : string -> BenchStdlibIntMap.tree -> int -> string
+    val setRun : string -> int -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/map_remove/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Program : <sig>
+    val entries : (int * int) list
+    val baseline : BenchStdlibIntMap.tree
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 5F5B9F0
+PASS map_remove
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+RESULT 5F5B9F0
+PASS map_remove
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 5F5B9F0
+PASS map_remove
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

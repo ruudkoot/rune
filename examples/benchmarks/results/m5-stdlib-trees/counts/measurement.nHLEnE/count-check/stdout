@@ -1,0 +1,5 @@
+COUNT unbudgeted map_for_all normal rune
+COUNT unbudgeted map_for_all normal rune:opt
+COUNT unbudgeted map_for_all normal rune:new
+COUNT unbudgeted map_for_all normal rune:jit
+COUNT comparisons agree

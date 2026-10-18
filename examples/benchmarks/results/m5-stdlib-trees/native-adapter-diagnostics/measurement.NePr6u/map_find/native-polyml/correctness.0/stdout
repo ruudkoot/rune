@@ -1,0 +1,4 @@
+RESULT 270F
+PASS map_find
+SAMPLE 1 0.000934000
+SUMMARY 1 checks, 0 failed

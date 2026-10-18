@@ -1,0 +1,5 @@
+COUNT unbudgeted set_add_rem normal rune
+COUNT unbudgeted set_add_rem normal rune:opt
+COUNT unbudgeted set_add_rem normal rune:new
+COUNT unbudgeted set_add_rem normal rune:jit
+COUNT comparisons agree

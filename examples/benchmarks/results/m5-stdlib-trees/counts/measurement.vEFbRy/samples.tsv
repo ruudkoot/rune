@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+set_add_rem	normal	rune	O2	compile	0	0	pass	4.77	2.41	0.24	135100	-	-	-	set_add_rem/rune/build/compile
+set_add_rem	normal	rune	O2	correctness	0	0	pass	2.27	1.33	0.03	10352	226505968	203616272	4291496	set_add_rem/rune/correctness.0
+set_add_rem	normal	rune	O2	count	1	1	pass	3.20	1.57	0.01	10452	226505968	203616272	4291496	set_add_rem/rune/fresh.1
+set_add_rem	normal	rune:opt	O2	compile	0	0	pass	5.01	2.26	0.16	135196	-	-	-	set_add_rem/rune-opt/build/compile
+set_add_rem	normal	rune:opt	O2	native-compile	0	0	pass	0.95	0.24	0.07	12252	-	-	-	set_add_rem/rune-opt/build/native-compile
+set_add_rem	normal	rune:opt	O2	correctness	0	0	pass	1.14	0.53	0.00	10756	226505968	203616272	4291496	set_add_rem/rune-opt/correctness.0
+set_add_rem	normal	rune:opt	O2	count	1	1	pass	0.81	0.52	0.02	10844	226505968	203616272	4291496	set_add_rem/rune-opt/fresh.1
+set_add_rem	normal	rune:new	O2	compile	0	0	pass	4.21	2.29	0.19	135196	-	-	-	set_add_rem/rune-new/build/compile
+set_add_rem	normal	rune:new	O2	correctness	0	0	pass	3.63	1.75	0.09	10464	126141323	203616272	4291496	set_add_rem/rune-new/correctness.0
+set_add_rem	normal	rune:new	O2	count	1	1	pass	2.40	1.30	0.02	10484	126141323	203616272	4291496	set_add_rem/rune-new/fresh.1
+set_add_rem	normal	rune:jit	O2	compile	0	0	pass	6.42	2.76	0.20	135168	-	-	-	set_add_rem/rune-jit/build/compile
+set_add_rem	normal	rune:jit	O2	correctness	0	0	pass	0.85	0.40	0.02	11540	126141323	203616272	4291496	set_add_rem/rune-jit/correctness.0
+set_add_rem	normal	rune:jit	O2	count	1	1	pass	1.10	0.58	0.05	11568	126141323	203616272	4291496	set_add_rem/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

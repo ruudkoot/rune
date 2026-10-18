@@ -1,0 +1,13 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-ida-parallel.c3wy1ojw
+PASS ida-lazy smoke O2
+PASS ida-lazy smoke O0
+PASS ida-lazy smoke hosts
+PASS ida-lazy normal O2
+PASS ida-lazy normal O0
+PASS ida-strict smoke O0
+PASS ida-strict smoke O2
+PASS ida-strict smoke hosts
+PASS ida-lazy normal hosts
+PASS ida-strict normal O0
+PASS ida-strict normal O2
+PASS ida-strict normal hosts

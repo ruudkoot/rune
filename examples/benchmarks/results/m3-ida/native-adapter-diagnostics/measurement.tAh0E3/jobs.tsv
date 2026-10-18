@@ -1,0 +1,1 @@
+ida-strict	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/stream.sml shared/hartel-ida-finite.sml shared/hartel-ida-kernel.sml shared/hartel-ida-driver.sml ida-strict/benchmark.sml shared/main.sml	1 2 smoke.reference	ida-strict/smoke.expected	smoke.reference

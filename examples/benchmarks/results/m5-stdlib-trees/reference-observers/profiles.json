@@ -1,0 +1,52 @@
+{
+  "map_iter": {
+    "smoke": 1,
+    "normal": 1000
+  },
+  "map_add": {
+    "smoke": 1,
+    "normal": 100000,
+    "large": 1000000
+  },
+  "map_add_duplicate": {
+    "smoke": 1,
+    "normal": 100000,
+    "large": 1000000
+  },
+  "map_remove": {
+    "smoke": 1,
+    "normal": 1000000
+  },
+  "map_fold": {
+    "smoke": 1,
+    "normal": 1000
+  },
+  "map_for_all": {
+    "smoke": 1,
+    "normal": 1000
+  },
+  "map_find": {
+    "smoke": 10001,
+    "normal": 1000000
+  },
+  "map_map": {
+    "smoke": 1,
+    "normal": 1000,
+    "large": 10000
+  },
+  "set_fold": {
+    "smoke": 1,
+    "normal": 10000,
+    "large": 1000000
+  },
+  "set_mem": {
+    "smoke": 1001,
+    "normal": 1000000,
+    "large": 50000000
+  },
+  "set_add_rem": {
+    "smoke": 1,
+    "normal": 100000,
+    "large": 20000000
+  }
+}
