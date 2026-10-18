@@ -58,7 +58,7 @@ What it rests on:
 | M4 | Literals by type and mode | done 2026-10-18 |
 | M5 | `lib/unicode`: normalisation and identifier tables | done 2026-10-18; G2 passed 2026-10-18 |
 | M6 | Unicode identifiers | done 2026-10-18 |
-| M7 | Showing source and names | |
+| M7 | Showing source and names | done 2026-10-18 |
 | M8 | The wide family in the 8-bit order, and its costs | done 2026-10-18 |
 | M9 | The symmetric text signatures, and the change request | done 2026-10-18 |
 | M10 | String operations at both widths | done 2026-10-18 |
@@ -3687,6 +3687,77 @@ lookalikes, and the lints' data goes into the compiler (*The request*).
 * **Done when:**
   - `docs/diagnostics.md` says which unit each column counts.
   - rune-ide still points at the right character.
+* **Done** (2026-10-18, at `c398b6d1`):
+  - **Columns** (D15), as `docs/diagnostics.md`'s new *Columns* table says
+    for every place that shows one:
+    - A diagnostic's first line, `FILE:LINE:COL`, counts characters: the
+      code points before the position on its line, a byte that is not
+      UTF-8 one, as the excerpt shows it (`Source.shownLineCol`, in
+      `Source.describe`). Only a diagnostic counts them; the line table
+      takes `Source.lineCol`'s bytes as before (E10's 4.1%).
+    - The REPL's traces (`raised in`, `:bt`) and its debugger's frames
+      count characters too (`Source.shownPlace`), in the file's text, the
+      lines `keepLines` kept, or the file on disk.
+    - The engine's frames (an exception's `trace`, `debug/frames`) count
+      UTF-16 units, as its diagnostics' ranges did, so `rune-dap` passes
+      them on as DAP counts them (`Source.utf16Column`).
+    - Unchanged: bytes in the line table, `Runtime.trace`, the VM's own
+      trace of an uncaught exception, DWARF and `--serve`; UTF-16 units
+      and bytes in `--diagnostics-json`.
+  - **`Source.keepLines`** keeps, of a file it lets go, the lines that hold
+    a character above ASCII (`Source.keptLines`), and nothing of an ASCII
+    file. The excerpt still needs the whole text, and is still left out.
+  - **File names** in the first line are escaped as the excerpt escapes
+    text: a control (C0, DEL, C1), a bidirectional control or another
+    default-ignorable character as `\u{202E}`, a byte that is not UTF-8 as
+    `\xE9` (`Source.shownName`). The JSON's `path` stays as it is, for an
+    editor to find the file by.
+  - **Wide values** (D14). The REPL prints a `WideString.string` and a
+    `WideChar.char` quoted, in UTF-8 (`"λA"`, `#"λ"`), with C0, C1,
+    DEL, the bidirectional controls, the default-ignorables and the
+    surrogates escaped: `\n` and the other short escapes of Standard ML
+    where it has one, else `\u202E` (`\U000E0001` above U+FFFF). Before
+    they printed by `WideString.toString`, unquoted, every character above
+    127 escaped. `string` prints as before. The printer is
+    `RuneShow.wideString` and `wideChar` (`lib/basis/compiler.sml`), which
+    the REPL's code picks for the types the session names
+    `WideString.string` and `WideChar.char`. Its 17 ranges of
+    default-ignorables equal `Identifier.isDefaultIgnorable` at every code
+    point (checked).
+  - **The build order:** `src/util/source.sml` and `error.sml` come after
+    `lib/unicode` in `rune.build` and `runedoc.build`, so that `Source`
+    can use `Utf8` and `Identifier`.
+  - **Tests:**
+    - `tests/diagnostics`: `emoji.sml` (`1:51` is now `1:36`) and `wide.sml`
+      (`1:74` is now `1:52`), each checked by hand against the line's code
+      points; the others hold ASCII before their columns.
+    - `diagnostics/escaped-names`: Latin-1's `caf\233.sml` shown as
+      `caf\xE9.sml`, a name with U+202E shown as `\u{202E}`, and a column
+      after `λ` counted once.
+    - `tests/repl/unicode`: a raise after CJK names on its line (`:bt` at
+      column 46, byte 62), an entry's trace after `ε`, and wide values.
+    - `tests/dap/run.py`: a caller's frame after U+1F600 and U+00E9 at
+      column 20 in UTF-16 units (byte 23, character 19).
+  - **rune-ide** points at the same characters: it counts its ranges from
+    the byte spans itself, in UTF-16 units, and Rune's `--diagnostics-json`
+    gives the same ranges as before. Its compiler adapter, built against
+    Rune `3a3c504f`, would need three changes to build against this
+    branch; none is in rune-ide's tree:
+    - Rune lists its sources in `rune.build` (`scripts/build-files.sh`), and
+      `sources.txt` is gone (the incremental roadmap's M10);
+    - `Source.readFile` and `Source.load` take a mode (M2), which its
+      `overlays.sml` must take and pass on (`fromStringIn`);
+    - its `diagnostics.sml`, put after `error.sml`, now comes after
+      `lib/unicode/utf8.sml` too, whose `Utf8.next` gives a length and not
+      the next index, and has no `Invalid`: it should name its own decoder
+      otherwise (its `semantics.sml`, put at the end, meets Rune's `Utf8`
+      already).
+  - **Not foreseen:** the REPL gives one name to several texts: `stdIn` to
+    every entry in its basic mode, and an entry typed at a stop the name of
+    the entry that stopped. A frame's column was first counted in the
+    newest of them, which `tests/repl/commands` and `debug` caught (`1:20`
+    shown as `1:9`). A column past the end of its line in the text at hand
+    is now taken for another text's, and keeps its bytes.
 
 ### M8. The wide family in the 8-bit order, and its costs (M, about 800)
 
