@@ -525,3 +525,21 @@ unattributed assembly-data origin are documented without inferred credits.
 The catalogue reaches 471 programs and 1367 profiles. Bounded semantic checks
 and explicit large checks are separated by their resource scope; the earlier
 ML Kit 1 GiB memory failure remains visible. M3/M4 remain in progress.
+
+## Hartel component-labelling modes, 2026-10-18
+
+Four ports preserve the original sifting labeller and its source-level
+non-sifting alternative with memoized/strict finite data. One shared kernel
+retains labelled persistent trees, global representatives, ordered union,
+ghost-leaf selection and no-op prediction hints. The inactive alternative is
+explicit in the variant inventory, with direct positive tiling and original
+observer evidence rather than a negative Main repetition loop.
+
+All 46 full original states agree with both policies and independent BFS/run/
+forest checks. Source individual authorship/notices are unstated and are not
+inferred from helper/collection credits. Whole original source/shim/fixtures
+remain. The catalogue contains 475 programs and 1379 profiles.
+
+Poly/ML's isolated auxiliary strict-tree compiler error remains distinct from
+passing standard applications and corrected earlier tuple-projection type
+ambiguity. M3/M4 remain in progress and M8 remains planned.

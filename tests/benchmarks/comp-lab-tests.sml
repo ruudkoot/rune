@@ -1,0 +1,211 @@
+structure CompLabTests=struct
+ structure N=BenchCompLabFn(BenchNeed)
+ structure E=BenchCompLabFn(BenchStrict)
+ structure NC=BenchCompLabCheckFn(N)
+ structure EC=BenchCompLabCheckFn(E)
+ structure L=BenchLazy
+ fun check name f=T.check("comp-lab/"^name,f)
+ fun read file=let val f=TextIO.openIn file in TextIO.inputAll f before TextIO.closeIn f end
+ val _=check"full-original/N/0-1-0-zift"(fn()=>N.rendered true 0 1 0=read"cases/0-1-0-zift.reference")
+ val _=check"full-original/E/0-1-0-zift"(fn()=>E.rendered true 0 1 0=read"cases/0-1-0-zift.reference")
+ val _=check"full-original/N/0-1-0-plain"(fn()=>N.rendered false 0 1 0=read"cases/0-1-0-plain.reference")
+ val _=check"full-original/E/0-1-0-plain"(fn()=>E.rendered false 0 1 0=read"cases/0-1-0-plain.reference")
+ val _=check"full-original/N/0-1-1-zift"(fn()=>N.rendered true 0 1 1=read"cases/0-1-1-zift.reference")
+ val _=check"full-original/E/0-1-1-zift"(fn()=>E.rendered true 0 1 1=read"cases/0-1-1-zift.reference")
+ val _=check"full-original/N/0-1-1-plain"(fn()=>N.rendered false 0 1 1=read"cases/0-1-1-plain.reference")
+ val _=check"full-original/E/0-1-1-plain"(fn()=>E.rendered false 0 1 1=read"cases/0-1-1-plain.reference")
+ val _=check"full-original/N/0-1-10000-zift"(fn()=>N.rendered true 0 1 10000=read"cases/0-1-10000-zift.reference")
+ val _=check"full-original/E/0-1-10000-zift"(fn()=>E.rendered true 0 1 10000=read"cases/0-1-10000-zift.reference")
+ val _=check"full-original/N/0-1-10000-plain"(fn()=>N.rendered false 0 1 10000=read"cases/0-1-10000-plain.reference")
+ val _=check"full-original/E/0-1-10000-plain"(fn()=>E.rendered false 0 1 10000=read"cases/0-1-10000-plain.reference")
+ val _=check"full-original/N/1-1-0-zift"(fn()=>N.rendered true 1 1 0=read"cases/1-1-0-zift.reference")
+ val _=check"full-original/E/1-1-0-zift"(fn()=>E.rendered true 1 1 0=read"cases/1-1-0-zift.reference")
+ val _=check"full-original/N/1-1-0-plain"(fn()=>N.rendered false 1 1 0=read"cases/1-1-0-plain.reference")
+ val _=check"full-original/E/1-1-0-plain"(fn()=>E.rendered false 1 1 0=read"cases/1-1-0-plain.reference")
+ val _=check"full-original/N/1-1-1-zift"(fn()=>N.rendered true 1 1 1=read"cases/1-1-1-zift.reference")
+ val _=check"full-original/E/1-1-1-zift"(fn()=>E.rendered true 1 1 1=read"cases/1-1-1-zift.reference")
+ val _=check"full-original/N/1-1-1-plain"(fn()=>N.rendered false 1 1 1=read"cases/1-1-1-plain.reference")
+ val _=check"full-original/E/1-1-1-plain"(fn()=>E.rendered false 1 1 1=read"cases/1-1-1-plain.reference")
+ val _=check"full-original/N/1-1-10000-zift"(fn()=>N.rendered true 1 1 10000=read"cases/1-1-10000-zift.reference")
+ val _=check"full-original/E/1-1-10000-zift"(fn()=>E.rendered true 1 1 10000=read"cases/1-1-10000-zift.reference")
+ val _=check"full-original/N/1-1-10000-plain"(fn()=>N.rendered false 1 1 10000=read"cases/1-1-10000-plain.reference")
+ val _=check"full-original/E/1-1-10000-plain"(fn()=>E.rendered false 1 1 10000=read"cases/1-1-10000-plain.reference")
+ val _=check"full-original/N/2-1-0-zift"(fn()=>N.rendered true 2 1 0=read"cases/2-1-0-zift.reference")
+ val _=check"full-original/E/2-1-0-zift"(fn()=>E.rendered true 2 1 0=read"cases/2-1-0-zift.reference")
+ val _=check"full-original/N/2-1-0-plain"(fn()=>N.rendered false 2 1 0=read"cases/2-1-0-plain.reference")
+ val _=check"full-original/E/2-1-0-plain"(fn()=>E.rendered false 2 1 0=read"cases/2-1-0-plain.reference")
+ val _=check"full-original/N/2-1-1-zift"(fn()=>N.rendered true 2 1 1=read"cases/2-1-1-zift.reference")
+ val _=check"full-original/E/2-1-1-zift"(fn()=>E.rendered true 2 1 1=read"cases/2-1-1-zift.reference")
+ val _=check"full-original/N/2-1-1-plain"(fn()=>N.rendered false 2 1 1=read"cases/2-1-1-plain.reference")
+ val _=check"full-original/E/2-1-1-plain"(fn()=>E.rendered false 2 1 1=read"cases/2-1-1-plain.reference")
+ val _=check"full-original/N/2-1-10000-zift"(fn()=>N.rendered true 2 1 10000=read"cases/2-1-10000-zift.reference")
+ val _=check"full-original/E/2-1-10000-zift"(fn()=>E.rendered true 2 1 10000=read"cases/2-1-10000-zift.reference")
+ val _=check"full-original/N/2-1-10000-plain"(fn()=>N.rendered false 2 1 10000=read"cases/2-1-10000-plain.reference")
+ val _=check"full-original/E/2-1-10000-plain"(fn()=>E.rendered false 2 1 10000=read"cases/2-1-10000-plain.reference")
+ val _=check"full-original/N/3-1-0-zift"(fn()=>N.rendered true 3 1 0=read"cases/3-1-0-zift.reference")
+ val _=check"full-original/E/3-1-0-zift"(fn()=>E.rendered true 3 1 0=read"cases/3-1-0-zift.reference")
+ val _=check"full-original/N/3-1-0-plain"(fn()=>N.rendered false 3 1 0=read"cases/3-1-0-plain.reference")
+ val _=check"full-original/E/3-1-0-plain"(fn()=>E.rendered false 3 1 0=read"cases/3-1-0-plain.reference")
+ val _=check"full-original/N/3-1-1-zift"(fn()=>N.rendered true 3 1 1=read"cases/3-1-1-zift.reference")
+ val _=check"full-original/E/3-1-1-zift"(fn()=>E.rendered true 3 1 1=read"cases/3-1-1-zift.reference")
+ val _=check"full-original/N/3-1-1-plain"(fn()=>N.rendered false 3 1 1=read"cases/3-1-1-plain.reference")
+ val _=check"full-original/E/3-1-1-plain"(fn()=>E.rendered false 3 1 1=read"cases/3-1-1-plain.reference")
+ val _=check"full-original/N/3-1-10000-zift"(fn()=>N.rendered true 3 1 10000=read"cases/3-1-10000-zift.reference")
+ val _=check"full-original/E/3-1-10000-zift"(fn()=>E.rendered true 3 1 10000=read"cases/3-1-10000-zift.reference")
+ val _=check"full-original/N/3-1-10000-plain"(fn()=>N.rendered false 3 1 10000=read"cases/3-1-10000-plain.reference")
+ val _=check"full-original/E/3-1-10000-plain"(fn()=>E.rendered false 3 1 10000=read"cases/3-1-10000-plain.reference")
+ val _=check"full-original/N/4-1-0-zift"(fn()=>N.rendered true 4 1 0=read"cases/4-1-0-zift.reference")
+ val _=check"full-original/E/4-1-0-zift"(fn()=>E.rendered true 4 1 0=read"cases/4-1-0-zift.reference")
+ val _=check"full-original/N/4-1-0-plain"(fn()=>N.rendered false 4 1 0=read"cases/4-1-0-plain.reference")
+ val _=check"full-original/E/4-1-0-plain"(fn()=>E.rendered false 4 1 0=read"cases/4-1-0-plain.reference")
+ val _=check"full-original/N/4-1-1-zift"(fn()=>N.rendered true 4 1 1=read"cases/4-1-1-zift.reference")
+ val _=check"full-original/E/4-1-1-zift"(fn()=>E.rendered true 4 1 1=read"cases/4-1-1-zift.reference")
+ val _=check"full-original/N/4-1-1-plain"(fn()=>N.rendered false 4 1 1=read"cases/4-1-1-plain.reference")
+ val _=check"full-original/E/4-1-1-plain"(fn()=>E.rendered false 4 1 1=read"cases/4-1-1-plain.reference")
+ val _=check"full-original/N/4-1-10000-zift"(fn()=>N.rendered true 4 1 10000=read"cases/4-1-10000-zift.reference")
+ val _=check"full-original/E/4-1-10000-zift"(fn()=>E.rendered true 4 1 10000=read"cases/4-1-10000-zift.reference")
+ val _=check"full-original/N/4-1-10000-plain"(fn()=>N.rendered false 4 1 10000=read"cases/4-1-10000-plain.reference")
+ val _=check"full-original/E/4-1-10000-plain"(fn()=>E.rendered false 4 1 10000=read"cases/4-1-10000-plain.reference")
+ val _=check"full-original/N/3-2-0-zift"(fn()=>N.rendered true 3 2 0=read"cases/3-2-0-zift.reference")
+ val _=check"full-original/E/3-2-0-zift"(fn()=>E.rendered true 3 2 0=read"cases/3-2-0-zift.reference")
+ val _=check"full-original/N/3-2-0-plain"(fn()=>N.rendered false 3 2 0=read"cases/3-2-0-plain.reference")
+ val _=check"full-original/E/3-2-0-plain"(fn()=>E.rendered false 3 2 0=read"cases/3-2-0-plain.reference")
+ val _=check"full-original/N/3-2-512-zift"(fn()=>N.rendered true 3 2 512=read"cases/3-2-512-zift.reference")
+ val _=check"full-original/E/3-2-512-zift"(fn()=>E.rendered true 3 2 512=read"cases/3-2-512-zift.reference")
+ val _=check"full-original/N/3-2-512-plain"(fn()=>N.rendered false 3 2 512=read"cases/3-2-512-plain.reference")
+ val _=check"full-original/E/3-2-512-plain"(fn()=>E.rendered false 3 2 512=read"cases/3-2-512-plain.reference")
+ val _=check"full-original/N/3-3-0-zift"(fn()=>N.rendered true 3 3 0=read"cases/3-3-0-zift.reference")
+ val _=check"full-original/E/3-3-0-zift"(fn()=>E.rendered true 3 3 0=read"cases/3-3-0-zift.reference")
+ val _=check"full-original/N/3-3-0-plain"(fn()=>N.rendered false 3 3 0=read"cases/3-3-0-plain.reference")
+ val _=check"full-original/E/3-3-0-plain"(fn()=>E.rendered false 3 3 0=read"cases/3-3-0-plain.reference")
+ val _=check"full-original/N/3-3-768-zift"(fn()=>N.rendered true 3 3 768=read"cases/3-3-768-zift.reference")
+ val _=check"full-original/E/3-3-768-zift"(fn()=>E.rendered true 3 3 768=read"cases/3-3-768-zift.reference")
+ val _=check"full-original/N/3-3-768-plain"(fn()=>N.rendered false 3 3 768=read"cases/3-3-768-plain.reference")
+ val _=check"full-original/E/3-3-768-plain"(fn()=>E.rendered false 3 3 768=read"cases/3-3-768-plain.reference")
+ val _=check"full-original/N/3-5-0-zift"(fn()=>N.rendered true 3 5 0=read"cases/3-5-0-zift.reference")
+ val _=check"full-original/E/3-5-0-zift"(fn()=>E.rendered true 3 5 0=read"cases/3-5-0-zift.reference")
+ val _=check"full-original/N/3-5-0-plain"(fn()=>N.rendered false 3 5 0=read"cases/3-5-0-plain.reference")
+ val _=check"full-original/E/3-5-0-plain"(fn()=>E.rendered false 3 5 0=read"cases/3-5-0-plain.reference")
+ val _=check"full-original/N/3-5-1280-zift"(fn()=>N.rendered true 3 5 1280=read"cases/3-5-1280-zift.reference")
+ val _=check"full-original/E/3-5-1280-zift"(fn()=>E.rendered true 3 5 1280=read"cases/3-5-1280-zift.reference")
+ val _=check"full-original/N/3-5-1280-plain"(fn()=>N.rendered false 3 5 1280=read"cases/3-5-1280-plain.reference")
+ val _=check"full-original/E/3-5-1280-plain"(fn()=>E.rendered false 3 5 1280=read"cases/3-5-1280-plain.reference")
+ val _=check"full-original/N/3-9-0-zift"(fn()=>N.rendered true 3 9 0=read"cases/3-9-0-zift.reference")
+ val _=check"full-original/E/3-9-0-zift"(fn()=>E.rendered true 3 9 0=read"cases/3-9-0-zift.reference")
+ val _=check"full-original/N/3-9-0-plain"(fn()=>N.rendered false 3 9 0=read"cases/3-9-0-plain.reference")
+ val _=check"full-original/E/3-9-0-plain"(fn()=>E.rendered false 3 9 0=read"cases/3-9-0-plain.reference")
+ val _=check"full-original/N/3-9-2304-zift"(fn()=>N.rendered true 3 9 2304=read"cases/3-9-2304-zift.reference")
+ val _=check"full-original/E/3-9-2304-zift"(fn()=>E.rendered true 3 9 2304=read"cases/3-9-2304-zift.reference")
+ val _=check"full-original/N/3-9-2304-plain"(fn()=>N.rendered false 3 9 2304=read"cases/3-9-2304-plain.reference")
+ val _=check"full-original/E/3-9-2304-plain"(fn()=>E.rendered false 3 9 2304=read"cases/3-9-2304-plain.reference")
+ val _=check"merge-retains-duplicates/N"(fn()=>
+ let val a=N.makeTree 2(N.F.fromList[1,2])
+     val b=N.makeTree 2(N.F.fromList[2,3])
+     val tree=N.treeUnion(#2(BenchNeed.force a))(#2(BenchNeed.force b))
+ in N.F.toList(N.flatten tree)=[1,2,2,3]end)
+ val _=check"select-leaf-outside-bounds-is-retained/N"(fn()=>
+ let val leaf=BenchNeed.delay(fn()=>N.Leaf(BenchNeed.delay(fn()=>3)))
+ in N.treeMin(N.selectTree 100 200 leaf)=3 end)
+ val _=check"cropped-object-keeps-global-representative/N"(fn()=>
+ let val made=N.makeTree 2(N.F.fromList[1,2])
+     val obj=BenchNeed.delay(fn()=>N.Set(BenchNeed.delay(fn()=>1),#2(BenchNeed.force made)))
+     val selected=N.selectSet 2 3 obj
+ in N.top selected=1 andalso N.setMember selected 2 andalso not(N.setMember selected 1)end)
+ val _=check"ignored-sandwich-hints/N"(fn()=>
+ N.sandwich(fn a=>fn b=>a+b)
+    (N.SandArg(3,L.delay(fn()=>raise Fail"left hint")))
+    (N.SandArg(4,L.delay(fn()=>raise Fail"right hint")))=7)
+ val _=check"plain-map-skips-generator/N"(fn()=>
+ let val image=N.figure 1
+     val field=N.pixelFieldSeq(N.F.map N.pixelsToRanges image)2(N.generator 2 0 0)
+     val labels=N.fieldLabels field
+     val objects=N.fieldObjects field
+     val gen=L.delay(fn()=>raise Fail"unused generator")
+     val result=N.mapLabel N.noSift labels 2 gen objects 0
+ in List.map(fn row=>List.map N.labelOf(N.F.toList row))(N.F.toList result)=[[0],[0]]end)
+ val _=check"sifting-demands-generator/N"(fn()=>
+ let val image=N.figure 1
+     val field=N.pixelFieldSeq(N.F.map N.pixelsToRanges image)2(N.generator 2 0 0)
+     val labels=N.fieldLabels field
+     val objects=N.fieldObjects field
+     val gen=L.delay(fn()=>raise Fail"expected generator demand")
+ in ((List.map(fn row=>List.map N.labelOf(N.F.toList row))
+       (N.F.toList(N.mapLabel N.sift labels 2 gen objects 0));false)
+    handle Fail text=>text="expected generator demand")end)
+ val _=check"merge-retains-duplicates/E"(fn()=>
+ let val a=E.makeTree 2(E.F.fromList[1,2])
+     val b=E.makeTree 2(E.F.fromList[2,3])
+     val tree=E.treeUnion(#2(BenchStrict.force a))(#2(BenchStrict.force b))
+ in E.F.toList(E.flatten tree)=[1,2,2,3]end)
+ val _=check"select-leaf-outside-bounds-is-retained/E"(fn()=>
+ let val leaf=BenchStrict.delay(fn()=>E.Leaf(BenchStrict.delay(fn()=>3)))
+ in E.treeMin(E.selectTree 100 200 leaf)=3 end)
+ val _=check"cropped-object-keeps-global-representative/E"(fn()=>
+ let val made=E.makeTree 2(E.F.fromList[1,2])
+     val obj=BenchStrict.delay(fn()=>E.Set(BenchStrict.delay(fn()=>1),#2(BenchStrict.force made)))
+     val selected=E.selectSet 2 3 obj
+ in E.top selected=1 andalso E.setMember selected 2 andalso not(E.setMember selected 1)end)
+ val _=check"ignored-sandwich-hints/E"(fn()=>
+ E.sandwich(fn a=>fn b=>a+b)
+    (E.SandArg(3,L.delay(fn()=>raise Fail"left hint")))
+    (E.SandArg(4,L.delay(fn()=>raise Fail"right hint")))=7)
+ val _=check"plain-map-skips-generator/E"(fn()=>
+ let val image=E.figure 1
+     val field=E.pixelFieldSeq(E.F.map E.pixelsToRanges image)2(E.generator 2 0 0)
+     val labels=E.fieldLabels field
+     val objects=E.fieldObjects field
+     val gen=L.delay(fn()=>raise Fail"unused generator")
+     val result=E.mapLabel E.noSift labels 2 gen objects 0
+ in List.map(fn row=>List.map E.labelOf(E.F.toList row))(E.F.toList result)=[[0],[0]]end)
+ val _=check"sifting-demands-generator/E"(fn()=>
+ let val image=E.figure 1
+     val field=E.pixelFieldSeq(E.F.map E.pixelsToRanges image)2(E.generator 2 0 0)
+     val labels=E.fieldLabels field
+     val objects=E.fieldObjects field
+     val gen=L.delay(fn()=>raise Fail"expected generator demand")
+ in ((List.map(fn row=>List.map E.labelOf(E.F.toList row))
+       (E.F.toList(E.mapLabel E.sift labels 2 gen objects 0));false)
+    handle Fail text=>text="expected generator demand")end)
+ val _=check"disjoint-border-skips-labels-and-objects"(fn()=>
+ let val count=ref 0
+     val objects=BenchNeed.delay(fn()=>(count:= !count+1;N.F.Nil))
+     fun row start finish=N.F.fromList[N.LabRange(BenchNeed.delay(fn()=>raise Fail"unused label"),
+        BenchNeed.delay(fn()=>N.Range(BenchNeed.delay(fn()=>start),BenchNeed.delay(fn()=>finish))))]
+     val result=N.unionBorder(row 0 1)(row 2 3)objects
+ in !count=0 andalso N.F.length result=0 andalso !count=1 end)
+ val _=check"ordered-tree-union-skips-unused-left-subtree"(fn()=>
+ let val poison=BenchNeed.delay(fn()=>raise Fail"unused subtree")
+     val leaf2=BenchNeed.delay(fn()=>N.Leaf(BenchNeed.delay(fn()=>2)))
+     val first=BenchNeed.delay(fn()=>N.Tree(BenchNeed.delay(fn()=>1),poison,leaf2))
+     val last=BenchNeed.delay(fn()=>N.Leaf(BenchNeed.delay(fn()=>3)))
+ in case BenchNeed.force(N.treeUnion first last)of N.Tree(key,_,_)=>BenchNeed.force key=2|_=>false end)
+ val _=check"tree-membership-skips-unused-subtree"(fn()=>
+ let val poison=BenchNeed.delay(fn()=>raise Fail"unused subtree")
+     val leaf=BenchNeed.delay(fn()=>N.Leaf(BenchNeed.delay(fn()=>3)))
+     val tree=BenchNeed.delay(fn()=>N.Tree(BenchNeed.delay(fn()=>2),poison,leaf))
+ in N.member tree 3 end)
+ val _=check"selection-skips-unused-subtree"(fn()=>
+ let val poison=BenchNeed.delay(fn()=>raise Fail"unused subtree")
+     val leaf=BenchNeed.delay(fn()=>N.Leaf(BenchNeed.delay(fn()=>3)))
+     val tree=BenchNeed.delay(fn()=>N.Tree(BenchNeed.delay(fn()=>2),poison,leaf))
+ in N.treeMin(N.selectTree 3 4 tree)=3 end)
+ val _=check"memoized-finite-fields"(fn()=>
+ let val count=ref 0 val value=BenchNeed.delay(fn()=>(count:= !count+1;7))
+     val tree=BenchNeed.delay(fn()=>N.Leaf value)
+ in N.treeMin tree=7 andalso N.treeMin tree=7 andalso !count=1 end)
+ val _=check"strict-finite-fields"(fn()=>
+ let val count=ref 0
+     val tree=BenchStrict.delay(fn()=>E.Leaf(BenchStrict.delay(fn()=>(count:= !count+1;7))))
+ in !count=1 andalso E.treeMin tree=7 end)
+ structure Zero=BenchCompLabCheckFn(struct
+ fun rendered(_:bool)(_:int)(_:int)(_:int):string=raise Fail"zero-work renderer"
+ fun sumcode(_:string):string=raise Fail"zero-work checksum"
+ end)
+ val _=check"zero-work-skips-renderer"(fn()=>Zero.run true["0","1","0","cases/3-1-0-zift.reference","ignored"]="0:0")
+ val _=check"reject-wrong-complete-state"(fn()=>
+ ((NC.run true["1","1","0","cases/0-1-0-zift.reference","ignored"];false)
+ handle Fail why=>String.isPrefix"incorrect result:"why))
+ val _=check"reject-wrong-source-sumcode"(fn()=>
+ ((NC.run true["1","1","0","cases/3-1-0-zift.reference","wrong"];false)
+ handle Fail why=>String.isPrefix"incorrect result:"why))
+end

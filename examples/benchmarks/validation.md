@@ -3053,3 +3053,34 @@ tables; per-run outputs, logs and commands remain intact.
 [Full make JOBS=4 check](validation/oct18-cacheprof-1367-acceptance.log)
 exits zero with 1367 profiles and all compiler/runedoc/runeopt cross-build
 comparisons. M3/M4 remain in progress and M8 remains planned.
+
+## Hartel connected-component labelling, 2026-10-18
+
+The catalogue contains 475 programs and 1379 profiles. All four sifting/data
+variants pass all 112 canonical smoke/normal cases on Rune O0/O2 across four
+engines and six managed SML hosts. Original full component images, raw ranges
+and persistent trees agree across 46 states; independent BFS/run/forest checks
+cover all 129950 pixels. Original FAST/NORM/SLOW fixtures match.
+
+The final semantic target records 2034 passing assertions, none failed and
+226 incomplete across twenty invocations. Both Poly/ML groups fail compilation
+of a valid auxiliary strict-tree test, as documented in the
+[host note](validation/comp-lab-polyml.md). Its diagnostic 98-assertion prefix
+and four normal application pilots pass; neither replaces the full failed
+target. Earlier tuple-arity ambiguity and allocator-probe setup failures remain
+separate development records.
+
+All sixteen full-normal Rune count samples agree with guards exiting zero
+without interruption. Twelve serial single fresh-process native smoke adapter
+diagnostics pass; a bounded semantic check overlapped initial samples.
+These are not ten-sample comparative performance claims. Full selected large
+100-repetition runs remain unrecorded.
+
+The public Rune O0/O2 semantic target, all 124 inventory regressions and the
+five-pin 861-entry replay pass. [Evidence](results/m3-comp-lab/README.md)
+retains raw outcomes, notices/attribution limits, independent references and
+canonical input identity/group maps.
+
+[Full make JOBS=4 check](validation/oct18-comp-lab-1379-acceptance.log)
+exits zero with 1379 profiles and all compiler/runedoc/runeopt cross-build
+comparisons. M3/M4 remain in progress and M8 remains planned.
