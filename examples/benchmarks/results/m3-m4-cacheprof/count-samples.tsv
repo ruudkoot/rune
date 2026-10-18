@@ -1,0 +1,17 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+cacheprof-lazy	normal	rune	O2	count	1	1	pass	0.22	0.12	0.00	10744	14293630	33233648	867204	counts/measurement.oWUHxw/cacheprof-lazy/rune/fresh.1
+cacheprof-lazy	normal	rune:opt	O2	count	1	1	pass	0.11	0.06	0.00	11920	14293630	33233648	867204	counts/measurement.oWUHxw/cacheprof-lazy/rune-opt/fresh.1
+cacheprof-lazy	normal	rune:new	O2	count	1	1	pass	0.24	0.10	0.01	11268	8221454	33233648	867204	counts/measurement.oWUHxw/cacheprof-lazy/rune-new/fresh.1
+cacheprof-lazy	normal	rune:jit	O2	count	1	1	pass	0.24	0.13	0.02	13520	8221454	33233648	867204	counts/measurement.oWUHxw/cacheprof-lazy/rune-jit/fresh.1
+cacheprof-strict	normal	rune	O2	count	1	1	pass	0.08	0.06	0.01	11548	11395564	23534712	544427	counts/measurement.ZZiCkV/cacheprof-strict/rune/fresh.1
+cacheprof-strict	normal	rune:opt	O2	count	1	1	pass	0.05	0.05	0.00	12988	11395564	23534712	544427	counts/measurement.ZZiCkV/cacheprof-strict/rune-opt/fresh.1
+cacheprof-strict	normal	rune:new	O2	count	1	1	pass	0.11	0.09	0.01	12328	6499751	23534712	544427	counts/measurement.ZZiCkV/cacheprof-strict/rune-new/fresh.1
+cacheprof-strict	normal	rune:jit	O2	count	1	1	pass	0.14	0.11	0.03	15652	6499751	23534712	544427	counts/measurement.ZZiCkV/cacheprof-strict/rune-jit/fresh.1
+cacheprof-nofib-lazy	normal	rune	O2	count	1	1	pass	25.27	24.53	0.22	10892	2834697308	6589098576	172974744	counts/measurement.FpdZY3/cacheprof-nofib-lazy/rune/fresh.1
+cacheprof-nofib-lazy	normal	rune:opt	O2	count	1	1	pass	11.32	10.21	0.08	12224	2834697308	6589098576	172974744	counts/measurement.FpdZY3/cacheprof-nofib-lazy/rune-opt/fresh.1
+cacheprof-nofib-lazy	normal	rune:new	O2	count	1	1	pass	23.68	22.99	0.16	19324	1630285415	6589098576	172974744	counts/measurement.FpdZY3/cacheprof-nofib-lazy/rune-new/fresh.1
+cacheprof-nofib-lazy	normal	rune:jit	O2	count	1	1	pass	10.08	10.35	0.06	21812	1630285415	6589098576	172974744	counts/measurement.FpdZY3/cacheprof-nofib-lazy/rune-jit/fresh.1
+cacheprof-nofib-strict	normal	rune	O2	count	1	1	pass	17.69	16.96	0.04	11548	2255078536	4649312888	108419941	counts/measurement.LarqyZ/cacheprof-nofib-strict/rune/fresh.1
+cacheprof-nofib-strict	normal	rune:opt	O2	count	1	1	pass	7.18	7.40	0.04	12952	2255078536	4649312888	108419941	counts/measurement.LarqyZ/cacheprof-nofib-strict/rune-opt/fresh.1
+cacheprof-nofib-strict	normal	rune:new	O2	count	1	1	pass	15.54	15.93	0.06	20516	1285941233	4649312888	108419941	counts/measurement.LarqyZ/cacheprof-nofib-strict/rune-new/fresh.1
+cacheprof-nofib-strict	normal	rune:jit	O2	count	1	1	pass	7.44	7.59	0.11	23880	1285941233	4649312888	108419941	counts/measurement.LarqyZ/cacheprof-nofib-strict/rune-jit/fresh.1

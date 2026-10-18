@@ -1,0 +1,34 @@
+    def cacheprof_notice(self, family, heading, full=False):
+        self.nofib_roots()
+        self.file(family + "/cacheprof/Makefile", "\n")
+        self.file(family + "/cacheprof/Main.hs", heading + "\nmodule Main where\nmain = print 0\n")
+        if full:
+            self.file(family + "/cacheprof/cacheprof.full", '.file "case.c"\n')
+        return self.build("nofib")[0]
+
+    def test_cacheprof_gc_individual_credit_is_recorded(self):
+        heading = (ROOT / "examples/benchmarks/cacheprof-lazy/upstream/Main.hs").read_text().split("module Main")[0]
+        row = self.cacheprof_notice("gc", heading)
+        self.assertIn("Julian Seward", row["authors"])
+        self.assertIn("gc/cacheprof/Main.hs:author-and-GPL2-or-later-heading", row["evidence"])
+
+    def test_cacheprof_real_individual_credit_is_recorded(self):
+        heading = (ROOT / "examples/benchmarks/cacheprof-nofib-lazy/upstream/Main.hs").read_text().split("module Main")[0]
+        self.assertIn("Julian Seward", self.cacheprof_notice("real", heading)["authors"])
+
+    def test_changed_cacheprof_author_requires_review(self):
+        heading = (ROOT / "examples/benchmarks/cacheprof-lazy/upstream/Main.hs").read_text().split("module Main")[0]
+        self.assertNotIn("Julian Seward", self.cacheprof_notice("gc", heading.replace("Julian Seward", "Another author"))["authors"])
+
+    def test_changed_cacheprof_license_requires_review(self):
+        heading = (ROOT / "examples/benchmarks/cacheprof-lazy/upstream/Main.hs").read_text().split("module Main")[0]
+        self.assertNotIn("Julian Seward", self.cacheprof_notice("gc", heading.replace("either version 2 of the", "a changed license"))["authors"])
+
+    def test_cacheprof_complete_reservoir_is_inventoried(self):
+        row = self.cacheprof_notice("real", "", full=True)
+        self.assertIn("real/cacheprof/cacheprof.full", row["inputs"])
+        self.assertIn("real/cacheprof/cacheprof.full:complete-assembly-input-reservoir", row["evidence"])
+
+    def test_absent_cacheprof_reservoir_is_not_invented(self):
+        self.assertNotIn("real/cacheprof/cacheprof.full", self.cacheprof_notice("real", "")["inputs"])
+

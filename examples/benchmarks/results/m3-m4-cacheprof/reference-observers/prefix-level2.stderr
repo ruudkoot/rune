@@ -1,0 +1,6 @@
+prefix: 
+cacheann: Bad input: (stdin):2: syntax error on `broken ???'
+
+
+CallStack (from HasCallStack):
+  error, called at ./Generics.hs:39:6 in main:Generics

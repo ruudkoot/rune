@@ -1,0 +1,206 @@
+O_movl	OI [OE_RW 4 4]	True
+O_movw	OI [OE_RW 2 2]	True
+O_movb	OI [OE_RW 1 1]	True
+O_movzbw	OI [OE_RW 1 2]	True
+O_movzbl	OI [OE_RW 1 4]	True
+O_movzwl	OI [OE_RW 2 4]	True
+O_movsbw	OI [OE_RW 1 2]	True
+O_movsbl	OI [OE_RW 1 4]	True
+O_movswl	OI [OE_RW 2 4]	True
+O_pushl	OI_Special	True
+O_popl	OI_Special	True
+O_pushfl	OI_Error	False
+O_popfl	OI_Error	False
+O_sall	OI [OE_RM 1 4]	True
+O_salw	OI [OE_RM 1 2]	True
+O_salb	OI [OE_RM 1 1]	True
+O_sarl	OI [OE_RM 1 4]	True
+O_sarw	OI [OE_RM 1 2]	False
+O_sarb	OI [OE_RM 1 1]	False
+O_shrl	OI [OE_RM 1 4]	True
+O_shrw	OI [OE_RM 1 2]	True
+O_shrb	OI [OE_RM 1 1]	True
+O_roll	OI [OE_RM 1 4]	False
+O_rolw	OI [OE_RM 1 2]	False
+O_rolb	OI [OE_RM 1 1]	False
+O_rorl	OI [OE_RM 1 4]	False
+O_rorw	OI [OE_RM 1 2]	False
+O_rorb	OI [OE_RM 1 1]	False
+O_shldl	OI [OE_RRM 4 4 4,OE_RM 4 4]	False
+O_shrdl	OI [OE_RRM 4 4 4,OE_RM 4 4]	False
+O_addl	OI [OE_RM 4 4]	True
+O_addw	OI [OE_RM 2 2]	True
+O_addb	OI [OE_RM 1 1]	True
+O_adcl	OI [OE_RM 4 4]	False
+O_subl	OI [OE_RM 4 4]	True
+O_subw	OI [OE_RM 2 2]	True
+O_subb	OI [OE_RM 1 1]	True
+O_sbbl	OI [OE_RM 4 4]	False
+O_imull	OI [OE_M 4,OE_RM 4 4,OE_RRM 4 4 4]	False
+O_imulb	OI [OE_M 1]	False
+O_imulw	OI [OE_M 2,OE_RM 2 2]	False
+O_mull	OI [OE_M 4]	False
+O_idivl	OI [OE_M 4]	False
+O_divl	OI [OE_M 4]	False
+O_divw	OI [OE_M 2]	False
+O_divb	OI [OE_M 1]	False
+O_xorl	OI [OE_RM 4 4]	True
+O_xorw	OI [OE_RM 2 2]	True
+O_xorb	OI [OE_RM 1 1]	True
+O_andl	OI [OE_RM 4 4]	True
+O_andw	OI [OE_RM 2 2]	True
+O_andb	OI [OE_RM 1 1]	True
+O_orl	OI [OE_RM 4 4]	True
+O_orw	OI [OE_RM 2 2]	True
+O_orb	OI [OE_RM 1 1]	True
+O_incl	OI [OE_M 4]	True
+O_incw	OI [OE_M 2]	True
+O_incb	OI [OE_M 1]	True
+O_decl	OI [OE_M 4]	True
+O_decw	OI [OE_M 2]	True
+O_decb	OI [OE_M 1]	True
+O_negl	OI [OE_M 4]	False
+O_negw	OI [OE_M 2]	False
+O_negb	OI [OE_M 1]	False
+O_notl	OI [OE_M 4]	False
+O_notw	OI [OE_M 2]	False
+O_notb	OI [OE_M 1]	False
+O_testl	OI [OE_RR 4 4]	True
+O_testw	OI [OE_RR 2 2]	True
+O_testb	OI [OE_RR 1 1]	True
+O_leal	OI [OE_nW 4]	True
+O_cmpl	OI [OE_RR 4 4]	True
+O_cmpw	OI [OE_RR 2 2]	True
+O_cmpb	OI [OE_RR 1 1]	True
+O_cmpsb	OI_Special	False
+O_scasb	OI_Special	False
+O_movsl	OI_Special	False
+O_movsw	OI_Special	False
+O_movsb	OI_Special	False
+O_stosl	OI_Special	False
+O_stosw	OI_Special	False
+O_stosb	OI_Special	False
+O_leave	OI_Error	False
+O_ret	OI_Special	False
+O_call	OI_Special	False
+O_jmp	OI_Jumpy	False
+O_je	OI_Jumpy	False
+O_jne	OI_Jumpy	False
+O_jl	OI_Jumpy	False
+O_jle	OI_Jumpy	False
+O_jg	OI_Jumpy	False
+O_jge	OI_Jumpy	False
+O_js	OI_Jumpy	False
+O_jns	OI_Jumpy	False
+O_jz	OI_Jumpy	False
+O_jnz	OI_Jumpy	False
+O_jc	OI_Jumpy	False
+O_jnc	OI_Jumpy	False
+O_jo	OI_Jumpy	False
+O_jno	OI_Jumpy	False
+O_ja	OI_Jumpy	False
+O_jae	OI_Jumpy	False
+O_jb	OI_Jumpy	False
+O_jbe	OI_Jumpy	False
+O_jp	OI_Jumpy	False
+O_seta	OI [OE_W 1]	True
+O_setae	OI [OE_W 1]	True
+O_setb	OI [OE_W 1]	True
+O_setbe	OI [OE_W 1]	True
+O_sete	OI [OE_W 1]	True
+O_setne	OI [OE_W 1]	True
+O_setl	OI [OE_W 1]	True
+O_setle	OI [OE_W 1]	True
+O_setg	OI [OE_W 1]	True
+O_setge	OI [OE_W 1]	True
+O_setc	OI [OE_W 1]	True
+O_setcb	OI [OE_W 1]	True
+O_btl	OI [OE_RR 4 4]	False
+O_btsl	OI [OE_RM 4 4]	False
+O_btcl	OI [OE_RM 4 4]	False
+O_btrl	OI [OE_RM 4 4]	False
+O_cld	OI_NoEffect	False
+O_cltd	OI_NoEffect	False
+O_cwtl	OI_NoEffect	False
+O_cbtw	OI_NoEffect	False
+O_rep	OI_Error	False
+O_repz	OI_Error	False
+O_repnz	OI_Error	False
+O_fld	OI [OE_R 8]	False
+O_fldt	OI [OE_R 8]	False
+O_fldl	OI [OE_R 8]	True
+O_flds	OI [OE_R 4]	False
+O_fild	OI [OE_R 4]	False
+O_fildl	OI [OE_R 4]	False
+O_fildll	OI [OE_R 8]	False
+O_fstl	OI [OE_W 8]	False
+O_fstpl	OI [OE_W 8]	True
+O_fstp	OI [OE_W 8]	True
+O_fstps	OI [OE_W 4]	False
+O_fsts	OI [OE_W 4]	False
+O_fstpt	OI [OE_W 8]	False
+O_fistl	OI [OE_W 4]	False
+O_fistpl	OI [OE_W 4]	False
+O_fistpll	OI [OE_W 8]	False
+O_fst	OI [OE_W 8]	False
+O_fldz	OI_NoEffect	False
+O_fld1	OI_NoEffect	True
+O_fldl2e	OI_NoEffect	False
+O_fldln2	OI_NoEffect	False
+O_fchs	OI_NoEffect	False
+O_fsin	OI_NoEffect	False
+O_fcos	OI_NoEffect	False
+O_fptan	OI_NoEffect	False
+O_fsqrt	OI_NoEffect	False
+O_fpatan	OI_NoEffect	False
+O_fabs	OI_NoEffect	False
+O_f2xm1	OI_NoEffect	False
+O_fscale	OI_NoEffect	False
+O_fyl2x	OI_NoEffect	False
+O_faddp	OI [OE_R 8,OE_RM 8 8]	False
+O_fadds	OI [OE_R 4]	False
+O_faddl	OI [OE_R 8]	True
+O_fiaddl	OI [OE_R 4]	False
+O_fadd	OI [OE_R 8,OE_RM 8 8]	False
+O_fsubp	OI [OE_RM 8 8]	False
+O_fsubrp	OI [OE_RM 8 8]	False
+O_fsubrl	OI [OE_R 8]	True
+O_fsubrs	OI [OE_R 4]	False
+O_fsubs	OI [OE_R 4]	False
+O_fsubl	OI [OE_R 8]	True
+O_fsub	OI [OE_R 8,OE_RM 8 8]	False
+O_fsubr	OI [OE_R 8,OE_RM 8 8]	False
+O_fmul	OI [OE_R 8,OE_RM 8 8]	False
+O_fmuls	OI [OE_R 4]	False
+O_fmull	OI [OE_R 8]	False
+O_fmulp	OI [OE_R 8,OE_RM 8 8]	False
+O_fimull	OI [OE_R 8]	False
+O_fdiv	OI [OE_RM 8 8]	False
+O_fdivp	OI [OE_RM 8 8]	False
+O_fdivr	OI [OE_RM 8 8]	False
+O_fdivrl	OI [OE_R 8]	False
+O_fdivrs	OI [OE_R 4]	False
+O_fdivrp	OI [OE_RM 8 8]	False
+O_fidivrl	OI [OE_R 4]	False
+O_fidivl	OI [OE_R 4]	False
+O_fdivl	OI [OE_R 8]	False
+O_fdivs	OI [OE_R 4]	False
+O_fprem	OI_NoEffect	False
+O_fucom	OI_NoEffect	False
+O_fucomp	OI_NoEffect	False
+O_fucompp	OI_NoEffect	False
+O_fcomp	OI_NoEffect	False
+O_fcompp	OI_NoEffect	False
+O_fcoms	OI [OE_R 4]	False
+O_fcoml	OI [OE_R 8]	True
+O_fcom	OI [OE_R 8]	False
+O_fcomps	OI [OE_R 4]	False
+O_fcompl	OI [OE_R 8]	False
+O_ficompl	OI [OE_R 4]	False
+O_fnstsw	OI [OE_W 2]	True
+O_fnstcw	OI [OE_W 2]	False
+O_fldcw	OI [OE_R 2]	False
+O_fxch	OI_NoEffect	False
+O_frndint	OI_NoEffect	False
+O_sahf	OI_NoEffect	False
+O_nop	OI_NoEffect	False

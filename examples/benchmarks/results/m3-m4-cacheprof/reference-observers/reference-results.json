@@ -1,0 +1,30 @@
+[
+  {
+    "family": "gc",
+    "profile": "normal",
+    "bytes": 56927,
+    "sha256": "5e9c39894dcb1e60917bf4bba49a74d96ffe67316cdd451a4f9e01d4e898b550",
+    "seconds": 0.04266101900066133
+  },
+  {
+    "family": "real",
+    "profile": "source-fast",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "seconds": 0.22557042500011448
+  },
+  {
+    "family": "real",
+    "profile": "normal",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "seconds": 2.510292908998963
+  },
+  {
+    "family": "real",
+    "profile": "source-slow",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "seconds": 14.848694971999066
+  }
+]

@@ -3014,3 +3014,42 @@ and distinct development failures are retained in
 [Full make JOBS=4 check](validation/oct18-fulsom-symalg-1355-acceptance.log)
 exits zero with 1355 profiles and all compiler/runedoc/runeopt cross-build
 comparisons. M3/M4 remain in progress and M8 remains planned.
+
+## Cacheprof text annotation, 2026-10-18
+
+The catalogue contains 471 programs and 1367 profiles. All four variants pass
+all 112 canonical smoke/normal cases across Rune O0/O2 stack/register/JIT/native
+engines and six managed SML hosts. The bounded semantic target completes
+822 assertions in each of twenty invocations: 16440 pass, none failed or
+unreached. Native O0/O2 labels repeat host-default compiler settings.
+
+Complete original outputs, all 206 opcode/effect entries, 67 exact nonJumpy
+members, 299 original accepted/rejected cases and prefix-demand controls
+support the translation. The current short GC stdin and historical full
+stdout fixture are reconciled: the unmodified original with cacheprof.full
+reproduces all 1671273 golden bytes exactly. Input origins and that pairing
+remain explicit.
+
+An initial mixed target has one ML Kit memory-limit failure at 1 GiB:
+8232 assertions pass over ten invocations, none fail, and eight remain
+incomplete. That failed subject and outcome are retained. Four separate
+large checks pass on ML Kit with the declared 8 GiB large-profile limit;
+the protective process-tree guard exits zero without interruption.
+Neither kernel nor expected output was changed to accept the failure.
+
+All sixteen full-normal Rune count samples agree; all four guards exit zero
+without interruption. Twelve serial single fresh-process native smoke
+diagnostics, including correctness preflights, pass before heavy validation.
+These are adapter diagnostics rather than ten-sample comparative claims.
+Broader final large-profile runs remain unrecorded beyond the explicit probe.
+
+The public bounded semantic shell target passes Rune O0/O2. All 124 inventory
+regressions and the five-pin 861-entry replay pass. [Evidence](results/m3-m4-cacheprof/README.md)
+retains individual notices, source/input identities, original references,
+raw outcomes and distinct development/resource failures. Repeated archived
+input copies are replaced by byte-verified canonical references and group
+tables; per-run outputs, logs and commands remain intact.
+
+[Full make JOBS=4 check](validation/oct18-cacheprof-1367-acceptance.log)
+exits zero with 1367 profiles and all compiler/runedoc/runeopt cross-build
+comparisons. M3/M4 remain in progress and M8 remains planned.

@@ -1,0 +1,3 @@
+[1 of 3] Compiling Arch_x86         ( Arch_x86.hs, Arch_x86.o )
+[2 of 3] Compiling Main             ( Metadata.hs, Metadata.o )
+[3 of 3] Linking metadata [Objects changed]

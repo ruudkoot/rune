@@ -1,0 +1,33 @@
+{
+  "command": [
+    "timeout",
+    "600",
+    "sh",
+    "-c",
+    "cd tests/out/benchmarks/nofib-cacheprof-originals && ../../../../bin/runevm pilot.rbc"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 75892,
+  "observed_minimum_available_kib": 24026036,
+  "peak_processes": [
+    {
+      "pid": 8,
+      "name": "timeout",
+      "rss_kib": 1796
+    },
+    {
+      "pid": 9,
+      "name": "exited",
+      "rss_kib": 1680
+    },
+    {
+      "pid": 10,
+      "name": "exited",
+      "rss_kib": 72416
+    }
+  ],
+  "elapsed_seconds": 1.62833307299843
+}

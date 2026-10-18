@@ -1,0 +1,17 @@
+ M examples/benchmarks/README.md
+ M examples/benchmarks/inventory.tsv
+ M examples/benchmarks/manifest.tsv
+ M scripts/benchmark-inventory.py
+ M tests/benchmarks/test-inventory.py
+?? examples/benchmarks/cacheprof-lazy/
+?? examples/benchmarks/cacheprof-nofib-lazy/
+?? examples/benchmarks/cacheprof-nofib-strict/
+?? examples/benchmarks/cacheprof-strict/
+?? examples/benchmarks/shared/cacheprof-architecture.sml
+?? examples/benchmarks/shared/cacheprof-check.sml
+?? examples/benchmarks/shared/cacheprof-kernel.sml
+?? tests/benchmarks/cacheprof-large-tests.sml
+?? tests/benchmarks/cacheprof-tests.sml
+?? tests/benchmarks/check-cacheprof-large.sh
+?? tests/benchmarks/check-cacheprof.sh
+?? tests/benchmarks/data/cacheprof/

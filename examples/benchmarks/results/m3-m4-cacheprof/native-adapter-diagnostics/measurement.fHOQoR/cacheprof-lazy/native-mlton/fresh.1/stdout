@@ -1,0 +1,4 @@
+RESULT 11288
+PASS cacheprof-lazy
+SAMPLE 1 0.002356000
+SUMMARY 1 checks, 0 failed

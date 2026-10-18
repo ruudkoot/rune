@@ -1,0 +1,6 @@
+observer: 
+cacheann: Bad input: (stdin):1: syntax error on `rune_unknown %eax'
+
+
+CallStack (from HasCallStack):
+  error, called at ./Generics.hs:39:6 in main:Generics

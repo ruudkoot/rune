@@ -1,0 +1,642 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 88342ef7a..15470ef91 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -476,6 +476,10 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [fulsom-nofib-strict](#fulsom-nofib-strict) | [nofib real/fulsom](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/fulsom) | Hash repeated interval-CSG solid-model raster with strict finite data. |
+ | [symalg-lazy](#symalg-lazy) | [nofib real/symalg](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/symalg) | Interpret symbolic arithmetic and exact-real square roots using memoized finite data. |
+ | [symalg-strict](#symalg-strict) | [nofib real/symalg](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/symalg) | Interpret symbolic arithmetic and exact-real square roots using strict finite data. |
++| [cacheprof-lazy](#cacheprof-lazy) | [nofib gc/cacheprof](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/cacheprof) | Annotate assembly with counters and cache hooks using memoized finite pipeline data and the gc consumer. |
++| [cacheprof-strict](#cacheprof-strict) | [nofib gc/cacheprof](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/cacheprof) | Annotate assembly with counters and cache hooks using strict finite pipeline data and the gc consumer. |
++| [cacheprof-nofib-lazy](#cacheprof-nofib-lazy) | [nofib real/cacheprof](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/cacheprof) | Annotate assembly with counters and cache hooks using memoized finite pipeline data and the real consumer. |
++| [cacheprof-nofib-strict](#cacheprof-nofib-strict) | [nofib real/cacheprof](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/cacheprof) | Annotate assembly with counters and cache hooks using strict finite pipeline data and the real consumer. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -31152,3 +31156,515 @@ representation, scale rules, magnitude search and Newton-style recurrences.
+ No external exact-real paper is claimed as the derivation of this source.
+ Original observations and integer square roots support numerical validation;
+ compiler/collector and arithmetic-cost questions require separate measurement.
++
++## cacheprof-lazy
++
++### Algorithm and workload
++
++Annotate textual x86 assembly with instruction counters and calls to a cache
++profiler. Preserve source preparsing, AT&T lexical/operand parsing, repeat
++and leave expansion, basic-block grouping, operand effects, source-location
++cost centres, generated descriptors/calls, peephole cleanup and debug-line
++removal. Assembly and hook files are text input/output; this workload never
++assembles or executes them and needs no FFI facility.
++
++### History, source variants and notices
++
++[nofib Cacheprof](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/cacheprof)
++is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. Main, Arch_x86 and Generics credit Julian Seward,
++copyright 1999, with GPL version two or later notices. Preserve both source
++collections and notices. The pinned directories refer to LICENSE but omit
++that file; supply an unmodified GPL-2 text as COPYING from the installed
++Debian common-license text. Translated derivative modules retain the full
++original notice. Hook assembly has no separate notice in its header.
++
++The GC Main emits one annotated input followed by hook text. The real Main
++opens a hook file and fully forces annotated output in 200 repetitions,
++printing nothing. These are materially different consumers of shared code.
++Use cacheprof-lazy/strict for the GC source and cacheprof-nofib-lazy/strict
++for the colliding real source, retaining both original modules and all
++provenance. Finite stage streams and generated groups follow the named policy.
++
++Assembly fixtures identify heimdall.c and historical gcc output. No separate
++dataset author/license notice is stated in the scanned assembly; retain full
++pinned files and their identities without assigning program credits to the
++underlying C input. The supplied FAST/normal/SLOW inputs contain 76/600/3040
++lines; cacheprof.full contains 13708.
++
++### Translation, evaluation and numeric decisions
++
++Use tagged SML datatypes for source instructions, operands, annotations and
++location metadata. Generate all 206 opcode constructors/effect-table entries
++from the pinned source and check them against original Haskell observations.
++Preserve the explicit 67-entry nonJumpy list; do not replace it with a broader
++derived jump classification. Parser combinators, ordered alternatives and
++instruction simplification remain the source algorithms.
++
++Use memoized finite list spines/heads and deferred generated groups in the lazy
++policy; the strict policy materializes them. Parsed instruction descriptors
++are strict metadata, corresponding to the original forceLine boundary. Rollup
++descriptor lists/indices use explicit finite strict bridges; debug text follows
++the policy. Source ASCII character lists become SML strings at input and
++per-output-line boundaries. Record these representation, library and temporary
++allocation differences rather than claiming identical Haskell costs.
++
++Preserve source quirks: generated repeat-label Pseudo numbers are the label
++counter; quoted commas in stabs arguments become underscores; file/function
++guessing, canonical-name order, arbitrary nonJumpy membership and the counter
++peephole predicate remain unchanged. Level-zero prefix demand can skip a bad
++later instruction; level two's global cost-centre guard must inspect it.
++Independent original prefix observations confirm both cases.
++
++No floating-point or arbitrary-precision kernel arithmetic is needed.
++Source indices, line numbers, counter increments, 28-byte descriptor offsets
++and selected aggregate byte counts fit signed 31-bit integers. The generated
++64-bit counter operations are assembly text, not SML machine arithmetic.
++
++### Inputs, profiles and complete validation
++
++| Consumer | Smoke | Normal | Large |
++|---|---|---|---|
++| GC/raw | one FAST 76-line input | one normal 600-line input | one full 13708-line input |
++| Real/forced | one FAST input | 200 normal inputs | 200 SLOW 3040-line inputs |
++
++FAST input is borrowed explicitly from the real collection for GC smoke.
++GC normal is byte-identical to the real normal input. Real normal/large retain
++the source 200 repetitions; smoke reduces that count to one. Per-profile
++input-origins tables identify original paths and SHA-256 values.
++
++The pinned GC stdout fixture belongs to the full input reservoir, while its
++current default stdin is a 600-line prefix. The unmodified GC executable fed
++cacheprof.full reproduces all 1671273 fixture bytes exactly. Retain that
++complete input/fixture pairing for GC large and obtain reviewed normal output
++from the unmodified original. Do not treat the mismatch as a compiler failure
++or overwrite the historical fixture.
++
++Check every annotated output byte online. Raw GC additionally emits/checks
++all hook text; the real consumer checks only its annotated output, retaining
++per-iteration hook open/close without reading unused contents. SML closes
++those handles deterministically, replacing the Haskell lazy-handle lifetime.
++Preload source/reference strings once and retain the source 9999999-character
++input cap; all selected fixtures are smaller. Source take-list allocation is
++replaced by the string adapter. Return checked byte/repetition counts instead
++of raw terminal output. The extra reference comparisons are explicit work.
++
++Original full outputs cover all three supplied input sizes and the complete
++reservoir. Additional original cases cover 206 opcodes, applicable operand
++arities, indirect forms, three profiling levels, repeat expansion, location
++metadata, syntax and rejected inputs. Synthetic parser/effect cases exercise
++the source grammar; they are not claims of executable x86 instruction validity.
++Demand, memoization, strict materialization, zero-work and deliberately
++corrupted/truncated-output controls supplement complete original fixtures.
++
++### Compiler/runtime behavior and validation scope
++
++Investigate persistent stage spines, shared consumers, descriptor rollup,
++closure specialization, string/list boundaries and strict allocation lifetimes.
++These are source-based hypotheses; counter agreement does not attribute
++individual performance costs.
++
++Separate the bounded 822-assertion semantic target from four explicit full-
++reservoir checks. An initial mixed target exhausted ML Kit's 1 GiB limit
++during strict full-result materialization. Retain that failed attempt.
++The isolated large target passes ML Kit with the declared 8 GiB profile
++limit under the protective process-tree guard. Kernel and expected bytes are
++unchanged. The large probe does not establish every large profile/host run.
++
++Smoke/normal engine and host results, count scopes and full repository
++acceptance are recorded in the validation ledger. Native O0/O2 labels repeat
++host-default options. Deterministic input references and correct results are
++required before accepting measurements.
++
++### Literature and evidence scope
++
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
++provides application-suite context at the survey scope already recorded.
++Seward's individual source notices and stage comments establish this tool's
++history and transformation design. No external cache-profiling paper is
++claimed as a reviewed derivation. Original executable/fixture and exhaustive
++source-table observations support correctness; compiler/runtime explanations
++remain hypotheses until measured separately.
++
++## cacheprof-strict
++
++### Algorithm and workload
++
++Annotate textual x86 assembly with instruction counters and calls to a cache
++profiler. Preserve source preparsing, AT&T lexical/operand parsing, repeat
++and leave expansion, basic-block grouping, operand effects, source-location
++cost centres, generated descriptors/calls, peephole cleanup and debug-line
++removal. Assembly and hook files are text input/output; this workload never
++assembles or executes them and needs no FFI facility.
++
++### History, source variants and notices
++
++[nofib Cacheprof](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/cacheprof)
++is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. Main, Arch_x86 and Generics credit Julian Seward,
++copyright 1999, with GPL version two or later notices. Preserve both source
++collections and notices. The pinned directories refer to LICENSE but omit
++that file; supply an unmodified GPL-2 text as COPYING from the installed
++Debian common-license text. Translated derivative modules retain the full
++original notice. Hook assembly has no separate notice in its header.
++
++The GC Main emits one annotated input followed by hook text. The real Main
++opens a hook file and fully forces annotated output in 200 repetitions,
++printing nothing. These are materially different consumers of shared code.
++Use cacheprof-lazy/strict for the GC source and cacheprof-nofib-lazy/strict
++for the colliding real source, retaining both original modules and all
++provenance. Finite stage streams and generated groups follow the named policy.
++
++Assembly fixtures identify heimdall.c and historical gcc output. No separate
++dataset author/license notice is stated in the scanned assembly; retain full
++pinned files and their identities without assigning program credits to the
++underlying C input. The supplied FAST/normal/SLOW inputs contain 76/600/3040
++lines; cacheprof.full contains 13708.
++
++### Translation, evaluation and numeric decisions
++
++Use tagged SML datatypes for source instructions, operands, annotations and
++location metadata. Generate all 206 opcode constructors/effect-table entries
++from the pinned source and check them against original Haskell observations.
++Preserve the explicit 67-entry nonJumpy list; do not replace it with a broader
++derived jump classification. Parser combinators, ordered alternatives and
++instruction simplification remain the source algorithms.
++
++Use memoized finite list spines/heads and deferred generated groups in the lazy
++policy; the strict policy materializes them. Parsed instruction descriptors
++are strict metadata, corresponding to the original forceLine boundary. Rollup
++descriptor lists/indices use explicit finite strict bridges; debug text follows
++the policy. Source ASCII character lists become SML strings at input and
++per-output-line boundaries. Record these representation, library and temporary
++allocation differences rather than claiming identical Haskell costs.
++
++Preserve source quirks: generated repeat-label Pseudo numbers are the label
++counter; quoted commas in stabs arguments become underscores; file/function
++guessing, canonical-name order, arbitrary nonJumpy membership and the counter
++peephole predicate remain unchanged. Level-zero prefix demand can skip a bad
++later instruction; level two's global cost-centre guard must inspect it.
++Independent original prefix observations confirm both cases.
++
++No floating-point or arbitrary-precision kernel arithmetic is needed.
++Source indices, line numbers, counter increments, 28-byte descriptor offsets
++and selected aggregate byte counts fit signed 31-bit integers. The generated
++64-bit counter operations are assembly text, not SML machine arithmetic.
++
++### Inputs, profiles and complete validation
++
++| Consumer | Smoke | Normal | Large |
++|---|---|---|---|
++| GC/raw | one FAST 76-line input | one normal 600-line input | one full 13708-line input |
++| Real/forced | one FAST input | 200 normal inputs | 200 SLOW 3040-line inputs |
++
++FAST input is borrowed explicitly from the real collection for GC smoke.
++GC normal is byte-identical to the real normal input. Real normal/large retain
++the source 200 repetitions; smoke reduces that count to one. Per-profile
++input-origins tables identify original paths and SHA-256 values.
++
++The pinned GC stdout fixture belongs to the full input reservoir, while its
++current default stdin is a 600-line prefix. The unmodified GC executable fed
++cacheprof.full reproduces all 1671273 fixture bytes exactly. Retain that
++complete input/fixture pairing for GC large and obtain reviewed normal output
++from the unmodified original. Do not treat the mismatch as a compiler failure
++or overwrite the historical fixture.
++
++Check every annotated output byte online. Raw GC additionally emits/checks
++all hook text; the real consumer checks only its annotated output, retaining
++per-iteration hook open/close without reading unused contents. SML closes
++those handles deterministically, replacing the Haskell lazy-handle lifetime.
++Preload source/reference strings once and retain the source 9999999-character
++input cap; all selected fixtures are smaller. Source take-list allocation is
++replaced by the string adapter. Return checked byte/repetition counts instead
++of raw terminal output. The extra reference comparisons are explicit work.
++
++Original full outputs cover all three supplied input sizes and the complete
++reservoir. Additional original cases cover 206 opcodes, applicable operand
++arities, indirect forms, three profiling levels, repeat expansion, location
++metadata, syntax and rejected inputs. Synthetic parser/effect cases exercise
++the source grammar; they are not claims of executable x86 instruction validity.
++Demand, memoization, strict materialization, zero-work and deliberately
++corrupted/truncated-output controls supplement complete original fixtures.
++
++### Compiler/runtime behavior and validation scope
++
++Investigate persistent stage spines, shared consumers, descriptor rollup,
++closure specialization, string/list boundaries and strict allocation lifetimes.
++These are source-based hypotheses; counter agreement does not attribute
++individual performance costs.
++
++Separate the bounded 822-assertion semantic target from four explicit full-
++reservoir checks. An initial mixed target exhausted ML Kit's 1 GiB limit
++during strict full-result materialization. Retain that failed attempt.
++The isolated large target passes ML Kit with the declared 8 GiB profile
++limit under the protective process-tree guard. Kernel and expected bytes are
++unchanged. The large probe does not establish every large profile/host run.
++
++Smoke/normal engine and host results, count scopes and full repository
++acceptance are recorded in the validation ledger. Native O0/O2 labels repeat
++host-default options. Deterministic input references and correct results are
++required before accepting measurements.
++
++### Literature and evidence scope
++
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
++provides application-suite context at the survey scope already recorded.
++Seward's individual source notices and stage comments establish this tool's
++history and transformation design. No external cache-profiling paper is
++claimed as a reviewed derivation. Original executable/fixture and exhaustive
++source-table observations support correctness; compiler/runtime explanations
++remain hypotheses until measured separately.
++
++## cacheprof-nofib-lazy
++
++### Algorithm and workload
++
++Annotate textual x86 assembly with instruction counters and calls to a cache
++profiler. Preserve source preparsing, AT&T lexical/operand parsing, repeat
++and leave expansion, basic-block grouping, operand effects, source-location
++cost centres, generated descriptors/calls, peephole cleanup and debug-line
++removal. Assembly and hook files are text input/output; this workload never
++assembles or executes them and needs no FFI facility.
++
++### History, source variants and notices
++
++[nofib Cacheprof](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/cacheprof)
++is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. Main, Arch_x86 and Generics credit Julian Seward,
++copyright 1999, with GPL version two or later notices. Preserve both source
++collections and notices. The pinned directories refer to LICENSE but omit
++that file; supply an unmodified GPL-2 text as COPYING from the installed
++Debian common-license text. Translated derivative modules retain the full
++original notice. Hook assembly has no separate notice in its header.
++
++The GC Main emits one annotated input followed by hook text. The real Main
++opens a hook file and fully forces annotated output in 200 repetitions,
++printing nothing. These are materially different consumers of shared code.
++Use cacheprof-lazy/strict for the GC source and cacheprof-nofib-lazy/strict
++for the colliding real source, retaining both original modules and all
++provenance. Finite stage streams and generated groups follow the named policy.
++
++Assembly fixtures identify heimdall.c and historical gcc output. No separate
++dataset author/license notice is stated in the scanned assembly; retain full
++pinned files and their identities without assigning program credits to the
++underlying C input. The supplied FAST/normal/SLOW inputs contain 76/600/3040
++lines; cacheprof.full contains 13708.
++
++### Translation, evaluation and numeric decisions
++
++Use tagged SML datatypes for source instructions, operands, annotations and
++location metadata. Generate all 206 opcode constructors/effect-table entries
++from the pinned source and check them against original Haskell observations.
++Preserve the explicit 67-entry nonJumpy list; do not replace it with a broader
++derived jump classification. Parser combinators, ordered alternatives and
++instruction simplification remain the source algorithms.
++
++Use memoized finite list spines/heads and deferred generated groups in the lazy
++policy; the strict policy materializes them. Parsed instruction descriptors
++are strict metadata, corresponding to the original forceLine boundary. Rollup
++descriptor lists/indices use explicit finite strict bridges; debug text follows
++the policy. Source ASCII character lists become SML strings at input and
++per-output-line boundaries. Record these representation, library and temporary
++allocation differences rather than claiming identical Haskell costs.
++
++Preserve source quirks: generated repeat-label Pseudo numbers are the label
++counter; quoted commas in stabs arguments become underscores; file/function
++guessing, canonical-name order, arbitrary nonJumpy membership and the counter
++peephole predicate remain unchanged. Level-zero prefix demand can skip a bad
++later instruction; level two's global cost-centre guard must inspect it.
++Independent original prefix observations confirm both cases.
++
++No floating-point or arbitrary-precision kernel arithmetic is needed.
++Source indices, line numbers, counter increments, 28-byte descriptor offsets
++and selected aggregate byte counts fit signed 31-bit integers. The generated
++64-bit counter operations are assembly text, not SML machine arithmetic.
++
++### Inputs, profiles and complete validation
++
++| Consumer | Smoke | Normal | Large |
++|---|---|---|---|
++| GC/raw | one FAST 76-line input | one normal 600-line input | one full 13708-line input |
++| Real/forced | one FAST input | 200 normal inputs | 200 SLOW 3040-line inputs |
++
++FAST input is borrowed explicitly from the real collection for GC smoke.
++GC normal is byte-identical to the real normal input. Real normal/large retain
++the source 200 repetitions; smoke reduces that count to one. Per-profile
++input-origins tables identify original paths and SHA-256 values.
++
++The pinned GC stdout fixture belongs to the full input reservoir, while its
++current default stdin is a 600-line prefix. The unmodified GC executable fed
++cacheprof.full reproduces all 1671273 fixture bytes exactly. Retain that
++complete input/fixture pairing for GC large and obtain reviewed normal output
++from the unmodified original. Do not treat the mismatch as a compiler failure
++or overwrite the historical fixture.
++
++Check every annotated output byte online. Raw GC additionally emits/checks
++all hook text; the real consumer checks only its annotated output, retaining
++per-iteration hook open/close without reading unused contents. SML closes
++those handles deterministically, replacing the Haskell lazy-handle lifetime.
++Preload source/reference strings once and retain the source 9999999-character
++input cap; all selected fixtures are smaller. Source take-list allocation is
++replaced by the string adapter. Return checked byte/repetition counts instead
++of raw terminal output. The extra reference comparisons are explicit work.
++
++Original full outputs cover all three supplied input sizes and the complete
++reservoir. Additional original cases cover 206 opcodes, applicable operand
++arities, indirect forms, three profiling levels, repeat expansion, location
++metadata, syntax and rejected inputs. Synthetic parser/effect cases exercise
++the source grammar; they are not claims of executable x86 instruction validity.
++Demand, memoization, strict materialization, zero-work and deliberately
++corrupted/truncated-output controls supplement complete original fixtures.
++
++### Compiler/runtime behavior and validation scope
++
++Investigate persistent stage spines, shared consumers, descriptor rollup,
++closure specialization, string/list boundaries and strict allocation lifetimes.
++These are source-based hypotheses; counter agreement does not attribute
++individual performance costs.
++
++Separate the bounded 822-assertion semantic target from four explicit full-
++reservoir checks. An initial mixed target exhausted ML Kit's 1 GiB limit
++during strict full-result materialization. Retain that failed attempt.
++The isolated large target passes ML Kit with the declared 8 GiB profile
++limit under the protective process-tree guard. Kernel and expected bytes are
++unchanged. The large probe does not establish every large profile/host run.
++
++Smoke/normal engine and host results, count scopes and full repository
++acceptance are recorded in the validation ledger. Native O0/O2 labels repeat
++host-default options. Deterministic input references and correct results are
++required before accepting measurements.
++
++### Literature and evidence scope
++
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
++provides application-suite context at the survey scope already recorded.
++Seward's individual source notices and stage comments establish this tool's
++history and transformation design. No external cache-profiling paper is
++claimed as a reviewed derivation. Original executable/fixture and exhaustive
++source-table observations support correctness; compiler/runtime explanations
++remain hypotheses until measured separately.
++
++## cacheprof-nofib-strict
++
++### Algorithm and workload
++
++Annotate textual x86 assembly with instruction counters and calls to a cache
++profiler. Preserve source preparsing, AT&T lexical/operand parsing, repeat
++and leave expansion, basic-block grouping, operand effects, source-location
++cost centres, generated descriptors/calls, peephole cleanup and debug-line
++removal. Assembly and hook files are text input/output; this workload never
++assembles or executes them and needs no FFI facility.
++
++### History, source variants and notices
++
++[nofib Cacheprof](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/cacheprof)
++is pinned at b7391df4540ac8b11b35e1b2e2c15819b5171798. Main, Arch_x86 and Generics credit Julian Seward,
++copyright 1999, with GPL version two or later notices. Preserve both source
++collections and notices. The pinned directories refer to LICENSE but omit
++that file; supply an unmodified GPL-2 text as COPYING from the installed
++Debian common-license text. Translated derivative modules retain the full
++original notice. Hook assembly has no separate notice in its header.
++
++The GC Main emits one annotated input followed by hook text. The real Main
++opens a hook file and fully forces annotated output in 200 repetitions,
++printing nothing. These are materially different consumers of shared code.
++Use cacheprof-lazy/strict for the GC source and cacheprof-nofib-lazy/strict
++for the colliding real source, retaining both original modules and all
++provenance. Finite stage streams and generated groups follow the named policy.
++
++Assembly fixtures identify heimdall.c and historical gcc output. No separate
++dataset author/license notice is stated in the scanned assembly; retain full
++pinned files and their identities without assigning program credits to the
++underlying C input. The supplied FAST/normal/SLOW inputs contain 76/600/3040
++lines; cacheprof.full contains 13708.
++
++### Translation, evaluation and numeric decisions
++
++Use tagged SML datatypes for source instructions, operands, annotations and
++location metadata. Generate all 206 opcode constructors/effect-table entries
++from the pinned source and check them against original Haskell observations.
++Preserve the explicit 67-entry nonJumpy list; do not replace it with a broader
++derived jump classification. Parser combinators, ordered alternatives and
++instruction simplification remain the source algorithms.
++
++Use memoized finite list spines/heads and deferred generated groups in the lazy
++policy; the strict policy materializes them. Parsed instruction descriptors
++are strict metadata, corresponding to the original forceLine boundary. Rollup
++descriptor lists/indices use explicit finite strict bridges; debug text follows
++the policy. Source ASCII character lists become SML strings at input and
++per-output-line boundaries. Record these representation, library and temporary
++allocation differences rather than claiming identical Haskell costs.
++
++Preserve source quirks: generated repeat-label Pseudo numbers are the label
++counter; quoted commas in stabs arguments become underscores; file/function
++guessing, canonical-name order, arbitrary nonJumpy membership and the counter
++peephole predicate remain unchanged. Level-zero prefix demand can skip a bad
++later instruction; level two's global cost-centre guard must inspect it.
++Independent original prefix observations confirm both cases.
++
++No floating-point or arbitrary-precision kernel arithmetic is needed.
++Source indices, line numbers, counter increments, 28-byte descriptor offsets
++and selected aggregate byte counts fit signed 31-bit integers. The generated
++64-bit counter operations are assembly text, not SML machine arithmetic.
++
++### Inputs, profiles and complete validation
++
++| Consumer | Smoke | Normal | Large |
++|---|---|---|---|
++| GC/raw | one FAST 76-line input | one normal 600-line input | one full 13708-line input |
++| Real/forced | one FAST input | 200 normal inputs | 200 SLOW 3040-line inputs |
++
++FAST input is borrowed explicitly from the real collection for GC smoke.
++GC normal is byte-identical to the real normal input. Real normal/large retain
++the source 200 repetitions; smoke reduces that count to one. Per-profile
++input-origins tables identify original paths and SHA-256 values.
++
++The pinned GC stdout fixture belongs to the full input reservoir, while its
++current default stdin is a 600-line prefix. The unmodified GC executable fed
++cacheprof.full reproduces all 1671273 fixture bytes exactly. Retain that
++complete input/fixture pairing for GC large and obtain reviewed normal output
++from the unmodified original. Do not treat the mismatch as a compiler failure
++or overwrite the historical fixture.
++
++Check every annotated output byte online. Raw GC additionally emits/checks
++all hook text; the real consumer checks only its annotated output, retaining
++per-iteration hook open/close without reading unused contents. SML closes
++those handles deterministically, replacing the Haskell lazy-handle lifetime.
++Preload source/reference strings once and retain the source 9999999-character
++input cap; all selected fixtures are smaller. Source take-list allocation is
++replaced by the string adapter. Return checked byte/repetition counts instead
++of raw terminal output. The extra reference comparisons are explicit work.
++
++Original full outputs cover all three supplied input sizes and the complete
++reservoir. Additional original cases cover 206 opcodes, applicable operand
++arities, indirect forms, three profiling levels, repeat expansion, location
++metadata, syntax and rejected inputs. Synthetic parser/effect cases exercise
++the source grammar; they are not claims of executable x86 instruction validity.
++Demand, memoization, strict materialization, zero-work and deliberately
++corrupted/truncated-output controls supplement complete original fixtures.
++
++### Compiler/runtime behavior and validation scope
++
++Investigate persistent stage spines, shared consumers, descriptor rollup,
++closure specialization, string/list boundaries and strict allocation lifetimes.
++These are source-based hypotheses; counter agreement does not attribute
++individual performance costs.
++
++Separate the bounded 822-assertion semantic target from four explicit full-
++reservoir checks. An initial mixed target exhausted ML Kit's 1 GiB limit
++during strict full-result materialization. Retain that failed attempt.
++The isolated large target passes ML Kit with the declared 8 GiB profile
++limit under the protective process-tree guard. Kernel and expected bytes are
++unchanged. The large probe does not establish every large profile/host run.
++
++Smoke/normal engine and host results, count scopes and full repository
++acceptance are recorded in the validation ledger. Native O0/O2 labels repeat
++host-default options. Deterministic input references and correct results are
++required before accepting measurements.
++
++### Literature and evidence scope
++
++[Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17)
++provides application-suite context at the survey scope already recorded.
++Seward's individual source notices and stage comments establish this tool's
++history and transformation design. No external cache-profiling paper is
++claimed as a reviewed derivation. Original executable/fixture and exhaustive
++source-table observations support correctness; compiler/runtime explanations
++remain hypotheses until measured separately.
+diff --git a/examples/benchmarks/inventory.tsv b/examples/benchmarks/inventory.tsv
+index 60fa1e6b8..b9211eebc 100644
+--- a/examples/benchmarks/inventory.tsv
++++ b/examples/benchmarks/inventory.tsv
+@@ -485,7 +485,7 @@ mlton	benchmark/tests/wc-input1.sml	wc-input1	wc-input1	M2	import	kernel	mlkit:t
+ mlton	benchmark/tests/wc-scanStream.sml	wc-scanStream	wc-scanStream	M2	import	kernel	mlkit:test/wc-scanStream.sml;mlkit:test/wc-scanStream_smlnj.sml	Stephen Weeks (sweeks@sweeks.com).	1a363721c7ee3e5f50eac54bd5361b1ac69e598398aba556cbff6c04575d0cc4	benchmark/tests/wc-scanStream.sml		LICENSE;benchmark/tests/Makefile:header;benchmark/tests/wc-scanStream.sml:header;doc/license/README	benchmark/tests/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ mlton	benchmark/tests/zebra.sml	zebra	zebra	M2	import	kernel		not stated in scanned source headers	c608ac492581443f75debe5cdef16c380051013a943465209d52905f1a5155cc	benchmark/tests/zebra.sml		LICENSE;benchmark/tests/Makefile:header;benchmark/tests/zebra.sml:header;doc/license/README	benchmark/tests/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ mlton	benchmark/tests/zern.sml	zern	zern	M2	import	numerical	mlkit:test/zern.sml;mlkit:test/zern_smlnj.sml	not stated in scanned source headers	fc47d72590a23ec4c8302a9c3686b1050542227307969657845cba66f7c8d481	benchmark/tests/zern.sml		LICENSE;benchmark/tests/Makefile:header;doc/license/README	benchmark/tests/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	gc/cacheprof	cacheprof	cacheprof	M3	import	application	nofib:real/cacheprof	not stated in scanned source headers	1e1e127d7df8825152d824df1bc81fbbab21e0bce2704e2959f9e68d5a1c12c5	gc/cacheprof/Arch_x86.hs;gc/cacheprof/Generics.hs;gc/cacheprof/Main.hs	gc/cacheprof/cacheprof.stdin;gc/cacheprof/cacheprof.stdout;gc/cacheprof/cacheprof_hooks2_x86.s	gc/cacheprof/Arch_x86.hs:header;gc/cacheprof/Generics.hs:header;gc/cacheprof/Main.hs:header	gc/cacheprof/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	gc/cacheprof	cacheprof	cacheprof	M3	import	application	nofib:real/cacheprof	Julian Seward	1e1e127d7df8825152d824df1bc81fbbab21e0bce2704e2959f9e68d5a1c12c5	gc/cacheprof/Arch_x86.hs;gc/cacheprof/Generics.hs;gc/cacheprof/Main.hs	gc/cacheprof/cacheprof.stdin;gc/cacheprof/cacheprof.stdout;gc/cacheprof/cacheprof_hooks2_x86.s	gc/cacheprof/Arch_x86.hs:header;gc/cacheprof/Generics.hs:header;gc/cacheprof/Main.hs:header	gc/cacheprof/Main.hs:author-and-GPL2-or-later-heading;gc/cacheprof/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	gc/circsim	circsim	circsim	M3	import	application	nofib:spectral/circsim	David J. King;John O'Donnell	2748f133d1b183f1b70c405689f266291ae319d8c72cb1034a1c8e79d2641e2f	gc/circsim/Main.lhs			gc/circsim/Main.lhs:authorship-heading;gc/circsim/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	gc/constraints	constraints	constraints	M3	import	kernel	nofib:spectral/constraints	not stated in scanned source headers	c4b8aa369a0730e639866b628fab145ba965758fec94c2ae323be140ac14f18e	gc/constraints/Main.hs	gc/constraints/constraints.faststdout;gc/constraints/constraints.slowstdout;gc/constraints/constraints.stdout		gc/constraints/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	gc/fibheaps	fibheaps	fibheaps	M3	import	calls-recursion	nofib:spectral/fibheaps	not stated in scanned source headers	c9726703b6fbc79e348073ff87935d23897aad73b0de7aa60930fbf6394c468f	gc/fibheaps/Main.lhs	gc/fibheaps/fibheaps.stdout	gc/fibheaps/Main.lhs:header	gc/fibheaps/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+@@ -550,7 +550,7 @@ nofib	parallel/warshall	warshall	warshall	M3	defer	kernel		Rita Loogen, Jost Ber
+ nofib	real/anna	anna	anna	M4	import	compiler-application		not stated in scanned source headers	1264ac8c05ca354a2c3b89ea58727eecbb14797c928f3b4d992fcab4229f35f7	real/anna/AbsConc3.hs;real/anna/AbstractEval2.hs;real/anna/AbstractMisc.hs;real/anna/AbstractVals2.hs;real/anna/Apply.hs;real/anna/BarakiConc3.hs;real/anna/BarakiMeet.hs;real/anna/BaseDefs.hs;real/anna/Constructors.hs;real/anna/Dependancy.hs;real/anna/DomainExpr.hs;real/anna/EtaAbstract.hs;real/anna/FrontierDATAFN2.hs;real/anna/FrontierGENERIC2.hs;real/anna/FrontierMisc2.hs;real/anna/Inverse.hs;real/anna/LambdaLift5.hs;real/anna/Main.hs;real/anna/MakeDomains.hs;real/anna/Monster.hs;real/anna/MyUtils.hs;real/anna/NofibUtils.hs;real/anna/Parser2.hs;real/anna/PrettyPrint.hs;real/anna/PrintResults.hs;real/anna/ReadTable.hs;real/anna/Simplify.hs;real/anna/SmallerLattice.hs;real/anna/StrictAn6.hs;real/anna/SuccsAndPreds2.hs;real/anna/TExpr2DExpr.hs;real/anna/TypeCheck5.hs;real/anna/Utils.hs	real/anna/anna.faststdin;real/anna/anna.faststdout;real/anna/anna.slowstdin;real/anna/anna.slowstdout;real/anna/anna.stdin;real/anna/anna.stdout;real/anna/big.sum.out;real/anna/runtime_files/anna_table	real/anna/Main.hs:header;real/anna/Monster.hs:header	real/anna/Makefile;real/anna/README	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/ben-raytrace	ben-raytrace	ben-raytrace	M4	defer	numerical		not stated in scanned source headers	92db379a722cd1efdeaa0dc35c4091c2b3d0584a7f5344db716400a6032b1383	real/ben-raytrace/BVH.hs;real/ben-raytrace/BoundingBox.hs;real/ben-raytrace/Colour.hs;real/ben-raytrace/Figure.hs;real/ben-raytrace/Image.hs;real/ben-raytrace/Interval.hs;real/ben-raytrace/Main.hs;real/ben-raytrace/Matrix.hs;real/ben-raytrace/Mesh.hs;real/ben-raytrace/Random/Lehmer64.hs;real/ben-raytrace/Random/Lehmer64Mut.hs;real/ben-raytrace/Random/Wyhash64.hs;real/ben-raytrace/Random.hs;real/ben-raytrace/RandomDist.hs;real/ben-raytrace/Ray.hs;real/ben-raytrace/STL.hs;real/ben-raytrace/Sampler.hs;real/ben-raytrace/SamplerMonad/Naive.hs;real/ben-raytrace/SamplerMonad/STRand.hs;real/ben-raytrace/SamplerMonad/Unboxed.hs;real/ben-raytrace/SamplerMonad.hs;real/ben-raytrace/Scene/Scene1.hs;real/ben-raytrace/Scene/Scene2.hs;real/ben-raytrace/Scene/Type.hs;real/ben-raytrace/UnboxedBVH.hs;real/ben-raytrace/Vector.hs	real/ben-raytrace/ben-raytrace.faststdout;real/ben-raytrace/ben-raytrace.slowstdout;real/ben-raytrace/ben-raytrace.stdout;real/ben-raytrace/monkey.stl		real/ben-raytrace/Makefile	source imports runtime-specific primitives, concurrency, or weak references; audit a faithful portable replacement before reconsideration
+ nofib	real/bspt	bspt	bspt	M4	import	integer-arithmetic		not stated in scanned source headers	3d5a23e34a3d831547562fce25f1c537123387be23758268c90cd3808b8bfa9d	real/bspt/BSPT.lhs;real/bspt/Euclid.lhs;real/bspt/EuclidGMS.lhs;real/bspt/GeomNum.lhs;real/bspt/Init.lhs;real/bspt/Input.lhs;real/bspt/Interface.lhs;real/bspt/Interpret.lhs;real/bspt/Libfuns.lhs;real/bspt/MGRlib.lhs;real/bspt/Main.hs;real/bspt/Merge.lhs;real/bspt/NofibUtils.hs;real/bspt/Params.lhs;real/bspt/Prog.hs;real/bspt/Rationals.lhs;real/bspt/Render.lhs;real/bspt/Stdlib.lhs	real/bspt/bspt.faststdout;real/bspt/bspt.slowstdout;real/bspt/bspt.stdin;real/bspt/bspt.stdout		real/bspt/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	real/cacheprof	cacheprof	cacheprof-nofib	M4	import	application	nofib:gc/cacheprof	not stated in scanned source headers	c4908fe6e2f86facda2dacbc2c38fe53a0876f2a91196ff08fc91bc7acf33c80	real/cacheprof/Arch_x86.hs;real/cacheprof/Generics.hs;real/cacheprof/Main.hs	real/cacheprof/cacheprof.faststdin;real/cacheprof/cacheprof.slowstdin;real/cacheprof/cacheprof.stdin;real/cacheprof/runtime_files/cacheprof_hooks2_x86.s	real/cacheprof/Arch_x86.hs:header;real/cacheprof/Generics.hs:header;real/cacheprof/Main.hs:header	real/cacheprof/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	real/cacheprof	cacheprof	cacheprof-nofib	M4	import	application	nofib:gc/cacheprof	Julian Seward	c4908fe6e2f86facda2dacbc2c38fe53a0876f2a91196ff08fc91bc7acf33c80	real/cacheprof/Arch_x86.hs;real/cacheprof/Generics.hs;real/cacheprof/Main.hs	real/cacheprof/cacheprof.faststdin;real/cacheprof/cacheprof.full;real/cacheprof/cacheprof.slowstdin;real/cacheprof/cacheprof.stdin;real/cacheprof/runtime_files/cacheprof_hooks2_x86.s	real/cacheprof/Arch_x86.hs:header;real/cacheprof/Generics.hs:header;real/cacheprof/Main.hs:header	real/cacheprof/Main.hs:author-and-GPL2-or-later-heading;real/cacheprof/Makefile;real/cacheprof/cacheprof.full:complete-assembly-input-reservoir	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	real/compress/BinTest.hs	BinTest	BinTest	-	exclude	kernel		not stated in scanned source headers	1f77ea58aaac22538a6bb6c56ec621d1e7e341465c71664499913b0850d6188f	real/compress/BinTest.hs	real/compress/compress.faststdin;real/compress/compress.faststdout;real/compress/compress.slowstdin;real/compress/compress.slowstdout;real/compress/compress.stdin;real/compress/compress.stdout		real/compress/Makefile	auxiliary test or alternate entrypoint; the directory Makefile excludes it or selects the Main driver, not a separate benchmark invocation
+ nofib	real/compress/Lzw.hs	Lzw	Lzw	-	exclude	kernel		not stated in scanned source headers	8cead4d0b7df7e1e58c3913dfeaa1a7f8ae368ce7ddd3634dd86e74f0bc44500	real/compress/Lzw.hs	real/compress/compress.faststdin;real/compress/compress.faststdout;real/compress/compress.slowstdin;real/compress/compress.slowstdout;real/compress/compress.stdin;real/compress/compress.stdout		real/compress/Makefile	auxiliary test or alternate entrypoint; the directory Makefile excludes it or selects the Main driver, not a separate benchmark invocation
+ nofib	real/compress/Lzw2.hs	Lzw2	Lzw2	-	exclude	kernel		not stated in scanned source headers	6c07a77e9295c607fc3371d48f4c3068ea84ea83684d4a3e25b5165450080a97	real/compress/Lzw2.hs	real/compress/compress.faststdin;real/compress/compress.faststdout;real/compress/compress.slowstdin;real/compress/compress.slowstdout;real/compress/compress.stdin;real/compress/compress.stdout		real/compress/Makefile	auxiliary test or alternate entrypoint; the directory Makefile excludes it or selects the Main driver, not a separate benchmark invocation
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 1150d76ab..2250c5108 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -1354,3 +1354,15 @@ symalg-lazy	large	nofib	real/symalg	large.stdin large.numbers.reference large.st
+ symalg-strict	smoke	nofib	real/symalg	smoke.stdin smoke.numbers.reference smoke.stdout	symalg-strict/smoke.expected	shared/lazy.sml,shared/suspend.sml,shared/symalg-real.sml,shared/symalg-number.sml,shared/symalg-kernel.sml,shared/symalg-check.sml,symalg-strict/benchmark.sml,shared/main.sml	30	1048576	applications,parsing,exact-reals,integer-arithmetic,sharing,higher-order	smoke.stdin,smoke.numbers.reference,smoke.stdout	exact	implemented
+ symalg-strict	normal	nofib	real/symalg	normal.stdin normal.numbers.reference normal.stdout	symalg-strict/normal.expected	shared/lazy.sml,shared/suspend.sml,shared/symalg-real.sml,shared/symalg-number.sml,shared/symalg-kernel.sml,shared/symalg-check.sml,symalg-strict/benchmark.sml,shared/main.sml	600	4194304	applications,parsing,exact-reals,integer-arithmetic,sharing,higher-order	normal.stdin,normal.numbers.reference,normal.stdout	exact	implemented
+ symalg-strict	large	nofib	real/symalg	large.stdin large.numbers.reference large.stdout	symalg-strict/large.expected	shared/lazy.sml,shared/suspend.sml,shared/symalg-real.sml,shared/symalg-number.sml,shared/symalg-kernel.sml,shared/symalg-check.sml,symalg-strict/benchmark.sml,shared/main.sml	3600	8388608	applications,parsing,exact-reals,integer-arithmetic,sharing,higher-order	large.stdin,large.numbers.reference,large.stdout	exact	implemented
++cacheprof-lazy	smoke	nofib	gc/cacheprof	smoke.s smoke.reference hooks.s	cacheprof-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/cacheprof-architecture.sml,shared/cacheprof-kernel.sml,shared/cacheprof-check.sml,cacheprof-lazy/benchmark.sml,shared/main.sml	30	1048576	applications,parsing,symbolic-processing,code-generation,sharing,allocation-lifetimes	smoke.s,smoke.reference,hooks.s	exact	implemented
++cacheprof-lazy	normal	nofib	gc/cacheprof	normal.s normal.reference hooks.s	cacheprof-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/cacheprof-architecture.sml,shared/cacheprof-kernel.sml,shared/cacheprof-check.sml,cacheprof-lazy/benchmark.sml,shared/main.sml	600	4194304	applications,parsing,symbolic-processing,code-generation,sharing,allocation-lifetimes	normal.s,normal.reference,hooks.s	exact	implemented
++cacheprof-lazy	large	nofib	gc/cacheprof	large.s large.reference hooks.s	cacheprof-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/cacheprof-architecture.sml,shared/cacheprof-kernel.sml,shared/cacheprof-check.sml,cacheprof-lazy/benchmark.sml,shared/main.sml	3600	8388608	applications,parsing,symbolic-processing,code-generation,sharing,allocation-lifetimes	large.s,large.reference,hooks.s	exact	implemented
++cacheprof-strict	smoke	nofib	gc/cacheprof	smoke.s smoke.reference hooks.s	cacheprof-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/cacheprof-architecture.sml,shared/cacheprof-kernel.sml,shared/cacheprof-check.sml,cacheprof-strict/benchmark.sml,shared/main.sml	30	1048576	applications,parsing,symbolic-processing,code-generation,sharing,allocation-lifetimes	smoke.s,smoke.reference,hooks.s	exact	implemented
++cacheprof-strict	normal	nofib	gc/cacheprof	normal.s normal.reference hooks.s	cacheprof-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/cacheprof-architecture.sml,shared/cacheprof-kernel.sml,shared/cacheprof-check.sml,cacheprof-strict/benchmark.sml,shared/main.sml	600	4194304	applications,parsing,symbolic-processing,code-generation,sharing,allocation-lifetimes	normal.s,normal.reference,hooks.s	exact	implemented
++cacheprof-strict	large	nofib	gc/cacheprof	large.s large.reference hooks.s	cacheprof-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/cacheprof-architecture.sml,shared/cacheprof-kernel.sml,shared/cacheprof-check.sml,cacheprof-strict/benchmark.sml,shared/main.sml	3600	8388608	applications,parsing,symbolic-processing,code-generation,sharing,allocation-lifetimes	large.s,large.reference,hooks.s	exact	implemented
++cacheprof-nofib-lazy	smoke	nofib	real/cacheprof	1 smoke.s smoke.reference hooks.s	cacheprof-nofib-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/cacheprof-architecture.sml,shared/cacheprof-kernel.sml,shared/cacheprof-check.sml,cacheprof-nofib-lazy/benchmark.sml,shared/main.sml	30	1048576	applications,parsing,symbolic-processing,code-generation,sharing,allocation-lifetimes	smoke.s,smoke.reference,hooks.s	exact	implemented
++cacheprof-nofib-lazy	normal	nofib	real/cacheprof	200 normal.s normal.reference hooks.s	cacheprof-nofib-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/cacheprof-architecture.sml,shared/cacheprof-kernel.sml,shared/cacheprof-check.sml,cacheprof-nofib-lazy/benchmark.sml,shared/main.sml	600	4194304	applications,parsing,symbolic-processing,code-generation,sharing,allocation-lifetimes	normal.s,normal.reference,hooks.s	exact	implemented
++cacheprof-nofib-lazy	large	nofib	real/cacheprof	200 large.s large.reference hooks.s	cacheprof-nofib-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/cacheprof-architecture.sml,shared/cacheprof-kernel.sml,shared/cacheprof-check.sml,cacheprof-nofib-lazy/benchmark.sml,shared/main.sml	3600	8388608	applications,parsing,symbolic-processing,code-generation,sharing,allocation-lifetimes	large.s,large.reference,hooks.s	exact	implemented
++cacheprof-nofib-strict	smoke	nofib	real/cacheprof	1 smoke.s smoke.reference hooks.s	cacheprof-nofib-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/cacheprof-architecture.sml,shared/cacheprof-kernel.sml,shared/cacheprof-check.sml,cacheprof-nofib-strict/benchmark.sml,shared/main.sml	30	1048576	applications,parsing,symbolic-processing,code-generation,sharing,allocation-lifetimes	smoke.s,smoke.reference,hooks.s	exact	implemented
++cacheprof-nofib-strict	normal	nofib	real/cacheprof	200 normal.s normal.reference hooks.s	cacheprof-nofib-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/cacheprof-architecture.sml,shared/cacheprof-kernel.sml,shared/cacheprof-check.sml,cacheprof-nofib-strict/benchmark.sml,shared/main.sml	600	4194304	applications,parsing,symbolic-processing,code-generation,sharing,allocation-lifetimes	normal.s,normal.reference,hooks.s	exact	implemented
++cacheprof-nofib-strict	large	nofib	real/cacheprof	200 large.s large.reference hooks.s	cacheprof-nofib-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/cacheprof-architecture.sml,shared/cacheprof-kernel.sml,shared/cacheprof-check.sml,cacheprof-nofib-strict/benchmark.sml,shared/main.sml	3600	8388608	applications,parsing,symbolic-processing,code-generation,sharing,allocation-lifetimes	large.s,large.reference,hooks.s	exact	implemented
+diff --git a/scripts/benchmark-inventory.py b/scripts/benchmark-inventory.py
+index 923b8e4cf..b53989106 100644
+--- a/scripts/benchmark-inventory.py
++++ b/scripts/benchmark-inventory.py
+@@ -551,6 +551,19 @@ def build(source, root, lock):
+                     notices.append(str(notice.relative_to(root)))
+         authors = set()
+         context = [p for p in parent.iterdir() if p.is_file() and p.name in {"README", "README.md", "Makefile", "FILES", "sources.cm"}] if parent.exists() and files else []
++        if source == "nofib" and path in {"gc/cacheprof", "real/cacheprof"}:
++            module = parent / "Main.hs"
++            if module.is_file():
++                heading = module.read_text(errors="replace")[:2500]
++                if ("Copyright (C) 1999 Julian Seward (jseward@acm.org)" in heading
++                        and "either version 2 of the" in heading
++                        and "License, or (at your option) any later version." in heading):
++                    authors.add("Julian Seward")
++                    item["evidence"].append(path + "/Main.hs:author-and-GPL2-or-later-heading")
++            full = parent / "cacheprof.full"
++            if full.is_file():
++                inputs.add(str(full.relative_to(root)))
++                item["evidence"].append(path + "/cacheprof.full:complete-assembly-input-reservoir")
+         if source == "nofib" and path in {"gc/fulsom/Main.hs", "real/fulsom/Main.hs",
+                                           "gc/fulsom/Bah.hs", "real/fulsom/Bah.hs"}:
+             module = parent / "Interval.hs"
+diff --git a/tests/benchmarks/test-inventory.py b/tests/benchmarks/test-inventory.py
+index 0fcd2d379..9377f7417 100644
+--- a/tests/benchmarks/test-inventory.py
++++ b/tests/benchmarks/test-inventory.py
+@@ -286,6 +286,40 @@ class InventoryTest(unittest.TestCase):
+         self.file("spectral/multiplier/Main.hs", "-- Another multiplier author\nmain = print 0\n")
+         self.assertNotIn("John T. O'Donnell", self.build("nofib")[0]["authors"])
+ 
++    def cacheprof_notice(self, family, heading, full=False):
++        self.nofib_roots()
++        self.file(family + "/cacheprof/Makefile", "\n")
++        self.file(family + "/cacheprof/Main.hs", heading + "\nmodule Main where\nmain = print 0\n")
++        if full:
++            self.file(family + "/cacheprof/cacheprof.full", '.file "case.c"\n')
++        return self.build("nofib")[0]
++
++    def test_cacheprof_gc_individual_credit_is_recorded(self):
++        heading = (ROOT / "examples/benchmarks/cacheprof-lazy/upstream/Main.hs").read_text().split("module Main")[0]
++        row = self.cacheprof_notice("gc", heading)
++        self.assertIn("Julian Seward", row["authors"])
++        self.assertIn("gc/cacheprof/Main.hs:author-and-GPL2-or-later-heading", row["evidence"])
++
++    def test_cacheprof_real_individual_credit_is_recorded(self):
++        heading = (ROOT / "examples/benchmarks/cacheprof-nofib-lazy/upstream/Main.hs").read_text().split("module Main")[0]
++        self.assertIn("Julian Seward", self.cacheprof_notice("real", heading)["authors"])
++
++    def test_changed_cacheprof_author_requires_review(self):
++        heading = (ROOT / "examples/benchmarks/cacheprof-lazy/upstream/Main.hs").read_text().split("module Main")[0]
++        self.assertNotIn("Julian Seward", self.cacheprof_notice("gc", heading.replace("Julian Seward", "Another author"))["authors"])
++
++    def test_changed_cacheprof_license_requires_review(self):
++        heading = (ROOT / "examples/benchmarks/cacheprof-lazy/upstream/Main.hs").read_text().split("module Main")[0]
++        self.assertNotIn("Julian Seward", self.cacheprof_notice("gc", heading.replace("either version 2 of the", "a changed license"))["authors"])
++
++    def test_cacheprof_complete_reservoir_is_inventoried(self):
++        row = self.cacheprof_notice("real", "", full=True)
++        self.assertIn("real/cacheprof/cacheprof.full", row["inputs"])
++        self.assertIn("real/cacheprof/cacheprof.full:complete-assembly-input-reservoir", row["evidence"])
++
++    def test_absent_cacheprof_reservoir_is_not_invented(self):
++        self.assertNotIn("real/cacheprof/cacheprof.full", self.cacheprof_notice("real", "")["inputs"])
++
+     def fulsom_notice(self, family, heading):
+         self.nofib_roots()
+         self.file(family + "/fulsom/Makefile", "EXCLUDED_SRCS = Bah.hs\n")

@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+cacheprof-lazy	normal	rune	O2	compile	0	0	pass	4.31	4.13	0.14	135584	-	-	-	cacheprof-lazy/rune/build/compile
+cacheprof-lazy	normal	rune	O2	correctness	0	0	pass	0.25	0.09	0.03	10868	14293630	33233648	867204	cacheprof-lazy/rune/correctness.0
+cacheprof-lazy	normal	rune	O2	count	1	1	pass	0.22	0.12	0.00	10744	14293630	33233648	867204	cacheprof-lazy/rune/fresh.1
+cacheprof-lazy	normal	rune:opt	O2	compile	0	0	pass	5.97	4.95	0.27	135556	-	-	-	cacheprof-lazy/rune-opt/build/compile
+cacheprof-lazy	normal	rune:opt	O2	native-compile	0	0	pass	1.17	0.68	0.14	29432	-	-	-	cacheprof-lazy/rune-opt/build/native-compile
+cacheprof-lazy	normal	rune:opt	O2	correctness	0	0	pass	0.11	0.04	0.02	12076	14293630	33233648	867204	cacheprof-lazy/rune-opt/correctness.0
+cacheprof-lazy	normal	rune:opt	O2	count	1	1	pass	0.11	0.06	0.00	11920	14293630	33233648	867204	cacheprof-lazy/rune-opt/fresh.1
+cacheprof-lazy	normal	rune:new	O2	compile	0	0	pass	8.34	4.96	0.34	135480	-	-	-	cacheprof-lazy/rune-new/build/compile
+cacheprof-lazy	normal	rune:new	O2	correctness	0	0	pass	0.34	0.20	0.01	11256	8221454	33233648	867204	cacheprof-lazy/rune-new/correctness.0
+cacheprof-lazy	normal	rune:new	O2	count	1	1	pass	0.24	0.10	0.01	11268	8221454	33233648	867204	cacheprof-lazy/rune-new/fresh.1
+cacheprof-lazy	normal	rune:jit	O2	compile	0	0	pass	10.85	7.64	0.27	135428	-	-	-	cacheprof-lazy/rune-jit/build/compile
+cacheprof-lazy	normal	rune:jit	O2	correctness	0	0	pass	0.27	0.12	0.05	13516	8221454	33233648	867204	cacheprof-lazy/rune-jit/correctness.0
+cacheprof-lazy	normal	rune:jit	O2	count	1	1	pass	0.24	0.13	0.02	13520	8221454	33233648	867204	cacheprof-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

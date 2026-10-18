@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+cacheprof-nofib-strict	normal	rune	O2	compile	0	0	pass	6.62	5.07	0.27	135552	-	-	-	cacheprof-nofib-strict/rune/build/compile
+cacheprof-nofib-strict	normal	rune	O2	correctness	0	0	pass	16.76	17.32	0.07	11648	2255078536	4649312888	108419941	cacheprof-nofib-strict/rune/correctness.0
+cacheprof-nofib-strict	normal	rune	O2	count	1	1	pass	17.69	16.96	0.04	11548	2255078536	4649312888	108419941	cacheprof-nofib-strict/rune/fresh.1
+cacheprof-nofib-strict	normal	rune:opt	O2	compile	0	0	pass	4.32	4.35	0.13	135512	-	-	-	cacheprof-nofib-strict/rune-opt/build/compile
+cacheprof-nofib-strict	normal	rune:opt	O2	native-compile	0	0	pass	1.21	0.74	0.13	29236	-	-	-	cacheprof-nofib-strict/rune-opt/build/native-compile
+cacheprof-nofib-strict	normal	rune:opt	O2	correctness	0	0	pass	8.08	8.33	0.04	12920	2255078536	4649312888	108419941	cacheprof-nofib-strict/rune-opt/correctness.0
+cacheprof-nofib-strict	normal	rune:opt	O2	count	1	1	pass	7.18	7.40	0.04	12952	2255078536	4649312888	108419941	cacheprof-nofib-strict/rune-opt/fresh.1
+cacheprof-nofib-strict	normal	rune:new	O2	compile	0	0	pass	6.67	5.31	0.22	135468	-	-	-	cacheprof-nofib-strict/rune-new/build/compile
+cacheprof-nofib-strict	normal	rune:new	O2	correctness	0	0	pass	15.55	16.11	0.05	20616	1285941233	4649312888	108419941	cacheprof-nofib-strict/rune-new/correctness.0
+cacheprof-nofib-strict	normal	rune:new	O2	count	1	1	pass	15.54	15.93	0.06	20516	1285941233	4649312888	108419941	cacheprof-nofib-strict/rune-new/fresh.1
+cacheprof-nofib-strict	normal	rune:jit	O2	compile	0	0	pass	4.69	4.67	0.16	135564	-	-	-	cacheprof-nofib-strict/rune-jit/build/compile
+cacheprof-nofib-strict	normal	rune:jit	O2	correctness	0	0	pass	10.20	10.35	0.18	23816	1285941233	4649312888	108419941	cacheprof-nofib-strict/rune-jit/correctness.0
+cacheprof-nofib-strict	normal	rune:jit	O2	count	1	1	pass	7.44	7.59	0.11	23880	1285941233	4649312888	108419941	cacheprof-nofib-strict/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

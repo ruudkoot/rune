@@ -1,0 +1,1039 @@
+{
+  "source_sha256": "d29791d9f8a8703c3181d921d08d9934208a3ab4fcab5f15b38c28ccf13e9a4d",
+  "opcodes": 206,
+  "entries": 206,
+  "enum_order": [
+    "O_movl",
+    "O_movw",
+    "O_movb",
+    "O_movzbw",
+    "O_movzbl",
+    "O_movzwl",
+    "O_movsbw",
+    "O_movsbl",
+    "O_movswl",
+    "O_pushl",
+    "O_popl",
+    "O_pushfl",
+    "O_popfl",
+    "O_notl",
+    "O_notw",
+    "O_notb",
+    "O_sall",
+    "O_salw",
+    "O_salb",
+    "O_sarl",
+    "O_sarw",
+    "O_sarb",
+    "O_shrl",
+    "O_shrw",
+    "O_shrb",
+    "O_roll",
+    "O_rolw",
+    "O_rolb",
+    "O_rorl",
+    "O_rorw",
+    "O_rorb",
+    "O_shldl",
+    "O_shrdl",
+    "O_addl",
+    "O_addw",
+    "O_addb",
+    "O_adcl",
+    "O_subl",
+    "O_subw",
+    "O_subb",
+    "O_sbbl",
+    "O_imull",
+    "O_imulw",
+    "O_imulb",
+    "O_mull",
+    "O_divl",
+    "O_divw",
+    "O_divb",
+    "O_idivl",
+    "O_xorl",
+    "O_xorw",
+    "O_xorb",
+    "O_andl",
+    "O_andw",
+    "O_andb",
+    "O_orl",
+    "O_orw",
+    "O_orb",
+    "O_incl",
+    "O_incw",
+    "O_incb",
+    "O_decl",
+    "O_decw",
+    "O_decb",
+    "O_negl",
+    "O_negw",
+    "O_negb",
+    "O_testl",
+    "O_testw",
+    "O_testb",
+    "O_leal",
+    "O_cmpl",
+    "O_cmpw",
+    "O_cmpb",
+    "O_cmpsb",
+    "O_scasb",
+    "O_movsl",
+    "O_movsw",
+    "O_movsb",
+    "O_stosl",
+    "O_stosw",
+    "O_stosb",
+    "O_leave",
+    "O_ret",
+    "O_call",
+    "O_jmp",
+    "O_je",
+    "O_jne",
+    "O_jl",
+    "O_jle",
+    "O_jg",
+    "O_jge",
+    "O_js",
+    "O_jns",
+    "O_jz",
+    "O_jnz",
+    "O_jc",
+    "O_jnc",
+    "O_jo",
+    "O_jno",
+    "O_ja",
+    "O_jae",
+    "O_jb",
+    "O_jbe",
+    "O_jp",
+    "O_seta",
+    "O_setae",
+    "O_setb",
+    "O_setbe",
+    "O_sete",
+    "O_setne",
+    "O_setl",
+    "O_setle",
+    "O_setg",
+    "O_setge",
+    "O_setc",
+    "O_setcb",
+    "O_btl",
+    "O_btsl",
+    "O_btrl",
+    "O_btcl",
+    "O_cld",
+    "O_cltd",
+    "O_cwtl",
+    "O_cbtw",
+    "O_rep",
+    "O_repz",
+    "O_repnz",
+    "O_fild",
+    "O_fildl",
+    "O_fildll",
+    "O_fsubp",
+    "O_fsubr",
+    "O_fsubrp",
+    "O_fsubrl",
+    "O_fsubrs",
+    "O_fsubs",
+    "O_fsubl",
+    "O_fsub",
+    "O_faddp",
+    "O_fadds",
+    "O_faddl",
+    "O_fadd",
+    "O_fiaddl",
+    "O_fmul",
+    "O_fmuls",
+    "O_fmull",
+    "O_fmulp",
+    "O_fimull",
+    "O_fdiv",
+    "O_fdivp",
+    "O_fdivr",
+    "O_fdivrs",
+    "O_fdivrl",
+    "O_fdivrp",
+    "O_fidivl",
+    "O_fidivrl",
+    "O_fdivl",
+    "O_fdivs",
+    "O_fprem",
+    "O_fstp",
+    "O_fsts",
+    "O_fstps",
+    "O_fstl",
+    "O_fstpl",
+    "O_fstpt",
+    "O_fst",
+    "O_fistl",
+    "O_fistpl",
+    "O_fistpll",
+    "O_fld",
+    "O_flds",
+    "O_fldl",
+    "O_fldt",
+    "O_fldz",
+    "O_fld1",
+    "O_fldl2e",
+    "O_fldln2",
+    "O_fchs",
+    "O_fsin",
+    "O_fcos",
+    "O_fptan",
+    "O_fsqrt",
+    "O_fpatan",
+    "O_fabs",
+    "O_f2xm1",
+    "O_fscale",
+    "O_fyl2x",
+    "O_fucom",
+    "O_fucomp",
+    "O_fucompp",
+    "O_fcomp",
+    "O_fcompp",
+    "O_fcoml",
+    "O_fcompl",
+    "O_ficompl",
+    "O_fcoms",
+    "O_fcom",
+    "O_fcomps",
+    "O_fnstsw",
+    "O_fnstcw",
+    "O_fldcw",
+    "O_frndint",
+    "O_fxch",
+    "O_sahf",
+    "O_nop"
+  ],
+  "table": [
+    [
+      "O_movl",
+      "OI [OE_RW 4 4]"
+    ],
+    [
+      "O_movw",
+      "OI [OE_RW 2 2]"
+    ],
+    [
+      "O_movb",
+      "OI [OE_RW 1 1]"
+    ],
+    [
+      "O_movzbw",
+      "OI [OE_RW 1 2]"
+    ],
+    [
+      "O_movzbl",
+      "OI [OE_RW 1 4]"
+    ],
+    [
+      "O_movzwl",
+      "OI [OE_RW 2 4]"
+    ],
+    [
+      "O_movsbw",
+      "OI [OE_RW 1 2]"
+    ],
+    [
+      "O_movsbl",
+      "OI [OE_RW 1 4]"
+    ],
+    [
+      "O_movswl",
+      "OI [OE_RW 2 4]"
+    ],
+    [
+      "O_pushl",
+      "OI_Special"
+    ],
+    [
+      "O_popl",
+      "OI_Special"
+    ],
+    [
+      "O_pushfl",
+      "OI_Error"
+    ],
+    [
+      "O_popfl",
+      "OI_Error"
+    ],
+    [
+      "O_sall",
+      "OI [OE_RM 1 4]"
+    ],
+    [
+      "O_salw",
+      "OI [OE_RM 1 2]"
+    ],
+    [
+      "O_salb",
+      "OI [OE_RM 1 1]"
+    ],
+    [
+      "O_sarl",
+      "OI [OE_RM 1 4]"
+    ],
+    [
+      "O_sarw",
+      "OI [OE_RM 1 2]"
+    ],
+    [
+      "O_sarb",
+      "OI [OE_RM 1 1]"
+    ],
+    [
+      "O_shrl",
+      "OI [OE_RM 1 4]"
+    ],
+    [
+      "O_shrw",
+      "OI [OE_RM 1 2]"
+    ],
+    [
+      "O_shrb",
+      "OI [OE_RM 1 1]"
+    ],
+    [
+      "O_roll",
+      "OI [OE_RM 1 4]"
+    ],
+    [
+      "O_rolw",
+      "OI [OE_RM 1 2]"
+    ],
+    [
+      "O_rolb",
+      "OI [OE_RM 1 1]"
+    ],
+    [
+      "O_rorl",
+      "OI [OE_RM 1 4]"
+    ],
+    [
+      "O_rorw",
+      "OI [OE_RM 1 2]"
+    ],
+    [
+      "O_rorb",
+      "OI [OE_RM 1 1]"
+    ],
+    [
+      "O_shldl",
+      "OI [OE_RRM 4 4 4, OE_RM 4 4]"
+    ],
+    [
+      "O_shrdl",
+      "OI [OE_RRM 4 4 4, OE_RM 4 4]"
+    ],
+    [
+      "O_addl",
+      "OI [OE_RM 4 4]"
+    ],
+    [
+      "O_addw",
+      "OI [OE_RM 2 2]"
+    ],
+    [
+      "O_addb",
+      "OI [OE_RM 1 1]"
+    ],
+    [
+      "O_adcl",
+      "OI [OE_RM 4 4]"
+    ],
+    [
+      "O_subl",
+      "OI [OE_RM 4 4]"
+    ],
+    [
+      "O_subw",
+      "OI [OE_RM 2 2]"
+    ],
+    [
+      "O_subb",
+      "OI [OE_RM 1 1]"
+    ],
+    [
+      "O_sbbl",
+      "OI [OE_RM 4 4]"
+    ],
+    [
+      "O_imull",
+      "OI [OE_M 4, OE_RM 4 4, OE_RRM 4 4 4]"
+    ],
+    [
+      "O_imulb",
+      "OI [OE_M 1]"
+    ],
+    [
+      "O_imulw",
+      "OI [OE_M 2, OE_RM 2 2]"
+    ],
+    [
+      "O_mull",
+      "OI [OE_M 4]"
+    ],
+    [
+      "O_idivl",
+      "OI [OE_M 4]"
+    ],
+    [
+      "O_divl",
+      "OI [OE_M 4]"
+    ],
+    [
+      "O_divw",
+      "OI [OE_M 2]"
+    ],
+    [
+      "O_divb",
+      "OI [OE_M 1]"
+    ],
+    [
+      "O_xorl",
+      "OI [OE_RM 4 4]"
+    ],
+    [
+      "O_xorw",
+      "OI [OE_RM 2 2]"
+    ],
+    [
+      "O_xorb",
+      "OI [OE_RM 1 1]"
+    ],
+    [
+      "O_andl",
+      "OI [OE_RM 4 4]"
+    ],
+    [
+      "O_andw",
+      "OI [OE_RM 2 2]"
+    ],
+    [
+      "O_andb",
+      "OI [OE_RM 1 1]"
+    ],
+    [
+      "O_orl",
+      "OI [OE_RM 4 4]"
+    ],
+    [
+      "O_orw",
+      "OI [OE_RM 2 2]"
+    ],
+    [
+      "O_orb",
+      "OI [OE_RM 1 1]"
+    ],
+    [
+      "O_incl",
+      "OI [OE_M 4]"
+    ],
+    [
+      "O_incw",
+      "OI [OE_M 2]"
+    ],
+    [
+      "O_incb",
+      "OI [OE_M 1]"
+    ],
+    [
+      "O_decl",
+      "OI [OE_M 4]"
+    ],
+    [
+      "O_decw",
+      "OI [OE_M 2]"
+    ],
+    [
+      "O_decb",
+      "OI [OE_M 1]"
+    ],
+    [
+      "O_negl",
+      "OI [OE_M 4]"
+    ],
+    [
+      "O_negw",
+      "OI [OE_M 2]"
+    ],
+    [
+      "O_negb",
+      "OI [OE_M 1]"
+    ],
+    [
+      "O_notl",
+      "OI [OE_M 4]"
+    ],
+    [
+      "O_notw",
+      "OI [OE_M 2]"
+    ],
+    [
+      "O_notb",
+      "OI [OE_M 1]"
+    ],
+    [
+      "O_testl",
+      "OI [OE_RR 4 4]"
+    ],
+    [
+      "O_testw",
+      "OI [OE_RR 2 2]"
+    ],
+    [
+      "O_testb",
+      "OI [OE_RR 1 1]"
+    ],
+    [
+      "O_leal",
+      "OI [OE_nW 4]"
+    ],
+    [
+      "O_cmpl",
+      "OI [OE_RR 4 4]"
+    ],
+    [
+      "O_cmpw",
+      "OI [OE_RR 2 2]"
+    ],
+    [
+      "O_cmpb",
+      "OI [OE_RR 1 1]"
+    ],
+    [
+      "O_cmpsb",
+      "OI_Special"
+    ],
+    [
+      "O_scasb",
+      "OI_Special"
+    ],
+    [
+      "O_movsl",
+      "OI_Special"
+    ],
+    [
+      "O_movsw",
+      "OI_Special"
+    ],
+    [
+      "O_movsb",
+      "OI_Special"
+    ],
+    [
+      "O_stosl",
+      "OI_Special"
+    ],
+    [
+      "O_stosw",
+      "OI_Special"
+    ],
+    [
+      "O_stosb",
+      "OI_Special"
+    ],
+    [
+      "O_leave",
+      "OI_Error"
+    ],
+    [
+      "O_ret",
+      "OI_Special"
+    ],
+    [
+      "O_call",
+      "OI_Special"
+    ],
+    [
+      "O_jmp",
+      "OI_Jumpy"
+    ],
+    [
+      "O_je",
+      "OI_Jumpy"
+    ],
+    [
+      "O_jne",
+      "OI_Jumpy"
+    ],
+    [
+      "O_jl",
+      "OI_Jumpy"
+    ],
+    [
+      "O_jle",
+      "OI_Jumpy"
+    ],
+    [
+      "O_jg",
+      "OI_Jumpy"
+    ],
+    [
+      "O_jge",
+      "OI_Jumpy"
+    ],
+    [
+      "O_js",
+      "OI_Jumpy"
+    ],
+    [
+      "O_jns",
+      "OI_Jumpy"
+    ],
+    [
+      "O_jz",
+      "OI_Jumpy"
+    ],
+    [
+      "O_jnz",
+      "OI_Jumpy"
+    ],
+    [
+      "O_jc",
+      "OI_Jumpy"
+    ],
+    [
+      "O_jnc",
+      "OI_Jumpy"
+    ],
+    [
+      "O_jo",
+      "OI_Jumpy"
+    ],
+    [
+      "O_jno",
+      "OI_Jumpy"
+    ],
+    [
+      "O_ja",
+      "OI_Jumpy"
+    ],
+    [
+      "O_jae",
+      "OI_Jumpy"
+    ],
+    [
+      "O_jb",
+      "OI_Jumpy"
+    ],
+    [
+      "O_jbe",
+      "OI_Jumpy"
+    ],
+    [
+      "O_jp",
+      "OI_Jumpy"
+    ],
+    [
+      "O_seta",
+      "OI [OE_W 1]"
+    ],
+    [
+      "O_setae",
+      "OI [OE_W 1]"
+    ],
+    [
+      "O_setb",
+      "OI [OE_W 1]"
+    ],
+    [
+      "O_setbe",
+      "OI [OE_W 1]"
+    ],
+    [
+      "O_sete",
+      "OI [OE_W 1]"
+    ],
+    [
+      "O_setne",
+      "OI [OE_W 1]"
+    ],
+    [
+      "O_setl",
+      "OI [OE_W 1]"
+    ],
+    [
+      "O_setle",
+      "OI [OE_W 1]"
+    ],
+    [
+      "O_setg",
+      "OI [OE_W 1]"
+    ],
+    [
+      "O_setge",
+      "OI [OE_W 1]"
+    ],
+    [
+      "O_setc",
+      "OI [OE_W 1]"
+    ],
+    [
+      "O_setcb",
+      "OI [OE_W 1]"
+    ],
+    [
+      "O_btl",
+      "OI [OE_RR 4 4]"
+    ],
+    [
+      "O_btsl",
+      "OI [OE_RM 4 4]"
+    ],
+    [
+      "O_btcl",
+      "OI [OE_RM 4 4]"
+    ],
+    [
+      "O_btrl",
+      "OI [OE_RM 4 4]"
+    ],
+    [
+      "O_cld",
+      "OI_NoEffect"
+    ],
+    [
+      "O_cltd",
+      "OI_NoEffect"
+    ],
+    [
+      "O_cwtl",
+      "OI_NoEffect"
+    ],
+    [
+      "O_cbtw",
+      "OI_NoEffect"
+    ],
+    [
+      "O_rep",
+      "OI_Error"
+    ],
+    [
+      "O_repz",
+      "OI_Error"
+    ],
+    [
+      "O_repnz",
+      "OI_Error"
+    ],
+    [
+      "O_fld",
+      "OI [OE_R 8]"
+    ],
+    [
+      "O_fldt",
+      "OI [OE_R 8]"
+    ],
+    [
+      "O_fldl",
+      "OI [OE_R 8]"
+    ],
+    [
+      "O_flds",
+      "OI [OE_R 4]"
+    ],
+    [
+      "O_fild",
+      "OI [OE_R 4]"
+    ],
+    [
+      "O_fildl",
+      "OI [OE_R 4]"
+    ],
+    [
+      "O_fildll",
+      "OI [OE_R 8]"
+    ],
+    [
+      "O_fstl",
+      "OI [OE_W 8]"
+    ],
+    [
+      "O_fstpl",
+      "OI [OE_W 8]"
+    ],
+    [
+      "O_fstp",
+      "OI [OE_W 8]"
+    ],
+    [
+      "O_fstps",
+      "OI [OE_W 4]"
+    ],
+    [
+      "O_fsts",
+      "OI [OE_W 4]"
+    ],
+    [
+      "O_fstpt",
+      "OI [OE_W 8]"
+    ],
+    [
+      "O_fistl",
+      "OI [OE_W 4]"
+    ],
+    [
+      "O_fistpl",
+      "OI [OE_W 4]"
+    ],
+    [
+      "O_fistpll",
+      "OI [OE_W 8]"
+    ],
+    [
+      "O_fst",
+      "OI [OE_W 8]"
+    ],
+    [
+      "O_fldz",
+      "OI_NoEffect"
+    ],
+    [
+      "O_fld1",
+      "OI_NoEffect"
+    ],
+    [
+      "O_fldl2e",
+      "OI_NoEffect"
+    ],
+    [
+      "O_fldln2",
+      "OI_NoEffect"
+    ],
+    [
+      "O_fchs",
+      "OI_NoEffect"
+    ],
+    [
+      "O_fsin",
+      "OI_NoEffect"
+    ],
+    [
+      "O_fcos",
+      "OI_NoEffect"
+    ],
+    [
+      "O_fptan",
+      "OI_NoEffect"
+    ],
+    [
+      "O_fsqrt",
+      "OI_NoEffect"
+    ],
+    [
+      "O_fpatan",
+      "OI_NoEffect"
+    ],
+    [
+      "O_fabs",
+      "OI_NoEffect"
+    ],
+    [
+      "O_f2xm1",
+      "OI_NoEffect"
+    ],
+    [
+      "O_fscale",
+      "OI_NoEffect"
+    ],
+    [
+      "O_fyl2x",
+      "OI_NoEffect"
+    ],
+    [
+      "O_faddp",
+      "OI [OE_R 8, OE_RM 8 8]"
+    ],
+    [
+      "O_fadds",
+      "OI [OE_R 4]"
+    ],
+    [
+      "O_faddl",
+      "OI [OE_R 8]"
+    ],
+    [
+      "O_fiaddl",
+      "OI [OE_R 4]"
+    ],
+    [
+      "O_fadd",
+      "OI [OE_R 8, OE_RM 8 8]"
+    ],
+    [
+      "O_fsubp",
+      "OI [OE_RM 8 8]"
+    ],
+    [
+      "O_fsubrp",
+      "OI [OE_RM 8 8]"
+    ],
+    [
+      "O_fsubrl",
+      "OI [OE_R 8]"
+    ],
+    [
+      "O_fsubrs",
+      "OI [OE_R 4]"
+    ],
+    [
+      "O_fsubs",
+      "OI [OE_R 4]"
+    ],
+    [
+      "O_fsubl",
+      "OI [OE_R 8]"
+    ],
+    [
+      "O_fsub",
+      "OI [OE_R 8, OE_RM 8 8]"
+    ],
+    [
+      "O_fsubr",
+      "OI [OE_R 8, OE_RM 8 8]"
+    ],
+    [
+      "O_fmul",
+      "OI [OE_R 8, OE_RM 8 8]"
+    ],
+    [
+      "O_fmuls",
+      "OI [OE_R 4]"
+    ],
+    [
+      "O_fmull",
+      "OI [OE_R 8]"
+    ],
+    [
+      "O_fmulp",
+      "OI [OE_R 8, OE_RM 8 8]"
+    ],
+    [
+      "O_fimull",
+      "OI [OE_R 8]"
+    ],
+    [
+      "O_fdiv",
+      "OI [OE_RM 8 8]"
+    ],
+    [
+      "O_fdivp",
+      "OI [OE_RM 8 8]"
+    ],
+    [
+      "O_fdivr",
+      "OI [OE_RM 8 8]"
+    ],
+    [
+      "O_fdivrl",
+      "OI [OE_R 8]"
+    ],
+    [
+      "O_fdivrs",
+      "OI [OE_R 4]"
+    ],
+    [
+      "O_fdivrp",
+      "OI [OE_RM 8 8]"
+    ],
+    [
+      "O_fidivrl",
+      "OI [OE_R 4]"
+    ],
+    [
+      "O_fidivl",
+      "OI [OE_R 4]"
+    ],
+    [
+      "O_fdivl",
+      "OI [OE_R 8]"
+    ],
+    [
+      "O_fdivs",
+      "OI [OE_R 4]"
+    ],
+    [
+      "O_fprem",
+      "OI_NoEffect"
+    ],
+    [
+      "O_fucom",
+      "OI_NoEffect"
+    ],
+    [
+      "O_fucomp",
+      "OI_NoEffect"
+    ],
+    [
+      "O_fucompp",
+      "OI_NoEffect"
+    ],
+    [
+      "O_fcomp",
+      "OI_NoEffect"
+    ],
+    [
+      "O_fcompp",
+      "OI_NoEffect"
+    ],
+    [
+      "O_fcoms",
+      "OI [OE_R 4]"
+    ],
+    [
+      "O_fcoml",
+      "OI [OE_R 8]"
+    ],
+    [
+      "O_fcom",
+      "OI [OE_R 8]"
+    ],
+    [
+      "O_fcomps",
+      "OI [OE_R 4]"
+    ],
+    [
+      "O_fcompl",
+      "OI [OE_R 8]"
+    ],
+    [
+      "O_ficompl",
+      "OI [OE_R 4]"
+    ],
+    [
+      "O_fnstsw",
+      "OI [OE_W 2]"
+    ],
+    [
+      "O_fnstcw",
+      "OI [OE_W 2]"
+    ],
+    [
+      "O_fldcw",
+      "OI [OE_R 2]"
+    ],
+    [
+      "O_fxch",
+      "OI_NoEffect"
+    ],
+    [
+      "O_frndint",
+      "OI_NoEffect"
+    ],
+    [
+      "O_sahf",
+      "OI_NoEffect"
+    ],
+    [
+      "O_nop",
+      "OI_NoEffect"
+    ]
+  ]
+}

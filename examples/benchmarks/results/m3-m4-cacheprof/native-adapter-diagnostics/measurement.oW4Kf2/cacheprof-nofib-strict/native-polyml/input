@@ -1,0 +1,4 @@
+cacheprof-nofib-strict
+1 smoke.s smoke.reference hooks.s
+1:7439
+1

@@ -1,0 +1,4 @@
+f:
+	movl %eax,(%ebx)
+	movl (%eax),%ebx
+	movl %eax,(%ebx)

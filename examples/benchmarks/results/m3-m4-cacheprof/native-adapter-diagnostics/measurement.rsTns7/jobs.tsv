@@ -1,0 +1,1 @@
+cacheprof-strict	30	1048576	shared/input.sml shared/lazy.sml shared/suspend.sml shared/hartel-ida-finite.sml shared/cacheprof-architecture.sml shared/cacheprof-kernel.sml shared/cacheprof-check.sml cacheprof-strict/benchmark.sml shared/main.sml	smoke.s smoke.reference hooks.s	cacheprof-strict/smoke.expected	smoke.s smoke.reference hooks.s

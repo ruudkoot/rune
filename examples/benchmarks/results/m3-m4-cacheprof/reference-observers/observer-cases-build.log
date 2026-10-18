@@ -1,0 +1,5 @@
+[1 of 5] Compiling Arch_x86         ( Arch_x86.hs, Arch_x86.o )
+[2 of 5] Compiling Generics         ( Generics.hs, Generics.o )
+[3 of 5] Compiling CacheMain        ( CacheMain.hs, CacheMain.o )
+[4 of 5] Compiling Main             ( Observer.hs, Observer.o )
+[5 of 5] Linking observer [Objects changed]

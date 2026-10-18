@@ -1,0 +1,4 @@
+rep
+movsb
+rep
+stosl

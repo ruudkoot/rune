@@ -1,0 +1,7 @@
+PROGRAM LIMIT AS 8388608 KiB
+PASS cacheprof-large/materialized-N
+PASS cacheprof-large/materialized-E
+PASS cacheprof-large/streamed-N
+PASS cacheprof-large/streamed-E
+SUMMARY 4 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23

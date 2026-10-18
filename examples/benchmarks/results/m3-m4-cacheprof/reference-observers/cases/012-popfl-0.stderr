@@ -1,0 +1,5 @@
+observer: 
+cacheann: Internal error: unsimplified opcode: popfl
+
+CallStack (from HasCallStack):
+  error, called at ./Generics.hs:34:6 in main:Generics

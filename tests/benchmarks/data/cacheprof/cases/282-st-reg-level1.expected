@@ -1,0 +1,5 @@
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	fadd %st(1),%st

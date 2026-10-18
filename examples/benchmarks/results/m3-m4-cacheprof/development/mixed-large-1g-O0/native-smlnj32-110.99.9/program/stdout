@@ -1,0 +1,1530 @@
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml:19.32 Warning: calling polyEqual
+functor BenchIdaFiniteFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a seq
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t * 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val defer : (unit -> 'a D.t) -> 'a D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val nth : 'a <BaseFct>.<resultStr>.node D.t -> int -> 'a
+  val update :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val unify :
+      ''a <BaseFct>.<resultStr>.node D.t
+       -> ''a -> ''a <BaseFct>.<resultStr>.node D.t
+  val foldl :
+      ('a D.t -> 'b -> 'a D.t)
+       -> 'a D.t -> 'b <BaseFct>.<resultStr>.node D.t -> 'a D.t
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val filter :
+      ('a -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val length : 'a <BaseFct>.<resultStr>.node D.t -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-cacheprof-originals/architecture.sml]
+structure BenchCacheprofArch : sig
+  datatype opcode
+    = O_adcl
+    | O_addb
+    | O_addl
+    | O_addw
+    | O_andb
+    | O_andl
+    | O_andw
+    | O_btcl
+    | O_btl
+    | O_btrl
+    | O_btsl
+    | O_call
+    | O_cbtw
+    | O_cld
+    | O_cltd
+    | O_cmpb
+    | O_cmpl
+    | O_cmpsb
+    | O_cmpw
+    | O_cwtl
+    | O_decb
+    | O_decl
+    | O_decw
+    | O_divb
+    | O_divl
+    | O_divw
+    | O_f2xm1
+    | O_fabs
+    | O_fadd
+    | O_faddl
+    | O_faddp
+    | O_fadds
+    | O_fchs
+    | O_fcom
+    | O_fcoml
+    | O_fcomp
+    | O_fcompl
+    | O_fcompp
+    | O_fcomps
+    | O_fcoms
+    | O_fcos
+    | O_fdiv
+    | O_fdivl
+    | O_fdivp
+    | O_fdivr
+    | O_fdivrl
+    | O_fdivrp
+    | O_fdivrs
+    | O_fdivs
+    | O_fiaddl
+    | O_ficompl
+    | O_fidivl
+    | O_fidivrl
+    | O_fild
+    | O_fildl
+    | O_fildll
+    | O_fimull
+    | O_fistl
+    | O_fistpl
+    | O_fistpll
+    | O_fld
+    | O_fld1
+    | O_fldcw
+    | O_fldl
+    | O_fldl2e
+    | O_fldln2
+    | O_flds
+    | O_fldt
+    | O_fldz
+    | O_fmul
+    | O_fmull
+    | O_fmulp
+    | O_fmuls
+    | O_fnstcw
+    | O_fnstsw
+    | O_fpatan
+    | O_fprem
+    | O_fptan
+    | O_frndint
+    | O_fscale
+    | O_fsin
+    | O_fsqrt
+    | O_fst
+    | O_fstl
+    | O_fstp
+    | O_fstpl
+    | O_fstps
+    | O_fstpt
+    | O_fsts
+    | O_fsub
+    | O_fsubl
+    | O_fsubp
+    | O_fsubr
+    | O_fsubrl
+    | O_fsubrp
+    | O_fsubrs
+    | O_fsubs
+    | O_fucom
+    | O_fucomp
+    | O_fucompp
+    | O_fxch
+    | O_fyl2x
+    | O_idivl
+    | O_imulb
+    | O_imull
+    | O_imulw
+    | O_incb
+    | O_incl
+    | O_incw
+    | O_ja
+    | O_jae
+    | O_jb
+    | O_jbe
+    | O_jc
+    | O_je
+    | O_jg
+    | O_jge
+    | O_jl
+    | O_jle
+    | O_jmp
+    | O_jnc
+    | O_jne
+    | O_jno
+    | O_jns
+    | O_jnz
+    | O_jo
+    | O_jp
+    | O_js
+    | O_jz
+    | O_leal
+    | O_leave
+    | O_movb
+    | O_movl
+    | O_movsb
+    | O_movsbl
+    | O_movsbw
+    | O_movsl
+    | O_movsw
+    | O_movswl
+    | O_movw
+    | O_movzbl
+    | O_movzbw
+    | O_movzwl
+    | O_mull
+    | O_negb
+    | O_negl
+    | O_negw
+    | O_nop
+    | O_notb
+    | O_notl
+    | O_notw
+    | O_orb
+    | O_orl
+    | O_orw
+    | O_popfl
+    | O_popl
+    | O_pushfl
+    | O_pushl
+    | O_rep
+    | O_repnz
+    | O_repz
+    | O_ret
+    | O_rolb
+    | O_roll
+    | O_rolw
+    | O_rorb
+    | O_rorl
+    | O_rorw
+    | O_sahf
+    | O_salb
+    | O_sall
+    | O_salw
+    | O_sarb
+    | O_sarl
+    | O_sarw
+    | O_sbbl
+    | O_scasb
+    | O_seta
+    | O_setae
+    | O_setb
+    | O_setbe
+    | O_setc
+    | O_setcb
+    | O_sete
+    | O_setg
+    | O_setge
+    | O_setl
+    | O_setle
+    | O_setne
+    | O_shldl
+    | O_shrb
+    | O_shrdl
+    | O_shrl
+    | O_shrw
+    | O_stosb
+    | O_stosl
+    | O_stosw
+    | O_subb
+    | O_subl
+    | O_subw
+    | O_testb
+    | O_testl
+    | O_testw
+    | O_xorb
+    | O_xorl
+    | O_xorw
+  datatype effect
+    = OE_M of int
+    | OE_R of int
+    | OE_RM of int * int
+    | OE_RR of int * int
+    | OE_RRM of int * int * int
+    | OE_RW of int * int
+    | OE_W of int
+    | OE_nW of int
+  datatype operandInfo
+    = OI of effect list
+    | OI_Error
+    | OI_Jumpy
+    | OI_NoEffect
+    | OI_Special
+  val x86info : (opcode * operandInfo) list
+  val name : opcode -> string
+  val nonJumpyOpcodes : opcode list
+  val getOperandInfo : opcode -> operandInfo
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-cacheprof-originals/kernel.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-cacheprof-originals/kernel.sml:346.31 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-cacheprof-originals/kernel.sml:343.62-343.64 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-cacheprof-originals/kernel.sml:54.37 Warning: calling polyEqual
+functor BenchCacheprofFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure A : <sig>
+  type opcode
+  type effect
+  type operandInfo
+  val x86info :
+      (BenchCacheprofArch.opcode * BenchCacheprofArch.operandInfo) list
+  val name : BenchCacheprofArch.opcode -> string
+  val nonJumpyOpcodes : BenchCacheprofArch.opcode list
+  val getOperandInfo :
+      BenchCacheprofArch.opcode -> BenchCacheprofArch.operandInfo
+  structure F : <sig>
+  type preline
+  type cc
+  type reg
+  type amode
+  type unsigned
+  type signed
+  type constant
+  type operand
+  type annot
+  type annotations
+  type insn
+  type line
+  type bb
+  type token
+  type 'a parseResult
+  val internal : string -> 'a
+  val incomplete : string -> 'a
+  val inputerr : string -> 'a
+  val member : ''a -> ''a list -> bool
+  val concat :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val concatMap :
+      ('a -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val emit :
+      'a list
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val view :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a * 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t) option
+  val trim : string -> string
+  val takeString : int -> string -> string
+  val dropString : int -> string -> string
+  val span : (char -> bool) -> char list -> string * char list
+  val isLabelIsh : char -> bool
+  val isNameIsh : char -> bool
+  val isDigitish : char -> bool
+  val preparseLine : int * string -> <BaseFct>.<resultStr>.preline list
+  val sourceLines : string -> string list
+  val preparse :
+      string
+       -> <BaseFct>.<resultStr>.preline 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val regMap : (string * <BaseFct>.<resultStr>.reg) list
+  val register : string -> <BaseFct>.<resultStr>.reg
+  val olex : string -> <BaseFct>.<resultStr>.token list
+  val pEmpty :
+      'a
+       -> <BaseFct>.<resultStr>.token list
+       -> 'a <BaseFct>.<resultStr>.parseResult
+  val pSat :
+      (<BaseFct>.<resultStr>.token -> bool)
+       -> <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.parseResult
+  val pApply :
+      ('a -> 'b)
+       -> ('c -> 'a <BaseFct>.<resultStr>.parseResult)
+       -> 'c -> 'b <BaseFct>.<resultStr>.parseResult
+  val pName :
+      string
+       -> 'a
+       -> <BaseFct>.<resultStr>.token list
+       -> 'a <BaseFct>.<resultStr>.parseResult
+  val p2 :
+      ('a -> 'b -> 'c)
+       -> ('d -> 'a <BaseFct>.<resultStr>.parseResult)
+       -> (<BaseFct>.<resultStr>.token list
+        -> 'b <BaseFct>.<resultStr>.parseResult)
+       -> 'd -> 'c <BaseFct>.<resultStr>.parseResult
+  val p3 :
+      ('a -> 'b -> 'c -> 'd)
+       -> ('e -> 'a <BaseFct>.<resultStr>.parseResult)
+       -> (<BaseFct>.<resultStr>.token list
+        -> 'b <BaseFct>.<resultStr>.parseResult)
+       -> (<BaseFct>.<resultStr>.token list
+        -> 'c <BaseFct>.<resultStr>.parseResult)
+       -> 'e -> 'd <BaseFct>.<resultStr>.parseResult
+  val pStar :
+      (<BaseFct>.<resultStr>.token list
+        -> 'a <BaseFct>.<resultStr>.parseResult)
+       -> <BaseFct>.<resultStr>.token list
+       -> 'a list <BaseFct>.<resultStr>.parseResult
+  val pPlus :
+      (<BaseFct>.<resultStr>.token list
+        -> 'a <BaseFct>.<resultStr>.parseResult)
+       -> <BaseFct>.<resultStr>.token list
+       -> 'a list <BaseFct>.<resultStr>.parseResult
+  val pAlt :
+      ('a -> 'b <BaseFct>.<resultStr>.parseResult)
+       -> ('a -> 'b <BaseFct>.<resultStr>.parseResult)
+       -> 'a -> 'b <BaseFct>.<resultStr>.parseResult
+  val pAlts :
+      ('a -> 'b <BaseFct>.<resultStr>.parseResult) list
+       -> 'a -> 'b <BaseFct>.<resultStr>.parseResult
+  val pOpt :
+      (<BaseFct>.<resultStr>.token list
+        -> 'a <BaseFct>.<resultStr>.parseResult)
+       -> <BaseFct>.<resultStr>.token list
+       -> 'a option <BaseFct>.<resultStr>.parseResult
+  val punct :
+      <BaseFct>.<resultStr>.token
+       -> <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.parseResult
+  val pInParens :
+      (<BaseFct>.<resultStr>.token list
+        -> 'a <BaseFct>.<resultStr>.parseResult)
+       -> <BaseFct>.<resultStr>.token list
+       -> 'a <BaseFct>.<resultStr>.parseResult
+  val pPreComma :
+      (<BaseFct>.<resultStr>.token list
+        -> 'a <BaseFct>.<resultStr>.parseResult)
+       -> <BaseFct>.<resultStr>.token list
+       -> 'a <BaseFct>.<resultStr>.parseResult
+  val pStarComma :
+      (<BaseFct>.<resultStr>.token list
+        -> 'a <BaseFct>.<resultStr>.parseResult)
+       -> <BaseFct>.<resultStr>.token list
+       -> 'a list <BaseFct>.<resultStr>.parseResult
+  val pLNum :
+      <BaseFct>.<resultStr>.token list
+       -> string <BaseFct>.<resultStr>.parseResult
+  val pLReg :
+      <BaseFct>.<resultStr>.token list
+       -> string <BaseFct>.<resultStr>.parseResult
+  val pLName :
+      <BaseFct>.<resultStr>.token list
+       -> string <BaseFct>.<resultStr>.parseResult
+  val pLLabel :
+      <BaseFct>.<resultStr>.token list
+       -> string <BaseFct>.<resultStr>.parseResult
+  val pReg :
+      <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.reg <BaseFct>.<resultStr>.parseResult
+  val pOpcode :
+      <BaseFct>.<resultStr>.token list
+       -> BenchCacheprofArch.opcode <BaseFct>.<resultStr>.parseResult
+  val pUnsignedA :
+      <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.unsigned <BaseFct>.<resultStr>.parseResult
+  val pUnsignedF :
+      <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.unsigned <BaseFct>.<resultStr>.parseResult
+  val pSignedF :
+      <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.signed <BaseFct>.<resultStr>.parseResult
+  val pConst :
+      <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.constant <BaseFct>.<resultStr>.parseResult
+  val pAMode :
+      <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.amode <BaseFct>.<resultStr>.parseResult
+  val pOperand :
+      <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.operand <BaseFct>.<resultStr>.parseResult
+  val pInsn :
+      <BaseFct>.<resultStr>.token list
+       -> <BaseFct>.<resultStr>.insn <BaseFct>.<resultStr>.parseResult
+  val parse :
+      <BaseFct>.<resultStr>.preline <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> <BaseFct>.<resultStr>.line <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+  val ppReg : <BaseFct>.<resultStr>.reg -> string
+  val ppUnsigned : <BaseFct>.<resultStr>.unsigned -> string
+  val ppSigned : <BaseFct>.<resultStr>.signed -> string
+  val ppConst : <BaseFct>.<resultStr>.constant -> string
+  val paren : string -> string
+  val ppAMode : <BaseFct>.<resultStr>.amode -> string
+  val ppOperand : <BaseFct>.<resultStr>.operand -> string
+  val ppInsn : <BaseFct>.<resultStr>.insn -> string
+  val ppLine : <BaseFct>.<resultStr>.line -> string
+  val getLineNo : <BaseFct>.<resultStr>.line -> int
+  val isReal : <BaseFct>.<resultStr>.line -> bool
+  val isPseudo : <BaseFct>.<resultStr>.line -> bool
+  val isOriginalInsn : <BaseFct>.<resultStr>.line -> bool
+  val getAnns :
+      <BaseFct>.<resultStr>.annotations -> <BaseFct>.<resultStr>.annot list
+  val getCC : <BaseFct>.<resultStr>.line -> <BaseFct>.<resultStr>.cc
+  val isNoCC : <BaseFct>.<resultStr>.cc -> bool
+  val hasRealAnns : <BaseFct>.<resultStr>.insn -> bool
+  val archLabelDef : string -> string
+  val archLabelUse : string -> string
+  val constName : string -> <BaseFct>.<resultStr>.constant
+  val constNumber : int -> <BaseFct>.<resultStr>.constant
+  val incSequence : int -> string -> <BaseFct>.<resultStr>.insn list
+  val simplify :
+      <BaseFct>.<resultStr>.line <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.line <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+  val identifyBBs :
+      <BaseFct>.<resultStr>.line <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.bb <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+  val useBB :
+      <BaseFct>.<resultStr>.bb
+       -> <BaseFct>.<resultStr>.line <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+  val useBBs :
+      <BaseFct>.<resultStr>.bb <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.line <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+  val theEdi : <BaseFct>.<resultStr>.operand
+  val theEsi : <BaseFct>.<resultStr>.operand
+  val theSpPlus4 : <BaseFct>.<resultStr>.operand
+  val theSpPlus8 : <BaseFct>.<resultStr>.operand
+  val annsFromEffects :
+      BenchCacheprofArch.effect list
+       -> <BaseFct>.<resultStr>.operand list
+       -> <BaseFct>.<resultStr>.annot list option
+  val annsOf :
+      BenchCacheprofArch.opcode
+       -> <BaseFct>.<resultStr>.operand list
+       -> <BaseFct>.<resultStr>.annot list
+  val annOperand :
+      <BaseFct>.<resultStr>.annot -> <BaseFct>.<resultStr>.operand
+  val isMemOp : <BaseFct>.<resultStr>.operand -> bool
+  val annotateInsn : <BaseFct>.<resultStr>.insn -> <BaseFct>.<resultStr>.insn
+  val annotate :
+      <BaseFct>.<resultStr>.line <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.line <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+  type possiblyString
+  val isGuessed : <BaseFct>.<resultStr>.possiblyString -> bool
+  val getString : <BaseFct>.<resultStr>.possiblyString -> string
+  val deQuote : string -> string
+  val quoted : string -> bool
+  val splitArgs : string -> string list
+  val addCCs :
+      <BaseFct>.<resultStr>.line <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.line <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+  val decimal : int -> string
+  val showString : string -> string
+  val showCC : <BaseFct>.<resultStr>.cc -> string
+  val showPoint : int * int * int -> string
+  val unique : ''a list -> ''a list
+  val indexOf : ''a list -> ''a -> int
+  type descriptors
+  val makeCCdescriptors :
+      <BaseFct>.<resultStr>.cc list -> <BaseFct>.<resultStr>.descriptors
+  val tableStart : string
+  val bucketsStart : string
+  val useCCdescriptors :
+      <BaseFct>.<resultStr>.descriptors
+       -> <BaseFct>.<resultStr>.line <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+  val insnPush : <BaseFct>.<resultStr>.reg -> <BaseFct>.<resultStr>.insn
+  val insnPop : <BaseFct>.<resultStr>.reg -> <BaseFct>.<resultStr>.insn
+  val standardPreamble : <BaseFct>.<resultStr>.insn list
+  val standardPostamble : <BaseFct>.<resultStr>.insn list
+  val bucketAddress : int -> <BaseFct>.<resultStr>.operand
+  val useAnnot :
+      int -> <BaseFct>.<resultStr>.annot -> <BaseFct>.<resultStr>.insn list
+  val synthInstructions :
+      int -> <BaseFct>.<resultStr>.insn -> <BaseFct>.<resultStr>.insn list
+  val synthLine :
+      int
+       -> <BaseFct>.<resultStr>.line
+       -> int
+       * <BaseFct>.<resultStr>.line <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+  val synth2 :
+      <BaseFct>.<resultStr>.line <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.line <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+  val useIncAnn :
+      <BaseFct>.<resultStr>.annot -> <BaseFct>.<resultStr>.insn list
+  val synth1Line :
+      <BaseFct>.<resultStr>.line -> <BaseFct>.<resultStr>.line list
+  val synth1 :
+      <BaseFct>.<resultStr>.line <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.line <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+  val incrementsCounter :
+      <BaseFct>.<resultStr>.insn -> <BaseFct>.<resultStr>.insn -> bool
+  val peephole :
+      <BaseFct>.<resultStr>.line <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.line <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+  val isStabLine : <BaseFct>.<resultStr>.line -> bool
+  val finalCleanup :
+      <BaseFct>.<resultStr>.line <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> string <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val output :
+      int -> string -> string <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val rendered : int -> string -> string
+  val emitOutput : int -> string -> (string -> 'a) -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-cacheprof-originals/check.sml]
+[autoloading]
+[autoloading done]
+functor BenchCacheprofCheckFn(K: sig
+  val emitOutput : int -> string -> (string -> unit) -> unit
+end) :
+sig
+  val read : string -> TextIO.vector
+  val selectedInput : string -> TextIO.vector
+  val consumer : string -> (string -> unit) * (unit -> int)
+  val runRaw : string list -> string
+  val runForced : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-cacheprof-originals/tests-final.sml]
+PASS cacheprof/N/000-movl-0
+PASS cacheprof/E/000-movl-0
+PASS cacheprof/N/001-movw-0
+PASS cacheprof/E/001-movw-0
+PASS cacheprof/N/002-movb-0
+PASS cacheprof/E/002-movb-0
+PASS cacheprof/N/003-movzbw-0
+PASS cacheprof/E/003-movzbw-0
+PASS cacheprof/N/004-movzbl-0
+PASS cacheprof/E/004-movzbl-0
+PASS cacheprof/N/005-movzwl-0
+PASS cacheprof/E/005-movzwl-0
+PASS cacheprof/N/006-movsbw-0
+PASS cacheprof/E/006-movsbw-0
+PASS cacheprof/N/007-movsbl-0
+PASS cacheprof/E/007-movsbl-0
+PASS cacheprof/N/008-movswl-0
+PASS cacheprof/E/008-movswl-0
+PASS cacheprof/N/009-pushl-0
+PASS cacheprof/E/009-pushl-0
+PASS cacheprof/N/010-popl-0
+PASS cacheprof/E/010-popl-0
+PASS cacheprof/N/011-pushfl-0
+PASS cacheprof/E/011-pushfl-0
+PASS cacheprof/N/012-popfl-0
+PASS cacheprof/E/012-popfl-0
+PASS cacheprof/N/013-sall-0
+PASS cacheprof/E/013-sall-0
+PASS cacheprof/N/014-salw-0
+PASS cacheprof/E/014-salw-0
+PASS cacheprof/N/015-salb-0
+PASS cacheprof/E/015-salb-0
+PASS cacheprof/N/016-sarl-0
+PASS cacheprof/E/016-sarl-0
+PASS cacheprof/N/017-sarw-0
+PASS cacheprof/E/017-sarw-0
+PASS cacheprof/N/018-sarb-0
+PASS cacheprof/E/018-sarb-0
+PASS cacheprof/N/019-shrl-0
+PASS cacheprof/E/019-shrl-0
+PASS cacheprof/N/020-shrw-0
+PASS cacheprof/E/020-shrw-0
+PASS cacheprof/N/021-shrb-0
+PASS cacheprof/E/021-shrb-0
+PASS cacheprof/N/022-roll-0
+PASS cacheprof/E/022-roll-0
+PASS cacheprof/N/023-rolw-0
+PASS cacheprof/E/023-rolw-0
+PASS cacheprof/N/024-rolb-0
+PASS cacheprof/E/024-rolb-0
+PASS cacheprof/N/025-rorl-0
+PASS cacheprof/E/025-rorl-0
+PASS cacheprof/N/026-rorw-0
+PASS cacheprof/E/026-rorw-0
+PASS cacheprof/N/027-rorb-0
+PASS cacheprof/E/027-rorb-0
+PASS cacheprof/N/028-shldl-0
+PASS cacheprof/E/028-shldl-0
+PASS cacheprof/N/029-shldl-1
+PASS cacheprof/E/029-shldl-1
+PASS cacheprof/N/030-shrdl-0
+PASS cacheprof/E/030-shrdl-0
+PASS cacheprof/N/031-shrdl-1
+PASS cacheprof/E/031-shrdl-1
+PASS cacheprof/N/032-addl-0
+PASS cacheprof/E/032-addl-0
+PASS cacheprof/N/033-addw-0
+PASS cacheprof/E/033-addw-0
+PASS cacheprof/N/034-addb-0
+PASS cacheprof/E/034-addb-0
+PASS cacheprof/N/035-adcl-0
+PASS cacheprof/E/035-adcl-0
+PASS cacheprof/N/036-subl-0
+PASS cacheprof/E/036-subl-0
+PASS cacheprof/N/037-subw-0
+PASS cacheprof/E/037-subw-0
+PASS cacheprof/N/038-subb-0
+PASS cacheprof/E/038-subb-0
+PASS cacheprof/N/039-sbbl-0
+PASS cacheprof/E/039-sbbl-0
+PASS cacheprof/N/040-imull-0
+PASS cacheprof/E/040-imull-0
+PASS cacheprof/N/041-imull-1
+PASS cacheprof/E/041-imull-1
+PASS cacheprof/N/042-imull-2
+PASS cacheprof/E/042-imull-2
+PASS cacheprof/N/043-imulb-0
+PASS cacheprof/E/043-imulb-0
+PASS cacheprof/N/044-imulw-0
+PASS cacheprof/E/044-imulw-0
+PASS cacheprof/N/045-imulw-1
+PASS cacheprof/E/045-imulw-1
+PASS cacheprof/N/046-mull-0
+PASS cacheprof/E/046-mull-0
+PASS cacheprof/N/047-idivl-0
+PASS cacheprof/E/047-idivl-0
+PASS cacheprof/N/048-divl-0
+PASS cacheprof/E/048-divl-0
+PASS cacheprof/N/049-divw-0
+PASS cacheprof/E/049-divw-0
+PASS cacheprof/N/050-divb-0
+PASS cacheprof/E/050-divb-0
+PASS cacheprof/N/051-xorl-0
+PASS cacheprof/E/051-xorl-0
+PASS cacheprof/N/052-xorw-0
+PASS cacheprof/E/052-xorw-0
+PASS cacheprof/N/053-xorb-0
+PASS cacheprof/E/053-xorb-0
+PASS cacheprof/N/054-andl-0
+PASS cacheprof/E/054-andl-0
+PASS cacheprof/N/055-andw-0
+PASS cacheprof/E/055-andw-0
+PASS cacheprof/N/056-andb-0
+PASS cacheprof/E/056-andb-0
+PASS cacheprof/N/057-orl-0
+PASS cacheprof/E/057-orl-0
+PASS cacheprof/N/058-orw-0
+PASS cacheprof/E/058-orw-0
+PASS cacheprof/N/059-orb-0
+PASS cacheprof/E/059-orb-0
+PASS cacheprof/N/060-incl-0
+PASS cacheprof/E/060-incl-0
+PASS cacheprof/N/061-incw-0
+PASS cacheprof/E/061-incw-0
+PASS cacheprof/N/062-incb-0
+PASS cacheprof/E/062-incb-0
+PASS cacheprof/N/063-decl-0
+PASS cacheprof/E/063-decl-0
+PASS cacheprof/N/064-decw-0
+PASS cacheprof/E/064-decw-0
+PASS cacheprof/N/065-decb-0
+PASS cacheprof/E/065-decb-0
+PASS cacheprof/N/066-negl-0
+PASS cacheprof/E/066-negl-0
+PASS cacheprof/N/067-negw-0
+PASS cacheprof/E/067-negw-0
+PASS cacheprof/N/068-negb-0
+PASS cacheprof/E/068-negb-0
+PASS cacheprof/N/069-notl-0
+PASS cacheprof/E/069-notl-0
+PASS cacheprof/N/070-notw-0
+PASS cacheprof/E/070-notw-0
+PASS cacheprof/N/071-notb-0
+PASS cacheprof/E/071-notb-0
+PASS cacheprof/N/072-testl-0
+PASS cacheprof/E/072-testl-0
+PASS cacheprof/N/073-testw-0
+PASS cacheprof/E/073-testw-0
+PASS cacheprof/N/074-testb-0
+PASS cacheprof/E/074-testb-0
+PASS cacheprof/N/075-leal-0
+PASS cacheprof/E/075-leal-0
+PASS cacheprof/N/076-cmpl-0
+PASS cacheprof/E/076-cmpl-0
+PASS cacheprof/N/077-cmpw-0
+PASS cacheprof/E/077-cmpw-0
+PASS cacheprof/N/078-cmpb-0
+PASS cacheprof/E/078-cmpb-0
+PASS cacheprof/N/079-cmpsb-0
+PASS cacheprof/E/079-cmpsb-0
+PASS cacheprof/N/080-scasb-0
+PASS cacheprof/E/080-scasb-0
+PASS cacheprof/N/081-movsl-0
+PASS cacheprof/E/081-movsl-0
+PASS cacheprof/N/082-movsw-0
+PASS cacheprof/E/082-movsw-0
+PASS cacheprof/N/083-movsb-0
+PASS cacheprof/E/083-movsb-0
+PASS cacheprof/N/084-stosl-0
+PASS cacheprof/E/084-stosl-0
+PASS cacheprof/N/085-stosw-0
+PASS cacheprof/E/085-stosw-0
+PASS cacheprof/N/086-stosb-0
+PASS cacheprof/E/086-stosb-0
+PASS cacheprof/N/087-leave-0
+PASS cacheprof/E/087-leave-0
+PASS cacheprof/N/088-ret-0
+PASS cacheprof/E/088-ret-0
+PASS cacheprof/N/089-call-0
+PASS cacheprof/E/089-call-0
+PASS cacheprof/N/090-jmp-0
+PASS cacheprof/E/090-jmp-0
+PASS cacheprof/N/091-jmp-1
+PASS cacheprof/E/091-jmp-1
+PASS cacheprof/N/092-jmp-2
+PASS cacheprof/E/092-jmp-2
+PASS cacheprof/N/093-je-0
+PASS cacheprof/E/093-je-0
+PASS cacheprof/N/094-je-1
+PASS cacheprof/E/094-je-1
+PASS cacheprof/N/095-je-2
+PASS cacheprof/E/095-je-2
+PASS cacheprof/N/096-jne-0
+PASS cacheprof/E/096-jne-0
+PASS cacheprof/N/097-jne-1
+PASS cacheprof/E/097-jne-1
+PASS cacheprof/N/098-jne-2
+PASS cacheprof/E/098-jne-2
+PASS cacheprof/N/099-jl-0
+PASS cacheprof/E/099-jl-0
+PASS cacheprof/N/100-jl-1
+PASS cacheprof/E/100-jl-1
+PASS cacheprof/N/101-jl-2
+PASS cacheprof/E/101-jl-2
+PASS cacheprof/N/102-jle-0
+PASS cacheprof/E/102-jle-0
+PASS cacheprof/N/103-jle-1
+PASS cacheprof/E/103-jle-1
+PASS cacheprof/N/104-jle-2
+PASS cacheprof/E/104-jle-2
+PASS cacheprof/N/105-jg-0
+PASS cacheprof/E/105-jg-0
+PASS cacheprof/N/106-jg-1
+PASS cacheprof/E/106-jg-1
+PASS cacheprof/N/107-jg-2
+PASS cacheprof/E/107-jg-2
+PASS cacheprof/N/108-jge-0
+PASS cacheprof/E/108-jge-0
+PASS cacheprof/N/109-jge-1
+PASS cacheprof/E/109-jge-1
+PASS cacheprof/N/110-jge-2
+PASS cacheprof/E/110-jge-2
+PASS cacheprof/N/111-js-0
+PASS cacheprof/E/111-js-0
+PASS cacheprof/N/112-js-1
+PASS cacheprof/E/112-js-1
+PASS cacheprof/N/113-js-2
+PASS cacheprof/E/113-js-2
+PASS cacheprof/N/114-jns-0
+PASS cacheprof/E/114-jns-0
+PASS cacheprof/N/115-jns-1
+PASS cacheprof/E/115-jns-1
+PASS cacheprof/N/116-jns-2
+PASS cacheprof/E/116-jns-2
+PASS cacheprof/N/117-jz-0
+PASS cacheprof/E/117-jz-0
+PASS cacheprof/N/118-jz-1
+PASS cacheprof/E/118-jz-1
+PASS cacheprof/N/119-jz-2
+PASS cacheprof/E/119-jz-2
+PASS cacheprof/N/120-jnz-0
+PASS cacheprof/E/120-jnz-0
+PASS cacheprof/N/121-jnz-1
+PASS cacheprof/E/121-jnz-1
+PASS cacheprof/N/122-jnz-2
+PASS cacheprof/E/122-jnz-2
+PASS cacheprof/N/123-jc-0
+PASS cacheprof/E/123-jc-0
+PASS cacheprof/N/124-jc-1
+PASS cacheprof/E/124-jc-1
+PASS cacheprof/N/125-jc-2
+PASS cacheprof/E/125-jc-2
+PASS cacheprof/N/126-jnc-0
+PASS cacheprof/E/126-jnc-0
+PASS cacheprof/N/127-jnc-1
+PASS cacheprof/E/127-jnc-1
+PASS cacheprof/N/128-jnc-2
+PASS cacheprof/E/128-jnc-2
+PASS cacheprof/N/129-jo-0
+PASS cacheprof/E/129-jo-0
+PASS cacheprof/N/130-jo-1
+PASS cacheprof/E/130-jo-1
+PASS cacheprof/N/131-jo-2
+PASS cacheprof/E/131-jo-2
+PASS cacheprof/N/132-jno-0
+PASS cacheprof/E/132-jno-0
+PASS cacheprof/N/133-jno-1
+PASS cacheprof/E/133-jno-1
+PASS cacheprof/N/134-jno-2
+PASS cacheprof/E/134-jno-2
+PASS cacheprof/N/135-ja-0
+PASS cacheprof/E/135-ja-0
+PASS cacheprof/N/136-ja-1
+PASS cacheprof/E/136-ja-1
+PASS cacheprof/N/137-ja-2
+PASS cacheprof/E/137-ja-2
+PASS cacheprof/N/138-jae-0
+PASS cacheprof/E/138-jae-0
+PASS cacheprof/N/139-jae-1
+PASS cacheprof/E/139-jae-1
+PASS cacheprof/N/140-jae-2
+PASS cacheprof/E/140-jae-2
+PASS cacheprof/N/141-jb-0
+PASS cacheprof/E/141-jb-0
+PASS cacheprof/N/142-jb-1
+PASS cacheprof/E/142-jb-1
+PASS cacheprof/N/143-jb-2
+PASS cacheprof/E/143-jb-2
+PASS cacheprof/N/144-jbe-0
+PASS cacheprof/E/144-jbe-0
+PASS cacheprof/N/145-jbe-1
+PASS cacheprof/E/145-jbe-1
+PASS cacheprof/N/146-jbe-2
+PASS cacheprof/E/146-jbe-2
+PASS cacheprof/N/147-jp-0
+PASS cacheprof/E/147-jp-0
+PASS cacheprof/N/148-jp-1
+PASS cacheprof/E/148-jp-1
+PASS cacheprof/N/149-jp-2
+PASS cacheprof/E/149-jp-2
+PASS cacheprof/N/150-seta-0
+PASS cacheprof/E/150-seta-0
+PASS cacheprof/N/151-setae-0
+PASS cacheprof/E/151-setae-0
+PASS cacheprof/N/152-setb-0
+PASS cacheprof/E/152-setb-0
+PASS cacheprof/N/153-setbe-0
+PASS cacheprof/E/153-setbe-0
+PASS cacheprof/N/154-sete-0
+PASS cacheprof/E/154-sete-0
+PASS cacheprof/N/155-setne-0
+PASS cacheprof/E/155-setne-0
+PASS cacheprof/N/156-setl-0
+PASS cacheprof/E/156-setl-0
+PASS cacheprof/N/157-setle-0
+PASS cacheprof/E/157-setle-0
+PASS cacheprof/N/158-setg-0
+PASS cacheprof/E/158-setg-0
+PASS cacheprof/N/159-setge-0
+PASS cacheprof/E/159-setge-0
+PASS cacheprof/N/160-setc-0
+PASS cacheprof/E/160-setc-0
+PASS cacheprof/N/161-setcb-0
+PASS cacheprof/E/161-setcb-0
+PASS cacheprof/N/162-btl-0
+PASS cacheprof/E/162-btl-0
+PASS cacheprof/N/163-btsl-0
+PASS cacheprof/E/163-btsl-0
+PASS cacheprof/N/164-btcl-0
+PASS cacheprof/E/164-btcl-0
+PASS cacheprof/N/165-btrl-0
+PASS cacheprof/E/165-btrl-0
+PASS cacheprof/N/166-cld-0
+PASS cacheprof/E/166-cld-0
+PASS cacheprof/N/167-cltd-0
+PASS cacheprof/E/167-cltd-0
+PASS cacheprof/N/168-cwtl-0
+PASS cacheprof/E/168-cwtl-0
+PASS cacheprof/N/169-cbtw-0
+PASS cacheprof/E/169-cbtw-0
+PASS cacheprof/N/170-rep-0
+PASS cacheprof/E/170-rep-0
+PASS cacheprof/N/171-repz-0
+PASS cacheprof/E/171-repz-0
+PASS cacheprof/N/172-repnz-0
+PASS cacheprof/E/172-repnz-0
+PASS cacheprof/N/173-fld-0
+PASS cacheprof/E/173-fld-0
+PASS cacheprof/N/174-fldt-0
+PASS cacheprof/E/174-fldt-0
+PASS cacheprof/N/175-fldl-0
+PASS cacheprof/E/175-fldl-0
+PASS cacheprof/N/176-flds-0
+PASS cacheprof/E/176-flds-0
+PASS cacheprof/N/177-fild-0
+PASS cacheprof/E/177-fild-0
+PASS cacheprof/N/178-fildl-0
+PASS cacheprof/E/178-fildl-0
+PASS cacheprof/N/179-fildll-0
+PASS cacheprof/E/179-fildll-0
+PASS cacheprof/N/180-fstl-0
+PASS cacheprof/E/180-fstl-0
+PASS cacheprof/N/181-fstpl-0
+PASS cacheprof/E/181-fstpl-0
+PASS cacheprof/N/182-fstp-0
+PASS cacheprof/E/182-fstp-0
+PASS cacheprof/N/183-fstps-0
+PASS cacheprof/E/183-fstps-0
+PASS cacheprof/N/184-fsts-0
+PASS cacheprof/E/184-fsts-0
+PASS cacheprof/N/185-fstpt-0
+PASS cacheprof/E/185-fstpt-0
+PASS cacheprof/N/186-fistl-0
+PASS cacheprof/E/186-fistl-0
+PASS cacheprof/N/187-fistpl-0
+PASS cacheprof/E/187-fistpl-0
+PASS cacheprof/N/188-fistpll-0
+PASS cacheprof/E/188-fistpll-0
+PASS cacheprof/N/189-fst-0
+PASS cacheprof/E/189-fst-0
+PASS cacheprof/N/190-fldz-0
+PASS cacheprof/E/190-fldz-0
+PASS cacheprof/N/191-fld1-0
+PASS cacheprof/E/191-fld1-0
+PASS cacheprof/N/192-fldl2e-0
+PASS cacheprof/E/192-fldl2e-0
+PASS cacheprof/N/193-fldln2-0
+PASS cacheprof/E/193-fldln2-0
+PASS cacheprof/N/194-fchs-0
+PASS cacheprof/E/194-fchs-0
+PASS cacheprof/N/195-fsin-0
+PASS cacheprof/E/195-fsin-0
+PASS cacheprof/N/196-fcos-0
+PASS cacheprof/E/196-fcos-0
+PASS cacheprof/N/197-fptan-0
+PASS cacheprof/E/197-fptan-0
+PASS cacheprof/N/198-fsqrt-0
+PASS cacheprof/E/198-fsqrt-0
+PASS cacheprof/N/199-fpatan-0
+PASS cacheprof/E/199-fpatan-0
+PASS cacheprof/N/200-fabs-0
+PASS cacheprof/E/200-fabs-0
+PASS cacheprof/N/201-f2xm1-0
+PASS cacheprof/E/201-f2xm1-0
+PASS cacheprof/N/202-fscale-0
+PASS cacheprof/E/202-fscale-0
+PASS cacheprof/N/203-fyl2x-0
+PASS cacheprof/E/203-fyl2x-0
+PASS cacheprof/N/204-faddp-0
+PASS cacheprof/E/204-faddp-0
+PASS cacheprof/N/205-faddp-1
+PASS cacheprof/E/205-faddp-1
+PASS cacheprof/N/206-fadds-0
+PASS cacheprof/E/206-fadds-0
+PASS cacheprof/N/207-faddl-0
+PASS cacheprof/E/207-faddl-0
+PASS cacheprof/N/208-fiaddl-0
+PASS cacheprof/E/208-fiaddl-0
+PASS cacheprof/N/209-fadd-0
+PASS cacheprof/E/209-fadd-0
+PASS cacheprof/N/210-fadd-1
+PASS cacheprof/E/210-fadd-1
+PASS cacheprof/N/211-fsubp-0
+PASS cacheprof/E/211-fsubp-0
+PASS cacheprof/N/212-fsubrp-0
+PASS cacheprof/E/212-fsubrp-0
+PASS cacheprof/N/213-fsubrl-0
+PASS cacheprof/E/213-fsubrl-0
+PASS cacheprof/N/214-fsubrs-0
+PASS cacheprof/E/214-fsubrs-0
+PASS cacheprof/N/215-fsubs-0
+PASS cacheprof/E/215-fsubs-0
+PASS cacheprof/N/216-fsubl-0
+PASS cacheprof/E/216-fsubl-0
+PASS cacheprof/N/217-fsub-0
+PASS cacheprof/E/217-fsub-0
+PASS cacheprof/N/218-fsub-1
+PASS cacheprof/E/218-fsub-1
+PASS cacheprof/N/219-fsubr-0
+PASS cacheprof/E/219-fsubr-0
+PASS cacheprof/N/220-fsubr-1
+PASS cacheprof/E/220-fsubr-1
+PASS cacheprof/N/221-fmul-0
+PASS cacheprof/E/221-fmul-0
+PASS cacheprof/N/222-fmul-1
+PASS cacheprof/E/222-fmul-1
+PASS cacheprof/N/223-fmuls-0
+PASS cacheprof/E/223-fmuls-0
+PASS cacheprof/N/224-fmull-0
+PASS cacheprof/E/224-fmull-0
+PASS cacheprof/N/225-fmulp-0
+PASS cacheprof/E/225-fmulp-0
+PASS cacheprof/N/226-fmulp-1
+PASS cacheprof/E/226-fmulp-1
+PASS cacheprof/N/227-fimull-0
+PASS cacheprof/E/227-fimull-0
+PASS cacheprof/N/228-fdiv-0
+PASS cacheprof/E/228-fdiv-0
+PASS cacheprof/N/229-fdivp-0
+PASS cacheprof/E/229-fdivp-0
+PASS cacheprof/N/230-fdivr-0
+PASS cacheprof/E/230-fdivr-0
+PASS cacheprof/N/231-fdivrl-0
+PASS cacheprof/E/231-fdivrl-0
+PASS cacheprof/N/232-fdivrs-0
+PASS cacheprof/E/232-fdivrs-0
+PASS cacheprof/N/233-fdivrp-0
+PASS cacheprof/E/233-fdivrp-0
+PASS cacheprof/N/234-fidivrl-0
+PASS cacheprof/E/234-fidivrl-0
+PASS cacheprof/N/235-fidivl-0
+PASS cacheprof/E/235-fidivl-0
+PASS cacheprof/N/236-fdivl-0
+PASS cacheprof/E/236-fdivl-0
+PASS cacheprof/N/237-fdivs-0
+PASS cacheprof/E/237-fdivs-0
+PASS cacheprof/N/238-fprem-0
+PASS cacheprof/E/238-fprem-0
+PASS cacheprof/N/239-fucom-0
+PASS cacheprof/E/239-fucom-0
+PASS cacheprof/N/240-fucomp-0
+PASS cacheprof/E/240-fucomp-0
+PASS cacheprof/N/241-fucompp-0
+PASS cacheprof/E/241-fucompp-0
+PASS cacheprof/N/242-fcomp-0
+PASS cacheprof/E/242-fcomp-0
+PASS cacheprof/N/243-fcompp-0
+PASS cacheprof/E/243-fcompp-0
+PASS cacheprof/N/244-fcoms-0
+PASS cacheprof/E/244-fcoms-0
+PASS cacheprof/N/245-fcoml-0
+PASS cacheprof/E/245-fcoml-0
+PASS cacheprof/N/246-fcom-0
+PASS cacheprof/E/246-fcom-0
+PASS cacheprof/N/247-fcomps-0
+PASS cacheprof/E/247-fcomps-0
+PASS cacheprof/N/248-fcompl-0
+PASS cacheprof/E/248-fcompl-0
+PASS cacheprof/N/249-ficompl-0
+PASS cacheprof/E/249-ficompl-0
+PASS cacheprof/N/250-fnstsw-0
+PASS cacheprof/E/250-fnstsw-0
+PASS cacheprof/N/251-fnstcw-0
+PASS cacheprof/E/251-fnstcw-0
+PASS cacheprof/N/252-fldcw-0
+PASS cacheprof/E/252-fldcw-0
+PASS cacheprof/N/253-fxch-0
+PASS cacheprof/E/253-fxch-0
+PASS cacheprof/N/254-frndint-0
+PASS cacheprof/E/254-frndint-0
+PASS cacheprof/N/255-sahf-0
+PASS cacheprof/E/255-sahf-0
+PASS cacheprof/N/256-nop-0
+PASS cacheprof/E/256-nop-0
+PASS cacheprof/N/257-empty-level0
+PASS cacheprof/E/257-empty-level0
+PASS cacheprof/N/258-empty-level1
+PASS cacheprof/E/258-empty-level1
+PASS cacheprof/N/259-empty-level2
+PASS cacheprof/E/259-empty-level2
+PASS cacheprof/N/260-labels-level0
+PASS cacheprof/E/260-labels-level0
+PASS cacheprof/N/261-labels-level1
+PASS cacheprof/E/261-labels-level1
+PASS cacheprof/N/262-labels-level2
+PASS cacheprof/E/262-labels-level2
+PASS cacheprof/N/263-stabs-level0
+PASS cacheprof/E/263-stabs-level0
+PASS cacheprof/N/264-stabs-level1
+PASS cacheprof/E/264-stabs-level1
+PASS cacheprof/N/265-stabs-level2
+PASS cacheprof/E/265-stabs-level2
+PASS cacheprof/N/266-peephole-level0
+PASS cacheprof/E/266-peephole-level0
+PASS cacheprof/N/267-peephole-level1
+PASS cacheprof/E/267-peephole-level1
+PASS cacheprof/N/268-peephole-level2
+PASS cacheprof/E/268-peephole-level2
+PASS cacheprof/N/269-quoted-level0
+PASS cacheprof/E/269-quoted-level0
+PASS cacheprof/N/270-quoted-level1
+PASS cacheprof/E/270-quoted-level1
+PASS cacheprof/N/271-quoted-level2
+PASS cacheprof/E/271-quoted-level2
+PASS cacheprof/N/272-rep-copy-level0
+PASS cacheprof/E/272-rep-copy-level0
+PASS cacheprof/N/273-rep-copy-level1
+PASS cacheprof/E/273-rep-copy-level1
+PASS cacheprof/N/274-rep-copy-level2
+PASS cacheprof/E/274-rep-copy-level2
+PASS cacheprof/N/275-rep-compare-level0
+PASS cacheprof/E/275-rep-compare-level0
+PASS cacheprof/N/276-rep-compare-level1
+PASS cacheprof/E/276-rep-compare-level1
+PASS cacheprof/N/277-rep-compare-level2
+PASS cacheprof/E/277-rep-compare-level2
+PASS cacheprof/N/278-const-address-level0
+PASS cacheprof/E/278-const-address-level0
+PASS cacheprof/N/279-const-address-level1
+PASS cacheprof/E/279-const-address-level1
+PASS cacheprof/N/280-const-address-level2
+PASS cacheprof/E/280-const-address-level2
+PASS cacheprof/N/281-st-reg-level0
+PASS cacheprof/E/281-st-reg-level0
+PASS cacheprof/N/282-st-reg-level1
+PASS cacheprof/E/282-st-reg-level1
+PASS cacheprof/N/283-st-reg-level2
+PASS cacheprof/E/283-st-reg-level2
+PASS cacheprof/N/284-bad-opcode-level0
+PASS cacheprof/E/284-bad-opcode-level0
+PASS cacheprof/N/285-bad-opcode-level1
+PASS cacheprof/E/285-bad-opcode-level1
+PASS cacheprof/N/286-bad-opcode-level2
+PASS cacheprof/E/286-bad-opcode-level2
+PASS cacheprof/N/287-bad-token-level0
+PASS cacheprof/E/287-bad-token-level0
+PASS cacheprof/N/288-bad-token-level1
+PASS cacheprof/E/288-bad-token-level1
+PASS cacheprof/N/289-bad-token-level2
+PASS cacheprof/E/289-bad-token-level2
+PASS cacheprof/N/290-bad-arity-level0
+PASS cacheprof/E/290-bad-arity-level0
+PASS cacheprof/N/291-bad-arity-level1
+PASS cacheprof/E/291-bad-arity-level1
+PASS cacheprof/N/292-bad-arity-level2
+PASS cacheprof/E/292-bad-arity-level2
+PASS cacheprof/N/293-bad-reg-level0
+PASS cacheprof/E/293-bad-reg-level0
+PASS cacheprof/N/294-bad-reg-level1
+PASS cacheprof/E/294-bad-reg-level1
+PASS cacheprof/N/295-bad-reg-level2
+PASS cacheprof/E/295-bad-reg-level2
+PASS cacheprof/N/296-comments-level0
+PASS cacheprof/E/296-comments-level0
+PASS cacheprof/N/297-comments-level1
+PASS cacheprof/E/297-comments-level1
+PASS cacheprof/N/298-comments-level2
+PASS cacheprof/E/298-comments-level2
+PASS cacheprof/opcode-info/O_movl
+PASS cacheprof/opcode-info/O_movw
+PASS cacheprof/opcode-info/O_movb
+PASS cacheprof/opcode-info/O_movzbw
+PASS cacheprof/opcode-info/O_movzbl
+PASS cacheprof/opcode-info/O_movzwl
+PASS cacheprof/opcode-info/O_movsbw
+PASS cacheprof/opcode-info/O_movsbl
+PASS cacheprof/opcode-info/O_movswl
+PASS cacheprof/opcode-info/O_pushl
+PASS cacheprof/opcode-info/O_popl
+PASS cacheprof/opcode-info/O_pushfl
+PASS cacheprof/opcode-info/O_popfl
+PASS cacheprof/opcode-info/O_sall
+PASS cacheprof/opcode-info/O_salw
+PASS cacheprof/opcode-info/O_salb
+PASS cacheprof/opcode-info/O_sarl
+PASS cacheprof/opcode-info/O_sarw
+PASS cacheprof/opcode-info/O_sarb
+PASS cacheprof/opcode-info/O_shrl
+PASS cacheprof/opcode-info/O_shrw
+PASS cacheprof/opcode-info/O_shrb
+PASS cacheprof/opcode-info/O_roll
+PASS cacheprof/opcode-info/O_rolw
+PASS cacheprof/opcode-info/O_rolb
+PASS cacheprof/opcode-info/O_rorl
+PASS cacheprof/opcode-info/O_rorw
+PASS cacheprof/opcode-info/O_rorb
+PASS cacheprof/opcode-info/O_shldl
+PASS cacheprof/opcode-info/O_shrdl
+PASS cacheprof/opcode-info/O_addl
+PASS cacheprof/opcode-info/O_addw
+PASS cacheprof/opcode-info/O_addb
+PASS cacheprof/opcode-info/O_adcl
+PASS cacheprof/opcode-info/O_subl
+PASS cacheprof/opcode-info/O_subw
+PASS cacheprof/opcode-info/O_subb
+PASS cacheprof/opcode-info/O_sbbl
+PASS cacheprof/opcode-info/O_imull
+PASS cacheprof/opcode-info/O_imulb
+PASS cacheprof/opcode-info/O_imulw
+PASS cacheprof/opcode-info/O_mull
+PASS cacheprof/opcode-info/O_idivl
+PASS cacheprof/opcode-info/O_divl
+PASS cacheprof/opcode-info/O_divw
+PASS cacheprof/opcode-info/O_divb
+PASS cacheprof/opcode-info/O_xorl
+PASS cacheprof/opcode-info/O_xorw
+PASS cacheprof/opcode-info/O_xorb
+PASS cacheprof/opcode-info/O_andl
+PASS cacheprof/opcode-info/O_andw
+PASS cacheprof/opcode-info/O_andb
+PASS cacheprof/opcode-info/O_orl
+PASS cacheprof/opcode-info/O_orw
+PASS cacheprof/opcode-info/O_orb
+PASS cacheprof/opcode-info/O_incl
+PASS cacheprof/opcode-info/O_incw
+PASS cacheprof/opcode-info/O_incb
+PASS cacheprof/opcode-info/O_decl
+PASS cacheprof/opcode-info/O_decw
+PASS cacheprof/opcode-info/O_decb
+PASS cacheprof/opcode-info/O_negl
+PASS cacheprof/opcode-info/O_negw
+PASS cacheprof/opcode-info/O_negb
+PASS cacheprof/opcode-info/O_notl
+PASS cacheprof/opcode-info/O_notw
+PASS cacheprof/opcode-info/O_notb
+PASS cacheprof/opcode-info/O_testl
+PASS cacheprof/opcode-info/O_testw
+PASS cacheprof/opcode-info/O_testb
+PASS cacheprof/opcode-info/O_leal
+PASS cacheprof/opcode-info/O_cmpl
+PASS cacheprof/opcode-info/O_cmpw
+PASS cacheprof/opcode-info/O_cmpb
+PASS cacheprof/opcode-info/O_cmpsb
+PASS cacheprof/opcode-info/O_scasb
+PASS cacheprof/opcode-info/O_movsl
+PASS cacheprof/opcode-info/O_movsw
+PASS cacheprof/opcode-info/O_movsb
+PASS cacheprof/opcode-info/O_stosl
+PASS cacheprof/opcode-info/O_stosw
+PASS cacheprof/opcode-info/O_stosb
+PASS cacheprof/opcode-info/O_leave
+PASS cacheprof/opcode-info/O_ret
+PASS cacheprof/opcode-info/O_call
+PASS cacheprof/opcode-info/O_jmp
+PASS cacheprof/opcode-info/O_je
+PASS cacheprof/opcode-info/O_jne
+PASS cacheprof/opcode-info/O_jl
+PASS cacheprof/opcode-info/O_jle
+PASS cacheprof/opcode-info/O_jg
+PASS cacheprof/opcode-info/O_jge
+PASS cacheprof/opcode-info/O_js
+PASS cacheprof/opcode-info/O_jns
+PASS cacheprof/opcode-info/O_jz
+PASS cacheprof/opcode-info/O_jnz
+PASS cacheprof/opcode-info/O_jc
+PASS cacheprof/opcode-info/O_jnc
+PASS cacheprof/opcode-info/O_jo
+PASS cacheprof/opcode-info/O_jno
+PASS cacheprof/opcode-info/O_ja
+PASS cacheprof/opcode-info/O_jae
+PASS cacheprof/opcode-info/O_jb
+PASS cacheprof/opcode-info/O_jbe
+PASS cacheprof/opcode-info/O_jp
+PASS cacheprof/opcode-info/O_seta
+PASS cacheprof/opcode-info/O_setae
+PASS cacheprof/opcode-info/O_setb
+PASS cacheprof/opcode-info/O_setbe
+PASS cacheprof/opcode-info/O_sete
+PASS cacheprof/opcode-info/O_setne
+PASS cacheprof/opcode-info/O_setl
+PASS cacheprof/opcode-info/O_setle
+PASS cacheprof/opcode-info/O_setg
+PASS cacheprof/opcode-info/O_setge
+PASS cacheprof/opcode-info/O_setc
+PASS cacheprof/opcode-info/O_setcb
+PASS cacheprof/opcode-info/O_btl
+PASS cacheprof/opcode-info/O_btsl
+PASS cacheprof/opcode-info/O_btcl
+PASS cacheprof/opcode-info/O_btrl
+PASS cacheprof/opcode-info/O_cld
+PASS cacheprof/opcode-info/O_cltd
+PASS cacheprof/opcode-info/O_cwtl
+PASS cacheprof/opcode-info/O_cbtw
+PASS cacheprof/opcode-info/O_rep
+PASS cacheprof/opcode-info/O_repz
+PASS cacheprof/opcode-info/O_repnz
+PASS cacheprof/opcode-info/O_fld
+PASS cacheprof/opcode-info/O_fldt
+PASS cacheprof/opcode-info/O_fldl
+PASS cacheprof/opcode-info/O_flds
+PASS cacheprof/opcode-info/O_fild
+PASS cacheprof/opcode-info/O_fildl
+PASS cacheprof/opcode-info/O_fildll
+PASS cacheprof/opcode-info/O_fstl
+PASS cacheprof/opcode-info/O_fstpl
+PASS cacheprof/opcode-info/O_fstp
+PASS cacheprof/opcode-info/O_fstps
+PASS cacheprof/opcode-info/O_fsts
+PASS cacheprof/opcode-info/O_fstpt
+PASS cacheprof/opcode-info/O_fistl
+PASS cacheprof/opcode-info/O_fistpl
+PASS cacheprof/opcode-info/O_fistpll
+PASS cacheprof/opcode-info/O_fst
+PASS cacheprof/opcode-info/O_fldz
+PASS cacheprof/opcode-info/O_fld1
+PASS cacheprof/opcode-info/O_fldl2e
+PASS cacheprof/opcode-info/O_fldln2
+PASS cacheprof/opcode-info/O_fchs
+PASS cacheprof/opcode-info/O_fsin
+PASS cacheprof/opcode-info/O_fcos
+PASS cacheprof/opcode-info/O_fptan
+PASS cacheprof/opcode-info/O_fsqrt
+PASS cacheprof/opcode-info/O_fpatan
+PASS cacheprof/opcode-info/O_fabs
+PASS cacheprof/opcode-info/O_f2xm1
+PASS cacheprof/opcode-info/O_fscale
+PASS cacheprof/opcode-info/O_fyl2x
+PASS cacheprof/opcode-info/O_faddp
+PASS cacheprof/opcode-info/O_fadds
+PASS cacheprof/opcode-info/O_faddl
+PASS cacheprof/opcode-info/O_fiaddl
+PASS cacheprof/opcode-info/O_fadd
+PASS cacheprof/opcode-info/O_fsubp
+PASS cacheprof/opcode-info/O_fsubrp
+PASS cacheprof/opcode-info/O_fsubrl
+PASS cacheprof/opcode-info/O_fsubrs
+PASS cacheprof/opcode-info/O_fsubs
+PASS cacheprof/opcode-info/O_fsubl
+PASS cacheprof/opcode-info/O_fsub
+PASS cacheprof/opcode-info/O_fsubr
+PASS cacheprof/opcode-info/O_fmul
+PASS cacheprof/opcode-info/O_fmuls
+PASS cacheprof/opcode-info/O_fmull
+PASS cacheprof/opcode-info/O_fmulp
+PASS cacheprof/opcode-info/O_fimull
+PASS cacheprof/opcode-info/O_fdiv
+PASS cacheprof/opcode-info/O_fdivp
+PASS cacheprof/opcode-info/O_fdivr
+PASS cacheprof/opcode-info/O_fdivrl
+PASS cacheprof/opcode-info/O_fdivrs
+PASS cacheprof/opcode-info/O_fdivrp
+PASS cacheprof/opcode-info/O_fidivrl
+PASS cacheprof/opcode-info/O_fidivl
+PASS cacheprof/opcode-info/O_fdivl
+PASS cacheprof/opcode-info/O_fdivs
+PASS cacheprof/opcode-info/O_fprem
+PASS cacheprof/opcode-info/O_fucom
+PASS cacheprof/opcode-info/O_fucomp
+PASS cacheprof/opcode-info/O_fucompp
+PASS cacheprof/opcode-info/O_fcomp
+PASS cacheprof/opcode-info/O_fcompp
+PASS cacheprof/opcode-info/O_fcoms
+PASS cacheprof/opcode-info/O_fcoml
+PASS cacheprof/opcode-info/O_fcom
+PASS cacheprof/opcode-info/O_fcomps
+PASS cacheprof/opcode-info/O_fcompl
+PASS cacheprof/opcode-info/O_ficompl
+PASS cacheprof/opcode-info/O_fnstsw
+PASS cacheprof/opcode-info/O_fnstcw
+PASS cacheprof/opcode-info/O_fldcw
+PASS cacheprof/opcode-info/O_fxch
+PASS cacheprof/opcode-info/O_frndint
+PASS cacheprof/opcode-info/O_sahf
+PASS cacheprof/opcode-info/O_nop
+PASS cacheprof/complete-fast/N
+PASS cacheprof/complete-fast/E
+PASS cacheprof/complete-normal/N
+PASS cacheprof/complete-normal/E
+PASS cacheprof/complete-slow/N
+PASS cacheprof/complete-slow/E
+PASS cacheprof/memoized-finite-stage-head
+PASS cacheprof/strict-finite-stage-materialization
+PASS cacheprof/peephole-label-prefix-skips-tail
+PASS cacheprof/level0-prefix-skips-invalid-later-instruction
+PASS cacheprof/level2-cc-guard-demands-invalid-later-instruction
+PASS cacheprof/full-reservoir-golden/N
+PASS cacheprof/full-reservoir-golden/E
+PASS cacheprof/raw-driver/N
+PASS cacheprof/forced-driver/N
+PASS cacheprof/raw-driver/E
+PASS cacheprof/forced-driver/E
+PASS cacheprof/reject-corrupted-assembly
+PASS cacheprof/reject-truncated-assembly
+PASS cacheprof/zero-work-skips-annotation-and-unused-hook-open
+structure CacheprofTests : sig
+  structure N : <sig>
+  structure E : <sig>
+  structure A : <sig>
+  val read : string -> TextIO.vector
+  val check : string -> (unit -> bool) -> unit
+  structure NC : <sig>
+  structure EC : <sig>
+  structure Undemanded : <sig>
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 824 checks, 0 failed

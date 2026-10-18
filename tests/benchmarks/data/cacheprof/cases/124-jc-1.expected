@@ -1,0 +1,71 @@
+.file "case.c"
+.globl function
+function:
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	pushl %eax
+	pushl %ebx
+	leal (%eax),%eax
+	movl $.Lcacheprof_magic_buckets+0,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	jc *(%eax)
+	# 
+	# ---- start of the cost centers ----
+	# file names:
+	#    case.c
+	# canonicalised function names:
+	#    function(case.c)
+	# raw source points:
+	#    CC "case.c" 0 "function"
+	# cooked source points:
+	#    (0,0,0)
+	.data
+	.align 4
+.Lcacheprof_magic_table:
+	# number of filenames, funcnames, points, cc addr
+	.long 1
+	.long 1
+	.long 1
+	.long .Lcacheprof_magic_buckets
+	# "case.c"
+	.byte 99
+	.byte 97
+	.byte 115
+	.byte 101
+	.byte 46
+	.byte 99
+	.byte 0
+	# "function(case.c)"
+	.byte 102
+	.byte 117
+	.byte 110
+	.byte 99
+	.byte 116
+	.byte 105
+	.byte 111
+	.byte 110
+	.byte 40
+	.byte 99
+	.byte 97
+	.byte 115
+	.byte 101
+	.byte 46
+	.byte 99
+	.byte 41
+	.byte 0
+	.align 4
+.Lcacheprof_magic_buckets:
+	# (0,0,0)
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# 
+	# ---- end of the cost centers ----

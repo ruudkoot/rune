@@ -1,0 +1,20 @@
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 11288
+PASS cacheprof-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 11288
+PASS cacheprof-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 11288
+PASS cacheprof-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 11288
+PASS cacheprof-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt

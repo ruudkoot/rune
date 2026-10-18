@@ -1,0 +1,11 @@
+level	configuration	planned	completed	passed	failed	unreached	status
+O0	native-mlkit-4.7.23	824	816	816	0	8	memory-limit
+O0	native-mlton-20241230	824	824	824	0	0	pass
+O0	native-polyml-5.9.2	824	824	824	0	0	pass
+O0	native-smlnj-dev-2026.2	824	824	824	0	0	pass
+O0	native-smlnj-legacy-110.99.9	824	824	824	0	0	pass
+O0	native-smlnj32-110.99.9	824	824	824	0	0	pass
+O0	rune	824	824	824	0	0	pass
+O0	rune-jit	824	824	824	0	0	pass
+O0	rune-new	824	824	824	0	0	pass
+O0	rune-opt	824	824	824	0	0	pass

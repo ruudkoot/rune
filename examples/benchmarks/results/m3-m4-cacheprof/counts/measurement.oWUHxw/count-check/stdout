@@ -1,0 +1,5 @@
+COUNT unbudgeted cacheprof-lazy normal rune
+COUNT unbudgeted cacheprof-lazy normal rune:opt
+COUNT unbudgeted cacheprof-lazy normal rune:new
+COUNT unbudgeted cacheprof-lazy normal rune:jit
+COUNT comparisons agree

@@ -1,0 +1,1 @@
+cacheprof-nofib-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/hartel-ida-finite.sml shared/cacheprof-architecture.sml shared/cacheprof-kernel.sml shared/cacheprof-check.sml cacheprof-nofib-strict/benchmark.sml shared/main.sml	200 normal.s normal.reference hooks.s	cacheprof-nofib-strict/normal.expected	normal.s normal.reference hooks.s

@@ -1,0 +1,49 @@
+{
+  "command": [
+    "env",
+    "RUNE_MATRIX_RUN=/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-cacheprof-originals/mlkit-large-worker",
+    "RUNE_MATRIX_TIMEOUT=600",
+    "RUNE_MATRIX_MEMORY=8388608",
+    "sh",
+    "tests/basis/run-matrix.sh",
+    "--configs",
+    "native:mlkit",
+    "--program-list",
+    "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-cacheprof-originals/sources-large.txt",
+    "--program-data",
+    "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-cacheprof-originals/data",
+    "--program-data-list",
+    "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-cacheprof-originals/data-list",
+    "--program-out",
+    "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-cacheprof-originals/mlkit-large-tests"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 1235728,
+  "observed_minimum_available_kib": 24612188,
+  "peak_processes": [
+    {
+      "pid": 3167254,
+      "name": "sh",
+      "rss_kib": 1936
+    },
+    {
+      "pid": 3170140,
+      "name": "timeout",
+      "rss_kib": 1792
+    },
+    {
+      "pid": 3170141,
+      "name": "prog",
+      "rss_kib": 1230732
+    },
+    {
+      "pid": 3167294,
+      "name": "sh",
+      "rss_kib": 1268
+    }
+  ],
+  "elapsed_seconds": 25.888724948001254
+}

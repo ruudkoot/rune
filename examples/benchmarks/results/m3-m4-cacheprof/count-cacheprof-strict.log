@@ -1,0 +1,11 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1367 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=cacheprof-strict' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.ZZiCkV
+BENCH MEASURE cacheprof-strict normal count
+COUNT unbudgeted cacheprof-strict normal rune
+COUNT unbudgeted cacheprof-strict normal rune:opt
+COUNT unbudgeted cacheprof-strict normal rune:new
+COUNT unbudgeted cacheprof-strict normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.ZZiCkV/report.md

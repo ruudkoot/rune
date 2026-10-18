@@ -1,0 +1,14 @@
+[
+  {
+    "level": 0,
+    "exit": 0,
+    "stdout": "#",
+    "source": "first output character followed by invalid later instruction"
+  },
+  {
+    "level": 2,
+    "exit": 1,
+    "stdout": "",
+    "source": "first output character followed by invalid later instruction"
+  }
+]

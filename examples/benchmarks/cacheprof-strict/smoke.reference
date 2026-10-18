@@ -1,0 +1,757 @@
+	.file	"heimdall.c"
+	.version	"01.01"
+gcc2_compiled.:
+.data
+	.align 4
+	.type	 num_insns_done,@object
+	.size	 num_insns_done,4
+num_insns_done:
+	.long 0
+.section	.rodata
+	.align 32
+.LC46:
+	.string	"heimdall: fatal error near insn %d:\n\t%s\n"
+.text
+	.align 4
+	.type	 panic,@function
+panic:
+	pushfl
+	addl $9,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	subl $12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 16(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+0,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 16(%esp),%eax
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+28,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl %eax
+	pushl %eax
+	pushl %ebx
+	leal num_insns_done,%eax
+	movl $.Lcacheprof_magic_buckets+56,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl num_insns_done,%eax
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+84,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl %eax
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+112,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl $.LC46
+	pushl %eax
+	pushl %ebx
+	leal stderr,%eax
+	movl $.Lcacheprof_magic_buckets+140,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl stderr,%eax
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+168,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl %eax
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+196,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	call fprintf
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $-12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+224,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl $1
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+252,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	call exit
+.Lfe1:
+	.size	 panic,.Lfe1-panic
+.section	.rodata
+.LC47:
+	.string	"getIMem"
+.text
+	.align 4
+	.type	 getIMem,@function
+getIMem:
+	pushfl
+	addl $5,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	subl $12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 16(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+280,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 16(%esp),%edx
+	pushl %eax
+	pushl %ebx
+	leal 20(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+308,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 20(%esp),%eax
+	cmpl $4,%edx
+	jne .L341
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	pushl %eax
+	pushl %ebx
+	leal (%eax),%eax
+	movl $.Lcacheprof_magic_buckets+336,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl (%eax),%eax
+	jmp .L345
+	.p2align 4,,7
+.L341:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $1,%edx
+	jne .L342
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	pushl %eax
+	pushl %ebx
+	leal (%eax),%eax
+	movl $.Lcacheprof_magic_buckets+364,%ebx
+	call cacheprof_hook_Rd1
+	popl %ebx
+	popl %eax
+	movzbl (%eax),%eax
+	jmp .L345
+	.p2align 4,,7
+.L342:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $2,%edx
+	je .L343
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $-12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+392,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl $.LC47
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+420,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	call panic
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	xorl %eax,%eax
+	addl $16,%esp
+	jmp .L340
+	.p2align 4,,7
+.L343:
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	pushl %eax
+	pushl %ebx
+	leal (%eax),%eax
+	movl $.Lcacheprof_magic_buckets+448,%ebx
+	call cacheprof_hook_Rd2
+	popl %ebx
+	popl %eax
+	movzwl (%eax),%eax
+.L345:
+.L340:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+476,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	ret
+.Lfe2:
+	.size	 getIMem,.Lfe2-getIMem
+.section	.rodata
+.LC48:
+	.string	"setIMem"
+.text
+	.align 4
+	.type	 setIMem,@function
+	# 
+	# ---- start of the cost centers ----
+	# file names:
+	#    heimdall.c
+	# canonicalised function names:
+	#    panic(heimdall.c)
+	#    getIMem(heimdall.c)
+	# raw source points:
+	#    CC "heimdall.c" 0 "panic"
+	#    CC "heimdall.c" 0 "panic"
+	#    CC "heimdall.c" 0 "panic"
+	#    CC "heimdall.c" 0 "panic"
+	#    CC "heimdall.c" 0 "panic"
+	#    CC "heimdall.c" 0 "panic"
+	#    CC "heimdall.c" 0 "panic"
+	#    CC "heimdall.c" 0 "panic"
+	#    CC "heimdall.c" 0 "panic"
+	#    CC "heimdall.c" 0 "panic"
+	#    CC "heimdall.c" 0 "getIMem"
+	#    CC "heimdall.c" 0 "getIMem"
+	#    CC "heimdall.c" 0 "getIMem"
+	#    CC "heimdall.c" 0 "getIMem"
+	#    CC "heimdall.c" 0 "getIMem"
+	#    CC "heimdall.c" 0 "getIMem"
+	#    CC "heimdall.c" 0 "getIMem"
+	#    CC "heimdall.c" 0 "getIMem"
+	# cooked source points:
+	#    (0,0,0)
+	#    (0,0,0)
+	#    (0,0,0)
+	#    (0,0,0)
+	#    (0,0,0)
+	#    (0,0,0)
+	#    (0,0,0)
+	#    (0,0,0)
+	#    (0,0,0)
+	#    (0,0,0)
+	#    (0,0,1)
+	#    (0,0,1)
+	#    (0,0,1)
+	#    (0,0,1)
+	#    (0,0,1)
+	#    (0,0,1)
+	#    (0,0,1)
+	#    (0,0,1)
+	.data
+	.align 4
+.Lcacheprof_magic_table:
+	# number of filenames, funcnames, points, cc addr
+	.long 1
+	.long 2
+	.long 18
+	.long .Lcacheprof_magic_buckets
+	# "heimdall.c"
+	.byte 104
+	.byte 101
+	.byte 105
+	.byte 109
+	.byte 100
+	.byte 97
+	.byte 108
+	.byte 108
+	.byte 46
+	.byte 99
+	.byte 0
+	# "panic(heimdall.c)"
+	.byte 112
+	.byte 97
+	.byte 110
+	.byte 105
+	.byte 99
+	.byte 40
+	.byte 104
+	.byte 101
+	.byte 105
+	.byte 109
+	.byte 100
+	.byte 97
+	.byte 108
+	.byte 108
+	.byte 46
+	.byte 99
+	.byte 41
+	.byte 0
+	# "getIMem(heimdall.c)"
+	.byte 103
+	.byte 101
+	.byte 116
+	.byte 73
+	.byte 77
+	.byte 101
+	.byte 109
+	.byte 40
+	.byte 104
+	.byte 101
+	.byte 105
+	.byte 109
+	.byte 100
+	.byte 97
+	.byte 108
+	.byte 108
+	.byte 46
+	.byte 99
+	.byte 41
+	.byte 0
+	.align 4
+.Lcacheprof_magic_buckets:
+	# (0,0,0)
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,0)
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,0)
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,0)
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,0)
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,0)
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,0)
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,0)
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,0)
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,0)
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,1)
+	.long 0
+	.long 0
+	.long 1
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,1)
+	.long 0
+	.long 0
+	.long 1
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,1)
+	.long 0
+	.long 0
+	.long 1
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,1)
+	.long 0
+	.long 0
+	.long 1
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,1)
+	.long 0
+	.long 0
+	.long 1
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,1)
+	.long 0
+	.long 0
+	.long 1
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,1)
+	.long 0
+	.long 0
+	.long 1
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,1)
+	.long 0
+	.long 0
+	.long 1
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# 
+	# ---- end of the cost centers ----
+
+.section .ctors,"aw"
+	.long cacheprof_register2_me
+.section .dtors,"aw"
+	.long cacheprof_finalise2_me
+	
+.text
+        .align 4
+
+cacheprof_hook_Rd1:
+	pushl %ecx
+	pushl %edx
+	pushl %esi
+	pushl %edi
+	pushl %ebp
+	pushfl
+	pushl %eax         #  eax has addr referenced
+	pushl %ebx         #  ebx has addr of cc
+	call cacheprof_log_Rd1
+	addl $8,%esp
+	popfl
+	popl %ebp
+	popl %edi
+	popl %esi
+	popl %edx
+	popl %ecx
+	ret
+	
+cacheprof_hook_Rd2:
+	pushl %ecx
+	pushl %edx
+	pushl %esi
+	pushl %edi
+	pushl %ebp
+	pushfl
+	pushl %eax         #  eax has addr referenced
+	pushl %ebx         #  ebx has addr of cc
+	call cacheprof_log_Rd2
+	addl $8,%esp
+	popfl
+	popl %ebp
+	popl %edi
+	popl %esi
+	popl %edx
+	popl %ecx
+	ret
+	
+cacheprof_hook_Rd4:
+	pushl %ecx
+	pushl %edx
+	pushl %esi
+	pushl %edi
+	pushl %ebp
+	pushfl
+	pushl %eax         #  eax has addr referenced
+	pushl %ebx         #  ebx has addr of cc
+	call cacheprof_log_Rd4
+	addl $8,%esp
+	popfl
+	popl %ebp
+	popl %edi
+	popl %esi
+	popl %edx
+	popl %ecx
+	ret
+
+cacheprof_hook_Rd8:
+	pushl %ecx
+	pushl %edx
+	pushl %esi
+	pushl %edi
+	pushl %ebp
+	pushfl
+	pushl %eax         #  eax has addr referenced
+	pushl %ebx         #  ebx has addr of cc
+	call cacheprof_log_Rd8
+	addl $8,%esp
+	popfl
+	popl %ebp
+	popl %edi
+	popl %esi
+	popl %edx
+	popl %ecx
+	ret
+
+cacheprof_hook_Mo1:
+	pushl %ecx
+	pushl %edx
+	pushl %esi
+	pushl %edi
+	pushl %ebp
+	pushfl
+	pushl %eax         #  eax has addr referenced
+	pushl %ebx         #  ebx has addr of cc
+	call cacheprof_log_Mo1
+	addl $8,%esp
+	popfl
+	popl %ebp
+	popl %edi
+	popl %esi
+	popl %edx
+	popl %ecx
+	ret
+	
+cacheprof_hook_Mo2:
+	pushl %ecx
+	pushl %edx
+	pushl %esi
+	pushl %edi
+	pushl %ebp
+	pushfl
+	pushl %eax         #  eax has addr referenced
+	pushl %ebx         #  ebx has addr of cc
+	call cacheprof_log_Mo2
+	addl $8,%esp
+	popfl
+	popl %ebp
+	popl %edi
+	popl %esi
+	popl %edx
+	popl %ecx
+	ret
+	
+cacheprof_hook_Mo4:
+	pushl %ecx
+	pushl %edx
+	pushl %esi
+	pushl %edi
+	pushl %ebp
+	pushfl
+	pushl %eax         #  eax has addr referenced
+	pushl %ebx         #  ebx has addr of cc
+	call cacheprof_log_Mo4
+	addl $8,%esp
+	popfl
+	popl %ebp
+	popl %edi
+	popl %esi
+	popl %edx
+	popl %ecx
+	ret
+
+cacheprof_hook_Mo8:
+	pushl %ecx
+	pushl %edx
+	pushl %esi
+	pushl %edi
+	pushl %ebp
+	pushfl
+	pushl %eax         #  eax has addr referenced
+	pushl %ebx         #  ebx has addr of cc
+	call cacheprof_log_Mo8
+	addl $8,%esp
+	popfl
+	popl %ebp
+	popl %edi
+	popl %esi
+	popl %edx
+	popl %ecx
+	ret
+
+cacheprof_hook_Wr1:
+	pushl %ecx
+	pushl %edx
+	pushl %esi
+	pushl %edi
+	pushl %ebp
+	pushfl
+	pushl %eax         #  eax has addr referenced
+	pushl %ebx         #  ebx has addr of cc
+	call cacheprof_log_Wr1
+	addl $8,%esp
+	popfl
+	popl %ebp
+	popl %edi
+	popl %esi
+	popl %edx
+	popl %ecx
+	ret
+	
+cacheprof_hook_Wr2:
+	pushl %ecx
+	pushl %edx
+	pushl %esi
+	pushl %edi
+	pushl %ebp
+	pushfl
+	pushl %eax         #  eax has addr referenced
+	pushl %ebx         #  ebx has addr of cc
+	call cacheprof_log_Wr2
+	addl $8,%esp
+	popfl
+	popl %ebp
+	popl %edi
+	popl %esi
+	popl %edx
+	popl %ecx
+	ret
+	
+cacheprof_hook_Wr4:
+	pushl %ecx
+	pushl %edx
+	pushl %esi
+	pushl %edi
+	pushl %ebp
+	pushfl
+	pushl %eax         #  eax has addr referenced
+	pushl %ebx         #  ebx has addr of cc
+	call cacheprof_log_Wr4
+	addl $8,%esp
+	popfl
+	popl %ebp
+	popl %edi
+	popl %esi
+	popl %edx
+	popl %ecx
+	ret
+
+cacheprof_hook_Wr8:
+	pushl %ecx
+	pushl %edx
+	pushl %esi
+	pushl %edi
+	pushl %ebp
+	pushfl
+	pushl %eax         #  eax has addr referenced
+	pushl %ebx         #  ebx has addr of cc
+	call cacheprof_log_Wr8
+	addl $8,%esp
+	popfl
+	popl %ebp
+	popl %edi
+	popl %esi
+	popl %edx
+	popl %ecx
+	ret
+	
+cacheprof_register2_me:
+        pushal
+	pushfl
+	movl $.Lcacheprof_magic_table,%eax
+	pushl %eax
+	call cacheprof_register2_module
+	popl %eax
+	popfl
+	popal
+	ret
+
+cacheprof_finalise2_me:
+        pushal
+	pushfl
+	movl $.Lcacheprof_magic_table,%eax
+	pushl %eax
+	call cacheprof_finalise2_module
+	popl %eax
+	popfl
+	popal
+	ret

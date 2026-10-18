@@ -1,0 +1,5 @@
+observer: 
+cacheann: Bad input: lexical error on: `%rune,%eax'
+
+CallStack (from HasCallStack):
+  error, called at ./Generics.hs:39:6 in main:Generics

@@ -1,0 +1,517 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml:19.32 Warning: calling polyEqual
+functor BenchIdaFiniteFn(D: sig
+                            type 'a t
+                            val delay : (unit -> 'a) -> 'a t
+                            val force : 'a t -> 'a
+                          end) :
+                        
+                          sig
+                            type 'a node
+                            type 'a seq
+                            val empty : unit -> 'a node D.t
+                            val cons : 'a D.t * 'a node D.t -> 'a node D.t
+                            val fromList : 'a list -> 'a node D.t
+                            val defer : (unit -> 'a D.t) -> 'a D.t
+                            val append : 'a node D.t
+                                          -> 'a node D.t -> 'a node D.t
+                            val take : int -> 'a node D.t -> 'a node D.t
+                            val drop : int -> 'a node D.t -> 'a node D.t
+                            val nth : 'a node D.t -> int -> 'a
+                            val update : 'a node D.t
+                                          -> int -> 'a D.t -> 'a node D.t
+                            val unify : ''a node D.t -> ''a -> ''a node D.t
+                            val foldl : ('a D.t -> 'b -> 'a D.t)
+                                         -> 'a D.t -> 'b node D.t -> 'a D.t
+                            val toList : 'a node D.t -> 'a list
+                            val map : ('a -> 'b) -> 'a node D.t -> 'b node D.t
+                            val filter : ('a -> bool)
+                                          -> 'a node D.t -> 'a node D.t
+                            val length : 'a node D.t -> int
+                          end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cacheprof-architecture.sml]
+structure BenchCacheprofArch : 
+  sig
+    datatype opcode
+      = O_adcl
+    | O_addb
+    | O_addl
+    | O_addw
+    | O_andb
+    | O_andl
+    | O_andw
+    | O_btcl
+    | O_btl
+    | O_btrl
+    | O_btsl
+    | O_call
+    | O_cbtw
+    | O_cld
+    | O_cltd
+    | O_cmpb
+    | O_cmpl
+    | O_cmpsb
+    | O_cmpw
+    | O_cwtl
+    | O_decb
+    | O_decl
+    | O_decw
+    | O_divb
+    | O_divl
+    | O_divw
+    | O_f2xm1
+    | O_fabs
+    | O_fadd
+    | O_faddl
+    | O_faddp
+    | O_fadds
+    | O_fchs
+    | O_fcom
+    | O_fcoml
+    | O_fcomp
+    | O_fcompl
+    | O_fcompp
+    | O_fcomps
+    | O_fcoms
+    | O_fcos
+    | O_fdiv
+    | O_fdivl
+    | O_fdivp
+    | O_fdivr
+    | O_fdivrl
+    | O_fdivrp
+    | O_fdivrs
+    | O_fdivs
+    | O_fiaddl
+    | O_ficompl
+    | O_fidivl
+    | O_fidivrl
+    | O_fild
+    | O_fildl
+    | O_fildll
+    | O_fimull
+    | O_fistl
+    | O_fistpl
+    | O_fistpll
+    | O_fld
+    | O_fld1
+    | O_fldcw
+    | O_fldl
+    | O_fldl2e
+    | O_fldln2
+    | O_flds
+    | O_fldt
+    | O_fldz
+    | O_fmul
+    | O_fmull
+    | O_fmulp
+    | O_fmuls
+    | O_fnstcw
+    | O_fnstsw
+    | O_fpatan
+    | O_fprem
+    | O_fptan
+    | O_frndint
+    | O_fscale
+    | O_fsin
+    | O_fsqrt
+    | O_fst
+    | O_fstl
+    | O_fstp
+    | O_fstpl
+    | O_fstps
+    | O_fstpt
+    | O_fsts
+    | O_fsub
+    | O_fsubl
+    | O_fsubp
+    | O_fsubr
+    | O_fsubrl
+    | O_fsubrp
+    | O_fsubrs
+    | O_fsubs
+    | O_fucom
+    | O_fucomp
+    | O_fucompp
+    | O_fxch
+    | O_fyl2x
+    | O_idivl
+    | O_imulb
+    | O_imull
+    | O_imulw
+    | O_incb
+    | O_incl
+    | O_incw
+    | O_ja
+    | O_jae
+    | O_jb
+    | O_jbe
+    | O_jc
+    | O_je
+    | O_jg
+    | O_jge
+    | O_jl
+    | O_jle
+    | O_jmp
+    | O_jnc
+    | O_jne
+    | O_jno
+    | O_jns
+    | O_jnz
+    | O_jo
+    | O_jp
+    | O_js
+    | O_jz
+    | O_leal
+    | O_leave
+    | O_movb
+    | O_movl
+    | O_movsb
+    | O_movsbl
+    | O_movsbw
+    | O_movsl
+    | O_movsw
+    | O_movswl
+    | O_movw
+    | O_movzbl
+    | O_movzbw
+    | O_movzwl
+    | O_mull
+    | O_negb
+    | O_negl
+    | O_negw
+    | O_nop
+    | O_notb
+    | O_notl
+    | O_notw
+    | O_orb
+    | O_orl
+    | O_orw
+    | O_popfl
+    | O_popl
+    | O_pushfl
+    | O_pushl
+    | O_rep
+    | O_repnz
+    | O_repz
+    | O_ret
+    | O_rolb
+    | O_roll
+    | O_rolw
+    | O_rorb
+    | O_rorl
+    | O_rorw
+    | O_sahf
+    | O_salb
+    | O_sall
+    | O_salw
+    | O_sarb
+    | O_sarl
+    | O_sarw
+    | O_sbbl
+    | O_scasb
+    | O_seta
+    | O_setae
+    | O_setb
+    | O_setbe
+    | O_setc
+    | O_setcb
+    | O_sete
+    | O_setg
+    | O_setge
+    | O_setl
+    | O_setle
+    | O_setne
+    | O_shldl
+    | O_shrb
+    | O_shrdl
+    | O_shrl
+    | O_shrw
+    | O_stosb
+    | O_stosl
+    | O_stosw
+    | O_subb
+    | O_subl
+    | O_subw
+    | O_testb
+    | O_testl
+    | O_testw
+    | O_xorb
+    | O_xorl
+    | O_xorw
+    datatype effect
+      = OE_M of int
+    | OE_R of int
+    | OE_RM of int * int
+    | OE_RR of int * int
+    | OE_RRM of int * int * int
+    | OE_RW of int * int
+    | OE_W of int
+    | OE_nW of int
+    datatype operandInfo
+      = OI of effect list | OI_Error | OI_Jumpy | OI_NoEffect | OI_Special
+    val x86info : (opcode * operandInfo) list
+    val name : opcode -> string
+    val nonJumpyOpcodes : opcode list
+    val getOperandInfo : opcode -> operandInfo
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cacheprof-kernel.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cacheprof-kernel.sml:343.62-343.64 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cacheprof-kernel.sml:346.31 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cacheprof-kernel.sml:54.37 Warning: calling polyEqual
+functor BenchCacheprofFn(D: sig
+                            type 'a t
+                            val delay : (unit -> 'a) -> 'a t
+                            val force : 'a t -> 'a
+                          end) :
+                        
+                          sig
+                            structure A : <sig>
+                            type opcode
+                            type effect
+                            type operandInfo
+                            val x86info : (BenchCacheprofArch.opcode
+                                              * BenchCacheprofArch.operandInfo)
+                                             list
+                            val name : BenchCacheprofArch.opcode -> string
+                            val nonJumpyOpcodes : BenchCacheprofArch.opcode 
+                                                     list
+                            val getOperandInfo : BenchCacheprofArch.opcode
+                                                  -> 
+                                                    BenchCacheprofArch.operandInfo
+                            structure F : <sig>
+                            type preline
+                            type cc
+                            type reg
+                            type amode
+                            type unsigned
+                            type signed
+                            type constant
+                            type operand
+                            type annot
+                            type annotations
+                            type insn
+                            type line
+                            type bb
+                            type token
+                            type 'a parseResult
+                            val internal : string -> 'a
+                            val incomplete : string -> 'a
+                            val inputerr : string -> 'a
+                            val member : ''a -> ''a list -> bool
+                            val concat : 'a F.node D.t F.node D.t
+                                          -> 'a F.node D.t
+                            val concatMap : ('a -> 'b F.node D.t)
+                                             -> 'a F.node D.t -> 'b F.node D.t
+                            val emit : 'a list
+                                        -> 'a F.node D.t -> 'a F.node D.t
+                            val view : 'a F.node D.t
+                                        -> ('a * 'a F.node D.t) option
+                            val trim : string -> string
+                            val takeString : int -> string -> string
+                            val dropString : int -> string -> string
+                            val span : (char -> bool)
+                                        -> char list -> string * char list
+                            val isLabelIsh : char -> bool
+                            val isNameIsh : char -> bool
+                            val isDigitish : char -> bool
+                            val preparseLine : int * string -> preline list
+                            val sourceLines : string -> string list
+                            val preparse : string -> preline F.node D.t
+                            val regMap : (string * reg) list
+                            val register : string -> reg
+                            val olex : string -> token list
+                            val pEmpty : 'a -> token list -> 'a parseResult
+                            val pSat : (token -> bool)
+                                        -> token list -> token parseResult
+                            val pApply : ('a -> 'b)
+                                          -> ('c -> 'a parseResult)
+                                          -> 'c -> 'b parseResult
+                            val pName : string
+                                         -> 'a -> token list -> 'a parseResult
+                            val p2 : ('a -> 'b -> 'c)
+                                      -> ('d -> 'a parseResult)
+                                      -> (token list -> 'b parseResult)
+                                      -> 'd -> 'c parseResult
+                            val p3 : ('a -> 'b -> 'c -> 'd)
+                                      -> ('e -> 'a parseResult)
+                                      -> (token list -> 'b parseResult)
+                                      -> (token list -> 'c parseResult)
+                                      -> 'e -> 'd parseResult
+                            val pStar : (token list -> 'a parseResult)
+                                         -> token list -> 'a list parseResult
+                            val pPlus : (token list -> 'a parseResult)
+                                         -> token list -> 'a list parseResult
+                            val pAlt : ('a -> 'b parseResult)
+                                        -> ('a -> 'b parseResult)
+                                        -> 'a -> 'b parseResult
+                            val pAlts : ('a -> 'b parseResult) list
+                                         -> 'a -> 'b parseResult
+                            val pOpt : (token list -> 'a parseResult)
+                                        -> token list -> 'a option parseResult
+                            val punct : token
+                                         -> token list -> token parseResult
+                            val pInParens : (token list -> 'a parseResult)
+                                             -> token list -> 'a parseResult
+                            val pPreComma : (token list -> 'a parseResult)
+                                             -> token list -> 'a parseResult
+                            val pStarComma : (token list -> 'a parseResult)
+                                              -> token list
+                                              -> 'a list parseResult
+                            val pLNum : token list -> string parseResult
+                            val pLReg : token list -> string parseResult
+                            val pLName : token list -> string parseResult
+                            val pLLabel : token list -> string parseResult
+                            val pReg : token list -> reg parseResult
+                            val pOpcode : token list
+                                           -> BenchCacheprofArch.opcode 
+                                             parseResult
+                            val pUnsignedA : token list
+                                              -> unsigned parseResult
+                            val pUnsignedF : token list
+                                              -> unsigned parseResult
+                            val pSignedF : token list -> signed parseResult
+                            val pConst : token list -> constant parseResult
+                            val pAMode : token list -> amode parseResult
+                            val pOperand : token list -> operand parseResult
+                            val pInsn : token list -> insn parseResult
+                            val parse : preline F.node D.t -> line F.node D.t
+                            val ppReg : reg -> string
+                            val ppUnsigned : unsigned -> string
+                            val ppSigned : signed -> string
+                            val ppConst : constant -> string
+                            val paren : string -> string
+                            val ppAMode : amode -> string
+                            val ppOperand : operand -> string
+                            val ppInsn : insn -> string
+                            val ppLine : line -> string
+                            val getLineNo : line -> int
+                            val isReal : line -> bool
+                            val isPseudo : line -> bool
+                            val isOriginalInsn : line -> bool
+                            val getAnns : annotations -> annot list
+                            val getCC : line -> cc
+                            val isNoCC : cc -> bool
+                            val hasRealAnns : insn -> bool
+                            val archLabelDef : string -> string
+                            val archLabelUse : string -> string
+                            val constName : string -> constant
+                            val constNumber : int -> constant
+                            val incSequence : int -> string -> insn list
+                            val simplify : line F.node D.t -> line F.node D.t
+                            val identifyBBs : line F.node D.t -> bb F.node D.t
+                            val useBB : bb -> line F.node D.t
+                            val useBBs : bb F.node D.t -> line F.node D.t
+                            val theEdi : operand
+                            val theEsi : operand
+                            val theSpPlus4 : operand
+                            val theSpPlus8 : operand
+                            val annsFromEffects : BenchCacheprofArch.effect 
+                                                     list
+                                                   -> operand list
+                                                   -> annot list option
+                            val annsOf : BenchCacheprofArch.opcode
+                                          -> operand list -> annot list
+                            val annOperand : annot -> operand
+                            val isMemOp : operand -> bool
+                            val annotateInsn : insn -> insn
+                            val annotate : line F.node D.t -> line F.node D.t
+                            type possiblyString
+                            val isGuessed : possiblyString -> bool
+                            val getString : possiblyString -> string
+                            val deQuote : string -> string
+                            val quoted : string -> bool
+                            val splitArgs : string -> string list
+                            val addCCs : line F.node D.t -> line F.node D.t
+                            val decimal : int -> string
+                            val showString : string -> string
+                            val showCC : cc -> string
+                            val showPoint : int * int * int -> string
+                            val unique : ''a list -> ''a list
+                            val indexOf : ''a list -> ''a -> int
+                            type descriptors
+                            val makeCCdescriptors : cc list -> descriptors
+                            val tableStart : string
+                            val bucketsStart : string
+                            val useCCdescriptors : descriptors
+                                                    -> line F.node D.t
+                            val insnPush : reg -> insn
+                            val insnPop : reg -> insn
+                            val standardPreamble : insn list
+                            val standardPostamble : insn list
+                            val bucketAddress : int -> operand
+                            val useAnnot : int -> annot -> insn list
+                            val synthInstructions : int -> insn -> insn list
+                            val synthLine : int
+                                             -> line -> int * line F.node D.t
+                            val synth2 : line F.node D.t -> line F.node D.t
+                            val useIncAnn : annot -> insn list
+                            val synth1Line : line -> line list
+                            val synth1 : line F.node D.t -> line F.node D.t
+                            val incrementsCounter : insn -> insn -> bool
+                            val peephole : line F.node D.t -> line F.node D.t
+                            val isStabLine : line -> bool
+                            val finalCleanup : line F.node D.t
+                                                -> string F.node D.t
+                            val output : int -> string -> string F.node D.t
+                            val rendered : int -> string -> string
+                            val emitOutput : int
+                                              -> string
+                                              -> (string -> 'a) -> unit
+                          end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/cacheprof-check.sml]
+functor BenchCacheprofCheckFn(K: sig
+                               val emitOutput : int
+                                                 -> string
+                                                 -> (string -> unit) -> unit
+                               end) :
+                             
+                               sig
+                                 val read : string -> TextIO.vector
+                                 val selectedInput : string -> TextIO.vector
+                                 val consumer : string
+                                                 -> (string -> unit)
+                                                 * (unit -> int)
+                                 val runRaw : string list -> string
+                                 val runForced : string list -> string
+                               end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/cacheprof-strict/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Kernel : <sig>
+    structure Check : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 11288
+PASS cacheprof-strict
+SUMMARY 1 checks, 0 failed

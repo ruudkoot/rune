@@ -1,0 +1,9 @@
+attempts-raw/** -whitespace
+counts/** -whitespace
+native-adapter-diagnostics/** -whitespace
+semantics/** -whitespace
+semantic-outputs/** -whitespace
+semantics-*.log -whitespace
+reference-observers/** -text -whitespace
+development/** -text -whitespace
+large-mlkit/** -whitespace

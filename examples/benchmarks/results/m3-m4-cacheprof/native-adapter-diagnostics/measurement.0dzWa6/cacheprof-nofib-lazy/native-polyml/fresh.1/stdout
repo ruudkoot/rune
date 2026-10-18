@@ -1,0 +1,4 @@
+RESULT 1:7439
+PASS cacheprof-nofib-lazy
+SAMPLE 1 0.002753000
+SUMMARY 1 checks, 0 failed

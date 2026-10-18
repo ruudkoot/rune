@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+cacheprof-nofib-lazy	normal	rune	O2	compile	0	0	pass	5.02	4.80	0.30	135460	-	-	-	cacheprof-nofib-lazy/rune/build/compile
+cacheprof-nofib-lazy	normal	rune	O2	correctness	0	0	pass	25.55	24.73	0.36	10860	2834697308	6589098576	172974744	cacheprof-nofib-lazy/rune/correctness.0
+cacheprof-nofib-lazy	normal	rune	O2	count	1	1	pass	25.27	24.53	0.22	10892	2834697308	6589098576	172974744	cacheprof-nofib-lazy/rune/fresh.1
+cacheprof-nofib-lazy	normal	rune:opt	O2	compile	0	0	pass	4.47	4.41	0.19	135612	-	-	-	cacheprof-nofib-lazy/rune-opt/build/compile
+cacheprof-nofib-lazy	normal	rune:opt	O2	native-compile	0	0	pass	1.01	0.70	0.14	29376	-	-	-	cacheprof-nofib-lazy/rune-opt/build/native-compile
+cacheprof-nofib-lazy	normal	rune:opt	O2	correctness	0	0	pass	9.70	10.05	0.04	12188	2834697308	6589098576	172974744	cacheprof-nofib-lazy/rune-opt/correctness.0
+cacheprof-nofib-lazy	normal	rune:opt	O2	count	1	1	pass	11.32	10.21	0.08	12224	2834697308	6589098576	172974744	cacheprof-nofib-lazy/rune-opt/fresh.1
+cacheprof-nofib-lazy	normal	rune:new	O2	compile	0	0	pass	5.23	4.87	0.29	135444	-	-	-	cacheprof-nofib-lazy/rune-new/build/compile
+cacheprof-nofib-lazy	normal	rune:new	O2	correctness	0	0	pass	32.98	30.90	0.56	19428	1630285415	6589098576	172974744	cacheprof-nofib-lazy/rune-new/correctness.0
+cacheprof-nofib-lazy	normal	rune:new	O2	count	1	1	pass	23.68	22.99	0.16	19324	1630285415	6589098576	172974744	cacheprof-nofib-lazy/rune-new/fresh.1
+cacheprof-nofib-lazy	normal	rune:jit	O2	compile	0	0	pass	5.27	5.30	0.16	135412	-	-	-	cacheprof-nofib-lazy/rune-jit/build/compile
+cacheprof-nofib-lazy	normal	rune:jit	O2	correctness	0	0	pass	10.25	10.57	0.06	21844	1630285415	6589098576	172974744	cacheprof-nofib-lazy/rune-jit/correctness.0
+cacheprof-nofib-lazy	normal	rune:jit	O2	count	1	1	pass	10.08	10.35	0.06	21812	1630285415	6589098576	172974744	cacheprof-nofib-lazy/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

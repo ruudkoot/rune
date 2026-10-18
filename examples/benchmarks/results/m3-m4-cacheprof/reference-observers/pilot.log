@@ -1,0 +1,6 @@
+PASS need fast
+PASS strict fast
+PASS need normal
+PASS strict normal
+PASS need slow
+PASS strict slow

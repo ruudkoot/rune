@@ -1,0 +1,4 @@
+[1 of 4] Compiling Arch_x86         ( Arch_x86.hs, Arch_x86.o )
+[2 of 4] Compiling Generics         ( Generics.hs, Generics.o )
+[3 of 4] Compiling Main             ( Main.hs, Main.o )
+[4 of 4] Linking original [Objects changed]

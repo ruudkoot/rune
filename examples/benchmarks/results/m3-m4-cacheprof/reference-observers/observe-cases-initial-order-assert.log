@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-cacheprof-originals/observe-cases.py", line 13, in <module>
+    sml=(p/'architecture.sml').read_text();actual=re.findall(r'\bO_\w+\b',sml.split('val nonJumpyOpcodes=[',1)[1].split(']',1)[0]);expected=[row[0]for row in meta if row[2]=='True'];assert actual==expected
+                                                                                                                                                                                             ^^^^^^^^^^^^^^^^
+AssertionError

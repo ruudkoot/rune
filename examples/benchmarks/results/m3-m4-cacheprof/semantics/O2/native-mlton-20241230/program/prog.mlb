@@ -1,0 +1,11 @@
+$(SML_LIB)/basis/basis.mlb
+"/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml"
+"/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml"
+"/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml"
+"/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml"
+"/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-cacheprof-originals/architecture.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-cacheprof-originals/kernel.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-cacheprof-originals/check.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-cacheprof-originals/tests-final.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml"

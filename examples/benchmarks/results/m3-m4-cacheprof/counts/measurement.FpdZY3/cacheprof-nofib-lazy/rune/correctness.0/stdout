@@ -1,0 +1,3 @@
+RESULT 200:10615600
+PASS cacheprof-nofib-lazy
+SUMMARY 1 checks, 0 failed

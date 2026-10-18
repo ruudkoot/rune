@@ -1,0 +1,1 @@
+movl %rune,%eax

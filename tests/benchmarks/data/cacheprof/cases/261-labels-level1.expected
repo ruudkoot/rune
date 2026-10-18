@@ -1,0 +1,20 @@
+top:
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	addl $1,cacheprof_level1_writes
+	adcl $0,4+cacheprof_level1_writes
+	popfl
+	movl %eax,(%ebx)
+	pushfl
+	addl $1,cacheprof_level1_reads
+	adcl $0,4+cacheprof_level1_reads
+	addl $1,cacheprof_level1_writes
+	adcl $0,4+cacheprof_level1_writes
+	popfl
+	incl 4(%ecx)
+	pushfl
+	addl $1,cacheprof_level1_reads
+	adcl $0,4+cacheprof_level1_reads
+	popfl
+	ret

@@ -1,0 +1,1 @@
+cacheprof-strict	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/hartel-ida-finite.sml shared/cacheprof-architecture.sml shared/cacheprof-kernel.sml shared/cacheprof-check.sml cacheprof-strict/benchmark.sml shared/main.sml	normal.s normal.reference hooks.s	cacheprof-strict/normal.expected	normal.s normal.reference hooks.s
