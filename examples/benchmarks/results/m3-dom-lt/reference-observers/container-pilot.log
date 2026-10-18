@@ -1,0 +1,6 @@
+set order PASS
+set difference PASS
+set union PASS
+set filter PASS
+map order PASS
+map union PASS

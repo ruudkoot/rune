@@ -1,0 +1,27 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/dom-lt-originals/word.sml]
+structure BenchDomWord : 
+  sig
+    structure W : <sig>
+    val sign : Word64.word
+    val word : int -> Word64.word
+    val integer : Word64.word -> int
+    val zero : Word64.word -> Word64.word -> bool
+    val mask : Word64.word -> Word64.word -> Word64.word
+    val match : Word64.word -> Word64.word -> Word64.word -> bool
+    val shorter : Word64.word -> Word64.word -> bool
+    val highest : Word64.word -> Word64.word
+    val branch : Word64.word -> Word64.word -> Word64.word
+    val bit : int -> Word64.word
+    val lowestIndex : ?.word64 -> int
+    val highestIndex : ?.word64 -> int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/dom-lt-originals/word64-zero-shift-probe.sml]
+Word64 bit 0 = 1
+PASS zero shift
+SUMMARY 1 checks, 0 failed
+val amount = 0 : int
+val actual = 0wx1 : Word64.word
+val it = () : unit
+- 

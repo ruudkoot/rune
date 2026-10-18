@@ -1,0 +1,7 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1174 profiles)
+BENCH_PROFILE=smoke BENCH_CONFIGS=native:smlnj32 BENCH_FILTER='=dom-lt' BENCH_LEVEL= BENCH_MODE=fresh BENCH_SAMPLES=1 BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh time
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.m4jwOO
+BENCH MEASURE dom-lt smoke time
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.m4jwOO/report.md
+make: *** [Makefile:1010: bench] Error 1

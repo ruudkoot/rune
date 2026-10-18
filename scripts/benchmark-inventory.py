@@ -469,6 +469,12 @@ def classify(source, root, item, files, text):
         milestone = "M1"
     if source == "sandmark" and path == "benchmarks/bdd/bdd.exe":
         milestone = "M1"
+    if source == "nofib" and path == "spectral/dom-lt" and disposition == "import":
+        module = root / "spectral/dom-lt/Dom.hs"
+        if module.is_file() and hashlib.sha256(module.read_bytes()).hexdigest() == "ae7675a60f6915fee3f62c6e329b696e7f7a24324fc1cfac98fcaa1eff9094a1":
+            reason = ("portable with reviewed semidominator-minimum repair; pinned source reuses "
+                      "a stale threshold and returns incorrect parents on supplied graphs; preserve "
+                      "original checksums while validating all corrected parents against independent results")
     return milestone, disposition, reason
 
 
@@ -588,6 +594,13 @@ def build(source, root, lock):
                     "This is a Haskell port of the Id version from the Impala" in header):
                 authors.add("David J. King")
                 item["evidence"].append("spectral/sphere/Main.lhs:authorship-and-port-history")
+        if source == "nofib" and path == "spectral/dom-lt":
+            module = parent / "Dom.hs"
+            if module.is_file():
+                heading = module.read_text(errors="replace")
+                if "Copyright   :  (c) Matt Morrow 2009" in heading and "License     :  BSD3" in heading:
+                    authors.add("Matt Morrow")
+                    item["evidence"].append("spectral/dom-lt/Dom.hs:algorithm-author-and-BSD3-heading")
         if source == "nofib" and path == "spectral/multiplier":
             main = parent / "Main.hs"
             if main.is_file():

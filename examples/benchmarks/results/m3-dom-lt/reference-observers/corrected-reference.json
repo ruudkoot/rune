@@ -1,0 +1,20 @@
+[
+  {
+    "profile": "source-fast",
+    "argument": 50,
+    "original_fixture_matches": true,
+    "result": "133008"
+  },
+  {
+    "profile": "normal",
+    "argument": 400,
+    "original_fixture_matches": true,
+    "result": "2238783"
+  },
+  {
+    "profile": "large",
+    "argument": 2000,
+    "original_fixture_matches": true,
+    "result": "38385183"
+  }
+]

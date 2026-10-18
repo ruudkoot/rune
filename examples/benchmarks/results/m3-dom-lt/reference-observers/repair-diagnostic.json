@@ -1,0 +1,50 @@
+[
+  {
+    "variant": "threshold",
+    "total": 86,
+    "matches": 86,
+    "mismatches": []
+  },
+  {
+    "variant": "clear-bucket",
+    "total": 86,
+    "matches": 57,
+    "mismatches": [
+      0,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      32,
+      36,
+      37,
+      45,
+      53,
+      57,
+      60,
+      61,
+      65,
+      68,
+      69,
+      76,
+      77,
+      85
+    ]
+  },
+  {
+    "variant": "both",
+    "total": 86,
+    "matches": 86,
+    "mismatches": []
+  }
+]

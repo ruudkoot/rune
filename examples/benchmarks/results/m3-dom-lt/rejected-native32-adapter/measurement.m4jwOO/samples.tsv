@@ -1,0 +1,3 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+dom-lt	smoke	native:smlnj32@110.99.9	O2	compile	0	0	pass	0.84	0.78	0.05	29232	-	-	-	dom-lt/native-smlnj32/build/compile
+dom-lt	smoke	native:smlnj32@110.99.9	O2	correctness	0	0	runtime-failure	0.02	0.01	0.00	4360	-	-	-	dom-lt/native-smlnj32/correctness.0

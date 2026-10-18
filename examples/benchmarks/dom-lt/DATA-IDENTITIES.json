@@ -1,0 +1,12 @@
+[
+  {
+    "path": "ghc-examples.in",
+    "bytes": 28585,
+    "sha256": "a017effab05e22b15eaea6d5e703d7bf9836a015607eec5babf186bb71cebc99"
+  },
+  {
+    "path": "expected-parents.txt",
+    "bytes": 21193,
+    "sha256": "82bdbbff90cabb1ea667a78e2fec0ffa8077efa681e727005ae1c385ab8d5a22"
+  }
+]

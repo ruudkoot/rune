@@ -1,0 +1,3 @@
+{'variant': 'source-O2', 'result': '[(0,0),(2,0),(1,2)]'}
+{'variant': 'corrected-O2', 'result': '[(0,0),(2,0),(1,0)]'}
+{'variant': 'source-O0', 'result': '[(0,0),(2,0),(1,2)]'}

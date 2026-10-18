@@ -1,0 +1,35 @@
+{
+  "ghc": "9.4.7",
+  "containers": "version: 0.6.7",
+  "graphs": 17,
+  "runs": [
+    {
+      "profile": "smoke",
+      "argument": 0,
+      "passes": 1,
+      "result": "2183",
+      "elapsed_seconds": 0.04576658603036776
+    },
+    {
+      "profile": "source-fast",
+      "argument": 50,
+      "passes": 51,
+      "result": "133008",
+      "elapsed_seconds": 0.2766308969585225
+    },
+    {
+      "profile": "normal",
+      "argument": 400,
+      "passes": 401,
+      "result": "2238783",
+      "elapsed_seconds": 2.078925704001449
+    },
+    {
+      "profile": "large",
+      "argument": 2000,
+      "passes": 2001,
+      "result": "38385183",
+      "elapsed_seconds": 9.115634796966333
+    }
+  ]
+}

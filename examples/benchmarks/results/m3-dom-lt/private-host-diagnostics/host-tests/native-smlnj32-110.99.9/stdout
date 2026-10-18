@@ -1,0 +1,418 @@
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/dom-lt-originals/word.sml]
+structure BenchDomWord : sig
+  structure W : <sig>
+  val sign : Word64.word
+  val word : int -> Word64.word
+  val integer : Word64.word -> int
+  val zero : Word64.word -> Word64.word -> bool
+  val mask : Word64.word -> Word64.word -> Word64.word
+  val match : Word64.word -> Word64.word -> Word64.word -> bool
+  val shorter : Word64.word -> Word64.word -> bool
+  val highest : Word64.word -> Word64.word
+  val branch : Word64.word -> Word64.word -> Word64.word
+  val bit : int -> Word64.word
+  val lowestIndex : ?.word64 -> int
+  val highestIndex : ?.word64 -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/dom-lt-originals/intmap.sml]
+structure BenchDomIntMap : sig
+  structure B : <sig>
+  structure W : <sig>
+  datatype 'a map
+    = Bin of Word64.word * Word64.word * 'a map * 'a map
+    | Nil
+    | Tip of int * 'a
+  val link : Word64.word -> 'a map -> Word64.word -> 'a map -> 'a map
+  val lookup : int -> 'a map -> 'a option
+  val insertWith : ('a -> 'a -> 'a) -> int -> 'a -> 'a map -> 'a map
+  val insert : int -> 'a -> 'a map -> 'a map
+  val adjust : ('a -> 'a) -> int -> 'a map -> 'a map
+  val unionWith : ('a -> 'a -> 'a) -> 'a map -> 'a map -> 'a map
+  val map : ('a -> 'b) -> 'a map -> 'b map
+  val foldl : ('a -> int -> 'b -> 'a) -> 'a -> 'b map -> 'a
+  val foldr : (int -> 'a -> 'b -> 'b) -> 'b -> 'a map -> 'b
+  val toList : 'a map -> (int * 'a) list
+  val fromList : (int * 'a) list -> 'a map
+  val size : 'a map -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/dom-lt-originals/intset.sml]
+structure BenchDomIntSet : sig
+  structure B : <sig>
+  structure W : <sig>
+  datatype set
+    = Bin of Word64.word * Word64.word * set * set
+    | Nil
+    | Tip of Word64.word * Word64.word
+  val prefix : int -> Word64.word
+  val bitmap : int -> Word64.word
+  val tip : Word64.word -> ?.word64 -> set
+  val bin : Word64.word -> Word64.word -> set -> set -> set
+  val link : Word64.word -> set -> Word64.word -> set -> set
+  val insertBM : Word64.word -> Word64.word -> set -> set
+  val insert : int -> set -> set
+  val singleton : int -> set
+  val member : int -> set -> bool
+  val union : set -> set -> set
+  val deleteBM : Word64.word -> Word64.word -> set -> set
+  val difference : set -> set -> set
+  val foldr : (int -> 'a -> 'a) -> 'a -> set -> 'a
+  val toList : set -> int list
+  val filter : (int -> bool) -> set -> set
+  val fromList : int list -> set
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/dom-lt-originals/graph.sml]
+structure BenchDomGraph : sig
+  structure M : <sig>
+  structure S : <sig>
+  type graph = BenchDomIntSet.set BenchDomIntMap.map
+  type rooted = int * graph
+  val get : BenchDomIntSet.set BenchDomIntMap.map -> int -> BenchDomIntSet.set
+  val fromAdj : (int * int list) list -> BenchDomIntSet.set BenchDomIntMap.map
+  val toAdj : BenchDomIntSet.set BenchDomIntMap.map -> (int * int list) list
+  val pred :
+      BenchDomIntSet.set BenchDomIntMap.map
+       -> BenchDomIntSet.set BenchDomIntMap.map
+  val reachable : (int -> BenchDomIntSet.set) -> int -> BenchDomIntSet.set
+  val prune :
+      int * BenchDomIntSet.set BenchDomIntMap.map
+       -> int * BenchDomIntSet.set BenchDomIntMap.map
+  val renumber :
+      int
+       -> BenchDomIntSet.set BenchDomIntMap.map
+       -> BenchDomIntSet.set BenchDomIntMap.map * int BenchDomIntMap.map
+  val validate : int * BenchDomIntSet.set BenchDomIntMap.map -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/dom-lt-originals/kernel.sml]
+[autoloading]
+[autoloading done]
+functor BenchDomFn(P: sig
+  val checkInitialized : bool
+end) :
+sig
+  structure G : <sig>
+  structure M : <sig>
+  structure S : <sig>
+  type iarr
+  val newI : int -> <BaseFct>.<resultStr>.iarr
+  val read : <BaseFct>.<resultStr>.iarr -> int -> int
+  val write : <BaseFct>.<resultStr>.iarr -> int -> int -> unit
+  type env
+  type answer
+  type 'a action
+  val pure : 'a -> ('a -> 'b -> 'c) -> 'b -> 'c
+  val bind :
+      'a <BaseFct>.<resultStr>.action
+       -> ('a -> 'b <BaseFct>.<resultStr>.action)
+       -> 'b <BaseFct>.<resultStr>.action
+  val gets : ('a -> 'b) -> ('b -> 'a -> 'c) -> 'a -> 'c
+  val modify : ('a -> 'b) -> (unit -> 'b -> 'c) -> 'a -> 'c
+  val store :
+      ('a -> <BaseFct>.<resultStr>.iarr)
+       -> int -> int -> (unit -> 'a -> 'b) -> 'a -> 'b
+  val fetch :
+      ('a -> <BaseFct>.<resultStr>.iarr)
+       -> int -> (int -> 'a -> 'b) -> 'a -> 'b
+  val forEach :
+      'a list
+       -> ('a -> unit <BaseFct>.<resultStr>.action)
+       -> unit <BaseFct>.<resultStr>.action
+  val range :
+      int
+       -> int
+       -> (int -> unit <BaseFct>.<resultStr>.action)
+       -> unit <BaseFct>.<resultStr>.action
+  val backwards :
+      int
+       -> int
+       -> (int -> unit <BaseFct>.<resultStr>.action)
+       -> unit <BaseFct>.<resultStr>.action
+  val aLabel : <BaseFct>.<resultStr>.env -> <BaseFct>.<resultStr>.iarr
+  val aParent : <BaseFct>.<resultStr>.env -> <BaseFct>.<resultStr>.iarr
+  val aAncestor : <BaseFct>.<resultStr>.env -> <BaseFct>.<resultStr>.iarr
+  val aChild : <BaseFct>.<resultStr>.env -> <BaseFct>.<resultStr>.iarr
+  val aNdfs : <BaseFct>.<resultStr>.env -> <BaseFct>.<resultStr>.iarr
+  val aDfn : <BaseFct>.<resultStr>.env -> <BaseFct>.<resultStr>.iarr
+  val aSdno : <BaseFct>.<resultStr>.env -> <BaseFct>.<resultStr>.iarr
+  val aSize : <BaseFct>.<resultStr>.env -> <BaseFct>.<resultStr>.iarr
+  val aDom : <BaseFct>.<resultStr>.env -> <BaseFct>.<resultStr>.iarr
+  val aRn : <BaseFct>.<resultStr>.env -> <BaseFct>.<resultStr>.iarr
+  val withDfs : <BaseFct>.<resultStr>.env -> int -> <BaseFct>.<resultStr>.env
+  val withBucket :
+      <BaseFct>.<resultStr>.env
+       -> BenchDomGraph.graph -> <BaseFct>.<resultStr>.env
+  val succs :
+      int
+       -> (int list -> <BaseFct>.<resultStr>.env -> 'a)
+       -> <BaseFct>.<resultStr>.env -> 'a
+  val preds :
+      int
+       -> (int list -> <BaseFct>.<resultStr>.env -> 'a)
+       -> <BaseFct>.<resultStr>.env -> 'a
+  val bucket :
+      int
+       -> (int list -> <BaseFct>.<resultStr>.env -> 'a)
+       -> <BaseFct>.<resultStr>.env -> 'a
+  val next :
+      (int -> <BaseFct>.<resultStr>.env -> 'a)
+       -> <BaseFct>.<resultStr>.env -> 'a
+  val eval : int -> int <BaseFct>.<resultStr>.action
+  val compress : int -> unit <BaseFct>.<resultStr>.action
+  val link : int -> int -> unit <BaseFct>.<resultStr>.action
+  val dfs : int -> unit <BaseFct>.<resultStr>.action
+  val fromEnv :
+      ((int * int) list
+        -> <BaseFct>.<resultStr>.env -> <BaseFct>.<resultStr>.answer)
+       -> <BaseFct>.<resultStr>.env -> <BaseFct>.<resultStr>.answer
+  val updatePredecessor : int -> int -> unit <BaseFct>.<resultStr>.action
+  val assignDominator : int -> int -> unit <BaseFct>.<resultStr>.action
+  val processReverse : int -> unit <BaseFct>.<resultStr>.action
+  val processForward : int -> unit <BaseFct>.<resultStr>.action
+  val idomM : <BaseFct>.<resultStr>.answer <BaseFct>.<resultStr>.action
+  val initEnv :
+      int * BenchDomIntSet.set BenchDomIntMap.map -> <BaseFct>.<resultStr>.env
+  val idom :
+      int * BenchDomIntSet.set BenchDomIntMap.map
+       -> <BaseFct>.<resultStr>.answer
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/dom-lt-originals/reader.sml]
+[autoloading]
+[autoloading done]
+structure BenchDomReader : sig
+  datatype value = Integer of int | List of value list | Tuple of value list
+  val parse : string -> value list
+  val integer : value -> int
+  val entry : value -> int * int list
+  val graph : value -> int * BenchDomIntSet.set BenchDomIntMap.map
+  val pair : value -> int * int
+  val parents : value -> (int * int) list
+  val graphs : string -> (int * BenchDomIntSet.set BenchDomIntMap.map) list
+  val results : string -> (int * int) list list
+  val read : string -> TextIO.vector
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/dom-lt-originals/driver.sml]
+functor BenchDomDriverFn(P: sig
+  val idom : BenchDomGraph.rooted -> (int * int) list
+end) :
+sig
+  structure R : <sig>
+  val calculate :
+      BenchDomGraph.rooted list -> int -> (int * int) list list -> int
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/dom-lt-originals/tests.sml]
+[autoloading]
+[autoloading done]
+FAIL dom-lt/original-repaired-model/0 -- raised an exception
+PASS dom-lt/original-repaired-model/1
+FAIL dom-lt/original-repaired-model/2 -- raised an exception
+FAIL dom-lt/original-repaired-model/3 -- raised an exception
+FAIL dom-lt/original-repaired-model/4 -- raised an exception
+FAIL dom-lt/original-repaired-model/5 -- false
+PASS dom-lt/original-repaired-model/6
+FAIL dom-lt/original-repaired-model/7 -- raised an exception
+FAIL dom-lt/original-repaired-model/8 -- raised an exception
+FAIL dom-lt/original-repaired-model/9 -- raised an exception
+PASS dom-lt/original-repaired-model/10
+FAIL dom-lt/original-repaired-model/11 -- raised an exception
+FAIL dom-lt/original-repaired-model/12 -- raised an exception
+FAIL dom-lt/original-repaired-model/13 -- raised an exception
+FAIL dom-lt/original-repaired-model/14 -- raised an exception
+FAIL dom-lt/original-repaired-model/15 -- raised an exception
+PASS dom-lt/original-repaired-model/16
+PASS dom-lt/original-repaired-model/17
+FAIL dom-lt/original-repaired-model/18 -- raised an exception
+PASS dom-lt/original-repaired-model/19
+PASS dom-lt/original-repaired-model/20
+FAIL dom-lt/original-repaired-model/21 -- raised an exception
+FAIL dom-lt/original-repaired-model/22 -- raised an exception
+FAIL dom-lt/original-repaired-model/23 -- raised an exception
+FAIL dom-lt/original-repaired-model/24 -- raised an exception
+FAIL dom-lt/original-repaired-model/25 -- raised an exception
+FAIL dom-lt/original-repaired-model/26 -- raised an exception
+FAIL dom-lt/original-repaired-model/27 -- raised an exception
+FAIL dom-lt/original-repaired-model/28 -- raised an exception
+FAIL dom-lt/original-repaired-model/29 -- raised an exception
+PASS dom-lt/original-repaired-model/30
+PASS dom-lt/original-repaired-model/31
+PASS dom-lt/original-repaired-model/32
+FAIL dom-lt/original-repaired-model/33 -- raised an exception
+FAIL dom-lt/original-repaired-model/34 -- raised an exception
+FAIL dom-lt/original-repaired-model/35 -- raised an exception
+FAIL dom-lt/original-repaired-model/36 -- raised an exception
+FAIL dom-lt/original-repaired-model/37 -- raised an exception
+FAIL dom-lt/original-repaired-model/38 -- raised an exception
+FAIL dom-lt/original-repaired-model/39 -- raised an exception
+FAIL dom-lt/original-repaired-model/40 -- raised an exception
+PASS dom-lt/original-repaired-model/41
+FAIL dom-lt/original-repaired-model/42 -- raised an exception
+FAIL dom-lt/original-repaired-model/43 -- raised an exception
+FAIL dom-lt/original-repaired-model/44 -- raised an exception
+FAIL dom-lt/original-repaired-model/45 -- raised an exception
+FAIL dom-lt/original-repaired-model/46 -- raised an exception
+FAIL dom-lt/original-repaired-model/47 -- raised an exception
+FAIL dom-lt/original-repaired-model/48 -- raised an exception
+FAIL dom-lt/original-repaired-model/49 -- raised an exception
+FAIL dom-lt/original-repaired-model/50 -- raised an exception
+FAIL dom-lt/original-repaired-model/51 -- raised an exception
+FAIL dom-lt/original-repaired-model/52 -- raised an exception
+FAIL dom-lt/original-repaired-model/53 -- raised an exception
+PASS dom-lt/original-repaired-model/54
+FAIL dom-lt/original-repaired-model/55 -- raised an exception
+FAIL dom-lt/original-repaired-model/56 -- raised an exception
+FAIL dom-lt/original-repaired-model/57 -- raised an exception
+FAIL dom-lt/original-repaired-model/58 -- raised an exception
+FAIL dom-lt/original-repaired-model/59 -- raised an exception
+FAIL dom-lt/original-repaired-model/60 -- raised an exception
+FAIL dom-lt/original-repaired-model/61 -- raised an exception
+PASS dom-lt/original-repaired-model/62
+PASS dom-lt/original-repaired-model/63
+FAIL dom-lt/original-repaired-model/64 -- raised an exception
+FAIL dom-lt/original-repaired-model/65 -- raised an exception
+PASS dom-lt/original-repaired-model/66
+FAIL dom-lt/original-repaired-model/67 -- raised an exception
+FAIL dom-lt/original-repaired-model/68 -- raised an exception
+FAIL dom-lt/original-repaired-model/69 -- raised an exception
+PASS dom-lt/original-repaired-model/70
+PASS dom-lt/original-repaired-model/71
+FAIL dom-lt/original-repaired-model/72 -- raised an exception
+FAIL dom-lt/original-repaired-model/73 -- raised an exception
+FAIL dom-lt/original-repaired-model/74 -- raised an exception
+FAIL dom-lt/original-repaired-model/75 -- raised an exception
+FAIL dom-lt/original-repaired-model/76 -- raised an exception
+FAIL dom-lt/original-repaired-model/77 -- raised an exception
+FAIL dom-lt/original-repaired-model/78 -- raised an exception
+FAIL dom-lt/original-repaired-model/79 -- raised an exception
+FAIL dom-lt/original-repaired-model/80 -- raised an exception
+FAIL dom-lt/original-repaired-model/81 -- raised an exception
+PASS dom-lt/original-repaired-model/82
+FAIL dom-lt/original-repaired-model/83 -- raised an exception
+FAIL dom-lt/original-repaired-model/84 -- raised an exception
+FAIL dom-lt/original-repaired-model/85 -- raised an exception
+FAIL dom-lt/original-IntSet/0 -- false
+FAIL dom-lt/original-IntSet/1 -- false
+FAIL dom-lt/original-IntSet/2 -- false
+FAIL dom-lt/original-IntSet/3 -- false
+FAIL dom-lt/original-IntSet/4 -- false
+FAIL dom-lt/original-IntSet/5 -- false
+FAIL dom-lt/original-IntSet/6 -- false
+FAIL dom-lt/original-IntSet/7 -- false
+PASS dom-lt/original-IntMap/0
+PASS dom-lt/original-IntMap/1
+PASS dom-lt/original-IntMap/2
+PASS dom-lt/original-IntMap/3
+PASS dom-lt/original-IntMap/4
+PASS dom-lt/original-IntMap/5
+PASS dom-lt/original-IntMap/6
+PASS dom-lt/original-IntMap/7
+PASS dom-lt/original-IntMap/8
+FAIL dom-lt/original-set-fold-direction -- false
+PASS dom-lt/original-map-left-fold
+PASS dom-lt/original-map-right-fold
+FAIL dom-lt/bitmap-leaf-64-bits -- false
+FAIL dom-lt/strict-descending-set-fold-process-order -- false
+PASS dom-lt/minimum-threshold-counterexample
+PASS dom-lt/wrong-original-pairs-have-same-length
+PASS dom-lt/wrong-original-pairs-rejected
+PASS dom-lt/inclusive-source-repetition-range
+PASS dom-lt/initialization-checker-negative-control
+PASS dom-lt/source-store-initializes-slot
+PASS dom-lt/zero-fill-normal-allocator-is-separate
+PASS dom-lt/missing-root-rejected
+PASS dom-lt/unclosed-graph-rejected
+PASS dom-lt/duplicate-vertices-last-wins
+FAIL dom-lt/original-corpus-checksum-one-pass -- raised an exception
+structure DomTests : sig
+  structure D : <sig>
+  structure Driver : <sig>
+  structure G : <sig>
+  structure M : <sig>
+  structure S : <sig>
+  structure R : <sig>
+  val base : string
+  val read : string -> TextIO.vector
+  val graphs : (int * BenchDomIntSet.set BenchDomIntMap.map) list
+  val parents : (int * int) list list
+  val keys : int list
+  val a : BenchDomIntSet.set
+  val b : BenchDomIntSet.set
+  val maps : int BenchDomIntMap.map
+  val other : int BenchDomIntMap.map
+  val raw : TextIO.vector
+  val between : string -> string -> string
+  val setExpected : int list list
+  val setResults : int list list
+  val mapExpected : (int * int) list list
+  val mapResults : (int * int) list list
+  val triangle : int * BenchDomIntSet.set BenchDomIntMap.map
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 119 checks, 80 failed

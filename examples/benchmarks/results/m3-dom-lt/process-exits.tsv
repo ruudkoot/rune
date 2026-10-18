@@ -1,0 +1,9 @@
+target	exit
+primary-correctness	1
+semantic-correctness	1
+normal-counts	0
+serial-native-adapter	0
+native32-rejected-adapter	2
+full-make-check	0
+inventory-check	0
+corrected-original-reference	0

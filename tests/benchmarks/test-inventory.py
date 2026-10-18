@@ -228,6 +228,36 @@ class InventoryTest(unittest.TestCase):
                   "% Crown Copyright 1992\n\\author{Another author\\\\\n\n> main = print 0\n")
         self.assertNotIn("N. D. North", self.build("nofib")[0]["authors"])
 
+    def test_dominator_algorithm_author_is_recorded(self):
+        self.nofib_roots()
+        self.file("spectral/dom-lt/Makefile", "\n")
+        self.file("spectral/dom-lt/Main.hs", "module Main where\nmain = print 0\n")
+        self.file("spectral/dom-lt/Dom.hs", "Copyright   :  (c) Matt Morrow 2009\nLicense     :  BSD3\nmodule Dom where\n")
+        row = self.build("nofib")[0]
+        self.assertIn("Matt Morrow", row["authors"])
+        self.assertIn("spectral/dom-lt/Dom.hs:algorithm-author-and-BSD3-heading", row["evidence"])
+
+    def test_changed_dominator_author_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/dom-lt/Makefile", "\n")
+        self.file("spectral/dom-lt/Main.hs", "main = print 0\n")
+        self.file("spectral/dom-lt/Dom.hs", "Another author\nmodule Dom where\n")
+        self.assertNotIn("Matt Morrow", self.build("nofib")[0]["authors"])
+
+    def test_pinned_dominator_threshold_defect_requires_recorded_repair(self):
+        self.nofib_roots()
+        self.file("spectral/dom-lt/Makefile", "\n")
+        self.file("spectral/dom-lt/Main.hs", "main = print 0\n")
+        self.file("spectral/dom-lt/Dom.hs", (ROOT / "examples/benchmarks/dom-lt/upstream/Dom.hs").read_text())
+        self.assertIn("semidominator-minimum repair", self.build("nofib")[0]["reason"])
+
+    def test_changed_dominator_kernel_does_not_inherit_repair_claim(self):
+        self.nofib_roots()
+        self.file("spectral/dom-lt/Makefile", "\n")
+        self.file("spectral/dom-lt/Main.hs", "main = print 0\n")
+        self.file("spectral/dom-lt/Dom.hs", "module Dom where\nvalue = 0\n")
+        self.assertNotIn("semidominator-minimum repair", self.build("nofib")[0]["reason"])
+
     def test_multiplier_author_and_copyright_are_recorded(self):
         self.nofib_roots()
         self.file("spectral/multiplier/Makefile", "\n")

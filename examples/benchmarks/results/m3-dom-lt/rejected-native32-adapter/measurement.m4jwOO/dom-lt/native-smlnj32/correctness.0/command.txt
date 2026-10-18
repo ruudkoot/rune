@@ -1,0 +1,2 @@
+/home/ruud/.local/rune-hosts/smlnj32/bin/sml
+@SMLload=/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.m4jwOO/dom-lt/native-smlnj32/build/prog

@@ -1,0 +1,10 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+dom-lt	smoke	native:mlton@20241230	O2	compile	0	0	pass	6.18	4.84	1.23	661252	-	-	-	dom-lt/native-mlton/build/compile
+dom-lt	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.01	0.00	0.00	7544	-	-	-	dom-lt/native-mlton/correctness.0
+dom-lt	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.01	0.01	0.00	7512	-	-	-	dom-lt/native-mlton/fresh.1
+dom-lt	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	pass	0.76	0.73	0.03	37812	-	-	-	dom-lt/native-smlnj-legacy/build/compile
+dom-lt	smoke	native:smlnj-legacy@110.99.9	O2	correctness	0	0	pass	0.06	0.05	0.01	6736	-	-	-	dom-lt/native-smlnj-legacy/correctness.0
+dom-lt	smoke	native:smlnj-legacy@110.99.9	O2	fresh	1	1	pass	0.04	0.03	0.01	6756	-	-	-	dom-lt/native-smlnj-legacy/fresh.1
+dom-lt	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	0.57	0.37	0.14	47676	-	-	-	dom-lt/native-polyml/build/compile
+dom-lt	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.02	0.02	0.00	13772	-	-	-	dom-lt/native-polyml/correctness.0
+dom-lt	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.02	0.01	0.01	13772	-	-	-	dom-lt/native-polyml/fresh.1

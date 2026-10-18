@@ -1,0 +1,2 @@
+FAIL dom-lt -- Fail: dominator graph requires a root and an adjacency entry for every successor
+SUMMARY 1 checks, 1 failed

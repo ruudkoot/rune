@@ -1,0 +1,15 @@
+--- a/spectral/dom-lt/Dom.hs
++++ b/spectral/dom-lt/Dom.hs
+@@ -146,11 +146,11 @@
+   n <- gets dfsE
+   forM_ [n,n-1..1] (\i-> do
+     w <- ndfsM i
+-    sw <- sdnoM w
+     ps <- predsM w
+     forM_ ps (\v-> do
+       u <- eval v
+       su <- sdnoM u
++      sw <- sdnoM w
+       when (su < sw)
+         (store sdnoE w su))
+     z <- ndfsM =<< sdnoM w

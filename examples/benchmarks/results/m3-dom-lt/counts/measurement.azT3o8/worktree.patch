@@ -1,0 +1,234 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 61b12ccf..587dcde9 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -402,6 +402,7 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [event-strict](#event-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/event) | Simulate stable timed three-state circuit events with persistent strict finite state lists. |
+ | [typecheck-lazy](#typecheck-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/typecheck) | Infer polymorphic types with functional substitutions and lazy finite type children, validating every printed row. |
+ | [typecheck-strict](#typecheck-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/typecheck) | Infer polymorphic types with functional substitutions and strict finite type children, validating every printed row. |
++| [dom-lt](#dom-lt) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/dom-lt) | Compute and fully validate Lengauer–Tarjan dominators with a reviewed minimum-threshold repair and portable Patricia containers. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -23960,3 +23961,116 @@ type reconstruction, generalization, memoized fields, strict children and text
+ consumption. These are source-based questions. Exact original type agreement and
+ negative controls support correctness for the selected cases; measured counts
+ and times are distinct evidence and do not alone establish performance causes.
++
++## dom-lt
++
++### Algorithm and workload
++
++Compute immediate dominators of rooted flow graphs with the source Lengauer–Tarjan
++algorithm: prune unreachable nodes, renumber vertices, build predecessors, perform
++DFS, update semidominators, link/compress the balanced ancestor structure and
++resolve final dominators. Retain Patricia maps, 64-bit bitmap sets, mutable integer
++arrays, persistent environment records and continuation/state callbacks.
++
++### History, authorship and pinned dependencies
++
++[The nofib dom-lt snapshot](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/dom-lt) is revision
++b7391df4540ac8b11b35e1b2e2c15819b5171798. Dom.hs credits Matt Morrow, copyright
++2009, and declares BSD3, with ancestry in the dom-lt package. Its exact historical
++package version is not stated; the pinned module is the program source identity.
++The benchmark wrapper's individual author is unstated. Keep original Main,
++Dom, Makefile and fixtures under dom-lt/upstream.
++
++The original GHC 9.4.7 environment uses containers 0.6.7. DEPENDENCIES.json pins
++its official source archive by URL/version/SHA-256; selected complete original
++map/set/bit modules, package metadata and full LICENSE are retained. Their notices
++credit Daan Leijen, Andriy Palamarchuk, wren romano, Joachim Breitner, Clark Gaebel
++and Johan Tibel as declared in those files. Preserve these individual notices.
++
++The fixed ghc-examples.in contains seventeen real GHC control-flow graphs,
++according to the source Makefile. Its producing GHC version/program names and
++individual dataset authorship/notice are not supplied. Preserve the original
++CRLF bytes and unterminated last line. DATA-IDENTITIES.json records graph/reference
++file hashes and lengths.
++
++### Reviewed source repair and portable adaptations
++
++[The source issue](validation/dom-lt-source-issue.md) proves that the pinned
++kernel reuses a stale semidominator threshold and returns wrong parents on
++fifteen supplied graphs. Its length-only consumer conceals the error. The port
++uses the reviewed minimum-threshold correction; the exact patch, failing original
++O0/O2 results and independent model remain. Corrected original and SML results
++agree on all 86 checked graphs. The unrepaired source variant is deferred, with
++its concrete correctness blocker and refresh condition in source-variants.tsv.
++
++Port the required containers algorithms rather than substituting a balanced-tree
++or association-list dictionary. Retain big-endian Patricia branching, strict map
++insertion, bitmap-leaf union/difference/filter, signed enumeration and fold order.
++Use fixed Word64 masks/leaves on every host. Portable bit-index routines replace
++GHC's native bit-scan operations; finite list enumeration is strict in SML.
++Original IntSet.fold is foldr; descending callback execution matters to renumbering.
++
++Translate the continuation/state layer with an answer type specialized to this
++program's pair-list result, preserving higher-order callbacks and immutable
++sixteen-field environment updates. Standard SML mutable arrays replace STUArray
++operations. Array.array initializes storage to zero where unsafeNewArray_ leaves
++it unspecified; retain all explicit source initialization loops and document that
++additional allocator cost. The standard bounds-checked API is used; compilers may eliminate proved checks. A separate semantic
++instance tracks source writes and rejects uninitialized reads; instrumentation
++is disabled in the measured instance. No compiler/runtime prerequisite is added.
++
++### Inputs, profiles and consumers
++
++| Profile | Source repetition argument | Actual full passes |
++|---|---:|---:|
++| Smoke | 0 | 1 |
++| Normal | 400 | 401 |
++| Large | 2000 | 2001 |
++
++The source loops inclusively over 0..argument. Normal and large retain its
++parameters; smoke reduces FAST's argument fifty to zero, still processing all
++seventeen graphs once. Parse graph data once per Benchmark.run and retain it
++through the repetition loop, as in Main. The source subset reader accepts tuple,
++list and decimal-integer data with whitespace/CRLF; validate rooted closed graphs.
++
++For each graph and pass, compare every ordered parent pair with the reviewed
++corrected-original reference, then retain the source i+length result and final
++sum. This adds validation to the length consumer; no explicit result cache is
++introduced across passes. Source GHC disables full laziness; there is no claimed
++identical portable SML optimization switch. Record compiler options and inspect
++optimization effects rather than assume an exact execution count across hosts.
++
++Reported results are 2183 for smoke, 2238783 for normal and 38385183 for large.
++They match all source fixtures despite the repaired parent values. Profile graph
++labels, indices and sums fit signed 31-bit arithmetic; bitmap semantics remain
++explicitly 64-bit. All checking is exact, with no floating-point tolerance.
++Full final SML large-profile runs remain unrecorded unless listed in validation.
++
++### Correctness and host findings
++
++The 119-check target covers all 86 ordered graph results with initialized-read
++tracking; original containers set/map/fold observations; signed keys, bitmap bit
++63, duplicate semantics and noncommutative map union; the three-node threshold
++counterexample; same-length wrong-parent rejection; inclusive repetitions;
++initialization negative/positive controls; invalid graphs and source checksum.
++
++Private Rune and five native hosts pass every assertion. Native 32-bit SML/NJ
++110.99.9 fails because its documented runtime Word64 shift-by-zero operation
++produces the wrong bit mask. An isolated unchanged-helper probe reproduces it.
++Retain actual failures and reject their measurements; do not hide them by changing
++valid arithmetic. Canonical profile/engine results are recorded separately.
++The source threshold defect and external host arithmetic defect are distinct.
++
++### Literature and diagnostic interpretation
++
++The source cites [Lengauer and Tarjan's A Fast Algorithm for Finding Dominators in
++a Flowgraph](https://www.cs.princeton.edu/courses/archive/fall03/cs528/handouts/a%20fast%20algorithm%20for%20finding.pdf) (1979), Muchnick's Advanced Compiler Design and Implementation (1997)
++and Brisk/Sarrafzadeh's 2007 interference-graph work. These are its declared
++references, not a claim to have independently reviewed every paper. The pinned
++code, minimal counterexample and model comparisons establish this repair's scope.
++
++Investigate Patricia/bitmap operations, DFS, path compression, balanced linking,
++CPS specialization, persistent environment updates, array initialization/bounds
++and complete-result validation. These are source-based diagnostic questions.
++Reference agreement and recorded counts/timings are separate evidence; do not
++infer a compiler or collector cause from performance ratios alone.
+diff --git a/examples/benchmarks/inventory.tsv b/examples/benchmarks/inventory.tsv
+index 9f53dc3d..257f7962 100644
+--- a/examples/benchmarks/inventory.tsv
++++ b/examples/benchmarks/inventory.tsv
+@@ -624,7 +624,7 @@ nofib	spectral/constraints	constraints	constraints	M3	duplicate	kernel	nofib:gc/
+ nofib	spectral/cryptarithm1	cryptarithm1	cryptarithm1	M3	import	numerical		not stated in scanned source headers	7897c95d4ade2db8d498cb07de42fd2398642e9205f1c40bec8c87feb5934944	spectral/cryptarithm1/Main.hs	spectral/cryptarithm1/cryptarithm1.faststdout;spectral/cryptarithm1/cryptarithm1.slowstdout;spectral/cryptarithm1/cryptarithm1.stdout		spectral/cryptarithm1/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/cryptarithm2	cryptarithm2	cryptarithm2	M3	import	numerical		not stated in scanned source headers	2cfc9c8bbe6ab5d416cfe6e4237ad1f5cdf1e23bbff5cb8dc02c3f9b1a40e49a	spectral/cryptarithm2/Main.hs	spectral/cryptarithm2/cryptarithm2.faststdout;spectral/cryptarithm2/cryptarithm2.slowstdout;spectral/cryptarithm2/cryptarithm2.stdout		spectral/cryptarithm2/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/cse	cse	cse	M3	import	kernel		not stated in scanned source headers	d1c93725a5c775cbe0c52a4e78bf193e38ca0c86dba7e1ce38ab8060ac98a006	spectral/cse/Main.hs;spectral/cse/StateMonad.hs	spectral/cse/cse.faststdout;spectral/cse/cse.slowstdout;spectral/cse/cse.stdout		spectral/cse/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	spectral/dom-lt	dom-lt	dom-lt	M3	import	application		not stated in scanned source headers	a57dfb8d506ec26451ee4fbc400a65baa6b4ca57e9929a0b10da1f0859385de0	spectral/dom-lt/Dom.hs;spectral/dom-lt/Main.hs	spectral/dom-lt/dom-lt.faststdout;spectral/dom-lt/dom-lt.slowstdout;spectral/dom-lt/dom-lt.stdout;spectral/dom-lt/ghc-examples.in	spectral/dom-lt/Dom.hs:header	spectral/dom-lt/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	spectral/dom-lt	dom-lt	dom-lt	M3	import	application		Matt Morrow	a57dfb8d506ec26451ee4fbc400a65baa6b4ca57e9929a0b10da1f0859385de0	spectral/dom-lt/Dom.hs;spectral/dom-lt/Main.hs	spectral/dom-lt/dom-lt.faststdout;spectral/dom-lt/dom-lt.slowstdout;spectral/dom-lt/dom-lt.stdout;spectral/dom-lt/ghc-examples.in	spectral/dom-lt/Dom.hs:header	spectral/dom-lt/Dom.hs:algorithm-author-and-BSD3-heading;spectral/dom-lt/Makefile	portable with reviewed semidominator-minimum repair; pinned source reuses a stale threshold and returns incorrect parents on supplied graphs; preserve original checksums while validating all corrected parents against independent results
+ nofib	spectral/eliza	eliza	eliza	M3	import	kernel		not stated in scanned source headers	371aff2ffa2e38b65ad6340b9994b1c8e7615ce1b5985e9e9a757f5922a21309	spectral/eliza/Main.hs	spectral/eliza/eliza.faststdout;spectral/eliza/eliza.slowstdout;spectral/eliza/eliza.stdin;spectral/eliza/eliza.stdout		spectral/eliza/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/exact-reals	exact-reals	exact-reals	M3	import	integer-arithmetic		David Lester	e0adfd0a7cbe5beb68562bfd5396f5ac886968481c69d7c6540957772bf1a1c3	spectral/exact-reals/Main.hs	spectral/exact-reals/exact-reals.stdout		spectral/exact-reals/Main.hs:paper-attribution;spectral/exact-reals/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/expert	expert	expert	M3	import	application		Ian Holyer	7980aaeaf37783fb72671dc2be4ac2bc1019cc696d7020ddfdd70dec6ec599bb	spectral/expert/Knowledge.hs;spectral/expert/Main.hs;spectral/expert/Match.hs;spectral/expert/Result.hs;spectral/expert/Search.hs;spectral/expert/Table.hs	spectral/expert/expert.faststdout;spectral/expert/expert.slowstdout;spectral/expert/expert.stdin;spectral/expert/expert.stdout;spectral/expert/runtime_files/animals	spectral/expert/README:header	spectral/expert/Makefile;spectral/expert/README;spectral/expert/README:authorship-and-adaptation-heading	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index b782ee7a..37f4f2a5 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -1170,3 +1170,6 @@ typecheck-lazy	large	nofib	spectral/hartel/typecheck	25000 inferred-types.txt	ty
+ typecheck-strict	smoke	nofib	spectral/hartel/typecheck	1 inferred-types.txt	typecheck-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/hartel-typecheck-types.sml,shared/hartel-typecheck-infer.sml,shared/hartel-typecheck-program.sml,shared/hartel-typecheck-driver.sml,typecheck-strict/benchmark.sml,shared/main.sml	30	1048576	symbolic,higher-order,compiler-application,lists-streams,strict	inferred-types.txt	exact	implemented
+ typecheck-strict	normal	nofib	spectral/hartel/typecheck	5000 inferred-types.txt	typecheck-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/hartel-typecheck-types.sml,shared/hartel-typecheck-infer.sml,shared/hartel-typecheck-program.sml,shared/hartel-typecheck-driver.sml,typecheck-strict/benchmark.sml,shared/main.sml	600	4194304	symbolic,higher-order,compiler-application,lists-streams,strict	inferred-types.txt	exact	implemented
+ typecheck-strict	large	nofib	spectral/hartel/typecheck	25000 inferred-types.txt	typecheck-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/stream.sml,shared/hartel-typecheck-types.sml,shared/hartel-typecheck-infer.sml,shared/hartel-typecheck-program.sml,shared/hartel-typecheck-driver.sml,typecheck-strict/benchmark.sml,shared/main.sml	3600	8388608	symbolic,higher-order,compiler-application,lists-streams,strict	inferred-types.txt	exact	implemented
++dom-lt	smoke	nofib	spectral/dom-lt	ghc-examples.in 0 expected-parents.txt	dom-lt/smoke.expected	shared/input.sml,shared/nofib-dom-lt-word.sml,shared/nofib-dom-lt-intmap.sml,shared/nofib-dom-lt-intset.sml,shared/nofib-dom-lt-graph.sml,shared/nofib-dom-lt-kernel.sml,shared/nofib-dom-lt-reader.sml,shared/nofib-dom-lt-driver.sml,dom-lt/benchmark.sml,shared/main.sml	30	1048576	graphs,mutable-arrays,higher-order,word64	ghc-examples.in,expected-parents.txt	exact	implemented
++dom-lt	normal	nofib	spectral/dom-lt	ghc-examples.in 400 expected-parents.txt	dom-lt/normal.expected	shared/input.sml,shared/nofib-dom-lt-word.sml,shared/nofib-dom-lt-intmap.sml,shared/nofib-dom-lt-intset.sml,shared/nofib-dom-lt-graph.sml,shared/nofib-dom-lt-kernel.sml,shared/nofib-dom-lt-reader.sml,shared/nofib-dom-lt-driver.sml,dom-lt/benchmark.sml,shared/main.sml	600	4194304	graphs,mutable-arrays,higher-order,word64	ghc-examples.in,expected-parents.txt	exact	implemented
++dom-lt	large	nofib	spectral/dom-lt	ghc-examples.in 2000 expected-parents.txt	dom-lt/large.expected	shared/input.sml,shared/nofib-dom-lt-word.sml,shared/nofib-dom-lt-intmap.sml,shared/nofib-dom-lt-intset.sml,shared/nofib-dom-lt-graph.sml,shared/nofib-dom-lt-kernel.sml,shared/nofib-dom-lt-reader.sml,shared/nofib-dom-lt-driver.sml,dom-lt/benchmark.sml,shared/main.sml	3600	8388608	graphs,mutable-arrays,higher-order,word64	ghc-examples.in,expected-parents.txt	exact	implemented
+diff --git a/examples/benchmarks/source-variants.tsv b/examples/benchmarks/source-variants.tsv
+index 4b2f6aa0..7edff87c 100644
+--- a/examples/benchmarks/source-variants.tsv
++++ b/examples/benchmarks/source-variants.tsv
+@@ -27,3 +27,4 @@ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	gc/linear	gc/linear/Input.lhs	gc-
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/linear	real/linear/Input.lhs	real-linear-gcomp-data	Haskell	documented inactive reservoir-data mode	Roger L. Wainwright;Dan Vasicek	fcce6ad751b041adcf6321fe5f13d5647c1b27fc411c7142833cdb4e4343931c	defer	reservoir readers return literal abc and referenced Data/gcomp.mat*.one/.twoa/.twob/.twoc/.three/.four/.soln/.well fixtures are absent; reconsider with deterministically versioned/licensed datasets and a reviewed reader; default executable uses generated hard_data	individual source credit headers retained; no separate dataset notice or dataset files supplied
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/knights	spectral/knights/ChessSetArray.lhs	knights-array	Haskell	inactive persistent-array board representation	Jonathan Hill (program README)	c0383ed40d3127220ea53671ecb1ea1c9e302ba78775caf19a0fd50b500ab905	import	ported as knights-array-lazy/strict with immutable boxed arrays; original renderer logTen 1 base loops at zero; one-line formatting repair logTen 0 is reviewed against an adapted original, with bounded failing-original evidence; retain distinct layout, deletion metadata and indexTile quirk	no separate individual redistribution grant stated; retain original module, README and bibliography
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/multiplier	spectral/multiplier/Main.hs	multiplier-count	Haskell	inactive count-only simulation driver	John T. O'Donnell	a92974cefa647671a21b441e9affb21afd7ae3208a38de603b161931c4e96489	import	ported separately as multiplier-count-lazy/strict; runMult sums ready without observing product registers, so its demand excludes the product adder; preserve this source consumer and all provenance rather than silently replacing verbose traceMult	Copyright (c) 1992 John T. O'Donnell; full original notice retained
++nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/dom-lt	spectral/dom-lt/Dom.hs	dom-lt-unrepaired	Haskell	unrepaired semidominator threshold	Matt Morrow	ae7675a60f6915fee3f62c6e329b696e7f7a24324fc1cfac98fcaa1eff9094a1	defer	unmodified kernel returns incorrect parents on 15 of 17 supplied graphs and a three-node counterexample; list-length checksums conceal the error; only the reviewed minimum-threshold repair is runnable; reconsider unrepaired baseline only after an upstream revision fixes the defect and full parent results pass independent checks	Copyright Matt Morrow 2009; BSD3 declaration retained
+diff --git a/scripts/benchmark-inventory.py b/scripts/benchmark-inventory.py
+index 55971349..64fad996 100644
+--- a/scripts/benchmark-inventory.py
++++ b/scripts/benchmark-inventory.py
+@@ -469,6 +469,12 @@ def classify(source, root, item, files, text):
+         milestone = "M1"
+     if source == "sandmark" and path == "benchmarks/bdd/bdd.exe":
+         milestone = "M1"
++    if source == "nofib" and path == "spectral/dom-lt" and disposition == "import":
++        module = root / "spectral/dom-lt/Dom.hs"
++        if module.is_file() and hashlib.sha256(module.read_bytes()).hexdigest() == "ae7675a60f6915fee3f62c6e329b696e7f7a24324fc1cfac98fcaa1eff9094a1":
++            reason = ("portable with reviewed semidominator-minimum repair; pinned source reuses "
++                      "a stale threshold and returns incorrect parents on supplied graphs; preserve "
++                      "original checksums while validating all corrected parents against independent results")
+     return milestone, disposition, reason
+ 
+ 
+@@ -588,6 +594,13 @@ def build(source, root, lock):
+                     "This is a Haskell port of the Id version from the Impala" in header):
+                 authors.add("David J. King")
+                 item["evidence"].append("spectral/sphere/Main.lhs:authorship-and-port-history")
++        if source == "nofib" and path == "spectral/dom-lt":
++            module = parent / "Dom.hs"
++            if module.is_file():
++                heading = module.read_text(errors="replace")
++                if "Copyright   :  (c) Matt Morrow 2009" in heading and "License     :  BSD3" in heading:
++                    authors.add("Matt Morrow")
++                    item["evidence"].append("spectral/dom-lt/Dom.hs:algorithm-author-and-BSD3-heading")
+         if source == "nofib" and path == "spectral/multiplier":
+             main = parent / "Main.hs"
+             if main.is_file():
+diff --git a/tests/benchmarks/test-inventory.py b/tests/benchmarks/test-inventory.py
+index 3c799250..cc068931 100644
+--- a/tests/benchmarks/test-inventory.py
++++ b/tests/benchmarks/test-inventory.py
+@@ -228,6 +228,36 @@ class InventoryTest(unittest.TestCase):
+                   "% Crown Copyright 1992\n\\author{Another author\\\\\n\n> main = print 0\n")
+         self.assertNotIn("N. D. North", self.build("nofib")[0]["authors"])
+ 
++    def test_dominator_algorithm_author_is_recorded(self):
++        self.nofib_roots()
++        self.file("spectral/dom-lt/Makefile", "\n")
++        self.file("spectral/dom-lt/Main.hs", "module Main where\nmain = print 0\n")
++        self.file("spectral/dom-lt/Dom.hs", "Copyright   :  (c) Matt Morrow 2009\nLicense     :  BSD3\nmodule Dom where\n")
++        row = self.build("nofib")[0]
++        self.assertIn("Matt Morrow", row["authors"])
++        self.assertIn("spectral/dom-lt/Dom.hs:algorithm-author-and-BSD3-heading", row["evidence"])
++
++    def test_changed_dominator_author_requires_review(self):
++        self.nofib_roots()
++        self.file("spectral/dom-lt/Makefile", "\n")
++        self.file("spectral/dom-lt/Main.hs", "main = print 0\n")
++        self.file("spectral/dom-lt/Dom.hs", "Another author\nmodule Dom where\n")
++        self.assertNotIn("Matt Morrow", self.build("nofib")[0]["authors"])
++
++    def test_pinned_dominator_threshold_defect_requires_recorded_repair(self):
++        self.nofib_roots()
++        self.file("spectral/dom-lt/Makefile", "\n")
++        self.file("spectral/dom-lt/Main.hs", "main = print 0\n")
++        self.file("spectral/dom-lt/Dom.hs", (ROOT / "examples/benchmarks/dom-lt/upstream/Dom.hs").read_text())
++        self.assertIn("semidominator-minimum repair", self.build("nofib")[0]["reason"])
++
++    def test_changed_dominator_kernel_does_not_inherit_repair_claim(self):
++        self.nofib_roots()
++        self.file("spectral/dom-lt/Makefile", "\n")
++        self.file("spectral/dom-lt/Main.hs", "main = print 0\n")
++        self.file("spectral/dom-lt/Dom.hs", "module Dom where\nvalue = 0\n")
++        self.assertNotIn("semidominator-minimum repair", self.build("nofib")[0]["reason"])
++
+     def test_multiplier_author_and_copyright_are_recorded(self):
+         self.nofib_roots()
+         self.file("spectral/multiplier/Makefile", "\n")

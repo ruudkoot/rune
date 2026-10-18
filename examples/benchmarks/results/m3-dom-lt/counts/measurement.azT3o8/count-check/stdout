@@ -1,0 +1,5 @@
+COUNT unbudgeted dom-lt normal rune
+COUNT unbudgeted dom-lt normal rune:opt
+COUNT unbudgeted dom-lt normal rune:new
+COUNT unbudgeted dom-lt normal rune:jit
+COUNT comparisons agree

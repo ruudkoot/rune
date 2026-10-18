@@ -1,0 +1,32 @@
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/dom-lt-originals/word.sml]
+structure BenchDomWord : sig
+  structure W : <sig>
+  val sign : Word64.word
+  val word : int -> Word64.word
+  val integer : Word64.word -> int
+  val zero : Word64.word -> Word64.word -> bool
+  val mask : Word64.word -> Word64.word -> Word64.word
+  val match : Word64.word -> Word64.word -> Word64.word -> bool
+  val shorter : Word64.word -> Word64.word -> bool
+  val highest : Word64.word -> Word64.word
+  val branch : Word64.word -> Word64.word -> Word64.word
+  val bit : int -> Word64.word
+  val lowestIndex : ?.word64 -> int
+  val highestIndex : ?.word64 -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/dom-lt-originals/word64-zero-shift-probe.sml]
+[autoloading]
+[autoloading done]
+Word64 bit 0 = 100000001
+FAIL zero shift
+SUMMARY 1 checks, 1 failed
+val amount = 0 : int
+val actual = 0wx100000001 : Word64.word
+val it = () : unit
+- 

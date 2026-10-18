@@ -1,0 +1,201 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-dom-lt-word.sml]
+structure BenchDomWord : 
+  sig
+    structure W : <sig>
+    val sign : Word64.word
+    val word : int -> Word64.word
+    val integer : Word64.word -> int
+    val zero : Word64.word -> Word64.word -> bool
+    val mask : Word64.word -> Word64.word -> Word64.word
+    val match : Word64.word -> Word64.word -> Word64.word -> bool
+    val shorter : Word64.word -> Word64.word -> bool
+    val highest : Word64.word -> Word64.word
+    val branch : Word64.word -> Word64.word -> Word64.word
+    val bit : int -> Word64.word
+    val lowestIndex : ?.word64 -> int
+    val highestIndex : ?.word64 -> int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-dom-lt-intmap.sml]
+structure BenchDomIntMap : 
+  sig
+    structure B : <sig>
+    structure W : <sig>
+    datatype 'a map
+      = Bin of Word64.word * Word64.word * 'a map * 'a map
+    | Nil
+    | Tip of int * 'a
+    val link : Word64.word -> 'a map -> Word64.word -> 'a map -> 'a map
+    val lookup : int -> 'a map -> 'a option
+    val insertWith : ('a -> 'a -> 'a) -> int -> 'a -> 'a map -> 'a map
+    val insert : int -> 'a -> 'a map -> 'a map
+    val adjust : ('a -> 'a) -> int -> 'a map -> 'a map
+    val unionWith : ('a -> 'a -> 'a) -> 'a map -> 'a map -> 'a map
+    val map : ('a -> 'b) -> 'a map -> 'b map
+    val foldl : ('a -> int -> 'b -> 'a) -> 'a -> 'b map -> 'a
+    val foldr : (int -> 'a -> 'b -> 'b) -> 'b -> 'a map -> 'b
+    val toList : 'a map -> (int * 'a) list
+    val fromList : (int * 'a) list -> 'a map
+    val size : 'a map -> int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-dom-lt-intset.sml]
+structure BenchDomIntSet : 
+  sig
+    structure B : <sig>
+    structure W : <sig>
+    datatype set
+      = Bin of Word64.word * Word64.word * set * set
+    | Nil
+    | Tip of Word64.word * Word64.word
+    val prefix : int -> Word64.word
+    val bitmap : int -> Word64.word
+    val tip : Word64.word -> ?.word64 -> set
+    val bin : Word64.word -> Word64.word -> set -> set -> set
+    val link : Word64.word -> set -> Word64.word -> set -> set
+    val insertBM : Word64.word -> Word64.word -> set -> set
+    val insert : int -> set -> set
+    val singleton : int -> set
+    val member : int -> set -> bool
+    val union : set -> set -> set
+    val deleteBM : Word64.word -> Word64.word -> set -> set
+    val difference : set -> set -> set
+    val foldr : (int -> 'a -> 'a) -> 'a -> set -> 'a
+    val toList : set -> int list
+    val filter : (int -> bool) -> set -> set
+    val fromList : int list -> set
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-dom-lt-graph.sml]
+structure BenchDomGraph : 
+  sig
+    structure M : <sig>
+    structure S : <sig>
+    type graph = BenchDomIntSet.set BenchDomIntMap.map
+    type rooted = int * graph
+    val get : BenchDomIntSet.set BenchDomIntMap.map
+               -> int -> BenchDomIntSet.set
+    val fromAdj : (int * int list) list
+                   -> BenchDomIntSet.set BenchDomIntMap.map
+    val toAdj : BenchDomIntSet.set BenchDomIntMap.map -> (int * int list) list
+    val pred : BenchDomIntSet.set BenchDomIntMap.map
+                -> BenchDomIntSet.set BenchDomIntMap.map
+    val reachable : (int -> BenchDomIntSet.set) -> int -> BenchDomIntSet.set
+    val prune : int * BenchDomIntSet.set BenchDomIntMap.map
+                 -> int * BenchDomIntSet.set BenchDomIntMap.map
+    val renumber : int
+                    -> BenchDomIntSet.set BenchDomIntMap.map
+                    -> BenchDomIntSet.set BenchDomIntMap.map
+                    * int BenchDomIntMap.map
+    val validate : int * BenchDomIntSet.set BenchDomIntMap.map -> unit
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-dom-lt-kernel.sml]
+functor BenchDomFn(P: sig val checkInitialized : bool end) :
+                  
+                    sig
+                      structure G : <sig>
+                      structure M : <sig>
+                      structure S : <sig>
+                      type iarr
+                      val newI : int -> iarr
+                      val read : iarr -> int -> int
+                      val write : iarr -> int -> int -> unit
+                      type env
+                      type answer
+                      type 'a action
+                      val pure : 'a -> ('a -> 'b -> 'c) -> 'b -> 'c
+                      val bind : 'a action -> ('a -> 'b action) -> 'b action
+                      val gets : ('a -> 'b) -> ('b -> 'a -> 'c) -> 'a -> 'c
+                      val modify : ('a -> 'b)
+                                    -> (unit -> 'b -> 'c) -> 'a -> 'c
+                      val store : ('a -> iarr)
+                                   -> int
+                                   -> int -> (unit -> 'a -> 'b) -> 'a -> 'b
+                      val fetch : ('a -> iarr)
+                                   -> int -> (int -> 'a -> 'b) -> 'a -> 'b
+                      val forEach : 'a list
+                                     -> ('a -> unit action) -> unit action
+                      val range : int
+                                   -> int
+                                   -> (int -> unit action) -> unit action
+                      val backwards : int
+                                       -> int
+                                       -> (int -> unit action) -> unit action
+                      val aLabel : env -> iarr
+                      val aParent : env -> iarr
+                      val aAncestor : env -> iarr
+                      val aChild : env -> iarr
+                      val aNdfs : env -> iarr
+                      val aDfn : env -> iarr
+                      val aSdno : env -> iarr
+                      val aSize : env -> iarr
+                      val aDom : env -> iarr
+                      val aRn : env -> iarr
+                      val withDfs : env -> int -> env
+                      val withBucket : env -> BenchDomGraph.graph -> env
+                      val succs : int -> (int list -> env -> 'a) -> env -> 'a
+                      val preds : int -> (int list -> env -> 'a) -> env -> 'a
+                      val bucket : int -> (int list -> env -> 'a) -> env -> 'a
+                      val next : (int -> env -> 'a) -> env -> 'a
+                      val compress : int -> unit action
+                      val eval : int -> int action
+                      val link : int -> int -> unit action
+                      val dfs : int -> unit action
+                      val fromEnv : ((int * int) list -> env -> answer)
+                                     -> env -> answer
+                      val updatePredecessor : int -> int -> unit action
+                      val assignDominator : int -> int -> unit action
+                      val processReverse : int -> unit action
+                      val processForward : int -> unit action
+                      val idomM : answer action
+                      val initEnv : int
+                                     * BenchDomIntSet.set BenchDomIntMap.map
+                                     -> env
+                      val idom : int * BenchDomIntSet.set BenchDomIntMap.map
+                                  -> answer
+                    end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-dom-lt-reader.sml]
+structure BenchDomReader : 
+  sig
+    datatype value = Integer of int | List of value list | Tuple of value list
+    val parse : string -> value list
+    val integer : value -> int
+    val entry : value -> int * int list
+    val graph : value -> int * BenchDomIntSet.set BenchDomIntMap.map
+    val pair : value -> int * int
+    val parents : value -> (int * int) list
+    val graphs : string -> (int * BenchDomIntSet.set BenchDomIntMap.map) list
+    val results : string -> (int * int) list list
+    val read : string -> TextIO.vector
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-dom-lt-driver.sml]
+functor BenchDomDriverFn(P: sig
+                          val idom : BenchDomGraph.rooted -> (int * int) list
+                          end) :
+                        
+                          sig
+                            structure R : <sig>
+                            val calculate : BenchDomGraph.rooted list
+                                             -> int
+                                             -> (int * int) list list -> int
+                            val run : string list -> string
+                          end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/dom-lt/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Program : <sig>
+    structure Driver : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+RESULT 2183
+PASS dom-lt
+SUMMARY 1 checks, 0 failed

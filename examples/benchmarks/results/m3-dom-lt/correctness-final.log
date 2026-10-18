@@ -1,0 +1,7 @@
+VALIDATION OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/final-dom-lt-parallel.kkzj949t
+PASS dom-lt smoke O2
+PASS dom-lt smoke O0
+FAIL dom-lt smoke hosts
+PASS dom-lt normal O2
+FAIL dom-lt normal hosts
+PASS dom-lt normal O0

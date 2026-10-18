@@ -1,0 +1,27 @@
+benchmark	profile	optimization	configuration	arguments	status	artifact_directory
+dom-lt	normal	O0	rune	ghc-examples.in 400 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/normal/O0/rune
+dom-lt	normal	O0	rune-jit	ghc-examples.in 400 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/normal/O0/rune-jit
+dom-lt	normal	O0	rune-new	ghc-examples.in 400 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/normal/O0/rune-new
+dom-lt	normal	O0	rune-opt	ghc-examples.in 400 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/normal/O0/rune-opt
+dom-lt	normal	O2	rune	ghc-examples.in 400 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/normal/O2/rune
+dom-lt	normal	O2	rune-jit	ghc-examples.in 400 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/normal/O2/rune-jit
+dom-lt	normal	O2	rune-new	ghc-examples.in 400 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/normal/O2/rune-new
+dom-lt	normal	O2	rune-opt	ghc-examples.in 400 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/normal/O2/rune-opt
+dom-lt	normal	host-default	native-mlkit-4.7.23	ghc-examples.in 400 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/normal/host-default/native-mlkit-4.7.23
+dom-lt	normal	host-default	native-mlton-20241230	ghc-examples.in 400 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/normal/host-default/native-mlton-20241230
+dom-lt	normal	host-default	native-polyml-5.9.2	ghc-examples.in 400 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/normal/host-default/native-polyml-5.9.2
+dom-lt	normal	host-default	native-smlnj-dev-2026.2	ghc-examples.in 400 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/normal/host-default/native-smlnj-dev-2026.2
+dom-lt	normal	host-default	native-smlnj-legacy-110.99.9	ghc-examples.in 400 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/normal/host-default/native-smlnj-legacy-110.99.9
+dom-lt	smoke	O0	rune	ghc-examples.in 0 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/smoke/O0/rune
+dom-lt	smoke	O0	rune-jit	ghc-examples.in 0 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/smoke/O0/rune-jit
+dom-lt	smoke	O0	rune-new	ghc-examples.in 0 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/smoke/O0/rune-new
+dom-lt	smoke	O0	rune-opt	ghc-examples.in 0 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/smoke/O0/rune-opt
+dom-lt	smoke	O2	rune	ghc-examples.in 0 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/smoke/O2/rune
+dom-lt	smoke	O2	rune-jit	ghc-examples.in 0 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/smoke/O2/rune-jit
+dom-lt	smoke	O2	rune-new	ghc-examples.in 0 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/smoke/O2/rune-new
+dom-lt	smoke	O2	rune-opt	ghc-examples.in 0 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/smoke/O2/rune-opt
+dom-lt	smoke	host-default	native-mlkit-4.7.23	ghc-examples.in 0 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/smoke/host-default/native-mlkit-4.7.23
+dom-lt	smoke	host-default	native-mlton-20241230	ghc-examples.in 0 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/smoke/host-default/native-mlton-20241230
+dom-lt	smoke	host-default	native-polyml-5.9.2	ghc-examples.in 0 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/smoke/host-default/native-polyml-5.9.2
+dom-lt	smoke	host-default	native-smlnj-dev-2026.2	ghc-examples.in 0 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/smoke/host-default/native-smlnj-dev-2026.2
+dom-lt	smoke	host-default	native-smlnj-legacy-110.99.9	ghc-examples.in 0 expected-parents.txt	pass	results/m3-dom-lt/attempts-raw/final-dom-lt-parallel.kkzj949t/dom-lt/smoke/host-default/native-smlnj-legacy-110.99.9
