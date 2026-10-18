@@ -1,0 +1,7 @@
+[2 of 8] Compiling RU               ( RU.hs, RU.o ) [Source file changed]
+[3 of 8] Compiling RG               ( RG.hs, RG.o ) [Source file changed]
+[4 of 8] Compiling RC               ( RC.hs, RC.o ) [Source file changed]
+[5 of 8] Compiling RA               ( RA.hs, RA.o ) [Source file changed]
+[6 of 8] Compiling Main             ( Main.hs, Main.o ) [RA changed]
+[7 of 8] Compiling Database         ( Database.hs, Database.o )
+[8 of 8] Linking observe-database

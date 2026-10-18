@@ -1,0 +1,2 @@
+# Reviewed original binary32 bit fixtures, retained as text.
+*.reference -whitespace

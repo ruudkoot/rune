@@ -1,0 +1,11 @@
+{
+  "command": [
+    "make",
+    "JOBS=4",
+    "bench-smoke",
+    "check-docs"
+  ],
+  "exit": 0,
+  "elapsed_seconds": 57.20386860999861,
+  "scope": "Final documentation and metadata after full acceptance; kernel and driver unchanged."
+}

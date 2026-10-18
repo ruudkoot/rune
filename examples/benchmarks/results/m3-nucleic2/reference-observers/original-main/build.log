@@ -1,0 +1,7 @@
+[1 of 7] Compiling Types            ( Types.hs, Types.o )
+[2 of 7] Compiling RU               ( RU.hs, RU.o )
+[3 of 7] Compiling RG               ( RG.hs, RG.o )
+[4 of 7] Compiling RC               ( RC.hs, RC.o )
+[5 of 7] Compiling RA               ( RA.hs, RA.o )
+[6 of 7] Compiling Main             ( Main.hs, Main.o )
+[7 of 7] Linking original

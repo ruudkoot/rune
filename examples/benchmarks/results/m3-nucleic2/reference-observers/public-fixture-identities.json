@@ -1,0 +1,6 @@
+{
+  "tests/benchmarks/data/nucleic2/.gitattributes": "22280ba42319cbc4a0862d8f3a18a12d8d1fa49225c352acf558569487607529",
+  "tests/benchmarks/data/nucleic2/FILES": "7346b6e84c9496df93e1172f615f1042920af6260fa3c8a08cadff6e78891a7f",
+  "tests/benchmarks/data/nucleic2/database.reference": "dd904f18a308d9322e014a2ede7345cfa398141c2067f28877daf1360347270f",
+  "tests/benchmarks/data/nucleic2/full.reference": "9229e13b688fd3365d594fae0b9421d5cc419362dc68aef9ec09545f8025b136"
+}

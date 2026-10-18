@@ -1,0 +1,4 @@
+{'name': 'nucleic2-strict', 'exit': 0}
+{'name': 'nucleic2-lazy', 'exit': 0}
+{'name': 'nucleic2-shared-lazy', 'exit': 0}
+{'name': 'nucleic2-shared-strict', 'exit': 0}

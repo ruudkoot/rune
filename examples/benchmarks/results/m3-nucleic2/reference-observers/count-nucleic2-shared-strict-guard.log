@@ -1,0 +1,11 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1437 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:opt,rune:new,rune:jit BENCH_FILTER='=nucleic2-shared-strict' BENCH_LEVEL= BENCH_MODE= BENCH_SAMPLES= BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh count
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.PBP0oM
+BENCH MEASURE nucleic2-shared-strict normal count
+COUNT unbudgeted nucleic2-shared-strict normal rune
+COUNT unbudgeted nucleic2-shared-strict normal rune:opt
+COUNT unbudgeted nucleic2-shared-strict normal rune:new
+COUNT unbudgeted nucleic2-shared-strict normal rune:jit
+COUNT comparisons agree
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.PBP0oM/report.md

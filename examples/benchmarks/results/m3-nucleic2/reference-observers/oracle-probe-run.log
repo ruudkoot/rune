@@ -1,0 +1,4 @@
+PASS on-demand-need 1150 exact conformations 109800 coordinates
+PASS on-demand-strict 1150 exact conformations 109800 coordinates
+PASS shared-need 1150 exact conformations 109800 coordinates
+PASS shared-strict 1150 exact conformations 109800 coordinates

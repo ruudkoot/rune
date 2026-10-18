@@ -1,0 +1,35 @@
+[
+  {
+    "mode": "on-demand",
+    "command": [
+      "ghc",
+      "-O2",
+      "-cpp",
+      "-rtsopts",
+      "-fforce-recomp",
+      "-main-is",
+      "Observe.main",
+      "Observe.hs",
+      "Main.hs",
+      "-o",
+      "observe"
+    ]
+  },
+  {
+    "mode": "shared",
+    "command": [
+      "ghc",
+      "-O2",
+      "-cpp",
+      "-rtsopts",
+      "-fforce-recomp",
+      "-DUSE_HARTEL_LAZINESS",
+      "-main-is",
+      "Observe.main",
+      "Observe.hs",
+      "Main.hs",
+      "-o",
+      "observe"
+    ]
+  }
+]

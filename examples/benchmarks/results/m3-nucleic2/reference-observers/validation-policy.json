@@ -1,0 +1,14 @@
+{
+  "created_before_full_coordinate_comparison": "2026-10-18T19:12:13.489842+00:00",
+  "absolute_coordinate_tolerance": 0.0001,
+  "relative_coordinate_tolerance": 1e-06,
+  "maximum_relative_tolerance": 1e-06,
+  "mandatory_exact_checks": [
+    "solution count 50",
+    "solution order",
+    "variable identifiers and order",
+    "atom counts and order",
+    "finite binary32 values"
+  ],
+  "rationale": "Engineering validation budget: one unit of the four-decimal input coordinate resolution plus the existing classic Pseudoknot relative budget. This is not a proved accumulated-roundoff bound or a physical-model proof. Full original GHC coordinates and perturbed-result rejection are required."
+}

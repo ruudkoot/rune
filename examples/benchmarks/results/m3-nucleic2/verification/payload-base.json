@@ -1,0 +1,7 @@
+{
+  "exit": 0,
+  "files": 2488,
+  "bytes": 91248171,
+  "chunks": 2,
+  "policy": "unchanged scan-staged-fast.py rules, bounded 64 MiB per batch; every staged added/modified file covered exactly once"
+}

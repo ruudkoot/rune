@@ -1,0 +1,4 @@
+RESULT 3
+PASS nucleic2-shared-strict
+SAMPLE 1 3.740232000
+SUMMARY 1 checks, 0 failed

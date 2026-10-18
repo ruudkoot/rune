@@ -1,0 +1,20 @@
+ M docs/plans/benchmarks.md
+ M examples/benchmarks/README.md
+ M examples/benchmarks/audit.md
+ M examples/benchmarks/inventory.tsv
+ M examples/benchmarks/manifest.tsv
+ M examples/benchmarks/source-variants.tsv
+ M scripts/benchmark-inventory.py
+ M tests/benchmarks/test-inventory.py
+?? examples/benchmarks/nucleic2-lazy/
+?? examples/benchmarks/nucleic2-shared-lazy/
+?? examples/benchmarks/nucleic2-shared-strict/
+?? examples/benchmarks/nucleic2-strict/
+?? examples/benchmarks/shared/nucleic2-check.sml
+?? examples/benchmarks/shared/nucleic2-kernel.sml
+?? examples/benchmarks/validation/nucleic2-host-results.md
+?? tests/benchmarks/check-nucleic2.sh
+?? tests/benchmarks/data/nucleic2/
+?? tests/benchmarks/nucleic2-oracle.sml
+?? tests/benchmarks/nucleic2-precision.sml
+?? tests/benchmarks/nucleic2-tests.sml

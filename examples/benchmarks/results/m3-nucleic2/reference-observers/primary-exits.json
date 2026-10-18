@@ -1,0 +1,30 @@
+[
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "configs": "rune,rune:new,rune:jit,rune:opt",
+    "exit": 2,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nucleic2-originals/primary-O0-smoke.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "configs": "rune,rune:new,rune:jit,rune:opt",
+    "exit": 0,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nucleic2-originals/primary-O0-normal.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "configs": "rune,rune:new,rune:jit,rune:opt,hosts",
+    "exit": 2,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nucleic2-originals/primary-O2-smoke.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "configs": "rune,rune:new,rune:jit,rune:opt,hosts",
+    "exit": 2,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nucleic2-originals/primary-O2-normal.log"
+  }
+]

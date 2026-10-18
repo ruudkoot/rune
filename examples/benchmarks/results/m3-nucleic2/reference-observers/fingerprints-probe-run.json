@@ -1,0 +1,27 @@
+{
+  "command": [
+    "timeout",
+    "600",
+    "bin/runevm",
+    "tests/out/benchmarks/nucleic2-originals/fingerprints-probe.rbc"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 44740,
+  "observed_minimum_available_kib": 23534916,
+  "peak_processes": [
+    {
+      "pid": 3,
+      "name": "timeout",
+      "rss_kib": 1796
+    },
+    {
+      "pid": 4,
+      "name": "runevm",
+      "rss_kib": 42944
+    }
+  ],
+  "elapsed_seconds": 20.350981187999423
+}

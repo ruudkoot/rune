@@ -1,0 +1,4 @@
+PASS source smoke repetitions
+PASS source nonpositive repetition no-op
+PASS perturbed maximum rejected
+PASS nonfinite maximum rejected

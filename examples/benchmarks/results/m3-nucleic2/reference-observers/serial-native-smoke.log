@@ -1,0 +1,10 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1437 profiles)
+BENCH_PROFILE=smoke BENCH_CONFIGS=native:mlton,native:smlnj-legacy,native:polyml BENCH_FILTER='nucleic2-' BENCH_LEVEL= BENCH_MODE=fresh BENCH_SAMPLES=1 BENCH_REPETITIONS= sh scripts/measure-benchmarks.sh time
+BENCH MEASUREMENT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.0hgvmJ
+BENCH MEASURE nucleic2-lazy smoke time
+BENCH MEASURE nucleic2-strict smoke time
+BENCH MEASURE nucleic2-shared-lazy smoke time
+BENCH MEASURE nucleic2-shared-strict smoke time
+BENCH REPORT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.0hgvmJ/report.md
+make: *** [Makefile:1010: bench] Error 1

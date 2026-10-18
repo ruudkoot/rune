@@ -1,0 +1,148 @@
+{
+  "primary_combinations": 112,
+  "primary_pass": 98,
+  "primary_failures": [
+    [
+      "nucleic2-lazy",
+      "smoke",
+      "O2",
+      "host-default",
+      "native:mlkit@4.7.23",
+      "compile-failure-unclassified",
+      "results/m3-nucleic2/correctness/initial-profile-gates/O2/smoke/nucleic2-lazy/native-mlkit-4.7.23"
+    ],
+    [
+      "nucleic2-lazy",
+      "smoke",
+      "O2",
+      "host-default",
+      "native:smlnj-dev@2026.2",
+      "timeout-phase-unclassified",
+      "results/m3-nucleic2/correctness/initial-profile-gates/O2/smoke/nucleic2-lazy/native-smlnj-dev-2026.2"
+    ],
+    [
+      "nucleic2-lazy",
+      "smoke",
+      "O2",
+      "host-default",
+      "native:smlnj-legacy@110.99.9",
+      "runtime-failure",
+      "results/m3-nucleic2/correctness/initial-profile-gates/O2/smoke/nucleic2-lazy/native-smlnj-legacy-110.99.9"
+    ],
+    [
+      "nucleic2-shared-lazy",
+      "smoke",
+      "O2",
+      "host-default",
+      "native:mlkit@4.7.23",
+      "compile-failure-unclassified",
+      "results/m3-nucleic2/correctness/initial-profile-gates/O2/smoke/nucleic2-shared-lazy/native-mlkit-4.7.23"
+    ],
+    [
+      "nucleic2-shared-lazy",
+      "smoke",
+      "O2",
+      "host-default",
+      "native:smlnj-dev@2026.2",
+      "timeout-phase-unclassified",
+      "results/m3-nucleic2/correctness/initial-profile-gates/O2/smoke/nucleic2-shared-lazy/native-smlnj-dev-2026.2"
+    ],
+    [
+      "nucleic2-shared-lazy",
+      "smoke",
+      "O2",
+      "host-default",
+      "native:smlnj-legacy@110.99.9",
+      "runtime-failure",
+      "results/m3-nucleic2/correctness/initial-profile-gates/O2/smoke/nucleic2-shared-lazy/native-smlnj-legacy-110.99.9"
+    ],
+    [
+      "nucleic2-shared-strict",
+      "smoke",
+      "O2",
+      "host-default",
+      "native:smlnj-dev@2026.2",
+      "memory-limit-phase-unclassified",
+      "results/m3-nucleic2/correctness/initial-profile-gates/O2/smoke/nucleic2-shared-strict/native-smlnj-dev-2026.2"
+    ],
+    [
+      "nucleic2-shared-strict",
+      "smoke",
+      "O2",
+      "host-default",
+      "native:smlnj-legacy@110.99.9",
+      "runtime-failure",
+      "results/m3-nucleic2/correctness/initial-profile-gates/O2/smoke/nucleic2-shared-strict/native-smlnj-legacy-110.99.9"
+    ],
+    [
+      "nucleic2-strict",
+      "smoke",
+      "O2",
+      "host-default",
+      "native:smlnj-dev@2026.2",
+      "timeout-phase-unclassified",
+      "results/m3-nucleic2/correctness/initial-profile-gates/O2/smoke/nucleic2-strict/native-smlnj-dev-2026.2"
+    ],
+    [
+      "nucleic2-strict",
+      "smoke",
+      "O2",
+      "host-default",
+      "native:smlnj-legacy@110.99.9",
+      "runtime-failure",
+      "results/m3-nucleic2/correctness/initial-profile-gates/O2/smoke/nucleic2-strict/native-smlnj-legacy-110.99.9"
+    ],
+    [
+      "nucleic2-lazy",
+      "normal",
+      "O2",
+      "host-default",
+      "native:smlnj-legacy@110.99.9",
+      "runtime-failure",
+      "results/m3-nucleic2/correctness/initial-profile-gates/O2/normal/nucleic2-lazy/native-smlnj-legacy-110.99.9"
+    ],
+    [
+      "nucleic2-shared-lazy",
+      "normal",
+      "O2",
+      "host-default",
+      "native:smlnj-legacy@110.99.9",
+      "runtime-failure",
+      "results/m3-nucleic2/correctness/initial-profile-gates/O2/normal/nucleic2-shared-lazy/native-smlnj-legacy-110.99.9"
+    ],
+    [
+      "nucleic2-shared-strict",
+      "normal",
+      "O2",
+      "host-default",
+      "native:smlnj-legacy@110.99.9",
+      "runtime-failure",
+      "results/m3-nucleic2/correctness/initial-profile-gates/O2/normal/nucleic2-shared-strict/native-smlnj-legacy-110.99.9"
+    ],
+    [
+      "nucleic2-strict",
+      "normal",
+      "O2",
+      "host-default",
+      "native:smlnj-legacy@110.99.9",
+      "runtime-failure",
+      "results/m3-nucleic2/correctness/initial-profile-gates/O2/normal/nucleic2-strict/native-smlnj-legacy-110.99.9"
+    ]
+  ],
+  "all_attempts": 116,
+  "semantic_groups": 14,
+  "semantic_pass": 61061,
+  "semantic_fail": 65,
+  "semantic_complete": 12,
+  "normal_count_samples": 16,
+  "fresh_adapter_samples": 8,
+  "acceptance": {
+    "command": [
+      "make",
+      "JOBS=4",
+      "check"
+    ],
+    "exit": 0,
+    "elapsed_seconds": 2047.232637166977
+  }
+}

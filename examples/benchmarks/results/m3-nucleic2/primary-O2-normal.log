@@ -1,0 +1,209 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1437 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:new,rune:jit,rune:opt,hosts BENCH_FILTER='nucleic2-' sh scripts/run-benchmarks.sh
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.6xODao
+BENCH nucleic2-lazy normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+FAIL nucleic2-lazy -- domain error
+SUMMARY 1 checks, 1 failed
+PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 0, exit 1)
+FAIL nucleic2-lazy -- domain error
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+RESULT 25
+PASS nucleic2-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23
+BENCH nucleic2-strict normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+FAIL nucleic2-strict -- domain error
+SUMMARY 1 checks, 1 failed
+PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 0, exit 1)
+FAIL nucleic2-strict -- domain error
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+RESULT 25
+PASS nucleic2-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23
+BENCH nucleic2-shared-lazy normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-shared-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-shared-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-shared-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-shared-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-shared-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+FAIL nucleic2-shared-lazy -- domain error
+SUMMARY 1 checks, 1 failed
+PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 0, exit 1)
+FAIL nucleic2-shared-lazy -- domain error
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-shared-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-shared-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+RESULT 25
+PASS nucleic2-shared-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-shared-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23
+BENCH nucleic2-shared-strict normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-shared-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-shared-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-shared-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-shared-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-shared-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlton@20241230
+PROGRAM LIMIT AS 4194304 KiB
+FAIL nucleic2-shared-strict -- domain error
+SUMMARY 1 checks, 1 failed
+PROGRAM FAIL native:smlnj-legacy@110.99.9 (load 0, exit 1)
+FAIL nucleic2-shared-strict -- domain error
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-shared-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj32@110.99.9
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-shared-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:smlnj-dev@2026.2
+PROGRAM LIMIT DATA 4194304 KiB; ML heap 2048 MiB
+RESULT 25
+PASS nucleic2-shared-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:polyml@5.9.2
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-shared-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS native:mlkit@4.7.23
+make: *** [Makefile:987: bench-check] Error 1

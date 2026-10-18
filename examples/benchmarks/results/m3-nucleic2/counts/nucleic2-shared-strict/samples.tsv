@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+nucleic2-shared-strict	normal	rune	O2	compile	0	0	pass	13.16	9.64	0.99	336120	-	-	-	nucleic2-shared-strict/rune/build/compile
+nucleic2-shared-strict	normal	rune	O2	correctness	0	0	pass	341.27	318.74	0.83	12508	42891351171	3005455744	42311608	nucleic2-shared-strict/rune/correctness.0
+nucleic2-shared-strict	normal	rune	O2	count	1	1	pass	287.55	285.59	0.16	12456	42891351171	3005455744	42311608	nucleic2-shared-strict/rune/fresh.1
+nucleic2-shared-strict	normal	rune:opt	O2	compile	0	0	pass	7.77	7.58	0.62	336412	-	-	-	nucleic2-shared-strict/rune-opt/build/compile
+nucleic2-shared-strict	normal	rune:opt	O2	native-compile	0	0	pass	1.57	1.40	0.16	50416	-	-	-	nucleic2-shared-strict/rune-opt/build/native-compile
+nucleic2-shared-strict	normal	rune:opt	O2	correctness	0	0	pass	136.57	136.28	0.15	16156	42891351171	3005455744	42311608	nucleic2-shared-strict/rune-opt/correctness.0
+nucleic2-shared-strict	normal	rune:opt	O2	count	1	1	pass	139.44	139.75	0.03	16100	42891351171	3005455744	42311608	nucleic2-shared-strict/rune-opt/fresh.1
+nucleic2-shared-strict	normal	rune:new	O2	compile	0	0	pass	7.05	7.15	0.45	368820	-	-	-	nucleic2-shared-strict/rune-new/build/compile
+nucleic2-shared-strict	normal	rune:new	O2	correctness	0	0	pass	295.60	293.56	0.17	21176	26681098137	3005455744	42311608	nucleic2-shared-strict/rune-new/correctness.0
+nucleic2-shared-strict	normal	rune:new	O2	count	1	1	pass	213.77	214.22	0.06	21084	26681098137	3005455744	42311608	nucleic2-shared-strict/rune-new/fresh.1
+nucleic2-shared-strict	normal	rune:jit	O2	compile	0	0	pass	5.54	5.36	0.48	368592	-	-	-	nucleic2-shared-strict/rune-jit/build/compile
+nucleic2-shared-strict	normal	rune:jit	O2	correctness	0	0	pass	91.21	90.56	0.06	29148	26681098137	3005455744	42311608	nucleic2-shared-strict/rune-jit/correctness.0
+nucleic2-shared-strict	normal	rune:jit	O2	count	1	1	pass	89.61	88.85	0.03	29212	26681098137	3005455744	42311608	nucleic2-shared-strict/rune-jit/fresh.1
+	normal	rune:jit	O2	count-check	0	0	pass	0	0	0	0	-	-	-	count-check

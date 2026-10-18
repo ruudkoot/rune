@@ -1,0 +1,8 @@
+[1 of 8] Compiling Types            ( Types.hs, Types.o )
+[2 of 8] Compiling RU               ( RU.hs, RU.o )
+[3 of 8] Compiling RG               ( RG.hs, RG.o )
+[4 of 8] Compiling RC               ( RC.hs, RC.o )
+[5 of 8] Compiling RA               ( RA.hs, RA.o )
+[6 of 8] Compiling Main             ( Main.hs, Main.o )
+[7 of 8] Compiling Fingerprints     ( Fingerprints.hs, Fingerprints.o )
+[8 of 8] Linking observe-fingerprints

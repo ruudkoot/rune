@@ -11,6 +11,8 @@ evaluation set ([latency-ring](#latency-ring), [latency-map](#latency-map),
 [latency-static-map](#latency-static-map)): their manifest rows name `rune`
 as the upstream and the program's own file as its source, and they have no
 inventory entry.
+M3 kernel coverage is [complete with recorded host exceptions](results/m3-nucleic2/README.md);
+M4 applications and M8 coverage closure remain unfinished.
 
 | Name | Source | Description |
 |---|---|---|
@@ -508,6 +510,10 @@ inventory entry.
 | [simple-nofib-report-strict](#simple-nofib-report-strict) | [nofib SIMPLE](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/simple) | Advance immutable hydrodynamic arrays with complete state reporting and strict finite cells. |
 | [happy-lazy](#happy-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/happy) | Generate and validate complete Haskell LALR parser source with memoized finite data. |
 | [happy-strict](#happy-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/happy) | Generate and validate complete Haskell LALR parser source with eager finite data. |
+| [nucleic2-lazy](#nucleic2-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/nucleic2) | Search the binary32 Pseudoknot problem with on-demand coordinates and memoized finite data. |
+| [nucleic2-strict](#nucleic2-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/nucleic2) | Search the binary32 Pseudoknot problem with on-demand coordinates and eager finite data. |
+| [nucleic2-shared-lazy](#nucleic2-shared-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/nucleic2) | Search the binary32 Pseudoknot problem with shared placed coordinates and memoized finite data. |
+| [nucleic2-shared-strict](#nucleic2-shared-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/nucleic2) | Search the binary32 Pseudoknot problem with shared placed coordinates and eager finite data. |
 
 ## Running and interpreting checks
 
@@ -34472,3 +34478,31 @@ literature. The normal profile generates the unchanged upstream grammar.
 See the [complete provenance and workload description](happy-strict/PROVENANCE.md)
 for the algorithm, historical variants, translation, profiles, validation and
 literature. The normal profile generates the unchanged upstream grammar.
+
+
+## nucleic2-lazy
+
+See the [complete provenance](nucleic2-lazy/PROVENANCE.md) for the molecular search,
+source variants, binary32 semantics, demand/sharing policy, fixed profiles,
+independent result checks and literature.
+
+
+## nucleic2-strict
+
+See the [complete provenance](nucleic2-strict/PROVENANCE.md) for the molecular search,
+source variants, binary32 semantics, demand/sharing policy, fixed profiles,
+independent result checks and literature.
+
+
+## nucleic2-shared-lazy
+
+See the [complete provenance](nucleic2-shared-lazy/PROVENANCE.md) for the molecular search,
+source variants, binary32 semantics, demand/sharing policy, fixed profiles,
+independent result checks and literature.
+
+
+## nucleic2-shared-strict
+
+See the [complete provenance](nucleic2-shared-strict/PROVENANCE.md) for the molecular search,
+source variants, binary32 semantics, demand/sharing policy, fixed profiles,
+independent result checks and literature.

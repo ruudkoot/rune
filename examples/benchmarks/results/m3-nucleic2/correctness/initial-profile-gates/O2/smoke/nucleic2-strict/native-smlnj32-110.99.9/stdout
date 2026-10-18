@@ -1,0 +1,448 @@
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml:19.32 Warning: calling polyEqual
+functor BenchIdaFiniteFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a seq
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t * 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val defer : (unit -> 'a D.t) -> 'a D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val nth : 'a <BaseFct>.<resultStr>.node D.t -> int -> 'a
+  val update :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val unify :
+      ''a <BaseFct>.<resultStr>.node D.t
+       -> ''a -> ''a <BaseFct>.<resultStr>.node D.t
+  val foldl :
+      ('a D.t -> 'b -> 'a D.t)
+       -> 'a D.t -> 'b <BaseFct>.<resultStr>.node D.t -> 'a D.t
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val filter :
+      ('a -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val length : 'a <BaseFct>.<resultStr>.node D.t -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/finite-binary32.sml]
+[autoloading]
+[autoloading done]
+structure BenchMandelSingle : sig
+  val round : real -> real
+  val add : real * real -> real
+  val sub : real * real -> real
+  val mul : real * real -> real
+  val divide : real * real -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nucleic2-kernel.sml]
+[autoloading]
+[autoloading done]
+functor BenchNucleic2Fn(<param>: sig
+  structure D : <sig>
+  val shared : bool
+end) :
+sig
+  structure L : <sig>
+  structure F : <sig>
+  structure R : <sig>
+  type scalar
+  type pointNode
+  type pt
+  type transformNode
+  type tfo
+  type specificNode
+  type specific
+  type nucleotideNode
+  type nuc
+  val scalar : real -> real t
+  val real : 'a t -> 'a
+  val pt_sub :
+      <BaseFct>.<resultStr>.pointNode t
+       -> <BaseFct>.<resultStr>.pointNode t
+       -> <BaseFct>.<resultStr>.pointNode t
+  val pt_dist :
+      <BaseFct>.<resultStr>.pointNode t
+       -> <BaseFct>.<resultStr>.pointNode t -> real t
+  val pt_phi : <BaseFct>.<resultStr>.pointNode t -> real t
+  val pt_theta : <BaseFct>.<resultStr>.pointNode t -> real t
+  val tfo_apply :
+      <BaseFct>.<resultStr>.transformNode t
+       -> <BaseFct>.<resultStr>.pointNode t
+       -> <BaseFct>.<resultStr>.pointNode t
+  val tfo_combine :
+      <BaseFct>.<resultStr>.transformNode t
+       -> <BaseFct>.<resultStr>.transformNode t
+       -> <BaseFct>.<resultStr>.transformNode t
+  val tfo_inv_ortho :
+      <BaseFct>.<resultStr>.transformNode t
+       -> <BaseFct>.<resultStr>.transformNode t
+  val tfo_align :
+      <BaseFct>.<resultStr>.pointNode t
+       -> <BaseFct>.<resultStr>.pointNode t
+       -> <BaseFct>.<resultStr>.pointNode t
+       -> <BaseFct>.<resultStr>.transformNode t
+  val rA : <BaseFct>.<resultStr>.nucleotideNode t
+  val rA01 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rA02 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rA03 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rA04 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rA05 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rA06 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rA07 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rA08 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rA09 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rA10 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rC : <BaseFct>.<resultStr>.nucleotideNode t
+  val rC01 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rC02 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rC03 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rC04 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rC05 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rC06 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rC07 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rC08 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rC09 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rC10 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rG : <BaseFct>.<resultStr>.nucleotideNode t
+  val rG01 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rG02 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rG03 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rG04 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rG05 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rG06 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rG07 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rG08 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rG09 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rG10 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rGPrime : <BaseFct>.<resultStr>.nucleotideNode t
+  val rU : <BaseFct>.<resultStr>.nucleotideNode t
+  val rU01 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rU02 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rU03 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rU04 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rU05 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rU06 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rU07 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rU08 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rU09 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rU10 : <BaseFct>.<resultStr>.nucleotideNode t
+  val rUPrime : <BaseFct>.<resultStr>.nucleotideNode t
+  val rAs :
+      <BaseFct>.<resultStr>.nucleotideNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+  val rCs :
+      <BaseFct>.<resultStr>.nucleotideNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+  val rGs :
+      <BaseFct>.<resultStr>.nucleotideNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+  val rUs :
+      <BaseFct>.<resultStr>.nucleotideNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+  val nuc_C1XXX :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> <BaseFct>.<resultStr>.pointNode t
+  val nuc_C2 :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> <BaseFct>.<resultStr>.pointNode t
+  val nuc_C3XXX :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> <BaseFct>.<resultStr>.pointNode t
+  val nuc_C4 :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> <BaseFct>.<resultStr>.pointNode t
+  val nuc_C4XXX :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> <BaseFct>.<resultStr>.pointNode t
+  val nuc_N1 :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> <BaseFct>.<resultStr>.pointNode t
+  val nuc_O3XXX :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> <BaseFct>.<resultStr>.pointNode t
+  val nuc_P :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> <BaseFct>.<resultStr>.pointNode t
+  val nuc_dgf_base_tfo :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> <BaseFct>.<resultStr>.transformNode t
+  val nuc_p_o3XXX_180_tfo :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> <BaseFct>.<resultStr>.transformNode t
+  val nuc_p_o3XXX_275_tfo :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> <BaseFct>.<resultStr>.transformNode t
+  val nuc_p_o3XXX_60_tfo :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> <BaseFct>.<resultStr>.transformNode t
+  val is_A : <BaseFct>.<resultStr>.nucleotideNode t -> bool
+  val is_C : <BaseFct>.<resultStr>.nucleotideNode t -> bool
+  val is_G : <BaseFct>.<resultStr>.nucleotideNode t -> bool
+  val rA_N9 :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> <BaseFct>.<resultStr>.pointNode t
+  val rG_N9 :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> <BaseFct>.<resultStr>.pointNode t
+  val make_relative_nuc :
+      <BaseFct>.<resultStr>.transformNode t
+       -> <BaseFct>.<resultStr>.nucleotideNode t
+       -> <BaseFct>.<resultStr>.nucleotideNode t
+  val tfo_id : <BaseFct>.<resultStr>.transformNode t
+  val wc_tfo : <BaseFct>.<resultStr>.transformNode t
+  val wc_dumas_tfo : <BaseFct>.<resultStr>.transformNode t
+  val helix5XXX_tfo : <BaseFct>.<resultStr>.transformNode t
+  val helix3XXX_tfo : <BaseFct>.<resultStr>.transformNode t
+  val g37_a38_tfo : <BaseFct>.<resultStr>.transformNode t
+  val a38_g37_tfo : <BaseFct>.<resultStr>.transformNode t
+  type variableNode
+  type variable
+  type partial
+  val mk_var :
+      int
+       -> <BaseFct>.<resultStr>.transformNode t
+       -> <BaseFct>.<resultStr>.nucleotideNode t
+       -> <BaseFct>.<resultStr>.variableNode t
+  val absolute_pos :
+      <BaseFct>.<resultStr>.variableNode t
+       -> <BaseFct>.<resultStr>.pointNode t
+       -> <BaseFct>.<resultStr>.pointNode t
+  val atom_pos :
+      (<BaseFct>.<resultStr>.nuc -> <BaseFct>.<resultStr>.pointNode t)
+       -> <BaseFct>.<resultStr>.variableNode t
+       -> <BaseFct>.<resultStr>.pointNode t
+  val get_var :
+      int
+       -> <BaseFct>.<resultStr>.variableNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+       -> <BaseFct>.<resultStr>.variableNode t
+  val search :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node t
+       -> ('a <BaseFct>.<resultStr>.F.<returnStr>.node t
+            -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+       -> ('a t -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node t -> bool)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+  val dgf_base :
+      <BaseFct>.<resultStr>.transformNode t
+       -> <BaseFct>.<resultStr>.variableNode t
+       -> <BaseFct>.<resultStr>.nucleotideNode t
+       -> <BaseFct>.<resultStr>.transformNode t
+  val reference :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> int
+       -> 'a
+       -> <BaseFct>.<resultStr>.variableNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+  val wc :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> int
+       -> int
+       -> <BaseFct>.<resultStr>.variableNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+       -> <BaseFct>.<resultStr>.variableNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+  val wc_dumas :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> int
+       -> int
+       -> <BaseFct>.<resultStr>.variableNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+       -> <BaseFct>.<resultStr>.variableNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+  val helix5XXX :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> int
+       -> int
+       -> <BaseFct>.<resultStr>.variableNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+       -> <BaseFct>.<resultStr>.variableNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+  val helix3XXX :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> int
+       -> int
+       -> <BaseFct>.<resultStr>.variableNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+       -> <BaseFct>.<resultStr>.variableNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+  val g37_a38 :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> int
+       -> int
+       -> <BaseFct>.<resultStr>.variableNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+       -> <BaseFct>.<resultStr>.variableNode t
+  val a38_g37 :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> int
+       -> int
+       -> <BaseFct>.<resultStr>.variableNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+       -> <BaseFct>.<resultStr>.variableNode t
+  val stacked5XXX :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> int
+       -> int
+       -> <BaseFct>.<resultStr>.variableNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+       -> <BaseFct>.<resultStr>.variableNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+  val stacked3XXX :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> int
+       -> int
+       -> <BaseFct>.<resultStr>.variableNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+       -> <BaseFct>.<resultStr>.variableNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+  val p_o3XXX :
+      <BaseFct>.<resultStr>.nucleotideNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+       -> int
+       -> int
+       -> <BaseFct>.<resultStr>.variableNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+       -> <BaseFct>.<resultStr>.variableNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+  val anticodon_constraint :
+      <BaseFct>.<resultStr>.variableNode t
+       -> <BaseFct>.<resultStr>.variableNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+       -> bool
+  val pseudoknot_constraint :
+      <BaseFct>.<resultStr>.variableNode t
+       -> <BaseFct>.<resultStr>.variableNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+       -> bool
+  val anticodon_domains :
+      (<BaseFct>.<resultStr>.variableNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node t
+            -> <BaseFct>.<resultStr>.variableNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+  val anticodon :
+      'a
+       -> <BaseFct>.<resultStr>.variableNode 
+             <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+  val pseudoknot_domains :
+      (<BaseFct>.<resultStr>.variableNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node t
+            -> <BaseFct>.<resultStr>.variableNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+  val pseudoknot :
+      string
+       -> <BaseFct>.<resultStr>.variableNode 
+             <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+  val list_of_common_atoms :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> <BaseFct>.<resultStr>.pointNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+  val list_of_specific_atoms :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> <BaseFct>.<resultStr>.pointNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+  val list_of_atoms :
+      <BaseFct>.<resultStr>.nucleotideNode t
+       -> <BaseFct>.<resultStr>.pointNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+  val mapCells :
+      ('a t -> 'b t)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node t
+       -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node t
+  val maximum : real <BaseFct>.<resultStr>.F.<returnStr>.seq -> real t
+  val var_most_distant_atom : <BaseFct>.<resultStr>.variableNode t -> real t
+  val sol_most_distant_atom :
+      <BaseFct>.<resultStr>.variableNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+       -> real t
+  val most_distant_atom :
+      <BaseFct>.<resultStr>.variableNode 
+             <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node t
+       -> real t
+  val compute : string -> real
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nucleic2-check.sml]
+functor BenchNucleic2CheckFn(K: sig
+  val compute : string -> real
+end) :
+sig
+  val reference : real
+  val relative : real
+  val valid : real -> bool
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/nucleic2-strict/benchmark.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Check : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+[autoloading]
+[autoloading done]
+RESULT 3
+PASS nucleic2-strict
+SUMMARY 1 checks, 0 failed

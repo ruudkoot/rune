@@ -1,0 +1,1 @@
+nucleic2-shared-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/hartel-ida-finite.sml shared/finite-binary32.sml shared/nucleic2-kernel.sml shared/nucleic2-check.sml nucleic2-shared-lazy/benchmark.sml shared/main.sml	25	nucleic2-shared-lazy/normal.expected	-

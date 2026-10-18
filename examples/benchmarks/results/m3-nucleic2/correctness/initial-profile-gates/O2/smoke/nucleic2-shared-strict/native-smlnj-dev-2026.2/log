@@ -1,0 +1,5 @@
+/home/ruud/.local/rune-hosts/smlnj-dev/bin/sml: Error -- unable to map 95944704 bytes, errno = 12
+/home/ruud/.local/rune-hosts/smlnj-dev/bin/sml: Error -- unable to allocate to-space for generation 5; trying smaller size
+/home/ruud/.local/rune-hosts/smlnj-dev/bin/sml: Error -- unable to map 95944704 bytes, errno = 12
+/home/ruud/.local/rune-hosts/smlnj-dev/bin/sml: Fatal error -- unable to allocate minimum size
+

@@ -1,0 +1,14 @@
+[
+  {
+    "mode": "on-demand",
+    "exit": 0,
+    "solutions": 50,
+    "bytes": 1902747
+  },
+  {
+    "mode": "shared",
+    "exit": 0,
+    "solutions": 50,
+    "bytes": 1902747
+  }
+]

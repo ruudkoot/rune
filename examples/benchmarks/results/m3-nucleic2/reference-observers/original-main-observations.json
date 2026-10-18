@@ -1,0 +1,50 @@
+{
+  "build_command": [
+    "ghc",
+    "-O2",
+    "-cpp",
+    "-rtsopts",
+    "-fforce-recomp",
+    "Main.hs",
+    "-o",
+    "original"
+  ],
+  "observations": [
+    {
+      "repetitions": 0,
+      "exit": 0,
+      "stdout_bytes": 0,
+      "stderr_bytes": 0,
+      "elapsed_seconds": 0.012240409851074219
+    },
+    {
+      "repetitions": -1,
+      "exit": 0,
+      "stdout_bytes": 0,
+      "stderr_bytes": 0,
+      "elapsed_seconds": 0.012109041213989258
+    },
+    {
+      "repetitions": 3,
+      "exit": 0,
+      "stdout_bytes": 0,
+      "stderr_bytes": 0,
+      "elapsed_seconds": 0.11238718032836914
+    },
+    {
+      "repetitions": 25,
+      "exit": 0,
+      "stdout_bytes": 0,
+      "stderr_bytes": 0,
+      "elapsed_seconds": 0.8226726055145264
+    },
+    {
+      "repetitions": 125,
+      "exit": 0,
+      "stdout_bytes": 0,
+      "stderr_bytes": 0,
+      "elapsed_seconds": 6.437221527099609
+    }
+  ],
+  "measurement_scope": "concurrent correctness reference; not a headline timing comparison"
+}

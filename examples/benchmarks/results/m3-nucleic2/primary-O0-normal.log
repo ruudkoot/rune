@@ -1,0 +1,88 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1437 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:new,rune:jit,rune:opt BENCH_FILTER='nucleic2-' sh scripts/run-benchmarks.sh
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.wfq70H
+BENCH nucleic2-lazy normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt
+BENCH nucleic2-strict normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt
+BENCH nucleic2-shared-lazy normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-shared-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-shared-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-shared-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-shared-lazy
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt
+BENCH nucleic2-shared-strict normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-shared-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-shared-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-shared-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 25
+PASS nucleic2-shared-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt

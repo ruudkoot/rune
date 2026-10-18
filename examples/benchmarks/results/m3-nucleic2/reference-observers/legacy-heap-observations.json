@@ -1,0 +1,32 @@
+[
+  {
+    "heap": "128k",
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml",
+      "@SMLalloc=128k",
+      "@SMLload=/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.0hgvmJ/nucleic2-lazy/native-smlnj-legacy/build/prog"
+    ],
+    "exit": 1,
+    "output": "FAIL nucleic2-lazy -- domain error\nSUMMARY 1 checks, 1 failed\n"
+  },
+  {
+    "heap": "1m",
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml",
+      "@SMLalloc=1m",
+      "@SMLload=/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.0hgvmJ/nucleic2-lazy/native-smlnj-legacy/build/prog"
+    ],
+    "exit": 1,
+    "output": "FAIL nucleic2-lazy -- domain error\nSUMMARY 1 checks, 1 failed\n"
+  },
+  {
+    "heap": "128m",
+    "command": [
+      "/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml",
+      "@SMLalloc=128m",
+      "@SMLload=/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.0hgvmJ/nucleic2-lazy/native-smlnj-legacy/build/prog"
+    ],
+    "exit": 1,
+    "output": "FAIL nucleic2-lazy -- Fail: incorrect result: nucleic2 maximum atom distance\nSUMMARY 1 checks, 1 failed\n"
+  }
+]

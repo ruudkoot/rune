@@ -1,0 +1,5 @@
+on-demand evaluations 16 5 5
+shared evaluations 18 3 3
+PASS shared coordinates avoid repeated transformation demands
+PASS shared placement skips unused atom coordinates
+PASS poison atom is detected when demanded

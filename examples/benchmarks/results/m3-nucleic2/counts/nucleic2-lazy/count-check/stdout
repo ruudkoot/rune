@@ -1,0 +1,5 @@
+COUNT unbudgeted nucleic2-lazy normal rune
+COUNT unbudgeted nucleic2-lazy normal rune:opt
+COUNT unbudgeted nucleic2-lazy normal rune:new
+COUNT unbudgeted nucleic2-lazy normal rune:jit
+COUNT comparisons agree

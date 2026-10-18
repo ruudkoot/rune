@@ -1,0 +1,27 @@
+{
+  "command": [
+    "timeout",
+    "600",
+    "/home/ruud/rune/.worktrees/benchmarks/bin/runevm",
+    "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nucleic2-originals/public-tests.rbc"
+  ],
+  "exit": 1,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 45852,
+  "observed_minimum_available_kib": 25371528,
+  "peak_processes": [
+    {
+      "pid": 5,
+      "name": "timeout",
+      "rss_kib": 1852
+    },
+    {
+      "pid": 6,
+      "name": "runevm",
+      "rss_kib": 44000
+    }
+  ],
+  "elapsed_seconds": 37.19069639299414
+}

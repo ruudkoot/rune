@@ -1,0 +1,10 @@
+{
+  "benchmark": "nucleic2-shared-strict",
+  "profile": "smoke",
+  "old_timeout": 30,
+  "new_timeout": 120,
+  "memory_kib": 1048576,
+  "source_repetitions": 3,
+  "reason": "All four Rune O0 configurations compiled, then exceeded the 30-second runtime limit.",
+  "pending_check": "Rerun only the four affected O0 profile cases after the current primary batch."
+}

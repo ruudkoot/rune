@@ -1,0 +1,217 @@
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index 077048e7d..90c7f3922 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -500,6 +500,10 @@ passing programs. See the [source audit](audit.md) and [literature map](literatu
+ | [simple-nofib-report-strict](#simple-nofib-report-strict) | [nofib SIMPLE](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/simple) | Advance immutable hydrodynamic arrays with complete state reporting and strict finite cells. |
+ | [happy-lazy](#happy-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/happy) | Generate and validate complete Haskell LALR parser source with memoized finite data. |
+ | [happy-strict](#happy-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/gc/happy) | Generate and validate complete Haskell LALR parser source with eager finite data. |
++| [nucleic2-lazy](#nucleic2-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/nucleic2) | Search the binary32 Pseudoknot problem with on-demand coordinates and memoized finite data. |
++| [nucleic2-strict](#nucleic2-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/nucleic2) | Search the binary32 Pseudoknot problem with on-demand coordinates and eager finite data. |
++| [nucleic2-shared-lazy](#nucleic2-shared-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/nucleic2) | Search the binary32 Pseudoknot problem with shared placed coordinates and memoized finite data. |
++| [nucleic2-shared-strict](#nucleic2-shared-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/spectral/hartel/nucleic2) | Search the binary32 Pseudoknot problem with shared placed coordinates and eager finite data. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -34374,3 +34378,31 @@ literature. The normal profile generates the unchanged upstream grammar.
+ See the [complete provenance and workload description](happy-strict/PROVENANCE.md)
+ for the algorithm, historical variants, translation, profiles, validation and
+ literature. The normal profile generates the unchanged upstream grammar.
++
++
++## nucleic2-lazy
++
++See the [complete provenance](nucleic2-lazy/PROVENANCE.md) for the molecular search,
++source variants, binary32 semantics, demand/sharing policy, fixed profiles,
++independent result checks and literature.
++
++
++## nucleic2-strict
++
++See the [complete provenance](nucleic2-strict/PROVENANCE.md) for the molecular search,
++source variants, binary32 semantics, demand/sharing policy, fixed profiles,
++independent result checks and literature.
++
++
++## nucleic2-shared-lazy
++
++See the [complete provenance](nucleic2-shared-lazy/PROVENANCE.md) for the molecular search,
++source variants, binary32 semantics, demand/sharing policy, fixed profiles,
++independent result checks and literature.
++
++
++## nucleic2-shared-strict
++
++See the [complete provenance](nucleic2-shared-strict/PROVENANCE.md) for the molecular search,
++source variants, binary32 semantics, demand/sharing policy, fixed profiles,
++independent result checks and literature.
+diff --git a/examples/benchmarks/inventory.tsv b/examples/benchmarks/inventory.tsv
+index e910cc9a6..cb0230710 100644
+--- a/examples/benchmarks/inventory.tsv
++++ b/examples/benchmarks/inventory.tsv
+@@ -633,7 +633,7 @@ nofib	spectral/fft2/old	old	old	-	exclude	kernel		not stated in scanned source h
+ nofib	spectral/fibheaps	fibheaps	fibheaps-nofib	M3	import	calls-recursion	nofib:gc/fibheaps	not stated in scanned source headers	03e81472c734a535c08620bfd9923e951b25afad278f8df40a099d8c3bd87a28	spectral/fibheaps/Main.lhs		spectral/fibheaps/Main.lhs:header	spectral/fibheaps/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/fish	fish	fish	M3	import	kernel		not stated in scanned source headers	93f41032710c5119ce7dca30341e62ed8520d5789cca762de8b538ae92168993	spectral/fish/Main.hs			spectral/fish/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/gcd	gcd	gcd	M3	import	allocation-lifetimes		not stated in scanned source headers	1f8eb9649ac5c16892102d5876d2efb87e49e2723a3b430ed1a3edf5a59038de	spectral/gcd/Main.hs	spectral/gcd/gcd.faststdout;spectral/gcd/gcd.slowstdout;spectral/gcd/gcd.stdout		spectral/gcd/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	spectral/hartel	hartel	hartel	-	exclude	application		Marc Feeley (feeley@iro.umontreal.ca	9ff0c787e433488523b26a51a05b99ea9d0c77d99617a75538d1ee7d155f1ad1	spectral/hartel/Fast2haskell.hs;spectral/hartel/Fast2haskell2.hs;spectral/hartel/comp_lab_zift/Main.hs;spectral/hartel/event/Main.hs;spectral/hartel/fft/Main.hs;spectral/hartel/genfft/Main.hs;spectral/hartel/ida/Main.hs;spectral/hartel/listcompr/Main.hs;spectral/hartel/listcopy/Main.hs;spectral/hartel/nucleic2/Main.hs;spectral/hartel/nucleic2/RA.hs;spectral/hartel/nucleic2/RC.hs;spectral/hartel/nucleic2/RG.hs;spectral/hartel/nucleic2/RU.hs;spectral/hartel/nucleic2/Types.hs;spectral/hartel/nucleic2/unboxery.h;spectral/hartel/parstof/Main.hs;spectral/hartel/sched/Main.hs;spectral/hartel/solid/Main.hs;spectral/hartel/transform/Main.hs;spectral/hartel/typecheck/Main.hs;spectral/hartel/wang/Main.hs;spectral/hartel/wave4main/Main.hs	spectral/hartel/comp_lab_zift/comp_lab_zift.faststdout;spectral/hartel/comp_lab_zift/comp_lab_zift.slowstdout;spectral/hartel/comp_lab_zift/comp_lab_zift.stdout;spectral/hartel/event/event.faststdout;spectral/hartel/event/event.slowstdout;spectral/hartel/event/event.stdout;spectral/hartel/fft/fft.faststdout;spectral/hartel/fft/fft.slowstdout;spectral/hartel/fft/fft.stdout;spectral/hartel/genfft/genfft.faststdout;spectral/hartel/genfft/genfft.slowstdout;spectral/hartel/genfft/genfft.stdout;spectral/hartel/ida/ida.faststdout;spectral/hartel/ida/ida.slowstdout;spectral/hartel/ida/ida.stdout;spectral/hartel/listcompr/listcompr.faststdout;spectral/hartel/listcompr/listcompr.slowstdout;spectral/hartel/listcompr/listcompr.stdout;spectral/hartel/listcopy/listcopy.faststdout;spectral/hartel/listcopy/listcopy.slowstdout;spectral/hartel/listcopy/listcopy.stdout;spectral/hartel/parstof/parstof.faststdout;spectral/hartel/parstof/parstof.slowstdout;spectral/hartel/parstof/parstof.stdout;spectral/hartel/sched/sched.faststdout;spectral/hartel/sched/sched.slowstdout;spectral/hartel/sched/sched.stdout;spectral/hartel/solid/solid.faststdout;spectral/hartel/solid/solid.slowstdout;spectral/hartel/solid/solid.stdout;spectral/hartel/transform/transform.faststdout;spectral/hartel/transform/transform.slowstdout;spectral/hartel/transform/transform.stdout;spectral/hartel/typecheck/typecheck.faststdout;spectral/hartel/typecheck/typecheck.slowstdout;spectral/hartel/typecheck/typecheck.stdout;spectral/hartel/wang/wang.faststdout;spectral/hartel/wang/wang.slowstdout;spectral/hartel/wang/wang.stdout;spectral/hartel/wave4main/wave4main.faststdout;spectral/hartel/wave4main/wave4main.slowstdout;spectral/hartel/wave4main/wave4main.stdout	spectral/hartel/nucleic2/Main.hs:header	spectral/hartel/Makefile	aggregate, support directory, or old source fragment without a standalone Main entrypoint
++nofib	spectral/hartel	hartel	hartel	-	exclude	application		Marc Feeley	9ff0c787e433488523b26a51a05b99ea9d0c77d99617a75538d1ee7d155f1ad1	spectral/hartel/Fast2haskell.hs;spectral/hartel/Fast2haskell2.hs;spectral/hartel/comp_lab_zift/Main.hs;spectral/hartel/event/Main.hs;spectral/hartel/fft/Main.hs;spectral/hartel/genfft/Main.hs;spectral/hartel/ida/Main.hs;spectral/hartel/listcompr/Main.hs;spectral/hartel/listcopy/Main.hs;spectral/hartel/nucleic2/Main.hs;spectral/hartel/nucleic2/RA.hs;spectral/hartel/nucleic2/RC.hs;spectral/hartel/nucleic2/RG.hs;spectral/hartel/nucleic2/RU.hs;spectral/hartel/nucleic2/Types.hs;spectral/hartel/nucleic2/unboxery.h;spectral/hartel/parstof/Main.hs;spectral/hartel/sched/Main.hs;spectral/hartel/solid/Main.hs;spectral/hartel/transform/Main.hs;spectral/hartel/typecheck/Main.hs;spectral/hartel/wang/Main.hs;spectral/hartel/wave4main/Main.hs	spectral/hartel/comp_lab_zift/comp_lab_zift.faststdout;spectral/hartel/comp_lab_zift/comp_lab_zift.slowstdout;spectral/hartel/comp_lab_zift/comp_lab_zift.stdout;spectral/hartel/event/event.faststdout;spectral/hartel/event/event.slowstdout;spectral/hartel/event/event.stdout;spectral/hartel/fft/fft.faststdout;spectral/hartel/fft/fft.slowstdout;spectral/hartel/fft/fft.stdout;spectral/hartel/genfft/genfft.faststdout;spectral/hartel/genfft/genfft.slowstdout;spectral/hartel/genfft/genfft.stdout;spectral/hartel/ida/ida.faststdout;spectral/hartel/ida/ida.slowstdout;spectral/hartel/ida/ida.stdout;spectral/hartel/listcompr/listcompr.faststdout;spectral/hartel/listcompr/listcompr.slowstdout;spectral/hartel/listcompr/listcompr.stdout;spectral/hartel/listcopy/listcopy.faststdout;spectral/hartel/listcopy/listcopy.slowstdout;spectral/hartel/listcopy/listcopy.stdout;spectral/hartel/parstof/parstof.faststdout;spectral/hartel/parstof/parstof.slowstdout;spectral/hartel/parstof/parstof.stdout;spectral/hartel/sched/sched.faststdout;spectral/hartel/sched/sched.slowstdout;spectral/hartel/sched/sched.stdout;spectral/hartel/solid/solid.faststdout;spectral/hartel/solid/solid.slowstdout;spectral/hartel/solid/solid.stdout;spectral/hartel/transform/transform.faststdout;spectral/hartel/transform/transform.slowstdout;spectral/hartel/transform/transform.stdout;spectral/hartel/typecheck/typecheck.faststdout;spectral/hartel/typecheck/typecheck.slowstdout;spectral/hartel/typecheck/typecheck.stdout;spectral/hartel/wang/wang.faststdout;spectral/hartel/wang/wang.slowstdout;spectral/hartel/wang/wang.stdout;spectral/hartel/wave4main/wave4main.faststdout;spectral/hartel/wave4main/wave4main.slowstdout;spectral/hartel/wave4main/wave4main.stdout	spectral/hartel/nucleic2/Main.hs:header	spectral/hartel/Makefile	aggregate, support directory, or old source fragment without a standalone Main entrypoint
+ nofib	spectral/hartel/comp_lab_zift	comp_lab_zift	comp_lab_zift	M3	import	application		not stated in scanned source headers	e12e97f6af603f47b01e7eb4c5fd2efe9f874f976e9b9c8a74affe2f0533b6e7	spectral/hartel/Fast2haskell.hs;spectral/hartel/comp_lab_zift/Main.hs	spectral/hartel/comp_lab_zift/comp_lab_zift.faststdout;spectral/hartel/comp_lab_zift/comp_lab_zift.slowstdout;spectral/hartel/comp_lab_zift/comp_lab_zift.stdout		spectral/hartel/comp_lab_zift/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/hartel/event	event	event	M3	import	application		not stated in scanned source headers	387538edd2cb3956fdc69b2d24374a2d0c00f59a6d359e42deee480367182c1a	spectral/hartel/Fast2haskell.hs;spectral/hartel/event/Main.hs	spectral/hartel/event/event.faststdout;spectral/hartel/event/event.slowstdout;spectral/hartel/event/event.stdout		spectral/hartel/event/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/hartel/fft	fft	fft-nofib	M3	import	numerical	mlkit:test/fft.sml;mlkit:test_dev/fft_no_basislib.sml;mlton:benchmark/tests/fft.sml;nofib:parallel/OLD/NESL/fft.lhs;sandmark:benchmarks/numerical-analysis/fft.exe;smlnj:programs/fft	not stated in scanned source headers	6980cc79c520b391a4f2767dbd693613ff8431efefa221a3bbc3e1dd88ef49d0	spectral/hartel/Fast2haskell.hs;spectral/hartel/fft/Main.hs	spectral/hartel/fft/fft.faststdout;spectral/hartel/fft/fft.slowstdout;spectral/hartel/fft/fft.stdout		spectral/hartel/fft/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+@@ -641,7 +641,7 @@ nofib	spectral/hartel/genfft	genfft	genfft	M3	import	numerical		not stated in sc
+ nofib	spectral/hartel/ida	ida	ida	M3	import	application		not stated in scanned source headers	cc36fc782204a45fa24d7598d9c1eacbbbd67efcfd3ebeb119d3ecdc49e49208	spectral/hartel/Fast2haskell.hs;spectral/hartel/ida/Main.hs	spectral/hartel/ida/ida.faststdout;spectral/hartel/ida/ida.slowstdout;spectral/hartel/ida/ida.stdout		spectral/hartel/ida/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/hartel/listcompr	listcompr	listcompr	M3	import	lists-streams		not stated in scanned source headers	2a9617f4b99a155a2dba8e2d3651b8ec8ab5678d2877adf993db7b32f61929d4	spectral/hartel/Fast2haskell.hs;spectral/hartel/listcompr/Main.hs	spectral/hartel/listcompr/listcompr.faststdout;spectral/hartel/listcompr/listcompr.slowstdout;spectral/hartel/listcompr/listcompr.stdout		spectral/hartel/listcompr/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/hartel/listcopy	listcopy	listcopy	M3	import	lists-streams		not stated in scanned source headers	947ea91beecef38a7c1de1bb808b4af50956821cc9f008ddd25fe3dc2fff69b1	spectral/hartel/Fast2haskell.hs;spectral/hartel/listcopy/Main.hs	spectral/hartel/listcopy/listcopy.faststdout;spectral/hartel/listcopy/listcopy.slowstdout;spectral/hartel/listcopy/listcopy.stdout		spectral/hartel/listcopy/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+-nofib	spectral/hartel/nucleic2	nucleic2	nucleic2	M3	import	numerical	mlkit:test/nucleic.mlb;mlton:benchmark/tests/nucleic.sml;smlnj:programs/nucleic	Marc Feeley (feeley@iro.umontreal.ca	0a07093d23e93931ec744787df42beb65927a432a5840ac07a83416d4079f3f0	spectral/hartel/nucleic2/Main.hs;spectral/hartel/nucleic2/RA.hs;spectral/hartel/nucleic2/RC.hs;spectral/hartel/nucleic2/RG.hs;spectral/hartel/nucleic2/RU.hs;spectral/hartel/nucleic2/Types.hs;spectral/hartel/nucleic2/unboxery.h		spectral/hartel/nucleic2/Main.hs:header	spectral/hartel/nucleic2/Makefile;spectral/hartel/nucleic2/README	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
++nofib	spectral/hartel/nucleic2	nucleic2	nucleic2	M3	import	numerical	mlkit:test/nucleic.mlb;mlton:benchmark/tests/nucleic.sml;smlnj:programs/nucleic	Lennart Augustsson (Haskell version);Marc Feeley;Pieter H. Hartel (benchmark coordination)	0a07093d23e93931ec744787df42beb65927a432a5840ac07a83416d4079f3f0	spectral/hartel/nucleic2/Main.hs;spectral/hartel/nucleic2/RA.hs;spectral/hartel/nucleic2/RC.hs;spectral/hartel/nucleic2/RG.hs;spectral/hartel/nucleic2/RU.hs;spectral/hartel/nucleic2/Types.hs;spectral/hartel/nucleic2/unboxery.h		spectral/hartel/nucleic2/Main.hs:header	spectral/hartel/nucleic2/MAIL;spectral/hartel/nucleic2/MAIL:1994-benchmark-coordination-and-porting-invitation;spectral/hartel/nucleic2/Main.hs:molecular-search-author-and-date;spectral/hartel/nucleic2/Main.hs:on-demand-and-shared-coordinate-variants;spectral/hartel/nucleic2/Makefile;spectral/hartel/nucleic2/README;spectral/hartel/nucleic2/README:Haskell-port-authorship;spectral/hartel/nucleic2/README:historical-archive-files-removed-in-2017;spectral/hartel/nucleic2/unboxery.h:boxed-Float-default	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/hartel/parstof	parstof	parstof	M3	import	compiler-application		not stated in scanned source headers	e1798eef00523cc85cd8ae61f6b345d0bfbaa5412dfb56888732404ae739f7b3	spectral/hartel/Fast2haskell.hs;spectral/hartel/parstof/Main.hs	spectral/hartel/parstof/parstof.faststdout;spectral/hartel/parstof/parstof.slowstdout;spectral/hartel/parstof/parstof.stdout		spectral/hartel/parstof/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/hartel/sched	sched	sched	M3	import	application		not stated in scanned source headers	8a30680096fc1071a910b07b6719fbb882eb4211377ca4dc092e4241f7005852	spectral/hartel/Fast2haskell.hs;spectral/hartel/sched/Main.hs	spectral/hartel/sched/sched.faststdout;spectral/hartel/sched/sched.slowstdout;spectral/hartel/sched/sched.stdout		spectral/hartel/sched/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+ nofib	spectral/hartel/solid	solid	solid	M3	import	application		not stated in scanned source headers	4abefc32000930fc4d2ad8d2238033e16780aa90221e495494ad583d69bb69bc	spectral/hartel/Fast2haskell.hs;spectral/hartel/solid/Main.hs	spectral/hartel/solid/solid.faststdout;spectral/hartel/solid/solid.slowstdout;spectral/hartel/solid/solid.stdout		spectral/hartel/solid/Makefile	portable workload; retain algorithm and review driver, numeric assumptions, fixtures and notices before import
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index ddd6892c2..c07ffc00c 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -1424,3 +1424,15 @@ happy-lazy	smoke	nofib	gc/happy	smoke.y smoke.reference smoke.warnings	happy-laz
+ happy-lazy	normal	nofib	gc/happy	normal.y normal.reference normal.warnings	happy-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/happy-set.sml,shared/happy-lexer.sml,shared/happy-kernel.sml,shared/happy-check.sml,happy-lazy/benchmark.sml,shared/main.sml	600	4194304	compiler-application,parsing,lalr,sets,immutable-arrays,sharing,allocation-lifetimes,formatting,io	normal.y,normal.reference,normal.warnings	exact	implemented
+ happy-strict	smoke	nofib	gc/happy	smoke.y smoke.reference smoke.warnings	happy-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/happy-set.sml,shared/happy-lexer.sml,shared/happy-kernel.sml,shared/happy-check.sml,happy-strict/benchmark.sml,shared/main.sml	120	4194304	compiler-application,parsing,lalr,sets,immutable-arrays,sharing,allocation-lifetimes,formatting,io	smoke.y,smoke.reference,smoke.warnings	exact	implemented
+ happy-strict	normal	nofib	gc/happy	normal.y normal.reference normal.warnings	happy-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/happy-set.sml,shared/happy-lexer.sml,shared/happy-kernel.sml,shared/happy-check.sml,happy-strict/benchmark.sml,shared/main.sml	600	4194304	compiler-application,parsing,lalr,sets,immutable-arrays,sharing,allocation-lifetimes,formatting,io	normal.y,normal.reference,normal.warnings	exact	implemented
++nucleic2-lazy	smoke	nofib	spectral/hartel/nucleic2	3	nucleic2-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/finite-binary32.sml,shared/nucleic2-kernel.sml,shared/nucleic2-check.sml,nucleic2-lazy/benchmark.sml,shared/main.sml	30	1048576	numerical,binary32,software-rounding,transcendentals,geometry,search,sharing,allocation-lifetimes	-	checked-numerical	implemented
++nucleic2-lazy	normal	nofib	spectral/hartel/nucleic2	25	nucleic2-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/finite-binary32.sml,shared/nucleic2-kernel.sml,shared/nucleic2-check.sml,nucleic2-lazy/benchmark.sml,shared/main.sml	600	4194304	numerical,binary32,software-rounding,transcendentals,geometry,search,sharing,allocation-lifetimes	-	checked-numerical	implemented
++nucleic2-lazy	large	nofib	spectral/hartel/nucleic2	125	nucleic2-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/finite-binary32.sml,shared/nucleic2-kernel.sml,shared/nucleic2-check.sml,nucleic2-lazy/benchmark.sml,shared/main.sml	3600	8388608	numerical,binary32,software-rounding,transcendentals,geometry,search,sharing,allocation-lifetimes	-	checked-numerical	implemented
++nucleic2-strict	smoke	nofib	spectral/hartel/nucleic2	3	nucleic2-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/finite-binary32.sml,shared/nucleic2-kernel.sml,shared/nucleic2-check.sml,nucleic2-strict/benchmark.sml,shared/main.sml	30	1048576	numerical,binary32,software-rounding,transcendentals,geometry,search,sharing,allocation-lifetimes	-	checked-numerical	implemented
++nucleic2-strict	normal	nofib	spectral/hartel/nucleic2	25	nucleic2-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/finite-binary32.sml,shared/nucleic2-kernel.sml,shared/nucleic2-check.sml,nucleic2-strict/benchmark.sml,shared/main.sml	600	4194304	numerical,binary32,software-rounding,transcendentals,geometry,search,sharing,allocation-lifetimes	-	checked-numerical	implemented
++nucleic2-strict	large	nofib	spectral/hartel/nucleic2	125	nucleic2-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/finite-binary32.sml,shared/nucleic2-kernel.sml,shared/nucleic2-check.sml,nucleic2-strict/benchmark.sml,shared/main.sml	3600	8388608	numerical,binary32,software-rounding,transcendentals,geometry,search,sharing,allocation-lifetimes	-	checked-numerical	implemented
++nucleic2-shared-lazy	smoke	nofib	spectral/hartel/nucleic2	3	nucleic2-shared-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/finite-binary32.sml,shared/nucleic2-kernel.sml,shared/nucleic2-check.sml,nucleic2-shared-lazy/benchmark.sml,shared/main.sml	30	1048576	numerical,binary32,software-rounding,transcendentals,geometry,search,sharing,allocation-lifetimes	-	checked-numerical	implemented
++nucleic2-shared-lazy	normal	nofib	spectral/hartel/nucleic2	25	nucleic2-shared-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/finite-binary32.sml,shared/nucleic2-kernel.sml,shared/nucleic2-check.sml,nucleic2-shared-lazy/benchmark.sml,shared/main.sml	600	4194304	numerical,binary32,software-rounding,transcendentals,geometry,search,sharing,allocation-lifetimes	-	checked-numerical	implemented
++nucleic2-shared-lazy	large	nofib	spectral/hartel/nucleic2	125	nucleic2-shared-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/finite-binary32.sml,shared/nucleic2-kernel.sml,shared/nucleic2-check.sml,nucleic2-shared-lazy/benchmark.sml,shared/main.sml	3600	8388608	numerical,binary32,software-rounding,transcendentals,geometry,search,sharing,allocation-lifetimes	-	checked-numerical	implemented
++nucleic2-shared-strict	smoke	nofib	spectral/hartel/nucleic2	3	nucleic2-shared-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/finite-binary32.sml,shared/nucleic2-kernel.sml,shared/nucleic2-check.sml,nucleic2-shared-strict/benchmark.sml,shared/main.sml	30	1048576	numerical,binary32,software-rounding,transcendentals,geometry,search,sharing,allocation-lifetimes	-	checked-numerical	implemented
++nucleic2-shared-strict	normal	nofib	spectral/hartel/nucleic2	25	nucleic2-shared-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/finite-binary32.sml,shared/nucleic2-kernel.sml,shared/nucleic2-check.sml,nucleic2-shared-strict/benchmark.sml,shared/main.sml	600	4194304	numerical,binary32,software-rounding,transcendentals,geometry,search,sharing,allocation-lifetimes	-	checked-numerical	implemented
++nucleic2-shared-strict	large	nofib	spectral/hartel/nucleic2	125	nucleic2-shared-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/finite-binary32.sml,shared/nucleic2-kernel.sml,shared/nucleic2-check.sml,nucleic2-shared-strict/benchmark.sml,shared/main.sml	3600	8388608	numerical,binary32,software-rounding,transcendentals,geometry,search,sharing,allocation-lifetimes	-	checked-numerical	implemented
+diff --git a/examples/benchmarks/source-variants.tsv b/examples/benchmarks/source-variants.tsv
+index f0af24439..3a3631dd6 100644
+--- a/examples/benchmarks/source-variants.tsv
++++ b/examples/benchmarks/source-variants.tsv
+@@ -33,3 +33,6 @@ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/fulsom/Main.hs	real/fulsom/r
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/hartel/comp_lab_zift	spectral/hartel/comp_lab_zift/Main.hs	comp_lab_nozift	Haskell	inactive non-sifting label mapping	not stated in source heading	b20f91a38894f5ffcc3651066bb1453c713d252b5c08913df932c247a76a1eb3	import	ported as comp_lab_nozift-lazy/strict using the original f_comp_lab_diff-prime with f_no_zift; retain positive tiling and full renderer; no new algorithm replaces source trees; source helper f_main_field-prime also selects this mode with negative size but the benchmark Main itself requires positive tiling	no separate individual program notice stated; retain complete module and Fast2haskell shim
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	real/fem	real/fem/inC/fem.c	fem-c-reference	C	historical C comparison implementation	not separately stated in C headers	912b9fdde14896f9e3fcdff443a41d072d49b1ce9914129a6e43e30af8006b20	exclude	historical C comparison with fixed-size mutable arrays, a date-based run script and FEM_MODEL_DATA output; no maintained nofib Makefile builds or invokes it; preserve the complete inC source/data/timing tree and record its distinct role	no separate individual notice stated in scanned C headers or its README; retain originals without assigning Haskell author credit to these files
+ nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/hartel/solid	spectral/hartel/solid/Main.hs	solid-unrepaired	Haskell	unrepaired one-based classification lookup	not stated in scanned source heading	5bb4619d203c981c1a0e51b0400d67a69a27c10e9984806c5bf0af123870512f	defer	raw list indexing uses an extra one-based offset: union(OUT,OUT) gives UNKNOWN and depth-nine fixed-scene output overcounts 65 independently sampled cells; only the reviewed one-line index correction is runnable; reconsider unrepaired baselines after upstream indexing is corrected and independent scene counts pass	no separate individual notice stated; retain complete source, shim and original incorrect fixtures separately from repaired references
++nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/hartel/nucleic2	spectral/hartel/nucleic2/Main.hs	nucleic2-legacy-unboxed	GHC Haskell primitives	legacy USE_UNBOXED_FLOATS mode	Main credits Marc Feeley; README credits Lennart Augustsson for the Haskell version; individual legacy adaptation authors unstated	04a4b847f073f154d3d0422b4c239008c6c4ea8a40502eac1725a6b83f573cd5	defer	unboxed Float#/Int# representation and legacy primitive names are outside portable SML97; the custom atan2Float# also has different quadrant behavior; reconsider only with a validated historical reference and equivalent native representations under a separate feature roadmap	original source headers and correspondence retained; no separate program/dataset redistribution licence stated
++nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/hartel/nucleic2	spectral/hartel/nucleic2/Main.hs	nucleic2-legacy-primio	GHC Haskell PrimIO/FFI	legacy USE_GLASGOW_HACKS mode, paired with unboxed floats	Main credits Marc Feeley; README credits Lennart Augustsson for the Haskell version; individual legacy adaptation authors unstated	04a4b847f073f154d3d0422b4c239008c6c4ea8a40502eac1725a6b83f573cd5	defer	PreludeGlaST, mainPrimIO, printf _ccall_ and the primitive maximum_map backend require unavailable historical runtime/FFI facilities; retain source and reconsider with the original setup and equivalent facilities under a separate feature roadmap	original source headers and correspondence retained; no separate program/dataset redistribution licence stated
++nofib	b7391df4540ac8b11b35e1b2e2c15819b5171798	spectral/hartel/nucleic2	spectral/hartel/nucleic2/Types.hs	nucleic2-STR	Haskell compiler pragma	historical strict-field annotation	Main credits Marc Feeley; README credits Lennart Augustsson for the Haskell version; individual legacy adaptation authors unstated	1727d473f646217d67b9af3d87ec3f150552ba34bbfd5498dbc0c7ae27bdecbf	duplicate	GHC 9.4.7 reports the STRICT pragmas ignored; the complete 50-solution/conformation/coordinate observation is byte-identical to default; share the selected implementation and retain the diagnostic; portable eager finite-data policies are separately named and are not claimed as historical HBC STR behavior	original source headers and correspondence retained; no separate program/dataset redistribution licence stated
+diff --git a/scripts/benchmark-inventory.py b/scripts/benchmark-inventory.py
+index ca2bf7d0b..22f4e9406 100644
+--- a/scripts/benchmark-inventory.py
++++ b/scripts/benchmark-inventory.py
+@@ -558,6 +558,39 @@ def build(source, root, lock):
+                     notices.append(str(notice.relative_to(root)))
+         authors = set()
+         context = [p for p in parent.iterdir() if p.is_file() and p.name in {"README", "README.md", "Makefile", "FILES", "sources.cm"}] if parent.exists() and files else []
++        if source == "nofib" and path == "spectral/hartel/nucleic2":
++            main = parent / "Main.hs"
++            if main.is_file():
++                heading = main.read_text(errors="replace")
++                if ("Author: Marc Feeley (feeley@iro.umontreal.ca)" in heading
++                        and "Last modified: June 6, 1994" in heading):
++                    authors.add("Marc Feeley")
++                    item["evidence"].append(path + "/Main.hs:molecular-search-author-and-date")
++                if "#ifdef USE_HARTEL_LAZINESS" in heading and "make_relative_nuc t n" in heading:
++                    item["evidence"].append(path + "/Main.hs:on-demand-and-shared-coordinate-variants")
++            readme = parent / "README"
++            if readme.is_file():
++                readme_text = readme.read_text(errors="replace")
++                if "Haskell version (for HBC, by Lennart Augustsson)" in readme_text:
++                    authors.add("Lennart Augustsson (Haskell version)")
++                    item["evidence"].append(path + "/README:Haskell-port-authorship")
++                if "UPDATE(2017.01)" in readme_text and "non-Haskell versions of the program" in readme_text:
++                    item["evidence"].append(path + "/README:historical-archive-files-removed-in-2017")
++            mail = parent / "MAIL"
++            if mail.is_file():
++                context.append(mail)
++                correspondence = mail.read_text(errors="replace")
++                if ("From: pieter@fwi.uva.nl (Pieter H. Hartel)" in correspondence
++                        and "Subject: Request participation pseudo knot benchmark" in correspondence
++                        and "Mon, 13 Jun 1994" in correspondence):
++                    authors.add("Pieter H. Hartel (benchmark coordination)")
++                    item["evidence"].append(path + "/MAIL:1994-benchmark-coordination-and-porting-invitation")
++            header = parent / "unboxery.h"
++            if header.is_file():
++                header_text = header.read_text(errors="replace")
++                if (re.search(r"^#define FLOAT_TY Float\s*$", header_text, re.M)
++                        and "#define FL_LIT(x) (x)" in header_text):
++                    item["evidence"].append(path + "/unboxery.h:boxed-Float-default")
+         if source == "nofib" and path == "gc/happy":
+             main = parent / "Main.lhs"
+             if main.is_file():
+@@ -822,6 +855,8 @@ def build(source, root, lock):
+                         and header[attribution.start() - 1] == "$"):
+                     continue  # The RCS last-committer tag is not the declared author.
+                 author = (attribution.group(1) or attribution.group(2)).strip(" *()-")
++                if author == "Marc Feeley (feeley@iro.umontreal.ca":
++                    author = "Marc Feeley"
+                 if len(author) <= 180:
+                     authors.add(author)
+         if source == "sandmark" and not path.startswith("benchmarks/"):
+diff --git a/tests/benchmarks/test-inventory.py b/tests/benchmarks/test-inventory.py
+index f939ecea5..fb01b12d5 100644
+--- a/tests/benchmarks/test-inventory.py
++++ b/tests/benchmarks/test-inventory.py
+@@ -286,6 +286,59 @@ class InventoryTest(unittest.TestCase):
+         self.file("spectral/multiplier/Main.hs", "-- Another multiplier author\nmain = print 0\n")
+         self.assertNotIn("John T. O'Donnell", self.build("nofib")[0]["authors"])
+ 
++    def nucleic2_sources(self, original=True, readme=True, single=True):
++        self.nofib_roots()
++        path = "spectral/hartel/nucleic2/"
++        self.file(path + "Makefile", "FAST_OPTS = 3\nNORM_OPTS = 25\nSLOW_OPTS = 125\n")
++        self.file(path + "Main.hs", ("-- Author: Marc Feeley (feeley@iro.umontreal.ca)\n"
++                  "-- Last modified: June 6, 1994\n" if original else "-- Another author\n") +
++                  "main = print 0\n#ifdef USE_HARTEL_LAZINESS\n-- make_relative_nuc t n\n#endif\n")
++        self.file(path + "README", "UPDATE(2017.01)\nnon-Haskell versions of the program\n" +
++                  ("Haskell version (for HBC, by Lennart Augustsson)\n" if readme else "Another translation.\n"))
++        self.file(path + "unboxery.h", "#define FLOAT_TY " + ("Float" if single else "Double") + "\n#define FL_LIT(x) (x)\n")
++        return next(r for r in self.build("nofib") if r["path"] == path.rstrip("/"))
++
++    def test_nucleic2_records_molecular_search_author(self):
++        row = self.nucleic2_sources()
++        self.assertIn("Marc Feeley", row["authors"].split(";"))
++        self.assertNotIn("(feeley@", row["authors"])
++        self.assertIn("spectral/hartel/nucleic2/Main.hs:molecular-search-author-and-date", row["evidence"])
++
++    def test_changed_nucleic2_heading_requires_author_review(self):
++        self.assertNotIn("Marc Feeley", self.nucleic2_sources(original=False)["authors"])
++
++    def test_nucleic2_records_Haskell_porter(self):
++        self.assertIn("Lennart Augustsson (Haskell version)", self.nucleic2_sources()["authors"])
++
++    def test_changed_nucleic2_readme_requires_porter_review(self):
++        self.assertNotIn("Lennart Augustsson", self.nucleic2_sources(readme=False)["authors"])
++
++    def test_nucleic2_records_default_precision_and_sharing_variants(self):
++        row = self.nucleic2_sources()
++        self.assertIn("spectral/hartel/nucleic2/unboxery.h:boxed-Float-default", row["evidence"])
++        self.assertIn("spectral/hartel/nucleic2/Main.hs:on-demand-and-shared-coordinate-variants", row["evidence"])
++
++    def test_nucleic2_double_header_does_not_inherit_single_precision_claim(self):
++        self.assertNotIn("boxed-Float-default", self.nucleic2_sources(single=False)["evidence"])
++
++    def test_nucleic2_historical_archive_is_not_claimed_present(self):
++        self.assertIn("spectral/hartel/nucleic2/README:historical-archive-files-removed-in-2017", self.nucleic2_sources()["evidence"])
++
++    def test_nucleic2_records_coordinator_without_inventing_program_authorship(self):
++        self.nucleic2_sources()
++        self.file("spectral/hartel/nucleic2/MAIL", "Date: Mon, 13 Jun 1994\n"
++                  "From: pieter@fwi.uva.nl (Pieter H. Hartel)\n"
++                  "Subject: Request participation pseudo knot benchmark\n")
++        row = next(r for r in self.build("nofib") if r["path"] == "spectral/hartel/nucleic2")
++        self.assertIn("Pieter H. Hartel (benchmark coordination)", row["authors"])
++        self.assertIn("spectral/hartel/nucleic2/MAIL:1994-benchmark-coordination-and-porting-invitation", row["evidence"])
++
++    def test_changed_nucleic2_mail_does_not_inherit_coordinator_claim(self):
++        self.nucleic2_sources()
++        self.file("spectral/hartel/nucleic2/MAIL", "A different correspondence.\n")
++        row = next(r for r in self.build("nofib") if r["path"] == "spectral/hartel/nucleic2")
++        self.assertNotIn("Pieter H. Hartel", row["authors"])
++
+     def happy_sources(self, original=True):
+         self.nofib_roots()
+         self.file("gc/happy/Makefile", "NORM_OPTS = TestInput.y\nEXCLUDED_SRCS += TestInput.hs\n")

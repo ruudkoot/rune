@@ -286,6 +286,59 @@ class InventoryTest(unittest.TestCase):
         self.file("spectral/multiplier/Main.hs", "-- Another multiplier author\nmain = print 0\n")
         self.assertNotIn("John T. O'Donnell", self.build("nofib")[0]["authors"])
 
+    def nucleic2_sources(self, original=True, readme=True, single=True):
+        self.nofib_roots()
+        path = "spectral/hartel/nucleic2/"
+        self.file(path + "Makefile", "FAST_OPTS = 3\nNORM_OPTS = 25\nSLOW_OPTS = 125\n")
+        self.file(path + "Main.hs", ("-- Author: Marc Feeley (feeley@iro.umontreal.ca)\n"
+                  "-- Last modified: June 6, 1994\n" if original else "-- Another author\n") +
+                  "main = print 0\n#ifdef USE_HARTEL_LAZINESS\n-- make_relative_nuc t n\n#endif\n")
+        self.file(path + "README", "UPDATE(2017.01)\nnon-Haskell versions of the program\n" +
+                  ("Haskell version (for HBC, by Lennart Augustsson)\n" if readme else "Another translation.\n"))
+        self.file(path + "unboxery.h", "#define FLOAT_TY " + ("Float" if single else "Double") + "\n#define FL_LIT(x) (x)\n")
+        return next(r for r in self.build("nofib") if r["path"] == path.rstrip("/"))
+
+    def test_nucleic2_records_molecular_search_author(self):
+        row = self.nucleic2_sources()
+        self.assertIn("Marc Feeley", row["authors"].split(";"))
+        self.assertNotIn("(feeley@", row["authors"])
+        self.assertIn("spectral/hartel/nucleic2/Main.hs:molecular-search-author-and-date", row["evidence"])
+
+    def test_changed_nucleic2_heading_requires_author_review(self):
+        self.assertNotIn("Marc Feeley", self.nucleic2_sources(original=False)["authors"])
+
+    def test_nucleic2_records_Haskell_porter(self):
+        self.assertIn("Lennart Augustsson (Haskell version)", self.nucleic2_sources()["authors"])
+
+    def test_changed_nucleic2_readme_requires_porter_review(self):
+        self.assertNotIn("Lennart Augustsson", self.nucleic2_sources(readme=False)["authors"])
+
+    def test_nucleic2_records_default_precision_and_sharing_variants(self):
+        row = self.nucleic2_sources()
+        self.assertIn("spectral/hartel/nucleic2/unboxery.h:boxed-Float-default", row["evidence"])
+        self.assertIn("spectral/hartel/nucleic2/Main.hs:on-demand-and-shared-coordinate-variants", row["evidence"])
+
+    def test_nucleic2_double_header_does_not_inherit_single_precision_claim(self):
+        self.assertNotIn("boxed-Float-default", self.nucleic2_sources(single=False)["evidence"])
+
+    def test_nucleic2_historical_archive_is_not_claimed_present(self):
+        self.assertIn("spectral/hartel/nucleic2/README:historical-archive-files-removed-in-2017", self.nucleic2_sources()["evidence"])
+
+    def test_nucleic2_records_coordinator_without_inventing_program_authorship(self):
+        self.nucleic2_sources()
+        self.file("spectral/hartel/nucleic2/MAIL", "Date: Mon, 13 Jun 1994\n"
+                  "From: pieter@fwi.uva.nl (Pieter H. Hartel)\n"
+                  "Subject: Request participation pseudo knot benchmark\n")
+        row = next(r for r in self.build("nofib") if r["path"] == "spectral/hartel/nucleic2")
+        self.assertIn("Pieter H. Hartel (benchmark coordination)", row["authors"])
+        self.assertIn("spectral/hartel/nucleic2/MAIL:1994-benchmark-coordination-and-porting-invitation", row["evidence"])
+
+    def test_changed_nucleic2_mail_does_not_inherit_coordinator_claim(self):
+        self.nucleic2_sources()
+        self.file("spectral/hartel/nucleic2/MAIL", "A different correspondence.\n")
+        row = next(r for r in self.build("nofib") if r["path"] == "spectral/hartel/nucleic2")
+        self.assertNotIn("Pieter H. Hartel", row["authors"])
+
     def happy_sources(self, original=True):
         self.nofib_roots()
         self.file("gc/happy/Makefile", "NORM_OPTS = TestInput.y\nEXCLUDED_SRCS += TestInput.hs\n")

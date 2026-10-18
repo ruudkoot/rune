@@ -1,0 +1,20 @@
+{
+  "command": [
+    "ghc",
+    "-O2",
+    "-cpp",
+    "-DSTR",
+    "-rtsopts",
+    "-fforce-recomp",
+    "-main-is",
+    "Fingerprints.main",
+    "Fingerprints.hs",
+    "Main.hs",
+    "-o",
+    "observe"
+  ],
+  "exit": 0,
+  "bytes": 1902747,
+  "all_conformations_and_coordinates_byte_equal": true,
+  "compiler_reports_ignored_STRICT_pragmas": true
+}

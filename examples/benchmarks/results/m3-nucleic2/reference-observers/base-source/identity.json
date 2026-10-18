@@ -1,0 +1,23 @@
+[
+  {
+    "path": "Data/Foldable.hs",
+    "url": "https://raw.githubusercontent.com/ghc/ghc/ghc-9.4.7-release/libraries/base/Data/Foldable.hs",
+    "exit": 0,
+    "bytes": 87719,
+    "sha256": "a4fe2e6615d469fec853c475e209aee614dacf4ff44416d123893879aa7558bf"
+  },
+  {
+    "path": "Data/OldList.hs",
+    "url": "https://raw.githubusercontent.com/ghc/ghc/ghc-9.4.7-release/libraries/base/Data/OldList.hs",
+    "exit": 0,
+    "bytes": 55866,
+    "sha256": "c9f75e1d0ed4b27cf58e040339b6936c59c5a455ecbe172fb6b73655cb613ea1"
+  },
+  {
+    "path": "GHC/Float.hs",
+    "url": "https://raw.githubusercontent.com/ghc/ghc/ghc-9.4.7-release/libraries/base/GHC/Float.hs",
+    "exit": 0,
+    "bytes": 59978,
+    "sha256": "d71c11665bfcdbebb58c7d0df40e263653942760291d9dd37e2cc1cc004a761f"
+  }
+]

@@ -1,0 +1,25 @@
+bin/runevm build/bench-catalog.rbc --check
+bench-catalog: OK (1437 profiles)
+BENCH_PROFILE=smoke BENCH_CONFIGS=rune,rune:new,rune:jit,rune:opt BENCH_FILTER='=nucleic2-shared-strict' sh scripts/run-benchmarks.sh
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/smoke/run.l9RcwY
+BENCH nucleic2-shared-strict smoke
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 3
+PASS nucleic2-shared-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 3
+PASS nucleic2-shared-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:new
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 3
+PASS nucleic2-shared-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:jit
+PROGRAM LIMIT AS 1048576 KiB
+RESULT 3
+PASS nucleic2-shared-strict
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune:opt

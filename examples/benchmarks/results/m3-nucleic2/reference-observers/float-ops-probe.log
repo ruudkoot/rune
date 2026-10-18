@@ -1,0 +1,10 @@
+PASS binary32 add-round
+PASS binary32 add-odd
+PASS binary32 multiply
+PASS binary32 divide
+PASS binary32 sqrt
+PASS binary32 round-even
+PASS binary32 round-odd
+PASS binary32 round-negative
+PASS binary32 round-binade
+PASS binary32 negative-zero

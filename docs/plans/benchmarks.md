@@ -1,7 +1,7 @@
 # Benchmark suite roadmap
 
-Status: **in progress**, 2026-10-18. M0, M1 and M2 are complete with
-[recorded validation](../../examples/benchmarks/validation.md). M3 and M4 are in progress; M5, M6 and M7 are complete with recorded evidence; M8 remains planned. Source inventory entries are scheduled work, not passing ports.
+Status: **in progress**, 2026-10-18. M0, M1, M2 and M3 are complete with
+[recorded validation](../../examples/benchmarks/validation.md). M4 is in progress; M5, M6 and M7 are complete with recorded evidence; M8 remains planned. Source inventory entries are scheduled work, not passing ports.
 
 ## Goal and current baseline
 
@@ -33,15 +33,21 @@ suite grows. Implementation starts with the
 [pinned source inventory and audit](../../examples/benchmarks/audit.md).
 The [runnable catalogue](../../examples/benchmarks/README.md) contains the M1
 pilots, the validated M2 classic collection and the completed M5 sequential
-Sandmark collection. M3 kernels and M4 applications remain in progress; M8
+Sandmark collection. M3 kernels are complete; M4 applications remain in progress; M8
 coverage closure remains planned.
-The current catalogue has 491 programs and 1425 profiles. The Happy wave
+The current catalogue has 495 programs and 1437 profiles. The Happy wave
 has [recorded validation](../../examples/benchmarks/results/m3-happy/README.md):
 all normal profiles and 50280 semantic assertions pass, with two unclassified
 ML Kit smoke compile failures retained. Counts, serial adapter diagnostics
 and repository acceptance (498 compiler comparisons plus seven-host
 runedoc/runeopt agreement) are recorded.
-The remaining M3 source workload after this wave is Hartel nucleic2.
+Hartel nucleic2 closes M3 with [recorded validation](../../examples/benchmarks/results/m3-nucleic2/README.md):
+all 64 Rune smoke/normal combinations pass at O0/O2. The full matrix has
+98 of 112 passes; all host exceptions and 116 raw attempts remain recorded.
+Twelve complete semantic groups each pass 5081 assertions; the partial
+legacy SML/NJ and empty-log ML Kit groups remain incomplete. Normal counts
+and repository acceptance pass. All 92 suitable M3 inventory paths now have
+implemented smoke/normal profiles and documented variants.
 M4 still has anna, fluid, hpg, parser, reptile and veritas; M8 closes the
 inventories, evidence, documentation and maintenance procedures.
 
@@ -185,7 +191,7 @@ fixture references, and profile completeness.
 | **M0 — Inventory and literature review** | Complete | Audit SML/NJ, MLton, ML Kit, nofib, and Sandmark at pinned revisions. Inspect build manifests, nested workloads, dependencies, datasets, and existing Rune adaptations. Group related variants and map workloads to compiler and runtime concerns. | Every discovered workload has an explicit disposition: import, duplicate, defer, or exclude. Every disposition has evidence or a reason. The bibliography and naming map are recorded. |
 | **M1 — Suite foundation and pilots** | Complete | Establish the directory contract, manifest, documentation template, portable drivers, deterministic inputs, and correctness runner. Pilot classic `tak` and list sorting, nofib primes in lazy and strict forms, and Sandmark `bdd`. | Pilots build and validate on Rune, MLton, SML/NJ, and Poly/ML. Lazy and strict variants agree on results. Negative checks demonstrate that incorrect output and resource-limit failures are detected. |
 | **M2 — Classic SML collection** | Complete | Import suitable workloads from the three SML sources. Begin with recursive kernels, rewriting, sorting, numerical programs, and search; then add larger generators, simulators, and applications. Reuse reviewed external-runner adaptations. | Every suitable classic SML workload is imported and documented. Remaining entries have concrete blockers. Each import passes smoke checks and has a validated normal profile. |
-| **M3 — nofib kernels and GC workloads** | In progress | Port suitable `imaginary`, `spectral`, `shootout`, and `gc` workloads, including nested collections such as `spectral/hartel`. Cover streams, higher-order functions, symbolic processing, graphs, arithmetic, and allocation patterns. | Every suitable kernel has a validated port. Each port records its treatment of laziness, sharing, numeric types, and forcing. Materially different lazy and strict variants are separately named and measured. |
+| **M3 — nofib kernels and GC workloads** | Complete | Port suitable `imaginary`, `spectral`, `shootout`, and `gc` workloads, including nested collections such as `spectral/hartel`. Cover streams, higher-order functions, symbolic processing, graphs, arithmetic, and allocation patterns. | Every suitable kernel has a validated port. Each port records its treatment of laziness, sharing, numeric types, and forcing. Materially different lazy and strict variants are separately named and measured. |
 | **M4 — nofib applications** | In progress | Port suitable `real` applications in dependency order. Prioritize parsing, type inference, compression, interpreters, symbolic algebra, rendering, and scientific workloads. | Each application includes its required portable modules and deterministic data. Results agree with upstream fixtures or the original Haskell program. Feature-dependent applications have explicit blockers. |
 | **M5 — Sandmark sequential workloads** | Complete | Port self-contained sequential workloads first, including decision diagrams, rewriting, streams, numerical programs, rendering, and graph processing. Audit individual executables within collection directories. | Every suitable workload is imported or scheduled with its dependencies. OCaml library replacements and evaluation-order changes are documented. Ecosystem applications and runtime-specific workloads have explicit dispositions. |
 | **M6 — Measurement and comparisons** | Complete | Extend Rune's existing matrix, count, and profiling tools to consume the manifest. Add serial timing runs, compile measurements, raw results, and reports. | A recorded run reproduces selected inputs and configurations. Reports include correctness status, complete samples, configuration metadata, and separate failure categories. |
@@ -196,7 +202,7 @@ fixture references, and profile completeness.
 M5 completion is recorded in the [application closure evidence](../../examples/benchmarks/validation.md#m5-closure-sequential-sandmark-applications-2026-10-18):
 all suitable pinned executables/selectors are imported and documented. Native
 SML/NJ failures remain recorded, with incorrect results excluded from timings.
-This does not mark M3, M4 or M8 complete.
+This does not mark M4 or M8 complete. M3 closure is recorded in the\n[Nucleic2 evidence](../../examples/benchmarks/results/m3-nucleic2/README.md),\nincluding retained host failures and all 92 suitable inventory paths.
 
 M1 depends on M0. M2, M3, and M5 build on M1; M4 follows M3's translation
 support. M6 starts with the pilots and expands with each import wave. M7

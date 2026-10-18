@@ -1,0 +1,207 @@
+[
+  {
+    "level": "O0",
+    "config": "rune",
+    "pass_assertions": 5081,
+    "failed_assertions": 0,
+    "summaries": [
+      [
+        "5081",
+        "0"
+      ]
+    ],
+    "first_failures": [],
+    "tail": "rol\nPASS nucleic2/driver-source-normal-count\nPASS nucleic2/nonpositive-repetition-no-op\nPASS nucleic2/perturbed-maximum-rejected\nPASS nucleic2/nonfinite-maximum-rejected\nSUMMARY 5081 checks, 0 failed\n",
+    "compile_log_tail": ""
+  },
+  {
+    "level": "O0",
+    "config": "rune-jit",
+    "pass_assertions": 5081,
+    "failed_assertions": 0,
+    "summaries": [
+      [
+        "5081",
+        "0"
+      ]
+    ],
+    "first_failures": [],
+    "tail": "rol\nPASS nucleic2/driver-source-normal-count\nPASS nucleic2/nonpositive-repetition-no-op\nPASS nucleic2/perturbed-maximum-rejected\nPASS nucleic2/nonfinite-maximum-rejected\nSUMMARY 5081 checks, 0 failed\n",
+    "compile_log_tail": ""
+  },
+  {
+    "level": "O0",
+    "config": "rune-new",
+    "pass_assertions": 5081,
+    "failed_assertions": 0,
+    "summaries": [
+      [
+        "5081",
+        "0"
+      ]
+    ],
+    "first_failures": [],
+    "tail": "rol\nPASS nucleic2/driver-source-normal-count\nPASS nucleic2/nonpositive-repetition-no-op\nPASS nucleic2/perturbed-maximum-rejected\nPASS nucleic2/nonfinite-maximum-rejected\nSUMMARY 5081 checks, 0 failed\n",
+    "compile_log_tail": ""
+  },
+  {
+    "level": "O0",
+    "config": "rune-opt",
+    "pass_assertions": 5081,
+    "failed_assertions": 0,
+    "summaries": [
+      [
+        "5081",
+        "0"
+      ]
+    ],
+    "first_failures": [],
+    "tail": "rol\nPASS nucleic2/driver-source-normal-count\nPASS nucleic2/nonpositive-repetition-no-op\nPASS nucleic2/perturbed-maximum-rejected\nPASS nucleic2/nonfinite-maximum-rejected\nSUMMARY 5081 checks, 0 failed\n",
+    "compile_log_tail": ""
+  },
+  {
+    "level": "O2",
+    "config": "native-mlkit-4.7.23",
+    "pass_assertions": 0,
+    "failed_assertions": 0,
+    "summaries": [],
+    "first_failures": [],
+    "tail": "",
+    "compile_log_tail": ""
+  },
+  {
+    "level": "O2",
+    "config": "native-mlton-20241230",
+    "pass_assertions": 5081,
+    "failed_assertions": 0,
+    "summaries": [
+      [
+        "5081",
+        "0"
+      ]
+    ],
+    "first_failures": [],
+    "tail": "rol\nPASS nucleic2/driver-source-normal-count\nPASS nucleic2/nonpositive-repetition-no-op\nPASS nucleic2/perturbed-maximum-rejected\nPASS nucleic2/nonfinite-maximum-rejected\nSUMMARY 5081 checks, 0 failed\n",
+    "compile_log_tail": ""
+  },
+  {
+    "level": "O2",
+    "config": "native-polyml-5.9.2",
+    "pass_assertions": 5081,
+    "failed_assertions": 0,
+    "summaries": [
+      [
+        "5081",
+        "0"
+      ]
+    ],
+    "first_failures": [],
+    "tail": "rol\nPASS nucleic2/driver-source-normal-count\nPASS nucleic2/nonpositive-repetition-no-op\nPASS nucleic2/perturbed-maximum-rejected\nPASS nucleic2/nonfinite-maximum-rejected\nSUMMARY 5081 checks, 0 failed\n",
+    "compile_log_tail": ""
+  },
+  {
+    "level": "O2",
+    "config": "native-smlnj-dev-2026.2",
+    "pass_assertions": 5081,
+    "failed_assertions": 0,
+    "summaries": [
+      [
+        "5081",
+        "0"
+      ]
+    ],
+    "first_failures": [],
+    "tail": "\n    structure Counting : <sig>\n    structure Poison : <sig>\n    structure Perturbed : <sig>\n  end\n[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]\nSUMMARY 5081 checks, 0 failed\n",
+    "compile_log_tail": ""
+  },
+  {
+    "level": "O2",
+    "config": "native-smlnj-legacy-110.99.9",
+    "pass_assertions": 89,
+    "failed_assertions": 65,
+    "summaries": [],
+    "first_failures": [
+      "FAIL nucleic2/on-demand-need/database-rU02 -- false",
+      "FAIL nucleic2/on-demand-need/solution-0/variable-6 -- false",
+      "FAIL nucleic2/on-demand-need/solution-0/variable-5 -- false",
+      "FAIL nucleic2/on-demand-need/solution-0/variable-4 -- false"
+    ],
+    "tail": "emand-need/solution-3/variable-8 -- false\nPASS nucleic2/on-demand-need/solution-3/variable-23\nPASS nucleic2/on-demand-need/solution-3/length\nuncaught exception ExnDuringExecution [ExnDuringExecution]\n",
+    "compile_log_tail": ""
+  },
+  {
+    "level": "O2",
+    "config": "native-smlnj32-110.99.9",
+    "pass_assertions": 5081,
+    "failed_assertions": 0,
+    "summaries": [
+      [
+        "5081",
+        "0"
+      ]
+    ],
+    "first_failures": [],
+    "tail": " int ref\n  structure Counting : <sig>\n  structure Poison : <sig>\n  structure Perturbed : <sig>\nend\n[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]\nSUMMARY 5081 checks, 0 failed\n",
+    "compile_log_tail": ""
+  },
+  {
+    "level": "O2",
+    "config": "rune",
+    "pass_assertions": 5081,
+    "failed_assertions": 0,
+    "summaries": [
+      [
+        "5081",
+        "0"
+      ]
+    ],
+    "first_failures": [],
+    "tail": "rol\nPASS nucleic2/driver-source-normal-count\nPASS nucleic2/nonpositive-repetition-no-op\nPASS nucleic2/perturbed-maximum-rejected\nPASS nucleic2/nonfinite-maximum-rejected\nSUMMARY 5081 checks, 0 failed\n",
+    "compile_log_tail": ""
+  },
+  {
+    "level": "O2",
+    "config": "rune-jit",
+    "pass_assertions": 5081,
+    "failed_assertions": 0,
+    "summaries": [
+      [
+        "5081",
+        "0"
+      ]
+    ],
+    "first_failures": [],
+    "tail": "rol\nPASS nucleic2/driver-source-normal-count\nPASS nucleic2/nonpositive-repetition-no-op\nPASS nucleic2/perturbed-maximum-rejected\nPASS nucleic2/nonfinite-maximum-rejected\nSUMMARY 5081 checks, 0 failed\n",
+    "compile_log_tail": ""
+  },
+  {
+    "level": "O2",
+    "config": "rune-new",
+    "pass_assertions": 5081,
+    "failed_assertions": 0,
+    "summaries": [
+      [
+        "5081",
+        "0"
+      ]
+    ],
+    "first_failures": [],
+    "tail": "rol\nPASS nucleic2/driver-source-normal-count\nPASS nucleic2/nonpositive-repetition-no-op\nPASS nucleic2/perturbed-maximum-rejected\nPASS nucleic2/nonfinite-maximum-rejected\nSUMMARY 5081 checks, 0 failed\n",
+    "compile_log_tail": ""
+  },
+  {
+    "level": "O2",
+    "config": "rune-opt",
+    "pass_assertions": 5081,
+    "failed_assertions": 0,
+    "summaries": [
+      [
+        "5081",
+        "0"
+      ]
+    ],
+    "first_failures": [],
+    "tail": "rol\nPASS nucleic2/driver-source-normal-count\nPASS nucleic2/nonpositive-repetition-no-op\nPASS nucleic2/perturbed-maximum-rejected\nPASS nucleic2/nonfinite-maximum-rejected\nSUMMARY 5081 checks, 0 failed\n",
+    "compile_log_tail": ""
+  }
+]

@@ -1,0 +1,77 @@
+[
+  {
+    "variant": "on-demand-need",
+    "solutions": 50,
+    "coordinates": 109800,
+    "changed_bits": 95982,
+    "largest_absolute_difference": 6.866455078125e-05,
+    "largest_budget_fraction": 0.63052632238972,
+    "worst": [
+      9,
+      18,
+      29,
+      0,
+      -8.90030288696289,
+      -8.900371551513672,
+      6.866455078125e-05,
+      0.00010890037155151368
+    ]
+  },
+  {
+    "variant": "on-demand-strict",
+    "solutions": 50,
+    "coordinates": 109800,
+    "changed_bits": 95982,
+    "largest_absolute_difference": 6.866455078125e-05,
+    "largest_budget_fraction": 0.63052632238972,
+    "worst": [
+      9,
+      18,
+      29,
+      0,
+      -8.90030288696289,
+      -8.900371551513672,
+      6.866455078125e-05,
+      0.00010890037155151368
+    ]
+  },
+  {
+    "variant": "shared-need",
+    "solutions": 50,
+    "coordinates": 109800,
+    "changed_bits": 95982,
+    "largest_absolute_difference": 6.866455078125e-05,
+    "largest_budget_fraction": 0.63052632238972,
+    "worst": [
+      9,
+      18,
+      29,
+      0,
+      -8.90030288696289,
+      -8.900371551513672,
+      6.866455078125e-05,
+      0.00010890037155151368
+    ]
+  },
+  {
+    "variant": "shared-strict",
+    "solutions": 50,
+    "coordinates": 109800,
+    "changed_bits": 95982,
+    "largest_absolute_difference": 6.866455078125e-05,
+    "largest_budget_fraction": 0.63052632238972,
+    "worst": [
+      9,
+      18,
+      29,
+      0,
+      -8.90030288696289,
+      -8.900371551513672,
+      6.866455078125e-05,
+      0.00010890037155151368
+    ]
+  },
+  {
+    "all_four_variants_bit_equal": true
+  }
+]
