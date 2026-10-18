@@ -11,8 +11,9 @@ This roadmap plans three things:
 - **Tests chosen for the occasion.** The Makefile's targets and the agents' instructions say which tests a kind of change runs. The aim is less time spent testing, with the same coverage or more.
 
 It was written on 2026-10-11 against `34b2b4c5`, the merge of the
-install-test branch into master. It lives in a worktree, on branch
-`unit-testing`.
+install-test branch into master, and carried out on branch `unit-testing`,
+which pull request #42 merged into master on 2026-10-13. What is left is in
+*What is left, and how to go on*.
 
 What it rests on:
 * **The code.** A census of the scripts (152 files under `tests/`, `scripts/` and `tools/`), the Makefile's test targets, the SML harnesses there are (`lib/test/property`, the Basis suite's `T`, the libraries' tests), and what the Basis offers a runner (*Where we are*, *What is different for SML, and for Rune*).
@@ -31,19 +32,86 @@ What it rests on:
 | M4 | `tests/lang` and `tests/errors` in ways, compiled once | done 2026-10-12 |
 | M5 | The first calibration: tiers, profiles, `--affected` | done 2026-10-12 |
 | M6 | One engine for expectations | done 2026-10-12 |
-| M7 | The Basis suite on the runner || done 2026-10-12 |
-| M8 | Laws on the runner || done 2026-10-12 |
-| M9 | The differential checks as oracles || done 2026-10-12 |
-| M10 | The tools' suites || done 2026-10-12 |
-| M11 | The protocol suites in SML || done 2026-10-12 |
-| M12 | Requirements and the doctor || done 2026-10-12 |
-| M13 | The matrix, and the other machines || done 2026-10-12 |
-| M14 | The rest, and the tools for flaky tests || done 2026-10-12, in part |
-| M15 | The final calibration || done 2026-10-12 |
+| M7 | The Basis suite on the runner | done 2026-10-12 |
+| M8 | Laws on the runner | done 2026-10-12 |
+| M9 | The differential checks as oracles | done 2026-10-12 |
+| M10 | The tools' suites | done 2026-10-12 |
+| M11 | The protocol suites in SML | done 2026-10-12 |
+| M12 | Requirements and the doctor | done 2026-10-12 |
+| M13 | The matrix, and the other machines | done 2026-10-12, in part |
+| M14 | The rest, and the tools for flaky tests | done 2026-10-12, in part |
+| M15 | The final calibration | done 2026-10-12 |
 
 The owner decided D1 to D24 on 2026-10-12, every one as recommended
 (*Decisions*). M1 and M2 do not depend on each other or on anything else,
 and can be done first.
+
+## What is left, and how to go on
+
+As of 2026-10-18, at master `b11a1737`. Every script below still runs, as a
+make target that the runner runs as a step (`make/*`), or as a job of a
+profile or of the tier `nightly`. The Done notes of M10 to M14 say why each
+stayed.
+
+**The ports still to do:**
+* **M13, the matrix and Windows,** the largest part, and the one with the most knowledge of the hosts:
+  - `tests/basis/run-matrix.sh` (1,698 lines): its configurations as ways, its probes, its halving of a program into sections, and its heap images. `test-windows`, `test-stress`, `matrix-quick`, `matrix` and portability's job `portability/matrix` call it.
+  - The Windows runner: `tests/run-windows.sh` and `tests/windows-dir.sh`.
+  - The hosts' runs of the libraries and the laws: `tests/lib/run-hosts.sh` and `tests/basis/run-laws-hosts.py`.
+* **M14, the other suites** (26 scripts):
+  - native code: `tests/opt/run-opt-tests.sh`, `run-counts.sh`, `run-debug.sh` and `run-bootstrap.sh`;
+  - the budgets: `tests/perf/run-perf.sh`;
+  - the census: `scripts/check-census.sh`;
+  - the heap simulator: `tools/heapsim/test.sh`, `test2.sh` and `validate.sh`;
+  - the layouts and gcbench: `tests/layouts/check.sh` and `tests/gcbench/check.sh`;
+  - the benchmarks: `scripts/run-benchmarks.sh` and the six `tests/benchmarks/check-*.sh`;
+  - the documentation's checks: `scripts/check-docs.sh`, `tests/basis/check-claims.sh` and `check-notes.sh`;
+  - the mutants: `tests/basis/run-mutants.sh`;
+  - the external corpora: `tests/external/run-mlton.sh`, `run-mlton-bench.sh` and `tests/incremental/mlton.sh`;
+  - `tests/color/contrast.py`.
+* **M14, stress and the sanitizers as ways.** `test-stress`, `test-native-stress`, `test-register-asan` and `test-native-asan` still call `tests/run-tests.sh`. It goes when they and the Windows runner have moved. `tests/runtime/run-vm-tests.sh` goes with the Windows runner, since it and portability's jobs call it.
+* **M14, the timing jobs in the exclusive pool.** `make check` has none.
+
+**Kept on purpose, to port when they change:**
+* the scenario scripts of `tests/deps`, `tests/dynamic`, `tests/buildfile` and `tests/units` (M10; D6's cram transcripts are their better next form);
+* `tests/install/run.sh`, a make step, for `SMLNJ` (M10);
+* the interop scripts of `tests/lib/zmtp` and `tests/lib/jupyter` (M10);
+* the protocol drivers (M11): `tests/repl-protocol/run.py`, `tests/dap/run.py`, `tests/kernel/run.sh` with its client, and `tests/incremental/run.sh` with `mutate.py`;
+* `tests/terminal/run.sh`, until the runtime has a pty (G8);
+* `scripts/doctor.sh`'s build scopes (M12).
+
+**Not built from *Testing the tester*:** the display drawn through `Emulator` (item 4). The rest is in place:
+* the canaries;
+* the properties of the scheduler and the expectation engine (`tests/lib/runner/props.sml`);
+* `lib/test/unit`'s own harness (`tests/lib/unit/core.sml`);
+* a planted fault for each port.
+
+*Later* lists what comes after the ports.
+
+**How the work was checked:**
+* **`make check` green before every commit,** in a fresh detached worktree. A commit changes the version compiled into the tools, so the first `make` after a checkout rebuilds them all: about 8 minutes on 16 processors.
+* **A port is done** when the runner gives the script's verdicts on the same tree (a shadow run), and a planted fault fails it (D23).
+  - To plant a fault in an oracle without touching the tree, make a scratch root of symbolic links to the tree, put faulty wrappers in its `bin/`, and run `bin/rune-test run --root SCRATCH`.
+  - A symlinked root changes the compiler's bytes, so there `reproducible/*` fails its comparison with `bin/rune.rbc` for that reason alone.
+* **A change to `lib/basis`** changes `docs/generated/basis`: regenerate it with `make docs`, which `check-docs` compares against. It can also push past `perf-check`'s budgets, which count the compiler's instructions, bytes and objects; measure them again (`tests/perf/run-perf.sh --new --update`) and give the reason in the commit.
+
+**What the full runs taught.** Each lesson comes from a failure of the first full `make check` on the runner (2026-10-12) or of a run since, fixed in the milestone it came from:
+* **Run where the bytes do not depend on it.** A job runs in a directory of its own, or in the root with `dir = SOME "."`. A program that writes into its output where it ran must run in the root, by a relative name:
+  - `bin/rune`'s wrappers find the library through `$0`, and an absolute `$0` puts absolute paths into the bytecode (`bootstrap/*`, `reproducible/*`). So `Sh.exec` keeps a relative name in the root.
+  - The assembler writes its directory into the debug information, so `bin/runevm-native` translates in the root, whichever directory the program runs in. Its cache is keyed by the bytecode alone.
+* **A pool for a script's fixed paths.** Two jobs of one script share what it writes at fixed paths under `tests/out`. So `kernel/pipe` and `kernel/connection` share the pool `kernel`.
+* **An edge for every file a job reads from another.** `jit/@every-instruction` reads `@every-opcode`'s disassembly, and waits for it.
+* **Make's variables stay out of the runner's environment.** A relative `RUNEVM=bin/runevm-stack` reached scripts that run elsewhere, so `RUNE_TEST` passes `RUNEVM` only when it is overridden.
+* **Directories made at once.** `mkdirs` accepts a directory that another job made between its check and its `mkdir` (`45269c34`).
+* **Counts the same on every run.** `check-jit` compares modes, and `IntInf`'s cost depends on its values, so `Subprocess` and `Runtime.clock` use `Time.ofMicros`.
+* **A shared machine.** By default a run takes the processors less the load, but at least half of them. The load is a minute's mean, which still counts the tools just built.
+
+**After the merge,** pull requests fixed the nightly workflow's first runs:
+* #44: the PowerPC and ARM sysroots;
+* #50: SML/NJ's heaps built with `SIGPIPE` at its default;
+* #51: each host's install shown while the others build;
+* #58: two hours for the full matrix, and the deletion of directories that MLKit's `chmod` locks;
+* #60: a flake of native SML/NJ's `setpgid`, recorded as `HOST-FLAKY`.
 
 ## The request
 
@@ -1757,7 +1825,7 @@ M1 and M2 are independent of each other and of the rest.
 
 * **Done** (2026-10-12), for the machines; the matrix's port is still to come:
   - **Portability** (`tests/runner/portability.sml`): tests/lang on the 32-bit, PowerPC and aarch64 VMs and their variants under incremental marking are ten more ways of M4 (`lang/port-*`), compiled once; the counts of --count on every VM and this one, the image of each VM read by every other, the bytecode each VM must refuse (`run-vm-tests.sh`, a job a VM), the JIT's checks on the aarch64 (the oracle of M9 on another VM, `port-jit/*`), and the matrix's configuration `portability`, as jobs of the tier `test-portability`, outside `check`. The capability `qemu` probes the kernel's registration of qemu as well, which run-portability.sh checked before it started. `run-portability.sh` is gone.
-  - **Not yet:** the matrix's configurations as ways (`run-matrix.sh`, its probes, sections and images), the Windows runner (`run-windows.sh`, `windows-dir.sh`, and so `run-tests.sh` and `run-vm-tests.sh`), and the hosts' runs of the libraries and the laws (`run-hosts.sh`, `run-laws-hosts.py`). They hold most of the knowledge of the hosts and of Windows; each still runs, as a make target and as a profile's job. Their port is the next work of this roadmap (*Later*).
+  - **Not yet:** the matrix's configurations as ways (`run-matrix.sh`, its probes, sections and images), the Windows runner (`run-windows.sh`, `windows-dir.sh`, and so `run-tests.sh` and `run-vm-tests.sh`), and the hosts' runs of the libraries and the laws (`run-hosts.sh`, `run-laws-hosts.py`). They hold most of the knowledge of the hosts and of Windows; each still runs, as a make target and as a profile's job. Their port is the next work of this roadmap (*What is left, and how to go on*).
 
 ### M14. The rest, and the tools for flaky tests (L, about 1,500)
 
@@ -1895,7 +1963,7 @@ An agent that reads a log reads the failure blocks and the `RESULT:` line
 
 ## Appendix A: the scripts, and what becomes of them
 
-Every script under `tests/`, `scripts/` and `tools/` at `34b2b4c5` (E10's census: 152 files, 14,321 lines of shell, 6,873 of Python and 727 of awk), with the milestone that retires it, or why it stays.
+Every script under `tests/`, `scripts/` and `tools/` at `34b2b4c5` (E10's census: 152 files, 14,321 lines of shell, 6,873 of Python and 727 of awk), with the milestone that retires it, or why it stays. This is the plan as written. The scripts still in the tree after M15, and why, are in *What is left, and how to go on*.
 
 | Fate | Scripts | Lines |
 |---|---|---|
