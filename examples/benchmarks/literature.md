@@ -759,3 +759,15 @@ theoretical background; the original GHC program establishes the selected
 workload and its expected reports. Frontier representation, fixed-point
 iteration, sharing and polymorphic instantiation are source-based diagnostic
 hypotheses until benchmark measurements establish an effect.
+
+## Veritas proof-editor application
+
+Hanna, Daeche and Howells, [Implementation of the Veritas Design Logic](https://www.cs.kent.ac.uk/pubs/1992/427/index.html),
+1992, is related implementation literature identified by the authors'
+University of Kent record. The pinned nofib source and README identify the
+actual historical workload and input; the paper record alone does not
+establish this exact source snapshot's authorship or release. Source analysis
+suggests diagnostics involving dependent-type terms, signatures, attributes,
+state/output combinators, persistent proof trees and lazy result fields.
+The upstream Makefile warns that its fixed script exercises a limited part
+of the prover; preserve that limit when interpreting measurements.

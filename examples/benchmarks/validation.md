@@ -3401,3 +3401,28 @@ it does not alter the public source. Full make JOBS=4 check exits zero after
 1634.7 seconds. The measurement adapter now retains nonzero compiler exits
 when no image is produced, with planted status tests and the existing
 measurement regressions passing. M4 remains in progress and M8 remains open.
+
+## M4 closure: Veritas, 2026-10-19
+
+The lazy and strict Veritas ports complete all 34 suitable pinned nofib real
+application paths. The catalogue contains 507 programs and 1473 profiles.
+[The complete evidence](results/m4-veritas/README.md) retains 46 passing
+profile combinations out of 56, including all 32 Rune combinations at O0/O2
+across four engines. Nonpassing host compiles/source loads retain their
+actual deadline and phase status; no incorrect or incomplete run contributes
+an accepted timing.
+
+Original GHC observations establish the complete 1391-byte request stream,
+all 400/4000/20000 repeated hashes, lexical/parser outputs and 25 proof-editor
+outcomes. Thirteen canonical semantic groups each pass 218 assertions;
+ML Kit reaches its 600-second compile deadline. Ten earlier incomplete
+fixture-transport groups and all corrected retries remain in the 24-group
+attempt ledger. Both policies preserve the source's partial/stubbed behavior.
+
+All eight normal allocation comparisons agree under the unchanged guards.
+Final serial adapter checks retain two accepted Poly/ML fresh samples
+and four rejected MLton/legacy SML/NJ compile deadlines. Earlier parser-pair and
+development-port failures remain separately identifiable. The full
+make JOBS=4 check passes after 2236.0 seconds on the recorded
+combined Veritas/closure working-tree subject. M4 is complete; M8's report,
+maintenance and final retention audit are still in progress.

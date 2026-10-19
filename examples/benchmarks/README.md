@@ -12,7 +12,8 @@ evaluation set ([latency-ring](#latency-ring), [latency-map](#latency-map),
 as the upstream and the program's own file as its source, and they have no
 inventory entry.
 M3 kernel coverage is [complete with recorded host exceptions](results/m3-nucleic2/README.md);
-M4 applications and M8 coverage closure remain unfinished.
+M4 application coverage is [complete with recorded host exceptions](results/m4-veritas/README.md);
+M8 coverage closure is in progress.
 
 | Name | Source | Description |
 |---|---|---|
@@ -524,6 +525,8 @@ M4 applications and M8 coverage closure remain unfinished.
 | [fluid-strict](#fluid-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/fluid) | Solve and hash the supplied finite-element flow model using sparse tries, Cholesky and Jacobi methods. |
 | [anna-lazy](#anna-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/anna) | Infer types and compute polymorphic strictness frontiers for functional Core programs. |
 | [anna-strict](#anna-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/anna) | Infer types and compute polymorphic strictness frontiers for functional Core programs. |
+| [veritas-lazy](#veritas-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/veritas) | Execute and validate a scripted proof-editor session using dependent-type logic and immutable proof trees. |
+| [veritas-strict](#veritas-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/veritas) | Execute and validate a scripted proof-editor session using dependent-type logic and immutable proof trees. |
 
 ## Running and interpreting checks
 
@@ -20169,7 +20172,8 @@ Private Rune, MLton, Poly/ML and ML Kit runs pass 132 checks. Private SML/NJ
 runs terminate with bus/segmentation faults or a fatal bogus-overflow diagnostic.
 Retain valid source and canonical host settings; the compiler mechanism is
 unresolved. Failed correctness checks cannot supply accepted timing samples.
-Canonical primary, count and semantic results are recorded as they finish.
+Canonical primary, count and semantic results are recorded in the
+[Fourier wave evidence](results/m3-fft2/README.md).
 
 ### Literature and diagnostic questions
 
@@ -20266,7 +20270,8 @@ Private Rune, MLton, Poly/ML and ML Kit runs pass 132 checks. Private SML/NJ
 runs terminate with bus/segmentation faults or a fatal bogus-overflow diagnostic.
 Retain valid source and canonical host settings; the compiler mechanism is
 unresolved. Failed correctness checks cannot supply accepted timing samples.
-Canonical primary, count and semantic results are recorded as they finish.
+Canonical primary, count and semantic results are recorded in the
+[Fourier wave evidence](results/m3-fft2/README.md).
 
 ### Literature and diagnostic questions
 
@@ -20750,7 +20755,7 @@ small full text, the source counterexample, output corruption/length rejection,
 zero iterations, front/back queue rebalancing and unused-field demand.
 Both policies agree with the complete original text in a guarded streaming
 pilot. Full normal calibration and canonical primary/count/semantic runs are
-recorded separately as they finish. Full large SML repetition checks remain
+recorded in the [paragraph wave evidence](results/m3-para/README.md). Full large SML repetition checks remain
 unrecorded. An earlier development consumer materialized an extra full output
 list and exceeded a private 1-GiB guard; retain that development observation
 separately from the final streaming consumer's checks.
@@ -20867,7 +20872,7 @@ small full text, the source counterexample, output corruption/length rejection,
 zero iterations, front/back queue rebalancing and unused-field demand.
 Both policies agree with the complete original text in a guarded streaming
 pilot. Full normal calibration and canonical primary/count/semantic runs are
-recorded separately as they finish. Full large SML repetition checks remain
+recorded in the [paragraph wave evidence](results/m3-para/README.md). Full large SML repetition checks remain
 unrecorded. An earlier development consumer materialized an extra full output
 list and exceeded a private 1-GiB guard; retain that development observation
 separately from the final streaming consumer's checks.
@@ -21152,7 +21157,7 @@ The 163-check target compares 64 original states, 64 independent states,
 angle/remainder semantics, smoke moments, every individually perturbed moment,
 nonfinite values and malformed/short references. Point comparisons use absolute
 and relative 1e-11. Full normal final-source Rune calibration passes; canonical
-host/count checks are recorded as they finish. Full large SML repetition checks
+host/count checks are recorded in the [Almabench evidence](results/m5-almabench/README.md). Full large SML repetition checks
 remain unrecorded, separately from the original observer's complete large
 moments. Incorrect results cannot supply accepted measurements.
 
@@ -34604,3 +34609,29 @@ on every repetition, as the original driver does.
 See [anna-strict/PROVENANCE.md](anna-strict/PROVENANCE.md) for history,
 variants, adaptations, runtime questions, inputs, checks and references.
 Public validation is [recorded](results/m4-anna/README.md), including host exceptions.
+
+## veritas-lazy
+
+Execute the original scripted proof-editor session for the Veritas design
+logic. Tokenize and parse a functional concrete syntax, manipulate terms,
+declarations and signatures, build proof trees, apply tactics, track completion,
+render the original X-interface requests and compute their modular hash.
+The maintained nofib driver repeats the same session 400/4000/20000 times.
+
+
+See [veritas-lazy/PROVENANCE.md](veritas-lazy/PROVENANCE.md) for history,
+variants, adaptations, runtime questions, inputs, checks and references.
+Public validation is [recorded](results/m4-veritas/README.md), including host deadlines and incomplete attempts.
+
+## veritas-strict
+
+Execute the original scripted proof-editor session for the Veritas design
+logic. Tokenize and parse a functional concrete syntax, manipulate terms,
+declarations and signatures, build proof trees, apply tactics, track completion,
+render the original X-interface requests and compute their modular hash.
+The maintained nofib driver repeats the same session 400/4000/20000 times.
+
+
+See [veritas-strict/PROVENANCE.md](veritas-strict/PROVENANCE.md) for history,
+variants, adaptations, runtime questions, inputs, checks and references.
+Public validation is [recorded](results/m4-veritas/README.md), including host deadlines and incomplete attempts.
