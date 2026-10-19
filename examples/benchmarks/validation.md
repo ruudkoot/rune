@@ -3426,3 +3426,35 @@ development-port failures remain separately identifiable. The full
 make JOBS=4 check passes after 2236.0 seconds on the recorded
 combined Veritas/closure working-tree subject. M4 is complete; M8's report,
 maintenance and final retention audit are still in progress.
+
+## M8 closure: coverage, report and maintenance, 2026-10-19
+
+[The closure evidence](results/m8-closure/README.md) accounts for all 861
+primary entries and 38 companion variants. All 321 suitable source paths
+map to the 507 runnable programs and 1473 profiles. No suitable import
+remains merely scheduled. The independent evidence index links each program
+to its recorded per-wave checks and preserves actual host/source epochs.
+
+The SML coverage checker and six meaningful assertions pass on four standard
+SML implementations. All 163 inventory regressions pass and the inventory
+replays against five pinned upstreams. The closure indexes all 43 nofib
+runtime_files members, reviews dataset credits/notices, and records Monster
+as Anna's separate auxiliary tool.
+
+Selected-tool provenance distinguishes a compiler override's actual
+repository, dirty state, Basis and payloads from the suite checkout.
+Foreign-repository and unknown-launcher probes and the existing measurement
+regressions pass. Final routine smoke, metadata and documentation checks
+follow the successful full repository acceptance subject.
+
+The audit retains 50815 previously ignored text records (158138605 bytes),
+with byte-exact identities, 21 text observation aliases and 812 excluded
+binary identities. Every staged added/modified blob passes the unchanged
+payload policy and matches its physical bytes. Raw evidence retains its
+original whitespace.
+
+[The initial report](REPORT.md), [maintenance procedures](MAINTENANCE.md) and
+[ranked additional candidates](CANDIDATES.md) complete M8. All M0-M8 milestones
+are complete. This publishes recorded coverage and method evidence, not an
+all-program compiler ranking or an unrecorded large-host sweep. Future
+parallel/runtime-specific workloads remain deferred under the agreed policy.

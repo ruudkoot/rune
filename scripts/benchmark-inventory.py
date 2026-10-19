@@ -540,7 +540,7 @@ def build(source, root, lock):
             for fixture in parent.rglob("*"):
                 if not upstream_file(root, fixture):
                     continue
-                if fixture.is_file() and (fixture.name == "ANSWER" or fixture.suffix in {".in", ".stdin", ".stdout", ".faststdin", ".faststdout", ".slowstdin", ".slowstdout", ".expected", ".out", ".ok"} or "DATA" in fixture.relative_to(parent).parts):
+                if fixture.is_file() and (fixture.name == "ANSWER" or fixture.suffix in {".in", ".stdin", ".stdout", ".faststdin", ".faststdout", ".slowstdin", ".slowstdout", ".expected", ".out", ".ok"} or "DATA" in fixture.relative_to(parent).parts or (source == "nofib" and "runtime_files" in fixture.relative_to(parent).parts)):
                     inputs.add(str(fixture.relative_to(root)))
         input_text = re.sub(r'^\s*#\s*include[^\n]*$', '', text, flags=re.M)
         for ref in re.findall(r'"([^"\n]+)"', input_text):
@@ -558,6 +558,14 @@ def build(source, root, lock):
                     notices.append(str(notice.relative_to(root)))
         authors = set()
         context = [p for p in parent.iterdir() if p.is_file() and p.name in {"README", "README.md", "Makefile", "FILES", "sources.cm"}] if parent.exists() and files else []
+        if source == "nofib" and path == "real/anna":
+            main = parent / "Main.hs"
+            if main.is_file():
+                banner = main.read_text(errors="replace")
+                if ("Jules's Strictness Analyser, version 0.400" in banner
+                        and "Copyright (c) Julian Seward 1992" in banner):
+                    authors.add("Julian Seward (program banner)")
+                    item["evidence"].append(path + "/Main.hs:versioned-program-copyright-banner")
         if source == "nofib" and path == "real/hpg":
             manual = parent / "hpg.tex"
             if manual.is_file():

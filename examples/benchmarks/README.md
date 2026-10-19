@@ -1,10 +1,11 @@
 # Rune benchmarks
 
-Portable SML97 benchmark programs, being implemented from the
+Portable SML97 benchmark programs, implemented from the
 [roadmap](../../docs/plans/benchmarks.md). The runnable catalogue covers the classic SML collection and staged nofib/Sandmark
-ports, with fixed profiles and result checks. Recorded coverage is in
-[validation.md](validation.md). The larger source
-[inventory](inventory.tsv) schedules future imports; it is not a list of
+ports, with fixed profiles and result checks. The initial roadmap is complete
+with 507 programs and 1473 profiles. Recorded coverage is in
+[validation.md](validation.md). The source
+[inventory](inventory.tsv) records every pinned disposition; it is not a list of
 passing programs. See the [source audit](audit.md) and [literature map](literature.md).
 Three programs are Rune's own, the latency workloads of the collector's
 evaluation set ([latency-ring](#latency-ring), [latency-map](#latency-map),
@@ -13,7 +14,9 @@ as the upstream and the program's own file as its source, and they have no
 inventory entry.
 M3 kernel coverage is [complete with recorded host exceptions](results/m3-nucleic2/README.md);
 M4 application coverage is [complete with recorded host exceptions](results/m4-veritas/README.md);
-M8 coverage closure is in progress.
+M8 coverage closure is [complete](results/m8-closure/README.md). See the
+[initial report](REPORT.md), [maintenance procedures](MAINTENANCE.md) and
+[additional candidate review](CANDIDATES.md).
 
 | Name | Source | Description |
 |---|---|---|
@@ -611,8 +614,8 @@ name, for example `BENCH_FILTER='=S'`. For example,
 `make bench-check BENCH_PROFILE=normal BENCH_CONFIGS=rune,rune:new,rune:jit,rune:opt BENCH_FILTER=aobench`
 checks the captured-record workload on all four engines. The default reference
 host set has recorded failures; see [reference-host caveats](validation/reference-hosts.md)
-before using host agreement as an acceptance condition. The roadmap remains
-in progress while these imported programs and tools are available for use.
+before using host agreement as an acceptance condition. The initial roadmap is complete; recorded host exceptions remain explicit in
+the report and per-wave evidence.
 
 The independent and negative tests are:
 

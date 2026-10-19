@@ -1,4 +1,9 @@
-# Initial source audit
+# Source audit and review history
+
+Current closure: all 321 suitable paths are implemented in 507 programs and
+1473 profiles. The [M8 evidence](results/m8-closure/README.md) and
+[initial report](REPORT.md) record the final reconciliation. The reviews below
+retain their historical counts and status at each recorded source epoch.
 
 The [2026-10-16 circuit-input review](validation/inventory-oct16-circuit-input.md)
 adds the SCS inverter fixture whose .in suffix is added by the program. All 46
@@ -735,3 +740,22 @@ SML/NJ has three smoke loading timeouts and one explicit allocation failure,
 and passes every normal profile. ML Kit has two empty-log smoke compiles
 and passes every normal profile. All normal allocation counts agree;
 repository acceptance and all 152 inventory tests pass.
+
+## Initial roadmap coverage closure, 2026-10-19
+
+All 861 primary entries have a disposition and reason. All 321 import paths
+map to implemented profiles; 38 companions include alternate engines,
+historical references and Anna's separately built Monster utility. The
+closure indexes every tracked nofib runtime_files member and preserves
+individual dataset credits/notices. All 163 inventory regressions and clean
+five-upstream replay pass.
+
+All 507 programs have linked overview rows, documentation sections,
+provenance and recorded evidence. The portable SML coverage checker rejects
+missing imports and runnable deferred/excluded entries. M4 completion is
+recorded with Veritas; the final M8 evidence retains full repository
+acceptance, metadata regressions, text snapshots and explicit host failures.
+
+The [maintenance procedures](MAINTENANCE.md) define refresh and baseline
+updates. [Additional candidates](CANDIDATES.md) record overlap and feature
+conditions; they do not silently enlarge the initial import commitment.
