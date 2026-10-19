@@ -323,13 +323,23 @@ static Value ret_word(VM *vm) {
     return vm->ret_word;
 }
 
+/* the frame's return word, seen through the return barrier where the
+   frame is the barrier's (below, M5) */
+static int barrier_at(const VM *vm, size_t b) {
+    return vm->barrier_at && b == vm->barrier_at && vm->stack[b - 1] == vm->barrier_stub;
+}
+static Value ret_word_at(const VM *vm, size_t b) { return barrier_at(vm, b) ? vm->barrier_word : vm->stack[b - 1]; }
+static void set_ret_word_at(VM *vm, size_t b, Value w) {
+    if (barrier_at(vm, b)) vm->barrier_word = w;
+    else vm->stack[b - 1] = w;
+}
 /* what the header of the frame at base b says of its caller -- its base,
    function and pc in f's caller_*, f's ret_pc; bottom where it has none --
    and where the header begins. A caller whose registers would not end
    below the header is a fault of the VM's (or of an image's, which
    vm_frames_install checks). */
 static void read_header(VM *vm, size_t b, FrameRef *f) {
-    Value w = vm->stack[b - 1];
+    Value w = ret_word_at(vm, b);
     f->bottom = 0;
     f->head = b - 3;
     if (reg_interp_word(vm, w)) {
@@ -411,12 +421,77 @@ size_t vm_frames_from(VM *vm, size_t low, FrameRef **out) {
 
 int vm_frame_top_live(const VM *vm, const FrameRef *top) { return vm->top_frame == (const void *)(vm->stack + top->base); }
 
-void vm_frames_mark_low(VM *vm, size_t id) {
+/* ---- The watermark (runtime/gc/minor.c) by a return barrier
+   (docs/plans/native-frames.md, M5) ----
+   Where the JIT's region has the barrier's stub (VM.barrier_stub, an odd
+   word), the frame at the watermark has it for its return word, its own
+   kept in VM.barrier_word: a return from that frame -- the only one that
+   goes below the watermark -- goes through the stub, which lowers the
+   watermark to the caller and moves the barrier there
+   (reg_barrier_pass), so that compiled code's returns compare nothing.
+   Every reader of a return word sees through it (ret_word_at). A
+   collection sets the watermark at the frame that runs, the barrier
+   leaving the frame it was at; a pop below it -- a raise, the debugger's
+   frame dropped -- lowers it, the frame that had the barrier gone. */
+/* the barrier at the frame based at b, where there is a stub */
+static void barrier_arm(VM *vm, size_t b) {
+    vm->barrier_at = 0;
+    if (!vm->barrier_stub || !vm->frames_active || b < 3 || b > vm->fp) return;
+    vm->barrier_word = vm->stack[b - 1];
+    vm->stack[b - 1] = vm->barrier_stub;
+    vm->barrier_at = b;
+}
+/* the watermark lowered to the frame based at id, below it popped (the
+   barrier's frame with them) */
+static void frames_lower(VM *vm, size_t id) {
+    if (id >= vm->fp_low) return;
     vm->fp_low = id;
-    vm->frame_low = vm->stack + id;
+    barrier_arm(vm, id);
+}
+/* the watermark at id, the frames as they are: the barrier's frame given
+   its return word back, and the barrier at id where a frame is based there */
+void vm_frames_mark_low(VM *vm, size_t id) {
+    if (barrier_at(vm, vm->barrier_at)) vm->stack[vm->barrier_at - 1] = vm->barrier_word;
+    vm->barrier_at = 0;
+    vm->fp_low = id;
+    FrameRef f;
+    if (vm->barrier_stub && id >= 3 && vm_frame_find(vm, id, &f)) barrier_arm(vm, id);
 }
 size_t vm_frames_low(const VM *vm) { return vm->fp_low; }
-void vm_frames_stack_moved(VM *vm) { vm->frame_low = vm->stack + vm->fp_low; }
+/* a return through the barrier, the frame at the watermark returning: its
+   return word, given back; the watermark lowered to its caller, and the
+   barrier there (the top level's frame has none below it) */
+Value reg_barrier_pass(VM *vm) {
+    size_t b = vm->barrier_at;
+    Value w = vm->barrier_word;
+    vm->stack[b - 1] = w;
+    vm->barrier_at = 0;
+    vm->barrier_runs++;
+    FrameRef f;
+    f.bottom = 0;
+    read_header(vm, b, &f);
+    if (!f.bottom) {
+        vm->fp_low = f.caller_base;
+        if (vm->barrier_stub) {
+            vm->barrier_word = vm->stack[f.caller_base - 1];
+            vm->stack[f.caller_base - 1] = vm->barrier_stub;
+            vm->barrier_at = f.caller_base;
+        }
+    }
+    return w;
+}
+/* the barrier where the watermark is, the stub made (jit_region_init) */
+void reg_barrier_arm(VM *vm) { vm_frames_mark_low(vm, vm->fp_low); }
+/* runtime/gc/check.c: the barrier at the watermark's frame where there is
+   a stub and a frame there, and nowhere else */
+const char *vm_frames_check(VM *vm) {
+    FrameRef f;
+    int there = vm->barrier_stub && vm->fp_low >= 3 && vm_frame_find(vm, vm->fp_low, &f);
+    if (there && (vm->barrier_at != vm->fp_low || vm->stack[vm->fp_low - 1] != vm->barrier_stub))
+        return "the return barrier not at the stack's watermark";
+    if (!there && vm->barrier_at) return "a return barrier where the stack's watermark has no frame";
+    return NULL;
+}
 
 /* a frame the runtime pushes above values of its own keeps its caller's
    base below its header */
@@ -439,7 +514,7 @@ void vm_frame_drop(VM *vm) {
     if (!vm_frame_top(vm, &f) || f.bottom) vm_fatal(vm, "no frame to drop");
     vm->fp = f.caller_base;
     vm->func = f.caller_func;
-    if (vm->fp < vm->fp_low) vm_frames_mark_low(vm, vm->fp);
+    frames_lower(vm, vm->fp);
 }
 
 void vm_frame_top_level(VM *vm) {
@@ -451,14 +526,15 @@ void vm_frame_top_level(VM *vm) {
     vm->fp = 3;
     vm->func = 0;
     vm->frames_active = 1;
-    vm_frames_stack_moved(vm);
+    vm->barrier_at = 0;
 }
 
 void vm_frame_unwind(VM *vm, size_t id, uint32_t func) {
     vm->fp = id;
     vm->func = func;
-    if (vm->fp < vm->fp_low) vm_frames_mark_low(vm, vm->fp);
+    frames_lower(vm, vm->fp);
 }
+void reg_frames_lower(VM *vm, size_t id) { frames_lower(vm, id); }
 
 /* An image's frames (runtime/image.c), its stack and handlers as the image
    has them, without the headers: the stack made over with a header below
@@ -514,6 +590,7 @@ int vm_frames_install(VM *vm, const FrameRecord *frames, size_t n, const char **
     free(words);
     vm->stack_clean = vm->sp;   /* nothing above it claimed (vm.h, M6) */
     vm->stack_room = vm_room(vm, vm->sp);
+    vm->barrier_at = 0;
     vm_frames_mark_low(vm, 0);
     return 1;
 }
@@ -523,10 +600,10 @@ int vm_frames_install(VM *vm, const FrameRecord *frames, size_t n, const char **
 void reg_frames_to_interpreter(VM *vm, uintptr_t lo, uintptr_t hi) {
     FrameRef f;
     for (int more = vm_frame_top(vm, &f); more; more = vm_frame_down(vm, &f)) {
-        Value w = vm->stack[f.base - 1];
+        Value w = ret_word_at(vm, f.base);
         if (reg_interp_word(vm, w) || (uintptr_t)w - JIT_RET_BIAS < lo || (uintptr_t)w - JIT_RET_BIAS >= hi) continue;
         vm->stack[f.base - 3] = reg_info(f.caller_func, f.ret_pc, REG_INFO_CALLER);
-        vm->stack[f.base - 1] = ret_word(vm);
+        set_ret_word_at(vm, f.base, ret_word(vm));
     }
 }
 void vm_frames_to_interpreter(VM *vm) {
@@ -536,5 +613,5 @@ void vm_frames_to_interpreter(VM *vm) {
 void reg_frames_ret_word(VM *vm) {
     FrameRef f;
     for (int more = vm_frame_top(vm, &f); more; more = vm_frame_down(vm, &f))
-        if (reg_interp_word(vm, vm->stack[f.base - 1])) vm->stack[f.base - 1] = ret_word(vm);
+        if (reg_interp_word(vm, ret_word_at(vm, f.base))) set_ret_word_at(vm, f.base, ret_word(vm));
 }

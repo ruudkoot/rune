@@ -1728,6 +1728,18 @@ void ms_emit_ret_tramp(Asm *a, int win, MsHelper helper, AsmLabel *leave) {
     as_jmp(&m.a, leave);   /* with the answer in R_S0 */
     *a = m.a;
 }
+void ms_emit_barrier(Asm *a, int win, MsHelper helper) {
+    Masm m;
+    memset(&m, 0, sizeof m);
+    m.a = *a; m.win = win; m.nfields = UINT32_MAX;
+    as_st64(&m.a, VMR, OFF(ret_value), R_S0);   /* the value, kept across the call */
+    as_mov_rr(&m.a, ms_arg(&m, 1), BASER);      /* the frame that returns */
+    ms_call(&m, helper);
+    as_mov_rr(&m.a, R_S1, R_S0);
+    as_ld64(&m.a, R_S0, VMR, OFF(ret_value));
+    as_jmp_r(&m.a, R_S1);
+    *a = m.a;
+}
 void ms_emit_call_interp(Asm *a, int win, MsHelper helper, AsmLabel *leave) {
     Masm m;
     memset(&m, 0, sizeof m);

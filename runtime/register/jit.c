@@ -3,9 +3,7 @@
    M4. Under --jit=all every function tier 1 can compile is compiled when
    the program is first seen; the rest stay interpreted. */
 #include "jit.h"
-#ifdef RUNE_JIT_CONV
 #include "regvm.h"
-#endif
 #include "sys/sys.h"
 
 #include <stdio.h>
@@ -98,6 +96,8 @@ static void jit_make(VM *vm, JitProgram *jit) {
         vm->ret_tramp = jit->ret_tramp;
         vm->ret_word = (Value)(uintptr_t)jit->ret_tramp + JIT_RET_BIAS;   /* (native-frames.md, M4) */
         reg_frames_ret_word(vm);
+        vm->barrier_stub = (Value)(uintptr_t)jit->barrier + JIT_RET_BIAS;   /* (M5) */
+        reg_barrier_arm(vm);
     }
     /* the code made for the program before goes first: its frames return
        into the interpreter (jit_invalidate), since that code names the
@@ -401,6 +401,8 @@ void jit_print_stats(void) {
             (unsigned long long)jit->compiled, jit->nfuncs, (unsigned long long)jit->compiled_opt, jit->compile_seconds, (unsigned long long)jit->code_used,
             (unsigned long long)jit->dead_bytes, (unsigned long long)jit->handed_native, (unsigned long long)jit->handed_interp,
             (unsigned long long)jit->osr_entries, (unsigned long long)jit->deopts, (unsigned long long)jit->invalidated);
+    if (the_vm && the_vm->barrier_runs)
+        fprintf(stderr, "runevm: jit: the stack's return barrier: %llu returns through it\n", (unsigned long long)the_vm->barrier_runs);
     if (jit->homes_wanted[0] | jit->homes_wanted[1] | jit->homes_too_large) {
         static const char *const kinds[2] = { "general", "real" };
         for (int k = 0; k < 2; k++)

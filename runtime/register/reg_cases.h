@@ -166,6 +166,9 @@ CASE(RET) {
        (RETURN_LANDING), and else says what its landing is of */
     size_t at = vm->fp;
     Value w = vm->stack[at - 1], info = vm->stack[at - 3];
+    /* the frame at the stack's watermark returns through its barrier,
+       which lowers the watermark (native-frames.md, M5) */
+    if (w == vm->barrier_stub && at == vm->barrier_at) w = reg_barrier_pass(vm);
     uint32_t cf, back;
     size_t head = at - FRAME_HEADER, cb;
     if (reg_interp_word(vm, w)) {
@@ -185,7 +188,7 @@ CASE(RET) {
     }
     vm->fp = cb;
     vm->func = cf;
-    if (cb < vm->fp_low) vm_frames_mark_low(vm, cb);
+    reg_frames_lower(vm, cb);
     base = vm->stack + cb;
     sp = vm->stack + head;
     /* the caller goes on at RESULT d, which takes the value: written

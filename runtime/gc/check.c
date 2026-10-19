@@ -210,6 +210,8 @@ const char *heap_check(VM *vm, const void **at) {
         for (size_t k = 0; k < nf && fr[k].id < low && !c.failed; k++)
             if (fr[k].closure_root && *fr[k].closure_root && gc_in_nursery(vm, *fr[k].closure_root))
                 check_fail(&c, "a frame below the stack's watermark whose closure is young", fr[k].closure_root);
+        const char *why = c.failed ? NULL : vm_frames_check(vm);   /* runtime/register's barrier at it (native-frames.md, M5) */
+        if (why) check_fail(&c, why, NULL);
     }
 #define CHECK_VALUE(v) check_value(&c, (v), "a root that is no object's")
 #define CHECK_OBJ(o) check_ptr(&c, *(o), "a root that is no object")

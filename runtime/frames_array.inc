@@ -66,7 +66,7 @@ size_t vm_frames_from(VM *vm, size_t low, FrameRef **out) {
 int vm_frame_top_live(const VM *vm, const FrameRef *top) { return vm->top_frame == (const void *)&vm->frames[top->id]; }
 
 void vm_frames_mark_low(VM *vm, size_t id) { vm_set_fp_low(vm, id); }
-void vm_frames_stack_moved(VM *vm) { (void)vm; }
+const char *vm_frames_check(VM *vm) { (void)vm; return NULL; }
 
 size_t vm_frames_low(const VM *vm) { return vm->fp_low; }
 
@@ -100,7 +100,6 @@ int vm_frames_install(VM *vm, const FrameRecord *frames, size_t n, const char **
     vm->frames_cap = n < 256 ? 256 : n;
     vm->frames = malloc(vm->frames_cap * sizeof(Frame));
     if (!vm->frames) return 0;
-    vm->frame_low = vm->frames + vm->fp_low;
     for (size_t i = 0; i < n; i++) {
         vm->frames[i].func = frames[i].func;
         vm->frames[i].ret_pc = frames[i].ret_pc;

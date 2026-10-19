@@ -99,6 +99,7 @@ int jit_h_prim(VM *vm, int prim, int32_t d, uint32_t at);
 Obj *jit_h_alloc(VM *vm, int kind, int contag, uint32_t n);
 void jit_h_setenv(VM *vm, int32_t c, int32_t e, int32_t v);
 int jit_h_return(VM *vm, uint64_t value);
+const void *jit_h_barrier(VM *vm, const Value *regs);
 int jit_h_enter_interp(VM *vm);
 void jit_h_fatal(VM *vm, int what, int32_t a, int32_t b);
 void jit_h_fatal_at(VM *vm, uint32_t k, int64_t value);

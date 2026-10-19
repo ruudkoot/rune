@@ -39,7 +39,7 @@ enum { VMR = R_VM, BASEI = R_BASEI, BASER = R_BASER, COUNTR = R_COUNT };
 
 /* A slow path, emitted after the function's code: where it begins, where
    it goes back to, and what it is. */
-enum SlowKind { SLOW_FATAL, SLOW_ALLOC, SLOW_GROW, SLOW_PRIM, SLOW_GROW_RAX, SLOW_TAKEN, SLOW_DEOPT, SLOW_BOXREAL, SLOW_BOXNUM, SLOW_SETENV, SLOW_INTERRUPT, SLOW_CALL_TABLE, SLOW_LOW };
+enum SlowKind { SLOW_FATAL, SLOW_ALLOC, SLOW_GROW, SLOW_PRIM, SLOW_GROW_RAX, SLOW_TAKEN, SLOW_DEOPT, SLOW_BOXREAL, SLOW_BOXNUM, SLOW_SETENV, SLOW_INTERRUPT, SLOW_CALL_TABLE };
 /* the words of a frame's header below its registers (vm.h, isa_frame_header) */
 #define MS_HEADER 3
 typedef struct Slow {
@@ -434,5 +434,11 @@ void ms_emit_ret_tramp(Asm *a, int win, MsHelper helper, AsmLabel *leave);
    the frame and the function to the VM,
    helper(vm), and the VM handed back with its answer */
 void ms_emit_call_interp(Asm *a, int win, MsHelper helper, AsmLabel *leave);
+/* the stack's return barrier (native-frames.md, M5): where a RET of the
+   frame at the watermark goes, the value in R_S0 and r14 the frame:
+   helper(vm, its registers), which lowers the watermark and gives back
+   where the frame's own return word goes, and on there with the value.
+   Its address is odd (as_ret_align): it is a return word. */
+void ms_emit_barrier(Asm *a, int win, MsHelper helper);
 
 #endif

@@ -365,8 +365,9 @@ being visited. A minor collection's roots are those, the fields of the
 cards the barrier marked and the large objects made since the last one,
 and of the stack only what is above its watermark: the lowest frame that
 has run since the last minor collection, which every return and every
-raise lowers to the frame it goes on in (`vm_frame_pop`; `runevm`'s
-compiled code, at the landing of the call returned from). The frames below
+raise lowers to the frame it goes on in (`vm_frame_pop`; in `runevm`, a
+return barrier at the watermark's frame, whose return alone goes below
+it: docs/plans/native-frames.md, M5). The frames below
 it have not run since that collection left nothing young in them, so a
 deep recursion is not scanned again at every minor collection; a full
 collection scans the whole stack.
@@ -474,7 +475,8 @@ what `Runtime.stats` says is live.
   stack or among the other roots is to the start of an object in it, and
   that every field of an old object that holds a pointer into the nursery
   is in a card the barrier marked, and that no slot of the stack below its
-  watermark holds one; a failure is a message naming the
+  watermark holds one (and in `runevm` that the return barrier is at the
+  watermark); a failure is a message naming the
   collection and status 2. `make test-heap` runs the language's tests so,
   with a heap of 64 KiB and a nursery of 8 KiB.
 * An image (`Runtime.save`) carries the heap as it lies, the garbage since

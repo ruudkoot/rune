@@ -38,7 +38,7 @@ plan's.
 | M2 | The body: tier 2's code for an instruction | done (2026-10-19): a constructor's tag tested by its representation, `SWITCH`'s tag likewise, the `--checked` test compiled in only under `--checked`, `int_mod` by a power of two an `and`; the bootstrap 15.230G to 14.516G instructions (−4.7%), HOL's kernel work 53.016G to 49.953G (−5.8%); cycles, an indication, −7% and −11%; `--count` and every output unchanged; `ENV`'s tests and division by a constant not built (*M2*) |
 | M3 | Frames walked, not indexed | done (2026-10-19): the walk of `vm.h`, given by each instruction set over the array, and every reader of frames outside the engines on it; the bootstrap 14.516G to 14.519G instructions (+0.02%), every output and count unchanged (*M3*) |
 | M4 | Frames in the value stack | done (2026-10-19): a header of three words below each frame's registers, `vm->frames` gone from `runevm`, returns by `jmp [r14-8]`, the watermark compared at the landing; a `fib` call 39.0 to 29.0 instructions and 11.0 to 8.3 cycles (MLton 8.7), a `tak` call 47.3 to 37.3 and 13.1 to 11.0; HOL's kernel work 49.98G to 43.95G instructions (−12.1%), the bootstrap's compiled code −10.3% and the whole −2.9%; the targets of instructions short (*M4*); `--count`, every output and the images' format unchanged |
-| M5 | The watermark by a return barrier | not started; prototype F1 |
+| M5 | The watermark by a return barrier | done (2026-10-19): the frame at the watermark returns through a stub that lowers it and moves itself to the caller; no other return compares anything; a `fib` call 29.0 to 27.0 instructions, a `tak` call 37.3 to 35.3 (targets 24 and 32 short); the bootstrap −1.1% instructions, HOL's kernel work −2.6%; 64,033 returns through the barrier in the bootstrap's 72M; `--count` and every output unchanged (*M5*) |
 | M6 | Arguments in registers | not started; prototype F1 |
 | M7 | Returns the processor predicts | not started; prototype F1 |
 | M8 | The allocation pointer in a register | not started |
@@ -1474,6 +1474,51 @@ seen through by every walk.
 * the stub's runs counted by `--jit-stats`, and no more than the frames
   minor collections walk;
 * `--gc-verify` holding the barrier to the watermark, `--gc-stress` green.
+
+**Done** (2026-10-19; `runtime/register/isa_regs.c`, the JIT's `masm.c`,
+`emit.c`, `compile.c`, `jit.c`, the loop's `RET`, `vm.h`, `gc/check.c`;
+`tests/lang/rt.gc_return-barrier`):
+
+* **The barrier** (`isa_regs.c`): where the JIT's region has the
+  barrier's stub (`ms_emit_barrier`, at an odd address: a return word),
+  the frame at the watermark has the stub's word for its return word
+  (`VM.barrier_stub`, the frame at `VM.barrier_at`, its own word in
+  `VM.barrier_word`). Its return -- the only one that goes below the
+  watermark -- goes through the stub, which keeps the value, asks C
+  (`jit_h_barrier`, `reg_barrier_pass`) to give the frame its word back,
+  lower the watermark to the caller and put the barrier there, and goes
+  on where the word says; the loop's `RET` does the same for a frame it
+  returns from. A collection moves the barrier to the frame that runs
+  (`vm_frames_mark_low`, the frame it leaves given its word back); a
+  raise below it, or the debugger's frame dropped, lowers it to the frame
+  left running, the frames above gone (the in-line raise of compiled code
+  goes to the helper for a handler below the watermark, compared by
+  index). The walk, invalidation, debug mode and the return word given
+  to the interpreter's frames read and write a barrier frame's own word.
+  The region's making, and a new world's, arm it.
+* **What goes:** the landing's compare and its slow path, and
+  `VM.frame_low` (the watermark is a base, an index, and the stack's
+  moves change nothing).
+* **Checked:** `--gc-verify` holds the barrier to the watermark before and
+  after every collection (`vm_frames_check`); a test raises below it from
+  deep recursions that collect, and returns and tail-calls through it,
+  under a small nursery; the suites under `--gc-stress` and `--gc-verify`,
+  `check-jit` at every tier and under `--jit-stress`, and aarch64 and
+  Windows.
+* **Measured** (`perf stat`, exact; M4's VM against M5's): a `fib` call
+  29.0 to 27.0 instructions, a `tak` call 37.33 to 35.33 (targets 24 and
+  32: what is left of F1's variant 3 is M4's, *M4*); a call through a
+  closure and its return 20 to 18 instructions of call machinery; the
+  bootstrap 14.104G to 13.955G instructions (−1.06%) and HOL's kernel
+  work 43.954G to 42.822G (−2.58%; targets 0.8% each); the seven programs
+  of MLton's set `fib` −6.1%, `tak` −4.2%, `logic` −1.7%,
+  `model-elimination` −1.6%, `tyan` −1.2%, `barnes-hut` and `nucleic`
+  −0.6%. The bootstrap returns through the barrier 64,033 times of its
+  72M returns of compiled code, more than the 10,208 waiting frames its
+  minor collections scan (the roadmap's bound assumed each frame the
+  barrier passes is scanned once after; a collection at a shallower depth
+  scans fewer than the returns it saw): some 140 instructions each under
+  callgrind, 9M in all, where the landings' compares were 144M.
 
 ### M6. Arguments in registers (M, measured)
 

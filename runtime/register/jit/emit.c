@@ -1068,9 +1068,10 @@ static void call_header(Jit *j, int closure, int unit_closure, AsmLabel *after, 
 /* Where the callee's RET lands (M6), the frame's return word: in line,
    after the jump into the callee, at an odd address (as_ret_align). The
    callee left its value in R_S0 and r14 is still its own registers' base,
-   which began past this frame's and the header: this frame's again, the
-   watermark lowered to it where it was above (until native-frames.md's
-   M5), the homes needed after the call loaded from their slots (written
+   which began past this frame's and the header: this frame's again (the
+   stack's watermark is lowered by its return barrier, a callee at it
+   having the barrier's stub for its return word: native-frames.md, M5),
+   the homes needed after the call loaded from their slots (written
    back before it), and the value into the register of the RESULT, which
    every engine passes over. The landing's pc (that RESULT's) is the code
    object's to say for the frames' walk (jit_landing_here). */
@@ -1083,12 +1084,6 @@ static void call_landing(Jit *j, AsmLabel *l) {
     ms_role(M, MR_LAND);
     ms_begin(M, after);
     ms_frame_back(M);
-    Slow *s = ms_slow(M, SLOW_LOW, after);
-    if (s) {
-        as_cmp_rm(A, BASER, VMR, OFF(frame_low));
-        as_jcc(A, CC_B, &s->here);
-        as_bind(A, &s->back);
-    }
     ms_reload_homes_but(M, after, d);
     ms_set_bits(M, d, R_S0);
     ms_role(M, MR_BODY);
@@ -1468,8 +1463,8 @@ void emit_RAISE(Jit *j, uint32_t pc, int32_t a) {
     if (j->m.has_handlers) ms_writeback(M, M->cur_pc);
     ms_load_obj(M, R_S0, a, K_EXN, jit_fatal(j, FATAL_RAISE, 0, 0, 0));
     {
-        AsmLabel slow, nodbg, above;
-        as_label_init(&slow); as_label_init(&nodbg); as_label_init(&above);
+        AsmLabel slow, nodbg;
+        as_label_init(&slow); as_label_init(&nodbg);
         as_ld64(A, R_S1, VMR, OFF(dbg));
         as_test_rr(A, R_S1, R_S1);
         as_jcc(A, CC_E, &nodbg);
@@ -1487,8 +1482,10 @@ void emit_RAISE(Jit *j, uint32_t pc, int32_t a) {
         as_ld64(A, R_S6, R_S2, (int32_t)offsetof(Handler, native));
         as_test_rr(A, R_S6, R_S6);
         as_jcc(A, CC_E, &slow);                       /* the interpreter's */
-        as_st64(A, VMR, OFF(hp), R_S1);
         as_ld64(A, R_S3, R_S2, (int32_t)offsetof(Handler, fp));
+        as_cmp_rm(A, R_S3, VMR, OFF(fp_low));
+        as_jcc(A, CC_B, &slow);                       /* below the stack's watermark: its barrier moves (native-frames.md, M5) */
+        as_st64(A, VMR, OFF(hp), R_S1);
         as_st64(A, VMR, OFF(fp), R_S3);
         as_ld32(A, R_S1, R_S2, (int32_t)offsetof(Handler, func));
         as_st32(A, VMR, OFF(func), R_S1);
@@ -1496,11 +1493,6 @@ void emit_RAISE(Jit *j, uint32_t pc, int32_t a) {
         as_mov_rr(A, BASER, R_S3);
         ms_scale_index(M, BASER);
         as_add_rm(A, BASER, VMR, OFF(stack));
-        as_cmp_rm(A, BASER, VMR, OFF(frame_low));
-        as_jcc(A, CC_AE, &above);
-        as_st64(A, VMR, OFF(fp_low), R_S3);
-        as_st64(A, VMR, OFF(frame_low), BASER);
-        as_bind(A, &above);
         /* the exception at its stack pointer, its code */
         as_ld64(A, R_S1, R_S2, (int32_t)offsetof(Handler, sp));
         ms_scale_index(M, R_S1);
@@ -1508,7 +1500,7 @@ void emit_RAISE(Jit *j, uint32_t pc, int32_t a) {
         as_st64(A, R_S1, 0, R_S0);
         as_jmp_r(A, R_S6);
         as_bind(A, &slow);
-        as_label_free(&slow); as_label_free(&nodbg); as_label_free(&above);
+        as_label_free(&slow); as_label_free(&nodbg);
     }
     ms_sync(M, j->next, 0);
     as_mov_ri(A, ms_arg(M, 1), a);

@@ -35,6 +35,13 @@ static inline uint32_t reg_info_func(Value v) { return (uint32_t)((uint64_t)v >>
 static inline uint32_t reg_info_pc(Value v) { return (uint32_t)((uint64_t)v >> 33); }
 static inline int reg_info_kind(Value v) { return (int)(((uint64_t)v >> 1) & 3); }
 static inline int reg_interp_word(const VM *vm, Value w) { return w == 1 || w == vm->ret_word; }
+/* the watermark's return barrier (isa_regs.c; native-frames.md, M5): a
+   return through it, its frame's own return word given back; the
+   watermark lowered to the frame based at id, the frames above it popped;
+   and the barrier armed where the watermark is, the stub made */
+Value reg_barrier_pass(VM *vm);
+void reg_frames_lower(VM *vm, size_t id);
+void reg_barrier_arm(VM *vm);
 
 /* The byte length of the instruction at code, or 0 for an invalid opcode. */
 static inline uint32_t rop_length(const uint8_t *code) {

@@ -260,7 +260,7 @@ int jit_h_return(VM *vm, uint64_t value) {
     vm->sp = head;
     vm->fp = cb;
     vm->func = cf;
-    if (vm->fp < vm->fp_low) vm_frames_mark_low(vm, vm->fp);
+    reg_frames_lower(vm, vm->fp);
     const uint8_t *code = vm->prog.code;
     if (code[back] == ROP_RESULT) {
         vm->stack[vm->fp + (size_t)read_i32(code + back + 1)] = v;
@@ -270,6 +270,16 @@ int jit_h_return(VM *vm, uint64_t value) {
         vm->pc = back;
     }
     return RUN_INTERP;
+}
+
+/* a RET of the frame at the stack's watermark, through its barrier's
+   stub (masm.h, ms_emit_barrier; native-frames.md, M5): the watermark
+   lowered and the barrier moved to the caller, and where the frame's own
+   return word goes */
+const void *jit_h_barrier(VM *vm, const Value *regs) {
+    if ((size_t)(regs - vm->stack) != vm->barrier_at) vm_fatal(vm, "a return through the barrier of another frame");
+    Value w = reg_barrier_pass(vm);
+    return (const void *)(uintptr_t)(w - JIT_RET_BIAS);
 }
 
 /* ---- the helpers of the calls, the handlers and PRIMPUSH (M5) ---- */
@@ -720,16 +730,7 @@ static void emit_slow(Masm *m, Slow *sp) {
         as_ld64(&m->a, R_S0, R_S0, (int32_t)((size_t)s.a * sizeof(CallInfo) + offsetof(CallInfo, entry)));
         as_mov_ri(&m->a, R_S6, 2 * (int64_t)s.a + 1);   /* the callee's word, for the stub of the interpreter (ms_emit_call_interp) */
         as_jmp_r(&m->a, R_S0);
-    } else if (s.kind == SLOW_LOW) {
-        /* a landing below the stack's watermark (minor.c): lowered to the
-           caller's frame, r14 (native-frames.md, M4; until M5's barrier),
-           the returned value kept in rax */
-        as_st64(&m->a, VMR, (int32_t)offsetof(VM, frame_low), BASER);
-        as_mov_rr(&m->a, R_S1, BASER);
-        as_sub_rm(&m->a, R_S1, VMR, (int32_t)offsetof(VM, stack));
-        as_shr_ri(&m->a, R_S1, 3);
-        as_st64(&m->a, VMR, (int32_t)offsetof(VM, fp_low), R_S1);
-        as_jmp(&m->a, &s.back);
+
     } else if (s.kind == SLOW_INTERRUPT) {
         emit_poll(m, &s, s.n);
     } else if (s.kind == SLOW_DEOPT) {
@@ -936,6 +937,9 @@ int jit_region_init(VM *vm, JitProgram *jit) {
     size_t call_interp_at = a.n;
     ms_emit_call_interp(&a, JIT_WIN, (MsHelper)jit_h_enter_interp, &leave);
     as_label_free(&leave);
+    as_ret_align(&a);   /* a return word too (native-frames.md, M5) */
+    size_t barrier_at = a.n;
+    ms_emit_barrier(&a, JIT_WIN, (MsHelper)jit_h_barrier);
     /* every primitive's C, the helpers, and the C library's functions
        that primitives on reals are (jit_libm_of) */
     uint32_t nhelpers = (uint32_t)(sizeof helpers / sizeof helpers[0]), n = 2 * PRIM__COUNT + nhelpers, size = 16;
@@ -970,6 +974,10 @@ int jit_region_init(VM *vm, JitProgram *jit) {
     vm->ret_tramp = jit->ret_tramp = mem + ret_at;
     vm->ret_word = (Value)(uintptr_t)vm->ret_tramp + JIT_RET_BIAS;
     if (vm->frames_active) reg_frames_ret_word(vm);
+    /* and the stack's watermark is kept by the barrier from here on (M5) */
+    jit->barrier = mem + barrier_at;
+    vm->barrier_stub = (Value)(uintptr_t)jit->barrier + JIT_RET_BIAS;
+    reg_barrier_arm(vm);
     /* and a call to a function with no code goes here (M6) */
     jit->call_interp = mem + call_interp_at;
     for (uint32_t i = 0; jit->calls && i < jit->nfuncs; i++)

@@ -983,6 +983,7 @@ int vm_become(VM *vm, const char *path) {
        the image return when compiled code runs them (M6) */
     next->ret_tramp = vm->ret_tramp;
     next->ret_word = vm->ret_word;   /* (native-frames.md, M4) */
+    next->barrier_stub = vm->barrier_stub;   /* (M5: armed as the next collection begins the watermark) */
     vm_frames_to_interpreter(next);
     next->gc_log = vm->gc_log;
     next->gc_log_t0 = vm->gc_log_t0;

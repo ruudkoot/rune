@@ -198,6 +198,7 @@ typedef struct JitProgram {
     CallInfo *calls;            /* per function, where calls go in (M6); VM.jit_calls */
     const void *call_interp;    /* the stub a call goes to where the callee has no code (M6), in the region */
     const void *ret_tramp;      /* the return trampoline (VM.ret_tramp, M6), in the region: a new world's VM is given it again (jit_make) */
+    const void *barrier;        /* the stack's return barrier (VM.barrier_stub; native-frames.md, M5), in the region: and the barrier too */
     uint32_t deopt_stress;      /* --deopt-stress=N (M11): the code counts instruction boundaries here and leaves at every Nth */
     uint64_t deopt_count;
     uint64_t deopts;            /* how many times it left so */

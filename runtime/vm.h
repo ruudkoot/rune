@@ -325,11 +325,6 @@ typedef struct VM {
        its slots hold no young pointer; every pop of a frame lowers it to
        the frame it returns to (vm_frame_pop) */
     size_t fp_low;
-    /* the watermark's frame where compiled code compares with it
-       (runtime/register: the address of its registers, which a landing
-       compares the caller's with, native-frames.md M4; M6 had its record's):
-       set with fp_low and where the stack moves (vm_frames_mark_low) */
-    const void *frame_low;
     Value *globals;
     uint8_t *global_set;
     int gc_verify;           /* --gc-verify: the heap checked before and after every collection (runtime/gc/check.c) */
@@ -379,6 +374,15 @@ typedef struct VM {
     uint32_t func;
     Value ret_word;
     Value ret_value;
+    /* runtime/register's watermark by a return barrier (native-frames.md,
+       M5; runtime/register/isa_regs.c): the word of the barrier's stub in
+       the JIT's region (0 while there is none), the base of the frame at
+       the watermark whose return word it is (0: none), that frame's own
+       return word, and the returns through it (--jit-stats) */
+    Value barrier_stub;
+    size_t barrier_at;
+    Value barrier_word;
+    uint64_t barrier_runs;
     /* the frames vm_frames_from gives, walked into a buffer of the VM's (native-frames.md, M3) */
     struct FrameRef *frame_buf;
     size_t frame_buf_cap;
@@ -681,7 +685,6 @@ static inline void vm_push_frame(VM *vm, uint32_t func, Obj *closure, uint32_t r
    handler's, vm_raise): the watermark follows the frame that runs again */
 static inline void vm_set_fp_low(VM *vm, size_t low) {
     vm->fp_low = low;
-    vm->frame_low = vm->frames ? vm->frames + low : NULL;
 }
 static inline void vm_frame_pop(VM *vm) {
     vm->fp--;
@@ -745,9 +748,10 @@ size_t vm_frames_low(const VM *vm);
    frame that runs popped (rt_debug_return), the watermark lowered */
 size_t vm_frame_push(VM *vm, uint32_t func, Obj *closure, uint32_t ret_pc, size_t top);
 void vm_frame_drop(VM *vm);
-/* the stack has moved (vm_grow_stack): what an instruction set keeps of
-   addresses in it (runtime/register's watermark, VM.frame_low) */
-void vm_frames_stack_moved(VM *vm);
+/* runtime/gc/check.c's question of the frames under --gc-verify: what is
+   wrong with what the instruction set keeps of them (runtime/register's
+   return barrier at the watermark), or NULL */
+const char *vm_frames_check(VM *vm);
 /* the top level's frame, function 0 applied to unit, made on an empty
    stack (vm_start) */
 void vm_frame_top_level(VM *vm);

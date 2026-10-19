@@ -86,7 +86,6 @@ void vm_grow_stack(VM *vm, size_t need) {
     vm->stack = ns;
     vm->stack_cap = ncap;
     if (vm->stack_room) vm->stack_room = vm_room(vm, vm->stack_clean);   /* where the clean part ends now */
-    vm_frames_stack_moved(vm);
 }
 
 /* (frames as many as the stack's slots may be: a frame has a slot at least,
@@ -100,7 +99,6 @@ void vm_grow_frames(VM *vm) {
     if (!nf) { fprintf(stderr, "runevm: out of memory (frames)\n"); exit(2); }
     vm->frames = nf;
     vm->frames_cap = ncap;
-    vm->frame_low = nf + vm->fp_low;
 }
 
 /* The stack's clean part is the calls' poll too (vm.h): an interrupt that

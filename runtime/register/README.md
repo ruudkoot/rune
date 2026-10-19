@@ -422,8 +422,9 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   64 MB mapping, executable, made writable to add a function's code. At
   its start (`jit_region_init`) are the enter and leave stubs, the stub
   of fatal errors, the return trampoline, the stub of a call into the
-  interpreter, the watermark's stub (`ms_emit_low`: where a `RET` goes
-  that pops below the watermark) and a trampoline for every call into C the code makes
+  interpreter, the return barrier's stub (`ms_emit_barrier`: where the
+  `RET` of the frame at the stack's watermark goes; native-frames.md,
+  M5) and a trampoline for every call into C the code makes
   -- every primitive and every helper -- where a function anywhere in
   the region reaches them by a direct jump or call (`ms_call`,
   `ms_handback`; `placed` in the masm says the code knows where it will
@@ -483,12 +484,9 @@ the registers made, the header's closure and return word written and
 the entry jumped to. `RET` takes the value's word into `rax` and jumps
 where the frame's return word says, testing nothing: two instructions
 -- to the landing of the caller's compiled call, which moves `r14` back
-by the caller's registers and the header, lowers the stack's watermark
-where the caller is below it (`r14` against `VM.frame_low`, the address
-of the registers of the frame at `VM.fp_low`, which every change of
-`fp_low` and every move of the stack keeps; until native-frames.md's M5),
-loads the homes needed after the call and stores the value into the
-register of the `RESULT` -- or, for a caller that is not compiled code
+by the caller's registers and the header, loads the homes needed after
+the call and stores the value into the register of the `RESULT` -- or,
+for a caller that is not compiled code
 and for the top level, to the return stub `VM.ret_tramp`, whose word
 every frame the interpreter or the runtime pushes keeps (`VM.ret_word`;
 the debugger's debug mode, invalidation and a new world give it to the
@@ -498,7 +496,21 @@ which pops the frame as its info word says; the top level's has no
 caller). The interpreter's `RET` into a frame whose return word is a
 landing hands the VM to the driver, which enters the landing with the
 value (`VM.ret_value`, which the enter stub loads into `rax`) and the
-frame that returns still the VM's.
+frame that returns still the VM's. **The stack's watermark**, below
+which a minor collection does not scan, is kept by a *return barrier*
+(native-frames.md, M5; `isa_regs.c`): the frame at the watermark -- the
+frame that ran when the last collection ended, or the lowest a return
+or a raise has reached since -- has the barrier's stub for its return
+word (`VM.barrier_stub`, at `VM.barrier_at`, its own word in
+`VM.barrier_word`), so that its return, the only one that goes below the
+watermark, goes through the stub, which lowers the watermark to the
+caller, moves the barrier there and goes on where the frame's own word
+says (`jit_h_barrier`, `reg_barrier_pass`; the loop's `RET` likewise).
+No other return compares anything. A collection moves the barrier to the
+frame that runs (`vm_frames_mark_low`), a raise or the debugger's frame
+dropped below it to the frame they leave running; the walk and every
+reader of a return word see through it; `--gc-verify` checks that it is
+at the watermark, and `--jit-stats` counts the returns through it.
 So a `RESULT` after a `CALL` or `CALLK` is passed over by every engine
 and counted by none (compile.c, a phantom), where a `RESULT` after a
 `PRIMPUSH` runs and takes the value the primitive left above the
@@ -512,8 +524,9 @@ table has room, as `vm_push_handler` writes it, and a `RAISE` unwinds in
 line where nothing else is to be done -- no debugger watching raises
 (`Debugger.raise_mode`), a handler there that is not the REPL's
 (`VM.raise_mark`, whose raise records the frames it leaves) and whose code
-is compiled: the handler popped, its frame the VM's and the watermark
-lowered to it, the exception at its stack pointer, and on into its code,
+is compiled and whose frame is not below the stack's watermark (where
+the barrier must move, which the helper does): the handler popped, its
+frame the VM's, the exception at its stack pointer, and on into its code,
 which loads its homes from the slots (written back first in a function
 with handlers). `--trace`
 runs the interpreter alone. The user's interrupt is polled where the loop

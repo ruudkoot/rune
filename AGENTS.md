@@ -213,10 +213,11 @@ keep these invariants:
   frame in `r14` alone: `VM.fp` and `VM.func` are right only where the
   code has synced (`ms_sync`, `ms_exit`, the stubs), so a helper called
   without a sync (a lean call) reads neither them nor the frames, and
-  `VM.fp_low` changes through `vm_frames_mark_low` alone in C (a call's
-  landing compares `r14` with `VM.frame_low`, which a move of the stack
-  makes again; runeopt's code, which runs on the stack VM, writes the
-  field itself). **The homes** (tier 2,
+  `VM.fp_low` changes in C through the walk's functions alone
+  (`vm_frames_mark_low`, and in `isa_regs.c` the return barrier that
+  keeps it, native-frames.md M5: a reader of a frame's return word sees
+  through the barrier's; runeopt's code, which runs on the stack VM,
+  writes the field itself). **The homes** (tier 2,
   README.md): an emitter reads and writes a register through the
   macro-assembler's accessors only, never `[r14 + 16 k]`; `rbx`, `rsi`,
   `rdi` and `xmm2` to `xmm15` are homes, so an emitter that uses one as
