@@ -69,10 +69,15 @@ struct
         | Prim ("ref_set", _, [Var _, v]) => kill v
         | App (Global (g, _), args) =>
             if g = #name f andalso tail andalso List.length args = n then
+              (* the parameter itself at its place, or the place is no
+                 ref parameter: a call of itself that gives another ref
+                 there (deep-flatten of MLton's regressions) gives another
+                 value than the one the copy holds *)
               ListPair.app (fn (i, a) =>
                               case a of
-                                Var (x, _) => if x = #1 (Vector.sub (ps, i)) then () else kill a
-                              | _ => kill a)
+                                Var (x, _) => if x = #1 (Vector.sub (ps, i)) then ()
+                                              else (Array.update (cand, i, false); kill a)
+                              | _ => (Array.update (cand, i, false); kill a))
                            (List.tabulate (n, fn i => i), args)
             else List.app kill args
         | _ => killAll r
@@ -147,6 +152,11 @@ struct
         | Jump (j, xs) => if isSome (IntTable.find (extended, j)) then Jump (j, xs @ values cur) else e
         | If (a, t, f) => If (a, go (t, cur), go (f, cur))
         | Handle (a, x, h) => Handle (go (a, cur), x, go (h, cur))
+        (* a read or a set in tail position: the value, or () *)
+        | Return (Prim ("ref_get", _, [Var (r, _)])) =>
+            if isRef r then Return (Atom (valOf (IntMap.find (cur, r)))) else e
+        | Return (Prim ("ref_set", _, [Var (r, _), _])) =>
+            if isRef r then Return (Atom Unit) else e
         | Return (App (Global (g, ts), args)) =>
             if g = name then
               Return (App (Global (f', ts),
