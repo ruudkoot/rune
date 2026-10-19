@@ -1,0 +1,6 @@
+PASS lazy complete report smoke 2810
+PASS lazy complete report normal 28800
+PASS lazy complete report large 86941
+PASS strict complete report smoke 2810
+PASS strict complete report normal 28800
+PASS strict complete report large 86941

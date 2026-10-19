@@ -1,0 +1,1 @@
+[(True,["list"]),(False,["pair"]),(False,["tp3"]),(False,["tp4"]),(True,["la","lb"]),(False,["complex"]),(False,["boxed"]),(False,["numD"]),(False,["triple"]),(True,["tree"]),(False,["day"]),(True,["domain"]),(True,["assoc"])]

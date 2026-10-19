@@ -1,0 +1,1 @@
+anna-lazy	600	4194304	shared/input.sml shared/lazy.sml shared/suspend.sml shared/hartel-ida-finite.sml shared/signed64.sml shared/nofib-anna-kernel.sml shared/nofib-anna-check.sml anna-lazy/benchmark.sml shared/main.sml	100 normal.input 2869188386E50180	anna-lazy/normal.expected	normal.input runtime_files/anna_table

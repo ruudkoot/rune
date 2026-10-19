@@ -1,0 +1,1 @@
+The first 1963-check local run passed 1962 assertions; the final test wrongly expected an infinite EOF stream. Original Parser2.hs:61 returns one EOF token. The port already did so. Correct the test and documentation to the finite singleton; do not change the kernel.

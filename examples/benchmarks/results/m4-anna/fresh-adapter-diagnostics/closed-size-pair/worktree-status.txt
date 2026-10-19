@@ -1,0 +1,12 @@
+ M docs/plans/benchmarks.md
+ M examples/benchmarks/README.md
+ M examples/benchmarks/literature.md
+ M examples/benchmarks/manifest.tsv
+ M tests/benchmarks/check-nofib-applications.sh
+?? examples/benchmarks/anna-lazy/
+?? examples/benchmarks/anna-strict/
+?? examples/benchmarks/shared/nofib-anna-check.sml
+?? examples/benchmarks/shared/nofib-anna-kernel.sml
+?? tests/benchmarks/check-nofib-anna.sh
+?? tests/benchmarks/data/nofib-anna/
+?? tests/benchmarks/nofib-anna-tests.sml

@@ -1,0 +1,37 @@
+[ 1 of 15] Compiling BaseDefs         ( BaseDefs.hs, BaseDefs.o )
+
+BaseDefs.hs:97:10: warning: [-Wmissing-methods]
+    • No explicit implementation for
+        ‘abs’, ‘signum’, ‘fromInteger’, and (either ‘negate’ or ‘-’)
+    • In the instance declaration for ‘Num (ExceptionInt a)’
+   |
+97 | instance (Show{-was:Text-} a, Ord a) => Num (ExceptionInt a) where
+   |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+BaseDefs.hs:379:6: warning: [-Wtabs]
+    Tab character found here, and in one further location.
+    Suggested fix: Please use spaces instead.
+    |
+379 |          DExprEnv,
+    |      ^^^
+[ 2 of 15] Compiling MyUtils          ( MyUtils.hs, MyUtils.o )
+[ 3 of 15] Compiling Utils            ( Utils.hs, Utils.o )
+[ 4 of 15] Compiling DomainExpr       ( DomainExpr.hs, DomainExpr.o )
+
+DomainExpr.hs:1:1: warning: [-Wtabs]
+    Tab character found here.
+    Suggested fix: Please use spaces instead.
+  |
+1 |         
+  | ^^^^^^^^
+[ 5 of 15] Compiling AbstractVals2    ( AbstractVals2.hs, AbstractVals2.o )
+[ 6 of 15] Compiling SuccsAndPreds2   ( SuccsAndPreds2.hs, SuccsAndPreds2.o )
+[ 7 of 15] Compiling Apply            ( Apply.hs, Apply.o )
+[ 8 of 15] Compiling AbstractMisc     ( AbstractMisc.hs, AbstractMisc.o )
+[ 9 of 15] Compiling FrontierMisc2    ( FrontierMisc2.hs, FrontierMisc2.o )
+[10 of 15] Compiling DomainObserver   ( DomainObserver.hs, DomainObserver.o )
+[11 of 15] Compiling AbstractEval2    ( AbstractEval2.hs, AbstractEval2.o )
+[12 of 15] Compiling AbsConc3         ( AbsConc3.hs, AbsConc3.o )
+[13 of 15] Compiling FrontierDATAFN2  ( FrontierDATAFN2.hs, FrontierDATAFN2.o )
+[14 of 15] Compiling Main             ( Main.hs, Main.o )
+[15 of 15] Linking observe-frontier

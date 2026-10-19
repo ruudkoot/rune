@@ -1,0 +1,2689 @@
+Standard ML of New Jersey [Version 2026.2; 64-bit; August 14, 2026]
+[opening driver.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : 
+  sig
+    val integer : string -> int
+    val between : int * int -> int -> int
+    val closeReal : real * real * real * real -> bool
+    val repeat : int -> (unit -> int) -> IntInf.int
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : 
+  sig
+    datatype 'a state
+      = Evaluating | Failed of exn | Pending of unit -> 'a | Value of 'a
+    type 'a delay = 'a state ref
+    val delay : (unit -> 'a) -> 'a state ref
+    val force : 'a state ref -> 'a
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND = 
+  sig
+    type 'a t
+    val delay : (unit -> 'a) -> 'a t
+    val force : 'a t -> 'a
+  end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml:19.32 Warning: calling polyEqual
+functor BenchIdaFiniteFn(D: sig
+                            type 'a t
+                            val delay : (unit -> 'a) -> 'a t
+                            val force : 'a t -> 'a
+                          end) :
+                        
+                          sig
+                            type 'a node
+                            type 'a seq
+                            val empty : unit -> 'a node D.t
+                            val cons : 'a D.t * 'a node D.t -> 'a node D.t
+                            val fromList : 'a list -> 'a node D.t
+                            val defer : (unit -> 'a D.t) -> 'a D.t
+                            val append : 'a node D.t
+                                          -> 'a node D.t -> 'a node D.t
+                            val take : int -> 'a node D.t -> 'a node D.t
+                            val drop : int -> 'a node D.t -> 'a node D.t
+                            val nth : 'a node D.t -> int -> 'a
+                            val update : 'a node D.t
+                                          -> int -> 'a D.t -> 'a node D.t
+                            val unify : ''a node D.t -> ''a -> ''a node D.t
+                            val foldl : ('a D.t -> 'b -> 'a D.t)
+                                         -> 'a D.t -> 'b node D.t -> 'a D.t
+                            val toList : 'a node D.t -> 'a list
+                            val map : ('a -> 'b) -> 'a node D.t -> 'b node D.t
+                            val filter : ('a -> bool)
+                                          -> 'a node D.t -> 'a node D.t
+                            val length : 'a node D.t -> int
+                          end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/signed64.sml]
+structure BenchSigned64 : 
+  sig
+    structure W : <sig>
+    val sign : Word64.word
+    val minusOne : Word64.word
+    val negative : Word64.word -> bool
+    val negate : Word64.word -> Word64.word
+    val magnitude : Word64.word -> Word64.word
+    val less : Word64.word * Word64.word -> bool
+    val leq : Word64.word * Word64.word -> bool
+    val quotient : Word64.word * ?.word64 -> Word64.word
+    val remainder : Word64.word * ?.word64 -> Word64.word
+    val divide : Word64.word * ?.word64 -> Word64.word
+    val modulo : Word64.word * ?.word64 -> Word64.word
+    val gcd : Word64.word * Word64.word -> Word64.word
+    val lcm : ?.word64 * ?.word64 -> ?.word64
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-anna-kernel.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-anna-kernel.sml:315.27 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-anna-kernel.sml:130.52 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-anna-kernel.sml:101.26 Warning: calling polyEqual
+functor BenchNofibAnnaFn(D: sig
+                            type 'a t
+                            val delay : (unit -> 'a) -> 'a t
+                            val force : 'a t -> 'a
+                          end) :
+                        
+                          sig
+                            structure L : <sig>
+                            structure F : <sig>
+                            structure C : <sig>
+                            structure W : <sig>
+                            structure S : <sig>
+                            type integer
+                            type nameNode
+                            type name
+                            type ('a,'b) treeNode
+                            type ('a,'b) replyNode
+                            type 'a setNode
+                            type 'a maybeNode
+                            type flagNode
+                            type flags
+                            type tdefNode
+                            type typeDef
+                            type 'a coreNode
+                            type eqnNode
+                            type core
+                            type coreProgram
+                            type atomicProgram
+                            type ('a,'b) annNode
+                            type ('a,'b) ann
+                            type tvname
+                            type typeNode
+                            type texpr
+                            type schemeNode
+                            type typeEnv
+                            type subst
+                            type fullTypeEnv
+                            type domainNode
+                            type domain
+                            type routeNode
+                            type repNode
+                            type frontierNode
+                            type frontierElemNode
+                            type route
+                            type representation
+                            type frontier
+                            type frontierElem
+                            type point
+                            type dexprNode
+                            type dexpr
+                            type constructorNode
+                            type acMode
+                            type appInfoNode
+                            type 'a hexprNode
+                            type hexpr
+                            type 'a exceptionIntNode
+                            type domainInt
+                            type oneFuncSize
+                            type infoNode
+                            type token
+                            type 'a parseNode
+                            type 'a parser
+                            type partialNode
+                            type limits
+                            type static
+                            val force : 'a D.t -> 'a
+                            val cell : 'a -> 'a D.t
+                            val int : int -> Word64.word D.t
+                            val add : Word64.word D.t
+                                       -> Word64.word D.t -> Word64.word D.t
+                            val subtract : Word64.word D.t
+                                            -> Word64.word D.t
+                                            -> Word64.word D.t
+                            val multiply : Word64.word D.t
+                                            -> Word64.word D.t
+                                            -> Word64.word D.t
+                            val divide : Word64.word D.t
+                                          -> ?.word64 D.t -> Word64.word D.t
+                            val quotient : Word64.word D.t
+                                            -> ?.word64 D.t -> Word64.word D.t
+                            val modulo : Word64.word D.t
+                                          -> ?.word64 D.t -> Word64.word D.t
+                            val negative : Word64.word D.t -> Word64.word D.t
+                            val less : Word64.word D.t
+                                        -> Word64.word D.t -> bool
+                            val leq : Word64.word D.t
+                                       -> Word64.word D.t -> bool
+                            val equalInt : ''a D.t -> ''a D.t -> bool
+                            val signed : Word64.word D.t -> string
+                            val small : Word64.word D.t -> int
+                            val name : string -> char F.node D.t
+                            val string : char F.node D.t -> string
+                            val empty : unit -> 'a F.node D.t
+                            val head : 'a F.node D.t -> 'a D.t
+                            val tail : 'a F.node D.t -> 'a F.node D.t
+                            val null : 'a F.node D.t -> bool
+                            val singleton : 'a D.t -> 'a F.node D.t
+                            val map : ('a D.t -> 'b D.t)
+                                       -> 'a F.node D.t -> 'b F.node D.t
+                            val flatMap : ('a D.t -> 'b F.node D.t)
+                                           -> 'a F.node D.t -> 'b F.node D.t
+                            val pair : 'a -> 'b -> ('a * 'b) D.t
+                            val triple : 'a -> 'b -> 'c -> ('a * 'b * 'c) D.t
+                            val length : 'a F.node D.t -> Word64.word D.t
+                            val compareLists : ('a D.t -> 'b D.t -> order)
+                                                -> 'a F.node D.t
+                                                -> 'b F.node D.t -> order
+                            val equalLists : ('a D.t -> 'b D.t -> bool)
+                                              -> 'a F.node D.t
+                                              -> 'b F.node D.t -> bool
+                            val compareInt : Word64.word D.t
+                                              -> Word64.word D.t -> order
+                            val compareName : char F.node D.t
+                                               -> char F.node D.t -> order
+                            val equalName : ''a F.node D.t
+                                             -> ''a F.node D.t -> bool
+                            val myFail : string -> 'a
+                            val panic : string -> 'a
+                            val thenCompare : order
+                                               -> (unit -> order) -> order
+                            val domainTag : domainNode -> int
+                            val compareDomain : domainNode D.t
+                                                 -> domainNode D.t -> order
+                            val equalDomain : domainNode D.t
+                                               -> domainNode D.t -> bool
+                            val routeTag : routeNode -> int
+                            val repTag : repNode -> int
+                            val compareFrel : frontierElemNode D.t
+                                               -> frontierElemNode D.t
+                                               -> order
+                            val compareFrontier : frontierNode D.t
+                                                   -> frontierNode D.t
+                                                   -> order
+                            val compareRep : repNode D.t
+                                              -> repNode D.t -> order
+                            val compareRoute : routeNode D.t
+                                                -> routeNode D.t -> order
+                            val equalRoute : routeNode D.t
+                                              -> routeNode D.t -> bool
+                            val equalRep : repNode D.t -> repNode D.t -> bool
+                            val equalFrontier : frontierNode D.t
+                                                 -> frontierNode D.t -> bool
+                            val equalFrel : frontierElemNode D.t
+                                             -> frontierElemNode D.t -> bool
+                            val equalType : typeNode D.t
+                                             -> typeNode D.t -> bool
+                            val equalDexpr : dexprNode D.t
+                                              -> dexprNode D.t -> bool
+                            val compareConstructor : constructorNode D.t
+                                                      -> constructorNode D.t
+                                                      -> order
+                            val equalFlag : flagNode D.t
+                                             -> flagNode D.t -> bool
+                            val filter : ('a D.t -> bool)
+                                          -> 'a F.node D.t -> 'a F.node D.t
+                            val zipWith : ('a D.t -> 'b D.t -> 'c D.t)
+                                           -> 'a F.node D.t
+                                           -> 'b F.node D.t -> 'c F.node D.t
+                            val zip : 'a F.node D.t
+                                       -> 'b F.node D.t
+                                       -> ('a D.t * 'b D.t) F.node D.t
+                            val zipExact : ('a D.t -> 'b D.t -> 'c D.t)
+                                            -> 'a F.node D.t
+                                            -> 'b F.node D.t -> 'c F.node D.t
+                            val zip3Exact : ('a D.t
+                                              -> 'b D.t -> 'c D.t -> 'd D.t)
+                                             -> 'a F.node D.t
+                                             -> 'b F.node D.t
+                                             -> 'c F.node D.t -> 'd F.node D.t
+                            val foldLeft : ('a D.t -> 'b D.t -> 'a D.t)
+                                            -> 'a D.t
+                                            -> 'b F.node D.t -> 'a D.t
+                            val foldRight : ('a D.t -> 'b D.t -> 'b D.t)
+                                             -> 'b D.t
+                                             -> 'a F.node D.t -> 'b D.t
+                            val all : ('a D.t -> bool)
+                                       -> 'a F.node D.t -> bool
+                            val any : ('a D.t -> bool)
+                                       -> 'a F.node D.t -> bool
+                            val take : Word64.word D.t
+                                        -> 'a F.node D.t -> 'a F.node D.t
+                            val drop : Word64.word D.t
+                                        -> 'a F.node D.t -> 'a F.node D.t
+                            val nth : 'a F.node D.t
+                                       -> Word64.word D.t -> 'a D.t
+                            val reverse : 'a F.node D.t -> 'a F.node D.t
+                            val last : 'a F.node D.t -> 'a D.t
+                            val init : 'a F.node D.t -> 'a F.node D.t
+                            val repeat : 'a -> 'a C.node BenchNeed.t
+                            val fromControl : 'a D.t C.node BenchLazy.state 
+                                                 ref
+                                               -> 'a F.node D.t
+                            val copy : Word64.word D.t
+                                        -> 'a D.t -> 'a F.node D.t
+                            val intsFrom : Word64.word D.t
+                                            -> Word64.word D.t C.node 
+                                              BenchNeed.t
+                            val intsFromTo : Word64.word D.t
+                                              -> Word64.word D.t
+                                              -> Word64.word F.node D.t
+                            val listVariants : 'a F.node D.t
+                                                -> 'a F.node F.node D.t
+                                                -> 'a F.node F.node D.t
+                            val cartesianProduct : 'a F.node F.node D.t
+                                                    -> 'a F.node F.node D.t
+                            val mySeq : ('a -> 'a -> bool)
+                                         -> 'a -> (unit -> 'b) -> 'b
+                            val insertionSort : ('a D.t -> 'a D.t -> order)
+                                                 -> 'a F.node D.t
+                                                 -> 'a F.node D.t
+                            val removeDuplicates : ('a D.t -> 'a D.t -> bool)
+                                                    -> 'a F.node D.t
+                                                    -> 'a F.node D.t
+                            val unzip : ('a D.t * 'b D.t) F.node D.t
+                                         -> 'a F.node D.t * 'b F.node D.t
+                            val mapFirst : ('a -> 'b)
+                                            -> ('a * 'c) F.node D.t
+                                            -> ('b * 'c) F.node D.t
+                            val mapSecond : ('a -> 'b)
+                                             -> ('c * 'a) F.node D.t
+                                             -> ('c * 'b) F.node D.t
+                            val mapAccumulate : ('a D.t
+                                                  -> 'b D.t -> 'a D.t * 'c D.t)
+                                                 -> 'a D.t
+                                                 -> 'b F.node D.t
+                                                 -> ('a D.t * 'c F.node D.t) 
+                                                     BenchLazy.state ref
+                            val interleave : 'a F.node D.t
+                                              -> 'a F.node F.node D.t
+                                              -> 'a F.node D.t
+                            val set : 'a F.seq -> 'a setNode D.t
+                            val setValues : 'a setNode D.t -> 'a F.seq
+                            val setEmpty : unit -> 'a setNode D.t
+                            val setSingleton : 'a D.t -> 'a setNode D.t
+                            val setFromList : ('a D.t -> 'a D.t -> order)
+                                               -> 'a F.node D.t
+                                               -> 'a setNode D.t
+                            val setUnion : ('a D.t -> 'a D.t -> order)
+                                            -> 'a setNode D.t
+                                            -> 'a setNode D.t
+                                            -> 'a setNode D.t
+                            val setIntersection : ('a D.t -> 'b D.t -> order)
+                                                   -> 'a setNode D.t
+                                                   -> 'b setNode D.t
+                                                   -> 'a setNode D.t
+                            val setSubtract : ('a D.t -> 'b D.t -> order)
+                                               -> 'a setNode D.t
+                                               -> 'b setNode D.t
+                                               -> 'a setNode D.t
+                            val setMember : ('a -> 'b D.t -> order)
+                                             -> 'a -> 'b setNode D.t -> bool
+                            val setSubset : ('a D.t -> 'b D.t -> order)
+                                             -> 'a setNode D.t
+                                             -> 'b setNode D.t -> bool
+                            val setUnionList : ('a D.t -> 'a D.t -> order)
+                                                -> 'a setNode F.node D.t
+                                                -> 'a setNode D.t
+                            type chars
+                            val input : string -> char C.node BenchNeed.t
+                            val charUncons : 'a C.node BenchLazy.state ref
+                                              -> ('a * 'a C.node BenchNeed.t) 
+                                                option
+                            val charSpan : ('a -> bool)
+                                            -> 'a C.node BenchNeed.t
+                                            -> 'a C.node BenchNeed.t
+                                            * 'a C.node BenchNeed.t
+                            val charsToName : 'a C.node BenchLazy.state ref
+                                               -> 'a F.node D.t
+                            val prefixChars : string
+                                               -> char C.node BenchNeed.t
+                                               -> char C.node BenchLazy.state 
+                                                   ref option
+                            val token : 'a
+                                         -> 'b
+                                         -> ('a * 'b) C.node BenchNeed.t
+                                         -> ('a * 'b) C.node BenchNeed.t
+                            val endTokens : token C.seq
+                            val comment : Word64.word D.t
+                                           -> char C.node BenchNeed.t
+                                           -> (Word64.word D.t
+                                                * char F.node D.t) C.node 
+                                             BenchNeed.t
+                            val lex : Word64.word D.t
+                                       -> char C.node BenchNeed.t
+                                       -> (Word64.word D.t * char F.node D.t) 
+                                           C.node BenchNeed.t
+                            val failed : 'a parseNode BenchLazy.state ref
+                                          -> bool
+                            val parsedItem : 'a parseNode BenchLazy.state ref
+                                              -> 'a D.t
+                            val parsedRest : 'a parseNode BenchLazy.state ref
+                                              -> token C.seq
+                            val paLiteral : char F.node D.t
+                                             -> token C.node BenchLazy.state 
+                                               ref
+                                             -> char F.node parseNode 
+                                                 BenchLazy.state ref
+                            val paAlts : (('a -> bool)
+                                             * (('b * 'a) C.node 
+                                                  BenchLazy.state ref
+                                              -> 'c parseNode BenchLazy.state 
+                                                ref)) list
+                                          -> ('b * 'a) C.node BenchLazy.state 
+                                            ref
+                                          -> 'c parseNode BenchLazy.state ref
+                            val paThen2 : ('a D.t -> 'b D.t -> 'c D.t)
+                                           -> ('d
+                                            -> 'a parseNode BenchLazy.state 
+                                              ref)
+                                           -> (token C.seq
+                                            -> 'b parseNode BenchLazy.state 
+                                              ref)
+                                           -> 'd
+                                           -> 'c parseNode BenchLazy.state ref
+                            val paThen3 : ('a D.t
+                                            -> 'b D.t -> 'c D.t -> 'd D.t)
+                                           -> ('e
+                                            -> 'a parseNode BenchLazy.state 
+                                              ref)
+                                           -> (token C.seq
+                                            -> 'b parseNode BenchLazy.state 
+                                              ref)
+                                           -> (token C.seq
+                                            -> 'c parseNode BenchLazy.state 
+                                              ref)
+                                           -> 'e
+                                           -> 'd parseNode BenchLazy.state ref
+                            val paThen4 : ('a D.t
+                                            -> 'b D.t
+                                            -> 'c D.t -> 'd D.t -> 'e D.t)
+                                           -> ('f
+                                            -> 'a parseNode BenchLazy.state 
+                                              ref)
+                                           -> (token C.seq
+                                            -> 'b parseNode BenchLazy.state 
+                                              ref)
+                                           -> (token C.seq
+                                            -> 'c parseNode BenchLazy.state 
+                                              ref)
+                                           -> (token C.seq
+                                            -> 'd parseNode BenchLazy.state 
+                                              ref)
+                                           -> 'f
+                                           -> 'e parseNode BenchLazy.state ref
+                            val paZeroOrMore : (token C.seq
+                                                 -> 'a parseNode 
+                                                     BenchLazy.state ref)
+                                                -> token C.seq
+                                                -> 'a F.node parseNode 
+                                                    BenchLazy.state ref
+                            val paOneOrMore : (token C.seq
+                                                -> 'a parseNode 
+                                                    BenchLazy.state ref)
+                                               -> token C.seq
+                                               -> 'a F.node parseNode 
+                                                   BenchLazy.state ref
+                            val paOneOrMoreSep : (token C.seq
+                                                   -> 'a parseNode 
+                                                       BenchLazy.state ref)
+                                                  -> (token C.seq
+                                                   -> 'b parseNode 
+                                                       BenchLazy.state ref)
+                                                  -> token C.seq
+                                                  -> 'a F.node parseNode 
+                                                      BenchLazy.state ref
+                            val paApply : ('a
+                                            -> 'b parseNode BenchLazy.state 
+                                              ref)
+                                           -> ('b D.t -> 'c D.t)
+                                           -> 'a
+                                           -> 'c parseNode BenchLazy.state ref
+                            val paSatisfy : (char F.node D.t -> bool)
+                                             -> (integer * char F.node D.t) 
+                                                   C.node BenchLazy.state ref
+                                             -> char F.node parseNode 
+                                                 BenchLazy.state ref
+                            val paEmpty : 'a D.t
+                                           -> token C.seq
+                                           -> 'a parseNode BenchLazy.state ref
+                            val literal : string
+                                           -> token C.node BenchLazy.state ref
+                                           -> char F.node parseNode 
+                                               BenchLazy.state ref
+                            val tokenIs : string -> char F.node D.t -> bool
+                            val numericValue : char F.node D.t
+                                                -> Word64.word D.t
+                            val paNumber : (integer * char F.node D.t) C.node 
+                                                BenchLazy.state ref
+                                            -> Word64.word parseNode 
+                                                BenchLazy.state ref
+                            val tableLex : Word64.word D.t
+                                            -> char C.node BenchNeed.t
+                                            -> (Word64.word D.t
+                                                 * char F.node D.t) C.node 
+                                              BenchNeed.t
+                            val tableComma : ('a
+                                               -> 'b parseNode BenchLazy.state 
+                                                 ref)
+                                              -> 'a
+                                              -> 'b parseNode BenchLazy.state 
+                                                ref
+                            val tableListMain : (token C.seq
+                                                  -> 'a parseNode 
+                                                      BenchLazy.state ref)
+                                                 -> (integer * char F.node D.t)
+                                                       C.node BenchLazy.state 
+                                                   ref
+                                                 -> 'a F.node parseNode 
+                                                     BenchLazy.state ref
+                            val tableList : (token C.seq
+                                              -> 'a parseNode BenchLazy.state 
+                                                ref)
+                                             -> token C.node BenchLazy.state 
+                                               ref
+                                             -> 'a F.node parseNode 
+                                                 BenchLazy.state ref
+                            val tableDomainSlot : domainNode parser option ref
+                            val tableDomain : token C.seq
+                                               -> domainNode parseNode 
+                                                   BenchLazy.state ref
+                            val tablePair : (token C.seq
+                                              -> 'a parseNode BenchLazy.state 
+                                                ref)
+                                             -> (token C.seq
+                                              -> 'b parseNode BenchLazy.state 
+                                                ref)
+                                             -> token C.node BenchLazy.state 
+                                               ref
+                                             -> ('a D.t * 'b D.t) parseNode 
+                                                 BenchLazy.state ref
+                            val tableParser : (domain * integer) F.node parser
+                            val readTable : char C.node BenchNeed.t
+                                             -> (domain * integer) F.node D.t
+                            val cached : ('a -> 'b) option ref
+                                          -> (unit -> 'a -> 'b) -> 'a -> 'b
+                            val inNames : string list
+                                           -> char F.node D.t -> bool
+                            val keywords : string list
+                            val firstChar : 'a F.node D.t -> 'a
+                            val isName : char F.node D.t -> bool
+                            val isConstructor : char F.node D.t -> bool
+                            val paName : (integer * char F.node D.t) C.node 
+                                              BenchLazy.state ref
+                                          -> char F.node parseNode 
+                                              BenchLazy.state ref
+                            val paConstructorName : (integer * char F.node D.t)
+                                                           C.node 
+                                                         BenchLazy.state ref
+                                                     -> char F.node parseNode 
+                                                         BenchLazy.state ref
+                            val relations : string list
+                            val paRelation : (integer * char F.node D.t) 
+                                                    C.node BenchLazy.state ref
+                                              -> char F.node parseNode 
+                                                  BenchLazy.state ref
+                            val trailingSemi : ('a
+                                                 -> 'b parseNode 
+                                                     BenchLazy.state ref)
+                                                -> 'a
+                                                -> 'b parseNode 
+                                                    BenchLazy.state ref
+                            type scDefinition
+                            type coreBinding
+                            type constructorAlt
+                            val programSlot : coreProgram parser option ref
+                            val typeDefsSlot : typeDef F.node parser option 
+                                                  ref
+                            val typeDefSlot : typeDef parser option ref
+                            val constructorAltsSlot : constructorAlt F.node 
+                                                             parser option ref
+                            val constructorAltSlot : constructorAlt parser 
+                                                          option ref
+                            val typeExprSlot : tdefNode parser option ref
+                            val scDefsSlot : scDefinition F.node parser option 
+                                                ref
+                            val scSlot : scDefinition parser option ref
+                            val exprSlot : nameNode coreNode parser option ref
+                            val letSlot : nameNode coreNode parser option ref
+                            val letrecSlot : nameNode coreNode parser option 
+                                                ref
+                            val bindingsSlot : coreBinding F.node parser 
+                                                    option ref
+                            val bindingSlot : coreBinding parser option ref
+                            val caseSlot : nameNode coreNode parser option ref
+                            val alternativesSlot : scDefinition F.node parser 
+                                                        option ref
+                            val alternativeSlot : scDefinition parser option 
+                                                     ref
+                            val lambdaSlot : nameNode coreNode parser option 
+                                                ref
+                            val expr1Slot : nameNode coreNode parser option 
+                                               ref
+                            val expr2Slot : nameNode coreNode parser option 
+                                               ref
+                            val expr3Slot : nameNode coreNode parser option 
+                                               ref
+                            val expr4Slot : nameNode coreNode parser option 
+                                               ref
+                            val expr5Slot : nameNode coreNode parser option 
+                                               ref
+                            val expr6Slot : nameNode coreNode parser option 
+                                               ref
+                            val expr1cSlot : partialNode parser option ref
+                            val expr2cSlot : partialNode parser option ref
+                            val expr3cSlot : partialNode parser option ref
+                            val expr4cSlot : partialNode parser option ref
+                            val expr5cSlot : partialNode parser option ref
+                            val atomicSlot : nameNode coreNode parser option 
+                                                ref
+                            val assembleOp : nameNode coreNode D.t
+                                              -> partialNode D.t
+                                              -> nameNode coreNode D.t
+                            val paAtomic : token C.seq
+                                            -> nameNode coreNode parseNode 
+                                                BenchLazy.state ref
+                            val paExpr5c : token C.seq
+                                            -> partialNode parseNode 
+                                                BenchLazy.state ref
+                            val paExpr4c : token C.seq
+                                            -> partialNode parseNode 
+                                                BenchLazy.state ref
+                            val paExpr3c : token C.seq
+                                            -> partialNode parseNode 
+                                                BenchLazy.state ref
+                            val paExpr2c : token C.seq
+                                            -> partialNode parseNode 
+                                                BenchLazy.state ref
+                            val paExpr1c : token C.seq
+                                            -> partialNode parseNode 
+                                                BenchLazy.state ref
+                            val paExpr6 : token C.seq
+                                           -> nameNode coreNode parseNode 
+                                               BenchLazy.state ref
+                            val paExpr5 : token C.seq
+                                           -> nameNode coreNode parseNode 
+                                               BenchLazy.state ref
+                            val paExpr4 : token C.seq
+                                           -> nameNode coreNode parseNode 
+                                               BenchLazy.state ref
+                            val paExpr3 : token C.seq
+                                           -> nameNode coreNode parseNode 
+                                               BenchLazy.state ref
+                            val paExpr2 : token C.seq
+                                           -> nameNode coreNode parseNode 
+                                               BenchLazy.state ref
+                            val paExpr1 : (integer * char F.node D.t) C.node 
+                                               BenchLazy.state ref
+                                           -> nameNode coreNode parseNode 
+                                               BenchLazy.state ref
+                            val paLambda : (integer * char F.node D.t) C.node 
+                                                BenchLazy.state ref
+                                            -> nameNode coreNode parseNode 
+                                                BenchLazy.state ref
+                            val paAlternative : token C.seq
+                                                 -> scDefinition parseNode 
+                                                     BenchLazy.state ref
+                            val paAlternatives : token C.seq
+                                                  -> (name
+                                                           * (nameNode F.seq
+                                                              * nameNode 
+                                                                  coreNode D.t)
+                                                             D.t) F.node 
+                                                        parseNode 
+                                                      BenchLazy.state ref
+                            val paCase : (integer * char F.node D.t) C.node 
+                                              BenchLazy.state ref
+                                          -> nameNode coreNode parseNode 
+                                              BenchLazy.state ref
+                            val paBinding : token C.seq
+                                             -> coreBinding parseNode 
+                                                 BenchLazy.state ref
+                            val paBindings : token C.seq
+                                              -> (nameNode D.t
+                                                       * nameNode coreNode D.t)
+                                                      F.node parseNode 
+                                                  BenchLazy.state ref
+                            val paLetrec : (integer * char F.node D.t) C.node 
+                                                BenchLazy.state ref
+                                            -> nameNode coreNode parseNode 
+                                                BenchLazy.state ref
+                            val paLet : (integer * char F.node D.t) C.node 
+                                             BenchLazy.state ref
+                                         -> nameNode coreNode parseNode 
+                                             BenchLazy.state ref
+                            val paExpr : token C.seq
+                                          -> nameNode coreNode parseNode 
+                                              BenchLazy.state ref
+                            val paSc : token C.seq
+                                        -> scDefinition parseNode 
+                                            BenchLazy.state ref
+                            val paScDefs : token C.seq
+                                            -> (name
+                                                     * (nameNode F.seq * core) 
+                                                       D.t) F.node parseNode 
+                                                BenchLazy.state ref
+                            val paTypeExpr : token C.seq
+                                              -> tdefNode parseNode 
+                                                  BenchLazy.state ref
+                            val paConstructorAlt : token C.seq
+                                                    -> constructorAlt 
+                                                          parseNode 
+                                                        BenchLazy.state ref
+                            val paConstructorAlts : token C.seq
+                                                     -> (name * tdefNode F.seq)
+                                                             F.node parseNode 
+                                                         BenchLazy.state ref
+                            val paTypeDefinition : token C.seq
+                                                    -> typeDef parseNode 
+                                                        BenchLazy.state ref
+                            val paTypeDefs : token C.seq
+                                              -> typeDef F.node parseNode 
+                                                  BenchLazy.state ref
+                            val paProgram : token C.seq
+                                             -> coreProgram parseNode 
+                                               BenchLazy.delay
+                            val parseSyntax : token C.seq -> coreProgram D.t
+                            type freeAnnotation
+                            val annotationSet : ('a * 'b) D.t -> 'a
+                            val freeVariables : core -> freeAnnotation
+                            val depthFirst : ('a D.t -> 'a D.t -> order)
+                                              -> ('a D.t -> 'a F.node D.t)
+                                              -> ('a setNode D.t
+                                                 * 'a F.node D.t) D.t
+                                              -> 'a F.node D.t
+                                              -> ('a setNode D.t
+                                                 * 'a F.node D.t) D.t
+                            val spanningSearch : ('a D.t -> 'a D.t -> order)
+                                                  -> ('a D.t -> 'a F.node D.t)
+                                                  -> ('a setNode D.t
+                                                     * 'a setNode F.node D.t) 
+                                                    D.t
+                                                  -> 'a F.node D.t
+                                                  -> ('a setNode D.t
+                                                     * 'a setNode F.node D.t) 
+                                                    D.t
+                            val stronglyConnected : ('a D.t -> 'a D.t -> order)
+                                                     -> ('a D.t
+                                                      -> 'a F.node D.t)
+                                                     -> ('a D.t
+                                                      -> 'a F.node D.t)
+                                                     -> 'a F.node D.t
+                                                     -> 'a setNode F.node D.t
+                            val concat : 'a F.node F.node D.t -> 'a F.node D.t
+                            val member : ('a -> 'b D.t -> bool)
+                                          -> 'a -> 'b F.node D.t -> bool
+                            val unique : ('a D.t -> 'a D.t -> bool)
+                                          -> 'a F.node D.t -> 'a F.node D.t
+                            val freeTypeVariables : ('a
+                                                        * char F.node F.node 
+                                                          D.t
+                                                        * ('b
+                                                             * tdefNode F.node 
+                                                               D.t) F.node D.t)
+                                                       D.t
+                                                     -> char F.node F.seq
+                            val typeEdges : ('a D.t * char F.node F.node D.t
+                                                  * ('b * tdefNode F.node D.t) 
+                                                      F.node D.t) F.node D.t
+                                             -> ('a D.t * char F.node D.t) 
+                                                 F.node D.t
+                            val typeDependency : (char F.node D.t
+                                                       * char F.node F.node 
+                                                         D.t
+                                                       * ('a
+                                                            * tdefNode F.node 
+                                                              D.t) F.node D.t) 
+                                                      F.node D.t
+                                                  -> (bool D.t
+                                                       * char F.node F.node 
+                                                         D.t) F.node D.t
+                            val isRecursiveType : ('a D.t
+                                                        * ''b F.node F.node 
+                                                          D.t) F.node D.t
+                                                   -> ''b F.node D.t -> 'a
+                            val sureLookup : ('a -> 'b -> bool)
+                                              -> ('a * 'c) F.node D.t
+                                              -> string -> 'b -> 'c
+                            val lookupDefault : ('a -> 'b -> bool)
+                                                 -> ('a * 'c) F.node D.t
+                                                 -> 'b -> 'c -> 'c
+                            val validTypeDefinitions : (char F.node D.t
+                                                             * char F.node 
+                                                                 F.node D.t
+                                                             * (''a F.node D.t
+                                                                  * tdefNode 
+                                                                      F.node 
+                                                                    D.t) 
+                                                                 F.node D.t) 
+                                                            F.node D.t
+                                                        -> (bool D.t
+                                                             * char F.node 
+                                                                 F.node D.t) 
+                                                            F.node D.t
+                                                        -> string
+                            val programToAtomic : ('a
+                                                      * ('b D.t
+                                                           * ('b F.seq
+                                                              * 'b coreNode 
+                                                                D.t) D.t) 
+                                                          F.node D.t) D.t
+                                                   -> ('a * 'b coreNode D.t) 
+                                                     D.t
+                            val parseCore : char C.node BenchNeed.t
+                                             -> (bool D.t
+                                                  * char F.node F.node D.t) 
+                                                 F.node D.t
+                                             * (typeDef F.seq
+                                                * char F.node coreNode D.t) 
+                                               D.t
+                            val dependencyExpression : freeAnnotation -> core
+                            val depend : core -> core
+                            val mergeLambdas : core -> core
+                            val nameLambdas : core -> core
+                            val mapCore : (name -> name)
+                                           -> char F.node coreNode D.t
+                                           -> char F.node coreNode D.t
+                            val dropWhile : ('a D.t -> bool)
+                                             -> 'a F.node D.t -> 'a F.node D.t
+                            val checkUnique : char F.node F.node D.t
+                                               -> char F.node F.node D.t
+                            val makeName : char F.node D.t
+                                            -> Word64.word D.t
+                                            -> char F.node D.t
+                            val getNames : Word64.word D.t
+                                            -> char F.node F.node D.t
+                                            -> Word64.word D.t
+                                            * char F.node F.node D.t
+                            type uniqueResult
+                            val uniqueSupply : uniqueResult -> Word64.word D.t
+                            val uniqueBody : uniqueResult -> core
+                            val uniqueNames : Word64.word D.t
+                                               -> (char F.node D.t * name) 
+                                                   F.node D.t
+                                               -> char F.node coreNode D.t
+                                               -> uniqueResult
+                            val liftFreeVariables : core -> freeAnnotation
+                            val splitFreeSet : char F.node setNode D.t
+                                                -> char F.node setNode D.t
+                                                * char F.node setNode D.t
+                            val liftEquations : freeAnnotation
+                                                 -> eqnNode F.node D.t
+                            val zapBuiltins : char F.node F.node D.t
+                                               -> eqnNode D.t -> eqnNode D.t
+                            val equalNameSets : ''a F.node setNode D.t
+                                                 -> ''a F.node setNode D.t
+                                                 -> bool
+                            val equalFreeEnvironments : (''a F.node D.t
+                                                              * ''b F.node 
+                                                                  setNode D.t) 
+                                                             F.node D.t
+                                                         -> (''a F.node D.t
+                                                              * ''b F.node 
+                                                                  setNode D.t) 
+                                                             F.node D.t
+                                                         -> bool
+                            val solveLiftEquations : eqnNode F.node D.t
+                                                      -> (name
+                                                           * char F.node 
+                                                               setNode D.t) 
+                                                          F.node D.t
+                            val addLiftParameters : (char F.node D.t
+                                                          * char F.node 
+                                                              setNode D.t) 
+                                                         F.node D.t
+                                                     -> (char F.node,
+                                                         nameNode setNode) ann
+                                                     -> char F.node coreNode 
+                                                       D.t
+                            type flattenResult
+                            val flattenedBindings : flattenResult
+                                                     -> coreBinding F.node D.t
+                            val flattenedBody : flattenResult -> core
+                            val flattenCore : core -> flattenResult
+                            val rootName : char F.node D.t -> char F.node D.t
+                            val contentious : char F.node F.node D.t
+                                               -> char F.node F.node D.t
+                            val prettyScName : char F.node F.node D.t
+                                                -> char F.node D.t
+                                                -> char F.node D.t
+                            val prettyVariableName : char F.node F.node D.t
+                                                      -> char F.node D.t
+                                                      -> char F.node D.t
+                            val prettyLifted : (char F.node D.t
+                                                     * char F.node coreNode 
+                                                       D.t) F.node D.t
+                                                -> (char F.node D.t
+                                                     * char F.node F.node D.t) 
+                                                    F.node D.t
+                                                -> (char F.node D.t
+                                                     * char F.node coreNode 
+                                                       D.t) F.node D.t
+                                                * (char F.node D.t
+                                                     * char F.node F.node D.t) 
+                                                    F.node D.t
+                            val lambdaLift : char F.node F.node D.t
+                                              -> core
+                                              -> bool
+                                              -> (core
+                                                   * (char F.node D.t
+                                                        * char F.node F.node 
+                                                          D.t) F.node D.t) 
+                                                  BenchLazy.state ref
+                            val equalTVName : (''a F.node D.t * ''b F.node D.t)
+                                                 D.t
+                                               -> (''a F.node D.t
+                                                  * ''b F.node D.t) D.t
+                                               -> bool
+                            val compareTVName : (Word64.word F.node D.t
+                                                    * Word64.word F.node D.t) 
+                                                   D.t
+                                                 -> (Word64.word F.node D.t
+                                                    * Word64.word F.node D.t) 
+                                                   D.t
+                                                 -> order
+                            val typeVariables : typeNode D.t
+                                                 -> tvname F.node D.t
+                            val showType : typeNode D.t -> char F.node D.t
+                            val substituteType : ((Word64.word F.node D.t
+                                                          * Word64.word F.node 
+                                                            D.t) D.t
+                                                       * typeNode D.t) F.node 
+                                                    D.t
+                                                  -> typeNode D.t
+                                                  -> typeNode D.t
+                            val applySubstitution : ((Word64.word F.node D.t
+                                                             * Word64.word 
+                                                                 F.node D.t) 
+                                                            D.t * typeNode D.t)
+                                                         F.node D.t
+                                                     -> (Word64.word F.node 
+                                                          D.t
+                                                        * Word64.word F.node 
+                                                          D.t) D.t
+                                                     -> texpr
+                            val composeSubstitutions : 'a F.node D.t
+                                                        -> 'a F.node D.t
+                                                        -> 'a F.node D.t
+                            val deltaSubstitution : (Word64.word F.node D.t
+                                                        * Word64.word F.node 
+                                                          D.t) D.t
+                                                     -> typeNode D.t
+                                                     -> ((Word64.word F.node 
+                                                               D.t
+                                                             * Word64.word 
+                                                                 F.node D.t) 
+                                                            D.t * typeNode D.t)
+                                                         F.node D.t
+                            type substNode
+                            type unifyReply
+                            val extendSubstitution : ((Word64.word F.node D.t
+                                                              * Word64.word 
+                                                                  F.node D.t) 
+                                                             D.t
+                                                           * typeNode D.t) 
+                                                          F.node D.t
+                                                      -> tvname D.t
+                                                      -> typeNode D.t
+                                                      -> unifyReply
+                            val unifyList : ((Word64.word F.node D.t
+                                                     * Word64.word F.node D.t) 
+                                                    D.t * typeNode D.t) F.node 
+                                               D.t
+                                             -> (typeNode D.t * typeNode D.t) 
+                                                 F.node D.t
+                                             -> (substNode,nameNode) replyNode 
+                                                 BenchLazy.state ref
+                            val mismatch : texpr
+                                            -> texpr
+                                            -> (substNode,nameNode) replyNode
+                            val unify : ((Word64.word F.node D.t
+                                                 * Word64.word F.node D.t) D.t
+                                              * typeNode D.t) F.node D.t
+                                         -> texpr * typeNode D.t
+                                         -> (substNode,nameNode) replyNode 
+                                             BenchLazy.state ref
+                            val mapAnnotation : ('a D.t -> 'b D.t)
+                                                 -> ('c,'a) ann -> ('c,'b) ann
+                            val lookupAll : ('a -> 'b -> bool)
+                                             -> ('a * 'c D.t) F.node D.t
+                                             -> 'b -> 'c F.node D.t
+                            val checkUnifier : ('a,char F.node) replyNode 
+                                                    BenchLazy.state ref
+                                                -> 'a D.t
+                            val unifyTypeSet : substNode D.t
+                                                -> typeNode F.node D.t
+                                                -> (substNode,nameNode) 
+                                                      replyNode 
+                                                    BenchLazy.state ref
+                            val mergeSubstitutions : ((Word64.word F.node D.t
+                                                              * Word64.word 
+                                                                  F.node D.t) 
+                                                             D.t
+                                                           * typeNode D.t) 
+                                                          F.node D.t
+                                                      -> ((Word64.word F.node 
+                                                                D.t
+                                                              * Word64.word 
+                                                                  F.node D.t) 
+                                                             D.t
+                                                           * typeNode D.t) 
+                                                          F.node D.t
+                            val typeBar : (''a F.node D.t * ''b F.node D.t) 
+                                               F.node D.t
+                                           -> (''a F.node D.t * ''b F.node D.t)
+                                               F.node D.t
+                                           -> (''a F.node D.t * ''b F.node D.t)
+                                               F.node D.t
+                            val schemeUnknowns : schemeNode D.t
+                                                  -> (Word64.word F.node D.t
+                                                       * Word64.word F.node 
+                                                         D.t) F.node D.t
+                            val substituteScheme : ((Word64.word F.node D.t
+                                                            * Word64.word 
+                                                                F.node D.t) 
+                                                           D.t * typeNode D.t) 
+                                                        F.node D.t
+                                                    -> schemeNode D.t
+                                                    -> schemeNode D.t
+                            val charValue : (char F.node D.t * 'a) F.node D.t
+                                             -> char F.node D.t -> 'a
+                            val environmentUnknowns : ('a * schemeNode D.t) 
+                                                           F.node D.t
+                                                       -> (Word64.word F.node 
+                                                              D.t
+                                                            * Word64.word 
+                                                                F.node D.t) 
+                                                           F.node D.t
+                            val substituteEnvironment : ((Word64.word F.node 
+                                                                   D.t
+                                                                 * Word64.word 
+                                                                     F.node 
+                                                                   D.t) D.t
+                                                              * typeNode D.t) 
+                                                             F.node D.t
+                                                         -> ('a
+                                                              * schemeNode D.t)
+                                                             F.node D.t
+                                                         -> ('a
+                                                              * schemeNode D.t)
+                                                             F.node D.t
+                            val typeSupplyDoubleLimit : Word64.word D.t
+                            val typeSupplySuccessorLimit : Word64.word D.t
+                            val typeSupplySuccessor : Word64.word F.node D.t
+                                                       -> Word64.word F.node 
+                                                         D.t
+                            val typeSupplyDouble : Word64.word F.node D.t
+                                                    -> Word64.word F.node D.t
+                            val depleteTypeSupply : 'a
+                                                     * Word64.word F.node D.t
+                                                     -> 'a
+                                                     * Word64.word F.node D.t
+                            val splitTypeSupply : Word64.word F.node D.t * 'a
+                                                   -> (Word64.word F.node D.t
+                                                    * Word64.word F.node D.t)
+                                                   * (Word64.word F.node D.t
+                                                    * Word64.word F.node D.t)
+                            val typeNameSequence : 'a * Word64.word F.node D.t
+                                                    -> ('a
+                                                           * Word64.word 
+                                                               F.node D.t) D.t 
+                                                        C.node BenchNeed.t
+                            val zipTypeNames : 'a F.node D.t
+                                                -> 'b C.node BenchNeed.t
+                                                -> ('a D.t * 'b) F.node D.t
+                            val newTypeInstance : Word64.word F.seq
+                                                   * Word64.word F.node D.t
+                                                   -> schemeNode D.t
+                                                   -> typeNode D.t
+                            val generalizedScheme : (Word64.word F.node D.t
+                                                          * Word64.word F.node 
+                                                            D.t) F.node D.t
+                                                     -> Word64.word F.seq
+                                                     * Word64.word F.node D.t
+                                                     -> typeNode D.t
+                                                     -> schemeNode D.t
+                            val addTypeDeclarations : ('a D.t * schemeNode D.t)
+                                                           F.node D.t
+                                                       -> Word64.word F.seq
+                                                       * Word64.word F.node 
+                                                         D.t
+                                                       -> 'a F.node D.t
+                                                       -> typeNode F.node D.t
+                                                       -> ('a D.t
+                                                            * schemeNode D.t) 
+                                                           F.node D.t
+                            val newBoundVariable : 'a
+                                                    -> tvname D.t
+                                                    -> ('a * schemeNode D.t) 
+                                                      D.t
+                            val newBoundVariables : 'a F.node D.t
+                                                     -> Word64.word F.seq
+                                                     * Word64.word F.node D.t
+                                                     -> ('a D.t
+                                                          * schemeNode D.t) 
+                                                         F.node D.t
+                            val oldBoundVariable : ('a * schemeNode D.t) D.t
+                                                    -> texpr
+                            val typeDefinitionSubstitution : (char F.node D.t
+                                                                   * tvname 
+                                                                     D.t) 
+                                                                  F.node D.t
+                                                              -> tdefNode D.t
+                                                              -> typeNode D.t
+                            val newTypeVariables : ('a * 'b F.node D.t * 'c) 
+                                                      D.t
+                                                    -> 'd
+                                                    * Word64.word F.node D.t
+                                                    -> ('b D.t
+                                                         * ('d
+                                                            * Word64.word 
+                                                                F.node D.t) 
+                                                           D.t) F.node D.t
+                            val constructorTypeSchemes : Word64.word F.seq
+                                                          * Word64.word F.node 
+                                                            D.t
+                                                          -> (name
+                                                             * char F.node 
+                                                                 F.node D.t
+                                                             * ('a
+                                                                  * tdefNode 
+                                                                      F.node 
+                                                                    D.t) 
+                                                                 F.node D.t) 
+                                                            D.t
+                                                          -> (Word64.word 
+                                                             F.seq
+                                                           * Word64.word 
+                                                               F.node D.t)
+                                                          * ('a
+                                                               * schemeNode 
+                                                                 D.t) F.node 
+                                                            D.t
+                            val equalTypeDefExpr : tdefNode D.t
+                                                    -> tdefNode D.t -> bool
+                            val equalTypeDefinition : (''a F.node D.t
+                                                          * ''b F.node F.node 
+                                                            D.t
+                                                          * (''c F.node D.t
+                                                               * tdefNode 
+                                                                   F.node D.t) 
+                                                              F.node D.t) D.t
+                                                       -> (''a F.node D.t
+                                                          * ''b F.node F.node 
+                                                            D.t
+                                                          * (''c F.node D.t
+                                                               * tdefNode 
+                                                                   F.node D.t) 
+                                                              F.node D.t) D.t
+                                                       -> bool
+                            val getTypeDefinition : (''a F.node D.t
+                                                          * ''b F.node F.node 
+                                                            D.t
+                                                          * (''c F.node D.t
+                                                               * tdefNode 
+                                                                   F.node D.t) 
+                                                              F.node D.t) 
+                                                         F.node D.t
+                                                     -> ''c F.node F.node D.t
+                                                     -> (''a F.node D.t
+                                                        * ''b F.node F.node 
+                                                          D.t
+                                                        * (''c F.node D.t
+                                                             * tdefNode F.node 
+                                                               D.t) F.node D.t)
+                                                       D.t
+                            val reorderConstructors : char F.node F.node D.t
+                                                       -> (char F.node D.t
+                                                            * 'a D.t) F.node 
+                                                         D.t
+                                                       -> 'a F.node D.t
+                            val constructorGamma : (char F.node D.t
+                                                         * tvname D.t) F.node 
+                                                      D.t
+                                                    -> ('a
+                                                       * tdefNode F.node D.t) 
+                                                      D.t
+                                                    -> 'b F.node D.t
+                                                    -> ('b D.t
+                                                         * schemeNode D.t) 
+                                                        F.node D.t
+                            val allConstructorGammas : (char F.node D.t
+                                                             * tvname D.t) 
+                                                            F.node D.t
+                                                        -> ('a
+                                                             * tdefNode F.node 
+                                                               D.t) F.node D.t
+                                                        -> 'b F.node F.node 
+                                                          D.t
+                                                        -> ('b D.t
+                                                               * schemeNode 
+                                                                 D.t) F.node 
+                                                            F.node D.t
+                            type typedAnnotation
+                            type typedAnnotationNode
+                            type typeInfo
+                            type typeReply
+                            type typeListInfo
+                            type typeListReply
+                            val info : typeReply -> typeInfo
+                            val infoSubstitution : typeReply -> subst
+                            val infoType : typeReply -> texpr
+                            val infoTree : typeReply -> typedAnnotation
+                            val intType : typeNode D.t
+                            val boolType : typeNode D.t
+                            val inferCase : (char F.node D.t
+                                                  * char F.node F.node D.t
+                                                  * (char F.node D.t
+                                                       * tdefNode F.node D.t) 
+                                                      F.node D.t) F.node D.t
+                                             -> (char F.node D.t
+                                                  * schemeNode D.t) F.node D.t
+                                             -> Word64.word F.seq
+                                             * Word64.word F.node D.t
+                                             -> nameNode coreNode D.t
+                                             -> char F.node F.node D.t
+                                             -> nameNode F.node F.node D.t
+                                             -> nameNode coreNode F.node D.t
+                                             -> (((Word64.word F.node D.t
+                                                         * Word64.word F.node 
+                                                           D.t) D.t
+                                                      * typeNode D.t) F.node 
+                                                   D.t * typeNode D.t
+                                                 * (typeNode D.t
+                                                    * (nameNode,typeNode) 
+                                                        annNode D.t) D.t,
+                                                 nameNode) replyNode 
+                                                 BenchLazy.state ref
+                            val inferLetrec : (char F.node D.t
+                                                    * char F.node F.node D.t
+                                                    * (char F.node D.t
+                                                         * tdefNode F.node D.t)
+                                                        F.node D.t) F.node D.t
+                                               -> (char F.node D.t
+                                                    * schemeNode D.t) F.node 
+                                                 D.t
+                                               -> Word64.word F.seq
+                                               * Word64.word F.node D.t
+                                               -> nameNode F.node D.t
+                                               -> nameNode coreNode F.node D.t
+                                               -> nameNode coreNode D.t
+                                               -> (((Word64.word F.node D.t
+                                                           * Word64.word 
+                                                               F.node D.t) D.t
+                                                        * typeNode D.t) F.node 
+                                                     D.t * typeNode D.t
+                                                   * (typeNode D.t
+                                                      * (nameNode,typeNode) 
+                                                          annNode D.t) D.t,
+                                                   nameNode) replyNode 
+                                                   BenchLazy.state ref
+                            val finishLet : ((Word64.word F.node D.t
+                                                     * Word64.word F.node D.t) 
+                                                    D.t * typeNode D.t) F.node 
+                                               D.t
+                                             -> char F.node F.node D.t
+                                             -> bool
+                                             -> (((Word64.word F.node D.t
+                                                         * Word64.word F.node 
+                                                           D.t) D.t
+                                                      * typeNode D.t) F.node 
+                                                   D.t * typeNode D.t
+                                                 * (typeNode D.t
+                                                    * (nameNode,typeNode) 
+                                                        annNode D.t) D.t,
+                                                 nameNode) replyNode 
+                                                 BenchLazy.state ref
+                                             -> (typeNode D.t
+                                                  * (nameNode,typeNode) 
+                                                      annNode D.t) F.node D.t
+                                             -> (typeInfo,nameNode) replyNode 
+                                                 BenchLazy.state ref
+                            val inferLet : (char F.node D.t
+                                                 * char F.node F.node D.t
+                                                 * (char F.node D.t
+                                                      * tdefNode F.node D.t) 
+                                                     F.node D.t) F.node D.t
+                                            -> (char F.node D.t
+                                                 * schemeNode D.t) F.node D.t
+                                            -> Word64.word F.seq
+                                            * Word64.word F.node D.t
+                                            -> nameNode F.node D.t
+                                            -> nameNode coreNode F.node D.t
+                                            -> nameNode coreNode D.t
+                                            -> (((Word64.word F.node D.t
+                                                        * Word64.word F.node 
+                                                          D.t) D.t
+                                                     * typeNode D.t) F.node 
+                                                  D.t * typeNode D.t
+                                                * (typeNode D.t
+                                                   * (nameNode,typeNode) 
+                                                       annNode D.t) D.t,
+                                                nameNode) replyNode 
+                                                BenchLazy.state ref
+                            val inferLambda : (char F.node D.t
+                                                    * char F.node F.node D.t
+                                                    * (char F.node D.t
+                                                         * tdefNode F.node D.t)
+                                                        F.node D.t) F.node D.t
+                                               -> (char F.node D.t
+                                                    * schemeNode D.t) F.node 
+                                                 D.t
+                                               -> Word64.word F.seq
+                                               * Word64.word F.node D.t
+                                               -> nameNode D.t
+                                               -> nameNode coreNode D.t
+                                               -> (((Word64.word F.node D.t
+                                                           * Word64.word 
+                                                               F.node D.t) D.t
+                                                        * typeNode D.t) F.node 
+                                                     D.t * typeNode D.t
+                                                   * (typeNode D.t
+                                                      * (nameNode,typeNode) 
+                                                          annNode D.t) D.t,
+                                                   nameNode) replyNode 
+                                                   BenchLazy.state ref
+                            val inferList : (char F.node D.t
+                                                  * char F.node F.node D.t
+                                                  * (char F.node D.t
+                                                       * tdefNode F.node D.t) 
+                                                      F.node D.t) F.node D.t
+                                             -> (char F.node D.t
+                                                  * schemeNode D.t) F.node D.t
+                                             -> Word64.word F.seq
+                                             * Word64.word F.node D.t
+                                             -> nameNode coreNode F.node D.t
+                                             -> (((Word64.word F.node D.t
+                                                         * Word64.word F.node 
+                                                           D.t) D.t
+                                                      * typeNode D.t) F.node 
+                                                   D.t * typeNode F.node D.t
+                                                 * (typeNode D.t
+                                                      * (nameNode,typeNode) 
+                                                          annNode D.t) F.node 
+                                                   D.t,nameNode) replyNode 
+                                                 BenchLazy.state ref
+                            val inferVariable : (char F.node D.t
+                                                      * schemeNode D.t) F.node 
+                                                   D.t
+                                                 -> Word64.word F.seq
+                                                 * Word64.word F.node D.t
+                                                 -> name
+                                                 -> (((Word64.word F.node D.t
+                                                             * Word64.word 
+                                                                 F.node D.t) 
+                                                            D.t * typeNode D.t)
+                                                         F.node D.t
+                                                     * typeNode D.t
+                                                     * (typeNode D.t
+                                                        * (nameNode,typeNode) 
+                                                            annNode D.t) D.t,
+                                                     nameNode) replyNode
+                            val infer : (char F.node D.t
+                                              * char F.node F.node D.t
+                                              * (char F.node D.t
+                                                   * tdefNode F.node D.t) 
+                                                  F.node D.t) F.node D.t
+                                         -> (char F.node D.t * schemeNode D.t) 
+                                             F.node D.t
+                                         -> Word64.word F.seq
+                                         * Word64.word F.node D.t
+                                         -> nameNode coreNode D.t
+                                         -> (((Word64.word F.node D.t
+                                                     * Word64.word F.node D.t) 
+                                                    D.t * typeNode D.t) F.node 
+                                               D.t * typeNode D.t
+                                             * (typeNode D.t
+                                                * (nameNode,typeNode) annNode 
+                                                  D.t) D.t,nameNode) replyNode 
+                                             BenchLazy.state ref
+                            val typedTreeEnvironment : typedAnnotation
+                                                        -> (nameNode D.t
+                                                             * typeNode D.t) 
+                                                            F.node D.t
+                            val prettyTypeBinding : (char F.node D.t
+                                                        * typeNode D.t) D.t
+                                                     -> char F.node D.t
+                            type checkedReply
+                            val builtinTypeDefinitions : typeDef F.seq
+                            val checkTypes : (name * schemeNode D.t) F.node 
+                                                D.t
+                                              -> Word64.word F.seq
+                                              * Word64.word F.node D.t
+                                              -> (typeDef F.node D.t
+                                                 * nameNode coreNode D.t) D.t
+                                              -> char F.node D.t
+                                              * checkedReply
+                            val baseTypes : typeEnv
+                            val curryType : typeNode D.t
+                                             -> typeNode F.node D.t
+                                             -> typeNode D.t
+                            val uncurryType : typeNode D.t
+                                               -> (typeNode F.node D.t
+                                                    * typeNode D.t) 
+                                                   BenchLazy.state ref
+                            val etaNewArguments : Word64.word D.t
+                                                   -> char F.node F.node D.t
+                                                   -> char F.node F.node D.t
+                            val etaMain : ('a
+                                              * ('b
+                                                 * (char F.node,typeNode) 
+                                                     annNode D.t) D.t) D.t
+                                           -> typeNode F.node D.t
+                                           -> typeNode D.t
+                                           -> ('a
+                                              * ('b
+                                                 * (char F.node,typeNode) 
+                                                     annNode D.t) D.t) D.t
+                            val etaAbstract : typedAnnotation
+                                               -> typedAnnotation
+                            val makeFrontier : integer
+                                                -> frontierElemNode F.seq
+                                                -> frontierElemNode F.seq
+                                                -> frontierNode D.t
+                            val uncurryDomain : domainNode F.node D.t
+                                                 -> domainNode D.t
+                                                 -> domainNode D.t
+                            val bottomRepresentation : domainNode D.t
+                                                        -> representation
+                            val bottomFrontier : domainNode F.node D.t
+                                                  -> frontierNode D.t
+                            val bottomRoute : domainNode D.t -> route
+                            val topRepresentation : domainNode D.t
+                                                     -> representation
+                            val topFrontier : domainNode F.node D.t
+                                               -> frontierNode D.t
+                            val topRoute : domainNode D.t -> route
+                            val isBottomRepresentation : repNode D.t -> bool
+                            val isBottomRoute : routeNode D.t -> bool
+                            val isTopRepresentation : repNode D.t -> bool
+                            val isTopRoute : routeNode D.t -> bool
+                            val belowRepresentation : repNode D.t
+                                                       -> repNode D.t -> bool
+                            val belowFrontier : frontierNode D.t
+                                                 -> frontierNode D.t -> bool
+                            val belowFrel : frontierElemNode D.t
+                                             -> frontierElemNode D.t -> bool
+                            val belowRouteList : routeNode F.seq
+                                                  -> routeNode F.seq -> bool
+                            val belowRoute : routeNode D.t
+                                              -> routeNode D.t -> bool
+                            val minimumAdd : ('a D.t -> 'a D.t -> bool)
+                                              -> 'a D.t
+                                              -> 'a F.node D.t
+                                              -> 'a F.node D.t
+                            val maximumAdd : ('a D.t -> 'a D.t -> bool)
+                                              -> 'a D.t
+                                              -> 'a F.node D.t
+                                              -> 'a F.node D.t
+                            val minimal : ('a D.t -> 'a D.t -> bool)
+                                           -> 'a F.node D.t -> 'a F.node D.t
+                            val maximal : ('a D.t -> 'a D.t -> bool)
+                                           -> 'a F.node D.t -> 'a F.node D.t
+                            val meetRepresentation : repNode D.t
+                                                      -> repNode D.t
+                                                      -> repNode D.t
+                            val meetFrontier : frontierNode D.t
+                                                -> frontierNode D.t
+                                                -> frontier
+                            val meetFrel : frontierElemNode D.t
+                                            -> frontierElemNode D.t
+                                            -> frontierElemNode D.t
+                            val meetRoute : routeNode D.t
+                                             -> routeNode D.t -> routeNode D.t
+                            val joinRepresentation : repNode D.t
+                                                      -> repNode D.t
+                                                      -> repNode D.t
+                            val joinFrontier : frontierNode D.t
+                                                -> frontierNode D.t
+                                                -> frontier
+                            val joinFrel : frontierElemNode D.t
+                                            -> frontierElemNode D.t
+                                            -> frontierElem
+                            val joinRoute : routeNode D.t
+                                             -> routeNode D.t -> routeNode D.t
+                            val defaultDomain : dexprNode D.t -> domain
+                            val applyDomainSubstitution : (char F.node D.t
+                                                                * domainNode 
+                                                                  D.t) F.node 
+                                                             D.t
+                                                           -> dexprNode D.t
+                                                           -> domainNode D.t
+                            val normalizeDomainExpression : dexprNode D.t
+                                                             -> dexpr
+                            val expressionContainsFunctions : dexprNode D.t
+                                                               -> bool
+                            val expressionContainsSubsidiaryFunctions : 
+                                                                             dexprNode
+                                                                           D.t
+                                                                         -> 
+                                                                           bool
+                            type domainDifferenceState
+                            type domainDifferenceResult
+                            val differenceList : domainNode F.seq
+                                                  -> domainNode F.seq
+                                                  -> Word64.word D.t
+                                                  * (char F.node D.t
+                                                       * domainNode D.t) 
+                                                      F.node D.t
+                                                  -> (dexprNode F.node D.t
+                                                       * (Word64.word D.t
+                                                        * (char F.node D.t
+                                                             * domainNode D.t) 
+                                                            F.node D.t)) 
+                                                      BenchLazy.state ref
+                            val differenceAux : domainNode D.t
+                                                 -> domainNode D.t
+                                                 -> Word64.word D.t
+                                                 * (char F.node D.t
+                                                      * domainNode D.t) F.node 
+                                                   D.t
+                                                 -> (dexpr
+                                                      * domainDifferenceState) 
+                                                     BenchLazy.state ref
+                            val domainDifference : domainNode D.t
+                                                    -> domainNode D.t
+                                                    -> dexpr
+                                                    * (name * domain) F.seq
+                            val andWith : ('a D.t -> 'b D.t -> bool)
+                                           -> 'a F.node D.t
+                                           -> 'b F.node D.t -> bool
+                            val foldRight1 : ('a D.t -> 'a D.t -> 'a D.t)
+                                              -> 'a F.node D.t -> 'a D.t
+                            val partialFrontier : Word64.word D.t
+                                                   -> frontierNode D.t
+                                                   -> routeNode F.node D.t
+                                                   -> frontier
+                            val partialRepresentation : repNode D.t
+                                                         -> routeNode F.node 
+                                                           D.t
+                                                         -> repNode D.t
+                            val constantRepresentation : repNode D.t -> route
+                            val applyRoute : routeNode D.t
+                                              -> routeNode F.node D.t -> route
+                            val evaluateConstant : nameNode hexprNode D.t
+                                                    -> route
+                            val evaluateAbstract : hexpr -> hexpr
+                            val substituteAbstract : (char F.node D.t
+                                                           * nameNode 
+                                                               hexprNode D.t) 
+                                                          F.node D.t
+                                                      -> char F.node hexprNode 
+                                                        D.t
+                                                      -> nameNode hexprNode 
+                                                        D.t
+                            val evaluateExact : char F.node hexprNode D.t
+                                                 -> nameNode hexprNode F.node 
+                                                   D.t
+                                                 -> route
+                            val makeAbstractMeet : nameNode hexprNode D.t
+                                                    -> nameNode hexprNode 
+                                                        F.node D.t
+                                                    -> hexpr
+                            val isSingletonList : 'a F.node D.t -> bool
+                            val joinZeroFrontiers : frontierElemNode F.node 
+                                                       D.t
+                                                     -> frontierElemNode 
+                                                         F.node D.t
+                                                     -> frontierElemNode 
+                                                         F.node D.t
+                            val meetOneFrontiers : frontierElemNode F.node D.t
+                                                    -> frontierElemNode F.node 
+                                                      D.t
+                                                    -> frontierElemNode F.node 
+                                                      D.t
+                            val minOneFromMaxZeroAux : routeNode F.seq
+                                                        -> domainNode F.node 
+                                                          D.t
+                                                        -> frontierElemNode 
+                                                            F.node D.t
+                                                        -> frontierElemNode 
+                                                            F.node D.t
+                            val maxZeroFromMinOneAux : routeNode F.node D.t
+                                                        -> domainNode F.seq
+                                                        -> frontierElemNode 
+                                                            F.node D.t
+                                                        -> frontierElemNode 
+                                                          F.seq
+                            val increaseArity : frontierNode D.t
+                                                 -> domainNode F.seq
+                                                 -> repNode D.t
+                            val greaterEmbedAux : frontierNode D.t
+                                                   -> domainNode D.t
+                                                   -> repNode D.t
+                            val greaterEmbed : frontierNode D.t
+                                                -> domainNode F.seq
+                                                -> repNode D.t
+                            val reduceArity : Word64.word D.t
+                                               -> routeNode F.node D.t
+                                               -> domainNode F.seq
+                                               -> repNode D.t -> repNode D.t
+                            val lowerLiftAux : Word64.word D.t
+                                                -> routeNode F.node D.t
+                                                -> domainNode F.seq
+                                                -> domainNode D.t
+                                                -> repNode D.t -> repNode D.t
+                            val lowerLift : routeNode F.node D.t
+                                             -> domainNode F.seq
+                                             -> domainNode F.node D.t
+                                             -> repNode F.node D.t
+                                             -> repNode D.t
+                            val isoRepresentationInverse : repNode D.t
+                                                            -> repNode D.t
+                            val predecessorRepresentations : domainNode D.t
+                                                              -> repNode D.t
+                                                              -> repNode 
+                                                                  F.node D.t
+                            val predecessors : domainNode D.t
+                                                -> routeNode D.t
+                                                -> routeNode F.node D.t
+                            val successorFrels : domainNode F.node D.t
+                                                  -> frontierElemNode D.t
+                                                  -> frontierElemNode F.node 
+                                                    D.t
+                            val predecessorFrels : domainNode F.seq
+                                                    -> frontierElemNode D.t
+                                                    -> frontierElemNode F.node 
+                                                      D.t
+                            val successorRepresentations : domainNode D.t
+                                                            -> repNode D.t
+                                                            -> repNode F.node 
+                                                              D.t
+                            val successors : domainNode D.t
+                                              -> routeNode D.t
+                                              -> routeNode F.node D.t
+                            val immediateAbove : domainNode D.t
+                                                  -> routeNode D.t
+                                                  -> routeNode F.node D.t
+                            val immediateBelow : domainNode D.t
+                                                  -> routeNode D.t
+                                                  -> routeNode F.node D.t
+                            val pushUp : domainNode D.t
+                                          -> routeNode F.node D.t
+                                          -> routeNode F.node D.t
+                            val pushDown : domainNode D.t
+                                            -> routeNode F.node D.t
+                                            -> routeNode F.node D.t
+                            val slices : ('a F.node D.t -> 'a F.node D.t)
+                                          -> 'a F.node D.t
+                                          -> 'a F.node F.node D.t
+                            val allUpSlices : domainNode D.t
+                                               -> routeNode F.node F.node D.t
+                            val allDownSlices : domainNode D.t
+                                                 -> routeNode F.node F.node 
+                                                   D.t
+                            val allRoutes : domainNode D.t
+                                             -> routeNode F.node D.t
+                            val upwardClosure : domainNode D.t
+                                                 -> routeNode F.node D.t
+                                                 -> routeNode F.node D.t
+                            val downwardClosure : domainNode D.t
+                                                   -> routeNode F.node D.t
+                                                   -> routeNode F.node D.t
+                            val allRoutesMinusTop : domainNode D.t
+                                                     -> routeNode F.node D.t
+                            val equalPoints : domainNode D.t * routeNode D.t
+                                               -> domainNode D.t
+                                               * routeNode D.t
+                                               -> bool
+                            val containsFunctions : domainNode D.t -> bool
+                            val isHigherOrderFunction : domainNode D.t -> bool
+                            val isDataFunction : domainNode D.t -> bool
+                            val representationArity : repNode D.t -> integer
+                            val strongNormalize : domainNode D.t -> domain
+                            val meetIrreducibleRoutes : domainNode D.t
+                                                         -> routeNode F.node 
+                                                           D.t
+                            val typeToDomainExpression : (bool D.t
+                                                               * char F.node 
+                                                                   F.node D.t) 
+                                                              F.node D.t
+                                                          -> typeNode D.t
+                                                          -> dexpr
+                            val typedToDomainTree : (bool D.t
+                                                          * char F.node F.node 
+                                                            D.t) F.node D.t
+                                                     -> ('a,typeNode) ann
+                                                     -> ('a,dexprNode) ann
+                            val getDomainInstantiations : dexprNode D.t
+                                                           -> dexprNode D.t
+                                                           -> (char F.node D.t
+                                                                * domainNode 
+                                                                  D.t) F.node 
+                                                             D.t
+                            val normalizeInverse : frontierElemNode F.node D.t
+                                                    -> frontierElemNode F.node 
+                                                      D.t
+                                                    -> frontierElemNode F.node 
+                                                      D.t
+                                                    * frontierElemNode F.node 
+                                                      D.t
+                            val intersectInverse : frontierElemNode F.node D.t
+                                                    * frontierElemNode F.node 
+                                                      D.t
+                                                    -> frontierElemNode F.node 
+                                                      D.t
+                                                    * frontierElemNode F.node 
+                                                      D.t
+                                                    -> frontierElemNode F.node 
+                                                      D.t
+                                                    * frontierElemNode F.node 
+                                                      D.t
+                            val inverseEnumerated : domainNode F.node D.t
+                                                     -> repNode D.t
+                                                     -> routeNode D.t
+                                                     -> frontierElemNode 
+                                                         F.node D.t
+                            val inverseMindless : domainNode D.t
+                                                   -> repNode D.t
+                                                   -> routeNode D.t
+                                                   -> (frontierElemNode F.node 
+                                                          D.t
+                                                        * frontierElemNode 
+                                                            F.node D.t) 
+                                                       BenchLazy.state ref
+                            val inverseMMI : domainNode D.t
+                                              -> repNode D.t
+                                              -> routeNode D.t
+                                              -> (frontierElemNode F.node D.t
+                                                   * frontierElemNode F.node 
+                                                     D.t) BenchLazy.state ref
+                            val minimumInverse : bool
+                                                  -> domainNode D.t
+                                                  -> routeNode D.t
+                                                  -> routeNode D.t
+                                                  -> frontierElemNode F.node 
+                                                    D.t
+                            val maximumInverse : bool
+                                                  -> domainNode D.t
+                                                  -> routeNode D.t
+                                                  -> routeNode D.t
+                                                  -> frontierElemNode F.node 
+                                                    D.t
+                            val maxZeroFromMinOne : domainNode F.node D.t
+                                                     -> frontierElemNode 
+                                                         F.node D.t
+                                                     -> frontierElemNode F.seq
+                            val minOneFromMaxZero : domainNode F.node D.t
+                                                     -> frontierElemNode 
+                                                         F.node D.t
+                                                     -> frontierElemNode 
+                                                         F.node D.t
+                            val joinOneFrontiers : frontierElemNode F.node D.t
+                                                    -> frontierElemNode F.node 
+                                                      D.t
+                                                    -> frontierElemNode F.node 
+                                                      D.t
+                            val generateConstructorCross : bool
+                                                            -> (routeNode 
+                                                                   F.seq
+                                                                 * 
+                                                                       frontierElemNode
+                                                                     F.node 
+                                                                   D.t) F.node 
+                                                              D.t
+                                                            -> domainNode 
+                                                              F.seq
+                                                            -> domainNode 
+                                                              F.seq
+                                                            -> repNode F.seq
+                            val generateConstructor : bool
+                                                       -> (routeNode D.t
+                                                            * frontierElemNode 
+                                                                F.node D.t) 
+                                                           F.node D.t
+                                                       -> domainNode D.t
+                                                       -> repNode D.t
+                            val constructorInstance : bool
+                                                       -> constructorNode 
+                                                           F.node D.t
+                                                       -> dexprNode D.t
+                                                       -> (char F.node D.t
+                                                            * domainNode D.t) 
+                                                           F.node D.t
+                                                       -> route
+                            val uncurryWithRespect : domainNode D.t
+                                                      -> domainNode D.t
+                                                      -> domainNode D.t
+                            val compatible : domainNode D.t
+                                              -> domainNode D.t -> bool
+                            val concretizedSourceDomain : domainNode D.t
+                                                           -> domainNode D.t
+                                                           -> domainNode D.t
+                            val concretizeSource : acMode
+                                                    -> domain
+                                                    -> domainNode D.t
+                                                    -> repNode D.t
+                                                    -> repNode D.t
+                            val concretizeSourceFrontier : acMode
+                                                            -> domainNode 
+                                                                F.node D.t
+                                                            -> domainNode 
+                                                                F.node D.t
+                                                            -> frontierNode 
+                                                              D.t
+                                                            -> frontier
+                            val increaseArityMode : acMode
+                                                     -> Word64.word D.t
+                                                     -> domainNode F.seq
+                                                     -> domainNode F.seq
+                                                     -> frontierNode D.t
+                                                     -> repNode D.t
+                            val concretizeTargetHighs : acMode
+                                                         -> domainNode F.seq
+                                                         -> domainNode F.seq
+                                                         -> domainNode F.seq
+                                                         -> repNode F.seq
+                                                         -> repNode F.seq
+                            val concretizeTarget : acMode
+                                                    -> domainNode D.t
+                                                    -> domain
+                                                    -> repNode D.t
+                                                    -> repNode D.t
+                            val concretizeData : acMode
+                                                  -> domain
+                                                  -> domainNode D.t
+                                                  -> routeNode D.t
+                                                  -> routeNode D.t
+                            val concretize : acMode
+                                              -> domainNode D.t
+                                              -> domainNode D.t
+                                              -> routeNode D.t -> route
+                            val makeAbstractInstance : acMode
+                                                        -> dexprNode D.t
+                                                        -> (char F.node D.t
+                                                             * domainNode D.t) 
+                                                            F.node D.t
+                                                        -> routeNode D.t
+                                                        -> route
+                            val addException : 'a exceptionIntNode D.t
+                                                -> 'a exceptionIntNode D.t
+                                                -> 'a exceptionIntNode D.t
+                            val multiplyException : 'a exceptionIntNode D.t
+                                                     -> 'a exceptionIntNode 
+                                                       D.t
+                                                     -> 'a exceptionIntNode 
+                                                       D.t
+                            val exceptionOne : domainInt
+                            val exceptionTwo : domainInt
+                            val isTwo : domainNode D.t -> bool
+                            val singletonValue : 'a F.node D.t
+                                                  -> 'a D.t option
+                            val normalizeSizeDomain : domainNode D.t -> domain
+                            val latticeCardinality : (domainNode D.t * integer)
+                                                          F.node D.t
+                                                      -> domainNode D.t
+                                                      -> domainNode 
+                                                          exceptionIntNode D.t
+                            val reduceDomain : domainNode D.t
+                                                -> domainNode F.node D.t
+                            val recoverRelation : ('a D.t -> 'a D.t -> bool)
+                                                   -> ('a D.t
+                                                    -> 'a D.t -> bool)
+                                                   -> 'a F.node D.t
+                                                   -> ('a D.t * 'a F.node D.t) 
+                                                       F.node D.t
+                            val shortestPath : ('a -> 'a -> bool)
+                                                -> ('a * 'a * Word64.word D.t) 
+                                                    F.node D.t
+                                                -> 'a
+                                                -> 'a
+                                                -> ('a * Word64.word D.t) 
+                                                    F.node D.t
+                            val oneSizeSequence : (domainNode D.t * integer) 
+                                                       F.node D.t
+                                                   -> Word64.word D.t
+                                                   -> domainNode F.seq
+                                                   -> ((domainNode D.t
+                                                           * ?.word64 D.t) D.t
+                                                        * Word64.word D.t) 
+                                                       F.node D.t
+                            val transpose : 'a F.node F.node D.t
+                                             -> 'a F.node F.node D.t
+                            val takeWhile : ('a D.t -> bool)
+                                             -> 'a F.node D.t -> 'a F.node D.t
+                            val sizeSequence : (domainNode D.t * integer) 
+                                                    F.node D.t
+                                                -> Word64.word D.t
+                                                -> domainNode F.node F.node 
+                                                  D.t
+                                                -> Word64.word D.t
+                                                -> Word64.word D.t
+                                                -> ((?.word64 D.t
+                                                            * domainNode F.seq)
+                                                           F.node F.node D.t
+                                                     * (?.word64 D.t
+                                                            * domainNode F.seq)
+                                                           F.node F.node D.t) 
+                                                    BenchLazy.state ref
+                            val splitBy : ('a D.t -> bool)
+                                           -> 'a F.node D.t
+                                           -> ('a F.node D.t * 'a F.node D.t) 
+                                               BenchLazy.state ref
+                            val combineFrontierBounds : frontierNode D.t
+                                                         -> frontierNode D.t
+                                                         -> frontierNode D.t
+                            val combineBounds : repNode D.t
+                                                 -> repNode D.t -> repNode D.t
+                            val selectFrontier : Word64.word D.t
+                                                  -> frontierElemNode F.node 
+                                                    D.t
+                                                  -> frontierElemNode F.node 
+                                                    D.t
+                                                  -> bool
+                                                  -> frontierElemNode D.t 
+                                                    option
+                            val frontierMaximumIntersection : frontierElemNode 
+                                                                   F.node D.t
+                                                               -> 
+                                                                     frontierElemNode
+                                                                   F.node D.t
+                                                               -> 
+                                                                     frontierElemNode
+                                                                   F.node D.t
+                            val frontierMinimumIntersection : frontierElemNode 
+                                                                   F.node D.t
+                                                               -> 
+                                                                     frontierElemNode
+                                                                   F.node D.t
+                                                               -> 
+                                                                     frontierElemNode
+                                                                   F.node D.t
+                            val reviseMinimum : domainNode F.node D.t
+                                                 -> frontierElemNode F.node 
+                                                   D.t
+                                                 -> frontierElemNode D.t
+                                                 -> frontierElemNode F.node 
+                                                   D.t
+                            val reviseMaximum : domainNode F.seq
+                                                 -> frontierElemNode F.node 
+                                                   D.t
+                                                 -> frontierElemNode D.t
+                                                 -> frontierElemNode F.node 
+                                                   D.t
+                            val randomModulus1 : Word64.word D.t
+                            val randomModulus2 : Word64.word D.t
+                            val randomLimit1 : Word64.word D.t
+                            val randomLimit2 : Word64.word D.t
+                            val randomIntegers : Word64.word D.t
+                                                  -> Word64.word D.t
+                                                  -> Word64.word D.t C.node 
+                                                    BenchNeed.t
+                            type memo
+                            val dataIsZero : routeNode D.t -> bool
+                            val dataLow1 : routeNode D.t -> route
+                            val dataLow2 : routeNode D.t -> route
+                            val dataMiddle2 : routeNode D.t -> route
+                            val dataHigh1 : routeNode D.t
+                                             -> Word64.word D.t
+                                             -> routeNode D.t -> route
+                            val dataHigh2 : routeNode D.t
+                                             -> Word64.word D.t
+                                             -> routeNode D.t -> route
+                            val improveData : ('a -> routeNode D.t)
+                                               -> (routeNode F.seq * 'a) 
+                                                   F.node D.t
+                                               -> domainNode F.node D.t
+                                               -> bool
+                                               -> frontierElemNode F.node D.t
+                                               -> frontierElemNode F.node D.t
+                                               -> (frontierElemNode F.node D.t
+                                                    * frontierElemNode F.node 
+                                                      D.t) BenchLazy.state ref
+                            val tailControl : Word64.word D.t C.node 
+                                                 BenchNeed.t
+                                               -> Word64.word D.t C.node 
+                                                 BenchNeed.t
+                            val headControl : Word64.word D.t C.node 
+                                                 BenchNeed.t
+                                               -> Word64.word D.t 
+                                                   BenchLazy.state ref
+                            val searchData : acMode
+                                              -> char F.node hexprNode D.t
+                                              -> domainNode F.node D.t
+                                              -> domainNode F.node D.t
+                                              -> frontierElemNode F.node D.t
+                                              -> frontierElemNode F.node D.t
+                                              -> (route -> routeNode D.t)
+                                              -> (frontierNode D.t
+                                                   * (routeNode F.seq * route) 
+                                                       F.node D.t) 
+                                                  BenchLazy.state ref
+                            val findDataHigh : acMode
+                                                -> char F.node hexprNode D.t
+                                                -> domainNode F.node D.t
+                                                -> domainNode F.node D.t
+                                                -> domainNode F.seq
+                                                -> repNode F.seq
+                                                -> (route -> routeNode D.t)
+                                                -> (routeNode F.seq * route) 
+                                                    F.node D.t
+                                                -> bool
+                                                -> (unit
+                                                 -> frontierElemNode F.seq)
+                                                -> bool
+                                                -> (repNode F.seq
+                                                     * (routeNode F.seq
+                                                          * route) F.node D.t) 
+                                                    BenchLazy.state ref
+                            val findData : acMode
+                                            -> char F.node hexprNode D.t
+                                            -> domainNode D.t
+                                            -> domainNode F.node D.t
+                                            -> domainNode F.node D.t
+                                            -> repNode D.t
+                                            -> (route -> routeNode D.t)
+                                            -> bool
+                                            -> (unit -> frontierElemNode F.seq)
+                                            -> (routeNode F.seq * route) 
+                                                F.node D.t
+                                            -> (repNode D.t
+                                                 * (routeNode F.seq * route) 
+                                                     F.node D.t) 
+                                                BenchLazy.state ref
+                            val evaluateSearchConstant : char F.node hexprNode 
+                                                            D.t
+                                                          -> nameNode 
+                                                                hexprNode 
+                                                              F.node D.t
+                                                          -> route
+                            val applySearch : appInfoNode F.node D.t
+                                               -> nameNode hexprNode F.node 
+                                                 D.t
+                                               -> char F.node hexprNode D.t
+                                               -> routeNode D.t
+                            val searchGeneric : acMode
+                                                 -> char F.node hexprNode D.t
+                                                 -> domainNode F.node D.t
+                                                 -> domainNode F.node D.t
+                                                 -> frontierNode D.t
+                                                 -> appInfoNode F.node D.t
+                                                 -> bool -> frontier
+                            val findGeneric : acMode
+                                               -> char F.node hexprNode D.t
+                                               -> domainNode D.t
+                                               -> domainNode F.node D.t
+                                               -> domainNode F.node D.t
+                                               -> repNode D.t
+                                               -> Word64.word D.t
+                                               -> appInfoNode F.node D.t
+                                               -> bool -> repNode D.t
+                            val makeFrontierRepresentation : acMode
+                                                              -> bool
+                                                              -> nameNode 
+                                                                  hexprNode 
+                                                                D.t
+                                                              -> domainNode 
+                                                                D.t
+                                                              -> domainNode 
+                                                                  F.node D.t
+                                                              -> routeNode D.t
+                                                              -> routeNode D.t
+                                                              -> (routeNode 
+                                                                     D.t
+                                                                   * 
+                                                                       Word64.word
+                                                                     D.t) 
+                                                                  BenchLazy.state
+                                                                ref
+                            val barakiBelowFrel : frontierElemNode D.t
+                                                   -> frontierElemNode D.t
+                                                   -> bool
+                            val barakiBelowFrontier : frontierNode D.t
+                                                       -> frontierNode D.t
+                                                       -> bool
+                            val barakiBelowRepresentation : repNode D.t
+                                                             -> repNode D.t
+                                                             -> bool
+                            val barakiBelow : routeNode D.t
+                                               -> routeNode D.t -> bool
+                            val barakiMaximumAdd : frontierElemNode D.t
+                                                    -> frontierElemNode F.node 
+                                                      D.t
+                                                    -> frontierElemNode F.node 
+                                                      D.t
+                            val barakiMeetFrontier : frontierNode D.t
+                                                      -> frontierNode D.t
+                                                      -> frontier
+                            val barakiMeetRepresentation : repNode D.t
+                                                            -> repNode D.t
+                                                            -> repNode D.t
+                            val barakiMeet : routeNode D.t
+                                              -> routeNode D.t -> route
+                            val normalizeBarakiFrontier : domainNode F.seq
+                                                           -> frontierNode D.t
+                                                           -> frontierNode D.t
+                            val normalizeBarakiRepresentation : domainNode D.t
+                                                                 -> repNode 
+                                                                   D.t
+                                                                 -> repNode 
+                                                                   D.t
+                            val normalizeBaraki : domainNode D.t
+                                                   -> routeNode D.t
+                                                   -> routeNode D.t
+                            type embeddingSubstitution
+                            val embeddingDomain : (char F.node D.t
+                                                        * (domainNode D.t * 'a
+                                                           * 'b) D.t) F.node 
+                                                     D.t
+                                                   -> dexprNode D.t
+                                                   -> domainNode D.t
+                            val composeEmbeddingFunctionClosure : (char F.node 
+                                                                          D.t
+                                                                        * (
+                                                                              domainNode
+                                                                             
+                                                                             D.t
+                                                                           * 
+                                                                              routeNode
+                                                                             
+                                                                             D.t
+                                                                           * 
+                                                                              routeNode
+                                                                             
+                                                                             D.t)
+                                                                          D.t) 
+                                                                       F.node 
+                                                                     D.t
+                                                                   -> 
+                                                                       dexprNode
+                                                                     D.t
+                                                                   -> domain
+                                                                   -> repNode 
+                                                                     D.t
+                                                                   -> 
+                                                                       dexprNode
+                                                                     F.seq
+                                                                   -> 
+                                                                       routeNode
+                                                                     D.t
+                            val mapBarakiZeroFrontier : (frontierElemNode D.t
+                                                          -> frontierElemNode 
+                                                            D.t)
+                                                         -> domainNode F.node 
+                                                           D.t
+                                                         -> frontierNode D.t
+                                                         -> frontierNode D.t
+                            val mapBarakiZeros : (frontierElemNode D.t
+                                                   -> frontierElemNode D.t)
+                                                  -> domainNode F.node D.t
+                                                  -> repNode D.t
+                                                  -> repNode D.t
+                            val composeEmbeddingFunction : (char F.node D.t
+                                                                 * (domainNode 
+                                                                      D.t
+                                                                    * 
+                                                                        routeNode
+                                                                      D.t
+                                                                    * 
+                                                                        routeNode
+                                                                      D.t) D.t)
+                                                                F.node D.t
+                                                            -> dexprNode D.t
+                                                            -> domainNode D.t
+                                                            -> repNode D.t
+                                                            -> repNode D.t
+                            val applyEmbedding : (char F.node D.t
+                                                       * (domainNode D.t
+                                                          * routeNode D.t
+                                                          * routeNode D.t) D.t)
+                                                      F.node D.t
+                                                  -> dexprNode D.t
+                                                  -> routeNode D.t
+                                                  -> routeNode D.t
+                            val cleanDomainExpression : dexprNode D.t -> dexpr
+                            val makePolymorphicInstance : bool
+                                                           -> Word64.word D.t
+                                                           -> acMode
+                                                           -> dexprNode D.t
+                                                           -> (char F.node D.t
+                                                                * domainNode 
+                                                                  D.t) F.node 
+                                                             D.t
+                                                           -> routeNode D.t
+                                                           -> route
+                            val equalAbstract : ''a F.node hexprNode D.t
+                                                 -> ''a F.node hexprNode D.t
+                                                 -> bool
+                            val vectorizeAbstract : nameNode hexprNode D.t
+                                                     -> hexpr
+                            val optimizeAbstractApplication : hexpr
+                                                               -> hexpr
+                                                               -> nameNode 
+                                                                   hexprNode 
+                                                                 D.t
+                            val optimizeAbstractMeet : nameNode hexprNode 
+                                                          F.seq
+                                                        -> hexpr
+                            val optimizeAbstract : nameNode hexprNode D.t
+                                                    -> hexpr
+                            val simplifyAbstract : nameNode hexprNode D.t
+                                                    -> hexpr
+                            val lookupAssociation : ('a -> 'b -> bool)
+                                                     -> ('b * 'c D.t) F.node 
+                                                       D.t
+                                                     -> 'a -> 'c maybeNode D.t
+                            type analysisSequence
+                            val staticExpressions : static
+                                                     -> (name * dexpr) F.seq
+                            val staticDomains : static
+                                                 -> (name * domain) F.seq
+                            val staticConstructors : static
+                                                      -> (name
+                                                         * constructorNode 
+                                                           F.seq) F.seq
+                            val staticFreeVariables : static
+                                                       -> (name
+                                                          * nameNode F.seq) 
+                                                         F.seq
+                            val staticFlags : static -> flags
+                            val staticLimits : static -> limits
+                            val staticSizes : static
+                                               -> (domain * integer) F.seq
+                            val hasFlag : static -> flagNode -> bool
+                            val zip4Exact : ('a D.t
+                                              -> 'b D.t
+                                              -> 'c D.t -> 'd D.t -> 'e D.t)
+                                             -> 'a F.node D.t
+                                             -> 'b F.node D.t
+                                             -> 'c F.node D.t
+                                             -> 'd F.node D.t -> 'e F.node D.t
+                            val zip5Exact : ('a D.t
+                                              -> 'b D.t
+                                              -> 'c D.t
+                                              -> 'd D.t -> 'e D.t -> 'f D.t)
+                                             -> 'a F.node D.t
+                                             -> 'b F.node D.t
+                                             -> 'c F.node D.t
+                                             -> 'd F.node D.t
+                                             -> 'e F.node D.t -> 'f F.node D.t
+                            val cafDomain : domainNode D.t -> domain
+                            val uncafDomain : domainNode D.t -> domain
+                            val makeFunction : domainNode F.node D.t
+                                                -> domainNode D.t -> domain
+                            val functionArguments : domainNode D.t
+                                                     -> domainNode F.node D.t
+                            val functionResult : domainNode D.t -> domain
+                            val sequenceEmpty : ('a F.node D.t * 'b) 
+                                                     BenchLazy.state ref
+                                                 -> bool
+                            val nextRecursive : ('a F.node D.t * 'b) 
+                                                     BenchLazy.state ref
+                                                 -> 'a D.t
+                            val nextNonRecursive : ('a F.node F.node D.t * 'b) 
+                                                        BenchLazy.state ref
+                                                    -> 'a D.t
+                            val sequenceTail : ('a F.node D.t * 'b) 
+                                                    BenchLazy.state ref
+                                                -> ('a F.node D.t * 'b) 
+                                                    BenchLazy.state ref
+                            val sequenceGaveUp : ('a * 'b F.node D.t) 
+                                                      BenchLazy.state ref
+                                                  -> bool
+                            val isAnalysisResult : infoNode D.t -> bool
+                            val analysisResult : infoNode D.t -> route
+                            val makeSizeInformation : (oneFuncSize F.node 
+                                                                F.node D.t
+                                                            * oneFuncSize 
+                                                                  F.node 
+                                                                F.node D.t) 
+                                                           BenchLazy.state ref
+                                                       -> char F.node F.node 
+                                                         D.t
+                                                       -> infoNode F.node D.t
+                            val substituteAnalysis : (char F.node D.t * route) 
+                                                          F.node D.t
+                                                      -> char F.node hexprNode 
+                                                        D.t
+                                                      -> char F.node hexprNode 
+                                                        D.t
+                            val analysisGroups : ('a D.t * ('b,'a) annNode D.t)
+                                                    D.t
+                                                  -> (bool D.t
+                                                       * ('b D.t * ('b,'a) ann)
+                                                         F.seq) F.node D.t
+                            val constructorArguments : ('a
+                                                             * char F.node 
+                                                                 F.node D.t
+                                                             * ('b
+                                                                  * tdefNode 
+                                                                      F.node 
+                                                                    D.t) 
+                                                                 F.node D.t) 
+                                                            F.node D.t
+                                                        -> ('b
+                                                             * constructorNode 
+                                                                 F.node D.t) 
+                                                            F.node D.t
+                            val analyzeExpression : static
+                                                     -> (char F.node D.t
+                                                          * char F.node 
+                                                              hexprNode D.t) 
+                                                         F.node D.t
+                                                     -> (char F.node,dexprNode) 
+                                                       ann
+                                                     -> char F.node hexprNode 
+                                                       D.t
+                            val finalExpansion : static
+                                                  -> domainNode F.node D.t
+                                                  -> domainNode F.node D.t
+                                                  -> routeNode F.node D.t
+                                                  -> routeNode F.node D.t
+                            val nonRecursiveSearch : static
+                                                      -> name
+                                                      -> ((integer
+                                                                  * domainNode 
+                                                                      F.node 
+                                                                    D.t) 
+                                                                 F.node F.node 
+                                                             D.t
+                                                           * 'a F.node D.t) 
+                                                          BenchLazy.state ref
+                                                      -> domainNode F.node D.t
+                                                      -> domainNode D.t
+                                                      -> domainNode F.node D.t
+                                                      -> routeNode D.t
+                                                      -> routeNode D.t
+                                                      -> nameNode hexprNode 
+                                                        D.t
+                                                      -> infoNode F.node D.t
+                            val nonRecursiveStartup : static
+                                                       -> name
+                                                       -> domainNode D.t
+                                                       -> nameNode hexprNode 
+                                                         D.t
+                                                       -> infoNode F.node D.t
+                            val fixAtSizeSafe : 'a
+                                                 -> routeNode F.node D.t
+                                                 -> routeNode F.node D.t
+                                                 -> char F.node F.node D.t
+                                                 -> domainNode F.node D.t
+                                                 -> domainNode F.node F.node 
+                                                   D.t
+                                                 -> domainNode F.node D.t
+                                                 -> char F.node hexprNode 
+                                                     F.node D.t
+                                                 -> routeNode F.node D.t
+                                                 -> 'b
+                                                 -> Word64.word F.node D.t
+                                                 -> Word64.word D.t
+                                                 -> infoNode F.node D.t
+                            val fixAtSizeLive : 'a
+                                                 -> routeNode F.node D.t
+                                                 -> char F.node F.node D.t
+                                                 -> domainNode F.node D.t
+                                                 -> domainNode F.node F.node 
+                                                   D.t
+                                                 -> domainNode F.node D.t
+                                                 -> char F.node hexprNode 
+                                                     F.node D.t
+                                                 -> routeNode F.node D.t
+                                                 -> 'b
+                                                 -> Word64.word F.node D.t
+                                                 -> Word64.word D.t
+                                                 -> infoNode F.node D.t
+                            val fixMain : static
+                                           -> char F.node F.node D.t
+                                           -> (oneFuncSize F.node F.node D.t
+                                                * oneFuncSize F.node F.seq) 
+                                               BenchLazy.state ref
+                                           -> domainNode F.node F.node D.t
+                                           -> domainNode F.node D.t
+                                           -> domainNode F.node F.node D.t
+                                           -> routeNode F.node D.t
+                                           -> routeNode F.node D.t
+                                           -> char F.node hexprNode F.node D.t
+                                           -> Word64.word D.t
+                                           -> infoNode F.node D.t
+                            val fixStartup : static
+                                              -> char F.node F.node D.t
+                                              -> domainNode F.node D.t
+                                              -> char F.node hexprNode F.node 
+                                                D.t
+                                              -> infoNode F.node D.t
+                            val analyzeGroups : static
+                                                 -> (char F.node D.t
+                                                      * char F.node hexprNode 
+                                                        D.t) F.node D.t
+                                                 -> (bool D.t
+                                                      * (char F.node D.t
+                                                           * (char F.node,
+                                                              dexprNode) ann) 
+                                                          F.node D.t) F.node 
+                                                   D.t
+                                                 -> infoNode F.node D.t
+                            val undoCAFInformation : infoNode F.node D.t
+                                                      -> infoNode F.node D.t
+                            val text : string -> char F.node D.t
+                            val appendText : 'a F.node D.t
+                                              -> 'a F.node D.t
+                                              -> 'a F.node D.t
+                            val textConcat : 'a F.node D.t list
+                                              -> 'a F.node D.t
+                            val renderList : ('a D.t -> char F.node D.t)
+                                              -> 'a F.node D.t
+                                              -> char F.node D.t
+                            val parenthesize : int
+                                                -> char F.node D.t
+                                                -> char F.node D.t
+                            val renderInteger : Word64.word D.t
+                                                 -> char F.node D.t
+                            val renderQuoted : char F.node D.t
+                                                -> char F.node D.t
+                            val renderDomain : int
+                                                -> domainNode D.t
+                                                -> char F.node D.t
+                            val renderFrel : int
+                                              -> frontierElemNode D.t
+                                              -> char F.node D.t
+                            val renderFrontier : int
+                                                  -> frontierNode D.t
+                                                  -> char F.node D.t
+                            val renderRepresentation : int
+                                                        -> repNode D.t
+                                                        -> char F.node D.t
+                            val renderRoute : int
+                                               -> routeNode D.t
+                                               -> char F.node D.t
+                            val renderAbstract : int
+                                                  -> char F.node hexprNode D.t
+                                                  -> char F.node D.t
+                            type outputSequence
+                            type indentSequence
+                            val emptyOutput : 'a -> 'b -> 'c F.node D.t
+                            val emptyIndent : 'a -> 'a
+                            val appendIndent : ('a -> 'b)
+                                                -> ('c -> 'a) -> 'c -> 'b
+                            val indentCharacter : char
+                                                   -> (Word64.word D.t
+                                                    -> Word64.word D.t
+                                                    -> char F.node D.t)
+                                                   -> Word64.word D.t
+                                                   -> Word64.word D.t
+                                                   -> char F.node D.t
+                            val indentText : char F.node D.t
+                                              -> (Word64.word D.t
+                                               -> Word64.word D.t
+                                               -> char F.node D.t)
+                                              -> Word64.word D.t
+                                              -> Word64.word D.t
+                                              -> char F.node D.t
+                            val indentString : string
+                                                -> (Word64.word D.t
+                                                 -> Word64.word D.t
+                                                 -> char F.node D.t)
+                                                -> Word64.word D.t
+                                                -> Word64.word D.t
+                                                -> char F.node D.t
+                            val indentBlock : (('a -> 'b -> 'c)
+                                                -> Word64.word D.t
+                                                -> Word64.word D.t -> 'd)
+                                               -> (Word64.word D.t -> 'b -> 'c)
+                                               -> Word64.word D.t
+                                               -> Word64.word D.t -> 'd
+                            val indentInterleave : (('a -> 'b -> 'c)
+                                                     -> 'a -> 'b -> 'c)
+                                                    -> (('a -> 'b -> 'c)
+                                                         -> 'a -> 'b -> 'c) 
+                                                        F.node D.t
+                                                    -> ('a -> 'b -> 'c)
+                                                    -> 'a -> 'b -> 'c
+                            val renderIndent : (('a -> 'b -> 'c F.node D.t)
+                                                 -> Word64.word D.t
+                                                 -> Word64.word D.t -> 'd)
+                                                -> 'd
+                            val combineIndent : ('a -> 'a) list -> 'a -> 'a
+                            val prettyCore : char F.node coreNode D.t
+                                              -> indentSequence
+                            val prettyTypeExpression : tdefNode D.t
+                                                        -> indentSequence
+                            val prettyTypeDefinition : (char F.node D.t
+                                                           * char F.node 
+                                                               F.node D.t
+                                                           * (char F.node D.t
+                                                                * tdefNode 
+                                                                    F.node D.t)
+                                                               F.node D.t) D.t
+                                                        -> char F.node D.t
+                            val prettyParsed : (char F.node D.t
+                                                     * char F.node F.node D.t
+                                                     * (char F.node D.t
+                                                          * tdefNode F.node 
+                                                            D.t) F.node D.t) 
+                                                    F.node D.t
+                                                -> char F.node coreNode D.t
+                                                -> char F.node D.t
+                            val justify : Word64.word D.t
+                                           -> char F.node D.t
+                                           -> char F.node D.t
+                            val numberedLines : char F.node F.node D.t
+                                                 -> char F.node D.t
+                            val minInteger : Word64.word D.t
+                                              -> Word64.word D.t
+                                              -> Word64.word D.t
+                            val maxInteger : Word64.word D.t
+                                              -> Word64.word D.t
+                                              -> Word64.word D.t
+                            val listMinimum : Word64.word F.node D.t
+                                               -> Word64.word D.t
+                            val listMaximum : Word64.word F.node D.t
+                                               -> Word64.word D.t
+                            val liftPrintedDomain : Word64.word F.node F.node 
+                                                       D.t
+                                                     -> Word64.word F.node 
+                                                         F.node D.t
+                            val crossPrintedDomain : 'a F.node F.node D.t
+                                                      -> 'a F.node F.node D.t
+                                                      -> 'a F.node F.node D.t
+                            val crossPrintedDomains : Word64.word F.node 
+                                                             F.node F.node D.t
+                                                       -> Word64.word F.node 
+                                                           F.node D.t
+                            val printedDomain : domainNode D.t
+                                                 -> Word64.word F.node F.node 
+                                                   D.t
+                            val printAllPoints : domainNode D.t
+                                                  -> char F.node D.t
+                            val printedWidth : domainNode D.t -> integer
+                            val printedLifts : domainNode D.t -> integer
+                            val printedCrossRoutes : domainNode F.seq
+                                                      -> routeNode F.seq
+                                                      -> Word64.word F.node 
+                                                        D.t
+                            val printedRoute : domainNode D.t
+                                                -> routeNode D.t
+                                                -> Word64.word F.node D.t
+                            val printRoute : domainNode D.t
+                                              -> routeNode D.t
+                                              -> char F.node D.t
+                            val printFunction : bool
+                                                 -> static
+                                                 -> char F.node D.t
+                                                 -> domainNode D.t
+                                                 -> routeNode D.t
+                                                 -> char F.node D.t
+                            val printSizeRows : bool
+                                                 -> (Word64.word D.t
+                                                      * domainNode F.node D.t) 
+                                                     F.node D.t
+                                                 -> char F.node D.t
+                            val printAnalysisInformation : static
+                                                            -> bool
+                                                            -> infoNode D.t
+                                                            -> char F.node D.t
+                            val settingInformation : Word64.word D.t
+                                                      -> 'a
+                                                      -> Word64.word D.t
+                                                      -> Word64.word D.t
+                                                      -> Word64.word D.t
+                                                      -> bool
+                                                      -> bool
+                                                      -> char F.node D.t
+                            val baseAnnotations : (name * hexpr) F.seq
+                            val defaultSettings : flags
+                            val prepareAnalysisDetailed : char C.node 
+                                                             BenchNeed.t
+                                                           -> (domain
+                                                              * integer) F.seq
+                                                           -> flagNode F.node 
+                                                             D.t
+                                                           -> static
+                                                           * infoNode F.node 
+                                                             D.t
+                                                           * char F.node D.t
+                                                           * char F.node D.t
+                            val prepareAnalysis : string
+                                                   -> (domain * integer) F.seq
+                                                   -> static
+                                                   * infoNode F.node D.t
+                            val dryRunSettings : flags
+                            val augmentFlags : flagNode F.node D.t
+                                                -> flagNode F.node D.t
+                            val strictAnalyze : (domain * integer) F.seq
+                                                 -> flagNode F.node D.t
+                                                 -> char C.node BenchNeed.t
+                                                 -> char F.node D.t
+                            type input
+                            type table
+                            val benchmark : char C.node BenchNeed.t
+                                             -> (domain * integer) F.seq
+                                             -> Word64.word
+                            val signedHash : Word64.word -> string
+                          end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-anna-check.sml]
+functor BenchNofibAnnaCheckFn(K: sig
+                                 type input
+                                 type table
+                                 val input : string -> input
+                                 val readTable : input -> table
+                                 val benchmark : input -> table -> Word64.word
+                                 val signedHash : Word64.word -> string
+                               end) :
+                             
+                               sig
+                                 val read : string -> TextIO.vector
+                                 val run : string list -> string
+                               end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/anna-strict/benchmark.sml]
+structure Benchmark : 
+  sig
+    val name : string
+    structure Kernel : <sig>
+    structure Check : <sig>
+    val run : string list -> string
+  end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/main.sml]
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+2911885587254673792
+RESULT 100
+PASS anna-strict
+SUMMARY 1 checks, 0 failed

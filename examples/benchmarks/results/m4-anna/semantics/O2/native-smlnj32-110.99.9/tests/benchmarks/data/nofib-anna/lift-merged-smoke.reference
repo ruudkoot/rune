@@ -1,0 +1,1 @@
+L(True,[("z4",F(["l1","l2"],K(V"l1",[("Nil",([],C"Nil")),("Cons",(["x","xs"],K(V"l2",[("Nil",([],C"Nil")),("Cons",(["y","ys"],A(A(C"Cons",A(A(V"+",V"x"),V"y")),A(A(V"z4",V"xs"),V"ys"))))])))])))],N42)

@@ -1,0 +1,38 @@
+[
+  {
+    "level": "O0",
+    "profile": "smoke",
+    "family": "anna",
+    "configs": "rune,rune:new,rune:jit,rune:opt",
+    "exit": 0,
+    "elapsed_seconds": 59.51732503899257,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-anna/primary-O0-smoke-anna.log"
+  },
+  {
+    "level": "O0",
+    "profile": "normal",
+    "family": "anna",
+    "configs": "rune,rune:new,rune:jit,rune:opt",
+    "exit": 0,
+    "elapsed_seconds": 340.8241325919953,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-anna/primary-O0-normal-anna.log"
+  },
+  {
+    "level": "O2",
+    "profile": "smoke",
+    "family": "anna",
+    "configs": "rune,rune:new,rune:jit,rune:opt,hosts",
+    "exit": 2,
+    "elapsed_seconds": 338.8422015889955,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-anna/primary-O2-smoke-anna.log"
+  },
+  {
+    "level": "O2",
+    "profile": "normal",
+    "family": "anna",
+    "configs": "rune,rune:new,rune:jit,rune:opt,hosts",
+    "exit": 2,
+    "elapsed_seconds": 1775.9357461170002,
+    "log": "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/m4-anna/primary-O2-normal-anna.log"
+  }
+]

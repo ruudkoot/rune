@@ -1,0 +1,154 @@
+diff --git a/Makefile b/Makefile
+index 4215a76a8..380a84859 100644
+--- a/Makefile
++++ b/Makefile
+@@ -987,10 +987,11 @@ bench-check: build/bench-catalog.rbc vm
+ 	BENCH_PROFILE=$(BENCH_PROFILE) BENCH_CONFIGS=$(BENCH_CONFIGS) BENCH_FILTER='$(BENCH_FILTER)' sh scripts/run-benchmarks.sh
+ 
+ # Bounded correctness/metadata only; wall-clock thresholds stay outside check.
+-bench-smoke: build/bench-catalog.rbc vm
++bench-smoke: build/bench-catalog.rbc build/bench-report.rbc vm
+ 	bin/runevm build/bench-catalog.rbc --check
+ 	sh tests/benchmarks/check-catalog.sh
+ 	sh tests/benchmarks/check-matrix-status.sh
++	sh tests/benchmarks/check-measurement-status.sh
+ 	RUNE_BENCH_COMPILE_OPTIONS=-O2 sh scripts/run-benchmarks.sh --routine --configs rune
+ 
+ # Every imported program has a smoke and normal profile. This explicit target
+diff --git a/docs/plans/benchmarks.md b/docs/plans/benchmarks.md
+index 74bd327e6..6b0346aaf 100644
+--- a/docs/plans/benchmarks.md
++++ b/docs/plans/benchmarks.md
+@@ -35,7 +35,7 @@ The [runnable catalogue](../../examples/benchmarks/README.md) contains the M1
+ pilots, the validated M2 classic collection and the completed M5 sequential
+ Sandmark collection. M3 kernels are complete; M4 applications remain in progress; M8
+ coverage closure remains planned.
+-The current catalogue has 503 programs and 1461 profiles. The Happy wave
++The current catalogue has 505 programs and 1467 profiles. The Happy wave
+ has [recorded validation](../../examples/benchmarks/results/m3-happy/README.md):
+ all normal profiles and 50280 semantic assertions pass, with two unclassified
+ ML Kit smoke compile failures retained. Counts, serial adapter diagnostics
+@@ -51,9 +51,9 @@ implemented smoke/normal profiles and documented variants.
+ M4 now registers parser, reptile, hpg and fluid with [recorded validation](../../examples/benchmarks/results/m4-parser-reptile-hpg-fluid/README.md):
+ 209 of 224 profile combinations pass, including all 128 Rune combinations.
+ All 32 normal allocation samples agree, 52 semantic groups complete, and
+-repository acceptance passes. Host failures remain explicit. Anna is a private
+-partial port with complete report agreement on the three source inputs;
+-Veritas is not yet ported. Neither appears as a runnable benchmark.
++repository acceptance passes. Host failures remain explicit. Anna now registers lazy and strict ports after complete report agreement
++on all three source inputs and private 100-repeat smoke checks. Its public
++host/profile, count and acceptance gates are pending. Veritas is not yet ported.
+ M8 closes the inventories, evidence, documentation and maintenance procedures.
+ 
+ ## Sources, naming, and portable programs
+diff --git a/examples/benchmarks/README.md b/examples/benchmarks/README.md
+index da2a4b764..9340aea30 100644
+--- a/examples/benchmarks/README.md
++++ b/examples/benchmarks/README.md
+@@ -514,6 +514,8 @@ M4 applications and M8 coverage closure remain unfinished.
+ | [hpg-strict](#hpg-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/hpg) | Generate and hash seeded Haskell types, values and expressions through continuation-passing functions. |
+ | [fluid-lazy](#fluid-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/fluid) | Solve and hash the supplied finite-element flow model using sparse tries, Cholesky and Jacobi methods. |
+ | [fluid-strict](#fluid-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/fluid) | Solve and hash the supplied finite-element flow model using sparse tries, Cholesky and Jacobi methods. |
++| [anna-lazy](#anna-lazy) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/anna) | Infer types and compute polymorphic strictness frontiers for functional Core programs. |
++| [anna-strict](#anna-strict) | [nofib](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/anna) | Infer types and compute polymorphic strictness frontiers for functional Core programs. |
+ 
+ ## Running and interpreting checks
+ 
+@@ -34472,3 +34474,35 @@ Public profile, count and acceptance checks are [recorded](results/m4-parser-rep
+ See the [complete provenance](fluid-strict/PROVENANCE.md) for the workload,
+ source history, variants, translation, input profiles, result checks and references.
+ Public profile, count and acceptance checks are [recorded](results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.
++
++## anna-lazy
++
++Anna 0.400 parses a typed functional Core language, lambda-lifts definitions,
++infers types, eta-abstracts and computes strictness abstractions over finite
++domains. It builds constructor inverses, uses Hunt-style frontier search,
++finds recursive fixed points and generalizes polymorphic functions through
++embedding/closure compositions. Render the complete original analysis report,
++including input, inferred types, search evaluations, domains and results.
++Preserve 100 complete analyses per invocation and reopen the lattice table
++on every repetition, as the original driver does.
++
++
++See [anna-lazy/PROVENANCE.md](anna-lazy/PROVENANCE.md) for history,
++variants, adaptations, runtime questions, inputs, checks and references.
++Public host/profile validation is pending.
++
++## anna-strict
++
++Anna 0.400 parses a typed functional Core language, lambda-lifts definitions,
++infers types, eta-abstracts and computes strictness abstractions over finite
++domains. It builds constructor inverses, uses Hunt-style frontier search,
++finds recursive fixed points and generalizes polymorphic functions through
++embedding/closure compositions. Render the complete original analysis report,
++including input, inferred types, search evaluations, domains and results.
++Preserve 100 complete analyses per invocation and reopen the lattice table
++on every repetition, as the original driver does.
++
++
++See [anna-strict/PROVENANCE.md](anna-strict/PROVENANCE.md) for history,
++variants, adaptations, runtime questions, inputs, checks and references.
++Public host/profile validation is pending.
+diff --git a/examples/benchmarks/literature.md b/examples/benchmarks/literature.md
+index e7b358af7..f4a318f25 100644
+--- a/examples/benchmarks/literature.md
++++ b/examples/benchmarks/literature.md
+@@ -748,3 +748,14 @@ The application provenance distinguishes these background references from
+ independently checked fixture results and source-based hypotheses. Exact
+ binary32-derived output is the selected Fluid validation rule; it has zero
+ numerical error allowance for the recorded profiles.
++
++## Anna strictness analysis
++
++Baraki, [Abstract Interpretation of Polymorphic Higher-Order Functions](https://theses.gla.ac.uk/74619/),
++PhD thesis, University of Glasgow, 1993, develops embedding/closure-based
++relations between polymorphic instances. Anna's pinned BarakiConc3 and
++BarakiMeet sources explicitly identify that approach. The thesis supplies
++theoretical background; the original GHC program establishes the selected
++workload and its expected reports. Frontier representation, fixed-point
++iteration, sharing and polymorphic instantiation are source-based diagnostic
++hypotheses until benchmark measurements establish an effect.
+diff --git a/examples/benchmarks/manifest.tsv b/examples/benchmarks/manifest.tsv
+index 0b55e9308..27fe84440 100644
+--- a/examples/benchmarks/manifest.tsv
++++ b/examples/benchmarks/manifest.tsv
+@@ -1460,3 +1460,9 @@ fluid-lazy	large	nofib	real/fluid	1750 input.stdin 9DCE0361F540E943	fluid-lazy/l
+ fluid-strict	smoke	nofib	real/fluid	35 input.stdin 9DCE0361F540E943	fluid-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-linear-float.sml,shared/nofib-fluid-sparse.sml,shared/nofib-fluid-float-show.sml,shared/nofib-fluid-kernel.sml,shared/nofib-fluid-check.sml,fluid-strict/benchmark.sml,shared/main.sml	30	1048576	application,numerical,sparse-data,graph-ordering,allocation-lifetimes,strict-finite-data	input.stdin,runtime_files/chan8.dat	exact	implemented
+ fluid-strict	normal	nofib	real/fluid	350 input.stdin 9DCE0361F540E943	fluid-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-linear-float.sml,shared/nofib-fluid-sparse.sml,shared/nofib-fluid-float-show.sml,shared/nofib-fluid-kernel.sml,shared/nofib-fluid-check.sml,fluid-strict/benchmark.sml,shared/main.sml	600	4194304	application,numerical,sparse-data,graph-ordering,allocation-lifetimes,strict-finite-data	input.stdin,runtime_files/chan8.dat	exact	implemented
+ fluid-strict	large	nofib	real/fluid	1750 input.stdin 9DCE0361F540E943	fluid-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/nofib-linear-float.sml,shared/nofib-fluid-sparse.sml,shared/nofib-fluid-float-show.sml,shared/nofib-fluid-kernel.sml,shared/nofib-fluid-check.sml,fluid-strict/benchmark.sml,shared/main.sml	3600	8388608	application,numerical,sparse-data,graph-ordering,allocation-lifetimes,strict-finite-data	input.stdin,runtime_files/chan8.dat	exact	implemented
++anna-lazy	smoke	nofib	real/anna	100 smoke.input F3AFC2396A8A1CB5	anna-lazy/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/signed64.sml,shared/nofib-anna-kernel.sml,shared/nofib-anna-check.sml,anna-lazy/benchmark.sml,shared/main.sml	30	1048576	application,compiler,parsing,type-inference,abstract-interpretation,lazy-finite-data	smoke.input,runtime_files/anna_table	exact	implemented
++anna-lazy	normal	nofib	real/anna	100 normal.input 2869188386E50180	anna-lazy/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/signed64.sml,shared/nofib-anna-kernel.sml,shared/nofib-anna-check.sml,anna-lazy/benchmark.sml,shared/main.sml	600	4194304	application,compiler,parsing,type-inference,abstract-interpretation,lazy-finite-data	normal.input,runtime_files/anna_table	exact	implemented
++anna-lazy	large	nofib	real/anna	100 large.input 18B2617540B8ED09	anna-lazy/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/signed64.sml,shared/nofib-anna-kernel.sml,shared/nofib-anna-check.sml,anna-lazy/benchmark.sml,shared/main.sml	3600	8388608	application,compiler,parsing,type-inference,abstract-interpretation,lazy-finite-data	large.input,runtime_files/anna_table	exact	implemented
++anna-strict	smoke	nofib	real/anna	100 smoke.input F3AFC2396A8A1CB5	anna-strict/smoke.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/signed64.sml,shared/nofib-anna-kernel.sml,shared/nofib-anna-check.sml,anna-strict/benchmark.sml,shared/main.sml	30	1048576	application,compiler,parsing,type-inference,abstract-interpretation,strict-finite-data	smoke.input,runtime_files/anna_table	exact	implemented
++anna-strict	normal	nofib	real/anna	100 normal.input 2869188386E50180	anna-strict/normal.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/signed64.sml,shared/nofib-anna-kernel.sml,shared/nofib-anna-check.sml,anna-strict/benchmark.sml,shared/main.sml	600	4194304	application,compiler,parsing,type-inference,abstract-interpretation,strict-finite-data	normal.input,runtime_files/anna_table	exact	implemented
++anna-strict	large	nofib	real/anna	100 large.input 18B2617540B8ED09	anna-strict/large.expected	shared/input.sml,shared/lazy.sml,shared/suspend.sml,shared/hartel-ida-finite.sml,shared/signed64.sml,shared/nofib-anna-kernel.sml,shared/nofib-anna-check.sml,anna-strict/benchmark.sml,shared/main.sml	3600	8388608	application,compiler,parsing,type-inference,abstract-interpretation,strict-finite-data	large.input,runtime_files/anna_table	exact	implemented
+diff --git a/scripts/measure-benchmarks.sh b/scripts/measure-benchmarks.sh
+index d07794f73..2b7d9af91 100644
+--- a/scripts/measure-benchmarks.sh
++++ b/scripts/measure-benchmarks.sh
+@@ -204,7 +204,10 @@ while IFS="$(printf '\t')" read -r name seconds memory sources args expected inp
+           echo 'val _ = OS.Process.exit OS.Process.success;'
+         } > "$bundle/export.sml"
+         execute "$bundle/compile" "$quota" "$compiler" "$bundle/export.sml"
+-        if ! ls "$bundle"/prog.* > /dev/null 2>&1; then phase_exit=1; fi
++        if [ "$phase_exit" = 0 ] && ! ls "$bundle"/prog.* > /dev/null 2>&1; then
++          phase_exit=1
++          echo 'compiler exited successfully without an exported SML/NJ image' >> "$phase_dir/stderr"
++        fi
+         run_command=$compiler; run_file=@SMLload=$bundle/prog
+         ;;
+       native:polyml)
+diff --git a/tests/benchmarks/check-nofib-applications.sh b/tests/benchmarks/check-nofib-applications.sh
+index e74703ef9..255f0dfb4 100644
+--- a/tests/benchmarks/check-nofib-applications.sh
++++ b/tests/benchmarks/check-nofib-applications.sh
+@@ -4,7 +4,7 @@ set -eu
+ cd "$(dirname "$0")/../.."
+ root=$(pwd)
+ family=$1
+-case "$family" in parser|reptile|hpg|fluid) ;; *) echo "unknown nofib application" >&2; exit 2 ;; esac
++case "$family" in parser|reptile|hpg|fluid|anna) ;; *) echo "unknown nofib application" >&2; exit 2 ;; esac
+ catalog=$root/build/bench-catalog.rbc
+ [ -f "$catalog" ] || { echo "build the catalogue with make bench-check first" >&2; exit 2; }
+ mkdir -p "$root/tests/out/benchmarks"

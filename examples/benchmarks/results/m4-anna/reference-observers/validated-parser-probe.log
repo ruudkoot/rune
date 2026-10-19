@@ -1,0 +1,14 @@
+PASS lazy complete type dependencies smoke
+PASS lazy full parsed smoke
+PASS lazy complete type dependencies normal
+PASS lazy full parsed normal
+PASS lazy complete type dependencies large
+PASS lazy full parsed large
+PASS lazy complete lattice table
+PASS strict complete type dependencies smoke
+PASS strict full parsed smoke
+PASS strict complete type dependencies normal
+PASS strict full parsed normal
+PASS strict complete type dependencies large
+PASS strict full parsed large
+PASS strict complete lattice table

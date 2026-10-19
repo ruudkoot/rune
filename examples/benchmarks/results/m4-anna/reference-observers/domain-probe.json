@@ -1,0 +1,27 @@
+{
+  "command": [
+    "timeout",
+    "120",
+    "bin/runevm",
+    "tests/out/benchmarks/nofib-anna-originals/domain-probe.rbc"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 13336,
+  "observed_minimum_available_kib": 23257424,
+  "peak_processes": [
+    {
+      "pid": 6,
+      "name": "timeout",
+      "rss_kib": 1796
+    },
+    {
+      "pid": 7,
+      "name": "runevm",
+      "rss_kib": 11540
+    }
+  ],
+  "elapsed_seconds": 0.10323202800645959
+}

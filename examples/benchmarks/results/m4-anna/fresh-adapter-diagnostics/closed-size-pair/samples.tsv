@@ -1,0 +1,15 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+anna-lazy	smoke	native:mlton@20241230	O2	compile	0	0	pass	30.22	27.69	1.49	1040476	-	-	-	anna-lazy/native-mlton/build/compile
+anna-lazy	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.78	0.58	0.24	11024	-	-	-	anna-lazy/native-mlton/correctness.0
+anna-lazy	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.78	0.63	0.20	11180	-	-	-	anna-lazy/native-mlton/fresh.1
+anna-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	compile-error	31.64	31.53	0.64	225520	-	-	-	anna-lazy/native-smlnj-legacy/build/compile
+anna-lazy	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	5.47	9.19	1.12	410952	-	-	-	anna-lazy/native-polyml/build/compile
+anna-lazy	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.64	0.64	0.34	61512	-	-	-	anna-lazy/native-polyml/correctness.0
+anna-lazy	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.63	0.64	0.32	68740	-	-	-	anna-lazy/native-polyml/fresh.1
+anna-strict	smoke	native:mlton@20241230	O2	compile	0	0	pass	20.92	18.21	1.28	1042456	-	-	-	anna-strict/native-mlton/build/compile
+anna-strict	smoke	native:mlton@20241230	O2	correctness	0	0	pass	0.10	0.09	0.00	6284	-	-	-	anna-strict/native-mlton/correctness.0
+anna-strict	smoke	native:mlton@20241230	O2	fresh	1	1	pass	0.10	0.11	0.00	6328	-	-	-	anna-strict/native-mlton/fresh.1
+anna-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	compile-error	32.39	31.51	0.71	130600	-	-	-	anna-strict/native-smlnj-legacy/build/compile
+anna-strict	smoke	native:polyml@5.9.2	O2	compile	0	0	pass	2.68	4.34	0.54	231064	-	-	-	anna-strict/native-polyml/build/compile
+anna-strict	smoke	native:polyml@5.9.2	O2	correctness	0	0	pass	0.18	0.15	0.06	34028	-	-	-	anna-strict/native-polyml/correctness.0
+anna-strict	smoke	native:polyml@5.9.2	O2	fresh	1	1	pass	0.15	0.14	0.04	29572	-	-	-	anna-strict/native-polyml/fresh.1

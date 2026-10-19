@@ -1,0 +1,2533 @@
+
+Jules's Strictness Analyser, version 0.400
+Copyright (c) Julian Seward 1992
+Read 9 lattice sizes.
+
+
+=============
+=== Input ===
+=============
+
+list a ::= Nil  |
+           Cons a (list a);
+
+
+pair a b ::= Pair a b;
+
+
+tp3 a b c ::= Tp3 a b c;
+
+
+tp4 a b c d ::= Tp4 a b c d;
+
+
+la a ::= Na  |
+         Ca a (lb a);
+
+
+lb b ::= Nb  |
+         Cb b (la b);
+
+
+complex a b ::= Cpx a b;
+
+
+boxed a ::= Box a;
+
+
+numD b u ::= NumDict b b u;
+
+
+triple a b c ::= MkTriple a b c;
+
+
+tree a ::= Leaf  |
+           Branch (tree a) a (tree a);
+
+
+day  ::= Monday  |
+         Tuesday  |
+         Wednesday  |
+         Thursday  |
+         Friday  |
+         Saturday  |
+         Sunday ;
+
+
+domain  ::= Unit  |
+            Lift (domain );
+
+
+assoc a b ::= NilAssoc  |
+              Assoc a b (assoc a b);
+
+;;
+
+letrec
+  _error = \ -> _error
+in let
+  _dot)1 = \f g x -> f (g x)
+in let
+  _flip = \f x y -> f y x
+in let
+  _max = \x y -> case _> x y of
+                   True  -> x;
+                   False  -> y
+                 end
+in let
+  _min = \x y -> case _< x y of
+                   True  -> x;
+                   False  -> y
+                 end
+in let
+  _head = \l -> case l of
+                  Cons x xs -> x;
+                  Nil  -> _error
+                end
+in letrec
+  _last = \l -> case l of
+                  Nil  -> _error;
+                  Cons x xs -> case xs of
+                                 Nil  -> x;
+                                 Cons y ys -> _last xs
+                               end
+                end
+in let
+  _tail = \l -> case l of
+                  Cons x xs -> xs;
+                  Nil  -> _error
+                end
+in letrec
+  _init = \l -> case l of
+                  Nil  -> _error;
+                  Cons x xs -> case xs of
+                                 Nil  -> Nil;
+                                 Cons y ys -> Cons x (_init xs)
+                               end
+                end
+in let
+  _null = \l -> case l of
+                  Nil  -> True;
+                  Cons x xs -> False
+                end
+in letrec
+  _foldr = \f z l -> case l of
+                       Nil  -> z;
+                       Cons x xs -> f x (_foldr f z xs)
+                     end
+in let
+  _append = \l1 l2 -> _foldr Cons l2 l1
+in letrec
+  _foldl = \f z l -> case l of
+                       Nil  -> z;
+                       Cons x xs -> _foldl f (f z x) xs
+                     end
+in letrec
+  _del = \xl y -> case xl of
+                    Nil  -> Nil;
+                    Cons x xs -> case _== x y of
+                                   True  -> xs;
+                                   False  -> Cons x (_del xs y)
+                                 end
+                  end
+in let
+  _diff = \ -> _foldl _del
+in let
+  __sc)61 = \n dontCare -> _+ n 1
+in let
+  _length = \ -> _foldl __sc)61 0
+in letrec
+  _nth = \l n -> case l of
+                   Nil  -> _error;
+                   Cons x xs -> case _== n 0 of
+                                  True  -> x;
+                                  False  -> _nth xs (_- n 1)
+                                end
+                 end
+in letrec
+  _map = \f l -> case l of
+                   Nil  -> Nil;
+                   Cons x xs -> Cons (f x) (_map f xs)
+                 end
+in let
+  __sc)76 = \p x xs -> case p x of
+                         True  -> Cons x xs;
+                         False  -> xs
+                       end
+in let
+  _filter = \p -> _foldr (__sc)76 p) Nil
+in let
+  _foldl1 = \f xl -> case xl of
+                       Nil  -> _error;
+                       Cons x xs -> _foldl f x xs
+                     end
+in letrec
+  _scanl = \f q xl -> Cons q (case xl of
+                        Nil  -> Nil;
+                        Cons x xs -> _scanl f (f q x) xs
+                      end)
+in let
+  _scanl1 = \f xl -> case xl of
+                       Nil  -> _error;
+                       Cons x xs -> _scanl f x xs
+                     end
+in letrec
+  _foldr1 = \f xl -> case xl of
+                       Nil  -> _error;
+                       Cons x xs -> case xs of
+                                      Nil  -> x;
+                                      Cons y ys -> f x (_foldr1 f xs)
+                                    end
+                     end
+in letrec
+  _qs)108 = \f q0 xs -> _scanr f q0 xs;
+  _scanr = \f q0 xl -> case xl of
+                         Nil  -> Cons q0 Nil;
+                         Cons x xs -> case _qs)108 f q0 xs of
+                                        Nil  -> _error;
+                                        Cons qsx qsxs -> Cons (f x qsx) (_qs)108 f q0 xs)
+                                      end
+                       end
+in letrec
+  _qs)116 = \f xs -> _scanr1 f xs;
+  _scanr1 = \f xl -> case xl of
+                       Nil  -> _error;
+                       Cons x xs -> case _qs)116 f xs of
+                                      Nil  -> _error;
+                                      Cons qsx qsxs -> Cons (f x qsx) (_qs)116 f xs)
+                                    end
+                     end
+in letrec
+  _iterate = \f x -> Cons x (_iterate f (f x))
+in letrec
+  _xs = \x -> Cons x (_xs x)
+in let
+  _repeat = \x -> _xs x
+in letrec
+  _xss = \xs -> _append xs (_xss xs)
+in let
+  _cycle = \xs -> _xss xs
+in letrec
+  _take = \n xl -> case _== n 0 of
+                     True  -> Nil;
+                     False  -> case xl of
+                                 Nil  -> Nil;
+                                 Cons x xs -> Cons x (_take (_- n 1) xs)
+                               end
+                   end
+in letrec
+  _drop = \n xl -> case _== n 0 of
+                     True  -> xl;
+                     False  -> case xl of
+                                 Nil  -> Nil;
+                                 Cons x xs -> _drop (_- n 1) xs
+                               end
+                   end
+in letrec
+  _splitAt = \n xl -> case _== n 0 of
+                        True  -> Pair Nil xl;
+                        False  -> case xl of
+                                    Nil  -> Pair Nil Nil;
+                                    Cons x xs -> case _splitAt (_- n 1) xs of
+                                                   Pair xsp xspp -> Pair (Cons x xsp) xspp
+                                                 end
+                                  end
+                      end
+in letrec
+  _takeWhile = \p xl -> case xl of
+                          Nil  -> Nil;
+                          Cons x xs -> case p x of
+                                         True  -> Cons x (_takeWhile p xs);
+                                         False  -> Nil
+                                       end
+                        end
+in letrec
+  _dropWhile = \p xl -> case xl of
+                          Nil  -> Nil;
+                          Cons x xsp -> case p x of
+                                          True  -> _dropWhile p xsp;
+                                          False  -> xl
+                                        end
+                        end
+in letrec
+  _span = \p xs -> case xs of
+                     Nil  -> Pair Nil Nil;
+                     Cons x xsp -> case p x of
+                                     False  -> Pair Nil xs;
+                                     True  -> case _span p xsp of
+                                                Pair ys zs -> Pair (Cons x ys) zs
+                                              end
+                                   end
+                   end
+in let
+  _break = \p -> _span (_dot)1 _not p)
+in let
+  __sc)168 = \x a -> _not (_== a x)
+in letrec
+  _nub = \xl -> case xl of
+                  Nil  -> Nil;
+                  Cons x xs -> Cons x (_nub (_filter (__sc)168 x) xs))
+                end
+in let
+  _reverse = \ -> _foldl (_flip Cons) Nil
+in let
+  __sc)172 = \a b -> _& a b
+in let
+  _and = \ -> _foldr __sc)172 True
+in let
+  __sc)176 = \a b -> _| a b
+in let
+  _or = \ -> _foldr __sc)176 True
+in let
+  _any = \p -> _dot)1 _or (_map p)
+in let
+  _all = \p -> _dot)1 _and (_map p)
+in let
+  __sc)184 = \a b -> _== a b
+in let
+  _elem = \ -> _dot)1 _any __sc)184
+in let
+  __sc)188 = \a b -> _not (_== a b)
+in let
+  _notElem = \ -> _dot)1 _all __sc)188
+in let
+  __sc)192 = \a b -> _+ a b
+in let
+  _sum = \ -> _foldl __sc)192 0
+in let
+  __sc)196 = \a b -> _* a b
+in let
+  _product = \ -> _foldl __sc)196 1
+in let
+  __sc)200 = \a b -> _+ a b
+in let
+  _sums = \ -> _scanl __sc)200 0
+in let
+  __sc)204 = \a b -> _* a b
+in let
+  _products = \ -> _scanl __sc)204 1
+in let
+  _maximum = \ -> _foldl1 _max
+in let
+  _minimum = \ -> _foldl1 _min
+in let
+  _concat = \ -> _foldr _append Nil
+in letrec
+  _zipWith = \z al bl -> case al of
+                           Cons a as -> case bl of
+                                          Cons b bs -> Cons (z a b) (_zipWith z as bs);
+                                          Nil  -> Nil
+                                        end;
+                           Nil  -> Nil
+                         end
+in let
+  __sc)219 = \xs xss -> _zipWith Cons xs (_append xss (_repeat Nil))
+in let
+  _transpose = \ -> _foldr __sc)219 Nil
+in let
+  __sc)223 = \a b -> Pair a b
+in let
+  _zip = \ -> _zipWith __sc)223
+in letrec
+  _backMap = \fl v -> case fl of
+                        Nil  -> Nil;
+                        Cons f fs -> Cons (f v) (_backMap fs v)
+                      end
+in let
+  _g = \ -> _backMap (Cons _not (Cons _not Nil)) False
+in let
+  _add1 = \x -> _+ 1 x
+in let
+  _hof = \f y -> _+ 1 (f y)
+in let
+  _id = \x -> x
+in let
+  _useHOF = \ -> _hof _id (_hof (_id _id _add1) 43)
+in letrec
+  _loop = \ -> _loop
+in let
+  _nasty = \x -> _loop
+in let
+  _concat2 = \ -> _foldr _append Nil
+in let
+  _add)245 = \x y -> _+ x y
+in let
+  _sum2 = \ -> _foldr _add)245 0
+in let
+  _hd = \l -> case l of
+                Nil  -> _nasty 0;
+                Cons x xs -> x
+              end
+in letrec
+  _rev = \acc lisp -> case lisp of
+                        Nil  -> acc;
+                        Cons x xs -> _rev (Cons x acc) xs
+                      end
+in let
+  _reverse_into = \l -> _rev Nil l
+in let
+  _f = \ -> _length (_reverse (Cons _not (Cons _not Nil)))
+in let
+  _funcList = \ -> Cons _not (Cons _not Nil)
+in let
+  _g1 = \ -> _backMap _funcList False
+in let
+  _dot)267 = \f g x -> f (g x)
+in let
+  _areInverses = \f1 f2 equalPred testVal -> case equalPred testVal (_dot)267 f2 f1 testVal) of
+                                               True  -> True;
+                                               False  -> False
+                                             end
+in let
+  _add)275 = \a b -> _+ a b
+in let
+  _eq = \a b -> _== a b
+in let
+  _sub = \a b -> _- b a
+in let
+  _testInverses = \ -> _areInverses (_add)275 1) (_sub 1) _eq 5
+in 42
+
+
+=============
+=== Types ===
+=============
+
+   _error ::                 a
+   _dot)1 ::                 ( a ->  b) ->  ( c ->  a) ->  c ->  b
+   _flip ::                  ( a ->  b ->  c) ->  b ->  a ->  c
+   _max ::                   int ->  int ->  int
+   _min ::                   int ->  int ->  int
+   _head ::                  (list a) ->  a
+   _last ::                  (list a) ->  a
+   _tail ::                  (list a) ->  (list a)
+   _init ::                  (list a) ->  (list a)
+   _null ::                  (list a) ->  bool
+   _foldr ::                 ( a ->  b ->  b) ->  b ->  (list a) ->  b
+   _append ::                (list a) ->  (list a) ->  (list a)
+   _foldl ::                 ( a ->  b ->  a) ->  a ->  (list b) ->  a
+   _del ::                   (list int) ->  int ->  (list int)
+   _diff ::                  (list int) ->  (list int) ->  (list int)
+   __sc)61 ::                int ->  a ->  int
+   _length ::                (list a) ->  int
+   _nth ::                   (list a) ->  int ->  a
+   _map ::                   ( a ->  b) ->  (list a) ->  (list b)
+   __sc)76 ::                ( a ->  bool) ->  a ->  (list a) ->  (list a)
+   _filter ::                ( a ->  bool) ->  (list a) ->  (list a)
+   _foldl1 ::                ( a ->  a ->  a) ->  (list a) ->  a
+   _scanl ::                 ( a ->  b ->  a) ->  a ->  (list b) ->  (list a)
+   _scanl1 ::                ( a ->  a ->  a) ->  (list a) ->  (list a)
+   _foldr1 ::                ( a ->  a ->  a) ->  (list a) ->  a
+   _qs)108 ::                ( a ->  b ->  b) ->  b ->  (list a) ->  (list b)
+   _scanr ::                 ( a ->  b ->  b) ->  b ->  (list a) ->  (list b)
+   _qs)116 ::                ( a ->  b ->  b) ->  (list a) ->  (list b)
+   _scanr1 ::                ( a ->  b ->  b) ->  (list a) ->  (list b)
+   _iterate ::               ( a ->  a) ->  a ->  (list a)
+   _xs ::                    a ->  (list a)
+   _repeat ::                a ->  (list a)
+   _xss ::                   (list a) ->  (list a)
+   _cycle ::                 (list a) ->  (list a)
+   _take ::                  int ->  (list a) ->  (list a)
+   _drop ::                  int ->  (list a) ->  (list a)
+   _splitAt ::               int ->  (list a) ->  (pair (list a) (list a))
+   _takeWhile ::             ( a ->  bool) ->  (list a) ->  (list a)
+   _dropWhile ::             ( a ->  bool) ->  (list a) ->  (list a)
+   _span ::                  ( a ->  bool) ->  (list a) ->  (pair (list a) (list a))
+   _break ::                 ( a ->  bool) ->  (list a) ->  (pair (list a) (list a))
+   __sc)168 ::               int ->  int ->  bool
+   _nub ::                   (list int) ->  (list int)
+   _reverse ::               (list a) ->  (list a)
+   __sc)172 ::               bool ->  bool ->  bool
+   _and ::                   (list bool) ->  bool
+   __sc)176 ::               bool ->  bool ->  bool
+   _or ::                    (list bool) ->  bool
+   _any ::                   ( a ->  bool) ->  (list a) ->  bool
+   _all ::                   ( a ->  bool) ->  (list a) ->  bool
+   __sc)184 ::               int ->  int ->  bool
+   _elem ::                  int ->  (list int) ->  bool
+   __sc)188 ::               int ->  int ->  bool
+   _notElem ::               int ->  (list int) ->  bool
+   __sc)192 ::               int ->  int ->  int
+   _sum ::                   (list int) ->  int
+   __sc)196 ::               int ->  int ->  int
+   _product ::               (list int) ->  int
+   __sc)200 ::               int ->  int ->  int
+   _sums ::                  (list int) ->  (list int)
+   __sc)204 ::               int ->  int ->  int
+   _products ::              (list int) ->  (list int)
+   _maximum ::               (list int) ->  int
+   _minimum ::               (list int) ->  int
+   _concat ::                (list (list a)) ->  (list a)
+   _zipWith ::               ( a ->  b ->  c) ->  (list a) ->  (list b) ->  (list c)
+   __sc)219 ::               (list a) ->  (list (list a)) ->  (list (list a))
+   _transpose ::             (list (list a)) ->  (list (list a))
+   __sc)223 ::               a ->  b ->  (pair a b)
+   _zip ::                   (list a) ->  (list b) ->  (list (pair a b))
+   _backMap ::               (list ( a ->  b)) ->  a ->  (list b)
+   _g ::                     (list bool)
+   _add1 ::                  int ->  int
+   _hof ::                   ( a ->  int) ->  a ->  int
+   _id ::                    a ->  a
+   _useHOF ::                int
+   _loop ::                  a
+   _nasty ::                 a ->  b
+   _concat2 ::               (list (list a)) ->  (list a)
+   _add)245 ::               int ->  int ->  int
+   _sum2 ::                  (list int) ->  int
+   _hd ::                    (list a) ->  a
+   _rev ::                   (list a) ->  (list a) ->  (list a)
+   _reverse_into ::          (list a) ->  (list a)
+   _f ::                     int
+   _funcList ::              (list ( bool ->  bool))
+   _g1 ::                    (list bool)
+   _dot)267 ::               ( a ->  b) ->  ( c ->  a) ->  c ->  b
+   _areInverses ::           ( a ->  b) ->  ( b ->  c) ->  ( a ->  c ->  bool) ->  a ->  bool
+   _add)275 ::               int ->  int ->  int
+   _eq ::                    int ->  int ->  bool
+   _sub ::                   int ->  int ->  int
+   _testInverses ::          bool
+   Nil ::                    (list a)
+   Cons ::                   a ->  (list a) ->  (list a)
+   Pair ::                   a ->  b ->  (pair a b)
+   Tp3 ::                    a ->  b ->  c ->  (tp3 a b c)
+   Tp4 ::                    a ->  b ->  c ->  d ->  (tp4 a b c d)
+   Na ::                     (la a)
+   Ca ::                     a ->  (lb a) ->  (la a)
+   Nb ::                     (lb a)
+   Cb ::                     a ->  (la a) ->  (lb a)
+   Cpx ::                    a ->  b ->  (complex a b)
+   Box ::                    a ->  (boxed a)
+   NumDict ::                a ->  a ->  b ->  (numD a b)
+   MkTriple ::               a ->  b ->  c ->  (triple a b c)
+   Leaf ::                   (tree a)
+   Branch ::                 (tree a) ->  a ->  (tree a) ->  (tree a)
+   Monday ::                 (day)
+   Tuesday ::                (day)
+   Wednesday ::              (day)
+   Thursday ::               (day)
+   Friday ::                 (day)
+   Saturday ::               (day)
+   Sunday ::                 (day)
+   Unit ::                   (domain)
+   Lift ::                   (domain) ->  (domain)
+   NilAssoc ::               (assoc a b)
+   Assoc ::                  a ->  b ->  (assoc a b) ->  (assoc a b)
+   True ::                   bool
+   False ::                  bool
+
+
+================
+=== Settings ===
+================
+
+Scaleup ratio = 20/10
+Lower lattice size limit = 0
+Upper lattice size limit = 1000000
+Polymorphic generalisation limit = 10000
+
+
+==================
+=== Strictness ===
+==================
+
+Function "_error" is a constant point 0 in domain 
+    {0 1}
+
+
+Domains for "_dot)1" are
+       8   [Two,Two,Two]
+      12   [Func [Two] Two,Two,Two]
+      18   [Func [Two] Two,Func [Two] Two,Two]
+
+Evaluated at size       8 using    5 evals safe "_dot)1"
+Evaluated at size       8 using    5 evals live "_dot)1"
+Evaluated at size      12 using    4 evals safe "_dot)1"
+Evaluated at size      12 using    4 evals live "_dot)1"
+Evaluated at size      18 using    2 evals safe "_dot)1"
+Evaluated at size      18 using    2 evals live "_dot)1"
+
+Function "_dot)1" has input domains:
+   1) Func [Two] Two
+   2) Func [Two] Two
+   3) Two
+   and output domain
+      Two
+
+with value:
+
+RepTwo (Min1Max0 3 [MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),Zero],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Zero],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),One]] [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),One],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),One],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Zero]])
+
+
+Domains for "_flip" are
+       8   [Two,Two,Two]
+      24   [Func [Two,Two] Two,Two,Two]
+
+Evaluated at size       8 using    5 evals safe "_flip"
+Evaluated at size       8 using    5 evals live "_flip"
+Evaluated at size      24 using   16 evals safe "_flip"
+Evaluated at size      24 using   16 evals live "_flip"
+
+Function "_flip" has input domains:
+   1) Func [Two,Two] Two
+   2) Two
+   3) Two
+   and output domain
+      Two
+
+with value:
+
+RepTwo (Min1Max0 3 [MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),Zero,Zero],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,One]] [MkFrel [One,Zero]])),One,Zero],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [One,Zero]] [MkFrel [Zero,One]])),Zero,One],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [One,One]] [MkFrel [Zero,One],MkFrel [One,Zero]])),One,One]] [MkFrel [Rep (RepTwo (Min1Max0 2 [] [MkFrel [One,One]])),One,One],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,One]] [MkFrel [One,Zero]])),Zero,One],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,One],MkFrel [One,Zero]] [MkFrel [Zero,Zero]])),Zero,Zero],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [One,Zero]] [MkFrel [Zero,One]])),One,Zero]])
+
+
+Domains for "_max" are
+       4   [Two,Two]
+
+Evaluated at size       4 using    4 evals safe "_max"
+Evaluated at size       4 using    4 evals live "_max"
+
+Function "_max" has input domains:
+   1) {0 1}
+   2) {0 1}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  1 1
+       0   |  0 0
+
+
+
+Domains for "_min" are
+       4   [Two,Two]
+
+Evaluated at size       4 using    4 evals safe "_min"
+Evaluated at size       4 using    4 evals live "_min"
+
+Function "_min" has input domains:
+   1) {0 1}
+   2) {0 1}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  1 1
+       0   |  0 0
+
+
+
+Domains for "_head" are
+       2   [Two]
+       4   [Lift2 [Two]]
+
+Evaluated at size       2 using    2 evals safe "_head"
+Evaluated at size       2 using    2 evals live "_head"
+Evaluated at size       4 using    2 evals safe "_head"
+Evaluated at size       4 using    2 evals live "_head"
+
+Function "_head" has input domains:
+   1) {0 1 2 3}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  1
+       0   |  0
+
+
+
+Domains for "_last" are
+       2   [Two]
+       4   [Lift2 [Two]]
+
+Evaluated at size       2 using    2 evals live "_last"
+Evaluated at size       2 using    2 evals live "_last"
+Evaluated at size       2 using    2 evals safe "_last"
+Evaluated at size       4 using    2 evals live "_last"
+Evaluated at size       4 using    1 evals live "_last"
+Evaluated at size       4 using    1 evals safe "_last"
+
+Function "_last" has input domains:
+   1) {0 1 2 3}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  2
+       0   |  0
+
+
+
+Domains for "_tail" are
+       2   [Two]
+       4   [Lift2 [Two]]
+
+Evaluated at size       2 using    4 evals safe "_tail"
+Evaluated at size       2 using    4 evals live "_tail"
+Evaluated at size       4 using    3 evals safe "_tail"
+Evaluated at size       4 using    3 evals live "_tail"
+
+Function "_tail" has input domains:
+   1) {0 1 2 3}
+   and output domain
+      {0 1 2 3}
+
+   Output  |  Lower frontier
+   --------+----------------
+       3   |  2
+       2   |  
+       1   |  1
+       0   |  0
+
+
+
+Domains for "_init" are
+       2   [Two]
+       4   [Lift2 [Two]]
+
+Evaluated at size       2 using    4 evals live "_init"
+Evaluated at size       2 using    4 evals live "_init"
+Evaluated at size       2 using    4 evals safe "_init"
+Evaluated at size       4 using    3 evals live "_init"
+Evaluated at size       4 using    2 evals live "_init"
+Evaluated at size       4 using    2 evals safe "_init"
+
+Function "_init" has input domains:
+   1) {0 1 2 3}
+   and output domain
+      {0 1 2 3}
+
+   Output  |  Lower frontier
+   --------+----------------
+       3   |  2
+       2   |  
+       1   |  1
+       0   |  0
+
+
+
+Domains for "_null" are
+       2   [Two]
+       4   [Lift2 [Two]]
+
+Evaluated at size       2 using    2 evals safe "_null"
+Evaluated at size       2 using    2 evals live "_null"
+Evaluated at size       4 using    2 evals safe "_null"
+Evaluated at size       4 using    2 evals live "_null"
+
+Function "_null" has input domains:
+   1) {0 1 2 3}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  1
+       0   |  0
+
+
+
+Domains for "_foldr" are
+       8   [Two,Two,Two]
+      24   [Func [Two,Two] Two,Two,Two]
+      48   [Func [Two,Two] Two,Two,Lift2 [Two]]
+
+Evaluated at size       8 using    7 evals live "_foldr"
+Evaluated at size       8 using    7 evals live "_foldr"
+Evaluated at size       8 using    7 evals safe "_foldr"
+Evaluated at size      24 using    4 evals live "_foldr"
+Evaluated at size      24 using    1 evals live "_foldr"
+Evaluated at size      24 using    1 evals safe "_foldr"
+Evaluated at size      48 using    7 evals live "_foldr"
+Evaluated at size      48 using    2 evals live "_foldr"
+Evaluated at size      48 using    2 evals safe "_foldr"
+
+Function "_foldr" has input domains:
+   1) Func [Two,Two] Two
+   2) Two
+   3) Lift2 [Two]
+   and output domain
+      Two
+
+with value:
+
+RepTwo (Min1Max0 3 [MkFrel [Rep (RepTwo (Min1Max0 2 [] [MkFrel [One,One]])),One,UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,One]] [MkFrel [One,Zero]])),One,UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [One,Zero]] [MkFrel [Zero,One]])),Zero,Up2]] [MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),One,Stop2],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,One]] [MkFrel [One,Zero]])),Zero,UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,One]] [MkFrel [One,Zero]])),One,Up2],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [One,One]] [MkFrel [Zero,One],MkFrel [One,Zero]])),One,UpUp2 [Zero]]])
+
+
+Domains for "_append" are
+       4   [Two,Two]
+       8   [Lift2 [Two],Two]
+      16   [Lift2 [Two],Lift2 [Two]]
+
+Evaluated at size       4 using    7 evals safe "_append"
+Evaluated at size       4 using    7 evals live "_append"
+Evaluated at size       8 using    3 evals safe "_append"
+Evaluated at size       8 using    3 evals live "_append"
+Evaluated at size      16 using    4 evals safe "_append"
+Evaluated at size      16 using    4 evals live "_append"
+
+Function "_append" has input domains:
+   1) {0 1 2 3}
+   2) {0 1 2 3}
+   and output domain
+      {0 1 2 3}
+
+   Output  |  Lower frontier
+   --------+----------------
+       3   |  3 3
+       2   |  2 2
+       1   |  1 0
+       0   |  0 0
+
+
+
+Domains for "_foldl" are
+       8   [Two,Two,Two]
+      24   [Func [Two,Two] Two,Two,Two]
+      48   [Func [Two,Two] Two,Two,Lift2 [Two]]
+
+Evaluated at size       8 using    6 evals live "_foldl"
+Evaluated at size       8 using    7 evals live "_foldl"
+Evaluated at size       8 using    7 evals live "_foldl"
+Evaluated at size       8 using    7 evals safe "_foldl"
+Evaluated at size      24 using    4 evals live "_foldl"
+Evaluated at size      24 using    1 evals live "_foldl"
+Evaluated at size      24 using    1 evals safe "_foldl"
+Evaluated at size      48 using   11 evals live "_foldl"
+Evaluated at size      48 using    2 evals live "_foldl"
+Evaluated at size      48 using    2 evals safe "_foldl"
+
+Function "_foldl" has input domains:
+   1) Func [Two,Two] Two
+   2) Two
+   3) Lift2 [Two]
+   and output domain
+      Two
+
+with value:
+
+RepTwo (Min1Max0 3 [MkFrel [Rep (RepTwo (Min1Max0 2 [] [MkFrel [One,One]])),One,UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,One]] [MkFrel [One,Zero]])),Zero,UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [One,Zero]] [MkFrel [Zero,One]])),One,UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),One,Up2],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [One,Zero]] [MkFrel [Zero,One]])),Zero,UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [One,One]] [MkFrel [Zero,One],MkFrel [One,Zero]])),One,UpUp2 [Zero]]])
+
+
+Domains for "_del" are
+       4   [Two,Two]
+       8   [Lift2 [Two],Two]
+
+Evaluated at size       4 using    6 evals live "_del"
+Evaluated at size       4 using    6 evals live "_del"
+Evaluated at size       4 using    6 evals safe "_del"
+Evaluated at size       8 using    5 evals live "_del"
+Evaluated at size       8 using    4 evals live "_del"
+Evaluated at size       8 using    4 evals safe "_del"
+
+Function "_del" has input domains:
+   1) {0 1 2 3}
+   2) {0 1}
+   and output domain
+      {0 1 2 3}
+
+   Output  |  Lower frontier
+   --------+----------------
+       3   |  3 0
+       2   |  2 1
+       1   |  1 1
+       0   |  0 0
+
+
+
+Domains for "_diff" are
+       4   [Two,Two]
+       8   [Lift2 [Two],Two]
+      16   [Lift2 [Two],Lift2 [Two]]
+
+Evaluated at size       4 using    8 evals safe "_diff"
+Evaluated at size       4 using    8 evals live "_diff"
+Evaluated at size       8 using    2 evals safe "_diff"
+Evaluated at size       8 using    2 evals live "_diff"
+Evaluated at size      16 using    8 evals safe "_diff"
+Evaluated at size      16 using    8 evals live "_diff"
+
+Function "_diff" has input domains:
+   1) {0 1 2 3}
+   2) {0 1 2 3}
+   and output domain
+      {0 1 2 3}
+
+   Output  |  Lower frontier
+   --------+----------------
+       3   |  3 2
+       2   |  2 2
+       1   |  1 2
+       0   |  0 0
+
+
+
+Domains for "__sc)61" are
+       4   [Two,Two]
+
+Evaluated at size       4 using    4 evals safe "__sc)61"
+Evaluated at size       4 using    4 evals live "__sc)61"
+
+Function "__sc)61" has input domains:
+   1) {0 1}
+   2) {0 1}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  1 0
+       0   |  0 0
+
+
+
+Domains for "_length" are
+       2   [Two]
+       4   [Lift2 [Two]]
+
+Evaluated at size       2 using    2 evals safe "_length"
+Evaluated at size       2 using    2 evals live "_length"
+Evaluated at size       4 using    2 evals safe "_length"
+Evaluated at size       4 using    2 evals live "_length"
+
+Function "_length" has input domains:
+   1) {0 1 2 3}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  2
+       0   |  0
+
+
+
+Domains for "_nth" are
+       4   [Two,Two]
+       8   [Lift2 [Two],Two]
+
+Evaluated at size       4 using    4 evals live "_nth"
+Evaluated at size       4 using    4 evals live "_nth"
+Evaluated at size       4 using    4 evals safe "_nth"
+Evaluated at size       8 using    2 evals live "_nth"
+Evaluated at size       8 using    0 evals live "_nth"
+Evaluated at size       8 using    0 evals safe "_nth"
+
+Function "_nth" has input domains:
+   1) {0 1 2 3}
+   2) {0 1}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  1 1
+       0   |  0 0
+
+
+
+Domains for "_map" are
+       4   [Two,Two]
+       6   [Func [Two] Two,Two]
+      12   [Func [Two] Two,Lift2 [Two]]
+
+Evaluated at size       4 using    6 evals live "_map"
+Evaluated at size       4 using    6 evals live "_map"
+Evaluated at size       4 using    6 evals safe "_map"
+Evaluated at size       6 using    0 evals live "_map"
+Evaluated at size       6 using    0 evals safe "_map"
+Evaluated at size      12 using    7 evals live "_map"
+Evaluated at size      12 using    3 evals live "_map"
+Evaluated at size      12 using    3 evals safe "_map"
+
+Function "_map" has input domains:
+   1) Func [Two] Two
+   2) Lift2 [Two]
+   and output domain
+      Lift2 [Two]
+
+with value:
+
+Rep2 (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),Up2]] [MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Stop2]]) (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Up2]]) [RepTwo (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Up2],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),UpUp2 [Zero]]])]
+
+
+Domains for "__sc)76" are
+       8   [Two,Two,Two]
+      12   [Func [Two] Two,Two,Two]
+      24   [Func [Two] Two,Two,Lift2 [Two]]
+
+Evaluated at size       8 using    9 evals safe "__sc)76"
+Evaluated at size       8 using    9 evals live "__sc)76"
+Evaluated at size      12 using    6 evals safe "__sc)76"
+Evaluated at size      12 using    6 evals live "__sc)76"
+Evaluated at size      24 using    5 evals safe "__sc)76"
+Evaluated at size      24 using    5 evals live "__sc)76"
+
+Function "__sc)76" has input domains:
+   1) Func [Two] Two
+   2) Two
+   3) Lift2 [Two]
+   and output domain
+      Lift2 [Two]
+
+with value:
+
+Rep2 (Min1Max0 3 [MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Zero,Stop2],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),One,Stop2]] [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),One,UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Zero,UpUp2 [One]]]) (Min1Max0 3 [MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Zero,UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),One,UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),One,UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),One,Up2],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Zero,UpUp2 [One]]]) [RepTwo (Min1Max0 3 [MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Zero,UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),One,UpUp2 [One]]] [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),One,UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),One,UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Zero,UpUp2 [One]]])]
+
+
+Domains for "_filter" are
+       4   [Two,Two]
+       6   [Func [Two] Two,Two]
+      12   [Func [Two] Two,Lift2 [Two]]
+
+Evaluated at size       4 using    6 evals safe "_filter"
+Evaluated at size       4 using    6 evals live "_filter"
+Evaluated at size       6 using    0 evals safe "_filter"
+Evaluated at size       6 using    0 evals live "_filter"
+Evaluated at size      12 using    8 evals safe "_filter"
+Evaluated at size      12 using    8 evals live "_filter"
+
+Function "_filter" has input domains:
+   1) Func [Two] Two
+   2) Lift2 [Two]
+   and output domain
+      Lift2 [Two]
+
+with value:
+
+Rep2 (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Up2]] [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Stop2]]) (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Up2],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),UpUp2 [Zero]]]) [RepTwo (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Up2],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),UpUp2 [Zero]]])]
+
+
+Domains for "_foldl1" are
+       4   [Two,Two]
+      12   [Func [Two,Two] Two,Two]
+      24   [Func [Two,Two] Two,Lift2 [Two]]
+
+Evaluated at size       4 using    4 evals safe "_foldl1"
+Evaluated at size       4 using    4 evals live "_foldl1"
+Evaluated at size      12 using    0 evals safe "_foldl1"
+Evaluated at size      12 using    0 evals live "_foldl1"
+Evaluated at size      24 using   10 evals safe "_foldl1"
+Evaluated at size      24 using   10 evals live "_foldl1"
+
+Function "_foldl1" has input domains:
+   1) Func [Two,Two] Two
+   2) Lift2 [Two]
+   and output domain
+      Two
+
+with value:
+
+RepTwo (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 2 [] [MkFrel [One,One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,One]] [MkFrel [One,Zero]])),UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [One,Zero]] [MkFrel [Zero,One]])),UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),Up2],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [One,One]] [MkFrel [Zero,One],MkFrel [One,Zero]])),UpUp2 [Zero]]])
+
+
+Domains for "_scanl" are
+       8   [Two,Two,Two]
+      24   [Func [Two,Two] Two,Two,Two]
+      48   [Func [Two,Two] Two,Two,Lift2 [Two]]
+
+Evaluated at size       8 using    9 evals live "_scanl"
+Evaluated at size       8 using    9 evals live "_scanl"
+Evaluated at size       8 using    9 evals safe "_scanl"
+Evaluated at size      24 using    0 evals live "_scanl"
+Evaluated at size      24 using    0 evals safe "_scanl"
+Evaluated at size      48 using   14 evals live "_scanl"
+Evaluated at size      48 using    3 evals live "_scanl"
+Evaluated at size      48 using    3 evals safe "_scanl"
+
+Function "_scanl" has input domains:
+   1) Func [Two,Two] Two
+   2) Two
+   3) Lift2 [Two]
+   and output domain
+      Lift2 [Two]
+
+with value:
+
+Rep2 (Min1Max0 3 [MkFrel [Rep (RepTwo (Min1Max0 2 [] [MkFrel [One,One]])),Zero,Stop2]] []) (Min1Max0 3 [MkFrel [Rep (RepTwo (Min1Max0 2 [] [MkFrel [One,One]])),Zero,UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),One,Up2]]) [RepTwo (Min1Max0 3 [MkFrel [Rep (RepTwo (Min1Max0 2 [] [MkFrel [One,One]])),One,UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [One,Zero]] [MkFrel [Zero,One]])),One,UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),Zero,UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),One,Up2],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,One]] [MkFrel [One,Zero]])),One,UpUp2 [Zero]]])]
+
+
+Domains for "_scanl1" are
+       4   [Two,Two]
+      12   [Func [Two,Two] Two,Two]
+      24   [Func [Two,Two] Two,Lift2 [Two]]
+
+Evaluated at size       4 using    6 evals safe "_scanl1"
+Evaluated at size       4 using    6 evals live "_scanl1"
+Evaluated at size      12 using    0 evals safe "_scanl1"
+Evaluated at size      12 using    0 evals live "_scanl1"
+Evaluated at size      24 using    9 evals safe "_scanl1"
+Evaluated at size      24 using    9 evals live "_scanl1"
+
+Function "_scanl1" has input domains:
+   1) Func [Two,Two] Two
+   2) Lift2 [Two]
+   and output domain
+      Lift2 [Two]
+
+with value:
+
+Rep2 (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 2 [] [MkFrel [One,One]])),Up2]] [MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),Stop2]]) (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 2 [] [MkFrel [One,One]])),UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),Up2]]) [RepTwo (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 2 [] [MkFrel [One,One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [One,Zero]] [MkFrel [Zero,One]])),UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),Up2],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,One]] [MkFrel [One,Zero]])),UpUp2 [Zero]]])]
+
+
+Domains for "_foldr1" are
+       4   [Two,Two]
+      12   [Func [Two,Two] Two,Two]
+      24   [Func [Two,Two] Two,Lift2 [Two]]
+
+Evaluated at size       4 using    4 evals live "_foldr1"
+Evaluated at size       4 using    4 evals live "_foldr1"
+Evaluated at size       4 using    4 evals safe "_foldr1"
+Evaluated at size      12 using    0 evals live "_foldr1"
+Evaluated at size      12 using    0 evals safe "_foldr1"
+Evaluated at size      24 using   11 evals live "_foldr1"
+Evaluated at size      24 using    2 evals live "_foldr1"
+Evaluated at size      24 using    2 evals safe "_foldr1"
+
+Function "_foldr1" has input domains:
+   1) Func [Two,Two] Two
+   2) Lift2 [Two]
+   and output domain
+      Two
+
+with value:
+
+RepTwo (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 2 [] [MkFrel [One,One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,One]] [MkFrel [One,Zero]])),UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [One,Zero]] [MkFrel [Zero,One]])),Up2]] [MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),Stop2],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,One]] [MkFrel [One,Zero]])),Up2],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [One,One]] [MkFrel [Zero,One],MkFrel [One,Zero]])),UpUp2 [Zero]]])
+
+
+Domains for "_qs)108" are
+       8   [Two,Two,Two]
+      24   [Func [Two,Two] Two,Two,Two]
+      48   [Func [Two,Two] Two,Two,Lift2 [Two]]
+
+
+Domains for "_scanr" are
+       8   [Two,Two,Two]
+      24   [Func [Two,Two] Two,Two,Two]
+      48   [Func [Two,Two] Two,Two,Lift2 [Two]]
+
+Evaluated at size       8 using    3 evals live "_qs)108"
+Evaluated at size       8 using    9 evals live "_scanr"
+Evaluated at size       8 using    9 evals live "_qs)108"
+Evaluated at size       8 using    9 evals live "_scanr"
+Evaluated at size       8 using    9 evals live "_qs)108"
+Evaluated at size       8 using    9 evals live "_scanr"
+Evaluated at size       8 using    9 evals safe "_qs)108"
+Evaluated at size       8 using    9 evals safe "_scanr"
+Evaluated at size      24 using    0 evals live "_qs)108"
+Evaluated at size      24 using    0 evals live "_scanr"
+Evaluated at size      24 using    0 evals safe "_qs)108"
+Evaluated at size      24 using    0 evals safe "_scanr"
+Evaluated at size      48 using    3 evals live "_qs)108"
+Evaluated at size      48 using   15 evals live "_scanr"
+Evaluated at size      48 using   15 evals live "_qs)108"
+Evaluated at size      48 using    4 evals live "_scanr"
+Evaluated at size      48 using    4 evals live "_qs)108"
+Evaluated at size      48 using    4 evals live "_scanr"
+Evaluated at size      48 using    4 evals safe "_qs)108"
+Evaluated at size      48 using    4 evals safe "_scanr"
+
+Function "_qs)108" has input domains:
+   1) Func [Two,Two] Two
+   2) Two
+   3) Lift2 [Two]
+   and output domain
+      Lift2 [Two]
+
+with value:
+
+Rep2 (Min1Max0 3 [MkFrel [Rep (RepTwo (Min1Max0 2 [] [MkFrel [One,One]])),Zero,UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),One,Up2]]) (Min1Max0 3 [MkFrel [Rep (RepTwo (Min1Max0 2 [] [MkFrel [One,One]])),Zero,UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),One,Up2]]) [RepTwo (Min1Max0 3 [MkFrel [Rep (RepTwo (Min1Max0 2 [] [MkFrel [One,One]])),One,UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,One]] [MkFrel [One,Zero]])),One,UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),Zero,UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),One,Up2],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [One,Zero]] [MkFrel [Zero,One]])),One,UpUp2 [Zero]]])]
+
+
+Function "_scanr" has input domains:
+   1) Func [Two,Two] Two
+   2) Two
+   3) Lift2 [Two]
+   and output domain
+      Lift2 [Two]
+
+with value:
+
+Rep2 (Min1Max0 3 [MkFrel [Rep (RepTwo (Min1Max0 2 [] [MkFrel [One,One]])),Zero,UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),One,Up2]]) (Min1Max0 3 [MkFrel [Rep (RepTwo (Min1Max0 2 [] [MkFrel [One,One]])),Zero,UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),One,Up2]]) [RepTwo (Min1Max0 3 [MkFrel [Rep (RepTwo (Min1Max0 2 [] [MkFrel [One,One]])),One,UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,One]] [MkFrel [One,Zero]])),One,UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),Zero,UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),One,Up2],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [One,Zero]] [MkFrel [Zero,One]])),One,UpUp2 [Zero]]])]
+
+
+Domains for "_qs)116" are
+       4   [Two,Two]
+      12   [Func [Two,Two] Two,Two]
+      24   [Func [Two,Two] Two,Lift2 [Two]]
+
+
+Domains for "_scanr1" are
+       4   [Two,Two]
+      12   [Func [Two,Two] Two,Two]
+      24   [Func [Two,Two] Two,Lift2 [Two]]
+
+Evaluated at size       4 using    3 evals live "_qs)116"
+Evaluated at size       4 using    3 evals live "_scanr1"
+Evaluated at size       4 using    3 evals safe "_qs)116"
+Evaluated at size       4 using    3 evals safe "_scanr1"
+Evaluated at size      12 using    0 evals live "_qs)116"
+Evaluated at size      12 using    0 evals live "_scanr1"
+Evaluated at size      12 using    0 evals safe "_qs)116"
+Evaluated at size      12 using    0 evals safe "_scanr1"
+Evaluated at size      24 using    0 evals live "_qs)116"
+Evaluated at size      24 using    0 evals live "_scanr1"
+Evaluated at size      24 using    0 evals safe "_qs)116"
+Evaluated at size      24 using    0 evals safe "_scanr1"
+
+Function "_qs)116" has input domains:
+   1) Func [Two,Two] Two
+   2) Lift2 [Two]
+   and output domain
+      Lift2 [Two]
+
+with value:
+
+Rep2 (Min1Max0 2 [] [MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),UpUp2 [One]]]) (Min1Max0 2 [] [MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),UpUp2 [One]]]) [RepTwo (Min1Max0 2 [] [MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),UpUp2 [One]]])]
+
+
+Function "_scanr1" has input domains:
+   1) Func [Two,Two] Two
+   2) Lift2 [Two]
+   and output domain
+      Lift2 [Two]
+
+with value:
+
+Rep2 (Min1Max0 2 [] [MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),UpUp2 [One]]]) (Min1Max0 2 [] [MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),UpUp2 [One]]]) [RepTwo (Min1Max0 2 [] [MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),UpUp2 [One]]])]
+
+
+Domains for "_iterate" are
+       4   [Two,Two]
+       6   [Func [Two] Two,Two]
+
+Evaluated at size       4 using    3 evals live "_iterate"
+Evaluated at size       4 using    3 evals live "_iterate"
+Evaluated at size       4 using    3 evals safe "_iterate"
+Evaluated at size       6 using    0 evals live "_iterate"
+Evaluated at size       6 using    0 evals safe "_iterate"
+
+Function "_iterate" has input domains:
+   1) Func [Two] Two
+   2) Two
+   and output domain
+      Lift2 [Two]
+
+with value:
+
+Rep2 (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),Zero]] []) (Min1Max0 2 [] [MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),One]]) [RepTwo (Min1Max0 2 [] [MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),One]])]
+
+
+Domains for "_xs" are
+       2   [Two]
+
+Evaluated at size       2 using    3 evals live "_xs"
+Evaluated at size       2 using    3 evals live "_xs"
+Evaluated at size       2 using    3 evals safe "_xs"
+
+Function "_xs" has input domains:
+   1) {0 1} (free "x")
+   and output domain
+      {0 1 2 3}
+
+   Output  |  Lower frontier
+   --------+----------------
+       3   |  
+       2   |  
+       1   |  0
+       0   |  
+
+
+
+Domains for "_repeat" are
+       2   [Two]
+
+Evaluated at size       2 using    3 evals safe "_repeat"
+Evaluated at size       2 using    3 evals live "_repeat"
+
+Function "_repeat" has input domains:
+   1) {0 1}
+   and output domain
+      {0 1 2 3}
+
+   Output  |  Lower frontier
+   --------+----------------
+       3   |  
+       2   |  
+       1   |  0
+       0   |  
+
+
+
+Domains for "_xss" are
+       2   [Two]
+       4   [Lift2 [Two]]
+
+Evaluated at size       2 using    3 evals live "_xss"
+Evaluated at size       2 using    3 evals live "_xss"
+Evaluated at size       2 using    3 evals safe "_xss"
+Evaluated at size       4 using    2 evals live "_xss"
+Evaluated at size       4 using    0 evals live "_xss"
+Evaluated at size       4 using    0 evals safe "_xss"
+
+Function "_xss" has input domains:
+   1) {0 1 2 3} (free "xs")
+   and output domain
+      {0 1 2 3}
+
+   Output  |  Lower frontier
+   --------+----------------
+       3   |  
+       2   |  
+       1   |  1
+       0   |  0
+
+
+
+Domains for "_cycle" are
+       2   [Two]
+       4   [Lift2 [Two]]
+
+Evaluated at size       2 using    3 evals safe "_cycle"
+Evaluated at size       2 using    3 evals live "_cycle"
+Evaluated at size       4 using    2 evals safe "_cycle"
+Evaluated at size       4 using    2 evals live "_cycle"
+
+Function "_cycle" has input domains:
+   1) {0 1 2 3}
+   and output domain
+      {0 1 2 3}
+
+   Output  |  Lower frontier
+   --------+----------------
+       3   |  
+       2   |  
+       1   |  1
+       0   |  0
+
+
+
+Domains for "_take" are
+       4   [Two,Two]
+       8   [Two,Lift2 [Two]]
+
+Evaluated at size       4 using    6 evals live "_take"
+Evaluated at size       4 using    6 evals live "_take"
+Evaluated at size       4 using    6 evals safe "_take"
+Evaluated at size       8 using    0 evals live "_take"
+Evaluated at size       8 using    0 evals safe "_take"
+
+Function "_take" has input domains:
+   1) {0 1}
+   2) {0 1 2 3}
+   and output domain
+      {0 1 2 3}
+
+   Output  |  Lower frontier
+   --------+----------------
+       3   |  1 0
+       2   |  
+       1   |  
+       0   |  0 0
+
+
+
+Domains for "_drop" are
+       4   [Two,Two]
+       8   [Two,Lift2 [Two]]
+
+Evaluated at size       4 using    8 evals live "_drop"
+Evaluated at size       4 using    8 evals live "_drop"
+Evaluated at size       4 using    8 evals safe "_drop"
+Evaluated at size       8 using    3 evals live "_drop"
+Evaluated at size       8 using    2 evals live "_drop"
+Evaluated at size       8 using    2 evals safe "_drop"
+
+Function "_drop" has input domains:
+   1) {0 1}
+   2) {0 1 2 3}
+   and output domain
+      {0 1 2 3}
+
+   Output  |  Lower frontier
+   --------+----------------
+       3   |  1 2
+       2   |  
+       1   |  1 1
+       0   |  0 0
+
+
+
+Domains for "_splitAt" are
+       4   [Two,Two]
+       8   [Two,Lift2 [Two]]
+
+Evaluated at size       4 using   11 evals live "_splitAt"
+Evaluated at size       4 using   11 evals live "_splitAt"
+Evaluated at size       4 using   11 evals safe "_splitAt"
+Evaluated at size       8 using    3 evals live "_splitAt"
+Evaluated at size       8 using    2 evals live "_splitAt"
+Evaluated at size       8 using    2 evals safe "_splitAt"
+
+Function "_splitAt" has input domains:
+   1) {0 1}
+   2) {0 1 2 3}
+   and output domain
+      {00 11 12 13 14 21 22 23 24 31 32 33 34 41 42 43 44}
+
+   Output  |  Lower frontier
+   --------+----------------
+      44   |  1 2
+      43   |  
+      42   |  1 1
+      41   |  1 0
+      34   |  
+      33   |  
+      32   |  
+      31   |  
+      24   |  
+      23   |  
+      22   |  
+      21   |  
+      14   |  
+      13   |  
+      12   |  
+      11   |  
+      00   |  0 0
+
+
+
+Domains for "_takeWhile" are
+       4   [Two,Two]
+       6   [Func [Two] Two,Two]
+      12   [Func [Two] Two,Lift2 [Two]]
+
+Evaluated at size       4 using    6 evals live "_takeWhile"
+Evaluated at size       4 using    6 evals live "_takeWhile"
+Evaluated at size       4 using    6 evals safe "_takeWhile"
+Evaluated at size       6 using    0 evals live "_takeWhile"
+Evaluated at size       6 using    0 evals safe "_takeWhile"
+Evaluated at size      12 using    7 evals live "_takeWhile"
+Evaluated at size      12 using    3 evals live "_takeWhile"
+Evaluated at size      12 using    3 evals safe "_takeWhile"
+
+Function "_takeWhile" has input domains:
+   1) Func [Two] Two
+   2) Lift2 [Two]
+   and output domain
+      Lift2 [Two]
+
+with value:
+
+Rep2 (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Up2]] [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Stop2]]) (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Up2]] [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Stop2]]) [RepTwo (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Up2]] [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Stop2]])]
+
+
+Domains for "_dropWhile" are
+       4   [Two,Two]
+       6   [Func [Two] Two,Two]
+      12   [Func [Two] Two,Lift2 [Two]]
+
+Evaluated at size       4 using    6 evals live "_dropWhile"
+Evaluated at size       4 using    6 evals live "_dropWhile"
+Evaluated at size       4 using    6 evals safe "_dropWhile"
+Evaluated at size       6 using    0 evals live "_dropWhile"
+Evaluated at size       6 using    0 evals safe "_dropWhile"
+Evaluated at size      12 using    8 evals live "_dropWhile"
+Evaluated at size      12 using    5 evals live "_dropWhile"
+Evaluated at size      12 using    5 evals safe "_dropWhile"
+
+Function "_dropWhile" has input domains:
+   1) Func [Two] Two
+   2) Lift2 [Two]
+   and output domain
+      Lift2 [Two]
+
+with value:
+
+Rep2 (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Up2]] [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Stop2]]) (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Up2]]) [RepTwo (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Up2],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),UpUp2 [Zero]]])]
+
+
+Domains for "_span" are
+       4   [Two,Two]
+       6   [Func [Two] Two,Two]
+      12   [Func [Two] Two,Lift2 [Two]]
+
+Evaluated at size       4 using    9 evals live "_span"
+Evaluated at size       4 using    9 evals live "_span"
+Evaluated at size       4 using    9 evals safe "_span"
+Evaluated at size       6 using    0 evals live "_span"
+Evaluated at size       6 using    0 evals safe "_span"
+Evaluated at size      12 using   11 evals live "_span"
+Evaluated at size      12 using    8 evals live "_span"
+Evaluated at size      12 using    8 evals safe "_span"
+
+Function "_span" has input domains:
+   1) Func [Two] Two
+   2) Lift2 [Two]
+   and output domain
+      Lift1 [Lift2 [Two],Lift2 [Two]]
+
+with value:
+
+Rep1 (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Up2]] [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Stop2]]) [Rep2 (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Up2]] [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Stop2]]) (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Up2]] [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Stop2]]) [RepTwo (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Up2]] [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Stop2]])],Rep2 (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Up2]] [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Stop2]]) (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Up2]]) [RepTwo (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Up2],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),UpUp2 [Zero]]])]]
+
+
+Domains for "_break" are
+       4   [Two,Two]
+       6   [Func [Two] Two,Two]
+      12   [Func [Two] Two,Lift2 [Two]]
+
+Evaluated at size       4 using    9 evals safe "_break"
+Evaluated at size       4 using    9 evals live "_break"
+Evaluated at size       6 using    0 evals safe "_break"
+Evaluated at size       6 using    0 evals live "_break"
+Evaluated at size      12 using   11 evals safe "_break"
+Evaluated at size      12 using   11 evals live "_break"
+
+Function "_break" has input domains:
+   1) Func [Two] Two
+   2) Lift2 [Two]
+   and output domain
+      Lift1 [Lift2 [Two],Lift2 [Two]]
+
+with value:
+
+Rep1 (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Up2]] [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Stop2]]) [Rep2 (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Up2]] [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Stop2]]) (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Up2]] [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Stop2]]) [RepTwo (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Up2]] [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Stop2]])],Rep2 (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Up2]] [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Stop2]]) (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Up2]]) [RepTwo (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Up2],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),UpUp2 [Zero]]])]]
+
+
+Domains for "__sc)168" are
+       4   [Two,Two]
+
+Evaluated at size       4 using    4 evals safe "__sc)168"
+Evaluated at size       4 using    4 evals live "__sc)168"
+
+Function "__sc)168" has input domains:
+   1) {0 1} (free "x")
+   2) {0 1}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  1 1
+       0   |  0 0
+
+
+
+Domains for "_nub" are
+       2   [Two]
+       4   [Lift2 [Two]]
+
+Evaluated at size       2 using    4 evals live "_nub"
+Evaluated at size       2 using    4 evals live "_nub"
+Evaluated at size       2 using    4 evals safe "_nub"
+Evaluated at size       4 using    2 evals live "_nub"
+Evaluated at size       4 using    2 evals live "_nub"
+Evaluated at size       4 using    2 evals safe "_nub"
+
+Function "_nub" has input domains:
+   1) {0 1 2 3}
+   and output domain
+      {0 1 2 3}
+
+   Output  |  Lower frontier
+   --------+----------------
+       3   |  3
+       2   |  2
+       1   |  1
+       0   |  0
+
+
+
+Domains for "_reverse" are
+       2   [Two]
+       4   [Lift2 [Two]]
+
+Evaluated at size       2 using    4 evals safe "_reverse"
+Evaluated at size       2 using    4 evals live "_reverse"
+Evaluated at size       4 using    3 evals safe "_reverse"
+Evaluated at size       4 using    3 evals live "_reverse"
+
+Function "_reverse" has input domains:
+   1) {0 1 2 3}
+   and output domain
+      {0 1 2 3}
+
+   Output  |  Lower frontier
+   --------+----------------
+       3   |  3
+       2   |  2
+       1   |  
+       0   |  0
+
+
+
+Domains for "__sc)172" are
+       4   [Two,Two]
+
+Evaluated at size       4 using    4 evals safe "__sc)172"
+Evaluated at size       4 using    4 evals live "__sc)172"
+
+Function "__sc)172" has input domains:
+   1) {0 1}
+   2) {0 1}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  1 1
+       0   |  0 0
+
+
+
+Domains for "_and" are
+       2   [Two]
+       4   [Lift2 [Two]]
+
+Evaluated at size       2 using    2 evals safe "_and"
+Evaluated at size       2 using    2 evals live "_and"
+Evaluated at size       4 using    1 evals safe "_and"
+Evaluated at size       4 using    1 evals live "_and"
+
+Function "_and" has input domains:
+   1) {0 1 2 3}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  3
+       0   |  0
+
+
+
+Domains for "__sc)176" are
+       4   [Two,Two]
+
+Evaluated at size       4 using    4 evals safe "__sc)176"
+Evaluated at size       4 using    4 evals live "__sc)176"
+
+Function "__sc)176" has input domains:
+   1) {0 1}
+   2) {0 1}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  1 1
+       0   |  0 0
+
+
+
+Domains for "_or" are
+       2   [Two]
+       4   [Lift2 [Two]]
+
+Evaluated at size       2 using    2 evals safe "_or"
+Evaluated at size       2 using    2 evals live "_or"
+Evaluated at size       4 using    1 evals safe "_or"
+Evaluated at size       4 using    1 evals live "_or"
+
+Function "_or" has input domains:
+   1) {0 1 2 3}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  3
+       0   |  0
+
+
+
+Domains for "_any" are
+       4   [Two,Two]
+       6   [Func [Two] Two,Two]
+      12   [Func [Two] Two,Lift2 [Two]]
+
+Evaluated at size       4 using    4 evals safe "_any"
+Evaluated at size       4 using    4 evals live "_any"
+Evaluated at size       6 using    0 evals safe "_any"
+Evaluated at size       6 using    0 evals live "_any"
+Evaluated at size      12 using    4 evals safe "_any"
+Evaluated at size      12 using    4 evals live "_any"
+
+Function "_any" has input domains:
+   1) Func [Two] Two
+   2) Lift2 [Two]
+   and output domain
+      Two
+
+with value:
+
+RepTwo (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Up2],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),UpUp2 [Zero]]])
+
+
+Domains for "_all" are
+       4   [Two,Two]
+       6   [Func [Two] Two,Two]
+      12   [Func [Two] Two,Lift2 [Two]]
+
+Evaluated at size       4 using    4 evals safe "_all"
+Evaluated at size       4 using    4 evals live "_all"
+Evaluated at size       6 using    0 evals safe "_all"
+Evaluated at size       6 using    0 evals live "_all"
+Evaluated at size      12 using    4 evals safe "_all"
+Evaluated at size      12 using    4 evals live "_all"
+
+Function "_all" has input domains:
+   1) Func [Two] Two
+   2) Lift2 [Two]
+   and output domain
+      Two
+
+with value:
+
+RepTwo (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Up2],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),UpUp2 [Zero]]])
+
+
+Domains for "__sc)184" are
+       4   [Two,Two]
+
+Evaluated at size       4 using    4 evals safe "__sc)184"
+Evaluated at size       4 using    4 evals live "__sc)184"
+
+Function "__sc)184" has input domains:
+   1) {0 1}
+   2) {0 1}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  1 1
+       0   |  0 0
+
+
+
+Domains for "_elem" are
+       4   [Two,Two]
+       8   [Two,Lift2 [Two]]
+
+Evaluated at size       4 using    4 evals safe "_elem"
+Evaluated at size       4 using    4 evals live "_elem"
+Evaluated at size       8 using    2 evals safe "_elem"
+Evaluated at size       8 using    2 evals live "_elem"
+
+Function "_elem" has input domains:
+   1) {0 1}
+   2) {0 1 2 3}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  0 1 and 1 0
+       0   |  0 0
+
+
+
+Domains for "__sc)188" are
+       4   [Two,Two]
+
+Evaluated at size       4 using    4 evals safe "__sc)188"
+Evaluated at size       4 using    4 evals live "__sc)188"
+
+Function "__sc)188" has input domains:
+   1) {0 1}
+   2) {0 1}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  1 1
+       0   |  0 0
+
+
+
+Domains for "_notElem" are
+       4   [Two,Two]
+       8   [Two,Lift2 [Two]]
+
+Evaluated at size       4 using    4 evals safe "_notElem"
+Evaluated at size       4 using    4 evals live "_notElem"
+Evaluated at size       8 using    2 evals safe "_notElem"
+Evaluated at size       8 using    2 evals live "_notElem"
+
+Function "_notElem" has input domains:
+   1) {0 1}
+   2) {0 1 2 3}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  0 1 and 1 0
+       0   |  0 0
+
+
+
+Domains for "__sc)192" are
+       4   [Two,Two]
+
+Evaluated at size       4 using    4 evals safe "__sc)192"
+Evaluated at size       4 using    4 evals live "__sc)192"
+
+Function "__sc)192" has input domains:
+   1) {0 1}
+   2) {0 1}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  1 1
+       0   |  0 0
+
+
+
+Domains for "_sum" are
+       2   [Two]
+       4   [Lift2 [Two]]
+
+Evaluated at size       2 using    2 evals safe "_sum"
+Evaluated at size       2 using    2 evals live "_sum"
+Evaluated at size       4 using    1 evals safe "_sum"
+Evaluated at size       4 using    1 evals live "_sum"
+
+Function "_sum" has input domains:
+   1) {0 1 2 3}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  3
+       0   |  0
+
+
+
+Domains for "__sc)196" are
+       4   [Two,Two]
+
+Evaluated at size       4 using    4 evals safe "__sc)196"
+Evaluated at size       4 using    4 evals live "__sc)196"
+
+Function "__sc)196" has input domains:
+   1) {0 1}
+   2) {0 1}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  1 1
+       0   |  0 0
+
+
+
+Domains for "_product" are
+       2   [Two]
+       4   [Lift2 [Two]]
+
+Evaluated at size       2 using    2 evals safe "_product"
+Evaluated at size       2 using    2 evals live "_product"
+Evaluated at size       4 using    1 evals safe "_product"
+Evaluated at size       4 using    1 evals live "_product"
+
+Function "_product" has input domains:
+   1) {0 1 2 3}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  3
+       0   |  0
+
+
+
+Domains for "__sc)200" are
+       4   [Two,Two]
+
+Evaluated at size       4 using    4 evals safe "__sc)200"
+Evaluated at size       4 using    4 evals live "__sc)200"
+
+Function "__sc)200" has input domains:
+   1) {0 1}
+   2) {0 1}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  1 1
+       0   |  0 0
+
+
+
+Domains for "_sums" are
+       2   [Two]
+       4   [Lift2 [Two]]
+
+Evaluated at size       2 using    3 evals safe "_sums"
+Evaluated at size       2 using    3 evals live "_sums"
+Evaluated at size       4 using    2 evals safe "_sums"
+Evaluated at size       4 using    2 evals live "_sums"
+
+Function "_sums" has input domains:
+   1) {0 1 2 3}
+   and output domain
+      {0 1 2 3}
+
+   Output  |  Lower frontier
+   --------+----------------
+       3   |  3
+       2   |  2
+       1   |  0
+       0   |  
+
+
+
+Domains for "__sc)204" are
+       4   [Two,Two]
+
+Evaluated at size       4 using    4 evals safe "__sc)204"
+Evaluated at size       4 using    4 evals live "__sc)204"
+
+Function "__sc)204" has input domains:
+   1) {0 1}
+   2) {0 1}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  1 1
+       0   |  0 0
+
+
+
+Domains for "_products" are
+       2   [Two]
+       4   [Lift2 [Two]]
+
+Evaluated at size       2 using    3 evals safe "_products"
+Evaluated at size       2 using    3 evals live "_products"
+Evaluated at size       4 using    2 evals safe "_products"
+Evaluated at size       4 using    2 evals live "_products"
+
+Function "_products" has input domains:
+   1) {0 1 2 3}
+   and output domain
+      {0 1 2 3}
+
+   Output  |  Lower frontier
+   --------+----------------
+       3   |  3
+       2   |  2
+       1   |  0
+       0   |  
+
+
+
+Domains for "_maximum" are
+       2   [Two]
+       4   [Lift2 [Two]]
+
+Evaluated at size       2 using    2 evals safe "_maximum"
+Evaluated at size       2 using    2 evals live "_maximum"
+Evaluated at size       4 using    1 evals safe "_maximum"
+Evaluated at size       4 using    1 evals live "_maximum"
+
+Function "_maximum" has input domains:
+   1) {0 1 2 3}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  3
+       0   |  0
+
+
+
+Domains for "_minimum" are
+       2   [Two]
+       4   [Lift2 [Two]]
+
+Evaluated at size       2 using    2 evals safe "_minimum"
+Evaluated at size       2 using    2 evals live "_minimum"
+Evaluated at size       4 using    1 evals safe "_minimum"
+Evaluated at size       4 using    1 evals live "_minimum"
+
+Function "_minimum" has input domains:
+   1) {0 1 2 3}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  3
+       0   |  0
+
+
+
+Domains for "_concat" are
+       2   [Two]
+       4   [Lift2 [Two]]
+       6   [Lift2 [Lift2 [Two]]]
+
+Evaluated at size       2 using    4 evals safe "_concat"
+Evaluated at size       2 using    4 evals live "_concat"
+Evaluated at size       4 using    3 evals safe "_concat"
+Evaluated at size       4 using    3 evals live "_concat"
+Evaluated at size       6 using    2 evals safe "_concat"
+Evaluated at size       6 using    2 evals live "_concat"
+
+Function "_concat" has input domains:
+   1) {0 1 2 3 4 5}
+   and output domain
+      {0 1 2 3}
+
+   Output  |  Lower frontier
+   --------+----------------
+       3   |  5
+       2   |  4
+       1   |  1
+       0   |  0
+
+
+
+Domains for "_zipWith" are
+       8   [Two,Two,Two]
+      24   [Func [Two,Two] Two,Two,Two]
+      48   [Func [Two,Two] Two,Two,Lift2 [Two]]
+      96   [Func [Two,Two] Two,Lift2 [Two],Lift2 [Two]]
+
+Evaluated at size       8 using    8 evals live "_zipWith"
+Evaluated at size       8 using    8 evals live "_zipWith"
+Evaluated at size       8 using    8 evals safe "_zipWith"
+Evaluated at size      24 using    0 evals live "_zipWith"
+Evaluated at size      24 using    0 evals safe "_zipWith"
+Evaluated at size      48 using    0 evals live "_zipWith"
+Evaluated at size      48 using    0 evals safe "_zipWith"
+Evaluated at size      96 using   34 evals live "_zipWith"
+Evaluated at size      96 using   17 evals live "_zipWith"
+Evaluated at size      96 using    8 evals live "_zipWith"
+Evaluated at size      96 using    8 evals safe "_zipWith"
+
+Function "_zipWith" has input domains:
+   1) Func [Two,Two] Two
+   2) Lift2 [Two]
+   3) Lift2 [Two]
+   and output domain
+      Lift2 [Two]
+
+with value:
+
+Rep2 (Min1Max0 3 [MkFrel [Rep (RepTwo (Min1Max0 2 [] [MkFrel [One,One]])),Up2,Up2],MkFrel [Rep (RepTwo (Min1Max0 2 [] [MkFrel [One,One]])),UpUp2 [One],Stop2]] [MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),Stop2,UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),UpUp2 [Zero],Stop2]]) (Min1Max0 3 [MkFrel [Rep (RepTwo (Min1Max0 2 [] [MkFrel [One,One]])),Up2,UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 2 [] [MkFrel [One,One]])),UpUp2 [Zero],Up2],MkFrel [Rep (RepTwo (Min1Max0 2 [] [MkFrel [One,One]])),UpUp2 [One],Stop2]] [MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),Stop2,UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),Up2,Up2],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),UpUp2 [Zero],Stop2]]) [RepTwo (Min1Max0 3 [MkFrel [Rep (RepTwo (Min1Max0 2 [] [MkFrel [One,One]])),Up2,UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 2 [] [MkFrel [One,One]])),UpUp2 [One],Stop2],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,One]] [MkFrel [One,Zero]])),UpUp2 [Zero],Up2],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [One,Zero]] [MkFrel [Zero,One]])),Up2,UpUp2 [Zero]]] [MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),Stop2,UpUp2 [One]],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),Up2,Up2],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),UpUp2 [Zero],Stop2],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,One]] [MkFrel [One,Zero]])),Up2,UpUp2 [Zero]],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [One,Zero]] [MkFrel [Zero,One]])),UpUp2 [Zero],Up2],MkFrel [Rep (RepTwo (Min1Max0 2 [MkFrel [One,One]] [MkFrel [Zero,One],MkFrel [One,Zero]])),UpUp2 [Zero],UpUp2 [Zero]]])]
+
+
+Domains for "__sc)219" are
+       4   [Two,Two]
+       8   [Two,Lift2 [Two]]
+      12   [Two,Lift2 [Lift2 [Two]]]
+      24   [Lift2 [Two],Lift2 [Lift2 [Two]]]
+
+Evaluated at size       4 using    8 evals safe "__sc)219"
+Evaluated at size       4 using    8 evals live "__sc)219"
+Evaluated at size       8 using    0 evals safe "__sc)219"
+Evaluated at size       8 using    0 evals live "__sc)219"
+Evaluated at size      12 using    0 evals safe "__sc)219"
+Evaluated at size      12 using    0 evals live "__sc)219"
+Evaluated at size      24 using   14 evals safe "__sc)219"
+Evaluated at size      24 using   14 evals live "__sc)219"
+
+Function "__sc)219" has input domains:
+   1) {0 1 2 3}
+   2) {0 1 2 3 4 5}
+   and output domain
+      {0 1 2 3 4 5}
+
+   Output  |  Lower frontier
+   --------+----------------
+       5   |  3 0
+       4   |  2 1
+       3   |  
+       2   |  
+       1   |  1 1
+       0   |  0 0
+
+
+
+Domains for "_transpose" are
+       2   [Two]
+       4   [Lift2 [Two]]
+       6   [Lift2 [Lift2 [Two]]]
+
+Evaluated at size       2 using    6 evals safe "_transpose"
+Evaluated at size       2 using    6 evals live "_transpose"
+Evaluated at size       4 using    2 evals safe "_transpose"
+Evaluated at size       4 using    2 evals live "_transpose"
+Evaluated at size       6 using    0 evals safe "_transpose"
+Evaluated at size       6 using    0 evals live "_transpose"
+
+Function "_transpose" has input domains:
+   1) {0 1 2 3 4 5}
+   and output domain
+      {0 1 2 3 4 5}
+
+   Output  |  Lower frontier
+   --------+----------------
+       5   |  1
+       4   |  
+       3   |  
+       2   |  
+       1   |  
+       0   |  0
+
+
+
+Domains for "__sc)223" are
+       4   [Two,Two]
+
+Evaluated at size       4 using    4 evals safe "__sc)223"
+Evaluated at size       4 using    4 evals live "__sc)223"
+
+Function "__sc)223" has input domains:
+   1) {0 1}
+   2) {0 1}
+   and output domain
+      {00 11 12 21 22}
+
+   Output  |  Lower frontier
+   --------+----------------
+      22   |  1 1
+      21   |  1 0
+      12   |  0 1
+      11   |  0 0
+      00   |  
+
+
+
+Domains for "_zip" are
+       4   [Two,Two]
+       8   [Lift2 [Two],Two]
+      16   [Lift2 [Two],Lift2 [Two]]
+
+Evaluated at size       4 using    7 evals safe "_zip"
+Evaluated at size       4 using    7 evals live "_zip"
+Evaluated at size       8 using    7 evals safe "_zip"
+Evaluated at size       8 using    7 evals live "_zip"
+Evaluated at size      16 using    5 evals safe "_zip"
+Evaluated at size      16 using    5 evals live "_zip"
+
+Function "_zip" has input domains:
+   1) {0 1 2 3}
+   2) {0 1 2 3}
+   and output domain
+      {00 11 22 33 34 43 44}
+
+   Output  |  Lower frontier
+   --------+----------------
+      44   |  1 3 and 2 2 and 3 0
+      43   |  1 2
+      34   |  2 1
+      33   |  
+      22   |  
+      11   |  1 1
+      00   |  0 0
+
+
+
+Domains for "_backMap" are
+       4   [Two,Two]
+       8   [Lift2 [Two],Two]
+      10   [Lift2 [Func [Two] Two],Two]
+
+Evaluated at size       4 using    6 evals live "_backMap"
+Evaluated at size       4 using    6 evals live "_backMap"
+Evaluated at size       4 using    6 evals safe "_backMap"
+Evaluated at size       8 using    4 evals live "_backMap"
+Evaluated at size       8 using    2 evals live "_backMap"
+Evaluated at size       8 using    2 evals safe "_backMap"
+Evaluated at size      10 using    2 evals live "_backMap"
+Evaluated at size      10 using    1 evals live "_backMap"
+Evaluated at size      10 using    1 evals safe "_backMap"
+
+Function "_backMap" has input domains:
+   1) Lift2 [Func [Two] Two]
+   2) Two
+   and output domain
+      Lift2 [Two]
+
+with value:
+
+Rep2 (Min1Max0 2 [MkFrel [Up2,Zero]] [MkFrel [Stop2,One]]) (Min1Max0 2 [MkFrel [UpUp2 [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]]))],Zero]] [MkFrel [Up2,One]]) [RepTwo (Min1Max0 2 [MkFrel [UpUp2 [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] []))],Zero],MkFrel [UpUp2 [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]]))],One]] [MkFrel [UpUp2 [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]]))],One],MkFrel [UpUp2 [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]]))],Zero]])]
+
+
+Function "_g" is a constant point 3 in domain 
+    {0 1 2 3}
+
+
+Domains for "_add1" are
+       2   [Two]
+
+Evaluated at size       2 using    2 evals safe "_add1"
+Evaluated at size       2 using    2 evals live "_add1"
+
+Function "_add1" has input domains:
+   1) {0 1}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  1
+       0   |  0
+
+
+
+Domains for "_hof" are
+       4   [Two,Two]
+       6   [Func [Two] Two,Two]
+
+Evaluated at size       4 using    4 evals safe "_hof"
+Evaluated at size       4 using    4 evals live "_hof"
+Evaluated at size       6 using    2 evals safe "_hof"
+Evaluated at size       6 using    2 evals live "_hof"
+
+Function "_hof" has input domains:
+   1) Func [Two] Two
+   2) Two
+   and output domain
+      Two
+
+with value:
+
+RepTwo (Min1Max0 2 [MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Zero],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),One]] [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),One],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Zero]])
+
+
+Domains for "_id" are
+       2   [Two]
+
+Evaluated at size       2 using    2 evals safe "_id"
+Evaluated at size       2 using    2 evals live "_id"
+
+Function "_id" has input domains:
+   1) {0 1}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  1
+       0   |  0
+
+
+
+Function "_useHOF" is a constant point 1 in domain 
+    {0 1}
+
+
+Function "_loop" is a constant point 0 in domain 
+    {0 1}
+
+
+Domains for "_nasty" are
+       2   [Two]
+
+Evaluated at size       2 using    1 evals safe "_nasty"
+Evaluated at size       2 using    1 evals live "_nasty"
+
+Function "_nasty" has input domains:
+   1) {0 1}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  
+       0   |  0
+
+
+
+Domains for "_concat2" are
+       2   [Two]
+       4   [Lift2 [Two]]
+       6   [Lift2 [Lift2 [Two]]]
+
+Evaluated at size       2 using    4 evals safe "_concat2"
+Evaluated at size       2 using    4 evals live "_concat2"
+Evaluated at size       4 using    3 evals safe "_concat2"
+Evaluated at size       4 using    3 evals live "_concat2"
+Evaluated at size       6 using    2 evals safe "_concat2"
+Evaluated at size       6 using    2 evals live "_concat2"
+
+Function "_concat2" has input domains:
+   1) {0 1 2 3 4 5}
+   and output domain
+      {0 1 2 3}
+
+   Output  |  Lower frontier
+   --------+----------------
+       3   |  5
+       2   |  4
+       1   |  1
+       0   |  0
+
+
+
+Domains for "_add)245" are
+       4   [Two,Two]
+
+Evaluated at size       4 using    4 evals safe "_add)245"
+Evaluated at size       4 using    4 evals live "_add)245"
+
+Function "_add)245" has input domains:
+   1) {0 1}
+   2) {0 1}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  1 1
+       0   |  0 0
+
+
+
+Domains for "_sum2" are
+       2   [Two]
+       4   [Lift2 [Two]]
+
+Evaluated at size       2 using    2 evals safe "_sum2"
+Evaluated at size       2 using    2 evals live "_sum2"
+Evaluated at size       4 using    1 evals safe "_sum2"
+Evaluated at size       4 using    1 evals live "_sum2"
+
+Function "_sum2" has input domains:
+   1) {0 1 2 3}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  3
+       0   |  0
+
+
+
+Domains for "_hd" are
+       2   [Two]
+       4   [Lift2 [Two]]
+
+Evaluated at size       2 using    2 evals safe "_hd"
+Evaluated at size       2 using    2 evals live "_hd"
+Evaluated at size       4 using    2 evals safe "_hd"
+Evaluated at size       4 using    2 evals live "_hd"
+
+Function "_hd" has input domains:
+   1) {0 1 2 3}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  1
+       0   |  0
+
+
+
+Domains for "_rev" are
+       4   [Two,Two]
+       8   [Lift2 [Two],Two]
+      16   [Lift2 [Two],Lift2 [Two]]
+
+Evaluated at size       4 using    8 evals live "_rev"
+Evaluated at size       4 using    8 evals live "_rev"
+Evaluated at size       4 using    6 evals safe "_rev"
+Evaluated at size       4 using    6 evals safe "_rev"
+Evaluated at size       8 using    3 evals live "_rev"
+Evaluated at size       8 using    3 evals live "_rev"
+Evaluated at size       8 using    2 evals live "_rev"
+Evaluated at size       8 using    2 evals safe "_rev"
+Evaluated at size      16 using    7 evals live "_rev"
+Evaluated at size      16 using    3 evals live "_rev"
+Evaluated at size      16 using    3 evals safe "_rev"
+
+Function "_rev" has input domains:
+   1) {0 1 2 3}
+   2) {0 1 2 3}
+   and output domain
+      {0 1 2 3}
+
+   Output  |  Lower frontier
+   --------+----------------
+       3   |  3 3
+       2   |  2 2
+       1   |  0 2
+       0   |  0 0
+
+
+
+Domains for "_reverse_into" are
+       2   [Two]
+       4   [Lift2 [Two]]
+
+Evaluated at size       2 using    4 evals safe "_reverse_into"
+Evaluated at size       2 using    4 evals live "_reverse_into"
+Evaluated at size       4 using    3 evals safe "_reverse_into"
+Evaluated at size       4 using    3 evals live "_reverse_into"
+
+Function "_reverse_into" has input domains:
+   1) {0 1 2 3}
+   and output domain
+      {0 1 2 3}
+
+   Output  |  Lower frontier
+   --------+----------------
+       3   |  3
+       2   |  2
+       1   |  
+       0   |  0
+
+
+
+Function "_f" is a constant point 1 in domain 
+    {0 1}
+
+
+Function "_funcList" is a higher-order constant (yuck) in domain
+
+Lift2 [Func [Two] Two]
+
+of value
+
+UpUp2 [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]]))]
+
+
+Function "_g1" is a constant point 3 in domain 
+    {0 1 2 3}
+
+
+Domains for "_dot)267" are
+       8   [Two,Two,Two]
+      12   [Func [Two] Two,Two,Two]
+      18   [Func [Two] Two,Func [Two] Two,Two]
+
+Evaluated at size       8 using    5 evals safe "_dot)267"
+Evaluated at size       8 using    5 evals live "_dot)267"
+Evaluated at size      12 using    4 evals safe "_dot)267"
+Evaluated at size      12 using    4 evals live "_dot)267"
+Evaluated at size      18 using    2 evals safe "_dot)267"
+Evaluated at size      18 using    2 evals live "_dot)267"
+
+Function "_dot)267" has input domains:
+   1) Func [Two] Two
+   2) Func [Two] Two
+   3) Two
+   and output domain
+      Two
+
+with value:
+
+RepTwo (Min1Max0 3 [MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),Zero],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Zero],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),One]] [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),One],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),One],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Zero]])
+
+
+Domains for "_areInverses" are
+      16   [Two,Two,Two,Two]
+      24   [Func [Two] Two,Two,Two,Two]
+      36   [Func [Two] Two,Func [Two] Two,Two,Two]
+     108   [Func [Two] Two,Func [Two] Two,Func [Two,Two] Two,Two]
+
+Evaluated at size      16 using   10 evals safe "_areInverses"
+Evaluated at size      16 using   10 evals live "_areInverses"
+Evaluated at size      24 using    0 evals safe "_areInverses"
+Evaluated at size      24 using    0 evals live "_areInverses"
+Evaluated at size      36 using    0 evals safe "_areInverses"
+Evaluated at size      36 using    0 evals live "_areInverses"
+Evaluated at size     108 using   33 evals safe "_areInverses"
+Evaluated at size     108 using   33 evals live "_areInverses"
+
+Function "_areInverses" has input domains:
+   1) Func [Two] Two
+   2) Func [Two] Two
+   3) Func [Two,Two] Two
+   4) Two
+   and output domain
+      Two
+
+with value:
+
+RepTwo (Min1Max0 4 [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,Zero]] [])),Zero],MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),Rep (RepTwo (Min1Max0 2 [MkFrel [One,Zero]] [MkFrel [Zero,One]])),One],MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,One]] [MkFrel [One,Zero]])),Zero],MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Rep (RepTwo (Min1Max0 2 [MkFrel [One,One]] [MkFrel [Zero,One],MkFrel [One,Zero]])),One],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,One]] [MkFrel [One,Zero]])),Zero],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Rep (RepTwo (Min1Max0 2 [MkFrel [One,One]] [MkFrel [Zero,One],MkFrel [One,Zero]])),One]] [MkFrel [Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,One]] [MkFrel [One,Zero]])),One],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,One]] [MkFrel [One,Zero]])),One],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Rep (RepTwo (Min1Max0 1 [] [MkFrel [One]])),Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,One],MkFrel [One,Zero]] [MkFrel [Zero,Zero]])),Zero],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Rep (RepTwo (Min1Max0 2 [] [MkFrel [One,One]])),One],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Rep (RepTwo (Min1Max0 1 [MkFrel [Zero]] [])),Rep (RepTwo (Min1Max0 2 [MkFrel [One,Zero]] [MkFrel [Zero,One]])),Zero],MkFrel [Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Rep (RepTwo (Min1Max0 1 [MkFrel [One]] [MkFrel [Zero]])),Rep (RepTwo (Min1Max0 2 [MkFrel [Zero,One],MkFrel [One,Zero]] [MkFrel [Zero,Zero]])),Zero]])
+
+
+Domains for "_add)275" are
+       4   [Two,Two]
+
+Evaluated at size       4 using    4 evals safe "_add)275"
+Evaluated at size       4 using    4 evals live "_add)275"
+
+Function "_add)275" has input domains:
+   1) {0 1}
+   2) {0 1}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  1 1
+       0   |  0 0
+
+
+
+Domains for "_eq" are
+       4   [Two,Two]
+
+Evaluated at size       4 using    4 evals safe "_eq"
+Evaluated at size       4 using    4 evals live "_eq"
+
+Function "_eq" has input domains:
+   1) {0 1}
+   2) {0 1}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  1 1
+       0   |  0 0
+
+
+
+Domains for "_sub" are
+       4   [Two,Two]
+
+Evaluated at size       4 using    4 evals safe "_sub"
+Evaluated at size       4 using    4 evals live "_sub"
+
+Function "_sub" has input domains:
+   1) {0 1}
+   2) {0 1}
+   and output domain
+      {0 1}
+
+   Output  |  Lower frontier
+   --------+----------------
+       1   |  1 1
+       0   |  0 0
+
+
+
+Function "_testInverses" is a constant point 1 in domain 
+    {0 1}
+
+

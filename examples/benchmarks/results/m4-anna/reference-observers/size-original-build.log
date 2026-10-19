@@ -1,0 +1,34 @@
+[ 1 of 12] Compiling BaseDefs         ( BaseDefs.hs, BaseDefs.o )
+
+BaseDefs.hs:97:10: warning: [-Wmissing-methods]
+    • No explicit implementation for
+        ‘abs’, ‘signum’, ‘fromInteger’, and (either ‘negate’ or ‘-’)
+    • In the instance declaration for ‘Num (ExceptionInt a)’
+   |
+97 | instance (Show{-was:Text-} a, Ord a) => Num (ExceptionInt a) where
+   |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+BaseDefs.hs:379:6: warning: [-Wtabs]
+    Tab character found here, and in one further location.
+    Suggested fix: Please use spaces instead.
+    |
+379 |          DExprEnv,
+    |      ^^^
+[ 2 of 12] Compiling MyUtils          ( MyUtils.hs, MyUtils.o )
+[ 3 of 12] Compiling Utils            ( Utils.hs, Utils.o )
+[ 4 of 12] Compiling DomainExpr       ( DomainExpr.hs, DomainExpr.o )
+
+DomainExpr.hs:1:1: warning: [-Wtabs]
+    Tab character found here.
+    Suggested fix: Please use spaces instead.
+  |
+1 |         
+  | ^^^^^^^^
+[ 5 of 12] Compiling AbstractVals2    ( AbstractVals2.hs, AbstractVals2.o )
+[ 6 of 12] Compiling SuccsAndPreds2   ( SuccsAndPreds2.hs, SuccsAndPreds2.o )
+[ 7 of 12] Compiling AbstractMisc     ( AbstractMisc.hs, AbstractMisc.o )
+[ 8 of 12] Compiling FrontierMisc2    ( FrontierMisc2.hs, FrontierMisc2.o )
+[ 9 of 12] Compiling AbsConc3         ( AbsConc3.hs, AbsConc3.o )
+[10 of 12] Compiling SmallerLattice   ( SmallerLattice.hs, SmallerLattice.o )
+[11 of 12] Compiling Main             ( Main.hs, Main.o )
+[12 of 12] Linking observe-size

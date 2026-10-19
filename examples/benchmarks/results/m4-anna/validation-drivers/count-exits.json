@@ -1,0 +1,10 @@
+[
+  {
+    "benchmark": "anna-strict",
+    "exit": 0
+  },
+  {
+    "benchmark": "anna-lazy",
+    "exit": 0
+  }
+]

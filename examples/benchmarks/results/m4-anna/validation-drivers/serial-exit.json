@@ -1,0 +1,13 @@
+{
+  "command": [
+    "make",
+    "bench",
+    "BENCH_PROFILE=smoke",
+    "BENCH_FILTER=anna-",
+    "BENCH_CONFIGS=native:mlton,native:smlnj-legacy,native:polyml",
+    "BENCH_MODE=fresh",
+    "BENCH_SAMPLES=1"
+  ],
+  "exit": 2,
+  "elapsed_seconds": 63.32264520700846
+}

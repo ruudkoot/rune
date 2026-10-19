@@ -1,0 +1,30 @@
+{
+  "command": [
+    "timeout",
+    "30",
+    "/home/ruud/rune/.worktrees/benchmarks/bin/runevm",
+    "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-anna-originals/driver-Strict.rbc",
+    "100",
+    "input.stdin",
+    "F3AFC2396A8A1CB5"
+  ],
+  "exit": 0,
+  "guard_reason": null,
+  "rss_limit_kib": 2097152,
+  "minimum_available_kib": 8388608,
+  "observed_peak_tree_rss_kib": 13228,
+  "observed_minimum_available_kib": 24070320,
+  "peak_processes": [
+    {
+      "pid": 3,
+      "name": "timeout",
+      "rss_kib": 1796
+    },
+    {
+      "pid": 4,
+      "name": "runevm",
+      "rss_kib": 11432
+    }
+  ],
+  "elapsed_seconds": 6.358961238001939
+}

@@ -1,0 +1,8 @@
+PASS lazy full parsed smoke
+PASS lazy full parsed normal
+PASS lazy full parsed large
+PASS lazy complete lattice table
+PASS strict full parsed smoke
+PASS strict full parsed normal
+PASS strict full parsed large
+PASS strict complete lattice table

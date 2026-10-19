@@ -1,0 +1,2 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+tak	smoke	native:smlnj-legacy@999.0	O2	compile	0	0	compile-error	0.00	0.00	0.00	1808	-	-	-	tak/native-smlnj-legacy/build/compile

@@ -1,0 +1,20 @@
+
+   _z4 ::                    (list int) ->  (list int) ->  (list int)
+   Monday ::                 (day)
+   Tuesday ::                (day)
+   Wednesday ::              (day)
+   Thursday ::               (day)
+   Friday ::                 (day)
+   Saturday ::               (day)
+   Sunday ::                 (day)
+   Unit ::                   (domain)
+   Lift ::                   (domain) ->  (domain)
+   Pair ::                   a ->  b ->  (pair a b)
+   Nil ::                    (list a)
+   Cons ::                   a ->  (list a) ->  (list a)
+   Leaf ::                   (tree a)
+   Branch ::                 (tree a) ->  a ->  (tree a) ->  (tree a)
+   NilAssoc ::               (assoc a b)
+   Assoc ::                  a ->  b ->  (assoc a b) ->  (assoc a b)
+   True ::                   bool
+   False ::                  bool

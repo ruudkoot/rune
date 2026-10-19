@@ -1,0 +1,11 @@
+tests/basis/harness.sml
+tests/benchmarks/application-test-io.sml
+examples/benchmarks/shared/input.sml
+examples/benchmarks/shared/lazy.sml
+examples/benchmarks/shared/suspend.sml
+examples/benchmarks/shared/hartel-ida-finite.sml
+examples/benchmarks/shared/signed64.sml
+examples/benchmarks/shared/nofib-anna-kernel.sml
+examples/benchmarks/shared/nofib-anna-check.sml
+tests/benchmarks/nofib-anna-tests.sml
+tests/basis/finish.sml

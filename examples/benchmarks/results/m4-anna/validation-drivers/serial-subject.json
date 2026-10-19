@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-19T01:12:33.703500+00:00",
+  "revision": "2bc3c32ae44bf4501a6612591d5f75ccf2842365",
+  "dirty": true,
+  "sources": {
+    "examples/benchmarks/manifest.tsv": "c6783ed539f00e2c0e7be6cc79794eaf284c71ba2d0acb3c4f0f779d837932d4",
+    "examples/benchmarks/shared/nofib-anna-kernel.sml": "e93ec2f3465f6561736459118bcbab3167675190c7fc97fb4f22cdc36104d2c5",
+    "examples/benchmarks/shared/nofib-anna-check.sml": "7caaabb5d74894f01da642225b3dc49fc5ce7da670e338faa85f75a7a26f6df6",
+    "tests/benchmarks/nofib-anna-tests.sml": "52d1ffa6783ffa9ff8fb2160d654e564f4b2e865cf43f9aed9e36e61d2196045",
+    "tests/benchmarks/check-nofib-applications.sh": "facf1666e4a15a982f3196d564ba2db4df11c93cc66f70ea1cad37c9c29d919a"
+  }
+}

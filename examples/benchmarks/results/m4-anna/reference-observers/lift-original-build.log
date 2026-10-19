@@ -1,0 +1,76 @@
+[ 3 of 34] Compiling NofibUtils       ( NofibUtils.hs, NofibUtils.o )
+[ 5 of 34] Compiling TypeCheck5       ( TypeCheck5.hs, TypeCheck5.o )
+
+TypeCheck5.hs:90:1: warning: [-Wtabs]
+    Tab character found here, and in 19 further locations.
+    Suggested fix: Please use spaces instead.
+   |
+90 |            = " (" ++ (pretty' True t1) ++ " -> " ++
+   | ^^^^^^^^
+[ 6 of 34] Compiling PrettyPrint      ( PrettyPrint.hs, PrettyPrint.o )
+
+PrettyPrint.hs:34:1: warning: [-Wtabs]
+    Tab character found here, and in five further locations.
+    Suggested fix: Please use spaces instead.
+   |
+34 |                               [(utiStr n) `utiAppend`
+   | ^^^^^^^^
+[ 7 of 34] Compiling EtaAbstract      ( EtaAbstract.hs, EtaAbstract.o )
+[ 8 of 34] Compiling DomainExpr       ( DomainExpr.hs, DomainExpr.o )
+
+DomainExpr.hs:1:1: warning: [-Wtabs]
+    Tab character found here.
+    Suggested fix: Please use spaces instead.
+  |
+1 |         
+  | ^^^^^^^^
+[11 of 34] Compiling TExpr2DExpr      ( TExpr2DExpr.hs, TExpr2DExpr.o )
+[14 of 34] Compiling LambdaLift5      ( LambdaLift5.hs, LambdaLift5.o )
+
+LambdaLift5.hs:205:1: warning: [-Wtabs]
+    Tab character found here, and in one further location.
+    Suggested fix: Please use spaces instead.
+    |
+205 |                AnnExpr Naam (Set Naam) ->
+    | ^^^^^^^^
+[15 of 34] Compiling AbstractVals2    ( AbstractVals2.hs, AbstractVals2.o )
+[16 of 34] Compiling SuccsAndPreds2   ( SuccsAndPreds2.hs, SuccsAndPreds2.o )
+[17 of 34] Compiling BarakiMeet       ( BarakiMeet.hs, BarakiMeet.o )
+[18 of 34] Compiling Apply            ( Apply.hs, Apply.o )
+[19 of 34] Compiling AbstractMisc     ( AbstractMisc.hs, AbstractMisc.o )
+[20 of 34] Compiling Inverse          ( Inverse.hs, Inverse.o )
+[21 of 34] Compiling PrintResults     ( PrintResults.hs, PrintResults.o )
+
+PrintResults.hs:48:1: warning: [-Wtabs]
+    Tab character found here, and in three further locations.
+    Suggested fix: Please use spaces instead.
+   |
+48 |         -- f creates the numbered version of a domain
+   | ^^^^^^^^
+[22 of 34] Compiling FrontierMisc2    ( FrontierMisc2.hs, FrontierMisc2.o )
+[23 of 34] Compiling Constructors     ( Constructors.hs, Constructors.o )
+[24 of 34] Compiling AbstractEval2    ( AbstractEval2.hs, AbstractEval2.o )
+[25 of 34] Compiling Simplify         ( Simplify.hs, Simplify.o )
+[26 of 34] Compiling AbsConc3         ( AbsConc3.hs, AbsConc3.o )
+[27 of 34] Compiling SmallerLattice   ( SmallerLattice.hs, SmallerLattice.o )
+[28 of 34] Compiling FrontierDATAFN2  ( FrontierDATAFN2.hs, FrontierDATAFN2.o )
+[29 of 34] Compiling FrontierGENERIC2 ( FrontierGENERIC2.hs, FrontierGENERIC2.o )
+[30 of 34] Compiling BarakiConc3      ( BarakiConc3.hs, BarakiConc3.o )
+
+BarakiConc3.hs:1:1: warning: [-Wtabs]
+    Tab character found here.
+    Suggested fix: Please use spaces instead.
+  |
+1 |         
+  | ^^^^^^^^
+[31 of 34] Compiling StrictAn6        ( StrictAn6.hs, StrictAn6.o )
+[32 of 34] Compiling Main             ( Main.hs, Main.o )
+
+Main.hs:75:1: warning: [-Wtabs]
+    Tab character found here, and in two further locations.
+    Suggested fix: Please use spaces instead.
+   |
+75 |         strictUnaryFunc
+   | ^^^^^^^^
+[33 of 34] Compiling Observe          ( Observe.hs, Observe.o ) [Source file changed]
+[34 of 34] Linking observe [Objects changed]

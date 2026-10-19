@@ -1,0 +1,41 @@
+Two
+Lift1 [Two]
+Lift2 [Two]
+Lift1 [Two,Two]
+Lift2 [Two,Two]
+Lift1 [Two]
+Func [Two,Two] Two
+Func [Two,Two] Two
+Func [Lift1 [Two]] (Lift1 [Two])
+Func [Lift1 [Two]] Two
+[]
+[Two]
+[Two]
+[Two]
+[Two]
+[Two]
+[Two]
+[Func [Two] Two,Two]
+[Func [Two] Two,Two]
+[Func [Two] Two,Two]
+MkExInt 2 []
+MkExInt 3 []
+MkExInt 4 []
+MkExInt 5 []
+MkExInt 6 []
+MkExInt 3 []
+MkExInt 6 []
+MkExInt 6 []
+MkExInt 10 []
+MkExInt 4 []
+[((Lift1 [Two],2),0)]
+[((Lift1 [Two],2),0),((Lift1 [Lift1 [Two]],3),0)]
+[((Lift1 [Two],2),0),((Lift1 [Lift2 [Two]],4),0)]
+[((Lift1 [Two,Two],4),0)]
+[((Lift1 [Two,Two],4),0),((Lift1 [Lift1 [Two],Two],6),0)]
+[((Lift1 [Two,Two],4),0),((Lift1 [Two,Lift1 [Two]],6),0),((Lift1 [Lift2 [Two],Lift1 [Two]],12),0)]
+([[(2,[Two]),(3,[Lift1 [Two]]),(4,[Lift2 [Two]]),(4,[Two,Two]),(6,[Lift1 [Two],Two]),(12,[Lift2 [Two],Lift1 [Two]])]],[])
+([[(2,[Two]),(3,[Lift1 [Two]]),(4,[Lift2 [Two]]),(4,[Two,Two]),(6,[Lift1 [Two],Two]),(12,[Lift2 [Two],Lift1 [Two]])]],[])
+([[(2,[Two]),(3,[Lift1 [Two]]),(4,[Lift2 [Two]]),(4,[Two,Two]),(6,[Lift1 [Two],Two]),(12,[Lift2 [Two],Lift1 [Two]])]],[])
+[2147442192,436925867,1434534200,990707786,1573909306,714462572,891960968,1803863332,1163251661,1170256130,908169937,499815624,2094081678,366883968,671394465,1162616800,379023965,1525999041,1898645803,1699158742,1528830590,1460080499,1887296129,867321571]
+[(0,0),(2,1),(3,2)]

@@ -1,0 +1,19 @@
+[1 of 4] Compiling BaseDefs         ( BaseDefs.hs, BaseDefs.o )
+
+BaseDefs.hs:97:10: warning: [-Wmissing-methods]
+    • No explicit implementation for
+        ‘abs’, ‘signum’, ‘fromInteger’, and (either ‘negate’ or ‘-’)
+    • In the instance declaration for ‘Num (ExceptionInt a)’
+   |
+97 | instance (Show{-was:Text-} a, Ord a) => Num (ExceptionInt a) where
+   |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+BaseDefs.hs:379:6: warning: [-Wtabs]
+    Tab character found here, and in one further location.
+    Suggested fix: Please use spaces instead.
+    |
+379 |          DExprEnv,
+    |      ^^^
+[2 of 4] Compiling MyUtils          ( MyUtils.hs, MyUtils.o )
+[3 of 4] Compiling Main             ( Main.hs, Main.o )
+[4 of 4] Linking observe

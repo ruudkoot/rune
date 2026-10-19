@@ -1,0 +1,8 @@
+{
+  "command": [
+    "make",
+    "bench-smoke",
+    "check-docs"
+  ],
+  "exit": 0
+}

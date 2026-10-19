@@ -1,0 +1,5 @@
+COUNT unbudgeted anna-strict normal rune
+COUNT unbudgeted anna-strict normal rune:opt
+COUNT unbudgeted anna-strict normal rune:new
+COUNT unbudgeted anna-strict normal rune:jit
+COUNT comparisons agree

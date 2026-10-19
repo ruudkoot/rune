@@ -1,0 +1,8 @@
+#!/bin/sh
+if [ "$1" = @SMLversion ]; then echo 'sml 999.0'; exit 0; fi
+case "$MEASUREMENT_FAULT" in
+  error) echo 'planted compiler error' >&2; exit 7 ;;
+  timeout) echo 'planted deadline status' >&2; exit 124 ;;
+  no_image) exit 0 ;;
+esac
+exit 8

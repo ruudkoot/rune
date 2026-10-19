@@ -1,0 +1,124 @@
+[
+  {
+    "level": "O0",
+    "configuration": "rune",
+    "passed": 1963,
+    "failed": 0,
+    "summary": [
+      "SUMMARY 1963 checks, 0 failed"
+    ]
+  },
+  {
+    "level": "O0",
+    "configuration": "rune-jit",
+    "passed": 1963,
+    "failed": 0,
+    "summary": [
+      "SUMMARY 1963 checks, 0 failed"
+    ]
+  },
+  {
+    "level": "O0",
+    "configuration": "rune-new",
+    "passed": 1963,
+    "failed": 0,
+    "summary": [
+      "SUMMARY 1963 checks, 0 failed"
+    ]
+  },
+  {
+    "level": "O0",
+    "configuration": "rune-opt",
+    "passed": 1963,
+    "failed": 0,
+    "summary": [
+      "SUMMARY 1963 checks, 0 failed"
+    ]
+  },
+  {
+    "level": "O2",
+    "configuration": "native-mlkit-4.7.23",
+    "passed": 0,
+    "failed": 0,
+    "summary": []
+  },
+  {
+    "level": "O2",
+    "configuration": "native-mlton-20241230",
+    "passed": 1963,
+    "failed": 0,
+    "summary": [
+      "SUMMARY 1963 checks, 0 failed"
+    ]
+  },
+  {
+    "level": "O2",
+    "configuration": "native-polyml-5.9.2",
+    "passed": 1963,
+    "failed": 0,
+    "summary": [
+      "SUMMARY 1963 checks, 0 failed"
+    ]
+  },
+  {
+    "level": "O2",
+    "configuration": "native-smlnj-dev-2026.2",
+    "passed": 1963,
+    "failed": 0,
+    "summary": [
+      "SUMMARY 1963 checks, 0 failed"
+    ]
+  },
+  {
+    "level": "O2",
+    "configuration": "native-smlnj-legacy-110.99.9",
+    "passed": 1963,
+    "failed": 0,
+    "summary": [
+      "SUMMARY 1963 checks, 0 failed"
+    ]
+  },
+  {
+    "level": "O2",
+    "configuration": "native-smlnj32-110.99.9",
+    "passed": 4,
+    "failed": 0,
+    "summary": []
+  },
+  {
+    "level": "O2",
+    "configuration": "rune",
+    "passed": 1963,
+    "failed": 0,
+    "summary": [
+      "SUMMARY 1963 checks, 0 failed"
+    ]
+  },
+  {
+    "level": "O2",
+    "configuration": "rune-jit",
+    "passed": 1963,
+    "failed": 0,
+    "summary": [
+      "SUMMARY 1963 checks, 0 failed"
+    ]
+  },
+  {
+    "level": "O2",
+    "configuration": "rune-new",
+    "passed": 1963,
+    "failed": 0,
+    "summary": [
+      "SUMMARY 1963 checks, 0 failed"
+    ]
+  },
+  {
+    "level": "O2",
+    "configuration": "rune-opt",
+    "passed": 1963,
+    "failed": 0,
+    "summary": [
+      "SUMMARY 1963 checks, 0 failed"
+    ]
+  }
+]

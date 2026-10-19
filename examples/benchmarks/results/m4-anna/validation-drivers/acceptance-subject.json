@@ -1,0 +1,14 @@
+{
+  "started": "2026-10-19T02:13:12.007266+00:00",
+  "revision": "2bc3c32ae44bf4501a6612591d5f75ccf2842365",
+  "dirty": true,
+  "sources": {
+    "Makefile": "f3584cf082d23c66ec22ed3943f74c813dfa3325d4e27709e0f02b640570aa85",
+    "scripts/measure-benchmarks.sh": "6882cbf5fd92e3c0e1394cd16d83528146cf4ab9dec37f03ab73bf97999d41a8",
+    "tests/benchmarks/check-measurement-status.sh": "ad0ccee9a7a1e80e210a22e30f9ef24ffd58cacd3a23f5dab1cb09596efc0633",
+    "examples/benchmarks/manifest.tsv": "c6783ed539f00e2c0e7be6cc79794eaf284c71ba2d0acb3c4f0f779d837932d4",
+    "examples/benchmarks/shared/nofib-anna-kernel.sml": "95f535011e7ebb256c0a1b1aa1cfe4bcd4709cebbfe4e3e77a3b497a17c89abc",
+    "examples/benchmarks/shared/nofib-anna-check.sml": "7caaabb5d74894f01da642225b3dc49fc5ce7da670e338faa85f75a7a26f6df6",
+    "tests/benchmarks/nofib-anna-tests.sml": "52d1ffa6783ffa9ff8fb2160d654e564f4b2e865cf43f9aed9e36e61d2196045"
+  }
+}

@@ -1,0 +1,3 @@
+benchmark	profile	config	level	phase	process	round	status	seconds	user_seconds	system_seconds	max_rss_kib	instructions	bytes	objects	artifact
+anna-lazy	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	timeout	32.38	31.36	0.85	117108	-	-	-	anna-lazy/native-smlnj-legacy/build/compile
+anna-strict	smoke	native:smlnj-legacy@110.99.9	O2	compile	0	0	timeout	32.38	31.50	0.70	113072	-	-	-	anna-strict/native-smlnj-legacy/build/compile

@@ -1,0 +1,10 @@
+{
+  "started": "2026-10-19T01:14:35.500508+00:00",
+  "revision": "2bc3c32ae44bf4501a6612591d5f75ccf2842365",
+  "dirty": true,
+  "sources": {
+    "examples/benchmarks/manifest.tsv": "c6783ed539f00e2c0e7be6cc79794eaf284c71ba2d0acb3c4f0f779d837932d4",
+    "examples/benchmarks/shared/nofib-anna-kernel.sml": "95f535011e7ebb256c0a1b1aa1cfe4bcd4709cebbfe4e3e77a3b497a17c89abc",
+    "tests/benchmarks/nofib-anna-tests.sml": "52d1ffa6783ffa9ff8fb2160d654e564f4b2e865cf43f9aed9e36e61d2196045"
+  }
+}

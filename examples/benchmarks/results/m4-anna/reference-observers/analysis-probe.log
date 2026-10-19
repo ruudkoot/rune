@@ -1,0 +1,6 @@
+PASS lazy complete analysis smoke 11
+PASS lazy complete analysis normal 184
+PASS lazy complete analysis large 601
+PASS strict complete analysis smoke 11
+PASS strict complete analysis normal 184
+PASS strict complete analysis large 601

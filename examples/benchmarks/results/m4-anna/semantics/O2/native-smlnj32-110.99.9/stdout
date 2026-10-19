@@ -1,0 +1,3320 @@
+Standard ML of New Jersey [Version 110.99.9; 32-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/application-test-io.sml]
+[autoloading]
+[autoloading done]
+structure BenchApplicationTestIO : sig
+  val read : string -> TextIO.vector
+  val compare : string * TextIO.vector * TextIO.vector -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/input.sml]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/lazy.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/suspend.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/hartel-ida-finite.sml:19.32 Warning: calling polyEqual
+functor BenchIdaFiniteFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a seq
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t * 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val defer : (unit -> 'a D.t) -> 'a D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val nth : 'a <BaseFct>.<resultStr>.node D.t -> int -> 'a
+  val update :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val unify :
+      ''a <BaseFct>.<resultStr>.node D.t
+       -> ''a -> ''a <BaseFct>.<resultStr>.node D.t
+  val foldl :
+      ('a D.t -> 'b -> 'a D.t)
+       -> 'a D.t -> 'b <BaseFct>.<resultStr>.node D.t -> 'a D.t
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val filter :
+      ('a -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val length : 'a <BaseFct>.<resultStr>.node D.t -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/signed64.sml]
+structure BenchSigned64 : sig
+  structure W : <sig>
+  val sign : Word64.word
+  val minusOne : Word64.word
+  val negative : Word64.word -> bool
+  val negate : Word64.word -> Word64.word
+  val magnitude : Word64.word -> Word64.word
+  val less : Word64.word * Word64.word -> bool
+  val leq : Word64.word * Word64.word -> bool
+  val quotient : Word64.word * ?.word64 -> Word64.word
+  val remainder : Word64.word * ?.word64 -> Word64.word
+  val divide : Word64.word * ?.word64 -> Word64.word
+  val modulo : Word64.word * ?.word64 -> Word64.word
+  val gcd : Word64.word * Word64.word -> Word64.word
+  val lcm : ?.word64 * ?.word64 -> ?.word64
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-anna-kernel.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-anna-kernel.sml:315.27 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-anna-kernel.sml:130.52 Warning: calling polyEqual
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-anna-kernel.sml:101.26 Warning: calling polyEqual
+functor BenchNofibAnnaFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure L : <sig>
+  structure F : <sig>
+  structure C : <sig>
+  structure W : <sig>
+  structure S : <sig>
+  type integer
+  type nameNode
+  type name
+  type ('a,'b) treeNode
+  type ('a,'b) replyNode
+  type 'a setNode
+  type 'a maybeNode
+  type flagNode
+  type flags
+  type tdefNode
+  type typeDef
+  type 'a coreNode
+  type eqnNode
+  type core
+  type coreProgram
+  type atomicProgram
+  type ('a,'b) annNode
+  type ('a,'b) ann
+  type tvname
+  type typeNode
+  type texpr
+  type schemeNode
+  type typeEnv
+  type subst
+  type fullTypeEnv
+  type domainNode
+  type domain
+  type routeNode
+  type repNode
+  type frontierNode
+  type frontierElemNode
+  type route
+  type representation
+  type frontier
+  type frontierElem
+  type point
+  type dexprNode
+  type dexpr
+  type constructorNode
+  type acMode
+  type appInfoNode
+  type 'a hexprNode
+  type hexpr
+  type 'a exceptionIntNode
+  type domainInt
+  type oneFuncSize
+  type infoNode
+  type token
+  type 'a parseNode
+  type 'a parser
+  type partialNode
+  type limits
+  type static
+  val force : 'a D.t -> 'a
+  val cell : 'a -> 'a D.t
+  val int : int -> Word64.word D.t
+  val add : Word64.word D.t -> Word64.word D.t -> Word64.word D.t
+  val subtract : Word64.word D.t -> Word64.word D.t -> Word64.word D.t
+  val multiply : Word64.word D.t -> Word64.word D.t -> Word64.word D.t
+  val divide : Word64.word D.t -> ?.word64 D.t -> Word64.word D.t
+  val quotient : Word64.word D.t -> ?.word64 D.t -> Word64.word D.t
+  val modulo : Word64.word D.t -> ?.word64 D.t -> Word64.word D.t
+  val negative : Word64.word D.t -> Word64.word D.t
+  val less : Word64.word D.t -> Word64.word D.t -> bool
+  val leq : Word64.word D.t -> Word64.word D.t -> bool
+  val equalInt : ''a D.t -> ''a D.t -> bool
+  val signed : Word64.word D.t -> string
+  val small : Word64.word D.t -> int
+  val name : string -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val string : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> string
+  val empty : unit -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val head : 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> 'a D.t
+  val tail :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val null : 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> bool
+  val singleton : 'a D.t -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val map :
+      ('a D.t -> 'b D.t)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val flatMap :
+      ('a D.t -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val pair : 'a -> 'b -> ('a * 'b) D.t
+  val triple : 'a -> 'b -> 'c -> ('a * 'b * 'c) D.t
+  val length :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> Word64.word D.t
+  val compareLists :
+      ('a D.t -> 'b D.t -> order)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> order
+  val equalLists :
+      ('a D.t -> 'b D.t -> bool)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> bool
+  val compareInt : Word64.word D.t -> Word64.word D.t -> order
+  val compareName :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> order
+  val equalName :
+      ''a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ''a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> bool
+  val myFail : string -> 'a
+  val panic : string -> 'a
+  val thenCompare : order -> (unit -> order) -> order
+  val domainTag : <BaseFct>.<resultStr>.domainNode -> int
+  val compareDomain :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.domainNode D.t -> order
+  val equalDomain :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.domainNode D.t -> bool
+  val routeTag : <BaseFct>.<resultStr>.routeNode -> int
+  val repTag : <BaseFct>.<resultStr>.repNode -> int
+  val compareRoute :
+      <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t -> order
+  val compareRep :
+      <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t -> order
+  val compareFrontier :
+      <BaseFct>.<resultStr>.frontierNode D.t
+       -> <BaseFct>.<resultStr>.frontierNode D.t -> order
+  val compareFrel :
+      <BaseFct>.<resultStr>.frontierElemNode D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode D.t -> order
+  val equalRoute :
+      <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t -> bool
+  val equalRep :
+      <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t -> bool
+  val equalFrontier :
+      <BaseFct>.<resultStr>.frontierNode D.t
+       -> <BaseFct>.<resultStr>.frontierNode D.t -> bool
+  val equalFrel :
+      <BaseFct>.<resultStr>.frontierElemNode D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode D.t -> bool
+  val equalType :
+      <BaseFct>.<resultStr>.typeNode D.t
+       -> <BaseFct>.<resultStr>.typeNode D.t -> bool
+  val equalDexpr :
+      <BaseFct>.<resultStr>.dexprNode D.t
+       -> <BaseFct>.<resultStr>.dexprNode D.t -> bool
+  val compareConstructor :
+      <BaseFct>.<resultStr>.constructorNode D.t
+       -> <BaseFct>.<resultStr>.constructorNode D.t -> order
+  val equalFlag :
+      <BaseFct>.<resultStr>.flagNode D.t
+       -> <BaseFct>.<resultStr>.flagNode D.t -> bool
+  val filter :
+      ('a D.t -> bool)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val zipWith :
+      ('a D.t -> 'b D.t -> 'c D.t)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val zip :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a D.t * 'b D.t) <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val zipExact :
+      ('a D.t -> 'b D.t -> 'c D.t)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val zip3Exact :
+      ('a D.t -> 'b D.t -> 'c D.t -> 'd D.t)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'd <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val foldLeft :
+      ('a D.t -> 'b D.t -> 'a D.t)
+       -> 'a D.t -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> 'a D.t
+  val foldRight :
+      ('a D.t -> 'b D.t -> 'b D.t)
+       -> 'b D.t -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> 'b D.t
+  val all :
+      ('a D.t -> bool)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> bool
+  val any :
+      ('a D.t -> bool)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> bool
+  val take :
+      Word64.word D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val drop :
+      Word64.word D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val nth :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word D.t -> 'a D.t
+  val reverse :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val last : 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> 'a D.t
+  val init :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val repeat : 'a -> 'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val fromControl :
+      'a D.t <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val copy :
+      Word64.word D.t
+       -> 'a D.t -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val intsFrom :
+      Word64.word D.t
+       -> Word64.word D.t <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val intsFromTo :
+      Word64.word D.t
+       -> Word64.word D.t
+       -> Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val listVariants :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val cartesianProduct :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val mySeq : ('a -> 'a -> bool) -> 'a -> (unit -> 'b) -> 'b
+  val insertionSort :
+      ('a D.t -> 'a D.t -> order)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val removeDuplicates :
+      ('a D.t -> 'a D.t -> bool)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val unzip :
+      ('a D.t * 'b D.t) <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       * 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val mapFirst :
+      ('a -> 'b)
+       -> ('a * 'c) <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('b * 'c) <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val mapSecond :
+      ('a -> 'b)
+       -> ('c * 'a) <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('c * 'b) <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val mapAccumulate :
+      ('a D.t -> 'b D.t -> 'a D.t * 'c D.t)
+       -> 'a D.t
+       -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a D.t * 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           BenchLazy.state ref
+  val interleave :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val set :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> 'a <BaseFct>.<resultStr>.setNode D.t
+  val setValues :
+      'a <BaseFct>.<resultStr>.setNode D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val setEmpty : unit -> 'a <BaseFct>.<resultStr>.setNode D.t
+  val setSingleton : 'a D.t -> 'a <BaseFct>.<resultStr>.setNode D.t
+  val setFromList :
+      ('a D.t -> 'a D.t -> order)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.setNode D.t
+  val setUnion :
+      ('a D.t -> 'a D.t -> order)
+       -> 'a <BaseFct>.<resultStr>.setNode D.t
+       -> 'a <BaseFct>.<resultStr>.setNode D.t
+       -> 'a <BaseFct>.<resultStr>.setNode D.t
+  val setIntersection :
+      ('a D.t -> 'b D.t -> order)
+       -> 'a <BaseFct>.<resultStr>.setNode D.t
+       -> 'b <BaseFct>.<resultStr>.setNode D.t
+       -> 'a <BaseFct>.<resultStr>.setNode D.t
+  val setSubtract :
+      ('a D.t -> 'b D.t -> order)
+       -> 'a <BaseFct>.<resultStr>.setNode D.t
+       -> 'b <BaseFct>.<resultStr>.setNode D.t
+       -> 'a <BaseFct>.<resultStr>.setNode D.t
+  val setMember :
+      ('a -> 'b D.t -> order)
+       -> 'a -> 'b <BaseFct>.<resultStr>.setNode D.t -> bool
+  val setSubset :
+      ('a D.t -> 'b D.t -> order)
+       -> 'a <BaseFct>.<resultStr>.setNode D.t
+       -> 'b <BaseFct>.<resultStr>.setNode D.t -> bool
+  val setUnionList :
+      ('a D.t -> 'a D.t -> order)
+       -> 'a <BaseFct>.<resultStr>.setNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.setNode D.t
+  type chars
+  val input :
+      string -> char <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val charUncons :
+      'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> ('a * 'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t) 
+         option
+  val charSpan :
+      ('a -> bool)
+       -> 'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> 'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       * 'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val charsToName :
+      'a <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val prefixChars :
+      string
+       -> char <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> char <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref 
+         option
+  val token :
+      'a
+       -> 'b
+       -> ('a * 'b) <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> ('a * 'b) <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val endTokens :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+  val lex :
+      Word64.word D.t
+       -> char <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> (Word64.word D.t * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t)
+           <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val comment :
+      Word64.word D.t
+       -> char <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> (Word64.word D.t * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t)
+           <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val failed : 'a <BaseFct>.<resultStr>.parseNode BenchLazy.state ref -> bool
+  val parsedItem :
+      'a <BaseFct>.<resultStr>.parseNode BenchLazy.state ref -> 'a D.t
+  val parsedRest :
+      'a <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+  val paLiteral :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.node 
+           BenchLazy.state ref
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paAlts :
+      (('a -> bool)
+          * (('b * 'a) <BaseFct>.<resultStr>.C.<returnStr>.node 
+               BenchLazy.state ref
+           -> 'c <BaseFct>.<resultStr>.parseNode BenchLazy.state ref)) list
+       -> ('b * 'a) <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state 
+         ref
+       -> 'c <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paThen2 :
+      ('a D.t -> 'b D.t -> 'c D.t)
+       -> ('d -> 'a <BaseFct>.<resultStr>.parseNode BenchLazy.state ref)
+       -> (<BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+        -> 'b <BaseFct>.<resultStr>.parseNode BenchLazy.state ref)
+       -> 'd -> 'c <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paThen3 :
+      ('a D.t -> 'b D.t -> 'c D.t -> 'd D.t)
+       -> ('e -> 'a <BaseFct>.<resultStr>.parseNode BenchLazy.state ref)
+       -> (<BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+        -> 'b <BaseFct>.<resultStr>.parseNode BenchLazy.state ref)
+       -> (<BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+        -> 'c <BaseFct>.<resultStr>.parseNode BenchLazy.state ref)
+       -> 'e -> 'd <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paThen4 :
+      ('a D.t -> 'b D.t -> 'c D.t -> 'd D.t -> 'e D.t)
+       -> ('f -> 'a <BaseFct>.<resultStr>.parseNode BenchLazy.state ref)
+       -> (<BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+        -> 'b <BaseFct>.<resultStr>.parseNode BenchLazy.state ref)
+       -> (<BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+        -> 'c <BaseFct>.<resultStr>.parseNode BenchLazy.state ref)
+       -> (<BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+        -> 'd <BaseFct>.<resultStr>.parseNode BenchLazy.state ref)
+       -> 'f -> 'e <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paZeroOrMore :
+      (<BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+        -> 'a <BaseFct>.<resultStr>.parseNode BenchLazy.state ref)
+       -> <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paOneOrMore :
+      (<BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+        -> 'a <BaseFct>.<resultStr>.parseNode BenchLazy.state ref)
+       -> <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paOneOrMoreSep :
+      (<BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+        -> 'a <BaseFct>.<resultStr>.parseNode BenchLazy.state ref)
+       -> (<BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+        -> 'b <BaseFct>.<resultStr>.parseNode BenchLazy.state ref)
+       -> <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paApply :
+      ('a -> 'b <BaseFct>.<resultStr>.parseNode BenchLazy.state ref)
+       -> ('b D.t -> 'c D.t)
+       -> 'a -> 'c <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paSatisfy :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> bool)
+       -> (<BaseFct>.<resultStr>.integer
+              * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+             <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paEmpty :
+      'a D.t
+       -> <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> 'a <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val literal :
+      string
+       -> <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.node 
+           BenchLazy.state ref
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val tokenIs :
+      string -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> bool
+  val numericValue :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> Word64.word D.t
+  val paNumber :
+      (<BaseFct>.<resultStr>.integer
+              * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+             <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> Word64.word <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val tableLex :
+      Word64.word D.t
+       -> char <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> (Word64.word D.t * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t)
+           <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val tableComma :
+      ('a -> 'b <BaseFct>.<resultStr>.parseNode BenchLazy.state ref)
+       -> 'a -> 'b <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val tableListMain :
+      (<BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+        -> 'a <BaseFct>.<resultStr>.parseNode BenchLazy.state ref)
+       -> (<BaseFct>.<resultStr>.integer
+              * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+             <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val tableList :
+      (<BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+        -> 'a <BaseFct>.<resultStr>.parseNode BenchLazy.state ref)
+       -> <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.node 
+           BenchLazy.state ref
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val tableDomainSlot :
+      <BaseFct>.<resultStr>.domainNode <BaseFct>.<resultStr>.parser option ref
+  val tableDomain :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.domainNode <BaseFct>.<resultStr>.parseNode 
+           BenchLazy.state ref
+  val tablePair :
+      (<BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+        -> 'a <BaseFct>.<resultStr>.parseNode BenchLazy.state ref)
+       -> (<BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+        -> 'b <BaseFct>.<resultStr>.parseNode BenchLazy.state ref)
+       -> <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.node 
+           BenchLazy.state ref
+       -> ('a D.t * 'b D.t) <BaseFct>.<resultStr>.parseNode BenchLazy.state 
+         ref
+  val tableParser :
+      (<BaseFct>.<resultStr>.domain * <BaseFct>.<resultStr>.integer) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node 
+         <BaseFct>.<resultStr>.parser
+  val readTable :
+      char <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> (<BaseFct>.<resultStr>.domain * <BaseFct>.<resultStr>.integer) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val cached : ('a -> 'b) option ref -> (unit -> 'a -> 'b) -> 'a -> 'b
+  val inNames :
+      string list -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> bool
+  val keywords : string list
+  val firstChar : 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> 'a
+  val isName : char <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> bool
+  val isConstructor :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> bool
+  val paName :
+      (<BaseFct>.<resultStr>.integer
+              * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+             <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paConstructorName :
+      (<BaseFct>.<resultStr>.integer
+              * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+             <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val relations : string list
+  val paRelation :
+      (<BaseFct>.<resultStr>.integer
+              * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+             <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val trailingSemi :
+      ('a -> 'b <BaseFct>.<resultStr>.parseNode BenchLazy.state ref)
+       -> 'a -> 'b <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  type scDefinition
+  type coreBinding
+  type constructorAlt
+  val programSlot :
+      <BaseFct>.<resultStr>.coreProgram <BaseFct>.<resultStr>.parser option 
+         ref
+  val typeDefsSlot :
+      <BaseFct>.<resultStr>.typeDef <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.parser option ref
+  val typeDefSlot :
+      <BaseFct>.<resultStr>.typeDef <BaseFct>.<resultStr>.parser option ref
+  val constructorAltsSlot :
+      <BaseFct>.<resultStr>.constructorAlt 
+               <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.parser option ref
+  val constructorAltSlot :
+      <BaseFct>.<resultStr>.constructorAlt <BaseFct>.<resultStr>.parser option 
+         ref
+  val typeExprSlot :
+      <BaseFct>.<resultStr>.tdefNode <BaseFct>.<resultStr>.parser option ref
+  val scDefsSlot :
+      <BaseFct>.<resultStr>.scDefinition 
+               <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.parser option ref
+  val scSlot :
+      <BaseFct>.<resultStr>.scDefinition <BaseFct>.<resultStr>.parser option 
+         ref
+  val exprSlot :
+      <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+             <BaseFct>.<resultStr>.parser option ref
+  val letSlot :
+      <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+             <BaseFct>.<resultStr>.parser option ref
+  val letrecSlot :
+      <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+             <BaseFct>.<resultStr>.parser option ref
+  val bindingsSlot :
+      <BaseFct>.<resultStr>.coreBinding 
+               <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.parser option ref
+  val bindingSlot :
+      <BaseFct>.<resultStr>.coreBinding <BaseFct>.<resultStr>.parser option 
+         ref
+  val caseSlot :
+      <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+             <BaseFct>.<resultStr>.parser option ref
+  val alternativesSlot :
+      <BaseFct>.<resultStr>.scDefinition 
+               <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.parser option ref
+  val alternativeSlot :
+      <BaseFct>.<resultStr>.scDefinition <BaseFct>.<resultStr>.parser option 
+         ref
+  val lambdaSlot :
+      <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+             <BaseFct>.<resultStr>.parser option ref
+  val expr1Slot :
+      <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+             <BaseFct>.<resultStr>.parser option ref
+  val expr2Slot :
+      <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+             <BaseFct>.<resultStr>.parser option ref
+  val expr3Slot :
+      <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+             <BaseFct>.<resultStr>.parser option ref
+  val expr4Slot :
+      <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+             <BaseFct>.<resultStr>.parser option ref
+  val expr5Slot :
+      <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+             <BaseFct>.<resultStr>.parser option ref
+  val expr6Slot :
+      <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+             <BaseFct>.<resultStr>.parser option ref
+  val expr1cSlot :
+      <BaseFct>.<resultStr>.partialNode <BaseFct>.<resultStr>.parser option 
+         ref
+  val expr2cSlot :
+      <BaseFct>.<resultStr>.partialNode <BaseFct>.<resultStr>.parser option 
+         ref
+  val expr3cSlot :
+      <BaseFct>.<resultStr>.partialNode <BaseFct>.<resultStr>.parser option 
+         ref
+  val expr4cSlot :
+      <BaseFct>.<resultStr>.partialNode <BaseFct>.<resultStr>.parser option 
+         ref
+  val expr5cSlot :
+      <BaseFct>.<resultStr>.partialNode <BaseFct>.<resultStr>.parser option 
+         ref
+  val atomicSlot :
+      <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+             <BaseFct>.<resultStr>.parser option ref
+  val assembleOp :
+      <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode D.t
+       -> <BaseFct>.<resultStr>.partialNode D.t
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode D.t
+  val paProgram :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.coreProgram <BaseFct>.<resultStr>.parseNode 
+         BenchLazy.delay
+  val paTypeDefs :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.typeDef 
+               <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paTypeDefinition :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.typeDef <BaseFct>.<resultStr>.parseNode 
+           BenchLazy.state ref
+  val paConstructorAlts :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> (<BaseFct>.<resultStr>.name
+                * <BaseFct>.<resultStr>.tdefNode 
+                  <BaseFct>.<resultStr>.F.<returnStr>.seq) 
+               <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paConstructorAlt :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.constructorAlt <BaseFct>.<resultStr>.parseNode 
+           BenchLazy.state ref
+  val paTypeExpr :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.tdefNode <BaseFct>.<resultStr>.parseNode 
+           BenchLazy.state ref
+  val paScDefs :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> (<BaseFct>.<resultStr>.name
+                * (<BaseFct>.<resultStr>.nameNode 
+                     <BaseFct>.<resultStr>.F.<returnStr>.seq
+                   * <BaseFct>.<resultStr>.core) D.t) 
+               <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paSc :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.scDefinition <BaseFct>.<resultStr>.parseNode 
+           BenchLazy.state ref
+  val paExpr :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paLet :
+      (<BaseFct>.<resultStr>.integer
+              * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+             <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paLetrec :
+      (<BaseFct>.<resultStr>.integer
+              * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+             <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paBindings :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> (<BaseFct>.<resultStr>.nameNode D.t
+                * <BaseFct>.<resultStr>.nameNode 
+                    <BaseFct>.<resultStr>.coreNode D.t) 
+               <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paBinding :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.coreBinding <BaseFct>.<resultStr>.parseNode 
+           BenchLazy.state ref
+  val paCase :
+      (<BaseFct>.<resultStr>.integer
+              * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+             <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paAlternatives :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> (<BaseFct>.<resultStr>.name
+                * (<BaseFct>.<resultStr>.nameNode 
+                     <BaseFct>.<resultStr>.F.<returnStr>.seq
+                   * <BaseFct>.<resultStr>.nameNode 
+                       <BaseFct>.<resultStr>.coreNode D.t) D.t) 
+               <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paAlternative :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.scDefinition <BaseFct>.<resultStr>.parseNode 
+           BenchLazy.state ref
+  val paLambda :
+      (<BaseFct>.<resultStr>.integer
+              * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+             <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paExpr1 :
+      (<BaseFct>.<resultStr>.integer
+              * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+             <BaseFct>.<resultStr>.C.<returnStr>.node BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paExpr2 :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paExpr3 :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paExpr4 :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paExpr5 :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paExpr6 :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val paExpr1c :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.partialNode <BaseFct>.<resultStr>.parseNode 
+           BenchLazy.state ref
+  val paExpr2c :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.partialNode <BaseFct>.<resultStr>.parseNode 
+           BenchLazy.state ref
+  val paExpr3c :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.partialNode <BaseFct>.<resultStr>.parseNode 
+           BenchLazy.state ref
+  val paExpr4c :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.partialNode <BaseFct>.<resultStr>.parseNode 
+           BenchLazy.state ref
+  val paExpr5c :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.partialNode <BaseFct>.<resultStr>.parseNode 
+           BenchLazy.state ref
+  val paAtomic :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+             <BaseFct>.<resultStr>.parseNode BenchLazy.state ref
+  val parseSyntax :
+      <BaseFct>.<resultStr>.token <BaseFct>.<resultStr>.C.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.coreProgram D.t
+  type freeAnnotation
+  val annotationSet : ('a * 'b) D.t -> 'a
+  val freeVariables :
+      <BaseFct>.<resultStr>.core -> <BaseFct>.<resultStr>.freeAnnotation
+  val depthFirst :
+      ('a D.t -> 'a D.t -> order)
+       -> ('a D.t -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t)
+       -> ('a <BaseFct>.<resultStr>.setNode D.t
+          * 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a <BaseFct>.<resultStr>.setNode D.t
+          * 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+  val spanningSearch :
+      ('a D.t -> 'a D.t -> order)
+       -> ('a D.t -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t)
+       -> ('a <BaseFct>.<resultStr>.setNode D.t
+          * 'a <BaseFct>.<resultStr>.setNode 
+              <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a <BaseFct>.<resultStr>.setNode D.t
+          * 'a <BaseFct>.<resultStr>.setNode 
+              <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+  val stronglyConnected :
+      ('a D.t -> 'a D.t -> order)
+       -> ('a D.t -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t)
+       -> ('a D.t -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.setNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val concat :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val member :
+      ('a -> 'b D.t -> bool)
+       -> 'a -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> bool
+  val unique :
+      ('a D.t -> 'a D.t -> bool)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val freeTypeVariables :
+      ('a
+          * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+              <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+          * ('b
+               * <BaseFct>.<resultStr>.tdefNode 
+                   <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+              <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val typeEdges :
+      ('a D.t
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * ('b
+                 * <BaseFct>.<resultStr>.tdefNode 
+                     <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a D.t * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val typeDependency :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * ('a
+                 * <BaseFct>.<resultStr>.tdefNode 
+                     <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (bool D.t
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val isRecursiveType :
+      ('a D.t
+            * ''b <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ''b <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> 'a
+  val sureLookup :
+      ('a -> 'b -> bool)
+       -> ('a * 'c) <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> string -> 'b -> 'c
+  val lookupDefault :
+      ('a -> 'b -> bool)
+       -> ('a * 'c) <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'b -> 'c -> 'c
+  val validTypeDefinitions :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * (''a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                 * <BaseFct>.<resultStr>.tdefNode 
+                     <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (bool D.t
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> string
+  val programToAtomic :
+      ('a
+          * ('b D.t
+               * ('b <BaseFct>.<resultStr>.F.<returnStr>.seq
+                  * 'b <BaseFct>.<resultStr>.coreNode D.t) D.t) 
+              <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+       -> ('a * 'b <BaseFct>.<resultStr>.coreNode D.t) D.t
+  val parseCore :
+      char <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> (bool D.t
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       * (<BaseFct>.<resultStr>.typeDef 
+            <BaseFct>.<resultStr>.F.<returnStr>.seq
+          * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+              <BaseFct>.<resultStr>.coreNode D.t) D.t
+  val dependencyExpression :
+      <BaseFct>.<resultStr>.freeAnnotation -> <BaseFct>.<resultStr>.core
+  val depend : <BaseFct>.<resultStr>.core -> <BaseFct>.<resultStr>.core
+  val mergeLambdas : <BaseFct>.<resultStr>.core -> <BaseFct>.<resultStr>.core
+  val nameLambdas : <BaseFct>.<resultStr>.core -> <BaseFct>.<resultStr>.core
+  val mapCore :
+      (<BaseFct>.<resultStr>.name -> <BaseFct>.<resultStr>.name)
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.coreNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.coreNode D.t
+  val dropWhile :
+      ('a D.t -> bool)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val checkUnique :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val makeName :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word D.t -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val getNames :
+      Word64.word D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word D.t
+       * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  type uniqueResult
+  val uniqueSupply : <BaseFct>.<resultStr>.uniqueResult -> Word64.word D.t
+  val uniqueBody :
+      <BaseFct>.<resultStr>.uniqueResult -> <BaseFct>.<resultStr>.core
+  val uniqueNames :
+      Word64.word D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.name) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.coreNode D.t
+       -> <BaseFct>.<resultStr>.uniqueResult
+  val liftFreeVariables :
+      <BaseFct>.<resultStr>.core -> <BaseFct>.<resultStr>.freeAnnotation
+  val splitFreeSet :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.setNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.setNode D.t
+       * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.setNode D.t
+  val liftEquations :
+      <BaseFct>.<resultStr>.freeAnnotation
+       -> <BaseFct>.<resultStr>.eqnNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val zapBuiltins :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.eqnNode D.t
+       -> <BaseFct>.<resultStr>.eqnNode D.t
+  val equalNameSets :
+      ''a <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.setNode D.t
+       -> ''a <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.setNode D.t
+       -> bool
+  val equalFreeEnvironments :
+      (''a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * ''b <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.setNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (''a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * ''b <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.setNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> bool
+  val solveLiftEquations :
+      <BaseFct>.<resultStr>.eqnNode <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> (<BaseFct>.<resultStr>.name
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.setNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val addLiftParameters :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.setNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node,
+           <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.setNode) 
+         <BaseFct>.<resultStr>.ann
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.coreNode D.t
+  type flattenResult
+  val flattenedBindings :
+      <BaseFct>.<resultStr>.flattenResult
+       -> <BaseFct>.<resultStr>.coreBinding 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val flattenedBody :
+      <BaseFct>.<resultStr>.flattenResult -> <BaseFct>.<resultStr>.core
+  val flattenCore :
+      <BaseFct>.<resultStr>.core -> <BaseFct>.<resultStr>.flattenResult
+  val rootName :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val contentious :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val prettyScName :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val prettyVariableName :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val prettyLifted :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.coreNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.coreNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       * (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val lambdaLift :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.core
+       -> bool
+       -> (<BaseFct>.<resultStr>.core
+            * (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                 * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+                     <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val equalTVName :
+      (''a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+          * ''b <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+       -> (''a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+          * ''b <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+       -> bool
+  val compareTVName :
+      (Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+          * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+       -> (Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+          * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+       -> order
+  val typeVariables :
+      <BaseFct>.<resultStr>.typeNode D.t
+       -> <BaseFct>.<resultStr>.tvname 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val showType :
+      <BaseFct>.<resultStr>.typeNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val applySubstitution :
+      ((Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+               * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+            * <BaseFct>.<resultStr>.typeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+          * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+       -> <BaseFct>.<resultStr>.texpr
+  val substituteType :
+      ((Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+               * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+            * <BaseFct>.<resultStr>.typeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.typeNode D.t
+       -> <BaseFct>.<resultStr>.typeNode D.t
+  val composeSubstitutions :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val deltaSubstitution :
+      (Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+          * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+       -> <BaseFct>.<resultStr>.typeNode D.t
+       -> ((Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+               * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+            * <BaseFct>.<resultStr>.typeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  type substNode
+  type unifyReply
+  val extendSubstitution :
+      ((Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+               * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+            * <BaseFct>.<resultStr>.typeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.tvname D.t
+       -> <BaseFct>.<resultStr>.typeNode D.t
+       -> <BaseFct>.<resultStr>.unifyReply
+  val unify :
+      ((Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+               * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+            * <BaseFct>.<resultStr>.typeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.texpr * <BaseFct>.<resultStr>.typeNode D.t
+       -> (<BaseFct>.<resultStr>.substNode,<BaseFct>.<resultStr>.nameNode) 
+             <BaseFct>.<resultStr>.replyNode BenchLazy.state ref
+  val mismatch :
+      <BaseFct>.<resultStr>.texpr
+       -> <BaseFct>.<resultStr>.texpr
+       -> (<BaseFct>.<resultStr>.substNode,<BaseFct>.<resultStr>.nameNode) 
+         <BaseFct>.<resultStr>.replyNode
+  val unifyList :
+      ((Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+               * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+            * <BaseFct>.<resultStr>.typeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (<BaseFct>.<resultStr>.typeNode D.t
+            * <BaseFct>.<resultStr>.typeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (<BaseFct>.<resultStr>.substNode,<BaseFct>.<resultStr>.nameNode) 
+             <BaseFct>.<resultStr>.replyNode BenchLazy.state ref
+  val mapAnnotation :
+      ('a D.t -> 'b D.t)
+       -> ('c,'a) <BaseFct>.<resultStr>.ann
+       -> ('c,'b) <BaseFct>.<resultStr>.ann
+  val lookupAll :
+      ('a -> 'b -> bool)
+       -> ('a * 'c D.t) <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'b -> 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val checkUnifier :
+      ('a,char <BaseFct>.<resultStr>.F.<returnStr>.node) 
+             <BaseFct>.<resultStr>.replyNode BenchLazy.state ref
+       -> 'a D.t
+  val unifyTypeSet :
+      <BaseFct>.<resultStr>.substNode D.t
+       -> <BaseFct>.<resultStr>.typeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (<BaseFct>.<resultStr>.substNode,<BaseFct>.<resultStr>.nameNode) 
+             <BaseFct>.<resultStr>.replyNode BenchLazy.state ref
+  val mergeSubstitutions :
+      ((Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+               * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+            * <BaseFct>.<resultStr>.typeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ((Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+               * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+            * <BaseFct>.<resultStr>.typeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val typeBar :
+      (''a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * ''b <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (''a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * ''b <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (''a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * ''b <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val schemeUnknowns :
+      <BaseFct>.<resultStr>.schemeNode D.t
+       -> (Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val substituteScheme :
+      ((Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+               * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+            * <BaseFct>.<resultStr>.typeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.schemeNode D.t
+       -> <BaseFct>.<resultStr>.schemeNode D.t
+  val charValue :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> 'a
+  val environmentUnknowns :
+      ('a * <BaseFct>.<resultStr>.schemeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val substituteEnvironment :
+      ((Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+               * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+            * <BaseFct>.<resultStr>.typeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a * <BaseFct>.<resultStr>.schemeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a * <BaseFct>.<resultStr>.schemeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val typeSupplyDoubleLimit : Word64.word D.t
+  val typeSupplySuccessorLimit : Word64.word D.t
+  val typeSupplySuccessor :
+      Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val typeSupplyDouble :
+      Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val depleteTypeSupply :
+      'a * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val splitTypeSupply :
+      Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a
+       -> (Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+        * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t)
+       * (Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+        * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t)
+  val typeNameSequence :
+      'a * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t 
+           <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val zipTypeNames :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> ('a D.t * 'b) <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val newTypeInstance :
+      Word64.word <BaseFct>.<resultStr>.F.<returnStr>.seq
+       * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.schemeNode D.t
+       -> <BaseFct>.<resultStr>.typeNode D.t
+  val generalizedScheme :
+      (Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word <BaseFct>.<resultStr>.F.<returnStr>.seq
+       * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.typeNode D.t
+       -> <BaseFct>.<resultStr>.schemeNode D.t
+  val addTypeDeclarations :
+      ('a D.t * <BaseFct>.<resultStr>.schemeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word <BaseFct>.<resultStr>.F.<returnStr>.seq
+       * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.typeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a D.t * <BaseFct>.<resultStr>.schemeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val newBoundVariable :
+      'a
+       -> <BaseFct>.<resultStr>.tvname D.t
+       -> ('a * <BaseFct>.<resultStr>.schemeNode D.t) D.t
+  val newBoundVariables :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word <BaseFct>.<resultStr>.F.<returnStr>.seq
+       * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a D.t * <BaseFct>.<resultStr>.schemeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val oldBoundVariable :
+      ('a * <BaseFct>.<resultStr>.schemeNode D.t) D.t
+       -> <BaseFct>.<resultStr>.texpr
+  val typeDefinitionSubstitution :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.tvname D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.tdefNode D.t
+       -> <BaseFct>.<resultStr>.typeNode D.t
+  val newTypeVariables :
+      ('a * 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'c) D.t
+       -> 'd * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('b D.t
+            * ('d * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+              D.t) <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val constructorTypeSchemes :
+      Word64.word <BaseFct>.<resultStr>.F.<returnStr>.seq
+       * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (<BaseFct>.<resultStr>.name
+          * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+              <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+          * ('a
+               * <BaseFct>.<resultStr>.tdefNode 
+                   <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+              <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+       -> (Word64.word <BaseFct>.<resultStr>.F.<returnStr>.seq
+        * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t)
+       * ('a * <BaseFct>.<resultStr>.schemeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val equalTypeDefExpr :
+      <BaseFct>.<resultStr>.tdefNode D.t
+       -> <BaseFct>.<resultStr>.tdefNode D.t -> bool
+  val equalTypeDefinition :
+      (''a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+          * ''b <BaseFct>.<resultStr>.F.<returnStr>.node 
+              <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+          * (''c <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+               * <BaseFct>.<resultStr>.tdefNode 
+                   <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+              <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+       -> (''a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+          * ''b <BaseFct>.<resultStr>.F.<returnStr>.node 
+              <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+          * (''c <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+               * <BaseFct>.<resultStr>.tdefNode 
+                   <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+              <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+       -> bool
+  val getTypeDefinition :
+      (''a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * ''b <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * (''c <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                 * <BaseFct>.<resultStr>.tdefNode 
+                     <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ''c <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (''a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+          * ''b <BaseFct>.<resultStr>.F.<returnStr>.node 
+              <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+          * (''c <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+               * <BaseFct>.<resultStr>.tdefNode 
+                   <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+              <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+  val reorderConstructors :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'a D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val constructorGamma :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.tvname D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a
+          * <BaseFct>.<resultStr>.tdefNode 
+              <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+       -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('b D.t * <BaseFct>.<resultStr>.schemeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val allConstructorGammas :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.tvname D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a
+            * <BaseFct>.<resultStr>.tdefNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('b D.t * <BaseFct>.<resultStr>.schemeNode D.t) 
+             <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  type typedAnnotation
+  type typedAnnotationNode
+  type typeInfo
+  type typeReply
+  type typeListInfo
+  type typeListReply
+  val info : <BaseFct>.<resultStr>.typeReply -> <BaseFct>.<resultStr>.typeInfo
+  val infoSubstitution :
+      <BaseFct>.<resultStr>.typeReply -> <BaseFct>.<resultStr>.subst
+  val infoType :
+      <BaseFct>.<resultStr>.typeReply -> <BaseFct>.<resultStr>.texpr
+  val infoTree :
+      <BaseFct>.<resultStr>.typeReply -> <BaseFct>.<resultStr>.typedAnnotation
+  val intType : <BaseFct>.<resultStr>.typeNode D.t
+  val boolType : <BaseFct>.<resultStr>.typeNode D.t
+  val infer :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                 * <BaseFct>.<resultStr>.tdefNode 
+                     <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.schemeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word <BaseFct>.<resultStr>.F.<returnStr>.seq
+       * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode D.t
+       -> (((Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                   * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                  D.t * <BaseFct>.<resultStr>.typeNode D.t) 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * <BaseFct>.<resultStr>.typeNode D.t
+           * (<BaseFct>.<resultStr>.typeNode D.t
+              * (<BaseFct>.<resultStr>.nameNode,<BaseFct>.<resultStr>.typeNode) 
+                  <BaseFct>.<resultStr>.annNode D.t) D.t,
+           <BaseFct>.<resultStr>.nameNode) <BaseFct>.<resultStr>.replyNode 
+           BenchLazy.state ref
+  val inferVariable :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.schemeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word <BaseFct>.<resultStr>.F.<returnStr>.seq
+       * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.name
+       -> (((Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                   * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                  D.t * <BaseFct>.<resultStr>.typeNode D.t) 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * <BaseFct>.<resultStr>.typeNode D.t
+           * (<BaseFct>.<resultStr>.typeNode D.t
+              * (<BaseFct>.<resultStr>.nameNode,<BaseFct>.<resultStr>.typeNode) 
+                  <BaseFct>.<resultStr>.annNode D.t) D.t,
+           <BaseFct>.<resultStr>.nameNode) <BaseFct>.<resultStr>.replyNode
+  val inferList :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                 * <BaseFct>.<resultStr>.tdefNode 
+                     <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.schemeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word <BaseFct>.<resultStr>.F.<returnStr>.seq
+       * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (((Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                   * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                  D.t * <BaseFct>.<resultStr>.typeNode D.t) 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * <BaseFct>.<resultStr>.typeNode 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * (<BaseFct>.<resultStr>.typeNode D.t
+                * (<BaseFct>.<resultStr>.nameNode,
+                   <BaseFct>.<resultStr>.typeNode) 
+                    <BaseFct>.<resultStr>.annNode D.t) 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t,
+           <BaseFct>.<resultStr>.nameNode) <BaseFct>.<resultStr>.replyNode 
+           BenchLazy.state ref
+  val inferLambda :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                 * <BaseFct>.<resultStr>.tdefNode 
+                     <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.schemeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word <BaseFct>.<resultStr>.F.<returnStr>.seq
+       * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.nameNode D.t
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode D.t
+       -> (((Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                   * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                  D.t * <BaseFct>.<resultStr>.typeNode D.t) 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * <BaseFct>.<resultStr>.typeNode D.t
+           * (<BaseFct>.<resultStr>.typeNode D.t
+              * (<BaseFct>.<resultStr>.nameNode,<BaseFct>.<resultStr>.typeNode) 
+                  <BaseFct>.<resultStr>.annNode D.t) D.t,
+           <BaseFct>.<resultStr>.nameNode) <BaseFct>.<resultStr>.replyNode 
+           BenchLazy.state ref
+  val inferLet :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                 * <BaseFct>.<resultStr>.tdefNode 
+                     <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.schemeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word <BaseFct>.<resultStr>.F.<returnStr>.seq
+       * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.nameNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode D.t
+       -> (((Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                   * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                  D.t * <BaseFct>.<resultStr>.typeNode D.t) 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * <BaseFct>.<resultStr>.typeNode D.t
+           * (<BaseFct>.<resultStr>.typeNode D.t
+              * (<BaseFct>.<resultStr>.nameNode,<BaseFct>.<resultStr>.typeNode) 
+                  <BaseFct>.<resultStr>.annNode D.t) D.t,
+           <BaseFct>.<resultStr>.nameNode) <BaseFct>.<resultStr>.replyNode 
+           BenchLazy.state ref
+  val finishLet :
+      ((Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+               * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+            * <BaseFct>.<resultStr>.typeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> bool
+       -> (((Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                   * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                  D.t * <BaseFct>.<resultStr>.typeNode D.t) 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * <BaseFct>.<resultStr>.typeNode D.t
+           * (<BaseFct>.<resultStr>.typeNode D.t
+              * (<BaseFct>.<resultStr>.nameNode,<BaseFct>.<resultStr>.typeNode) 
+                  <BaseFct>.<resultStr>.annNode D.t) D.t,
+           <BaseFct>.<resultStr>.nameNode) <BaseFct>.<resultStr>.replyNode 
+           BenchLazy.state ref
+       -> (<BaseFct>.<resultStr>.typeNode D.t
+            * (<BaseFct>.<resultStr>.nameNode,<BaseFct>.<resultStr>.typeNode) 
+                <BaseFct>.<resultStr>.annNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (<BaseFct>.<resultStr>.typeInfo,<BaseFct>.<resultStr>.nameNode) 
+             <BaseFct>.<resultStr>.replyNode BenchLazy.state ref
+  val inferLetrec :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                 * <BaseFct>.<resultStr>.tdefNode 
+                     <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.schemeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word <BaseFct>.<resultStr>.F.<returnStr>.seq
+       * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.nameNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode D.t
+       -> (((Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                   * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                  D.t * <BaseFct>.<resultStr>.typeNode D.t) 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * <BaseFct>.<resultStr>.typeNode D.t
+           * (<BaseFct>.<resultStr>.typeNode D.t
+              * (<BaseFct>.<resultStr>.nameNode,<BaseFct>.<resultStr>.typeNode) 
+                  <BaseFct>.<resultStr>.annNode D.t) D.t,
+           <BaseFct>.<resultStr>.nameNode) <BaseFct>.<resultStr>.replyNode 
+           BenchLazy.state ref
+  val inferCase :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                 * <BaseFct>.<resultStr>.tdefNode 
+                     <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.schemeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word <BaseFct>.<resultStr>.F.<returnStr>.seq
+       * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.nameNode 
+             <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (((Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                   * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                  D.t * <BaseFct>.<resultStr>.typeNode D.t) 
+               <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+           * <BaseFct>.<resultStr>.typeNode D.t
+           * (<BaseFct>.<resultStr>.typeNode D.t
+              * (<BaseFct>.<resultStr>.nameNode,<BaseFct>.<resultStr>.typeNode) 
+                  <BaseFct>.<resultStr>.annNode D.t) D.t,
+           <BaseFct>.<resultStr>.nameNode) <BaseFct>.<resultStr>.replyNode 
+           BenchLazy.state ref
+  val typedTreeEnvironment :
+      <BaseFct>.<resultStr>.typedAnnotation
+       -> (<BaseFct>.<resultStr>.nameNode D.t
+            * <BaseFct>.<resultStr>.typeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val prettyTypeBinding :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+          * <BaseFct>.<resultStr>.typeNode D.t) D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  type checkedReply
+  val builtinTypeDefinitions :
+      <BaseFct>.<resultStr>.typeDef <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val checkTypes :
+      (<BaseFct>.<resultStr>.name * <BaseFct>.<resultStr>.schemeNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word <BaseFct>.<resultStr>.F.<returnStr>.seq
+       * Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (<BaseFct>.<resultStr>.typeDef 
+              <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+          * <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.coreNode D.t) 
+         D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       * <BaseFct>.<resultStr>.checkedReply
+  val baseTypes : <BaseFct>.<resultStr>.typeEnv
+  val curryType :
+      <BaseFct>.<resultStr>.typeNode D.t
+       -> <BaseFct>.<resultStr>.typeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.typeNode D.t
+  val uncurryType :
+      <BaseFct>.<resultStr>.typeNode D.t
+       -> (<BaseFct>.<resultStr>.typeNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.typeNode D.t) BenchLazy.state ref
+  val etaNewArguments :
+      Word64.word D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val etaMain :
+      ('a
+          * ('b
+             * (char <BaseFct>.<resultStr>.F.<returnStr>.node,
+                <BaseFct>.<resultStr>.typeNode) <BaseFct>.<resultStr>.annNode 
+               D.t) D.t) D.t
+       -> <BaseFct>.<resultStr>.typeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.typeNode D.t
+       -> ('a
+          * ('b
+             * (char <BaseFct>.<resultStr>.F.<returnStr>.node,
+                <BaseFct>.<resultStr>.typeNode) <BaseFct>.<resultStr>.annNode 
+               D.t) D.t) D.t
+  val etaAbstract :
+      <BaseFct>.<resultStr>.typedAnnotation
+       -> <BaseFct>.<resultStr>.typedAnnotation
+  val makeFrontier :
+      <BaseFct>.<resultStr>.integer
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.frontierNode D.t
+  val uncurryDomain :
+      <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.domainNode D.t
+  val topRoute :
+      <BaseFct>.<resultStr>.domainNode D.t -> <BaseFct>.<resultStr>.route
+  val topFrontier :
+      <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierNode D.t
+  val topRepresentation :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.representation
+  val bottomRoute :
+      <BaseFct>.<resultStr>.domainNode D.t -> <BaseFct>.<resultStr>.route
+  val bottomFrontier :
+      <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierNode D.t
+  val bottomRepresentation :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.representation
+  val isBottomRoute : <BaseFct>.<resultStr>.routeNode D.t -> bool
+  val isBottomRepresentation : <BaseFct>.<resultStr>.repNode D.t -> bool
+  val isTopRoute : <BaseFct>.<resultStr>.routeNode D.t -> bool
+  val isTopRepresentation : <BaseFct>.<resultStr>.repNode D.t -> bool
+  val belowRoute :
+      <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t -> bool
+  val belowRouteList :
+      <BaseFct>.<resultStr>.routeNode <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.routeNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> bool
+  val belowFrel :
+      <BaseFct>.<resultStr>.frontierElemNode D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode D.t -> bool
+  val belowFrontier :
+      <BaseFct>.<resultStr>.frontierNode D.t
+       -> <BaseFct>.<resultStr>.frontierNode D.t -> bool
+  val belowRepresentation :
+      <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t -> bool
+  val minimumAdd :
+      ('a D.t -> 'a D.t -> bool)
+       -> 'a D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val maximumAdd :
+      ('a D.t -> 'a D.t -> bool)
+       -> 'a D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val minimal :
+      ('a D.t -> 'a D.t -> bool)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val maximal :
+      ('a D.t -> 'a D.t -> bool)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val joinRoute :
+      <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+  val joinFrel :
+      <BaseFct>.<resultStr>.frontierElemNode D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode D.t
+       -> <BaseFct>.<resultStr>.frontierElem
+  val joinFrontier :
+      <BaseFct>.<resultStr>.frontierNode D.t
+       -> <BaseFct>.<resultStr>.frontierNode D.t
+       -> <BaseFct>.<resultStr>.frontier
+  val joinRepresentation :
+      <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+  val meetRoute :
+      <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+  val meetFrel :
+      <BaseFct>.<resultStr>.frontierElemNode D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode D.t
+  val meetFrontier :
+      <BaseFct>.<resultStr>.frontierNode D.t
+       -> <BaseFct>.<resultStr>.frontierNode D.t
+       -> <BaseFct>.<resultStr>.frontier
+  val meetRepresentation :
+      <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+  val defaultDomain :
+      <BaseFct>.<resultStr>.dexprNode D.t -> <BaseFct>.<resultStr>.domain
+  val applyDomainSubstitution :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.domainNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.dexprNode D.t
+       -> <BaseFct>.<resultStr>.domainNode D.t
+  val normalizeDomainExpression :
+      <BaseFct>.<resultStr>.dexprNode D.t -> <BaseFct>.<resultStr>.dexpr
+  val expressionContainsFunctions :
+      <BaseFct>.<resultStr>.dexprNode D.t -> bool
+  val expressionContainsSubsidiaryFunctions :
+      <BaseFct>.<resultStr>.dexprNode D.t -> bool
+  type domainDifferenceState
+  type domainDifferenceResult
+  val differenceAux :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.domainNode D.t
+       -> Word64.word D.t
+       * (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.domainNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (<BaseFct>.<resultStr>.dexpr
+            * <BaseFct>.<resultStr>.domainDifferenceState) BenchLazy.state ref
+  val differenceList :
+      <BaseFct>.<resultStr>.domainNode <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.domainNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> Word64.word D.t
+       * (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.domainNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (<BaseFct>.<resultStr>.dexprNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * (Word64.word D.t
+             * (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                  * <BaseFct>.<resultStr>.domainNode D.t) 
+                 <BaseFct>.<resultStr>.F.<returnStr>.node D.t)) 
+           BenchLazy.state ref
+  val domainDifference :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.dexpr
+       * (<BaseFct>.<resultStr>.name * <BaseFct>.<resultStr>.domain) 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val andWith :
+      ('a D.t -> 'b D.t -> bool)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> bool
+  val foldRight1 :
+      ('a D.t -> 'a D.t -> 'a D.t)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> 'a D.t
+  val partialFrontier :
+      Word64.word D.t
+       -> <BaseFct>.<resultStr>.frontierNode D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontier
+  val partialRepresentation :
+      <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+  val constantRepresentation :
+      <BaseFct>.<resultStr>.repNode D.t -> <BaseFct>.<resultStr>.route
+  val applyRoute :
+      <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.route
+  val evaluateAbstract :
+      <BaseFct>.<resultStr>.hexpr -> <BaseFct>.<resultStr>.hexpr
+  val evaluateConstant :
+      <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.hexprNode D.t
+       -> <BaseFct>.<resultStr>.route
+  val substituteAbstract :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.hexprNode 
+              D.t) <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.hexprNode D.t
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.hexprNode D.t
+  val evaluateExact :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.hexprNode D.t
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.hexprNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.route
+  val makeAbstractMeet :
+      <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.hexprNode D.t
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.hexprNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.hexpr
+  val isSingletonList :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> bool
+  val joinZeroFrontiers :
+      <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val meetOneFrontiers :
+      <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val successors :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val successorRepresentations :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.repNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val predecessorFrels :
+      <BaseFct>.<resultStr>.domainNode <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.frontierElemNode D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val successorFrels :
+      <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val predecessors :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val predecessorRepresentations :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.repNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val isoRepresentationInverse :
+      <BaseFct>.<resultStr>.repNode D.t -> <BaseFct>.<resultStr>.repNode D.t
+  val lowerLift :
+      <BaseFct>.<resultStr>.routeNode <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.repNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+  val lowerLiftAux :
+      Word64.word D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+  val reduceArity :
+      Word64.word D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+  val greaterEmbed :
+      <BaseFct>.<resultStr>.frontierNode D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.repNode D.t
+  val greaterEmbedAux :
+      <BaseFct>.<resultStr>.frontierNode D.t
+       -> <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+  val increaseArity :
+      <BaseFct>.<resultStr>.frontierNode D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.repNode D.t
+  val maxZeroFromMinOneAux :
+      <BaseFct>.<resultStr>.routeNode <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val minOneFromMaxZeroAux :
+      <BaseFct>.<resultStr>.routeNode <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val immediateAbove :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val immediateBelow :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val pushUp :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val pushDown :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val slices :
+      ('a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+        -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val allUpSlices :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+             <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val allDownSlices :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+             <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val allRoutes :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val upwardClosure :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val downwardClosure :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val allRoutesMinusTop :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val equalPoints :
+      <BaseFct>.<resultStr>.domainNode D.t
+       * <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.domainNode D.t
+       * <BaseFct>.<resultStr>.routeNode D.t
+       -> bool
+  val containsFunctions : <BaseFct>.<resultStr>.domainNode D.t -> bool
+  val isHigherOrderFunction : <BaseFct>.<resultStr>.domainNode D.t -> bool
+  val isDataFunction : <BaseFct>.<resultStr>.domainNode D.t -> bool
+  val representationArity :
+      <BaseFct>.<resultStr>.repNode D.t -> <BaseFct>.<resultStr>.integer
+  val strongNormalize :
+      <BaseFct>.<resultStr>.domainNode D.t -> <BaseFct>.<resultStr>.domain
+  val meetIrreducibleRoutes :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val typeToDomainExpression :
+      (bool D.t
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.typeNode D.t -> <BaseFct>.<resultStr>.dexpr
+  val typedToDomainTree :
+      (bool D.t
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a,<BaseFct>.<resultStr>.typeNode) <BaseFct>.<resultStr>.ann
+       -> ('a,<BaseFct>.<resultStr>.dexprNode) <BaseFct>.<resultStr>.ann
+  val getDomainInstantiations :
+      <BaseFct>.<resultStr>.dexprNode D.t
+       -> <BaseFct>.<resultStr>.dexprNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.domainNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val normalizeInverse :
+      <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       * <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val intersectInverse :
+      <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       * <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       * <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       * <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val inverseEnumerated :
+      <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val inverseMindless :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+       -> (<BaseFct>.<resultStr>.frontierElemNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.frontierElemNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val inverseMMI :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+       -> (<BaseFct>.<resultStr>.frontierElemNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.frontierElemNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val minimumInverse :
+      bool
+       -> <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val maximumInverse :
+      bool
+       -> <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val maxZeroFromMinOne :
+      <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val minOneFromMaxZero :
+      <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val joinOneFrontiers :
+      <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val constructorInstance :
+      bool
+       -> <BaseFct>.<resultStr>.constructorNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.dexprNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.domainNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.route
+  val generateConstructor :
+      bool
+       -> (<BaseFct>.<resultStr>.routeNode D.t
+            * <BaseFct>.<resultStr>.frontierElemNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+  val generateConstructorCross :
+      bool
+       -> (<BaseFct>.<resultStr>.routeNode 
+              <BaseFct>.<resultStr>.F.<returnStr>.seq
+            * <BaseFct>.<resultStr>.frontierElemNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.domainNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.repNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val uncurryWithRespect :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.domainNode D.t
+  val compatible :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.domainNode D.t -> bool
+  val concretize :
+      <BaseFct>.<resultStr>.acMode
+       -> <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t -> <BaseFct>.<resultStr>.route
+  val concretizeData :
+      <BaseFct>.<resultStr>.acMode
+       -> <BaseFct>.<resultStr>.domain
+       -> <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+  val concretizeTarget :
+      <BaseFct>.<resultStr>.acMode
+       -> <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.domain
+       -> <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+  val concretizeTargetHighs :
+      <BaseFct>.<resultStr>.acMode
+       -> <BaseFct>.<resultStr>.domainNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.domainNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.domainNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.repNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.repNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val increaseArityMode :
+      <BaseFct>.<resultStr>.acMode
+       -> Word64.word D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.domainNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.frontierNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+  val concretizeSourceFrontier :
+      <BaseFct>.<resultStr>.acMode
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierNode D.t
+       -> <BaseFct>.<resultStr>.frontier
+  val concretizeSource :
+      <BaseFct>.<resultStr>.acMode
+       -> <BaseFct>.<resultStr>.domain
+       -> <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+  val concretizedSourceDomain :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.domainNode D.t
+  val makeAbstractInstance :
+      <BaseFct>.<resultStr>.acMode
+       -> <BaseFct>.<resultStr>.dexprNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.domainNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t -> <BaseFct>.<resultStr>.route
+  val addException :
+      'a <BaseFct>.<resultStr>.exceptionIntNode D.t
+       -> 'a <BaseFct>.<resultStr>.exceptionIntNode D.t
+       -> 'a <BaseFct>.<resultStr>.exceptionIntNode D.t
+  val multiplyException :
+      'a <BaseFct>.<resultStr>.exceptionIntNode D.t
+       -> 'a <BaseFct>.<resultStr>.exceptionIntNode D.t
+       -> 'a <BaseFct>.<resultStr>.exceptionIntNode D.t
+  val exceptionOne : <BaseFct>.<resultStr>.domainInt
+  val exceptionTwo : <BaseFct>.<resultStr>.domainInt
+  val isTwo : <BaseFct>.<resultStr>.domainNode D.t -> bool
+  val singletonValue :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t -> 'a D.t option
+  val normalizeSizeDomain :
+      <BaseFct>.<resultStr>.domainNode D.t -> <BaseFct>.<resultStr>.domain
+  val latticeCardinality :
+      (<BaseFct>.<resultStr>.domainNode D.t * <BaseFct>.<resultStr>.integer) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.exceptionIntNode D.t
+  val reduceDomain :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val recoverRelation :
+      ('a D.t -> 'a D.t -> bool)
+       -> ('a D.t -> 'a D.t -> bool)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a D.t * 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val shortestPath :
+      ('a -> 'a -> bool)
+       -> ('a * 'a * Word64.word D.t) <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> 'a
+       -> 'a
+       -> ('a * Word64.word D.t) <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val oneSizeSequence :
+      (<BaseFct>.<resultStr>.domainNode D.t * <BaseFct>.<resultStr>.integer) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> ((<BaseFct>.<resultStr>.domainNode D.t * ?.word64 D.t) D.t
+            * Word64.word D.t) <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val transpose :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val takeWhile :
+      ('a D.t -> bool)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val sizeSequence :
+      (<BaseFct>.<resultStr>.domainNode D.t * <BaseFct>.<resultStr>.integer) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+             <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word D.t
+       -> Word64.word D.t
+       -> ((?.word64 D.t
+                   * <BaseFct>.<resultStr>.domainNode 
+                     <BaseFct>.<resultStr>.F.<returnStr>.seq) 
+                  <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * (?.word64 D.t
+                   * <BaseFct>.<resultStr>.domainNode 
+                     <BaseFct>.<resultStr>.F.<returnStr>.seq) 
+                  <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val splitBy :
+      ('a D.t -> bool)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val combineBounds :
+      <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+  val combineFrontierBounds :
+      <BaseFct>.<resultStr>.frontierNode D.t
+       -> <BaseFct>.<resultStr>.frontierNode D.t
+       -> <BaseFct>.<resultStr>.frontierNode D.t
+  val selectFrontier :
+      Word64.word D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> bool -> <BaseFct>.<resultStr>.frontierElemNode D.t option
+  val frontierMaximumIntersection :
+      <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val frontierMinimumIntersection :
+      <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val reviseMinimum :
+      <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val reviseMaximum :
+      <BaseFct>.<resultStr>.domainNode <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val randomModulus1 : Word64.word D.t
+  val randomModulus2 : Word64.word D.t
+  val randomLimit1 : Word64.word D.t
+  val randomLimit2 : Word64.word D.t
+  val randomIntegers :
+      Word64.word D.t
+       -> Word64.word D.t
+       -> Word64.word D.t <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  type memo
+  val dataIsZero : <BaseFct>.<resultStr>.routeNode D.t -> bool
+  val dataLow1 :
+      <BaseFct>.<resultStr>.routeNode D.t -> <BaseFct>.<resultStr>.route
+  val dataLow2 :
+      <BaseFct>.<resultStr>.routeNode D.t -> <BaseFct>.<resultStr>.route
+  val dataMiddle2 :
+      <BaseFct>.<resultStr>.routeNode D.t -> <BaseFct>.<resultStr>.route
+  val dataHigh1 :
+      <BaseFct>.<resultStr>.routeNode D.t
+       -> Word64.word D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t -> <BaseFct>.<resultStr>.route
+  val dataHigh2 :
+      <BaseFct>.<resultStr>.routeNode D.t
+       -> Word64.word D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t -> <BaseFct>.<resultStr>.route
+  val improveData :
+      ('a -> <BaseFct>.<resultStr>.routeNode D.t)
+       -> (<BaseFct>.<resultStr>.routeNode 
+              <BaseFct>.<resultStr>.F.<returnStr>.seq * 'a) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> bool
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (<BaseFct>.<resultStr>.frontierElemNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.frontierElemNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val searchData :
+      <BaseFct>.<resultStr>.acMode
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.hexprNode D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (<BaseFct>.<resultStr>.route -> <BaseFct>.<resultStr>.routeNode D.t)
+       -> (<BaseFct>.<resultStr>.frontierNode D.t
+            * (<BaseFct>.<resultStr>.routeNode 
+                   <BaseFct>.<resultStr>.F.<returnStr>.seq
+                 * <BaseFct>.<resultStr>.route) 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val headControl :
+      Word64.word D.t <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> Word64.word D.t BenchLazy.state ref
+  val tailControl :
+      Word64.word D.t <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> Word64.word D.t <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+  val findData :
+      <BaseFct>.<resultStr>.acMode
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.hexprNode D.t
+       -> <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+       -> (<BaseFct>.<resultStr>.route -> <BaseFct>.<resultStr>.routeNode D.t)
+       -> bool
+       -> (unit
+        -> <BaseFct>.<resultStr>.frontierElemNode 
+          <BaseFct>.<resultStr>.F.<returnStr>.seq)
+       -> (<BaseFct>.<resultStr>.routeNode 
+              <BaseFct>.<resultStr>.F.<returnStr>.seq
+            * <BaseFct>.<resultStr>.route) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (<BaseFct>.<resultStr>.repNode D.t
+            * (<BaseFct>.<resultStr>.routeNode 
+                   <BaseFct>.<resultStr>.F.<returnStr>.seq
+                 * <BaseFct>.<resultStr>.route) 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val findDataHigh :
+      <BaseFct>.<resultStr>.acMode
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.hexprNode D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.repNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> (<BaseFct>.<resultStr>.route -> <BaseFct>.<resultStr>.routeNode D.t)
+       -> (<BaseFct>.<resultStr>.routeNode 
+              <BaseFct>.<resultStr>.F.<returnStr>.seq
+            * <BaseFct>.<resultStr>.route) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> bool
+       -> (unit
+        -> <BaseFct>.<resultStr>.frontierElemNode 
+          <BaseFct>.<resultStr>.F.<returnStr>.seq)
+       -> bool
+       -> (<BaseFct>.<resultStr>.repNode 
+              <BaseFct>.<resultStr>.F.<returnStr>.seq
+            * (<BaseFct>.<resultStr>.routeNode 
+                   <BaseFct>.<resultStr>.F.<returnStr>.seq
+                 * <BaseFct>.<resultStr>.route) 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+  val evaluateSearchConstant :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.hexprNode D.t
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.hexprNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.route
+  val applySearch :
+      <BaseFct>.<resultStr>.appInfoNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.hexprNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.hexprNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+  val searchGeneric :
+      <BaseFct>.<resultStr>.acMode
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.hexprNode D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierNode D.t
+       -> <BaseFct>.<resultStr>.appInfoNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> bool -> <BaseFct>.<resultStr>.frontier
+  val findGeneric :
+      <BaseFct>.<resultStr>.acMode
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.hexprNode D.t
+       -> <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+       -> Word64.word D.t
+       -> <BaseFct>.<resultStr>.appInfoNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> bool -> <BaseFct>.<resultStr>.repNode D.t
+  val makeFrontierRepresentation :
+      <BaseFct>.<resultStr>.acMode
+       -> bool
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.hexprNode D.t
+       -> <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+       -> (<BaseFct>.<resultStr>.routeNode D.t * Word64.word D.t) 
+           BenchLazy.state ref
+  val barakiBelow :
+      <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t -> bool
+  val barakiBelowRepresentation :
+      <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t -> bool
+  val barakiBelowFrontier :
+      <BaseFct>.<resultStr>.frontierNode D.t
+       -> <BaseFct>.<resultStr>.frontierNode D.t -> bool
+  val barakiBelowFrel :
+      <BaseFct>.<resultStr>.frontierElemNode D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode D.t -> bool
+  val barakiMaximumAdd :
+      <BaseFct>.<resultStr>.frontierElemNode D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierElemNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val barakiMeetFrontier :
+      <BaseFct>.<resultStr>.frontierNode D.t
+       -> <BaseFct>.<resultStr>.frontierNode D.t
+       -> <BaseFct>.<resultStr>.frontier
+  val barakiMeetRepresentation :
+      <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+  val barakiMeet :
+      <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t -> <BaseFct>.<resultStr>.route
+  val normalizeBaraki :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+  val normalizeBarakiRepresentation :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+  val normalizeBarakiFrontier :
+      <BaseFct>.<resultStr>.domainNode <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.frontierNode D.t
+       -> <BaseFct>.<resultStr>.frontierNode D.t
+  type embeddingSubstitution
+  val embeddingDomain :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * (<BaseFct>.<resultStr>.domainNode D.t * 'a * 'b) D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.dexprNode D.t
+       -> <BaseFct>.<resultStr>.domainNode D.t
+  val applyEmbedding :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * (<BaseFct>.<resultStr>.domainNode D.t
+               * <BaseFct>.<resultStr>.routeNode D.t
+               * <BaseFct>.<resultStr>.routeNode D.t) D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.dexprNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+  val composeEmbeddingFunction :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * (<BaseFct>.<resultStr>.domainNode D.t
+               * <BaseFct>.<resultStr>.routeNode D.t
+               * <BaseFct>.<resultStr>.routeNode D.t) D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.dexprNode D.t
+       -> <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+  val mapBarakiZeros :
+      (<BaseFct>.<resultStr>.frontierElemNode D.t
+        -> <BaseFct>.<resultStr>.frontierElemNode D.t)
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.repNode D.t
+  val mapBarakiZeroFrontier :
+      (<BaseFct>.<resultStr>.frontierElemNode D.t
+        -> <BaseFct>.<resultStr>.frontierElemNode D.t)
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.frontierNode D.t
+       -> <BaseFct>.<resultStr>.frontierNode D.t
+  val composeEmbeddingFunctionClosure :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * (<BaseFct>.<resultStr>.domainNode D.t
+               * <BaseFct>.<resultStr>.routeNode D.t
+               * <BaseFct>.<resultStr>.routeNode D.t) D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.dexprNode D.t
+       -> <BaseFct>.<resultStr>.domain
+       -> <BaseFct>.<resultStr>.repNode D.t
+       -> <BaseFct>.<resultStr>.dexprNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.routeNode D.t
+  val cleanDomainExpression :
+      <BaseFct>.<resultStr>.dexprNode D.t -> <BaseFct>.<resultStr>.dexpr
+  val makePolymorphicInstance :
+      bool
+       -> Word64.word D.t
+       -> <BaseFct>.<resultStr>.acMode
+       -> <BaseFct>.<resultStr>.dexprNode D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.domainNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t -> <BaseFct>.<resultStr>.route
+  val equalAbstract :
+      ''a <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.hexprNode D.t
+       -> ''a <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.hexprNode D.t
+       -> bool
+  val vectorizeAbstract :
+      <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.hexprNode D.t
+       -> <BaseFct>.<resultStr>.hexpr
+  val optimizeAbstract :
+      <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.hexprNode D.t
+       -> <BaseFct>.<resultStr>.hexpr
+  val optimizeAbstractMeet :
+      <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.hexprNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.hexpr
+  val optimizeAbstractApplication :
+      <BaseFct>.<resultStr>.hexpr
+       -> <BaseFct>.<resultStr>.hexpr
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.hexprNode D.t
+  val simplifyAbstract :
+      <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.hexprNode D.t
+       -> <BaseFct>.<resultStr>.hexpr
+  val lookupAssociation :
+      ('a -> 'b -> bool)
+       -> ('b * 'c D.t) <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a -> 'c <BaseFct>.<resultStr>.maybeNode D.t
+  type analysisSequence
+  val staticExpressions :
+      <BaseFct>.<resultStr>.static
+       -> (<BaseFct>.<resultStr>.name * <BaseFct>.<resultStr>.dexpr) 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val staticDomains :
+      <BaseFct>.<resultStr>.static
+       -> (<BaseFct>.<resultStr>.name * <BaseFct>.<resultStr>.domain) 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val staticConstructors :
+      <BaseFct>.<resultStr>.static
+       -> (<BaseFct>.<resultStr>.name
+          * <BaseFct>.<resultStr>.constructorNode 
+            <BaseFct>.<resultStr>.F.<returnStr>.seq) 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val staticFreeVariables :
+      <BaseFct>.<resultStr>.static
+       -> (<BaseFct>.<resultStr>.name
+          * <BaseFct>.<resultStr>.nameNode 
+            <BaseFct>.<resultStr>.F.<returnStr>.seq) 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val staticFlags :
+      <BaseFct>.<resultStr>.static -> <BaseFct>.<resultStr>.flags
+  val staticLimits :
+      <BaseFct>.<resultStr>.static -> <BaseFct>.<resultStr>.limits
+  val staticSizes :
+      <BaseFct>.<resultStr>.static
+       -> (<BaseFct>.<resultStr>.domain * <BaseFct>.<resultStr>.integer) 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val hasFlag :
+      <BaseFct>.<resultStr>.static -> <BaseFct>.<resultStr>.flagNode -> bool
+  val zip4Exact :
+      ('a D.t -> 'b D.t -> 'c D.t -> 'd D.t -> 'e D.t)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'd <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'e <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val zip5Exact :
+      ('a D.t -> 'b D.t -> 'c D.t -> 'd D.t -> 'e D.t -> 'f D.t)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'd <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'e <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'f <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val cafDomain :
+      <BaseFct>.<resultStr>.domainNode D.t -> <BaseFct>.<resultStr>.domain
+  val uncafDomain :
+      <BaseFct>.<resultStr>.domainNode D.t -> <BaseFct>.<resultStr>.domain
+  val makeFunction :
+      <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode D.t -> <BaseFct>.<resultStr>.domain
+  val functionArguments :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val functionResult :
+      <BaseFct>.<resultStr>.domainNode D.t -> <BaseFct>.<resultStr>.domain
+  val sequenceEmpty :
+      ('a <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'b) BenchLazy.state 
+         ref
+       -> bool
+  val nextRecursive :
+      ('a <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'b) BenchLazy.state 
+         ref
+       -> 'a D.t
+  val nextNonRecursive :
+      ('a <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'b) 
+           BenchLazy.state ref
+       -> 'a D.t
+  val sequenceTail :
+      ('a <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'b) BenchLazy.state 
+         ref
+       -> ('a <BaseFct>.<resultStr>.F.<returnStr>.node D.t * 'b) 
+           BenchLazy.state ref
+  val sequenceGaveUp :
+      ('a * 'b <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+       -> bool
+  val isAnalysisResult : <BaseFct>.<resultStr>.infoNode D.t -> bool
+  val analysisResult :
+      <BaseFct>.<resultStr>.infoNode D.t -> <BaseFct>.<resultStr>.route
+  val makeSizeInformation :
+      (<BaseFct>.<resultStr>.oneFuncSize 
+                  <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.oneFuncSize 
+                  <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.infoNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val substituteAnalysis :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.route) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.hexprNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.hexprNode D.t
+  val analysisGroups :
+      ('a D.t * ('b,'a) <BaseFct>.<resultStr>.annNode D.t) D.t
+       -> (bool D.t
+            * ('b D.t * ('b,'a) <BaseFct>.<resultStr>.ann) 
+              <BaseFct>.<resultStr>.F.<returnStr>.seq) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val constructorArguments :
+      ('a
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * ('b
+                 * <BaseFct>.<resultStr>.tdefNode 
+                     <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('b
+            * <BaseFct>.<resultStr>.constructorNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val analyzeExpression :
+      <BaseFct>.<resultStr>.static
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.hexprNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node,
+           <BaseFct>.<resultStr>.dexprNode) <BaseFct>.<resultStr>.ann
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.hexprNode D.t
+  val finalExpansion :
+      <BaseFct>.<resultStr>.static
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val nonRecursiveSearch :
+      <BaseFct>.<resultStr>.static
+       -> <BaseFct>.<resultStr>.name
+       -> ((<BaseFct>.<resultStr>.integer
+                   * <BaseFct>.<resultStr>.domainNode 
+                       <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                  <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t) BenchLazy.state 
+         ref
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.hexprNode D.t
+       -> <BaseFct>.<resultStr>.infoNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val nonRecursiveStartup :
+      <BaseFct>.<resultStr>.static
+       -> <BaseFct>.<resultStr>.name
+       -> <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.nameNode <BaseFct>.<resultStr>.hexprNode D.t
+       -> <BaseFct>.<resultStr>.infoNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val fixAtSizeLive :
+      'a
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+             <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.hexprNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'b
+       -> Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word D.t
+       -> <BaseFct>.<resultStr>.infoNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val fixAtSizeSafe :
+      'a
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+             <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.hexprNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'b
+       -> Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word D.t
+       -> <BaseFct>.<resultStr>.infoNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val fixMain :
+      <BaseFct>.<resultStr>.static
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (<BaseFct>.<resultStr>.oneFuncSize 
+                  <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * <BaseFct>.<resultStr>.oneFuncSize 
+                <BaseFct>.<resultStr>.F.<returnStr>.node 
+              <BaseFct>.<resultStr>.F.<returnStr>.seq) BenchLazy.state ref
+       -> <BaseFct>.<resultStr>.domainNode 
+             <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+             <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.routeNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.hexprNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word D.t
+       -> <BaseFct>.<resultStr>.infoNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val fixStartup :
+      <BaseFct>.<resultStr>.static
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.hexprNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.infoNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val analyzeGroups :
+      <BaseFct>.<resultStr>.static
+       -> (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.hexprNode D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (bool D.t
+            * (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                 * (char <BaseFct>.<resultStr>.F.<returnStr>.node,
+                    <BaseFct>.<resultStr>.dexprNode) <BaseFct>.<resultStr>.ann)
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.infoNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val undoCAFInformation :
+      <BaseFct>.<resultStr>.infoNode <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> <BaseFct>.<resultStr>.infoNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val text : string -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val appendText :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val textConcat :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t list
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val renderList :
+      ('a D.t -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t)
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val parenthesize :
+      int
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val renderInteger :
+      Word64.word D.t -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val renderQuoted :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val renderDomain :
+      int
+       -> <BaseFct>.<resultStr>.domainNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val renderRoute :
+      int
+       -> <BaseFct>.<resultStr>.routeNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val renderRepresentation :
+      int
+       -> <BaseFct>.<resultStr>.repNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val renderFrontier :
+      int
+       -> <BaseFct>.<resultStr>.frontierNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val renderFrel :
+      int
+       -> <BaseFct>.<resultStr>.frontierElemNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val renderAbstract :
+      int
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.hexprNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  type outputSequence
+  type indentSequence
+  val emptyOutput :
+      'a -> 'b -> 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val emptyIndent : 'a -> 'a
+  val appendIndent : ('a -> 'b) -> ('c -> 'a) -> 'c -> 'b
+  val indentCharacter :
+      char
+       -> (Word64.word D.t
+        -> Word64.word D.t
+        -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t)
+       -> Word64.word D.t
+       -> Word64.word D.t -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val indentText :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> (Word64.word D.t
+        -> Word64.word D.t
+        -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t)
+       -> Word64.word D.t
+       -> Word64.word D.t -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val indentString :
+      string
+       -> (Word64.word D.t
+        -> Word64.word D.t
+        -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t)
+       -> Word64.word D.t
+       -> Word64.word D.t -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val indentBlock :
+      (('a -> 'b -> 'c) -> Word64.word D.t -> Word64.word D.t -> 'd)
+       -> (Word64.word D.t -> 'b -> 'c)
+       -> Word64.word D.t -> Word64.word D.t -> 'd
+  val indentInterleave :
+      (('a -> 'b -> 'c) -> 'a -> 'b -> 'c)
+       -> (('a -> 'b -> 'c) -> 'a -> 'b -> 'c) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> ('a -> 'b -> 'c) -> 'a -> 'b -> 'c
+  val renderIndent :
+      (('a -> 'b -> 'c <BaseFct>.<resultStr>.F.<returnStr>.node D.t)
+        -> Word64.word D.t -> Word64.word D.t -> 'd)
+       -> 'd
+  val combineIndent : ('a -> 'a) list -> 'a -> 'a
+  val prettyCore :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.coreNode D.t
+       -> <BaseFct>.<resultStr>.indentSequence
+  val prettyTypeExpression :
+      <BaseFct>.<resultStr>.tdefNode D.t
+       -> <BaseFct>.<resultStr>.indentSequence
+  val prettyTypeDefinition :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+          * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+              <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+          * (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+               * <BaseFct>.<resultStr>.tdefNode 
+                   <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+              <BaseFct>.<resultStr>.F.<returnStr>.node D.t) D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val prettyParsed :
+      (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * char <BaseFct>.<resultStr>.F.<returnStr>.node 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+            * (char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+                 * <BaseFct>.<resultStr>.tdefNode 
+                     <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.coreNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val justify :
+      Word64.word D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val numberedLines :
+      char <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val minInteger : Word64.word D.t -> Word64.word D.t -> Word64.word D.t
+  val maxInteger : Word64.word D.t -> Word64.word D.t -> Word64.word D.t
+  val listMinimum :
+      Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word D.t
+  val listMaximum :
+      Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word D.t
+  val liftPrintedDomain :
+      Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val crossPrintedDomain :
+      'a <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val crossPrintedDomains :
+      Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node 
+             <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val printedDomain :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val printAllPoints :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val printedWidth :
+      <BaseFct>.<resultStr>.domainNode D.t -> <BaseFct>.<resultStr>.integer
+  val printedLifts :
+      <BaseFct>.<resultStr>.domainNode D.t -> <BaseFct>.<resultStr>.integer
+  val printedRoute :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+       -> Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val printedCrossRoutes :
+      <BaseFct>.<resultStr>.domainNode <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.routeNode 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> Word64.word <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val printRoute :
+      <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val printFunction :
+      bool
+       -> <BaseFct>.<resultStr>.static
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.domainNode D.t
+       -> <BaseFct>.<resultStr>.routeNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val printSizeRows :
+      bool
+       -> (Word64.word D.t
+            * <BaseFct>.<resultStr>.domainNode 
+                <BaseFct>.<resultStr>.F.<returnStr>.node D.t) 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val printAnalysisInformation :
+      <BaseFct>.<resultStr>.static
+       -> bool
+       -> <BaseFct>.<resultStr>.infoNode D.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val settingInformation :
+      Word64.word D.t
+       -> 'a
+       -> Word64.word D.t
+       -> Word64.word D.t
+       -> Word64.word D.t
+       -> bool -> bool -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val baseAnnotations :
+      (<BaseFct>.<resultStr>.name * <BaseFct>.<resultStr>.hexpr) 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+  val defaultSettings : <BaseFct>.<resultStr>.flags
+  val prepareAnalysisDetailed :
+      char <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> (<BaseFct>.<resultStr>.domain * <BaseFct>.<resultStr>.integer) 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.flagNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> <BaseFct>.<resultStr>.static
+       * <BaseFct>.<resultStr>.infoNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       * char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val prepareAnalysis :
+      string
+       -> (<BaseFct>.<resultStr>.domain * <BaseFct>.<resultStr>.integer) 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.static
+       * <BaseFct>.<resultStr>.infoNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val dryRunSettings : <BaseFct>.<resultStr>.flags
+  val augmentFlags :
+      <BaseFct>.<resultStr>.flagNode <BaseFct>.<resultStr>.F.<returnStr>.node 
+         D.t
+       -> <BaseFct>.<resultStr>.flagNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  val strictAnalyze :
+      (<BaseFct>.<resultStr>.domain * <BaseFct>.<resultStr>.integer) 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> <BaseFct>.<resultStr>.flagNode 
+           <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+       -> char <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> char <BaseFct>.<resultStr>.F.<returnStr>.node D.t
+  type input
+  type table
+  val benchmark :
+      char <BaseFct>.<resultStr>.C.<returnStr>.node BenchNeed.t
+       -> (<BaseFct>.<resultStr>.domain * <BaseFct>.<resultStr>.integer) 
+         <BaseFct>.<resultStr>.F.<returnStr>.seq
+       -> Word64.word
+  val signedHash : Word64.word -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/nofib-anna-check.sml]
+functor BenchNofibAnnaCheckFn(K: sig
+  type input
+  type table
+  val input : string -> input
+  val readTable : input -> table
+  val benchmark : input -> table -> Word64.word
+  val signedHash : Word64.word -> string
+end) :
+sig
+  val read : string -> TextIO.vector
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/nofib-anna-tests.sml]
+PASS nofib-anna/lazy/smoke/parsed
+PASS nofib-anna/lazy/smoke/dependency
+PASS nofib-anna/lazy/smoke/lift-pretty
+PASS nofib-anna/lazy/smoke/lift-raw
+uncaught exception ExnDuringExecution [ExnDuringExecution]

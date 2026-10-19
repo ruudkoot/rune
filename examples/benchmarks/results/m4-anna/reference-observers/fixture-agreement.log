@@ -1,0 +1,3 @@
+PASS smoke all 100 original fixture hashes agree with independently generated complete report
+PASS normal all 100 original fixture hashes agree with independently generated complete report
+PASS large all 100 original fixture hashes agree with independently generated complete report

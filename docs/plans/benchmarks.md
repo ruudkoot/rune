@@ -35,7 +35,7 @@ The [runnable catalogue](../../examples/benchmarks/README.md) contains the M1
 pilots, the validated M2 classic collection and the completed M5 sequential
 Sandmark collection. M3 kernels are complete; M4 applications remain in progress; M8
 coverage closure remains planned.
-The current catalogue has 503 programs and 1461 profiles. The Happy wave
+The current catalogue has 505 programs and 1467 profiles. The Happy wave
 has [recorded validation](../../examples/benchmarks/results/m3-happy/README.md):
 all normal profiles and 50280 semantic assertions pass, with two unclassified
 ML Kit smoke compile failures retained. Counts, serial adapter diagnostics
@@ -51,9 +51,13 @@ implemented smoke/normal profiles and documented variants.
 M4 now registers parser, reptile, hpg and fluid with [recorded validation](../../examples/benchmarks/results/m4-parser-reptile-hpg-fluid/README.md):
 209 of 224 profile combinations pass, including all 128 Rune combinations.
 All 32 normal allocation samples agree, 52 semantic groups complete, and
-repository acceptance passes. Host failures remain explicit. Anna is a private
-partial port with complete report agreement on the three source inputs;
-Veritas is not yet ported. Neither appears as a runnable benchmark.
+repository acceptance passes. Host failures remain explicit. Anna has [recorded public validation](../../examples/benchmarks/results/m4-anna/README.md):
+45 of 56 profile combinations pass, including all 32 Rune combinations.
+Twelve semantic groups pass all 1963 assertions, eight normal allocation
+samples agree, and repository acceptance passes. Source-loading/compile
+timeouts and the confirmed SML/NJ32 literal defect remain explicit.
+Veritas is a private port with original request-stream and editor-outcome
+agreement; its public registration and validation remain pending.
 M8 closes the inventories, evidence, documentation and maintenance procedures.
 
 ## Sources, naming, and portable programs

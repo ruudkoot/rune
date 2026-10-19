@@ -1,0 +1,122 @@
+
+   _error ::                 a
+   _dot)1 ::                 ( a ->  b) ->  ( c ->  a) ->  c ->  b
+   _flip ::                  ( a ->  b ->  c) ->  b ->  a ->  c
+   _max ::                   int ->  int ->  int
+   _min ::                   int ->  int ->  int
+   _head ::                  (list a) ->  a
+   _last ::                  (list a) ->  a
+   _tail ::                  (list a) ->  (list a)
+   _init ::                  (list a) ->  (list a)
+   _null ::                  (list a) ->  bool
+   _foldr ::                 ( a ->  b ->  b) ->  b ->  (list a) ->  b
+   _append ::                (list a) ->  (list a) ->  (list a)
+   _foldl ::                 ( a ->  b ->  a) ->  a ->  (list b) ->  a
+   _del ::                   (list int) ->  int ->  (list int)
+   _diff ::                  (list int) ->  (list int) ->  (list int)
+   __sc)61 ::                int ->  a ->  int
+   _length ::                (list a) ->  int
+   _nth ::                   (list a) ->  int ->  a
+   _map ::                   ( a ->  b) ->  (list a) ->  (list b)
+   __sc)76 ::                ( a ->  bool) ->  a ->  (list a) ->  (list a)
+   _filter ::                ( a ->  bool) ->  (list a) ->  (list a)
+   _foldl1 ::                ( a ->  a ->  a) ->  (list a) ->  a
+   _scanl ::                 ( a ->  b ->  a) ->  a ->  (list b) ->  (list a)
+   _scanl1 ::                ( a ->  a ->  a) ->  (list a) ->  (list a)
+   _foldr1 ::                ( a ->  a ->  a) ->  (list a) ->  a
+   _qs)108 ::                ( a ->  b ->  b) ->  b ->  (list a) ->  (list b)
+   _scanr ::                 ( a ->  b ->  b) ->  b ->  (list a) ->  (list b)
+   _qs)116 ::                ( a ->  b ->  b) ->  (list a) ->  (list b)
+   _scanr1 ::                ( a ->  b ->  b) ->  (list a) ->  (list b)
+   _iterate ::               ( a ->  a) ->  a ->  (list a)
+   _xs ::                    a ->  (list a)
+   _repeat ::                a ->  (list a)
+   _xss ::                   (list a) ->  (list a)
+   _cycle ::                 (list a) ->  (list a)
+   _take ::                  int ->  (list a) ->  (list a)
+   _drop ::                  int ->  (list a) ->  (list a)
+   _splitAt ::               int ->  (list a) ->  (pair (list a) (list a))
+   _takeWhile ::             ( a ->  bool) ->  (list a) ->  (list a)
+   _dropWhile ::             ( a ->  bool) ->  (list a) ->  (list a)
+   _span ::                  ( a ->  bool) ->  (list a) ->  (pair (list a) (list a))
+   _break ::                 ( a ->  bool) ->  (list a) ->  (pair (list a) (list a))
+   __sc)168 ::               int ->  int ->  bool
+   _nub ::                   (list int) ->  (list int)
+   _reverse ::               (list a) ->  (list a)
+   __sc)172 ::               bool ->  bool ->  bool
+   _and ::                   (list bool) ->  bool
+   __sc)176 ::               bool ->  bool ->  bool
+   _or ::                    (list bool) ->  bool
+   _any ::                   ( a ->  bool) ->  (list a) ->  bool
+   _all ::                   ( a ->  bool) ->  (list a) ->  bool
+   __sc)184 ::               int ->  int ->  bool
+   _elem ::                  int ->  (list int) ->  bool
+   __sc)188 ::               int ->  int ->  bool
+   _notElem ::               int ->  (list int) ->  bool
+   __sc)192 ::               int ->  int ->  int
+   _sum ::                   (list int) ->  int
+   __sc)196 ::               int ->  int ->  int
+   _product ::               (list int) ->  int
+   __sc)200 ::               int ->  int ->  int
+   _sums ::                  (list int) ->  (list int)
+   __sc)204 ::               int ->  int ->  int
+   _products ::              (list int) ->  (list int)
+   _maximum ::               (list int) ->  int
+   _minimum ::               (list int) ->  int
+   _concat ::                (list (list a)) ->  (list a)
+   _zipWith ::               ( a ->  b ->  c) ->  (list a) ->  (list b) ->  (list c)
+   __sc)219 ::               (list a) ->  (list (list a)) ->  (list (list a))
+   _transpose ::             (list (list a)) ->  (list (list a))
+   __sc)223 ::               a ->  b ->  (pair a b)
+   _zip ::                   (list a) ->  (list b) ->  (list (pair a b))
+   _backMap ::               (list ( a ->  b)) ->  a ->  (list b)
+   _g ::                     (list bool)
+   _add1 ::                  int ->  int
+   _hof ::                   ( a ->  int) ->  a ->  int
+   _id ::                    a ->  a
+   _useHOF ::                int
+   _loop ::                  a
+   _nasty ::                 a ->  b
+   _concat2 ::               (list (list a)) ->  (list a)
+   _add)245 ::               int ->  int ->  int
+   _sum2 ::                  (list int) ->  int
+   _hd ::                    (list a) ->  a
+   _rev ::                   (list a) ->  (list a) ->  (list a)
+   _reverse_into ::          (list a) ->  (list a)
+   _f ::                     int
+   _funcList ::              (list ( bool ->  bool))
+   _g1 ::                    (list bool)
+   _dot)267 ::               ( a ->  b) ->  ( c ->  a) ->  c ->  b
+   _areInverses ::           ( a ->  b) ->  ( b ->  c) ->  ( a ->  c ->  bool) ->  a ->  bool
+   _add)275 ::               int ->  int ->  int
+   _eq ::                    int ->  int ->  bool
+   _sub ::                   int ->  int ->  int
+   _testInverses ::          bool
+   Nil ::                    (list a)
+   Cons ::                   a ->  (list a) ->  (list a)
+   Pair ::                   a ->  b ->  (pair a b)
+   Tp3 ::                    a ->  b ->  c ->  (tp3 a b c)
+   Tp4 ::                    a ->  b ->  c ->  d ->  (tp4 a b c d)
+   Na ::                     (la a)
+   Ca ::                     a ->  (lb a) ->  (la a)
+   Nb ::                     (lb a)
+   Cb ::                     a ->  (la a) ->  (lb a)
+   Cpx ::                    a ->  b ->  (complex a b)
+   Box ::                    a ->  (boxed a)
+   NumDict ::                a ->  a ->  b ->  (numD a b)
+   MkTriple ::               a ->  b ->  c ->  (triple a b c)
+   Leaf ::                   (tree a)
+   Branch ::                 (tree a) ->  a ->  (tree a) ->  (tree a)
+   Monday ::                 (day)
+   Tuesday ::                (day)
+   Wednesday ::              (day)
+   Thursday ::               (day)
+   Friday ::                 (day)
+   Saturday ::               (day)
+   Sunday ::                 (day)
+   Unit ::                   (domain)
+   Lift ::                   (domain) ->  (domain)
+   NilAssoc ::               (assoc a b)
+   Assoc ::                  a ->  b ->  (assoc a b) ->  (assoc a b)
+   True ::                   bool
+   False ::                  bool

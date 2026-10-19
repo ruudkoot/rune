@@ -1,0 +1,9 @@
+{
+  "purpose": "private causal probe only; public canonical source is unchanged",
+  "source_sha256": "95f535011e7ebb256c0a1b1aa1cfe4bcd4709cebbfe4e3e77a3b497a17c89abc",
+  "private_sha256": "0b3acd8b1eb5bd9db4a97e916309cfecffce39807e84adb16bb1fdf08d04ee31",
+  "changes": [
+    "rename private functor",
+    "read only typeSupplyDoubleLimit at runtime rather than as a literal"
+  ]
+}

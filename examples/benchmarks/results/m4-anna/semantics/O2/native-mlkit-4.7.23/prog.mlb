@@ -1,0 +1,12 @@
+$(SML_LIB)/basis/basis.mlb
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-anna-checks.vUPZIO/O2/native-mlkit-4.7.23/program/src/1/harness.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-anna-checks.vUPZIO/O2/native-mlkit-4.7.23/program/src/2/application-test-io.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-anna-checks.vUPZIO/O2/native-mlkit-4.7.23/program/src/3/input.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-anna-checks.vUPZIO/O2/native-mlkit-4.7.23/program/src/4/lazy.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-anna-checks.vUPZIO/O2/native-mlkit-4.7.23/program/src/5/suspend.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-anna-checks.vUPZIO/O2/native-mlkit-4.7.23/program/src/6/hartel-ida-finite.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-anna-checks.vUPZIO/O2/native-mlkit-4.7.23/program/src/7/signed64.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-anna-checks.vUPZIO/O2/native-mlkit-4.7.23/program/src/8/nofib-anna-kernel.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-anna-checks.vUPZIO/O2/native-mlkit-4.7.23/program/src/9/nofib-anna-check.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-anna-checks.vUPZIO/O2/native-mlkit-4.7.23/program/src/10/nofib-anna-tests.sml"
+"/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/nofib-anna-checks.vUPZIO/O2/native-mlkit-4.7.23/program/src/11/finish.sml"

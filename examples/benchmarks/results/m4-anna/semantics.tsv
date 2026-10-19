@@ -1,0 +1,15 @@
+requested_level	configuration	status	passed	failed	complete	recorded_checks	artifact_directory
+O0	rune	pass	1963	0	true	1963	results/m4-anna/semantics/O0/rune
+O0	rune-jit	pass	1963	0	true	1963	results/m4-anna/semantics/O0/rune-jit
+O0	rune-new	pass	1963	0	true	1963	results/m4-anna/semantics/O0/rune-new
+O0	rune-opt	pass	1963	0	true	1963	results/m4-anna/semantics/O0/rune-opt
+O2	native-mlkit-4.7.23	incomplete	0	0	false		results/m4-anna/semantics/O2/native-mlkit-4.7.23
+O2	native-mlton-20241230	pass	1963	0	true	1963	results/m4-anna/semantics/O2/native-mlton-20241230
+O2	native-polyml-5.9.2	pass	1963	0	true	1963	results/m4-anna/semantics/O2/native-polyml-5.9.2
+O2	native-smlnj-dev-2026.2	pass	1963	0	true	1963	results/m4-anna/semantics/O2/native-smlnj-dev-2026.2
+O2	native-smlnj-legacy-110.99.9	pass	1963	0	true	1963	results/m4-anna/semantics/O2/native-smlnj-legacy-110.99.9
+O2	native-smlnj32-110.99.9	incomplete	4	0	false		results/m4-anna/semantics/O2/native-smlnj32-110.99.9
+O2	rune	pass	1963	0	true	1963	results/m4-anna/semantics/O2/rune
+O2	rune-jit	pass	1963	0	true	1963	results/m4-anna/semantics/O2/rune-jit
+O2	rune-new	pass	1963	0	true	1963	results/m4-anna/semantics/O2/rune-new
+O2	rune-opt	pass	1963	0	true	1963	results/m4-anna/semantics/O2/rune-opt

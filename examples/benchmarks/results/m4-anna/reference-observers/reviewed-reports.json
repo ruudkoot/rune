@@ -1,0 +1,20 @@
+{
+  "smoke": {
+    "bytes": 2810,
+    "sha256": "a9381a357fea3f123699af8a2a199abf57e087d6758554ff3c62a3ffb4b241dc",
+    "word64": "F3AFC2396A8A1CB5",
+    "signed": -887277049712337739
+  },
+  "normal": {
+    "bytes": 28800,
+    "sha256": "e0f99135c942a8978f2d0e26a3d9da1395c10e2e4ccc96af101415f76f906b13",
+    "word64": "2869188386E50180",
+    "signed": 2911885587254673792
+  },
+  "large": {
+    "bytes": 86941,
+    "sha256": "566ae7be308f11f0af2316fa013bec1424da96d09cee46c655d12702616fa0f2",
+    "word64": "18B2617540B8ED09",
+    "signed": 1779591958989696265
+  }
+}
