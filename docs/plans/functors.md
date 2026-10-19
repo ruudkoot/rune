@@ -14,6 +14,10 @@ against master `921af2cc`. It covers:
 performance.md's M3. B is to be revisited later; this file is where that
 starts.
 
+**Built:** A, extended, as M3 (`b168e117f`, merged into `performance` on
+2026-10-19). *What M3 built and found*, below, says what it gave and what
+building it taught.
+
 ## What the Definition says
 
 The rules below are cited from their transcription on branch `runespec`
@@ -78,7 +82,8 @@ By rule 154, `A.E` and `B.E` are distinct.
 
 So Rune, like MLton, accepts a program the Definition rejects.
 [docs/language.md](../language.md) does not list this among its deviations,
-and its row `mod.functor` cites rule 54.
+and its row `mod.functor` cites rule 54. Since M3 Rune rejects the program
+(`tests/errors/err.functor_equality.sml`), and the row is true.
 
 ## What Rune does today
 
@@ -364,6 +369,58 @@ functor's signature out of the identity's hash and replaying the body's
 usages at checks. It would weaken the cut-off that M3 is meant to
 improve.
 
+### What M3 built and found
+
+M3 is `b168e117f`, by the front-end agent, on 2026-10-12. The figures are
+its own; `make check` passed on a snapshot of that commit.
+
+**What it gave:**
+
+* **MLton's 606 files type-checked as units**, by MLton's build of Rune:
+  476.0G instructions before M2, 153.0G after M2, 89.1G after M3 (the
+  target was 100G at most). With a fixed heap of 7 GB: 425.4G for the
+  base, 96.9G after M3.
+* **Rune at tier 2 compiling MLton's compiler whole:** elaboration
+  82.1 s, from 795 s (the target was under 250 s). The compiled MLton is
+  the same bytes as before.
+* **The budgets of the functor programs** (instructions measured):
+  compile-funapp 197.4M to 47.9M, compile-funnest 791.6M to 139.9M.
+
+**The gate held,** as *A contradiction in M3* says it is put:
+
+* The whole program's output is the base's. The exception is
+  `err.functor_generative_types`, which relied on the leak; it now tests
+  generativity with a list.
+* All 791 code files of MLton's units are equal with identities masked.
+* MLton's units built twice through a cache are the build without one.
+* Three scenarios: S65 is the cut-off; S66 is a functor declaration that
+  applies a changed functor, no longer compiled again (it fails on the
+  base); S67 is an old cache missed.
+
+**The copies differ from the signature in polymorphism as well as in
+equality.** A copy elaborated against an argument whose type drops a
+parameter (`type 'a t = int` for a `type 'a t` of the parameter, as in
+MLton's lattices) infers a more general type than the body's check did.
+So an application that makes code is not typed from its copy. It is typed
+by the functor's signature, realised with the copy's names:
+
+* a fast path takes the copy as it is where neither difference can arise;
+* `--lint` checks every copy against the signature, and the fast path's
+  claim with it, and passes on all 606 of MLton's files;
+* `tests/errors/err.functor_signature_types.sml` is the test.
+
+**The counters replayed match in 780 of 791 units.** The other eleven
+record 14 to 84 fewer type variables. They are the units of that case:
+the base's copies, more general, used more of them. A replay without the
+copy cannot know that, and it changes only the `used` prefix, not an
+identity or code.
+
+**Nothing relied on the leak.** MLton's sources, HOL4, the five xc2
+configurations and every suite compile as before. HOL4 was built by this
+code from a fresh clone: `hol.state` in 1,419 s, then 210 targets built and
+none failing in the two hours given; earlier builds of M3 reached 218 and
+182, none failing. That is short of HOL4's whole build.
+
 ### B, functors as functions: to revisit
 
 * **The design:**
@@ -422,9 +479,8 @@ To be measured first:
 
 * **Unit files.** Settled: *A contradiction in M3, found while building
   it*.
-* **What depends on the leak.** Whether MLton's sources, HOL4 or the
-  libraries rely on equality leaking through a functor's result. M3
-  answers it by compiling them.
+* **What depends on the leak.** Settled: nothing that M3 compiled
+  (*What M3 built and found*). HOL4's build was not run to its end.
 * **The copies' code.** A copy elaborated against the actual argument may
   still compile `=` on a body's datatype by its representation (in the
   equality example, `d` holds an `int`). That is a choice of code inside
