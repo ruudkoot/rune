@@ -54,7 +54,7 @@ What each means is on [`REAL`](../sig/REAL.md); the types are this structure's o
 | val | [`compareReal`](../sig/REAL.md#val-comparereal) | `Real32.real * Real32.real -> IEEEReal.real_order` |
 | val | [`copySign`](../sig/REAL.md#val-copysign) | `Real32.real * Real32.real -> Real32.real` |
 | val | [`floor`](../sig/REAL.md#val-floor) | `Real32.real -> int` |
-| val | [`fmt`](../sig/REAL.md#val-fmt) | `StringCvt.realfmt -> Real32.real -> string` |
+| val | [`fmt`](../sig/REAL.md#val-fmt) | `RuneWideStringCvt.realfmt -> Real32.real -> string` |
 | val | [`fromDecimal`](../sig/REAL.md#val-fromdecimal) | `{class : IEEEReal.float_class, digits : int list, exp : int, sign : bool} -> Real32.real option` |
 | val | [`fromInt`](../sig/REAL.md#val-fromint) | `int -> Real32.real` |
 | val | [`fromLarge`](../sig/REAL.md#val-fromlarge) | `IEEEReal.rounding_mode -> real -> Real32.real` |

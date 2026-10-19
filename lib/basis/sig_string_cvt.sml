@@ -12,9 +12,32 @@
 
    Area: Text and characters
 
+   Deviation: `STRING_CVT/generic`. The page writes the types of the helpers
+   that build and take apart text as `char` and `string`, so there are none
+   for wide text, and a scanner of `WideChar.char`s has no `skipWS` or
+   `scanString`. Here the character and the string are the signature's
+   own, `StringCvt` is declared `where type char = Char.char where type
+   string = String.string`, which gives it the very types of the page, and
+   `WideStringCvt` is the same over `WideChar.char` and `WideString.string`,
+   with the same `radix` and `realfmt`. The change of the specification it
+   proposes is in docs/unicode.md.
+
+   Pinned by: `StringCvt:STRING_CVT/generic`,
+   `WideStringCvt:STRING_CVT/generic`
+
    See also: `CHAR`, `STRING`, `SUBSTRING`, `TEXT_IO` *)
 signature STRING_CVT =
 sig
+  (* ---- Text ---- *)
+
+  (* The type of the characters the helpers below read and write: `char` for
+     `StringCvt`, `WideChar.char` for `WideStringCvt`. *)
+  eqtype char
+
+  (* The type of the strings of those characters: `string` for `StringCvt`,
+     `WideString.string` for `WideStringCvt`. *)
+  eqtype string
+
   (* ---- Formats ---- *)
 
   (* The base in which `Int.fmt`, `Word.fmt` and their `scan` functions write
@@ -116,7 +139,8 @@ sig
 
   (* `skipWS getc strm` is `strm` without the white space at its front.
 
-     White space is what `Char.isSpace` accepts.
+     White space is what `Char.isSpace` accepts, and `WideChar.isSpace` for
+     `WideStringCvt`.
 
      Law: `skipWS getc strm = dropl Char.isSpace getc strm`
 

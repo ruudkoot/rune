@@ -107,4 +107,42 @@ struct
                              in WideTextIO.outputSubstr (out, WideSubstring.full (ws [65])); WideTextIO.closeOut out;
                                 (OS.FileSys.remove file handle _ => ()); true end)
   (*>> strings *)
+
+  (*<< text-io *)
+  (* The members of TEXT_IO that WideTextIO has as TextIO has them, since
+     both match one TEXT_IO (the deviation TEXT_IO/generic of lib/basis).
+     The runner gives the program an empty standard input. *)
+  val () = eqW ("WideTextIO.input/what-is-there", ws [0x3BB, 65],
+                fn () => WideTextIO.input (WideTextIO.openString (ws [0x3BB, 65])))
+  val () = eqW ("WideTextIO.input/empty-at-end-of-stream", ws [],
+                fn () => let val ins = WideTextIO.openString (ws [65]) in ignore (WideTextIO.input ins); WideTextIO.input ins end)
+  val () = eqW ("WideTextIO.openOut/empties-the-file", ws [0x1F600],
+                fn () => (write (file, sample); write (file, ws [0x1F600]);
+                          let val ins = WideTextIO.openIn file in WideTextIO.inputAll ins before WideTextIO.closeIn ins end))
+  val () = eqW ("WideTextIO.outputSubstr/writes-the-substring", ws [233, 0x1F600],
+                fn () => let val out = WideTextIO.openOut file
+                         in WideTextIO.outputSubstr (out, WideSubstring.extract (sample, 1, SOME 2)); WideTextIO.closeOut out;
+                            let val ins = WideTextIO.openIn file in WideTextIO.inputAll ins before WideTextIO.closeIn ins end
+                         end)
+  (* a file of wide characters has no positions
+     (WideTextIO/file-streams-have-no-positions) *)
+  val () = eqB ("WideTextIO.setPosOut/file-has-no-positions", true,
+                fn () => let val out = WideTextIO.openOut file
+                         in (WideTextIO.setPosOut (out, WideTextIO.getPosOut out); false) handle IO.Io _ => true
+                         end before (OS.FileSys.remove file handle _ => ()))
+  val () = eqB ("WideTextIO.StreamIO.setPosOut/file-has-no-positions", true,
+                fn () => let val out = WideTextIO.getOutstream (WideTextIO.openOut file)
+                         in (ignore (WideTextIO.StreamIO.setPosOut (WideTextIO.StreamIO.getPosOut out)); false) handle IO.Io _ => true
+                         end before (OS.FileSys.remove file handle _ => ()))
+  val () = eqB ("WideTextIO.StreamIO.filePosOut/file-has-no-positions", true,
+                fn () => let val out = WideTextIO.getOutstream (WideTextIO.openOut file)
+                         in (ignore (WideTextIO.StreamIO.filePosOut (WideTextIO.StreamIO.getPosOut out)); false) handle IO.Io _ => true
+                         end before (OS.FileSys.remove file handle _ => ()))
+  val () = eqW ("WideTextIO.stdIn/inputAll-at-end-of-stream", ws [], fn () => WideTextIO.inputAll WideTextIO.stdIn)
+  val () = eqB ("WideTextIO.stdOut/output-and-flushOut", true,
+                fn () => (WideTextIO.output (WideTextIO.stdOut, ws []); WideTextIO.flushOut WideTextIO.stdOut; true))
+  val () = eqB ("WideTextIO.stdErr/output-and-flushOut", true,
+                fn () => (WideTextIO.output (WideTextIO.stdErr, ws [35, 32, 0x3BB, 10]); WideTextIO.flushOut WideTextIO.stdErr; true))
+  val () = eqB ("WideTextIO.print/empty-string", true, fn () => (WideTextIO.print (ws []); true))
+  (*>> text-io *)
 end

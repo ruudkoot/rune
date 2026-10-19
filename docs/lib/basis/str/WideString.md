@@ -13,7 +13,7 @@
 ## Synopsis
 
 ```sml
-structure WideString :> STRING where type string = WideCharVector.vector where type char = WideChar.char
+structure WideString : STRING where type char = WideChar.char
 ```
 
 WideString: strings of wide characters, and their conversions to and from
@@ -41,36 +41,36 @@ What each means is on [`STRING`](../sig/STRING.md); the types are this structure
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`char`](../sig/STRING.md#type-char) | `RuneWideChar.char` |
-| type | [`string`](../sig/STRING.md#type-string) | `WideCharVector.vector` |
-| val | [`<`](../sig/STRING.md#val-op-lt) | `WideCharVector.vector * WideCharVector.vector -> bool` |
-| val | [`<=`](../sig/STRING.md#val-op-lt-eq) | `WideCharVector.vector * WideCharVector.vector -> bool` |
-| val | [`>`](../sig/STRING.md#val-op-gt) | `WideCharVector.vector * WideCharVector.vector -> bool` |
-| val | [`>=`](../sig/STRING.md#val-op-gt-eq) | `WideCharVector.vector * WideCharVector.vector -> bool` |
-| val | [`^`](../sig/STRING.md#val-op-caret) | `WideCharVector.vector * WideCharVector.vector -> WideCharVector.vector` |
-| val | [`collate`](../sig/STRING.md#val-collate) | `(RuneWideChar.char * RuneWideChar.char -> order) -> WideCharVector.vector * WideCharVector.vector -> order` |
-| val | [`compare`](../sig/STRING.md#val-compare) | `WideCharVector.vector * WideCharVector.vector -> order` |
-| val | [`concat`](../sig/STRING.md#val-concat) | `WideCharVector.vector list -> WideCharVector.vector` |
-| val | [`concatWith`](../sig/STRING.md#val-concatwith) | `WideCharVector.vector -> WideCharVector.vector list -> WideCharVector.vector` |
-| val | [`explode`](../sig/STRING.md#val-explode) | `WideCharVector.vector -> RuneWideChar.char list` |
-| val | [`extract`](../sig/STRING.md#val-extract) | `WideCharVector.vector * int * int option -> WideCharVector.vector` |
-| val | [`fields`](../sig/STRING.md#val-fields) | `(RuneWideChar.char -> bool) -> WideCharVector.vector -> WideCharVector.vector list` |
-| val | [`fromCString`](../sig/STRING.md#val-fromcstring) | `string -> WideCharVector.vector option` |
-| val | [`fromString`](../sig/STRING.md#val-fromstring) | `string -> WideCharVector.vector option` |
-| val | [`implode`](../sig/STRING.md#val-implode) | `RuneWideChar.char list -> WideCharVector.vector` |
-| val | [`isPrefix`](../sig/STRING.md#val-isprefix) | `WideCharVector.vector -> WideCharVector.vector -> bool` |
-| val | [`isSubstring`](../sig/STRING.md#val-issubstring) | `WideCharVector.vector -> WideCharVector.vector -> bool` |
-| val | [`isSuffix`](../sig/STRING.md#val-issuffix) | `WideCharVector.vector -> WideCharVector.vector -> bool` |
-| val | [`map`](../sig/STRING.md#val-map) | `(RuneWideChar.char -> RuneWideChar.char) -> WideCharVector.vector -> WideCharVector.vector` |
+| type | [`string`](../sig/STRING.md#type-string) | *a type of its own* |
+| val | [`<`](../sig/STRING.md#val-op-lt) | `WideString.string * WideString.string -> bool` |
+| val | [`<=`](../sig/STRING.md#val-op-lt-eq) | `WideString.string * WideString.string -> bool` |
+| val | [`>`](../sig/STRING.md#val-op-gt) | `WideString.string * WideString.string -> bool` |
+| val | [`>=`](../sig/STRING.md#val-op-gt-eq) | `WideString.string * WideString.string -> bool` |
+| val | [`^`](../sig/STRING.md#val-op-caret) | `WideString.string * WideString.string -> WideString.string` |
+| val | [`collate`](../sig/STRING.md#val-collate) | `(RuneWideChar.char * RuneWideChar.char -> order) -> WideString.string * WideString.string -> order` |
+| val | [`compare`](../sig/STRING.md#val-compare) | `WideString.string * WideString.string -> order` |
+| val | [`concat`](../sig/STRING.md#val-concat) | `WideString.string list -> WideString.string` |
+| val | [`concatWith`](../sig/STRING.md#val-concatwith) | `WideString.string -> WideString.string list -> WideString.string` |
+| val | [`explode`](../sig/STRING.md#val-explode) | `WideString.string -> RuneWideChar.char list` |
+| val | [`extract`](../sig/STRING.md#val-extract) | `WideString.string * int * int option -> WideString.string` |
+| val | [`fields`](../sig/STRING.md#val-fields) | `(RuneWideChar.char -> bool) -> WideString.string -> WideString.string list` |
+| val | [`fromCString`](../sig/STRING.md#val-fromcstring) | `string -> WideString.string option` |
+| val | [`fromString`](../sig/STRING.md#val-fromstring) | `string -> WideString.string option` |
+| val | [`implode`](../sig/STRING.md#val-implode) | `RuneWideChar.char list -> WideString.string` |
+| val | [`isPrefix`](../sig/STRING.md#val-isprefix) | `WideString.string -> WideString.string -> bool` |
+| val | [`isSubstring`](../sig/STRING.md#val-issubstring) | `WideString.string -> WideString.string -> bool` |
+| val | [`isSuffix`](../sig/STRING.md#val-issuffix) | `WideString.string -> WideString.string -> bool` |
+| val | [`map`](../sig/STRING.md#val-map) | `(RuneWideChar.char -> RuneWideChar.char) -> WideString.string -> WideString.string` |
 | val | [`maxSize`](../sig/STRING.md#val-maxsize) | `int` |
-| val | [`scan`](../sig/STRING.md#val-scan) | `('a -> (RuneWideChar.char * 'a) option) -> 'a -> (WideCharVector.vector * 'a) option` |
-| val | [`size`](../sig/STRING.md#val-size) | `WideCharVector.vector -> int` |
-| val | [`str`](../sig/STRING.md#val-str) | `RuneWideChar.char -> WideCharVector.vector` |
-| val | [`sub`](../sig/STRING.md#val-sub) | `WideCharVector.vector * int -> RuneWideChar.char` |
-| val | [`substring`](../sig/STRING.md#val-substring) | `WideCharVector.vector * int * int -> WideCharVector.vector` |
-| val | [`toCString`](../sig/STRING.md#val-tocstring) | `WideCharVector.vector -> string` |
-| val | [`toString`](../sig/STRING.md#val-tostring) | `WideCharVector.vector -> string` |
-| val | [`tokens`](../sig/STRING.md#val-tokens) | `(RuneWideChar.char -> bool) -> WideCharVector.vector -> WideCharVector.vector list` |
-| val | [`translate`](../sig/STRING.md#val-translate) | `(RuneWideChar.char -> WideCharVector.vector) -> WideCharVector.vector -> WideCharVector.vector` |
+| val | [`scan`](../sig/STRING.md#val-scan) | `('a -> (RuneWideChar.char * 'a) option) -> 'a -> (WideString.string * 'a) option` |
+| val | [`size`](../sig/STRING.md#val-size) | `WideString.string -> int` |
+| val | [`str`](../sig/STRING.md#val-str) | `RuneWideChar.char -> WideString.string` |
+| val | [`sub`](../sig/STRING.md#val-sub) | `WideString.string * int -> RuneWideChar.char` |
+| val | [`substring`](../sig/STRING.md#val-substring) | `WideString.string * int * int -> WideString.string` |
+| val | [`toCString`](../sig/STRING.md#val-tocstring) | `WideString.string -> string` |
+| val | [`toString`](../sig/STRING.md#val-tostring) | `WideString.string -> string` |
+| val | [`tokens`](../sig/STRING.md#val-tokens) | `(RuneWideChar.char -> bool) -> WideString.string -> WideString.string list` |
+| val | [`translate`](../sig/STRING.md#val-translate) | `(RuneWideChar.char -> WideString.string) -> WideString.string -> WideString.string` |
 
 ---
 

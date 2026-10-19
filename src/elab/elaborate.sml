@@ -124,6 +124,20 @@ struct
       fun bounded (what, v, signed, n) =
         let val (lo, hi) = literalBounds (signed, n)
         in check (what, v, lo, hi) end
+      (* a raw character above 127 read under --unicode, which means its
+         code point (D6): an error at an 8-bit type, whose constant says
+         by an escape whether it means the character or its bytes *)
+      fun raw (what, c) =
+        let
+          fun ddd b = "\\" ^ StringCvt.padLeft #"0" 3 (Int.toString b)
+          val utf8 = String.concat (List.map (ddd o Char.ord) (String.explode (Utf8.encode c)))
+        in
+          err (sp, "raw character " ^ Lexer.codePoint c ^ " in a " ^ what ^ " constant of type " ^ toString t ^ ": "
+                   ^ (if c <= 255 then "write " ^ ddd c ^ " for the character"
+                                       ^ (if what = "string" then ", or " ^ utf8 ^ " for its UTF-8" else "")
+                      else if what = "string" then "write " ^ utf8 ^ " for its UTF-8, or give the constant a wide type"
+                      else "give the constant a wide type"))
+        end
     in
       case prune t of
         TCon (c, _) =>
@@ -132,9 +146,11 @@ struct
                bounded ("integer", v, true, n)
            | (SWord v, SOME (Overload.Bits n)) =>
                bounded ("word", v, false, n)
-           | (SChar v, SOME (Overload.Bits n)) =>
+           | (SChar (_, SOME r), SOME (Overload.Bits _)) => raw ("character", r)
+           | (SChar (v, NONE), SOME (Overload.Bits n)) =>
                bounded ("character", IntInf.fromInt v, false, n)
-           | (SWideString cs, SOME (Overload.Bits n)) =>
+           | (SWideString (_, SOME r), SOME (Overload.Bits _)) => raw ("string", r)
+           | (SWideString (cs, NONE), SOME (Overload.Bits n)) =>
                (case cs of [] => ()
                 | _ => let val (lo, hi) = literalBounds (false, n)
                        in List.app (fn v => check ("string", IntInf.fromInt v, lo, hi)) cs end)
@@ -1373,6 +1389,8 @@ struct
 
   fun elabTop (env : env ref, decs : dec list) : unit =
     (lastDelta := Env.empty;
+     (* a type of a message is named as the top level names it *)
+     Types.qualifier := (fn c => Env.qualifiedName (!env, c));
      List.app (fn d =>
                 let
                   val saved = if !recover then SOME (snapshot ()) else NONE

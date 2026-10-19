@@ -48,13 +48,17 @@ struct
 
   (* The signatures of the Basis Library that the pages define ask no more
      than the pages do: the structures seen through the transcriptions match
-     them. *)
+     them. TEXT_STREAM_IO and TEXT_IO ask for one type more in Rune, the
+     `substring` of the change request of docs/unicode.md (the deviations
+     TEXT_STREAM_IO/generic and TEXT_IO/generic): a structure that matches
+     the page matches them once it has that type, which a host's matches
+     too. *)
   (*<< sig-STREAM_IO *)
   structure SigS : STREAM_IO = G
   val () = T.check ("TextIO.StreamIO:STREAM_IO/signature-STREAM_IO", fn () => true)
   (*>> sig-STREAM_IO *)
   (*<< sig-TEXT_STREAM_IO *)
-  structure SigT : TEXT_STREAM_IO = S
+  structure SigT : TEXT_STREAM_IO = struct open S type substring = Substring.substring end
   val () = T.check ("TextIO.StreamIO:TEXT_STREAM_IO/signature-TEXT_STREAM_IO", fn () => true)
   (*>> sig-TEXT_STREAM_IO *)
   (*<< sig-IMPERATIVE_IO *)
@@ -62,7 +66,12 @@ struct
   val () = T.check ("TextIO:IMPERATIVE_IO/signature-IMPERATIVE_IO", fn () => true)
   (*>> sig-IMPERATIVE_IO *)
   (*<< sig-TEXT_IO *)
-  structure SigX : TEXT_IO = C
+  structure SigX : TEXT_IO =
+  struct
+    open C
+    structure StreamIO = struct open C.StreamIO type substring = Substring.substring end
+    type substring = Substring.substring
+  end
   val () = T.check ("TextIO:TEXT_IO/signature-TEXT_IO", fn () => true)
   (*>> sig-TEXT_IO *)
 end

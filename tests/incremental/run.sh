@@ -806,5 +806,52 @@ val () = print (Int64.toString x ^ "\n")'
   build; fails
 fi
 
+# S63, the mode a unit is read in (docs/plans/utf8.md, D1): the
+# configuration does not say it, since the libraries are read in the
+# default; a unit's key does, where it is not the default. Built under
+# --unicode and then, through the same cache, without it, the file is
+# compiled again, and once more under --unicode=latin1; under --unicode
+# again it is found. A build file's annotation says a unit's mode over the
+# command line's
+if run S63; then
+  own S63 p.sml
+  put p.sml 'val () = print "read\n"'
+  build --unicode; want "p.sml"
+  prints read
+  build; want "p.sml"
+  build --unicode=latin1; want "p.sml"
+  build --unicode; want ""
+  build; want ""
+  prints read
+  own S63b --build p.build
+  put p.sml 'val () = print "built\n"'
+  put p.build 'annotate "unicode" in p.sml end'
+  build; want "p.sml"
+  prints built
+  build --unicode; want ""
+  put p.build 'annotate "ascii" in p.sml end'
+  build --unicode; want "p.sml"
+  build; want ""
+fi
+
+# S64, the warnings of UTS #39 (docs/plans/utf8.md, D13): an entry keeps a
+# unit's warnings, and --no-unicode-lints leaves out those of UTS #39, so
+# an input file's key says it. The file is compiled again with it and
+# found without it, warning as it did
+if run S64; then
+  own S64 p.sml
+  printf 'val x\316\273 = 1\nval () = print "linted\\n"\n' > "$dir/p.sml"
+  lint="p.sml:1:5: warning: the name x.* mixes scripts"
+  linted() {
+    if grep -q "$lint" "$dir/build.err"; then [ "$1" = yes ]; else [ "$1" = no ]; fi && { pass=$((pass + 1)); return; }
+    echo "FAIL incremental.S64: wanted a warning: $1 ($dir/build.err)"; fail=$((fail + 1))
+  }
+  build --unicode; want "p.sml"; linted yes
+  prints linted
+  build --unicode --no-unicode-lints; want "p.sml"; linted no
+  build --unicode --no-unicode-lints; want ""; linted no
+  build --unicode; want ""; linted yes
+fi
+
 echo "incremental: passed $pass, failed $fail"
 [ $fail = 0 ]

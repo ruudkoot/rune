@@ -6,8 +6,8 @@
 | --- | --- |
 | Signature | [`COMPILER`](../sig/COMPILER.md) |
 | Status | extension |
-| Members | 13 |
-| Tests | 15 checks |
+| Members | 14 |
+| Tests | 16 checks |
 | Source | [lib/basis/compiler.sml](../../../../lib/basis/compiler.sml) |
 
 ## Synopsis
@@ -29,6 +29,7 @@ What each means is on [`COMPILER`](../sig/COMPILER.md); the types are this struc
 | datatype | [`pretty`](../sig/COMPILER.md#type-pretty) | `PrettyBlock` &#124; `PrettyBreak` &#124; `PrettyLineBreak` &#124; `PrettyString` &#124; `PrettyStringWithWidth` |
 | val | [`addPrettyPrinter`](../sig/COMPILER.md#val-addprettyprinter) | `(int -> 'a -> 'b -> pretty) -> unit` |
 | val | [`compile`](../sig/COMPILER.md#val-compile) | `{file : string, line : int, read : unit -> char option} -> unit -> unit` |
+| val | [`compileIn`](../sig/COMPILER.md#val-compilein) | `string -> {file : string, line : int, read : unit -> char option} -> unit -> unit` |
 | val | [`lineLength`](../sig/COMPILER.md#val-linelength) | `int ref` |
 | val | [`prettyPrint`](../sig/COMPILER.md#val-prettyprint) | `(string -> unit) * int -> pretty -> unit` |
 | val | [`printDepth`](../sig/COMPILER.md#val-printdepth) | `int ref` |

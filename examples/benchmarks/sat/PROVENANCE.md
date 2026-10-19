@@ -10,3 +10,7 @@ Removes candidate logging and consumes every returned Boolean. An independent
 including the three unused variables. Normal repeats 10000 solves; large
 retains the original million. Allocation, closures and short-circuiting are
 diagnostic hypotheses, not measured findings.
+
+The upstream copy writes its one non-ASCII literal, `"φ("`, as the escapes
+of its UTF-8, `"\207\134("`, which Rune's default needs (docs/plans/utf8.md,
+D6); it means the same bytes.

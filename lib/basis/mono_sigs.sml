@@ -32,17 +32,15 @@
    type to pin to; here `WideString.string` is already there and `STRING`
    already makes it an equality type.
 
-   Rune gives the equality the other way, by sealing with `MONO_VECTOR_EQ`.
-   That is a consequence of *this* library's order and not of the fault:
-   `WideString` is built on `WideCharVector` (`type string = V.vector`, and
-   every operation delegates), so `WideCharVector` is where the type name is
-   born and there is nothing yet to pin it to. Following the page as it
-   should have been written would mean giving `WideString` a representation
-   of its own and pinning `WideCharVector` to it -- a change to two files,
-   not a rename -- and `MONO_VECTOR_EQ` would then be unnecessary.
+   Rune follows the page as it should have been written: `WideCharVector` is
+   declared `where type vector = WideString.string where type elem =
+   WideChar.char`, and the wide family is sealed in the order of the 8-bit
+   one, the strings first (widestring.sml), so `WideCharVector.vector`
+   admits equality because `WideString.string` does, and `MONO_VECTOR`
+   serves it unchanged (the reading `WideCharVector/vector-is-WideString.string`).
 
    See also: `VECTOR`, `ARRAY`, `VECTOR_SLICE`, `ARRAY_SLICE`, `MONO_ARRAY2`,
-   `MONO_VECTOR_EQ`, `TEXT`, `BYTE` *)
+   `TEXT`, `BYTE` *)
 signature MONO_VECTOR =
 sig
   (* The type of these vectors.
@@ -470,43 +468,28 @@ sig
 end
 
 
-(* The same as `MONO_VECTOR`, with a vector type that admits equality.
-
-   Area: Sequences
-
-   Status: extension
-
-   Deviation: `MONO_VECTOR_EQ/not-in-the-specification`. This signature is
-   not in the specification, and it is here because the specification asks
-   for something it gives no way to say: `WideCharVector.vector` has to admit
-   equality, and the declaration the page gives `WideCharVector` cannot make
-   it -- see the erratum `MONO_VECTOR/WideCharVector-must-admit-equality`.
-   `MONO_VECTOR` writes `type vector`, not `eqtype`, so that a family whose
-   elements do not admit equality can have a vector; a family whose vector is
-   a type of its own and does admit it is sealed with this instead. The
-   specification's own way out is `where type vector = WideString.string` on
-   the instance, which Rune cannot use because `WideString` is declared after
-   `WideCharVector` and is built on it -- `WideString.string` must be a type
-   name of its own for wide string constants to be overloaded at it. *)
-signature MONO_VECTOR_EQ =
+(* `MONO_VECTOR` with a vector type that admits equality: the view of the
+   byte vector inside the library (`RUNE_MONO_VECTOR_BYTES`), whose type is
+   born at the seal of word8vector.sml with nothing to pin it to. It is not a
+   signature of the specification and no program sees it: the wide family,
+   which used to be sealed with a public signature of this shape, is sealed
+   in the order of the specification instead (widestring.sml), where
+   `WideCharVector.vector` is `WideString.string` and `STRING` gives it its
+   equality. *)
+signature RUNE_MONO_VECTOR_EQ =
 sig
   (* The type of these vectors, which admits equality. *)
   eqtype vector
 
-  (* The type of the elements: `WideChar.char` for `WideCharVector`. *)
+  (* The type of the elements: `Word8.word` for the byte vector. *)
   type elem
 
-  (* The greatest length such a vector may have.
-
-     Implementation: `MONO_VECTOR_EQ.maxLen/value`. `String.maxSize`, the
-     bound of the families of `MONO_VECTOR` whose vector is a string. *)
+  (* The greatest length such a vector may have: `String.maxSize`. *)
   val maxLen : int
 
   (* `fromList l` is the sequence of the elements of `l`, in order.
 
-     Raises: `Size` if `l` is longer than `maxLen`.
-
-     Example: `fromList [WideChar.chr 65, WideChar.chr 0x3BB] = fromList [WideChar.chr 65, WideChar.chr 0x3BB]` *)
+     Raises: `Size` if `l` is longer than `maxLen`. *)
   val fromList : elem list -> vector
 
   (* `tabulate (n, f)` is the sequence of `f 0`, ..., `f (n - 1)`, applied in order.
@@ -514,23 +497,17 @@ sig
      Raises: `Size` if `n < 0` or `n > maxLen`, before `f` is applied. *)
   val tabulate : int * (int -> elem) -> vector
 
-  (* `length x` is the number of elements.
-
-     Example: `length (fromList [WideChar.chr 0x10000]) = 1` *)
+  (* `length x` is the number of elements. *)
   val length : vector -> int
 
   (* `sub (x, i)` is the element at position `i`, counting from 0.
 
-     Raises: `Subscript` if `i` is outside.
-
-     Example: `WideChar.ord (sub (fromList [WideChar.chr 65, WideChar.chr 0x3BB], 1)) = 0x3BB` *)
+     Raises: `Subscript` if `i` is outside. *)
   val sub : vector * int -> elem
 
   (* `update (v, i, x)` is a new vector like `v` but with `x` at position `i`.
 
-     Raises: `Subscript` if `i` is outside `v`.
-
-     Example: `update (fromList [WideChar.chr 65], 0, WideChar.chr 66) = fromList [WideChar.chr 66]` *)
+     Raises: `Subscript` if `i` is outside `v`. *)
   val update : vector * int * elem -> vector
 
   (* `concat l` is the vectors of `l` one after another.
@@ -547,9 +524,7 @@ sig
   (* `mapi f v` is the vector of the results of `f` on the index and the element of each position. *)
   val mapi : (int * elem -> elem) -> vector -> vector
 
-  (* `map f v` is the vector of the results of `f` on each element, in order.
-
-     Example: `map WideChar.toUpper (fromList [WideChar.chr 97]) = fromList [WideChar.chr 65]` *)
+  (* `map f v` is the vector of the results of `f` on each element, in order. *)
   val map : (elem -> elem) -> vector -> vector
 
   (* `foldli f init x` combines the elements from the left, giving `f` the index as well. *)
@@ -576,9 +551,7 @@ sig
   (* `all p x` is `true` when every element satisfies `p`. *)
   val all : (elem -> bool) -> vector -> bool
 
-  (* `collate cmp (a, b)` compares the elements of two of these lexicographically with `cmp`.
-
-     Example: `collate WideChar.compare (fromList [WideChar.chr 65], fromList [WideChar.chr 66]) = LESS` *)
+  (* `collate cmp (a, b)` compares the elements of two of these lexicographically with `cmp`. *)
   val collate : (elem * elem -> order) -> vector * vector -> order
 end
 
@@ -1025,7 +998,7 @@ end
    signature is in word8vector.sml, where `Substring` is in scope. *)
 signature RUNE_MONO_VECTOR_BYTES =
 sig
-  include MONO_VECTOR_EQ
+  include RUNE_MONO_VECTOR_EQ
   val toString : vector -> string
   val fromString : string -> vector
 end

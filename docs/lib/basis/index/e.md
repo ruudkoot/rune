@@ -4,7 +4,7 @@
 
 - `DDE.executeString` (val): [WINDOWS](../sig/WINDOWS.md#val-dde.executestring)
 - `e` (val): [MATH](../sig/MATH.md#val-e)
-- `elem` (type): [IMPERATIVE_IO](../sig/IMPERATIVE_IO.md#type-elem), [MONO_ARRAY](../sig/MONO_ARRAY.md#type-elem), [MONO_ARRAY2](../sig/MONO_ARRAY2.md#type-elem), [MONO_ARRAY_SLICE](../sig/MONO_ARRAY_SLICE.md#type-elem), [MONO_VECTOR](../sig/MONO_VECTOR.md#type-elem), [MONO_VECTOR_EQ](../sig/MONO_VECTOR_EQ.md#type-elem), [MONO_VECTOR_SLICE](../sig/MONO_VECTOR_SLICE.md#type-elem), [PRIM_IO](../sig/PRIM_IO.md#type-elem), [STREAM_IO](../sig/STREAM_IO.md#type-elem), [TEXT_IO](../sig/TEXT_IO.md#type-elem)
+- `elem` (type): [IMPERATIVE_IO](../sig/IMPERATIVE_IO.md#type-elem), [MONO_ARRAY](../sig/MONO_ARRAY.md#type-elem), [MONO_ARRAY2](../sig/MONO_ARRAY2.md#type-elem), [MONO_ARRAY_SLICE](../sig/MONO_ARRAY_SLICE.md#type-elem), [MONO_VECTOR](../sig/MONO_VECTOR.md#type-elem), [MONO_VECTOR_SLICE](../sig/MONO_VECTOR_SLICE.md#type-elem), [PRIM_IO](../sig/PRIM_IO.md#type-elem), [STREAM_IO](../sig/STREAM_IO.md#type-elem), [TEXT_IO](../sig/TEXT_IO.md#type-elem)
 - `Empty` (exn): [LIST](../sig/LIST.md#exn-empty)
 - `end_of_stream` (val): [SML90](../sig/SML90.md#val-end_of_stream)
 - `ended` (type): [SUBPROCESS](../sig/SUBPROCESS.md#type-ended)
@@ -23,7 +23,7 @@
 - `execute` (val): [UNIX](../sig/UNIX.md#val-execute), [WINDOWS](../sig/WINDOWS.md#val-execute)
 - `executeInEnv` (val): [UNIX](../sig/UNIX.md#val-executeinenv)
 - `exist` (val): [POSIX_ERROR](../sig/POSIX_ERROR.md#val-exist)
-- `exists` (val): [ARRAY](../sig/ARRAY.md#val-exists), [ARRAY_SLICE](../sig/ARRAY_SLICE.md#val-exists), [LIST](../sig/LIST.md#val-exists), [LIST_PAIR](../sig/LIST_PAIR.md#val-exists), [MONO_ARRAY](../sig/MONO_ARRAY.md#val-exists), [MONO_ARRAY_SLICE](../sig/MONO_ARRAY_SLICE.md#val-exists), [MONO_VECTOR](../sig/MONO_VECTOR.md#val-exists), [MONO_VECTOR_EQ](../sig/MONO_VECTOR_EQ.md#val-exists), [MONO_VECTOR_SLICE](../sig/MONO_VECTOR_SLICE.md#val-exists), [VECTOR](../sig/VECTOR.md#val-exists), [VECTOR_SLICE](../sig/VECTOR_SLICE.md#val-exists)
+- `exists` (val): [ARRAY](../sig/ARRAY.md#val-exists), [ARRAY_SLICE](../sig/ARRAY_SLICE.md#val-exists), [LIST](../sig/LIST.md#val-exists), [LIST_PAIR](../sig/LIST_PAIR.md#val-exists), [MONO_ARRAY](../sig/MONO_ARRAY.md#val-exists), [MONO_ARRAY_SLICE](../sig/MONO_ARRAY_SLICE.md#val-exists), [MONO_VECTOR](../sig/MONO_VECTOR.md#val-exists), [MONO_VECTOR_SLICE](../sig/MONO_VECTOR_SLICE.md#val-exists), [VECTOR](../sig/VECTOR.md#val-exists), [VECTOR_SLICE](../sig/VECTOR_SLICE.md#val-exists)
 - `exit` (val): [OS_PROCESS](../sig/OS_PROCESS.md#val-exit), [POSIX_PROCESS](../sig/POSIX_PROCESS.md#val-exit), [UNIX](../sig/UNIX.md#val-exit), [WINDOWS](../sig/WINDOWS.md#val-exit)
 - `exit_status` (type): [POSIX_PROCESS](../sig/POSIX_PROCESS.md#type-exit_status), [UNIX](../sig/UNIX.md#type-exit_status)
 - `exn` (type): [GENERAL](../sig/GENERAL.md#type-exn)

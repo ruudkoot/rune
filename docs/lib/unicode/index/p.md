@@ -1,6 +1,6 @@
 # Index: P
 
-[Overview](../README.md) &middot; [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) [n](n.md) **p** [r](r.md) [s](s.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) **p** [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [y](y.md)
 
 - `policy` (type): [GRAPHEME](../sig/GRAPHEME.md#type-policy)
 

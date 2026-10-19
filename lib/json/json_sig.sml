@@ -42,14 +42,20 @@ sig
      tokens, `"`, `\` and the control characters escaped, the rest of the
      UTF-8 of strings left as it is.
 
-     Raises: `Domain` if a string of `v` is not valid UTF-8, or a `Number`
-     is not a number of the RFC's grammar.
+     A byte of a string that is not part of its UTF-8 is written as the
+     character of the same number, `\u00XX`, as Latin-1 would read it: JSON
+     text holds characters, not bytes, and so a file name or a message in
+     another encoding can still be written.
 
-     Reading back what it writes gives `v` again;
-     tests/lib/json/roundtrip.sml checks that on random values.
+     Raises: `Domain` if a `Number` is not a number of the RFC's grammar.
+
+     Reading back what it writes gives `v` again where its strings are
+     UTF-8; tests/lib/json/roundtrip.sml checks that on random values.
 
      Example: `encode (Object [("a", Array [Bool true, String "\n"])]) =
-     "{\"a\":[true,\"\\n\"]}"` *)
+     "{\"a\":[true,\"\\n\"]}"`
+
+     Example: `encode (String "caf\233") = "\"caf\\u00E9\""` *)
   val encode : value -> string
 
   (* `encodeIndented n v` is `v` written as JSON text with each element and

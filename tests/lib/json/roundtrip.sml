@@ -66,7 +66,16 @@ struct
   fun escapes () =
     (check ("escapes", Json.encode (Json.String "a\"b\\c\n\t\001") = "\"a\\\"b\\\\c\\n\\t\\u0001\"");
      check ("UTF-8 kept", Json.encode (Json.String "\226\130\172") = "\"\226\130\172\"");
-     check ("bad UTF-8 refused", (ignore (Json.encode (Json.String "\255")); false) handle Domain => true);
+     (* a byte that is not part of the UTF-8 is written as the character of
+        its number, the UTF-8 around it as it is *)
+     check ("bytes that are not UTF-8 escaped",
+            Json.encode (Json.String "\255") = "\"\\u00FF\""
+            andalso Json.encode (Json.String "caf\233 \226\130\172") = "\"caf\\u00E9 \226\130\172\""
+            andalso Json.encode (Json.String "\226\130x") = "\"\\u00E2\\u0082x\""
+            andalso Json.encode (Json.String "\237\160\128") = "\"\\u00ED\\u00A0\\u0080\""
+            andalso Json.encode (Json.String "\192\128\n") = "\"\\u00C0\\u0080\\n\"");
+     check ("what is escaped reads back as Latin-1",
+            Json.decode (Json.encode (Json.String "caf\233")) = Json.String "caf\195\169");
      check ("a bad number refused", (ignore (Json.encode (Json.Number "01")); false) handle Domain => true);
      check ("a surrogate pair read", Json.decode "\"\\ud83d\\ude00\"" = Json.String "\240\159\152\128"))
 

@@ -224,6 +224,9 @@ struct
   fun unop (name, class, id) =
     let val o' = overloaded (id, class)
     in (name, Prim {scheme = TArrow (o', o'), name = name}) end
+  fun strop (name, scheme, id) =
+    let val s = overloaded (id, ["string"])
+    in (name, Prim {scheme = scheme s, name = name}) end
   fun cmpop (name, class, id) =
     let val o' = overloaded (id, class)
     in (name, Prim {scheme = TArrow (tupleTy [o', o'], boolTy), name = name}) end
@@ -239,7 +242,15 @@ struct
      ("=", Prim {scheme = TArrow (tupleTy [eqa, eqa], boolTy), name = "="}),
      ("<>", Prim {scheme = TArrow (tupleTy [eqa, eqa], boolTy), name = "<>"}),
      (":=", Prim {scheme = TArrow (tupleTy [refTy a, a], unitTy), name = ":="}),
-     ("!", Prim {scheme = TArrow (refTy a, a), name = "!"})]
+     ("!", Prim {scheme = TArrow (refTy a, a), name = "!"}),
+     (* the operations of the top level on strings, overloaded on the class
+        String as the comparisons are: one type of the class throughout,
+        resolved by the operands, `string` by default (docs/language.md,
+        Deviations, Overloading) *)
+     strop ("^", fn s => TArrow (tupleTy [s, s], s), ~22),
+     strop ("size", fn s => TArrow (s, intTy), ~23),
+     strop ("concat", fn s => TArrow (listTy s, s), ~24),
+     strop ("substring", fn s => TArrow (tupleTy [s, intTy, intTy], s), ~25)]
 
   fun nameStr (c, cons) = TyStr {fcn = TName c, cons = cons}
 
@@ -267,4 +278,74 @@ struct
     Env {vals = StringMap.fromList builtinVals,
          tys = StringMap.fromList builtinTys,
          strs = StringMap.empty}
+
+  (* ---- the names of types ---- *)
+
+  (* the type constructor a type structure is, or abbreviates with its
+     parameters in order *)
+  fun tyconOf (TyStr {fcn, ...}) = Option.map #stamp (fcnIsName fcn)
+
+  (* the shortest path that names the type constructor in env: its own name
+     at the top where that is it, else the structures breadth first, a path
+     that ends in its own name before one that does not, then the first in
+     order; only names satisfying accepts are considered *)
+  fun pathOfWhen (env : env, c : tycon, accepts : string -> bool) : string option =
+    let
+      val stamp = #stamp c
+      fun named e n = case StringMap.find (tys e, n) of SOME ts => tyconOf ts = SOME stamp | NONE => false
+      fun search ([], _) = NONE
+        | search (_, 0) = NONE
+        | search (level : (string * env) list, depth : int) =
+            let
+              fun own (p, e) = if named e (#name c) andalso accepts (p ^ #name c) then SOME (p ^ #name c) else NONE
+              fun other (p, e) =
+                StringMap.foldli (fn (n, ts, found) => case found of
+                                                         SOME _ => found
+                                                       | NONE => if tyconOf ts = SOME stamp andalso accepts (p ^ n)
+                                                                 then SOME (p ^ n) else NONE)
+                                 NONE (tys e)
+              (* the library's own structures (Rune...) after the others,
+                 and a structure named for the type (WideString for its
+                 string, which WideChar's string is too) before the rest *)
+              fun private p = String.isPrefix "Rune" p orelse String.isPrefix "RUNE" p
+              fun lower s = String.map Char.toLower s
+              fun namedFor p =
+                let val parts = String.tokens (fn ch => ch = #".") p
+                in List.length parts >= 2
+                   andalso String.isSubstring (lower (#name c)) (lower (List.nth (parts, List.length parts - 2)))
+                end
+              fun firstOf f =
+                case List.mapPartial f level of
+                  [] => NONE
+                | found =>
+                    let val public = List.filter (not o private) found
+                        val pick = case List.filter namedFor public of p :: _ => [p] | [] => public
+                    in SOME (case pick of p :: _ => p | [] => hd found) end
+            in
+              case firstOf own of
+                SOME p => SOME p
+              | NONE =>
+                  case firstOf other of
+                    SOME p => SOME p
+                  | NONE =>
+                      search (List.concat (List.map (fn (p, e) => StringMap.foldri (fn (n, s, acc) => (p ^ n ^ ".", s) :: acc)
+                                                                                    [] (strs e)) level),
+                              depth - 1)
+            end
+    in
+      if named env (#name c) andalso accepts (#name c) then SOME (#name c) else search ([("", env)], 5)
+    end
+
+  fun pathOf (env : env, c : tycon) = pathOfWhen (env, c, fn _ => true)
+
+  (* The name a message gives a type constructor, where the name it was
+     declared under would not do: the path that reaches it from env, the top
+     level, when that does not name it by its own name (`WideString.string`,
+     where `string` is `String.string`). NONE where the top level names it so,
+     and where no path reaches it (a type of a structure being elaborated):
+     the declared name is printed then (Types.qualifier). *)
+  fun qualifiedName (env : env, c : tycon) : string option =
+    case pathOf (env, c) of
+      SOME p => if p = #name c then NONE else SOME p
+    | NONE => NONE
 end

@@ -67,13 +67,12 @@ fun foldr f init [] = init
   | foldr f init (x :: xs) = f (x, foldr f init xs)
 
 (* ---- strings and characters ---- *)
-val size = _prim "string_size" : string -> int
-val op ^ = _prim "string_concat" : string * string -> string
+(* `^`, `size`, `concat` and `substring` are the compiler's, overloaded over
+   the class String as the comparisons are, `string` by default
+   (src/elab/env.sml; docs/language.md, Deviations, Overloading) *)
 val str = _prim "string_from_char" : char -> string
-val concat = _prim "string_concat_list" : string list -> string
 val implode = _prim "string_implode" : char list -> string
 val explode = _prim "string_explode" : string -> char list
-val substring = _prim "string_extract" : string * int * int -> string
 val ord = _prim "char_ord" : char -> int
 val chr = _prim "int_to_char" : int -> char
 

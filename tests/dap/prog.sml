@@ -8,3 +8,5 @@ val () = print ("r = " ^ Int.toString r ^ "\n")
 fun h n = if n = 0 then raise Fail "zero" else h (n - 1)
 val s = (h 2 : int) handle Fail m => size m
 val () = print ("done " ^ Int.toString s ^ "\n")
+fun g n = n + 1
+val u = (* 😀 é *) g 1

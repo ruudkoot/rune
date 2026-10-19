@@ -26,7 +26,7 @@ struct
     | SReal r => CReal r
     | SString s => CString s
     | SWideString _ => Error.bug "sconConst: a string constant with a code point above 255"
-    | SChar c => CChar c
+    | SChar (c, _) => CChar c
 
   (* The type of a special constant: what elaboration found, where the
      constant is overloaded, else that of its kind. *)
@@ -42,19 +42,34 @@ struct
          | SString _ => Ty.string
          | SWideString _ => Ty.string)
 
+  (* The wide constants made while a top-level declaration is translated:
+     each a global and what sets it, which the declaration runs first
+     (Translate.transProgram), so that a constant is made once and not where
+     it is evaluated (the utf8 roadmap's M4, E8) *)
+  val hoisted : (int * lexp) list ref = ref []
+
   (* A special constant at the type elaboration found for it: a constant, or
      for a type registered with `_overload ... via f` the application of f to
-     the digits (the text, for a real constant). *)
+     the digits (the text, for a real constant): a global, made once, for a
+     character or string constant (hoisted). *)
   fun sconExp (sc, slot : Types.ty option ref) : lexp =
     let
       val ty = sconTy (sc, slot)
+      val once = case sc of SString _ => true | SWideString _ => true | SChar _ => true | _ => false
       fun via digits =
         case !slot of
           SOME t =>
             (case Types.resolve t of
-               Types.TCon (c, _) =>
+               rt as Types.TCon (c, _) =>
                  (case Overload.literalOf c of
-                    SOME (Overload.Via f) => SOME (App (Inst (Global f, Ty.Arrow (Ty.string, ty)), Const (CString digits, Ty.string)))
+                    SOME (Overload.Via f) =>
+                      let val make = App (Inst (Global f, Ty.Arrow (Ty.string, ty)), Const (CString digits, Ty.string))
+                      in
+                        if not once then SOME make
+                        else
+                          let val g = Elaborate.freshStamp ()
+                          in Ty.bindVar (g, rt); hoisted := (g, make) :: !hoisted; SOME (Global g) end
+                      end
                   | _ => NONE)
              | _ => NONE)
         | NONE => NONE
@@ -65,11 +80,11 @@ struct
         SInt i => (case via (digits i) of SOME e => e | NONE => const ())
       | SWord w => (case via (digits w) of SOME e => e | NONE => const ())
       | SReal text => (case via text of SOME e => e | NONE => const ())
-      | SChar c => (case via (Scon.escape c) of SOME e => e | NONE => const ())
+      | SChar (c, _) => (case via (Scon.escape c) of SOME e => e | NONE => const ())
       | SString s => (case via (Scon.text (List.map Char.ord (String.explode s))) of
                         SOME e => e
                       | NONE => const ())
-      | SWideString s => (case via (Scon.text s) of SOME e => e | NONE => const ())
+      | SWideString (s, _) => (case via (Scon.text s) of SOME e => e | NONE => const ())
     end
 
   fun info (slot : patinfo option ref, sp) =

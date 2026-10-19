@@ -36,25 +36,24 @@ struct
         case StringCvt.scanString (Int.scan StringCvt.HEX) (String.substring (s, i, 4)) handle Subscript => NONE of
           SOME c => c
         | NONE => raise Bad "a \\u escape"
-      (* a code point as UTF-8 *)
-      fun utf8 c =
-        if c < 0x80 then String.str (Char.chr c)
-        else if c < 0x800 then String.implode [Char.chr (0xC0 + c div 64), Char.chr (0x80 + c mod 64)]
-        else if c < 0x10000 then
-          String.implode [Char.chr (0xE0 + c div 4096), Char.chr (0x80 + (c div 64) mod 64), Char.chr (0x80 + c mod 64)]
-        else String.implode [Char.chr (0xF0 + c div 262144), Char.chr (0x80 + (c div 4096) mod 64),
-                             Char.chr (0x80 + (c div 64) mod 64), Char.chr (0x80 + c mod 64)]
       (* \u escapes from i: a code point, one of beyond 16 bits as a pair of
-         surrogates, and where the next escape begins *)
+         surrogates, and where the next escape begins. A surrogate that is
+         not one of a pair names no character, and has no UTF-8 that the
+         compiler could be given (RFC 8259, Section 8.2). *)
       fun escape i =
-        let val c = hex4 i
+        let
+          val c = hex4 i
+          fun lone () = raise Bad "a lone surrogate in a \\u escape"
         in
-          if c >= 0xD800 andalso c < 0xDC00 andalso at (i + 4) = #"\\" andalso at (i + 5) = #"u" then
-            let val d = hex4 (i + 6)
-            in
-              if d >= 0xDC00 andalso d < 0xE000 then (0x10000 + (c - 0xD800) * 1024 + (d - 0xDC00), i + 10)
-              else (c, i + 4)
-            end
+          if c >= 0xD800 andalso c < 0xDC00 then
+            if at (i + 4) = #"\\" andalso at (i + 5) = #"u" then
+              let val d = hex4 (i + 6)
+              in
+                if d >= 0xDC00 andalso d < 0xE000 then (0x10000 + (c - 0xD800) * 1024 + (d - 0xDC00), i + 10)
+                else lone ()
+              end
+            else lone ()
+          else if c >= 0xDC00 andalso c < 0xE000 then lone ()
           else (c, i + 4)
         end
       fun str (i, acc) =
@@ -64,7 +63,7 @@ struct
             (case at (i + 1) of
                #"n" => str (i + 2, "\n" :: acc) | #"t" => str (i + 2, "\t" :: acc) | #"r" => str (i + 2, "\r" :: acc)
              | #"b" => str (i + 2, "\b" :: acc) | #"f" => str (i + 2, "\f" :: acc)
-             | #"u" => let val (c, j) = escape (i + 2) in str (j, utf8 c :: acc) end
+             | #"u" => let val (c, j) = escape (i + 2) in str (j, Utf8.encode c :: acc) end
              | c => str (i + 2, String.str c :: acc))
         | #"\000" => raise Bad "a string that does not end"
         | c => str (i + 1, String.str c :: acc)

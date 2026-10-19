@@ -1,0 +1,1 @@
+tests/lang/lex.comments_lookalike.sml:2:32: warning: a lookalike of *) in a comment, which does not end it

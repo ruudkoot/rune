@@ -1,0 +1,22 @@
+(* names of Unicode under --unicode (docs/plans/utf8.md, M6): the REPL
+   prints them as they are, and the debugger shows them; a trace's
+   columns count characters, and a wide string prints as UTF-8 with what
+   would not show escaped (M7) *)
+val λ = 1;
+fun 合計 (xs : int list) = List.foldl op+ 0 xs;
+合計 [λ, 2, 3];
+structure Σ = struct val α = 2 val работа = 5 end;
+Σ.α + λ + Σ.работа;
+val संख्या = 7;
+:break tests/repl/lib/unicode.sml:6
+use "tests/repl/lib/unicode.sml";
+面積 2;
+:locals
+:continue
+割る (1, 0);
+:bt
+val ε = 1 div 0;
+:bt
+val w = WideString.implode (List.map WideChar.chr [0x3BB, 0x202E, 0x41, 0x200D, 0x7, 0x9F, 0x1F600, 0x22]);
+val c = WideChar.chr 0x3C0;
+val s = "caf\195\169";

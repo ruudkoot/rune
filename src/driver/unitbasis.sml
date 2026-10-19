@@ -28,8 +28,8 @@
    the same to them, byte for byte.
 
    A functor's body is not written: its place in the unit's source is, and
-   loading parses the source again for it, the fixity of the unit's start
-   in force. Its basis is the unit's start, which loading has, and what the
+   loading parses the source again for it, in the mode the unit was read in
+   (Source.mode), the fixity of the unit's start in force. Its basis is the unit's start, which loading has, and what the
    unit declared before it. *)
 structure UnitBasis =
 struct
@@ -39,7 +39,7 @@ struct
   (* a pickle that names a unit the session has not loaded *)
   exception Missing of string
 
-  val version = 4
+  val version = 5
   val magic = "RBI"
 
   (* ---- the kinds of names ---- *)
@@ -830,12 +830,13 @@ struct
      of its own names was given, for the code of the unit (relative) *)
   type exported = {pickle : string, identity : string, own : int IntTable.table vector, counts : int vector}
 
-  (* export {start, name, file, text, delta, fixity, used}: the basis of the
-     unit compiled since start, which declared delta and left the fixity
-     given; name is how it is known, file how its spans name its source,
-     text the source, used the names its compile looked up (Usage) *)
-  fun export {start : start, name = uname : string, file : string, text : unit -> string, delta : Env.env,
-              fixity : Fixity.env, used : string list} : exported =
+  (* export {start, name, file, text, mode, delta, fixity, used}: the basis
+     of the unit compiled since start, which declared delta and left the
+     fixity given; name is how it is known, file how its spans name its
+     source, text the source and mode how it was read, used the names its
+     compile looked up (Usage) *)
+  fun export {start : start, name = uname : string, file : string, text : unit -> string, mode : Source.mode,
+              delta : Env.env, fixity : Fixity.env, used : string list} : exported =
     let
       val w = P.writer ()
       val e : enc = {w = w, start = #counters start, own = Vector.tabulate (3, fn _ => IntTable.table 256),
@@ -892,11 +893,13 @@ struct
       val hashed = P.contents h ^ body
       (* what the compile used of each kind, which loading puts aside first,
          and the hash of the source, which a functor's body is parsed from
-         again: neither is the basis's, nor in its identity *)
+         again, and the mode it is read in: none is the basis's, nor in its
+         identity *)
       val used = Vector.tabulate (3, fn k => !(counter k) - Vector.sub (#counters start, k))
       val u = P.writer ()
       val () = Vector.app (fn c => P.nat (u, c)) used
       val () = P.string (u, P.hash (text ()))
+      val () = P.string (u, Source.modeName mode)
     in
       {pickle = P.contents u ^ hashed, identity = uname ^ "@" ^ P.hash hashed, own = #own e, counts = counts}
     end
@@ -1214,7 +1217,8 @@ struct
     let
       val r = P.reader pickle
       val _ = Vector.tabulate (3, fn _ => P.rnat r)
-      val _ = P.rstring r
+      val _ = P.rstring r   (* the hash of the source *)
+      val _ = P.rstring r   (* its mode *)
       val () = if P.rbytes (r, 3) = magic then () else raise P.Bad "not a unit's basis"
       val () = if P.rnat r = version then () else raise P.Bad "a basis of another version"
       val _ = P.rstring r
@@ -1294,6 +1298,7 @@ struct
       val r = P.reader pickle
       val used = Vector.tabulate (3, fn _ => P.rnat r)
       val sourceHash = P.rstring r
+      val mode = case Source.modeNamed (P.rstring r) of SOME m => m | NONE => raise P.Bad "not a source mode"
       val hashed = String.extract (pickle, !(#pos r), NONE)
       val () = if P.rbytes (r, 3) = magic then () else raise P.Bad "not a unit's basis"
       val () = if P.rnat r = version then () else raise P.Bad "a basis of another version"
@@ -1337,7 +1342,7 @@ struct
                 let
                   val t = text ()
                   val () = if P.hash t = sourceHash then () else raise P.Bad "its source is not the one it was made from"
-                  val src = Source.fromString (file, t)
+                  val src = Source.fromStringIn (mode, file, t)
                   val () = Source.register src
                   val (decs, _) = Parser.parseTokensWith (Lexer.tokenize src, startFixity)
                   val m = functorsOf decs

@@ -55,6 +55,19 @@ sig
      function raises `Fail` where a declaration does not compile. *)
   val compile : {read : unit -> char option, file : string, line : int} -> unit -> unit
 
+  (* `compileIn mode {read, file, line}` is `compile {read, file, line}`
+     with the characters read in the mode that `mode` names.
+
+     The names are those of a build file's annotations: `"ascii"`, the
+     default, which `compile` reads in; `"unicode"` (or `"unicode=utf8"`);
+     and `"unicode=latin1"`. A mode is how `rune --unicode=ENC` reads its
+     inputs (docs/units.md, Source modes).
+
+     Raises: `Fail` in a program that has no compiler beside it, or for a
+     mode of another name; the function raises `Fail` where a declaration
+     does not compile. *)
+  val compileIn : string -> {read : unit -> char option, file : string, line : int} -> unit -> unit
+
   (* How deep the REPL prints a value, from the outside in.
 
      The levels it counts are those of a list, a tuple, a record, a

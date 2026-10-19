@@ -226,7 +226,7 @@ struct
         SOME r => r
       | NONE =>
           let
-            val (pieces, after) = Lexer.scan (line, state)
+            val (pieces, after) = Lexer.scan (ReplSession.typedMode (), line, state)
             val (roles, ctx') = rolesOf (env, line, pieces, ctx, false)
             val r = (roles, (after, ctx'))
           in
@@ -275,7 +275,7 @@ struct
     List.filter (fn (_, _, r) => r <> "syn.error")
                 (rolesIn (fn (l, (state, c)) =>
                             let
-                              val (pieces, after) = Lexer.scan (l, state)
+                              val (pieces, after) = Lexer.scan (ReplSession.typedMode (), l, state)
                               val (roles, c') = rolesOf (env, l, pieces, c, true)
                             in (roles, (after, c')) end)
                          (text, (Lexer.Code, ctx)))
@@ -312,7 +312,7 @@ struct
           (* a command (`:` and a letter at the start): its name as a
              keyword, what follows it as code *)
           val command =
-            if String.size text > 1 andalso String.sub (text, 0) = #":" andalso Char.isAlpha (String.sub (text, 1))
+            if String.size text > 1 andalso String.sub (text, 0) = #":" andalso Ident.isStartAscii (String.sub (text, 1))
             then SOME (CharVector.findi (fn (_, c) => Char.isSpace c) text)
             else NONE
           val roles =

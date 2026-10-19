@@ -235,6 +235,7 @@ annotate "demand" in
   mono_real32.sml
   widechar.sml
   widestring.sml
+  widestringcvt.sml
   widetext.sml
   widetextio.sml
 end

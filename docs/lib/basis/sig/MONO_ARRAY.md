@@ -27,7 +27,7 @@ structure LargeWordArray : MONO_ARRAY where type vector = LargeWordVector.vector
 structure Real32Array :> MONO_ARRAY where type vector = Real32Vector.vector where type elem = Real32.real  (* optional *)
 structure Real64Array : MONO_ARRAY where type vector = Real64Vector.vector where type elem = Real64.real  (* optional *)
 structure RealArray : MONO_ARRAY where type vector = RealVector.vector where type elem = real  (* optional *)
-structure WideCharArray :> MONO_ARRAY where type vector = WideCharVector.vector where type elem = WideChar.char  (* optional *)
+structure WideCharArray : MONO_ARRAY where type vector = WideCharVector.vector where type elem = WideChar.char  (* optional *)
 structure Word16Array :> MONO_ARRAY where type vector = Word16Vector.vector where type elem = Word16.word  (* optional *)
 structure Word32Array :> MONO_ARRAY where type vector = Word32Vector.vector where type elem = Word32.word  (* optional *)
 structure Word64Array :> MONO_ARRAY where type vector = Word64Vector.vector where type elem = Word64.word  (* optional *)
@@ -50,7 +50,7 @@ structure WordArray :> MONO_ARRAY where type vector = WordVector.vector where ty
 | [`Real32Array`](../str/Real32Array.md) | Real32Array: mutable arrays of binary32 reals, a type of their own with identity equality, whose vectors are those of [`Real32Vector`](../str/Real32Vector.md). | [lib/basis/mono\_real32.sml](../../../../lib/basis/mono_real32.sml) |
 | [`Real64Array`](../str/RealArray.md) |  | [lib/basis/mono\_real64.sml](../../../../lib/basis/mono_real64.sml) |
 | [`RealArray`](../str/RealArray.md) | RealArray: mutable arrays of reals, a type of their own with identity equality, whose vectors are those of [`RealVector`](../str/RealVector.md). | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
-| [`WideCharArray`](../str/WideCharArray.md) | WideCharArray: mutable arrays of wide characters, a type of their own with identity equality, whose vectors are those of [`WideCharVector`](../str/WideCharVector.md). | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
+| [`WideCharArray`](../str/WideCharArray.md) | WideCharArray: mutable arrays of wide characters, a type of their own with identity equality, whose vectors are those of [`WideCharVector`](../str/WideCharVector.md). | [lib/basis/widestring.sml](../../../../lib/basis/widestring.sml) |
 | [`Word16Array`](../str/Word16Array.md) | Word16Array: mutable arrays of 16-bit words, a type of their own with identity equality, whose vectors are those of [`Word16Vector`](../str/Word16Vector.md). | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
 | [`Word32Array`](../str/Word32Array.md) | Word32Array: mutable arrays of 32-bit words, a type of their own with identity equality, whose vectors are those of [`Word32Vector`](../str/Word32Vector.md). | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
 | [`Word64Array`](../str/Word64Array.md) | Word64Array: mutable arrays of 64-bit words, a type of their own with identity equality, whose vectors are those of [`Word64Vector`](../str/Word64Vector.md). | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |

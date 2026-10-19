@@ -31,7 +31,7 @@
    AF.list "returns a list of all the available address families", so
    `Socket.AF` knowing `INET6` is not a departure and this signature is.
 
-   See also: `INET_SOCK`, `SOCKET`, `NET_HOST_DB`, `MONO_VECTOR_EQ` *)
+   See also: `INET_SOCK`, `SOCKET`, `NET_HOST_DB` *)
 signature INET6_SOCK =
 sig
   (* The type that says a socket or an address is of this family. *)

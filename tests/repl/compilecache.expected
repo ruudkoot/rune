@@ -16,4 +16,9 @@ val it = () : unit
 - val it = true : bool
 - val it = () : unit
 - val it = 1 : int
+- = = val c3 = fn : unit -> unit
+- counted 1
+structure Counter
+val it = () : unit
+- val it = true : bool
 - 

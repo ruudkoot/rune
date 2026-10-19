@@ -176,7 +176,7 @@ struct
   (* ---- the trace of the last uncaught exception (:bt) ---- *)
 
   fun frame ({function, file, line, column} : Runtime.frame) : string =
-    "  in " ^ function ^ (if file = "" then "" else " at " ^ file ^ ":" ^ Int.toString line ^ ":" ^ Int.toString column)
+    "  in " ^ function ^ (if file = "" then "" else " at " ^ Source.shownPlace (file, line, column))
 
   fun backtrace () : string =
     case !ReplLoop.lastTrace of
@@ -277,7 +277,8 @@ struct
     let
       val t = trim line
       val body = String.extract (t, 1, NONE)
-      val name = Substring.string (Substring.takel (fn c => Char.isAlpha c orelse c = #"-") (Substring.full body))
+      (* a command's name is ASCII *)
+      val name = Substring.string (Substring.takel (fn c => Ident.isStartAscii c orelse c = #"-") (Substring.full body))
       val rest = trim (String.extract (body, String.size name, NONE))
     in
       (#run (find name) rest; true)

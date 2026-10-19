@@ -21,7 +21,7 @@ is one a program can name and nothing explains: it is a name beyond the signatur
 ## Examples that are run
 
 Every example is a closed expression of type `bool` that is true, and every counterexample a closed claim
-that does not hold: each is elaborated when these pages are made and tried by the test suite: 7 of them, in [`JSON`](sig/JSON.md) (7).
+that does not hold: each is elaborated when these pages are made and tried by the test suite: 8 of them, in [`JSON`](sig/JSON.md) (8).
 
 ---
 

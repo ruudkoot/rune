@@ -347,7 +347,14 @@ struct
         | TArrow (a, b) => paren (prec >= 1, go (1, a) ^ " -> " ^ go (0, b))
     in go (0, t) end
 
-  fun toStringWith (p : printer) t = toStringNamed (fn _ => NONE, p) t
+  (* The name a message gives a type constructor that the name it was
+     declared under would not tell apart: the elaborator sets it to the path
+     from the program's top level (Env.qualifiedName), so that a message says
+     `WideString.string` and not `string`. NONE keeps the declared name. *)
+  val qualifier : (tycon -> string option) ref = ref (fn _ => NONE)
+  fun tyconName (c : tycon) = case !qualifier c of SOME p => p | NONE => #name c
+
+  fun toStringWith (p : printer) t = toStringNamed (fn c => !qualifier c, p) t
 
   fun toString t = toStringWith (newPrinter ()) t
 end

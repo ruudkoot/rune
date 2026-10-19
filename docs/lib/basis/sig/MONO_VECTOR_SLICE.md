@@ -27,7 +27,7 @@ structure LargeWordVectorSlice : MONO_VECTOR_SLICE where type vector = LargeWord
 structure Real32VectorSlice :> MONO_VECTOR_SLICE where type vector = Real32Vector.vector where type elem = Real32.real  (* optional *)
 structure Real64VectorSlice : MONO_VECTOR_SLICE where type vector = Real64Vector.vector where type elem = Real64.real  (* optional *)
 structure RealVectorSlice :> MONO_VECTOR_SLICE where type vector = RealVector.vector where type elem = real  (* optional *)
-structure WideCharVectorSlice :> MONO_VECTOR_SLICE where type vector = WideCharVector.vector where type elem = WideChar.char  (* optional *)
+structure WideCharVectorSlice : MONO_VECTOR_SLICE where type vector = WideCharVector.vector where type elem = WideChar.char  (* optional *)
 structure Word16VectorSlice :> MONO_VECTOR_SLICE where type vector = Word16Vector.vector where type elem = Word16.word  (* optional *)
 structure Word32VectorSlice :> MONO_VECTOR_SLICE where type vector = Word32Vector.vector where type elem = Word32.word  (* optional *)
 structure Word64VectorSlice :> MONO_VECTOR_SLICE where type vector = Word64Vector.vector where type elem = Word64.word  (* optional *)
@@ -50,7 +50,7 @@ structure WordVectorSlice :> MONO_VECTOR_SLICE where type vector = WordVector.ve
 | [`Real32VectorSlice`](../str/Real32VectorSlice.md) | Real32VectorSlice: stretches of [`Real32Vector`](../str/Real32Vector.md) vectors, without a copy. | [lib/basis/mono\_real32.sml](../../../../lib/basis/mono_real32.sml) |
 | [`Real64VectorSlice`](../str/RealVectorSlice.md) |  | [lib/basis/mono\_real64.sml](../../../../lib/basis/mono_real64.sml) |
 | [`RealVectorSlice`](../str/RealVectorSlice.md) | RealVectorSlice: stretches of [`RealVector`](../str/RealVector.md) vectors, without a copy. | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
-| [`WideCharVectorSlice`](../str/WideCharVectorSlice.md) | WideCharVectorSlice: stretches of [`WideCharVector`](../str/WideCharVector.md) vectors, without a copy, which are the substrings of [`WideSubstring`](../str/WideSubstring.md). | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
+| [`WideCharVectorSlice`](../str/WideCharVectorSlice.md) | WideCharVectorSlice: stretches of [`WideCharVector`](../str/WideCharVector.md) vectors, without a copy, which are the substrings of [`WideSubstring`](../str/WideSubstring.md). | [lib/basis/widestring.sml](../../../../lib/basis/widestring.sml) |
 | [`Word16VectorSlice`](../str/Word16VectorSlice.md) | Word16VectorSlice: stretches of [`Word16Vector`](../str/Word16Vector.md) vectors, without a copy. | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
 | [`Word32VectorSlice`](../str/Word32VectorSlice.md) | Word32VectorSlice: stretches of [`Word32Vector`](../str/Word32Vector.md) vectors, without a copy. | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
 | [`Word64VectorSlice`](../str/Word64VectorSlice.md) | Word64VectorSlice: stretches of [`Word64Vector`](../str/Word64Vector.md) vectors, without a copy. | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |

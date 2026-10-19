@@ -1,0 +1,1 @@
+tests/lang/lex.ident_lintrestricted.sml:2:5: warning: the name ʃell holds U+0283, which UTS #39 restricts in names (technical)

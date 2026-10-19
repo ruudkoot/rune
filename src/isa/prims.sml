@@ -843,5 +843,14 @@ struct
          {name = "intinf_power", arity = 3, ty = "bool * string * int -> bool * string", effects = [ReadsHeap, Raises, Allocates],
           doc = "GMP power with nonnegative exponent; negative-exponent semantics remain in SML."},
          {name = "intinf_decimal", arity = 1, ty = "string -> string", effects = [ReadsHeap, Raises, Allocates],
-          doc = "GMP decimal digits of a canonical unsigned little-endian magnitude, empty for zero; returns 0 for zero. SML supplies the sign. Magnitude and GMP allocation budgets apply; no native state escapes."}]]
+          doc = "GMP decimal digits of a canonical unsigned little-endian magnitude, empty for zero; returns 0 for zero. SML supplies the sign. Magnitude and GMP allocation budgets apply; no native state escapes."}],
+       group "vectors copied in C, and UTF-8 decoded into one (Vector.concat, VectorSlice.vector, WideString.^, WideTextIO; docs/plans/utf8.md, M8)"
+        [{name = "vector_concat", arity = 2, ty = "'a vector * 'a vector -> 'a vector", effects = [Raises, Allocates],
+          doc = "The elements of the first vector, then those of the second; raises Size above 100000000 elements."},
+         {name = "vector_concat_list", arity = 1, ty = "'a vector list -> 'a vector", effects = [Raises, Allocates],
+          doc = "The elements of the vectors of a list, one vector after another; raises Size above 100000000 elements."},
+         {name = "vector_extract", arity = 3, ty = "'a vector * int * int -> 'a vector", effects = [Raises, Allocates],
+          doc = "The n elements of a vector from index i (vector, i, n); raises Subscript when i < 0, n < 0 or i + n is past its end."},
+         {name = "utf8_decode", arity = 3, ty = "string * int * int -> int vector * int * int", effects = [Raises, Allocates],
+          doc = "The code points of the UTF-8 of a string from byte i, at most n of them, n capped at 100000000 (string, i, n): (vector, j, status), j the byte after the last decoded, status 0 when it stopped at n or at the end, 1 when a sequence that is not UTF-8 (the Unicode Standard's Table 3-7) begins at j, 2 when the bytes from j to the end begin a sequence the end cuts short; raises Subscript when i is outside 0..size or n < 0."}]]
 end

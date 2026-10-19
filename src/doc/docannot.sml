@@ -23,7 +23,7 @@ struct
 
   fun load (path : string) : file =
     let
-      val text = #text (Source.load path)
+      val text = #text (Source.load (!DocSource.mode, path))
       val title = ref defaultTitle
       val intro = ref ""
       (* a line with the offset it begins at, so that a diagnostic names it *)
@@ -135,7 +135,7 @@ struct
           SOME cs => cs
         | NONE =>
             let
-              val toks = Lexer.tokenize (Source.load file) handle _ => Vector.fromList []
+              val toks = Lexer.tokenize (Source.load (!DocSource.mode, file)) handle _ => Vector.fromList []
               val cs = Vector.foldr (fn ((Token.STRING c, _), acc) => c :: acc | (_, acc) => acc) [] toks
             in
               constants := StringMap.insert (!constants, file, cs); cs
@@ -167,7 +167,7 @@ struct
                              then SOME (String.concatWith "." (List.take (parts, List.length parts - 1)))
                              else NONE
                            end)
-                        (String.tokens (fn c => not (Char.isAlphaNum c orelse c = #"." orelse c = #"_" orelse c = #"'")) text)
+                        (String.tokens (fn c => not (Ident.isNameByte c orelse c = #".")) text)
       fun withSuite (glob, text) =
         let
           val (scopeGlob, caseGlob) = case DocTests.split glob of SOME (s, c) => (s, SOME c) | NONE => (glob, NONE)

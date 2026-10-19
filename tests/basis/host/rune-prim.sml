@@ -464,6 +464,64 @@ struct
   fun vector_from_list l = if longer (l, maxLen) then raise Size else Vector.fromList l
   val vector_length = Vector.length
   val vector_sub = Vector.sub
+  fun vector_concat (a, b) =
+    if Vector.length a > maxLen - Vector.length b then raise Size else Vector.concat [a, b]
+  fun vector_concat_list l =
+    let
+      fun total ([], _) = ()
+        | total (v :: rest, n) =
+            if Vector.length v > maxLen - n then raise Size else total (rest, n + Vector.length v)
+    in total (l, 0); Vector.concat l end
+  fun vector_extract (v, i, n) =
+    if not (runOk (i, n, Vector.length v)) then raise Subscript
+    else VectorSlice.vector (VectorSlice.slice (v, i, SOME n))
+  (* the well-formed sequences of UTF-8 are those of the Unicode Standard's
+     Table 3-7: by the lead byte, the range of the second byte and the length *)
+  fun utf8_decode (s : string, i : int, n : int) =
+    let
+      val len = String.size s
+      fun byte k = Char.ord (String.sub (s, k))
+      (* the length of the sequence at k and its code point: 0 when it is not
+         UTF-8, ~1 when the end of s cuts it short *)
+      fun sequence k =
+        let
+          fun more (size, lo, hi, bits) =
+            let
+              fun go (m, c) =
+                if m >= size then (size, c)
+                else if k + m >= len then (~1, 0)
+                else
+                  let
+                    val x = byte (k + m)
+                    val (l, h) = if m = 1 then (lo, hi) else (0x80, 0xBF)
+                  in if x < l orelse x > h then (0, 0) else go (m + 1, c * 64 + (x - 0x80)) end
+            in go (1, bits) end
+          val b = byte k
+        in
+          if b < 0x80 then (1, b)
+          else if b < 0xC2 then (0, 0)
+          else if b < 0xE0 then more (2, 0x80, 0xBF, b - 0xC0)
+          else if b = 0xE0 then more (3, 0xA0, 0xBF, 0)
+          else if b = 0xED then more (3, 0x80, 0x9F, 0xD)
+          else if b < 0xF0 then more (3, 0x80, 0xBF, b - 0xE0)
+          else if b = 0xF0 then more (4, 0x90, 0xBF, 0)
+          else if b < 0xF4 then more (4, 0x80, 0xBF, b - 0xF0)
+          else if b = 0xF4 then more (4, 0x80, 0x8F, 4)
+          else (0, 0)
+        end
+      fun go (j, count, acc, limit) =
+        if count >= limit orelse j >= len then (acc, j, 0)
+        else
+          case sequence j of
+            (0, _) => (acc, j, 1)
+          | (~1, _) => (acc, j, 2)
+          | (size, c) => go (j + size, count + 1, c :: acc, limit)
+    in
+      if i < 0 orelse i > len orelse n < 0 then raise Subscript
+      else
+        let val (acc, j, status) = go (i, 0, [], if n > maxLen then maxLen else n)
+        in (Vector.fromList (List.rev acc), j, status) end
+    end
 
   (* Host builds exercise the independent arithmetic and finite policy. *)
   fun intinf_gmp_available () = false

@@ -27,7 +27,7 @@ structure LargeWordArray2 : MONO_ARRAY2 where type vector = LargeWordVector.vect
 structure Real32Array2 :> MONO_ARRAY2 where type vector = Real32Vector.vector where type elem = Real32.real  (* optional *)
 structure Real64Array2 : MONO_ARRAY2 where type vector = Real64Vector.vector where type elem = Real64.real  (* optional *)
 structure RealArray2 :> MONO_ARRAY2 where type vector = RealVector.vector where type elem = real  (* optional *)
-structure WideCharArray2 :> MONO_ARRAY2 where type vector = WideCharVector.vector where type elem = WideChar.char  (* optional *)
+structure WideCharArray2 : MONO_ARRAY2 where type vector = WideCharVector.vector where type elem = WideChar.char  (* optional *)
 structure Word16Array2 :> MONO_ARRAY2 where type vector = Word16Vector.vector where type elem = Word16.word  (* optional *)
 structure Word32Array2 :> MONO_ARRAY2 where type vector = Word32Vector.vector where type elem = Word32.word  (* optional *)
 structure Word64Array2 :> MONO_ARRAY2 where type vector = Word64Vector.vector where type elem = Word64.word  (* optional *)
@@ -50,7 +50,7 @@ structure WordArray2 :> MONO_ARRAY2 where type vector = WordVector.vector where 
 | [`Real32Array2`](../str/Real32Array2.md) | Real32Array2: two-dimensional arrays of binary32 reals, whose rows and columns are [`Real32Vector`](../str/Real32Vector.md) vectors. | [lib/basis/mono\_real32.sml](../../../../lib/basis/mono_real32.sml) |
 | [`Real64Array2`](../str/RealArray2.md) |  | [lib/basis/mono\_real64.sml](../../../../lib/basis/mono_real64.sml) |
 | [`RealArray2`](../str/RealArray2.md) | RealArray2: two-dimensional arrays of reals, whose rows and columns are [`RealVector`](../str/RealVector.md) vectors. | [lib/basis/mono\_real.sml](../../../../lib/basis/mono_real.sml) |
-| [`WideCharArray2`](../str/WideCharArray2.md) | WideCharArray2: two-dimensional arrays of wide characters, whose rows and columns are [`WideCharVector`](../str/WideCharVector.md) vectors. | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
+| [`WideCharArray2`](../str/WideCharArray2.md) | WideCharArray2: two-dimensional arrays of wide characters, whose rows and columns are [`WideCharVector`](../str/WideCharVector.md) vectors. | [lib/basis/widestring.sml](../../../../lib/basis/widestring.sml) |
 | [`Word16Array2`](../str/Word16Array2.md) | Word16Array2: two-dimensional arrays of 16-bit words, whose rows and columns are [`Word16Vector`](../str/Word16Vector.md) vectors. | [lib/basis/mono\_word16.sml](../../../../lib/basis/mono_word16.sml) |
 | [`Word32Array2`](../str/Word32Array2.md) | Word32Array2: two-dimensional arrays of 32-bit words, whose rows and columns are [`Word32Vector`](../str/Word32Vector.md) vectors. | [lib/basis/mono\_word32.sml](../../../../lib/basis/mono_word32.sml) |
 | [`Word64Array2`](../str/Word64Array2.md) | Word64Array2: two-dimensional arrays of 64-bit words, whose rows and columns are [`Word64Vector`](../str/Word64Vector.md) vectors. | [lib/basis/mono\_word64.sml](../../../../lib/basis/mono_word64.sml) |

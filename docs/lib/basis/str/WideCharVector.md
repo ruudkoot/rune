@@ -4,53 +4,57 @@
 
 |  |  |
 | --- | --- |
-| Signatures | [`MONO_VECTOR`](../sig/MONO_VECTOR.md), [`MONO_VECTOR_EQ`](../sig/MONO_VECTOR_EQ.md) |
+| Signature | [`MONO_VECTOR`](../sig/MONO_VECTOR.md) |
 | Status | optional |
 | Members | 22 |
 | Tests | 131 checks |
-| Source | [lib/basis/widechar.sml](../../../../lib/basis/widechar.sml) |
+| Source | [lib/basis/widestring.sml](../../../../lib/basis/widestring.sml) |
 
 ## Synopsis
 
 ```sml
-structure WideCharVector :> MONO_VECTOR where type elem = WideChar.char
-structure WideCharVector :> MONO_VECTOR_EQ where type elem = RuneWideChar.char
+structure WideCharVector : MONO_VECTOR where type vector = WideString.string where type elem = WideChar.char
 ```
 
 WideCharVector: immutable vectors of wide characters, which are the
-strings of [`WideString`](../str/WideString.md).
+strings of [`WideString`](../str/WideString.md): [`WideCharVector.vector`](../sig/MONO_VECTOR.md#type-vector) is [`WideString.string`](../sig/STRING.md#type-string),
+as [`CharVector.vector`](../sig/MONO_VECTOR.md#type-vector) is [`String.string`](../sig/STRING.md#type-string).
 
-Sealed with a vector of its own (MONO\_VECTOR\_EQ), so that WideString.string
-is a type name: the constants of a type are overloaded at a name.
+> **Reading** `WideCharVector/vector-is-WideString.string`. The page declares
+> `WideCharVector :> MONO_VECTOR where type elem = WideChar.char` and nothing
+> more, which no implementation can follow and still meet [`TEXT`](../sig/TEXT.md) and
+> [`STRING`](../sig/STRING.md) (the erratum `MONO_VECTOR/WideCharVector-must-admit-equality`).
+> It is declared here as [`CharVector`](../str/CharVector.md) is, `where type vector = WideString.string`, so its vectors admit equality because the strings do,
+> and plain [`MONO_VECTOR`](../sig/MONO_VECTOR.md) serves.
 
 ## Members
 
-What each means is on [`MONO_VECTOR`](../sig/MONO_VECTOR.md) and [`MONO_VECTOR_EQ`](../sig/MONO_VECTOR_EQ.md); the types are this structure's own.
+What each means is on [`MONO_VECTOR`](../sig/MONO_VECTOR.md); the types are this structure's own.
 
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`elem`](../sig/MONO_VECTOR.md#type-elem) | `RuneWideChar.char` |
-| type | [`vector`](../sig/MONO_VECTOR.md#type-vector) | *a type of its own* |
-| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(RuneWideChar.char -> bool) -> WideCharVector.vector -> bool` |
-| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(RuneWideChar.char -> unit) -> WideCharVector.vector -> unit` |
-| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * RuneWideChar.char -> unit) -> WideCharVector.vector -> unit` |
-| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(RuneWideChar.char * RuneWideChar.char -> order) -> WideCharVector.vector * WideCharVector.vector -> order` |
-| val | [`concat`](../sig/MONO_VECTOR.md#val-concat) | `WideCharVector.vector list -> WideCharVector.vector` |
-| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(RuneWideChar.char -> bool) -> WideCharVector.vector -> bool` |
-| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(RuneWideChar.char -> bool) -> WideCharVector.vector -> RuneWideChar.char option` |
-| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * RuneWideChar.char -> bool) -> WideCharVector.vector -> (int * RuneWideChar.char) option` |
-| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(RuneWideChar.char * 'a -> 'a) -> 'a -> WideCharVector.vector -> 'a` |
-| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * RuneWideChar.char * 'a -> 'a) -> 'a -> WideCharVector.vector -> 'a` |
-| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(RuneWideChar.char * 'a -> 'a) -> 'a -> WideCharVector.vector -> 'a` |
-| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * RuneWideChar.char * 'a -> 'a) -> 'a -> WideCharVector.vector -> 'a` |
-| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `RuneWideChar.char list -> WideCharVector.vector` |
-| val | [`length`](../sig/MONO_VECTOR.md#val-length) | `WideCharVector.vector -> int` |
-| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(RuneWideChar.char -> RuneWideChar.char) -> WideCharVector.vector -> WideCharVector.vector` |
-| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * RuneWideChar.char -> RuneWideChar.char) -> WideCharVector.vector -> WideCharVector.vector` |
+| type | [`vector`](../sig/MONO_VECTOR.md#type-vector) | `WideString.string` |
+| val | [`all`](../sig/MONO_VECTOR.md#val-all) | `(RuneWideChar.char -> bool) -> WideString.string -> bool` |
+| val | [`app`](../sig/MONO_VECTOR.md#val-app) | `(RuneWideChar.char -> unit) -> WideString.string -> unit` |
+| val | [`appi`](../sig/MONO_VECTOR.md#val-appi) | `(int * RuneWideChar.char -> unit) -> WideString.string -> unit` |
+| val | [`collate`](../sig/MONO_VECTOR.md#val-collate) | `(RuneWideChar.char * RuneWideChar.char -> order) -> WideString.string * WideString.string -> order` |
+| val | [`concat`](../sig/MONO_VECTOR.md#val-concat) | `WideString.string list -> WideString.string` |
+| val | [`exists`](../sig/MONO_VECTOR.md#val-exists) | `(RuneWideChar.char -> bool) -> WideString.string -> bool` |
+| val | [`find`](../sig/MONO_VECTOR.md#val-find) | `(RuneWideChar.char -> bool) -> WideString.string -> RuneWideChar.char option` |
+| val | [`findi`](../sig/MONO_VECTOR.md#val-findi) | `(int * RuneWideChar.char -> bool) -> WideString.string -> (int * RuneWideChar.char) option` |
+| val | [`foldl`](../sig/MONO_VECTOR.md#val-foldl) | `(RuneWideChar.char * 'a -> 'a) -> 'a -> WideString.string -> 'a` |
+| val | [`foldli`](../sig/MONO_VECTOR.md#val-foldli) | `(int * RuneWideChar.char * 'a -> 'a) -> 'a -> WideString.string -> 'a` |
+| val | [`foldr`](../sig/MONO_VECTOR.md#val-foldr) | `(RuneWideChar.char * 'a -> 'a) -> 'a -> WideString.string -> 'a` |
+| val | [`foldri`](../sig/MONO_VECTOR.md#val-foldri) | `(int * RuneWideChar.char * 'a -> 'a) -> 'a -> WideString.string -> 'a` |
+| val | [`fromList`](../sig/MONO_VECTOR.md#val-fromlist) | `RuneWideChar.char list -> WideString.string` |
+| val | [`length`](../sig/MONO_VECTOR.md#val-length) | `WideString.string -> int` |
+| val | [`map`](../sig/MONO_VECTOR.md#val-map) | `(RuneWideChar.char -> RuneWideChar.char) -> WideString.string -> WideString.string` |
+| val | [`mapi`](../sig/MONO_VECTOR.md#val-mapi) | `(int * RuneWideChar.char -> RuneWideChar.char) -> WideString.string -> WideString.string` |
 | val | [`maxLen`](../sig/MONO_VECTOR.md#val-maxlen) | `int` |
-| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `WideCharVector.vector * int -> RuneWideChar.char` |
-| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> RuneWideChar.char) -> WideCharVector.vector` |
-| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `WideCharVector.vector * int * RuneWideChar.char -> WideCharVector.vector` |
+| val | [`sub`](../sig/MONO_VECTOR.md#val-sub) | `WideString.string * int -> RuneWideChar.char` |
+| val | [`tabulate`](../sig/MONO_VECTOR.md#val-tabulate) | `int * (int -> RuneWideChar.char) -> WideString.string` |
+| val | [`update`](../sig/MONO_VECTOR.md#val-update) | `WideString.string * int * RuneWideChar.char -> WideString.string` |
 
 <details><summary>Other implementations (1)</summary>
 
@@ -60,4 +64,4 @@ What each means is on [`MONO_VECTOR`](../sig/MONO_VECTOR.md) and [`MONO_VECTOR_E
 
 ---
 
-<sub>Generated by runedoc from lib/basis/widechar.sml; do not edit.</sub>
+<sub>Generated by runedoc from lib/basis/widestring.sml; do not edit.</sub>

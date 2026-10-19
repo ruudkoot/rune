@@ -249,6 +249,52 @@ struct
       else ()
     end
 
+  (* --diagnostics-json for a file whose name is not UTF-8, Latin-1's
+     "caf\233.sml": the byte is written as the character of its number, and
+     the report reads back *)
+  fun diagnosticsLatin1 () =
+    let
+      val dir = run ^ "/diagnostics-latin1"
+      val () = (rmTree dir; mkdirs dir)
+      val src = dir ^ "/caf\233.sml"
+      val () = write (src, "val x : int = \"a\"\n")
+      val _ = exec {cmd = ["bin/rune", "--diagnostics-json", dir ^ "/report.json", src, "-o", dir ^ "/a.rbc"], dir = NONE,
+                    stdin = "", stdout = "", stderr = "", timeout = 120}
+      val report = Json.decode (read (dir ^ "/report.json")) handle Json.Syntax _ => Json.Null
+      val paths =
+        case Json.member ("diagnostics", report) of
+          SOME (Json.Array ds) => List.map (fn d => Json.member ("path", d)) ds
+        | _ => []
+    in
+      if paths = [SOME (Json.String (dir ^ "/caf\195\169.sml"))] then ()
+      else fail ("diagnostics.latin1-name: " ^ read (dir ^ "/report.json"))
+    end
+
+  (* the first line of a diagnostic escapes what a file's name holds that
+     would not show, or could make the line read otherwise (D14): a byte
+     that is not UTF-8, as Latin-1's "caf\233.sml" has, and a bidirectional
+     control, U+202E; the column after a character above ASCII counts it
+     once (D15) *)
+  fun diagnosticsNames () =
+    let
+      val dir = run ^ "/diagnostics-names"
+      val () = (rmTree dir; mkdirs dir)
+      fun one (name, shown, text, col) =
+        let
+          val src = dir ^ "/" ^ name
+          val () = write (src, text)
+          val () = ignore (exec {cmd = ["bin/rune", "--diagnostics=short", "--color=never", src, "-o", dir ^ "/a.rbc"],
+                                 dir = NONE, stdin = "", stdout = "", stderr = dir ^ "/err", timeout = 120})
+          val want = dir ^ "/" ^ shown ^ ":1:" ^ col ^ ": error: "
+        in
+          if String.isPrefix want (read (dir ^ "/err")) then ()
+          else fail ("diagnostics.escaped-names: wanted " ^ want ^ "..., got " ^ read (dir ^ "/err"))
+        end
+    in
+      one ("caf\233.sml", "caf\\xE9.sml", "val x : int = \"a\"\n", "5");
+      one ("a\226\128\174b.sml", "a\\u{202E}b.sml", "(* \206\187 *) val x : int = \"a\"\n", "13")
+    end
+
   (* ---- rune --serve *)
   fun serve () =
     let
@@ -315,14 +361,22 @@ struct
                                          andalso (case str (field (r, ["result", "type"])) of SOME t => String.isSuffix "-> 'a" t | NONE => false))
       val r = request (6, "hover", buffer (q good, ", \"offset\": 0"))
       val () = want ("hover-nothing", r, field (r, ["result"]) = SOME Json.Null)
-      (* a buffer of non-ASCII text, sent as Python sends it: \u escapes, a
-         character beyond 16 bits as two; offsets are its bytes in UTF-8 *)
-      val accented = "val s = \"caf\195\169 \226\134\146 \240\159\152\128\"\nval z = alsoUndefined\n"
-      val escaped = "\"val s = \\\"caf\\u00e9 \\u2192 \\ud83d\\ude00\\\"\\nval z = alsoUndefined\\n\""
+      (* a buffer of non-ASCII text, in a comment, where the default takes
+         it, sent as Python sends it: \u escapes, a character beyond 16 bits
+         as two; offsets are its bytes in UTF-8 *)
+      val accented = "(* caf\195\169 \226\134\146 \240\159\152\128 *)\nval z = alsoUndefined\n"
+      val escaped = "\"(* caf\\u00e9 \\u2192 \\ud83d\\ude00 *)\\nval z = alsoUndefined\\n\""
       val r = request (9, "diagnostics", buffer (escaped, ""))
       val () = want ("diagnostics-utf8", r,
                      List.map (fn d => (num (field (d, ["line"])), num (field (d, ["start"])))) (diags r)
                      = [(SOME 2, SOME (index (accented, "alsoUndefined")))])
+      (* a lone surrogate names no character, and has no UTF-8: the request
+         is refused as text that is not JSON, and the service goes on *)
+      val r = request (20, "diagnostics", buffer ("\"val s = \\\"\\ud800\\\"\\n\"", ""))
+      val () = want ("lone-surrogate", r, num (field (r, ["error", "code"])) = SOME ~32700
+                                          andalso (case str (field (r, ["error", "message"])) of
+                                                     SOME m => String.isSubstring "lone surrogate" m
+                                                   | NONE => false))
       val () = List.app (fn k => ignore (request (10 + k, "diagnostics", buffer (q good, "")))) (List.tabulate (9, fn k => k))
       val r = request (7, "nosuch", "{}")
       val () = want ("unknown-method", r, num (field (r, ["error", "code"])) = SOME ~32601)
@@ -341,12 +395,13 @@ struct
     end
 
   (* ---- the tree *)
-  fun job (path, args, after, memory, timeout) =
+  fun jobIn pools (path, args, after, memory, timeout) =
     Test.it path
       {program = "/bin/sh",
        args = ["sh", "-c", "exec \"$RUNE_TEST_ROOT\"/bin/rune-test " ^ String.concatWith " " (List.map quote args)],
        env = NONE, dir = SOME ".", stdin = NONE, timeout = Time.fromSeconds timeout, cap = 0, cpus = 1, memory = memory,
-       pools = [], exclusive = false, after = after, judge = failLines} : Run.command Test.tree
+       pools = pools, exclusive = false, after = after, judge = failLines} : Run.command Test.tree
+  fun job x = jobIn [] x
 
   (* a driver that stays, run as a job: it exits 0 when it passed; the
      drivers of a pool write one directory of tests/out, one at a time *)
@@ -361,6 +416,8 @@ struct
     case args of
       ["repl", suffix] => SOME (fn () => repl (if suffix = "-" then "" else suffix))
     | ["diagnostics-one", n] => SOME (fn () => diagnosticsOne n)
+    | ["diagnostics-latin1"] => SOME diagnosticsLatin1
+    | ["diagnostics-names"] => SOME diagnosticsNames
     | ["serve"] => SOME serve
     | _ => NONE
 
@@ -378,14 +435,20 @@ struct
 
   val tree =
     Test.describe ""
-      [tagged ["check", "test-repl", "covers:tests/repl/*"]
+      [(* the ways one at a time: reload.in writes its files to
+          tests/out/repl, whose names its transcript shows, and a way that
+          ran beside another read the other's (make check, 2026-10-18) *)
+       tagged ["check", "test-repl", "covers:tests/repl/*"]
          (Test.describe "repl"
-            (List.map (fn (s, _) => job (if s = "" then "default" else String.extract (s, 1, NONE), ["repl", if s = "" then "-" else s],
-                                         [], 1000, 1800))
+            (List.map (fn (s, _) => jobIn ["repl-files"]
+                                          (if s = "" then "default" else String.extract (s, 1, NONE), ["repl", if s = "" then "-" else s],
+                                           [], 1000, 1800))
                       replWays)),
        tagged ["check", "test-diagnostics", "covers:tests/diagnostics/*"]
          (Test.describe "diagnostics" (List.map (fn f => job (basename f, ["diagnostics-one", basename f], [], 300, 600))
-                                                (glob ("tests/diagnostics", ".sml")))),
+                                                (glob ("tests/diagnostics", ".sml"))
+                                       @ [job ("latin1-name", ["diagnostics-latin1"], [], 300, 600),
+                                          job ("escaped-names", ["diagnostics-names"], [], 300, 600)])),
        tagged ["check", "test-serve", "covers:tests/serve/*"] (Test.describe "serve" [job ("rune", ["serve"], [], 500, 600)]),
        Test.requires ["python3"] (tagged ["check", "test-repl-protocol", "covers:tests/repl-protocol/*"]
          (Test.describe "repl-protocol"

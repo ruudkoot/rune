@@ -373,7 +373,7 @@ For `INet6Sock`, in [tests/basis/inet6sock.sml](../../../../tests/basis/inet6soc
 
 ## See also
 
-[`INET_SOCK`](../sig/INET_SOCK.md), [`SOCKET`](../sig/SOCKET.md), [`NET_HOST_DB`](../sig/NET_HOST_DB.md), [`MONO_VECTOR_EQ`](../sig/MONO_VECTOR_EQ.md)
+[`INET_SOCK`](../sig/INET_SOCK.md), [`SOCKET`](../sig/SOCKET.md), [`NET_HOST_DB`](../sig/NET_HOST_DB.md)
 
 ---
 

@@ -152,10 +152,12 @@ include $(GMP_DIR)/config.mk
 GMP_FLAGS = $(GMP_CPPFLAGS) -include $(GMP_DIR)/config.h
 .PHONY: gmp-force gmp-dep
 gmp-force:
+# Remade by every make, and the runner starts several at once in one tree:
+# each writes a temporary file of its own (the shell's PID; one recipe line,
+# so one shell) and renames it over the old one only where it differs.
 build/gmp/selected: gmp-force
 	@mkdir -p build/gmp
-	@printf '%s\n' '$(GMP_KEY)' > $@.tmp
-	@cmp -s $@.tmp $@ && rm $@.tmp || mv $@.tmp $@
+	@t=$@.tmp.$$$$; printf '%s\n' '$(GMP_KEY)' > $$t && { cmp -s $$t $@ && rm -f $$t || mv -f $$t $@; }
 gmp-dep:
 	python3 scripts/build-gmp.py $(if $(filter x86_64 i686 i386,$(shell uname -m)),--enable-fat) --jobs $(JOBS)
 $(GMP_DIR)/intinf.o: runtime/intinf.c $(VM_HDRS) $(GMP_DIR)/config.mk
@@ -1081,9 +1083,10 @@ test-repl: bin/rune-repl bin/runevm bin/rune-test
 
 # rune-kernel, a Jupyter kernel for Standard ML (docs/kernel.md): a bridge
 # in SML over lib/jupyter that drives the REPL's engine as its child
-bin/rune-kernel.rbc: $(RUNE) src/front/engine.sml src/dap/translate.sml src/kernel/kernel.sml manifests \
-                     $(wildcard lib/jupyter/*.sml lib/zmtp/*.sml lib/digest/*.sml lib/json/*.sml lib/jsonrpc/*.sml)
-	$(RUNE) --library jupyter --library jsonrpc --library digest src/front/engine.sml src/dap/translate.sml src/kernel/kernel.sml -o $@
+bin/rune-kernel.rbc: $(RUNE) src/front/engine.sml src/dap/translate.sml src/util/ident.sml src/kernel/kernel.sml manifests \
+                     $(wildcard lib/jupyter/*.sml lib/zmtp/*.sml lib/digest/*.sml lib/json/*.sml lib/jsonrpc/*.sml lib/unicode/*.sml)
+	$(RUNE) --library jupyter --library jsonrpc --library digest --library unicode src/front/engine.sml src/dap/translate.sml \
+	  src/util/ident.sml src/kernel/kernel.sml -o $@
 bin/rune-kernel: bin/rune-kernel.rbc bin/rune-repl.img bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" "$$d/rune-kernel.rbc" --vm "$$d/runevm" --image "$$d/rune-repl.img" --program "$$d/rune-kernel.rbc" "$$@"\n' > $@
 	chmod +x $@

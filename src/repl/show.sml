@@ -63,57 +63,17 @@ struct
 
   (* ---- the names of types in the session ---- *)
 
-  (* the type constructor a type structure is, or abbreviates with its
-     parameters in order *)
-  fun tyconOf (Env.TyStr {fcn, ...}) = Option.map #stamp (fcnIsName fcn)
+  (* the paths that name a type constructor, as Env finds them for the
+     elaborator's messages too *)
+  val tyconOf = Env.tyconOf
+  val pathOfWhen = Env.pathOfWhen
+  val pathOf = Env.pathOf
 
   (* the environment of the structure at a path *)
   fun structureAt (env : Env.env, path : string list) : Env.env option =
     case path of
       [] => SOME env
     | p :: rest => (case StringMap.find (Env.strs env, p) of SOME e => structureAt (e, rest) | NONE => NONE)
-
-  (* the shortest path that names the type constructor in the session: its
-     own name at the top where that is it, else the structures breadth
-     first, a path that ends in its own name before one that does not, then
-     the first in order; only names satisfying accepts are considered *)
-  fun pathOfWhen (env : Env.env, c : tycon, accepts : string -> bool) : string option =
-    let
-      val stamp = #stamp c
-      fun named e n = case StringMap.find (Env.tys e, n) of SOME ts => tyconOf ts = SOME stamp | NONE => false
-      fun search ([], _) = NONE
-        | search (_, 0) = NONE
-        | search (level : (string * Env.env) list, depth : int) =
-            let
-              fun own (p, e) = if named e (#name c) andalso accepts (p ^ #name c) then SOME (p ^ #name c) else NONE
-              fun other (p, e) =
-                StringMap.foldli (fn (n, ts, found) => case found of
-                                                         SOME _ => found
-                                                       | NONE => if tyconOf ts = SOME stamp andalso accepts (p ^ n)
-                                                                 then SOME (p ^ n) else NONE)
-                                 NONE (Env.tys e)
-              (* the library's own structures (Rune...) after the others *)
-              fun private p = String.isPrefix "Rune" p orelse String.isPrefix "RUNE" p
-              fun firstOf f =
-                case List.mapPartial f level of
-                  [] => NONE
-                | found => SOME (case List.filter (not o private) found of p :: _ => p | [] => hd found)
-            in
-              case firstOf own of
-                SOME p => SOME p
-              | NONE =>
-                  case firstOf other of
-                    SOME p => SOME p
-                  | NONE =>
-                      search (List.concat (List.map (fn (p, e) => StringMap.foldri (fn (n, s, acc) => (p ^ n ^ ".", s) :: acc)
-                                                                                    [] (Env.strs e)) level),
-                              depth - 1)
-            end
-    in
-      if named env (#name c) andalso accepts (#name c) then SOME (#name c) else search ([("", env)], 5)
-    end
-
-  fun pathOf (env : Env.env, c : tycon) = pathOfWhen (env, c, fn _ => true)
 
   (* a type as the session names it, the type constructors of `local` by
      the names given there first *)
@@ -243,6 +203,27 @@ struct
       else Option.mapPartial at (pathOfWhen (env, c, fn path => isSome (at path)))
     end
 
+  (* The printer of WideString.string and WideChar.char, where the type of
+     the stamp is one of them as the session names them: their text in
+     UTF-8, with what would not show escaped (RuneShow.wideString; D14) *)
+  fun wideOf (env : Env.env, s : int) : string option =
+    let
+      (* the structure at path, where it has the members *)
+      fun having (path, members) =
+        case structureAt (env, path) of
+          SOME e => if List.all (fn m => StringMap.member (Env.vals e, m)) members then SOME e else NONE
+        | NONE => NONE
+      fun names (e, name) = Option.mapPartial Env.tyconOf (StringMap.find (Env.tys e, name)) = SOME s
+    in
+      case (having (["WideChar"], ["ord"]), having (["WideString"], ["size", "sub"])) of
+        (SOME c, w) =>
+          if names (c, "char") then SOME "(fn _ => fn x => RuneShow.wideChar (WideChar.ord x))"
+          else if (case w of SOME w => names (w, "string") | NONE => false)
+          then SOME "(fn _ => fn x => RuneShow.wideString (WideString.size x, fn i => WideChar.ord (WideString.sub (x, i))))"
+          else NONE
+      | (NONE, _) => NONE
+    end
+
   (* SML text of an `int -> t -> RuneCompiler.pretty` printer for t *)
   fun printer (g : gen, t : ty) : string =
     case prune t of
@@ -280,6 +261,9 @@ struct
             | (_, _, true, _, [a]) => "(RuneShow.array " ^ printer (g, a) ^ ")"
             | (_, _, _, true, [a]) => "(RuneShow.vector " ^ printer (g, a) ^ ")"
             | _ =>
+                case wideOf (#env g, s) of
+                  SOME p => p
+                | NONE =>
                 case shownBy (#env g, c, args) of
                   SOME p => p
                 | NONE => case IntMap.find (!Elaborate.dataCons, s) of
@@ -334,8 +318,9 @@ struct
             end
     end
 
-  fun valueName n = if CharVector.all (fn c => Char.isAlphaNum c orelse c = #"_" orelse c = #"'") n then n
-                    else "(op " ^ n ^ ")"
+  (* a value's name as a declaration writes it: an alphanumeric one as it
+     is, Unicode ones too (Ident), a symbolic one after op *)
+  fun valueName n = if Ident.isAlphanumeric n then n else "(op " ^ n ^ ")"
 
   (* the exception constructors with an argument a declaration declared, at
      their paths, with the argument's type *)

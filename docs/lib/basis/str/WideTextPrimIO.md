@@ -30,7 +30,7 @@ What each means is on [`PRIM_IO`](../sig/PRIM_IO.md); the types are this structu
 | type | [`elem`](../sig/PRIM_IO.md#type-elem) | `RuneWideChar.char` |
 | type | [`pos`](../sig/PRIM_IO.md#type-pos) | `RuneWideTextPos.pos` |
 | datatype | [`reader`](../sig/PRIM_IO.md#type-reader) | `RD` |
-| type | [`vector`](../sig/PRIM_IO.md#type-vector) | `WideCharVector.vector` |
+| type | [`vector`](../sig/PRIM_IO.md#type-vector) | `WideString.string` |
 | type | [`vector_slice`](../sig/PRIM_IO.md#type-vector_slice) | `WideCharVectorSlice.slice` |
 | datatype | [`writer`](../sig/PRIM_IO.md#type-writer) | `WR` |
 | val | [`augmentReader`](../sig/PRIM_IO.md#val-augmentreader) | `reader -> reader` |
@@ -38,7 +38,7 @@ What each means is on [`PRIM_IO`](../sig/PRIM_IO.md); the types are this structu
 | val | [`compare`](../sig/PRIM_IO.md#val-compare) | `RuneWideTextPos.pos * RuneWideTextPos.pos -> order` |
 | val | [`nullRd`](../sig/PRIM_IO.md#val-nullrd) | `unit -> reader` |
 | val | [`nullWr`](../sig/PRIM_IO.md#val-nullwr) | `unit -> writer` |
-| val | [`openVector`](../sig/PRIM_IO.md#val-openvector) | `WideCharVector.vector -> reader` |
+| val | [`openVector`](../sig/PRIM_IO.md#val-openvector) | `WideString.string -> reader` |
 
 <details><summary>Other implementations (1)</summary>
 

@@ -82,6 +82,248 @@
     }
    ]
   },
+  "IDENTIFIER": {
+   "doc": "Identifiers: which code points may make a name, by Unicode Standard\nAnnex \\#31, and the profile of it that Rune takes for Standard ML.\n\nUAX \\#31 gives XID\\_Start, the code points that may begin an identifier\n(letters), and XID\\_Continue, those that may follow them (letters,\ndigits, combining marks, connector punctuation); a string of them stays\none in every later version of Unicode. The profile of this structure\nadds `'` to the code points that may follow, as Standard ML has it, and\nleaves out two sets that are written down and frozen at Unicode 18.0.0,\nso that a name valid today stays valid:\n\n- the default ignorable code points that XID\\_Continue holds, which are\n  invisible: the joiners U+200C and U+200D, the variation selectors,\n  the Hangul fillers;\n- the lookalikes of Standard ML's punctuation and digits, such as U+01C3\n  for `!`, U+02BC for `'`, U+00B7 for `.` and U+01C0 for `|`.\n\nWhether a name is in Normalization Form C is for `Normalize.isNFC` to\nsay.\n\n",
+   "page": "sig/IDENTIFIER.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "version",
+     "spec": "val version : string",
+     "doc": "The version of Unicode whose properties are followed.\n\n**Example** `version = \"18.0.0\"`\n\n",
+     "page": "sig/IDENTIFIER.md#val-version"
+    },
+    {
+     "kind": "val",
+     "name": "isXIDStart",
+     "spec": "val isXIDStart : int -> bool",
+     "doc": "`isXIDStart c` is whether the code point `c` has the property\nXID\\_Start.\n\n**Example** `isXIDStart 0x3BB andalso not (isXIDStart 0x30)`\n\n",
+     "page": "sig/IDENTIFIER.md#val-isxidstart"
+    },
+    {
+     "kind": "val",
+     "name": "isXIDContinue",
+     "spec": "val isXIDContinue : int -> bool",
+     "doc": "`isXIDContinue c` is whether the code point `c` has the property\nXID\\_Continue.\n\n**Example** `isXIDContinue 0x30 andalso isXIDContinue 0x200D andalso not (isXIDContinue 0x27)`\n\n",
+     "page": "sig/IDENTIFIER.md#val-isxidcontinue"
+    },
+    {
+     "kind": "val",
+     "name": "isDefaultIgnorable",
+     "spec": "val isDefaultIgnorable : int -> bool",
+     "doc": "`isDefaultIgnorable c` is whether the code point `c` has the property\nDefault\\_Ignorable\\_Code\\_Point.\n\n**Example** `isDefaultIgnorable 0x200D andalso isDefaultIgnorable 0x3164 andalso not (isDefaultIgnorable 0x41)`\n\n",
+     "page": "sig/IDENTIFIER.md#val-isdefaultignorable"
+    },
+    {
+     "kind": "datatype",
+     "name": "exclusion",
+     "spec": "datatype exclusion =\n    Ignorable\n  | Lookalike of char",
+     "doc": "Why the profile leaves out a code point of XID\\_Continue.\n\n",
+     "page": "sig/IDENTIFIER.md#type-exclusion"
+    },
+    {
+     "kind": "val",
+     "name": "exclusion",
+     "spec": "val exclusion : int -> exclusion option",
+     "doc": "`exclusion c` is why the profile leaves out the code point `c`, and\n`NONE` where it does not or where `c` is not XID\\_Continue.\n\n**Example** `exclusion 0x2BC = SOME (Lookalike #\"'\") andalso exclusion 0x200D = SOME Ignorable`\n\n**Example** `exclusion 0x1C0 = SOME (Lookalike #\"|\") andalso exclusion 0x3BB = NONE`\n\n",
+     "page": "sig/IDENTIFIER.md#val-exclusion"
+    },
+    {
+     "kind": "val",
+     "name": "isStart",
+     "spec": "val isStart : int -> bool",
+     "doc": "`isStart c` is whether the code point `c` may begin an alphanumeric\nidentifier: an ASCII letter, or XID\\_Start where the profile does not\nleave it out.\n\n**Example** `isStart 0x3BB andalso not (isStart 0x3164) andalso not (isStart 0x5F)`\n\n",
+     "page": "sig/IDENTIFIER.md#val-isstart"
+    },
+    {
+     "kind": "val",
+     "name": "isContinue",
+     "spec": "val isContinue : int -> bool",
+     "doc": "`isContinue c` is whether the code point `c` may follow in an\nalphanumeric identifier.\n\nIt may where it is an ASCII letter or digit, `_` or `'`, or\nXID\\_Continue where the profile does not leave it out.\n\n**Example** `isContinue 0x27 andalso isContinue 0x301 andalso not (isContinue 0x200D)`\n\n",
+     "page": "sig/IDENTIFIER.md#val-iscontinue"
+    },
+    {
+     "kind": "val",
+     "name": "isAlphanumeric",
+     "spec": "val isAlphanumeric : string -> bool",
+     "doc": "`isAlphanumeric s` is whether the UTF-8 string `s` is an alphanumeric\nidentifier of the profile: well-formed, an `isStart` and then\n`isContinue`s. ASCII costs no table.\n\n**Example** `isAlphanumeric \"x\\206\\187'\" andalso not (isAlphanumeric \"a\\226\\128\\141b\")`, λ and a joiner\n\n",
+     "page": "sig/IDENTIFIER.md#val-isalphanumeric"
+    }
+   ]
+  },
+  "NORMALIZE": {
+   "doc": "Normalisation: the canonical forms of Unicode Standard Annex \\#15.\n\nTwo strings of code points may be the same text: \"é\" may be U+00E9, or\n\"e\" and U+0301 COMBINING ACUTE ACCENT; a Hangul syllable may be one\ncode point or its two or three jamo; accents on one letter may come in\neither order. Normalisation Form D (NFD) writes every such text one\nway, decomposed: each character replaced by its canonical decomposition,\nthen the marks of each letter sorted by their combining class. Form C\n(NFC) composes NFD again wherever a primary composite exists, so that\nmost text is shorter in it and is often already in it. Two strings are\ncanonically equivalent exactly when their NFCs, or their NFDs, are\nequal. The data is that of the version `version`; the test data of that\nversion (NormalizationTest.txt) passes, and a string in NFC stays in NFC\nin every later version (Unicode's normalisation stability policy).\n\nThe functions over strings read UTF-8 by `Utf8.next`: an ill-formed part\nof a string is read as U+FFFD, and such a string is in no form.\n\n",
+   "page": "sig/NORMALIZE.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "version",
+     "spec": "val version : string",
+     "doc": "The version of Unicode whose data is followed.\n\n**Example** `version = \"18.0.0\"`\n\n",
+     "page": "sig/NORMALIZE.md#val-version"
+    },
+    {
+     "kind": "datatype",
+     "name": "answer",
+     "spec": "datatype answer = Yes | No | Maybe",
+     "doc": "The answer of a quick check: certainly in the form, certainly not, or\nonly normalising tells.\n\n",
+     "page": "sig/NORMALIZE.md#type-answer"
+    },
+    {
+     "kind": "val",
+     "name": "combiningClass",
+     "spec": "val combiningClass : int -> int",
+     "doc": "`combiningClass c` is the Canonical\\_Combining\\_Class of the code point\n`c`: 0 for a starter, which is most characters; the marks above a\nletter 230, those below 220.\n\n**Example** `combiningClass 0x301 = 230 andalso combiningClass 0x41 = 0`\n\n",
+     "page": "sig/NORMALIZE.md#val-combiningclass"
+    },
+    {
+     "kind": "val",
+     "name": "nfd",
+     "spec": "val nfd : string -> string",
+     "doc": "`nfd s` is the canonical decomposition of the UTF-8 string `s`,\nNormalisation Form D.\n\n**Law** `nfd (nfd s) = nfd s`\n\n**Example** `nfd \"\\195\\169\" = \"e\\204\\129\"`, é decomposed\n\n",
+     "page": "sig/NORMALIZE.md#val-nfd"
+    },
+    {
+     "kind": "val",
+     "name": "nfc",
+     "spec": "val nfc : string -> string",
+     "doc": "`nfc s` is the canonical composition of the UTF-8 string `s`,\nNormalisation Form C. A string that the quick check finds in NFC is\n`s` itself, unchanged.\n\n**Law** `nfc (nfd s) = nfc s`\n\n**Example** `nfc \"e\\204\\129\" = \"\\195\\169\"`, é composed\n\n",
+     "page": "sig/NORMALIZE.md#val-nfc"
+    },
+    {
+     "kind": "val",
+     "name": "nfdList",
+     "spec": "val nfdList : int list -> int list",
+     "doc": "`nfdList cs` is the NFD of the code points `cs`.\n\n**Raises** `Chr` if one of `cs` is not a scalar value (`Utf8.isScalar`).\n\n**Example** `nfdList [0xAC01] = [0x1100, 0x1161, 0x11A8]`, a Hangul syllable\n\n",
+     "page": "sig/NORMALIZE.md#val-nfdlist"
+    },
+    {
+     "kind": "val",
+     "name": "nfcList",
+     "spec": "val nfcList : int list -> int list",
+     "doc": "`nfcList cs` is the NFC of the code points `cs`.\n\n**Raises** `Chr` if one of `cs` is not a scalar value.\n\n**Example** `nfcList [0x1100, 0x1161, 0x11A8] = [0xAC01]`\n\n",
+     "page": "sig/NORMALIZE.md#val-nfclist"
+    },
+    {
+     "kind": "val",
+     "name": "quickCheck",
+     "spec": "val quickCheck : string -> answer",
+     "doc": "`quickCheck s` is the NFC quick check of the UTF-8 string `s`: `Yes`\nwhere `s` is in NFC, `No` where it is not, `Maybe` where only `nfc`\ntells.\n\nIt is the algorithm of UAX \\#15's section 9 over the property\nNFC\\_Quick\\_Check. ASCII is always `Yes` and costs no table; ill-formed\nUTF-8 is `No`.\n\n**Example** `quickCheck \"abc\" = Yes andalso quickCheck \"e\\204\\129\" = Maybe`\n\n",
+     "page": "sig/NORMALIZE.md#val-quickcheck"
+    },
+    {
+     "kind": "val",
+     "name": "quickCheckList",
+     "spec": "val quickCheckList : int list -> answer",
+     "doc": "`quickCheckList cs` is the NFC quick check of the code points `cs`.\n\n**Raises** `Chr` if one of `cs` is not a scalar value.\n\n",
+     "page": "sig/NORMALIZE.md#val-quickchecklist"
+    },
+    {
+     "kind": "val",
+     "name": "isNFC",
+     "spec": "val isNFC : string -> bool",
+     "doc": "`isNFC s` is whether the UTF-8 string `s` is in NFC: the quick check,\nand `nfc` where it says `Maybe`.\n\n**Law** `isNFC s = (nfc s = s)`\n\n**Example** `isNFC \"\\195\\169\" andalso not (isNFC \"e\\204\\129\")`\n\n",
+     "page": "sig/NORMALIZE.md#val-isnfc"
+    },
+    {
+     "kind": "val",
+     "name": "isNFCList",
+     "spec": "val isNFCList : int list -> bool",
+     "doc": "`isNFCList cs` is whether the code points `cs` are in NFC.\n\n**Raises** `Chr` if one of `cs` is not a scalar value.\n\n",
+     "page": "sig/NORMALIZE.md#val-isnfclist"
+    }
+   ]
+  },
+  "UNICODE_SECURITY": {
+   "doc": "The security mechanisms of Unicode Technical Standard \\#39 for\nidentifiers: which code points the standard allows in identifiers and\nof what type they are, the scripts of a string and how far they mix,\nand the skeletons by which two strings are confusable.\n\nUnlike the properties of UAX \\#31 that `Identifier` follows, these data\nchange between versions of Unicode: a code point may stop being allowed,\nand two strings may become confusable or stop being so. They suit\nwarnings rather than the rules of a language. The data are those of the\nversion `version`.\n\n",
+   "page": "sig/UNICODE_SECURITY.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "version",
+     "spec": "val version : string",
+     "doc": "The version of Unicode and of UTS \\#39 whose data are followed.\n\n**Example** `version = \"18.0.0\"`\n\n",
+     "page": "sig/UNICODE_SECURITY.md#val-version"
+    },
+    {
+     "kind": "datatype",
+     "name": "status",
+     "spec": "datatype status =\n    Allowed\n  | Restricted",
+     "doc": "The Identifier\\_Status of a code point.\n\n",
+     "page": "sig/UNICODE_SECURITY.md#type-status"
+    },
+    {
+     "kind": "val",
+     "name": "status",
+     "spec": "val status : int -> status",
+     "doc": "`status c` is the Identifier\\_Status of the code point `c`.\n\n**Example** `status 0x61 = Allowed andalso status 0x1D44E = Restricted`, a and a mathematical italic a\n\n",
+     "page": "sig/UNICODE_SECURITY.md#val-status"
+    },
+    {
+     "kind": "datatype",
+     "name": "identifierType",
+     "spec": "datatype identifierType =\n    Recommended\n  | Inclusion\n  | LimitedUse\n  | Technical\n  | UncommonUse\n  | Obsolete\n  | Exclusion\n  | NotXID\n  | NotNFKC\n  | DefaultIgnorable\n  | Deprecated\n  | NotCharacter",
+     "doc": "An Identifier\\_Type: why a code point is allowed in identifiers, or why\nit is restricted.\n\n",
+     "page": "sig/UNICODE_SECURITY.md#type-identifiertype"
+    },
+    {
+     "kind": "val",
+     "name": "types",
+     "spec": "val types : int -> identifierType list",
+     "doc": "`types c` is the Identifier\\_Type of the code point `c`, a set of one\nor more types, in the order of the datatype.\n\n**Example** `types 0x61 = [Recommended] andalso types 0x1C0 = [Technical]`\n\n",
+     "page": "sig/UNICODE_SECURITY.md#val-types"
+    },
+    {
+     "kind": "val",
+     "name": "scripts",
+     "spec": "val scripts : int -> string list option",
+     "doc": "`scripts c` is the augmented script set of the code point `c` (UTS \\#39,\nsection 5.1), its scripts as ISO 15924 codes in order, or `NONE` for\nevery script.\n\nThe scripts are those of its Script\\_Extensions, with the writing\nsystems that hold them: Hanb, Hntl, Jpan and Kore for Han, Jpan for\nHiragana and Katakana, Kore for Hangul, Hanb for Bopomofo and Hntl for\nLatin. A code point of Common or Inherited has every script.\n\n**Example** `scripts 0x3BB = SOME [\"Grek\"] andalso scripts 0x30 = NONE`\n\n**Example** `scripts 0x61 = SOME [\"Hntl\", \"Latn\"]`\n\n",
+     "page": "sig/UNICODE_SECURITY.md#val-scripts"
+    },
+    {
+     "kind": "val",
+     "name": "resolvedScripts",
+     "spec": "val resolvedScripts : string -> string list option",
+     "doc": "`resolvedScripts s` is the resolved script set of the UTF-8 string\n`s`, the scripts that every code point of `s` has, or `NONE` for every\nscript.\n\n**Example** `resolvedScripts \"x\\206\\187\" = SOME [] andalso resolvedScripts \"\\206\\187\" = SOME [\"Grek\"]`, x and λ\n\n",
+     "page": "sig/UNICODE_SECURITY.md#val-resolvedscripts"
+    },
+    {
+     "kind": "val",
+     "name": "isSingleScript",
+     "spec": "val isSingleScript : string -> bool",
+     "doc": "`isSingleScript s` is whether the resolved script set of the UTF-8\nstring `s` is not empty.\n\n**Example** `isSingleScript \"\\206\\177\\206\\187\" andalso not (isSingleScript \"x\\206\\187\")`\n\n",
+     "page": "sig/UNICODE_SECURITY.md#val-issinglescript"
+    },
+    {
+     "kind": "datatype",
+     "name": "restriction",
+     "spec": "datatype restriction =\n    ASCIIOnly\n  | SingleScript\n  | HighlyRestrictive\n  | ModeratelyRestrictive\n  | MinimallyRestrictive\n  | Unrestricted",
+     "doc": "The restriction levels of UTS \\#39, section 5.2, the strictest first.\n\n",
+     "page": "sig/UNICODE_SECURITY.md#type-restriction"
+    },
+    {
+     "kind": "val",
+     "name": "restriction",
+     "spec": "val restriction : string -> restriction",
+     "doc": "`restriction s` is the strictest restriction level that the UTF-8\nstring `s` meets, by the algorithm of UTS \\#39, section 5.2, with\n`status` as the identifier profile.\n\n**Example** `restriction \"abc\" = ASCIIOnly andalso restriction \"\\206\\177\\206\\187\" = SingleScript`\n\n**Example** `restriction \"x\\206\\187\" = MinimallyRestrictive`, Latin and Greek\n\n",
+     "page": "sig/UNICODE_SECURITY.md#val-restriction"
+    },
+    {
+     "kind": "val",
+     "name": "skeleton",
+     "spec": "val skeleton : string -> string",
+     "doc": "`skeleton s` is the skeleton of the UTF-8 string `s` (UTS \\#39, section\n4\\), by which strings that look alike are found.\n\nIt is the NFD of `s` without its default ignorable code points, each\ncode point replaced by its prototype in confusables.txt, and the NFD of\nthat.\n\n**Example** `skeleton \"\\208\\176\" = \"a\"`, a Cyrillic а\n\n",
+     "page": "sig/UNICODE_SECURITY.md#val-skeleton"
+    },
+    {
+     "kind": "val",
+     "name": "isConfusable",
+     "spec": "val isConfusable : string * string -> bool",
+     "doc": "`isConfusable (s, t)` is whether the UTF-8 strings `s` and `t` have the\nsame skeleton.\n\n**Example** `isConfusable (\"paypal\", \"p\\208\\176yp\\208\\176l\")`, with two Cyrillic а\n\n",
+     "page": "sig/UNICODE_SECURITY.md#val-isconfusable"
+    }
+   ]
+  },
   "UTF8": {
    "doc": "UTF-8: code points written as bytes and read back, strictly.\n\nA string holds bytes, and text in it is UTF-8 by convention. Reading is\nstrict in the sense of the Unicode Standard (its section 3.9): an\noverlong form, a surrogate, a code point past 0x10FFFF, a sequence cut\nshort and a continuation byte with no lead are ill-formed, and `decode`\ngives `NONE` for them. Where a program must read whatever bytes it gets\n\\-- what a terminal sends, a file of unknown origin -- `next` and the\nfunctions over whole strings never fail: they read each ill-formed part\nas one replacement character, U+FFFD, as long as the maximal subpart the\nstandard recommends, so that the same bytes give the same characters in\nevery program that follows it.\n\n",
    "page": "sig/UTF8.md",
@@ -162,6 +404,9 @@
  "structures": {
   "DisplayWidth": "DISPLAY_WIDTH",
   "Grapheme": "GRAPHEME",
+  "Identifier": "IDENTIFIER",
+  "Normalize": "NORMALIZE",
+  "UnicodeSecurity": "UNICODE_SECURITY",
   "Utf8": "UTF8"
  }
 }

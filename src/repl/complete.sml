@@ -19,9 +19,10 @@ struct
 
   fun noteUses (text : string) : unit =
     List.app (fn w => uses := StringMap.insert (!uses, w, count w + 1))
-             (String.tokens (fn c => not (Char.isAlphaNum c orelse c = #"_" orelse c = #"'")) text)
+             (String.tokens (not o Ident.isNameByte) text)
 
-  fun isNameChar c = Char.isAlphaNum c orelse c = #"_" orelse c = #"'"
+  (* a byte of a name: an ASCII one, or one of a character above 127 (Ident) *)
+  val isNameChar = Ident.isNameByte
 
   (* whether a name is offered for what is typed: the library's own
      (`Rune...`) only when what is typed begins so, and never the names the
@@ -90,7 +91,7 @@ struct
     let
       fun lineStart j = if j > 0 andalso String.sub (text, j - 1) <> #"\n" then lineStart (j - 1) else j
       val l = lineStart i
-      val (pieces, _) = Lexer.scan (String.substring (text, l, i - l), Lexer.Code)
+      val (pieces, _) = Lexer.scan (ReplSession.typedMode (), String.substring (text, l, i - l), Lexer.Code)
     in
       case List.rev pieces of
         (a, b, c) :: _ =>

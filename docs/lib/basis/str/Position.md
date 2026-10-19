@@ -41,7 +41,7 @@ What each means is on [`INTEGER`](../sig/INTEGER.md); the types are this structu
 | val | [`abs`](../sig/INTEGER.md#val-abs) | `Position.int -> Position.int` |
 | val | [`compare`](../sig/INTEGER.md#val-compare) | `Position.int * Position.int -> order` |
 | val | [`div`](../sig/INTEGER.md#val-div) | `Position.int * Position.int -> Position.int` |
-| val | [`fmt`](../sig/INTEGER.md#val-fmt) | `StringCvt.radix -> Position.int -> string` |
+| val | [`fmt`](../sig/INTEGER.md#val-fmt) | `RuneWideStringCvt.radix -> Position.int -> string` |
 | val | [`fromInt`](../sig/INTEGER.md#val-fromint) | `int -> Position.int` |
 | val | [`fromLarge`](../sig/INTEGER.md#val-fromlarge) | `IntInf.int -> Position.int` |
 | val | [`fromString`](../sig/INTEGER.md#val-fromstring) | `string -> Position.int option` |
@@ -54,7 +54,7 @@ What each means is on [`INTEGER`](../sig/INTEGER.md); the types are this structu
 | val | [`quot`](../sig/INTEGER.md#val-quot) | `Position.int * Position.int -> Position.int` |
 | val | [`rem`](../sig/INTEGER.md#val-rem) | `Position.int * Position.int -> Position.int` |
 | val | [`sameSign`](../sig/INTEGER.md#val-samesign) | `Position.int * Position.int -> bool` |
-| val | [`scan`](../sig/INTEGER.md#val-scan) | `StringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (Position.int * 'a) option` |
+| val | [`scan`](../sig/INTEGER.md#val-scan) | `RuneWideStringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (Position.int * 'a) option` |
 | val | [`sign`](../sig/INTEGER.md#val-sign) | `Position.int -> int` |
 | val | [`toInt`](../sig/INTEGER.md#val-toint) | `Position.int -> int` |
 | val | [`toLarge`](../sig/INTEGER.md#val-tolarge) | `Position.int -> IntInf.int` |

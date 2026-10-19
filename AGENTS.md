@@ -357,7 +357,9 @@ keep these invariants:
   NAME`) has a `library.build` in the basis library's form, whose
   `libraries` declaration names the libraries it is written on; its
   generated `MANIFEST` records what each file uses of the basis library as
-  well (`rune --basis-check --library NAME` checks it). It may not use `_prim`. The mechanism's tests are in
+  well (`rune --basis-check --library NAME` checks it). It may not use `_prim`,
+  and what it exports is ASCII, so that a program in every mode can name it
+  (docs/build.md, *A library's build file*). The mechanism's tests are in
   `tests/lib` (`make test-lib`), and a library's own tests, `tests/lib/NAME`, are suites on
   `lib/test/unit` (`Test`, `Expect`, `Main`; docs/lib/test/unit), whose
   `PASS`/`FAIL` lines both targets read. After a change to such a library, run `make

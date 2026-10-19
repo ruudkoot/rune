@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 4 of 4 entries documented |
+| Documentation | 5 of 5 entries documented |
 | Tests | not listed |
 | Source | [tests/doc/laws.lib/colors.sml](../../../../../tests/doc/laws.lib/colors.sml) |
 
@@ -32,6 +32,7 @@ sig
   val <a href="#val-index">index</a> : color -&gt; int
   val <a href="#val-fromindex">fromIndex</a> : int -&gt; color
   val <a href="#val-keep">keep</a> : (int -&gt; bool) * int list -&gt; int list
+  val <a href="#val-count">count</a> : (WideChar.char, 'a) StringCvt.reader -&gt; 'a -&gt; int
 end
 </pre>
 
@@ -101,6 +102,16 @@ no effects (for every `f : 'a -> bool`, `g : 'a -> bool`, `l : 'a list`)
 
 **Law** `List.length (keep (fn k => k < m, List.tabulate (n, fn k => k))) = Int.min (Int.max (m, 0), n)` for `n` from `Arb.intRange (0, 5)` and `m`
 from `Arb.intRange (~2, 7)` (for every `m : int`, `n : int`)
+
+### <a name="val-count"></a>`count`
+
+```sml
+val count : (WideChar.char, 'a) StringCvt.reader -> 'a -> int
+```
+
+`count getc s` is how many wide characters `getc` reads from `s`.
+
+**Law** `count getc s >= 0` (for every `getc : 'a -> (RuneWideChar.char * 'a) option`, `s : 'a`)
 
 ---
 

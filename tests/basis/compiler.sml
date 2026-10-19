@@ -1,9 +1,10 @@
 (* requires: Compiler Int String *)
 (* Compiler (signature COMPILER, Rune's own): what a program can ask of the
    compiler beside it. The suite's programs are compiled by rune, with no
-   compiler beside them, so what is checked is that: use raises Fail, and
-   the controls are refs of the defaults the REPL starts from
-   (docs/repl.md). The REPL itself is checked by tests/repl. *)
+   compiler beside them, so what is checked is that: use, compile and
+   compileIn raise Fail, and the controls are refs of the defaults the
+   REPL starts from (docs/repl.md). The REPL itself is checked by
+   tests/repl. *)
 structure TestCompiler =
 struct
   val () = T.raises ("Compiler.use/no-compiler-beside-the-program",
@@ -12,6 +13,9 @@ struct
   val () = T.raises ("Compiler.compile/no-compiler-beside-the-program",
                      fn Fail _ => true | _ => false,
                      fn () => Compiler.compile {read = fn () => NONE, file = "none", line = 1})
+  val () = T.raises ("Compiler.compileIn/no-compiler-beside-the-program",
+                     fn Fail _ => true | _ => false,
+                     fn () => Compiler.compileIn "unicode" {read = fn () => NONE, file = "none", line = 1})
   val () = T.check ("Compiler.printDepth/is-twenty", fn () => !Compiler.printDepth = 20)
   val () = T.check ("Compiler.printLength/is-a-hundred", fn () => !Compiler.printLength = 100)
   val () = T.check ("Compiler.stringLength/is-a-thousand", fn () => !Compiler.stringLength = 1000)

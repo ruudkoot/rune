@@ -1005,6 +1005,13 @@
     },
     {
      "kind": "val",
+     "name": "compileIn",
+     "spec": "val compileIn : string -> {read : unit -> char option, file : string, line : int} -> unit -> unit",
+     "doc": "`compileIn mode {read, file, line}` is `compile {read, file, line}`\nwith the characters read in the mode that `mode` names.\n\nThe names are those of a build file's annotations: `\"ascii\"`, the\ndefault, which `compile` reads in; `\"unicode\"` (or `\"unicode=utf8\"`);\nand `\"unicode=latin1\"`. A mode is how `rune --unicode=ENC` reads its\ninputs (docs/units.md, Source modes).\n\n**Raises** `Fail` in a program that has no compiler beside it, or for a\nmode of another name; the function raises `Fail` where a declaration\ndoes not compile.\n\n",
+     "page": "sig/COMPILER.md#val-compilein"
+    },
+    {
+     "kind": "val",
      "name": "printDepth",
      "spec": "val printDepth : int ref",
      "doc": "How deep the REPL prints a value, from the outside in.\n\nThe levels it counts are those of a list, a tuple, a record, a\nconstructor's argument and a `ref`'s content; past them it writes\n`...` for the rest. At 0 or below the REPL says nothing of what a\ndeclaration declared.\n\n",
@@ -1762,7 +1769,7 @@
    ]
   },
   "INET6_SOCK": {
-   "doc": "Sockets of the Internet protocol version 6, as `INET_SOCK` describes them\nfor version 4.\n\nThe specification knows nothing of IPv6: it was written when the protocol\nwas new, and its `NetHostDB` is an IPv4 database whose `toString` is\ndefined to give the four dotted numbers. So this signature is Rune's own,\nand a program that uses it is not portable. It is as close to `INET_SOCK`\nas it can be -- the same names, in the same order, for the same things --\nso that the two read alike.\n\nAn address of this family is an `in6_addr` and a port. `toString` and\n`fromString` write and read the text of `inet_ntop` and `inet_pton` \\--\neight groups of up to four hexadecimal digits, at most one `::` for the\nlongest run of zeros, a dotted quad in place of the last two groups, and\nno scope after `%` \\-- and they do it here rather than asking the system,\nas `NetHostDB` does for IPv4, so that a host compiling this library can\nread and write addresses although it has no sockets. On 300 addresses\ndrawn at random the text is the same as `inet_ntop`'s, character for\ncharacter. The addresses of a host are not looked up here; `NetHostDB`\nanswers for IPv4 only.\n\n> **Deviation** `INET6_SOCK/not-in-the-specification`. This signature is not in\nthe specification, which has no IPv6 at all: it was written before the\nprotocol, its `NetHostDB` is defined to give the four dotted numbers of\nIPv4, and it names no structure for anything else. A program that uses\nthis one does not port. What the specification does allow is the family:\nAF.list \"returns a list of all the available address families\", so\n`Socket.AF` knowing `INET6` is not a departure and this signature is.\n\n**See also** `INET_SOCK`, `SOCKET`, `NET_HOST_DB`, `MONO_VECTOR_EQ`\n\n",
+   "doc": "Sockets of the Internet protocol version 6, as `INET_SOCK` describes them\nfor version 4.\n\nThe specification knows nothing of IPv6: it was written when the protocol\nwas new, and its `NetHostDB` is an IPv4 database whose `toString` is\ndefined to give the four dotted numbers. So this signature is Rune's own,\nand a program that uses it is not portable. It is as close to `INET_SOCK`\nas it can be -- the same names, in the same order, for the same things --\nso that the two read alike.\n\nAn address of this family is an `in6_addr` and a port. `toString` and\n`fromString` write and read the text of `inet_ntop` and `inet_pton` \\--\neight groups of up to four hexadecimal digits, at most one `::` for the\nlongest run of zeros, a dotted quad in place of the last two groups, and\nno scope after `%` \\-- and they do it here rather than asking the system,\nas `NetHostDB` does for IPv4, so that a host compiling this library can\nread and write addresses although it has no sockets. On 300 addresses\ndrawn at random the text is the same as `inet_ntop`'s, character for\ncharacter. The addresses of a host are not looked up here; `NetHostDB`\nanswers for IPv4 only.\n\n> **Deviation** `INET6_SOCK/not-in-the-specification`. This signature is not in\nthe specification, which has no IPv6 at all: it was written before the\nprotocol, its `NetHostDB` is defined to give the four dotted numbers of\nIPv4, and it names no structure for anything else. A program that uses\nthis one does not port. What the specification does allow is the family:\nAF.list \"returns a list of all the available address families\", so\n`Socket.AF` knowing `INET6` is not a departure and this signature is.\n\n**See also** `INET_SOCK`, `SOCKET`, `NET_HOST_DB`\n\n",
    "page": "sig/INET6_SOCK.md",
    "members": [
     {
@@ -3382,7 +3389,7 @@
    ]
   },
   "MONO_VECTOR": {
-   "doc": "The sequences of one element type: vectors, arrays and their slices, as\n`VECTOR`, `ARRAY`, `VECTOR_SLICE` and `ARRAY_SLICE` describe them for any\nelement type.\n\nFixing the element type lets an implementation pack the elements, so\n`Word8Vector` need not hold one machine word per byte, and it gives the\nbyte- and character-oriented parts of the library (`BYTE`, `TEXT`,\n`BIN_IO`) a sequence type to name. The members are those of the\npolymorphic signatures, with `elem` for the element type; what they mean\nis the same, and the pages of `VECTOR` and `ARRAY` describe it at more\nlength.\n\n> **Erratum** `MONO_VECTOR/WideCharVector-must-admit-equality`. The page writes\n`type vector`, not `eqtype`, so that a family whose elements do not admit\nequality can have a vector -- `RealVector` needs that. Where a vector has\nto admit equality the page says so on the instance instead: `CharVector`\nis declared `where type vector = String.string`, and `STRING` writes\n`eqtype string`. \\*\\*`WideCharVector` is declared `where type elem = WideChar.char` and nothing more, and that is not enough.\\*\\* `TEXT` shares\n`String.string` with `CharVector.vector`, and `WideText` is declared\n`where type String.string = WideString.string`, so\n`WideText.CharVector.vector` is `WideString.string`, which `STRING` makes\nan equality type. Any implementation whose `WideText.CharVector` is the\ntop-level `WideCharVector` \\-- every one that has both -- must therefore\ngive `WideCharVector.vector` equality, and the declaration the page gives\nit cannot. \\*\\*The whole of the defect is one missing constraint\\*\\*:\n`where type vector = WideString.string`, which `CharVector` has and\n`WideCharVector` does not. That makes this a milder fault than the one on\nthe page of `ARRAY2`, where no constraint can help because there is no\ntype to pin to; here `WideString.string` is already there and `STRING`\nalready makes it an equality type.\n\nRune gives the equality the other way, by sealing with `MONO_VECTOR_EQ`.\nThat is a consequence of \\*this\\* library's order and not of the fault:\n`WideString` is built on `WideCharVector` (`type string = V.vector`, and\nevery operation delegates), so `WideCharVector` is where the type name is\nborn and there is nothing yet to pin it to. Following the page as it\nshould have been written would mean giving `WideString` a representation\nof its own and pinning `WideCharVector` to it -- a change to two files,\nnot a rename -- and `MONO_VECTOR_EQ` would then be unnecessary.\n\n**See also** `VECTOR`, `ARRAY`, `VECTOR_SLICE`, `ARRAY_SLICE`, `MONO_ARRAY2`,\n`MONO_VECTOR_EQ`, `TEXT`, `BYTE`\n\n",
+   "doc": "The sequences of one element type: vectors, arrays and their slices, as\n`VECTOR`, `ARRAY`, `VECTOR_SLICE` and `ARRAY_SLICE` describe them for any\nelement type.\n\nFixing the element type lets an implementation pack the elements, so\n`Word8Vector` need not hold one machine word per byte, and it gives the\nbyte- and character-oriented parts of the library (`BYTE`, `TEXT`,\n`BIN_IO`) a sequence type to name. The members are those of the\npolymorphic signatures, with `elem` for the element type; what they mean\nis the same, and the pages of `VECTOR` and `ARRAY` describe it at more\nlength.\n\n> **Erratum** `MONO_VECTOR/WideCharVector-must-admit-equality`. The page writes\n`type vector`, not `eqtype`, so that a family whose elements do not admit\nequality can have a vector -- `RealVector` needs that. Where a vector has\nto admit equality the page says so on the instance instead: `CharVector`\nis declared `where type vector = String.string`, and `STRING` writes\n`eqtype string`. \\*\\*`WideCharVector` is declared `where type elem = WideChar.char` and nothing more, and that is not enough.\\*\\* `TEXT` shares\n`String.string` with `CharVector.vector`, and `WideText` is declared\n`where type String.string = WideString.string`, so\n`WideText.CharVector.vector` is `WideString.string`, which `STRING` makes\nan equality type. Any implementation whose `WideText.CharVector` is the\ntop-level `WideCharVector` \\-- every one that has both -- must therefore\ngive `WideCharVector.vector` equality, and the declaration the page gives\nit cannot. \\*\\*The whole of the defect is one missing constraint\\*\\*:\n`where type vector = WideString.string`, which `CharVector` has and\n`WideCharVector` does not. That makes this a milder fault than the one on\nthe page of `ARRAY2`, where no constraint can help because there is no\ntype to pin to; here `WideString.string` is already there and `STRING`\nalready makes it an equality type.\n\nRune follows the page as it should have been written: `WideCharVector` is\ndeclared `where type vector = WideString.string where type elem = WideChar.char`, and the wide family is sealed in the order of the 8-bit\none, the strings first (widestring.sml), so `WideCharVector.vector`\nadmits equality because `WideString.string` does, and `MONO_VECTOR`\nserves it unchanged (the reading `WideCharVector/vector-is-WideString.string`).\n\n**See also** `VECTOR`, `ARRAY`, `VECTOR_SLICE`, `ARRAY_SLICE`, `MONO_ARRAY2`,\n`TEXT`, `BYTE`\n\n",
    "page": "sig/MONO_VECTOR.md",
    "members": [
     {
@@ -3538,166 +3545,6 @@
      "spec": "val collate : (elem * elem -> order) -> vector * vector -> order",
      "doc": "`collate cmp (a, b)` compares the elements of two of these lexicographically with `cmp`.\n\n**Law** `collate cmp (a, b) = List.collate cmp (foldr (op ::) [] a, foldr (op ::) [] b)`\n\n**Example** `collate Char.compare (\"ab\", \"ac\") = LESS`\n\n",
      "page": "sig/MONO_VECTOR.md#val-collate"
-    }
-   ]
-  },
-  "MONO_VECTOR_EQ": {
-   "doc": "The same as `MONO_VECTOR`, with a vector type that admits equality.\n\n> **Deviation** `MONO_VECTOR_EQ/not-in-the-specification`. This signature is\nnot in the specification, and it is here because the specification asks\nfor something it gives no way to say: `WideCharVector.vector` has to admit\nequality, and the declaration the page gives `WideCharVector` cannot make\nit -- see the erratum `MONO_VECTOR/WideCharVector-must-admit-equality`.\n`MONO_VECTOR` writes `type vector`, not `eqtype`, so that a family whose\nelements do not admit equality can have a vector; a family whose vector is\na type of its own and does admit it is sealed with this instead. The\nspecification's own way out is `where type vector = WideString.string` on\nthe instance, which Rune cannot use because `WideString` is declared after\n`WideCharVector` and is built on it -- `WideString.string` must be a type\nname of its own for wide string constants to be overloaded at it.\n\n",
-   "page": "sig/MONO_VECTOR_EQ.md",
-   "members": [
-    {
-     "kind": "eqtype",
-     "name": "vector",
-     "spec": "eqtype vector",
-     "doc": "The type of these vectors, which admits equality.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#type-vector"
-    },
-    {
-     "kind": "type",
-     "name": "elem",
-     "spec": "type elem",
-     "doc": "The type of the elements: `WideChar.char` for `WideCharVector`.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#type-elem"
-    },
-    {
-     "kind": "val",
-     "name": "maxLen",
-     "spec": "val maxLen : int",
-     "doc": "The greatest length such a vector may have.\n\n> **Implementation** `MONO_VECTOR_EQ.maxLen/value`. `String.maxSize`, the\nbound of the families of `MONO_VECTOR` whose vector is a string.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-maxlen"
-    },
-    {
-     "kind": "val",
-     "name": "fromList",
-     "spec": "val fromList : elem list -> vector",
-     "doc": "`fromList l` is the sequence of the elements of `l`, in order.\n\n**Raises** `Size` if `l` is longer than `maxLen`.\n\n**Example** `fromList [WideChar.chr 65, WideChar.chr 0x3BB] = fromList [WideChar.chr 65, WideChar.chr 0x3BB]`\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-fromlist"
-    },
-    {
-     "kind": "val",
-     "name": "tabulate",
-     "spec": "val tabulate : int * (int -> elem) -> vector",
-     "doc": "`tabulate (n, f)` is the sequence of `f 0`, ..., `f (n - 1)`, applied in order.\n\n**Raises** `Size` if `n < 0` or `n > maxLen`, before `f` is applied.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-tabulate"
-    },
-    {
-     "kind": "val",
-     "name": "length",
-     "spec": "val length : vector -> int",
-     "doc": "`length x` is the number of elements.\n\n**Example** `length (fromList [WideChar.chr 0x10000]) = 1`\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-length"
-    },
-    {
-     "kind": "val",
-     "name": "sub",
-     "spec": "val sub : vector * int -> elem",
-     "doc": "`sub (x, i)` is the element at position `i`, counting from 0.\n\n**Raises** `Subscript` if `i` is outside.\n\n**Example** `WideChar.ord (sub (fromList [WideChar.chr 65, WideChar.chr 0x3BB], 1)) = 0x3BB`\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-sub"
-    },
-    {
-     "kind": "val",
-     "name": "update",
-     "spec": "val update : vector * int * elem -> vector",
-     "doc": "`update (v, i, x)` is a new vector like `v` but with `x` at position `i`.\n\n**Raises** `Subscript` if `i` is outside `v`.\n\n**Example** `update (fromList [WideChar.chr 65], 0, WideChar.chr 66) = fromList [WideChar.chr 66]`\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-update"
-    },
-    {
-     "kind": "val",
-     "name": "concat",
-     "spec": "val concat : vector list -> vector",
-     "doc": "`concat l` is the vectors of `l` one after another.\n\n**Raises** `Size` if the result would be longer than `maxLen`.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-concat"
-    },
-    {
-     "kind": "val",
-     "name": "appi",
-     "spec": "val appi : (int * elem -> unit) -> vector -> unit",
-     "doc": "`appi f x` applies `f` to the index and the element of each position, from 0 up, for its effect.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-appi"
-    },
-    {
-     "kind": "val",
-     "name": "app",
-     "spec": "val app : (elem -> unit) -> vector -> unit",
-     "doc": "`app f x` applies `f` to every element, from 0 up, for its effect.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-app"
-    },
-    {
-     "kind": "val",
-     "name": "mapi",
-     "spec": "val mapi : (int * elem -> elem) -> vector -> vector",
-     "doc": "`mapi f v` is the vector of the results of `f` on the index and the element of each position.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-mapi"
-    },
-    {
-     "kind": "val",
-     "name": "map",
-     "spec": "val map : (elem -> elem) -> vector -> vector",
-     "doc": "`map f v` is the vector of the results of `f` on each element, in order.\n\n**Example** `map WideChar.toUpper (fromList [WideChar.chr 97]) = fromList [WideChar.chr 65]`\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-map"
-    },
-    {
-     "kind": "val",
-     "name": "foldli",
-     "spec": "val foldli : (int * elem * 'b -> 'b) -> 'b -> vector -> 'b",
-     "doc": "`foldli f init x` combines the elements from the left, giving `f` the index as well.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-foldli"
-    },
-    {
-     "kind": "val",
-     "name": "foldri",
-     "spec": "val foldri : (int * elem * 'b -> 'b) -> 'b -> vector -> 'b",
-     "doc": "`foldri f init x` combines the elements from the right, giving `f` the index as well.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-foldri"
-    },
-    {
-     "kind": "val",
-     "name": "foldl",
-     "spec": "val foldl : (elem * 'b -> 'b) -> 'b -> vector -> 'b",
-     "doc": "`foldl f init x` combines the elements from the left, as `List.foldl` does.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-foldl"
-    },
-    {
-     "kind": "val",
-     "name": "foldr",
-     "spec": "val foldr : (elem * 'b -> 'b) -> 'b -> vector -> 'b",
-     "doc": "`foldr f init x` combines the elements from the right, as `List.foldr` does.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-foldr"
-    },
-    {
-     "kind": "val",
-     "name": "findi",
-     "spec": "val findi : (int * elem -> bool) -> vector -> (int * elem) option",
-     "doc": "`findi p x` is `SOME (i, e)` for the first position whose index and element satisfy `p`, or `NONE`.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-findi"
-    },
-    {
-     "kind": "val",
-     "name": "find",
-     "spec": "val find : (elem -> bool) -> vector -> elem option",
-     "doc": "`find p x` is `SOME e` for the first element that satisfies `p`, or `NONE`.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-find"
-    },
-    {
-     "kind": "val",
-     "name": "exists",
-     "spec": "val exists : (elem -> bool) -> vector -> bool",
-     "doc": "`exists p x` is `true` when some element satisfies `p`.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-exists"
-    },
-    {
-     "kind": "val",
-     "name": "all",
-     "spec": "val all : (elem -> bool) -> vector -> bool",
-     "doc": "`all p x` is `true` when every element satisfies `p`.\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-all"
-    },
-    {
-     "kind": "val",
-     "name": "collate",
-     "spec": "val collate : (elem * elem -> order) -> vector * vector -> order",
-     "doc": "`collate cmp (a, b)` compares the elements of two of these lexicographically with `cmp`.\n\n**Example** `collate WideChar.compare (fromList [WideChar.chr 65], fromList [WideChar.chr 66]) = LESS`\n\n",
-     "page": "sig/MONO_VECTOR_EQ.md#val-collate"
     }
    ]
   },
@@ -9980,9 +9827,23 @@
    ]
   },
   "STRING_CVT": {
-   "doc": "The types and helpers of the conversions between values and text: the\nformats of `fmt`, the readers of `scan`.\n\nEvery `scan` function of the library reads from a functional character\nstream: a value of any type `'b` together with a reader, a function that\ngives the next character and the rest of the stream, or `NONE` at the end.\nA scanner takes a reader of characters and gives a reader of values, so it\nworks alike on strings, lists of characters, substrings and input streams,\nand a program can build scanners of its own out of those of the library and\nthe helpers below. Nothing is consumed by a scan that fails: the caller\nstill has the stream it passed.\n\n**See also** `CHAR`, `STRING`, `SUBSTRING`, `TEXT_IO`\n\n",
+   "doc": "The types and helpers of the conversions between values and text: the\nformats of `fmt`, the readers of `scan`.\n\nEvery `scan` function of the library reads from a functional character\nstream: a value of any type `'b` together with a reader, a function that\ngives the next character and the rest of the stream, or `NONE` at the end.\nA scanner takes a reader of characters and gives a reader of values, so it\nworks alike on strings, lists of characters, substrings and input streams,\nand a program can build scanners of its own out of those of the library and\nthe helpers below. Nothing is consumed by a scan that fails: the caller\nstill has the stream it passed.\n\n> **Deviation** `STRING_CVT/generic`. The page writes the types of the helpers\nthat build and take apart text as `char` and `string`, so there are none\nfor wide text, and a scanner of `WideChar.char`s has no `skipWS` or\n`scanString`. Here the character and the string are the signature's\nown, `StringCvt` is declared `where type char = Char.char where type string = String.string`, which gives it the very types of the page, and\n`WideStringCvt` is the same over `WideChar.char` and `WideString.string`,\nwith the same `radix` and `realfmt`. The change of the specification it\nproposes is in docs/unicode.md.\n\n**See also** `CHAR`, `STRING`, `SUBSTRING`, `TEXT_IO`\n\n",
    "page": "sig/STRING_CVT.md",
    "members": [
+    {
+     "kind": "eqtype",
+     "name": "char",
+     "spec": "eqtype char",
+     "doc": "The type of the characters the helpers below read and write: `char` for\n`StringCvt`, `WideChar.char` for `WideStringCvt`.\n\n",
+     "page": "sig/STRING_CVT.md#type-char"
+    },
+    {
+     "kind": "eqtype",
+     "name": "string",
+     "spec": "eqtype string",
+     "doc": "The type of the strings of those characters: `string` for `StringCvt`,\n`WideString.string` for `WideStringCvt`.\n\n",
+     "page": "sig/STRING_CVT.md#type-string"
+    },
     {
      "kind": "datatype",
      "name": "radix",
@@ -10043,7 +9904,7 @@
      "kind": "val",
      "name": "skipWS",
      "spec": "val skipWS : (char, 'a) reader -> 'a -> 'a",
-     "doc": "`skipWS getc strm` is `strm` without the white space at its front.\n\nWhite space is what `Char.isSpace` accepts.\n\n**Law** `skipWS getc strm = dropl Char.isSpace getc strm`\n\n**Example** `Substring.string (skipWS Substring.getc (Substring.full \"  a\")) = \"a\"`\n\n",
+     "doc": "`skipWS getc strm` is `strm` without the white space at its front.\n\nWhite space is what `Char.isSpace` accepts, and `WideChar.isSpace` for\n`WideStringCvt`.\n\n**Law** `skipWS getc strm = dropl Char.isSpace getc strm`\n\n**Example** `Substring.string (skipWS Substring.getc (Substring.full \"  a\")) = \"a\"`\n\n",
      "page": "sig/STRING_CVT.md#val-skipws"
     },
     {
@@ -10535,29 +10396,36 @@
    ]
   },
   "TEXT_IO": {
-   "doc": "Text files and the standard streams: the imperative streams of characters,\nwith the ways of opening a file.\n\nThis is the signature a program reaches for first. It is `IMPERATIVE_IO`\nover characters, so everything written there holds; what it adds is\n`openIn`, `openOut`, `openAppend` and `openString`, the three standard\nstreams, `inputLine`, `print` and `scanStream`.\n\nA text file holds characters; on the systems Rune runs on nothing is\ntranslated, so what `output` writes is what `inputAll` reads back, newline\nfor newline. `BIN_IO` is the same for bytes.\n\n`StreamIO` is the functional stream underneath, reached through\n`getInstream` and `getOutstream`; `TEXT_STREAM_IO` describes it.\n\n**See also** `IMPERATIVE_IO`, `TEXT_STREAM_IO`, `BIN_IO`, `STRING_CVT`,\n`OS_FILE_SYS`\n\n> **Erratum** `TEXT_IO/include-rewritten`. The page writes `include IMPERATIVE_IO` and then specifies `StreamIO` again as a\n`TEXT_STREAM_IO`, which is not valid SML. What it means is that a\nstructure matching `TEXT_IO` also matches `IMPERATIVE_IO` and has a\n`StreamIO` matching `TEXT_STREAM_IO`; that is what stands here, with the\nsubstructure first, then the members of `IMPERATIVE_IO` in full, then the\nones of `TEXT_IO`.\n\n> **Deviation** `TEXT_IO/WideTextIO-not-matched`. The optional `WideTextIO` is\nnot matched against this signature, because the types here are written\n`string` and `char`; the suite checks that its readers and writers match\n`PRIM_IO`, and that its vectors are the strings of `WideString` and its\nelements the characters of `WideChar`, instead.\n\n",
+   "doc": "Text files and the standard streams: the imperative streams of characters,\nwith the ways of opening a file.\n\nThis is the signature a program reaches for first. It is `IMPERATIVE_IO`\nover characters, so everything written there holds; what it adds is\n`openIn`, `openOut`, `openAppend` and `openString`, the three standard\nstreams, `inputLine`, `print` and `scanStream`.\n\nA text file holds characters; on the systems Rune runs on nothing is\ntranslated, so what `output` writes is what `inputAll` reads back, newline\nfor newline. `BIN_IO` is the same for bytes.\n\n`StreamIO` is the functional stream underneath, reached through\n`getInstream` and `getOutstream`; `TEXT_STREAM_IO` describes it.\n\n**See also** `IMPERATIVE_IO`, `TEXT_STREAM_IO`, `BIN_IO`, `STRING_CVT`,\n`OS_FILE_SYS`\n\n> **Erratum** `TEXT_IO/include-rewritten`. The page writes `include IMPERATIVE_IO` and then specifies `StreamIO` again as a\n`TEXT_STREAM_IO`, which is not valid SML. What it means is that a\nstructure matching `TEXT_IO` also matches `IMPERATIVE_IO` and has a\n`StreamIO` matching `TEXT_STREAM_IO`; that is what stands here, with the\nsubstructure first, then the members of `IMPERATIVE_IO` in full, then the\nones of `TEXT_IO`.\n\n> **Deviation** `TEXT_IO/generic`. The page writes the types of `TEXT_IO` as\nthose of `TextIO` \\-- `string`, `char`, `substring` and the readers and\nwriters of `TextPrimIO` \\-- so the optional `WideTextIO`, which the page\ndeclares `:> TEXT_IO`, cannot match it. Here they are the signature's\nown: what is read and written is `vector`, one of it `elem`, a piece of\nit `substring`, and the readers and writers are left to the declaration,\n`structure TextIO :> TEXT_IO where type StreamIO.vector = CharVector.vector where type StreamIO.elem = Char.char where type StreamIO.substring = Substring.substring where type StreamIO.reader = TextPrimIO.reader where type StreamIO.writer = TextPrimIO.writer where type StreamIO.pos = TextPrimIO.pos`, which gives `TextIO` the very types\nof the page; `WideTextIO` is declared the same way with the wide ones.\nThe names of files stay `string`. The change of the specification it\nproposes is in docs/unicode.md.\n\n",
    "page": "sig/TEXT_IO.md",
    "members": [
     {
      "kind": "structure",
      "name": "StreamIO",
-     "spec": "structure StreamIO : TEXT_STREAM_IO\n  where type reader = TextPrimIO.reader\n  where type writer = TextPrimIO.writer\n  where type pos = TextPrimIO.pos",
-     "doc": "The functional text streams underneath, with the readers and writers of `TextPrimIO`.\n\n",
+     "spec": "structure StreamIO : TEXT_STREAM_IO",
+     "doc": "The functional text streams underneath, with the readers and writers of\n`TextPrimIO` for `TextIO` and of `WideTextPrimIO` for `WideTextIO`.\n\n",
      "page": "sig/TEXT_IO.md#str-streamio"
     },
     {
      "kind": "type",
      "name": "vector",
      "spec": "type vector = StreamIO.vector",
-     "doc": "The type of what is read and written: `string`.\n\n",
+     "doc": "The type of what is read and written: `string` for `TextIO`,\n`WideString.string` for `WideTextIO`.\n\n",
      "page": "sig/TEXT_IO.md#type-vector"
     },
     {
      "kind": "type",
      "name": "elem",
      "spec": "type elem = StreamIO.elem",
-     "doc": "The type of the elements: `char`.\n\n",
+     "doc": "The type of the elements: `char` for `TextIO`, `WideChar.char` for\n`WideTextIO`.\n\n",
      "page": "sig/TEXT_IO.md#type-elem"
+    },
+    {
+     "kind": "type",
+     "name": "substring",
+     "spec": "type substring = StreamIO.substring",
+     "doc": "The type of the pieces of what is read and written:\n`Substring.substring` for `TextIO`, `WideSubstring.substring` for\n`WideTextIO`.\n\n",
+     "page": "sig/TEXT_IO.md#type-substring"
     },
     {
      "kind": "type",
@@ -10716,7 +10584,7 @@
     {
      "kind": "val",
      "name": "inputLine",
-     "spec": "val inputLine : instream -> string option",
+     "spec": "val inputLine : instream -> vector option",
      "doc": "`inputLine f` is `SOME` of the next line, with its newline, or `NONE` at an end of stream.\n\nA last line that runs into an end of stream gets a newline appended, so\nevery line ends in one.\n\n**Raises** `IO.Io` if the reader fails.\n\n> **Reading** `TextIO.inputLine/does-not-pass-the-end-of-stream`. An\n`inputLine` that gives `NONE` does not consume the end of stream it\nfound -- `TEXT_STREAM_IO.inputLine` returns no stream in that case, so\nthere is none to move on to -- and it keeps giving `NONE` even after the\nfile has grown. Poly/ML reads on there.\n\n**Example** `let val s = openString \"a\\nb\" in (inputLine s, inputLine s, inputLine s) end = (SOME \"a\\n\", SOME \"b\\n\", NONE)`\n\n",
      "page": "sig/TEXT_IO.md#val-inputline"
     },
@@ -10751,7 +10619,7 @@
     {
      "kind": "val",
      "name": "openString",
-     "spec": "val openString : string -> instream",
+     "spec": "val openString : vector -> instream",
      "doc": "`openString s` is a stream reading the characters of `s`, and no file.\n\n**Example** `inputAll (openString \"xyz\") = \"xyz\"`\n\n",
      "page": "sig/TEXT_IO.md#val-openstring"
     },
@@ -10779,34 +10647,41 @@
     {
      "kind": "val",
      "name": "print",
-     "spec": "val print : string -> unit",
-     "doc": "`print s` writes `s` to `stdOut` and flushes it.\n\nIt is the `print` of the top-level environment.\n\n",
+     "spec": "val print : vector -> unit",
+     "doc": "`print s` writes `s` to `stdOut` and flushes it.\n\n`TextIO.print` is the `print` of the top-level environment.\n\n",
      "page": "sig/TEXT_IO.md#val-print"
     },
     {
      "kind": "val",
      "name": "scanStream",
-     "spec": "val scanStream : ((Char.char, StreamIO.instream) StringCvt.reader\n                  -> ('a, StreamIO.instream) StringCvt.reader)\n                 -> instream -> 'a option",
+     "spec": "val scanStream : ((elem, StreamIO.instream) StringCvt.reader\n                  -> ('a, StreamIO.instream) StringCvt.reader)\n                 -> instream -> 'a option",
      "doc": "`scanStream scan f` runs a scanner over `f` and moves `f` to where it stopped.\n\n`scan` is a function of the shape that `StringCvt` describes: it takes a\nreader and reads from a source, here the functional stream underneath.\n\n> **Reading** `TextIO.scanStream/moves-only-on-success`. By the\nimplementation the page gives, the stream is moved to where the scanner\nstopped when it returns `SOME`, and not at all when it returns `NONE`,\nwhatever the scanner read while trying.\n\n**Example** `scanStream (Int.scan StringCvt.DEC) (openString \" 42 rest\") = SOME 42`\n\n",
      "page": "sig/TEXT_IO.md#val-scanstream"
     }
    ]
   },
   "TEXT_STREAM_IO": {
-   "doc": "The functional streams of `STREAM_IO` where the elements are characters,\nwith the two operations that only text has: reading a line and writing a\nsubstring.\n\nEverything of `STREAM_IO` holds here unchanged; the `include` fixes the\nelements to `char` and the vectors to `string`.\n\n**See also** `STREAM_IO`, `TEXT_IO`, `SUBSTRING`\n\n",
+   "doc": "The functional streams of `STREAM_IO` where the elements are characters,\nwith the two operations that only text has: reading a line and writing a\nsubstring.\n\nEverything of `STREAM_IO` holds here unchanged. The elements are the\ncharacters of one kind of text and the vectors its strings: `char` and\n`string` for `TextIO.StreamIO`, `WideChar.char` and `WideString.string`\nfor `WideTextIO.StreamIO`.\n\n> **Deviation** `TEXT_STREAM_IO/generic`. The page writes `include STREAM_IO where type vector = CharVector.vector where type elem = Char.char`, and\n`substring` for `Substring.substring`, so no stream of wide characters\ncan match it, and the optional `WideTextIO.StreamIO` the page declares\nhas no signature. Here the three types are the signature's own --\n`substring` is a type of it, as `vector_slice` is of `PRIM_IO` \\-- and\n`TextIO` is declared `where type StreamIO.vector = CharVector.vector where type StreamIO.elem = Char.char where type StreamIO.substring = Substring.substring`, which gives `TextIO.StreamIO` the very types of the\npage. A structure that matches the page's signature matches this one\nonce it has the type `substring`. The change of the specification it\nproposes is in docs/unicode.md.\n\n**See also** `STREAM_IO`, `TEXT_IO`, `SUBSTRING`\n\n",
    "page": "sig/TEXT_STREAM_IO.md",
    "members": [
     {
      "kind": "include",
      "name": "STREAM_IO",
-     "spec": "include STREAM_IO\n  where type vector = CharVector.vector\n  where type elem = Char.char",
+     "spec": "include STREAM_IO",
      "doc": "",
      "page": "sig/TEXT_STREAM_IO.md#include-stream_io"
     },
     {
+     "kind": "type",
+     "name": "substring",
+     "spec": "type substring",
+     "doc": "The type of the substrings of the vectors: `Substring.substring` for\n`TextIO.StreamIO`, `WideSubstring.substring` for `WideTextIO.StreamIO`.\n\n",
+     "page": "sig/TEXT_STREAM_IO.md#type-substring"
+    },
+    {
      "kind": "val",
      "name": "inputLine",
-     "spec": "val inputLine : instream -> (string * instream) option",
+     "spec": "val inputLine : instream -> (vector * instream) option",
      "doc": "`inputLine f` is `SOME` of the next line, with its newline, and the stream after it, or `NONE` at an end of stream.\n\n> **Reading** `TextIO.StreamIO.inputLine/last-line-without-a-newline`. A last\nline that runs into an end of stream gets a newline appended, so that\nevery line returned ends in one, and the stream returned is past that\nend of stream. At an end of stream itself it is `NONE`.\n\n**Raises** `IO.Io` if the reader fails.\n\n**Example** `Option.map #1 (inputLine (TextIO.getInstream (TextIO.openString \"a\\nb\"))) = SOME \"a\\n\"`\n\n",
      "page": "sig/TEXT_STREAM_IO.md#val-inputline"
     },
@@ -10814,7 +10689,7 @@
      "kind": "val",
      "name": "outputSubstr",
      "spec": "val outputSubstr : outstream * substring -> unit",
-     "doc": "`outputSubstr (f, ss)` writes the characters of the substring `ss`.\n\nIt is `output (f, Substring.string ss)`, and so raises what that raises,\nwith `\"output\"` as the `function` of the `IO.Io`.\n\n**Raises** `IO.Io` if the writer fails, or if the stream is closed or\nterminated.\n\n",
+     "doc": "`outputSubstr (f, ss)` writes the characters of the substring `ss`.\n\nIt is `output (f, Substring.string ss)` (of the substrings of its own\nkind of text), and so raises what that raises,\nwith `\"output\"` as the `function` of the `IO.Io`.\n\n**Raises** `IO.Io` if the writer fails, or if the stream is closed or\nterminated.\n\n",
      "page": "sig/TEXT_STREAM_IO.md#val-outputsubstr"
     }
    ]
@@ -12689,8 +12564,11 @@
   "WideCharVector": "MONO_VECTOR",
   "WideCharVectorSlice": "MONO_VECTOR_SLICE",
   "WideString": "STRING",
+  "WideStringCvt": "STRING_CVT",
   "WideSubstring": "SUBSTRING",
   "WideText": "TEXT",
+  "WideTextIO": "IMPERATIVE_IO",
+  "WideTextIO.StreamIO": "STREAM_IO",
   "WideTextPrimIO": "PRIM_IO",
   "Windows": "WINDOWS",
   "Word": "WORD",

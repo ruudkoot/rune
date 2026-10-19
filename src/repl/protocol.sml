@@ -91,8 +91,13 @@ struct
       SOME k => k
     | NONE => raise R.Failed {code = R.invalidParams, message = "wants a number " ^ name, data = NONE}
 
+  (* a frame's column as an editor counts it, in UTF-16 units, as the
+     diagnostics' ranges are: the line table's is in bytes (Source.utf16Column) *)
+  fun frameColumn (file, line, column) = if file = "" then column else Source.utf16Column (file, line, column)
+
   fun frameJson ({function, file, line, column} : Runtime.frame) =
-    Json.Object [("function", str function), ("file", str file), ("line", int line), ("column", int column)]
+    Json.Object [("function", str function), ("file", str file), ("line", int line),
+                 ("column", int (frameColumn (file, line, column)))]
 
   fun outcome ({ok, bindings, declared, messages, diagnostics, exn, css} : ReplEngine.outcome) : Json.value =
     Json.Object
@@ -124,7 +129,7 @@ struct
         Json.Array (List.tabulate (List.length frames, fn i =>
                       let val {function, file, line, column, ...} = List.nth (frames, i)
                       in Json.Object [("id", int i), ("function", str function), ("file", str file), ("line", int line),
-                                      ("column", int column)] end))
+                                      ("column", int (frameColumn (file, line, column)))] end))
     | NONE => Json.Array []
 
   fun stopped () =

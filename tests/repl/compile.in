@@ -31,3 +31,9 @@ c3 ();
 val c4 = Compiler.compile {read = tricky, file = "<string>", line = 1};
 c4 ();
 z1;
+(* compileIn: the mode the characters are read in, by the names of a build
+   file's annotations; another name is refused before anything is read *)
+val u = Compiler.compileIn "unicode=latin1" {read = reader "val e = 2;", file = "<string>", line = 1};
+u ();
+e;
+(Compiler.compileIn "utf8" {read = reader "val f = 3;", file = "<string>", line = 1}; "taken") handle Fail m => m;

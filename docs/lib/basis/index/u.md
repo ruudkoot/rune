@@ -23,7 +23,7 @@
 - `unpackString` (val): [BYTE](../sig/BYTE.md#val-unpackstring)
 - `unpackStringVec` (val): [BYTE](../sig/BYTE.md#val-unpackstringvec)
 - `unzip` (val): [LIST_PAIR](../sig/LIST_PAIR.md#val-unzip)
-- `update` (val): [ARRAY](../sig/ARRAY.md#val-update), [ARRAY2](../sig/ARRAY2.md#val-update), [ARRAY_SLICE](../sig/ARRAY_SLICE.md#val-update), [DISPLAY](../sig/DISPLAY.md#val-update), [MONO_ARRAY](../sig/MONO_ARRAY.md#val-update), [MONO_ARRAY2](../sig/MONO_ARRAY2.md#val-update), [MONO_ARRAY_SLICE](../sig/MONO_ARRAY_SLICE.md#val-update), [MONO_VECTOR](../sig/MONO_VECTOR.md#val-update), [MONO_VECTOR_EQ](../sig/MONO_VECTOR_EQ.md#val-update), [PACK_REAL](../sig/PACK_REAL.md#val-update), [PACK_WORD](../sig/PACK_WORD.md#val-update), [VECTOR](../sig/VECTOR.md#val-update)
+- `update` (val): [ARRAY](../sig/ARRAY.md#val-update), [ARRAY2](../sig/ARRAY2.md#val-update), [ARRAY_SLICE](../sig/ARRAY_SLICE.md#val-update), [DISPLAY](../sig/DISPLAY.md#val-update), [MONO_ARRAY](../sig/MONO_ARRAY.md#val-update), [MONO_ARRAY2](../sig/MONO_ARRAY2.md#val-update), [MONO_ARRAY_SLICE](../sig/MONO_ARRAY_SLICE.md#val-update), [MONO_VECTOR](../sig/MONO_VECTOR.md#val-update), [PACK_REAL](../sig/PACK_REAL.md#val-update), [PACK_WORD](../sig/PACK_WORD.md#val-update), [VECTOR](../sig/VECTOR.md#val-update)
 - `use` (val): [COMPILER](../sig/COMPILER.md#val-use)
 - `usr1` (val): [POSIX_SIGNAL](../sig/POSIX_SIGNAL.md#val-usr1)
 - `usr2` (val): [POSIX_SIGNAL](../sig/POSIX_SIGNAL.md#val-usr2)

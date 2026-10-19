@@ -4,10 +4,11 @@
 
 What a program can name without a structure in front. The types `int`, `word`, `real`, `char`,
 `string`, `bool`, `list`, `ref`, `array`, `vector`, `exn` and `unit`, the constructors of `bool`,
-`list` and `ref`, the arithmetic and comparison operators and the exceptions of the language are
-built into the compiler; the rest is declared by the files of the library that every program
-loads, and is listed here. A value that is also a member of a structure is described on the page
-of that structure's signature.
+`list` and `ref`, the arithmetic and comparison operators, the operations `^`, `size`, `concat`
+and `substring` on strings (overloaded over `string` and `WideString.string`, `string` by
+default) and the exceptions of the language are built into the compiler; the rest is declared
+by the files of the library that every program loads, and is listed here. A value that is also
+a member of a structure is described on the page of that structure's signature.
 
 ## Types
 
@@ -47,13 +48,9 @@ of that structure's signature.
 | `map` | [`List.map`](sig/LIST.md#val-map) | `map f l` is the list of the results of applying `f` to each element of `l`, from left to right. |
 | `foldl` | [`List.foldl`](sig/LIST.md#val-foldl) | `foldl f init l` combines the elements of `l` from the left: `f (xn, ... f (x2, f (x1, init)) ...)`. |
 | `foldr` | [`List.foldr`](sig/LIST.md#val-foldr) | `foldr f init l` combines the elements of `l` from the right: `f (x1, f (x2, ... f (xn, init) ...))`. |
-| `size` | [`String.size`](sig/STRING.md#val-size) | `size s` is the number of characters of `s`. |
-| `^` | [`String.^`](sig/STRING.md#val-op-caret) | `s ^ t` is the characters of `s` followed by those of `t`. |
 | `str` | [`String.str`](sig/STRING.md#val-str) | `str c` is the string of the one character `c`. |
-| `concat` | [`String.concat`](sig/STRING.md#val-concat) | `concat l` is the strings of `l` one after another. |
 | `implode` | [`String.implode`](sig/STRING.md#val-implode) | `implode l` is the string of the characters of `l`, in order. |
 | `explode` | [`String.explode`](sig/STRING.md#val-explode) | `explode s` is the list of the characters of `s`, in order. |
-| `substring` | [`String.substring`](sig/STRING.md#val-substring) | `substring (s, i, n)` is the `n` characters of `s` from position `i`. |
 | `ord` | [`Char.ord`](sig/CHAR.md#val-ord) | `ord c` is the code of `c`, between 0 and `maxOrd`. |
 | `chr` | [`Char.chr`](sig/CHAR.md#val-chr) | `chr i` is the character whose code is `i`. |
 | `real` | [`Real.fromInt`](sig/REAL.md#val-fromint) | `fromInt i` is `i` as a real, rounded in the current rounding mode when the type cannot hold it exactly. |

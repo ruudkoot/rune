@@ -13,7 +13,7 @@ struct
 
   fun isBound (bound : tycon list, c : tycon) = List.exists (fn b => sameTycon (b, c)) bound
 
-  fun fcnToString (TName c) = #name c
+  fun fcnToString (TName c) = tyconName c
     | fcnToString (TAbbrev (_, body)) = toString body
 
   (* Rule 65: every use of a signature gets fresh bound names. *)

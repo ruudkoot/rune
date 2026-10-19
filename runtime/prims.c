@@ -1768,6 +1768,114 @@ static int p_vector_sub(VM *vm) {
     return ret(vm, 2, obj_field(a, i));
 }
 
+/* Vectors made by copying the fields of others, in C, where the library
+   would go through lists (Vector.concat, VectorSlice.vector, WideString.^).
+   The new vector is filled as a fresh object is, after its allocation, which
+   may move the sources: they are read again from the stack. */
+#define MAX_VECTOR 100000000
+static int p_vector_concat(VM *vm) {
+    Obj *a = check_obj(vm, ARG(1), K_TUPLE, "vector_concat");
+    Obj *b = check_obj(vm, ARG(0), K_TUPLE, "vector_concat");
+    uint64_t n = (uint64_t)obj_len(a) + obj_len(b);
+    if (n > MAX_VECTOR) return raise_with(vm, 2, EXN_SIZE);
+    Obj *r = vm_alloc_fields(vm, K_TUPLE, 0, (uint32_t)n);
+    a = val_ptr(ARG(1)); b = val_ptr(ARG(0));   /* may have moved */
+    uint32_t na = obj_len(a), nb = obj_len(b);
+    for (uint32_t i = 0; i < na; i++) obj_fill_field(r, i, obj_field(a, i));
+    for (uint32_t i = 0; i < nb; i++) obj_fill_field(r, na + i, obj_field(b, i));
+    return ret(vm, 2, mk_ptr(r));
+}
+static int p_vector_concat_list(VM *vm) {
+    uint64_t total = 0;
+    if (list_length(ARG(0)) < 0) vm_fatal(vm, "vector_concat_list: malformed list");
+    for (Value x = ARG(0); val_is(x, T_PTR); x = list_tail(x)) {
+        Value v = list_head(x);
+        if (!val_is(v, T_PTR) || obj_kind(val_ptr(v)) != K_TUPLE) vm_fatal(vm, "vector_concat_list: non-vector element");
+        total += obj_len(val_ptr(v));
+        if (total > MAX_VECTOR) return raise_with(vm, 1, EXN_SIZE);
+    }
+    Obj *r = vm_alloc_fields(vm, K_TUPLE, 0, (uint32_t)total);
+    uint32_t o = 0;
+    for (Value x = ARG(0); val_is(x, T_PTR); x = list_tail(x)) {   /* the list may have moved */
+        Obj *v = val_ptr(list_head(x));
+        uint32_t n = obj_len(v);
+        for (uint32_t i = 0; i < n; i++) obj_fill_field(r, o + i, obj_field(v, i));
+        o += n;
+    }
+    return ret(vm, 1, mk_ptr(r));
+}
+static int p_vector_extract(VM *vm) {
+    Obj *v = check_obj(vm, ARG(2), K_TUPLE, "vector_extract");
+    check_tag(vm, ARG(1), T_INT, "vector_extract");
+    check_tag(vm, ARG(0), T_INT, "vector_extract");
+    int64_t i = val_imm(ARG(1)), n = val_imm(ARG(0));
+    if (i < 0 || n < 0 || (uint64_t)i + (uint64_t)n > obj_len(v)) return raise_with(vm, 3, EXN_SUBSCRIPT);
+    Obj *r = vm_alloc_fields(vm, K_TUPLE, 0, (uint32_t)n);
+    v = val_ptr(ARG(2));   /* may have moved */
+    for (int64_t k = 0; k < n; k++) obj_fill_field(r, (uint32_t)k, obj_field(v, (uint32_t)(i + k)));
+    return ret(vm, 3, mk_ptr(r));
+}
+
+/* One sequence of UTF-8 at p, of which avail bytes are there: its length,
+   with its code point in *cp; 0 when it is not UTF-8 (the well-formed
+   sequences are those of the Unicode Standard's Table 3-7, so an overlong
+   form, a surrogate and a value past 0x10FFFF are not); -1 when the avail
+   bytes are the beginning of one that the end cuts short. */
+static int utf8_sequence(const unsigned char *p, size_t avail, uint32_t *cp) {
+    unsigned b = p[0];
+    int len;
+    unsigned lo = 0x80, hi = 0xBF;
+    if (b < 0x80) { *cp = b; return 1; }
+    if (b < 0xC2) return 0;
+    if (b < 0xE0) len = 2;
+    else if (b < 0xF0) { len = 3; if (b == 0xE0) lo = 0xA0; else if (b == 0xED) hi = 0x9F; }
+    else if (b < 0xF5) { len = 4; if (b == 0xF0) lo = 0x90; else if (b == 0xF4) hi = 0x8F; }
+    else return 0;
+    uint32_t c = b & (0x7Fu >> len);
+    for (int k = 1; k < len; k++) {
+        if ((size_t)k >= avail) return -1;
+        unsigned x = p[k];
+        if (x < (k == 1 ? lo : 0x80) || x > (k == 1 ? hi : 0xBF)) return 0;
+        c = (c << 6) | (x & 0x3F);
+    }
+    *cp = c;
+    return len;
+}
+static int p_utf8_decode(VM *vm) {
+    Obj *s = check_obj(vm, ARG(2), K_STRING, "utf8_decode");
+    check_tag(vm, ARG(1), T_INT, "utf8_decode");
+    check_tag(vm, ARG(0), T_INT, "utf8_decode");
+    int64_t i = val_imm(ARG(1)), n = val_imm(ARG(0));
+    size_t len = obj_len(s);
+    if (i < 0 || (uint64_t)i > len || n < 0) return raise_with(vm, 3, EXN_SUBSCRIPT);
+    if (n > MAX_VECTOR) n = MAX_VECTOR;
+    /* how many there are and where they stop, then the vector */
+    const unsigned char *b = (const unsigned char *)obj_bytes(s);
+    size_t j = (size_t)i;
+    int64_t count = 0;
+    int status = 0;
+    uint32_t cp;
+    while (count < n && j < len) {
+        int k = utf8_sequence(b + j, len - j, &cp);
+        if (k <= 0) { status = k == 0 ? 1 : 2; break; }
+        j += (size_t)k;
+        count++;
+    }
+    Obj *v = vm_alloc_fields(vm, K_TUPLE, 0, (uint32_t)count);
+    b = (const unsigned char *)obj_bytes(val_ptr(ARG(2)));   /* may have moved */
+    size_t at = (size_t)i;
+    for (int64_t c = 0; c < count; c++) {
+        at += (size_t)utf8_sequence(b + at, len - at, &cp);
+        obj_fill_field(v, (uint32_t)c, mk_int((int64_t)cp));
+    }
+    vm_push(vm, mk_ptr(v));
+    Obj *t = vm_alloc_fields(vm, K_TUPLE, 0, 3);
+    obj_fill_field(t, 0, vm_pop(vm));
+    obj_fill_field(t, 1, mk_int((int64_t)j));
+    obj_fill_field(t, 2, mk_int(status));
+    return ret(vm, 3, mk_ptr(t));
+}
+
 /* ================================================================ I/O and system */
 /* print and print_err write through the VM's slots for the descriptors 1
    and 2, as a stream of TextIO does, not to C's stdout and stderr

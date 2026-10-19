@@ -6,12 +6,13 @@
 | --- | --- |
 | Signatures | none: it matches no signature of the library |
 | Status | required |
-| Members | 2 |
+| Members | 5 |
 | Tests | not listed |
 | Source | [lib/test/property/basis/wide/widetext.sml](../../../../../lib/test/property/basis/wide/widetext.sml) |
 
-The arbitrary of the positions of wide text readers: that of a reader over
-a drawn wide string after a drawn number of its characters.
+The arbitraries of the positions of wide text readers, and of readers of
+wide characters: a reader over a drawn wide string, after a drawn number
+of its characters for a position.
 
 ## Members
 
@@ -19,8 +20,11 @@ The types are this structure's own.
 
 |  | Member | Is |
 | --- | --- | --- |
+| val | `contents` | `(int -> (WideChar.char * int) option) -> WideString.string` |
 | val | `pos` | `{co : WideTextPrimIO.pos -> Word64.word, eq : (WideTextPrimIO.pos * WideTextPrimIO.pos -> bool) option, gen : WideTextPrimIO.pos Gen.gen, show : WideTextPrimIO.pos -> string}` |
-| val | `positionIn` | `WideCharVector.vector * int -> WideTextPrimIO.pos` |
+| val | `positionIn` | `WideString.string * int -> WideTextPrimIO.pos` |
+| val | `reader` | `{co : (int -> (WideChar.char * int) option) -> Word64.word, eq : ((int -> (WideChar.char * int) option) * (int -> (WideChar.char * int) option) -> bool) option, gen : (int -> (WideChar.char * int) option) Gen.gen, show : (int -> (WideChar.char * int) option) -> string}` |
+| val | `readerOf` | `WideString.string -> int -> (WideChar.char * int) option` |
 
 ---
 

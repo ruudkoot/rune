@@ -1,8 +1,13 @@
 # Index: R
 
-[Overview](../README.md) &middot; [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [i](i.md) [n](n.md) [p](p.md) **r** [s](s.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) **r** [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [y](y.md)
 
+- `Recommended` (con): [UNICODE_SECURITY](../sig/UNICODE_SECURITY.md#con-recommended)
 - `replacement` (val): [UTF8](../sig/UTF8.md#val-replacement)
+- `resolvedScripts` (val): [UNICODE_SECURITY](../sig/UNICODE_SECURITY.md#val-resolvedscripts)
+- `Restricted` (con): [UNICODE_SECURITY](../sig/UNICODE_SECURITY.md#con-restricted)
+- `restriction` (type): [UNICODE_SECURITY](../sig/UNICODE_SECURITY.md#type-restriction)
+- `restriction` (val): [UNICODE_SECURITY](../sig/UNICODE_SECURITY.md#val-restriction)
 
 ---
 

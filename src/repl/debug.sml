@@ -161,7 +161,7 @@ struct
     end
 
   fun whereOf ({function, file, line, column, ...} : frame) : string =
-    function ^ (if file = "" then "" else " at " ^ file ^ ":" ^ Int.toString line ^ ":" ^ Int.toString column)
+    function ^ (if file = "" then "" else " at " ^ Source.shownPlace (file, line, column))
 
   fun selectedFrame () : frame option =
     case !current of
@@ -223,7 +223,8 @@ struct
       NONE => ()
     | SOME (text, extra) =>
         let
-          val file = Source.fromString ("<locals>", text)
+          (* the variables' names may be Unicode: read as --unicode reads *)
+          val file = Source.fromStringIn (Source.Unicode Source.Utf8, "<locals>", text)
           val () = Source.register file
           val (decs, _) = Parser.parseTokensWith (Lexer.tokenize file, Fixity.initial)
           val {run, delta, bind, ...} = ReplSession.compileWith (decs, "<locals>", text, NONE, extra)
@@ -264,8 +265,7 @@ struct
         let
           val env = !ReplSession.env
           fun nameable (n, t, _) =
-            CharVector.all (fn c => Char.isAlphaNum c orelse c = #"_" orelse c = #"'") n
-            andalso size n > 0 andalso Char.isAlpha (String.sub (n, 0))
+            Ident.isAlphanumeric n
             andalso not (String.isSubstring "?" (ReplShow.typeIn env t))
           val vars = List.filter nameable (variables k)
         in
@@ -274,7 +274,7 @@ struct
             let
               fun tokens (src : string, s : string) =
                 let
-                  val f = Source.fromString (src, s)
+                  val f = Source.fromStringIn (Source.Unicode Source.Utf8, src, s)
                   val () = Source.register f
                   val ts = Lexer.tokenize f
                 in VectorSlice.vector (VectorSlice.slice (ts, 0, SOME (Vector.length ts - 1))) end
@@ -282,7 +282,7 @@ struct
                  less `val x =` where it is a declaration *)
               val user =
                 let
-                  val f = Source.fromString (name, text)
+                  val f = Source.fromStringIn (ReplSession.typedMode (), name, text)
                   val () = Source.register f
                   val ts = Lexer.tokenize f
                   val n = Vector.length ts - 1

@@ -27,6 +27,15 @@ struct
   (* whether a declaration's values are echoed: not those of the REPL's own
      declarations at start *)
   val quiet : bool ref = ref false
+  (* how the files the session uses are read, as rune-repl --unicode[=ENC]
+     says (Source.mode); what is typed is UTF-8 under --unicode, whatever
+     the files' encoding (docs/plans/utf8.md, D1) *)
+  val mode : Source.mode ref = ref Source.Ascii
+  fun typedMode () : Source.mode = case !mode of Source.Ascii => Source.Ascii | Source.Unicode _ => Source.Unicode Source.Utf8
+  (* the mode the source named file was read in, where it was registered
+     (the REPL's parse); else the files' *)
+  fun modeOf (file : string) : Source.mode =
+    case Source.findFile file of SOME f => #mode f | NONE => !mode
   fun echoing () = not (!quiet) andalso !RuneCompiler.printDepth > 0 andalso !RuneCompiler.feedback <> "silent"
   (* what a declaration's echo was compiled by, as the usages of the cache
      see it (UnitBasis.replSetting) *)
@@ -188,7 +197,7 @@ struct
                 val st = UnitBasis.begin (!env, !fixity)
                 val l =
                   UnitBasis.load {pickle = pickle, file = name, at = #counters st, env = !env, fixity = !fixity,
-                                  text = fn () => #text (Source.readFile path)}
+                                  text = fn () => #text (Source.readFile (Source.Ascii, path))}
                   handle Pickle.Bad why => raise Failed (rbi ^ ": " ^ why)
                        | UnitBasis.Missing u => raise Failed (rbi ^ ": names " ^ u ^ ", which was not loaded")
                        | IO.Io _ => raise Failed ("cannot read " ^ path)
@@ -295,10 +304,18 @@ struct
       val () = count := !count + 1
       val k = !count
       val name = case cached of SOME (stem, n, _) => stem ^ "#" ^ Int.toString n | NONE => file ^ "#" ^ Int.toString k
+      (* the mode its text was read in, which its key says where it is not
+         the default, as a compile in units says it (Main), and
+         --no-unicode-lints, whose warnings an entry would keep *)
+      val srcMode = modeOf file
+      val settings = String.concatWith " " (List.filter (fn s => s <> "")
+                                              [if srcMode = Source.Ascii then "" else Source.modeName srcMode,
+                                               if !Lexer.lints then "" else "no-unicode-lints"])
       val cache =
         case cached of
           NONE => NONE
-        | SOME _ => Option.map (fn (d, c) => (d, c, UnitCache.key {name = name, text = text, allow = false, settings = ""})) (cacheOf file)
+        | SOME _ => Option.map (fn (d, c) => (d, c, UnitCache.key {name = name, text = text, allow = false, settings = settings}))
+                               (cacheOf file)
       fun result (l : UnitBasis.result, run) =
         {run = run, delta = #delta l, declared = declared (Env.plus (!env, #delta l), #delta l),
          bind = fn () => UnitBasis.bind l}
@@ -379,7 +396,9 @@ struct
                       NONE => []
                     | SOME (text, synth) =>
                         let
-                          val file = Source.fromString (echoName, text)
+                          (* read as --unicode reads, since it names the
+                             declaration's values, which may be Unicode *)
+                          val file = Source.fromStringIn (Source.Unicode Source.Utf8, echoName, text)
                           val () = Source.register file
                           (* the standard fixity, whatever the declarations made of the
                              names the printer uses *)
@@ -395,7 +414,7 @@ struct
          (* compiled, and loaded again from its basis: what it declared,
             the session's after it has run, is what the basis says *)
          val {code, loaded, exported} =
-           Pipeline.unitThrough {start = start, name = name, file = file, text = fn () => text,
+           Pipeline.unitThrough {start = start, name = name, file = file, text = fn () => text, mode = srcMode,
                                  decs = decs @ pdecs, delta = delta, fixity = #fixity start, used = used}
          val bytes = String.concat (UnitFile.chunks (Pipeline.fingerprint (), code))
          val () =
@@ -433,7 +452,7 @@ struct
      own (the source stdIn) *)
   fun declarations (text : string) : Ast.dec list =
     let
-      val file = Source.fromString ("stdIn", text)
+      val file = Source.fromStringIn (ReplSession.typedMode (), "stdIn", text)
       val () = Source.register file
       val toks = Lexer.tokenize file
       val n = Vector.length toks
@@ -475,7 +494,7 @@ struct
     let
       (* the expression lexed by itself, so that an error points into it,
          behind the tokens of `val it =` *)
-      val file = Source.fromString ("stdIn", text)
+      val file = Source.fromStringIn (ReplSession.typedMode (), "stdIn", text)
       val () = Source.register file
       val toks = Lexer.tokenize file
       val n = Vector.length toks

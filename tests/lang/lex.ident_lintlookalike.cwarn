@@ -1,0 +1,3 @@
+tests/lang/lex.ident_lintlookalike.sml:3:5: warning: the name vаl mixes scripts, which UTS #39's moderately restrictive profile refuses
+tests/lang/lex.ident_lintlookalike.sml:3:5: warning: the name vаl looks like the reserved word val
+tests/lang/lex.ident_lintlookalike.sml:4:5: warning: the name ノ looks like /

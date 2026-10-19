@@ -6,14 +6,14 @@
 | --- | --- |
 | Signatures | [`TEXT_IO`](../sig/TEXT_IO.md), [`IMPERATIVE_IO`](../sig/IMPERATIVE_IO.md) |
 | Status | required |
-| Members | 36 |
+| Members | 37 |
 | Tests | 234 checks |
 | Source | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
 
 ## Synopsis
 
 ```sml
-structure TextIO : TEXT_IO
+structure TextIO : TEXT_IO where type StreamIO.vector = CharVector.vector where type StreamIO.elem = Char.char where type StreamIO.substring = Substring.substring where type StreamIO.reader = TextPrimIO.reader where type StreamIO.writer = TextPrimIO.writer where type StreamIO.pos = TextPrimIO.pos
 structure TextIO : IMPERATIVE_IO
 ```
 
@@ -30,6 +30,7 @@ What each means is on [`TEXT_IO`](../sig/TEXT_IO.md) and [`IMPERATIVE_IO`](../si
 | type | [`elem`](../sig/TEXT_IO.md#type-elem) | `char` |
 | type | [`instream`](../sig/TEXT_IO.md#type-instream) | *a type of its own* |
 | type | [`outstream`](../sig/TEXT_IO.md#type-outstream) | *a type of its own* |
+| type | [`substring`](../sig/TEXT_IO.md#type-substring) | `Substring.substring` |
 | type | [`vector`](../sig/TEXT_IO.md#type-vector) | `string` |
 | val | [`canInput`](../sig/TEXT_IO.md#val-caninput) | `instream * int -> int option` |
 | val | [`closeIn`](../sig/TEXT_IO.md#val-closein) | `instream -> unit` |

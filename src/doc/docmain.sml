@@ -77,6 +77,8 @@ struct
     \  --diagnostics=full|short  show the source lines of a diagnostic, or\n\
     \              its first line only (the default: full on a terminal)\n\
     \  --diagnostics-json FILE  also write the diagnostics to FILE as JSON\n\
+    \  --unicode[=ENC]  read the files as rune --unicode[=ENC] reads its inputs,\n\
+    \              so that their names may be Unicode (docs/units.md, Source modes)\n\
     \  --lib DIR   the directory of the libraries (the wrappers pass it)\n\
     \  --version   print the version\n\
     \  --help      print this text\n"
@@ -154,8 +156,13 @@ struct
     | "--version" :: rest => (showVersion := true; parse rest)
     | "--help" :: rest => (showHelp := true; parse rest)
     | "-h" :: rest => (showHelp := true; parse rest)
+    | "--unicode" :: rest => (DocSource.mode := Source.Unicode Source.Utf8; parse rest)
     | arg :: rest =>
-        if String.isPrefix "--color=" arg then
+        if String.isPrefix "--unicode=" arg then
+          (case Source.modeNamed (String.extract (arg, 2, NONE)) of
+             SOME m => (DocSource.mode := m; parse rest)
+           | NONE => raise Usage ("--unicode=ENC takes utf8 or latin1, not " ^ String.extract (arg, 10, NONE)))
+        else if String.isPrefix "--color=" arg then
           (case Color.choiceNamed (String.extract (arg, 8, NONE)) of
              SOME c => (color := c; parse rest)
            | NONE => raise Usage ("--color takes always, never or auto, not " ^ String.extract (arg, 8, NONE)))

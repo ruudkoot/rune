@@ -1,0 +1,24 @@
+- = = = = val λ = 1 : int
+- val 合計 = fn : int list -> int
+- val it = 6 : int
+- structure Σ
+- val it = 8 : int
+- val संख्या = 7 : int
+- breakpoint 1 at tests/repl/lib/unicode.sml:6 (no code there yet: a file used from now on, compiled for the debugger, may have some)
+- val 割る = fn : int * int -> int
+val 面積 = fn : int -> int
+val it = () : unit
+- stopped at a breakpoint: in 面積 at tests/repl/lib/unicode.sml:6:6
+    6 |   in π * 半径 * 半径 end
+debug> val 半径 = 2 : int
+val π = 3 : int
+debug> val it = 12 : int
+- uncaught exception Div
+-   in 割る at tests/repl/lib/unicode.sml:7:46
+  in <toplevel> at stdIn#9:1:4
+- uncaught exception Div
+-   in <toplevel> at stdIn#10:1:9
+- val w = "λ\u202EA\u200D\a\u009F😀\"" : WideString.string
+- val c = #"π" : WideChar.char
+- val s = "caf\195\169" : string
+- 

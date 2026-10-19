@@ -41,7 +41,7 @@ with the reasons for what it does.
 ## The command line
 
 ```
-rune-repl [-q] [-e DECLARATIONS]... [--no-init] [--color=WHEN] [--basic] [FILE]...
+rune-repl [-q] [-e DECLARATIONS]... [--no-init] [--color=WHEN] [--basic] [--unicode[=ENC]] [--no-unicode-lints] [FILE]...
 ```
 
 * `-q`: no banner on a terminal.
@@ -57,6 +57,17 @@ rune-repl [-q] [-e DECLARATIONS]... [--no-init] [--color=WHEN] [--basic] [FILE].
   [diagnostics.md](diagnostics.md) (a terminal, `NO_COLOR`, `FORCE_COLOR`,
   `TERM`), each stream by itself.
 * `--basic`: the basic mode on a terminal too.
+* `--unicode[=ENC]`: the files the REPL uses -- by `use`, `:reload` and
+  the command line -- are read in the mode `rune --unicode[=ENC]` reads
+  its inputs in, Unicode text in the encoding `utf8` (the default) or
+  `latin1`, and what is typed is read as UTF-8 ([units.md](units.md),
+  *Source modes*). The encoding is taken only after an `=`, as by `rune`:
+  `--unicode latin1` uses a file `latin1`. Under it a name may hold the
+  letters of `lib/unicode`'s identifier profile, which the REPL, its
+  completion and the debugger show as they are written.
+* `--no-unicode-lints`: the warnings of UTS #39 on the names, and of a
+  lookalike of `*)` in a comment, are left out, as `rune` leaves them out
+  ([language.md](language.md), *Identifiers*).
 
 On Windows, `rune-repl.cmd` beside `runevm.exe` is `rune-repl` for the
 command prompt and PowerShell.
@@ -311,8 +322,12 @@ reader gives, up to a `;` that ends a declaration or to the reader's end:
 the function it returns runs them, and raises `Fail` where one does not
 compile. It is what a program that reads its source itself -- HOL4 puts
 its quotations through a filter of its own -- compiles with, as Poly/ML's
-`PolyML.compiler` is. At a `Compiler.printDepth` of 0 the REPL says
-nothing of what a declaration declared.
+`PolyML.compiler` is. It reads the characters in the default mode, and
+`Compiler.compileIn MODE {read, file, line}` in the one that `MODE` names
+as a build file's annotation does (`"ascii"`, `"unicode"`,
+`"unicode=latin1"`; [units.md](units.md), *Source modes*). At a
+`Compiler.printDepth` of 0 the REPL says nothing of what a declaration
+declared.
 
 A file's declarations are units named by the file and their place in it,
 kept in the cache of units -- `$RUNE_CACHE`, else `.rune` beside the file
@@ -425,6 +440,14 @@ and styles on a terminal ([plans/repl.md](plans/repl.md), D16):
 * an `int`, a `word`, a `char` and a `string` as their `toString` shows
   them, a `word` with `0wx`, a `char` and a `string` quoted; a `real` so
   that it reads back as a real (`5.0`, `1E10`);
+* a `WideString.string` and a `WideChar.char` quoted, their text in UTF-8
+  (`"λx"`, `#"λ"`), but for what would not show or could make the
+  line read otherwise: a control (C0, DEL, C1), a bidirectional control or
+  another default-ignorable character, and a surrogate, as an escape --
+  `\n` and the others of Standard ML, else `\u202E` (`\U000E0001` above
+  U+FFFF) -- and the quote and the backslash escaped
+  (`RuneShow.wideString`; docs/plans/utf8.md, D14). A `string` is bytes,
+  and prints as `String.toString` shows it (`"caf\195\169"`);
 * a type `S.t` of a structure that has `S.toString : t -> string` by it:
   `0wx3 : Word8.word`, an `IntInf.int`, a `Time.time`. A matching formatter
   takes precedence over datatype constructors, so both small and large

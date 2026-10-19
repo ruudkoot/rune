@@ -5,9 +5,9 @@
 |  |  |
 | --- | --- |
 | Status | required |
-| Implementations | 3 |
+| Implementations | 4 |
 | Documentation | 29 of 29 entries documented |
-| Tests | 148 checks of 21 entries |
+| Tests | 151 checks of 22 entries |
 | Source | [lib/basis/streamio\_sig.sml](../../../../lib/basis/streamio_sig.sml) |
 
 ## Synopsis
@@ -17,6 +17,7 @@ signature STREAM_IO
 structure BinIO.StreamIO : STREAM_IO where type vector = Word8Vector.vector where type elem = Word8.word where type reader = BinPrimIO.reader where type writer = BinPrimIO.writer where type pos = Position.int
 functor StreamIO (...) : STREAM_IO  (* optional *)
 structure TextIO.StreamIO : STREAM_IO
+structure WideTextIO.StreamIO : STREAM_IO
 ```
 
 | Implementation |  | Source |
@@ -24,6 +25,7 @@ structure TextIO.StreamIO : STREAM_IO
 | [`BinIO.StreamIO`](../str/BinIO.StreamIO.md) | "For binary streams, LINE\_BUF mode should be treated as a synonym for BLOCK\_BUF": no element is a newline. | [lib/basis/binio.sml](../../../../lib/basis/binio.sml) |
 | `StreamIO` | Functional streams over a [`PRIM_IO`](../sig/PRIM_IO.md) of a new element type: the [`STREAM_IO`](STREAM_IO.md) of it. | [lib/basis/io\_functors.sml](../../../../lib/basis/io_functors.sml) |
 | [`TextIO.StreamIO`](../str/TextIO.StreamIO.md) | TextIO.StreamIO: the functional text streams under [`TextIO`](../str/TextIO.md), with the operations on lines and substrings of TEXT\_STREAM\_IO. | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
+| [`WideTextIO.StreamIO`](../str/WideTextIO.StreamIO.md) | WideTextIO.StreamIO: the functional streams of wide text under [`WideTextIO`](../str/WideTextIO.md), with the operations on lines and substrings of TEXT\_STREAM\_IO. | [lib/basis/widetextio.sml](../../../../lib/basis/widetextio.sml) |
 
 Streams as values: reading gives the elements and the stream that is left,
 so a stream can be kept, read twice, and read from again where it was.
@@ -147,6 +149,12 @@ type reader
 
 The type of the readers the streams are built on, a [`PRIM_IO.reader`](../sig/PRIM_IO.md#type-reader).
 
+<details><summary>Tests (1)</summary>
+
+For `WideTextIO.StreamIO`, in [tests/basis/widetextio\_sig.sml](../../../../tests/basis/widetextio_sig.sml): `is-that-of-WideTextPrimIO`
+
+</details>
+
 ### <a name="type-writer"></a>`writer`
 
 ```sml
@@ -187,6 +195,8 @@ waits.
 **Law** `let val (a, _) = input f val (b, _) = input f in a = b end`: a
 stream in hand does not change (for every `f : BinIO.StreamIO.instream`)
 
+> **Not tested in Rune** at `WideTextIO.StreamIO`: lib/test/property/basis has no arbitrary of a stream of [`WideTextIO.StreamIO`](../str/WideTextIO.StreamIO.md) yet; those of [`TextIO.StreamIO`](../str/TextIO.StreamIO.md) are in its system.sml.
+
 **Example** `Byte.bytesToString (#1 (input (mkInstream (BinPrimIO.openVector (Byte.stringToBytes "ab"), Byte.stringToBytes "")))) = "ab"`
 
 <details><summary>Other implementations (1)</summary>
@@ -197,7 +207,7 @@ stream in hand does not change (for every `f : BinIO.StreamIO.instream`)
 
 <details><summary>Tests (10)</summary>
 
-In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`: `the-sequence-of-the-reader` &middot; `up-to-each-end-of-stream` &middot; `one-or-more-elements` &middot; `empty-at-end-of-stream` &middot; `same-result-twice` &middot; `up-to-date-with-the-reader` &middot; `earlier-streams-read-the-same` &middot; `Io-when-the-reader-fails` &middot; `Io-name-is-the-reader's` &middot; `after-a-failure-of-the-reader`
+In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`, `WideTextIO.StreamIO`: `the-sequence-of-the-reader` &middot; `up-to-each-end-of-stream` &middot; `one-or-more-elements` &middot; `empty-at-end-of-stream` &middot; `same-result-twice` &middot; `up-to-date-with-the-reader` &middot; `earlier-streams-read-the-same` &middot; `Io-when-the-reader-fails` &middot; `Io-name-is-the-reader's` &middot; `after-a-failure-of-the-reader`
 
 </details>
 
@@ -214,6 +224,8 @@ val input1 : instream -> (elem * instream) option
 **Law** `isSome (input1 f) = not (endOfStream f)` when the reader does not
 fail (for every `f : BinIO.StreamIO.instream`)
 
+> **Not tested in Rune** at `WideTextIO.StreamIO`: lib/test/property/basis has no arbitrary of a stream of [`WideTextIO.StreamIO`](../str/WideTextIO.StreamIO.md) yet; those of [`TextIO.StreamIO`](../str/TextIO.StreamIO.md) are in its system.sml.
+
 A stream is a value, and reading from it gives another, so reading the
 same stream twice gives the same element:
 
@@ -223,7 +235,7 @@ same stream twice gives the same element:
 
 For `TextIO.StreamIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/basis/textio_streamio.sml): `is-a-StringCvt.reader`
 
-In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`: `elements-then-NONE` &middot; `empty-stream` &middot; `stops-at-end-of-stream` &middot; `NONE-again` &middot; `is-inputN-1`
+In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`, `WideTextIO.StreamIO`: `elements-then-NONE` &middot; `empty-stream` &middot; `stops-at-end-of-stream` &middot; `NONE-again` &middot; `is-inputN-1`
 
 </details>
 
@@ -257,7 +269,7 @@ longer than the greatest length of a vector.
 
 <details><summary>Tests (8)</summary>
 
-In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`: `zero` &middot; `Size-negative` (raises Size) &middot; `across-pieces` &middot; `fewer-then-past-the-end-of-stream` &middot; `continues-after-input1-NONE` &middot; `exactly-n-before-end-of-stream` &middot; `empty-stream` &middot; `allAndN-random-*`
+In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`, `WideTextIO.StreamIO`: `zero` &middot; `Size-negative` (raises Size) &middot; `across-pieces` &middot; `fewer-then-past-the-end-of-stream` &middot; `continues-after-input1-NONE` &middot; `exactly-n-before-end-of-stream` &middot; `empty-stream` &middot; `allAndN-random-*`
 
 </details>
 
@@ -280,7 +292,7 @@ val inputAll : instream -> vector * instream
 
 <details><summary>Tests (5)</summary>
 
-In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`: `up-to-each-end-of-stream` &middot; `pieces` &middot; `same-result-twice` &middot; `is-input-to-end-of-stream` &middot; `with-initial-elements`
+In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`, `WideTextIO.StreamIO`: `up-to-each-end-of-stream` &middot; `pieces` &middot; `same-result-twice` &middot; `is-input-to-end-of-stream` &middot; `with-initial-elements`
 
 </details>
 
@@ -312,7 +324,7 @@ val canInput : instream * int -> int option
 
 <details><summary>Tests (7)</summary>
 
-In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`: `Size-negative` (raises Size) &middot; `NONE-when-input-would-block` &middot; `elements-available` &middot; `then-inputN-k` &middot; `end-of-stream-is-zero` &middot; `determined-stream-does-not-block` &middot; `removes-nothing`
+In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`, `WideTextIO.StreamIO`: `Size-negative` (raises Size) &middot; `NONE-when-input-would-block` &middot; `elements-available` &middot; `then-inputN-k` &middot; `end-of-stream-is-zero` &middot; `determined-stream-does-not-block` &middot; `removes-nothing`
 
 </details>
 
@@ -338,7 +350,7 @@ already been read ends.
 
 <details><summary>Tests (8)</summary>
 
-In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`: `closes-the-reader` &middot; `twice` &middot; `any-stream-of-the-chain` &middot; `not-yet-determined-part-is-empty` &middot; `fresh-stream` &middot; `keeps-what-was-determined` &middot; `Io-when-the-reader-fails` &middot; `truncated-stream-closes-the-reader`
+In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`, `WideTextIO.StreamIO`: `closes-the-reader` &middot; `twice` &middot; `any-stream-of-the-chain` &middot; `not-yet-determined-part-is-empty` &middot; `fresh-stream` &middot; `keeps-what-was-determined` &middot; `Io-when-the-reader-fails` &middot; `truncated-stream-closes-the-reader`
 
 </details>
 
@@ -361,7 +373,7 @@ val endOfStream : instream -> bool
 
 <details><summary>Tests (6)</summary>
 
-In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`: `is-input-empty` &middot; `end-of-stream-then-more` &middot; `elements-available` &middot; `empty-stream` &middot; `removes-nothing` &middot; `closed-stream`
+In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`, `WideTextIO.StreamIO`: `is-input-empty` &middot; `end-of-stream-then-more` &middot; `elements-available` &middot; `empty-stream` &middot; `removes-nothing` &middot; `closed-stream`
 
 </details>
 
@@ -392,7 +404,7 @@ terminated.
 
 <details><summary>Tests (11)</summary>
 
-In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`: `NO_BUF-writes-at-once` &middot; `partial-writes-are-completed` &middot; `BLOCK_BUF-keeps-a-little` &middot; `LINE_BUF-flushes-at-a-newline` &middot; `LINE_BUF-is-BLOCK_BUF` &middot; `Io-closed` &middot; `Io-closed-name` &middot; `Io-terminated` &middot; `Io-terminated-writes-nothing` &middot; `Io-when-the-writer-fails` &middot; `Io-name-is-the-writer's`
+In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`, `WideTextIO.StreamIO`: `NO_BUF-writes-at-once` &middot; `partial-writes-are-completed` &middot; `BLOCK_BUF-keeps-a-little` &middot; `LINE_BUF-flushes-at-a-newline` &middot; `LINE_BUF-is-BLOCK_BUF` &middot; `Io-closed` &middot; `Io-closed-name` &middot; `Io-terminated` &middot; `Io-terminated-writes-nothing` &middot; `Io-when-the-writer-fails` &middot; `Io-name-is-the-writer's`
 
 </details>
 
@@ -416,7 +428,7 @@ val output1 : outstream * elem -> unit
 
 <details><summary>Tests (6)</summary>
 
-In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`: `NO_BUF-writes-at-once` &middot; `LINE_BUF-flushes-at-a-newline` &middot; `LINE_BUF-is-BLOCK_BUF` &middot; `Io-closed` &middot; `Io-terminated` &middot; `Io-when-the-writer-fails`
+In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`, `WideTextIO.StreamIO`: `NO_BUF-writes-at-once` &middot; `LINE_BUF-flushes-at-a-newline` &middot; `LINE_BUF-is-BLOCK_BUF` &middot; `Io-closed` &middot; `Io-terminated` &middot; `Io-when-the-writer-fails`
 
 </details>
 
@@ -441,7 +453,7 @@ For `TextIO.StreamIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/b
 
 For `BinIO.StreamIO`, in [tests/basis/binio\_streamio.sml](../../../../tests/basis/binio_streamio.sml): `file`
 
-In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`: `partial-writes-are-completed` &middot; `writes-the-buffer` &middot; `LINE_BUF` &middot; `NO_BUF` &middot; `terminated-is-a-no-op` &middot; `closed-is-a-no-op` &middot; `Io-when-the-writer-fails`
+In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`, `WideTextIO.StreamIO`: `partial-writes-are-completed` &middot; `writes-the-buffer` &middot; `LINE_BUF` &middot; `NO_BUF` &middot; `terminated-is-a-no-op` &middot; `closed-is-a-no-op` &middot; `Io-when-the-writer-fails`
 
 </details>
 
@@ -473,7 +485,7 @@ val closeOut : outstream -> unit
 
 For `TextIO.StreamIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/basis/textio_streamio.sml): `file`
 
-In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`: `flushes` &middot; `closes-the-writer` &middot; `twice` &middot; `terminated-closes-the-writer` &middot; `Io-when-flushing-fails` &middot; `left-open-when-flushing-fails`
+In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`, `WideTextIO.StreamIO`: `flushes` &middot; `closes-the-writer` &middot; `twice` &middot; `terminated-closes-the-writer` &middot; `Io-when-flushing-fails` &middot; `left-open-when-flushing-fails`
 
 </details>
 
@@ -497,7 +509,7 @@ from it.
 
 For `TextIO.StreamIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/basis/textio_streamio.sml): `file-reader`
 
-In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`: `initial-buffer-comes-first` &middot; `initial-buffer-input1` &middot; `input-of-initial-buffer` &middot; `reads-nothing` &middot; `empty-reader`
+In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`, `WideTextIO.StreamIO`: `initial-buffer-comes-first` &middot; `initial-buffer-input1` &middot; `input-of-initial-buffer` &middot; `reads-nothing` &middot; `empty-reader`
 
 </details>
 
@@ -533,7 +545,7 @@ For `TextIO.StreamIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/b
 
 For `BinIO.StreamIO`, in [tests/basis/binio\_streamio.sml](../../../../tests/basis/binio_streamio.sml): `file`
 
-In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`: `fresh-stream` &middot; `unconsumed-data` &middot; `after-the-data` &middot; `initial-buffer` &middot; `truncates-the-stream` &middot; `truncated-stream-keeps-its-buffer` &middot; `does-not-close-the-reader` &middot; `Io-truncated` (raises) &middot; `Io-closed` (raises)
+In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`, `WideTextIO.StreamIO`: `fresh-stream` &middot; `unconsumed-data` &middot; `after-the-data` &middot; `initial-buffer` &middot; `truncates-the-stream` &middot; `truncated-stream-keeps-its-buffer` &middot; `does-not-close-the-reader` &middot; `Io-truncated` (raises) &middot; `Io-closed` (raises)
 
 </details>
 
@@ -577,7 +589,7 @@ For `TextIO.StreamIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/b
 
 For `BinIO.StreamIO`, in [tests/basis/binio\_streamio.sml](../../../../tests/basis/binio_streamio.sml): `offsets` &middot; `reader-not-at-the-start` &middot; `setPos-then-readVec` &middot; `Io-truncated` (raises) &middot; `Io-closed` (raises) &middot; `file-offsets`
 
-In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`: `Io-without-positions` (raises) &middot; `Io-cause`
+In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`, `WideTextIO.StreamIO`: `Io-without-positions` (raises) &middot; `Io-cause`
 
 </details>
 
@@ -602,6 +614,8 @@ Changing to `NO_BUF` flushes what is held.
 
 **Law** `(setBufferMode (f, mode); getBufferMode f) = mode` (for every `f : BinIO.StreamIO.outstream`, `mode : IO.buffer_mode`)
 
+> **Not tested in Rune** at `WideTextIO.StreamIO`: lib/test/property/basis has no arbitrary of a stream of [`WideTextIO.StreamIO`](../str/WideTextIO.StreamIO.md) yet; those of [`TextIO.StreamIO`](../str/TextIO.StreamIO.md) are in its system.sml.
+
 **Example** `let val f = mkOutstream (BinPrimIO.nullWr (), IO.NO_BUF) in setBufferMode (f, IO.BLOCK_BUF); getBufferMode f end = IO.BLOCK_BUF`
 
 <details><summary>Tests (8)</summary>
@@ -610,7 +624,7 @@ For `TextIO.StreamIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/b
 
 For `BinIO.StreamIO`, in [tests/basis/binio\_streamio.sml](../../../../tests/basis/binio_streamio.sml): `NO_BUF-file`
 
-In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`: `NO_BUF-flushes` &middot; `BLOCK_BUF-to-LINE_BUF-does-not-flush` &middot; `LINE_BUF-to-BLOCK_BUF-does-not-flush` &middot; `then-output`
+In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`, `WideTextIO.StreamIO`: `NO_BUF-flushes` &middot; `BLOCK_BUF-to-LINE_BUF-does-not-flush` &middot; `LINE_BUF-to-BLOCK_BUF-does-not-flush` &middot; `then-output`
 
 </details>
 
@@ -623,6 +637,8 @@ val getBufferMode : outstream -> IO.buffer_mode
 `getBufferMode f` is the mode `f` holds back by.
 
 **Law** `getBufferMode (mkOutstream (wr, mode)) = mode` (for every `wr : BinPrimIO.writer`, `mode : IO.buffer_mode`)
+
+> **Not tested in Rune** at `WideTextIO.StreamIO`: lib/test/property/basis has no arbitrary of a stream of [`WideTextIO.StreamIO`](../str/WideTextIO.StreamIO.md) yet; those of [`TextIO.StreamIO`](../str/TextIO.StreamIO.md) are in its system.sml.
 
 **Example** `let val p = OS.FileSys.tmpName () val out = BinIO.getOutstream (BinIO.openOut p) in getBufferMode out before (closeOut out; OS.FileSys.remove p) end = IO.BLOCK_BUF`
 
@@ -638,7 +654,7 @@ For `TextIO.StreamIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/b
 
 For `BinIO.StreamIO`, in [tests/basis/binio\_streamio.sml](../../../../tests/basis/binio_streamio.sml): `openOut-is-buffered`
 
-In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`: `after-setBufferMode`
+In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`, `WideTextIO.StreamIO`: `after-setBufferMode`
 
 </details>
 
@@ -661,7 +677,7 @@ val mkOutstream : writer * IO.buffer_mode -> outstream
 
 For `TextIO.StreamIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/basis/textio_streamio.sml): `file-writer`
 
-In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`: `buffer-mode` &middot; `writes-to-the-writer`
+In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`, `WideTextIO.StreamIO`: `buffer-mode` &middot; `writes-to-the-writer`
 
 </details>
 
@@ -681,6 +697,8 @@ val getWriter : outstream -> writer * IO.buffer_mode
 
 **Law** `#2 (getWriter (mkOutstream (wr, mode))) = mode` (for every `wr : BinPrimIO.writer`, `mode : IO.buffer_mode`)
 
+> **Not tested in Rune** at `WideTextIO.StreamIO`: lib/test/property/basis has no arbitrary of a stream of [`WideTextIO.StreamIO`](../str/WideTextIO.StreamIO.md) yet; those of [`TextIO.StreamIO`](../str/TextIO.StreamIO.md) are in its system.sml.
+
 **Example** `#2 (getWriter (mkOutstream (BinPrimIO.nullWr (), IO.NO_BUF))) = IO.NO_BUF`
 
 <details><summary>Other implementations (1)</summary>
@@ -695,7 +713,7 @@ For `TextIO.StreamIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/b
 
 For `BinIO.StreamIO`, in [tests/basis/binio\_streamio.sml](../../../../tests/basis/binio_streamio.sml): `file`
 
-In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`: `writer-and-mode` &middot; `flushes` &middot; `the-same-writer` &middot; `does-not-close-the-writer` &middot; `Io-closed` (raises) &middot; `Io-when-flushing-fails`
+In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`, `WideTextIO.StreamIO`: `writer-and-mode` &middot; `flushes` &middot; `the-same-writer` &middot; `does-not-close-the-writer` &middot; `Io-closed` (raises) &middot; `Io-when-flushing-fails`
 
 </details>
 
@@ -720,7 +738,7 @@ For `TextIO.StreamIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/b
 
 For `BinIO.StreamIO`, in [tests/basis/binio\_streamio.sml](../../../../tests/basis/binio_streamio.sml): `flushes` &middot; `file-offsets`
 
-In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`: `Io-without-positions` (raises) &middot; `Io-cause` &middot; `Io-terminated` (raises)
+In [tests/basis/fn/stream\_io\_fn.sml](../../../../tests/basis/fn/stream_io_fn.sml), applied to `TextIO.StreamIO`, `BinIO.StreamIO`, `WideTextIO.StreamIO`: `Io-without-positions` (raises) &middot; `Io-cause` &middot; `Io-terminated` (raises)
 
 </details>
 
@@ -745,11 +763,13 @@ the stream is terminated or closed.
 
 </details>
 
-<details><summary>Tests (5)</summary>
+<details><summary>Tests (6)</summary>
 
 For `TextIO.StreamIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/basis/textio_streamio.sml): `file-overwrites`
 
 For `BinIO.StreamIO`, in [tests/basis/binio\_streamio.sml](../../../../tests/basis/binio_streamio.sml): `overwrites` &middot; `flushes` &middot; `returns-the-stream` &middot; `file-overwrites`
+
+For `WideTextIO.StreamIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `file-has-no-positions`
 
 </details>
 
@@ -761,11 +781,13 @@ val filePosOut : out_pos -> pos
 
 `filePosOut opos` is the position that `opos` records, without its stream.
 
-<details><summary>Tests (3)</summary>
+<details><summary>Tests (4)</summary>
 
 For `TextIO.StreamIO`, in [tests/basis/textio\_streamio.sml](../../../../tests/basis/textio_streamio.sml): `is-the-writer's-position`
 
 For `BinIO.StreamIO`, in [tests/basis/binio\_streamio.sml](../../../../tests/basis/binio_streamio.sml): `offsets` &middot; `writes-go-there`
+
+For `WideTextIO.StreamIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `file-has-no-positions`
 
 </details>
 

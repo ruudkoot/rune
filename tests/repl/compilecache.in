@@ -33,3 +33,8 @@ c2 ();
 unchanged ();
 first := 10;
 !Counter.n;
+(* the same part read in another mode is another unit, with an entry of
+   its own (docs/plans/utf8.md, D1) *)
+val c3 = Compiler.compileIn "unicode" {read = part "tests/repl/lib/counter.sml", file = "tests/repl/lib/counter.sml", line = 1};
+c3 ();
+length (entries ()) = count + 1;

@@ -1,1 +1,1 @@
-type constructor mismatch: d vs d
+type constructor mismatch: A.d vs B.d

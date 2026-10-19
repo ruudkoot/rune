@@ -50,7 +50,14 @@ skips the init file
 .B \-\-color
 colours the REPL's output always, never or on a terminal (auto), and
 .B \-\-basic
-reads a line at a time, as on a pipe;
+reads a line at a time, as on a pipe,
+.BR \-\-unicode [= \fIENC\fP]
+reads the files it uses as
+.B rune
+reads its inputs under it, and what is typed as UTF-8,
+.B \-\-no\-unicode\-lints
+leaves out the warnings of UTS #39 as it does for
+.BR rune ;
 .B \-\-engine
 is the session for a front in another process, JSON-RPC 2.0 on the
 descriptors 3 and 4
@@ -144,6 +151,56 @@ pattern
 matches what any of its alternatives matches. Every alternative binds the
 same variables at the same types. Without the option the compiler takes
 Standard ML '97 only.
+.TP
+.BR \-\-unicode [= \fIENC\fP]
+Read the input files as Unicode text in the encoding
+.IR ENC :
+.B utf8
+(the default) or
+.BR latin1 .
+Without it they are read in the default mode, which the Basis Library and
+the libraries beside it are always read in. The encoding is taken only
+after an
+.BR = :
+.B "\-\-unicode latin1"
+names an input file
+.BR latin1 .
+A build file's annotation
+.RB ( ascii ,
+.BR unicode ,
+.BR unicode=latin1 )
+gives a unit's mode over the command line's, and the cache keeps a unit
+read in one mode apart from one read in another
+.RI ( docs/units.md ,
+Source modes). By default a literal holds ASCII alone, and
+.B \eU
+is refused; under
+.B \-\-unicode
+a raw character above 127 in a literal means its code point, which only
+.B WideChar
+and
+.B WideString
+take; under
+.B \-\-unicode=latin1
+the file is Latin-1, made UTF-8 as it is read, and a raw character is
+its own byte
+.RI ( docs/language.md ,
+Strings).
+Under either an alphanumeric identifier may hold the letters, marks and
+digits of the identifier profile of
+.IR lib/unicode ,
+in NFC
+.RI ( docs/language.md ,
+Identifiers).
+.TP
+.B \-\-no\-unicode\-lints
+Do not warn of what UTS #39 finds in the names of a source read under
+.BR \-\-unicode :
+a character it restricts, a name that mixes scripts, a name that looks
+like another, like a reserved word or like punctuation; nor of a
+lookalike of
+.B *)
+in a comment (UTS #55), in every mode.
 .TP
 .BI \-\-default\-type= T
 In the input files, not the libraries, make an integer or word constant, or an

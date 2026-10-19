@@ -69,6 +69,8 @@ struct
       val src = "tests/doc/" ^ n ^ ".sml"
       fun t ext = "tests/doc/" ^ n ^ ext
       fun o' ext = out ^ "/" ^ n ^ ext
+      (* the options of runedoc beside --page and --dump-ir: NAME.args *)
+      val extra = words (t ".args")
       (* the diagnostics: compared when expected, else there must be none *)
       fun diag (got, want) =
         if exists want then sameDoc (OS.Path.file want, got, want)
@@ -76,12 +78,12 @@ struct
         else ()
     in
       if exists (t ".ir") orelse exists (t ".diag") then
-        (ignore (exec {cmd = ["bin/runedoc", "--dump-ir", src], dir = NONE, stdin = "", stdout = o' ".ir", stderr = o' ".diag", timeout = 0});
+        (ignore (exec {cmd = ["bin/runedoc"] @ extra @ ["--dump-ir", src], dir = NONE, stdin = "", stdout = o' ".ir", stderr = o' ".diag", timeout = 0});
          if exists (t ".ir") then sameDoc (n ^ ".ir", o' ".ir", t ".ir") else ();
          diag (o' ".diag", t ".diag"))
       else ();
       if exists (t ".md") then
-        (ignore (exec {cmd = ["bin/runedoc", "--page", src], dir = NONE, stdin = "", stdout = o' ".md", stderr = o' ".md.diag", timeout = 0});
+        (ignore (exec {cmd = ["bin/runedoc"] @ extra @ ["--page", src], dir = NONE, stdin = "", stdout = o' ".md", stderr = o' ".md.diag", timeout = 0});
          sameDoc (n ^ ".md", o' ".md", t ".md");
          diag (o' ".md.diag", t ".md.diag"))
       else ()

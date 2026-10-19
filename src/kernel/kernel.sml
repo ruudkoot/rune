@@ -307,7 +307,7 @@ struct
                                                ("evalue", Json.String message), ("traceback", Json.Array [])]
     end
 
-  fun isNameChar c = Char.isAlphaNum c orelse c = #"_" orelse c = #"'" orelse c = #"."
+  fun isNameChar c = Ident.isNameByte c orelse c = #"."
 
   fun inspect (e : engine, req : Jupyter.request) : Json.value =
     let

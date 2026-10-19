@@ -23,12 +23,14 @@ struct
       SOME (_, n) => n
     | NONE => "x" ^ Int.toString (Char.ord c)
 
-  fun isSymbolic (name : string) : bool =
-    name <> "" andalso not (Char.isAlpha (String.sub (name, 0)))
+  val isSymbolic = Ident.isSymbolic
 
+  (* a name in an anchor: a symbolic one by the names of its symbols, an
+     alphanumeric one lower-cased, with a character above 127 as u and its
+     code point (D14): `val-u3bb` for the value named U+03BB *)
   fun spell (name : string) : string =
     if isSymbolic name then "op-" ^ String.concatWith "-" (List.map symbolName (String.explode name))
-    else String.translate (fn #"'" => "-prime" | c => String.str (Char.toLower c)) name
+    else String.translate (fn #"'" => "-prime" | c => String.str (Char.toLower c)) (Ident.asciiSpelling name)
 
   fun kindPrefix (bound : I.bound) : string =
     case bound of

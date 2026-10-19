@@ -37,7 +37,7 @@ What each means is on [`WORD`](../sig/WORD.md); the types are this structure's o
 | val | [`andb`](../sig/WORD.md#val-andb) | `Word8.word * Word8.word -> Word8.word` |
 | val | [`compare`](../sig/WORD.md#val-compare) | `Word8.word * Word8.word -> order` |
 | val | [`div`](../sig/WORD.md#val-div) | `Word8.word * Word8.word -> Word8.word` |
-| val | [`fmt`](../sig/WORD.md#val-fmt) | `StringCvt.radix -> Word8.word -> string` |
+| val | [`fmt`](../sig/WORD.md#val-fmt) | `RuneWideStringCvt.radix -> Word8.word -> string` |
 | val | [`fromInt`](../sig/WORD.md#val-fromint) | `int -> Word8.word` |
 | val | [`fromLarge`](../sig/WORD.md#val-fromlarge) | `Word64.word -> Word8.word` |
 | val | [`fromLargeInt`](../sig/WORD.md#val-fromlargeint) | `IntInf.int -> Word8.word` |
@@ -48,7 +48,7 @@ What each means is on [`WORD`](../sig/WORD.md); the types are this structure's o
 | val | [`mod`](../sig/WORD.md#val-mod) | `Word8.word * Word8.word -> Word8.word` |
 | val | [`notb`](../sig/WORD.md#val-notb) | `Word8.word -> Word8.word` |
 | val | [`orb`](../sig/WORD.md#val-orb) | `Word8.word * Word8.word -> Word8.word` |
-| val | [`scan`](../sig/WORD.md#val-scan) | `StringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (Word8.word * 'a) option` |
+| val | [`scan`](../sig/WORD.md#val-scan) | `RuneWideStringCvt.radix -> ('a -> (char * 'a) option) -> 'a -> (Word8.word * 'a) option` |
 | val | [`toInt`](../sig/WORD.md#val-toint) | `Word8.word -> int` |
 | val | [`toIntX`](../sig/WORD.md#val-tointx) | `Word8.word -> int` |
 | val | [`toLarge`](../sig/WORD.md#val-tolarge) | `Word8.word -> Word64.word` |

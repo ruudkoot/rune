@@ -405,6 +405,10 @@ enum Prim {
   PRIM_intinf_shift = 399,
   PRIM_intinf_power = 400,
   PRIM_intinf_decimal = 401,
+  PRIM_vector_concat = 402,
+  PRIM_vector_concat_list = 403,
+  PRIM_vector_extract = 404,
+  PRIM_utf8_decode = 405,
   PRIM__COUNT
 };
 
@@ -811,6 +815,10 @@ static const char *const prim_names[] = {
   "intinf_shift",
   "intinf_power",
   "intinf_decimal",
+  "vector_concat",
+  "vector_concat_list",
+  "vector_extract",
+  "utf8_decode",
 };
 
 static const unsigned char prim_arity[] = {
@@ -1216,6 +1224,10 @@ static const unsigned char prim_arity[] = {
   4,
   3,
   1,
+  2,
+  1,
+  3,
+  3,
 };
 
 /* what each primitive's result is (the representations of
@@ -1624,6 +1636,10 @@ static const unsigned char prim_result[] = {
   0,
   0,
   6,
+  6,
+  6,
+  6,
+  0,
 };
 
 #define RUNE_PRIM_LIST(X) \
@@ -2028,6 +2044,10 @@ static const unsigned char prim_result[] = {
   X(intinf_divmod) \
   X(intinf_shift) \
   X(intinf_power) \
-  X(intinf_decimal)
+  X(intinf_decimal) \
+  X(vector_concat) \
+  X(vector_concat_list) \
+  X(vector_extract) \
+  X(utf8_decode)
 
 #endif

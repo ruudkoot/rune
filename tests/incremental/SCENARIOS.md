@@ -12,7 +12,7 @@ build mode differs. A scenario's id is what the runner and a failure name.
 `tests/incremental/run.sh` (`make test-incremental`, in `make check`) runs
 every scenario a runner can make, on the project of
 `tests/incremental/project` or on one of its own: S1 to S26 (S23 not on
-a file system without case), S28 to S36, S40, and S49 to S62. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
+a file system without case), S28 to S36, S40, and S49 to S64. `tests/repl/usecache.in` is S38 and `tests/repl/usechanged.in`
 S39; the oracle `cross` of `tests/runner/oracles.sml` (`rune-units`) is S43; S41 is `make
 check-units`, and S42 is `make check-units` (`--units --whole`) and
 `check-cross` (`rune-whole`). Beside them, `tests/incremental/mutate.py` edits projects
@@ -216,6 +216,19 @@ when the scenarios above were all green
   printer.
 * **S54, the print depth.** A file whose entry was written at print depth
   0 echoes at the default depth.
+* **S64, the warnings of UTS #39.** An entry keeps a unit's warnings, and
+  `--no-unicode-lints` leaves out those of UTS #39 (docs/language.md,
+  *Identifiers*), so an input file's key says it: a file with a name of
+  mixed scripts, built under `--unicode` and then with the flag, is
+  compiled again and warns of nothing; built with it again it is found
+  and warns of nothing; and built without it, it is found and warns, as
+  it did the first time.
+* **S63, the mode a unit is read in.** A unit's key says its mode where
+  it is not the default (docs/units.md, *Source modes*): a file built under
+  `--unicode` and then, through the same cache, without it is compiled
+  again, and once more under `--unicode=latin1`, and found under
+  `--unicode` again. A build file's annotation (`unicode`, `ascii`) gives
+  the mode over the command line's.
 * **S62, the input files' own settings.** `--or-patterns` and
   `--default-type` hold for the input files and not the libraries, so a
   unit's key says them, not the configuration: a file built with one and

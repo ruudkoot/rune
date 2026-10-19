@@ -121,13 +121,17 @@ struct
         if offset >= V.length v then endOfStream (In {segment = next, offset = 0, state = state}) else false
     | _ => true
 
+  (* what is left of a chunk from offset: the chunk itself, not a copy, when
+     that is all of it, for a vector does not change *)
+  fun rest (v, offset) = if offset = 0 then v else VS.vector (VS.slice (v, offset, NONE))
+
   (* input: the rest of the chunk, or "" at the end of the stream, which it
      passes: "the stream f' is immediately past the next end-of-stream". *)
   fun input (strm as In {segment, offset, state}) =
     case force (segment, state, "input") of
       Chunk (v, _, next) =>
         if offset >= V.length v then input (In {segment = next, offset = 0, state = state})
-        else (VS.vector (VS.slice (v, offset, NONE)), In {segment = next, offset = 0, state = state})
+        else (rest (v, offset), In {segment = next, offset = 0, state = state})
     | Eos (_, next) => (V.fromList [], In {segment = next, offset = 0, state = state})
     | Unread => (V.fromList [], strm)
 
@@ -156,7 +160,7 @@ struct
                   if have <= 0 then go (In {segment = next, offset = 0, state = state}, left, acc)
                   else if have <= left then
                     go (In {segment = next, offset = 0, state = state}, left - have,
-                        VS.vector (VS.slice (v, offset, NONE)) :: acc)
+                        rest (v, offset) :: acc)
                   else
                     (V.concat (List.rev (VS.vector (VS.slice (v, offset, SOME left)) :: acc)),
                      In {segment = segment, offset = offset + left, state = state})

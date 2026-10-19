@@ -1,4 +1,4 @@
-\e[1mtests/diagnostics/emoji.sml:1:44:\e[0m \e[1;91merror:\e[0m \e[1mfunction argument: type mismatch between int * int and string * int (overloaded operator not defined at type string)\e[0m
+\e[1mtests/diagnostics/emoji.sml:1:36:\e[0m \e[1;91merror:\e[0m \e[1mfunction argument: type mismatch between int * int and string * int (overloaded operator not defined at type string)\e[0m
 \e[2m  |\e[0m
-\e[2m1 |\e[0m val s = "é 👩‍💻 🇳🇱" val k = s + 1
-\e[2m  |\e[0m                           \e[1;91m^^^^^\e[0m
+\e[2m1 |\e[0m (* é 👩‍💻 🇳🇱 *) val s = "e" val k = s + 1
+\e[2m  |\e[0m                                   \e[1;91m^^^^^\e[0m

@@ -41,7 +41,6 @@ the system answer on Windows only.
 | [`MONO_ARRAY2`](sig/MONO_ARRAY2.md) | Two-dimensional arrays of one element type, as [`ARRAY2`](sig/ARRAY2.md) describes them for any element type. | optional |
 | [`MONO_ARRAY_SLICE`](sig/MONO_ARRAY_SLICE.md) | A stretch of an array of one element type, without a copy of it. | required |
 | [`MONO_VECTOR`](sig/MONO_VECTOR.md) | The sequences of one element type: vectors, arrays and their slices, as [`VECTOR`](sig/VECTOR.md), [`ARRAY`](sig/ARRAY.md), [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) and [`ARRAY_SLICE`](sig/ARRAY_SLICE.md) describe them for any element type. | required |
-| [`MONO_VECTOR_EQ`](sig/MONO_VECTOR_EQ.md) | The same as [`MONO_VECTOR`](sig/MONO_VECTOR.md), with a vector type that admits equality. | extension |
 | [`MONO_VECTOR_SLICE`](sig/MONO_VECTOR_SLICE.md) | A stretch of a vector of one element type, without a copy of it. | required |
 | [`VECTOR`](sig/VECTOR.md) | Vectors: immutable sequences of a fixed length, of any element type. | required |
 | [`VECTOR_SLICE`](sig/VECTOR_SLICE.md) | A stretch of a vector, without a copy of it: a base vector and a start and a length inside it. | required |

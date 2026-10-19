@@ -1,0 +1,1 @@
+the text looks like UTF-8: U+00EF U+00BB U+00BF are the bytes of U+FEFF (read the file with --unicode, not --unicode=latin1)

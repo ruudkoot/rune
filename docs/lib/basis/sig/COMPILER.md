@@ -6,8 +6,8 @@
 | --- | --- |
 | Status | extension |
 | Implementations | 1 |
-| Documentation | 13 of 13 entries documented |
-| Tests | 15 checks of 10 entries |
+| Documentation | 14 of 14 entries documented |
+| Tests | 16 checks of 11 entries |
 | Source | [lib/basis/compiler\_sig.sml](../../../../lib/basis/compiler_sig.sml) |
 
 ## Synopsis
@@ -48,6 +48,7 @@ signature COMPILER =
 sig
   val <a href="#val-use">use</a> : string -&gt; unit
   val <a href="#val-compile">compile</a> : {<a href="#fld-compile.read">read</a> : unit -&gt; char option, <a href="#fld-compile.file">file</a> : string, <a href="#fld-compile.line">line</a> : int} -&gt; unit -&gt; unit
+  val <a href="#val-compilein">compileIn</a> : string -&gt; {<a href="#fld-compilein.read">read</a> : unit -&gt; char option, <a href="#fld-compilein.file">file</a> : string, <a href="#fld-compilein.line">line</a> : int} -&gt; unit -&gt; unit
   val <a href="#val-printdepth">printDepth</a> : int ref
   val <a href="#val-printlength">printLength</a> : int ref
   val <a href="#val-stringlength">stringLength</a> : int ref
@@ -122,6 +123,36 @@ function raises [`Fail`](../sig/GENERAL.md#exn-fail) where a declaration does no
 | <a name="fld-compile.read"></a>`read` | `unit -> char option` |  |
 | <a name="fld-compile.file"></a>`file` | `string` |  |
 | <a name="fld-compile.line"></a>`line` | `int` |  |
+
+<details><summary>Tests (1)</summary>
+
+For `Compiler`, in [tests/basis/compiler.sml](../../../../tests/basis/compiler.sml): `no-compiler-beside-the-program` (raises)
+
+</details>
+
+### <a name="val-compilein"></a>`compileIn`
+
+```sml
+val compileIn : string -> {read : unit -> char option, file : string, line : int} -> unit -> unit
+```
+
+`compileIn mode {read, file, line}` is `compile {read, file, line}`
+with the characters read in the mode that `mode` names.
+
+The names are those of a build file's annotations: `"ascii"`, the
+default, which [`compile`](#val-compile) reads in; `"unicode"` (or `"unicode=utf8"`);
+and `"unicode=latin1"`. A mode is how `rune --unicode=ENC` reads its
+inputs (docs/units.md, Source modes).
+
+**Raises** [`Fail`](../sig/GENERAL.md#exn-fail) in a program that has no compiler beside it, or for a
+mode of another name; the function raises [`Fail`](../sig/GENERAL.md#exn-fail) where a declaration
+does not compile.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-compilein.read"></a>`read` | `unit -> char option` |  |
+| <a name="fld-compilein.file"></a>`file` | `string` |  |
+| <a name="fld-compilein.line"></a>`line` | `int` |  |
 
 <details><summary>Tests (1)</summary>
 

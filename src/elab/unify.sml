@@ -50,7 +50,7 @@ struct
       | (t, TVar r) => bindVar (r, t)
       | (TCon (c1, a1), TCon (c2, a2)) =>
           if sameTycon (c1, c2) then ListPair.app unify (a1, a2)
-          else raise Unify ("type constructor mismatch: " ^ #name c1 ^ " vs " ^ #name c2)
+          else raise Unify ("type constructor mismatch: " ^ tyconName c1 ^ " vs " ^ tyconName c2)
       | (TRecord f1, TRecord f2) =>
           let
             fun go ([], []) = ()

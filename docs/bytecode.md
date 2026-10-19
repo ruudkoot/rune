@@ -218,8 +218,10 @@ compiles after it need of it ([units.md](units.md), *The export basis*):
 ```
 used        3 × varint   what the unit's compile used of each kind of name
 source      varint len, bytes   the hash of its source
+mode        varint len, bytes   how the source was read: ascii, unicode or
+                                unicode=latin1 (units.md, Source modes)
 magic       3 bytes   "RBI"
-version     varint    1
+version     varint    5
 name        varint len, bytes   the unit's name
 units       varint n, n × string   the identities of the units it names
 counts      3 × varint   its own names of each kind
@@ -464,6 +466,7 @@ raised as noted.
 | Char | `char_ord char_lt char_le char_gt char_ge char_order` |
 | String (8-bit) | `string_size string_sub string_concat string_extract string_lt string_le string_gt string_ge string_compare string_order string_from_char string_implode string_explode string_concat_list` — `string_sub`/`string_extract` raise `Subscript`; `string_compare` returns −1/0/1 |
 | Ref / array / vector | `ref_new ref_get ref_set array_new array_length array_sub array_update array_from_list vector_from_list vector_length vector_sub` — `array_new`, `array_from_list` and `vector_from_list` raise `Size` for a length that is negative or above 100000000 (`Array.maxLen`, `Vector.maxLen`); indexing raises `Subscript` |
+| Vectors copied in C (`Vector.concat`, `VectorSlice.vector`, `WideString.^`), and UTF-8 decoded into one | `vector_concat vector_concat_list vector_extract utf8_decode` — `vector_concat` gives the elements of two vectors one after the other and `vector_concat_list` those of the vectors of a list, both raising `Size` above 100000000 elements; `vector_extract (v, i, n)` gives the `n` elements from index `i`, and raises `Subscript` when `i` or `n` is negative or `i + n` is past the end. `utf8_decode (s, i, n)` gives the code points of the UTF-8 of `s` from byte `i`, at most `n` (and at most 100000000), with the byte after the last and a status: 0 when it stopped at `n` or at the end, 1 when a sequence that is not UTF-8 begins there (the well-formed sequences are those of the Unicode Standard's Table 3-7), 2 when the bytes left begin a sequence that the end cuts short (`WideTextIO`'s reader) |
 | Arrays of bytes (`Word8Array`, `CharArray`; a byte an element, C's layout behind the header) | `bytes_new bytes_length bytes_sub bytes_update bytes_blit bytes_blit_string bytes_extract` — `bytes_new` raises `Size` for a length that is negative or above a string's largest; indexing and a run that leaves the array raise `Subscript`; a blit is right where source and destination overlap; `bytes_extract` gives a run as a new string |
 | Packed integer storage | `intinf_unpack intinf_pack` convert between little-endian magnitude bytes and arrays of 15- or 30-bit digits; arithmetic remains in SML. Unpack returns enough digits for all input bytes, including high zeros. Pack takes an array, its used length, and the width, and strips high zeros. Both raise `Size` for a result beyond the array/string limit. Invalid widths, counts, or digit values are bytecode errors. |
 | IntInf runtime policy | `intinf_gmp_available intinf_max_bits intinf_check_bits` read the current VM capability and finite magnitude budget, including after restoration. |

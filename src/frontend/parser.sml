@@ -198,7 +198,8 @@ struct
 
       and parseLabel () : string =
         case next () of
-          ID s => s
+          ID s => if CharVector.all (fn c => Char.ord c < 128) s then s
+                  else errAt (prevSpan (), "a record label is ASCII, and " ^ s ^ " is not")
         | INT i => if IntInf.> (i, IntInf.fromInt 0) then IntInf.toString i else err "record label must be a positive integer"
         | t => errAt (prevSpan (), "expected record label but found '" ^ toString t ^ "'")
 

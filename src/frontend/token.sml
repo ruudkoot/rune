@@ -10,8 +10,13 @@ struct
   | WORD of IntInf.int
   | REAL of string                        (* literal text, SML syntax *)
   | STRING of string            (* a constant whose characters fit 8 bits *)
-  | WIDESTRING of int list      (* one with a code point above 255 *)
-  | CHAR of int                 (* the code point of a character constant *)
+  | WIDESTRING of int list * int option
+                                (* one with a code point above 255, or one
+                                   that holds a raw character above 127 read
+                                   under --unicode: SOME its first, which
+                                   only a wide type may take (D6) *)
+  | CHAR of int * int option    (* the code point of a character constant,
+                                   and SOME it where it is raw, as above *)
     (* reserved words *)
   | ABSTYPE | AND | ANDALSO | AS | CASE | DATATYPE | DO | ELSE | END | EXCEPTION
   | FN | FUN | HANDLE | IF | IN | INFIX | INFIXR | LET | LOCAL | NONFIX | OF | OP
@@ -37,8 +42,8 @@ struct
     | WORD w => "0w" ^ IntInf.toString w
     | REAL s => s
     | STRING s => "\"" ^ String.toString s ^ "\""
-    | WIDESTRING s => "\"" ^ Scon.text s ^ "\""
-    | CHAR c => "#\"" ^ Scon.escape c ^ "\""
+    | WIDESTRING (s, _) => "\"" ^ Scon.text s ^ "\""
+    | CHAR (c, _) => "#\"" ^ Scon.escape c ^ "\""
     | ABSTYPE => "abstype" | AND => "and" | ANDALSO => "andalso" | AS => "as"
     | CASE => "case" | DATATYPE => "datatype" | DO => "do" | ELSE => "else"
     | END => "end" | EXCEPTION => "exception" | FN => "fn" | FUN => "fun"

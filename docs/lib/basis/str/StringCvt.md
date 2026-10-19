@@ -6,14 +6,14 @@
 | --- | --- |
 | Signature | [`STRING_CVT`](../sig/STRING_CVT.md) |
 | Status | required |
-| Members | 11 |
+| Members | 13 |
 | Tests | 170 checks |
 | Source | [lib/basis/stringcvt.sml](../../../../lib/basis/stringcvt.sml) |
 
 ## Synopsis
 
 ```sml
-structure StringCvt : STRING_CVT
+structure StringCvt : STRING_CVT where type char = char where type string = string
 ```
 
 StringCvt: the types and helpers of the fmt and scan functions. Written on
@@ -25,10 +25,12 @@ What each means is on [`STRING_CVT`](../sig/STRING_CVT.md); the types are this s
 
 |  | Member | Is |
 | --- | --- | --- |
+| type | [`char`](../sig/STRING_CVT.md#type-char) | `char` |
 | type | [`cs`](../sig/STRING_CVT.md#type-cs) | *a type of its own* |
 | datatype | [`radix`](../sig/STRING_CVT.md#type-radix) | `BIN` &#124; `OCT` &#124; `DEC` &#124; `HEX` |
 | type | [`reader`](../sig/STRING_CVT.md#type-reader) | `'b -> ('a * 'b) option` |
 | datatype | [`realfmt`](../sig/STRING_CVT.md#type-realfmt) | `SCI` &#124; `FIX` &#124; `GEN` &#124; `EXACT` |
+| type | [`string`](../sig/STRING_CVT.md#type-string) | `string` |
 | val | [`dropl`](../sig/STRING_CVT.md#val-dropl) | `(char -> bool) -> (char, 'a) reader -> 'a -> 'a` |
 | val | [`padLeft`](../sig/STRING_CVT.md#val-padleft) | `char -> int -> string -> string` |
 | val | [`padRight`](../sig/STRING_CVT.md#val-padright) | `char -> int -> string -> string` |

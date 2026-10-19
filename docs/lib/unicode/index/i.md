@@ -1,11 +1,24 @@
 # Index: I
 
-[Overview](../README.md) &middot; [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) **i** [n](n.md) [p](p.md) [r](r.md) [s](s.md) [v](v.md) [w](w.md)
+[Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [h](h.md) **i** [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [y](y.md)
 
+- `identifierType` (type): [UNICODE_SECURITY](../sig/UNICODE_SECURITY.md#type-identifiertype)
+- `Ignorable` (con): [IDENTIFIER](../sig/IDENTIFIER.md#con-ignorable)
 - `implode` (val): [UTF8](../sig/UTF8.md#val-implode)
+- `Inclusion` (con): [UNICODE_SECURITY](../sig/UNICODE_SECURITY.md#con-inclusion)
+- `isAlphanumeric` (val): [IDENTIFIER](../sig/IDENTIFIER.md#val-isalphanumeric)
+- `isConfusable` (val): [UNICODE_SECURITY](../sig/UNICODE_SECURITY.md#val-isconfusable)
+- `isContinue` (val): [IDENTIFIER](../sig/IDENTIFIER.md#val-iscontinue)
 - `isControl` (val): [DISPLAY_WIDTH](../sig/DISPLAY_WIDTH.md#val-iscontrol)
+- `isDefaultIgnorable` (val): [IDENTIFIER](../sig/IDENTIFIER.md#val-isdefaultignorable)
+- `isNFC` (val): [NORMALIZE](../sig/NORMALIZE.md#val-isnfc)
+- `isNFCList` (val): [NORMALIZE](../sig/NORMALIZE.md#val-isnfclist)
 - `isScalar` (val): [UTF8](../sig/UTF8.md#val-isscalar)
+- `isSingleScript` (val): [UNICODE_SECURITY](../sig/UNICODE_SECURITY.md#val-issinglescript)
+- `isStart` (val): [IDENTIFIER](../sig/IDENTIFIER.md#val-isstart)
 - `isValid` (val): [UTF8](../sig/UTF8.md#val-isvalid)
+- `isXIDContinue` (val): [IDENTIFIER](../sig/IDENTIFIER.md#val-isxidcontinue)
+- `isXIDStart` (val): [IDENTIFIER](../sig/IDENTIFIER.md#val-isxidstart)
 
 ---
 

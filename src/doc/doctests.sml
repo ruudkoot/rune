@@ -55,7 +55,7 @@ struct
     | SOME (scope, _) =>
         scope <> "" andalso not (CharVector.exists Char.isSpace s)
         andalso (relative
-                 orelse (Char.isAlpha (String.sub (scope, 0))
+                 orelse (Ident.isStartByte (String.sub (scope, 0))
                          andalso CharVector.exists (fn c => c = #"." orelse c = #":") scope)
                  (* a check of a functor of the library: PrimIO/nullRd-is-empty *)
                  orelse (Char.isUpper (String.sub (scope, 0)) andalso CharVector.all Char.isAlphaNum scope))
@@ -207,7 +207,7 @@ struct
 
   (* ---- a suite ---- *)
   fun parse (path : string) : Ast.program =
-    #1 (Parser.parseTokensWith (Lexer.tokenize (Source.load path), Fixity.initial))
+    #1 (Parser.parseTokensWith (Lexer.tokenize (Source.load (!DocSource.mode, path)), Fixity.initial))
 
   fun filesOf (dir : string) : string list =
     let
