@@ -565,6 +565,21 @@ void census_flush(void) {
 /* ---------------------------------------------------------------- collections */
 
 static size_t gc_begin_size;
+/* the frames as samples.bin counts them, by index from the top level's 0:
+   how many there are, and the index and the first slot of the lowest whose
+   id is at least low (ids rise with the frames: runtime/register's are
+   their bases, native-frames.md M4) */
+static size_t frame_count(VM *vm, size_t low, size_t *low_index, size_t *low_head) {
+    FrameRef f;
+    size_t n = 0, above = 0;
+    *low_head = 0;
+    for (int more = vm_frame_top(vm, &f); more; more = vm_frame_down(vm, &f)) {
+        if (f.id >= low) { above = n; *low_head = f.head; }
+        n++;
+    }
+    *low_index = n ? n - 1 - above : 0;
+    return n;
+}
 void census_gc_begin(VM *vm) {
     /* samples.bin's record, as the collection begins (docs/census.md): the
        clock, the instruction count, the ids so far, the stack and the
@@ -573,19 +588,20 @@ void census_gc_begin(VM *vm) {
     put_u64(sample_rec, census_clock);
     put_u64(sample_rec + 24, (uint64_t)vm->instructions);
     put_u64(sample_rec + 32, census_next_id);
-    size_t sp = vm->sp, fp = vm_frame_id(vm), ptrs = 0;
-    if (fp_low > fp) fp_low = fp;
-    FrameRef low;
-    size_t base_low = vm_frame_find(vm, fp_low, &low) ? low.base : 0;
+    size_t sp = vm->sp, id = vm_frame_id(vm), ptrs = 0;
+    if (fp_low > id) fp_low = id;
+    size_t low_index, base_low;
+    size_t nframes = frame_count(vm, fp_low, &low_index, &base_low);
+    size_t fp = nframes ? nframes - 1 : 0;
     for (size_t i = 0; i < sp; i++) if (val_is_ptr(vm->stack[i])) ptrs++;
     uint32_t flags = (census_every && census_clock - census_last_sample_clock >= census_every ? 1u : 0u) | (final_collection ? 2u : 0u);
     put_u32(sample_rec + 40, (uint32_t)sp);
     put_u32(sample_rec + 44, (uint32_t)fp);
-    put_u32(sample_rec + 48, (uint32_t)fp_low);
+    put_u32(sample_rec + 48, (uint32_t)low_index);
     put_u32(sample_rec + 52, (uint32_t)base_low);
     put_u32(sample_rec + 56, (uint32_t)ptrs);
     put_u32(sample_rec + 60, flags);
-    fp_low = fp;     /* the next sample's watermark starts here */
+    fp_low = id;     /* the next sample's watermark starts here */
     gc_begin_size = vm->alloc.size;
     census_sample_no++;
     if (census_sample_no >= (1u << (64 - CENSUS_ID_BITS))) { fprintf(stderr, "runevm-census: more than 2^%d samples\n", 64 - CENSUS_ID_BITS); exit(2); }

@@ -60,10 +60,13 @@ void emit_SETGLOBAL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     as_ld64(A, R_S0, VMR, OFF(global_set));
     as_st8i(A, R_S0, a, 1);
 }
-/* rax := the frame's closure, or the fatal error */
+/* rax := the frame's closure, or the fatal error: the header's word, a
+   closure where the frame was called through one and unit where it was
+   not, since a frame whose function reads its closure is given unit by
+   a known call (native-frames.md, M4) */
 static void closure(Jit *j, int what) {
-    as_ld64(A, R_S0, BASEI, (int32_t)offsetof(Frame, closure));   /* rbp is the frame's record (M6) */
-    as_test_rr(A, R_S0, R_S0);
+    as_ld64(A, R_S0, BASER, -2 * (int32_t)sizeof(Value));
+    as_cmp_ri(A, R_S0, (int32_t)mk_unit());
     as_jcc(A, CC_E, jit_fatal(j, what, 0, 0, 0));
 }
 void emit_ENV(Jit *j, uint32_t pc, int32_t a, int32_t b) {
@@ -996,12 +999,15 @@ void emit_FIELD(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c, int32_t d)
 }
 /* ---- calls, returns, handlers, PRIMPUSH (M5) ---- */
 
-#define FRAME_SIZE ((int32_t)sizeof(Frame))
-#define FR(field) ((int32_t)offsetof(Frame, field))
+/* a frame's header, below its registers (vm.h, isa_frame_header;
+   native-frames.md, M4): the word k below the registers that begin
+   `above` values past this frame's base -- 1 the return word, 2 the
+   closure, 3 the info word */
+#define HEADER_AT(above, k) ((int32_t)sizeof(Value) * ((int32_t)(above) - (k)))
 
 static void fill_unit(Jit *j, int base_reg, uint32_t fill_from, uint32_t nlocals);
-/* into the callee whose frame is on top and whose registers rbp and r14
-   now name: its code where it has some, else the interpreter, the VM made
+/* into the callee whose frame is on top and whose registers r14 now
+   names: its code where it has some, else the interpreter, the VM made
    exact for it */
 static void to_callee(Jit *j, uint32_t f, const Function *fn) {
     /* straight into the callee's code where it has some (M7): a call to
@@ -1029,8 +1035,8 @@ static void to_callee(Jit *j, uint32_t f, const Function *fn) {
 }
 /* room on the stack for need values above the frame's base, in the
    stack's clean part (VM.stack_clean, M6), or the slow path that claims
-   more: then the callee's registers need no unit, and the frames have
-   room for a frame per slot claimed, so that a call checks them no more */
+   more: then the callee's registers need no unit, nor the closure of its
+   header */
 static void room(Jit *j, uint32_t need) {
     Slow *s = ms_slow(M, SLOW_GROW, j->next);
     if (!s) return;
@@ -1040,47 +1046,49 @@ static void room(Jit *j, uint32_t need) {
     as_bind(A, &s->back);
 }
 
-/* a frame pushed: index rax, function f, base rdx, no closure, returning
-   to the code at after, the caller's pc that of the RESULT */
 /* the register of the RESULT at pc, if that is one: where a frame pushed
    by a call at that pc returns to (-1: none) */
 static int32_t result_at(Jit *j, uint32_t pc) {
     const uint8_t *code = j->vm->prog.code;
     return pc < j->vm->prog.code_len && code[pc] == ROP_RESULT ? read_i32(code + pc + 1) : -1;
 }
-/* the frame of a known call (M6): the record after this frame's (rbp's),
-   which the frames have room for (room claimed it: VM.stack_clean) --
-   function f, base this frame's past its registers, no closure, returning
-   to the landing after -- and the frame index one more */
-static void push_frame(Jit *j, uint32_t f, int32_t ret_pc, AsmLabel *after) {
-    /* the function and the pc after the call, one word; no RESULT's
-       register, which the landing knows (vm.h, Frame) */
-    _Static_assert(offsetof(Frame, ret_pc) == offsetof(Frame, func) + 4 && sizeof(((Frame *)0)->func) == 4,
-                   "a frame's function and return pc are one word, the function in its low half");
-    as_mov_ri(A, R_S3, (int64_t)((uint64_t)f | (uint64_t)(uint32_t)ret_pc << 32));
-    as_st64(A, BASEI, FRAME_SIZE + FR(func), R_S3);
-    ms_base_index(M, R_S2, j->m.nlocals);
-    as_st64(A, BASEI, FRAME_SIZE + FR(base), R_S2);
-    as_st64i(A, BASEI, FRAME_SIZE + FR(closure), 0);
-    as_lea_label(A, R_S3, after);
-    as_st64(A, BASEI, FRAME_SIZE + FR(native_ret), R_S3);
+/* The header of a call's frame (native-frames.md, M4), past this frame's
+   registers: the return word, the landing after's, from r; and the
+   closure, from closure (a register; -1: unit, for a known callee that
+   reads its closure -- one that does not is left the word as it was, a
+   value of the stack's clean part, which the collector makes unit). The
+   info word is the interpreter's to write, and the frame's own. */
+static void call_header(Jit *j, int closure, int unit_closure, AsmLabel *after, int r) {
+    uint32_t above = j->m.nlocals + MS_HEADER;
+    if (closure >= 0) as_st64(A, BASER, HEADER_AT(above, 2), closure);
+    else if (unit_closure) as_st64i(A, BASER, HEADER_AT(above, 2), (int32_t)mk_unit());
+    as_ret_addr(A, r, after);
+    as_st64(A, BASER, HEADER_AT(above, 1), r);
 }
-/* Where the callee's RET lands (M6), the frame's native_ret: in line,
-   after the jump into the callee. The callee popped its frame and left
-   its value in R_S0, and rbp and r14 are still its own registers' base,
-   which began past this frame's: this frame's again, the homes needed
-   after the call loaded from their slots (written back before it), and
-   the value into the register of the RESULT, which every engine passes
-   over. The interpreter's RET into this frame goes on at the landing of
-   the instruction after the RESULT instead (jit_osr), the value already
-   in its slot. */
+/* Where the callee's RET lands (M6), the frame's return word: in line,
+   after the jump into the callee, at an odd address (as_ret_align). The
+   callee left its value in R_S0 and r14 is still its own registers' base,
+   which began past this frame's and the header: this frame's again, the
+   watermark lowered to it where it was above (until native-frames.md's
+   M5), the homes needed after the call loaded from their slots (written
+   back before it), and the value into the register of the RESULT, which
+   every engine passes over. The landing's pc (that RESULT's) is the code
+   object's to say for the frames' walk (jit_landing_here). */
 static void call_landing(Jit *j, AsmLabel *l) {
     uint32_t after = j->next + 5;
     int32_t d = result_at(j, j->next);
+    as_ret_align(A);
     as_bind(A, l);
+    jit_landing_here(j, j->next);
     ms_role(M, MR_LAND);
     ms_begin(M, after);
     ms_frame_back(M);
+    Slow *s = ms_slow(M, SLOW_LOW, after);
+    if (s) {
+        as_cmp_rm(A, BASER, VMR, OFF(frame_low));
+        as_jcc(A, CC_B, &s->here);
+        as_bind(A, &s->back);
+    }
     ms_reload_homes_but(M, after, d);
     ms_set_bits(M, d, R_S0);
     ms_role(M, MR_BODY);
@@ -1098,7 +1106,7 @@ static void fill_unit(Jit *j, int base_reg, uint32_t fill_from, uint32_t nlocals
    addressed from this frame's base, and no register holds where they
    are: an argument may be in any home (asm.h) */
 static void make_registers(Jit *j, uint32_t n, const uint8_t *L, uint32_t f, const Function *fn) {
-    uint32_t above = j->m.nlocals;
+    uint32_t above = j->m.nlocals + MS_HEADER;
     for (uint32_t i = 0; i < n; i++) ms_store_nth(M, BASER, above + i, read_i32(L + 4 * i));
     if (!fn->has_meta) {
         uint32_t fill_from = jit_fill_from(j->vm, j->jit, f);
@@ -1116,13 +1124,12 @@ void emit_CALLK(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uin
     ms_role(M, MR_ARGS);
     for (uint32_t i = 0; i < n; i++) ms_need_word(M, read_i32(L + 4 * i));   /* an argument's word, before the frame is reserved (a box's slow path clobbers rax) */
     ms_role(M, MR_ROOM);
-    room(j, j->m.nlocals + fn->nlocals + fn->maxstack);
+    room(j, j->m.nlocals + MS_HEADER + fn->nlocals + fn->maxstack);
     ms_role(M, MR_ARGS);
     make_registers(j, n, L, (uint32_t)a, fn);
     ms_role(M, MR_FRAME);
-    push_frame(j, (uint32_t)a, (int32_t)j->next, &after);
-    as_add_ri(A, BASEI, FRAME_SIZE);   /* the callee's record and registers the code's (M6) */
-    ms_slot_addr(M, BASER, (int32_t)j->m.nlocals);
+    call_header(j, -1, fn->reads_closure, &after, R_S3);
+    as_add_ri(A, BASER, (int32_t)sizeof(Value) * (int32_t)(j->m.nlocals + MS_HEADER));   /* the callee's registers the code's */
     ms_role(M, MR_JUMP);
     to_callee(j, (uint32_t)a, fn);
     call_landing(j, &after);
@@ -1164,9 +1171,12 @@ void emit_TAILCALLK(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L,
         uint32_t from = jit_fill_from(j->vm, j->jit, (uint32_t)a);
         fill_unit(j, BASER, from < n ? n : from, fn->nlocals);
     }
-    ms_role(M, MR_FRAME);
-    as_st32i(A, BASEI, FR(func), a);   /* the frame's record, rbp (M6) */
-    as_st64i(A, BASEI, FR(closure), 0);
+    /* the frame's header stays its caller's, but its closure: unit, for a
+       callee that reads one (native-frames.md, M4) */
+    if (fn->reads_closure) {
+        ms_role(M, MR_FRAME);
+        as_st64i(A, BASER, HEADER_AT(0, 2), (int32_t)mk_unit());
+    }
     ms_role(M, MR_JUMP);
     to_callee(j, (uint32_t)a, fn);
     ms_role(M, MR_BODY);
@@ -1298,32 +1308,28 @@ void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     closure_function(j, a, R_S2);
     called(j, pc);
     ms_role(M, MR_ROOM);
-    room_dynamic(j, grow, j->m.nlocals);
+    room_dynamic(j, grow, j->m.nlocals + MS_HEADER);
     ms_role(M, MR_ARGS);
-    /* the callee's registers above the frame: register 0 from register b
-       (the last home read), the rest as the stack's clean part has them
-       (M6) or unit where not every function has its arity in the section */
-    ms_store_nth(M, BASER, j->m.nlocals, b);
+    /* the callee's registers above the frame and the header: register 0
+       from register b (the last home read), the rest as the stack's clean
+       part has them (M6) or unit where not every function has its arity
+       in the section */
+    ms_store_nth(M, BASER, j->m.nlocals + MS_HEADER, b);
     callee_entry(j, R_S5);
-    as_shr_ri(A, R_S6, 1);   /* the function's number */
+    /* r11 stays the function's word, which the stub of the interpreter
+       wants (ms_emit_call_interp); the fill its number */
     if (!j->jit->all_meta) {
-        ms_slot_addr(M, R_S4, (int32_t)j->m.nlocals);
+        as_shr_ri(A, R_S6, 1);
+        as_lea(A, R_S4, BASER, -1, 1, (int32_t)sizeof(Value) * (int32_t)(j->m.nlocals + MS_HEADER));
         callee_nlocals(j);
         fill_unit_dynamic(j);
+        as_lea(A, R_S6, R_S6, R_S6, 1, 1);
     }
     ms_role(M, MR_FRAME);
-    /* the frame (M6): the record after this frame's, rbp's -- function
-       r11, closure rdx, base this frame's past its registers, returning
-       to after -- and the frame index one more */
-    as_st32(A, BASEI, FRAME_SIZE + FR(func), R_S6);
-    as_st32i(A, BASEI, FRAME_SIZE + FR(ret_pc), (int32_t)j->next);
-    ms_base_index(M, R_S3, j->m.nlocals);
-    as_st64(A, BASEI, FRAME_SIZE + FR(base), R_S3);
-    as_st64(A, BASEI, FRAME_SIZE + FR(closure), R_S2);
-    as_lea_label(A, R_H2, &after);
-    as_st64(A, BASEI, FRAME_SIZE + FR(native_ret), R_H2);
-    as_add_ri(A, BASEI, FRAME_SIZE);
-    ms_slot_addr(M, BASER, (int32_t)j->m.nlocals);
+    /* the callee's frame's header (native-frames.md, M4): its closure,
+       rdx, and its return word, the landing after */
+    call_header(j, R_S2, 0, &after, R_H2);
+    as_add_ri(A, BASER, (int32_t)sizeof(Value) * (int32_t)(j->m.nlocals + MS_HEADER));
     ms_role(M, MR_JUMP);
     as_jmp_r(A, R_S5);   /* its code, or the interpreter (the table of calls, M6) */
     call_landing(j, &after);
@@ -1348,17 +1354,17 @@ void emit_TAILCALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
        from register b, the last home read */
     ms_store_nth(M, BASER, 0, b);
     callee_entry(j, R_S5);
-    as_shr_ri(A, R_S6, 1);   /* the function's number */
-    if (!j->jit->all_meta) {
+    if (!j->jit->all_meta) {   /* (r11 the function's word again after, as in CALL) */
+        as_shr_ri(A, R_S6, 1);
         as_mov_rr(A, R_S4, BASER);
         callee_nlocals(j);
         fill_unit_dynamic(j);
+        as_lea(A, R_S6, R_S6, R_S6, 1, 1);
     }
     ms_role(M, MR_FRAME);
-    /* the frame replaced: its function and closure; its return kept (the
-       record, rbp, M6) */
-    as_st32(A, BASEI, (int32_t)offsetof(Frame, func), R_S6);
-    as_st64(A, BASEI, (int32_t)offsetof(Frame, closure), R_S2);
+    /* the frame replaced: its header's closure; its return kept, and its
+       caller (native-frames.md, M4) */
+    as_st64(A, BASER, HEADER_AT(0, 2), R_S2);
     ms_role(M, MR_JUMP);
     as_jmp_r(A, R_S5);   /* its code, or the interpreter (the table of calls, M6) */
     ms_role(M, MR_BODY);
@@ -1370,28 +1376,18 @@ void emit_RESULT(Jit *j, uint32_t pc, int32_t a) {
     (void)pc;
     ms_copy(M, a, (int32_t)j->m.nlocals);
 }
-/* RET (M6): the value's word into R_S0 and on where the frame says
-   (Frame.native_ret), with nothing tested but the watermark: the landing
-   of the caller's compiled call (call_landing), which takes the value and
-   pops the frame (rbp back), or VM.ret_tramp for any other caller and
-   for the top level (jit_h_return). No frame index: compiled code keeps
-   it in rbp (ms_store_fp). The watermark is lowered as vm_frame_pop
-   lowers it, where the frame's record is at or below VM.frame_low's. */
+/* RET (M6): the value's word into R_S0 and on where the frame's return
+   word says (native-frames.md, M4), with nothing tested: the landing of
+   the caller's compiled call (call_landing), which takes the value, puts
+   r14 back and lowers the watermark, or VM.ret_tramp for any other caller
+   and for the top level (jit_h_return). */
 void emit_RET(Jit *j, uint32_t pc, int32_t a) {
     (void)pc;
-    AsmLabel below; as_label_init(&below);
     ms_role(M, MR_RET);
     ms_need_word(M, a);
     ms_load_bits(M, R_S0, a);
-    as_ld64(A, R_S1, BASEI, FR(native_ret));   /* the frame's record, rbp (M6) */
-    as_cmp_rm(A, BASEI, VMR, OFF(frame_low));
-    as_jcc(A, CC_BE, &below);
-    as_jmp_r(A, R_S1);
-    as_bind(A, &below);   /* below the watermark (ms_emit_low) */
-    if (M->placed) as_jmp_to(A, M->low);
-    else { as_mov_ri(A, R_S2, (int64_t)(intptr_t)M->low); as_jmp_r(A, R_S2); }
+    as_jmp_ret(A, BASER, HEADER_AT(0, 1));
     ms_role(M, MR_BODY);
-    as_label_free(&below);
 }
 void emit_PRIMPUSH(Jit *j, uint32_t pc, int32_t a, const uint8_t *L, uint32_t n) {
     (void)pc; (void)n;
@@ -1423,10 +1419,11 @@ void emit_PUSHHANDLER(Jit *j, uint32_t pc, int32_t a) {
     as_mul_ri(A, R_S1, R_S0, (int32_t)sizeof(Handler));
     as_add_rm(A, R_S1, VMR, OFF(handlers));
     as_st32i(A, R_S1, (int32_t)offsetof(Handler, pc), a);
-    ms_base_index(M, R_S2, j->m.nlocals);
+    as_st32i(A, R_S1, (int32_t)offsetof(Handler, func), (int32_t)j->f);
+    ms_base_index(M, R_S2, 0);   /* the frame: its base (native-frames.md, M4) */
+    as_st64(A, R_S1, (int32_t)offsetof(Handler, fp), R_S2);
+    as_add_ri(A, R_S2, (int32_t)j->m.nlocals);
     as_st64(A, R_S1, (int32_t)offsetof(Handler, sp), R_S2);
-    as_mov_rr(A, R_S2, BASEI);   /* the frame index: compiled code keeps it in rbp (M6) */
-    ms_frame_index_to(M, R_S2, R_S1, (int32_t)offsetof(Handler, fp));
     as_lea_label(A, R_S2, jit_landing(j, (uint32_t)a));
     as_st64(A, R_S1, (int32_t)offsetof(Handler, native), R_S2);
     as_add_ri(A, R_S0, 1);
@@ -1493,18 +1490,18 @@ void emit_RAISE(Jit *j, uint32_t pc, int32_t a) {
         as_st64(A, VMR, OFF(hp), R_S1);
         as_ld64(A, R_S3, R_S2, (int32_t)offsetof(Handler, fp));
         as_st64(A, VMR, OFF(fp), R_S3);
-        as_mul_ri(A, BASEI, R_S3, (int32_t)sizeof(Frame));   /* the record (M6) */
-        as_add_rm(A, BASEI, VMR, OFF(frames));
-        as_cmp_rm(A, BASEI, VMR, OFF(frame_low));
-        as_jcc(A, CC_AE, &above);
-        as_st64(A, VMR, OFF(fp_low), R_S3);
-        as_st64(A, VMR, OFF(frame_low), BASEI);
-        as_bind(A, &above);
-        /* the handler's frame's registers the code's, the exception at its
-           stack pointer, its code */
-        as_ld64(A, BASER, BASEI, (int32_t)offsetof(Frame, base));
+        as_ld32(A, R_S1, R_S2, (int32_t)offsetof(Handler, func));
+        as_st32(A, VMR, OFF(func), R_S1);
+        /* the handler's frame's registers the code's (its base: native-frames.md, M4) */
+        as_mov_rr(A, BASER, R_S3);
         ms_scale_index(M, BASER);
         as_add_rm(A, BASER, VMR, OFF(stack));
+        as_cmp_rm(A, BASER, VMR, OFF(frame_low));
+        as_jcc(A, CC_AE, &above);
+        as_st64(A, VMR, OFF(fp_low), R_S3);
+        as_st64(A, VMR, OFF(frame_low), BASER);
+        as_bind(A, &above);
+        /* the exception at its stack pointer, its code */
         as_ld64(A, R_S1, R_S2, (int32_t)offsetof(Handler, sp));
         ms_scale_index(M, R_S1);
         as_add_rm(A, R_S1, VMR, OFF(stack));

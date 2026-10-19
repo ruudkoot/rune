@@ -304,27 +304,46 @@ static void write_image(VM *vm, Stream *s, int kind) {
        starts again catches it again (interrupt_again) */
     put_u32(s, (uint32_t)vm->interrupt_mask);
     put_obj(s, vm->interrupt_exn, vm);
-    put_u64(s, (uint64_t)vm->sp);
-    for (size_t i = 0; i < vm->sp; i++) put_value(s, vm->stack[i], vm);
-    put_u32(s, (uint32_t)vm->frames_active);
     {
-        /* the frames, the top level's first, as the runtime walks them
-           (vm.h; native-frames.md, M3) */
+        /* The stack, the frames and the handlers as the runtime walks them
+           (vm.h; native-frames.md, M3), in the layout of every instruction
+           set: without the words of a frame's header that some keep in the
+           stack below its base (from FrameRef.head; native-frames.md, M4)
+           -- a frame's base and a handler's stack pointer less the header
+           words below them -- and a handler's frame by its index, the top
+           level's 0. An image of one engine is read by every other of its
+           instruction set, and by those before the header. */
         FrameRef *fr;
-        size_t nf = vm_frames_from(vm, 0, &fr);
+        size_t nf = vm->frames_active ? vm_frames_from(vm, 0, &fr) : 0;
+        size_t words = 0;   /* of the headers of all the frames */
+        for (size_t k = 0; k < nf; k++) words += fr[k].base - fr[k].head;
+        put_u64(s, (uint64_t)(vm->sp - words));
+        for (size_t i = 0, k = 0; i < vm->sp;) {
+            if (k < nf && i == fr[k].head) { i = fr[k].base; k++; continue; }
+            put_value(s, vm->stack[i++], vm);
+        }
+        put_u32(s, (uint32_t)vm->frames_active);
         put_u64(s, (uint64_t)(nf ? nf - 1 : 0));
+        words = 0;
         for (size_t i = 0; i < nf; i++) {
+            words += fr[i].base - fr[i].head;
             put_u32(s, fr[i].func);
             put_u32(s, fr[i].ret_pc);
-            put_u64(s, (uint64_t)fr[i].base);
-            put_obj(s, fr[i].closure ? *fr[i].closure : NULL, vm);
+            put_u64(s, (uint64_t)(fr[i].base - words));
+            put_obj(s, fr[i].closure, vm);
         }
-    }
-    put_u64(s, (uint64_t)vm->hp);
-    for (size_t i = 0; i < vm->hp; i++) {
-        put_u32(s, vm->handlers[i].pc);
-        put_u64(s, (uint64_t)vm->handlers[i].sp);
-        put_u64(s, (uint64_t)vm->handlers[i].fp);
+        put_u64(s, (uint64_t)vm->hp);
+        /* a handler's frame by its id, the frames' rising (and the handlers'
+           with them), and the header words below that frame's base */
+        size_t k = 0, below = nf ? fr[0].base - fr[0].head : 0;
+        for (size_t i = 0; i < vm->hp; i++) {
+            size_t id = vm->handlers[i].fp;
+            if (nf && fr[k].id > id) { k = 0; below = fr[0].base - fr[0].head; }
+            while (k + 1 < nf && fr[k + 1].id <= id) { k++; below += fr[k].base - fr[k].head; }
+            put_u32(s, vm->handlers[i].pc);
+            put_u64(s, (uint64_t)(vm->handlers[i].sp - below));
+            put_u64(s, (uint64_t)(nf ? k : id));
+        }
     }
 
     /* Each file by its descriptor, -1 for a closed slot: handles are never
@@ -769,7 +788,7 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
     vm->sp = (size_t)sp;
     for (size_t i = 0; i < vm->sp; i++) vm->stack[i] = get_value(&s);
     vm->stack_clean = vm->sp;   /* nothing above it claimed (vm.h, M6) */
-    vm->stack_room = (uintptr_t)(vm->stack + vm->sp);
+    vm->stack_room = vm_room(vm, vm->sp);
 
     /* the frames, the top level's first, which the instruction set makes
        its own once the handlers are read too (vm_frames_install;
@@ -802,9 +821,10 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
         vm->handlers[i].native = NULL;
     }
     {
-        int installed = vm_frames_install(vm, records, nrecords);
+        const char *why = NULL;
+        int installed = vm_frames_install(vm, records, nrecords, &why);
         free(records);
-        if (!installed) return failed(&s, err, errlen, "out of memory");
+        if (!installed) return failed(&s, err, errlen, why);
     }
 
     uint64_t nfiles = get_u64(&s);
@@ -871,7 +891,8 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
             for (size_t i = 0; ok && i < nf; i++)
                 ok = fr[i].func < p->nfuncs
                      && fr[i].base <= vm->sp
-                     && (i == 0 || (fr[i].ret_pc < p->code_len && starts[fr[i].ret_pc]));
+                     && (i == 0 || (fr[i].ret_pc < p->code_len && starts[fr[i].ret_pc]))
+                     && (!fr[i].closure || obj_kind(fr[i].closure) == K_CLOSURE);
         }
         for (size_t i = 0; ok && i < vm->hp; i++)
             ok = vm->handlers[i].pc < p->code_len && starts[vm->handlers[i].pc]
@@ -961,6 +982,7 @@ int vm_become(VM *vm, const char *path) {
     /* and so is runtime/register's return trampoline, where the frames of
        the image return when compiled code runs them (M6) */
     next->ret_tramp = vm->ret_tramp;
+    next->ret_word = vm->ret_word;   /* (native-frames.md, M4) */
     vm_frames_to_interpreter(next);
     next->gc_log = vm->gc_log;
     next->gc_log_t0 = vm->gc_log_t0;

@@ -317,7 +317,7 @@ int sys_interrupt_catch(volatile int *flag);
 /* where the interrupt is caught, it also makes *limit 0, after the flag
    (NULL: nothing): a word that code compares with on its way, which then
    finds the interrupt where it would otherwise poll for it (runtime/register's
-   compiled code: the end of the stack's clean part, VM.stack_room;
+   compiled code: the limit of its room checks, VM.stack_room;
    performance M6) */
 void sys_interrupt_limit(volatile uintptr_t *limit);
 /* An interrupt from another process on Windows, which has no SIGINT to

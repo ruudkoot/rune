@@ -100,6 +100,9 @@ void as_patch_jmp(uint8_t *site, const void *to) {
 }
 void as_call_to(Asm *a, const void *at) { x64_call_to(a, at); }
 void as_call_r(Asm *a, int r) { x64_call_r(a, r); }
+void as_ret_align(Asm *a) { if (!(a->n & 1)) x64_byte(a, 0x90); }   /* nop: the landing at an odd offset */
+void as_ret_addr(Asm *a, int rd, AsmLabel *l) { x64_lea_rip(a, rd, l); }
+void as_jmp_ret(Asm *a, int base, int32_t disp) { x64_jmp_m(a, base, -1, 1, disp); }
 void as_ret(Asm *a) { x64_ret(a); }
 void as_trap(Asm *a) { x64_int3(a); }
 void as_setcc(Asm *a, int rd, int cc) {

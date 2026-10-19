@@ -26,15 +26,14 @@ int main(void) {
     void *stubs = place(&st);
     const void *leave = (const char *)stubs + leave_at;
 
-    /* a VM with one frame of 4 registers at base 3 of the stack */
+    /* a VM with one frame of 4 registers at base 3 of the stack (its
+       header below them: native-frames.md, M4) */
     static VM vm;
     static Value stack[64];
-    static Frame frames[4];
     static char heap[4096];
     memset(&vm, 0, sizeof vm);
     vm.stack = stack; vm.sp = 7; vm.stack_cap = 64;
-    vm.frames = frames; vm.fp = 1; vm.frames_active = 1;
-    frames[1].base = 3;
+    vm.fp = 3; vm.frames_active = 1;
     vm.alloc.from = heap; vm.alloc.size = sizeof heap; vm.alloc.used = 32;
     vm.instructions = 100;
     stack[3] = mk_int(7);
@@ -42,6 +41,7 @@ int main(void) {
 
     Masm m;
     ms_init(&m, 4, 0, 0, leave);
+    m.func = 5;
     X64Label bad; x64_label_init(&bad);
     ms_count(&m, 5);
     ms_copy(&m, 1, 0);                      /* R1 := R0 (int 7) */
@@ -74,6 +74,7 @@ int main(void) {
     }
     if (vm.alloc.used != 32 + OBJ_SIZE_FIELDS(2) || vm.bytes_allocated != OBJ_SIZE_FIELDS(2) || vm.objects_allocated != 1) { printf("FAIL counts %zu %llu\n", vm.alloc.used, (unsigned long long)vm.bytes_allocated); fails++; }
     if (vm.pc != 77 || vm.sp != 7 || vm.instructions != 105) { printf("FAIL sync pc %u sp %zu count %llu\n", vm.pc, vm.sp, (unsigned long long)vm.instructions); fails++; }
+    if (vm.fp != 3 || vm.func != 5) { printf("FAIL sync frame %zu function %u\n", vm.fp, vm.func); fails++; }
     /* the slow path: no room */
     vm.alloc.used = sizeof heap - 8;
     r = as_enter(stubs)(&vm, code);

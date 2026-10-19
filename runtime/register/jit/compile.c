@@ -33,15 +33,17 @@ void jit_h_fatal(VM *vm, int what, int32_t a, int32_t b) {
     vm_fatal(vm, fatal_text[what], (int)a, (int)b);
 }
 /* the fatal error numbered k (jit_fatal), from the stub, with the value
-   rcx held: its message and its trace read the pc and the frames, and
-   the frames are always exact */
+   rcx held: its message and its trace read the pc and the frames -- the
+   stub told the VM the frame's base, and the record its function -- and
+   the frames below are exact in the stack */
 void jit_h_fatal_at(VM *vm, uint32_t k, int64_t value) {
     const JitFatalSite *f = &jit_program(vm)->fatals[k];
     vm->pc = f->pc;
+    vm->func = f->func;   /* the stub told the VM the frame (native-frames.md, M4) */
     vm_fatal(vm, fatal_text[f->what], f->value ? (int)value : (int)f->a, (int)f->b);
 }
 /* a fatal error's record, its number; UINT32_MAX where there is no memory */
-static uint32_t fatal_record(JitProgram *jit, uint32_t pc, int32_t what, int32_t a, int32_t b, int value) {
+static uint32_t fatal_record(JitProgram *jit, uint32_t func, uint32_t pc, int32_t what, int32_t a, int32_t b, int value) {
     if (jit->nfatals == jit->fatals_cap) {
         uint32_t cap = jit->fatals_cap ? jit->fatals_cap * 2 : 1024;
         JitFatalSite *all = realloc(jit->fatals, (size_t)cap * sizeof *all);
@@ -50,7 +52,7 @@ static uint32_t fatal_record(JitProgram *jit, uint32_t pc, int32_t what, int32_t
         jit->fatals_cap = cap;
     }
     JitFatalSite *f = &jit->fatals[jit->nfatals];
-    f->pc = pc; f->what = what; f->a = a; f->b = b; f->value = value;
+    f->pc = pc; f->func = func; f->what = what; f->a = a; f->b = b; f->value = value;
     return jit->nfatals++;
 }
 
@@ -145,6 +147,22 @@ uint32_t jit_fill_from(VM *vm, JitProgram *jit, uint32_t f) {
     return lowest;
 }
 
+void jit_landing_here(Jit *j, uint32_t pc) {
+    if (j->nlands == j->lands_cap) {
+        uint32_t cap = j->lands_cap ? 2 * j->lands_cap : 16;
+        uint32_t *o = realloc(j->land_offs, cap * sizeof *o);
+        if (!o) { j->m.a.failed = 1; return; }
+        j->land_offs = o;
+        uint32_t *q = realloc(j->land_pcs, cap * sizeof *q);
+        if (!q) { j->m.a.failed = 1; return; }
+        j->land_pcs = q;
+        j->lands_cap = cap;
+    }
+    j->land_offs[j->nlands] = (uint32_t)j->m.a.n;
+    j->land_pcs[j->nlands] = pc;
+    j->nlands++;
+}
+
 void jit_pending(Jit *j, size_t off, uint32_t f) {
     if (j->npending == j->pending_cap) {
         uint32_t cap = j->pending_cap ? 2 * j->pending_cap : 16;
@@ -193,11 +211,11 @@ int jit_h_prim(VM *vm, int prim, int32_t d, uint32_t at) {
     const uint8_t *L = vm->prog.code + at;
     JitProgram *jit = jit_program(vm);
     if (jit->prim_calls) jit->prim_calls[prim]++;
-    Value *base = vm->stack + vm->frames[vm->fp].base;
+    Value *base = vm->stack + vm->fp;
     uint32_t n = prim_arity[prim];
     if (prim_fast(vm, prim, n, base, L, &base[d])) return 0;
     for (uint32_t i = 0; i < n; i++) {
-        Value v = vm->stack[vm->frames[vm->fp].base + (size_t)read_i32(L + 4 * i)];
+        Value v = vm->stack[vm->fp + (size_t)read_i32(L + 4 * i)];
         vm_push(vm, v);
     }
     const void *native = vm->hp ? vm->handlers[vm->hp - 1].native : NULL;
@@ -205,14 +223,14 @@ int jit_h_prim(VM *vm, int prim, int32_t d, uint32_t at) {
     if (r == 1) { if (native) { jit_program(vm)->at = native; return RUN_NATIVE; } return RUN_INTERP; }
     if (r == PRIM_NEW_WORLD) vm_fatal(vm, "a primitive that changes the world in PRIM");
     Value v = vm_pop(vm);
-    vm->stack[vm->frames[vm->fp].base + (size_t)d] = v;
+    vm->stack[vm->fp + (size_t)d] = v;
     return 0;
 }
 
 /* SETENV c e v while the low-pause collector's cycle marks: the store,
    through the barrier (emit.c, emit_SETENV) */
 void jit_h_setenv(VM *vm, int32_t c, int32_t e, int32_t v) {
-    Value *base = vm->stack + vm->frames[vm->fp].base;
+    Value *base = vm->stack + vm->fp;
     obj_set_field(vm, val_ptr(base[c]), (uint32_t)e + 1, base[v]);
 }
 
@@ -222,23 +240,30 @@ Obj *jit_h_alloc(VM *vm, int kind, int contag, uint32_t n) {
 
 /* compiled code's RET into a caller that is not compiled code, through
    the return trampoline (VM.ret_tramp, M6), with the value and the frame
-   index the frame that returns, whose RET has lowered the watermark: the
-   frame popped -- the top level's too, the frame index then one below 0
-   -- and on as the loop's RET goes on (src/isa/regs.sml): the value into
-   the register of the caller's RESULT, or onto the stack; what the driver
-   is to do next (the interpreter, which goes on in the caller's code
-   where it has some, vm_loop) */
+   that returns (VM.fp, the stub's): the frame popped as its header says
+   -- the top level's too, which has no caller (native-frames.md, M4) --
+   and on as the loop's RET goes on (src/isa/regs.sml): the watermark
+   lowered to the caller, the value into the register of the caller's
+   RESULT, or onto the stack; what the driver is to do next (the
+   interpreter, which goes on in the caller's code where it has some,
+   vm_loop) */
 int jit_h_return(VM *vm, uint64_t value) {
     Value v = (Value)value;
-    Frame *fr = &vm->frames[vm->fp--];
-    uint32_t back = fr->ret_pc;
-    size_t top = fr->base;
-    vm->sp = top;
-    if (vm->fp == (size_t)-1) { vm->fp = 0; vm->pc = back; vm_push(vm, v); return RUN_HALT; }
-    fr = &vm->frames[vm->fp];
+    size_t b = vm->fp, head = b - REG_HEADER, cb;
+    Value info = vm->stack[b - 3];   /* the return word is the interpreter's: the stub is where it goes */
+    uint32_t back = reg_info_pc(info), cf = reg_info_func(info);
+    switch (reg_info_kind(info)) {
+    case REG_INFO_BOTTOM: vm->sp = b; vm->pc = back; vm_push(vm, v); return RUN_HALT;   /* the header stays whole, as the loop's RET leaves it */
+    case REG_INFO_EXPLICIT: head--; cb = (size_t)val_imm(vm->stack[head]); break;
+    default: cb = head - vm->prog.funcs[cf].nlocals; break;
+    }
+    vm->sp = head;
+    vm->fp = cb;
+    vm->func = cf;
+    if (vm->fp < vm->fp_low) vm_frames_mark_low(vm, vm->fp);
     const uint8_t *code = vm->prog.code;
     if (code[back] == ROP_RESULT) {
-        vm->stack[fr->base + (size_t)read_i32(code + back + 1)] = v;
+        vm->stack[vm->fp + (size_t)read_i32(code + back + 1)] = v;
         vm->pc = back + 5;
     } else {
         vm_push(vm, v);
@@ -250,19 +275,24 @@ int jit_h_return(VM *vm, uint64_t value) {
 /* ---- the helpers of the calls, the handlers and PRIMPUSH (M5) ---- */
 
 /* compiled code's call into a function that has no code, through the
-   table of calls (JitProgram.call_interp, M6): the frame pushed and its
-   registers made; the interpreter to run it from its first instruction */
+   table of calls (JitProgram.call_interp, M6): the frame made, its header
+   and registers (the stub told the VM its base and function); the
+   interpreter to run it from its first instruction */
 int jit_h_enter_interp(VM *vm) {
-    const Frame *fr = &vm->frames[vm->fp];
-    const Function *fn = &vm->prog.funcs[fr->func];
+    const Function *fn = &vm->prog.funcs[vm->func];
     vm->pc = fn->code_offset;
-    vm->sp = fr->base + fn->nlocals;
+    vm->sp = vm->fp + fn->nlocals;
     return RUN_INTERP;
 }
 
-/* room claimed in the stack's clean part to end, an address in the stack
-   as it is (M6: compiled code's room checks compare addresses) */
-void jit_h_grow(VM *vm, const Value *end) { vm_claim_stack(vm, (size_t)(end - vm->stack)); }
+/* room claimed in the stack's clean part to ROOM_SLACK values past at,
+   the address in the stack as it is that a room check compared with
+   VM.stack_room (M6; native-frames.md, M4) */
+void jit_h_grow(VM *vm, const Value *at) {
+    /* (at may be below the stack's start, by less than the slack: as numbers) */
+    intptr_t k = (intptr_t)((uintptr_t)at - (uintptr_t)vm->stack) / (intptr_t)sizeof(Value) + ROOM_SLACK;
+    vm_claim_stack(vm, k > 0 ? (size_t)k : 0);
+}
 
 /* the handler a raise would land in, before the raise pops it: its native
    address, or NULL where it is the interpreter's */
@@ -288,7 +318,7 @@ void jit_h_push_handler(VM *vm, int32_t pc, const void *native) {
 const void *jit_h_raise(VM *vm, int32_t s) {
     JitProgram *jit = jit_program(vm);
     if (jit->prim_calls) jit->raises_c++;   /* --jit-stats */
-    Value v = vm->stack[vm->frames[vm->fp].base + (size_t)s];
+    Value v = vm->stack[vm->fp + (size_t)s];
     const void *native = handler_native(vm);
     vm_raise(vm, v);
     return native;
@@ -323,7 +353,7 @@ int64_t jit_h_values_equal(VM *vm, const Value *x, const Value *y) { return valu
 void jit_h_box_real(VM *vm, int32_t slot, uint64_t bits) {
     double d;
     memcpy(&d, &bits, sizeof d);
-    size_t base = vm->frames[vm->fp].base;
+    size_t base = vm->fp;
     /* the box of the last write-back, where the register has not changed:
        a real that stays in its home across many safepoints is boxed once */
     Value old = vm->stack[base + (size_t)slot];
@@ -336,7 +366,7 @@ void jit_h_box_real(VM *vm, int32_t slot, uint64_t bits) {
    under RUNE_INT64 an int or a word: its home holds the bits, its slot the
    box */
 void jit_h_box_num(VM *vm, int32_t slot, uint64_t bits) {
-    size_t base = vm->frames[vm->fp].base;
+    size_t base = vm->fp;
     Value old = vm->stack[base + (size_t)slot];
     if (val_is_ptr(old) && obj_kind(val_ptr(old)) == K_BOX && box_bits(old) == bits) return;
     Value v = mk_box_vm(vm, bits);
@@ -347,7 +377,7 @@ int jit_h_primpush(VM *vm, int prim, uint32_t at) {
     const uint8_t *L = vm->prog.code + at;
     uint32_t n = prim_arity[prim];
     for (uint32_t i = 0; i < n; i++) {
-        Value v = vm->stack[vm->frames[vm->fp].base + (size_t)read_i32(L + 4 * i)];
+        Value v = vm->stack[vm->fp + (size_t)read_i32(L + 4 * i)];
         vm_push(vm, v);
     }
     const void *native = handler_native(vm);
@@ -634,7 +664,7 @@ static void emit_slow(Masm *m, Slow *sp) {
            C itself: a fifth of the compiler's code compiled, measured in
            docs/plans/performance-64bit.md.) rcx, a value the message may
            want, is where the check left it. */
-        uint32_t k = fatal_record(j->jit, s.pc, s.a, s.b, s.c, s.d);
+        uint32_t k = fatal_record(j->jit, j->f, s.pc, s.a, s.b, s.c, s.d);
         if (k == UINT32_MAX) { m->a.failed = 1; return; }
         as_mov_ri(&m->a, R_S0, k);
         as_jmp_to(&m->a, j->jit->fatal_at);
@@ -661,7 +691,7 @@ static void emit_slow(Masm *m, Slow *sp) {
         if (s.kind == SLOW_GROW_RAX) as_mov_rr(&m->a, R_S6, R_S0);   /* kept across the sync, which uses rax and writes the homes back (an argument's register may be one) */
         ms_sync(m, s.pc, 0);
         if (s.kind == SLOW_GROW_RAX) as_mov_rr(&m->a, ms_arg(m, 1), R_S6);
-        else ms_slot_end(m, ms_arg(m, 1), s.n);
+        else ms_room_compared(m, ms_arg(m, 1), s.n);
         ms_call(m, (MsHelper)jit_h_grow);
         ms_reload(m);
         as_cmp32_mi(&m->a, VMR, (int32_t)offsetof(VM, interrupt), 0);
@@ -688,7 +718,18 @@ static void emit_slow(Masm *m, Slow *sp) {
            when the jump here becomes a jump there (patch_pending) */
         as_ld64(&m->a, R_S0, VMR, (int32_t)offsetof(VM, jit_calls));
         as_ld64(&m->a, R_S0, R_S0, (int32_t)((size_t)s.a * sizeof(CallInfo) + offsetof(CallInfo, entry)));
+        as_mov_ri(&m->a, R_S6, 2 * (int64_t)s.a + 1);   /* the callee's word, for the stub of the interpreter (ms_emit_call_interp) */
         as_jmp_r(&m->a, R_S0);
+    } else if (s.kind == SLOW_LOW) {
+        /* a landing below the stack's watermark (minor.c): lowered to the
+           caller's frame, r14 (native-frames.md, M4; until M5's barrier),
+           the returned value kept in rax */
+        as_st64(&m->a, VMR, (int32_t)offsetof(VM, frame_low), BASER);
+        as_mov_rr(&m->a, R_S1, BASER);
+        as_sub_rm(&m->a, R_S1, VMR, (int32_t)offsetof(VM, stack));
+        as_shr_ri(&m->a, R_S1, 3);
+        as_st64(&m->a, VMR, (int32_t)offsetof(VM, fp_low), R_S1);
+        as_jmp(&m->a, &s.back);
     } else if (s.kind == SLOW_INTERRUPT) {
         emit_poll(m, &s, s.n);
     } else if (s.kind == SLOW_DEOPT) {
@@ -889,13 +930,12 @@ int jit_region_init(VM *vm, JitProgram *jit) {
     ms_emit_leave(&a, JIT_WIN);
     size_t fatal_at = a.n;
     ms_emit_fatal(&a, JIT_WIN, (MsHelper)jit_h_fatal_at);
+    as_ret_align(&a);   /* a return word (native-frames.md, M4) */
     size_t ret_at = a.n;
     ms_emit_ret_tramp(&a, JIT_WIN, (MsHelper)jit_h_return, &leave);
     size_t call_interp_at = a.n;
-    ms_emit_ret_tramp(&a, JIT_WIN, (MsHelper)jit_h_enter_interp, &leave);   /* (its argument nothing's) */
+    ms_emit_call_interp(&a, JIT_WIN, (MsHelper)jit_h_enter_interp, &leave);
     as_label_free(&leave);
-    size_t low_at = a.n;
-    ms_emit_low(&a, JIT_WIN);
     /* every primitive's C, the helpers, and the C library's functions
        that primitives on reals are (jit_libm_of) */
     uint32_t nhelpers = (uint32_t)(sizeof helpers / sizeof helpers[0]), n = 2 * PRIM__COUNT + nhelpers, size = 16;
@@ -923,13 +963,13 @@ int jit_region_init(VM *vm, JitProgram *jit) {
     jit->code_used = (a.n + 15) & ~(size_t)15;
     jit->enter_at = mem + enter_at;
     jit->leave_at = mem + leave_at;
-    jit->low_at = mem + low_at;
     jit->fatal_at = mem + fatal_at;
-    /* compiled code's RET goes where a frame says, which for a frame not
-       pushed by compiled code -- every one there is so far -- is here (M6) */
+    /* compiled code's RET goes where a frame's return word says, which for
+       a frame not pushed by compiled code -- every one there is so far --
+       is here (M6; native-frames.md, M4) */
     vm->ret_tramp = jit->ret_tramp = mem + ret_at;
-    for (size_t i = 0; vm->frames_active && i <= vm->fp; i++)
-        if (!vm->frames[i].native_ret) vm->frames[i].native_ret = vm->ret_tramp;
+    vm->ret_word = (Value)(uintptr_t)vm->ret_tramp + JIT_RET_BIAS;
+    if (vm->frames_active) reg_frames_ret_word(vm);
     /* and a call to a function with no code goes here (M6) */
     jit->call_interp = mem + call_interp_at;
     for (uint32_t i = 0; jit->calls && i < jit->nfuncs; i++)
@@ -956,7 +996,7 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
     Jit j;
     memset(&j, 0, sizeof j);
     ms_init(&j.m, fn->nlocals, fn->maxstack, JIT_WIN, jit->leave_at);
-    j.m.low = jit->low_at;
+    j.m.func = f;
     j.m.verify = vm->gc_verify || vm->gc_stress;   /* the homes checked against their slots (ms_reload, M7) */
     j.m.home_fails = home_fails;
     MsMarks marks = { NULL, 0, 0 };
@@ -1085,6 +1125,10 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
                 free(co->sites);
                 co->sites = j.sites; co->nsites = j.nsites;
                 j.sites = NULL;
+                free(co->land_offs); free(co->land_pcs);
+                co->land_offs = j.land_offs; co->land_pcs = j.land_pcs; co->nlands = j.nlands;
+                j.land_offs = j.land_pcs = NULL;
+                jit_code_placed(jit, f, at, j.m.a.n);
                 co->tier = (uint32_t)j.tier;
                 co->size = (uint32_t)j.m.a.n;
                 co->entry = at;   /* published last */
@@ -1119,6 +1163,7 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
     free(j.live_in); free(j.homes);
     free(j.sites);
     free(j.pending);
+    free(j.land_offs); free(j.land_pcs);
     free(sc.start); free(sc.target); free(sc.ends); free(sc.phantom);
     free(marks.at);
     ms_free(&j.m);

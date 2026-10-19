@@ -981,10 +981,8 @@ void ms_emit_box(Masm *m, Slow *sp) {
     /* the one to box, live or not: the helper takes it from there */
     if (real) as_fst(&m->a, VMR, at, s.b); else as_st64(&m->a, VMR, at, s.b);
     as_st32i(&m->a, VMR, OFF(pc), (int32_t)s.pc);
-    ms_base_index(m, R_S0, m->nlocals + (uint32_t)s.c);
-    as_st64(&m->a, VMR, OFF(sp), R_S0);
+    ms_store_fp(m, m->nlocals + (uint32_t)s.c);
     store_count(m);
-    ms_store_fp(m);
     store_top_live(m);
     as_mov_ri(&m->a, ms_arg(m, 1), s.a);
     as_ld64(&m->a, ms_arg(m, 2), VMR, at);
@@ -1056,22 +1054,32 @@ void ms_reload_homes_but(Masm *m, uint32_t pc, int32_t d) {
         if (m->homes[r].kind != HOME_SLOT && (int32_t)r != d && live_at(m, pc, r)) slot_to_home(m, (int32_t)r, &m->homes[r]);
 }
 void ms_frame_back(Masm *m) {
-    as_sub_ri(&m->a, BASEI, (int32_t)sizeof(Frame));
-    as_sub_ri(&m->a, BASER, VALUE_SIZE * (int32_t)m->nlocals);
+    as_sub_ri(&m->a, BASER, VALUE_SIZE * (int32_t)(m->nlocals + MS_HEADER));
 }
+/* VM.stack_room is the clean part's end less ROOM_SLACK values: a frame
+   that wants no more compares its base, r14, with it (native-frames.md,
+   M4), one that wants more its base plus the rest */
 void ms_room(Masm *m, uint32_t need, AsmLabel *slow) {
-    ms_slot_end(m, R_S0, need);
-    as_cmp_rm(&m->a, R_S0, VMR, OFF(stack_room));
+    if (need <= ROOM_SLACK) as_cmp_rm(&m->a, BASER, VMR, OFF(stack_room));
+    else {
+        as_lea(&m->a, R_S0, BASER, -1, 1, VALUE_SIZE * (int32_t)(need - ROOM_SLACK));
+        as_cmp_rm(&m->a, R_S0, VMR, OFF(stack_room));
+    }
     as_jcc(&m->a, CC_A, slow);
 }
 void ms_room_dynamic(Masm *m, int r, uint32_t above, AsmLabel *slow) {
-    as_lea(&m->a, R_S0, BASER, r, VALUE_SIZE, VALUE_SIZE * (int32_t)above);
+    as_lea(&m->a, R_S0, BASER, r, VALUE_SIZE, VALUE_SIZE * ((int32_t)above - ROOM_SLACK));
     as_cmp_rm(&m->a, R_S0, VMR, OFF(stack_room));
     as_jcc(&m->a, CC_A, slow);
 }
+void ms_room_compared(Masm *m, int r, uint32_t need) {
+    as_lea(&m->a, r, BASER, -1, 1, need <= ROOM_SLACK ? 0 : VALUE_SIZE * (int32_t)(need - ROOM_SLACK));
+}
 void ms_slot_end(Masm *m, int r, uint32_t k) { as_lea(&m->a, r, BASER, -1, 1, VALUE_SIZE * (int32_t)k); }
 void ms_base_index(Masm *m, int r, uint32_t k) {
-    as_ld64(&m->a, r, BASEI, (int32_t)offsetof(Frame, base));
+    as_mov_rr(&m->a, r, BASER);
+    as_sub_rm(&m->a, r, VMR, OFF(stack));
+    as_shr_ri(&m->a, r, VALUE_SHIFT);
     if (k) as_add_ri(&m->a, r, (int32_t)k);
 }
 void ms_reload_homes(Masm *m, uint32_t pc) {
@@ -1325,68 +1333,49 @@ void ms_jump_unless_tag(Masm *m, int32_t s, int32_t c, AsmLabel *target, AsmLabe
 }
 
 /* ---- the VM ---- */
-/* The frame index of the record at the address in r, into the word at
-   [base + off], r clobbered (M6). Compiled code keeps its frame in rbp alone --
-   a call and a return touch no frame index -- and tells the VM at every
-   sync, on the way into the interpreter and in the trampolines; C's
-   VM.fp is the truth only there, and after a call into C rbp is made from
-   it again (ms_reload). A record's address less the frames' over the
-   record's size, which is 2^k times an odd number: shifted by k, then
-   times the odd one's inverse modulo 2^32 -- exact for a multiple, and
-   no index reaches 2^32 -- and stored as the low half of the field and a
-   0 for the high one. */
-void ms_frame_index_to(Masm *m, int r, int base, int32_t off) {
-    uint32_t size = (uint32_t)sizeof(Frame), k = 0;
-    while (!(size & 1)) { size >>= 1; k++; }
-    uint32_t inv = size;   /* Newton's iteration: each step doubles the bits right */
-    for (int i = 0; i < 5; i++) inv *= 2 - size * inv;
-    as_sub_rm(&m->a, r, VMR, OFF(frames));
-    if (k) as_shr_ri(&m->a, r, (int)k);
-    if (size != 1) as_mul_ri(&m->a, r, r, (int32_t)inv);
-    as_st32(&m->a, base, off, r);
-    as_st32i(&m->a, base, off + 4, 0);
-}
+/* Compiled code keeps its frame in r14 alone -- a call and a return
+   touch neither VM.fp nor VM.func -- and tells the VM at every sync, on
+   the way into the interpreter and in the stubs: C's VM.fp, the frame's
+   base as an index into the stack, and VM.func are the truth only there,
+   and after a call into C r14 is made from VM.fp again (ms_reload). */
 /* the registers live at the instruction's entry and the frame, for a
    collection the call into C may make: VM.top_live (M6); R_S0 clobbered */
 static void store_top_live(Masm *m) {
     if (!m->sync_live) return;
     as_mov_ri(&m->a, R_S0, (int64_t)m->sync_live[m->cur_pc - m->from]);
     as_st64(&m->a, VMR, OFF(top_live), R_S0);
-    as_st64(&m->a, VMR, OFF(top_frame), BASEI);
+    as_st64(&m->a, VMR, OFF(top_frame), BASER);
 }
-/* vm->fp := rbp's frame's index, R_S0 clobbered */
-void ms_store_fp(Masm *m) {
-    as_mov_rr(&m->a, R_S0, BASEI);
-    ms_frame_index_to(m, R_S0, VMR, OFF(fp));
+/* vm->fp := r14's frame's base, vm->func := the function, and vm->sp :=
+   the base plus k; R_S0 clobbered */
+void ms_store_fp(Masm *m, uint32_t k) {
+    ms_base_index(m, R_S0, 0);
+    as_st64(&m->a, VMR, OFF(fp), R_S0);
+    if (k) as_add_ri(&m->a, R_S0, (int32_t)k);
+    as_st64(&m->a, VMR, OFF(sp), R_S0);
+    as_st32i(&m->a, VMR, OFF(func), (int32_t)m->func);
 }
 void ms_sync(Masm *m, uint32_t pc, int pushed) {
     int role = ms_role(m, MR_SYNC);
     writeback(m, m->cur_pc, pushed);
     m->sync_pc = pc;
     as_st32i(&m->a, VMR, OFF(pc), (int32_t)pc);
-    ms_base_index(m, R_S0, m->nlocals + (uint32_t)pushed);
-    as_st64(&m->a, VMR, OFF(sp), R_S0);
+    ms_store_fp(m, m->nlocals + (uint32_t)pushed);
     store_count(m);
-    ms_store_fp(m);
     store_top_live(m);
     if (m->verify) {   /* for the check after the call (ms_reload, M7) */
         as_ld64(&m->a, R_S0, VMR, OFF(gc_count));
         as_st64(&m->a, VMR, OFF(verify_gc), R_S0);
-        as_st64(&m->a, VMR, OFF(verify_frame), BASEI);
+        as_st64(&m->a, VMR, OFF(verify_frame), BASER);
     }
     ms_role(m, role);
 }
-/* r := &vm->frames[vm->fp]: rbp's (M6) */
-void ms_frame(Masm *m, int r) { if (r != BASEI) as_mov_rr(&m->a, r, BASEI); }
-/* the frame's record and registers from the VM: after a call into C, which
-   may have moved the stack or the frames, or raised */
+/* the frame's registers from the VM: after a call into C, which may have
+   moved the stack, or raised */
 void ms_reload(Masm *m) {
     int role = ms_role(m, MR_SYNC);
     m->nfields = UINT32_MAX;
-    as_ld64(&m->a, BASEI, VMR, OFF(fp));
-    as_mul_ri(&m->a, BASEI, BASEI, (int32_t)sizeof(Frame));
-    as_add_rm(&m->a, BASEI, VMR, OFF(frames));
-    as_ld64(&m->a, BASER, BASEI, (int32_t)offsetof(Frame, base));
+    as_ld64(&m->a, BASER, VMR, OFF(fp));
     as_shl_ri(&m->a, BASER, VALUE_SHIFT);
     as_add_rm(&m->a, BASER, VMR, OFF(stack));   /* the stack itself has no register: only this wants it */
     /* the homes live at the instruction's entry (the call clobbered them)
@@ -1402,7 +1391,7 @@ void ms_reload(Masm *m) {
         as_ld64(&m->a, R_S2, VMR, OFF(gc_count));
         as_cmp_rm(&m->a, R_S2, VMR, OFF(verify_gc));
         as_jcc(&m->a, CC_NE, &skip);
-        as_cmp_rm(&m->a, BASEI, VMR, OFF(verify_frame));
+        as_cmp_rm(&m->a, BASER, VMR, OFF(verify_frame));
         as_jcc(&m->a, CC_NE, &skip);
         for (uint32_t r = 0; r < m->nlocals; r++) {
             const Home *h = &m->homes[r];
@@ -1474,9 +1463,7 @@ void ms_count(Masm *m, uint32_t k) {
 void ms_exit(Masm *m, uint32_t pc, uint32_t remaining) {
     ms_writeback(m, pc);
     as_st32i(&m->a, VMR, OFF(pc), (int32_t)pc);
-    ms_base_index(m, R_S0, m->nlocals);
-    as_st64(&m->a, VMR, OFF(sp), R_S0);
-    ms_store_fp(m);
+    ms_store_fp(m, m->nlocals);
     as_lea(&m->a, R_S0, COUNTR, -1, 1, -(int32_t)remaining);
     as_st64(&m->a, VMR, OFF(instructions), R_S0);
     ms_handback(m, RUN_INTERP);
@@ -1705,18 +1692,25 @@ void ms_emit_enter(Asm *a, int win) {
     as_stub_enter(&m.a, win);   /* the VM into VMR, where to go into R_GO */
     ms_reload(&m);
     as_ld64(&m.a, COUNTR, VMR, OFF(instructions));
+    as_ld64(&m.a, R_S0, VMR, OFF(ret_value));   /* for a landing: the value the interpreter returns (native-frames.md, M4) */
     as_jmp_r(&m.a, R_GO);
     *a = m.a;
 }
 /* the stub of the fatal errors (compile.c, jit_fatal): rax the number of
    the error's record, rcx the value its message may want, the machine
    stack as the code keeps it; the helper never returns */
+/* VM.fp := r14's frame's base, in R_S2 (the stubs) */
+static void stub_fp(Masm *m) {
+    as_mov_rr(&m->a, R_S2, BASER);
+    as_sub_rm(&m->a, R_S2, VMR, OFF(stack));
+    as_shr_ri(&m->a, R_S2, VALUE_SHIFT);
+    as_st64(&m->a, VMR, OFF(fp), R_S2);
+}
 void ms_emit_fatal(Asm *a, int win, MsHelper helper) {
     Masm m;
     memset(&m, 0, sizeof m);
     m.a = *a; m.win = win; m.nfields = UINT32_MAX;
-    as_mov_rr(&m.a, R_S2, BASEI);   /* the frame index, for the error's report (rdx: neither argument yet) */
-    ms_frame_index_to(&m, R_S2, VMR, OFF(fp));
+    stub_fp(&m);   /* the frame, for the error's report (rdx: neither argument yet); its function the helper's (the record) */
     as_mov_rr(&m.a, ms_arg(&m, 2), R_S1);   /* first: rcx is the first argument on Windows */
     as_mov_rr(&m.a, ms_arg(&m, 1), R_S0);
     ms_call(&m, helper);
@@ -1728,26 +1722,22 @@ void ms_emit_ret_tramp(Asm *a, int win, MsHelper helper, AsmLabel *leave) {
     memset(&m, 0, sizeof m);
     m.a = *a; m.win = win; m.nfields = UINT32_MAX;
     as_st64(&m.a, VMR, OFF(instructions), COUNTR);
-    as_mov_rr(&m.a, R_S2, BASEI);   /* the frame that returns, or the callee's */
-    ms_frame_index_to(&m, R_S2, VMR, OFF(fp));
+    stub_fp(&m);   /* the frame that returns */
     as_mov_rr(&m.a, ms_arg(&m, 1), R_S0);
     ms_call(&m, helper);
     as_jmp(&m.a, leave);   /* with the answer in R_S0 */
     *a = m.a;
 }
-void ms_emit_low(Asm *a, int win) {
+void ms_emit_call_interp(Asm *a, int win, MsHelper helper, AsmLabel *leave) {
     Masm m;
     memset(&m, 0, sizeof m);
     m.a = *a; m.win = win; m.nfields = UINT32_MAX;
-    AsmLabel top; as_label_init(&top);
-    as_lea(&m.a, R_S2, BASEI, -1, 1, -(int32_t)sizeof(Frame));
-    as_cmp_rm(&m.a, R_S2, VMR, OFF(frames));
-    as_jcc(&m.a, CC_B, &top);
-    as_st64(&m.a, VMR, OFF(frame_low), R_S2);
-    ms_frame_index_to(&m, R_S2, VMR, OFF(fp_low));
-    as_bind(&m.a, &top);
-    as_jmp_r(&m.a, R_S1);
-    as_label_free(&top);
+    as_st64(&m.a, VMR, OFF(instructions), COUNTR);
+    stub_fp(&m);   /* the callee's frame */
+    as_shr_ri(&m.a, R_S6, 1);   /* its function, from the word (2f + 1) the call has */
+    as_st32(&m.a, VMR, OFF(func), R_S6);
+    ms_call(&m, helper);
+    as_jmp(&m.a, leave);   /* with the answer in R_S0 */
     *a = m.a;
 }
 void ms_emit_leave(Asm *a, int win) {

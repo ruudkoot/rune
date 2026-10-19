@@ -244,14 +244,14 @@ struct
                                 instruction's own pc, before the prologue moves it *)
                              val census =
                                case #name i of
-                                 "TUPLE" => ["CENSUS_SITE(pc, fr->func);"]
-                               | "CLOSURE" => ["CENSUS_SITE(pc, fr->func);"]
-                               | "CON" => ["CENSUS_SITE(pc, fr->func);"]
-                               | "CONN" => ["CENSUS_SITE(pc, fr->func);"]
-                               | "NEWEXN" => ["CENSUS_SITE(pc, fr->func);"]
-                               | "MKEXN" => ["CENSUS_SITE(pc, fr->func);"]
-                               | "PRIM" => ["CENSUS_PRIM(pc, fr->func, a);"]
-                               | "PRIMPUSH" => ["CENSUS_PRIM(pc, fr->func, a);"]
+                                 "TUPLE" => ["CENSUS_SITE(pc, vm->func);"]
+                               | "CLOSURE" => ["CENSUS_SITE(pc, vm->func);"]
+                               | "CON" => ["CENSUS_SITE(pc, vm->func);"]
+                               | "CONN" => ["CENSUS_SITE(pc, vm->func);"]
+                               | "NEWEXN" => ["CENSUS_SITE(pc, vm->func);"]
+                               | "MKEXN" => ["CENSUS_SITE(pc, vm->func);"]
+                               | "PRIM" => ["CENSUS_PRIM(pc, vm->func, a);"]
+                               | "PRIMPUSH" => ["CENSUS_PRIM(pc, vm->func, a);"]
                                | _ => []
                            in
                              ["CASE(" ^ #name i ^ ") {"]

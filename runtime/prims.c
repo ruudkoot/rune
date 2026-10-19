@@ -2677,7 +2677,7 @@ static int p_rt_debug_env(VM *vm) {
     FrameRef fr;
     int found = stop_frame(vm, val_imm(ARG(1)), &fr);
     int64_t e = val_imm(ARG(0));
-    Obj *c = found && fr.closure ? *fr.closure : NULL;
+    Obj *c = found ? fr.closure : NULL;
     if (!c || e < 0 || (uint64_t)e + 1 >= obj_len(c)) return ret(vm, 2, mk_unit());
     return ret(vm, 2, obj_field(c, (uint32_t)e + 1));
 }
@@ -2704,7 +2704,7 @@ static int p_rt_debug_return(VM *vm) {
         vm_fatal(vm, "rt_debug_return outside <debug>");
     Value exn = ARG(0);
     uint32_t at = f.ret_pc;
-    size_t top = f.base;
+    size_t top = f.head;
     vm_frame_drop(vm);
     vm->sp = top;
     vm->pc = at;

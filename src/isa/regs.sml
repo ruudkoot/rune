@@ -20,16 +20,22 @@
    A body is the lines of C of its case in runtime/register's loop (runtime/register/interp.c),
    written in the loop's words, since the loop keeps the frame's registers,
    the stack pointer, the pc and the count in its own variables:
-   * `vm`, `p` (the program), `code`, `fr` (the frame), `pc` (already past
-     this instruction), the operands `a`, `b`, `c` and `d` in order, and
-     for a list `L` and `n`, its registers and how many;
+   * `vm`, `p` (the program), `code`, `pc` (already past this
+     instruction), the operands `a`, `b`, `c` and `d` in order, and for a
+     list `L` and `n`, its registers and how many; vm->fp and vm->func,
+     the frame's base, which names it, and its function, which the loop
+     keeps exact in the VM;
    * R(x), register x of the frame; LIST(i), the i-th register of the
      list; PUSH(v) and POP(), above the registers, unchecked;
    * SYNC() before whatever reads the VM's stack pointer, pc or count --
      the collector, a raise, a primitive, a handler pushed, a fatal error
      -- and RELOAD() after whatever may have changed them, or moved the
      stack; ROOM(top, fn), room for a frame of fn at top, which may move
-     the stack too;
+     the stack too; HEADER(top, pc, closure), the header of a frame whose
+     registers begin at top (docs/plans/native-frames.md, M4: the caller's
+     function and the pc of the RESULT it returns to, the closure, and the
+     interpreter's return word), and CLOSURE(), the slot of the running
+     frame's closure in its header;
    * ENTER(slot, fn), the frame's registers at slot and fn's code entered;
      HANDOVER(f), the frame handed to the driver where function f has
      native code (runtime/register/jit.h), RESUME_NATIVE(f, pc), on in function
@@ -40,9 +46,10 @@
      back and a call, before either does anything -- or, where the debugger
      makes it a pause (runtime/debug.c), the instruction, len bytes back,
      left to the debug loop -- RESUME_NATIVE(f, pc),
-     on in function f's code at pc where a run begins there, RESULT_OF(pc),
-     the frame just pushed told the register of the RESULT at pc, if that
-     is one, NEW_PROGRAM(), the JIT's view made again of a program
+     on in function f's code at pc where a run begins there,
+     RETURN_LANDING(w, v), the value v returned into compiled code at the
+     landing of the return word w where the loop runs code (else on in the
+     interpreter), NEW_PROGRAM(), the JIT's view made again of a program
      that became another, and DEBUG_BEGUN(), the program given to the
      driver where a primitive put the debugger's debug mode on;
    * FATAL(...), a fatal error at this instruction; EXPECT(v, kind, what),
@@ -82,7 +89,8 @@ struct
   (* What CALL and TAILCALL share: the closure in register a checked, the
      argument in register b taken; and after the frame, the callee's
      registers made at top -- register 0 is the argument, the others start
-     as unit -- and its code entered. *)
+     as unit -- and its code entered. A callee's frame begins above the
+     caller's registers, with its header (docs/plans/native-frames.md, M4). *)
   val callee =
     ["Value arg = R(b);",
      "Obj *c = EXPECT(R(a), K_CLOSURE, \"closure in call\");",
@@ -116,60 +124,77 @@ struct
        ["vm->globals[a] = R(b);",
         "vm->global_set[a] = 1;"],
      rinst ("ENV", [("d", reg), ("e", K EnvSlot)], Next, "Register d := slot e of the current closure's environment.")
-       ["Obj *c = fr->closure;",
-        "if (!c || (uint32_t)b + 1 >= obj_len(c)) FATAL(\"environment slot %d out of range\", b);",
-        "R(a) = obj_field(c, b + 1);"],
+       ["/* the header's closure: a closure, or unit where the frame has none */",
+        "Value cv = CLOSURE();",
+        "if (!val_is_ptr(cv) || obj_kind(val_ptr(cv)) != K_CLOSURE || (uint32_t)b + 1 >= obj_len(val_ptr(cv))) FATAL(\"environment slot %d out of range\", b);",
+        "R(a) = obj_field(val_ptr(cv), b + 1);"],
      rinst ("SELF", [("d", reg)], Next, "Register d := the closure running.")
-       ["if (!fr->closure) FATAL(\"SELF outside a closure\");",
-        "R(a) = mk_ptr(fr->closure);"],
+       ["Value cv = CLOSURE();",
+        "if (!val_is_ptr(cv) || obj_kind(val_ptr(cv)) != K_CLOSURE) FATAL(\"SELF outside a closure\");",
+        "R(a) = cv;"],
      rinst ("CALL", [("f", reg), ("x", reg)], Call,
             "Call the closure in register f with register x; RESULT takes what it returns.")
        (["POLL(9);",
-         "CENSUS_CALL(0, R(b), CENSUS_REP(p, fr->func, b));"]   (* the census VM's hook: nothing in the stock build *)
+         "CENSUS_CALL(0, R(b), CENSUS_REP(p, vm->func, b));"]   (* the census VM's hook: nothing in the stock build *)
         @ callee
-        @ ["size_t top = (size_t)(sp - vm->stack);",
+        @ ["size_t top = (size_t)(sp - vm->stack) + FRAME_HEADER;",
            "ROOM(top, fn);",
-           "vm_push_frame(vm, (uint32_t)fidx, c, pc, top);",
-           "RESULT_OF(pc);"]
+           "HEADER(top, pc, mk_ptr(c));",
+           "vm->fp = top;",
+           "vm->func = (uint32_t)fidx;"]
         @ enter
         @ ["HANDOVER((uint32_t)fidx);"]),
      rinst ("RESULT", [("d", reg)], Next, "Register d := what the call or primitive before it left on the stack.")
        ["R(a) = POP();"],
      rinst ("TAILCALL", [("f", reg), ("x", reg)], TailCall, "Like CALL, but the current frame is replaced.")
        (["POLL(9);",
-         "CENSUS_CALL(1, R(b), CENSUS_REP(p, fr->func, b));"]
+         "CENSUS_CALL(1, R(b), CENSUS_REP(p, vm->func, b));"]
         @ callee
-        @ ["size_t top = fr->base;",
+        @ ["size_t top = vm->fp;",
            "ROOM(top, fn);",
-           "fr->func = (uint32_t)fidx;",
-           "fr->closure = c;"]
+           "/* the frame's header keeps its caller and its return; its closure is the callee's */",
+           "CLOSURE() = mk_ptr(c);",
+           "vm->func = (uint32_t)fidx;"]
         @ enter
         @ ["HANDOVER((uint32_t)fidx);"]),
      rinst ("RET", [("s", reg)], Return, "Return register s to the caller.")
        ["Value v = R(a);",
-        "CENSUS_CALL(4, v, CENSUS_REP(p, fr->func, a));",
-        "uint32_t back = fr->ret_pc;",
-        "/* the register of the caller's RESULT, if it has one, as the loop's",
-        "   calls record it; a frame that compiled code pushed records none,",
-        "   nor one made to return to the interpreter: the code says (M6) */",
-        "uint32_t result = fr->result;",
-        "if (result == UINT32_MAX || (fr->native_ret && fr->native_ret != vm->ret_tramp))",
-        "  result = code[back] == ROP_RESULT ? (uint32_t)read_i32(code + back + 1) : UINT32_MAX;",
-        "size_t top = fr->base;   /* the caller's stack pointer, where the callee's registers began */",
-        "if (vm->fp == 0) { vm->sp = top; vm->pc = back; vm->instructions = count; vm_push(vm, v); return 0; }",
-        "vm_frame_pop(vm);",
-        "fr = &vm->frames[vm->fp];",
-        "base = vm->stack + fr->base;",
-        "sp = vm->stack + top;",
+        "CENSUS_CALL(4, v, CENSUS_REP(p, vm->func, a));",
+        "/* the caller, as the frame's header says (native-frames.md, M4):",
+        "   the interpreter's, whose info word names it, or compiled code,",
+        "   which takes the value at its landing where the loop runs code",
+        "   (RETURN_LANDING), and else says what its landing is of */",
+        "size_t at = vm->fp;",
+        "Value w = vm->stack[at - 1], info = vm->stack[at - 3];",
+        "uint32_t cf, back;",
+        "size_t head = at - FRAME_HEADER, cb;",
+        "if (reg_interp_word(vm, w)) {",
+        "  cf = reg_info_func(info);",
+        "  back = reg_info_pc(info);",
+        "  int kind = reg_info_kind(info);",
+        "  /* the top level's: the program ends, the value above the frame's",
+        "     header, which stays whole for what walks the frames after the",
+        "     end (the census's last collection, vm_exit) */",
+        "  if (kind == REG_INFO_BOTTOM) { vm->sp = at; vm->pc = back; vm->instructions = count; vm_push(vm, v); return 0; }",
+        "  if (kind == REG_INFO_EXPLICIT) { head--; cb = (size_t)val_imm(vm->stack[head]); }",
+        "  else cb = head - p->funcs[cf].nlocals;",
+        "} else {",
+        "  RETURN_LANDING(w, v);",
+        "  if (!jit_landing_info(vm, w, &cf, &back)) FATAL(\"a frame returns to no code\");",
+        "  cb = head - p->funcs[cf].nlocals;",
+        "}",
+        "vm->fp = cb;",
+        "vm->func = cf;",
+        "if (cb < vm->fp_low) vm_frames_mark_low(vm, cb);",
+        "base = vm->stack + cb;",
+        "sp = vm->stack + head;",
         "/* the caller goes on at RESULT d, which takes the value: written",
         "   into d here, and RESULT passed over; anything else takes it from",
         "   the stack, as an image resumed at RESULT does */",
-        "if (result != UINT32_MAX) { R(result) = v; pc = back + 5; }",
+        "if (code[back] == ROP_RESULT) { R(read_i32(code + back + 1)) = v; pc = back + 5; }",
         "else { PUSH(v); pc = back; }",
-        "/* a caller whose function has code goes on in it where a run begins",
-        "   (M6): its native_ret is the landing of compiled code's own return,",
-        "   which takes the value in a register */",
-        "RESUME_NATIVE(fr->func, pc);"],
+        "/* a caller whose function has code goes on in it where a run begins (M6) */",
+        "RESUME_NATIVE(cf, pc);"],
      rraising
        (rinst ("PRIM", [("p", K Primitive), ("d", reg), ("args", PrimArgs 0)], Next,
                "Register d := primitive p applied to the registers of args.")
@@ -259,7 +284,7 @@ struct
             "Slot e of the environment of the closure in register c := register v.")
        ["Obj *o = EXPECT(R(a), K_CLOSURE, \"closure\");",
         "if ((uint32_t)b + 1 >= obj_len(o)) FATAL(\"environment slot %d out of range\", b);",
-        "CENSUS_STORE(o, b + 1, R(c), 0, CENSUS_REP(p, fr->func, c));",
+        "CENSUS_STORE(o, b + 1, R(c), 0, CENSUS_REP(p, vm->func, c));",
         "obj_set_field(vm, o, b + 1, R(c));"],
      rinst ("JUMP", [("o", K Label)], Jump, "Jump to absolute code offset o.")
        ["/* a jump back is a loop's: a poll, counted, and where the",
@@ -304,24 +329,25 @@ struct
      rinst ("CALLK", [("f", K Function), ("n", K Count), ("args", Registers 1)], Call,
             "Call function f, known, with the n registers of args, which become its registers 0 to n-1; no closure; RESULT takes what it returns.")
        ["POLL(9 + 4 * n);",
-        "for (uint32_t i = 0; i < n; i++) CENSUS_CALL(2, R(LIST(i)), CENSUS_REP(p, fr->func, LIST(i)));",
+        "for (uint32_t i = 0; i < n; i++) CENSUS_CALL(2, R(LIST(i)), CENSUS_REP(p, vm->func, LIST(i)));",
         "Function *fn = &p->funcs[a];",
-        "size_t top = (size_t)(sp - vm->stack);",
+        "size_t top = (size_t)(sp - vm->stack) + FRAME_HEADER;",
         "ROOM(top, fn);",
         "/* the arguments read before the frame is pushed, which R would read */",
         "Value *slot = vm->stack + top;",
         "for (uint32_t i = 0; i < n; i++) slot[i] = R(LIST(i));",
         "for (uint32_t i = n; i < fn->nlocals; i++) slot[i] = mk_unit();",
-        "vm_push_frame(vm, (uint32_t)a, NULL, pc, top);",
-        "RESULT_OF(pc);",
+        "HEADER(top, pc, mk_unit());",
+        "vm->fp = top;",
+        "vm->func = (uint32_t)a;",
         "ENTER(slot, fn);",
         "HANDOVER((uint32_t)a);"],
      rinst ("TAILCALLK", [("f", K Function), ("n", K Count), ("args", Registers 1)], TailCall,
             "Like CALLK, but the current frame is replaced.")
        ["POLL(9 + 4 * n);",
-        "for (uint32_t i = 0; i < n; i++) CENSUS_CALL(3, R(LIST(i)), CENSUS_REP(p, fr->func, LIST(i)));",
+        "for (uint32_t i = 0; i < n; i++) CENSUS_CALL(3, R(LIST(i)), CENSUS_REP(p, vm->func, LIST(i)));",
         "Function *fn = &p->funcs[a];",
-        "size_t top = fr->base;",
+        "size_t top = vm->fp;",
         "size_t need = (size_t)(sp - vm->stack) + n;",
         "if (top + fn->nlocals + fn->maxstack > need) need = top + fn->nlocals + fn->maxstack;",
         "if (need > vm->stack_cap) { SYNC(); vm_grow_stack(vm, need); RELOAD(); }",
@@ -331,8 +357,8 @@ struct
         "Value *slot = vm->stack + top;",
         "memmove(slot, tmp, (size_t)n * sizeof(Value));",
         "for (uint32_t i = n; i < fn->nlocals; i++) slot[i] = mk_unit();",
-        "fr->func = (uint32_t)a;",
-        "fr->closure = NULL;",
+        "CLOSURE() = mk_unit();",
+        "vm->func = (uint32_t)a;",
         "ENTER(slot, fn);",
         "HANDOVER((uint32_t)a);"],
      rinst ("SWITCH", [("s", reg), ("n", K Count)], Switch,

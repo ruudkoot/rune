@@ -34,6 +34,11 @@ typedef struct Function {
     uint32_t maxstack;   /* how deep its operand stack goes: the loader works it out (runtime/stack/isa_stack.c) */
     uint32_t nlocals;
     char *name;
+    /* the function reads the closure it runs in (ENV, SELF): the loader
+       works it out (runtime/register/isa_regs.c), for a frame's closure in
+       the value stack, which counts only where it is read
+       (docs/plans/native-frames.md, M4) */
+    int reads_closure;
     /* The representations section of the register bytecode (docs/bytecode.md;
        docs/plans/jit.md, M8): what the compiler says of the function beside
        its code, for the JIT's tier 2. has_meta is 0 where the file says
@@ -149,8 +154,9 @@ typedef struct Frame {
 
 typedef struct Handler {
     uint32_t pc;
+    uint32_t func;   /* its frame's function: runtime/register's, whose frames hold no record (native-frames.md, M4) */
     size_t sp;
-    size_t fp;
+    size_t fp;       /* its frame's id (vm_frame_id) */
     /* In runtime/register, the native code of the handler where the frame that
        installed it runs compiled (runtime/register/jit.h); NULL for the interpreter.
        An image does not carry it. */
@@ -297,10 +303,16 @@ typedef struct VM {
     uint32_t pc;
     int checked;             /* --checked: DECON tests its tag (decision D14), for the test suites */
     Frame *frames;
-    size_t fp;               /* the index of the current frame */
-    /* the address of the end of the stack's clean part (stack_clean, below),
-       which compiled code's room checks compare with; 0 where an interrupt
-       waits (the calls' poll, M6) */
+    /* the running frame's id (vm_frame_id): the index of its record in
+       frames (runevm-stack, runeopt's code), the first slot of its registers
+       (runtime/register, whose frames are in the value stack:
+       native-frames.md, M4) */
+    size_t fp;
+    /* the limit of compiled code's room checks (the calls' poll, M6): the
+       address of the end of the stack's clean part (stack_clean, below)
+       less ROOM_SLACK values, so that a call whose frame wants no more
+       than those compares the frame's own base with it (native-frames.md,
+       M4); 0 where an interrupt waits (vm_room) */
     uintptr_t stack_room;
     Value *stack;
     size_t sp, stack_cap;
@@ -313,10 +325,11 @@ typedef struct VM {
        its slots hold no young pointer; every pop of a frame lowers it to
        the frame it returns to (vm_frame_pop) */
     size_t fp_low;
-    /* &frames[fp_low], which compiled code's RET compares its frame's
-       address with (runtime/register, M6): set with fp_low (vm_set_fp_low)
-       and where the frames move */
-    const Frame *frame_low;
+    /* the watermark's frame where compiled code compares with it
+       (runtime/register: the address of its registers, which a landing
+       compares the caller's with, native-frames.md M4; M6 had its record's):
+       set with fp_low and where the stack moves (vm_frames_mark_low) */
+    const void *frame_low;
     Value *globals;
     uint8_t *global_set;
     int gc_verify;           /* --gc-verify: the heap checked before and after every collection (runtime/gc/check.c) */
@@ -324,15 +337,15 @@ typedef struct VM {
     Program prog;
 
     size_t stack_limit;      /* the most bytes the value stack, the frames or the handlers may take (--stack-size): a runaway recursion stops here, not at the machine's memory */
-    size_t frames_cap;       /* the frames' capacity: a frame per slot of the stack's clean part at least (stack_clean) */
+    size_t frames_cap;       /* the frames' capacity (runevm-stack's, runeopt's code) */
     /* The stack's clean part (docs/plans/performance.md, M6): the slots
        from sp up to here hold unit, or a value written since the last
        collection -- never what a collection left behind -- so that a
        frame made there needs no unit in its registers, every one being
-       a root already; and the frames have room for a frame per slot below
-       here. Compiled code's room checks claim from it, by its end's
-       address (stack_room); jit_h_grow claims more (unit, and the frames
-       grown), every collection makes the slots above sp unit and claims
+       a root already, nor in its header's closure (runtime/register:
+       native-frames.md, M4). Compiled code's room checks claim from it, by
+       its end's address less a slack (stack_room); jit_h_grow claims more (unit),
+       every collection makes the slots above sp unit and claims
        no further than CLEAN_AHEAD past sp, and an image's stack is clean
        to its sp. It is also the poll of the calls of compiled code: the
        user's interrupt, and the debugger's, make stack_room 0
@@ -340,9 +353,10 @@ typedef struct VM {
        goes to its slow path, which looks at VM.interrupt. */
     size_t stack_clean;
     /* runtime/register's JIT (performance M6): where compiled code's RET
-       goes for a caller that is not compiled code, which a frame the
-       interpreter or the runtime pushes keeps as its native_ret; NULL until
-       the JIT's region is made, and in every other VM */
+       goes for a caller that is not compiled code, the interpreter's
+       return stub, which VM.ret_word names in a frame's header
+       (native-frames.md, M4); NULL until the JIT's region is made, and in
+       every other VM */
     const void *ret_tramp;
     const void *jit_calls;   /* runtime/register's JIT: the table of where calls go (CallInfo, register/jit.h; M6) */
     /* runtime/register's JIT (M6): the registers live at the instruction
@@ -354,7 +368,17 @@ typedef struct VM {
        written yet may hold what an earlier frame there wrote. The driver
        forgets it whenever compiled code hands back (jit_run). */
     uint64_t top_live;
-    const Frame *top_frame;
+    const void *top_frame;   /* the address of that frame's registers (native-frames.md, M4) */
+    /* runtime/register's frames (native-frames.md, M4): the running
+       frame's function; the return word the interpreter and the runtime
+       give a frame they push, VM.ret_tramp's address once there is one
+       (an odd number: an immediate to the collector), else an immediate of
+       their own; and a value the interpreter hands to compiled code's
+       landing with the VM (the enter stub takes it into the result's
+       register) */
+    uint32_t func;
+    Value ret_word;
+    Value ret_value;
     /* the frames vm_frames_from gives, walked into a buffer of the VM's (native-frames.md, M3) */
     struct FrameRef *frame_buf;
     size_t frame_buf_cap;
@@ -375,7 +399,7 @@ typedef struct VM {
        frame's record at its last sync, which the reload after the call
        into C compares (masm.c, ms_reload) */
     size_t verify_gc;
-    const Frame *verify_frame;
+    const void *verify_frame;   /* the address of the frame's registers there (native-frames.md, M4) */
     size_t live_last;        /* bytes the last collection kept, and the one before it: */
     size_t live_before;      /* vm_gc guesses from them whether the heap must grow */
     int64_t gc_user_us;      /* processor time spent collecting, in microseconds */
@@ -604,11 +628,19 @@ VM_NORETURN void vm_limit(VM *vm, const char *message);
 void vm_grow_stack(VM *vm, size_t need);     /* make room for `need` values in total */
 void vm_grow_frames(VM *vm);                 /* make room for another frame */
 /* The stack's clean part (VM.stack_clean, performance M6): claimed to
-   need at least, the stack grown, the slots claimed made unit and the
-   frames grown to a frame per slot; and, after a collection, the slots
+   need at least, the stack grown and the slots claimed made unit; and,
+   after a collection, the slots
    above sp made unit again, as far as CLEAN_AHEAD past sp, which is then
    all that stays claimed */
 #define CLEAN_AHEAD 4096
+/* the values past a frame's base that compiled code's room check of it
+   promises without adding them (VM.stack_room): at most CLEAN_AHEAD */
+#define ROOM_SLACK 256
+/* VM.stack_room for a clean part that ends at slot clean: below any
+   frame's base where it is shorter than the slack */
+static inline uintptr_t vm_room(const VM *vm, size_t clean) {
+    return clean > ROOM_SLACK ? (uintptr_t)(vm->stack + (clean - ROOM_SLACK)) : 1;
+}
 void vm_claim_stack(VM *vm, size_t need);
 void vm_clean_stack(VM *vm);
 /* an interrupt waits that the program is to take (VM.interrupt, not held
@@ -670,8 +702,26 @@ typedef struct FrameRef {
     uint32_t ret_pc;    /* where it returns to in its caller (the top level's: what vm_start gave it) */
     size_t base;        /* its registers' first slot */
     size_t id;          /* what names it */
-    Obj **closure;      /* the cell of its closure, a root: *closure NULL where it has none */
+    size_t head;        /* its first slot: its header's where it has one in the value stack (runtime/register), else its base */
+    Obj *closure;       /* its closure, NULL where it has none (or does not read it: runtime/register) */
+    /* the cell of its closure where the collector is to take it as a root
+       (the array's: NULL where the closure is a slot of the value stack,
+       which the stack's scan takes, as runtime/register's are) */
+    Obj **closure_root;
+    /* that slot of the value stack, or NULL: the collector makes it unit
+       where the frame has no closure it reads (closure NULL), so that it
+       keeps nothing alive and points nowhere after the collection */
+    Value *closure_slot;
+    /* the instruction set's own, for vm_frame_down: the caller's base and
+       function, and whether the frame has none (the top level's) */
+    size_t caller_base;
+    uint32_t caller_func;
+    int bottom;
 } FrameRef;
+/* the words a frame keeps below its registers in the value stack: 0 for
+   runevm-stack's (its frames are records of their own), 3 for
+   runtime/register's header (native-frames.md, M4) */
+extern const uint32_t isa_frame_header;
 size_t vm_frame_id(const VM *vm);                   /* the running frame's id (frames_active) */
 int vm_frame_top(VM *vm, FrameRef *f);              /* the frame that runs: 0 where there is none */
 int vm_frame_down(VM *vm, FrameRef *f);             /* f made its caller: 0 where f is the top level's */
@@ -689,21 +739,29 @@ void vm_frames_mark_low(VM *vm, size_t id);
 /* the watermark's id (above the frame that runs only where a pop forgot
    to lower it: runtime/gc/check.c) */
 size_t vm_frames_low(const VM *vm);
-/* a frame pushed above the one that runs, for function func at base,
-   returning to ret_pc (vm_start's of the top level, the debugger's
-   <debug>), and the frame that runs popped (rt_debug_return) */
-void vm_frame_push(VM *vm, uint32_t func, Obj *closure, uint32_t ret_pc, size_t base);
+/* a frame pushed above the one that runs, for function func at the
+   stack's slot top (its header first, where it has one), returning to
+   ret_pc (the debugger's <debug>): where its registers begin; and the
+   frame that runs popped (rt_debug_return), the watermark lowered */
+size_t vm_frame_push(VM *vm, uint32_t func, Obj *closure, uint32_t ret_pc, size_t top);
 void vm_frame_drop(VM *vm);
+/* the stack has moved (vm_grow_stack): what an instruction set keeps of
+   addresses in it (runtime/register's watermark, VM.frame_low) */
+void vm_frames_stack_moved(VM *vm);
 /* the top level's frame, function 0 applied to unit, made on an empty
    stack (vm_start) */
 void vm_frame_top_level(VM *vm);
-/* the frame named id made the one that runs, the frames above it gone and
-   the watermark lowered to it: a raise into a handler of it (vm_raise) */
-void vm_frame_unwind(VM *vm, size_t id);
+/* the frame named id, of function func, made the one that runs, the
+   frames above it gone and the watermark lowered to it: a raise into a
+   handler of it (vm_raise; Handler.func) */
+void vm_frame_unwind(VM *vm, size_t id, uint32_t func);
 /* the frames an image gives, the top level's first: installed as the
-   VM's (runtime/image.c); 0 where there is no memory */
+   VM's (runtime/image.c), with the stack and the handlers as the image has
+   them -- without the words of a header (isa_frame_header), a handler's
+   frame by its index -- which the instruction set makes its own; 0 where
+   there is no memory or the frames are not sound, and err says which */
 typedef struct FrameRecord { uint32_t func, ret_pc; size_t base; Obj *closure; } FrameRecord;
-int vm_frames_install(VM *vm, const FrameRecord *frames, size_t n);
+int vm_frames_install(VM *vm, const FrameRecord *frames, size_t n, const char **err);
 /* every frame made to return to the interpreter: the debugger's debug
    mode (runtime/debug.c) */
 void vm_frames_to_interpreter(VM *vm);

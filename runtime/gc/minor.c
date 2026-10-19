@@ -167,19 +167,21 @@ static void promote_obj(VM *vm, Obj **o) {
 
 /* The stack, as the full collection takes it (copy.c, stack_roots): the
    registers of a waiting frame as far as they are live, a dead one that
-   holds a pointer made unit -- from the frame of the watermark up (D9):
-   the frames below it have not run since the last minor collection, which
-   left nothing young in them. */
+   holds a pointer made unit -- from the frame of the watermark up (D9),
+   its header too where it has one (FrameRef.head: a tail call writes the
+   closure there): the frames below it have not run since the last minor
+   collection, which left nothing young in them. */
 static void minor_stack(VM *vm, size_t low) {
     FrameRef *fr = NULL;
     size_t nf = vm_frames_from(vm, low, &fr);   /* the frames from the watermark's up (native-frames.md, M3) */
-    size_t at = nf && low ? fr[0].base : 0, dead = 0, from = at;
+    size_t at = nf && low ? fr[0].head : 0, dead = 0, from = at;
     if (vm->frame_live)
         for (size_t k = 0; k + 1 < nf; k++) {
             const FrameRef *f = &fr[k];
             size_t end = fr[k + 1].base < vm->sp ? fr[k + 1].base : vm->sp;
             uint32_t n = vm->prog.funcs[f->func].nlocals;
             uint64_t live = vm->frame_live(vm, f->func, f->pc);
+            if (f->closure_slot && !f->closure) *f->closure_slot = mk_unit();
             for (; at < f->base && at < end; at++) promote_value(vm, &vm->stack[at]);
             for (uint32_t r = 0; r < n && at < end; r++, at++) {
                 if (r >= 64 || ((live >> r) & 1)) promote_value(vm, &vm->stack[at]);
@@ -195,6 +197,7 @@ static void minor_stack(VM *vm, size_t low) {
            (VM.top_live, M6): as a frame that waits */
         const FrameRef *f = &fr[nf - 1];
         uint32_t n = vm->prog.funcs[f->func].nlocals;
+        if (f->closure_slot && !f->closure) *f->closure_slot = mk_unit();
         for (; at < f->base && at < vm->sp; at++) promote_value(vm, &vm->stack[at]);
         for (uint32_t r = 0; r < n && at < vm->sp; r++, at++) {
             if (r >= 64 || ((vm->top_live >> r) & 1)) promote_value(vm, &vm->stack[at]);

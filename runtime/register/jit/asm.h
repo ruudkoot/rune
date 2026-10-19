@@ -220,6 +220,16 @@ void as_patch_jmp(uint8_t *site, const void *to);
 void as_call_to(Asm *a, const void *at);                    /* a call of code at an address the code reaches: its region's */
 size_t as_trampoline(Asm *a, int win, uint64_t addr);       /* here, aligned: code that a call of it makes a call of C's addr with R_VM its first argument, by the convention; its offset */
 void as_call_r(Asm *a, int r);
+/* The return word of a frame in the value stack (native-frames.md, M4):
+   the address of a landing in the code as an immediate to the collector,
+   an odd number -- on x86-64 the landing itself, placed at an odd offset
+   (as_ret_align, a nop before it), on aarch64, whose instructions are
+   words, the landing's address and 1 (JIT_RET_BIAS, jit.h). as_ret_addr
+   puts the word of the landing at l into rd; as_jmp_ret goes where the
+   word at [base + disp] says. */
+void as_ret_align(Asm *a);
+void as_ret_addr(Asm *a, int rd, AsmLabel *l);
+void as_jmp_ret(Asm *a, int base, int32_t disp);
 void as_ret(Asm *a);
 void as_trap(Asm *a);
 void as_setcc(Asm *a, int rd, int cc);

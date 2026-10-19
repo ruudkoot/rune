@@ -7,15 +7,18 @@
    The registers the code keeps, all preserved across a call into C by both
    conventions:
      r13  the VM (not r12, whose every memory operand is a byte longer)
-     rbp  the frame's record, &vm->frames[vm->fp] (performance M6: it was
-          the frame's base, as an index into the stack, which is the
-          record's base now)
      r14  the frame's registers: vm->stack + 8 * the frame's base
      r15  the count of instructions executed
-   Register k of the frame is the word at [r14 + 8 k]. The frame's
-   stack pointer is its base + nlocals, plus what a primitive's arguments
-   push. A call's frame is the record after rbp's, which the frames have
-   room for (VM.stack_clean), and its return's landing goes back one.
+   (rbp is free since native-frames.md's M4, where performance M6 kept the
+   frame's record in it.) Register k of the frame is the word at
+   [r14 + 8 k]. The frame's stack pointer is its base + nlocals, plus what
+   a primitive's arguments push. The frame's header is below its
+   registers (vm.h, isa_frame_header; native-frames.md, M4): [r14 - 8]
+   the return word, [r14 - 16] the closure, [r14 - 24] the info word. A
+   call's frame begins past this frame's registers, a header and the
+   callee's registers, in the stack's clean part (VM.stack_clean); the
+   call writes the return word -- its landing's -- and the closure, and its
+   landing goes back by as much.
    rax, rcx, rdx, r8, r11 and xmm0, xmm1 are scratch; rbx, r12, rsi, rdi,
    r10 and r9 are tier 2's homes (asm.h), and scratch where there are
    none. The machine stack holds only the call into C in progress: the
@@ -36,7 +39,9 @@ enum { VMR = R_VM, BASEI = R_BASEI, BASER = R_BASER, COUNTR = R_COUNT };
 
 /* A slow path, emitted after the function's code: where it begins, where
    it goes back to, and what it is. */
-enum SlowKind { SLOW_FATAL, SLOW_ALLOC, SLOW_GROW, SLOW_PRIM, SLOW_GROW_RAX, SLOW_TAKEN, SLOW_DEOPT, SLOW_BOXREAL, SLOW_BOXNUM, SLOW_SETENV, SLOW_INTERRUPT, SLOW_CALL_TABLE };
+enum SlowKind { SLOW_FATAL, SLOW_ALLOC, SLOW_GROW, SLOW_PRIM, SLOW_GROW_RAX, SLOW_TAKEN, SLOW_DEOPT, SLOW_BOXREAL, SLOW_BOXNUM, SLOW_SETENV, SLOW_INTERRUPT, SLOW_CALL_TABLE, SLOW_LOW };
+/* the words of a frame's header below its registers (vm.h, isa_frame_header) */
+#define MS_HEADER 3
 typedef struct Slow {
     AsmLabel here;
     AsmLabel back;
@@ -100,8 +105,9 @@ enum HomeKind { HOME_SLOT = 0, HOME_GPR, HOME_XMM };
    before it -- and a bytecode instruction. MR_BODY is the instruction's
    own work; the others are what the protocol around it costs: the count
    of a run, the poll, the write-back of the homes at a call, a call's
-   arguments, its room checks (the stack's, the frames'), its frame
-   record, its jump; the fill of registers with unit, a landing that loads
+   arguments, its room check, the header of its callee's frame
+   (native-frames.md, M4; a record of the frames before), its jump; the
+   fill of registers with unit, a landing that loads
    the homes, a return, the slow paths, the VM made exact for C and taken
    back, the closure a call goes through, a pointer loaded from its slot,
    a tag or kind test, an allocation in line. */
@@ -119,11 +125,11 @@ typedef struct Home {
 typedef struct Masm {
     Asm a;
     int win;              /* the Windows convention for calls into C */
+    uint32_t func;        /* the function, which a sync tells the VM (VM.func) */
     uint32_t nlocals;     /* the function's registers */
     uint32_t nslots;      /* the registers and what a primitive's arguments push: the frame's slots */
     uint32_t nfields;     /* the fields of the object ms_alloc last made, or UINT32_MAX where the object in hand is another's */
     const void *leave;    /* the leave stub: where the code hands the VM back */
-    const void *low;      /* the watermark's stub (ms_emit_low), where a RET goes that pops below it */
     int placed;           /* where the code will run is known (the Asm's base): the region's stubs and trampolines are in reach of a direct jump or call */
     int verify;           /* --gc-verify or --gc-stress: the homes checked against their slots after a call into C (ms_reload, M7) */
     AsmLabel *(*home_fails)(struct Masm *m, uint32_t r);   /* where register r's home and slot disagree: a fatal error (compile.c) */
@@ -274,17 +280,22 @@ void ms_reload_homes(Masm *m, uint32_t pc);
 void ms_writeback_call(Masm *m, uint32_t pc, uint32_t after, int32_t result);   /* at a call of an SML function, the homes the frame needs after it (at after; result: the register it returns into, or -1) */
 void ms_reload_clobbered(Masm *m, uint32_t pc);   /* after a call into C that touched no slot: the homes live at pc that C does not keep */
 void ms_reload_homes_but(Masm *m, uint32_t pc, int32_t d);   /* the homes live at pc loaded again, but d's (a call's result, M6) */
-/* a call's landing (M6): rbp and r14 the caller's again, from the
-   callee's, whose registers began past the caller's */
+/* a call's landing (M6): r14 the caller's again, from the callee's, whose
+   registers began past the caller's and a header */
 void ms_frame_back(Masm *m);
 /* the room for a frame (M6): to slow unless the stack's clean part holds
-   need values past this frame's base (its end's address, VM.stack_room);
-   R_S0 := the end's address the frame wants, which the slow path claims
-   to (jit_h_grow). And the same for a need in values in r, past above. */
+   need values past this frame's base (VM.stack_room, its end's address
+   less ROOM_SLACK values: native-frames.md, M4). And the same for a need
+   in values in r, past above, R_S0 := the address it compared, which the
+   slow path claims ROOM_SLACK values past (jit_h_grow); and r := the
+   address ms_room compared, for its slow path. */
 void ms_room(Masm *m, uint32_t need, AsmLabel *slow);
 void ms_room_dynamic(Masm *m, int r, uint32_t above, AsmLabel *slow);
+void ms_room_compared(Masm *m, int r, uint32_t need);
 /* r := the frame's base, an index into the stack, plus k */
 void ms_base_index(Masm *m, int r, uint32_t k);
+/* VM.fp and VM.func := the frame's, VM.sp := its base plus k (R_S0 clobbered) */
+void ms_store_fp(Masm *m, uint32_t k);
 /* r := the address k values past the frame's registers' start, past its
    slots too (the room a call wants) */
 void ms_slot_end(Masm *m, int r, uint32_t k);
@@ -307,10 +318,7 @@ static inline const Home *ms_home(const Masm *m, int32_t s) {
 
 /* the VM */
 void ms_sync(Masm *m, uint32_t pc, int pushed);
-void ms_frame_index_to(Masm *m, int r, int base, int32_t off);
-void ms_store_fp(Masm *m);
 void ms_reload(Masm *m);
-void ms_frame(Masm *m, int r);                                     /* r := &vm->frames[vm->fp], which rbp holds (M6) */
 /* a helper the code calls into: any function, cast to this type */
 typedef void (*MsHelper)(void);
 /* where a helper's address is looked for first in a table of trampolines of mask + 1 entries */
@@ -414,15 +422,17 @@ void ms_emit_enter(Asm *a, int win);
 void ms_emit_leave(Asm *a, int win);
 void ms_emit_fatal(Asm *a, int win, MsHelper helper);              /* the stub of the fatal errors: helper(vm, rax, rcx), which never returns (compile.c, jit_fatal) */
 /* the return trampoline (VM.ret_tramp, performance M6): where compiled
-   code's RET goes for a caller that is not compiled code, the value in
-   R_S0 and the frame popped: the count to the VM, helper(vm, value), and
-   the VM handed back with its answer through the leave stub at leave */
+   code's RET goes for a caller that is not compiled code -- the return
+   word VM.ret_word of a frame's header (native-frames.md, M4) -- the value
+   in R_S0 and r14 the frame that returns: the count and the frame to the
+   VM, helper(vm, value), and the VM handed back with its answer through
+   the leave stub at leave. Its address is odd (as_ret_align). */
 void ms_emit_ret_tramp(Asm *a, int win, MsHelper helper, AsmLabel *leave);
-/* the watermark's stub (M6): where compiled code's RET goes whose frame's
-   record is at or below VM.frame_low, the value in R_S0, where it goes in
-   R_S1 and its frame's record in rbp: the frame returned to the stack's
-   watermark (vm_set_fp_low), unless the frame is the top level's, and on
-   to R_S1 */
-void ms_emit_low(Asm *a, int win);
+/* where compiled code's call goes to a function with no code (the table of
+   calls, M6), r14 the callee's frame, its header and registers made, and
+   R_S6 its function's word (2f + 1, as a closure holds it): the count,
+   the frame and the function to the VM,
+   helper(vm), and the VM handed back with its answer */
+void ms_emit_call_interp(Asm *a, int win, MsHelper helper, AsmLabel *leave);
 
 #endif

@@ -365,7 +365,8 @@ being visited. A minor collection's roots are those, the fields of the
 cards the barrier marked and the large objects made since the last one,
 and of the stack only what is above its watermark: the lowest frame that
 has run since the last minor collection, which every return and every
-raise lowers to the frame it goes on in (`vm_frame_pop`). The frames below
+raise lowers to the frame it goes on in (`vm_frame_pop`; `runevm`'s
+compiled code, at the landing of the call returned from). The frames below
 it have not run since that collection left nothing young in them, so a
 deep recursion is not scanned again at every minor collection; a full
 collection scans the whole stack.
@@ -623,7 +624,9 @@ were built apart.
 The value stack, the frames and the handlers are three arrays that start at
 1024 values, 256 frames and 64 handlers and double when they are full, so
 recursion is bounded by memory rather than by the C stack: the interpreter
-loop does not call itself. A call that cannot grow them ends the run with
+loop does not call itself. `runevm`'s frames are in the value stack itself,
+three words of each below its registers (docs/plans/native-frames.md, M4),
+so there it is two arrays. A call that cannot grow them ends the run with
 `runevm: out of memory (stack)`.
 
 Tail calls do not grow the frame stack, so a tail-recursive loop runs in

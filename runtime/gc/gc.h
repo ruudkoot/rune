@@ -343,7 +343,7 @@ static inline void minor_globals(VM *vm, void (*take)(VM *, Value *)) {
         (vm)->consts_minor = (vm)->prog.nconsts; \
         { FrameRef *f_; size_t n_ = vm_frames_from((vm), (frame0), &f_); \
           for (size_t i_ = 0; i_ < n_; i_++) \
-              if (f_[i_].closure && *f_[i_].closure) O(f_[i_].closure); } \
+              if (f_[i_].closure_root && *f_[i_].closure_root) O(f_[i_].closure_root); } \
         for (int i_ = 0; i_ < NUM_BUILTIN_EXNS; i_++) \
             if ((vm)->builtin_exns[i_]) O(&(vm)->builtin_exns[i_]); \
         for (int i_ = 0; i_ < REAL_BOXES; i_++) \
@@ -357,7 +357,7 @@ static inline void minor_globals(VM *vm, void (*take)(VM *, Value *)) {
         for (uint32_t i_ = 0; i_ < (vm)->prog.nconsts; i_++) V(&(vm)->prog.consts[i_]); \
         { FrameRef *f_; size_t n_ = vm_frames_from((vm), (frame0), &f_); \
           for (size_t i_ = 0; i_ < n_; i_++) \
-              if (f_[i_].closure && *f_[i_].closure) O(f_[i_].closure); } \
+              if (f_[i_].closure_root && *f_[i_].closure_root) O(f_[i_].closure_root); } \
         for (int i_ = 0; i_ < NUM_BUILTIN_EXNS; i_++) \
             if ((vm)->builtin_exns[i_]) O(&(vm)->builtin_exns[i_]); \
         for (int i_ = 0; i_ < REAL_BOXES; i_++) \

@@ -121,6 +121,13 @@ void as_patch_jmp(uint8_t *site, const void *to) {
 }
 void as_call_to(Asm *a, const void *at) { a64_bl_to(a, at); }
 void as_call_r(Asm *a, int r) { a64_blr(a, r); }
+void as_ret_align(Asm *a) { (void)a; }   /* every instruction is a word: the return word is its address and 1 */
+void as_ret_addr(Asm *a, int rd, AsmLabel *l) { a64_adr(a, rd, l); a64_add_ri(a, rd, rd, 1); }
+void as_jmp_ret(Asm *a, int base, int32_t disp) {
+    a64_ldr(a, R_T, base, disp);   /* x17, the implementation's own */
+    a64_sub_ri(a, R_T, R_T, 1);
+    a64_br(a, R_T);
+}
 void as_ret(Asm *a) { a64_ret(a); }
 void as_trap(Asm *a) { a64_brk(a); }
 void as_setcc(Asm *a, int rd, int cc) { a64_cset(a, rd, cond(cc)); }

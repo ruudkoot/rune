@@ -52,7 +52,14 @@ typedef struct Jit {
        offset of each patch in this function's code, and the callee */
     struct { uint32_t off, f; } *pending;
     uint32_t npending, pending_cap;
+    /* the landings of the calls (native-frames.md, M4): each one's offset
+       in the code and the pc of the call's RESULT, in the order of the
+       code (CodeObject.land_offs) */
+    uint32_t *land_offs, *land_pcs;
+    uint32_t nlands, lands_cap;
 } Jit;
+/* a landing of a call bound here, returning to the RESULT at pc */
+void jit_landing_here(Jit *j, uint32_t pc);
 
 /* what native code says on a fatal error: the message of the interpreter */
 enum JitFatal {
@@ -96,7 +103,7 @@ int jit_h_enter_interp(VM *vm);
 void jit_h_fatal(VM *vm, int what, int32_t a, int32_t b);
 void jit_h_fatal_at(VM *vm, uint32_t k, int64_t value);
 MsHelper jit_libm_of(int32_t prim);   /* emit.c: the C library's function a primitive on reals is, or NULL */
-void jit_h_grow(VM *vm, const Value *end);
+void jit_h_grow(VM *vm, const Value *at);
 void jit_h_push_handler(VM *vm, int32_t pc, const void *native);
 const void *jit_h_raise(VM *vm, int32_t s);
 /* what jit_h_interrupt answers beside a handler's native code or NULL:

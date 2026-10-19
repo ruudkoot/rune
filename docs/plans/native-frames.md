@@ -37,7 +37,7 @@ plan's.
 | M1 | The gate: the call measured after performance M5 to M7 | done (2026-10-19, on `db0fba57a`): the gate open; *Where we are* and the baselines measured again, the decisions' premises restated, `scripts/hol-kernel.sh` made to run on `$RUNEVM` |
 | M2 | The body: tier 2's code for an instruction | done (2026-10-19): a constructor's tag tested by its representation, `SWITCH`'s tag likewise, the `--checked` test compiled in only under `--checked`, `int_mod` by a power of two an `and`; the bootstrap 15.230G to 14.516G instructions (−4.7%), HOL's kernel work 53.016G to 49.953G (−5.8%); cycles, an indication, −7% and −11%; `--count` and every output unchanged; `ENV`'s tests and division by a constant not built (*M2*) |
 | M3 | Frames walked, not indexed | done (2026-10-19): the walk of `vm.h`, given by each instruction set over the array, and every reader of frames outside the engines on it; the bootstrap 14.516G to 14.519G instructions (+0.02%), every output and count unchanged (*M3*) |
-| M4 | Frames in the value stack | not started; prototype F1 |
+| M4 | Frames in the value stack | done (2026-10-19): a header of three words below each frame's registers, `vm->frames` gone from `runevm`, returns by `jmp [r14-8]`, the watermark compared at the landing; a `fib` call 39.0 to 29.0 instructions and 11.0 to 8.3 cycles (MLton 8.7), a `tak` call 47.3 to 37.3 and 13.1 to 11.0; HOL's kernel work 49.98G to 43.95G instructions (−12.1%), the bootstrap's compiled code −10.3% and the whole −2.9%; the targets of instructions short (*M4*); `--count`, every output and the images' format unchanged |
 | M5 | The watermark by a return barrier | not started; prototype F1 |
 | M6 | Arguments in registers | not started; prototype F1 |
 | M7 | Returns the processor predicts | not started; prototype F1 |
@@ -1369,6 +1369,97 @@ compare (D4 A, until M5):
   are*) each at least 10% fewer instructions;
 * `--count` unchanged everywhere; images unchanged in format and crossing
   between every VM.
+
+**Done** (2026-10-19; `runtime/register/isa_regs.c`, `regvm.h`, the
+loop's words and bodies (`reg_words.h`, `src/isa/regs.sml`), the JIT's
+`jit.c`, `compile.c`, `emit.c`, `masm.c` and its assemblers, `vm.h`,
+`runtime.c`, `image.c`, `debug.c`, `prims.c`, `gc/copy.c`, `gc/minor.c`,
+`gc/check.c`, `census/census.c`):
+
+* **The frame** is its registers and, below them, three words its caller
+  writes (`regvm.h`): the *info word*, an immediate of the caller's
+  function, the pc of the `RESULT` it returns to and what it says of the
+  caller's base; the closure; and the *return word*, an odd number, the
+  interpreter's stub (`VM.ret_word`) or the landing of a compiled call --
+  on x86-64 the landing at an odd address, a `nop` before it, on aarch64
+  the address and 1, `ldr`, `sub` and `br` to return. The interpreter and
+  the runtime write all three; compiled code the return word, and the
+  closure for a call through one or to a function that reads its closure
+  (`ENV`, `SELF`: `Function.reads_closure`, worked out by the loader), to
+  which a known call gives `unit`. `VM.fp` is the running frame's base, its
+  id, and `VM.func` its function; `vm->frames` is `runevm-stack`'s and
+  runeopt's alone. A frame the runtime pushes above values of its own (the
+  debugger's `<debug>` at a stop where the stack holds more than the
+  registers) keeps its caller's base in a fourth word, and the top level's
+  says it has no caller. That one stays whole when the program ends, its
+  `RET` leaving the value above the header, for what walks the frames
+  after the end (the census's last collection, which found the header
+  overwritten in this milestone's first chain); and a fatal error met in
+  telling of one -- frames broken, which the walk that names the function
+  finds -- is told alone, without the frames.
+* **The walk** (`isa_regs.c`) reads each frame's caller from its header:
+  the info word, or, for a landing, its code object's table of landings,
+  the code found by address among the region's code objects in the order
+  they were compiled (`jit_landing_info`), the last 256 return words kept.
+  The collector scans a header as the slots between frames, the closure
+  made `unit` first where the frame does not read one -- so a header keeps
+  less alive than the record did, which kept every closure called through
+  -- and a minor collection scans the watermark's frame's header too,
+  which its tail calls write. Invalidation and the debugger's debug mode
+  give the frames returning into compiled code the interpreter's return
+  word and the info word from the landing.
+* **Calls and returns.** A known call: its room checked, the arguments
+  above the frame and a header, the return word (`lea`, `mov`), `r14`
+  moved and the jump; a call through a closure stores the closure too.
+  `RET` is `mov rax, s; jmp [r14-8]`. The landing moves `r14` back,
+  compares it with `VM.frame_low` (lowered in a slow path; until M5),
+  loads the homes needed and stores the result. The room checks compare
+  with the clean part's end less `ROOM_SLACK` values (256), so that a
+  known call whose frame wants no more compares its own base, `r14`
+  (`cmp`, `ja`). The interpreter's `RET` into a landing hands the VM to the
+  driver with the value (`VM.ret_value`, which the enter stub loads into
+  `rax`); compiled code's into the interpreter goes through the return stub
+  (`jit_h_return`), and its call into a function without code through the
+  stub that tells the VM the callee (`ms_emit_call_interp`, the function's
+  word in `r11`). `rbp` is unused, kept for M8.
+* **Images** keep the layout of every engine: the writer leaves the
+  headers out of the stack (a frame's base and a handler's stack pointer
+  less the words below them, a handler's frame by its index), the reader
+  makes them (`vm_frames_install`), each frame returning to the
+  interpreter, and checks that each frame lies above its caller's
+  registers and its closure is one. HOL-midM8's `hol.state`, written
+  before M4, restores and runs; `Runtime.save` and `restore`, the fork, the
+  debugger, traces and the census (its samples count frames by index) read
+  the frames through the walk.
+* **Measured** (`perf stat`, exact; pinned, the least of five for cycles;
+  M3's VM against M4's, built alike):
+  * a `fib` call 39.0 to 29.0 instructions and 10.96 to 8.25 cycles, a
+    `tak` call 47.33 to 37.33 and 13.1 to 11.0 (MLton 8.7 and 10.0 in
+    M1's session): the cycles' target met, the instructions' not (26 and
+    34). What `fib` keeps that variant 2 has not: the watermark's compare
+    in the landing (2; M5), the room's check at the call (2, where the
+    prototype compares at the callee's entry), the homes' reload and the
+    result's move at the landing, and a body a little longer;
+  * a call through a closure and its return 29 to 20 instructions of call
+    machinery (target 15): the room, from the table, 4; the header 3 and
+    `r14` 1; the landing 4; the closure's and the entry's loads 3;
+  * the bootstrap: under callgrind its compiled code 7.268G to 6.520G
+    instructions (−10.3%), its call machinery 14.9% of its instructions to
+    10.5% (target 8%), the landings now the largest part of it (0.48G, the
+    watermark's compare 0.14G of them); the whole 14.520G to 14.104G
+    (−2.9%, target 6%) -- its collector does 0.34G more, the full
+    collections falling elsewhere since a minor one promotes less;
+  * HOL's kernel work 49.98G to 43.95G instructions (−12.1%; target 8%),
+    and 25.4G to 21.7G cycles (−15%, the least of three);
+  * MLton's seven programs of calls and closures, as `perf-cycles.sh`
+    wraps them: `fib` −23.4%, `tak` −17.2%, `model-elimination` −11.6%,
+    `logic` −9.5%, `tyan` −5.4%, `barnes-hut` −3.4%, `nucleic` −3.1%
+    (target 10% each): the last four spend most of their time outside
+    calls;
+  * `--count` the same on every engine and at every tier (`check-jit`'s
+    programs), the bootstrap's output the same. (The bootstrap's own count
+    is not one to compare between runs: the compiler reads the processor's
+    clock, and its count moves by thousands with the time it took.)
 
 ### M5. The watermark by a return barrier (S-M)
 

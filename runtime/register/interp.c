@@ -29,8 +29,8 @@
             if (JIT_TIERS(vm->jit.mode)) { \
                 /* the caller's work too: called once but calling for ever, it \
                    is compiled here and entered when this callee returns */ \
-                CodeObject *me_ = &jit->codes[fr->func]; \
-                if (!me_->entry && ++me_->work >= jit->work_threshold) jit_tier_up(vm, jit, fr->func); \
+                CodeObject *me_ = &jit->codes[vm->func]; \
+                if (!me_->entry && ++me_->work >= jit->work_threshold) jit_tier_up(vm, jit, vm->func); \
                 if (!co_->entry && ++co_->calls >= jit->calls_threshold) jit_tier_up(vm, jit, (f)); \
             } \
             if (co_->entry && jit->stress && ++jit->stress_count % jit->stress == 0) jit_invalidate(vm, jit, (f)); \
@@ -43,8 +43,8 @@
 #define BACKWARD(t) \
     do { \
         if (jit) { \
-            CodeObject *co_ = &jit->codes[fr->func]; \
-            if (!co_->entry && JIT_TIERS(vm->jit.mode) && ++co_->work >= jit->work_threshold) jit_tier_up(vm, jit, fr->func); \
+            CodeObject *co_ = &jit->codes[vm->func]; \
+            if (!co_->entry && JIT_TIERS(vm->jit.mode) && ++co_->work >= jit->work_threshold) jit_tier_up(vm, jit, vm->func); \
             if (co_->entry) { \
                 const void *at_ = jit_osr(co_, (t)); \
                 if (at_) { pc = (t); SYNC(); jit->at = at_; jit->osr_entries++; return RUN_NATIVE; } \
@@ -102,6 +102,19 @@ static int poll_slow(VM *vm, uint32_t len) {
     } while (0)
 /* a return into native code, at the address the frame kept */
 #define RETURN_NATIVE(at_) do { SYNC(); jit->at = (at_); jit->handed_native++; return RUN_NATIVE; } while (0)
+/* a return into compiled code, at the landing of the return word w, which
+   takes the value v from the VM (the enter stub) with the frame that
+   returns as it is: its landing pops it (native-frames.md, M4) */
+#define RETURN_LANDING(w, v) \
+    do { \
+        if (jit) { \
+            SYNC(); \
+            vm->ret_value = (v); \
+            jit->at = (const void *)(uintptr_t)((w) - JIT_RET_BIAS); \
+            jit->handed_native++; \
+            return RUN_NATIVE; \
+        } \
+    } while (0)
 /* the program became another (Runtime.restore): the JIT's view of it again */
 #define NEW_PROGRAM() (jit = RUN_JIT && !vm->trace ? jit_program(vm) : NULL)
 /* after a raise (vm_raise, which left the handler it took at hp): on in the
@@ -109,7 +122,7 @@ static int poll_slow(VM *vm, uint32_t len) {
 #define RAISED() \
     do { \
         if (jit && vm->handlers[vm->hp].native) RETURN_NATIVE(vm->handlers[vm->hp].native); \
-        RESUME_NATIVE(fr->func, pc); \
+        RESUME_NATIVE(vm->func, pc); \
         NEXT; \
     } while (0)
 
@@ -133,15 +146,12 @@ int loop_debug(VM *vm, JitProgram *jit);
    from an image (runtime/image.c) has not had it made yet. */
 static void make_room(VM *vm) {
     size_t need = vm->sp + 1;
-    for (size_t i = 0; i <= vm->fp; i++) {
-        Frame *f = &vm->frames[i];
-        Function *fn = &vm->prog.funcs[f->func];
-        size_t n = f->base + fn->nlocals + fn->maxstack;
+    FrameRef *fr;
+    size_t nf = vm_frames_from(vm, 0, &fr);
+    for (size_t i = 0; i < nf; i++) {
+        const Function *fn = &vm->prog.funcs[fr[i].func];
+        size_t n = fr[i].base + fn->nlocals + fn->maxstack;
         if (n > need) need = n;
-        f->native_ret = vm->ret_tramp;   /* a frame of an image, or of vm_start, returns into the interpreter */
-        /* where its return goes: the RESULT at its ret_pc, if that is one */
-        f->result = f->ret_pc < vm->prog.code_len && vm->prog.code[f->ret_pc] == ROP_RESULT
-                    ? (uint32_t)read_i32(vm->prog.code + f->ret_pc + 1) : UINT32_MAX;
     }
     if (need > vm->stack_cap) vm_grow_stack(vm, need);
 }
@@ -182,7 +192,7 @@ int vm_loop(VM *vm) {
            frame at its first instruction, a frame of an image at its
            resume point */
         if (r == RUN_INTERP && jit) {
-            uint32_t f = vm->frames[vm->fp].func;
+            uint32_t f = vm->func;
             CodeObject *co = &jit->codes[f];
             /* a call from native code into an interpreted function lands here,
                at the function's first instruction: its counter (M6), which the

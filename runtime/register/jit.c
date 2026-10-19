@@ -25,6 +25,7 @@ static void free_tables(JitProgram *jit) {
         free(jit->codes[i].osr_pcs); free(jit->codes[i].osr_offs); free(jit->codes[i].callers);
         free(jit->codes[i].pending);
         free(jit->codes[i].sites);
+        free(jit->codes[i].land_offs); free(jit->codes[i].land_pcs);
         if (jit->names) free(jit->names[i]);
     }
     free(jit->names);
@@ -95,8 +96,8 @@ static void jit_make(VM *vm, JitProgram *jit) {
        return trampoline is given again, and its frames with it (M6) */
     if (jit->ret_tramp && vm->ret_tramp != jit->ret_tramp) {
         vm->ret_tramp = jit->ret_tramp;
-        for (size_t i = 0; vm->frames_active && i <= vm->fp; i++)
-            if (!vm->frames[i].native_ret) vm->frames[i].native_ret = vm->ret_tramp;
+        vm->ret_word = (Value)(uintptr_t)jit->ret_tramp + JIT_RET_BIAS;   /* (native-frames.md, M4) */
+        reg_frames_ret_word(vm);
     }
     /* the code made for the program before goes first: its frames return
        into the interpreter (jit_invalidate), since that code names the
@@ -125,7 +126,8 @@ static void jit_make(VM *vm, JitProgram *jit) {
     }
     vm->jit_calls = jit->calls;
     /* the code of the program before is left where it is: a frame of an
-       image never returns into it, since native_ret is not carried */
+       image never returns into it, since its return word is not carried */
+    memset(jit->seen, 0, sizeof jit->seen);
     jit->code_used = jit->code_mem ? jit->code_used : 0;
     /* what each function's calls must fill: worked out for all now, since
        a call through a closure reads it from the table at run time */
@@ -203,17 +205,77 @@ const void *jit_osr(const CodeObject *co, uint32_t pc) {
     return NULL;
 }
 
+/* the range of the code of function f, at lo: of no function (lo is the
+   region's, and rises with the order of the compiles) */
+static void range_dies(JitProgram *jit, uintptr_t lo) {
+    uint32_t a = 0, b = jit->nranges;
+    while (a < b) {
+        uint32_t mid = a + (b - a) / 2;
+        if (jit->ranges[mid].lo < lo) a = mid + 1;
+        else b = mid;
+    }
+    if (a < jit->nranges && jit->ranges[a].lo == lo) jit->ranges[a].func = UINT32_MAX;
+    memset(jit->seen, 0, sizeof jit->seen);
+}
+void jit_code_placed(JitProgram *jit, uint32_t f, const void *at, size_t size) {
+    if (jit->nranges == jit->ranges_cap) {
+        uint32_t cap = jit->ranges_cap ? 2 * jit->ranges_cap : 256;
+        struct CodeRange *r = realloc(jit->ranges, cap * sizeof *r);
+        if (!r) { fprintf(stderr, "runevm: out of memory (code objects)\n"); exit(2); }
+        jit->ranges = r;
+        jit->ranges_cap = cap;
+    }
+    jit->ranges[jit->nranges].lo = (uintptr_t)at;
+    jit->ranges[jit->nranges].hi = (uintptr_t)at + size;
+    jit->ranges[jit->nranges].func = f;
+    jit->nranges++;
+}
+
+/* A return word that is a landing: the code it is in by the ranges, and
+   the call by the code's landings; the last 256 asked kept */
+int jit_landing_info(VM *vm, Value w, uint32_t *func, uint32_t *pc) {
+    JitProgram *jit = the_program;
+    (void)vm;
+    if (!jit || !jit->nranges) return 0;
+    struct LandingSeen *seen = &jit->seen[(uint32_t)((w >> 1) * 0x9E3779B97F4A7C15u >> 56)];
+    if (seen->word == w) { *func = seen->func; *pc = seen->pc; return 1; }
+    uintptr_t at = (uintptr_t)w - JIT_RET_BIAS;
+    uint32_t a = 0, b = jit->nranges;
+    while (a < b) {   /* the last range at or below at */
+        uint32_t mid = a + (b - a) / 2;
+        if (jit->ranges[mid].lo <= at) a = mid + 1;
+        else b = mid;
+    }
+    if (a == 0) return 0;
+    const struct CodeRange *r = &jit->ranges[a - 1];
+    if (at >= r->hi || r->func == UINT32_MAX || r->func >= jit->nfuncs) return 0;
+    const CodeObject *co = &jit->codes[r->func];
+    if ((uintptr_t)co->entry != r->lo) return 0;
+    uint32_t off = (uint32_t)(at - r->lo), x = 0, y = co->nlands;
+    while (x < y) {
+        uint32_t mid = x + (y - x) / 2;
+        if (co->land_offs[mid] < off) x = mid + 1;
+        else y = mid;
+    }
+    if (x == co->nlands || co->land_offs[x] != off) return 0;
+    *func = r->func;
+    *pc = co->land_pcs[x];
+    seen->word = w; seen->func = *func; seen->pc = *pc;
+    jit->walked_landings++;
+    return 1;
+}
+
 void jit_invalidate(VM *vm, JitProgram *jit, uint32_t f) {
     CodeObject *co = &jit->codes[f];
     if (!co->entry) return;
     uintptr_t lo = (uintptr_t)co->entry, hi = lo + co->size;
-    for (size_t i = 0; i <= vm->fp; i++) {
-        uintptr_t r = (uintptr_t)vm->frames[i].native_ret;
-        if (r >= lo && r < hi) {
-            vm->frames[i].native_ret = vm->ret_tramp;
-            vm->frames[i].result = UINT32_MAX;   /* the loop's RET reads it from the code (vm.h, Frame; M6) */
-        }
-    }
+    /* the frames that return into the code return to the interpreter, told
+       where by the code's landings (native-frames.md, M4) */
+    if (vm->frames_active) reg_frames_to_interpreter(vm, lo, hi);
+    range_dies(jit, lo);
+    free(co->land_offs); free(co->land_pcs);
+    co->land_offs = co->land_pcs = NULL;
+    co->nlands = 0;
     for (size_t i = 0; i < vm->hp; i++) {
         uintptr_t r = (uintptr_t)vm->handlers[i].native;
         if (r >= lo && r < hi) vm->handlers[i].native = NULL;

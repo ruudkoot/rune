@@ -202,18 +202,21 @@ keep these invariants:
   (`--jit-only=odd`) and under `--jit-stress`, and every instruction to
   occurring in them. A primitive done in line by the loop and by the
   code changes with its C in `runtime/prims.c`. A native address lives in a
-  frame's `native_ret`, a handler's `native`, the driver's `jit->at` and
-  the table of calls (`JitProgram.calls`) and nowhere else -- a known
+  frame's return word (its header in the value stack, native-frames.md
+  M4: an odd number, which the code objects' landings name), a handler's
+  `native`, the driver's `jit->at` and the table of calls
+  (`JitProgram.calls`) and nowhere else -- a known
   call's jump into its callee's code, patched in when the callee is
   compiled, makes the caller depend on it (`jit_depend`) -- so that
   invalidating a function's code is a walk over the frames and handlers
   and a store into the table (`jit_invalidate`). Compiled code keeps the
-  frame in `rbp` and no frame index: `VM.fp` is right only where the
+  frame in `r14` alone: `VM.fp` and `VM.func` are right only where the
   code has synced (`ms_sync`, `ms_exit`, the stubs), so a helper called
-  without a sync (a lean call) reads neither it nor the frames, and
-  `VM.fp_low` changes through `vm_set_fp_low` alone in C (a `RET`
-  compares `rbp` with `VM.frame_low`; runeopt's code, which runs on the
-  stack VM, writes the field itself). **The homes** (tier 2,
+  without a sync (a lean call) reads neither them nor the frames, and
+  `VM.fp_low` changes through `vm_frames_mark_low` alone in C (a call's
+  landing compares `r14` with `VM.frame_low`, which a move of the stack
+  makes again; runeopt's code, which runs on the stack VM, writes the
+  field itself). **The homes** (tier 2,
   README.md): an emitter reads and writes a register through the
   macro-assembler's accessors only, never `[r14 + 16 k]`; `rbx`, `rsi`,
   `rdi` and `xmm2` to `xmm15` are homes, so an emitter that uses one as

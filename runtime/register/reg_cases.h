@@ -79,9 +79,10 @@ CASE(ENV) {
     TRACE(ROP_ENV, a, b, 0);
     pc += 9;
     count++;
-    Obj *c = fr->closure;
-    if (!c || (uint32_t)b + 1 >= obj_len(c)) FATAL("environment slot %d out of range", b);
-    R(a) = obj_field(c, b + 1);
+    /* the header's closure: a closure, or unit where the frame has none */
+    Value cv = CLOSURE();
+    if (!val_is_ptr(cv) || obj_kind(val_ptr(cv)) != K_CLOSURE || (uint32_t)b + 1 >= obj_len(val_ptr(cv))) FATAL("environment slot %d out of range", b);
+    R(a) = obj_field(val_ptr(cv), b + 1);
     NEXT;
 }
 CASE(SELF) {
@@ -89,8 +90,9 @@ CASE(SELF) {
     TRACE(ROP_SELF, a, 0, 0);
     pc += 5;
     count++;
-    if (!fr->closure) FATAL("SELF outside a closure");
-    R(a) = mk_ptr(fr->closure);
+    Value cv = CLOSURE();
+    if (!val_is_ptr(cv) || obj_kind(val_ptr(cv)) != K_CLOSURE) FATAL("SELF outside a closure");
+    R(a) = cv;
     NEXT;
 }
 CASE(CALL) {
@@ -100,16 +102,17 @@ CASE(CALL) {
     pc += 9;
     count++;
     POLL(9);
-    CENSUS_CALL(0, R(b), CENSUS_REP(p, fr->func, b));
+    CENSUS_CALL(0, R(b), CENSUS_REP(p, vm->func, b));
     Value arg = R(b);
     Obj *c = EXPECT(R(a), K_CLOSURE, "closure in call");
     int64_t fidx = val_imm(obj_field(c, 0));
     if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
     Function *fn = &p->funcs[fidx];
-    size_t top = (size_t)(sp - vm->stack);
+    size_t top = (size_t)(sp - vm->stack) + FRAME_HEADER;
     ROOM(top, fn);
-    vm_push_frame(vm, (uint32_t)fidx, c, pc, top);
-    RESULT_OF(pc);
+    HEADER(top, pc, mk_ptr(c));
+    vm->fp = top;
+    vm->func = (uint32_t)fidx;
     Value *slot = vm->stack + top;
     slot[0] = arg;
     for (uint32_t i = 1; i < fn->nlocals; i++) slot[i] = mk_unit();
@@ -132,16 +135,17 @@ CASE(TAILCALL) {
     pc += 9;
     count++;
     POLL(9);
-    CENSUS_CALL(1, R(b), CENSUS_REP(p, fr->func, b));
+    CENSUS_CALL(1, R(b), CENSUS_REP(p, vm->func, b));
     Value arg = R(b);
     Obj *c = EXPECT(R(a), K_CLOSURE, "closure in call");
     int64_t fidx = val_imm(obj_field(c, 0));
     if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
     Function *fn = &p->funcs[fidx];
-    size_t top = fr->base;
+    size_t top = vm->fp;
     ROOM(top, fn);
-    fr->func = (uint32_t)fidx;
-    fr->closure = c;
+    /* the frame's header keeps its caller and its return; its closure is the callee's */
+    CLOSURE() = mk_ptr(c);
+    vm->func = (uint32_t)fidx;
     Value *slot = vm->stack + top;
     slot[0] = arg;
     for (uint32_t i = 1; i < fn->nlocals; i++) slot[i] = mk_unit();
@@ -155,29 +159,42 @@ CASE(RET) {
     pc += 5;
     count++;
     Value v = R(a);
-    CENSUS_CALL(4, v, CENSUS_REP(p, fr->func, a));
-    uint32_t back = fr->ret_pc;
-    /* the register of the caller's RESULT, if it has one, as the loop's
-       calls record it; a frame that compiled code pushed records none,
-       nor one made to return to the interpreter: the code says (M6) */
-    uint32_t result = fr->result;
-    if (result == UINT32_MAX || (fr->native_ret && fr->native_ret != vm->ret_tramp))
-      result = code[back] == ROP_RESULT ? (uint32_t)read_i32(code + back + 1) : UINT32_MAX;
-    size_t top = fr->base;   /* the caller's stack pointer, where the callee's registers began */
-    if (vm->fp == 0) { vm->sp = top; vm->pc = back; vm->instructions = count; vm_push(vm, v); return 0; }
-    vm_frame_pop(vm);
-    fr = &vm->frames[vm->fp];
-    base = vm->stack + fr->base;
-    sp = vm->stack + top;
+    CENSUS_CALL(4, v, CENSUS_REP(p, vm->func, a));
+    /* the caller, as the frame's header says (native-frames.md, M4):
+       the interpreter's, whose info word names it, or compiled code,
+       which takes the value at its landing where the loop runs code
+       (RETURN_LANDING), and else says what its landing is of */
+    size_t at = vm->fp;
+    Value w = vm->stack[at - 1], info = vm->stack[at - 3];
+    uint32_t cf, back;
+    size_t head = at - FRAME_HEADER, cb;
+    if (reg_interp_word(vm, w)) {
+      cf = reg_info_func(info);
+      back = reg_info_pc(info);
+      int kind = reg_info_kind(info);
+      /* the top level's: the program ends, the value above the frame's
+         header, which stays whole for what walks the frames after the
+         end (the census's last collection, vm_exit) */
+      if (kind == REG_INFO_BOTTOM) { vm->sp = at; vm->pc = back; vm->instructions = count; vm_push(vm, v); return 0; }
+      if (kind == REG_INFO_EXPLICIT) { head--; cb = (size_t)val_imm(vm->stack[head]); }
+      else cb = head - p->funcs[cf].nlocals;
+    } else {
+      RETURN_LANDING(w, v);
+      if (!jit_landing_info(vm, w, &cf, &back)) FATAL("a frame returns to no code");
+      cb = head - p->funcs[cf].nlocals;
+    }
+    vm->fp = cb;
+    vm->func = cf;
+    if (cb < vm->fp_low) vm_frames_mark_low(vm, cb);
+    base = vm->stack + cb;
+    sp = vm->stack + head;
     /* the caller goes on at RESULT d, which takes the value: written
        into d here, and RESULT passed over; anything else takes it from
        the stack, as an image resumed at RESULT does */
-    if (result != UINT32_MAX) { R(result) = v; pc = back + 5; }
+    if (code[back] == ROP_RESULT) { R(read_i32(code + back + 1)) = v; pc = back + 5; }
     else { PUSH(v); pc = back; }
-    /* a caller whose function has code goes on in it where a run begins
-       (M6): its native_ret is the landing of compiled code's own return,
-       which takes the value in a register */
-    RESUME_NATIVE(fr->func, pc);
+    /* a caller whose function has code goes on in it where a run begins (M6) */
+    RESUME_NATIVE(cf, pc);
     NEXT;
 }
 CASE(PRIM) {
@@ -185,7 +202,7 @@ CASE(PRIM) {
     int32_t b = read_i32(code + pc + 5);
     const uint8_t *L = code + pc + 9;
     uint32_t n = prim_arity[a];
-    CENSUS_PRIM(pc, fr->func, a);
+    CENSUS_PRIM(pc, vm->func, a);
     TRACE(ROP_PRIM, a, b, 0);
     pc += 9 + 4 * n;
     count++;
@@ -205,7 +222,7 @@ CASE(PRIMPUSH) {
     int32_t a = read_i32(code + pc + 1);
     const uint8_t *L = code + pc + 5;
     uint32_t n = prim_arity[a];
-    CENSUS_PRIM(pc, fr->func, a);
+    CENSUS_PRIM(pc, vm->func, a);
     TRACE(ROP_PRIMPUSH, a, 0, 0);
     pc += 5 + 4 * n;
     count++;
@@ -226,7 +243,7 @@ CASE(TUPLE) {
     int32_t b = read_i32(code + pc + 5);
     const uint8_t *L = code + pc + 9;
     uint32_t n = (uint32_t)b;
-    CENSUS_SITE(pc, fr->func);
+    CENSUS_SITE(pc, vm->func);
     TRACE(ROP_TUPLE, a, b, 0);
     pc += 9 + 4 * n;
     count++;
@@ -244,7 +261,7 @@ CASE(CLOSURE) {
     int32_t c = read_i32(code + pc + 9);
     const uint8_t *L = code + pc + 13;
     uint32_t n = (uint32_t)c;
-    CENSUS_SITE(pc, fr->func);
+    CENSUS_SITE(pc, vm->func);
     TRACE(ROP_CLOSURE, a, b, c);
     pc += 13 + 4 * n;
     count++;
@@ -272,7 +289,7 @@ CASE(CON) {
     int32_t a = read_i32(code + pc + 1);
     int32_t b = read_i32(code + pc + 5);
     int32_t c = read_i32(code + pc + 9);
-    CENSUS_SITE(pc, fr->func);
+    CENSUS_SITE(pc, vm->func);
     TRACE(ROP_CON, a, b, c);
     pc += 13;
     count++;
@@ -309,7 +326,7 @@ CASE(CONTAG) {
 CASE(NEWEXN) {
     int32_t a = read_i32(code + pc + 1);
     int32_t b = read_i32(code + pc + 5);
-    CENSUS_SITE(pc, fr->func);
+    CENSUS_SITE(pc, vm->func);
     TRACE(ROP_NEWEXN, a, b, 0);
     pc += 9;
     count++;
@@ -332,7 +349,7 @@ CASE(MKEXN) {
     int32_t a = read_i32(code + pc + 1);
     int32_t b = read_i32(code + pc + 5);
     int32_t c = read_i32(code + pc + 9);
-    CENSUS_SITE(pc, fr->func);
+    CENSUS_SITE(pc, vm->func);
     TRACE(ROP_MKEXN, a, b, c);
     pc += 13;
     count++;
@@ -374,7 +391,7 @@ CASE(SETENV) {
     count++;
     Obj *o = EXPECT(R(a), K_CLOSURE, "closure");
     if ((uint32_t)b + 1 >= obj_len(o)) FATAL("environment slot %d out of range", b);
-    CENSUS_STORE(o, b + 1, R(c), 0, CENSUS_REP(p, fr->func, c));
+    CENSUS_STORE(o, b + 1, R(c), 0, CENSUS_REP(p, vm->func, c));
     obj_set_field(vm, o, b + 1, R(c));
     NEXT;
 }
@@ -473,16 +490,17 @@ CASE(CALLK) {
     pc += 9 + 4 * n;
     count++;
     POLL(9 + 4 * n);
-    for (uint32_t i = 0; i < n; i++) CENSUS_CALL(2, R(LIST(i)), CENSUS_REP(p, fr->func, LIST(i)));
+    for (uint32_t i = 0; i < n; i++) CENSUS_CALL(2, R(LIST(i)), CENSUS_REP(p, vm->func, LIST(i)));
     Function *fn = &p->funcs[a];
-    size_t top = (size_t)(sp - vm->stack);
+    size_t top = (size_t)(sp - vm->stack) + FRAME_HEADER;
     ROOM(top, fn);
     /* the arguments read before the frame is pushed, which R would read */
     Value *slot = vm->stack + top;
     for (uint32_t i = 0; i < n; i++) slot[i] = R(LIST(i));
     for (uint32_t i = n; i < fn->nlocals; i++) slot[i] = mk_unit();
-    vm_push_frame(vm, (uint32_t)a, NULL, pc, top);
-    RESULT_OF(pc);
+    HEADER(top, pc, mk_unit());
+    vm->fp = top;
+    vm->func = (uint32_t)a;
     ENTER(slot, fn);
     HANDOVER((uint32_t)a);
     NEXT;
@@ -496,9 +514,9 @@ CASE(TAILCALLK) {
     pc += 9 + 4 * n;
     count++;
     POLL(9 + 4 * n);
-    for (uint32_t i = 0; i < n; i++) CENSUS_CALL(3, R(LIST(i)), CENSUS_REP(p, fr->func, LIST(i)));
+    for (uint32_t i = 0; i < n; i++) CENSUS_CALL(3, R(LIST(i)), CENSUS_REP(p, vm->func, LIST(i)));
     Function *fn = &p->funcs[a];
-    size_t top = fr->base;
+    size_t top = vm->fp;
     size_t need = (size_t)(sp - vm->stack) + n;
     if (top + fn->nlocals + fn->maxstack > need) need = top + fn->nlocals + fn->maxstack;
     if (need > vm->stack_cap) { SYNC(); vm_grow_stack(vm, need); RELOAD(); }
@@ -508,8 +526,8 @@ CASE(TAILCALLK) {
     Value *slot = vm->stack + top;
     memmove(slot, tmp, (size_t)n * sizeof(Value));
     for (uint32_t i = n; i < fn->nlocals; i++) slot[i] = mk_unit();
-    fr->func = (uint32_t)a;
-    fr->closure = NULL;
+    CLOSURE() = mk_unit();
+    vm->func = (uint32_t)a;
     ENTER(slot, fn);
     HANDOVER((uint32_t)a);
     NEXT;
@@ -537,7 +555,7 @@ CASE(CONN) {
     int32_t c = read_i32(code + pc + 9);
     const uint8_t *L = code + pc + 13;
     uint32_t n = (uint32_t)c;
-    CENSUS_SITE(pc, fr->func);
+    CENSUS_SITE(pc, vm->func);
     TRACE(ROP_CONN, a, b, c);
     pc += 13 + 4 * n;
     count++;

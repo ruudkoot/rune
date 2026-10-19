@@ -36,9 +36,22 @@ enum RunResult {
     RUN_HALT = 0,       /* the program ended: what vm_loop returns */
     RUN_INTERP,         /* the frame on top is the interpreter's, from vm->pc */
     RUN_NATIVE          /* the frame on top has native code: enter it (at its
-                           entry for a fresh frame, at the frame's native_ret
-                           where it returns into one) */
+                           entry for a fresh frame, at the landing its
+                           callee's return word names where the callee
+                           returns into it, the value in VM.ret_value) */
 };
+
+/* A frame's return word (vm.h, isa_frame_header; native-frames.md, M4):
+   where compiled code's RET goes, an odd number, which the collector takes
+   for an immediate -- the interpreter's return stub (VM.ret_word) or a
+   landing in compiled code, at its address plus JIT_RET_BIAS (asm.h,
+   as_ret_addr): 0 where the landing is at an odd address (x86-64), 1
+   where instructions are words (aarch64). */
+#if defined(__aarch64__)
+#define JIT_RET_BIAS 1
+#else
+#define JIT_RET_BIAS 0
+#endif
 
 /* One per function: the tier its code is at and the code's entry, which
    is NULL while the function is interpreted; the counters tier 0 keeps for
@@ -75,6 +88,14 @@ typedef struct CodeObject {
        code was emitted; NULL otherwise */
     uint32_t nsites;
     struct Site *sites;
+    /* the landings of its calls (native-frames.md, M4): where a callee
+       returns to, each the offset of its landing from the entry and the
+       pc of the call's RESULT, the offsets rising -- what a frame's return
+       word says of its caller, the frame's function and pc
+       (jit_landing_info) */
+    uint32_t nlands;
+    uint32_t *land_offs;
+    uint32_t *land_pcs;
 } CodeObject;
 
 /* Where compiled code's calls go (performance M6): per function, the
@@ -112,6 +133,7 @@ void jit_h_called(VM *vm, Site *s, uint32_t f);
    the value the code has in rcx */
 typedef struct JitFatalSite {
     uint32_t pc;
+    uint32_t func;      /* the function whose code it is in (VM.func: native-frames.md, M4) */
     int32_t what, a, b;
     int value;
 } JitFatalSite;
@@ -127,7 +149,6 @@ typedef struct JitProgram {
     uint8_t *code_mem;
     size_t code_cap, code_used;
     const void *enter_at, *leave_at;
-    const void *low_at;         /* the watermark's stub (masm.h, ms_emit_low; M6), in the region */
     const void *fatal_at;       /* the stub of the fatal errors, beside them */
     JitFatalSite *fatals;           /* the fatal errors of the code, by the number it gives the stub; the process's */
     uint32_t nfatals, fatals_cap;
@@ -180,6 +201,14 @@ typedef struct JitProgram {
     uint32_t deopt_stress;      /* --deopt-stress=N (M11): the code counts instruction boundaries here and leaves at every Nth */
     uint64_t deopt_count;
     uint64_t deopts;            /* how many times it left so */
+    /* the code in the region by address (native-frames.md, M4): a range
+       per function's code as it was compiled, in the order of the region
+       and so of address, its function UINT32_MAX once it is invalidated;
+       and a cache of the return words it was asked of last */
+    struct CodeRange { uintptr_t lo, hi; uint32_t func; } *ranges;
+    uint32_t nranges, ranges_cap;
+    struct LandingSeen { Value word; uint32_t func, pc; } seen[256];
+    uint64_t walked_landings;   /* --jit-stats: the return words of compiled code the walks of the frames read */
 } JitProgram;
 /* the lowest register of function f a call must fill with unit */
 uint32_t jit_fill_from(VM *vm, JitProgram *jit, uint32_t f);
@@ -211,5 +240,19 @@ const void *jit_osr(const CodeObject *co, uint32_t pc);
 void jit_invalidate(VM *vm, JitProgram *jit, uint32_t f);
 /* caller's code jumps straight into callee's: said, for invalidation */
 void jit_depend(JitProgram *jit, uint32_t callee, uint32_t caller);
+/* what the return word w of a frame says of its caller where w is a
+   landing in compiled code: the caller's function and the pc of the
+   RESULT of the call (the walk of the frames, runtime/register/isa_regs.c);
+   0 where it is none */
+int jit_landing_info(VM *vm, Value w, uint32_t *func, uint32_t *pc);
+/* function f's code is placed at at, size bytes: its range, for jit_landing_info */
+void jit_code_placed(JitProgram *jit, uint32_t f, const void *at, size_t size);
+/* runtime/register/isa_regs.c: the frames whose return word is a landing
+   in the code at [lo, hi) made to return to the interpreter, each told
+   its caller's function and pc in its info word; and every frame that
+   returns to the interpreter given VM.ret_word, which the region's return
+   stub became */
+void reg_frames_to_interpreter(VM *vm, uintptr_t lo, uintptr_t hi);
+void reg_frames_ret_word(VM *vm);
 
 #endif

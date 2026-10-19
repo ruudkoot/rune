@@ -148,7 +148,7 @@ static int stop(VM *vm, Debugger *d, int event, uint32_t at, Value exn) {
     if (!d->has_hook || d->func == UINT32_MAX) return 0;
     const Function *fn = &vm->prog.funcs[d->func];
     size_t top = vm->sp;
-    size_t need = top + fn->nlocals + fn->maxstack + 1;
+    size_t need = top + isa_frame_header + fn->nlocals + fn->maxstack + 1;
     if (need > vm->stack_cap) vm_grow_stack(vm, need);
     d->stop_fp = vm_frame_id(vm);
     d->stop_pc = at;
@@ -163,13 +163,13 @@ static int stop(VM *vm, Debugger *d, int event, uint32_t at, Value exn) {
     d->in_hook = 1;
     dbg_update(d);
     Value hook = vm_handle_get(vm, d->hook);
-    vm_frame_push(vm, d->func, NULL, at, top);
-    Value *slot = vm->stack + top;
+    size_t base = vm_frame_push(vm, d->func, NULL, at, top);
+    Value *slot = vm->stack + base;
     slot[0] = hook;
     slot[1] = mk_int(event);
     for (uint32_t i = 2; i < fn->nlocals; i++) slot[i] = mk_unit();
     slot[3] = exn;
-    vm->sp = top + fn->nlocals;
+    vm->sp = base + fn->nlocals;
     vm->pc = fn->code_offset;
     return 1;
 }

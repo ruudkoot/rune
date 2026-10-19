@@ -40,18 +40,23 @@ void vm_print_trace(VM *vm, FILE *out) {
 }
 
 void vm_fatal(VM *vm, const char *fmt, ...) {
+    /* a fatal error met in telling of one -- frames found broken by the
+       walk that names the function and prints the trace -- is told
+       alone, without the frames */
+    static int telling;
+    int first = !telling++;
     va_list ap;
     fflush(stdout);
-    fprintf(stderr, "runevm: fatal error at pc %u", vm->pc);
     FrameRef top;
-    if (vm_frame_top(vm, &top) && top.func < vm->prog.nfuncs)
-        fprintf(stderr, " in %s", vm->prog.funcs[top.func].name);
+    int named = first && vm_frame_top(vm, &top) && top.func < vm->prog.nfuncs;
+    fprintf(stderr, "runevm: fatal error at pc %u", vm->pc);
+    if (named) fprintf(stderr, " in %s", vm->prog.funcs[top.func].name);
     fprintf(stderr, ": ");
     va_start(ap, fmt);
     vfprintf(stderr, fmt, ap);
     va_end(ap);
     fprintf(stderr, "\n");
-    vm_print_trace(vm, stderr);
+    if (first) vm_print_trace(vm, stderr);
     exit(2);
 }
 
@@ -80,7 +85,8 @@ void vm_grow_stack(VM *vm, size_t need) {
     if (!ns) { fprintf(stderr, "runevm: out of memory (stack)\n"); exit(2); }
     vm->stack = ns;
     vm->stack_cap = ncap;
-    if (vm->stack_room) vm->stack_room = (uintptr_t)(ns + vm->stack_clean);   /* where the clean part ends now */
+    if (vm->stack_room) vm->stack_room = vm_room(vm, vm->stack_clean);   /* where the clean part ends now */
+    vm_frames_stack_moved(vm);
 }
 
 /* (frames as many as the stack's slots may be: a frame has a slot at least,
@@ -114,15 +120,14 @@ void vm_claim_stack(VM *vm, size_t need) {
     vm_grow_stack(vm, need);
     size_t to = need + CLEAN_AHEAD < vm->stack_cap ? need + CLEAN_AHEAD : vm->stack_cap;
     if (to <= vm->stack_clean) {   /* claimed already, but for an interrupt's 0 */
-        vm->stack_room = (uintptr_t)(vm->stack + vm->stack_clean);
+        vm->stack_room = vm_room(vm, vm->stack_clean);
         clean_written(vm);
         return;
     }
     /* from the clean part's end, which an interrupt may have made 0 */
     for (size_t k = vm->stack_clean > vm->sp ? vm->stack_clean : vm->sp; k < to; k++) vm->stack[k] = mk_unit();
-    while (vm->frames_cap <= to) vm_grow_frames(vm);
     vm->stack_clean = to;
-    vm->stack_room = (uintptr_t)(vm->stack + to);
+    vm->stack_room = vm_room(vm, to);
     clean_written(vm);
 }
 void vm_clean_stack(VM *vm) {
@@ -130,7 +135,7 @@ void vm_clean_stack(VM *vm) {
     for (size_t k = vm->sp; k < to; k++) vm->stack[k] = mk_unit();
     if (to > vm->sp) {
         vm->stack_clean = to;
-        if (vm->stack_room) vm->stack_room = (uintptr_t)(vm->stack + to);
+        if (vm->stack_room) vm->stack_room = vm_room(vm, to);
         clean_written(vm);
     }
 }
@@ -147,6 +152,7 @@ void vm_push_handler(VM *vm, uint32_t pc) {
     vm->handlers[vm->hp].pc = pc;
     vm->handlers[vm->hp].sp = vm->sp;
     vm->handlers[vm->hp].fp = vm_frame_id(vm);
+    vm->handlers[vm->hp].func = vm->func;   /* runtime/register's; nothing's in runevm-stack */
     vm->handlers[vm->hp].native = NULL;
     vm->hp++;
 }
@@ -293,7 +299,7 @@ int vm_raise(VM *vm, Value exn) {
         }
     }
     Handler h = vm->handlers[--vm->hp];
-    vm_frame_unwind(vm, h.fp);
+    vm_frame_unwind(vm, h.fp, h.func);
     CENSUS_UNWIND(vm);
     vm->sp = h.sp;
     vm_push(vm, exn);

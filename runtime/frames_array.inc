@@ -1,9 +1,10 @@
 /* The frames as an array of records (vm->frames, vm.h's Frame), as the
    runtime walks them (vm.h, *The frames, as the runtime reads them*;
    docs/plans/native-frames.md, M3): included by the instruction sets
-   whose engines keep their frames so -- runtime/stack/isa_stack.c, and
-   runtime/register/isa_regs.c until native-frames.md's M4 -- which define
-   these for the rest of the runtime. A frame's id is its index. */
+   whose engines keep their frames so -- runtime/stack/isa_stack.c --
+   which defines these for the rest of the runtime. A frame's id is its
+   index. (runtime/register's frames are in the value stack, isa_regs.c:
+   native-frames.md, M4.) */
 
 /* frame i as the runtime reads it: its pc is the VM's where it runs, else
    where the frame above it returns to */
@@ -13,9 +14,17 @@ static void frame_at(VM *vm, size_t i, FrameRef *f) {
     f->ret_pc = fr->ret_pc;
     f->base = fr->base;
     f->id = i;
-    f->closure = &vm->frames[i].closure;
+    f->head = fr->base;
+    f->closure = fr->closure;
+    f->closure_root = &vm->frames[i].closure;
+    f->closure_slot = NULL;
     f->pc = i == vm->fp ? vm->pc : vm->frames[i + 1].ret_pc;
+    f->bottom = i == 0;
+    f->caller_base = i ? vm->frames[i - 1].base : 0;
+    f->caller_func = i ? vm->frames[i - 1].func : 0;
 }
+
+const uint32_t isa_frame_header = 0;
 
 size_t vm_frame_id(const VM *vm) { return vm->fp; }
 
@@ -54,14 +63,16 @@ size_t vm_frames_from(VM *vm, size_t low, FrameRef **out) {
     return n;
 }
 
-int vm_frame_top_live(const VM *vm, const FrameRef *top) { return vm->top_frame == &vm->frames[top->id]; }
+int vm_frame_top_live(const VM *vm, const FrameRef *top) { return vm->top_frame == (const void *)&vm->frames[top->id]; }
 
 void vm_frames_mark_low(VM *vm, size_t id) { vm_set_fp_low(vm, id); }
+void vm_frames_stack_moved(VM *vm) { (void)vm; }
 
 size_t vm_frames_low(const VM *vm) { return vm->fp_low; }
 
-void vm_frame_push(VM *vm, uint32_t func, Obj *closure, uint32_t ret_pc, size_t base) {
-    vm_push_frame(vm, func, closure, ret_pc, base);
+size_t vm_frame_push(VM *vm, uint32_t func, Obj *closure, uint32_t ret_pc, size_t top) {
+    vm_push_frame(vm, func, closure, ret_pc, top);
+    return top;
 }
 
 void vm_frame_drop(VM *vm) { vm_frame_pop(vm); }
@@ -73,12 +84,14 @@ void vm_frame_top_level(VM *vm) {
     vm_push_frame(vm, 0, NULL, 0, 0);
 }
 
-void vm_frame_unwind(VM *vm, size_t id) {
+void vm_frame_unwind(VM *vm, size_t id, uint32_t func) {
+    (void)func;
     vm->fp = id;
     if (vm->fp < vm->fp_low) vm_set_fp_low(vm, vm->fp);
 }
 
-int vm_frames_install(VM *vm, const FrameRecord *frames, size_t n) {
+int vm_frames_install(VM *vm, const FrameRecord *frames, size_t n, const char **err) {
+    *err = "out of memory";
     free(vm->frames);
     vm->frames = NULL;
     vm->frames_active = n > 0;
