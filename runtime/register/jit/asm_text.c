@@ -194,6 +194,7 @@ void as_divmod(Asm *a, int divisor) { emit(a, "cqo"); emit(a, "idiv %s", r64(a, 
 void as_udivmod(Asm *a, int divisor) { emit(a, "xor %%edx, %%edx"); emit(a, "div %s", r64(a, divisor)); }
 void as_add_mi(Asm *a, int base, int32_t disp, int32_t v) { emit(a, "addq $%d, %s", (int)v, mem(a, base, disp)); }
 void as_add_rm(Asm *a, int rd, int base, int32_t disp) { emit(a, "add %s, %s", mem(a, base, disp), r64(a, rd)); }
+void as_add_rm_to_mem(Asm *a, int base, int32_t disp, int rs) { emit(a, "addq %s, %s", r64(a, rs), mem(a, base, disp)); }
 void as_sub_rm(Asm *a, int rd, int base, int32_t disp) { emit(a, "sub %s, %s", mem(a, base, disp), r64(a, rd)); }
 void as_cmp_rm(Asm *a, int r, int base, int32_t disp) { emit(a, "cmp %s, %s", mem(a, base, disp), r64(a, r)); }
 void as_cmp_mi(Asm *a, int base, int32_t disp, int32_t v) { emit(a, "cmpq $%d, %s", (int)v, mem(a, base, disp)); }

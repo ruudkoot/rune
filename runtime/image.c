@@ -615,6 +615,7 @@ static int read_image(VM *vm, FILE *in, int want, char *err, size_t errlen) {
        smaller current cap first makes the narrowing conversion safe. */
     if (intinf_memory < vm_intinf_gmp_memory(vm)) vm->intinf_gmp_memory = (size_t)intinf_memory;
     vm->gc_stress = (size_t)get_u64(&s);
+    vm_alloc_limit(vm);
     vm->gc_count = (size_t)get_u64(&s);
     vm->gc_user_us = (int64_t)get_u64(&s);
     vm->gc_sys_us = (int64_t)get_u64(&s);

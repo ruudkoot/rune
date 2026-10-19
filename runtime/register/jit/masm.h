@@ -9,8 +9,9 @@
      r13  the VM (not r12, whose every memory operand is a byte longer)
      r14  the frame's registers: vm->stack + 8 * the frame's base
      r15  the count of instructions executed
-   (rbp is free since native-frames.md's M4, where performance M6 kept the
-   frame's record in it.) Register k of the frame is the word at
+     rbp  the allocation pointer, alloc.from + alloc.used (native-frames.md,
+          M8: Masm.alloc_reg; performance M6 kept the frame's record in it)
+   Register k of the frame is the word at
    [r14 + 8 k]. The frame's stack pointer is its base + nlocals, plus what
    a primitive's arguments push. The frame's header is below its
    registers (vm.h, isa_frame_header; native-frames.md, M4): [r14 - 8]
@@ -126,6 +127,14 @@ typedef struct Masm {
     Asm a;
     int win;              /* the Windows convention for calls into C */
     uint32_t func;        /* the function, which a sync tells the VM (VM.func) */
+    /* the allocation pointer in R_BASEI (native-frames.md, M8): alloc's
+       next byte, alloc.from + alloc.used, which a sync writes back (and
+       the bytes allocated since with it) and a reload takes again; 0 for
+       the text backend's templates, whose code keeps its frame there */
+    int alloc_reg;
+#ifdef RUNE_ALLOC_RUNS
+    uint32_t run_seq, alloc_seq;   /* a measuring build's: the run being made, and the last that allocated (masm.c) */
+#endif
     uint32_t nlocals;     /* the function's registers */
     uint32_t nslots;      /* the registers and what a primitive's arguments push: the frame's slots */
     uint32_t nfields;     /* the fields of the object ms_alloc last made, or UINT32_MAX where the object in hand is another's */
@@ -347,8 +356,13 @@ void ms_exit(Masm *m, uint32_t pc, uint32_t remaining);
 void ms_handback_rax(Masm *m);                                     /* with the answer in rax */
 
 /* the heap: rax := an object of n fields, or to slow where it would not
-   fit or --gc-stress asks; the header written, the counts kept */
+   fit or --gc-stress asks; the header written, the counts kept. With the
+   allocation pointer in a register (Masm.alloc_reg; native-frames.md,
+   M8) a bump of it and a compare with VM.alloc_limit, the bytes counted
+   from its progress at the next sync, the object here; the slow path
+   takes the bump back first (ms_alloc_undo). */
 void ms_alloc(Masm *m, int kind, int contag, uint32_t n, AsmLabel *slow);
+void ms_alloc_undo(Masm *m, int kind, uint32_t n);
 void ms_store_field(Masm *m, int obj, uint32_t i, int32_t s);       /* field i of the object in obj := R(s) */
 void ms_need_unmarked(Masm *m, AsmLabel *slow);                     /* to slow while the low-pause collector's cycle marks (the barrier's flag; before a store) */
 void ms_set_field(Masm *m, int obj, uint32_t i, int32_t s);         /* a store into an object that exists, through the barrier: field i of the object in obj := R(s); obj is not kept; R_S2, R_S3 and R_S6 clobbered */

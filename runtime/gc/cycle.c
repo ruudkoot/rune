@@ -196,6 +196,7 @@ static void cycle_finish(VM *vm) {
     vm->box_bytes_live = vm->gc.old_boxes;
     vm->gc.marking = 0;
     vm->alloc.size = vm->gc.nursery_size;   /* no slice point (slice_point) */
+    vm_alloc_limit(vm);
     vm->gc.cycles++;
     vm->gc_count++;
     if (heap_used(vm) > vm->max_live) vm->max_live = heap_used(vm);
@@ -218,6 +219,7 @@ static void slice_point(VM *vm) {
     size_t every = vm->gc.stress_cycles && vm->gc_stress ? CYCLE_STRESS_EVERY : vm->gc.slice_every;
     size_t room = vm->gc.nursery_size - vm->alloc.used;
     vm->alloc.size = vm->gc.marking && gray_left(vm) && every < room ? vm->alloc.used + every : vm->gc.nursery_size;
+    vm_alloc_limit(vm);
     vm->gc.slice_from = vm->alloc.used;
 }
 

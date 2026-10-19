@@ -201,6 +201,7 @@ void as_divmod(Asm *a, int divisor);                        /* signed: R_S0 / di
 void as_udivmod(Asm *a, int divisor);
 void as_add_mi(Asm *a, int base, int32_t disp, int32_t v);
 void as_add_rm(Asm *a, int rd, int base, int32_t disp);
+void as_add_rm_to_mem(Asm *a, int base, int32_t disp, int rs);   /* [base + disp] += rs (64 bits) */
 void as_sub_rm(Asm *a, int rd, int base, int32_t disp);
 void as_cmp_rm(Asm *a, int r, int base, int32_t disp);
 void as_cmp_mi(Asm *a, int base, int32_t disp, int32_t v);
@@ -255,7 +256,7 @@ void as_ret_word(Asm *a, int base, int32_t disp);
 void as_ret(Asm *a);
 void as_trap(Asm *a);
 void as_setcc(Asm *a, int rd, int cc);
-#ifdef RUNE_JIT_CONV
+#if defined(RUNE_JIT_CONV) || defined(RUNE_ALLOC_RUNS)
 void as_count(Asm *a, uint64_t *counter);   /* *counter += 1; every register and the flags kept (a measuring build's; x86-64) */
 #endif
 void as_push(Asm *a, int r);

@@ -41,7 +41,7 @@ plan's.
 | M5 | The watermark by a return barrier | done (2026-10-19): the frame at the watermark returns through a stub that lowers it and moves itself to the caller; no other return compares anything; a `fib` call 29.0 to 27.0 instructions, a `tak` call 37.3 to 35.3 (targets 24 and 32 short); the bootstrap −1.1% instructions, HOL's kernel work −2.6%; 64,033 returns through the barrier in the bootstrap's 72M; `--count` and every output unchanged (*M5*) |
 | M6 | Arguments in registers | done (2026-10-19), kept: a known call, and a tail call, puts its arguments in the homes the callee's tier-2 code takes them in, at its register entry; the bootstrap −0.93% instructions (the gate 0.5%), HOL's kernel work −1.06%; a `fib` call 27.0 to 26.0 instructions, a `tak` call 35.3 to 31.7 (target for `fib` 23.5 short); `--count` and every output unchanged (*M6*) |
 | M7 | Returns the processor predicts | done (2026-10-19) behind `--jit-returns=call`, the default staying `jmp`: a call by `call`, a return by `push [r14-8]; ret`; a `fib` call 8.05 to 7.62 cycles, a `tak` call 10.08 to 8.65, the instructions the same; on the whole programs 0.1% and 0.6% more instructions and the cycles not shown better on a loaded machine (the gate 1%); M9 measures again (*M7*) |
-| M8 | The allocation pointer in a register | not started |
+| M8 | The allocation pointer in a register | done (2026-10-19): the pointer in `rbp` (`x21`), an object 5 instructions before its header (10), the bytes from the pointer's progress at the syncs, the objects by a counter per object -- D7's count per run not built, the lead's call (*M8*); the bootstrap −1.59% instructions (target 2%), HOL's kernel work −6.15% (target 2.5%); `--count`'s bytes and objects unchanged everywhere |
 | M9 | Measure again: the owner's goal | not started |
 
 The owner took every decision as recommended on 2026-10-12 (*Decisions*).
@@ -1623,6 +1623,47 @@ objects per run, `--gc-stress` through the limit.
   2.5% fewer;
 * the bytes and objects of `--count` unchanged on every engine and every
   program; `--gc-stress`, `--gc-verify` and `make test-heap` green.
+
+**Done** (2026-10-19; the JIT's `masm.c`, `compile.c`, the assemblers;
+`vm.h`, `gc/chunk.c`, `gc/cycle.c`, `heap.c`, `gc/check.c`):
+
+* **The pointer** is `alloc.from + alloc.used`, in `rbp` (`x21`) while
+  compiled code runs (`Masm.alloc_reg`). An object is `mov rax, rbp; add
+  rbp, size; cmp rbp, [vm.alloc_limit]; ja slow`, `add [vm.objects], 1`
+  and its header: 5 instructions before the header where there were 10
+  (the test of `--gc-stress`, the load, add, compare and store of
+  `alloc.used`, the two counters, the base added). `VM.alloc_limit` is
+  the end of `alloc`'s room, which C makes again wherever that changes
+  (`vm_alloc_limit`: the allocation view, the low-pause collector's slice
+  points, an object past the room, `--gc-stress` set), and 0 under
+  `--gc-stress`, so that every allocation goes to C, which counts and
+  collects as the interpreter does; `--gc-verify` checks it. The slow path
+  takes the bump back and calls C as before.
+* **The bytes** are counted from the pointer's progress: a sync writes
+  `alloc.used` back and adds what the pointer moved since to
+  `bytes_allocated` (5 instructions), a reload and the enter stub take the
+  pointer again (2), and so do the box's helper's path and the stubs that
+  leave for the interpreter. The templates of runeopt keep `alloc.used`
+  (their code keeps its frame in `rbp`): `src/opt/x64_layout.sml` is the
+  same.
+* **The objects** keep a counter written per object. D7 B counts them by
+  a constant added once per run that allocates. That is not built -- the
+  lead's call, 2026-10-19, which the owner may overrule: it saves the
+  inline allocations less the runs that make one, measured (a build with
+  `RUNE_ALLOC_RUNS`) at 52.6M less 41.7M on the bootstrap, 10.9M
+  instructions or 0.08%, and 542.4M less 468.7M on HOL's kernel work,
+  73.8M or 0.19%; and it needs a correction wherever a run is left after a
+  call into C -- slow paths, raises, the hand-backs, the exits -- which
+  only `check-jit`'s executed paths would hold to the counts. So the
+  target's "no counter written per object" is missed, and the bootstrap's
+  2% by about that much.
+* **Measured** (`perf stat`, exact; M7's VM against M8's): the bootstrap
+  13.824G to 13.604G instructions (−1.59%; target 2%), HOL's kernel work
+  42.366G to 39.759G (−6.15%; target 2.5%); the seven programs of MLton's
+  set `logic` −7.5%, `model-elimination` −7.0%, `tyan` −6.2%, `nucleic`
+  −1.2%, `barnes-hut` −0.9%, `fib` and `tak` (which allocate nothing) 0;
+  `--count`'s bytes and objects the same at every tier, under
+  `--gc-stress` and `--gc-verify`, and under both returns of M7.
 
 ### M9. Measure again: the owner's goal (S)
 

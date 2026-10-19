@@ -407,6 +407,13 @@ void jit_print_stats(void) {
             (unsigned long long)jit->compiled, jit->nfuncs, (unsigned long long)jit->compiled_opt, jit->compile_seconds, (unsigned long long)jit->code_used,
             (unsigned long long)jit->dead_bytes, (unsigned long long)jit->handed_native, (unsigned long long)jit->handed_interp,
             (unsigned long long)jit->osr_entries, (unsigned long long)jit->deopts, (unsigned long long)jit->invalidated);
+#ifdef RUNE_ALLOC_RUNS
+    {
+        extern uint64_t jit_alloc_runs[2];
+        fprintf(stderr, "runevm: jit: %llu inline allocations in %llu runs that allocate\n",
+                (unsigned long long)jit_alloc_runs[0], (unsigned long long)jit_alloc_runs[1]);
+    }
+#endif
     if (the_vm && the_vm->barrier_runs)
         fprintf(stderr, "runevm: jit: the stack's return barrier: %llu returns through it\n", (unsigned long long)the_vm->barrier_runs);
     if (jit->homes_wanted[0] | jit->homes_wanted[1] | jit->homes_too_large) {

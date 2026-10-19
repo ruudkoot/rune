@@ -297,6 +297,7 @@ int main(int argc, char **argv) {
     vm->stats = stats;
     vm->count = count;
     vm->gc_stress = gc_stress;
+    vm_alloc_limit(vm);
     vm->gc_verify = gc_verify;
     vm->emulate_fork = emulate_fork;
     vm->checked = checked;

@@ -195,6 +195,9 @@ const char *heap_check(VM *vm, const void **at) {
             a += obj_size(o);
         }
     for (size_t i = 0; i < vm->sp && !c.failed; i++) check_value(&c, &vm->stack[i], "a slot of the stack that is no object's");
+    /* compiled code's limit of allocation where alloc's room ends (vm.h, vm_alloc_limit; native-frames.md, M8) */
+    if (!c.failed && vm->alloc_limit != (vm->gc_stress || !vm->alloc.from ? 0 : (uintptr_t)(vm->alloc.from + vm->alloc.size)))
+        check_fail(&c, "the limit of compiled code's allocation not where the allocation's room ends", NULL);
     /* below the stack's watermark (minor.c), nothing young: a pop of a frame
        that did not lower it would leave a frame unscanned */
     if (vm->gc.nursery && vm->frames_active && !c.failed) {

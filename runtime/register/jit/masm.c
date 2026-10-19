@@ -897,6 +897,23 @@ static int may_move(const Home *h) {
 }
 /* the count to the VM: what the instructions so far make, the rest of the
    run, counted where it began, less (Masm.ahead; R_S0 clobbered) */
+/* the allocation pointer (Masm.alloc_reg; native-frames.md, M8) written
+   back where C can look -- alloc.used, and the bytes allocated since it
+   was last, which are what compiled code's bump moved it by -- and taken
+   again after; R_S0 clobbered */
+static void store_alloc(Masm *m) {
+    if (!m->alloc_reg) return;
+    as_mov_rr(&m->a, R_S0, BASEI);
+    as_sub_rm(&m->a, R_S0, VMR, OFF(alloc.from));
+    as_sub_rm(&m->a, R_S0, VMR, OFF(alloc.used));
+    as_add_rm_to_mem(&m->a, VMR, OFF(bytes_allocated), R_S0);
+    as_add_rm_to_mem(&m->a, VMR, OFF(alloc.used), R_S0);
+}
+static void reload_alloc(Masm *m) {
+    if (!m->alloc_reg) return;
+    as_ld64(&m->a, BASEI, VMR, OFF(alloc.from));
+    as_add_rm(&m->a, BASEI, VMR, OFF(alloc.used));
+}
 static void store_count(Masm *m) {
     if (!m->ahead) { as_st64(&m->a, VMR, OFF(instructions), COUNTR); return; }
     as_lea(&m->a, R_S0, COUNTR, -1, 1, -(int32_t)m->ahead);
@@ -984,9 +1001,11 @@ void ms_emit_box(Masm *m, Slow *sp) {
     ms_store_fp(m, m->nlocals + (uint32_t)s.c);
     store_count(m);
     store_top_live(m);
+    store_alloc(m);
     as_mov_ri(&m->a, ms_arg(m, 1), s.a);
     as_ld64(&m->a, ms_arg(m, 2), VMR, at);
     ms_call(m, (MsHelper)(real ? m->box_real : m->box_num));
+    reload_alloc(m);   /* the box allocated, and may have collected */
     for (uint32_t r = 0; m->homes && r < m->nlocals; r++) {
         const Home *h = &m->homes[r];
         if (h->kind == HOME_SLOT || !live_at(m, live, r)) continue;
@@ -1363,6 +1382,7 @@ void ms_sync(Masm *m, uint32_t pc, int pushed) {
     ms_store_fp(m, m->nlocals + (uint32_t)pushed);
     store_count(m);
     store_top_live(m);
+    store_alloc(m);
     if (m->verify) {   /* for the check after the call (ms_reload, M7) */
         as_ld64(&m->a, R_S0, VMR, OFF(gc_count));
         as_st64(&m->a, VMR, OFF(verify_gc), R_S0);
@@ -1378,6 +1398,7 @@ void ms_reload(Masm *m) {
     as_ld64(&m->a, BASER, VMR, OFF(fp));
     as_shl_ri(&m->a, BASER, VALUE_SHIFT);
     as_add_rm(&m->a, BASER, VMR, OFF(stack));   /* the stack itself has no register: only this wants it */
+    reload_alloc(m);
     /* the homes live at the instruction's entry (the call clobbered them)
        and at its end (the helper may have written the slot of the one it
        defines) */
@@ -1456,6 +1477,9 @@ void ms_call(Masm *m, MsHelper helper) {
    the branch after (emit.c, a fused compare and branch, M7) */
 void ms_count(Masm *m, uint32_t k) {
     if (!k) return;
+#ifdef RUNE_ALLOC_RUNS
+    m->run_seq++;
+#endif
     int role = ms_role(m, MR_COUNT);
     as_lea(&m->a, COUNTR, COUNTR, -1, 1, (int32_t)k);
     ms_role(m, role);
@@ -1464,6 +1488,7 @@ void ms_exit(Masm *m, uint32_t pc, uint32_t remaining) {
     ms_writeback(m, pc);
     as_st32i(&m->a, VMR, OFF(pc), (int32_t)pc);
     ms_store_fp(m, m->nlocals);
+    store_alloc(m);
     as_lea(&m->a, R_S0, COUNTR, -1, 1, -(int32_t)remaining);
     as_st64(&m->a, VMR, OFF(instructions), R_S0);
     ms_handback(m, RUN_INTERP);
@@ -1479,9 +1504,31 @@ void ms_handback_rax(Masm *m) {
 }
 
 /* ---- the heap ---- */
+#ifdef RUNE_ALLOC_RUNS
+uint64_t jit_alloc_runs[2];
+#endif
 void ms_alloc(Masm *m, int kind, int contag, uint32_t n, AsmLabel *slow) {
     uint32_t size = (uint32_t)obj_size_of(kind, n);
     int role = ms_role(m, MR_ALLOC);
+#ifdef RUNE_ALLOC_RUNS
+    /* a measuring build's (native-frames.md, M8): the inline allocations,
+       and the runs that make one -- counted at their first -- which a count
+       of objects per run would add to once */
+    as_count(&m->a, &jit_alloc_runs[0]);
+    if (m->alloc_seq != m->run_seq) { m->alloc_seq = m->run_seq; as_count(&m->a, &jit_alloc_runs[1]); }
+#endif
+    if (m->alloc_reg) {
+        as_mov_rr(&m->a, R_S0, BASEI);
+        as_add_ri(&m->a, BASEI, (int32_t)size);
+        as_cmp_rm(&m->a, BASEI, VMR, OFF(alloc_limit));
+        as_jcc(&m->a, CC_A, slow);
+        as_add_mi(&m->a, VMR, OFF(objects_allocated), 1);
+        as_st32i(&m->a, R_S0, 0, (int32_t)((uint32_t)kind | ((uint32_t)contag << 16)));
+        as_st32i(&m->a, R_S0, 4, (int32_t)n);
+        m->nfields = n;
+        ms_role(m, role);
+        return;
+    }
     as_cmp_mi(&m->a, VMR, OFF(gc_stress), 0);
     as_jcc(&m->a, CC_NE, slow);
     as_ld64(&m->a, R_S0, VMR, OFF(alloc.used));
@@ -1497,6 +1544,9 @@ void ms_alloc(Masm *m, int kind, int contag, uint32_t n, AsmLabel *slow) {
     as_st32i(&m->a, R_S0, 4, (int32_t)n);
     m->nfields = n;
     ms_role(m, role);
+}
+void ms_alloc_undo(Masm *m, int kind, uint32_t n) {
+    if (m->alloc_reg) as_sub_ri(&m->a, BASEI, (int32_t)obj_size_of(kind, n));
 }
 void ms_store_field(Masm *m, int obj, uint32_t i, int32_t s) {
     if (i >= m->nfields) bug("a field the object does not have", i, m->nfields);
@@ -1689,6 +1739,7 @@ void ms_emit_enter(Asm *a, int win) {
     Masm m;
     memset(&m, 0, sizeof m);
     m.a = *a; m.win = win; m.nfields = UINT32_MAX;
+    m.alloc_reg = 1;   /* the allocation pointer taken too (M8) */
     as_stub_enter(&m.a, win);   /* the VM into VMR, where to go into R_GO */
     ms_reload(&m);
     as_ld64(&m.a, COUNTR, VMR, OFF(instructions));
@@ -1711,6 +1762,10 @@ void ms_emit_fatal(Asm *a, int win, MsHelper helper) {
     memset(&m, 0, sizeof m);
     m.a = *a; m.win = win; m.nfields = UINT32_MAX;
     stub_fp(&m);   /* the frame, for the error's report (rdx: neither argument yet); its function the helper's (the record) */
+    m.alloc_reg = 1;
+    as_mov_rr(&m.a, R_S3, R_S0);   /* (the record's number, which store_alloc's rax would lose) */
+    store_alloc(&m);
+    as_mov_rr(&m.a, R_S0, R_S3);
     as_mov_rr(&m.a, ms_arg(&m, 2), R_S1);   /* first: rcx is the first argument on Windows */
     as_mov_rr(&m.a, ms_arg(&m, 1), R_S0);
     ms_call(&m, helper);
@@ -1723,7 +1778,10 @@ void ms_emit_ret_tramp(Asm *a, int win, MsHelper helper, AsmLabel *leave) {
     m.a = *a; m.win = win; m.nfields = UINT32_MAX;
     as_st64(&m.a, VMR, OFF(instructions), COUNTR);
     stub_fp(&m);   /* the frame that returns */
-    as_mov_rr(&m.a, ms_arg(&m, 1), R_S0);
+    m.alloc_reg = 1;
+    as_mov_rr(&m.a, R_S3, R_S0);   /* (the value, which store_alloc's rax would lose) */
+    store_alloc(&m);
+    as_mov_rr(&m.a, ms_arg(&m, 1), R_S3);
     ms_call(&m, helper);
     as_jmp(&m.a, leave);   /* with the answer in R_S0 */
     *a = m.a;
@@ -1747,6 +1805,8 @@ void ms_emit_call_interp(Asm *a, int win, MsHelper helper, AsmLabel *leave, int 
     if (callret) as_pop_ret(&m.a, BASER, -(int32_t)sizeof(Value));   /* a call's entry stores the return address (M7) */
     as_st64(&m.a, VMR, OFF(instructions), COUNTR);
     stub_fp(&m);   /* the callee's frame */
+    m.alloc_reg = 1;
+    store_alloc(&m);
     as_shr_ri(&m.a, R_S6, 1);   /* its function, from the word (2f + 1) the call has */
     as_st32(&m.a, VMR, OFF(func), R_S6);
     ms_call(&m, helper);

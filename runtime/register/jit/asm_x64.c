@@ -73,6 +73,7 @@ void as_divmod(Asm *a, int divisor) { x64_cqo(a); x64_idiv_r(a, divisor); }
 void as_udivmod(Asm *a, int divisor) { x64_xor_rr(a, RDX, RDX); x64_div_r(a, divisor); }
 void as_add_mi(Asm *a, int base, int32_t disp, int32_t v) { x64_add_mi(a, base, disp, v); }
 void as_add_rm(Asm *a, int rd, int base, int32_t disp) { x64_add_rm(a, rd, base, disp); }
+void as_add_rm_to_mem(Asm *a, int base, int32_t disp, int rs) { x64_add_mr(a, base, disp, rs); }
 void as_sub_rm(Asm *a, int rd, int base, int32_t disp) { x64_sub_rm(a, rd, base, disp); }
 void as_cmp_rm(Asm *a, int r, int base, int32_t disp) { x64_cmp_rm(a, r, base, disp); }
 void as_cmp_mi(Asm *a, int base, int32_t disp, int32_t v) { x64_cmp_mi(a, base, disp, v); }
@@ -132,7 +133,7 @@ void as_setcc(Asm *a, int rd, int cc) {
     x64_setcc_r8(a, cc, rd);
     x64_movzx8_rr(a, rd, rd);
 }
-#ifdef RUNE_JIT_CONV
+#if defined(RUNE_JIT_CONV) || defined(RUNE_ALLOC_RUNS)
 void as_count(Asm *a, uint64_t *counter) {
     x64_push_r(a, RAX); x64_push_r(a, RCX);
     x64_mov_ri(a, RAX, (int64_t)(intptr_t)counter);

@@ -103,6 +103,7 @@ void as_udivmod(Asm *a, int divisor) {
 }
 void as_add_mi(Asm *a, int base, int32_t disp, int32_t v) { a64_ldr(a, R_T, base, disp); a64_add_ri(a, R_T, R_T, v); a64_str(a, R_T, base, disp); }
 void as_add_rm(Asm *a, int rd, int base, int32_t disp) { a64_ldr(a, R_T, base, disp); a64_add_rr(a, rd, rd, R_T); }
+void as_add_rm_to_mem(Asm *a, int base, int32_t disp, int rs) { a64_ldr(a, R_T, base, disp); a64_add_rr(a, R_T, R_T, rs); a64_str(a, R_T, base, disp); }
 void as_sub_rm(Asm *a, int rd, int base, int32_t disp) { a64_ldr(a, R_T, base, disp); a64_sub_rr(a, rd, rd, R_T); }
 void as_cmp_rm(Asm *a, int r, int base, int32_t disp) { a64_ldr(a, R_T, base, disp); a64_cmp_rr(a, r, R_T); }
 void as_cmp_mi(Asm *a, int base, int32_t disp, int32_t v) { a64_ldr(a, R_T, base, disp); a64_cmp_ri(a, R_T, v); }

@@ -74,7 +74,8 @@ stores into the heap are `SETENV`, the primitives `ref_set` and
 into the nursery, and `ms_set_field` or `ms_set_element` in compiled
 code. The collector's state and the allocation
 state are structs of the VM (`GcState`, `AllocState`, `runtime/vm.h`): the
-fast path bumps `alloc.used` against `alloc.size`.
+fast path bumps `alloc.used` against `alloc.size` -- in compiled code a
+pointer in a register of its own against `VM.alloc_limit`, below.
 
 ## Frames, registers and the stack
 
@@ -341,8 +342,8 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   8 bytes at `[r14 + 8 k]`, and the frame's header the three words below
   (`[r14 - 8]` the return word, `[r14 - 16]` the closure, which `ENV`,
   `SELF` and a tail call read and write, `[r14 - 24]` the info word).
-  `rbp` is free since native-frames.md's M4 (performance M6 kept the
-  frame's record in it).
+  `rbp` is the allocation pointer since native-frames.md's M8 (M4 freed
+  it; performance M6 kept the frame's record in it).
   The stack itself has no register: what moves between frames reads it
   from the VM. The fields of the VM that the code names most are the
   VM's first 128 bytes (`vm.h`), where an offset is one byte of an
@@ -359,8 +360,17 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   after one, since a call may move the stack and a raise the frame. A
   call into C takes the System V or the Windows convention (`ms_call`;
   the VM is argument 0). The allocation fast path is `vm_alloc`'s in
-  line -- `--gc-stress` to the slow path, the room, the bump, the counts,
-  the header -- and a store into an object that exists (`ref_set`,
+  line (native-frames.md, M8): the allocation pointer, `alloc.from` plus
+  `alloc.used`, is in `rbp` (`x21`), and an object is `mov rax, rbp; add
+  rbp, size; cmp rbp, [vm.alloc_limit]; ja slow`, the count of objects
+  and the header -- `VM.alloc_limit` the end of `alloc`'s room, which C
+  makes again wherever it changes (`vm_alloc_limit`; `--gc-verify` checks
+  it), and 0 under `--gc-stress`, so that every allocation goes to C, which
+  stresses as the loop does. The bytes are counted from the pointer's
+  progress: `SYNC` writes `alloc.used` back and adds what the pointer moved
+  since to `bytes_allocated`, and `RELOAD` takes the pointer again, as do
+  the stubs that leave for the interpreter and the enter stub; the slow
+  path takes its bump back first. A store into an object that exists (`ref_set`,
   `array_update`, `SETENV`) is `ms_set_field`, or `ms_set_element` for an
   array's element, the store and the barrier in one operation, which sees
   the object, the field and the value as C's `gc_barrier` does (the array
@@ -851,14 +861,13 @@ of it over its encoder: x86-64 in `asm_x64.c` over `x64.c`, aarch64 in
 implementation gives:
 
 * **The registers**, under the portable names: the three the code keeps
-  (`R_VM`, `R_BASER`, `R_COUNT`; and `R_BASEI`, which it kept the frame's
-  record in before native-frames.md's M4, unused), seven scratch registers
+  (`R_VM`, `R_BASER`, `R_COUNT`; and `R_BASEI`, the allocation pointer
+  since native-frames.md's M8), seven scratch registers
   (`R_S0`, the return value of a call into C, to `R_S6`) and two
   floating (`F_S0`, `F_S1`); and tier 2's homes, which have no names
   but a table by the convention of the calls into C: `as_home_g` and
   `as_home_f` give the kth, `as_keeps_g` and `as_keeps_f` say what a
-  call into C keeps. x86-64 keeps `r13`, `r14`, `r15` (and `rbp`, free
-  since native-frames.md's M4); its
+  call into C keeps. x86-64 keeps `r13`, `r14`, `r15` and `rbp`; its
   homes are `rbx`, `r12`, `rsi`, `rdi`, `r10`, `r9` and `xmm2` to
   `xmm15` (on Windows from `xmm6`); its scratch `rax`, `rcx`, `rdx`,
   `r8` to `r11`, `xmm0`, `xmm1` -- sixteen registers for seventeen

@@ -708,6 +708,7 @@ static void emit_slow(Masm *m, Slow *sp) {
         as_mov_ri(&m->a, R_S0, k);
         as_jmp_to(&m->a, j->jit->fatal_at);
     } else if (s.kind == SLOW_ALLOC) {
+        ms_alloc_undo(m, s.a, s.n);   /* the bump the fast path made (M8) */
         ms_sync(m, s.pc, 0);
         as_mov_ri(&m->a, ms_arg(m, 1), s.a);
         as_mov_ri(&m->a, ms_arg(m, 2), s.b);
@@ -1034,6 +1035,7 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
     memset(&j, 0, sizeof j);
     ms_init(&j.m, fn->nlocals, fn->maxstack, JIT_WIN, jit->leave_at);
     j.m.func = f;
+    j.m.alloc_reg = 1;   /* the allocation pointer in a register (native-frames.md, M8) */
     j.m.verify = vm->gc_verify || vm->gc_stress;   /* the homes checked against their slots (ms_reload, M7) */
     j.m.home_fails = home_fails;
     MsMarks marks = { NULL, 0, 0 };

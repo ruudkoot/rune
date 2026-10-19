@@ -318,14 +318,20 @@ typedef struct VM {
     Value *stack;
     size_t sp, stack_cap;
     AllocState alloc;        /* where the next object goes (runtime/gc/) */
+    /* where runtime/register's compiled code may allocate up to: the
+       address of alloc's room's end, or 0 where every allocation is to go
+       to C (--gc-stress); the code keeps alloc's pointer in a register of
+       its own, and writes alloc.used back where C can look
+       (native-frames.md, M8; vm_alloc_limit) */
+    uintptr_t alloc_limit;
     uint64_t bytes_allocated;  /* not size_t: --count prints the same where it is 32 bits */
     uint64_t objects_allocated;
-    size_t gc_stress;        /* --gc-stress N: collect before every Nth allocation; 0 = off */
     /* the stack's watermark (runtime/gc/minor.c; docs/plans/garbage-collector-v2.md,
        D9): no frame below it has run since the last minor collection, so
        its slots hold no young pointer; every pop of a frame lowers it to
        the frame it returns to (vm_frame_pop) */
     size_t fp_low;
+    size_t gc_stress;        /* --gc-stress N: collect before every Nth allocation; 0 = off */
     Value *globals;
     uint8_t *global_set;
     int gc_verify;           /* --gc-verify: the heap checked before and after every collection (runtime/gc/check.c) */
@@ -647,6 +653,12 @@ static inline uintptr_t vm_room(const VM *vm, size_t clean) {
     return clean > ROOM_SLACK ? (uintptr_t)(vm->stack + (clean - ROOM_SLACK)) : 1;
 }
 void vm_claim_stack(VM *vm, size_t need);
+/* VM.alloc_limit made again where alloc's room or --gc-stress has changed
+   (native-frames.md, M8): every change of alloc.from or alloc.size ends
+   with this */
+static inline void vm_alloc_limit(VM *vm) {
+    vm->alloc_limit = vm->gc_stress || !vm->alloc.from ? 0 : (uintptr_t)(vm->alloc.from + vm->alloc.size);
+}
 void vm_clean_stack(VM *vm);
 /* an interrupt waits that the program is to take (VM.interrupt, not held
    by the mask): compiled code's calls see it at their room checks, the

@@ -91,7 +91,8 @@ keep these invariants:
   against the text backend of its assembler by `bin/runeopt-templates`):
   never write a layout fact into `x64.sml`; after a change to `masm.c` run
   `make templates`, since `check-templates` (in `make test-native`) refuses
-  a stale file. `make test-native` runs the suites as native code and wants
+  a stale file. (The JIT's allocation with its pointer in a register,
+  `Masm.alloc_reg`, is the JIT's alone: the templates keep `alloc.used`.) `make test-native` runs the suites as native code and wants
   `--count` to agree with `runevm-stack`. The primitives whose common case the
   code does itself (`runeopt --inlined`, `fastPrim` in `src/opt/x64.sml`)
   change with their C code in `runtime/prims.c`: `tests/opt/prims.sml` runs
@@ -217,7 +218,11 @@ keep these invariants:
   (`vm_frames_mark_low`, and in `isa_regs.c` the return barrier that
   keeps it, native-frames.md M5: a reader of a frame's return word sees
   through the barrier's; runeopt's code, which runs on the stack VM,
-  writes the field itself). **The homes** (tier 2,
+  writes the field itself). Compiled code keeps the allocation pointer in
+  `rbp` and writes `alloc.used` and `bytes_allocated` back at its syncs
+  (native-frames.md, M8), so C that changes `alloc.from` or `alloc.size`
+  ends with `vm_alloc_limit`, the limit the code compares with, and C
+  that reads `alloc.used` does so where the code has synced. **The homes** (tier 2,
   README.md): an emitter reads and writes a register through the
   macro-assembler's accessors only, never `[r14 + 16 k]`; `rbx`, `rsi`,
   `rdi` and `xmm2` to `xmm15` are homes, so an emitter that uses one as
