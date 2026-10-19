@@ -35,8 +35,18 @@ if [ -d "$hol/tools-rune" ]; then
 fi
 mkdir -p "$root/tests/out/hol"
 log=$root/tests/out/hol/kernel.$$.log
-"$hol/bin/buildheap" --gcthreads=1 --holstate="$hol/bin/hol.state" \
-  Arbint Arbrat "$hol/tools-poly/prelude.ML" "$hol/tools-poly/prelude2.ML" "$file" 2>&1 | tee "$log"
+state=$hol/bin/hol.state
+set -- Arbint Arbrat "$hol/tools-poly/prelude.ML" "$hol/tools-poly/prelude2.ML" "$file"
+if [ -d "$hol/tools-rune" ] && [ -n "${RUNEVM:-}${RUNEVM_OPTS:-}" ]; then
+  # HOL's buildheap execs the VM HOL was built with, and takes no options of
+  # the VM's: run what it runs, on $RUNEVM (else that VM), with $RUNEVM_OPTS
+  vm=${RUNEVM:-$(sed -n 's/^exec \([^ ]*runevm\) .*/\1/p' "$hol/bin/buildheap")}
+  [ -x "$vm" ] || { echo "hol-kernel: no runevm to run $hol on" >&2; exit 2; }
+  # shellcheck disable=SC2086
+  "$vm" ${RUNEVM_OPTS:-} --name "$hol/bin/buildheap" --restore "$state" -- --holstate="$state" "$@" 2>&1 | tee "$log"
+else
+  "$hol/bin/buildheap" --gcthreads=1 --holstate="$state" "$@" 2>&1 | tee "$log"
+fi
 n=$(grep -c '^HOLBENCH ' "$log")
 rm -f "$log"
 [ "$n" -gt 0 ] || { echo "hol-kernel: no workload ran" >&2; exit 1; }

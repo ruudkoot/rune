@@ -1,8 +1,9 @@
 # Roadmap: native frames
 
 This plan is the roadmap that [performance.md](performance.md)'s M9 asks
-for: a call at tier 2 that costs what a call costs in native code. Today a
-`fib` call at tier 2 is 82.5 machine instructions and 31 to 37 cycles;
+for: a call at tier 2 that costs what a call costs in native code. On
+2026-10-12 a `fib` call at tier 2 was 82.5 machine instructions and 31 to
+37 cycles; after performance M6 and M7 (M1, 2026-10-19) it is 39 and 11.
 MLton's is 17 and 9 to 10, Poly/ML's 14.5 and 7, OCaml's 10 and 5. The
 plan says why, what a frame must become for the gap to close, what else
 stands between Rune and OCaml, and in what order to build it.
@@ -33,7 +34,7 @@ plan's.
 | Milestone | What | State |
 |---|---|---|
 | M0 | This roadmap | done (2026-10-12); every decision taken as recommended the same day |
-| M1 | The gate: the call measured after performance M5 to M7 | not started |
+| M1 | The gate: the call measured after performance M5 to M7 | done (2026-10-19, on `db0fba57a`): the gate open; *Where we are* and the baselines measured again, the decisions' premises restated, `scripts/hol-kernel.sh` made to run on `$RUNEVM` |
 | M2 | The body: tier 2's code for an instruction | not started |
 | M3 | Frames walked, not indexed | not started |
 | M4 | Frames in the value stack | not started; prototype F1 |
@@ -82,96 +83,121 @@ What the plan was asked to answer:
 
 ## Where we are
 
-Measured on 2026-10-12 with the runtime of master `921af2cc`; Rune means
-`bin/runevm` at its default, tier 2 by the counters.
+Measured again on 2026-10-19 for M1, on `performance` `db0fba57a`, which
+has performance M1 to M3 and M5 to M8: Rune means that tree's
+`bin/runevm` at its default, tier 2 by the counters. The figures of
+2026-10-12 (master `921af2cc`), against which the experiments were made,
+stand beside them where they changed. *Measuring* says how each was taken;
+the raw results are with the drafts (`results/M9/B0/`).
 
 ### The call
 
 Machine instructions per call (exact; the difference of two run lengths,
-`perf stat -e instructions:u`), and cycles per call (the least of 7 and 9
-runs in two sessions, pinned; F1):
+`perf stat -e instructions:u`), and cycles per call (the least of 7 runs,
+pinned, in one session with F1's prototypes; F1):
 
-| | Rune, tier 2 | MLton | Poly/ML | OCaml |
-|---|---:|---:|---:|---:|
-| `fib`: instructions | 82.5 | 17.0 | 14.5 | 10.0 |
-| `fib`: cycles | 37.3, 33.1 | 10.0, 8.9 | 7.4, 6.7 | 4.9, 4.9 |
-| `tak`: instructions | 92.0 | 23.3 | 23.0 | 19.7 |
-| `tak`: cycles | 40.7, 37.5 | 10.6, 11.1 | 9.5, 8.7 | 6.5, 6.2 |
+| | Rune, tier 2 | on 2026-10-12 | MLton | Poly/ML | OCaml |
+|---|---:|---:|---:|---:|---:|
+| `fib`: instructions | 39.0 | 82.5 | 17.0 | 14.5 | 10.0 |
+| `fib`: cycles | 11.0 | 31 to 37 | 8.7 | 6.7 | 4.9 |
+| `tak`: instructions | 47.3 | 92.0 | 23.3 | 23.0 | 19.7 |
+| `tak`: cycles | 13.1 | 38 to 41 | 10.0 | 8.6 | 6.1 |
+| a call through a closure and its return: instructions | 29 | 75 | | | |
 
-The instructions are performance.md's E9 to the decimal. Where `fib`'s
-82.5 go (E9, by the role the emitters gave each machine instruction):
+Performance M6 made the call lean -- the frame's record in `rbp`, no fill,
+a return through the record's `native_ret` that tests nothing but the
+watermark, a table of calls, known calls patched, the result in `rax`
+(performance.md, M6, as built) -- and its code runs at an IPC of 3.5. A
+`fib` call is now 1.26 times MLton's cycles, a `tak` call 1.31 times.
+
+Where `fib`'s 39 go, by the role the emitters gave each machine instruction
+(callgrind with the JIT's dump at two run lengths, `scripts/jit-dump.py
+--diff`):
 
 | Role | Instructions |
 |---|---:|
-| the body: compare, subtract, add, the branch | 20 |
-| the return | 22 |
-| the frame record (`vm->frames`, `imul` by 40, seven stores) | 14 |
-| the count | 5.5 |
-| the fill of the callee's registers with unit | 5 |
-| the landing: homes loaded after the return | 4 |
-| two room checks and the poll | 9 |
-| arguments, the jump, the write-back | 3 |
+| the body: compare, subtract, add, the branch | 10 |
+| the frame: the record's four words written, the record and the registers moved on | 10 |
+| the return: the value, `native_ret` loaded, the watermark compared, the jump | 5 |
+| the landing: the record and the registers moved back, homes loaded, the result | 5 |
+| the count | 3 |
+| the room check, which is the poll | 3 |
+| arguments, the write-back, the jump | 3 |
+
+Six of them are stores. A call through a closure is 24 instructions
+(the frame 10, the room 4, the argument 3, the landing 3, the closure 2,
+its pointer's load 1, the jump 1) and its return 5. What is left of the
+frame is the record: four words written at every call (the function and
+pc in one, the base, the closure, the return address), read back by the
+return, and the watermark compared at every return.
 
 ### Where the instructions go
 
 Bytecode instructions executed in compiled code, and their machine
-instructions, from a callgrind run with the JIT's dump (performance.md
-E12's runs, counted again by pattern for this plan: F5):
+instructions (callgrind with the JIT's dump, F5's script):
 
 | Instruction | Bootstrap: executions | machine instructions | each | HOL slice: executions | machine instructions | each |
 |---|---:|---:|---:|---:|---:|---:|
-| `RET` | 76.1M | 1.76G | 23.1 | 52.5M | 1.21G | 23.0 |
-| `CALLK` | 54.3M | 1.60G | 29.5 | 26.0M | 0.76G | 29.3 |
-| `CALL` (through a closure) | 21.8M | 1.10G | 50.6 | 27.5M | 1.43G | 52.0 |
-| `TAILCALLK` | 13.3M | 0.32G | 24.1 | 15.1M | 0.33G | 21.8 |
-| `TAILCALL` | 2.4M | 0.09G | 36.7 | 6.9M | 0.25G | 35.5 |
-| `ENV` (a closure's field) | 37.5M | 0.40G | 10.6 | 31.1M | 0.33G | 10.6 |
-| `JUMPIFNOTTAG` (a constructor's tag) | 99.7M | 0.73G | 7.3 | 50.1M | 0.38G | 7.6 |
-| `PRIM` | 178.8M | 1.65G | 9.2 | 23.9M | 0.30G | 12.4 |
-| all compiled code | | 11.09G of 17.85G | | | 7.12G of 11.02G | |
+| `CALLK` | 61.3M | 1.36G | 22.2 | 27.1M | 0.56G | 20.8 |
+| `CALL` (through a closure) | 10.3M | 0.29G | 28.2 | 28.3M | 0.82G | 29.0 |
+| `RET` | 72.0M | 0.37G | 5.2 | 54.6M | 0.28G | 5.1 |
+| `TAILCALLK` | 12.6M | 0.12G | 9.9 | 13.9M | 0.12G | 8.4 |
+| `TAILCALL` | 1.2M | 0.02G | 14.9 | 7.2M | 0.11G | 14.8 |
+| `ENV` (a closure's field) | 23.1M | 0.16G | 6.7 | 32.1M | 0.23G | 7.1 |
+| `JUMPIFNOTTAG` (a constructor's tag) | 92.5M | 0.92G | 9.9 | 47.7M | 0.44G | 9.2 |
+| `SWITCH` | 17.5M | 0.30G | 17.3 | 5.3M | 0.08G | 14.6 |
+| `FIELD` | 161.8M | 0.75G | 4.6 | 58.7M | 0.28G | 4.8 |
+| `PRIM` | 212.6M | 1.83G | 8.6 | 35.0M | 0.37G | 10.7 |
+| all compiled code | | 7.96G of 16.32G | | | 4.66G of 9.54G | |
 
-So the six instructions of calls and closures are 47% of the compiled
-code's instructions in the bootstrap and 60% in HOL's slice. A closure call
-is HOL's largest single cost: 20% of its compiled code, 52 machine
-instructions for the call alone, where Poly/ML calls a closure with
-`call *(%rdx)`.
-
-### What performance M5 to M7 will leave
-
-Performance M6 makes the call lean on the VM's own stacks: the fill
-dropped, the poll folded into the room check, the frames array grown with
-the stack, the landing in line, the frame's address a pointer, a return
-that tests nothing, the result in a register, the closure in a register,
-counting per extended block. Its targets: a `fib` call at most 50
-instructions and 8 stores, a closure call at most 25, calls and returns at
-most 18% of the bootstrap's instructions.
-
-F1's first variant is that end state written by hand, with a body as good
-as the other variants': **39.5 instructions and 17 to 18 cycles per
-`fib` call, 48 and 21 to 22 per `tak` call.** So performance M6 can meet
-its targets, and still leave the call at about twice MLton's cycles. The
-frame record is what remains: a 40-byte record in another array, written
-with six stores (five fields and the frame's pointer) and read back by
-every return, with the watermark kept by a compare and the caller's
-registers rebuilt from an index.
+By role, the call's machinery -- the frame, the landing, the return, the
+room, the arguments, the closure, the jump, the write-back, the poll -- is
+2.33G of the bootstrap's compiled code (29%) and 1.88G of HOL's (40%;
+60% on 2026-10-12). The body is 50% and 36%, allocation 8% and 14%.
+The bytecode's six instructions of calls and closures are 29% and 45%.
 
 ### The whole programs
 
-* **The bootstrap** (the compiler compiling itself) takes 11.95G cycles
-  and 17.33G instructions against 4.87G and 3.78G for MLton's build of the
-  compiler (performance.md E4): 2.46 times the cycles, 4.6 times the
-  instructions. It executes 1.03G bytecode instructions (F4), so MLton's
-  code does in 3.7 machine instructions what Rune's bytecode does in one,
-  and tier 2's code spends 10.8.
-* **HOL's kernel work** takes 51.4G cycles and 87.5G instructions against
-  8.75G and 11.4G on Poly/ML (performance.md's B1 run): 5.9 times the
-  cycles. It executes 15.8G bytecode instructions (F4): more than Poly/ML's
-  whole run executes machine instructions. So on HOL the bytecode itself,
-  not only its translation, is part of the gap (*What else stands between
-  Rune and OCaml*).
-* **MLton's set**: programs of calls and closures run at 2.8 to 4.2 times
-  MLton's cycles (`barnes-hut`, `nucleic`, `tak`, `logic`,
-  `model-elimination`, `tyan`, `fib`; performance.md E2).
+* **The bootstrap** -- the compiler of `db0fba57a` compiling its own
+  sources, a workload of its own frozen with the drafts (`results/M9/bootwl`,
+  1.217G bytecode instructions) -- takes 15.23G instructions and 10.2G to
+  10.5G cycles, against 4.85G and 5.9G to 6.2G for MLton's build of the
+  same compiler doing the same compile: 1.72 times the cycles and 3.1
+  times the instructions (2.46 and 4.6 on 2026-10-12, with that day's
+  compiler). Tier 2's code is 60% of its cycles and the collector 30%
+  (`perf record` over `--jit-perf-map`, `scripts/perf-groups.awk`).
+* **HOL's kernel work** (`scripts/hol-kernel.sh` on HOL4 built by M8's
+  compiler, the drafts' `hol/HOL-midM8`) takes 53.0G instructions and 25.2G to
+  25.9G cycles, against 11.3G to 11.5G and 8.5G to 8.6G on Poly/ML: 2.98
+  times the cycles and 4.6 times the instructions (5.9 and 7.7 on
+  2026-10-12). Tier 2's code is 84% of its cycles, the collector 7%. Its
+  bytecode executes 15.8G instructions, still more than Poly/ML's whole
+  run executes machine instructions.
+* **MLton's set** (`scripts/perf-cycles.sh --mlton-bench`, the least of
+  three runs): on the 37 programs both ran, the geometric mean of Rune's
+  cycles over MLton's is 4.58 and the median 3.40 (10.3 and 8.0 on
+  2026-10-12). The seven programs of calls and closures run at 1.32 to
+  3.16 times MLton (2.8 to 4.2): `fib` 1.32, `tak` 1.76, `tyan` 1.83,
+  `logic` 2.12, `nucleic` 2.35, `model-elimination` 2.41, `barnes-hut`
+  3.16. The outliers are IntInf (`pidigits` 681; `smith-normal-form`
+  stopped) and the Basis's own code (`output1` 21, `checksum` 18,
+  `vector32-concat` 13); `tensor` wants MLton's `Unsafe`. tests/perf's
+  `fib` and `tak`, whole, take 1.36 and 1.35 times MLton's cycles (3.9 and
+  3.5 on 2026-10-12).
+
+### The gate: the call is still the largest part
+
+performance.md's M9 asked for native frames only if, after its M5 to M7,
+the call were still the largest part of HOL's gap to Poly/ML. It is:
+
+* HOL's compiled code is 84% of its cycles, and in it the call's machinery
+  is the largest part (40% of its instructions), before the body (36%)
+  and allocation (14%);
+* a call costs 1.26 to 1.31 times MLton's cycles, and F1's prototypes in
+  the same session do it in 6.2 to 7.6 cycles against tier 2's 11.0 (*F1*).
+
+So the plan goes ahead (M1), with the restatements of *Decisions* where
+what M6 and M7 built changed a premise.
 
 ## What the implementations do
 
@@ -325,9 +351,13 @@ first session and of 9 in the second):
 
 What it says:
 
-* **Lean VM frames stop at about twice MLton** (variant 1: 17 to 18
-  cycles a `fib` call against 9 to 10). The record and its read-back are
-  what remains.
+* **Lean VM frames stop at about twice MLton** in this prototype
+  (variant 1: 17 to 18 cycles a `fib` call against 9 to 10). The record
+  and its read-back are what remains. *Performance M6 did better than
+  variant 1* (M1, 2026-10-19): with the same instructions, its record's
+  address in `rbp` where variant 1 kept it in the VM's memory, its `fib`
+  call takes 11.0 cycles and its `tak` call 13.1 (*Where we are*), 1.26
+  and 1.31 times MLton.
 * **Native frames reach MLton at once** (variants 2 to 5: 7 to 10 cycles a
   `fib` call, 10 to 13 a `tak` call). Variants 4 to 9 meet
   performance.md's target for M9, at most 25 instructions and 10 cycles,
@@ -353,6 +383,28 @@ What it says:
   return address stored and reloaded where OCaml's `call` and `ret` do it
   (2), a home loaded from the argument register (1), and untagging (0.5).
   That floor is the price of Rune's contract, not of its frames.
+
+**A third session** (2026-10-19, M1), beside performance M6 and M7 as
+built (`db0fba57a`), least of 7 runs:
+
+| | `fib`: instructions | cycles | `tak`: instructions | cycles |
+|---|---:|---:|---:|---:|
+| Rune, tier 2 (`db0fba57a`) | 39.0 | 11.0 | 47.3 | 13.1 |
+| 1 lean VM frames | 39.5 | 16.5 | 48.0 | 19.4 |
+| 2 native, 3 words written | 25.5 | 10.2 | 34.0 | 12.6 |
+| 3 ... with a return barrier | 23.5 | 7.6 | 32.0 | 10.0 |
+| 5 ... one word written | 21.0 | 7.0 | 30.0 | 8.9 |
+| 6 ... `call`/`ret`, `rsp` moved | 19.0 | 5.8 | 28.0 | 7.8 |
+| 9 ... 5, returns predicted | 21.0 | 6.2 | 30.0 | 7.9 |
+| MLton | 17.0 | 8.7 | 23.3 | 10.0 |
+| Poly/ML | 14.5 | 6.7 | 23.0 | 8.6 |
+| OCaml | 10.0 | 4.9 | 19.7 | 6.1 |
+
+So native frames would take a `fib` call from tier 2's 11.0 cycles to 7.0
+(variant 5) or 6.2 (variant 9), and a `tak` call from 13.1 to 8.9 or 7.9:
+32 to 44% fewer cycles, 17 to 18 fewer instructions -- less than against
+the base of 2026-10-12, and still the difference between 1.3 times MLton
+and 0.7 to 0.8 times.
 
 ### F2: what returns mispredict today
 
@@ -391,6 +443,10 @@ frame to native code, and back.
 | the bootstrap | 170,655 | 173,975 | 91.9M (76.2M not in tail position) | 0.4% |
 | HOL's kernel work | 328,786 | 330,834 | about 2.4G (one in 6.5 bytecode instructions, performance.md E12) | 0.03% |
 
+On `db0fba57a` (M1), with the bootstrap of its own compiler: 132,154 and
+177,557 crossings in about 85M calls (0.4%), and on HOL 281,822 and
+329,487 (0.03%).
+
 So a crossing can cost a hundred instructions and add under half an
 instruction a call. Deoptimisation at an instruction boundary happened 0
 times in both ("left mid-way 0"): only `--deopt-stress` and the debugger
@@ -408,6 +464,9 @@ native frames that is a descriptor found from a return address. How many?
 |---|---:|---:|---:|
 | the bootstrap | 396 (391 minor) | 51,000 | 120.7 |
 | HOL's kernel work | 4,772 logged (4,769 minor) | 25,258 | 5.3 |
+
+On `db0fba57a` (M1): the bootstrap of its own compiler 73,622 frames in
+365 collections (184.6 per minor collection), HOL 25,279 in 4,762 (5.3).
 
 The watermark (garbage-collector-v2.md, D9) keeps the walks short.
 
@@ -443,6 +502,31 @@ machine instructions where 2 to 4 would do (a nullary tag is one compare of
 the word; a pointer's tag a test, a load and a compare): 99.7M executions
 in the bootstrap, 50.1M in HOL's slice.
 
+**Again on `db0fba57a`** (M1; F5's script ported to the dump of
+performance M1, `scripts/M9/f5patterns2.py`), over the compiled code (the
+bootstrap's 7.96G instructions, HOL's slice's 4.66G):
+
+| Pattern | Bootstrap: executions | share | HOL slice: executions | share |
+|---|---:|---:|---:|---:|
+| `JUMPIFNOTTAG`'s body (8.1 and 7.6 instructions each, beside its count and the landings at it) | 748.8M | 9.4% | 363.5M | 7.8% |
+| the allocation fast path | 631.0M | 7.9% | 634.2M | 13.6% |
+| ... of which a counter's read-modify-write | 105.2M | 1.3% | 105.7M | 2.3% |
+| the count | 467.1M | 5.9% | 220.3M | 4.7% |
+| pointers loaded from their slots | 355.0M | 4.5% | 154.8M | 3.3% |
+| `SWITCH`, all of it (17.3 and 14.6 each) | 259.6M | 3.3% | 64.7M | 1.4% |
+| the test of `vm->checked` (and its branch) | 170.3M | 2.1% (4.3%) | 66.3M | 1.4% (2.8%) |
+| `ENV`, all of it (6.7 and 7.1 each) | 144.0M | 1.8% | 193.2M | 4.1% |
+| a `setcc` in a body | 52.8M | 0.7% | 7.5M | 0.2% |
+| `INT` | 48.6M | 0.6% | 14.7M | 0.3% |
+| `idiv` | 10.5M | 0.1% | 3.8M | 0.1% |
+
+Performance M6 fused comparisons with their branches and does `int_add`
+and `int_sub` where the words are. The constructor's tag is now the body's
+largest fault: tier 2 makes the tag in a scratch register before it
+compares -- the word copied, its low bit tested, the tag shifted out or
+loaded from the header -- where a compare of the word, or a test and a
+compare in memory, would do.
+
 ### F6: what finding a descriptor costs
 
 **The question.** A native frame names its caller by a return address.
@@ -462,61 +546,63 @@ is walked, not written when it is made (D2).
 ## What else stands between Rune and OCaml
 
 The frame is the largest part, not all of it. Each item below is weighed
-by F5 (shares of the compiled code's instructions: the bootstrap's 11.09G,
-HOL's slice's 7.12G) or by the experiment named, against what OCaml and
+by F5 on `db0fba57a` (M1: shares of the compiled code's instructions, the
+bootstrap's 7.96G and HOL's slice's 4.66G; on 2026-10-12 the shares were
+of 11.09G and 7.12G), or by the experiment named, against what OCaml and
 MLton do.
 
 | Item | Bootstrap | HOL slice | OCaml, MLton | Taken by |
 |---|---:|---:|---|---|
-| Calls, returns, closures' fields: the frame | 47% | 60% | 10 to 17 instructions a call | performance M6, then M4 to M7 |
-| Allocation: 12 instructions in line, two of them read-modify-writes of the counters | 5.8% | 8.6% | OCaml: `sub r15; cmp; jb` and the header, the pointer in `r15` | M8 |
-| The count | 5.3% | 3.3% | neither counts | performance M6 (per extended block, 30% fewer); kept (performance D9 A) |
-| Pointers loaded from their slots | 2.6% | 2.0% | kept in registers between safepoints | performance M7 |
-| ... of which the poll and the room checks | 8.1% | 9.9% | one compare at entry | M4 |
-| A constructor's tag: `JUMPIFNOTTAG` at 7.3 instructions | 6.6% | 5.4% | 2 to 4 | M2 |
-| `FIELD`'s and `DECON`'s test of `vm->checked` | 2.5% | 1.7% | none | M2 |
-| Operands moved into `rax` and `rcx` | 1.6% | 0.3% | in place | M2 |
-| Comparisons not fused with their branch | 0.5%, and 4 more each | 0.1% | `cmp; jl` | M2 |
-| Constants made in registers (`INT`) | 0.4% | 0.1% | immediates | M2 |
-| `div` and `mod` by a constant by `idiv` | 8.1M of them, 20 to 40 cycles each | 1.5M | a multiply and shifts | M2 |
-| Polymorphic equality, strings, exceptions in C | 1.9% of cycles | 8.2% of cycles | identity first, in line | performance M5 |
-| Inlining in the JIT | | | OCaml and MLton inline before code generation | not here: the middle end (performance M8); the JIT inlines nothing (jit.md M10) |
-| A register allocator over the function | 6 homes serve 84 to 90% of register uses once pointers have them (performance.md E12) | | linear scan, graph colouring | not here: M4 frees `rbp`, a seventh register |
+| The call's machinery: the frame, the return, the landing, the room, the arguments, the closure | 29% (47% on 2026-10-12) | 40% (60%) | 10 to 17 instructions a call | performance M6 (done), then M4 to M7 |
+| A constructor's tag: `JUMPIFNOTTAG`'s body at 8.1 and 7.6 instructions | 9.4% | 7.8% | 2 to 4 | M2 |
+| Allocation: 12 instructions in line, two of them read-modify-writes of the counters | 7.9% | 13.6% | OCaml: `sub r15; cmp; jb` and the header, the pointer in `r15` | M8 |
+| The count | 5.9% | 4.7% | neither counts | performance M6 (per extended block); kept (performance D9 A) |
+| Pointers loaded from their slots | 4.5% | 3.3% | kept in registers between safepoints | performance M7 (done: 743M to 262M loads on its workload) |
+| `FIELD`'s and `DECON`'s test of `vm->checked`, with its branch | 4.3% | 2.8% | none | M2 |
+| `SWITCH` at 17.3 and 14.6 instructions | 3.3% | 1.4% | a jump through a table, about 5 | M2 |
+| `ENV`'s null and length tests | 1.8% (`ENV` whole) | 4.1% | the field's load | M2 (the loader's check), M4 (the closure in the header) |
+| Comparisons not fused, operands through `rax` and `rcx`, constants in registers | 0.7%, 0.6% (`setcc`, `INT`) | 0.2%, 0.3% | `cmp; jl`, in place, immediates | performance M6 (done in the main); the rest left |
+| `div` and `mod` by a constant by `idiv` | 10.5M of them, 20 to 40 cycles each | 3.8M | a multiply and shifts | M2 |
+| Polymorphic equality, strings, exceptions in C | 0.9% of cycles | 1.0% of cycles | identity first, in line | performance M5 (done) |
+| Inlining in the JIT | | | OCaml and MLton inline before code generation | not here: the middle end; the JIT inlines nothing (jit.md M10) |
+| A register allocator over the function | 6 homes serve 84 to 90% of register uses with pointers in them (performance.md E12) | | linear scan, graph colouring | not here: M4 frees `rbp`, which M8 takes |
 | Unboxed reals | `real_nbody` at 0.94 times MLton (performance.md E1) | | | none needed |
-| The bytecode itself | 1.03G bytecode instructions; MLton's code 3.78G machine instructions | 15.8G; Poly/ML's whole run 11.4G | | not here: the middle end |
-| The collector | 23% of cycles | 2.3% | | garbage-collector-v3.md; performance M8 allocates less |
+| The bytecode itself | 1.217G bytecode instructions; MLton's code 4.85G machine instructions | 15.8G; Poly/ML's whole run 11.4G | | not here: the middle end |
+| The collector | 30% of cycles | 7% of cycles | | garbage-collector-v3.md |
 
 What it adds up to:
 
 * **This plan takes the frame (M4 to M7), the body's faults (M2) and the
   allocation's fast path (M8):** what native code does in a few
   instructions and tier 2 in many, with nothing changed of what `--count`
-  counts.
-* **It leaves the bytecode, the collector and inlining** to the middle end
-  (performance M8), to garbage-collector-v3.md and to a later plan
+  counts. On `db0fba57a` the body's faults have grown in share as the call
+  shrank: what M2 would take is about 6% of the bootstrap's instructions.
+* **It leaves the bytecode, the collector and inlining** to the middle end,
+  to garbage-collector-v3.md and to a later plan
   ([whole-program-optimization.md](whole-program-optimization.md) is where
   performance.md puts what goes beyond it). On HOL that is not a detail:
   Rune's bytecode executes 15.8G instructions where Poly/ML's machine code
   executes 11.4G, so even a translation of one machine instruction per
   bytecode instruction would leave HOL at 1.4 times Poly/ML's
-  instructions.
+  instructions. On the bootstrap the collector is 30% of the cycles: 3.1G,
+  half of what MLton's build of the compiler takes in all.
 * **What Rune keeps on purpose** -- the count, the overflow checks SML
   requires, frames the collector can read -- costs about 11 instructions a
   `fib` call against OCaml, and 1.27 to 1.29 times its cycles at best (F1,
   variant 9).
 
-**Where this plan would leave the whole programs, estimated.** With
-performance M5 to M7, and the call machinery cut from 47% and 60% of the
-compiled code to about a quarter of that (F1's ratio of variant 5 to
-today), the body's items of F5 removed and the allocation's fast path
-halved:
+**Where this plan would leave the whole programs, estimated at M1.** The
+call's machinery cut to about a third (F1: variant 5's call against
+tier 2's), M2's items removed and the allocation's fast path halved:
 
-* the bootstrap's compiled code from 10.7G instructions to about 5G, its
-  cycles from 11.95G to about 7.0 to 7.7G: 1.45 to 1.6 times MLton's build
-  (2.46 today), the rest being the collector (2.1 to 2.8G) and the
-  runtime;
-* HOL's kernel work from 5.9 times Poly/ML's cycles to about 3 times, the
-  rest being the bytecode's volume and the runtime;
+* the bootstrap about 2.9G instructions fewer (from 16.3G under callgrind,
+  15.2G under `perf stat`), and its cycles from 10.2G to about 8.4G: 1.4 to
+  1.5 times MLton's build (1.72 at M1), the rest being the collector and
+  the runtime;
+* HOL's kernel work with its compiled code's instructions about 45% fewer,
+  and its cycles from 25.2G to about 17G to 18G: 2.0 to 2.2 times Poly/ML
+  (2.98 at M1), the rest being the bytecode's volume, the collector and
+  the runtime;
 * `fib` and `tak`, which are calls and little else, under MLton's cycles.
 
 These are estimates from the shares above, not measurements; M9 measures
@@ -830,6 +916,37 @@ Each decision gives the options, the evidence, and a recommendation.
 The owner took every recommendation on 2026-10-12. Each decision records
 it.
 
+**Restated at M1 (2026-10-19), against what performance M6 and M7
+built.** No decision changes; these premises did:
+
+* **D1.** C's evidence was F1's variant 1. Performance M6 as built does
+  better with the same instructions -- 39 and 11.0 cycles a `fib` call,
+  1.26 times MLton -- since it keeps the record's address in `rbp`. A's
+  prototypes, in the same session, take 6.2 to 7.6 cycles: still 31 to
+  44% of a call's cycles, and the difference between 1.3 times MLton and
+  0.7 to 0.8 times (*F1*, the third session).
+* **D2.** M6's record keeps the function and the pc in one word, as D2's
+  info word does: the layout carries over.
+* **D4.** The watermark's compare is two instructions since M6 (`cmp rbp,
+  [frame_low]; jbe` to a stub that lowers it), not three; the barrier
+  saves those two in every return. Every reader of a return address must
+  then see through the barrier's word, which M3's walk is for.
+* **D5.** The result in `rax` is done (M6), and so are a tail call's
+  arguments written in place; the arguments of a call stay this plan's.
+* **D6.** M7's pointer homes made the write-back before a call and the
+  homes' reload at a landing larger: on its bootstrap, landings from 274M
+  to 404M instructions and write-backs from 19M to 58M (performance M7).
+  Callee-saved registers would keep homes across calls; native frames keep
+  A, as decided, and M9 measures what the reloads then cost.
+* **D7.** `rbp` holds the frame's record since M6, not the frame's base.
+  M4 removes the record, so `rbp` is free from M4 as D7 B wants.
+* **D8.** M6 fused comparisons with their branches and does `int_add` and
+  `int_sub` in place at tier 2. What is left for M2 is the constructor's
+  tag, the test of `vm->checked`, `SWITCH`, `ENV`'s tests and division by
+  a constant (F5 on `db0fba57a`).
+* **D9 and D10** stand. M6 grew the frames array with the stack's clean
+  part (a frame per slot); it goes with the array in M4.
+
 ### D1. Where frames live
 
 **Decided (2026-10-12): as recommended.**
@@ -1068,28 +1185,58 @@ largest part of HOL's gap to Poly/ML. Expected, from F1: performance M6's
 targets leave a closure call at 25 instructions and a `fib` call at 40 to
 50, where variant 5 needs 21.
 
+**Done** (2026-10-19, on `db0fba57a`): *Where we are* measured again, F1's
+third session, F3 to F5 again, and the decisions' premises restated
+(*Decisions*). The gate is open: the call's machinery is 40% of HOL's
+compiled code, which is 84% of its cycles. The baselines of the
+milestones below:
+
+| | At M1 |
+|---|---:|
+| a `fib` call: instructions, cycles | 39.0, 11.0 |
+| a `tak` call | 47.3, 13.1 |
+| a call through a closure and its return: instructions | 29 |
+| the bootstrap (`results/M9/bootwl`): instructions, cycles | 15.23G, 10.2G (MLton's build 4.85G, 5.9G) |
+| ... its call machinery, under callgrind | 2.33G of 16.32G (14.3%) |
+| HOL's kernel work (HOL-midM8): instructions, cycles | 53.0G, 25.2G (Poly/ML 11.4G, 8.5G) |
+| MLton's set against MLton, cycles | geometric mean 4.58 (37 programs); the seven of calls and closures 1.32 to 3.16; tests/perf's `fib` and `tak` 1.36, 1.35 |
+
+Found on the way: `scripts/hol-kernel.sh` ran a HOL built by Rune on the
+VM it was built with even where `$RUNEVM` named another, as HOL's
+`buildheap` execs its own; it now runs that HOL's state on `$RUNEVM`, with
+`$RUNEVM_OPTS`.
+
 ### M2. The body (M)
 
 D8 A, item by item, each measured on tests/perf, the bootstrap and HOL's
-kernel work and kept where it gains:
+kernel work and kept where it gains. Performance M6 did the comparison
+fused with its branch and `int_add` and `int_sub` in place; what is left
+(F5 on `db0fba57a`):
 
-* a comparison fused with its branch wherever its bool dies there (50.3M
-  `setcc` before a `JUMPIF` in the bootstrap, F5);
-* constants as immediates of the instruction that uses them, and
-  arithmetic in place, not through `rax` and `rcx` (177M operands moved);
-* `JUMPIFNOTTAG` in 2 instructions for a nullary tag and 4 for a pointer's
-  (7.3 today, 99.7M executions);
+* `JUMPIFNOTTAG` in 2 instructions for a nullary tag (a compare of the
+  word) and 4 for a pointer's (its low bit tested, its tag compared in
+  memory), from 8.1 (92.5M executions in the bootstrap, 47.7M in HOL's
+  slice);
+* `SWITCH` by a jump through its table on the tag made in one or two
+  instructions, from 17.3;
 * the test of `vm->checked` in `FIELD` and `DECON` compiled in only when
-  the VM runs under `--checked` (138M tests and their branches);
+  the VM runs under `--checked`: `vm->checked` is the command line's, set
+  before any code is made (170M tests in the bootstrap, each with its
+  branch);
+* `ENV`'s and `SELF`'s tests of a null closure and of its length, which
+  stay because nothing checks an `ENV`'s index against the closures made
+  of its function: the loader checks it, as it checks the rest of the
+  code, and the tests go where it has (performance M6's note: at most
+  about 150M of the bootstrap);
 * `div` and `mod` by a constant by a multiplication and shifts, with the
-  same results and the same raise (8.1M `idiv`s).
+  same results and the same raise (10.5M `idiv`s).
 
 **Targets:**
 
-* `fib`'s body at most 11 machine instructions (20 today); a `fib` call at
-  least 9 fewer instructions than at M1, a `tak` call at least 5 fewer;
-* the bootstrap at least 4% fewer instructions than at M1 (F5's items are
-  about 6% today), HOL's kernel work at least 2% fewer;
+* the bootstrap at least 4% fewer instructions than at M1 (the items are
+  about 6%), HOL's kernel work at least 2.5% fewer;
+* `JUMPIFNOTTAG`'s body at most 4 instructions on average, `SWITCH`'s at
+  most 8;
 * no program of tests/perf or MLton's set more instructions;
 * `--count` unchanged on every program.
 
@@ -1133,16 +1280,16 @@ compare (D4 A, until M5):
 
 **Targets:**
 
-* a `fib` call at most 26 instructions, a `tak` call at most 34 (variants 2
-  and 3: 23.5 to 25.5, 32 to 34), and at most 10 cycles a `fib` call (MLton
-  9 to 10);
-* a call through a closure at most 15 instructions of call machinery (52
-  today, performance M6 at most 25);
-* the bootstrap's call machinery (the roles return, frame, frame room,
-  room, poll, arguments, jump, closure, landing, fill) at most 10% of its
-  instructions (31% today, performance M6 at most 18%); the bootstrap at
-  least 8% fewer instructions than at M4's start, HOL's kernel work at
-  least 12% fewer;
+* a `fib` call at most 26 instructions, a `tak` call at most 34 (39.0 and
+  47.3 at M1; variants 2 and 3: 23.5 to 25.5, 32 to 34), and at most 9
+  cycles a `fib` call (11.0 at M1, MLton 8.7 to 10);
+* a call through a closure and its return at most 15 instructions of call
+  machinery (29 at M1, 75 on 2026-10-12);
+* the bootstrap's call machinery (the roles return, frame, room, poll,
+  arguments, jump, closure, landing, write-back) at most 8% of its
+  instructions under callgrind (14.3% at M1; 31% on 2026-10-12); the
+  bootstrap at least 6% fewer instructions than at M4's start, HOL's
+  kernel work at least 8% fewer;
 * the seven programs of calls and closures of MLton's set (*Where we
   are*) each at least 10% fewer instructions;
 * `--count` unchanged everywhere; images unchanged in format and crossing
@@ -1209,14 +1356,15 @@ true; what is left moved to the plan that takes it.
 **The targets, the owner's goal last:**
 
 * **Beat MLton on calls:** a `fib` and a `tak` call in fewer cycles than
-  MLton's; tests/perf's `fib` and `tak`, which are calls and little else,
-  in fewer cycles than MLton's build of them (3.9 and 3.5 times today,
-  performance.md E1).
+  MLton's (1.26 and 1.31 times at M1); tests/perf's `fib` and `tak`, which
+  are calls and little else, in fewer cycles than MLton's build of them
+  (1.36 and 1.35 at M1; 3.9 and 3.5 times on 2026-10-12, performance.md
+  E1).
 * **MLton's set:** the seven programs of calls and closures within 1.5
-  times MLton's cycles (2.8 to 4.2 times today).
-* **The whole programs, with performance M5 to M8:** the bootstrap within
-  1.6 times MLton's build in cycles (2.46 times today); HOL's kernel work
-  within 3 times Poly/ML (5.9 times today); what remains of each gap
+  times MLton's cycles (1.32 to 3.16 at M1; 2.8 to 4.2 times on 2026-10-12).
+* **The whole programs:** the bootstrap within 1.5 times MLton's build in
+  cycles (1.72 at M1, 2.46 on 2026-10-12); HOL's kernel work within 2.2
+  times Poly/ML (2.98 at M1, 5.9 on 2026-10-12); what remains of each gap
   measured and named (the collector, the bytecode, inlining).
 * **As fast as OCaml:** a `fib` and a `tak` call within 1.3 times OCaml's
   cycles, at most 22 and 31 instructions (variant 9: 21 and 30). That is
@@ -1332,11 +1480,23 @@ on: `results/M9/`, `scripts/M9/`).
 * **By role:** callgrind with `--dump-instr=yes` over a VM that dumps its
   code with a role per machine instruction (performance.md's B1-jit-dump,
   performance M1's `--jit-dump`), the counts matched to the roles and
-  patterns by script (`scripts/B1/cgjit.py`, `scripts/M9/f5patterns.py`).
-* **The bootstrap:** `bin/rune.rbc` compiling its own sources with
-  `--heap-size 67108864` (`scripts/B1/boot.sh`). **HOL's kernel work:**
-  `scripts/hol-kernel.sh`, in a restored `hol.state` of HOL-perf.
-  **MLton's set:** performance M1's scripts.
+  patterns by script (`scripts/B1/cgjit.py`, `scripts/M9/f5patterns.py`;
+  from M1 on the tree's `scripts/jit-dump.py --callgrind` and `--diff`,
+  and `scripts/M9/f5patterns2.py`, `callcost.sh`).
+* **The bootstrap:** until M1, `bin/rune.rbc` of `921af2cc` compiling its
+  own sources with `--heap-size 67108864` (`scripts/B1/boot.sh`). From M1,
+  the compiler of `db0fba57a` compiling its own sources, frozen with them
+  and its built library in `results/M9/bootwl` so that it stays the same
+  while the tree changes (`scripts/M9/boot.sh VM OUT`; 1.217G bytecode
+  instructions); MLton's build is `bin/rune-mlton` on the same sources.
+  The compile's output is the same on every VM, byte for byte.
+* **HOL's kernel work:** `scripts/hol-kernel.sh` in a restored `hol.state`:
+  of HOL-perf (built by `921af2cc`) until M1, of HOL-midM8 (built by
+  performance M8's compiler, the instruction set of `db0fba57a`) from M1,
+  run on the VM measured (`scripts/M9/hol.sh`, or the tree's script with
+  `$RUNEVM` since M1). Poly/ML: HOL-poly.
+* **MLton's set:** `scripts/perf-cycles.sh --mlton-bench`, MLton's own
+  `benchmark/tests` and `tests/perf/mlton-bench.txt`.
 * **Counts are the targets.** Cycles are indications, compared only within
   a session. A milestone that changes `--count` is a mistake: none here
   should.
