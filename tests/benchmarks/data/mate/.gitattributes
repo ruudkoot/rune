@@ -1,0 +1,2 @@
+cases/** -text -whitespace
+smoke-small.stdout -text -whitespace

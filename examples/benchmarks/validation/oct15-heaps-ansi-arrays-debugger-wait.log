@@ -1,0 +1,81 @@
+make[1]: Nothing to be done for 'host-builds'.
+make[1]: Nothing to be done for 'vm'.
+make[1]: Nothing to be done for 'boot'.
+make[1]: Nothing to be done for 'runedoc'.
+make[1]: Nothing to be done for 'runeopt'.
+python3 tests/compiler/run-tests.py --rune bin/rune
+bin/rune-boot -o bin/rune.stage2.rbc build/config.sml src/util/scon.sml src/util/ordmap.sml src/util/inttable.sml src/util/source.sml src/util/error.sml src/util/pass.sml src/frontend/token.sml src/frontend/lexer.sml src/elab/types.sml src/core/ty.sml src/elab/overload.sml src/frontend/ast.sml src/frontend/fixity.sml src/frontend/parser.sml src/elab/unifyexn.sml src/elab/unify.sml src/elab/env.sml src/elab/sigmatch.sml src/elab/exhaust.sml src/backend/opcodes.sml src/backend/prims.sml src/elab/elaborate.sml src/core/lambda.sml src/core/lambdalint.sml src/core/matchcomp.sml src/core/translate.sml src/core/mid.sml src/core/midlint.sml src/core/midtext.sml src/core/tomid.sml src/core/target.sml src/core/shake.sml src/core/lift.sml src/core/simplify.sml src/core/workers.sml src/backend/code.sml src/backend/low.sml src/backend/target.sml src/backend/lowlint.sml src/backend/rep.sml src/backend/lower.sml src/backend/stack.sml src/backend/regcodes.sml src/backend/regs.sml src/backend/emit.sml src/driver/basismanifest.sml src/driver/options.sml src/driver/main.sml src/main/rune-main.sml
+PASS compiler output protection and resource budgets
+python3 tests/vm/run-limits.py --rune bin/rune --vm bin/runevm
+PASS saved resource policies and stricter restore limits
+sh tests/run-tests.sh -j 4 --rune bin/rune --vm bin/runevm
+cmp bin/rune.rbc bin/rune.stage2.rbc
+bootstrap: bin/rune.rbc reproduces itself
+passed 331, failed 0
+sh tests/vm/run-vm-tests.sh --vm bin/runevm
+vm: passed 30, failed 0
+RUNEDOC=bin/runedoc sh tests/doc/run-doc-tests.sh
+test-doc: passed 55, failed 0
+RUNE=bin/rune RUNEVM=bin/runevm RUNEDOC=bin/runedoc sh tests/lib/run-lib-tests.sh
+test-lib: passed 22, failed 0
+=== testing with mlton build ===
+PASS compiler output protection and resource budgets
+passed 331, failed 0
+=== testing with smlnj-legacy build ===
+PASS compiler output protection and resource budgets
+passed 331, failed 0
+=== testing with smlnj32 build ===
+PASS compiler output protection and resource budgets
+passed 331, failed 0
+=== testing with smlnj-dev build ===
+PASS compiler output protection and resource budgets
+passed 331, failed 0
+=== testing with polyml build ===
+PASS compiler output protection and resource budgets
+passed 331, failed 0
+=== testing with mlkit build ===
+PASS compiler output protection and resource budgets
+passed 331, failed 0
+RUNE=/home/ruud/rune/.worktrees/benchmarks/bin/rune RUNEVM=/home/ruud/rune/.worktrees/benchmarks/bin/runevm \
+  sh tests/basis/run-matrix.sh -j 4 --configs rune
+rune                         139211 checks: 139211 pass,    0 explained,    0 FAILED, 0 skipped; of 221 tests 0 absent, 0 n/a
+timing: 132.2 s for the programs and probes on 4 job slots, busy 98% of the time (519.0 s of work)
+  configuration                work s  fallback s  slowest program
+  rune                           519.0         4.6  mono.word16 (11.4 s)
+  by host: rune 519.0 s
+  slowest programs: rune mono.word16 11.4 s, rune mono.word 11.4 s, rune mono.int8 11.4 s, rune mono.int 11.4 s, rune mono.largeint 10.9 s, rune mono.int32 10.9 s, rune mono.largereal 10.9 s, rune mono.real 10.9 s, rune mono.widechar 10.7 s, rune mono.real64 10.5 s, rune mono.int16 10.2 s, rune mono.real32 10.1 s
+timing: report 0.228 s, all 132.491 s
+report: tests/out/matrix/report.md
+RUNE=bin/rune RUNEVM=bin/runevm RUNEDOC=bin/runedoc sh tests/basis/run-examples.sh
+test-examples: 795 examples of 65 signatures hold, 0 do not
+sh tests/opt/run-opt-tests.sh -j 4 --runeopt bin/runeopt --rune bin/rune --vm bin/runevm
+opt: passed 514, failed 0 (488 programs checked and disassembled)
+sh tests/ir/run-ir-tests.sh --rune bin/rune
+sh scripts/check-levels.sh --rune bin/rune --vm bin/runevm -j 4
+ir: passed 25, failed 0
+check-levels: 273 programs, the same at -O0 and -O2
+python3 tests/vm/run-limits.py --rune bin/rune --vm bin/runevm-opt
+PASS saved resource policies and stricter restore limits
+sh tests/run-tests.sh -j 4 --rune bin/rune --vm bin/runevm-opt --skip tests/opt-skip.txt
+passed 331, failed 0
+sh tests/opt/run-counts.sh -j 4 $(for t in tests/lang/*.sml; do echo tests/out/$(basename $t .sml).rbc; done)
+counts: 264 programs agree with runevm, 0 differ
+RUNE=/home/ruud/rune/.worktrees/benchmarks/bin/rune RUNE_MATRIX_BYTECODE="/home/ruud/rune/.worktrees/benchmarks/tests/out/matrix/rune" \
+  sh tests/basis/run-matrix.sh -j 4 --configs rune:opt
+rune:opt                     139211 checks: 139211 pass,    0 explained,    0 FAILED, 0 skipped; of 221 tests 0 absent, 0 n/a
+timing: 14.2 s for the programs and probes on 4 job slots, busy 92% of the time (52.5 s of work)
+  configuration                work s  fallback s  slowest program
+  rune:opt                        52.5         2.2  posix_process (4.2 s)
+  by host: opt 52.5 s
+  slowest programs: rune:opt posix_process 4.2 s, rune:opt unix 2.2 s, rune:opt mono.real 2.0 s, rune:opt mono.largereal 1.8 s, rune:opt mono.word32 1.7 s, rune:opt mono.real32 1.6 s, rune:opt mono.int16 1.5 s, rune:opt mono.int32 1.4 s, rune:opt os.process 1.4 s, rune:opt mono.largeint 1.3 s, rune:opt mono.largeword 1.3 s, rune:opt mono.word 1.3 s
+timing: report 0.134 s, all 14.343 s
+report: tests/out/matrix/report.md
+RUNE_HEAP=67108864 sh tests/opt/run-bootstrap.sh
+opt-bootstrap: the compiler as native code reproduces bin/rune.rbc
+bin/rune examples/nqueens.sml -o tests/out/opt-debug/nqueens.rbc
+sh tests/opt/run-debug.sh -j 4 --debuggers tests/out/opt-debug/nqueens.rbc bin/rune.rbc \
+  $(for t in tests/lang/*.sml; do echo tests/out/$(basename $t .sml).rbc; done)
+FAIL debug lldb: no stop at nqueens.sml:12 (see /home/ruud/rune/.worktrees/benchmarks/tests/out/opt-debug/lldb.log)
+debug: 266 programs have the line table of their bytecode, and the debuggers stop at a line
+make[1]: *** [Makefile:759: test-native] Error 1
+make: *** [Makefile:939: check] Error 2

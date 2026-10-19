@@ -1,0 +1,3161 @@
+sed -e 's/^/||SYNTH_4 /' <<'end'     
+synth_fft_4 i1
+=LET b_0_0=head i1 IN
+ LET i2=tail i1 IN
+ LET b_0_2=head i2 IN
+ LET i3=tail i2 IN
+ LET b_0_1=head i3 IN
+ LET i4=tail i3 IN
+ LET b_0_3=head i4 IN
+ LET
+ b_1_0=add_x b_0_0 r_0_0; b_1_1=sub_x b_0_0 r_0_0; r_0_0=mul_x b_0_1 w_0;
+ b_1_2=add_x b_0_2 r_0_1; b_1_3=sub_x b_0_2 r_0_1; r_0_1=mul_x b_0_3 w_0;
+ b_2_0=add_x b_1_0 r_1_0; b_2_2=sub_x b_1_0 r_1_0; r_1_0=mul_x b_1_2 w_0;
+ b_2_1=add_x b_1_1 r_1_1; b_2_3=sub_x b_1_1 r_1_1; r_1_1=mul_x b_1_3 w_1;
+ w_0=fw_d sector_4 0.0;
+ w_1=fw_d sector_4 1.0
+ IN b_2_0:b_2_1:b_2_2:b_2_3:NIL;
+INLINE sector_4=pi/2.0;
+
+end
+sed -e 's/^/||SYNTH_8 /' <<'end'     
+synth_fft_8 i1
+=LET b_0_0=head i1 IN
+ LET i2=tail i1 IN
+ LET b_0_4=head i2 IN
+ LET i3=tail i2 IN
+ LET b_0_2=head i3 IN
+ LET i4=tail i3 IN
+ LET b_0_6=head i4 IN
+ LET i5=tail i4 IN
+ LET b_0_1=head i5 IN
+ LET i6=tail i5 IN
+ LET b_0_5=head i6 IN
+ LET i7=tail i6 IN
+ LET b_0_3=head i7 IN
+ LET i8=tail i7 IN
+ LET b_0_7=head i8 IN
+ LET
+ b_1_0=add_x b_0_0 r_0_0; b_1_1=sub_x b_0_0 r_0_0; r_0_0=mul_x b_0_1 w_0;
+ b_1_2=add_x b_0_2 r_0_1; b_1_3=sub_x b_0_2 r_0_1; r_0_1=mul_x b_0_3 w_0;
+ b_1_4=add_x b_0_4 r_0_2; b_1_5=sub_x b_0_4 r_0_2; r_0_2=mul_x b_0_5 w_0;
+ b_1_6=add_x b_0_6 r_0_3; b_1_7=sub_x b_0_6 r_0_3; r_0_3=mul_x b_0_7 w_0;
+ b_2_0=add_x b_1_0 r_1_0; b_2_2=sub_x b_1_0 r_1_0; r_1_0=mul_x b_1_2 w_0;
+ b_2_1=add_x b_1_1 r_1_1; b_2_3=sub_x b_1_1 r_1_1; r_1_1=mul_x b_1_3 w_2;
+ b_2_4=add_x b_1_4 r_1_2; b_2_6=sub_x b_1_4 r_1_2; r_1_2=mul_x b_1_6 w_0;
+ b_2_5=add_x b_1_5 r_1_3; b_2_7=sub_x b_1_5 r_1_3; r_1_3=mul_x b_1_7 w_2;
+ b_3_0=add_x b_2_0 r_2_0; b_3_4=sub_x b_2_0 r_2_0; r_2_0=mul_x b_2_4 w_0;
+ b_3_1=add_x b_2_1 r_2_1; b_3_5=sub_x b_2_1 r_2_1; r_2_1=mul_x b_2_5 w_1;
+ b_3_2=add_x b_2_2 r_2_2; b_3_6=sub_x b_2_2 r_2_2; r_2_2=mul_x b_2_6 w_2;
+ b_3_3=add_x b_2_3 r_2_3; b_3_7=sub_x b_2_3 r_2_3; r_2_3=mul_x b_2_7 w_3;
+ w_0=fw_d sector_8 0.0;
+ w_1=fw_d sector_8 1.0;
+ w_2=fw_d sector_8 2.0;
+ w_3=fw_d sector_8 3.0
+ IN b_3_0:b_3_1:b_3_2:b_3_3:b_3_4:b_3_5:b_3_6:b_3_7:NIL;
+INLINE sector_8=pi/4.0;
+
+end
+sed -e 's/^/||SYNTH_16 /' <<'end'     
+synth_fft_16 i1
+=LET b_0_0=head i1 IN
+ LET i2=tail i1 IN
+ LET b_0_8=head i2 IN
+ LET i3=tail i2 IN
+ LET b_0_4=head i3 IN
+ LET i4=tail i3 IN
+ LET b_0_12=head i4 IN
+ LET i5=tail i4 IN
+ LET b_0_2=head i5 IN
+ LET i6=tail i5 IN
+ LET b_0_10=head i6 IN
+ LET i7=tail i6 IN
+ LET b_0_6=head i7 IN
+ LET i8=tail i7 IN
+ LET b_0_14=head i8 IN
+ LET i9=tail i8 IN
+ LET b_0_1=head i9 IN
+ LET i10=tail i9 IN
+ LET b_0_9=head i10 IN
+ LET i11=tail i10 IN
+ LET b_0_5=head i11 IN
+ LET i12=tail i11 IN
+ LET b_0_13=head i12 IN
+ LET i13=tail i12 IN
+ LET b_0_3=head i13 IN
+ LET i14=tail i13 IN
+ LET b_0_11=head i14 IN
+ LET i15=tail i14 IN
+ LET b_0_7=head i15 IN
+ LET i16=tail i15 IN
+ LET b_0_15=head i16 IN
+ LET
+ b_1_0=add_x b_0_0 r_0_0; b_1_1=sub_x b_0_0 r_0_0; r_0_0=mul_x b_0_1 w_0;
+ b_1_2=add_x b_0_2 r_0_1; b_1_3=sub_x b_0_2 r_0_1; r_0_1=mul_x b_0_3 w_0;
+ b_1_4=add_x b_0_4 r_0_2; b_1_5=sub_x b_0_4 r_0_2; r_0_2=mul_x b_0_5 w_0;
+ b_1_6=add_x b_0_6 r_0_3; b_1_7=sub_x b_0_6 r_0_3; r_0_3=mul_x b_0_7 w_0;
+ b_1_8=add_x b_0_8 r_0_4; b_1_9=sub_x b_0_8 r_0_4; r_0_4=mul_x b_0_9 w_0;
+ b_1_10=add_x b_0_10 r_0_5; b_1_11=sub_x b_0_10 r_0_5; r_0_5=mul_x b_0_11 w_0;
+ b_1_12=add_x b_0_12 r_0_6; b_1_13=sub_x b_0_12 r_0_6; r_0_6=mul_x b_0_13 w_0;
+ b_1_14=add_x b_0_14 r_0_7; b_1_15=sub_x b_0_14 r_0_7; r_0_7=mul_x b_0_15 w_0;
+ b_2_0=add_x b_1_0 r_1_0; b_2_2=sub_x b_1_0 r_1_0; r_1_0=mul_x b_1_2 w_0;
+ b_2_1=add_x b_1_1 r_1_1; b_2_3=sub_x b_1_1 r_1_1; r_1_1=mul_x b_1_3 w_4;
+ b_2_4=add_x b_1_4 r_1_2; b_2_6=sub_x b_1_4 r_1_2; r_1_2=mul_x b_1_6 w_0;
+ b_2_5=add_x b_1_5 r_1_3; b_2_7=sub_x b_1_5 r_1_3; r_1_3=mul_x b_1_7 w_4;
+ b_2_8=add_x b_1_8 r_1_4; b_2_10=sub_x b_1_8 r_1_4; r_1_4=mul_x b_1_10 w_0;
+ b_2_9=add_x b_1_9 r_1_5; b_2_11=sub_x b_1_9 r_1_5; r_1_5=mul_x b_1_11 w_4;
+ b_2_12=add_x b_1_12 r_1_6; b_2_14=sub_x b_1_12 r_1_6; r_1_6=mul_x b_1_14 w_0;
+ b_2_13=add_x b_1_13 r_1_7; b_2_15=sub_x b_1_13 r_1_7; r_1_7=mul_x b_1_15 w_4;
+ b_3_0=add_x b_2_0 r_2_0; b_3_4=sub_x b_2_0 r_2_0; r_2_0=mul_x b_2_4 w_0;
+ b_3_1=add_x b_2_1 r_2_1; b_3_5=sub_x b_2_1 r_2_1; r_2_1=mul_x b_2_5 w_2;
+ b_3_2=add_x b_2_2 r_2_2; b_3_6=sub_x b_2_2 r_2_2; r_2_2=mul_x b_2_6 w_4;
+ b_3_3=add_x b_2_3 r_2_3; b_3_7=sub_x b_2_3 r_2_3; r_2_3=mul_x b_2_7 w_6;
+ b_3_8=add_x b_2_8 r_2_4; b_3_12=sub_x b_2_8 r_2_4; r_2_4=mul_x b_2_12 w_0;
+ b_3_9=add_x b_2_9 r_2_5; b_3_13=sub_x b_2_9 r_2_5; r_2_5=mul_x b_2_13 w_2;
+ b_3_10=add_x b_2_10 r_2_6; b_3_14=sub_x b_2_10 r_2_6; r_2_6=mul_x b_2_14 w_4;
+ b_3_11=add_x b_2_11 r_2_7; b_3_15=sub_x b_2_11 r_2_7; r_2_7=mul_x b_2_15 w_6;
+ b_4_0=add_x b_3_0 r_3_0; b_4_8=sub_x b_3_0 r_3_0; r_3_0=mul_x b_3_8 w_0;
+ b_4_1=add_x b_3_1 r_3_1; b_4_9=sub_x b_3_1 r_3_1; r_3_1=mul_x b_3_9 w_1;
+ b_4_2=add_x b_3_2 r_3_2; b_4_10=sub_x b_3_2 r_3_2; r_3_2=mul_x b_3_10 w_2;
+ b_4_3=add_x b_3_3 r_3_3; b_4_11=sub_x b_3_3 r_3_3; r_3_3=mul_x b_3_11 w_3;
+ b_4_4=add_x b_3_4 r_3_4; b_4_12=sub_x b_3_4 r_3_4; r_3_4=mul_x b_3_12 w_4;
+ b_4_5=add_x b_3_5 r_3_5; b_4_13=sub_x b_3_5 r_3_5; r_3_5=mul_x b_3_13 w_5;
+ b_4_6=add_x b_3_6 r_3_6; b_4_14=sub_x b_3_6 r_3_6; r_3_6=mul_x b_3_14 w_6;
+ b_4_7=add_x b_3_7 r_3_7; b_4_15=sub_x b_3_7 r_3_7; r_3_7=mul_x b_3_15 w_7;
+ w_0=fw_d sector_16 0.0;
+ w_1=fw_d sector_16 1.0;
+ w_2=fw_d sector_16 2.0;
+ w_3=fw_d sector_16 3.0;
+ w_4=fw_d sector_16 4.0;
+ w_5=fw_d sector_16 5.0;
+ w_6=fw_d sector_16 6.0;
+ w_7=fw_d sector_16 7.0
+ IN b_4_0:b_4_1:b_4_2:b_4_3:b_4_4:b_4_5:b_4_6:b_4_7:
+ b_4_8:b_4_9:b_4_10:b_4_11:b_4_12:b_4_13:b_4_14:b_4_15:NIL;
+INLINE sector_16=pi/8.0;
+
+end
+sed -e 's/^/||SYNTH_32 /' <<'end'     
+synth_fft_32 i1
+=LET b_0_0=head i1 IN
+ LET i2=tail i1 IN
+ LET b_0_16=head i2 IN
+ LET i3=tail i2 IN
+ LET b_0_8=head i3 IN
+ LET i4=tail i3 IN
+ LET b_0_24=head i4 IN
+ LET i5=tail i4 IN
+ LET b_0_4=head i5 IN
+ LET i6=tail i5 IN
+ LET b_0_20=head i6 IN
+ LET i7=tail i6 IN
+ LET b_0_12=head i7 IN
+ LET i8=tail i7 IN
+ LET b_0_28=head i8 IN
+ LET i9=tail i8 IN
+ LET b_0_2=head i9 IN
+ LET i10=tail i9 IN
+ LET b_0_18=head i10 IN
+ LET i11=tail i10 IN
+ LET b_0_10=head i11 IN
+ LET i12=tail i11 IN
+ LET b_0_26=head i12 IN
+ LET i13=tail i12 IN
+ LET b_0_6=head i13 IN
+ LET i14=tail i13 IN
+ LET b_0_22=head i14 IN
+ LET i15=tail i14 IN
+ LET b_0_14=head i15 IN
+ LET i16=tail i15 IN
+ LET b_0_30=head i16 IN
+ LET i17=tail i16 IN
+ LET b_0_1=head i17 IN
+ LET i18=tail i17 IN
+ LET b_0_17=head i18 IN
+ LET i19=tail i18 IN
+ LET b_0_9=head i19 IN
+ LET i20=tail i19 IN
+ LET b_0_25=head i20 IN
+ LET i21=tail i20 IN
+ LET b_0_5=head i21 IN
+ LET i22=tail i21 IN
+ LET b_0_21=head i22 IN
+ LET i23=tail i22 IN
+ LET b_0_13=head i23 IN
+ LET i24=tail i23 IN
+ LET b_0_29=head i24 IN
+ LET i25=tail i24 IN
+ LET b_0_3=head i25 IN
+ LET i26=tail i25 IN
+ LET b_0_19=head i26 IN
+ LET i27=tail i26 IN
+ LET b_0_11=head i27 IN
+ LET i28=tail i27 IN
+ LET b_0_27=head i28 IN
+ LET i29=tail i28 IN
+ LET b_0_7=head i29 IN
+ LET i30=tail i29 IN
+ LET b_0_23=head i30 IN
+ LET i31=tail i30 IN
+ LET b_0_15=head i31 IN
+ LET i32=tail i31 IN
+ LET b_0_31=head i32 IN
+ LET
+ b_1_0=add_x b_0_0 r_0_0; b_1_1=sub_x b_0_0 r_0_0; r_0_0=mul_x b_0_1 w_0;
+ b_1_2=add_x b_0_2 r_0_1; b_1_3=sub_x b_0_2 r_0_1; r_0_1=mul_x b_0_3 w_0;
+ b_1_4=add_x b_0_4 r_0_2; b_1_5=sub_x b_0_4 r_0_2; r_0_2=mul_x b_0_5 w_0;
+ b_1_6=add_x b_0_6 r_0_3; b_1_7=sub_x b_0_6 r_0_3; r_0_3=mul_x b_0_7 w_0;
+ b_1_8=add_x b_0_8 r_0_4; b_1_9=sub_x b_0_8 r_0_4; r_0_4=mul_x b_0_9 w_0;
+ b_1_10=add_x b_0_10 r_0_5; b_1_11=sub_x b_0_10 r_0_5; r_0_5=mul_x b_0_11 w_0;
+ b_1_12=add_x b_0_12 r_0_6; b_1_13=sub_x b_0_12 r_0_6; r_0_6=mul_x b_0_13 w_0;
+ b_1_14=add_x b_0_14 r_0_7; b_1_15=sub_x b_0_14 r_0_7; r_0_7=mul_x b_0_15 w_0;
+ b_1_16=add_x b_0_16 r_0_8; b_1_17=sub_x b_0_16 r_0_8; r_0_8=mul_x b_0_17 w_0;
+ b_1_18=add_x b_0_18 r_0_9; b_1_19=sub_x b_0_18 r_0_9; r_0_9=mul_x b_0_19 w_0;
+ b_1_20=add_x b_0_20 r_0_10; b_1_21=sub_x b_0_20 r_0_10; r_0_10=mul_x b_0_21 w_0;
+ b_1_22=add_x b_0_22 r_0_11; b_1_23=sub_x b_0_22 r_0_11; r_0_11=mul_x b_0_23 w_0;
+ b_1_24=add_x b_0_24 r_0_12; b_1_25=sub_x b_0_24 r_0_12; r_0_12=mul_x b_0_25 w_0;
+ b_1_26=add_x b_0_26 r_0_13; b_1_27=sub_x b_0_26 r_0_13; r_0_13=mul_x b_0_27 w_0;
+ b_1_28=add_x b_0_28 r_0_14; b_1_29=sub_x b_0_28 r_0_14; r_0_14=mul_x b_0_29 w_0;
+ b_1_30=add_x b_0_30 r_0_15; b_1_31=sub_x b_0_30 r_0_15; r_0_15=mul_x b_0_31 w_0;
+ b_2_0=add_x b_1_0 r_1_0; b_2_2=sub_x b_1_0 r_1_0; r_1_0=mul_x b_1_2 w_0;
+ b_2_1=add_x b_1_1 r_1_1; b_2_3=sub_x b_1_1 r_1_1; r_1_1=mul_x b_1_3 w_8;
+ b_2_4=add_x b_1_4 r_1_2; b_2_6=sub_x b_1_4 r_1_2; r_1_2=mul_x b_1_6 w_0;
+ b_2_5=add_x b_1_5 r_1_3; b_2_7=sub_x b_1_5 r_1_3; r_1_3=mul_x b_1_7 w_8;
+ b_2_8=add_x b_1_8 r_1_4; b_2_10=sub_x b_1_8 r_1_4; r_1_4=mul_x b_1_10 w_0;
+ b_2_9=add_x b_1_9 r_1_5; b_2_11=sub_x b_1_9 r_1_5; r_1_5=mul_x b_1_11 w_8;
+ b_2_12=add_x b_1_12 r_1_6; b_2_14=sub_x b_1_12 r_1_6; r_1_6=mul_x b_1_14 w_0;
+ b_2_13=add_x b_1_13 r_1_7; b_2_15=sub_x b_1_13 r_1_7; r_1_7=mul_x b_1_15 w_8;
+ b_2_16=add_x b_1_16 r_1_8; b_2_18=sub_x b_1_16 r_1_8; r_1_8=mul_x b_1_18 w_0;
+ b_2_17=add_x b_1_17 r_1_9; b_2_19=sub_x b_1_17 r_1_9; r_1_9=mul_x b_1_19 w_8;
+ b_2_20=add_x b_1_20 r_1_10; b_2_22=sub_x b_1_20 r_1_10; r_1_10=mul_x b_1_22 w_0;
+ b_2_21=add_x b_1_21 r_1_11; b_2_23=sub_x b_1_21 r_1_11; r_1_11=mul_x b_1_23 w_8;
+ b_2_24=add_x b_1_24 r_1_12; b_2_26=sub_x b_1_24 r_1_12; r_1_12=mul_x b_1_26 w_0;
+ b_2_25=add_x b_1_25 r_1_13; b_2_27=sub_x b_1_25 r_1_13; r_1_13=mul_x b_1_27 w_8;
+ b_2_28=add_x b_1_28 r_1_14; b_2_30=sub_x b_1_28 r_1_14; r_1_14=mul_x b_1_30 w_0;
+ b_2_29=add_x b_1_29 r_1_15; b_2_31=sub_x b_1_29 r_1_15; r_1_15=mul_x b_1_31 w_8;
+ b_3_0=add_x b_2_0 r_2_0; b_3_4=sub_x b_2_0 r_2_0; r_2_0=mul_x b_2_4 w_0;
+ b_3_1=add_x b_2_1 r_2_1; b_3_5=sub_x b_2_1 r_2_1; r_2_1=mul_x b_2_5 w_4;
+ b_3_2=add_x b_2_2 r_2_2; b_3_6=sub_x b_2_2 r_2_2; r_2_2=mul_x b_2_6 w_8;
+ b_3_3=add_x b_2_3 r_2_3; b_3_7=sub_x b_2_3 r_2_3; r_2_3=mul_x b_2_7 w_12;
+ b_3_8=add_x b_2_8 r_2_4; b_3_12=sub_x b_2_8 r_2_4; r_2_4=mul_x b_2_12 w_0;
+ b_3_9=add_x b_2_9 r_2_5; b_3_13=sub_x b_2_9 r_2_5; r_2_5=mul_x b_2_13 w_4;
+ b_3_10=add_x b_2_10 r_2_6; b_3_14=sub_x b_2_10 r_2_6; r_2_6=mul_x b_2_14 w_8;
+ b_3_11=add_x b_2_11 r_2_7; b_3_15=sub_x b_2_11 r_2_7; r_2_7=mul_x b_2_15 w_12;
+ b_3_16=add_x b_2_16 r_2_8; b_3_20=sub_x b_2_16 r_2_8; r_2_8=mul_x b_2_20 w_0;
+ b_3_17=add_x b_2_17 r_2_9; b_3_21=sub_x b_2_17 r_2_9; r_2_9=mul_x b_2_21 w_4;
+ b_3_18=add_x b_2_18 r_2_10; b_3_22=sub_x b_2_18 r_2_10; r_2_10=mul_x b_2_22 w_8;
+ b_3_19=add_x b_2_19 r_2_11; b_3_23=sub_x b_2_19 r_2_11; r_2_11=mul_x b_2_23 w_12;
+ b_3_24=add_x b_2_24 r_2_12; b_3_28=sub_x b_2_24 r_2_12; r_2_12=mul_x b_2_28 w_0;
+ b_3_25=add_x b_2_25 r_2_13; b_3_29=sub_x b_2_25 r_2_13; r_2_13=mul_x b_2_29 w_4;
+ b_3_26=add_x b_2_26 r_2_14; b_3_30=sub_x b_2_26 r_2_14; r_2_14=mul_x b_2_30 w_8;
+ b_3_27=add_x b_2_27 r_2_15; b_3_31=sub_x b_2_27 r_2_15; r_2_15=mul_x b_2_31 w_12;
+ b_4_0=add_x b_3_0 r_3_0; b_4_8=sub_x b_3_0 r_3_0; r_3_0=mul_x b_3_8 w_0;
+ b_4_1=add_x b_3_1 r_3_1; b_4_9=sub_x b_3_1 r_3_1; r_3_1=mul_x b_3_9 w_2;
+ b_4_2=add_x b_3_2 r_3_2; b_4_10=sub_x b_3_2 r_3_2; r_3_2=mul_x b_3_10 w_4;
+ b_4_3=add_x b_3_3 r_3_3; b_4_11=sub_x b_3_3 r_3_3; r_3_3=mul_x b_3_11 w_6;
+ b_4_4=add_x b_3_4 r_3_4; b_4_12=sub_x b_3_4 r_3_4; r_3_4=mul_x b_3_12 w_8;
+ b_4_5=add_x b_3_5 r_3_5; b_4_13=sub_x b_3_5 r_3_5; r_3_5=mul_x b_3_13 w_10;
+ b_4_6=add_x b_3_6 r_3_6; b_4_14=sub_x b_3_6 r_3_6; r_3_6=mul_x b_3_14 w_12;
+ b_4_7=add_x b_3_7 r_3_7; b_4_15=sub_x b_3_7 r_3_7; r_3_7=mul_x b_3_15 w_14;
+ b_4_16=add_x b_3_16 r_3_8; b_4_24=sub_x b_3_16 r_3_8; r_3_8=mul_x b_3_24 w_0;
+ b_4_17=add_x b_3_17 r_3_9; b_4_25=sub_x b_3_17 r_3_9; r_3_9=mul_x b_3_25 w_2;
+ b_4_18=add_x b_3_18 r_3_10; b_4_26=sub_x b_3_18 r_3_10; r_3_10=mul_x b_3_26 w_4;
+ b_4_19=add_x b_3_19 r_3_11; b_4_27=sub_x b_3_19 r_3_11; r_3_11=mul_x b_3_27 w_6;
+ b_4_20=add_x b_3_20 r_3_12; b_4_28=sub_x b_3_20 r_3_12; r_3_12=mul_x b_3_28 w_8;
+ b_4_21=add_x b_3_21 r_3_13; b_4_29=sub_x b_3_21 r_3_13; r_3_13=mul_x b_3_29 w_10;
+ b_4_22=add_x b_3_22 r_3_14; b_4_30=sub_x b_3_22 r_3_14; r_3_14=mul_x b_3_30 w_12;
+ b_4_23=add_x b_3_23 r_3_15; b_4_31=sub_x b_3_23 r_3_15; r_3_15=mul_x b_3_31 w_14;
+ b_5_0=add_x b_4_0 r_4_0; b_5_16=sub_x b_4_0 r_4_0; r_4_0=mul_x b_4_16 w_0;
+ b_5_1=add_x b_4_1 r_4_1; b_5_17=sub_x b_4_1 r_4_1; r_4_1=mul_x b_4_17 w_1;
+ b_5_2=add_x b_4_2 r_4_2; b_5_18=sub_x b_4_2 r_4_2; r_4_2=mul_x b_4_18 w_2;
+ b_5_3=add_x b_4_3 r_4_3; b_5_19=sub_x b_4_3 r_4_3; r_4_3=mul_x b_4_19 w_3;
+ b_5_4=add_x b_4_4 r_4_4; b_5_20=sub_x b_4_4 r_4_4; r_4_4=mul_x b_4_20 w_4;
+ b_5_5=add_x b_4_5 r_4_5; b_5_21=sub_x b_4_5 r_4_5; r_4_5=mul_x b_4_21 w_5;
+ b_5_6=add_x b_4_6 r_4_6; b_5_22=sub_x b_4_6 r_4_6; r_4_6=mul_x b_4_22 w_6;
+ b_5_7=add_x b_4_7 r_4_7; b_5_23=sub_x b_4_7 r_4_7; r_4_7=mul_x b_4_23 w_7;
+ b_5_8=add_x b_4_8 r_4_8; b_5_24=sub_x b_4_8 r_4_8; r_4_8=mul_x b_4_24 w_8;
+ b_5_9=add_x b_4_9 r_4_9; b_5_25=sub_x b_4_9 r_4_9; r_4_9=mul_x b_4_25 w_9;
+ b_5_10=add_x b_4_10 r_4_10; b_5_26=sub_x b_4_10 r_4_10; r_4_10=mul_x b_4_26 w_10;
+ b_5_11=add_x b_4_11 r_4_11; b_5_27=sub_x b_4_11 r_4_11; r_4_11=mul_x b_4_27 w_11;
+ b_5_12=add_x b_4_12 r_4_12; b_5_28=sub_x b_4_12 r_4_12; r_4_12=mul_x b_4_28 w_12;
+ b_5_13=add_x b_4_13 r_4_13; b_5_29=sub_x b_4_13 r_4_13; r_4_13=mul_x b_4_29 w_13;
+ b_5_14=add_x b_4_14 r_4_14; b_5_30=sub_x b_4_14 r_4_14; r_4_14=mul_x b_4_30 w_14;
+ b_5_15=add_x b_4_15 r_4_15; b_5_31=sub_x b_4_15 r_4_15; r_4_15=mul_x b_4_31 w_15;
+ w_0=fw_d sector_32 0.0;
+ w_1=fw_d sector_32 1.0;
+ w_2=fw_d sector_32 2.0;
+ w_3=fw_d sector_32 3.0;
+ w_4=fw_d sector_32 4.0;
+ w_5=fw_d sector_32 5.0;
+ w_6=fw_d sector_32 6.0;
+ w_7=fw_d sector_32 7.0;
+ w_8=fw_d sector_32 8.0;
+ w_9=fw_d sector_32 9.0;
+ w_10=fw_d sector_32 10.0;
+ w_11=fw_d sector_32 11.0;
+ w_12=fw_d sector_32 12.0;
+ w_13=fw_d sector_32 13.0;
+ w_14=fw_d sector_32 14.0;
+ w_15=fw_d sector_32 15.0
+ IN b_5_0:b_5_1:b_5_2:b_5_3:b_5_4:b_5_5:b_5_6:b_5_7:
+ b_5_8:b_5_9:b_5_10:b_5_11:b_5_12:b_5_13:b_5_14:b_5_15:
+ b_5_16:b_5_17:b_5_18:b_5_19:b_5_20:b_5_21:b_5_22:b_5_23:
+ b_5_24:b_5_25:b_5_26:b_5_27:b_5_28:b_5_29:b_5_30:b_5_31:NIL;
+INLINE sector_32=pi/16.0;
+
+end
+sed -e 's/^/||SYNTH_64 /' <<'end'     
+synth_fft_64 i1
+=LET b_0_0=head i1 IN
+ LET i2=tail i1 IN
+ LET b_0_32=head i2 IN
+ LET i3=tail i2 IN
+ LET b_0_16=head i3 IN
+ LET i4=tail i3 IN
+ LET b_0_48=head i4 IN
+ LET i5=tail i4 IN
+ LET b_0_8=head i5 IN
+ LET i6=tail i5 IN
+ LET b_0_40=head i6 IN
+ LET i7=tail i6 IN
+ LET b_0_24=head i7 IN
+ LET i8=tail i7 IN
+ LET b_0_56=head i8 IN
+ LET i9=tail i8 IN
+ LET b_0_4=head i9 IN
+ LET i10=tail i9 IN
+ LET b_0_36=head i10 IN
+ LET i11=tail i10 IN
+ LET b_0_20=head i11 IN
+ LET i12=tail i11 IN
+ LET b_0_52=head i12 IN
+ LET i13=tail i12 IN
+ LET b_0_12=head i13 IN
+ LET i14=tail i13 IN
+ LET b_0_44=head i14 IN
+ LET i15=tail i14 IN
+ LET b_0_28=head i15 IN
+ LET i16=tail i15 IN
+ LET b_0_60=head i16 IN
+ LET i17=tail i16 IN
+ LET b_0_2=head i17 IN
+ LET i18=tail i17 IN
+ LET b_0_34=head i18 IN
+ LET i19=tail i18 IN
+ LET b_0_18=head i19 IN
+ LET i20=tail i19 IN
+ LET b_0_50=head i20 IN
+ LET i21=tail i20 IN
+ LET b_0_10=head i21 IN
+ LET i22=tail i21 IN
+ LET b_0_42=head i22 IN
+ LET i23=tail i22 IN
+ LET b_0_26=head i23 IN
+ LET i24=tail i23 IN
+ LET b_0_58=head i24 IN
+ LET i25=tail i24 IN
+ LET b_0_6=head i25 IN
+ LET i26=tail i25 IN
+ LET b_0_38=head i26 IN
+ LET i27=tail i26 IN
+ LET b_0_22=head i27 IN
+ LET i28=tail i27 IN
+ LET b_0_54=head i28 IN
+ LET i29=tail i28 IN
+ LET b_0_14=head i29 IN
+ LET i30=tail i29 IN
+ LET b_0_46=head i30 IN
+ LET i31=tail i30 IN
+ LET b_0_30=head i31 IN
+ LET i32=tail i31 IN
+ LET b_0_62=head i32 IN
+ LET i33=tail i32 IN
+ LET b_0_1=head i33 IN
+ LET i34=tail i33 IN
+ LET b_0_33=head i34 IN
+ LET i35=tail i34 IN
+ LET b_0_17=head i35 IN
+ LET i36=tail i35 IN
+ LET b_0_49=head i36 IN
+ LET i37=tail i36 IN
+ LET b_0_9=head i37 IN
+ LET i38=tail i37 IN
+ LET b_0_41=head i38 IN
+ LET i39=tail i38 IN
+ LET b_0_25=head i39 IN
+ LET i40=tail i39 IN
+ LET b_0_57=head i40 IN
+ LET i41=tail i40 IN
+ LET b_0_5=head i41 IN
+ LET i42=tail i41 IN
+ LET b_0_37=head i42 IN
+ LET i43=tail i42 IN
+ LET b_0_21=head i43 IN
+ LET i44=tail i43 IN
+ LET b_0_53=head i44 IN
+ LET i45=tail i44 IN
+ LET b_0_13=head i45 IN
+ LET i46=tail i45 IN
+ LET b_0_45=head i46 IN
+ LET i47=tail i46 IN
+ LET b_0_29=head i47 IN
+ LET i48=tail i47 IN
+ LET b_0_61=head i48 IN
+ LET i49=tail i48 IN
+ LET b_0_3=head i49 IN
+ LET i50=tail i49 IN
+ LET b_0_35=head i50 IN
+ LET i51=tail i50 IN
+ LET b_0_19=head i51 IN
+ LET i52=tail i51 IN
+ LET b_0_51=head i52 IN
+ LET i53=tail i52 IN
+ LET b_0_11=head i53 IN
+ LET i54=tail i53 IN
+ LET b_0_43=head i54 IN
+ LET i55=tail i54 IN
+ LET b_0_27=head i55 IN
+ LET i56=tail i55 IN
+ LET b_0_59=head i56 IN
+ LET i57=tail i56 IN
+ LET b_0_7=head i57 IN
+ LET i58=tail i57 IN
+ LET b_0_39=head i58 IN
+ LET i59=tail i58 IN
+ LET b_0_23=head i59 IN
+ LET i60=tail i59 IN
+ LET b_0_55=head i60 IN
+ LET i61=tail i60 IN
+ LET b_0_15=head i61 IN
+ LET i62=tail i61 IN
+ LET b_0_47=head i62 IN
+ LET i63=tail i62 IN
+ LET b_0_31=head i63 IN
+ LET i64=tail i63 IN
+ LET b_0_63=head i64 IN
+ LET
+ b_1_0=add_x b_0_0 r_0_0; b_1_1=sub_x b_0_0 r_0_0; r_0_0=mul_x b_0_1 w_0;
+ b_1_2=add_x b_0_2 r_0_1; b_1_3=sub_x b_0_2 r_0_1; r_0_1=mul_x b_0_3 w_0;
+ b_1_4=add_x b_0_4 r_0_2; b_1_5=sub_x b_0_4 r_0_2; r_0_2=mul_x b_0_5 w_0;
+ b_1_6=add_x b_0_6 r_0_3; b_1_7=sub_x b_0_6 r_0_3; r_0_3=mul_x b_0_7 w_0;
+ b_1_8=add_x b_0_8 r_0_4; b_1_9=sub_x b_0_8 r_0_4; r_0_4=mul_x b_0_9 w_0;
+ b_1_10=add_x b_0_10 r_0_5; b_1_11=sub_x b_0_10 r_0_5; r_0_5=mul_x b_0_11 w_0;
+ b_1_12=add_x b_0_12 r_0_6; b_1_13=sub_x b_0_12 r_0_6; r_0_6=mul_x b_0_13 w_0;
+ b_1_14=add_x b_0_14 r_0_7; b_1_15=sub_x b_0_14 r_0_7; r_0_7=mul_x b_0_15 w_0;
+ b_1_16=add_x b_0_16 r_0_8; b_1_17=sub_x b_0_16 r_0_8; r_0_8=mul_x b_0_17 w_0;
+ b_1_18=add_x b_0_18 r_0_9; b_1_19=sub_x b_0_18 r_0_9; r_0_9=mul_x b_0_19 w_0;
+ b_1_20=add_x b_0_20 r_0_10; b_1_21=sub_x b_0_20 r_0_10; r_0_10=mul_x b_0_21 w_0;
+ b_1_22=add_x b_0_22 r_0_11; b_1_23=sub_x b_0_22 r_0_11; r_0_11=mul_x b_0_23 w_0;
+ b_1_24=add_x b_0_24 r_0_12; b_1_25=sub_x b_0_24 r_0_12; r_0_12=mul_x b_0_25 w_0;
+ b_1_26=add_x b_0_26 r_0_13; b_1_27=sub_x b_0_26 r_0_13; r_0_13=mul_x b_0_27 w_0;
+ b_1_28=add_x b_0_28 r_0_14; b_1_29=sub_x b_0_28 r_0_14; r_0_14=mul_x b_0_29 w_0;
+ b_1_30=add_x b_0_30 r_0_15; b_1_31=sub_x b_0_30 r_0_15; r_0_15=mul_x b_0_31 w_0;
+ b_1_32=add_x b_0_32 r_0_16; b_1_33=sub_x b_0_32 r_0_16; r_0_16=mul_x b_0_33 w_0;
+ b_1_34=add_x b_0_34 r_0_17; b_1_35=sub_x b_0_34 r_0_17; r_0_17=mul_x b_0_35 w_0;
+ b_1_36=add_x b_0_36 r_0_18; b_1_37=sub_x b_0_36 r_0_18; r_0_18=mul_x b_0_37 w_0;
+ b_1_38=add_x b_0_38 r_0_19; b_1_39=sub_x b_0_38 r_0_19; r_0_19=mul_x b_0_39 w_0;
+ b_1_40=add_x b_0_40 r_0_20; b_1_41=sub_x b_0_40 r_0_20; r_0_20=mul_x b_0_41 w_0;
+ b_1_42=add_x b_0_42 r_0_21; b_1_43=sub_x b_0_42 r_0_21; r_0_21=mul_x b_0_43 w_0;
+ b_1_44=add_x b_0_44 r_0_22; b_1_45=sub_x b_0_44 r_0_22; r_0_22=mul_x b_0_45 w_0;
+ b_1_46=add_x b_0_46 r_0_23; b_1_47=sub_x b_0_46 r_0_23; r_0_23=mul_x b_0_47 w_0;
+ b_1_48=add_x b_0_48 r_0_24; b_1_49=sub_x b_0_48 r_0_24; r_0_24=mul_x b_0_49 w_0;
+ b_1_50=add_x b_0_50 r_0_25; b_1_51=sub_x b_0_50 r_0_25; r_0_25=mul_x b_0_51 w_0;
+ b_1_52=add_x b_0_52 r_0_26; b_1_53=sub_x b_0_52 r_0_26; r_0_26=mul_x b_0_53 w_0;
+ b_1_54=add_x b_0_54 r_0_27; b_1_55=sub_x b_0_54 r_0_27; r_0_27=mul_x b_0_55 w_0;
+ b_1_56=add_x b_0_56 r_0_28; b_1_57=sub_x b_0_56 r_0_28; r_0_28=mul_x b_0_57 w_0;
+ b_1_58=add_x b_0_58 r_0_29; b_1_59=sub_x b_0_58 r_0_29; r_0_29=mul_x b_0_59 w_0;
+ b_1_60=add_x b_0_60 r_0_30; b_1_61=sub_x b_0_60 r_0_30; r_0_30=mul_x b_0_61 w_0;
+ b_1_62=add_x b_0_62 r_0_31; b_1_63=sub_x b_0_62 r_0_31; r_0_31=mul_x b_0_63 w_0;
+ b_2_0=add_x b_1_0 r_1_0; b_2_2=sub_x b_1_0 r_1_0; r_1_0=mul_x b_1_2 w_0;
+ b_2_1=add_x b_1_1 r_1_1; b_2_3=sub_x b_1_1 r_1_1; r_1_1=mul_x b_1_3 w_16;
+ b_2_4=add_x b_1_4 r_1_2; b_2_6=sub_x b_1_4 r_1_2; r_1_2=mul_x b_1_6 w_0;
+ b_2_5=add_x b_1_5 r_1_3; b_2_7=sub_x b_1_5 r_1_3; r_1_3=mul_x b_1_7 w_16;
+ b_2_8=add_x b_1_8 r_1_4; b_2_10=sub_x b_1_8 r_1_4; r_1_4=mul_x b_1_10 w_0;
+ b_2_9=add_x b_1_9 r_1_5; b_2_11=sub_x b_1_9 r_1_5; r_1_5=mul_x b_1_11 w_16;
+ b_2_12=add_x b_1_12 r_1_6; b_2_14=sub_x b_1_12 r_1_6; r_1_6=mul_x b_1_14 w_0;
+ b_2_13=add_x b_1_13 r_1_7; b_2_15=sub_x b_1_13 r_1_7; r_1_7=mul_x b_1_15 w_16;
+ b_2_16=add_x b_1_16 r_1_8; b_2_18=sub_x b_1_16 r_1_8; r_1_8=mul_x b_1_18 w_0;
+ b_2_17=add_x b_1_17 r_1_9; b_2_19=sub_x b_1_17 r_1_9; r_1_9=mul_x b_1_19 w_16;
+ b_2_20=add_x b_1_20 r_1_10; b_2_22=sub_x b_1_20 r_1_10; r_1_10=mul_x b_1_22 w_0;
+ b_2_21=add_x b_1_21 r_1_11; b_2_23=sub_x b_1_21 r_1_11; r_1_11=mul_x b_1_23 w_16;
+ b_2_24=add_x b_1_24 r_1_12; b_2_26=sub_x b_1_24 r_1_12; r_1_12=mul_x b_1_26 w_0;
+ b_2_25=add_x b_1_25 r_1_13; b_2_27=sub_x b_1_25 r_1_13; r_1_13=mul_x b_1_27 w_16;
+ b_2_28=add_x b_1_28 r_1_14; b_2_30=sub_x b_1_28 r_1_14; r_1_14=mul_x b_1_30 w_0;
+ b_2_29=add_x b_1_29 r_1_15; b_2_31=sub_x b_1_29 r_1_15; r_1_15=mul_x b_1_31 w_16;
+ b_2_32=add_x b_1_32 r_1_16; b_2_34=sub_x b_1_32 r_1_16; r_1_16=mul_x b_1_34 w_0;
+ b_2_33=add_x b_1_33 r_1_17; b_2_35=sub_x b_1_33 r_1_17; r_1_17=mul_x b_1_35 w_16;
+ b_2_36=add_x b_1_36 r_1_18; b_2_38=sub_x b_1_36 r_1_18; r_1_18=mul_x b_1_38 w_0;
+ b_2_37=add_x b_1_37 r_1_19; b_2_39=sub_x b_1_37 r_1_19; r_1_19=mul_x b_1_39 w_16;
+ b_2_40=add_x b_1_40 r_1_20; b_2_42=sub_x b_1_40 r_1_20; r_1_20=mul_x b_1_42 w_0;
+ b_2_41=add_x b_1_41 r_1_21; b_2_43=sub_x b_1_41 r_1_21; r_1_21=mul_x b_1_43 w_16;
+ b_2_44=add_x b_1_44 r_1_22; b_2_46=sub_x b_1_44 r_1_22; r_1_22=mul_x b_1_46 w_0;
+ b_2_45=add_x b_1_45 r_1_23; b_2_47=sub_x b_1_45 r_1_23; r_1_23=mul_x b_1_47 w_16;
+ b_2_48=add_x b_1_48 r_1_24; b_2_50=sub_x b_1_48 r_1_24; r_1_24=mul_x b_1_50 w_0;
+ b_2_49=add_x b_1_49 r_1_25; b_2_51=sub_x b_1_49 r_1_25; r_1_25=mul_x b_1_51 w_16;
+ b_2_52=add_x b_1_52 r_1_26; b_2_54=sub_x b_1_52 r_1_26; r_1_26=mul_x b_1_54 w_0;
+ b_2_53=add_x b_1_53 r_1_27; b_2_55=sub_x b_1_53 r_1_27; r_1_27=mul_x b_1_55 w_16;
+ b_2_56=add_x b_1_56 r_1_28; b_2_58=sub_x b_1_56 r_1_28; r_1_28=mul_x b_1_58 w_0;
+ b_2_57=add_x b_1_57 r_1_29; b_2_59=sub_x b_1_57 r_1_29; r_1_29=mul_x b_1_59 w_16;
+ b_2_60=add_x b_1_60 r_1_30; b_2_62=sub_x b_1_60 r_1_30; r_1_30=mul_x b_1_62 w_0;
+ b_2_61=add_x b_1_61 r_1_31; b_2_63=sub_x b_1_61 r_1_31; r_1_31=mul_x b_1_63 w_16;
+ b_3_0=add_x b_2_0 r_2_0; b_3_4=sub_x b_2_0 r_2_0; r_2_0=mul_x b_2_4 w_0;
+ b_3_1=add_x b_2_1 r_2_1; b_3_5=sub_x b_2_1 r_2_1; r_2_1=mul_x b_2_5 w_8;
+ b_3_2=add_x b_2_2 r_2_2; b_3_6=sub_x b_2_2 r_2_2; r_2_2=mul_x b_2_6 w_16;
+ b_3_3=add_x b_2_3 r_2_3; b_3_7=sub_x b_2_3 r_2_3; r_2_3=mul_x b_2_7 w_24;
+ b_3_8=add_x b_2_8 r_2_4; b_3_12=sub_x b_2_8 r_2_4; r_2_4=mul_x b_2_12 w_0;
+ b_3_9=add_x b_2_9 r_2_5; b_3_13=sub_x b_2_9 r_2_5; r_2_5=mul_x b_2_13 w_8;
+ b_3_10=add_x b_2_10 r_2_6; b_3_14=sub_x b_2_10 r_2_6; r_2_6=mul_x b_2_14 w_16;
+ b_3_11=add_x b_2_11 r_2_7; b_3_15=sub_x b_2_11 r_2_7; r_2_7=mul_x b_2_15 w_24;
+ b_3_16=add_x b_2_16 r_2_8; b_3_20=sub_x b_2_16 r_2_8; r_2_8=mul_x b_2_20 w_0;
+ b_3_17=add_x b_2_17 r_2_9; b_3_21=sub_x b_2_17 r_2_9; r_2_9=mul_x b_2_21 w_8;
+ b_3_18=add_x b_2_18 r_2_10; b_3_22=sub_x b_2_18 r_2_10; r_2_10=mul_x b_2_22 w_16;
+ b_3_19=add_x b_2_19 r_2_11; b_3_23=sub_x b_2_19 r_2_11; r_2_11=mul_x b_2_23 w_24;
+ b_3_24=add_x b_2_24 r_2_12; b_3_28=sub_x b_2_24 r_2_12; r_2_12=mul_x b_2_28 w_0;
+ b_3_25=add_x b_2_25 r_2_13; b_3_29=sub_x b_2_25 r_2_13; r_2_13=mul_x b_2_29 w_8;
+ b_3_26=add_x b_2_26 r_2_14; b_3_30=sub_x b_2_26 r_2_14; r_2_14=mul_x b_2_30 w_16;
+ b_3_27=add_x b_2_27 r_2_15; b_3_31=sub_x b_2_27 r_2_15; r_2_15=mul_x b_2_31 w_24;
+ b_3_32=add_x b_2_32 r_2_16; b_3_36=sub_x b_2_32 r_2_16; r_2_16=mul_x b_2_36 w_0;
+ b_3_33=add_x b_2_33 r_2_17; b_3_37=sub_x b_2_33 r_2_17; r_2_17=mul_x b_2_37 w_8;
+ b_3_34=add_x b_2_34 r_2_18; b_3_38=sub_x b_2_34 r_2_18; r_2_18=mul_x b_2_38 w_16;
+ b_3_35=add_x b_2_35 r_2_19; b_3_39=sub_x b_2_35 r_2_19; r_2_19=mul_x b_2_39 w_24;
+ b_3_40=add_x b_2_40 r_2_20; b_3_44=sub_x b_2_40 r_2_20; r_2_20=mul_x b_2_44 w_0;
+ b_3_41=add_x b_2_41 r_2_21; b_3_45=sub_x b_2_41 r_2_21; r_2_21=mul_x b_2_45 w_8;
+ b_3_42=add_x b_2_42 r_2_22; b_3_46=sub_x b_2_42 r_2_22; r_2_22=mul_x b_2_46 w_16;
+ b_3_43=add_x b_2_43 r_2_23; b_3_47=sub_x b_2_43 r_2_23; r_2_23=mul_x b_2_47 w_24;
+ b_3_48=add_x b_2_48 r_2_24; b_3_52=sub_x b_2_48 r_2_24; r_2_24=mul_x b_2_52 w_0;
+ b_3_49=add_x b_2_49 r_2_25; b_3_53=sub_x b_2_49 r_2_25; r_2_25=mul_x b_2_53 w_8;
+ b_3_50=add_x b_2_50 r_2_26; b_3_54=sub_x b_2_50 r_2_26; r_2_26=mul_x b_2_54 w_16;
+ b_3_51=add_x b_2_51 r_2_27; b_3_55=sub_x b_2_51 r_2_27; r_2_27=mul_x b_2_55 w_24;
+ b_3_56=add_x b_2_56 r_2_28; b_3_60=sub_x b_2_56 r_2_28; r_2_28=mul_x b_2_60 w_0;
+ b_3_57=add_x b_2_57 r_2_29; b_3_61=sub_x b_2_57 r_2_29; r_2_29=mul_x b_2_61 w_8;
+ b_3_58=add_x b_2_58 r_2_30; b_3_62=sub_x b_2_58 r_2_30; r_2_30=mul_x b_2_62 w_16;
+ b_3_59=add_x b_2_59 r_2_31; b_3_63=sub_x b_2_59 r_2_31; r_2_31=mul_x b_2_63 w_24;
+ b_4_0=add_x b_3_0 r_3_0; b_4_8=sub_x b_3_0 r_3_0; r_3_0=mul_x b_3_8 w_0;
+ b_4_1=add_x b_3_1 r_3_1; b_4_9=sub_x b_3_1 r_3_1; r_3_1=mul_x b_3_9 w_4;
+ b_4_2=add_x b_3_2 r_3_2; b_4_10=sub_x b_3_2 r_3_2; r_3_2=mul_x b_3_10 w_8;
+ b_4_3=add_x b_3_3 r_3_3; b_4_11=sub_x b_3_3 r_3_3; r_3_3=mul_x b_3_11 w_12;
+ b_4_4=add_x b_3_4 r_3_4; b_4_12=sub_x b_3_4 r_3_4; r_3_4=mul_x b_3_12 w_16;
+ b_4_5=add_x b_3_5 r_3_5; b_4_13=sub_x b_3_5 r_3_5; r_3_5=mul_x b_3_13 w_20;
+ b_4_6=add_x b_3_6 r_3_6; b_4_14=sub_x b_3_6 r_3_6; r_3_6=mul_x b_3_14 w_24;
+ b_4_7=add_x b_3_7 r_3_7; b_4_15=sub_x b_3_7 r_3_7; r_3_7=mul_x b_3_15 w_28;
+ b_4_16=add_x b_3_16 r_3_8; b_4_24=sub_x b_3_16 r_3_8; r_3_8=mul_x b_3_24 w_0;
+ b_4_17=add_x b_3_17 r_3_9; b_4_25=sub_x b_3_17 r_3_9; r_3_9=mul_x b_3_25 w_4;
+ b_4_18=add_x b_3_18 r_3_10; b_4_26=sub_x b_3_18 r_3_10; r_3_10=mul_x b_3_26 w_8;
+ b_4_19=add_x b_3_19 r_3_11; b_4_27=sub_x b_3_19 r_3_11; r_3_11=mul_x b_3_27 w_12;
+ b_4_20=add_x b_3_20 r_3_12; b_4_28=sub_x b_3_20 r_3_12; r_3_12=mul_x b_3_28 w_16;
+ b_4_21=add_x b_3_21 r_3_13; b_4_29=sub_x b_3_21 r_3_13; r_3_13=mul_x b_3_29 w_20;
+ b_4_22=add_x b_3_22 r_3_14; b_4_30=sub_x b_3_22 r_3_14; r_3_14=mul_x b_3_30 w_24;
+ b_4_23=add_x b_3_23 r_3_15; b_4_31=sub_x b_3_23 r_3_15; r_3_15=mul_x b_3_31 w_28;
+ b_4_32=add_x b_3_32 r_3_16; b_4_40=sub_x b_3_32 r_3_16; r_3_16=mul_x b_3_40 w_0;
+ b_4_33=add_x b_3_33 r_3_17; b_4_41=sub_x b_3_33 r_3_17; r_3_17=mul_x b_3_41 w_4;
+ b_4_34=add_x b_3_34 r_3_18; b_4_42=sub_x b_3_34 r_3_18; r_3_18=mul_x b_3_42 w_8;
+ b_4_35=add_x b_3_35 r_3_19; b_4_43=sub_x b_3_35 r_3_19; r_3_19=mul_x b_3_43 w_12;
+ b_4_36=add_x b_3_36 r_3_20; b_4_44=sub_x b_3_36 r_3_20; r_3_20=mul_x b_3_44 w_16;
+ b_4_37=add_x b_3_37 r_3_21; b_4_45=sub_x b_3_37 r_3_21; r_3_21=mul_x b_3_45 w_20;
+ b_4_38=add_x b_3_38 r_3_22; b_4_46=sub_x b_3_38 r_3_22; r_3_22=mul_x b_3_46 w_24;
+ b_4_39=add_x b_3_39 r_3_23; b_4_47=sub_x b_3_39 r_3_23; r_3_23=mul_x b_3_47 w_28;
+ b_4_48=add_x b_3_48 r_3_24; b_4_56=sub_x b_3_48 r_3_24; r_3_24=mul_x b_3_56 w_0;
+ b_4_49=add_x b_3_49 r_3_25; b_4_57=sub_x b_3_49 r_3_25; r_3_25=mul_x b_3_57 w_4;
+ b_4_50=add_x b_3_50 r_3_26; b_4_58=sub_x b_3_50 r_3_26; r_3_26=mul_x b_3_58 w_8;
+ b_4_51=add_x b_3_51 r_3_27; b_4_59=sub_x b_3_51 r_3_27; r_3_27=mul_x b_3_59 w_12;
+ b_4_52=add_x b_3_52 r_3_28; b_4_60=sub_x b_3_52 r_3_28; r_3_28=mul_x b_3_60 w_16;
+ b_4_53=add_x b_3_53 r_3_29; b_4_61=sub_x b_3_53 r_3_29; r_3_29=mul_x b_3_61 w_20;
+ b_4_54=add_x b_3_54 r_3_30; b_4_62=sub_x b_3_54 r_3_30; r_3_30=mul_x b_3_62 w_24;
+ b_4_55=add_x b_3_55 r_3_31; b_4_63=sub_x b_3_55 r_3_31; r_3_31=mul_x b_3_63 w_28;
+ b_5_0=add_x b_4_0 r_4_0; b_5_16=sub_x b_4_0 r_4_0; r_4_0=mul_x b_4_16 w_0;
+ b_5_1=add_x b_4_1 r_4_1; b_5_17=sub_x b_4_1 r_4_1; r_4_1=mul_x b_4_17 w_2;
+ b_5_2=add_x b_4_2 r_4_2; b_5_18=sub_x b_4_2 r_4_2; r_4_2=mul_x b_4_18 w_4;
+ b_5_3=add_x b_4_3 r_4_3; b_5_19=sub_x b_4_3 r_4_3; r_4_3=mul_x b_4_19 w_6;
+ b_5_4=add_x b_4_4 r_4_4; b_5_20=sub_x b_4_4 r_4_4; r_4_4=mul_x b_4_20 w_8;
+ b_5_5=add_x b_4_5 r_4_5; b_5_21=sub_x b_4_5 r_4_5; r_4_5=mul_x b_4_21 w_10;
+ b_5_6=add_x b_4_6 r_4_6; b_5_22=sub_x b_4_6 r_4_6; r_4_6=mul_x b_4_22 w_12;
+ b_5_7=add_x b_4_7 r_4_7; b_5_23=sub_x b_4_7 r_4_7; r_4_7=mul_x b_4_23 w_14;
+ b_5_8=add_x b_4_8 r_4_8; b_5_24=sub_x b_4_8 r_4_8; r_4_8=mul_x b_4_24 w_16;
+ b_5_9=add_x b_4_9 r_4_9; b_5_25=sub_x b_4_9 r_4_9; r_4_9=mul_x b_4_25 w_18;
+ b_5_10=add_x b_4_10 r_4_10; b_5_26=sub_x b_4_10 r_4_10; r_4_10=mul_x b_4_26 w_20;
+ b_5_11=add_x b_4_11 r_4_11; b_5_27=sub_x b_4_11 r_4_11; r_4_11=mul_x b_4_27 w_22;
+ b_5_12=add_x b_4_12 r_4_12; b_5_28=sub_x b_4_12 r_4_12; r_4_12=mul_x b_4_28 w_24;
+ b_5_13=add_x b_4_13 r_4_13; b_5_29=sub_x b_4_13 r_4_13; r_4_13=mul_x b_4_29 w_26;
+ b_5_14=add_x b_4_14 r_4_14; b_5_30=sub_x b_4_14 r_4_14; r_4_14=mul_x b_4_30 w_28;
+ b_5_15=add_x b_4_15 r_4_15; b_5_31=sub_x b_4_15 r_4_15; r_4_15=mul_x b_4_31 w_30;
+ b_5_32=add_x b_4_32 r_4_16; b_5_48=sub_x b_4_32 r_4_16; r_4_16=mul_x b_4_48 w_0;
+ b_5_33=add_x b_4_33 r_4_17; b_5_49=sub_x b_4_33 r_4_17; r_4_17=mul_x b_4_49 w_2;
+ b_5_34=add_x b_4_34 r_4_18; b_5_50=sub_x b_4_34 r_4_18; r_4_18=mul_x b_4_50 w_4;
+ b_5_35=add_x b_4_35 r_4_19; b_5_51=sub_x b_4_35 r_4_19; r_4_19=mul_x b_4_51 w_6;
+ b_5_36=add_x b_4_36 r_4_20; b_5_52=sub_x b_4_36 r_4_20; r_4_20=mul_x b_4_52 w_8;
+ b_5_37=add_x b_4_37 r_4_21; b_5_53=sub_x b_4_37 r_4_21; r_4_21=mul_x b_4_53 w_10;
+ b_5_38=add_x b_4_38 r_4_22; b_5_54=sub_x b_4_38 r_4_22; r_4_22=mul_x b_4_54 w_12;
+ b_5_39=add_x b_4_39 r_4_23; b_5_55=sub_x b_4_39 r_4_23; r_4_23=mul_x b_4_55 w_14;
+ b_5_40=add_x b_4_40 r_4_24; b_5_56=sub_x b_4_40 r_4_24; r_4_24=mul_x b_4_56 w_16;
+ b_5_41=add_x b_4_41 r_4_25; b_5_57=sub_x b_4_41 r_4_25; r_4_25=mul_x b_4_57 w_18;
+ b_5_42=add_x b_4_42 r_4_26; b_5_58=sub_x b_4_42 r_4_26; r_4_26=mul_x b_4_58 w_20;
+ b_5_43=add_x b_4_43 r_4_27; b_5_59=sub_x b_4_43 r_4_27; r_4_27=mul_x b_4_59 w_22;
+ b_5_44=add_x b_4_44 r_4_28; b_5_60=sub_x b_4_44 r_4_28; r_4_28=mul_x b_4_60 w_24;
+ b_5_45=add_x b_4_45 r_4_29; b_5_61=sub_x b_4_45 r_4_29; r_4_29=mul_x b_4_61 w_26;
+ b_5_46=add_x b_4_46 r_4_30; b_5_62=sub_x b_4_46 r_4_30; r_4_30=mul_x b_4_62 w_28;
+ b_5_47=add_x b_4_47 r_4_31; b_5_63=sub_x b_4_47 r_4_31; r_4_31=mul_x b_4_63 w_30;
+ b_6_0=add_x b_5_0 r_5_0; b_6_32=sub_x b_5_0 r_5_0; r_5_0=mul_x b_5_32 w_0;
+ b_6_1=add_x b_5_1 r_5_1; b_6_33=sub_x b_5_1 r_5_1; r_5_1=mul_x b_5_33 w_1;
+ b_6_2=add_x b_5_2 r_5_2; b_6_34=sub_x b_5_2 r_5_2; r_5_2=mul_x b_5_34 w_2;
+ b_6_3=add_x b_5_3 r_5_3; b_6_35=sub_x b_5_3 r_5_3; r_5_3=mul_x b_5_35 w_3;
+ b_6_4=add_x b_5_4 r_5_4; b_6_36=sub_x b_5_4 r_5_4; r_5_4=mul_x b_5_36 w_4;
+ b_6_5=add_x b_5_5 r_5_5; b_6_37=sub_x b_5_5 r_5_5; r_5_5=mul_x b_5_37 w_5;
+ b_6_6=add_x b_5_6 r_5_6; b_6_38=sub_x b_5_6 r_5_6; r_5_6=mul_x b_5_38 w_6;
+ b_6_7=add_x b_5_7 r_5_7; b_6_39=sub_x b_5_7 r_5_7; r_5_7=mul_x b_5_39 w_7;
+ b_6_8=add_x b_5_8 r_5_8; b_6_40=sub_x b_5_8 r_5_8; r_5_8=mul_x b_5_40 w_8;
+ b_6_9=add_x b_5_9 r_5_9; b_6_41=sub_x b_5_9 r_5_9; r_5_9=mul_x b_5_41 w_9;
+ b_6_10=add_x b_5_10 r_5_10; b_6_42=sub_x b_5_10 r_5_10; r_5_10=mul_x b_5_42 w_10;
+ b_6_11=add_x b_5_11 r_5_11; b_6_43=sub_x b_5_11 r_5_11; r_5_11=mul_x b_5_43 w_11;
+ b_6_12=add_x b_5_12 r_5_12; b_6_44=sub_x b_5_12 r_5_12; r_5_12=mul_x b_5_44 w_12;
+ b_6_13=add_x b_5_13 r_5_13; b_6_45=sub_x b_5_13 r_5_13; r_5_13=mul_x b_5_45 w_13;
+ b_6_14=add_x b_5_14 r_5_14; b_6_46=sub_x b_5_14 r_5_14; r_5_14=mul_x b_5_46 w_14;
+ b_6_15=add_x b_5_15 r_5_15; b_6_47=sub_x b_5_15 r_5_15; r_5_15=mul_x b_5_47 w_15;
+ b_6_16=add_x b_5_16 r_5_16; b_6_48=sub_x b_5_16 r_5_16; r_5_16=mul_x b_5_48 w_16;
+ b_6_17=add_x b_5_17 r_5_17; b_6_49=sub_x b_5_17 r_5_17; r_5_17=mul_x b_5_49 w_17;
+ b_6_18=add_x b_5_18 r_5_18; b_6_50=sub_x b_5_18 r_5_18; r_5_18=mul_x b_5_50 w_18;
+ b_6_19=add_x b_5_19 r_5_19; b_6_51=sub_x b_5_19 r_5_19; r_5_19=mul_x b_5_51 w_19;
+ b_6_20=add_x b_5_20 r_5_20; b_6_52=sub_x b_5_20 r_5_20; r_5_20=mul_x b_5_52 w_20;
+ b_6_21=add_x b_5_21 r_5_21; b_6_53=sub_x b_5_21 r_5_21; r_5_21=mul_x b_5_53 w_21;
+ b_6_22=add_x b_5_22 r_5_22; b_6_54=sub_x b_5_22 r_5_22; r_5_22=mul_x b_5_54 w_22;
+ b_6_23=add_x b_5_23 r_5_23; b_6_55=sub_x b_5_23 r_5_23; r_5_23=mul_x b_5_55 w_23;
+ b_6_24=add_x b_5_24 r_5_24; b_6_56=sub_x b_5_24 r_5_24; r_5_24=mul_x b_5_56 w_24;
+ b_6_25=add_x b_5_25 r_5_25; b_6_57=sub_x b_5_25 r_5_25; r_5_25=mul_x b_5_57 w_25;
+ b_6_26=add_x b_5_26 r_5_26; b_6_58=sub_x b_5_26 r_5_26; r_5_26=mul_x b_5_58 w_26;
+ b_6_27=add_x b_5_27 r_5_27; b_6_59=sub_x b_5_27 r_5_27; r_5_27=mul_x b_5_59 w_27;
+ b_6_28=add_x b_5_28 r_5_28; b_6_60=sub_x b_5_28 r_5_28; r_5_28=mul_x b_5_60 w_28;
+ b_6_29=add_x b_5_29 r_5_29; b_6_61=sub_x b_5_29 r_5_29; r_5_29=mul_x b_5_61 w_29;
+ b_6_30=add_x b_5_30 r_5_30; b_6_62=sub_x b_5_30 r_5_30; r_5_30=mul_x b_5_62 w_30;
+ b_6_31=add_x b_5_31 r_5_31; b_6_63=sub_x b_5_31 r_5_31; r_5_31=mul_x b_5_63 w_31;
+ w_0=fw_d sector_64 0.0;
+ w_1=fw_d sector_64 1.0;
+ w_2=fw_d sector_64 2.0;
+ w_3=fw_d sector_64 3.0;
+ w_4=fw_d sector_64 4.0;
+ w_5=fw_d sector_64 5.0;
+ w_6=fw_d sector_64 6.0;
+ w_7=fw_d sector_64 7.0;
+ w_8=fw_d sector_64 8.0;
+ w_9=fw_d sector_64 9.0;
+ w_10=fw_d sector_64 10.0;
+ w_11=fw_d sector_64 11.0;
+ w_12=fw_d sector_64 12.0;
+ w_13=fw_d sector_64 13.0;
+ w_14=fw_d sector_64 14.0;
+ w_15=fw_d sector_64 15.0;
+ w_16=fw_d sector_64 16.0;
+ w_17=fw_d sector_64 17.0;
+ w_18=fw_d sector_64 18.0;
+ w_19=fw_d sector_64 19.0;
+ w_20=fw_d sector_64 20.0;
+ w_21=fw_d sector_64 21.0;
+ w_22=fw_d sector_64 22.0;
+ w_23=fw_d sector_64 23.0;
+ w_24=fw_d sector_64 24.0;
+ w_25=fw_d sector_64 25.0;
+ w_26=fw_d sector_64 26.0;
+ w_27=fw_d sector_64 27.0;
+ w_28=fw_d sector_64 28.0;
+ w_29=fw_d sector_64 29.0;
+ w_30=fw_d sector_64 30.0;
+ w_31=fw_d sector_64 31.0
+ IN b_6_0:b_6_1:b_6_2:b_6_3:b_6_4:b_6_5:b_6_6:b_6_7:
+ b_6_8:b_6_9:b_6_10:b_6_11:b_6_12:b_6_13:b_6_14:b_6_15:
+ b_6_16:b_6_17:b_6_18:b_6_19:b_6_20:b_6_21:b_6_22:b_6_23:
+ b_6_24:b_6_25:b_6_26:b_6_27:b_6_28:b_6_29:b_6_30:b_6_31:
+ b_6_32:b_6_33:b_6_34:b_6_35:b_6_36:b_6_37:b_6_38:b_6_39:
+ b_6_40:b_6_41:b_6_42:b_6_43:b_6_44:b_6_45:b_6_46:b_6_47:
+ b_6_48:b_6_49:b_6_50:b_6_51:b_6_52:b_6_53:b_6_54:b_6_55:
+ b_6_56:b_6_57:b_6_58:b_6_59:b_6_60:b_6_61:b_6_62:b_6_63:NIL;
+INLINE sector_64=pi/32.0;
+
+end
+sed -e 's/^/||SYNTH_128 /' <<'end'     
+synth_fft_128 i1
+=LET b_0_0=head i1 IN
+ LET i2=tail i1 IN
+ LET b_0_64=head i2 IN
+ LET i3=tail i2 IN
+ LET b_0_32=head i3 IN
+ LET i4=tail i3 IN
+ LET b_0_96=head i4 IN
+ LET i5=tail i4 IN
+ LET b_0_16=head i5 IN
+ LET i6=tail i5 IN
+ LET b_0_80=head i6 IN
+ LET i7=tail i6 IN
+ LET b_0_48=head i7 IN
+ LET i8=tail i7 IN
+ LET b_0_112=head i8 IN
+ LET i9=tail i8 IN
+ LET b_0_8=head i9 IN
+ LET i10=tail i9 IN
+ LET b_0_72=head i10 IN
+ LET i11=tail i10 IN
+ LET b_0_40=head i11 IN
+ LET i12=tail i11 IN
+ LET b_0_104=head i12 IN
+ LET i13=tail i12 IN
+ LET b_0_24=head i13 IN
+ LET i14=tail i13 IN
+ LET b_0_88=head i14 IN
+ LET i15=tail i14 IN
+ LET b_0_56=head i15 IN
+ LET i16=tail i15 IN
+ LET b_0_120=head i16 IN
+ LET i17=tail i16 IN
+ LET b_0_4=head i17 IN
+ LET i18=tail i17 IN
+ LET b_0_68=head i18 IN
+ LET i19=tail i18 IN
+ LET b_0_36=head i19 IN
+ LET i20=tail i19 IN
+ LET b_0_100=head i20 IN
+ LET i21=tail i20 IN
+ LET b_0_20=head i21 IN
+ LET i22=tail i21 IN
+ LET b_0_84=head i22 IN
+ LET i23=tail i22 IN
+ LET b_0_52=head i23 IN
+ LET i24=tail i23 IN
+ LET b_0_116=head i24 IN
+ LET i25=tail i24 IN
+ LET b_0_12=head i25 IN
+ LET i26=tail i25 IN
+ LET b_0_76=head i26 IN
+ LET i27=tail i26 IN
+ LET b_0_44=head i27 IN
+ LET i28=tail i27 IN
+ LET b_0_108=head i28 IN
+ LET i29=tail i28 IN
+ LET b_0_28=head i29 IN
+ LET i30=tail i29 IN
+ LET b_0_92=head i30 IN
+ LET i31=tail i30 IN
+ LET b_0_60=head i31 IN
+ LET i32=tail i31 IN
+ LET b_0_124=head i32 IN
+ LET i33=tail i32 IN
+ LET b_0_2=head i33 IN
+ LET i34=tail i33 IN
+ LET b_0_66=head i34 IN
+ LET i35=tail i34 IN
+ LET b_0_34=head i35 IN
+ LET i36=tail i35 IN
+ LET b_0_98=head i36 IN
+ LET i37=tail i36 IN
+ LET b_0_18=head i37 IN
+ LET i38=tail i37 IN
+ LET b_0_82=head i38 IN
+ LET i39=tail i38 IN
+ LET b_0_50=head i39 IN
+ LET i40=tail i39 IN
+ LET b_0_114=head i40 IN
+ LET i41=tail i40 IN
+ LET b_0_10=head i41 IN
+ LET i42=tail i41 IN
+ LET b_0_74=head i42 IN
+ LET i43=tail i42 IN
+ LET b_0_42=head i43 IN
+ LET i44=tail i43 IN
+ LET b_0_106=head i44 IN
+ LET i45=tail i44 IN
+ LET b_0_26=head i45 IN
+ LET i46=tail i45 IN
+ LET b_0_90=head i46 IN
+ LET i47=tail i46 IN
+ LET b_0_58=head i47 IN
+ LET i48=tail i47 IN
+ LET b_0_122=head i48 IN
+ LET i49=tail i48 IN
+ LET b_0_6=head i49 IN
+ LET i50=tail i49 IN
+ LET b_0_70=head i50 IN
+ LET i51=tail i50 IN
+ LET b_0_38=head i51 IN
+ LET i52=tail i51 IN
+ LET b_0_102=head i52 IN
+ LET i53=tail i52 IN
+ LET b_0_22=head i53 IN
+ LET i54=tail i53 IN
+ LET b_0_86=head i54 IN
+ LET i55=tail i54 IN
+ LET b_0_54=head i55 IN
+ LET i56=tail i55 IN
+ LET b_0_118=head i56 IN
+ LET i57=tail i56 IN
+ LET b_0_14=head i57 IN
+ LET i58=tail i57 IN
+ LET b_0_78=head i58 IN
+ LET i59=tail i58 IN
+ LET b_0_46=head i59 IN
+ LET i60=tail i59 IN
+ LET b_0_110=head i60 IN
+ LET i61=tail i60 IN
+ LET b_0_30=head i61 IN
+ LET i62=tail i61 IN
+ LET b_0_94=head i62 IN
+ LET i63=tail i62 IN
+ LET b_0_62=head i63 IN
+ LET i64=tail i63 IN
+ LET b_0_126=head i64 IN
+ LET i65=tail i64 IN
+ LET b_0_1=head i65 IN
+ LET i66=tail i65 IN
+ LET b_0_65=head i66 IN
+ LET i67=tail i66 IN
+ LET b_0_33=head i67 IN
+ LET i68=tail i67 IN
+ LET b_0_97=head i68 IN
+ LET i69=tail i68 IN
+ LET b_0_17=head i69 IN
+ LET i70=tail i69 IN
+ LET b_0_81=head i70 IN
+ LET i71=tail i70 IN
+ LET b_0_49=head i71 IN
+ LET i72=tail i71 IN
+ LET b_0_113=head i72 IN
+ LET i73=tail i72 IN
+ LET b_0_9=head i73 IN
+ LET i74=tail i73 IN
+ LET b_0_73=head i74 IN
+ LET i75=tail i74 IN
+ LET b_0_41=head i75 IN
+ LET i76=tail i75 IN
+ LET b_0_105=head i76 IN
+ LET i77=tail i76 IN
+ LET b_0_25=head i77 IN
+ LET i78=tail i77 IN
+ LET b_0_89=head i78 IN
+ LET i79=tail i78 IN
+ LET b_0_57=head i79 IN
+ LET i80=tail i79 IN
+ LET b_0_121=head i80 IN
+ LET i81=tail i80 IN
+ LET b_0_5=head i81 IN
+ LET i82=tail i81 IN
+ LET b_0_69=head i82 IN
+ LET i83=tail i82 IN
+ LET b_0_37=head i83 IN
+ LET i84=tail i83 IN
+ LET b_0_101=head i84 IN
+ LET i85=tail i84 IN
+ LET b_0_21=head i85 IN
+ LET i86=tail i85 IN
+ LET b_0_85=head i86 IN
+ LET i87=tail i86 IN
+ LET b_0_53=head i87 IN
+ LET i88=tail i87 IN
+ LET b_0_117=head i88 IN
+ LET i89=tail i88 IN
+ LET b_0_13=head i89 IN
+ LET i90=tail i89 IN
+ LET b_0_77=head i90 IN
+ LET i91=tail i90 IN
+ LET b_0_45=head i91 IN
+ LET i92=tail i91 IN
+ LET b_0_109=head i92 IN
+ LET i93=tail i92 IN
+ LET b_0_29=head i93 IN
+ LET i94=tail i93 IN
+ LET b_0_93=head i94 IN
+ LET i95=tail i94 IN
+ LET b_0_61=head i95 IN
+ LET i96=tail i95 IN
+ LET b_0_125=head i96 IN
+ LET i97=tail i96 IN
+ LET b_0_3=head i97 IN
+ LET i98=tail i97 IN
+ LET b_0_67=head i98 IN
+ LET i99=tail i98 IN
+ LET b_0_35=head i99 IN
+ LET i100=tail i99 IN
+ LET b_0_99=head i100 IN
+ LET i101=tail i100 IN
+ LET b_0_19=head i101 IN
+ LET i102=tail i101 IN
+ LET b_0_83=head i102 IN
+ LET i103=tail i102 IN
+ LET b_0_51=head i103 IN
+ LET i104=tail i103 IN
+ LET b_0_115=head i104 IN
+ LET i105=tail i104 IN
+ LET b_0_11=head i105 IN
+ LET i106=tail i105 IN
+ LET b_0_75=head i106 IN
+ LET i107=tail i106 IN
+ LET b_0_43=head i107 IN
+ LET i108=tail i107 IN
+ LET b_0_107=head i108 IN
+ LET i109=tail i108 IN
+ LET b_0_27=head i109 IN
+ LET i110=tail i109 IN
+ LET b_0_91=head i110 IN
+ LET i111=tail i110 IN
+ LET b_0_59=head i111 IN
+ LET i112=tail i111 IN
+ LET b_0_123=head i112 IN
+ LET i113=tail i112 IN
+ LET b_0_7=head i113 IN
+ LET i114=tail i113 IN
+ LET b_0_71=head i114 IN
+ LET i115=tail i114 IN
+ LET b_0_39=head i115 IN
+ LET i116=tail i115 IN
+ LET b_0_103=head i116 IN
+ LET i117=tail i116 IN
+ LET b_0_23=head i117 IN
+ LET i118=tail i117 IN
+ LET b_0_87=head i118 IN
+ LET i119=tail i118 IN
+ LET b_0_55=head i119 IN
+ LET i120=tail i119 IN
+ LET b_0_119=head i120 IN
+ LET i121=tail i120 IN
+ LET b_0_15=head i121 IN
+ LET i122=tail i121 IN
+ LET b_0_79=head i122 IN
+ LET i123=tail i122 IN
+ LET b_0_47=head i123 IN
+ LET i124=tail i123 IN
+ LET b_0_111=head i124 IN
+ LET i125=tail i124 IN
+ LET b_0_31=head i125 IN
+ LET i126=tail i125 IN
+ LET b_0_95=head i126 IN
+ LET i127=tail i126 IN
+ LET b_0_63=head i127 IN
+ LET i128=tail i127 IN
+ LET b_0_127=head i128 IN
+ LET
+ b_1_0=add_x b_0_0 r_0_0; b_1_1=sub_x b_0_0 r_0_0; r_0_0=mul_x b_0_1 w_0;
+ b_1_2=add_x b_0_2 r_0_1; b_1_3=sub_x b_0_2 r_0_1; r_0_1=mul_x b_0_3 w_0;
+ b_1_4=add_x b_0_4 r_0_2; b_1_5=sub_x b_0_4 r_0_2; r_0_2=mul_x b_0_5 w_0;
+ b_1_6=add_x b_0_6 r_0_3; b_1_7=sub_x b_0_6 r_0_3; r_0_3=mul_x b_0_7 w_0;
+ b_1_8=add_x b_0_8 r_0_4; b_1_9=sub_x b_0_8 r_0_4; r_0_4=mul_x b_0_9 w_0;
+ b_1_10=add_x b_0_10 r_0_5; b_1_11=sub_x b_0_10 r_0_5; r_0_5=mul_x b_0_11 w_0;
+ b_1_12=add_x b_0_12 r_0_6; b_1_13=sub_x b_0_12 r_0_6; r_0_6=mul_x b_0_13 w_0;
+ b_1_14=add_x b_0_14 r_0_7; b_1_15=sub_x b_0_14 r_0_7; r_0_7=mul_x b_0_15 w_0;
+ b_1_16=add_x b_0_16 r_0_8; b_1_17=sub_x b_0_16 r_0_8; r_0_8=mul_x b_0_17 w_0;
+ b_1_18=add_x b_0_18 r_0_9; b_1_19=sub_x b_0_18 r_0_9; r_0_9=mul_x b_0_19 w_0;
+ b_1_20=add_x b_0_20 r_0_10; b_1_21=sub_x b_0_20 r_0_10; r_0_10=mul_x b_0_21 w_0;
+ b_1_22=add_x b_0_22 r_0_11; b_1_23=sub_x b_0_22 r_0_11; r_0_11=mul_x b_0_23 w_0;
+ b_1_24=add_x b_0_24 r_0_12; b_1_25=sub_x b_0_24 r_0_12; r_0_12=mul_x b_0_25 w_0;
+ b_1_26=add_x b_0_26 r_0_13; b_1_27=sub_x b_0_26 r_0_13; r_0_13=mul_x b_0_27 w_0;
+ b_1_28=add_x b_0_28 r_0_14; b_1_29=sub_x b_0_28 r_0_14; r_0_14=mul_x b_0_29 w_0;
+ b_1_30=add_x b_0_30 r_0_15; b_1_31=sub_x b_0_30 r_0_15; r_0_15=mul_x b_0_31 w_0;
+ b_1_32=add_x b_0_32 r_0_16; b_1_33=sub_x b_0_32 r_0_16; r_0_16=mul_x b_0_33 w_0;
+ b_1_34=add_x b_0_34 r_0_17; b_1_35=sub_x b_0_34 r_0_17; r_0_17=mul_x b_0_35 w_0;
+ b_1_36=add_x b_0_36 r_0_18; b_1_37=sub_x b_0_36 r_0_18; r_0_18=mul_x b_0_37 w_0;
+ b_1_38=add_x b_0_38 r_0_19; b_1_39=sub_x b_0_38 r_0_19; r_0_19=mul_x b_0_39 w_0;
+ b_1_40=add_x b_0_40 r_0_20; b_1_41=sub_x b_0_40 r_0_20; r_0_20=mul_x b_0_41 w_0;
+ b_1_42=add_x b_0_42 r_0_21; b_1_43=sub_x b_0_42 r_0_21; r_0_21=mul_x b_0_43 w_0;
+ b_1_44=add_x b_0_44 r_0_22; b_1_45=sub_x b_0_44 r_0_22; r_0_22=mul_x b_0_45 w_0;
+ b_1_46=add_x b_0_46 r_0_23; b_1_47=sub_x b_0_46 r_0_23; r_0_23=mul_x b_0_47 w_0;
+ b_1_48=add_x b_0_48 r_0_24; b_1_49=sub_x b_0_48 r_0_24; r_0_24=mul_x b_0_49 w_0;
+ b_1_50=add_x b_0_50 r_0_25; b_1_51=sub_x b_0_50 r_0_25; r_0_25=mul_x b_0_51 w_0;
+ b_1_52=add_x b_0_52 r_0_26; b_1_53=sub_x b_0_52 r_0_26; r_0_26=mul_x b_0_53 w_0;
+ b_1_54=add_x b_0_54 r_0_27; b_1_55=sub_x b_0_54 r_0_27; r_0_27=mul_x b_0_55 w_0;
+ b_1_56=add_x b_0_56 r_0_28; b_1_57=sub_x b_0_56 r_0_28; r_0_28=mul_x b_0_57 w_0;
+ b_1_58=add_x b_0_58 r_0_29; b_1_59=sub_x b_0_58 r_0_29; r_0_29=mul_x b_0_59 w_0;
+ b_1_60=add_x b_0_60 r_0_30; b_1_61=sub_x b_0_60 r_0_30; r_0_30=mul_x b_0_61 w_0;
+ b_1_62=add_x b_0_62 r_0_31; b_1_63=sub_x b_0_62 r_0_31; r_0_31=mul_x b_0_63 w_0;
+ b_1_64=add_x b_0_64 r_0_32; b_1_65=sub_x b_0_64 r_0_32; r_0_32=mul_x b_0_65 w_0;
+ b_1_66=add_x b_0_66 r_0_33; b_1_67=sub_x b_0_66 r_0_33; r_0_33=mul_x b_0_67 w_0;
+ b_1_68=add_x b_0_68 r_0_34; b_1_69=sub_x b_0_68 r_0_34; r_0_34=mul_x b_0_69 w_0;
+ b_1_70=add_x b_0_70 r_0_35; b_1_71=sub_x b_0_70 r_0_35; r_0_35=mul_x b_0_71 w_0;
+ b_1_72=add_x b_0_72 r_0_36; b_1_73=sub_x b_0_72 r_0_36; r_0_36=mul_x b_0_73 w_0;
+ b_1_74=add_x b_0_74 r_0_37; b_1_75=sub_x b_0_74 r_0_37; r_0_37=mul_x b_0_75 w_0;
+ b_1_76=add_x b_0_76 r_0_38; b_1_77=sub_x b_0_76 r_0_38; r_0_38=mul_x b_0_77 w_0;
+ b_1_78=add_x b_0_78 r_0_39; b_1_79=sub_x b_0_78 r_0_39; r_0_39=mul_x b_0_79 w_0;
+ b_1_80=add_x b_0_80 r_0_40; b_1_81=sub_x b_0_80 r_0_40; r_0_40=mul_x b_0_81 w_0;
+ b_1_82=add_x b_0_82 r_0_41; b_1_83=sub_x b_0_82 r_0_41; r_0_41=mul_x b_0_83 w_0;
+ b_1_84=add_x b_0_84 r_0_42; b_1_85=sub_x b_0_84 r_0_42; r_0_42=mul_x b_0_85 w_0;
+ b_1_86=add_x b_0_86 r_0_43; b_1_87=sub_x b_0_86 r_0_43; r_0_43=mul_x b_0_87 w_0;
+ b_1_88=add_x b_0_88 r_0_44; b_1_89=sub_x b_0_88 r_0_44; r_0_44=mul_x b_0_89 w_0;
+ b_1_90=add_x b_0_90 r_0_45; b_1_91=sub_x b_0_90 r_0_45; r_0_45=mul_x b_0_91 w_0;
+ b_1_92=add_x b_0_92 r_0_46; b_1_93=sub_x b_0_92 r_0_46; r_0_46=mul_x b_0_93 w_0;
+ b_1_94=add_x b_0_94 r_0_47; b_1_95=sub_x b_0_94 r_0_47; r_0_47=mul_x b_0_95 w_0;
+ b_1_96=add_x b_0_96 r_0_48; b_1_97=sub_x b_0_96 r_0_48; r_0_48=mul_x b_0_97 w_0;
+ b_1_98=add_x b_0_98 r_0_49; b_1_99=sub_x b_0_98 r_0_49; r_0_49=mul_x b_0_99 w_0;
+ b_1_100=add_x b_0_100 r_0_50; b_1_101=sub_x b_0_100 r_0_50; r_0_50=mul_x b_0_101 w_0;
+ b_1_102=add_x b_0_102 r_0_51; b_1_103=sub_x b_0_102 r_0_51; r_0_51=mul_x b_0_103 w_0;
+ b_1_104=add_x b_0_104 r_0_52; b_1_105=sub_x b_0_104 r_0_52; r_0_52=mul_x b_0_105 w_0;
+ b_1_106=add_x b_0_106 r_0_53; b_1_107=sub_x b_0_106 r_0_53; r_0_53=mul_x b_0_107 w_0;
+ b_1_108=add_x b_0_108 r_0_54; b_1_109=sub_x b_0_108 r_0_54; r_0_54=mul_x b_0_109 w_0;
+ b_1_110=add_x b_0_110 r_0_55; b_1_111=sub_x b_0_110 r_0_55; r_0_55=mul_x b_0_111 w_0;
+ b_1_112=add_x b_0_112 r_0_56; b_1_113=sub_x b_0_112 r_0_56; r_0_56=mul_x b_0_113 w_0;
+ b_1_114=add_x b_0_114 r_0_57; b_1_115=sub_x b_0_114 r_0_57; r_0_57=mul_x b_0_115 w_0;
+ b_1_116=add_x b_0_116 r_0_58; b_1_117=sub_x b_0_116 r_0_58; r_0_58=mul_x b_0_117 w_0;
+ b_1_118=add_x b_0_118 r_0_59; b_1_119=sub_x b_0_118 r_0_59; r_0_59=mul_x b_0_119 w_0;
+ b_1_120=add_x b_0_120 r_0_60; b_1_121=sub_x b_0_120 r_0_60; r_0_60=mul_x b_0_121 w_0;
+ b_1_122=add_x b_0_122 r_0_61; b_1_123=sub_x b_0_122 r_0_61; r_0_61=mul_x b_0_123 w_0;
+ b_1_124=add_x b_0_124 r_0_62; b_1_125=sub_x b_0_124 r_0_62; r_0_62=mul_x b_0_125 w_0;
+ b_1_126=add_x b_0_126 r_0_63; b_1_127=sub_x b_0_126 r_0_63; r_0_63=mul_x b_0_127 w_0;
+ b_2_0=add_x b_1_0 r_1_0; b_2_2=sub_x b_1_0 r_1_0; r_1_0=mul_x b_1_2 w_0;
+ b_2_1=add_x b_1_1 r_1_1; b_2_3=sub_x b_1_1 r_1_1; r_1_1=mul_x b_1_3 w_32;
+ b_2_4=add_x b_1_4 r_1_2; b_2_6=sub_x b_1_4 r_1_2; r_1_2=mul_x b_1_6 w_0;
+ b_2_5=add_x b_1_5 r_1_3; b_2_7=sub_x b_1_5 r_1_3; r_1_3=mul_x b_1_7 w_32;
+ b_2_8=add_x b_1_8 r_1_4; b_2_10=sub_x b_1_8 r_1_4; r_1_4=mul_x b_1_10 w_0;
+ b_2_9=add_x b_1_9 r_1_5; b_2_11=sub_x b_1_9 r_1_5; r_1_5=mul_x b_1_11 w_32;
+ b_2_12=add_x b_1_12 r_1_6; b_2_14=sub_x b_1_12 r_1_6; r_1_6=mul_x b_1_14 w_0;
+ b_2_13=add_x b_1_13 r_1_7; b_2_15=sub_x b_1_13 r_1_7; r_1_7=mul_x b_1_15 w_32;
+ b_2_16=add_x b_1_16 r_1_8; b_2_18=sub_x b_1_16 r_1_8; r_1_8=mul_x b_1_18 w_0;
+ b_2_17=add_x b_1_17 r_1_9; b_2_19=sub_x b_1_17 r_1_9; r_1_9=mul_x b_1_19 w_32;
+ b_2_20=add_x b_1_20 r_1_10; b_2_22=sub_x b_1_20 r_1_10; r_1_10=mul_x b_1_22 w_0;
+ b_2_21=add_x b_1_21 r_1_11; b_2_23=sub_x b_1_21 r_1_11; r_1_11=mul_x b_1_23 w_32;
+ b_2_24=add_x b_1_24 r_1_12; b_2_26=sub_x b_1_24 r_1_12; r_1_12=mul_x b_1_26 w_0;
+ b_2_25=add_x b_1_25 r_1_13; b_2_27=sub_x b_1_25 r_1_13; r_1_13=mul_x b_1_27 w_32;
+ b_2_28=add_x b_1_28 r_1_14; b_2_30=sub_x b_1_28 r_1_14; r_1_14=mul_x b_1_30 w_0;
+ b_2_29=add_x b_1_29 r_1_15; b_2_31=sub_x b_1_29 r_1_15; r_1_15=mul_x b_1_31 w_32;
+ b_2_32=add_x b_1_32 r_1_16; b_2_34=sub_x b_1_32 r_1_16; r_1_16=mul_x b_1_34 w_0;
+ b_2_33=add_x b_1_33 r_1_17; b_2_35=sub_x b_1_33 r_1_17; r_1_17=mul_x b_1_35 w_32;
+ b_2_36=add_x b_1_36 r_1_18; b_2_38=sub_x b_1_36 r_1_18; r_1_18=mul_x b_1_38 w_0;
+ b_2_37=add_x b_1_37 r_1_19; b_2_39=sub_x b_1_37 r_1_19; r_1_19=mul_x b_1_39 w_32;
+ b_2_40=add_x b_1_40 r_1_20; b_2_42=sub_x b_1_40 r_1_20; r_1_20=mul_x b_1_42 w_0;
+ b_2_41=add_x b_1_41 r_1_21; b_2_43=sub_x b_1_41 r_1_21; r_1_21=mul_x b_1_43 w_32;
+ b_2_44=add_x b_1_44 r_1_22; b_2_46=sub_x b_1_44 r_1_22; r_1_22=mul_x b_1_46 w_0;
+ b_2_45=add_x b_1_45 r_1_23; b_2_47=sub_x b_1_45 r_1_23; r_1_23=mul_x b_1_47 w_32;
+ b_2_48=add_x b_1_48 r_1_24; b_2_50=sub_x b_1_48 r_1_24; r_1_24=mul_x b_1_50 w_0;
+ b_2_49=add_x b_1_49 r_1_25; b_2_51=sub_x b_1_49 r_1_25; r_1_25=mul_x b_1_51 w_32;
+ b_2_52=add_x b_1_52 r_1_26; b_2_54=sub_x b_1_52 r_1_26; r_1_26=mul_x b_1_54 w_0;
+ b_2_53=add_x b_1_53 r_1_27; b_2_55=sub_x b_1_53 r_1_27; r_1_27=mul_x b_1_55 w_32;
+ b_2_56=add_x b_1_56 r_1_28; b_2_58=sub_x b_1_56 r_1_28; r_1_28=mul_x b_1_58 w_0;
+ b_2_57=add_x b_1_57 r_1_29; b_2_59=sub_x b_1_57 r_1_29; r_1_29=mul_x b_1_59 w_32;
+ b_2_60=add_x b_1_60 r_1_30; b_2_62=sub_x b_1_60 r_1_30; r_1_30=mul_x b_1_62 w_0;
+ b_2_61=add_x b_1_61 r_1_31; b_2_63=sub_x b_1_61 r_1_31; r_1_31=mul_x b_1_63 w_32;
+ b_2_64=add_x b_1_64 r_1_32; b_2_66=sub_x b_1_64 r_1_32; r_1_32=mul_x b_1_66 w_0;
+ b_2_65=add_x b_1_65 r_1_33; b_2_67=sub_x b_1_65 r_1_33; r_1_33=mul_x b_1_67 w_32;
+ b_2_68=add_x b_1_68 r_1_34; b_2_70=sub_x b_1_68 r_1_34; r_1_34=mul_x b_1_70 w_0;
+ b_2_69=add_x b_1_69 r_1_35; b_2_71=sub_x b_1_69 r_1_35; r_1_35=mul_x b_1_71 w_32;
+ b_2_72=add_x b_1_72 r_1_36; b_2_74=sub_x b_1_72 r_1_36; r_1_36=mul_x b_1_74 w_0;
+ b_2_73=add_x b_1_73 r_1_37; b_2_75=sub_x b_1_73 r_1_37; r_1_37=mul_x b_1_75 w_32;
+ b_2_76=add_x b_1_76 r_1_38; b_2_78=sub_x b_1_76 r_1_38; r_1_38=mul_x b_1_78 w_0;
+ b_2_77=add_x b_1_77 r_1_39; b_2_79=sub_x b_1_77 r_1_39; r_1_39=mul_x b_1_79 w_32;
+ b_2_80=add_x b_1_80 r_1_40; b_2_82=sub_x b_1_80 r_1_40; r_1_40=mul_x b_1_82 w_0;
+ b_2_81=add_x b_1_81 r_1_41; b_2_83=sub_x b_1_81 r_1_41; r_1_41=mul_x b_1_83 w_32;
+ b_2_84=add_x b_1_84 r_1_42; b_2_86=sub_x b_1_84 r_1_42; r_1_42=mul_x b_1_86 w_0;
+ b_2_85=add_x b_1_85 r_1_43; b_2_87=sub_x b_1_85 r_1_43; r_1_43=mul_x b_1_87 w_32;
+ b_2_88=add_x b_1_88 r_1_44; b_2_90=sub_x b_1_88 r_1_44; r_1_44=mul_x b_1_90 w_0;
+ b_2_89=add_x b_1_89 r_1_45; b_2_91=sub_x b_1_89 r_1_45; r_1_45=mul_x b_1_91 w_32;
+ b_2_92=add_x b_1_92 r_1_46; b_2_94=sub_x b_1_92 r_1_46; r_1_46=mul_x b_1_94 w_0;
+ b_2_93=add_x b_1_93 r_1_47; b_2_95=sub_x b_1_93 r_1_47; r_1_47=mul_x b_1_95 w_32;
+ b_2_96=add_x b_1_96 r_1_48; b_2_98=sub_x b_1_96 r_1_48; r_1_48=mul_x b_1_98 w_0;
+ b_2_97=add_x b_1_97 r_1_49; b_2_99=sub_x b_1_97 r_1_49; r_1_49=mul_x b_1_99 w_32;
+ b_2_100=add_x b_1_100 r_1_50; b_2_102=sub_x b_1_100 r_1_50; r_1_50=mul_x b_1_102 w_0;
+ b_2_101=add_x b_1_101 r_1_51; b_2_103=sub_x b_1_101 r_1_51; r_1_51=mul_x b_1_103 w_32;
+ b_2_104=add_x b_1_104 r_1_52; b_2_106=sub_x b_1_104 r_1_52; r_1_52=mul_x b_1_106 w_0;
+ b_2_105=add_x b_1_105 r_1_53; b_2_107=sub_x b_1_105 r_1_53; r_1_53=mul_x b_1_107 w_32;
+ b_2_108=add_x b_1_108 r_1_54; b_2_110=sub_x b_1_108 r_1_54; r_1_54=mul_x b_1_110 w_0;
+ b_2_109=add_x b_1_109 r_1_55; b_2_111=sub_x b_1_109 r_1_55; r_1_55=mul_x b_1_111 w_32;
+ b_2_112=add_x b_1_112 r_1_56; b_2_114=sub_x b_1_112 r_1_56; r_1_56=mul_x b_1_114 w_0;
+ b_2_113=add_x b_1_113 r_1_57; b_2_115=sub_x b_1_113 r_1_57; r_1_57=mul_x b_1_115 w_32;
+ b_2_116=add_x b_1_116 r_1_58; b_2_118=sub_x b_1_116 r_1_58; r_1_58=mul_x b_1_118 w_0;
+ b_2_117=add_x b_1_117 r_1_59; b_2_119=sub_x b_1_117 r_1_59; r_1_59=mul_x b_1_119 w_32;
+ b_2_120=add_x b_1_120 r_1_60; b_2_122=sub_x b_1_120 r_1_60; r_1_60=mul_x b_1_122 w_0;
+ b_2_121=add_x b_1_121 r_1_61; b_2_123=sub_x b_1_121 r_1_61; r_1_61=mul_x b_1_123 w_32;
+ b_2_124=add_x b_1_124 r_1_62; b_2_126=sub_x b_1_124 r_1_62; r_1_62=mul_x b_1_126 w_0;
+ b_2_125=add_x b_1_125 r_1_63; b_2_127=sub_x b_1_125 r_1_63; r_1_63=mul_x b_1_127 w_32;
+ b_3_0=add_x b_2_0 r_2_0; b_3_4=sub_x b_2_0 r_2_0; r_2_0=mul_x b_2_4 w_0;
+ b_3_1=add_x b_2_1 r_2_1; b_3_5=sub_x b_2_1 r_2_1; r_2_1=mul_x b_2_5 w_16;
+ b_3_2=add_x b_2_2 r_2_2; b_3_6=sub_x b_2_2 r_2_2; r_2_2=mul_x b_2_6 w_32;
+ b_3_3=add_x b_2_3 r_2_3; b_3_7=sub_x b_2_3 r_2_3; r_2_3=mul_x b_2_7 w_48;
+ b_3_8=add_x b_2_8 r_2_4; b_3_12=sub_x b_2_8 r_2_4; r_2_4=mul_x b_2_12 w_0;
+ b_3_9=add_x b_2_9 r_2_5; b_3_13=sub_x b_2_9 r_2_5; r_2_5=mul_x b_2_13 w_16;
+ b_3_10=add_x b_2_10 r_2_6; b_3_14=sub_x b_2_10 r_2_6; r_2_6=mul_x b_2_14 w_32;
+ b_3_11=add_x b_2_11 r_2_7; b_3_15=sub_x b_2_11 r_2_7; r_2_7=mul_x b_2_15 w_48;
+ b_3_16=add_x b_2_16 r_2_8; b_3_20=sub_x b_2_16 r_2_8; r_2_8=mul_x b_2_20 w_0;
+ b_3_17=add_x b_2_17 r_2_9; b_3_21=sub_x b_2_17 r_2_9; r_2_9=mul_x b_2_21 w_16;
+ b_3_18=add_x b_2_18 r_2_10; b_3_22=sub_x b_2_18 r_2_10; r_2_10=mul_x b_2_22 w_32;
+ b_3_19=add_x b_2_19 r_2_11; b_3_23=sub_x b_2_19 r_2_11; r_2_11=mul_x b_2_23 w_48;
+ b_3_24=add_x b_2_24 r_2_12; b_3_28=sub_x b_2_24 r_2_12; r_2_12=mul_x b_2_28 w_0;
+ b_3_25=add_x b_2_25 r_2_13; b_3_29=sub_x b_2_25 r_2_13; r_2_13=mul_x b_2_29 w_16;
+ b_3_26=add_x b_2_26 r_2_14; b_3_30=sub_x b_2_26 r_2_14; r_2_14=mul_x b_2_30 w_32;
+ b_3_27=add_x b_2_27 r_2_15; b_3_31=sub_x b_2_27 r_2_15; r_2_15=mul_x b_2_31 w_48;
+ b_3_32=add_x b_2_32 r_2_16; b_3_36=sub_x b_2_32 r_2_16; r_2_16=mul_x b_2_36 w_0;
+ b_3_33=add_x b_2_33 r_2_17; b_3_37=sub_x b_2_33 r_2_17; r_2_17=mul_x b_2_37 w_16;
+ b_3_34=add_x b_2_34 r_2_18; b_3_38=sub_x b_2_34 r_2_18; r_2_18=mul_x b_2_38 w_32;
+ b_3_35=add_x b_2_35 r_2_19; b_3_39=sub_x b_2_35 r_2_19; r_2_19=mul_x b_2_39 w_48;
+ b_3_40=add_x b_2_40 r_2_20; b_3_44=sub_x b_2_40 r_2_20; r_2_20=mul_x b_2_44 w_0;
+ b_3_41=add_x b_2_41 r_2_21; b_3_45=sub_x b_2_41 r_2_21; r_2_21=mul_x b_2_45 w_16;
+ b_3_42=add_x b_2_42 r_2_22; b_3_46=sub_x b_2_42 r_2_22; r_2_22=mul_x b_2_46 w_32;
+ b_3_43=add_x b_2_43 r_2_23; b_3_47=sub_x b_2_43 r_2_23; r_2_23=mul_x b_2_47 w_48;
+ b_3_48=add_x b_2_48 r_2_24; b_3_52=sub_x b_2_48 r_2_24; r_2_24=mul_x b_2_52 w_0;
+ b_3_49=add_x b_2_49 r_2_25; b_3_53=sub_x b_2_49 r_2_25; r_2_25=mul_x b_2_53 w_16;
+ b_3_50=add_x b_2_50 r_2_26; b_3_54=sub_x b_2_50 r_2_26; r_2_26=mul_x b_2_54 w_32;
+ b_3_51=add_x b_2_51 r_2_27; b_3_55=sub_x b_2_51 r_2_27; r_2_27=mul_x b_2_55 w_48;
+ b_3_56=add_x b_2_56 r_2_28; b_3_60=sub_x b_2_56 r_2_28; r_2_28=mul_x b_2_60 w_0;
+ b_3_57=add_x b_2_57 r_2_29; b_3_61=sub_x b_2_57 r_2_29; r_2_29=mul_x b_2_61 w_16;
+ b_3_58=add_x b_2_58 r_2_30; b_3_62=sub_x b_2_58 r_2_30; r_2_30=mul_x b_2_62 w_32;
+ b_3_59=add_x b_2_59 r_2_31; b_3_63=sub_x b_2_59 r_2_31; r_2_31=mul_x b_2_63 w_48;
+ b_3_64=add_x b_2_64 r_2_32; b_3_68=sub_x b_2_64 r_2_32; r_2_32=mul_x b_2_68 w_0;
+ b_3_65=add_x b_2_65 r_2_33; b_3_69=sub_x b_2_65 r_2_33; r_2_33=mul_x b_2_69 w_16;
+ b_3_66=add_x b_2_66 r_2_34; b_3_70=sub_x b_2_66 r_2_34; r_2_34=mul_x b_2_70 w_32;
+ b_3_67=add_x b_2_67 r_2_35; b_3_71=sub_x b_2_67 r_2_35; r_2_35=mul_x b_2_71 w_48;
+ b_3_72=add_x b_2_72 r_2_36; b_3_76=sub_x b_2_72 r_2_36; r_2_36=mul_x b_2_76 w_0;
+ b_3_73=add_x b_2_73 r_2_37; b_3_77=sub_x b_2_73 r_2_37; r_2_37=mul_x b_2_77 w_16;
+ b_3_74=add_x b_2_74 r_2_38; b_3_78=sub_x b_2_74 r_2_38; r_2_38=mul_x b_2_78 w_32;
+ b_3_75=add_x b_2_75 r_2_39; b_3_79=sub_x b_2_75 r_2_39; r_2_39=mul_x b_2_79 w_48;
+ b_3_80=add_x b_2_80 r_2_40; b_3_84=sub_x b_2_80 r_2_40; r_2_40=mul_x b_2_84 w_0;
+ b_3_81=add_x b_2_81 r_2_41; b_3_85=sub_x b_2_81 r_2_41; r_2_41=mul_x b_2_85 w_16;
+ b_3_82=add_x b_2_82 r_2_42; b_3_86=sub_x b_2_82 r_2_42; r_2_42=mul_x b_2_86 w_32;
+ b_3_83=add_x b_2_83 r_2_43; b_3_87=sub_x b_2_83 r_2_43; r_2_43=mul_x b_2_87 w_48;
+ b_3_88=add_x b_2_88 r_2_44; b_3_92=sub_x b_2_88 r_2_44; r_2_44=mul_x b_2_92 w_0;
+ b_3_89=add_x b_2_89 r_2_45; b_3_93=sub_x b_2_89 r_2_45; r_2_45=mul_x b_2_93 w_16;
+ b_3_90=add_x b_2_90 r_2_46; b_3_94=sub_x b_2_90 r_2_46; r_2_46=mul_x b_2_94 w_32;
+ b_3_91=add_x b_2_91 r_2_47; b_3_95=sub_x b_2_91 r_2_47; r_2_47=mul_x b_2_95 w_48;
+ b_3_96=add_x b_2_96 r_2_48; b_3_100=sub_x b_2_96 r_2_48; r_2_48=mul_x b_2_100 w_0;
+ b_3_97=add_x b_2_97 r_2_49; b_3_101=sub_x b_2_97 r_2_49; r_2_49=mul_x b_2_101 w_16;
+ b_3_98=add_x b_2_98 r_2_50; b_3_102=sub_x b_2_98 r_2_50; r_2_50=mul_x b_2_102 w_32;
+ b_3_99=add_x b_2_99 r_2_51; b_3_103=sub_x b_2_99 r_2_51; r_2_51=mul_x b_2_103 w_48;
+ b_3_104=add_x b_2_104 r_2_52; b_3_108=sub_x b_2_104 r_2_52; r_2_52=mul_x b_2_108 w_0;
+ b_3_105=add_x b_2_105 r_2_53; b_3_109=sub_x b_2_105 r_2_53; r_2_53=mul_x b_2_109 w_16;
+ b_3_106=add_x b_2_106 r_2_54; b_3_110=sub_x b_2_106 r_2_54; r_2_54=mul_x b_2_110 w_32;
+ b_3_107=add_x b_2_107 r_2_55; b_3_111=sub_x b_2_107 r_2_55; r_2_55=mul_x b_2_111 w_48;
+ b_3_112=add_x b_2_112 r_2_56; b_3_116=sub_x b_2_112 r_2_56; r_2_56=mul_x b_2_116 w_0;
+ b_3_113=add_x b_2_113 r_2_57; b_3_117=sub_x b_2_113 r_2_57; r_2_57=mul_x b_2_117 w_16;
+ b_3_114=add_x b_2_114 r_2_58; b_3_118=sub_x b_2_114 r_2_58; r_2_58=mul_x b_2_118 w_32;
+ b_3_115=add_x b_2_115 r_2_59; b_3_119=sub_x b_2_115 r_2_59; r_2_59=mul_x b_2_119 w_48;
+ b_3_120=add_x b_2_120 r_2_60; b_3_124=sub_x b_2_120 r_2_60; r_2_60=mul_x b_2_124 w_0;
+ b_3_121=add_x b_2_121 r_2_61; b_3_125=sub_x b_2_121 r_2_61; r_2_61=mul_x b_2_125 w_16;
+ b_3_122=add_x b_2_122 r_2_62; b_3_126=sub_x b_2_122 r_2_62; r_2_62=mul_x b_2_126 w_32;
+ b_3_123=add_x b_2_123 r_2_63; b_3_127=sub_x b_2_123 r_2_63; r_2_63=mul_x b_2_127 w_48;
+ b_4_0=add_x b_3_0 r_3_0; b_4_8=sub_x b_3_0 r_3_0; r_3_0=mul_x b_3_8 w_0;
+ b_4_1=add_x b_3_1 r_3_1; b_4_9=sub_x b_3_1 r_3_1; r_3_1=mul_x b_3_9 w_8;
+ b_4_2=add_x b_3_2 r_3_2; b_4_10=sub_x b_3_2 r_3_2; r_3_2=mul_x b_3_10 w_16;
+ b_4_3=add_x b_3_3 r_3_3; b_4_11=sub_x b_3_3 r_3_3; r_3_3=mul_x b_3_11 w_24;
+ b_4_4=add_x b_3_4 r_3_4; b_4_12=sub_x b_3_4 r_3_4; r_3_4=mul_x b_3_12 w_32;
+ b_4_5=add_x b_3_5 r_3_5; b_4_13=sub_x b_3_5 r_3_5; r_3_5=mul_x b_3_13 w_40;
+ b_4_6=add_x b_3_6 r_3_6; b_4_14=sub_x b_3_6 r_3_6; r_3_6=mul_x b_3_14 w_48;
+ b_4_7=add_x b_3_7 r_3_7; b_4_15=sub_x b_3_7 r_3_7; r_3_7=mul_x b_3_15 w_56;
+ b_4_16=add_x b_3_16 r_3_8; b_4_24=sub_x b_3_16 r_3_8; r_3_8=mul_x b_3_24 w_0;
+ b_4_17=add_x b_3_17 r_3_9; b_4_25=sub_x b_3_17 r_3_9; r_3_9=mul_x b_3_25 w_8;
+ b_4_18=add_x b_3_18 r_3_10; b_4_26=sub_x b_3_18 r_3_10; r_3_10=mul_x b_3_26 w_16;
+ b_4_19=add_x b_3_19 r_3_11; b_4_27=sub_x b_3_19 r_3_11; r_3_11=mul_x b_3_27 w_24;
+ b_4_20=add_x b_3_20 r_3_12; b_4_28=sub_x b_3_20 r_3_12; r_3_12=mul_x b_3_28 w_32;
+ b_4_21=add_x b_3_21 r_3_13; b_4_29=sub_x b_3_21 r_3_13; r_3_13=mul_x b_3_29 w_40;
+ b_4_22=add_x b_3_22 r_3_14; b_4_30=sub_x b_3_22 r_3_14; r_3_14=mul_x b_3_30 w_48;
+ b_4_23=add_x b_3_23 r_3_15; b_4_31=sub_x b_3_23 r_3_15; r_3_15=mul_x b_3_31 w_56;
+ b_4_32=add_x b_3_32 r_3_16; b_4_40=sub_x b_3_32 r_3_16; r_3_16=mul_x b_3_40 w_0;
+ b_4_33=add_x b_3_33 r_3_17; b_4_41=sub_x b_3_33 r_3_17; r_3_17=mul_x b_3_41 w_8;
+ b_4_34=add_x b_3_34 r_3_18; b_4_42=sub_x b_3_34 r_3_18; r_3_18=mul_x b_3_42 w_16;
+ b_4_35=add_x b_3_35 r_3_19; b_4_43=sub_x b_3_35 r_3_19; r_3_19=mul_x b_3_43 w_24;
+ b_4_36=add_x b_3_36 r_3_20; b_4_44=sub_x b_3_36 r_3_20; r_3_20=mul_x b_3_44 w_32;
+ b_4_37=add_x b_3_37 r_3_21; b_4_45=sub_x b_3_37 r_3_21; r_3_21=mul_x b_3_45 w_40;
+ b_4_38=add_x b_3_38 r_3_22; b_4_46=sub_x b_3_38 r_3_22; r_3_22=mul_x b_3_46 w_48;
+ b_4_39=add_x b_3_39 r_3_23; b_4_47=sub_x b_3_39 r_3_23; r_3_23=mul_x b_3_47 w_56;
+ b_4_48=add_x b_3_48 r_3_24; b_4_56=sub_x b_3_48 r_3_24; r_3_24=mul_x b_3_56 w_0;
+ b_4_49=add_x b_3_49 r_3_25; b_4_57=sub_x b_3_49 r_3_25; r_3_25=mul_x b_3_57 w_8;
+ b_4_50=add_x b_3_50 r_3_26; b_4_58=sub_x b_3_50 r_3_26; r_3_26=mul_x b_3_58 w_16;
+ b_4_51=add_x b_3_51 r_3_27; b_4_59=sub_x b_3_51 r_3_27; r_3_27=mul_x b_3_59 w_24;
+ b_4_52=add_x b_3_52 r_3_28; b_4_60=sub_x b_3_52 r_3_28; r_3_28=mul_x b_3_60 w_32;
+ b_4_53=add_x b_3_53 r_3_29; b_4_61=sub_x b_3_53 r_3_29; r_3_29=mul_x b_3_61 w_40;
+ b_4_54=add_x b_3_54 r_3_30; b_4_62=sub_x b_3_54 r_3_30; r_3_30=mul_x b_3_62 w_48;
+ b_4_55=add_x b_3_55 r_3_31; b_4_63=sub_x b_3_55 r_3_31; r_3_31=mul_x b_3_63 w_56;
+ b_4_64=add_x b_3_64 r_3_32; b_4_72=sub_x b_3_64 r_3_32; r_3_32=mul_x b_3_72 w_0;
+ b_4_65=add_x b_3_65 r_3_33; b_4_73=sub_x b_3_65 r_3_33; r_3_33=mul_x b_3_73 w_8;
+ b_4_66=add_x b_3_66 r_3_34; b_4_74=sub_x b_3_66 r_3_34; r_3_34=mul_x b_3_74 w_16;
+ b_4_67=add_x b_3_67 r_3_35; b_4_75=sub_x b_3_67 r_3_35; r_3_35=mul_x b_3_75 w_24;
+ b_4_68=add_x b_3_68 r_3_36; b_4_76=sub_x b_3_68 r_3_36; r_3_36=mul_x b_3_76 w_32;
+ b_4_69=add_x b_3_69 r_3_37; b_4_77=sub_x b_3_69 r_3_37; r_3_37=mul_x b_3_77 w_40;
+ b_4_70=add_x b_3_70 r_3_38; b_4_78=sub_x b_3_70 r_3_38; r_3_38=mul_x b_3_78 w_48;
+ b_4_71=add_x b_3_71 r_3_39; b_4_79=sub_x b_3_71 r_3_39; r_3_39=mul_x b_3_79 w_56;
+ b_4_80=add_x b_3_80 r_3_40; b_4_88=sub_x b_3_80 r_3_40; r_3_40=mul_x b_3_88 w_0;
+ b_4_81=add_x b_3_81 r_3_41; b_4_89=sub_x b_3_81 r_3_41; r_3_41=mul_x b_3_89 w_8;
+ b_4_82=add_x b_3_82 r_3_42; b_4_90=sub_x b_3_82 r_3_42; r_3_42=mul_x b_3_90 w_16;
+ b_4_83=add_x b_3_83 r_3_43; b_4_91=sub_x b_3_83 r_3_43; r_3_43=mul_x b_3_91 w_24;
+ b_4_84=add_x b_3_84 r_3_44; b_4_92=sub_x b_3_84 r_3_44; r_3_44=mul_x b_3_92 w_32;
+ b_4_85=add_x b_3_85 r_3_45; b_4_93=sub_x b_3_85 r_3_45; r_3_45=mul_x b_3_93 w_40;
+ b_4_86=add_x b_3_86 r_3_46; b_4_94=sub_x b_3_86 r_3_46; r_3_46=mul_x b_3_94 w_48;
+ b_4_87=add_x b_3_87 r_3_47; b_4_95=sub_x b_3_87 r_3_47; r_3_47=mul_x b_3_95 w_56;
+ b_4_96=add_x b_3_96 r_3_48; b_4_104=sub_x b_3_96 r_3_48; r_3_48=mul_x b_3_104 w_0;
+ b_4_97=add_x b_3_97 r_3_49; b_4_105=sub_x b_3_97 r_3_49; r_3_49=mul_x b_3_105 w_8;
+ b_4_98=add_x b_3_98 r_3_50; b_4_106=sub_x b_3_98 r_3_50; r_3_50=mul_x b_3_106 w_16;
+ b_4_99=add_x b_3_99 r_3_51; b_4_107=sub_x b_3_99 r_3_51; r_3_51=mul_x b_3_107 w_24;
+ b_4_100=add_x b_3_100 r_3_52; b_4_108=sub_x b_3_100 r_3_52; r_3_52=mul_x b_3_108 w_32;
+ b_4_101=add_x b_3_101 r_3_53; b_4_109=sub_x b_3_101 r_3_53; r_3_53=mul_x b_3_109 w_40;
+ b_4_102=add_x b_3_102 r_3_54; b_4_110=sub_x b_3_102 r_3_54; r_3_54=mul_x b_3_110 w_48;
+ b_4_103=add_x b_3_103 r_3_55; b_4_111=sub_x b_3_103 r_3_55; r_3_55=mul_x b_3_111 w_56;
+ b_4_112=add_x b_3_112 r_3_56; b_4_120=sub_x b_3_112 r_3_56; r_3_56=mul_x b_3_120 w_0;
+ b_4_113=add_x b_3_113 r_3_57; b_4_121=sub_x b_3_113 r_3_57; r_3_57=mul_x b_3_121 w_8;
+ b_4_114=add_x b_3_114 r_3_58; b_4_122=sub_x b_3_114 r_3_58; r_3_58=mul_x b_3_122 w_16;
+ b_4_115=add_x b_3_115 r_3_59; b_4_123=sub_x b_3_115 r_3_59; r_3_59=mul_x b_3_123 w_24;
+ b_4_116=add_x b_3_116 r_3_60; b_4_124=sub_x b_3_116 r_3_60; r_3_60=mul_x b_3_124 w_32;
+ b_4_117=add_x b_3_117 r_3_61; b_4_125=sub_x b_3_117 r_3_61; r_3_61=mul_x b_3_125 w_40;
+ b_4_118=add_x b_3_118 r_3_62; b_4_126=sub_x b_3_118 r_3_62; r_3_62=mul_x b_3_126 w_48;
+ b_4_119=add_x b_3_119 r_3_63; b_4_127=sub_x b_3_119 r_3_63; r_3_63=mul_x b_3_127 w_56;
+ b_5_0=add_x b_4_0 r_4_0; b_5_16=sub_x b_4_0 r_4_0; r_4_0=mul_x b_4_16 w_0;
+ b_5_1=add_x b_4_1 r_4_1; b_5_17=sub_x b_4_1 r_4_1; r_4_1=mul_x b_4_17 w_4;
+ b_5_2=add_x b_4_2 r_4_2; b_5_18=sub_x b_4_2 r_4_2; r_4_2=mul_x b_4_18 w_8;
+ b_5_3=add_x b_4_3 r_4_3; b_5_19=sub_x b_4_3 r_4_3; r_4_3=mul_x b_4_19 w_12;
+ b_5_4=add_x b_4_4 r_4_4; b_5_20=sub_x b_4_4 r_4_4; r_4_4=mul_x b_4_20 w_16;
+ b_5_5=add_x b_4_5 r_4_5; b_5_21=sub_x b_4_5 r_4_5; r_4_5=mul_x b_4_21 w_20;
+ b_5_6=add_x b_4_6 r_4_6; b_5_22=sub_x b_4_6 r_4_6; r_4_6=mul_x b_4_22 w_24;
+ b_5_7=add_x b_4_7 r_4_7; b_5_23=sub_x b_4_7 r_4_7; r_4_7=mul_x b_4_23 w_28;
+ b_5_8=add_x b_4_8 r_4_8; b_5_24=sub_x b_4_8 r_4_8; r_4_8=mul_x b_4_24 w_32;
+ b_5_9=add_x b_4_9 r_4_9; b_5_25=sub_x b_4_9 r_4_9; r_4_9=mul_x b_4_25 w_36;
+ b_5_10=add_x b_4_10 r_4_10; b_5_26=sub_x b_4_10 r_4_10; r_4_10=mul_x b_4_26 w_40;
+ b_5_11=add_x b_4_11 r_4_11; b_5_27=sub_x b_4_11 r_4_11; r_4_11=mul_x b_4_27 w_44;
+ b_5_12=add_x b_4_12 r_4_12; b_5_28=sub_x b_4_12 r_4_12; r_4_12=mul_x b_4_28 w_48;
+ b_5_13=add_x b_4_13 r_4_13; b_5_29=sub_x b_4_13 r_4_13; r_4_13=mul_x b_4_29 w_52;
+ b_5_14=add_x b_4_14 r_4_14; b_5_30=sub_x b_4_14 r_4_14; r_4_14=mul_x b_4_30 w_56;
+ b_5_15=add_x b_4_15 r_4_15; b_5_31=sub_x b_4_15 r_4_15; r_4_15=mul_x b_4_31 w_60;
+ b_5_32=add_x b_4_32 r_4_16; b_5_48=sub_x b_4_32 r_4_16; r_4_16=mul_x b_4_48 w_0;
+ b_5_33=add_x b_4_33 r_4_17; b_5_49=sub_x b_4_33 r_4_17; r_4_17=mul_x b_4_49 w_4;
+ b_5_34=add_x b_4_34 r_4_18; b_5_50=sub_x b_4_34 r_4_18; r_4_18=mul_x b_4_50 w_8;
+ b_5_35=add_x b_4_35 r_4_19; b_5_51=sub_x b_4_35 r_4_19; r_4_19=mul_x b_4_51 w_12;
+ b_5_36=add_x b_4_36 r_4_20; b_5_52=sub_x b_4_36 r_4_20; r_4_20=mul_x b_4_52 w_16;
+ b_5_37=add_x b_4_37 r_4_21; b_5_53=sub_x b_4_37 r_4_21; r_4_21=mul_x b_4_53 w_20;
+ b_5_38=add_x b_4_38 r_4_22; b_5_54=sub_x b_4_38 r_4_22; r_4_22=mul_x b_4_54 w_24;
+ b_5_39=add_x b_4_39 r_4_23; b_5_55=sub_x b_4_39 r_4_23; r_4_23=mul_x b_4_55 w_28;
+ b_5_40=add_x b_4_40 r_4_24; b_5_56=sub_x b_4_40 r_4_24; r_4_24=mul_x b_4_56 w_32;
+ b_5_41=add_x b_4_41 r_4_25; b_5_57=sub_x b_4_41 r_4_25; r_4_25=mul_x b_4_57 w_36;
+ b_5_42=add_x b_4_42 r_4_26; b_5_58=sub_x b_4_42 r_4_26; r_4_26=mul_x b_4_58 w_40;
+ b_5_43=add_x b_4_43 r_4_27; b_5_59=sub_x b_4_43 r_4_27; r_4_27=mul_x b_4_59 w_44;
+ b_5_44=add_x b_4_44 r_4_28; b_5_60=sub_x b_4_44 r_4_28; r_4_28=mul_x b_4_60 w_48;
+ b_5_45=add_x b_4_45 r_4_29; b_5_61=sub_x b_4_45 r_4_29; r_4_29=mul_x b_4_61 w_52;
+ b_5_46=add_x b_4_46 r_4_30; b_5_62=sub_x b_4_46 r_4_30; r_4_30=mul_x b_4_62 w_56;
+ b_5_47=add_x b_4_47 r_4_31; b_5_63=sub_x b_4_47 r_4_31; r_4_31=mul_x b_4_63 w_60;
+ b_5_64=add_x b_4_64 r_4_32; b_5_80=sub_x b_4_64 r_4_32; r_4_32=mul_x b_4_80 w_0;
+ b_5_65=add_x b_4_65 r_4_33; b_5_81=sub_x b_4_65 r_4_33; r_4_33=mul_x b_4_81 w_4;
+ b_5_66=add_x b_4_66 r_4_34; b_5_82=sub_x b_4_66 r_4_34; r_4_34=mul_x b_4_82 w_8;
+ b_5_67=add_x b_4_67 r_4_35; b_5_83=sub_x b_4_67 r_4_35; r_4_35=mul_x b_4_83 w_12;
+ b_5_68=add_x b_4_68 r_4_36; b_5_84=sub_x b_4_68 r_4_36; r_4_36=mul_x b_4_84 w_16;
+ b_5_69=add_x b_4_69 r_4_37; b_5_85=sub_x b_4_69 r_4_37; r_4_37=mul_x b_4_85 w_20;
+ b_5_70=add_x b_4_70 r_4_38; b_5_86=sub_x b_4_70 r_4_38; r_4_38=mul_x b_4_86 w_24;
+ b_5_71=add_x b_4_71 r_4_39; b_5_87=sub_x b_4_71 r_4_39; r_4_39=mul_x b_4_87 w_28;
+ b_5_72=add_x b_4_72 r_4_40; b_5_88=sub_x b_4_72 r_4_40; r_4_40=mul_x b_4_88 w_32;
+ b_5_73=add_x b_4_73 r_4_41; b_5_89=sub_x b_4_73 r_4_41; r_4_41=mul_x b_4_89 w_36;
+ b_5_74=add_x b_4_74 r_4_42; b_5_90=sub_x b_4_74 r_4_42; r_4_42=mul_x b_4_90 w_40;
+ b_5_75=add_x b_4_75 r_4_43; b_5_91=sub_x b_4_75 r_4_43; r_4_43=mul_x b_4_91 w_44;
+ b_5_76=add_x b_4_76 r_4_44; b_5_92=sub_x b_4_76 r_4_44; r_4_44=mul_x b_4_92 w_48;
+ b_5_77=add_x b_4_77 r_4_45; b_5_93=sub_x b_4_77 r_4_45; r_4_45=mul_x b_4_93 w_52;
+ b_5_78=add_x b_4_78 r_4_46; b_5_94=sub_x b_4_78 r_4_46; r_4_46=mul_x b_4_94 w_56;
+ b_5_79=add_x b_4_79 r_4_47; b_5_95=sub_x b_4_79 r_4_47; r_4_47=mul_x b_4_95 w_60;
+ b_5_96=add_x b_4_96 r_4_48; b_5_112=sub_x b_4_96 r_4_48; r_4_48=mul_x b_4_112 w_0;
+ b_5_97=add_x b_4_97 r_4_49; b_5_113=sub_x b_4_97 r_4_49; r_4_49=mul_x b_4_113 w_4;
+ b_5_98=add_x b_4_98 r_4_50; b_5_114=sub_x b_4_98 r_4_50; r_4_50=mul_x b_4_114 w_8;
+ b_5_99=add_x b_4_99 r_4_51; b_5_115=sub_x b_4_99 r_4_51; r_4_51=mul_x b_4_115 w_12;
+ b_5_100=add_x b_4_100 r_4_52; b_5_116=sub_x b_4_100 r_4_52; r_4_52=mul_x b_4_116 w_16;
+ b_5_101=add_x b_4_101 r_4_53; b_5_117=sub_x b_4_101 r_4_53; r_4_53=mul_x b_4_117 w_20;
+ b_5_102=add_x b_4_102 r_4_54; b_5_118=sub_x b_4_102 r_4_54; r_4_54=mul_x b_4_118 w_24;
+ b_5_103=add_x b_4_103 r_4_55; b_5_119=sub_x b_4_103 r_4_55; r_4_55=mul_x b_4_119 w_28;
+ b_5_104=add_x b_4_104 r_4_56; b_5_120=sub_x b_4_104 r_4_56; r_4_56=mul_x b_4_120 w_32;
+ b_5_105=add_x b_4_105 r_4_57; b_5_121=sub_x b_4_105 r_4_57; r_4_57=mul_x b_4_121 w_36;
+ b_5_106=add_x b_4_106 r_4_58; b_5_122=sub_x b_4_106 r_4_58; r_4_58=mul_x b_4_122 w_40;
+ b_5_107=add_x b_4_107 r_4_59; b_5_123=sub_x b_4_107 r_4_59; r_4_59=mul_x b_4_123 w_44;
+ b_5_108=add_x b_4_108 r_4_60; b_5_124=sub_x b_4_108 r_4_60; r_4_60=mul_x b_4_124 w_48;
+ b_5_109=add_x b_4_109 r_4_61; b_5_125=sub_x b_4_109 r_4_61; r_4_61=mul_x b_4_125 w_52;
+ b_5_110=add_x b_4_110 r_4_62; b_5_126=sub_x b_4_110 r_4_62; r_4_62=mul_x b_4_126 w_56;
+ b_5_111=add_x b_4_111 r_4_63; b_5_127=sub_x b_4_111 r_4_63; r_4_63=mul_x b_4_127 w_60;
+ b_6_0=add_x b_5_0 r_5_0; b_6_32=sub_x b_5_0 r_5_0; r_5_0=mul_x b_5_32 w_0;
+ b_6_1=add_x b_5_1 r_5_1; b_6_33=sub_x b_5_1 r_5_1; r_5_1=mul_x b_5_33 w_2;
+ b_6_2=add_x b_5_2 r_5_2; b_6_34=sub_x b_5_2 r_5_2; r_5_2=mul_x b_5_34 w_4;
+ b_6_3=add_x b_5_3 r_5_3; b_6_35=sub_x b_5_3 r_5_3; r_5_3=mul_x b_5_35 w_6;
+ b_6_4=add_x b_5_4 r_5_4; b_6_36=sub_x b_5_4 r_5_4; r_5_4=mul_x b_5_36 w_8;
+ b_6_5=add_x b_5_5 r_5_5; b_6_37=sub_x b_5_5 r_5_5; r_5_5=mul_x b_5_37 w_10;
+ b_6_6=add_x b_5_6 r_5_6; b_6_38=sub_x b_5_6 r_5_6; r_5_6=mul_x b_5_38 w_12;
+ b_6_7=add_x b_5_7 r_5_7; b_6_39=sub_x b_5_7 r_5_7; r_5_7=mul_x b_5_39 w_14;
+ b_6_8=add_x b_5_8 r_5_8; b_6_40=sub_x b_5_8 r_5_8; r_5_8=mul_x b_5_40 w_16;
+ b_6_9=add_x b_5_9 r_5_9; b_6_41=sub_x b_5_9 r_5_9; r_5_9=mul_x b_5_41 w_18;
+ b_6_10=add_x b_5_10 r_5_10; b_6_42=sub_x b_5_10 r_5_10; r_5_10=mul_x b_5_42 w_20;
+ b_6_11=add_x b_5_11 r_5_11; b_6_43=sub_x b_5_11 r_5_11; r_5_11=mul_x b_5_43 w_22;
+ b_6_12=add_x b_5_12 r_5_12; b_6_44=sub_x b_5_12 r_5_12; r_5_12=mul_x b_5_44 w_24;
+ b_6_13=add_x b_5_13 r_5_13; b_6_45=sub_x b_5_13 r_5_13; r_5_13=mul_x b_5_45 w_26;
+ b_6_14=add_x b_5_14 r_5_14; b_6_46=sub_x b_5_14 r_5_14; r_5_14=mul_x b_5_46 w_28;
+ b_6_15=add_x b_5_15 r_5_15; b_6_47=sub_x b_5_15 r_5_15; r_5_15=mul_x b_5_47 w_30;
+ b_6_16=add_x b_5_16 r_5_16; b_6_48=sub_x b_5_16 r_5_16; r_5_16=mul_x b_5_48 w_32;
+ b_6_17=add_x b_5_17 r_5_17; b_6_49=sub_x b_5_17 r_5_17; r_5_17=mul_x b_5_49 w_34;
+ b_6_18=add_x b_5_18 r_5_18; b_6_50=sub_x b_5_18 r_5_18; r_5_18=mul_x b_5_50 w_36;
+ b_6_19=add_x b_5_19 r_5_19; b_6_51=sub_x b_5_19 r_5_19; r_5_19=mul_x b_5_51 w_38;
+ b_6_20=add_x b_5_20 r_5_20; b_6_52=sub_x b_5_20 r_5_20; r_5_20=mul_x b_5_52 w_40;
+ b_6_21=add_x b_5_21 r_5_21; b_6_53=sub_x b_5_21 r_5_21; r_5_21=mul_x b_5_53 w_42;
+ b_6_22=add_x b_5_22 r_5_22; b_6_54=sub_x b_5_22 r_5_22; r_5_22=mul_x b_5_54 w_44;
+ b_6_23=add_x b_5_23 r_5_23; b_6_55=sub_x b_5_23 r_5_23; r_5_23=mul_x b_5_55 w_46;
+ b_6_24=add_x b_5_24 r_5_24; b_6_56=sub_x b_5_24 r_5_24; r_5_24=mul_x b_5_56 w_48;
+ b_6_25=add_x b_5_25 r_5_25; b_6_57=sub_x b_5_25 r_5_25; r_5_25=mul_x b_5_57 w_50;
+ b_6_26=add_x b_5_26 r_5_26; b_6_58=sub_x b_5_26 r_5_26; r_5_26=mul_x b_5_58 w_52;
+ b_6_27=add_x b_5_27 r_5_27; b_6_59=sub_x b_5_27 r_5_27; r_5_27=mul_x b_5_59 w_54;
+ b_6_28=add_x b_5_28 r_5_28; b_6_60=sub_x b_5_28 r_5_28; r_5_28=mul_x b_5_60 w_56;
+ b_6_29=add_x b_5_29 r_5_29; b_6_61=sub_x b_5_29 r_5_29; r_5_29=mul_x b_5_61 w_58;
+ b_6_30=add_x b_5_30 r_5_30; b_6_62=sub_x b_5_30 r_5_30; r_5_30=mul_x b_5_62 w_60;
+ b_6_31=add_x b_5_31 r_5_31; b_6_63=sub_x b_5_31 r_5_31; r_5_31=mul_x b_5_63 w_62;
+ b_6_64=add_x b_5_64 r_5_32; b_6_96=sub_x b_5_64 r_5_32; r_5_32=mul_x b_5_96 w_0;
+ b_6_65=add_x b_5_65 r_5_33; b_6_97=sub_x b_5_65 r_5_33; r_5_33=mul_x b_5_97 w_2;
+ b_6_66=add_x b_5_66 r_5_34; b_6_98=sub_x b_5_66 r_5_34; r_5_34=mul_x b_5_98 w_4;
+ b_6_67=add_x b_5_67 r_5_35; b_6_99=sub_x b_5_67 r_5_35; r_5_35=mul_x b_5_99 w_6;
+ b_6_68=add_x b_5_68 r_5_36; b_6_100=sub_x b_5_68 r_5_36; r_5_36=mul_x b_5_100 w_8;
+ b_6_69=add_x b_5_69 r_5_37; b_6_101=sub_x b_5_69 r_5_37; r_5_37=mul_x b_5_101 w_10;
+ b_6_70=add_x b_5_70 r_5_38; b_6_102=sub_x b_5_70 r_5_38; r_5_38=mul_x b_5_102 w_12;
+ b_6_71=add_x b_5_71 r_5_39; b_6_103=sub_x b_5_71 r_5_39; r_5_39=mul_x b_5_103 w_14;
+ b_6_72=add_x b_5_72 r_5_40; b_6_104=sub_x b_5_72 r_5_40; r_5_40=mul_x b_5_104 w_16;
+ b_6_73=add_x b_5_73 r_5_41; b_6_105=sub_x b_5_73 r_5_41; r_5_41=mul_x b_5_105 w_18;
+ b_6_74=add_x b_5_74 r_5_42; b_6_106=sub_x b_5_74 r_5_42; r_5_42=mul_x b_5_106 w_20;
+ b_6_75=add_x b_5_75 r_5_43; b_6_107=sub_x b_5_75 r_5_43; r_5_43=mul_x b_5_107 w_22;
+ b_6_76=add_x b_5_76 r_5_44; b_6_108=sub_x b_5_76 r_5_44; r_5_44=mul_x b_5_108 w_24;
+ b_6_77=add_x b_5_77 r_5_45; b_6_109=sub_x b_5_77 r_5_45; r_5_45=mul_x b_5_109 w_26;
+ b_6_78=add_x b_5_78 r_5_46; b_6_110=sub_x b_5_78 r_5_46; r_5_46=mul_x b_5_110 w_28;
+ b_6_79=add_x b_5_79 r_5_47; b_6_111=sub_x b_5_79 r_5_47; r_5_47=mul_x b_5_111 w_30;
+ b_6_80=add_x b_5_80 r_5_48; b_6_112=sub_x b_5_80 r_5_48; r_5_48=mul_x b_5_112 w_32;
+ b_6_81=add_x b_5_81 r_5_49; b_6_113=sub_x b_5_81 r_5_49; r_5_49=mul_x b_5_113 w_34;
+ b_6_82=add_x b_5_82 r_5_50; b_6_114=sub_x b_5_82 r_5_50; r_5_50=mul_x b_5_114 w_36;
+ b_6_83=add_x b_5_83 r_5_51; b_6_115=sub_x b_5_83 r_5_51; r_5_51=mul_x b_5_115 w_38;
+ b_6_84=add_x b_5_84 r_5_52; b_6_116=sub_x b_5_84 r_5_52; r_5_52=mul_x b_5_116 w_40;
+ b_6_85=add_x b_5_85 r_5_53; b_6_117=sub_x b_5_85 r_5_53; r_5_53=mul_x b_5_117 w_42;
+ b_6_86=add_x b_5_86 r_5_54; b_6_118=sub_x b_5_86 r_5_54; r_5_54=mul_x b_5_118 w_44;
+ b_6_87=add_x b_5_87 r_5_55; b_6_119=sub_x b_5_87 r_5_55; r_5_55=mul_x b_5_119 w_46;
+ b_6_88=add_x b_5_88 r_5_56; b_6_120=sub_x b_5_88 r_5_56; r_5_56=mul_x b_5_120 w_48;
+ b_6_89=add_x b_5_89 r_5_57; b_6_121=sub_x b_5_89 r_5_57; r_5_57=mul_x b_5_121 w_50;
+ b_6_90=add_x b_5_90 r_5_58; b_6_122=sub_x b_5_90 r_5_58; r_5_58=mul_x b_5_122 w_52;
+ b_6_91=add_x b_5_91 r_5_59; b_6_123=sub_x b_5_91 r_5_59; r_5_59=mul_x b_5_123 w_54;
+ b_6_92=add_x b_5_92 r_5_60; b_6_124=sub_x b_5_92 r_5_60; r_5_60=mul_x b_5_124 w_56;
+ b_6_93=add_x b_5_93 r_5_61; b_6_125=sub_x b_5_93 r_5_61; r_5_61=mul_x b_5_125 w_58;
+ b_6_94=add_x b_5_94 r_5_62; b_6_126=sub_x b_5_94 r_5_62; r_5_62=mul_x b_5_126 w_60;
+ b_6_95=add_x b_5_95 r_5_63; b_6_127=sub_x b_5_95 r_5_63; r_5_63=mul_x b_5_127 w_62;
+ b_7_0=add_x b_6_0 r_6_0; b_7_64=sub_x b_6_0 r_6_0; r_6_0=mul_x b_6_64 w_0;
+ b_7_1=add_x b_6_1 r_6_1; b_7_65=sub_x b_6_1 r_6_1; r_6_1=mul_x b_6_65 w_1;
+ b_7_2=add_x b_6_2 r_6_2; b_7_66=sub_x b_6_2 r_6_2; r_6_2=mul_x b_6_66 w_2;
+ b_7_3=add_x b_6_3 r_6_3; b_7_67=sub_x b_6_3 r_6_3; r_6_3=mul_x b_6_67 w_3;
+ b_7_4=add_x b_6_4 r_6_4; b_7_68=sub_x b_6_4 r_6_4; r_6_4=mul_x b_6_68 w_4;
+ b_7_5=add_x b_6_5 r_6_5; b_7_69=sub_x b_6_5 r_6_5; r_6_5=mul_x b_6_69 w_5;
+ b_7_6=add_x b_6_6 r_6_6; b_7_70=sub_x b_6_6 r_6_6; r_6_6=mul_x b_6_70 w_6;
+ b_7_7=add_x b_6_7 r_6_7; b_7_71=sub_x b_6_7 r_6_7; r_6_7=mul_x b_6_71 w_7;
+ b_7_8=add_x b_6_8 r_6_8; b_7_72=sub_x b_6_8 r_6_8; r_6_8=mul_x b_6_72 w_8;
+ b_7_9=add_x b_6_9 r_6_9; b_7_73=sub_x b_6_9 r_6_9; r_6_9=mul_x b_6_73 w_9;
+ b_7_10=add_x b_6_10 r_6_10; b_7_74=sub_x b_6_10 r_6_10; r_6_10=mul_x b_6_74 w_10;
+ b_7_11=add_x b_6_11 r_6_11; b_7_75=sub_x b_6_11 r_6_11; r_6_11=mul_x b_6_75 w_11;
+ b_7_12=add_x b_6_12 r_6_12; b_7_76=sub_x b_6_12 r_6_12; r_6_12=mul_x b_6_76 w_12;
+ b_7_13=add_x b_6_13 r_6_13; b_7_77=sub_x b_6_13 r_6_13; r_6_13=mul_x b_6_77 w_13;
+ b_7_14=add_x b_6_14 r_6_14; b_7_78=sub_x b_6_14 r_6_14; r_6_14=mul_x b_6_78 w_14;
+ b_7_15=add_x b_6_15 r_6_15; b_7_79=sub_x b_6_15 r_6_15; r_6_15=mul_x b_6_79 w_15;
+ b_7_16=add_x b_6_16 r_6_16; b_7_80=sub_x b_6_16 r_6_16; r_6_16=mul_x b_6_80 w_16;
+ b_7_17=add_x b_6_17 r_6_17; b_7_81=sub_x b_6_17 r_6_17; r_6_17=mul_x b_6_81 w_17;
+ b_7_18=add_x b_6_18 r_6_18; b_7_82=sub_x b_6_18 r_6_18; r_6_18=mul_x b_6_82 w_18;
+ b_7_19=add_x b_6_19 r_6_19; b_7_83=sub_x b_6_19 r_6_19; r_6_19=mul_x b_6_83 w_19;
+ b_7_20=add_x b_6_20 r_6_20; b_7_84=sub_x b_6_20 r_6_20; r_6_20=mul_x b_6_84 w_20;
+ b_7_21=add_x b_6_21 r_6_21; b_7_85=sub_x b_6_21 r_6_21; r_6_21=mul_x b_6_85 w_21;
+ b_7_22=add_x b_6_22 r_6_22; b_7_86=sub_x b_6_22 r_6_22; r_6_22=mul_x b_6_86 w_22;
+ b_7_23=add_x b_6_23 r_6_23; b_7_87=sub_x b_6_23 r_6_23; r_6_23=mul_x b_6_87 w_23;
+ b_7_24=add_x b_6_24 r_6_24; b_7_88=sub_x b_6_24 r_6_24; r_6_24=mul_x b_6_88 w_24;
+ b_7_25=add_x b_6_25 r_6_25; b_7_89=sub_x b_6_25 r_6_25; r_6_25=mul_x b_6_89 w_25;
+ b_7_26=add_x b_6_26 r_6_26; b_7_90=sub_x b_6_26 r_6_26; r_6_26=mul_x b_6_90 w_26;
+ b_7_27=add_x b_6_27 r_6_27; b_7_91=sub_x b_6_27 r_6_27; r_6_27=mul_x b_6_91 w_27;
+ b_7_28=add_x b_6_28 r_6_28; b_7_92=sub_x b_6_28 r_6_28; r_6_28=mul_x b_6_92 w_28;
+ b_7_29=add_x b_6_29 r_6_29; b_7_93=sub_x b_6_29 r_6_29; r_6_29=mul_x b_6_93 w_29;
+ b_7_30=add_x b_6_30 r_6_30; b_7_94=sub_x b_6_30 r_6_30; r_6_30=mul_x b_6_94 w_30;
+ b_7_31=add_x b_6_31 r_6_31; b_7_95=sub_x b_6_31 r_6_31; r_6_31=mul_x b_6_95 w_31;
+ b_7_32=add_x b_6_32 r_6_32; b_7_96=sub_x b_6_32 r_6_32; r_6_32=mul_x b_6_96 w_32;
+ b_7_33=add_x b_6_33 r_6_33; b_7_97=sub_x b_6_33 r_6_33; r_6_33=mul_x b_6_97 w_33;
+ b_7_34=add_x b_6_34 r_6_34; b_7_98=sub_x b_6_34 r_6_34; r_6_34=mul_x b_6_98 w_34;
+ b_7_35=add_x b_6_35 r_6_35; b_7_99=sub_x b_6_35 r_6_35; r_6_35=mul_x b_6_99 w_35;
+ b_7_36=add_x b_6_36 r_6_36; b_7_100=sub_x b_6_36 r_6_36; r_6_36=mul_x b_6_100 w_36;
+ b_7_37=add_x b_6_37 r_6_37; b_7_101=sub_x b_6_37 r_6_37; r_6_37=mul_x b_6_101 w_37;
+ b_7_38=add_x b_6_38 r_6_38; b_7_102=sub_x b_6_38 r_6_38; r_6_38=mul_x b_6_102 w_38;
+ b_7_39=add_x b_6_39 r_6_39; b_7_103=sub_x b_6_39 r_6_39; r_6_39=mul_x b_6_103 w_39;
+ b_7_40=add_x b_6_40 r_6_40; b_7_104=sub_x b_6_40 r_6_40; r_6_40=mul_x b_6_104 w_40;
+ b_7_41=add_x b_6_41 r_6_41; b_7_105=sub_x b_6_41 r_6_41; r_6_41=mul_x b_6_105 w_41;
+ b_7_42=add_x b_6_42 r_6_42; b_7_106=sub_x b_6_42 r_6_42; r_6_42=mul_x b_6_106 w_42;
+ b_7_43=add_x b_6_43 r_6_43; b_7_107=sub_x b_6_43 r_6_43; r_6_43=mul_x b_6_107 w_43;
+ b_7_44=add_x b_6_44 r_6_44; b_7_108=sub_x b_6_44 r_6_44; r_6_44=mul_x b_6_108 w_44;
+ b_7_45=add_x b_6_45 r_6_45; b_7_109=sub_x b_6_45 r_6_45; r_6_45=mul_x b_6_109 w_45;
+ b_7_46=add_x b_6_46 r_6_46; b_7_110=sub_x b_6_46 r_6_46; r_6_46=mul_x b_6_110 w_46;
+ b_7_47=add_x b_6_47 r_6_47; b_7_111=sub_x b_6_47 r_6_47; r_6_47=mul_x b_6_111 w_47;
+ b_7_48=add_x b_6_48 r_6_48; b_7_112=sub_x b_6_48 r_6_48; r_6_48=mul_x b_6_112 w_48;
+ b_7_49=add_x b_6_49 r_6_49; b_7_113=sub_x b_6_49 r_6_49; r_6_49=mul_x b_6_113 w_49;
+ b_7_50=add_x b_6_50 r_6_50; b_7_114=sub_x b_6_50 r_6_50; r_6_50=mul_x b_6_114 w_50;
+ b_7_51=add_x b_6_51 r_6_51; b_7_115=sub_x b_6_51 r_6_51; r_6_51=mul_x b_6_115 w_51;
+ b_7_52=add_x b_6_52 r_6_52; b_7_116=sub_x b_6_52 r_6_52; r_6_52=mul_x b_6_116 w_52;
+ b_7_53=add_x b_6_53 r_6_53; b_7_117=sub_x b_6_53 r_6_53; r_6_53=mul_x b_6_117 w_53;
+ b_7_54=add_x b_6_54 r_6_54; b_7_118=sub_x b_6_54 r_6_54; r_6_54=mul_x b_6_118 w_54;
+ b_7_55=add_x b_6_55 r_6_55; b_7_119=sub_x b_6_55 r_6_55; r_6_55=mul_x b_6_119 w_55;
+ b_7_56=add_x b_6_56 r_6_56; b_7_120=sub_x b_6_56 r_6_56; r_6_56=mul_x b_6_120 w_56;
+ b_7_57=add_x b_6_57 r_6_57; b_7_121=sub_x b_6_57 r_6_57; r_6_57=mul_x b_6_121 w_57;
+ b_7_58=add_x b_6_58 r_6_58; b_7_122=sub_x b_6_58 r_6_58; r_6_58=mul_x b_6_122 w_58;
+ b_7_59=add_x b_6_59 r_6_59; b_7_123=sub_x b_6_59 r_6_59; r_6_59=mul_x b_6_123 w_59;
+ b_7_60=add_x b_6_60 r_6_60; b_7_124=sub_x b_6_60 r_6_60; r_6_60=mul_x b_6_124 w_60;
+ b_7_61=add_x b_6_61 r_6_61; b_7_125=sub_x b_6_61 r_6_61; r_6_61=mul_x b_6_125 w_61;
+ b_7_62=add_x b_6_62 r_6_62; b_7_126=sub_x b_6_62 r_6_62; r_6_62=mul_x b_6_126 w_62;
+ b_7_63=add_x b_6_63 r_6_63; b_7_127=sub_x b_6_63 r_6_63; r_6_63=mul_x b_6_127 w_63;
+ w_0=fw_d sector_128 0.0;
+ w_1=fw_d sector_128 1.0;
+ w_2=fw_d sector_128 2.0;
+ w_3=fw_d sector_128 3.0;
+ w_4=fw_d sector_128 4.0;
+ w_5=fw_d sector_128 5.0;
+ w_6=fw_d sector_128 6.0;
+ w_7=fw_d sector_128 7.0;
+ w_8=fw_d sector_128 8.0;
+ w_9=fw_d sector_128 9.0;
+ w_10=fw_d sector_128 10.0;
+ w_11=fw_d sector_128 11.0;
+ w_12=fw_d sector_128 12.0;
+ w_13=fw_d sector_128 13.0;
+ w_14=fw_d sector_128 14.0;
+ w_15=fw_d sector_128 15.0;
+ w_16=fw_d sector_128 16.0;
+ w_17=fw_d sector_128 17.0;
+ w_18=fw_d sector_128 18.0;
+ w_19=fw_d sector_128 19.0;
+ w_20=fw_d sector_128 20.0;
+ w_21=fw_d sector_128 21.0;
+ w_22=fw_d sector_128 22.0;
+ w_23=fw_d sector_128 23.0;
+ w_24=fw_d sector_128 24.0;
+ w_25=fw_d sector_128 25.0;
+ w_26=fw_d sector_128 26.0;
+ w_27=fw_d sector_128 27.0;
+ w_28=fw_d sector_128 28.0;
+ w_29=fw_d sector_128 29.0;
+ w_30=fw_d sector_128 30.0;
+ w_31=fw_d sector_128 31.0;
+ w_32=fw_d sector_128 32.0;
+ w_33=fw_d sector_128 33.0;
+ w_34=fw_d sector_128 34.0;
+ w_35=fw_d sector_128 35.0;
+ w_36=fw_d sector_128 36.0;
+ w_37=fw_d sector_128 37.0;
+ w_38=fw_d sector_128 38.0;
+ w_39=fw_d sector_128 39.0;
+ w_40=fw_d sector_128 40.0;
+ w_41=fw_d sector_128 41.0;
+ w_42=fw_d sector_128 42.0;
+ w_43=fw_d sector_128 43.0;
+ w_44=fw_d sector_128 44.0;
+ w_45=fw_d sector_128 45.0;
+ w_46=fw_d sector_128 46.0;
+ w_47=fw_d sector_128 47.0;
+ w_48=fw_d sector_128 48.0;
+ w_49=fw_d sector_128 49.0;
+ w_50=fw_d sector_128 50.0;
+ w_51=fw_d sector_128 51.0;
+ w_52=fw_d sector_128 52.0;
+ w_53=fw_d sector_128 53.0;
+ w_54=fw_d sector_128 54.0;
+ w_55=fw_d sector_128 55.0;
+ w_56=fw_d sector_128 56.0;
+ w_57=fw_d sector_128 57.0;
+ w_58=fw_d sector_128 58.0;
+ w_59=fw_d sector_128 59.0;
+ w_60=fw_d sector_128 60.0;
+ w_61=fw_d sector_128 61.0;
+ w_62=fw_d sector_128 62.0;
+ w_63=fw_d sector_128 63.0
+ IN b_7_0:b_7_1:b_7_2:b_7_3:b_7_4:b_7_5:b_7_6:b_7_7:
+ b_7_8:b_7_9:b_7_10:b_7_11:b_7_12:b_7_13:b_7_14:b_7_15:
+ b_7_16:b_7_17:b_7_18:b_7_19:b_7_20:b_7_21:b_7_22:b_7_23:
+ b_7_24:b_7_25:b_7_26:b_7_27:b_7_28:b_7_29:b_7_30:b_7_31:
+ b_7_32:b_7_33:b_7_34:b_7_35:b_7_36:b_7_37:b_7_38:b_7_39:
+ b_7_40:b_7_41:b_7_42:b_7_43:b_7_44:b_7_45:b_7_46:b_7_47:
+ b_7_48:b_7_49:b_7_50:b_7_51:b_7_52:b_7_53:b_7_54:b_7_55:
+ b_7_56:b_7_57:b_7_58:b_7_59:b_7_60:b_7_61:b_7_62:b_7_63:
+ b_7_64:b_7_65:b_7_66:b_7_67:b_7_68:b_7_69:b_7_70:b_7_71:
+ b_7_72:b_7_73:b_7_74:b_7_75:b_7_76:b_7_77:b_7_78:b_7_79:
+ b_7_80:b_7_81:b_7_82:b_7_83:b_7_84:b_7_85:b_7_86:b_7_87:
+ b_7_88:b_7_89:b_7_90:b_7_91:b_7_92:b_7_93:b_7_94:b_7_95:
+ b_7_96:b_7_97:b_7_98:b_7_99:b_7_100:b_7_101:b_7_102:b_7_103:
+ b_7_104:b_7_105:b_7_106:b_7_107:b_7_108:b_7_109:b_7_110:b_7_111:
+ b_7_112:b_7_113:b_7_114:b_7_115:b_7_116:b_7_117:b_7_118:b_7_119:
+ b_7_120:b_7_121:b_7_122:b_7_123:b_7_124:b_7_125:b_7_126:b_7_127:NIL;
+INLINE sector_128=pi/64.0;
+
+end
+sed -e 's/^/||SYNTH_256 /' <<'end'     
+synth_fft_256 i1
+=LET b_0_0=head i1 IN
+ LET i2=tail i1 IN
+ LET b_0_128=head i2 IN
+ LET i3=tail i2 IN
+ LET b_0_64=head i3 IN
+ LET i4=tail i3 IN
+ LET b_0_192=head i4 IN
+ LET i5=tail i4 IN
+ LET b_0_32=head i5 IN
+ LET i6=tail i5 IN
+ LET b_0_160=head i6 IN
+ LET i7=tail i6 IN
+ LET b_0_96=head i7 IN
+ LET i8=tail i7 IN
+ LET b_0_224=head i8 IN
+ LET i9=tail i8 IN
+ LET b_0_16=head i9 IN
+ LET i10=tail i9 IN
+ LET b_0_144=head i10 IN
+ LET i11=tail i10 IN
+ LET b_0_80=head i11 IN
+ LET i12=tail i11 IN
+ LET b_0_208=head i12 IN
+ LET i13=tail i12 IN
+ LET b_0_48=head i13 IN
+ LET i14=tail i13 IN
+ LET b_0_176=head i14 IN
+ LET i15=tail i14 IN
+ LET b_0_112=head i15 IN
+ LET i16=tail i15 IN
+ LET b_0_240=head i16 IN
+ LET i17=tail i16 IN
+ LET b_0_8=head i17 IN
+ LET i18=tail i17 IN
+ LET b_0_136=head i18 IN
+ LET i19=tail i18 IN
+ LET b_0_72=head i19 IN
+ LET i20=tail i19 IN
+ LET b_0_200=head i20 IN
+ LET i21=tail i20 IN
+ LET b_0_40=head i21 IN
+ LET i22=tail i21 IN
+ LET b_0_168=head i22 IN
+ LET i23=tail i22 IN
+ LET b_0_104=head i23 IN
+ LET i24=tail i23 IN
+ LET b_0_232=head i24 IN
+ LET i25=tail i24 IN
+ LET b_0_24=head i25 IN
+ LET i26=tail i25 IN
+ LET b_0_152=head i26 IN
+ LET i27=tail i26 IN
+ LET b_0_88=head i27 IN
+ LET i28=tail i27 IN
+ LET b_0_216=head i28 IN
+ LET i29=tail i28 IN
+ LET b_0_56=head i29 IN
+ LET i30=tail i29 IN
+ LET b_0_184=head i30 IN
+ LET i31=tail i30 IN
+ LET b_0_120=head i31 IN
+ LET i32=tail i31 IN
+ LET b_0_248=head i32 IN
+ LET i33=tail i32 IN
+ LET b_0_4=head i33 IN
+ LET i34=tail i33 IN
+ LET b_0_132=head i34 IN
+ LET i35=tail i34 IN
+ LET b_0_68=head i35 IN
+ LET i36=tail i35 IN
+ LET b_0_196=head i36 IN
+ LET i37=tail i36 IN
+ LET b_0_36=head i37 IN
+ LET i38=tail i37 IN
+ LET b_0_164=head i38 IN
+ LET i39=tail i38 IN
+ LET b_0_100=head i39 IN
+ LET i40=tail i39 IN
+ LET b_0_228=head i40 IN
+ LET i41=tail i40 IN
+ LET b_0_20=head i41 IN
+ LET i42=tail i41 IN
+ LET b_0_148=head i42 IN
+ LET i43=tail i42 IN
+ LET b_0_84=head i43 IN
+ LET i44=tail i43 IN
+ LET b_0_212=head i44 IN
+ LET i45=tail i44 IN
+ LET b_0_52=head i45 IN
+ LET i46=tail i45 IN
+ LET b_0_180=head i46 IN
+ LET i47=tail i46 IN
+ LET b_0_116=head i47 IN
+ LET i48=tail i47 IN
+ LET b_0_244=head i48 IN
+ LET i49=tail i48 IN
+ LET b_0_12=head i49 IN
+ LET i50=tail i49 IN
+ LET b_0_140=head i50 IN
+ LET i51=tail i50 IN
+ LET b_0_76=head i51 IN
+ LET i52=tail i51 IN
+ LET b_0_204=head i52 IN
+ LET i53=tail i52 IN
+ LET b_0_44=head i53 IN
+ LET i54=tail i53 IN
+ LET b_0_172=head i54 IN
+ LET i55=tail i54 IN
+ LET b_0_108=head i55 IN
+ LET i56=tail i55 IN
+ LET b_0_236=head i56 IN
+ LET i57=tail i56 IN
+ LET b_0_28=head i57 IN
+ LET i58=tail i57 IN
+ LET b_0_156=head i58 IN
+ LET i59=tail i58 IN
+ LET b_0_92=head i59 IN
+ LET i60=tail i59 IN
+ LET b_0_220=head i60 IN
+ LET i61=tail i60 IN
+ LET b_0_60=head i61 IN
+ LET i62=tail i61 IN
+ LET b_0_188=head i62 IN
+ LET i63=tail i62 IN
+ LET b_0_124=head i63 IN
+ LET i64=tail i63 IN
+ LET b_0_252=head i64 IN
+ LET i65=tail i64 IN
+ LET b_0_2=head i65 IN
+ LET i66=tail i65 IN
+ LET b_0_130=head i66 IN
+ LET i67=tail i66 IN
+ LET b_0_66=head i67 IN
+ LET i68=tail i67 IN
+ LET b_0_194=head i68 IN
+ LET i69=tail i68 IN
+ LET b_0_34=head i69 IN
+ LET i70=tail i69 IN
+ LET b_0_162=head i70 IN
+ LET i71=tail i70 IN
+ LET b_0_98=head i71 IN
+ LET i72=tail i71 IN
+ LET b_0_226=head i72 IN
+ LET i73=tail i72 IN
+ LET b_0_18=head i73 IN
+ LET i74=tail i73 IN
+ LET b_0_146=head i74 IN
+ LET i75=tail i74 IN
+ LET b_0_82=head i75 IN
+ LET i76=tail i75 IN
+ LET b_0_210=head i76 IN
+ LET i77=tail i76 IN
+ LET b_0_50=head i77 IN
+ LET i78=tail i77 IN
+ LET b_0_178=head i78 IN
+ LET i79=tail i78 IN
+ LET b_0_114=head i79 IN
+ LET i80=tail i79 IN
+ LET b_0_242=head i80 IN
+ LET i81=tail i80 IN
+ LET b_0_10=head i81 IN
+ LET i82=tail i81 IN
+ LET b_0_138=head i82 IN
+ LET i83=tail i82 IN
+ LET b_0_74=head i83 IN
+ LET i84=tail i83 IN
+ LET b_0_202=head i84 IN
+ LET i85=tail i84 IN
+ LET b_0_42=head i85 IN
+ LET i86=tail i85 IN
+ LET b_0_170=head i86 IN
+ LET i87=tail i86 IN
+ LET b_0_106=head i87 IN
+ LET i88=tail i87 IN
+ LET b_0_234=head i88 IN
+ LET i89=tail i88 IN
+ LET b_0_26=head i89 IN
+ LET i90=tail i89 IN
+ LET b_0_154=head i90 IN
+ LET i91=tail i90 IN
+ LET b_0_90=head i91 IN
+ LET i92=tail i91 IN
+ LET b_0_218=head i92 IN
+ LET i93=tail i92 IN
+ LET b_0_58=head i93 IN
+ LET i94=tail i93 IN
+ LET b_0_186=head i94 IN
+ LET i95=tail i94 IN
+ LET b_0_122=head i95 IN
+ LET i96=tail i95 IN
+ LET b_0_250=head i96 IN
+ LET i97=tail i96 IN
+ LET b_0_6=head i97 IN
+ LET i98=tail i97 IN
+ LET b_0_134=head i98 IN
+ LET i99=tail i98 IN
+ LET b_0_70=head i99 IN
+ LET i100=tail i99 IN
+ LET b_0_198=head i100 IN
+ LET i101=tail i100 IN
+ LET b_0_38=head i101 IN
+ LET i102=tail i101 IN
+ LET b_0_166=head i102 IN
+ LET i103=tail i102 IN
+ LET b_0_102=head i103 IN
+ LET i104=tail i103 IN
+ LET b_0_230=head i104 IN
+ LET i105=tail i104 IN
+ LET b_0_22=head i105 IN
+ LET i106=tail i105 IN
+ LET b_0_150=head i106 IN
+ LET i107=tail i106 IN
+ LET b_0_86=head i107 IN
+ LET i108=tail i107 IN
+ LET b_0_214=head i108 IN
+ LET i109=tail i108 IN
+ LET b_0_54=head i109 IN
+ LET i110=tail i109 IN
+ LET b_0_182=head i110 IN
+ LET i111=tail i110 IN
+ LET b_0_118=head i111 IN
+ LET i112=tail i111 IN
+ LET b_0_246=head i112 IN
+ LET i113=tail i112 IN
+ LET b_0_14=head i113 IN
+ LET i114=tail i113 IN
+ LET b_0_142=head i114 IN
+ LET i115=tail i114 IN
+ LET b_0_78=head i115 IN
+ LET i116=tail i115 IN
+ LET b_0_206=head i116 IN
+ LET i117=tail i116 IN
+ LET b_0_46=head i117 IN
+ LET i118=tail i117 IN
+ LET b_0_174=head i118 IN
+ LET i119=tail i118 IN
+ LET b_0_110=head i119 IN
+ LET i120=tail i119 IN
+ LET b_0_238=head i120 IN
+ LET i121=tail i120 IN
+ LET b_0_30=head i121 IN
+ LET i122=tail i121 IN
+ LET b_0_158=head i122 IN
+ LET i123=tail i122 IN
+ LET b_0_94=head i123 IN
+ LET i124=tail i123 IN
+ LET b_0_222=head i124 IN
+ LET i125=tail i124 IN
+ LET b_0_62=head i125 IN
+ LET i126=tail i125 IN
+ LET b_0_190=head i126 IN
+ LET i127=tail i126 IN
+ LET b_0_126=head i127 IN
+ LET i128=tail i127 IN
+ LET b_0_254=head i128 IN
+ LET i129=tail i128 IN
+ LET b_0_1=head i129 IN
+ LET i130=tail i129 IN
+ LET b_0_129=head i130 IN
+ LET i131=tail i130 IN
+ LET b_0_65=head i131 IN
+ LET i132=tail i131 IN
+ LET b_0_193=head i132 IN
+ LET i133=tail i132 IN
+ LET b_0_33=head i133 IN
+ LET i134=tail i133 IN
+ LET b_0_161=head i134 IN
+ LET i135=tail i134 IN
+ LET b_0_97=head i135 IN
+ LET i136=tail i135 IN
+ LET b_0_225=head i136 IN
+ LET i137=tail i136 IN
+ LET b_0_17=head i137 IN
+ LET i138=tail i137 IN
+ LET b_0_145=head i138 IN
+ LET i139=tail i138 IN
+ LET b_0_81=head i139 IN
+ LET i140=tail i139 IN
+ LET b_0_209=head i140 IN
+ LET i141=tail i140 IN
+ LET b_0_49=head i141 IN
+ LET i142=tail i141 IN
+ LET b_0_177=head i142 IN
+ LET i143=tail i142 IN
+ LET b_0_113=head i143 IN
+ LET i144=tail i143 IN
+ LET b_0_241=head i144 IN
+ LET i145=tail i144 IN
+ LET b_0_9=head i145 IN
+ LET i146=tail i145 IN
+ LET b_0_137=head i146 IN
+ LET i147=tail i146 IN
+ LET b_0_73=head i147 IN
+ LET i148=tail i147 IN
+ LET b_0_201=head i148 IN
+ LET i149=tail i148 IN
+ LET b_0_41=head i149 IN
+ LET i150=tail i149 IN
+ LET b_0_169=head i150 IN
+ LET i151=tail i150 IN
+ LET b_0_105=head i151 IN
+ LET i152=tail i151 IN
+ LET b_0_233=head i152 IN
+ LET i153=tail i152 IN
+ LET b_0_25=head i153 IN
+ LET i154=tail i153 IN
+ LET b_0_153=head i154 IN
+ LET i155=tail i154 IN
+ LET b_0_89=head i155 IN
+ LET i156=tail i155 IN
+ LET b_0_217=head i156 IN
+ LET i157=tail i156 IN
+ LET b_0_57=head i157 IN
+ LET i158=tail i157 IN
+ LET b_0_185=head i158 IN
+ LET i159=tail i158 IN
+ LET b_0_121=head i159 IN
+ LET i160=tail i159 IN
+ LET b_0_249=head i160 IN
+ LET i161=tail i160 IN
+ LET b_0_5=head i161 IN
+ LET i162=tail i161 IN
+ LET b_0_133=head i162 IN
+ LET i163=tail i162 IN
+ LET b_0_69=head i163 IN
+ LET i164=tail i163 IN
+ LET b_0_197=head i164 IN
+ LET i165=tail i164 IN
+ LET b_0_37=head i165 IN
+ LET i166=tail i165 IN
+ LET b_0_165=head i166 IN
+ LET i167=tail i166 IN
+ LET b_0_101=head i167 IN
+ LET i168=tail i167 IN
+ LET b_0_229=head i168 IN
+ LET i169=tail i168 IN
+ LET b_0_21=head i169 IN
+ LET i170=tail i169 IN
+ LET b_0_149=head i170 IN
+ LET i171=tail i170 IN
+ LET b_0_85=head i171 IN
+ LET i172=tail i171 IN
+ LET b_0_213=head i172 IN
+ LET i173=tail i172 IN
+ LET b_0_53=head i173 IN
+ LET i174=tail i173 IN
+ LET b_0_181=head i174 IN
+ LET i175=tail i174 IN
+ LET b_0_117=head i175 IN
+ LET i176=tail i175 IN
+ LET b_0_245=head i176 IN
+ LET i177=tail i176 IN
+ LET b_0_13=head i177 IN
+ LET i178=tail i177 IN
+ LET b_0_141=head i178 IN
+ LET i179=tail i178 IN
+ LET b_0_77=head i179 IN
+ LET i180=tail i179 IN
+ LET b_0_205=head i180 IN
+ LET i181=tail i180 IN
+ LET b_0_45=head i181 IN
+ LET i182=tail i181 IN
+ LET b_0_173=head i182 IN
+ LET i183=tail i182 IN
+ LET b_0_109=head i183 IN
+ LET i184=tail i183 IN
+ LET b_0_237=head i184 IN
+ LET i185=tail i184 IN
+ LET b_0_29=head i185 IN
+ LET i186=tail i185 IN
+ LET b_0_157=head i186 IN
+ LET i187=tail i186 IN
+ LET b_0_93=head i187 IN
+ LET i188=tail i187 IN
+ LET b_0_221=head i188 IN
+ LET i189=tail i188 IN
+ LET b_0_61=head i189 IN
+ LET i190=tail i189 IN
+ LET b_0_189=head i190 IN
+ LET i191=tail i190 IN
+ LET b_0_125=head i191 IN
+ LET i192=tail i191 IN
+ LET b_0_253=head i192 IN
+ LET i193=tail i192 IN
+ LET b_0_3=head i193 IN
+ LET i194=tail i193 IN
+ LET b_0_131=head i194 IN
+ LET i195=tail i194 IN
+ LET b_0_67=head i195 IN
+ LET i196=tail i195 IN
+ LET b_0_195=head i196 IN
+ LET i197=tail i196 IN
+ LET b_0_35=head i197 IN
+ LET i198=tail i197 IN
+ LET b_0_163=head i198 IN
+ LET i199=tail i198 IN
+ LET b_0_99=head i199 IN
+ LET i200=tail i199 IN
+ LET b_0_227=head i200 IN
+ LET i201=tail i200 IN
+ LET b_0_19=head i201 IN
+ LET i202=tail i201 IN
+ LET b_0_147=head i202 IN
+ LET i203=tail i202 IN
+ LET b_0_83=head i203 IN
+ LET i204=tail i203 IN
+ LET b_0_211=head i204 IN
+ LET i205=tail i204 IN
+ LET b_0_51=head i205 IN
+ LET i206=tail i205 IN
+ LET b_0_179=head i206 IN
+ LET i207=tail i206 IN
+ LET b_0_115=head i207 IN
+ LET i208=tail i207 IN
+ LET b_0_243=head i208 IN
+ LET i209=tail i208 IN
+ LET b_0_11=head i209 IN
+ LET i210=tail i209 IN
+ LET b_0_139=head i210 IN
+ LET i211=tail i210 IN
+ LET b_0_75=head i211 IN
+ LET i212=tail i211 IN
+ LET b_0_203=head i212 IN
+ LET i213=tail i212 IN
+ LET b_0_43=head i213 IN
+ LET i214=tail i213 IN
+ LET b_0_171=head i214 IN
+ LET i215=tail i214 IN
+ LET b_0_107=head i215 IN
+ LET i216=tail i215 IN
+ LET b_0_235=head i216 IN
+ LET i217=tail i216 IN
+ LET b_0_27=head i217 IN
+ LET i218=tail i217 IN
+ LET b_0_155=head i218 IN
+ LET i219=tail i218 IN
+ LET b_0_91=head i219 IN
+ LET i220=tail i219 IN
+ LET b_0_219=head i220 IN
+ LET i221=tail i220 IN
+ LET b_0_59=head i221 IN
+ LET i222=tail i221 IN
+ LET b_0_187=head i222 IN
+ LET i223=tail i222 IN
+ LET b_0_123=head i223 IN
+ LET i224=tail i223 IN
+ LET b_0_251=head i224 IN
+ LET i225=tail i224 IN
+ LET b_0_7=head i225 IN
+ LET i226=tail i225 IN
+ LET b_0_135=head i226 IN
+ LET i227=tail i226 IN
+ LET b_0_71=head i227 IN
+ LET i228=tail i227 IN
+ LET b_0_199=head i228 IN
+ LET i229=tail i228 IN
+ LET b_0_39=head i229 IN
+ LET i230=tail i229 IN
+ LET b_0_167=head i230 IN
+ LET i231=tail i230 IN
+ LET b_0_103=head i231 IN
+ LET i232=tail i231 IN
+ LET b_0_231=head i232 IN
+ LET i233=tail i232 IN
+ LET b_0_23=head i233 IN
+ LET i234=tail i233 IN
+ LET b_0_151=head i234 IN
+ LET i235=tail i234 IN
+ LET b_0_87=head i235 IN
+ LET i236=tail i235 IN
+ LET b_0_215=head i236 IN
+ LET i237=tail i236 IN
+ LET b_0_55=head i237 IN
+ LET i238=tail i237 IN
+ LET b_0_183=head i238 IN
+ LET i239=tail i238 IN
+ LET b_0_119=head i239 IN
+ LET i240=tail i239 IN
+ LET b_0_247=head i240 IN
+ LET i241=tail i240 IN
+ LET b_0_15=head i241 IN
+ LET i242=tail i241 IN
+ LET b_0_143=head i242 IN
+ LET i243=tail i242 IN
+ LET b_0_79=head i243 IN
+ LET i244=tail i243 IN
+ LET b_0_207=head i244 IN
+ LET i245=tail i244 IN
+ LET b_0_47=head i245 IN
+ LET i246=tail i245 IN
+ LET b_0_175=head i246 IN
+ LET i247=tail i246 IN
+ LET b_0_111=head i247 IN
+ LET i248=tail i247 IN
+ LET b_0_239=head i248 IN
+ LET i249=tail i248 IN
+ LET b_0_31=head i249 IN
+ LET i250=tail i249 IN
+ LET b_0_159=head i250 IN
+ LET i251=tail i250 IN
+ LET b_0_95=head i251 IN
+ LET i252=tail i251 IN
+ LET b_0_223=head i252 IN
+ LET i253=tail i252 IN
+ LET b_0_63=head i253 IN
+ LET i254=tail i253 IN
+ LET b_0_191=head i254 IN
+ LET i255=tail i254 IN
+ LET b_0_127=head i255 IN
+ LET i256=tail i255 IN
+ LET b_0_255=head i256 IN
+ LET
+ b_1_0=add_x b_0_0 r_0_0; b_1_1=sub_x b_0_0 r_0_0; r_0_0=mul_x b_0_1 w_0;
+ b_1_2=add_x b_0_2 r_0_1; b_1_3=sub_x b_0_2 r_0_1; r_0_1=mul_x b_0_3 w_0;
+ b_1_4=add_x b_0_4 r_0_2; b_1_5=sub_x b_0_4 r_0_2; r_0_2=mul_x b_0_5 w_0;
+ b_1_6=add_x b_0_6 r_0_3; b_1_7=sub_x b_0_6 r_0_3; r_0_3=mul_x b_0_7 w_0;
+ b_1_8=add_x b_0_8 r_0_4; b_1_9=sub_x b_0_8 r_0_4; r_0_4=mul_x b_0_9 w_0;
+ b_1_10=add_x b_0_10 r_0_5; b_1_11=sub_x b_0_10 r_0_5; r_0_5=mul_x b_0_11 w_0;
+ b_1_12=add_x b_0_12 r_0_6; b_1_13=sub_x b_0_12 r_0_6; r_0_6=mul_x b_0_13 w_0;
+ b_1_14=add_x b_0_14 r_0_7; b_1_15=sub_x b_0_14 r_0_7; r_0_7=mul_x b_0_15 w_0;
+ b_1_16=add_x b_0_16 r_0_8; b_1_17=sub_x b_0_16 r_0_8; r_0_8=mul_x b_0_17 w_0;
+ b_1_18=add_x b_0_18 r_0_9; b_1_19=sub_x b_0_18 r_0_9; r_0_9=mul_x b_0_19 w_0;
+ b_1_20=add_x b_0_20 r_0_10; b_1_21=sub_x b_0_20 r_0_10; r_0_10=mul_x b_0_21 w_0;
+ b_1_22=add_x b_0_22 r_0_11; b_1_23=sub_x b_0_22 r_0_11; r_0_11=mul_x b_0_23 w_0;
+ b_1_24=add_x b_0_24 r_0_12; b_1_25=sub_x b_0_24 r_0_12; r_0_12=mul_x b_0_25 w_0;
+ b_1_26=add_x b_0_26 r_0_13; b_1_27=sub_x b_0_26 r_0_13; r_0_13=mul_x b_0_27 w_0;
+ b_1_28=add_x b_0_28 r_0_14; b_1_29=sub_x b_0_28 r_0_14; r_0_14=mul_x b_0_29 w_0;
+ b_1_30=add_x b_0_30 r_0_15; b_1_31=sub_x b_0_30 r_0_15; r_0_15=mul_x b_0_31 w_0;
+ b_1_32=add_x b_0_32 r_0_16; b_1_33=sub_x b_0_32 r_0_16; r_0_16=mul_x b_0_33 w_0;
+ b_1_34=add_x b_0_34 r_0_17; b_1_35=sub_x b_0_34 r_0_17; r_0_17=mul_x b_0_35 w_0;
+ b_1_36=add_x b_0_36 r_0_18; b_1_37=sub_x b_0_36 r_0_18; r_0_18=mul_x b_0_37 w_0;
+ b_1_38=add_x b_0_38 r_0_19; b_1_39=sub_x b_0_38 r_0_19; r_0_19=mul_x b_0_39 w_0;
+ b_1_40=add_x b_0_40 r_0_20; b_1_41=sub_x b_0_40 r_0_20; r_0_20=mul_x b_0_41 w_0;
+ b_1_42=add_x b_0_42 r_0_21; b_1_43=sub_x b_0_42 r_0_21; r_0_21=mul_x b_0_43 w_0;
+ b_1_44=add_x b_0_44 r_0_22; b_1_45=sub_x b_0_44 r_0_22; r_0_22=mul_x b_0_45 w_0;
+ b_1_46=add_x b_0_46 r_0_23; b_1_47=sub_x b_0_46 r_0_23; r_0_23=mul_x b_0_47 w_0;
+ b_1_48=add_x b_0_48 r_0_24; b_1_49=sub_x b_0_48 r_0_24; r_0_24=mul_x b_0_49 w_0;
+ b_1_50=add_x b_0_50 r_0_25; b_1_51=sub_x b_0_50 r_0_25; r_0_25=mul_x b_0_51 w_0;
+ b_1_52=add_x b_0_52 r_0_26; b_1_53=sub_x b_0_52 r_0_26; r_0_26=mul_x b_0_53 w_0;
+ b_1_54=add_x b_0_54 r_0_27; b_1_55=sub_x b_0_54 r_0_27; r_0_27=mul_x b_0_55 w_0;
+ b_1_56=add_x b_0_56 r_0_28; b_1_57=sub_x b_0_56 r_0_28; r_0_28=mul_x b_0_57 w_0;
+ b_1_58=add_x b_0_58 r_0_29; b_1_59=sub_x b_0_58 r_0_29; r_0_29=mul_x b_0_59 w_0;
+ b_1_60=add_x b_0_60 r_0_30; b_1_61=sub_x b_0_60 r_0_30; r_0_30=mul_x b_0_61 w_0;
+ b_1_62=add_x b_0_62 r_0_31; b_1_63=sub_x b_0_62 r_0_31; r_0_31=mul_x b_0_63 w_0;
+ b_1_64=add_x b_0_64 r_0_32; b_1_65=sub_x b_0_64 r_0_32; r_0_32=mul_x b_0_65 w_0;
+ b_1_66=add_x b_0_66 r_0_33; b_1_67=sub_x b_0_66 r_0_33; r_0_33=mul_x b_0_67 w_0;
+ b_1_68=add_x b_0_68 r_0_34; b_1_69=sub_x b_0_68 r_0_34; r_0_34=mul_x b_0_69 w_0;
+ b_1_70=add_x b_0_70 r_0_35; b_1_71=sub_x b_0_70 r_0_35; r_0_35=mul_x b_0_71 w_0;
+ b_1_72=add_x b_0_72 r_0_36; b_1_73=sub_x b_0_72 r_0_36; r_0_36=mul_x b_0_73 w_0;
+ b_1_74=add_x b_0_74 r_0_37; b_1_75=sub_x b_0_74 r_0_37; r_0_37=mul_x b_0_75 w_0;
+ b_1_76=add_x b_0_76 r_0_38; b_1_77=sub_x b_0_76 r_0_38; r_0_38=mul_x b_0_77 w_0;
+ b_1_78=add_x b_0_78 r_0_39; b_1_79=sub_x b_0_78 r_0_39; r_0_39=mul_x b_0_79 w_0;
+ b_1_80=add_x b_0_80 r_0_40; b_1_81=sub_x b_0_80 r_0_40; r_0_40=mul_x b_0_81 w_0;
+ b_1_82=add_x b_0_82 r_0_41; b_1_83=sub_x b_0_82 r_0_41; r_0_41=mul_x b_0_83 w_0;
+ b_1_84=add_x b_0_84 r_0_42; b_1_85=sub_x b_0_84 r_0_42; r_0_42=mul_x b_0_85 w_0;
+ b_1_86=add_x b_0_86 r_0_43; b_1_87=sub_x b_0_86 r_0_43; r_0_43=mul_x b_0_87 w_0;
+ b_1_88=add_x b_0_88 r_0_44; b_1_89=sub_x b_0_88 r_0_44; r_0_44=mul_x b_0_89 w_0;
+ b_1_90=add_x b_0_90 r_0_45; b_1_91=sub_x b_0_90 r_0_45; r_0_45=mul_x b_0_91 w_0;
+ b_1_92=add_x b_0_92 r_0_46; b_1_93=sub_x b_0_92 r_0_46; r_0_46=mul_x b_0_93 w_0;
+ b_1_94=add_x b_0_94 r_0_47; b_1_95=sub_x b_0_94 r_0_47; r_0_47=mul_x b_0_95 w_0;
+ b_1_96=add_x b_0_96 r_0_48; b_1_97=sub_x b_0_96 r_0_48; r_0_48=mul_x b_0_97 w_0;
+ b_1_98=add_x b_0_98 r_0_49; b_1_99=sub_x b_0_98 r_0_49; r_0_49=mul_x b_0_99 w_0;
+ b_1_100=add_x b_0_100 r_0_50; b_1_101=sub_x b_0_100 r_0_50; r_0_50=mul_x b_0_101 w_0;
+ b_1_102=add_x b_0_102 r_0_51; b_1_103=sub_x b_0_102 r_0_51; r_0_51=mul_x b_0_103 w_0;
+ b_1_104=add_x b_0_104 r_0_52; b_1_105=sub_x b_0_104 r_0_52; r_0_52=mul_x b_0_105 w_0;
+ b_1_106=add_x b_0_106 r_0_53; b_1_107=sub_x b_0_106 r_0_53; r_0_53=mul_x b_0_107 w_0;
+ b_1_108=add_x b_0_108 r_0_54; b_1_109=sub_x b_0_108 r_0_54; r_0_54=mul_x b_0_109 w_0;
+ b_1_110=add_x b_0_110 r_0_55; b_1_111=sub_x b_0_110 r_0_55; r_0_55=mul_x b_0_111 w_0;
+ b_1_112=add_x b_0_112 r_0_56; b_1_113=sub_x b_0_112 r_0_56; r_0_56=mul_x b_0_113 w_0;
+ b_1_114=add_x b_0_114 r_0_57; b_1_115=sub_x b_0_114 r_0_57; r_0_57=mul_x b_0_115 w_0;
+ b_1_116=add_x b_0_116 r_0_58; b_1_117=sub_x b_0_116 r_0_58; r_0_58=mul_x b_0_117 w_0;
+ b_1_118=add_x b_0_118 r_0_59; b_1_119=sub_x b_0_118 r_0_59; r_0_59=mul_x b_0_119 w_0;
+ b_1_120=add_x b_0_120 r_0_60; b_1_121=sub_x b_0_120 r_0_60; r_0_60=mul_x b_0_121 w_0;
+ b_1_122=add_x b_0_122 r_0_61; b_1_123=sub_x b_0_122 r_0_61; r_0_61=mul_x b_0_123 w_0;
+ b_1_124=add_x b_0_124 r_0_62; b_1_125=sub_x b_0_124 r_0_62; r_0_62=mul_x b_0_125 w_0;
+ b_1_126=add_x b_0_126 r_0_63; b_1_127=sub_x b_0_126 r_0_63; r_0_63=mul_x b_0_127 w_0;
+ b_1_128=add_x b_0_128 r_0_64; b_1_129=sub_x b_0_128 r_0_64; r_0_64=mul_x b_0_129 w_0;
+ b_1_130=add_x b_0_130 r_0_65; b_1_131=sub_x b_0_130 r_0_65; r_0_65=mul_x b_0_131 w_0;
+ b_1_132=add_x b_0_132 r_0_66; b_1_133=sub_x b_0_132 r_0_66; r_0_66=mul_x b_0_133 w_0;
+ b_1_134=add_x b_0_134 r_0_67; b_1_135=sub_x b_0_134 r_0_67; r_0_67=mul_x b_0_135 w_0;
+ b_1_136=add_x b_0_136 r_0_68; b_1_137=sub_x b_0_136 r_0_68; r_0_68=mul_x b_0_137 w_0;
+ b_1_138=add_x b_0_138 r_0_69; b_1_139=sub_x b_0_138 r_0_69; r_0_69=mul_x b_0_139 w_0;
+ b_1_140=add_x b_0_140 r_0_70; b_1_141=sub_x b_0_140 r_0_70; r_0_70=mul_x b_0_141 w_0;
+ b_1_142=add_x b_0_142 r_0_71; b_1_143=sub_x b_0_142 r_0_71; r_0_71=mul_x b_0_143 w_0;
+ b_1_144=add_x b_0_144 r_0_72; b_1_145=sub_x b_0_144 r_0_72; r_0_72=mul_x b_0_145 w_0;
+ b_1_146=add_x b_0_146 r_0_73; b_1_147=sub_x b_0_146 r_0_73; r_0_73=mul_x b_0_147 w_0;
+ b_1_148=add_x b_0_148 r_0_74; b_1_149=sub_x b_0_148 r_0_74; r_0_74=mul_x b_0_149 w_0;
+ b_1_150=add_x b_0_150 r_0_75; b_1_151=sub_x b_0_150 r_0_75; r_0_75=mul_x b_0_151 w_0;
+ b_1_152=add_x b_0_152 r_0_76; b_1_153=sub_x b_0_152 r_0_76; r_0_76=mul_x b_0_153 w_0;
+ b_1_154=add_x b_0_154 r_0_77; b_1_155=sub_x b_0_154 r_0_77; r_0_77=mul_x b_0_155 w_0;
+ b_1_156=add_x b_0_156 r_0_78; b_1_157=sub_x b_0_156 r_0_78; r_0_78=mul_x b_0_157 w_0;
+ b_1_158=add_x b_0_158 r_0_79; b_1_159=sub_x b_0_158 r_0_79; r_0_79=mul_x b_0_159 w_0;
+ b_1_160=add_x b_0_160 r_0_80; b_1_161=sub_x b_0_160 r_0_80; r_0_80=mul_x b_0_161 w_0;
+ b_1_162=add_x b_0_162 r_0_81; b_1_163=sub_x b_0_162 r_0_81; r_0_81=mul_x b_0_163 w_0;
+ b_1_164=add_x b_0_164 r_0_82; b_1_165=sub_x b_0_164 r_0_82; r_0_82=mul_x b_0_165 w_0;
+ b_1_166=add_x b_0_166 r_0_83; b_1_167=sub_x b_0_166 r_0_83; r_0_83=mul_x b_0_167 w_0;
+ b_1_168=add_x b_0_168 r_0_84; b_1_169=sub_x b_0_168 r_0_84; r_0_84=mul_x b_0_169 w_0;
+ b_1_170=add_x b_0_170 r_0_85; b_1_171=sub_x b_0_170 r_0_85; r_0_85=mul_x b_0_171 w_0;
+ b_1_172=add_x b_0_172 r_0_86; b_1_173=sub_x b_0_172 r_0_86; r_0_86=mul_x b_0_173 w_0;
+ b_1_174=add_x b_0_174 r_0_87; b_1_175=sub_x b_0_174 r_0_87; r_0_87=mul_x b_0_175 w_0;
+ b_1_176=add_x b_0_176 r_0_88; b_1_177=sub_x b_0_176 r_0_88; r_0_88=mul_x b_0_177 w_0;
+ b_1_178=add_x b_0_178 r_0_89; b_1_179=sub_x b_0_178 r_0_89; r_0_89=mul_x b_0_179 w_0;
+ b_1_180=add_x b_0_180 r_0_90; b_1_181=sub_x b_0_180 r_0_90; r_0_90=mul_x b_0_181 w_0;
+ b_1_182=add_x b_0_182 r_0_91; b_1_183=sub_x b_0_182 r_0_91; r_0_91=mul_x b_0_183 w_0;
+ b_1_184=add_x b_0_184 r_0_92; b_1_185=sub_x b_0_184 r_0_92; r_0_92=mul_x b_0_185 w_0;
+ b_1_186=add_x b_0_186 r_0_93; b_1_187=sub_x b_0_186 r_0_93; r_0_93=mul_x b_0_187 w_0;
+ b_1_188=add_x b_0_188 r_0_94; b_1_189=sub_x b_0_188 r_0_94; r_0_94=mul_x b_0_189 w_0;
+ b_1_190=add_x b_0_190 r_0_95; b_1_191=sub_x b_0_190 r_0_95; r_0_95=mul_x b_0_191 w_0;
+ b_1_192=add_x b_0_192 r_0_96; b_1_193=sub_x b_0_192 r_0_96; r_0_96=mul_x b_0_193 w_0;
+ b_1_194=add_x b_0_194 r_0_97; b_1_195=sub_x b_0_194 r_0_97; r_0_97=mul_x b_0_195 w_0;
+ b_1_196=add_x b_0_196 r_0_98; b_1_197=sub_x b_0_196 r_0_98; r_0_98=mul_x b_0_197 w_0;
+ b_1_198=add_x b_0_198 r_0_99; b_1_199=sub_x b_0_198 r_0_99; r_0_99=mul_x b_0_199 w_0;
+ b_1_200=add_x b_0_200 r_0_100; b_1_201=sub_x b_0_200 r_0_100; r_0_100=mul_x b_0_201 w_0;
+ b_1_202=add_x b_0_202 r_0_101; b_1_203=sub_x b_0_202 r_0_101; r_0_101=mul_x b_0_203 w_0;
+ b_1_204=add_x b_0_204 r_0_102; b_1_205=sub_x b_0_204 r_0_102; r_0_102=mul_x b_0_205 w_0;
+ b_1_206=add_x b_0_206 r_0_103; b_1_207=sub_x b_0_206 r_0_103; r_0_103=mul_x b_0_207 w_0;
+ b_1_208=add_x b_0_208 r_0_104; b_1_209=sub_x b_0_208 r_0_104; r_0_104=mul_x b_0_209 w_0;
+ b_1_210=add_x b_0_210 r_0_105; b_1_211=sub_x b_0_210 r_0_105; r_0_105=mul_x b_0_211 w_0;
+ b_1_212=add_x b_0_212 r_0_106; b_1_213=sub_x b_0_212 r_0_106; r_0_106=mul_x b_0_213 w_0;
+ b_1_214=add_x b_0_214 r_0_107; b_1_215=sub_x b_0_214 r_0_107; r_0_107=mul_x b_0_215 w_0;
+ b_1_216=add_x b_0_216 r_0_108; b_1_217=sub_x b_0_216 r_0_108; r_0_108=mul_x b_0_217 w_0;
+ b_1_218=add_x b_0_218 r_0_109; b_1_219=sub_x b_0_218 r_0_109; r_0_109=mul_x b_0_219 w_0;
+ b_1_220=add_x b_0_220 r_0_110; b_1_221=sub_x b_0_220 r_0_110; r_0_110=mul_x b_0_221 w_0;
+ b_1_222=add_x b_0_222 r_0_111; b_1_223=sub_x b_0_222 r_0_111; r_0_111=mul_x b_0_223 w_0;
+ b_1_224=add_x b_0_224 r_0_112; b_1_225=sub_x b_0_224 r_0_112; r_0_112=mul_x b_0_225 w_0;
+ b_1_226=add_x b_0_226 r_0_113; b_1_227=sub_x b_0_226 r_0_113; r_0_113=mul_x b_0_227 w_0;
+ b_1_228=add_x b_0_228 r_0_114; b_1_229=sub_x b_0_228 r_0_114; r_0_114=mul_x b_0_229 w_0;
+ b_1_230=add_x b_0_230 r_0_115; b_1_231=sub_x b_0_230 r_0_115; r_0_115=mul_x b_0_231 w_0;
+ b_1_232=add_x b_0_232 r_0_116; b_1_233=sub_x b_0_232 r_0_116; r_0_116=mul_x b_0_233 w_0;
+ b_1_234=add_x b_0_234 r_0_117; b_1_235=sub_x b_0_234 r_0_117; r_0_117=mul_x b_0_235 w_0;
+ b_1_236=add_x b_0_236 r_0_118; b_1_237=sub_x b_0_236 r_0_118; r_0_118=mul_x b_0_237 w_0;
+ b_1_238=add_x b_0_238 r_0_119; b_1_239=sub_x b_0_238 r_0_119; r_0_119=mul_x b_0_239 w_0;
+ b_1_240=add_x b_0_240 r_0_120; b_1_241=sub_x b_0_240 r_0_120; r_0_120=mul_x b_0_241 w_0;
+ b_1_242=add_x b_0_242 r_0_121; b_1_243=sub_x b_0_242 r_0_121; r_0_121=mul_x b_0_243 w_0;
+ b_1_244=add_x b_0_244 r_0_122; b_1_245=sub_x b_0_244 r_0_122; r_0_122=mul_x b_0_245 w_0;
+ b_1_246=add_x b_0_246 r_0_123; b_1_247=sub_x b_0_246 r_0_123; r_0_123=mul_x b_0_247 w_0;
+ b_1_248=add_x b_0_248 r_0_124; b_1_249=sub_x b_0_248 r_0_124; r_0_124=mul_x b_0_249 w_0;
+ b_1_250=add_x b_0_250 r_0_125; b_1_251=sub_x b_0_250 r_0_125; r_0_125=mul_x b_0_251 w_0;
+ b_1_252=add_x b_0_252 r_0_126; b_1_253=sub_x b_0_252 r_0_126; r_0_126=mul_x b_0_253 w_0;
+ b_1_254=add_x b_0_254 r_0_127; b_1_255=sub_x b_0_254 r_0_127; r_0_127=mul_x b_0_255 w_0;
+ b_2_0=add_x b_1_0 r_1_0; b_2_2=sub_x b_1_0 r_1_0; r_1_0=mul_x b_1_2 w_0;
+ b_2_1=add_x b_1_1 r_1_1; b_2_3=sub_x b_1_1 r_1_1; r_1_1=mul_x b_1_3 w_64;
+ b_2_4=add_x b_1_4 r_1_2; b_2_6=sub_x b_1_4 r_1_2; r_1_2=mul_x b_1_6 w_0;
+ b_2_5=add_x b_1_5 r_1_3; b_2_7=sub_x b_1_5 r_1_3; r_1_3=mul_x b_1_7 w_64;
+ b_2_8=add_x b_1_8 r_1_4; b_2_10=sub_x b_1_8 r_1_4; r_1_4=mul_x b_1_10 w_0;
+ b_2_9=add_x b_1_9 r_1_5; b_2_11=sub_x b_1_9 r_1_5; r_1_5=mul_x b_1_11 w_64;
+ b_2_12=add_x b_1_12 r_1_6; b_2_14=sub_x b_1_12 r_1_6; r_1_6=mul_x b_1_14 w_0;
+ b_2_13=add_x b_1_13 r_1_7; b_2_15=sub_x b_1_13 r_1_7; r_1_7=mul_x b_1_15 w_64;
+ b_2_16=add_x b_1_16 r_1_8; b_2_18=sub_x b_1_16 r_1_8; r_1_8=mul_x b_1_18 w_0;
+ b_2_17=add_x b_1_17 r_1_9; b_2_19=sub_x b_1_17 r_1_9; r_1_9=mul_x b_1_19 w_64;
+ b_2_20=add_x b_1_20 r_1_10; b_2_22=sub_x b_1_20 r_1_10; r_1_10=mul_x b_1_22 w_0;
+ b_2_21=add_x b_1_21 r_1_11; b_2_23=sub_x b_1_21 r_1_11; r_1_11=mul_x b_1_23 w_64;
+ b_2_24=add_x b_1_24 r_1_12; b_2_26=sub_x b_1_24 r_1_12; r_1_12=mul_x b_1_26 w_0;
+ b_2_25=add_x b_1_25 r_1_13; b_2_27=sub_x b_1_25 r_1_13; r_1_13=mul_x b_1_27 w_64;
+ b_2_28=add_x b_1_28 r_1_14; b_2_30=sub_x b_1_28 r_1_14; r_1_14=mul_x b_1_30 w_0;
+ b_2_29=add_x b_1_29 r_1_15; b_2_31=sub_x b_1_29 r_1_15; r_1_15=mul_x b_1_31 w_64;
+ b_2_32=add_x b_1_32 r_1_16; b_2_34=sub_x b_1_32 r_1_16; r_1_16=mul_x b_1_34 w_0;
+ b_2_33=add_x b_1_33 r_1_17; b_2_35=sub_x b_1_33 r_1_17; r_1_17=mul_x b_1_35 w_64;
+ b_2_36=add_x b_1_36 r_1_18; b_2_38=sub_x b_1_36 r_1_18; r_1_18=mul_x b_1_38 w_0;
+ b_2_37=add_x b_1_37 r_1_19; b_2_39=sub_x b_1_37 r_1_19; r_1_19=mul_x b_1_39 w_64;
+ b_2_40=add_x b_1_40 r_1_20; b_2_42=sub_x b_1_40 r_1_20; r_1_20=mul_x b_1_42 w_0;
+ b_2_41=add_x b_1_41 r_1_21; b_2_43=sub_x b_1_41 r_1_21; r_1_21=mul_x b_1_43 w_64;
+ b_2_44=add_x b_1_44 r_1_22; b_2_46=sub_x b_1_44 r_1_22; r_1_22=mul_x b_1_46 w_0;
+ b_2_45=add_x b_1_45 r_1_23; b_2_47=sub_x b_1_45 r_1_23; r_1_23=mul_x b_1_47 w_64;
+ b_2_48=add_x b_1_48 r_1_24; b_2_50=sub_x b_1_48 r_1_24; r_1_24=mul_x b_1_50 w_0;
+ b_2_49=add_x b_1_49 r_1_25; b_2_51=sub_x b_1_49 r_1_25; r_1_25=mul_x b_1_51 w_64;
+ b_2_52=add_x b_1_52 r_1_26; b_2_54=sub_x b_1_52 r_1_26; r_1_26=mul_x b_1_54 w_0;
+ b_2_53=add_x b_1_53 r_1_27; b_2_55=sub_x b_1_53 r_1_27; r_1_27=mul_x b_1_55 w_64;
+ b_2_56=add_x b_1_56 r_1_28; b_2_58=sub_x b_1_56 r_1_28; r_1_28=mul_x b_1_58 w_0;
+ b_2_57=add_x b_1_57 r_1_29; b_2_59=sub_x b_1_57 r_1_29; r_1_29=mul_x b_1_59 w_64;
+ b_2_60=add_x b_1_60 r_1_30; b_2_62=sub_x b_1_60 r_1_30; r_1_30=mul_x b_1_62 w_0;
+ b_2_61=add_x b_1_61 r_1_31; b_2_63=sub_x b_1_61 r_1_31; r_1_31=mul_x b_1_63 w_64;
+ b_2_64=add_x b_1_64 r_1_32; b_2_66=sub_x b_1_64 r_1_32; r_1_32=mul_x b_1_66 w_0;
+ b_2_65=add_x b_1_65 r_1_33; b_2_67=sub_x b_1_65 r_1_33; r_1_33=mul_x b_1_67 w_64;
+ b_2_68=add_x b_1_68 r_1_34; b_2_70=sub_x b_1_68 r_1_34; r_1_34=mul_x b_1_70 w_0;
+ b_2_69=add_x b_1_69 r_1_35; b_2_71=sub_x b_1_69 r_1_35; r_1_35=mul_x b_1_71 w_64;
+ b_2_72=add_x b_1_72 r_1_36; b_2_74=sub_x b_1_72 r_1_36; r_1_36=mul_x b_1_74 w_0;
+ b_2_73=add_x b_1_73 r_1_37; b_2_75=sub_x b_1_73 r_1_37; r_1_37=mul_x b_1_75 w_64;
+ b_2_76=add_x b_1_76 r_1_38; b_2_78=sub_x b_1_76 r_1_38; r_1_38=mul_x b_1_78 w_0;
+ b_2_77=add_x b_1_77 r_1_39; b_2_79=sub_x b_1_77 r_1_39; r_1_39=mul_x b_1_79 w_64;
+ b_2_80=add_x b_1_80 r_1_40; b_2_82=sub_x b_1_80 r_1_40; r_1_40=mul_x b_1_82 w_0;
+ b_2_81=add_x b_1_81 r_1_41; b_2_83=sub_x b_1_81 r_1_41; r_1_41=mul_x b_1_83 w_64;
+ b_2_84=add_x b_1_84 r_1_42; b_2_86=sub_x b_1_84 r_1_42; r_1_42=mul_x b_1_86 w_0;
+ b_2_85=add_x b_1_85 r_1_43; b_2_87=sub_x b_1_85 r_1_43; r_1_43=mul_x b_1_87 w_64;
+ b_2_88=add_x b_1_88 r_1_44; b_2_90=sub_x b_1_88 r_1_44; r_1_44=mul_x b_1_90 w_0;
+ b_2_89=add_x b_1_89 r_1_45; b_2_91=sub_x b_1_89 r_1_45; r_1_45=mul_x b_1_91 w_64;
+ b_2_92=add_x b_1_92 r_1_46; b_2_94=sub_x b_1_92 r_1_46; r_1_46=mul_x b_1_94 w_0;
+ b_2_93=add_x b_1_93 r_1_47; b_2_95=sub_x b_1_93 r_1_47; r_1_47=mul_x b_1_95 w_64;
+ b_2_96=add_x b_1_96 r_1_48; b_2_98=sub_x b_1_96 r_1_48; r_1_48=mul_x b_1_98 w_0;
+ b_2_97=add_x b_1_97 r_1_49; b_2_99=sub_x b_1_97 r_1_49; r_1_49=mul_x b_1_99 w_64;
+ b_2_100=add_x b_1_100 r_1_50; b_2_102=sub_x b_1_100 r_1_50; r_1_50=mul_x b_1_102 w_0;
+ b_2_101=add_x b_1_101 r_1_51; b_2_103=sub_x b_1_101 r_1_51; r_1_51=mul_x b_1_103 w_64;
+ b_2_104=add_x b_1_104 r_1_52; b_2_106=sub_x b_1_104 r_1_52; r_1_52=mul_x b_1_106 w_0;
+ b_2_105=add_x b_1_105 r_1_53; b_2_107=sub_x b_1_105 r_1_53; r_1_53=mul_x b_1_107 w_64;
+ b_2_108=add_x b_1_108 r_1_54; b_2_110=sub_x b_1_108 r_1_54; r_1_54=mul_x b_1_110 w_0;
+ b_2_109=add_x b_1_109 r_1_55; b_2_111=sub_x b_1_109 r_1_55; r_1_55=mul_x b_1_111 w_64;
+ b_2_112=add_x b_1_112 r_1_56; b_2_114=sub_x b_1_112 r_1_56; r_1_56=mul_x b_1_114 w_0;
+ b_2_113=add_x b_1_113 r_1_57; b_2_115=sub_x b_1_113 r_1_57; r_1_57=mul_x b_1_115 w_64;
+ b_2_116=add_x b_1_116 r_1_58; b_2_118=sub_x b_1_116 r_1_58; r_1_58=mul_x b_1_118 w_0;
+ b_2_117=add_x b_1_117 r_1_59; b_2_119=sub_x b_1_117 r_1_59; r_1_59=mul_x b_1_119 w_64;
+ b_2_120=add_x b_1_120 r_1_60; b_2_122=sub_x b_1_120 r_1_60; r_1_60=mul_x b_1_122 w_0;
+ b_2_121=add_x b_1_121 r_1_61; b_2_123=sub_x b_1_121 r_1_61; r_1_61=mul_x b_1_123 w_64;
+ b_2_124=add_x b_1_124 r_1_62; b_2_126=sub_x b_1_124 r_1_62; r_1_62=mul_x b_1_126 w_0;
+ b_2_125=add_x b_1_125 r_1_63; b_2_127=sub_x b_1_125 r_1_63; r_1_63=mul_x b_1_127 w_64;
+ b_2_128=add_x b_1_128 r_1_64; b_2_130=sub_x b_1_128 r_1_64; r_1_64=mul_x b_1_130 w_0;
+ b_2_129=add_x b_1_129 r_1_65; b_2_131=sub_x b_1_129 r_1_65; r_1_65=mul_x b_1_131 w_64;
+ b_2_132=add_x b_1_132 r_1_66; b_2_134=sub_x b_1_132 r_1_66; r_1_66=mul_x b_1_134 w_0;
+ b_2_133=add_x b_1_133 r_1_67; b_2_135=sub_x b_1_133 r_1_67; r_1_67=mul_x b_1_135 w_64;
+ b_2_136=add_x b_1_136 r_1_68; b_2_138=sub_x b_1_136 r_1_68; r_1_68=mul_x b_1_138 w_0;
+ b_2_137=add_x b_1_137 r_1_69; b_2_139=sub_x b_1_137 r_1_69; r_1_69=mul_x b_1_139 w_64;
+ b_2_140=add_x b_1_140 r_1_70; b_2_142=sub_x b_1_140 r_1_70; r_1_70=mul_x b_1_142 w_0;
+ b_2_141=add_x b_1_141 r_1_71; b_2_143=sub_x b_1_141 r_1_71; r_1_71=mul_x b_1_143 w_64;
+ b_2_144=add_x b_1_144 r_1_72; b_2_146=sub_x b_1_144 r_1_72; r_1_72=mul_x b_1_146 w_0;
+ b_2_145=add_x b_1_145 r_1_73; b_2_147=sub_x b_1_145 r_1_73; r_1_73=mul_x b_1_147 w_64;
+ b_2_148=add_x b_1_148 r_1_74; b_2_150=sub_x b_1_148 r_1_74; r_1_74=mul_x b_1_150 w_0;
+ b_2_149=add_x b_1_149 r_1_75; b_2_151=sub_x b_1_149 r_1_75; r_1_75=mul_x b_1_151 w_64;
+ b_2_152=add_x b_1_152 r_1_76; b_2_154=sub_x b_1_152 r_1_76; r_1_76=mul_x b_1_154 w_0;
+ b_2_153=add_x b_1_153 r_1_77; b_2_155=sub_x b_1_153 r_1_77; r_1_77=mul_x b_1_155 w_64;
+ b_2_156=add_x b_1_156 r_1_78; b_2_158=sub_x b_1_156 r_1_78; r_1_78=mul_x b_1_158 w_0;
+ b_2_157=add_x b_1_157 r_1_79; b_2_159=sub_x b_1_157 r_1_79; r_1_79=mul_x b_1_159 w_64;
+ b_2_160=add_x b_1_160 r_1_80; b_2_162=sub_x b_1_160 r_1_80; r_1_80=mul_x b_1_162 w_0;
+ b_2_161=add_x b_1_161 r_1_81; b_2_163=sub_x b_1_161 r_1_81; r_1_81=mul_x b_1_163 w_64;
+ b_2_164=add_x b_1_164 r_1_82; b_2_166=sub_x b_1_164 r_1_82; r_1_82=mul_x b_1_166 w_0;
+ b_2_165=add_x b_1_165 r_1_83; b_2_167=sub_x b_1_165 r_1_83; r_1_83=mul_x b_1_167 w_64;
+ b_2_168=add_x b_1_168 r_1_84; b_2_170=sub_x b_1_168 r_1_84; r_1_84=mul_x b_1_170 w_0;
+ b_2_169=add_x b_1_169 r_1_85; b_2_171=sub_x b_1_169 r_1_85; r_1_85=mul_x b_1_171 w_64;
+ b_2_172=add_x b_1_172 r_1_86; b_2_174=sub_x b_1_172 r_1_86; r_1_86=mul_x b_1_174 w_0;
+ b_2_173=add_x b_1_173 r_1_87; b_2_175=sub_x b_1_173 r_1_87; r_1_87=mul_x b_1_175 w_64;
+ b_2_176=add_x b_1_176 r_1_88; b_2_178=sub_x b_1_176 r_1_88; r_1_88=mul_x b_1_178 w_0;
+ b_2_177=add_x b_1_177 r_1_89; b_2_179=sub_x b_1_177 r_1_89; r_1_89=mul_x b_1_179 w_64;
+ b_2_180=add_x b_1_180 r_1_90; b_2_182=sub_x b_1_180 r_1_90; r_1_90=mul_x b_1_182 w_0;
+ b_2_181=add_x b_1_181 r_1_91; b_2_183=sub_x b_1_181 r_1_91; r_1_91=mul_x b_1_183 w_64;
+ b_2_184=add_x b_1_184 r_1_92; b_2_186=sub_x b_1_184 r_1_92; r_1_92=mul_x b_1_186 w_0;
+ b_2_185=add_x b_1_185 r_1_93; b_2_187=sub_x b_1_185 r_1_93; r_1_93=mul_x b_1_187 w_64;
+ b_2_188=add_x b_1_188 r_1_94; b_2_190=sub_x b_1_188 r_1_94; r_1_94=mul_x b_1_190 w_0;
+ b_2_189=add_x b_1_189 r_1_95; b_2_191=sub_x b_1_189 r_1_95; r_1_95=mul_x b_1_191 w_64;
+ b_2_192=add_x b_1_192 r_1_96; b_2_194=sub_x b_1_192 r_1_96; r_1_96=mul_x b_1_194 w_0;
+ b_2_193=add_x b_1_193 r_1_97; b_2_195=sub_x b_1_193 r_1_97; r_1_97=mul_x b_1_195 w_64;
+ b_2_196=add_x b_1_196 r_1_98; b_2_198=sub_x b_1_196 r_1_98; r_1_98=mul_x b_1_198 w_0;
+ b_2_197=add_x b_1_197 r_1_99; b_2_199=sub_x b_1_197 r_1_99; r_1_99=mul_x b_1_199 w_64;
+ b_2_200=add_x b_1_200 r_1_100; b_2_202=sub_x b_1_200 r_1_100; r_1_100=mul_x b_1_202 w_0;
+ b_2_201=add_x b_1_201 r_1_101; b_2_203=sub_x b_1_201 r_1_101; r_1_101=mul_x b_1_203 w_64;
+ b_2_204=add_x b_1_204 r_1_102; b_2_206=sub_x b_1_204 r_1_102; r_1_102=mul_x b_1_206 w_0;
+ b_2_205=add_x b_1_205 r_1_103; b_2_207=sub_x b_1_205 r_1_103; r_1_103=mul_x b_1_207 w_64;
+ b_2_208=add_x b_1_208 r_1_104; b_2_210=sub_x b_1_208 r_1_104; r_1_104=mul_x b_1_210 w_0;
+ b_2_209=add_x b_1_209 r_1_105; b_2_211=sub_x b_1_209 r_1_105; r_1_105=mul_x b_1_211 w_64;
+ b_2_212=add_x b_1_212 r_1_106; b_2_214=sub_x b_1_212 r_1_106; r_1_106=mul_x b_1_214 w_0;
+ b_2_213=add_x b_1_213 r_1_107; b_2_215=sub_x b_1_213 r_1_107; r_1_107=mul_x b_1_215 w_64;
+ b_2_216=add_x b_1_216 r_1_108; b_2_218=sub_x b_1_216 r_1_108; r_1_108=mul_x b_1_218 w_0;
+ b_2_217=add_x b_1_217 r_1_109; b_2_219=sub_x b_1_217 r_1_109; r_1_109=mul_x b_1_219 w_64;
+ b_2_220=add_x b_1_220 r_1_110; b_2_222=sub_x b_1_220 r_1_110; r_1_110=mul_x b_1_222 w_0;
+ b_2_221=add_x b_1_221 r_1_111; b_2_223=sub_x b_1_221 r_1_111; r_1_111=mul_x b_1_223 w_64;
+ b_2_224=add_x b_1_224 r_1_112; b_2_226=sub_x b_1_224 r_1_112; r_1_112=mul_x b_1_226 w_0;
+ b_2_225=add_x b_1_225 r_1_113; b_2_227=sub_x b_1_225 r_1_113; r_1_113=mul_x b_1_227 w_64;
+ b_2_228=add_x b_1_228 r_1_114; b_2_230=sub_x b_1_228 r_1_114; r_1_114=mul_x b_1_230 w_0;
+ b_2_229=add_x b_1_229 r_1_115; b_2_231=sub_x b_1_229 r_1_115; r_1_115=mul_x b_1_231 w_64;
+ b_2_232=add_x b_1_232 r_1_116; b_2_234=sub_x b_1_232 r_1_116; r_1_116=mul_x b_1_234 w_0;
+ b_2_233=add_x b_1_233 r_1_117; b_2_235=sub_x b_1_233 r_1_117; r_1_117=mul_x b_1_235 w_64;
+ b_2_236=add_x b_1_236 r_1_118; b_2_238=sub_x b_1_236 r_1_118; r_1_118=mul_x b_1_238 w_0;
+ b_2_237=add_x b_1_237 r_1_119; b_2_239=sub_x b_1_237 r_1_119; r_1_119=mul_x b_1_239 w_64;
+ b_2_240=add_x b_1_240 r_1_120; b_2_242=sub_x b_1_240 r_1_120; r_1_120=mul_x b_1_242 w_0;
+ b_2_241=add_x b_1_241 r_1_121; b_2_243=sub_x b_1_241 r_1_121; r_1_121=mul_x b_1_243 w_64;
+ b_2_244=add_x b_1_244 r_1_122; b_2_246=sub_x b_1_244 r_1_122; r_1_122=mul_x b_1_246 w_0;
+ b_2_245=add_x b_1_245 r_1_123; b_2_247=sub_x b_1_245 r_1_123; r_1_123=mul_x b_1_247 w_64;
+ b_2_248=add_x b_1_248 r_1_124; b_2_250=sub_x b_1_248 r_1_124; r_1_124=mul_x b_1_250 w_0;
+ b_2_249=add_x b_1_249 r_1_125; b_2_251=sub_x b_1_249 r_1_125; r_1_125=mul_x b_1_251 w_64;
+ b_2_252=add_x b_1_252 r_1_126; b_2_254=sub_x b_1_252 r_1_126; r_1_126=mul_x b_1_254 w_0;
+ b_2_253=add_x b_1_253 r_1_127; b_2_255=sub_x b_1_253 r_1_127; r_1_127=mul_x b_1_255 w_64;
+ b_3_0=add_x b_2_0 r_2_0; b_3_4=sub_x b_2_0 r_2_0; r_2_0=mul_x b_2_4 w_0;
+ b_3_1=add_x b_2_1 r_2_1; b_3_5=sub_x b_2_1 r_2_1; r_2_1=mul_x b_2_5 w_32;
+ b_3_2=add_x b_2_2 r_2_2; b_3_6=sub_x b_2_2 r_2_2; r_2_2=mul_x b_2_6 w_64;
+ b_3_3=add_x b_2_3 r_2_3; b_3_7=sub_x b_2_3 r_2_3; r_2_3=mul_x b_2_7 w_96;
+ b_3_8=add_x b_2_8 r_2_4; b_3_12=sub_x b_2_8 r_2_4; r_2_4=mul_x b_2_12 w_0;
+ b_3_9=add_x b_2_9 r_2_5; b_3_13=sub_x b_2_9 r_2_5; r_2_5=mul_x b_2_13 w_32;
+ b_3_10=add_x b_2_10 r_2_6; b_3_14=sub_x b_2_10 r_2_6; r_2_6=mul_x b_2_14 w_64;
+ b_3_11=add_x b_2_11 r_2_7; b_3_15=sub_x b_2_11 r_2_7; r_2_7=mul_x b_2_15 w_96;
+ b_3_16=add_x b_2_16 r_2_8; b_3_20=sub_x b_2_16 r_2_8; r_2_8=mul_x b_2_20 w_0;
+ b_3_17=add_x b_2_17 r_2_9; b_3_21=sub_x b_2_17 r_2_9; r_2_9=mul_x b_2_21 w_32;
+ b_3_18=add_x b_2_18 r_2_10; b_3_22=sub_x b_2_18 r_2_10; r_2_10=mul_x b_2_22 w_64;
+ b_3_19=add_x b_2_19 r_2_11; b_3_23=sub_x b_2_19 r_2_11; r_2_11=mul_x b_2_23 w_96;
+ b_3_24=add_x b_2_24 r_2_12; b_3_28=sub_x b_2_24 r_2_12; r_2_12=mul_x b_2_28 w_0;
+ b_3_25=add_x b_2_25 r_2_13; b_3_29=sub_x b_2_25 r_2_13; r_2_13=mul_x b_2_29 w_32;
+ b_3_26=add_x b_2_26 r_2_14; b_3_30=sub_x b_2_26 r_2_14; r_2_14=mul_x b_2_30 w_64;
+ b_3_27=add_x b_2_27 r_2_15; b_3_31=sub_x b_2_27 r_2_15; r_2_15=mul_x b_2_31 w_96;
+ b_3_32=add_x b_2_32 r_2_16; b_3_36=sub_x b_2_32 r_2_16; r_2_16=mul_x b_2_36 w_0;
+ b_3_33=add_x b_2_33 r_2_17; b_3_37=sub_x b_2_33 r_2_17; r_2_17=mul_x b_2_37 w_32;
+ b_3_34=add_x b_2_34 r_2_18; b_3_38=sub_x b_2_34 r_2_18; r_2_18=mul_x b_2_38 w_64;
+ b_3_35=add_x b_2_35 r_2_19; b_3_39=sub_x b_2_35 r_2_19; r_2_19=mul_x b_2_39 w_96;
+ b_3_40=add_x b_2_40 r_2_20; b_3_44=sub_x b_2_40 r_2_20; r_2_20=mul_x b_2_44 w_0;
+ b_3_41=add_x b_2_41 r_2_21; b_3_45=sub_x b_2_41 r_2_21; r_2_21=mul_x b_2_45 w_32;
+ b_3_42=add_x b_2_42 r_2_22; b_3_46=sub_x b_2_42 r_2_22; r_2_22=mul_x b_2_46 w_64;
+ b_3_43=add_x b_2_43 r_2_23; b_3_47=sub_x b_2_43 r_2_23; r_2_23=mul_x b_2_47 w_96;
+ b_3_48=add_x b_2_48 r_2_24; b_3_52=sub_x b_2_48 r_2_24; r_2_24=mul_x b_2_52 w_0;
+ b_3_49=add_x b_2_49 r_2_25; b_3_53=sub_x b_2_49 r_2_25; r_2_25=mul_x b_2_53 w_32;
+ b_3_50=add_x b_2_50 r_2_26; b_3_54=sub_x b_2_50 r_2_26; r_2_26=mul_x b_2_54 w_64;
+ b_3_51=add_x b_2_51 r_2_27; b_3_55=sub_x b_2_51 r_2_27; r_2_27=mul_x b_2_55 w_96;
+ b_3_56=add_x b_2_56 r_2_28; b_3_60=sub_x b_2_56 r_2_28; r_2_28=mul_x b_2_60 w_0;
+ b_3_57=add_x b_2_57 r_2_29; b_3_61=sub_x b_2_57 r_2_29; r_2_29=mul_x b_2_61 w_32;
+ b_3_58=add_x b_2_58 r_2_30; b_3_62=sub_x b_2_58 r_2_30; r_2_30=mul_x b_2_62 w_64;
+ b_3_59=add_x b_2_59 r_2_31; b_3_63=sub_x b_2_59 r_2_31; r_2_31=mul_x b_2_63 w_96;
+ b_3_64=add_x b_2_64 r_2_32; b_3_68=sub_x b_2_64 r_2_32; r_2_32=mul_x b_2_68 w_0;
+ b_3_65=add_x b_2_65 r_2_33; b_3_69=sub_x b_2_65 r_2_33; r_2_33=mul_x b_2_69 w_32;
+ b_3_66=add_x b_2_66 r_2_34; b_3_70=sub_x b_2_66 r_2_34; r_2_34=mul_x b_2_70 w_64;
+ b_3_67=add_x b_2_67 r_2_35; b_3_71=sub_x b_2_67 r_2_35; r_2_35=mul_x b_2_71 w_96;
+ b_3_72=add_x b_2_72 r_2_36; b_3_76=sub_x b_2_72 r_2_36; r_2_36=mul_x b_2_76 w_0;
+ b_3_73=add_x b_2_73 r_2_37; b_3_77=sub_x b_2_73 r_2_37; r_2_37=mul_x b_2_77 w_32;
+ b_3_74=add_x b_2_74 r_2_38; b_3_78=sub_x b_2_74 r_2_38; r_2_38=mul_x b_2_78 w_64;
+ b_3_75=add_x b_2_75 r_2_39; b_3_79=sub_x b_2_75 r_2_39; r_2_39=mul_x b_2_79 w_96;
+ b_3_80=add_x b_2_80 r_2_40; b_3_84=sub_x b_2_80 r_2_40; r_2_40=mul_x b_2_84 w_0;
+ b_3_81=add_x b_2_81 r_2_41; b_3_85=sub_x b_2_81 r_2_41; r_2_41=mul_x b_2_85 w_32;
+ b_3_82=add_x b_2_82 r_2_42; b_3_86=sub_x b_2_82 r_2_42; r_2_42=mul_x b_2_86 w_64;
+ b_3_83=add_x b_2_83 r_2_43; b_3_87=sub_x b_2_83 r_2_43; r_2_43=mul_x b_2_87 w_96;
+ b_3_88=add_x b_2_88 r_2_44; b_3_92=sub_x b_2_88 r_2_44; r_2_44=mul_x b_2_92 w_0;
+ b_3_89=add_x b_2_89 r_2_45; b_3_93=sub_x b_2_89 r_2_45; r_2_45=mul_x b_2_93 w_32;
+ b_3_90=add_x b_2_90 r_2_46; b_3_94=sub_x b_2_90 r_2_46; r_2_46=mul_x b_2_94 w_64;
+ b_3_91=add_x b_2_91 r_2_47; b_3_95=sub_x b_2_91 r_2_47; r_2_47=mul_x b_2_95 w_96;
+ b_3_96=add_x b_2_96 r_2_48; b_3_100=sub_x b_2_96 r_2_48; r_2_48=mul_x b_2_100 w_0;
+ b_3_97=add_x b_2_97 r_2_49; b_3_101=sub_x b_2_97 r_2_49; r_2_49=mul_x b_2_101 w_32;
+ b_3_98=add_x b_2_98 r_2_50; b_3_102=sub_x b_2_98 r_2_50; r_2_50=mul_x b_2_102 w_64;
+ b_3_99=add_x b_2_99 r_2_51; b_3_103=sub_x b_2_99 r_2_51; r_2_51=mul_x b_2_103 w_96;
+ b_3_104=add_x b_2_104 r_2_52; b_3_108=sub_x b_2_104 r_2_52; r_2_52=mul_x b_2_108 w_0;
+ b_3_105=add_x b_2_105 r_2_53; b_3_109=sub_x b_2_105 r_2_53; r_2_53=mul_x b_2_109 w_32;
+ b_3_106=add_x b_2_106 r_2_54; b_3_110=sub_x b_2_106 r_2_54; r_2_54=mul_x b_2_110 w_64;
+ b_3_107=add_x b_2_107 r_2_55; b_3_111=sub_x b_2_107 r_2_55; r_2_55=mul_x b_2_111 w_96;
+ b_3_112=add_x b_2_112 r_2_56; b_3_116=sub_x b_2_112 r_2_56; r_2_56=mul_x b_2_116 w_0;
+ b_3_113=add_x b_2_113 r_2_57; b_3_117=sub_x b_2_113 r_2_57; r_2_57=mul_x b_2_117 w_32;
+ b_3_114=add_x b_2_114 r_2_58; b_3_118=sub_x b_2_114 r_2_58; r_2_58=mul_x b_2_118 w_64;
+ b_3_115=add_x b_2_115 r_2_59; b_3_119=sub_x b_2_115 r_2_59; r_2_59=mul_x b_2_119 w_96;
+ b_3_120=add_x b_2_120 r_2_60; b_3_124=sub_x b_2_120 r_2_60; r_2_60=mul_x b_2_124 w_0;
+ b_3_121=add_x b_2_121 r_2_61; b_3_125=sub_x b_2_121 r_2_61; r_2_61=mul_x b_2_125 w_32;
+ b_3_122=add_x b_2_122 r_2_62; b_3_126=sub_x b_2_122 r_2_62; r_2_62=mul_x b_2_126 w_64;
+ b_3_123=add_x b_2_123 r_2_63; b_3_127=sub_x b_2_123 r_2_63; r_2_63=mul_x b_2_127 w_96;
+ b_3_128=add_x b_2_128 r_2_64; b_3_132=sub_x b_2_128 r_2_64; r_2_64=mul_x b_2_132 w_0;
+ b_3_129=add_x b_2_129 r_2_65; b_3_133=sub_x b_2_129 r_2_65; r_2_65=mul_x b_2_133 w_32;
+ b_3_130=add_x b_2_130 r_2_66; b_3_134=sub_x b_2_130 r_2_66; r_2_66=mul_x b_2_134 w_64;
+ b_3_131=add_x b_2_131 r_2_67; b_3_135=sub_x b_2_131 r_2_67; r_2_67=mul_x b_2_135 w_96;
+ b_3_136=add_x b_2_136 r_2_68; b_3_140=sub_x b_2_136 r_2_68; r_2_68=mul_x b_2_140 w_0;
+ b_3_137=add_x b_2_137 r_2_69; b_3_141=sub_x b_2_137 r_2_69; r_2_69=mul_x b_2_141 w_32;
+ b_3_138=add_x b_2_138 r_2_70; b_3_142=sub_x b_2_138 r_2_70; r_2_70=mul_x b_2_142 w_64;
+ b_3_139=add_x b_2_139 r_2_71; b_3_143=sub_x b_2_139 r_2_71; r_2_71=mul_x b_2_143 w_96;
+ b_3_144=add_x b_2_144 r_2_72; b_3_148=sub_x b_2_144 r_2_72; r_2_72=mul_x b_2_148 w_0;
+ b_3_145=add_x b_2_145 r_2_73; b_3_149=sub_x b_2_145 r_2_73; r_2_73=mul_x b_2_149 w_32;
+ b_3_146=add_x b_2_146 r_2_74; b_3_150=sub_x b_2_146 r_2_74; r_2_74=mul_x b_2_150 w_64;
+ b_3_147=add_x b_2_147 r_2_75; b_3_151=sub_x b_2_147 r_2_75; r_2_75=mul_x b_2_151 w_96;
+ b_3_152=add_x b_2_152 r_2_76; b_3_156=sub_x b_2_152 r_2_76; r_2_76=mul_x b_2_156 w_0;
+ b_3_153=add_x b_2_153 r_2_77; b_3_157=sub_x b_2_153 r_2_77; r_2_77=mul_x b_2_157 w_32;
+ b_3_154=add_x b_2_154 r_2_78; b_3_158=sub_x b_2_154 r_2_78; r_2_78=mul_x b_2_158 w_64;
+ b_3_155=add_x b_2_155 r_2_79; b_3_159=sub_x b_2_155 r_2_79; r_2_79=mul_x b_2_159 w_96;
+ b_3_160=add_x b_2_160 r_2_80; b_3_164=sub_x b_2_160 r_2_80; r_2_80=mul_x b_2_164 w_0;
+ b_3_161=add_x b_2_161 r_2_81; b_3_165=sub_x b_2_161 r_2_81; r_2_81=mul_x b_2_165 w_32;
+ b_3_162=add_x b_2_162 r_2_82; b_3_166=sub_x b_2_162 r_2_82; r_2_82=mul_x b_2_166 w_64;
+ b_3_163=add_x b_2_163 r_2_83; b_3_167=sub_x b_2_163 r_2_83; r_2_83=mul_x b_2_167 w_96;
+ b_3_168=add_x b_2_168 r_2_84; b_3_172=sub_x b_2_168 r_2_84; r_2_84=mul_x b_2_172 w_0;
+ b_3_169=add_x b_2_169 r_2_85; b_3_173=sub_x b_2_169 r_2_85; r_2_85=mul_x b_2_173 w_32;
+ b_3_170=add_x b_2_170 r_2_86; b_3_174=sub_x b_2_170 r_2_86; r_2_86=mul_x b_2_174 w_64;
+ b_3_171=add_x b_2_171 r_2_87; b_3_175=sub_x b_2_171 r_2_87; r_2_87=mul_x b_2_175 w_96;
+ b_3_176=add_x b_2_176 r_2_88; b_3_180=sub_x b_2_176 r_2_88; r_2_88=mul_x b_2_180 w_0;
+ b_3_177=add_x b_2_177 r_2_89; b_3_181=sub_x b_2_177 r_2_89; r_2_89=mul_x b_2_181 w_32;
+ b_3_178=add_x b_2_178 r_2_90; b_3_182=sub_x b_2_178 r_2_90; r_2_90=mul_x b_2_182 w_64;
+ b_3_179=add_x b_2_179 r_2_91; b_3_183=sub_x b_2_179 r_2_91; r_2_91=mul_x b_2_183 w_96;
+ b_3_184=add_x b_2_184 r_2_92; b_3_188=sub_x b_2_184 r_2_92; r_2_92=mul_x b_2_188 w_0;
+ b_3_185=add_x b_2_185 r_2_93; b_3_189=sub_x b_2_185 r_2_93; r_2_93=mul_x b_2_189 w_32;
+ b_3_186=add_x b_2_186 r_2_94; b_3_190=sub_x b_2_186 r_2_94; r_2_94=mul_x b_2_190 w_64;
+ b_3_187=add_x b_2_187 r_2_95; b_3_191=sub_x b_2_187 r_2_95; r_2_95=mul_x b_2_191 w_96;
+ b_3_192=add_x b_2_192 r_2_96; b_3_196=sub_x b_2_192 r_2_96; r_2_96=mul_x b_2_196 w_0;
+ b_3_193=add_x b_2_193 r_2_97; b_3_197=sub_x b_2_193 r_2_97; r_2_97=mul_x b_2_197 w_32;
+ b_3_194=add_x b_2_194 r_2_98; b_3_198=sub_x b_2_194 r_2_98; r_2_98=mul_x b_2_198 w_64;
+ b_3_195=add_x b_2_195 r_2_99; b_3_199=sub_x b_2_195 r_2_99; r_2_99=mul_x b_2_199 w_96;
+ b_3_200=add_x b_2_200 r_2_100; b_3_204=sub_x b_2_200 r_2_100; r_2_100=mul_x b_2_204 w_0;
+ b_3_201=add_x b_2_201 r_2_101; b_3_205=sub_x b_2_201 r_2_101; r_2_101=mul_x b_2_205 w_32;
+ b_3_202=add_x b_2_202 r_2_102; b_3_206=sub_x b_2_202 r_2_102; r_2_102=mul_x b_2_206 w_64;
+ b_3_203=add_x b_2_203 r_2_103; b_3_207=sub_x b_2_203 r_2_103; r_2_103=mul_x b_2_207 w_96;
+ b_3_208=add_x b_2_208 r_2_104; b_3_212=sub_x b_2_208 r_2_104; r_2_104=mul_x b_2_212 w_0;
+ b_3_209=add_x b_2_209 r_2_105; b_3_213=sub_x b_2_209 r_2_105; r_2_105=mul_x b_2_213 w_32;
+ b_3_210=add_x b_2_210 r_2_106; b_3_214=sub_x b_2_210 r_2_106; r_2_106=mul_x b_2_214 w_64;
+ b_3_211=add_x b_2_211 r_2_107; b_3_215=sub_x b_2_211 r_2_107; r_2_107=mul_x b_2_215 w_96;
+ b_3_216=add_x b_2_216 r_2_108; b_3_220=sub_x b_2_216 r_2_108; r_2_108=mul_x b_2_220 w_0;
+ b_3_217=add_x b_2_217 r_2_109; b_3_221=sub_x b_2_217 r_2_109; r_2_109=mul_x b_2_221 w_32;
+ b_3_218=add_x b_2_218 r_2_110; b_3_222=sub_x b_2_218 r_2_110; r_2_110=mul_x b_2_222 w_64;
+ b_3_219=add_x b_2_219 r_2_111; b_3_223=sub_x b_2_219 r_2_111; r_2_111=mul_x b_2_223 w_96;
+ b_3_224=add_x b_2_224 r_2_112; b_3_228=sub_x b_2_224 r_2_112; r_2_112=mul_x b_2_228 w_0;
+ b_3_225=add_x b_2_225 r_2_113; b_3_229=sub_x b_2_225 r_2_113; r_2_113=mul_x b_2_229 w_32;
+ b_3_226=add_x b_2_226 r_2_114; b_3_230=sub_x b_2_226 r_2_114; r_2_114=mul_x b_2_230 w_64;
+ b_3_227=add_x b_2_227 r_2_115; b_3_231=sub_x b_2_227 r_2_115; r_2_115=mul_x b_2_231 w_96;
+ b_3_232=add_x b_2_232 r_2_116; b_3_236=sub_x b_2_232 r_2_116; r_2_116=mul_x b_2_236 w_0;
+ b_3_233=add_x b_2_233 r_2_117; b_3_237=sub_x b_2_233 r_2_117; r_2_117=mul_x b_2_237 w_32;
+ b_3_234=add_x b_2_234 r_2_118; b_3_238=sub_x b_2_234 r_2_118; r_2_118=mul_x b_2_238 w_64;
+ b_3_235=add_x b_2_235 r_2_119; b_3_239=sub_x b_2_235 r_2_119; r_2_119=mul_x b_2_239 w_96;
+ b_3_240=add_x b_2_240 r_2_120; b_3_244=sub_x b_2_240 r_2_120; r_2_120=mul_x b_2_244 w_0;
+ b_3_241=add_x b_2_241 r_2_121; b_3_245=sub_x b_2_241 r_2_121; r_2_121=mul_x b_2_245 w_32;
+ b_3_242=add_x b_2_242 r_2_122; b_3_246=sub_x b_2_242 r_2_122; r_2_122=mul_x b_2_246 w_64;
+ b_3_243=add_x b_2_243 r_2_123; b_3_247=sub_x b_2_243 r_2_123; r_2_123=mul_x b_2_247 w_96;
+ b_3_248=add_x b_2_248 r_2_124; b_3_252=sub_x b_2_248 r_2_124; r_2_124=mul_x b_2_252 w_0;
+ b_3_249=add_x b_2_249 r_2_125; b_3_253=sub_x b_2_249 r_2_125; r_2_125=mul_x b_2_253 w_32;
+ b_3_250=add_x b_2_250 r_2_126; b_3_254=sub_x b_2_250 r_2_126; r_2_126=mul_x b_2_254 w_64;
+ b_3_251=add_x b_2_251 r_2_127; b_3_255=sub_x b_2_251 r_2_127; r_2_127=mul_x b_2_255 w_96;
+ b_4_0=add_x b_3_0 r_3_0; b_4_8=sub_x b_3_0 r_3_0; r_3_0=mul_x b_3_8 w_0;
+ b_4_1=add_x b_3_1 r_3_1; b_4_9=sub_x b_3_1 r_3_1; r_3_1=mul_x b_3_9 w_16;
+ b_4_2=add_x b_3_2 r_3_2; b_4_10=sub_x b_3_2 r_3_2; r_3_2=mul_x b_3_10 w_32;
+ b_4_3=add_x b_3_3 r_3_3; b_4_11=sub_x b_3_3 r_3_3; r_3_3=mul_x b_3_11 w_48;
+ b_4_4=add_x b_3_4 r_3_4; b_4_12=sub_x b_3_4 r_3_4; r_3_4=mul_x b_3_12 w_64;
+ b_4_5=add_x b_3_5 r_3_5; b_4_13=sub_x b_3_5 r_3_5; r_3_5=mul_x b_3_13 w_80;
+ b_4_6=add_x b_3_6 r_3_6; b_4_14=sub_x b_3_6 r_3_6; r_3_6=mul_x b_3_14 w_96;
+ b_4_7=add_x b_3_7 r_3_7; b_4_15=sub_x b_3_7 r_3_7; r_3_7=mul_x b_3_15 w_112;
+ b_4_16=add_x b_3_16 r_3_8; b_4_24=sub_x b_3_16 r_3_8; r_3_8=mul_x b_3_24 w_0;
+ b_4_17=add_x b_3_17 r_3_9; b_4_25=sub_x b_3_17 r_3_9; r_3_9=mul_x b_3_25 w_16;
+ b_4_18=add_x b_3_18 r_3_10; b_4_26=sub_x b_3_18 r_3_10; r_3_10=mul_x b_3_26 w_32;
+ b_4_19=add_x b_3_19 r_3_11; b_4_27=sub_x b_3_19 r_3_11; r_3_11=mul_x b_3_27 w_48;
+ b_4_20=add_x b_3_20 r_3_12; b_4_28=sub_x b_3_20 r_3_12; r_3_12=mul_x b_3_28 w_64;
+ b_4_21=add_x b_3_21 r_3_13; b_4_29=sub_x b_3_21 r_3_13; r_3_13=mul_x b_3_29 w_80;
+ b_4_22=add_x b_3_22 r_3_14; b_4_30=sub_x b_3_22 r_3_14; r_3_14=mul_x b_3_30 w_96;
+ b_4_23=add_x b_3_23 r_3_15; b_4_31=sub_x b_3_23 r_3_15; r_3_15=mul_x b_3_31 w_112;
+ b_4_32=add_x b_3_32 r_3_16; b_4_40=sub_x b_3_32 r_3_16; r_3_16=mul_x b_3_40 w_0;
+ b_4_33=add_x b_3_33 r_3_17; b_4_41=sub_x b_3_33 r_3_17; r_3_17=mul_x b_3_41 w_16;
+ b_4_34=add_x b_3_34 r_3_18; b_4_42=sub_x b_3_34 r_3_18; r_3_18=mul_x b_3_42 w_32;
+ b_4_35=add_x b_3_35 r_3_19; b_4_43=sub_x b_3_35 r_3_19; r_3_19=mul_x b_3_43 w_48;
+ b_4_36=add_x b_3_36 r_3_20; b_4_44=sub_x b_3_36 r_3_20; r_3_20=mul_x b_3_44 w_64;
+ b_4_37=add_x b_3_37 r_3_21; b_4_45=sub_x b_3_37 r_3_21; r_3_21=mul_x b_3_45 w_80;
+ b_4_38=add_x b_3_38 r_3_22; b_4_46=sub_x b_3_38 r_3_22; r_3_22=mul_x b_3_46 w_96;
+ b_4_39=add_x b_3_39 r_3_23; b_4_47=sub_x b_3_39 r_3_23; r_3_23=mul_x b_3_47 w_112;
+ b_4_48=add_x b_3_48 r_3_24; b_4_56=sub_x b_3_48 r_3_24; r_3_24=mul_x b_3_56 w_0;
+ b_4_49=add_x b_3_49 r_3_25; b_4_57=sub_x b_3_49 r_3_25; r_3_25=mul_x b_3_57 w_16;
+ b_4_50=add_x b_3_50 r_3_26; b_4_58=sub_x b_3_50 r_3_26; r_3_26=mul_x b_3_58 w_32;
+ b_4_51=add_x b_3_51 r_3_27; b_4_59=sub_x b_3_51 r_3_27; r_3_27=mul_x b_3_59 w_48;
+ b_4_52=add_x b_3_52 r_3_28; b_4_60=sub_x b_3_52 r_3_28; r_3_28=mul_x b_3_60 w_64;
+ b_4_53=add_x b_3_53 r_3_29; b_4_61=sub_x b_3_53 r_3_29; r_3_29=mul_x b_3_61 w_80;
+ b_4_54=add_x b_3_54 r_3_30; b_4_62=sub_x b_3_54 r_3_30; r_3_30=mul_x b_3_62 w_96;
+ b_4_55=add_x b_3_55 r_3_31; b_4_63=sub_x b_3_55 r_3_31; r_3_31=mul_x b_3_63 w_112;
+ b_4_64=add_x b_3_64 r_3_32; b_4_72=sub_x b_3_64 r_3_32; r_3_32=mul_x b_3_72 w_0;
+ b_4_65=add_x b_3_65 r_3_33; b_4_73=sub_x b_3_65 r_3_33; r_3_33=mul_x b_3_73 w_16;
+ b_4_66=add_x b_3_66 r_3_34; b_4_74=sub_x b_3_66 r_3_34; r_3_34=mul_x b_3_74 w_32;
+ b_4_67=add_x b_3_67 r_3_35; b_4_75=sub_x b_3_67 r_3_35; r_3_35=mul_x b_3_75 w_48;
+ b_4_68=add_x b_3_68 r_3_36; b_4_76=sub_x b_3_68 r_3_36; r_3_36=mul_x b_3_76 w_64;
+ b_4_69=add_x b_3_69 r_3_37; b_4_77=sub_x b_3_69 r_3_37; r_3_37=mul_x b_3_77 w_80;
+ b_4_70=add_x b_3_70 r_3_38; b_4_78=sub_x b_3_70 r_3_38; r_3_38=mul_x b_3_78 w_96;
+ b_4_71=add_x b_3_71 r_3_39; b_4_79=sub_x b_3_71 r_3_39; r_3_39=mul_x b_3_79 w_112;
+ b_4_80=add_x b_3_80 r_3_40; b_4_88=sub_x b_3_80 r_3_40; r_3_40=mul_x b_3_88 w_0;
+ b_4_81=add_x b_3_81 r_3_41; b_4_89=sub_x b_3_81 r_3_41; r_3_41=mul_x b_3_89 w_16;
+ b_4_82=add_x b_3_82 r_3_42; b_4_90=sub_x b_3_82 r_3_42; r_3_42=mul_x b_3_90 w_32;
+ b_4_83=add_x b_3_83 r_3_43; b_4_91=sub_x b_3_83 r_3_43; r_3_43=mul_x b_3_91 w_48;
+ b_4_84=add_x b_3_84 r_3_44; b_4_92=sub_x b_3_84 r_3_44; r_3_44=mul_x b_3_92 w_64;
+ b_4_85=add_x b_3_85 r_3_45; b_4_93=sub_x b_3_85 r_3_45; r_3_45=mul_x b_3_93 w_80;
+ b_4_86=add_x b_3_86 r_3_46; b_4_94=sub_x b_3_86 r_3_46; r_3_46=mul_x b_3_94 w_96;
+ b_4_87=add_x b_3_87 r_3_47; b_4_95=sub_x b_3_87 r_3_47; r_3_47=mul_x b_3_95 w_112;
+ b_4_96=add_x b_3_96 r_3_48; b_4_104=sub_x b_3_96 r_3_48; r_3_48=mul_x b_3_104 w_0;
+ b_4_97=add_x b_3_97 r_3_49; b_4_105=sub_x b_3_97 r_3_49; r_3_49=mul_x b_3_105 w_16;
+ b_4_98=add_x b_3_98 r_3_50; b_4_106=sub_x b_3_98 r_3_50; r_3_50=mul_x b_3_106 w_32;
+ b_4_99=add_x b_3_99 r_3_51; b_4_107=sub_x b_3_99 r_3_51; r_3_51=mul_x b_3_107 w_48;
+ b_4_100=add_x b_3_100 r_3_52; b_4_108=sub_x b_3_100 r_3_52; r_3_52=mul_x b_3_108 w_64;
+ b_4_101=add_x b_3_101 r_3_53; b_4_109=sub_x b_3_101 r_3_53; r_3_53=mul_x b_3_109 w_80;
+ b_4_102=add_x b_3_102 r_3_54; b_4_110=sub_x b_3_102 r_3_54; r_3_54=mul_x b_3_110 w_96;
+ b_4_103=add_x b_3_103 r_3_55; b_4_111=sub_x b_3_103 r_3_55; r_3_55=mul_x b_3_111 w_112;
+ b_4_112=add_x b_3_112 r_3_56; b_4_120=sub_x b_3_112 r_3_56; r_3_56=mul_x b_3_120 w_0;
+ b_4_113=add_x b_3_113 r_3_57; b_4_121=sub_x b_3_113 r_3_57; r_3_57=mul_x b_3_121 w_16;
+ b_4_114=add_x b_3_114 r_3_58; b_4_122=sub_x b_3_114 r_3_58; r_3_58=mul_x b_3_122 w_32;
+ b_4_115=add_x b_3_115 r_3_59; b_4_123=sub_x b_3_115 r_3_59; r_3_59=mul_x b_3_123 w_48;
+ b_4_116=add_x b_3_116 r_3_60; b_4_124=sub_x b_3_116 r_3_60; r_3_60=mul_x b_3_124 w_64;
+ b_4_117=add_x b_3_117 r_3_61; b_4_125=sub_x b_3_117 r_3_61; r_3_61=mul_x b_3_125 w_80;
+ b_4_118=add_x b_3_118 r_3_62; b_4_126=sub_x b_3_118 r_3_62; r_3_62=mul_x b_3_126 w_96;
+ b_4_119=add_x b_3_119 r_3_63; b_4_127=sub_x b_3_119 r_3_63; r_3_63=mul_x b_3_127 w_112;
+ b_4_128=add_x b_3_128 r_3_64; b_4_136=sub_x b_3_128 r_3_64; r_3_64=mul_x b_3_136 w_0;
+ b_4_129=add_x b_3_129 r_3_65; b_4_137=sub_x b_3_129 r_3_65; r_3_65=mul_x b_3_137 w_16;
+ b_4_130=add_x b_3_130 r_3_66; b_4_138=sub_x b_3_130 r_3_66; r_3_66=mul_x b_3_138 w_32;
+ b_4_131=add_x b_3_131 r_3_67; b_4_139=sub_x b_3_131 r_3_67; r_3_67=mul_x b_3_139 w_48;
+ b_4_132=add_x b_3_132 r_3_68; b_4_140=sub_x b_3_132 r_3_68; r_3_68=mul_x b_3_140 w_64;
+ b_4_133=add_x b_3_133 r_3_69; b_4_141=sub_x b_3_133 r_3_69; r_3_69=mul_x b_3_141 w_80;
+ b_4_134=add_x b_3_134 r_3_70; b_4_142=sub_x b_3_134 r_3_70; r_3_70=mul_x b_3_142 w_96;
+ b_4_135=add_x b_3_135 r_3_71; b_4_143=sub_x b_3_135 r_3_71; r_3_71=mul_x b_3_143 w_112;
+ b_4_144=add_x b_3_144 r_3_72; b_4_152=sub_x b_3_144 r_3_72; r_3_72=mul_x b_3_152 w_0;
+ b_4_145=add_x b_3_145 r_3_73; b_4_153=sub_x b_3_145 r_3_73; r_3_73=mul_x b_3_153 w_16;
+ b_4_146=add_x b_3_146 r_3_74; b_4_154=sub_x b_3_146 r_3_74; r_3_74=mul_x b_3_154 w_32;
+ b_4_147=add_x b_3_147 r_3_75; b_4_155=sub_x b_3_147 r_3_75; r_3_75=mul_x b_3_155 w_48;
+ b_4_148=add_x b_3_148 r_3_76; b_4_156=sub_x b_3_148 r_3_76; r_3_76=mul_x b_3_156 w_64;
+ b_4_149=add_x b_3_149 r_3_77; b_4_157=sub_x b_3_149 r_3_77; r_3_77=mul_x b_3_157 w_80;
+ b_4_150=add_x b_3_150 r_3_78; b_4_158=sub_x b_3_150 r_3_78; r_3_78=mul_x b_3_158 w_96;
+ b_4_151=add_x b_3_151 r_3_79; b_4_159=sub_x b_3_151 r_3_79; r_3_79=mul_x b_3_159 w_112;
+ b_4_160=add_x b_3_160 r_3_80; b_4_168=sub_x b_3_160 r_3_80; r_3_80=mul_x b_3_168 w_0;
+ b_4_161=add_x b_3_161 r_3_81; b_4_169=sub_x b_3_161 r_3_81; r_3_81=mul_x b_3_169 w_16;
+ b_4_162=add_x b_3_162 r_3_82; b_4_170=sub_x b_3_162 r_3_82; r_3_82=mul_x b_3_170 w_32;
+ b_4_163=add_x b_3_163 r_3_83; b_4_171=sub_x b_3_163 r_3_83; r_3_83=mul_x b_3_171 w_48;
+ b_4_164=add_x b_3_164 r_3_84; b_4_172=sub_x b_3_164 r_3_84; r_3_84=mul_x b_3_172 w_64;
+ b_4_165=add_x b_3_165 r_3_85; b_4_173=sub_x b_3_165 r_3_85; r_3_85=mul_x b_3_173 w_80;
+ b_4_166=add_x b_3_166 r_3_86; b_4_174=sub_x b_3_166 r_3_86; r_3_86=mul_x b_3_174 w_96;
+ b_4_167=add_x b_3_167 r_3_87; b_4_175=sub_x b_3_167 r_3_87; r_3_87=mul_x b_3_175 w_112;
+ b_4_176=add_x b_3_176 r_3_88; b_4_184=sub_x b_3_176 r_3_88; r_3_88=mul_x b_3_184 w_0;
+ b_4_177=add_x b_3_177 r_3_89; b_4_185=sub_x b_3_177 r_3_89; r_3_89=mul_x b_3_185 w_16;
+ b_4_178=add_x b_3_178 r_3_90; b_4_186=sub_x b_3_178 r_3_90; r_3_90=mul_x b_3_186 w_32;
+ b_4_179=add_x b_3_179 r_3_91; b_4_187=sub_x b_3_179 r_3_91; r_3_91=mul_x b_3_187 w_48;
+ b_4_180=add_x b_3_180 r_3_92; b_4_188=sub_x b_3_180 r_3_92; r_3_92=mul_x b_3_188 w_64;
+ b_4_181=add_x b_3_181 r_3_93; b_4_189=sub_x b_3_181 r_3_93; r_3_93=mul_x b_3_189 w_80;
+ b_4_182=add_x b_3_182 r_3_94; b_4_190=sub_x b_3_182 r_3_94; r_3_94=mul_x b_3_190 w_96;
+ b_4_183=add_x b_3_183 r_3_95; b_4_191=sub_x b_3_183 r_3_95; r_3_95=mul_x b_3_191 w_112;
+ b_4_192=add_x b_3_192 r_3_96; b_4_200=sub_x b_3_192 r_3_96; r_3_96=mul_x b_3_200 w_0;
+ b_4_193=add_x b_3_193 r_3_97; b_4_201=sub_x b_3_193 r_3_97; r_3_97=mul_x b_3_201 w_16;
+ b_4_194=add_x b_3_194 r_3_98; b_4_202=sub_x b_3_194 r_3_98; r_3_98=mul_x b_3_202 w_32;
+ b_4_195=add_x b_3_195 r_3_99; b_4_203=sub_x b_3_195 r_3_99; r_3_99=mul_x b_3_203 w_48;
+ b_4_196=add_x b_3_196 r_3_100; b_4_204=sub_x b_3_196 r_3_100; r_3_100=mul_x b_3_204 w_64;
+ b_4_197=add_x b_3_197 r_3_101; b_4_205=sub_x b_3_197 r_3_101; r_3_101=mul_x b_3_205 w_80;
+ b_4_198=add_x b_3_198 r_3_102; b_4_206=sub_x b_3_198 r_3_102; r_3_102=mul_x b_3_206 w_96;
+ b_4_199=add_x b_3_199 r_3_103; b_4_207=sub_x b_3_199 r_3_103; r_3_103=mul_x b_3_207 w_112;
+ b_4_208=add_x b_3_208 r_3_104; b_4_216=sub_x b_3_208 r_3_104; r_3_104=mul_x b_3_216 w_0;
+ b_4_209=add_x b_3_209 r_3_105; b_4_217=sub_x b_3_209 r_3_105; r_3_105=mul_x b_3_217 w_16;
+ b_4_210=add_x b_3_210 r_3_106; b_4_218=sub_x b_3_210 r_3_106; r_3_106=mul_x b_3_218 w_32;
+ b_4_211=add_x b_3_211 r_3_107; b_4_219=sub_x b_3_211 r_3_107; r_3_107=mul_x b_3_219 w_48;
+ b_4_212=add_x b_3_212 r_3_108; b_4_220=sub_x b_3_212 r_3_108; r_3_108=mul_x b_3_220 w_64;
+ b_4_213=add_x b_3_213 r_3_109; b_4_221=sub_x b_3_213 r_3_109; r_3_109=mul_x b_3_221 w_80;
+ b_4_214=add_x b_3_214 r_3_110; b_4_222=sub_x b_3_214 r_3_110; r_3_110=mul_x b_3_222 w_96;
+ b_4_215=add_x b_3_215 r_3_111; b_4_223=sub_x b_3_215 r_3_111; r_3_111=mul_x b_3_223 w_112;
+ b_4_224=add_x b_3_224 r_3_112; b_4_232=sub_x b_3_224 r_3_112; r_3_112=mul_x b_3_232 w_0;
+ b_4_225=add_x b_3_225 r_3_113; b_4_233=sub_x b_3_225 r_3_113; r_3_113=mul_x b_3_233 w_16;
+ b_4_226=add_x b_3_226 r_3_114; b_4_234=sub_x b_3_226 r_3_114; r_3_114=mul_x b_3_234 w_32;
+ b_4_227=add_x b_3_227 r_3_115; b_4_235=sub_x b_3_227 r_3_115; r_3_115=mul_x b_3_235 w_48;
+ b_4_228=add_x b_3_228 r_3_116; b_4_236=sub_x b_3_228 r_3_116; r_3_116=mul_x b_3_236 w_64;
+ b_4_229=add_x b_3_229 r_3_117; b_4_237=sub_x b_3_229 r_3_117; r_3_117=mul_x b_3_237 w_80;
+ b_4_230=add_x b_3_230 r_3_118; b_4_238=sub_x b_3_230 r_3_118; r_3_118=mul_x b_3_238 w_96;
+ b_4_231=add_x b_3_231 r_3_119; b_4_239=sub_x b_3_231 r_3_119; r_3_119=mul_x b_3_239 w_112;
+ b_4_240=add_x b_3_240 r_3_120; b_4_248=sub_x b_3_240 r_3_120; r_3_120=mul_x b_3_248 w_0;
+ b_4_241=add_x b_3_241 r_3_121; b_4_249=sub_x b_3_241 r_3_121; r_3_121=mul_x b_3_249 w_16;
+ b_4_242=add_x b_3_242 r_3_122; b_4_250=sub_x b_3_242 r_3_122; r_3_122=mul_x b_3_250 w_32;
+ b_4_243=add_x b_3_243 r_3_123; b_4_251=sub_x b_3_243 r_3_123; r_3_123=mul_x b_3_251 w_48;
+ b_4_244=add_x b_3_244 r_3_124; b_4_252=sub_x b_3_244 r_3_124; r_3_124=mul_x b_3_252 w_64;
+ b_4_245=add_x b_3_245 r_3_125; b_4_253=sub_x b_3_245 r_3_125; r_3_125=mul_x b_3_253 w_80;
+ b_4_246=add_x b_3_246 r_3_126; b_4_254=sub_x b_3_246 r_3_126; r_3_126=mul_x b_3_254 w_96;
+ b_4_247=add_x b_3_247 r_3_127; b_4_255=sub_x b_3_247 r_3_127; r_3_127=mul_x b_3_255 w_112;
+ b_5_0=add_x b_4_0 r_4_0; b_5_16=sub_x b_4_0 r_4_0; r_4_0=mul_x b_4_16 w_0;
+ b_5_1=add_x b_4_1 r_4_1; b_5_17=sub_x b_4_1 r_4_1; r_4_1=mul_x b_4_17 w_8;
+ b_5_2=add_x b_4_2 r_4_2; b_5_18=sub_x b_4_2 r_4_2; r_4_2=mul_x b_4_18 w_16;
+ b_5_3=add_x b_4_3 r_4_3; b_5_19=sub_x b_4_3 r_4_3; r_4_3=mul_x b_4_19 w_24;
+ b_5_4=add_x b_4_4 r_4_4; b_5_20=sub_x b_4_4 r_4_4; r_4_4=mul_x b_4_20 w_32;
+ b_5_5=add_x b_4_5 r_4_5; b_5_21=sub_x b_4_5 r_4_5; r_4_5=mul_x b_4_21 w_40;
+ b_5_6=add_x b_4_6 r_4_6; b_5_22=sub_x b_4_6 r_4_6; r_4_6=mul_x b_4_22 w_48;
+ b_5_7=add_x b_4_7 r_4_7; b_5_23=sub_x b_4_7 r_4_7; r_4_7=mul_x b_4_23 w_56;
+ b_5_8=add_x b_4_8 r_4_8; b_5_24=sub_x b_4_8 r_4_8; r_4_8=mul_x b_4_24 w_64;
+ b_5_9=add_x b_4_9 r_4_9; b_5_25=sub_x b_4_9 r_4_9; r_4_9=mul_x b_4_25 w_72;
+ b_5_10=add_x b_4_10 r_4_10; b_5_26=sub_x b_4_10 r_4_10; r_4_10=mul_x b_4_26 w_80;
+ b_5_11=add_x b_4_11 r_4_11; b_5_27=sub_x b_4_11 r_4_11; r_4_11=mul_x b_4_27 w_88;
+ b_5_12=add_x b_4_12 r_4_12; b_5_28=sub_x b_4_12 r_4_12; r_4_12=mul_x b_4_28 w_96;
+ b_5_13=add_x b_4_13 r_4_13; b_5_29=sub_x b_4_13 r_4_13; r_4_13=mul_x b_4_29 w_104;
+ b_5_14=add_x b_4_14 r_4_14; b_5_30=sub_x b_4_14 r_4_14; r_4_14=mul_x b_4_30 w_112;
+ b_5_15=add_x b_4_15 r_4_15; b_5_31=sub_x b_4_15 r_4_15; r_4_15=mul_x b_4_31 w_120;
+ b_5_32=add_x b_4_32 r_4_16; b_5_48=sub_x b_4_32 r_4_16; r_4_16=mul_x b_4_48 w_0;
+ b_5_33=add_x b_4_33 r_4_17; b_5_49=sub_x b_4_33 r_4_17; r_4_17=mul_x b_4_49 w_8;
+ b_5_34=add_x b_4_34 r_4_18; b_5_50=sub_x b_4_34 r_4_18; r_4_18=mul_x b_4_50 w_16;
+ b_5_35=add_x b_4_35 r_4_19; b_5_51=sub_x b_4_35 r_4_19; r_4_19=mul_x b_4_51 w_24;
+ b_5_36=add_x b_4_36 r_4_20; b_5_52=sub_x b_4_36 r_4_20; r_4_20=mul_x b_4_52 w_32;
+ b_5_37=add_x b_4_37 r_4_21; b_5_53=sub_x b_4_37 r_4_21; r_4_21=mul_x b_4_53 w_40;
+ b_5_38=add_x b_4_38 r_4_22; b_5_54=sub_x b_4_38 r_4_22; r_4_22=mul_x b_4_54 w_48;
+ b_5_39=add_x b_4_39 r_4_23; b_5_55=sub_x b_4_39 r_4_23; r_4_23=mul_x b_4_55 w_56;
+ b_5_40=add_x b_4_40 r_4_24; b_5_56=sub_x b_4_40 r_4_24; r_4_24=mul_x b_4_56 w_64;
+ b_5_41=add_x b_4_41 r_4_25; b_5_57=sub_x b_4_41 r_4_25; r_4_25=mul_x b_4_57 w_72;
+ b_5_42=add_x b_4_42 r_4_26; b_5_58=sub_x b_4_42 r_4_26; r_4_26=mul_x b_4_58 w_80;
+ b_5_43=add_x b_4_43 r_4_27; b_5_59=sub_x b_4_43 r_4_27; r_4_27=mul_x b_4_59 w_88;
+ b_5_44=add_x b_4_44 r_4_28; b_5_60=sub_x b_4_44 r_4_28; r_4_28=mul_x b_4_60 w_96;
+ b_5_45=add_x b_4_45 r_4_29; b_5_61=sub_x b_4_45 r_4_29; r_4_29=mul_x b_4_61 w_104;
+ b_5_46=add_x b_4_46 r_4_30; b_5_62=sub_x b_4_46 r_4_30; r_4_30=mul_x b_4_62 w_112;
+ b_5_47=add_x b_4_47 r_4_31; b_5_63=sub_x b_4_47 r_4_31; r_4_31=mul_x b_4_63 w_120;
+ b_5_64=add_x b_4_64 r_4_32; b_5_80=sub_x b_4_64 r_4_32; r_4_32=mul_x b_4_80 w_0;
+ b_5_65=add_x b_4_65 r_4_33; b_5_81=sub_x b_4_65 r_4_33; r_4_33=mul_x b_4_81 w_8;
+ b_5_66=add_x b_4_66 r_4_34; b_5_82=sub_x b_4_66 r_4_34; r_4_34=mul_x b_4_82 w_16;
+ b_5_67=add_x b_4_67 r_4_35; b_5_83=sub_x b_4_67 r_4_35; r_4_35=mul_x b_4_83 w_24;
+ b_5_68=add_x b_4_68 r_4_36; b_5_84=sub_x b_4_68 r_4_36; r_4_36=mul_x b_4_84 w_32;
+ b_5_69=add_x b_4_69 r_4_37; b_5_85=sub_x b_4_69 r_4_37; r_4_37=mul_x b_4_85 w_40;
+ b_5_70=add_x b_4_70 r_4_38; b_5_86=sub_x b_4_70 r_4_38; r_4_38=mul_x b_4_86 w_48;
+ b_5_71=add_x b_4_71 r_4_39; b_5_87=sub_x b_4_71 r_4_39; r_4_39=mul_x b_4_87 w_56;
+ b_5_72=add_x b_4_72 r_4_40; b_5_88=sub_x b_4_72 r_4_40; r_4_40=mul_x b_4_88 w_64;
+ b_5_73=add_x b_4_73 r_4_41; b_5_89=sub_x b_4_73 r_4_41; r_4_41=mul_x b_4_89 w_72;
+ b_5_74=add_x b_4_74 r_4_42; b_5_90=sub_x b_4_74 r_4_42; r_4_42=mul_x b_4_90 w_80;
+ b_5_75=add_x b_4_75 r_4_43; b_5_91=sub_x b_4_75 r_4_43; r_4_43=mul_x b_4_91 w_88;
+ b_5_76=add_x b_4_76 r_4_44; b_5_92=sub_x b_4_76 r_4_44; r_4_44=mul_x b_4_92 w_96;
+ b_5_77=add_x b_4_77 r_4_45; b_5_93=sub_x b_4_77 r_4_45; r_4_45=mul_x b_4_93 w_104;
+ b_5_78=add_x b_4_78 r_4_46; b_5_94=sub_x b_4_78 r_4_46; r_4_46=mul_x b_4_94 w_112;
+ b_5_79=add_x b_4_79 r_4_47; b_5_95=sub_x b_4_79 r_4_47; r_4_47=mul_x b_4_95 w_120;
+ b_5_96=add_x b_4_96 r_4_48; b_5_112=sub_x b_4_96 r_4_48; r_4_48=mul_x b_4_112 w_0;
+ b_5_97=add_x b_4_97 r_4_49; b_5_113=sub_x b_4_97 r_4_49; r_4_49=mul_x b_4_113 w_8;
+ b_5_98=add_x b_4_98 r_4_50; b_5_114=sub_x b_4_98 r_4_50; r_4_50=mul_x b_4_114 w_16;
+ b_5_99=add_x b_4_99 r_4_51; b_5_115=sub_x b_4_99 r_4_51; r_4_51=mul_x b_4_115 w_24;
+ b_5_100=add_x b_4_100 r_4_52; b_5_116=sub_x b_4_100 r_4_52; r_4_52=mul_x b_4_116 w_32;
+ b_5_101=add_x b_4_101 r_4_53; b_5_117=sub_x b_4_101 r_4_53; r_4_53=mul_x b_4_117 w_40;
+ b_5_102=add_x b_4_102 r_4_54; b_5_118=sub_x b_4_102 r_4_54; r_4_54=mul_x b_4_118 w_48;
+ b_5_103=add_x b_4_103 r_4_55; b_5_119=sub_x b_4_103 r_4_55; r_4_55=mul_x b_4_119 w_56;
+ b_5_104=add_x b_4_104 r_4_56; b_5_120=sub_x b_4_104 r_4_56; r_4_56=mul_x b_4_120 w_64;
+ b_5_105=add_x b_4_105 r_4_57; b_5_121=sub_x b_4_105 r_4_57; r_4_57=mul_x b_4_121 w_72;
+ b_5_106=add_x b_4_106 r_4_58; b_5_122=sub_x b_4_106 r_4_58; r_4_58=mul_x b_4_122 w_80;
+ b_5_107=add_x b_4_107 r_4_59; b_5_123=sub_x b_4_107 r_4_59; r_4_59=mul_x b_4_123 w_88;
+ b_5_108=add_x b_4_108 r_4_60; b_5_124=sub_x b_4_108 r_4_60; r_4_60=mul_x b_4_124 w_96;
+ b_5_109=add_x b_4_109 r_4_61; b_5_125=sub_x b_4_109 r_4_61; r_4_61=mul_x b_4_125 w_104;
+ b_5_110=add_x b_4_110 r_4_62; b_5_126=sub_x b_4_110 r_4_62; r_4_62=mul_x b_4_126 w_112;
+ b_5_111=add_x b_4_111 r_4_63; b_5_127=sub_x b_4_111 r_4_63; r_4_63=mul_x b_4_127 w_120;
+ b_5_128=add_x b_4_128 r_4_64; b_5_144=sub_x b_4_128 r_4_64; r_4_64=mul_x b_4_144 w_0;
+ b_5_129=add_x b_4_129 r_4_65; b_5_145=sub_x b_4_129 r_4_65; r_4_65=mul_x b_4_145 w_8;
+ b_5_130=add_x b_4_130 r_4_66; b_5_146=sub_x b_4_130 r_4_66; r_4_66=mul_x b_4_146 w_16;
+ b_5_131=add_x b_4_131 r_4_67; b_5_147=sub_x b_4_131 r_4_67; r_4_67=mul_x b_4_147 w_24;
+ b_5_132=add_x b_4_132 r_4_68; b_5_148=sub_x b_4_132 r_4_68; r_4_68=mul_x b_4_148 w_32;
+ b_5_133=add_x b_4_133 r_4_69; b_5_149=sub_x b_4_133 r_4_69; r_4_69=mul_x b_4_149 w_40;
+ b_5_134=add_x b_4_134 r_4_70; b_5_150=sub_x b_4_134 r_4_70; r_4_70=mul_x b_4_150 w_48;
+ b_5_135=add_x b_4_135 r_4_71; b_5_151=sub_x b_4_135 r_4_71; r_4_71=mul_x b_4_151 w_56;
+ b_5_136=add_x b_4_136 r_4_72; b_5_152=sub_x b_4_136 r_4_72; r_4_72=mul_x b_4_152 w_64;
+ b_5_137=add_x b_4_137 r_4_73; b_5_153=sub_x b_4_137 r_4_73; r_4_73=mul_x b_4_153 w_72;
+ b_5_138=add_x b_4_138 r_4_74; b_5_154=sub_x b_4_138 r_4_74; r_4_74=mul_x b_4_154 w_80;
+ b_5_139=add_x b_4_139 r_4_75; b_5_155=sub_x b_4_139 r_4_75; r_4_75=mul_x b_4_155 w_88;
+ b_5_140=add_x b_4_140 r_4_76; b_5_156=sub_x b_4_140 r_4_76; r_4_76=mul_x b_4_156 w_96;
+ b_5_141=add_x b_4_141 r_4_77; b_5_157=sub_x b_4_141 r_4_77; r_4_77=mul_x b_4_157 w_104;
+ b_5_142=add_x b_4_142 r_4_78; b_5_158=sub_x b_4_142 r_4_78; r_4_78=mul_x b_4_158 w_112;
+ b_5_143=add_x b_4_143 r_4_79; b_5_159=sub_x b_4_143 r_4_79; r_4_79=mul_x b_4_159 w_120;
+ b_5_160=add_x b_4_160 r_4_80; b_5_176=sub_x b_4_160 r_4_80; r_4_80=mul_x b_4_176 w_0;
+ b_5_161=add_x b_4_161 r_4_81; b_5_177=sub_x b_4_161 r_4_81; r_4_81=mul_x b_4_177 w_8;
+ b_5_162=add_x b_4_162 r_4_82; b_5_178=sub_x b_4_162 r_4_82; r_4_82=mul_x b_4_178 w_16;
+ b_5_163=add_x b_4_163 r_4_83; b_5_179=sub_x b_4_163 r_4_83; r_4_83=mul_x b_4_179 w_24;
+ b_5_164=add_x b_4_164 r_4_84; b_5_180=sub_x b_4_164 r_4_84; r_4_84=mul_x b_4_180 w_32;
+ b_5_165=add_x b_4_165 r_4_85; b_5_181=sub_x b_4_165 r_4_85; r_4_85=mul_x b_4_181 w_40;
+ b_5_166=add_x b_4_166 r_4_86; b_5_182=sub_x b_4_166 r_4_86; r_4_86=mul_x b_4_182 w_48;
+ b_5_167=add_x b_4_167 r_4_87; b_5_183=sub_x b_4_167 r_4_87; r_4_87=mul_x b_4_183 w_56;
+ b_5_168=add_x b_4_168 r_4_88; b_5_184=sub_x b_4_168 r_4_88; r_4_88=mul_x b_4_184 w_64;
+ b_5_169=add_x b_4_169 r_4_89; b_5_185=sub_x b_4_169 r_4_89; r_4_89=mul_x b_4_185 w_72;
+ b_5_170=add_x b_4_170 r_4_90; b_5_186=sub_x b_4_170 r_4_90; r_4_90=mul_x b_4_186 w_80;
+ b_5_171=add_x b_4_171 r_4_91; b_5_187=sub_x b_4_171 r_4_91; r_4_91=mul_x b_4_187 w_88;
+ b_5_172=add_x b_4_172 r_4_92; b_5_188=sub_x b_4_172 r_4_92; r_4_92=mul_x b_4_188 w_96;
+ b_5_173=add_x b_4_173 r_4_93; b_5_189=sub_x b_4_173 r_4_93; r_4_93=mul_x b_4_189 w_104;
+ b_5_174=add_x b_4_174 r_4_94; b_5_190=sub_x b_4_174 r_4_94; r_4_94=mul_x b_4_190 w_112;
+ b_5_175=add_x b_4_175 r_4_95; b_5_191=sub_x b_4_175 r_4_95; r_4_95=mul_x b_4_191 w_120;
+ b_5_192=add_x b_4_192 r_4_96; b_5_208=sub_x b_4_192 r_4_96; r_4_96=mul_x b_4_208 w_0;
+ b_5_193=add_x b_4_193 r_4_97; b_5_209=sub_x b_4_193 r_4_97; r_4_97=mul_x b_4_209 w_8;
+ b_5_194=add_x b_4_194 r_4_98; b_5_210=sub_x b_4_194 r_4_98; r_4_98=mul_x b_4_210 w_16;
+ b_5_195=add_x b_4_195 r_4_99; b_5_211=sub_x b_4_195 r_4_99; r_4_99=mul_x b_4_211 w_24;
+ b_5_196=add_x b_4_196 r_4_100; b_5_212=sub_x b_4_196 r_4_100; r_4_100=mul_x b_4_212 w_32;
+ b_5_197=add_x b_4_197 r_4_101; b_5_213=sub_x b_4_197 r_4_101; r_4_101=mul_x b_4_213 w_40;
+ b_5_198=add_x b_4_198 r_4_102; b_5_214=sub_x b_4_198 r_4_102; r_4_102=mul_x b_4_214 w_48;
+ b_5_199=add_x b_4_199 r_4_103; b_5_215=sub_x b_4_199 r_4_103; r_4_103=mul_x b_4_215 w_56;
+ b_5_200=add_x b_4_200 r_4_104; b_5_216=sub_x b_4_200 r_4_104; r_4_104=mul_x b_4_216 w_64;
+ b_5_201=add_x b_4_201 r_4_105; b_5_217=sub_x b_4_201 r_4_105; r_4_105=mul_x b_4_217 w_72;
+ b_5_202=add_x b_4_202 r_4_106; b_5_218=sub_x b_4_202 r_4_106; r_4_106=mul_x b_4_218 w_80;
+ b_5_203=add_x b_4_203 r_4_107; b_5_219=sub_x b_4_203 r_4_107; r_4_107=mul_x b_4_219 w_88;
+ b_5_204=add_x b_4_204 r_4_108; b_5_220=sub_x b_4_204 r_4_108; r_4_108=mul_x b_4_220 w_96;
+ b_5_205=add_x b_4_205 r_4_109; b_5_221=sub_x b_4_205 r_4_109; r_4_109=mul_x b_4_221 w_104;
+ b_5_206=add_x b_4_206 r_4_110; b_5_222=sub_x b_4_206 r_4_110; r_4_110=mul_x b_4_222 w_112;
+ b_5_207=add_x b_4_207 r_4_111; b_5_223=sub_x b_4_207 r_4_111; r_4_111=mul_x b_4_223 w_120;
+ b_5_224=add_x b_4_224 r_4_112; b_5_240=sub_x b_4_224 r_4_112; r_4_112=mul_x b_4_240 w_0;
+ b_5_225=add_x b_4_225 r_4_113; b_5_241=sub_x b_4_225 r_4_113; r_4_113=mul_x b_4_241 w_8;
+ b_5_226=add_x b_4_226 r_4_114; b_5_242=sub_x b_4_226 r_4_114; r_4_114=mul_x b_4_242 w_16;
+ b_5_227=add_x b_4_227 r_4_115; b_5_243=sub_x b_4_227 r_4_115; r_4_115=mul_x b_4_243 w_24;
+ b_5_228=add_x b_4_228 r_4_116; b_5_244=sub_x b_4_228 r_4_116; r_4_116=mul_x b_4_244 w_32;
+ b_5_229=add_x b_4_229 r_4_117; b_5_245=sub_x b_4_229 r_4_117; r_4_117=mul_x b_4_245 w_40;
+ b_5_230=add_x b_4_230 r_4_118; b_5_246=sub_x b_4_230 r_4_118; r_4_118=mul_x b_4_246 w_48;
+ b_5_231=add_x b_4_231 r_4_119; b_5_247=sub_x b_4_231 r_4_119; r_4_119=mul_x b_4_247 w_56;
+ b_5_232=add_x b_4_232 r_4_120; b_5_248=sub_x b_4_232 r_4_120; r_4_120=mul_x b_4_248 w_64;
+ b_5_233=add_x b_4_233 r_4_121; b_5_249=sub_x b_4_233 r_4_121; r_4_121=mul_x b_4_249 w_72;
+ b_5_234=add_x b_4_234 r_4_122; b_5_250=sub_x b_4_234 r_4_122; r_4_122=mul_x b_4_250 w_80;
+ b_5_235=add_x b_4_235 r_4_123; b_5_251=sub_x b_4_235 r_4_123; r_4_123=mul_x b_4_251 w_88;
+ b_5_236=add_x b_4_236 r_4_124; b_5_252=sub_x b_4_236 r_4_124; r_4_124=mul_x b_4_252 w_96;
+ b_5_237=add_x b_4_237 r_4_125; b_5_253=sub_x b_4_237 r_4_125; r_4_125=mul_x b_4_253 w_104;
+ b_5_238=add_x b_4_238 r_4_126; b_5_254=sub_x b_4_238 r_4_126; r_4_126=mul_x b_4_254 w_112;
+ b_5_239=add_x b_4_239 r_4_127; b_5_255=sub_x b_4_239 r_4_127; r_4_127=mul_x b_4_255 w_120;
+ b_6_0=add_x b_5_0 r_5_0; b_6_32=sub_x b_5_0 r_5_0; r_5_0=mul_x b_5_32 w_0;
+ b_6_1=add_x b_5_1 r_5_1; b_6_33=sub_x b_5_1 r_5_1; r_5_1=mul_x b_5_33 w_4;
+ b_6_2=add_x b_5_2 r_5_2; b_6_34=sub_x b_5_2 r_5_2; r_5_2=mul_x b_5_34 w_8;
+ b_6_3=add_x b_5_3 r_5_3; b_6_35=sub_x b_5_3 r_5_3; r_5_3=mul_x b_5_35 w_12;
+ b_6_4=add_x b_5_4 r_5_4; b_6_36=sub_x b_5_4 r_5_4; r_5_4=mul_x b_5_36 w_16;
+ b_6_5=add_x b_5_5 r_5_5; b_6_37=sub_x b_5_5 r_5_5; r_5_5=mul_x b_5_37 w_20;
+ b_6_6=add_x b_5_6 r_5_6; b_6_38=sub_x b_5_6 r_5_6; r_5_6=mul_x b_5_38 w_24;
+ b_6_7=add_x b_5_7 r_5_7; b_6_39=sub_x b_5_7 r_5_7; r_5_7=mul_x b_5_39 w_28;
+ b_6_8=add_x b_5_8 r_5_8; b_6_40=sub_x b_5_8 r_5_8; r_5_8=mul_x b_5_40 w_32;
+ b_6_9=add_x b_5_9 r_5_9; b_6_41=sub_x b_5_9 r_5_9; r_5_9=mul_x b_5_41 w_36;
+ b_6_10=add_x b_5_10 r_5_10; b_6_42=sub_x b_5_10 r_5_10; r_5_10=mul_x b_5_42 w_40;
+ b_6_11=add_x b_5_11 r_5_11; b_6_43=sub_x b_5_11 r_5_11; r_5_11=mul_x b_5_43 w_44;
+ b_6_12=add_x b_5_12 r_5_12; b_6_44=sub_x b_5_12 r_5_12; r_5_12=mul_x b_5_44 w_48;
+ b_6_13=add_x b_5_13 r_5_13; b_6_45=sub_x b_5_13 r_5_13; r_5_13=mul_x b_5_45 w_52;
+ b_6_14=add_x b_5_14 r_5_14; b_6_46=sub_x b_5_14 r_5_14; r_5_14=mul_x b_5_46 w_56;
+ b_6_15=add_x b_5_15 r_5_15; b_6_47=sub_x b_5_15 r_5_15; r_5_15=mul_x b_5_47 w_60;
+ b_6_16=add_x b_5_16 r_5_16; b_6_48=sub_x b_5_16 r_5_16; r_5_16=mul_x b_5_48 w_64;
+ b_6_17=add_x b_5_17 r_5_17; b_6_49=sub_x b_5_17 r_5_17; r_5_17=mul_x b_5_49 w_68;
+ b_6_18=add_x b_5_18 r_5_18; b_6_50=sub_x b_5_18 r_5_18; r_5_18=mul_x b_5_50 w_72;
+ b_6_19=add_x b_5_19 r_5_19; b_6_51=sub_x b_5_19 r_5_19; r_5_19=mul_x b_5_51 w_76;
+ b_6_20=add_x b_5_20 r_5_20; b_6_52=sub_x b_5_20 r_5_20; r_5_20=mul_x b_5_52 w_80;
+ b_6_21=add_x b_5_21 r_5_21; b_6_53=sub_x b_5_21 r_5_21; r_5_21=mul_x b_5_53 w_84;
+ b_6_22=add_x b_5_22 r_5_22; b_6_54=sub_x b_5_22 r_5_22; r_5_22=mul_x b_5_54 w_88;
+ b_6_23=add_x b_5_23 r_5_23; b_6_55=sub_x b_5_23 r_5_23; r_5_23=mul_x b_5_55 w_92;
+ b_6_24=add_x b_5_24 r_5_24; b_6_56=sub_x b_5_24 r_5_24; r_5_24=mul_x b_5_56 w_96;
+ b_6_25=add_x b_5_25 r_5_25; b_6_57=sub_x b_5_25 r_5_25; r_5_25=mul_x b_5_57 w_100;
+ b_6_26=add_x b_5_26 r_5_26; b_6_58=sub_x b_5_26 r_5_26; r_5_26=mul_x b_5_58 w_104;
+ b_6_27=add_x b_5_27 r_5_27; b_6_59=sub_x b_5_27 r_5_27; r_5_27=mul_x b_5_59 w_108;
+ b_6_28=add_x b_5_28 r_5_28; b_6_60=sub_x b_5_28 r_5_28; r_5_28=mul_x b_5_60 w_112;
+ b_6_29=add_x b_5_29 r_5_29; b_6_61=sub_x b_5_29 r_5_29; r_5_29=mul_x b_5_61 w_116;
+ b_6_30=add_x b_5_30 r_5_30; b_6_62=sub_x b_5_30 r_5_30; r_5_30=mul_x b_5_62 w_120;
+ b_6_31=add_x b_5_31 r_5_31; b_6_63=sub_x b_5_31 r_5_31; r_5_31=mul_x b_5_63 w_124;
+ b_6_64=add_x b_5_64 r_5_32; b_6_96=sub_x b_5_64 r_5_32; r_5_32=mul_x b_5_96 w_0;
+ b_6_65=add_x b_5_65 r_5_33; b_6_97=sub_x b_5_65 r_5_33; r_5_33=mul_x b_5_97 w_4;
+ b_6_66=add_x b_5_66 r_5_34; b_6_98=sub_x b_5_66 r_5_34; r_5_34=mul_x b_5_98 w_8;
+ b_6_67=add_x b_5_67 r_5_35; b_6_99=sub_x b_5_67 r_5_35; r_5_35=mul_x b_5_99 w_12;
+ b_6_68=add_x b_5_68 r_5_36; b_6_100=sub_x b_5_68 r_5_36; r_5_36=mul_x b_5_100 w_16;
+ b_6_69=add_x b_5_69 r_5_37; b_6_101=sub_x b_5_69 r_5_37; r_5_37=mul_x b_5_101 w_20;
+ b_6_70=add_x b_5_70 r_5_38; b_6_102=sub_x b_5_70 r_5_38; r_5_38=mul_x b_5_102 w_24;
+ b_6_71=add_x b_5_71 r_5_39; b_6_103=sub_x b_5_71 r_5_39; r_5_39=mul_x b_5_103 w_28;
+ b_6_72=add_x b_5_72 r_5_40; b_6_104=sub_x b_5_72 r_5_40; r_5_40=mul_x b_5_104 w_32;
+ b_6_73=add_x b_5_73 r_5_41; b_6_105=sub_x b_5_73 r_5_41; r_5_41=mul_x b_5_105 w_36;
+ b_6_74=add_x b_5_74 r_5_42; b_6_106=sub_x b_5_74 r_5_42; r_5_42=mul_x b_5_106 w_40;
+ b_6_75=add_x b_5_75 r_5_43; b_6_107=sub_x b_5_75 r_5_43; r_5_43=mul_x b_5_107 w_44;
+ b_6_76=add_x b_5_76 r_5_44; b_6_108=sub_x b_5_76 r_5_44; r_5_44=mul_x b_5_108 w_48;
+ b_6_77=add_x b_5_77 r_5_45; b_6_109=sub_x b_5_77 r_5_45; r_5_45=mul_x b_5_109 w_52;
+ b_6_78=add_x b_5_78 r_5_46; b_6_110=sub_x b_5_78 r_5_46; r_5_46=mul_x b_5_110 w_56;
+ b_6_79=add_x b_5_79 r_5_47; b_6_111=sub_x b_5_79 r_5_47; r_5_47=mul_x b_5_111 w_60;
+ b_6_80=add_x b_5_80 r_5_48; b_6_112=sub_x b_5_80 r_5_48; r_5_48=mul_x b_5_112 w_64;
+ b_6_81=add_x b_5_81 r_5_49; b_6_113=sub_x b_5_81 r_5_49; r_5_49=mul_x b_5_113 w_68;
+ b_6_82=add_x b_5_82 r_5_50; b_6_114=sub_x b_5_82 r_5_50; r_5_50=mul_x b_5_114 w_72;
+ b_6_83=add_x b_5_83 r_5_51; b_6_115=sub_x b_5_83 r_5_51; r_5_51=mul_x b_5_115 w_76;
+ b_6_84=add_x b_5_84 r_5_52; b_6_116=sub_x b_5_84 r_5_52; r_5_52=mul_x b_5_116 w_80;
+ b_6_85=add_x b_5_85 r_5_53; b_6_117=sub_x b_5_85 r_5_53; r_5_53=mul_x b_5_117 w_84;
+ b_6_86=add_x b_5_86 r_5_54; b_6_118=sub_x b_5_86 r_5_54; r_5_54=mul_x b_5_118 w_88;
+ b_6_87=add_x b_5_87 r_5_55; b_6_119=sub_x b_5_87 r_5_55; r_5_55=mul_x b_5_119 w_92;
+ b_6_88=add_x b_5_88 r_5_56; b_6_120=sub_x b_5_88 r_5_56; r_5_56=mul_x b_5_120 w_96;
+ b_6_89=add_x b_5_89 r_5_57; b_6_121=sub_x b_5_89 r_5_57; r_5_57=mul_x b_5_121 w_100;
+ b_6_90=add_x b_5_90 r_5_58; b_6_122=sub_x b_5_90 r_5_58; r_5_58=mul_x b_5_122 w_104;
+ b_6_91=add_x b_5_91 r_5_59; b_6_123=sub_x b_5_91 r_5_59; r_5_59=mul_x b_5_123 w_108;
+ b_6_92=add_x b_5_92 r_5_60; b_6_124=sub_x b_5_92 r_5_60; r_5_60=mul_x b_5_124 w_112;
+ b_6_93=add_x b_5_93 r_5_61; b_6_125=sub_x b_5_93 r_5_61; r_5_61=mul_x b_5_125 w_116;
+ b_6_94=add_x b_5_94 r_5_62; b_6_126=sub_x b_5_94 r_5_62; r_5_62=mul_x b_5_126 w_120;
+ b_6_95=add_x b_5_95 r_5_63; b_6_127=sub_x b_5_95 r_5_63; r_5_63=mul_x b_5_127 w_124;
+ b_6_128=add_x b_5_128 r_5_64; b_6_160=sub_x b_5_128 r_5_64; r_5_64=mul_x b_5_160 w_0;
+ b_6_129=add_x b_5_129 r_5_65; b_6_161=sub_x b_5_129 r_5_65; r_5_65=mul_x b_5_161 w_4;
+ b_6_130=add_x b_5_130 r_5_66; b_6_162=sub_x b_5_130 r_5_66; r_5_66=mul_x b_5_162 w_8;
+ b_6_131=add_x b_5_131 r_5_67; b_6_163=sub_x b_5_131 r_5_67; r_5_67=mul_x b_5_163 w_12;
+ b_6_132=add_x b_5_132 r_5_68; b_6_164=sub_x b_5_132 r_5_68; r_5_68=mul_x b_5_164 w_16;
+ b_6_133=add_x b_5_133 r_5_69; b_6_165=sub_x b_5_133 r_5_69; r_5_69=mul_x b_5_165 w_20;
+ b_6_134=add_x b_5_134 r_5_70; b_6_166=sub_x b_5_134 r_5_70; r_5_70=mul_x b_5_166 w_24;
+ b_6_135=add_x b_5_135 r_5_71; b_6_167=sub_x b_5_135 r_5_71; r_5_71=mul_x b_5_167 w_28;
+ b_6_136=add_x b_5_136 r_5_72; b_6_168=sub_x b_5_136 r_5_72; r_5_72=mul_x b_5_168 w_32;
+ b_6_137=add_x b_5_137 r_5_73; b_6_169=sub_x b_5_137 r_5_73; r_5_73=mul_x b_5_169 w_36;
+ b_6_138=add_x b_5_138 r_5_74; b_6_170=sub_x b_5_138 r_5_74; r_5_74=mul_x b_5_170 w_40;
+ b_6_139=add_x b_5_139 r_5_75; b_6_171=sub_x b_5_139 r_5_75; r_5_75=mul_x b_5_171 w_44;
+ b_6_140=add_x b_5_140 r_5_76; b_6_172=sub_x b_5_140 r_5_76; r_5_76=mul_x b_5_172 w_48;
+ b_6_141=add_x b_5_141 r_5_77; b_6_173=sub_x b_5_141 r_5_77; r_5_77=mul_x b_5_173 w_52;
+ b_6_142=add_x b_5_142 r_5_78; b_6_174=sub_x b_5_142 r_5_78; r_5_78=mul_x b_5_174 w_56;
+ b_6_143=add_x b_5_143 r_5_79; b_6_175=sub_x b_5_143 r_5_79; r_5_79=mul_x b_5_175 w_60;
+ b_6_144=add_x b_5_144 r_5_80; b_6_176=sub_x b_5_144 r_5_80; r_5_80=mul_x b_5_176 w_64;
+ b_6_145=add_x b_5_145 r_5_81; b_6_177=sub_x b_5_145 r_5_81; r_5_81=mul_x b_5_177 w_68;
+ b_6_146=add_x b_5_146 r_5_82; b_6_178=sub_x b_5_146 r_5_82; r_5_82=mul_x b_5_178 w_72;
+ b_6_147=add_x b_5_147 r_5_83; b_6_179=sub_x b_5_147 r_5_83; r_5_83=mul_x b_5_179 w_76;
+ b_6_148=add_x b_5_148 r_5_84; b_6_180=sub_x b_5_148 r_5_84; r_5_84=mul_x b_5_180 w_80;
+ b_6_149=add_x b_5_149 r_5_85; b_6_181=sub_x b_5_149 r_5_85; r_5_85=mul_x b_5_181 w_84;
+ b_6_150=add_x b_5_150 r_5_86; b_6_182=sub_x b_5_150 r_5_86; r_5_86=mul_x b_5_182 w_88;
+ b_6_151=add_x b_5_151 r_5_87; b_6_183=sub_x b_5_151 r_5_87; r_5_87=mul_x b_5_183 w_92;
+ b_6_152=add_x b_5_152 r_5_88; b_6_184=sub_x b_5_152 r_5_88; r_5_88=mul_x b_5_184 w_96;
+ b_6_153=add_x b_5_153 r_5_89; b_6_185=sub_x b_5_153 r_5_89; r_5_89=mul_x b_5_185 w_100;
+ b_6_154=add_x b_5_154 r_5_90; b_6_186=sub_x b_5_154 r_5_90; r_5_90=mul_x b_5_186 w_104;
+ b_6_155=add_x b_5_155 r_5_91; b_6_187=sub_x b_5_155 r_5_91; r_5_91=mul_x b_5_187 w_108;
+ b_6_156=add_x b_5_156 r_5_92; b_6_188=sub_x b_5_156 r_5_92; r_5_92=mul_x b_5_188 w_112;
+ b_6_157=add_x b_5_157 r_5_93; b_6_189=sub_x b_5_157 r_5_93; r_5_93=mul_x b_5_189 w_116;
+ b_6_158=add_x b_5_158 r_5_94; b_6_190=sub_x b_5_158 r_5_94; r_5_94=mul_x b_5_190 w_120;
+ b_6_159=add_x b_5_159 r_5_95; b_6_191=sub_x b_5_159 r_5_95; r_5_95=mul_x b_5_191 w_124;
+ b_6_192=add_x b_5_192 r_5_96; b_6_224=sub_x b_5_192 r_5_96; r_5_96=mul_x b_5_224 w_0;
+ b_6_193=add_x b_5_193 r_5_97; b_6_225=sub_x b_5_193 r_5_97; r_5_97=mul_x b_5_225 w_4;
+ b_6_194=add_x b_5_194 r_5_98; b_6_226=sub_x b_5_194 r_5_98; r_5_98=mul_x b_5_226 w_8;
+ b_6_195=add_x b_5_195 r_5_99; b_6_227=sub_x b_5_195 r_5_99; r_5_99=mul_x b_5_227 w_12;
+ b_6_196=add_x b_5_196 r_5_100; b_6_228=sub_x b_5_196 r_5_100; r_5_100=mul_x b_5_228 w_16;
+ b_6_197=add_x b_5_197 r_5_101; b_6_229=sub_x b_5_197 r_5_101; r_5_101=mul_x b_5_229 w_20;
+ b_6_198=add_x b_5_198 r_5_102; b_6_230=sub_x b_5_198 r_5_102; r_5_102=mul_x b_5_230 w_24;
+ b_6_199=add_x b_5_199 r_5_103; b_6_231=sub_x b_5_199 r_5_103; r_5_103=mul_x b_5_231 w_28;
+ b_6_200=add_x b_5_200 r_5_104; b_6_232=sub_x b_5_200 r_5_104; r_5_104=mul_x b_5_232 w_32;
+ b_6_201=add_x b_5_201 r_5_105; b_6_233=sub_x b_5_201 r_5_105; r_5_105=mul_x b_5_233 w_36;
+ b_6_202=add_x b_5_202 r_5_106; b_6_234=sub_x b_5_202 r_5_106; r_5_106=mul_x b_5_234 w_40;
+ b_6_203=add_x b_5_203 r_5_107; b_6_235=sub_x b_5_203 r_5_107; r_5_107=mul_x b_5_235 w_44;
+ b_6_204=add_x b_5_204 r_5_108; b_6_236=sub_x b_5_204 r_5_108; r_5_108=mul_x b_5_236 w_48;
+ b_6_205=add_x b_5_205 r_5_109; b_6_237=sub_x b_5_205 r_5_109; r_5_109=mul_x b_5_237 w_52;
+ b_6_206=add_x b_5_206 r_5_110; b_6_238=sub_x b_5_206 r_5_110; r_5_110=mul_x b_5_238 w_56;
+ b_6_207=add_x b_5_207 r_5_111; b_6_239=sub_x b_5_207 r_5_111; r_5_111=mul_x b_5_239 w_60;
+ b_6_208=add_x b_5_208 r_5_112; b_6_240=sub_x b_5_208 r_5_112; r_5_112=mul_x b_5_240 w_64;
+ b_6_209=add_x b_5_209 r_5_113; b_6_241=sub_x b_5_209 r_5_113; r_5_113=mul_x b_5_241 w_68;
+ b_6_210=add_x b_5_210 r_5_114; b_6_242=sub_x b_5_210 r_5_114; r_5_114=mul_x b_5_242 w_72;
+ b_6_211=add_x b_5_211 r_5_115; b_6_243=sub_x b_5_211 r_5_115; r_5_115=mul_x b_5_243 w_76;
+ b_6_212=add_x b_5_212 r_5_116; b_6_244=sub_x b_5_212 r_5_116; r_5_116=mul_x b_5_244 w_80;
+ b_6_213=add_x b_5_213 r_5_117; b_6_245=sub_x b_5_213 r_5_117; r_5_117=mul_x b_5_245 w_84;
+ b_6_214=add_x b_5_214 r_5_118; b_6_246=sub_x b_5_214 r_5_118; r_5_118=mul_x b_5_246 w_88;
+ b_6_215=add_x b_5_215 r_5_119; b_6_247=sub_x b_5_215 r_5_119; r_5_119=mul_x b_5_247 w_92;
+ b_6_216=add_x b_5_216 r_5_120; b_6_248=sub_x b_5_216 r_5_120; r_5_120=mul_x b_5_248 w_96;
+ b_6_217=add_x b_5_217 r_5_121; b_6_249=sub_x b_5_217 r_5_121; r_5_121=mul_x b_5_249 w_100;
+ b_6_218=add_x b_5_218 r_5_122; b_6_250=sub_x b_5_218 r_5_122; r_5_122=mul_x b_5_250 w_104;
+ b_6_219=add_x b_5_219 r_5_123; b_6_251=sub_x b_5_219 r_5_123; r_5_123=mul_x b_5_251 w_108;
+ b_6_220=add_x b_5_220 r_5_124; b_6_252=sub_x b_5_220 r_5_124; r_5_124=mul_x b_5_252 w_112;
+ b_6_221=add_x b_5_221 r_5_125; b_6_253=sub_x b_5_221 r_5_125; r_5_125=mul_x b_5_253 w_116;
+ b_6_222=add_x b_5_222 r_5_126; b_6_254=sub_x b_5_222 r_5_126; r_5_126=mul_x b_5_254 w_120;
+ b_6_223=add_x b_5_223 r_5_127; b_6_255=sub_x b_5_223 r_5_127; r_5_127=mul_x b_5_255 w_124;
+ b_7_0=add_x b_6_0 r_6_0; b_7_64=sub_x b_6_0 r_6_0; r_6_0=mul_x b_6_64 w_0;
+ b_7_1=add_x b_6_1 r_6_1; b_7_65=sub_x b_6_1 r_6_1; r_6_1=mul_x b_6_65 w_2;
+ b_7_2=add_x b_6_2 r_6_2; b_7_66=sub_x b_6_2 r_6_2; r_6_2=mul_x b_6_66 w_4;
+ b_7_3=add_x b_6_3 r_6_3; b_7_67=sub_x b_6_3 r_6_3; r_6_3=mul_x b_6_67 w_6;
+ b_7_4=add_x b_6_4 r_6_4; b_7_68=sub_x b_6_4 r_6_4; r_6_4=mul_x b_6_68 w_8;
+ b_7_5=add_x b_6_5 r_6_5; b_7_69=sub_x b_6_5 r_6_5; r_6_5=mul_x b_6_69 w_10;
+ b_7_6=add_x b_6_6 r_6_6; b_7_70=sub_x b_6_6 r_6_6; r_6_6=mul_x b_6_70 w_12;
+ b_7_7=add_x b_6_7 r_6_7; b_7_71=sub_x b_6_7 r_6_7; r_6_7=mul_x b_6_71 w_14;
+ b_7_8=add_x b_6_8 r_6_8; b_7_72=sub_x b_6_8 r_6_8; r_6_8=mul_x b_6_72 w_16;
+ b_7_9=add_x b_6_9 r_6_9; b_7_73=sub_x b_6_9 r_6_9; r_6_9=mul_x b_6_73 w_18;
+ b_7_10=add_x b_6_10 r_6_10; b_7_74=sub_x b_6_10 r_6_10; r_6_10=mul_x b_6_74 w_20;
+ b_7_11=add_x b_6_11 r_6_11; b_7_75=sub_x b_6_11 r_6_11; r_6_11=mul_x b_6_75 w_22;
+ b_7_12=add_x b_6_12 r_6_12; b_7_76=sub_x b_6_12 r_6_12; r_6_12=mul_x b_6_76 w_24;
+ b_7_13=add_x b_6_13 r_6_13; b_7_77=sub_x b_6_13 r_6_13; r_6_13=mul_x b_6_77 w_26;
+ b_7_14=add_x b_6_14 r_6_14; b_7_78=sub_x b_6_14 r_6_14; r_6_14=mul_x b_6_78 w_28;
+ b_7_15=add_x b_6_15 r_6_15; b_7_79=sub_x b_6_15 r_6_15; r_6_15=mul_x b_6_79 w_30;
+ b_7_16=add_x b_6_16 r_6_16; b_7_80=sub_x b_6_16 r_6_16; r_6_16=mul_x b_6_80 w_32;
+ b_7_17=add_x b_6_17 r_6_17; b_7_81=sub_x b_6_17 r_6_17; r_6_17=mul_x b_6_81 w_34;
+ b_7_18=add_x b_6_18 r_6_18; b_7_82=sub_x b_6_18 r_6_18; r_6_18=mul_x b_6_82 w_36;
+ b_7_19=add_x b_6_19 r_6_19; b_7_83=sub_x b_6_19 r_6_19; r_6_19=mul_x b_6_83 w_38;
+ b_7_20=add_x b_6_20 r_6_20; b_7_84=sub_x b_6_20 r_6_20; r_6_20=mul_x b_6_84 w_40;
+ b_7_21=add_x b_6_21 r_6_21; b_7_85=sub_x b_6_21 r_6_21; r_6_21=mul_x b_6_85 w_42;
+ b_7_22=add_x b_6_22 r_6_22; b_7_86=sub_x b_6_22 r_6_22; r_6_22=mul_x b_6_86 w_44;
+ b_7_23=add_x b_6_23 r_6_23; b_7_87=sub_x b_6_23 r_6_23; r_6_23=mul_x b_6_87 w_46;
+ b_7_24=add_x b_6_24 r_6_24; b_7_88=sub_x b_6_24 r_6_24; r_6_24=mul_x b_6_88 w_48;
+ b_7_25=add_x b_6_25 r_6_25; b_7_89=sub_x b_6_25 r_6_25; r_6_25=mul_x b_6_89 w_50;
+ b_7_26=add_x b_6_26 r_6_26; b_7_90=sub_x b_6_26 r_6_26; r_6_26=mul_x b_6_90 w_52;
+ b_7_27=add_x b_6_27 r_6_27; b_7_91=sub_x b_6_27 r_6_27; r_6_27=mul_x b_6_91 w_54;
+ b_7_28=add_x b_6_28 r_6_28; b_7_92=sub_x b_6_28 r_6_28; r_6_28=mul_x b_6_92 w_56;
+ b_7_29=add_x b_6_29 r_6_29; b_7_93=sub_x b_6_29 r_6_29; r_6_29=mul_x b_6_93 w_58;
+ b_7_30=add_x b_6_30 r_6_30; b_7_94=sub_x b_6_30 r_6_30; r_6_30=mul_x b_6_94 w_60;
+ b_7_31=add_x b_6_31 r_6_31; b_7_95=sub_x b_6_31 r_6_31; r_6_31=mul_x b_6_95 w_62;
+ b_7_32=add_x b_6_32 r_6_32; b_7_96=sub_x b_6_32 r_6_32; r_6_32=mul_x b_6_96 w_64;
+ b_7_33=add_x b_6_33 r_6_33; b_7_97=sub_x b_6_33 r_6_33; r_6_33=mul_x b_6_97 w_66;
+ b_7_34=add_x b_6_34 r_6_34; b_7_98=sub_x b_6_34 r_6_34; r_6_34=mul_x b_6_98 w_68;
+ b_7_35=add_x b_6_35 r_6_35; b_7_99=sub_x b_6_35 r_6_35; r_6_35=mul_x b_6_99 w_70;
+ b_7_36=add_x b_6_36 r_6_36; b_7_100=sub_x b_6_36 r_6_36; r_6_36=mul_x b_6_100 w_72;
+ b_7_37=add_x b_6_37 r_6_37; b_7_101=sub_x b_6_37 r_6_37; r_6_37=mul_x b_6_101 w_74;
+ b_7_38=add_x b_6_38 r_6_38; b_7_102=sub_x b_6_38 r_6_38; r_6_38=mul_x b_6_102 w_76;
+ b_7_39=add_x b_6_39 r_6_39; b_7_103=sub_x b_6_39 r_6_39; r_6_39=mul_x b_6_103 w_78;
+ b_7_40=add_x b_6_40 r_6_40; b_7_104=sub_x b_6_40 r_6_40; r_6_40=mul_x b_6_104 w_80;
+ b_7_41=add_x b_6_41 r_6_41; b_7_105=sub_x b_6_41 r_6_41; r_6_41=mul_x b_6_105 w_82;
+ b_7_42=add_x b_6_42 r_6_42; b_7_106=sub_x b_6_42 r_6_42; r_6_42=mul_x b_6_106 w_84;
+ b_7_43=add_x b_6_43 r_6_43; b_7_107=sub_x b_6_43 r_6_43; r_6_43=mul_x b_6_107 w_86;
+ b_7_44=add_x b_6_44 r_6_44; b_7_108=sub_x b_6_44 r_6_44; r_6_44=mul_x b_6_108 w_88;
+ b_7_45=add_x b_6_45 r_6_45; b_7_109=sub_x b_6_45 r_6_45; r_6_45=mul_x b_6_109 w_90;
+ b_7_46=add_x b_6_46 r_6_46; b_7_110=sub_x b_6_46 r_6_46; r_6_46=mul_x b_6_110 w_92;
+ b_7_47=add_x b_6_47 r_6_47; b_7_111=sub_x b_6_47 r_6_47; r_6_47=mul_x b_6_111 w_94;
+ b_7_48=add_x b_6_48 r_6_48; b_7_112=sub_x b_6_48 r_6_48; r_6_48=mul_x b_6_112 w_96;
+ b_7_49=add_x b_6_49 r_6_49; b_7_113=sub_x b_6_49 r_6_49; r_6_49=mul_x b_6_113 w_98;
+ b_7_50=add_x b_6_50 r_6_50; b_7_114=sub_x b_6_50 r_6_50; r_6_50=mul_x b_6_114 w_100;
+ b_7_51=add_x b_6_51 r_6_51; b_7_115=sub_x b_6_51 r_6_51; r_6_51=mul_x b_6_115 w_102;
+ b_7_52=add_x b_6_52 r_6_52; b_7_116=sub_x b_6_52 r_6_52; r_6_52=mul_x b_6_116 w_104;
+ b_7_53=add_x b_6_53 r_6_53; b_7_117=sub_x b_6_53 r_6_53; r_6_53=mul_x b_6_117 w_106;
+ b_7_54=add_x b_6_54 r_6_54; b_7_118=sub_x b_6_54 r_6_54; r_6_54=mul_x b_6_118 w_108;
+ b_7_55=add_x b_6_55 r_6_55; b_7_119=sub_x b_6_55 r_6_55; r_6_55=mul_x b_6_119 w_110;
+ b_7_56=add_x b_6_56 r_6_56; b_7_120=sub_x b_6_56 r_6_56; r_6_56=mul_x b_6_120 w_112;
+ b_7_57=add_x b_6_57 r_6_57; b_7_121=sub_x b_6_57 r_6_57; r_6_57=mul_x b_6_121 w_114;
+ b_7_58=add_x b_6_58 r_6_58; b_7_122=sub_x b_6_58 r_6_58; r_6_58=mul_x b_6_122 w_116;
+ b_7_59=add_x b_6_59 r_6_59; b_7_123=sub_x b_6_59 r_6_59; r_6_59=mul_x b_6_123 w_118;
+ b_7_60=add_x b_6_60 r_6_60; b_7_124=sub_x b_6_60 r_6_60; r_6_60=mul_x b_6_124 w_120;
+ b_7_61=add_x b_6_61 r_6_61; b_7_125=sub_x b_6_61 r_6_61; r_6_61=mul_x b_6_125 w_122;
+ b_7_62=add_x b_6_62 r_6_62; b_7_126=sub_x b_6_62 r_6_62; r_6_62=mul_x b_6_126 w_124;
+ b_7_63=add_x b_6_63 r_6_63; b_7_127=sub_x b_6_63 r_6_63; r_6_63=mul_x b_6_127 w_126;
+ b_7_128=add_x b_6_128 r_6_64; b_7_192=sub_x b_6_128 r_6_64; r_6_64=mul_x b_6_192 w_0;
+ b_7_129=add_x b_6_129 r_6_65; b_7_193=sub_x b_6_129 r_6_65; r_6_65=mul_x b_6_193 w_2;
+ b_7_130=add_x b_6_130 r_6_66; b_7_194=sub_x b_6_130 r_6_66; r_6_66=mul_x b_6_194 w_4;
+ b_7_131=add_x b_6_131 r_6_67; b_7_195=sub_x b_6_131 r_6_67; r_6_67=mul_x b_6_195 w_6;
+ b_7_132=add_x b_6_132 r_6_68; b_7_196=sub_x b_6_132 r_6_68; r_6_68=mul_x b_6_196 w_8;
+ b_7_133=add_x b_6_133 r_6_69; b_7_197=sub_x b_6_133 r_6_69; r_6_69=mul_x b_6_197 w_10;
+ b_7_134=add_x b_6_134 r_6_70; b_7_198=sub_x b_6_134 r_6_70; r_6_70=mul_x b_6_198 w_12;
+ b_7_135=add_x b_6_135 r_6_71; b_7_199=sub_x b_6_135 r_6_71; r_6_71=mul_x b_6_199 w_14;
+ b_7_136=add_x b_6_136 r_6_72; b_7_200=sub_x b_6_136 r_6_72; r_6_72=mul_x b_6_200 w_16;
+ b_7_137=add_x b_6_137 r_6_73; b_7_201=sub_x b_6_137 r_6_73; r_6_73=mul_x b_6_201 w_18;
+ b_7_138=add_x b_6_138 r_6_74; b_7_202=sub_x b_6_138 r_6_74; r_6_74=mul_x b_6_202 w_20;
+ b_7_139=add_x b_6_139 r_6_75; b_7_203=sub_x b_6_139 r_6_75; r_6_75=mul_x b_6_203 w_22;
+ b_7_140=add_x b_6_140 r_6_76; b_7_204=sub_x b_6_140 r_6_76; r_6_76=mul_x b_6_204 w_24;
+ b_7_141=add_x b_6_141 r_6_77; b_7_205=sub_x b_6_141 r_6_77; r_6_77=mul_x b_6_205 w_26;
+ b_7_142=add_x b_6_142 r_6_78; b_7_206=sub_x b_6_142 r_6_78; r_6_78=mul_x b_6_206 w_28;
+ b_7_143=add_x b_6_143 r_6_79; b_7_207=sub_x b_6_143 r_6_79; r_6_79=mul_x b_6_207 w_30;
+ b_7_144=add_x b_6_144 r_6_80; b_7_208=sub_x b_6_144 r_6_80; r_6_80=mul_x b_6_208 w_32;
+ b_7_145=add_x b_6_145 r_6_81; b_7_209=sub_x b_6_145 r_6_81; r_6_81=mul_x b_6_209 w_34;
+ b_7_146=add_x b_6_146 r_6_82; b_7_210=sub_x b_6_146 r_6_82; r_6_82=mul_x b_6_210 w_36;
+ b_7_147=add_x b_6_147 r_6_83; b_7_211=sub_x b_6_147 r_6_83; r_6_83=mul_x b_6_211 w_38;
+ b_7_148=add_x b_6_148 r_6_84; b_7_212=sub_x b_6_148 r_6_84; r_6_84=mul_x b_6_212 w_40;
+ b_7_149=add_x b_6_149 r_6_85; b_7_213=sub_x b_6_149 r_6_85; r_6_85=mul_x b_6_213 w_42;
+ b_7_150=add_x b_6_150 r_6_86; b_7_214=sub_x b_6_150 r_6_86; r_6_86=mul_x b_6_214 w_44;
+ b_7_151=add_x b_6_151 r_6_87; b_7_215=sub_x b_6_151 r_6_87; r_6_87=mul_x b_6_215 w_46;
+ b_7_152=add_x b_6_152 r_6_88; b_7_216=sub_x b_6_152 r_6_88; r_6_88=mul_x b_6_216 w_48;
+ b_7_153=add_x b_6_153 r_6_89; b_7_217=sub_x b_6_153 r_6_89; r_6_89=mul_x b_6_217 w_50;
+ b_7_154=add_x b_6_154 r_6_90; b_7_218=sub_x b_6_154 r_6_90; r_6_90=mul_x b_6_218 w_52;
+ b_7_155=add_x b_6_155 r_6_91; b_7_219=sub_x b_6_155 r_6_91; r_6_91=mul_x b_6_219 w_54;
+ b_7_156=add_x b_6_156 r_6_92; b_7_220=sub_x b_6_156 r_6_92; r_6_92=mul_x b_6_220 w_56;
+ b_7_157=add_x b_6_157 r_6_93; b_7_221=sub_x b_6_157 r_6_93; r_6_93=mul_x b_6_221 w_58;
+ b_7_158=add_x b_6_158 r_6_94; b_7_222=sub_x b_6_158 r_6_94; r_6_94=mul_x b_6_222 w_60;
+ b_7_159=add_x b_6_159 r_6_95; b_7_223=sub_x b_6_159 r_6_95; r_6_95=mul_x b_6_223 w_62;
+ b_7_160=add_x b_6_160 r_6_96; b_7_224=sub_x b_6_160 r_6_96; r_6_96=mul_x b_6_224 w_64;
+ b_7_161=add_x b_6_161 r_6_97; b_7_225=sub_x b_6_161 r_6_97; r_6_97=mul_x b_6_225 w_66;
+ b_7_162=add_x b_6_162 r_6_98; b_7_226=sub_x b_6_162 r_6_98; r_6_98=mul_x b_6_226 w_68;
+ b_7_163=add_x b_6_163 r_6_99; b_7_227=sub_x b_6_163 r_6_99; r_6_99=mul_x b_6_227 w_70;
+ b_7_164=add_x b_6_164 r_6_100; b_7_228=sub_x b_6_164 r_6_100; r_6_100=mul_x b_6_228 w_72;
+ b_7_165=add_x b_6_165 r_6_101; b_7_229=sub_x b_6_165 r_6_101; r_6_101=mul_x b_6_229 w_74;
+ b_7_166=add_x b_6_166 r_6_102; b_7_230=sub_x b_6_166 r_6_102; r_6_102=mul_x b_6_230 w_76;
+ b_7_167=add_x b_6_167 r_6_103; b_7_231=sub_x b_6_167 r_6_103; r_6_103=mul_x b_6_231 w_78;
+ b_7_168=add_x b_6_168 r_6_104; b_7_232=sub_x b_6_168 r_6_104; r_6_104=mul_x b_6_232 w_80;
+ b_7_169=add_x b_6_169 r_6_105; b_7_233=sub_x b_6_169 r_6_105; r_6_105=mul_x b_6_233 w_82;
+ b_7_170=add_x b_6_170 r_6_106; b_7_234=sub_x b_6_170 r_6_106; r_6_106=mul_x b_6_234 w_84;
+ b_7_171=add_x b_6_171 r_6_107; b_7_235=sub_x b_6_171 r_6_107; r_6_107=mul_x b_6_235 w_86;
+ b_7_172=add_x b_6_172 r_6_108; b_7_236=sub_x b_6_172 r_6_108; r_6_108=mul_x b_6_236 w_88;
+ b_7_173=add_x b_6_173 r_6_109; b_7_237=sub_x b_6_173 r_6_109; r_6_109=mul_x b_6_237 w_90;
+ b_7_174=add_x b_6_174 r_6_110; b_7_238=sub_x b_6_174 r_6_110; r_6_110=mul_x b_6_238 w_92;
+ b_7_175=add_x b_6_175 r_6_111; b_7_239=sub_x b_6_175 r_6_111; r_6_111=mul_x b_6_239 w_94;
+ b_7_176=add_x b_6_176 r_6_112; b_7_240=sub_x b_6_176 r_6_112; r_6_112=mul_x b_6_240 w_96;
+ b_7_177=add_x b_6_177 r_6_113; b_7_241=sub_x b_6_177 r_6_113; r_6_113=mul_x b_6_241 w_98;
+ b_7_178=add_x b_6_178 r_6_114; b_7_242=sub_x b_6_178 r_6_114; r_6_114=mul_x b_6_242 w_100;
+ b_7_179=add_x b_6_179 r_6_115; b_7_243=sub_x b_6_179 r_6_115; r_6_115=mul_x b_6_243 w_102;
+ b_7_180=add_x b_6_180 r_6_116; b_7_244=sub_x b_6_180 r_6_116; r_6_116=mul_x b_6_244 w_104;
+ b_7_181=add_x b_6_181 r_6_117; b_7_245=sub_x b_6_181 r_6_117; r_6_117=mul_x b_6_245 w_106;
+ b_7_182=add_x b_6_182 r_6_118; b_7_246=sub_x b_6_182 r_6_118; r_6_118=mul_x b_6_246 w_108;
+ b_7_183=add_x b_6_183 r_6_119; b_7_247=sub_x b_6_183 r_6_119; r_6_119=mul_x b_6_247 w_110;
+ b_7_184=add_x b_6_184 r_6_120; b_7_248=sub_x b_6_184 r_6_120; r_6_120=mul_x b_6_248 w_112;
+ b_7_185=add_x b_6_185 r_6_121; b_7_249=sub_x b_6_185 r_6_121; r_6_121=mul_x b_6_249 w_114;
+ b_7_186=add_x b_6_186 r_6_122; b_7_250=sub_x b_6_186 r_6_122; r_6_122=mul_x b_6_250 w_116;
+ b_7_187=add_x b_6_187 r_6_123; b_7_251=sub_x b_6_187 r_6_123; r_6_123=mul_x b_6_251 w_118;
+ b_7_188=add_x b_6_188 r_6_124; b_7_252=sub_x b_6_188 r_6_124; r_6_124=mul_x b_6_252 w_120;
+ b_7_189=add_x b_6_189 r_6_125; b_7_253=sub_x b_6_189 r_6_125; r_6_125=mul_x b_6_253 w_122;
+ b_7_190=add_x b_6_190 r_6_126; b_7_254=sub_x b_6_190 r_6_126; r_6_126=mul_x b_6_254 w_124;
+ b_7_191=add_x b_6_191 r_6_127; b_7_255=sub_x b_6_191 r_6_127; r_6_127=mul_x b_6_255 w_126;
+ b_8_0=add_x b_7_0 r_7_0; b_8_128=sub_x b_7_0 r_7_0; r_7_0=mul_x b_7_128 w_0;
+ b_8_1=add_x b_7_1 r_7_1; b_8_129=sub_x b_7_1 r_7_1; r_7_1=mul_x b_7_129 w_1;
+ b_8_2=add_x b_7_2 r_7_2; b_8_130=sub_x b_7_2 r_7_2; r_7_2=mul_x b_7_130 w_2;
+ b_8_3=add_x b_7_3 r_7_3; b_8_131=sub_x b_7_3 r_7_3; r_7_3=mul_x b_7_131 w_3;
+ b_8_4=add_x b_7_4 r_7_4; b_8_132=sub_x b_7_4 r_7_4; r_7_4=mul_x b_7_132 w_4;
+ b_8_5=add_x b_7_5 r_7_5; b_8_133=sub_x b_7_5 r_7_5; r_7_5=mul_x b_7_133 w_5;
+ b_8_6=add_x b_7_6 r_7_6; b_8_134=sub_x b_7_6 r_7_6; r_7_6=mul_x b_7_134 w_6;
+ b_8_7=add_x b_7_7 r_7_7; b_8_135=sub_x b_7_7 r_7_7; r_7_7=mul_x b_7_135 w_7;
+ b_8_8=add_x b_7_8 r_7_8; b_8_136=sub_x b_7_8 r_7_8; r_7_8=mul_x b_7_136 w_8;
+ b_8_9=add_x b_7_9 r_7_9; b_8_137=sub_x b_7_9 r_7_9; r_7_9=mul_x b_7_137 w_9;
+ b_8_10=add_x b_7_10 r_7_10; b_8_138=sub_x b_7_10 r_7_10; r_7_10=mul_x b_7_138 w_10;
+ b_8_11=add_x b_7_11 r_7_11; b_8_139=sub_x b_7_11 r_7_11; r_7_11=mul_x b_7_139 w_11;
+ b_8_12=add_x b_7_12 r_7_12; b_8_140=sub_x b_7_12 r_7_12; r_7_12=mul_x b_7_140 w_12;
+ b_8_13=add_x b_7_13 r_7_13; b_8_141=sub_x b_7_13 r_7_13; r_7_13=mul_x b_7_141 w_13;
+ b_8_14=add_x b_7_14 r_7_14; b_8_142=sub_x b_7_14 r_7_14; r_7_14=mul_x b_7_142 w_14;
+ b_8_15=add_x b_7_15 r_7_15; b_8_143=sub_x b_7_15 r_7_15; r_7_15=mul_x b_7_143 w_15;
+ b_8_16=add_x b_7_16 r_7_16; b_8_144=sub_x b_7_16 r_7_16; r_7_16=mul_x b_7_144 w_16;
+ b_8_17=add_x b_7_17 r_7_17; b_8_145=sub_x b_7_17 r_7_17; r_7_17=mul_x b_7_145 w_17;
+ b_8_18=add_x b_7_18 r_7_18; b_8_146=sub_x b_7_18 r_7_18; r_7_18=mul_x b_7_146 w_18;
+ b_8_19=add_x b_7_19 r_7_19; b_8_147=sub_x b_7_19 r_7_19; r_7_19=mul_x b_7_147 w_19;
+ b_8_20=add_x b_7_20 r_7_20; b_8_148=sub_x b_7_20 r_7_20; r_7_20=mul_x b_7_148 w_20;
+ b_8_21=add_x b_7_21 r_7_21; b_8_149=sub_x b_7_21 r_7_21; r_7_21=mul_x b_7_149 w_21;
+ b_8_22=add_x b_7_22 r_7_22; b_8_150=sub_x b_7_22 r_7_22; r_7_22=mul_x b_7_150 w_22;
+ b_8_23=add_x b_7_23 r_7_23; b_8_151=sub_x b_7_23 r_7_23; r_7_23=mul_x b_7_151 w_23;
+ b_8_24=add_x b_7_24 r_7_24; b_8_152=sub_x b_7_24 r_7_24; r_7_24=mul_x b_7_152 w_24;
+ b_8_25=add_x b_7_25 r_7_25; b_8_153=sub_x b_7_25 r_7_25; r_7_25=mul_x b_7_153 w_25;
+ b_8_26=add_x b_7_26 r_7_26; b_8_154=sub_x b_7_26 r_7_26; r_7_26=mul_x b_7_154 w_26;
+ b_8_27=add_x b_7_27 r_7_27; b_8_155=sub_x b_7_27 r_7_27; r_7_27=mul_x b_7_155 w_27;
+ b_8_28=add_x b_7_28 r_7_28; b_8_156=sub_x b_7_28 r_7_28; r_7_28=mul_x b_7_156 w_28;
+ b_8_29=add_x b_7_29 r_7_29; b_8_157=sub_x b_7_29 r_7_29; r_7_29=mul_x b_7_157 w_29;
+ b_8_30=add_x b_7_30 r_7_30; b_8_158=sub_x b_7_30 r_7_30; r_7_30=mul_x b_7_158 w_30;
+ b_8_31=add_x b_7_31 r_7_31; b_8_159=sub_x b_7_31 r_7_31; r_7_31=mul_x b_7_159 w_31;
+ b_8_32=add_x b_7_32 r_7_32; b_8_160=sub_x b_7_32 r_7_32; r_7_32=mul_x b_7_160 w_32;
+ b_8_33=add_x b_7_33 r_7_33; b_8_161=sub_x b_7_33 r_7_33; r_7_33=mul_x b_7_161 w_33;
+ b_8_34=add_x b_7_34 r_7_34; b_8_162=sub_x b_7_34 r_7_34; r_7_34=mul_x b_7_162 w_34;
+ b_8_35=add_x b_7_35 r_7_35; b_8_163=sub_x b_7_35 r_7_35; r_7_35=mul_x b_7_163 w_35;
+ b_8_36=add_x b_7_36 r_7_36; b_8_164=sub_x b_7_36 r_7_36; r_7_36=mul_x b_7_164 w_36;
+ b_8_37=add_x b_7_37 r_7_37; b_8_165=sub_x b_7_37 r_7_37; r_7_37=mul_x b_7_165 w_37;
+ b_8_38=add_x b_7_38 r_7_38; b_8_166=sub_x b_7_38 r_7_38; r_7_38=mul_x b_7_166 w_38;
+ b_8_39=add_x b_7_39 r_7_39; b_8_167=sub_x b_7_39 r_7_39; r_7_39=mul_x b_7_167 w_39;
+ b_8_40=add_x b_7_40 r_7_40; b_8_168=sub_x b_7_40 r_7_40; r_7_40=mul_x b_7_168 w_40;
+ b_8_41=add_x b_7_41 r_7_41; b_8_169=sub_x b_7_41 r_7_41; r_7_41=mul_x b_7_169 w_41;
+ b_8_42=add_x b_7_42 r_7_42; b_8_170=sub_x b_7_42 r_7_42; r_7_42=mul_x b_7_170 w_42;
+ b_8_43=add_x b_7_43 r_7_43; b_8_171=sub_x b_7_43 r_7_43; r_7_43=mul_x b_7_171 w_43;
+ b_8_44=add_x b_7_44 r_7_44; b_8_172=sub_x b_7_44 r_7_44; r_7_44=mul_x b_7_172 w_44;
+ b_8_45=add_x b_7_45 r_7_45; b_8_173=sub_x b_7_45 r_7_45; r_7_45=mul_x b_7_173 w_45;
+ b_8_46=add_x b_7_46 r_7_46; b_8_174=sub_x b_7_46 r_7_46; r_7_46=mul_x b_7_174 w_46;
+ b_8_47=add_x b_7_47 r_7_47; b_8_175=sub_x b_7_47 r_7_47; r_7_47=mul_x b_7_175 w_47;
+ b_8_48=add_x b_7_48 r_7_48; b_8_176=sub_x b_7_48 r_7_48; r_7_48=mul_x b_7_176 w_48;
+ b_8_49=add_x b_7_49 r_7_49; b_8_177=sub_x b_7_49 r_7_49; r_7_49=mul_x b_7_177 w_49;
+ b_8_50=add_x b_7_50 r_7_50; b_8_178=sub_x b_7_50 r_7_50; r_7_50=mul_x b_7_178 w_50;
+ b_8_51=add_x b_7_51 r_7_51; b_8_179=sub_x b_7_51 r_7_51; r_7_51=mul_x b_7_179 w_51;
+ b_8_52=add_x b_7_52 r_7_52; b_8_180=sub_x b_7_52 r_7_52; r_7_52=mul_x b_7_180 w_52;
+ b_8_53=add_x b_7_53 r_7_53; b_8_181=sub_x b_7_53 r_7_53; r_7_53=mul_x b_7_181 w_53;
+ b_8_54=add_x b_7_54 r_7_54; b_8_182=sub_x b_7_54 r_7_54; r_7_54=mul_x b_7_182 w_54;
+ b_8_55=add_x b_7_55 r_7_55; b_8_183=sub_x b_7_55 r_7_55; r_7_55=mul_x b_7_183 w_55;
+ b_8_56=add_x b_7_56 r_7_56; b_8_184=sub_x b_7_56 r_7_56; r_7_56=mul_x b_7_184 w_56;
+ b_8_57=add_x b_7_57 r_7_57; b_8_185=sub_x b_7_57 r_7_57; r_7_57=mul_x b_7_185 w_57;
+ b_8_58=add_x b_7_58 r_7_58; b_8_186=sub_x b_7_58 r_7_58; r_7_58=mul_x b_7_186 w_58;
+ b_8_59=add_x b_7_59 r_7_59; b_8_187=sub_x b_7_59 r_7_59; r_7_59=mul_x b_7_187 w_59;
+ b_8_60=add_x b_7_60 r_7_60; b_8_188=sub_x b_7_60 r_7_60; r_7_60=mul_x b_7_188 w_60;
+ b_8_61=add_x b_7_61 r_7_61; b_8_189=sub_x b_7_61 r_7_61; r_7_61=mul_x b_7_189 w_61;
+ b_8_62=add_x b_7_62 r_7_62; b_8_190=sub_x b_7_62 r_7_62; r_7_62=mul_x b_7_190 w_62;
+ b_8_63=add_x b_7_63 r_7_63; b_8_191=sub_x b_7_63 r_7_63; r_7_63=mul_x b_7_191 w_63;
+ b_8_64=add_x b_7_64 r_7_64; b_8_192=sub_x b_7_64 r_7_64; r_7_64=mul_x b_7_192 w_64;
+ b_8_65=add_x b_7_65 r_7_65; b_8_193=sub_x b_7_65 r_7_65; r_7_65=mul_x b_7_193 w_65;
+ b_8_66=add_x b_7_66 r_7_66; b_8_194=sub_x b_7_66 r_7_66; r_7_66=mul_x b_7_194 w_66;
+ b_8_67=add_x b_7_67 r_7_67; b_8_195=sub_x b_7_67 r_7_67; r_7_67=mul_x b_7_195 w_67;
+ b_8_68=add_x b_7_68 r_7_68; b_8_196=sub_x b_7_68 r_7_68; r_7_68=mul_x b_7_196 w_68;
+ b_8_69=add_x b_7_69 r_7_69; b_8_197=sub_x b_7_69 r_7_69; r_7_69=mul_x b_7_197 w_69;
+ b_8_70=add_x b_7_70 r_7_70; b_8_198=sub_x b_7_70 r_7_70; r_7_70=mul_x b_7_198 w_70;
+ b_8_71=add_x b_7_71 r_7_71; b_8_199=sub_x b_7_71 r_7_71; r_7_71=mul_x b_7_199 w_71;
+ b_8_72=add_x b_7_72 r_7_72; b_8_200=sub_x b_7_72 r_7_72; r_7_72=mul_x b_7_200 w_72;
+ b_8_73=add_x b_7_73 r_7_73; b_8_201=sub_x b_7_73 r_7_73; r_7_73=mul_x b_7_201 w_73;
+ b_8_74=add_x b_7_74 r_7_74; b_8_202=sub_x b_7_74 r_7_74; r_7_74=mul_x b_7_202 w_74;
+ b_8_75=add_x b_7_75 r_7_75; b_8_203=sub_x b_7_75 r_7_75; r_7_75=mul_x b_7_203 w_75;
+ b_8_76=add_x b_7_76 r_7_76; b_8_204=sub_x b_7_76 r_7_76; r_7_76=mul_x b_7_204 w_76;
+ b_8_77=add_x b_7_77 r_7_77; b_8_205=sub_x b_7_77 r_7_77; r_7_77=mul_x b_7_205 w_77;
+ b_8_78=add_x b_7_78 r_7_78; b_8_206=sub_x b_7_78 r_7_78; r_7_78=mul_x b_7_206 w_78;
+ b_8_79=add_x b_7_79 r_7_79; b_8_207=sub_x b_7_79 r_7_79; r_7_79=mul_x b_7_207 w_79;
+ b_8_80=add_x b_7_80 r_7_80; b_8_208=sub_x b_7_80 r_7_80; r_7_80=mul_x b_7_208 w_80;
+ b_8_81=add_x b_7_81 r_7_81; b_8_209=sub_x b_7_81 r_7_81; r_7_81=mul_x b_7_209 w_81;
+ b_8_82=add_x b_7_82 r_7_82; b_8_210=sub_x b_7_82 r_7_82; r_7_82=mul_x b_7_210 w_82;
+ b_8_83=add_x b_7_83 r_7_83; b_8_211=sub_x b_7_83 r_7_83; r_7_83=mul_x b_7_211 w_83;
+ b_8_84=add_x b_7_84 r_7_84; b_8_212=sub_x b_7_84 r_7_84; r_7_84=mul_x b_7_212 w_84;
+ b_8_85=add_x b_7_85 r_7_85; b_8_213=sub_x b_7_85 r_7_85; r_7_85=mul_x b_7_213 w_85;
+ b_8_86=add_x b_7_86 r_7_86; b_8_214=sub_x b_7_86 r_7_86; r_7_86=mul_x b_7_214 w_86;
+ b_8_87=add_x b_7_87 r_7_87; b_8_215=sub_x b_7_87 r_7_87; r_7_87=mul_x b_7_215 w_87;
+ b_8_88=add_x b_7_88 r_7_88; b_8_216=sub_x b_7_88 r_7_88; r_7_88=mul_x b_7_216 w_88;
+ b_8_89=add_x b_7_89 r_7_89; b_8_217=sub_x b_7_89 r_7_89; r_7_89=mul_x b_7_217 w_89;
+ b_8_90=add_x b_7_90 r_7_90; b_8_218=sub_x b_7_90 r_7_90; r_7_90=mul_x b_7_218 w_90;
+ b_8_91=add_x b_7_91 r_7_91; b_8_219=sub_x b_7_91 r_7_91; r_7_91=mul_x b_7_219 w_91;
+ b_8_92=add_x b_7_92 r_7_92; b_8_220=sub_x b_7_92 r_7_92; r_7_92=mul_x b_7_220 w_92;
+ b_8_93=add_x b_7_93 r_7_93; b_8_221=sub_x b_7_93 r_7_93; r_7_93=mul_x b_7_221 w_93;
+ b_8_94=add_x b_7_94 r_7_94; b_8_222=sub_x b_7_94 r_7_94; r_7_94=mul_x b_7_222 w_94;
+ b_8_95=add_x b_7_95 r_7_95; b_8_223=sub_x b_7_95 r_7_95; r_7_95=mul_x b_7_223 w_95;
+ b_8_96=add_x b_7_96 r_7_96; b_8_224=sub_x b_7_96 r_7_96; r_7_96=mul_x b_7_224 w_96;
+ b_8_97=add_x b_7_97 r_7_97; b_8_225=sub_x b_7_97 r_7_97; r_7_97=mul_x b_7_225 w_97;
+ b_8_98=add_x b_7_98 r_7_98; b_8_226=sub_x b_7_98 r_7_98; r_7_98=mul_x b_7_226 w_98;
+ b_8_99=add_x b_7_99 r_7_99; b_8_227=sub_x b_7_99 r_7_99; r_7_99=mul_x b_7_227 w_99;
+ b_8_100=add_x b_7_100 r_7_100; b_8_228=sub_x b_7_100 r_7_100; r_7_100=mul_x b_7_228 w_100;
+ b_8_101=add_x b_7_101 r_7_101; b_8_229=sub_x b_7_101 r_7_101; r_7_101=mul_x b_7_229 w_101;
+ b_8_102=add_x b_7_102 r_7_102; b_8_230=sub_x b_7_102 r_7_102; r_7_102=mul_x b_7_230 w_102;
+ b_8_103=add_x b_7_103 r_7_103; b_8_231=sub_x b_7_103 r_7_103; r_7_103=mul_x b_7_231 w_103;
+ b_8_104=add_x b_7_104 r_7_104; b_8_232=sub_x b_7_104 r_7_104; r_7_104=mul_x b_7_232 w_104;
+ b_8_105=add_x b_7_105 r_7_105; b_8_233=sub_x b_7_105 r_7_105; r_7_105=mul_x b_7_233 w_105;
+ b_8_106=add_x b_7_106 r_7_106; b_8_234=sub_x b_7_106 r_7_106; r_7_106=mul_x b_7_234 w_106;
+ b_8_107=add_x b_7_107 r_7_107; b_8_235=sub_x b_7_107 r_7_107; r_7_107=mul_x b_7_235 w_107;
+ b_8_108=add_x b_7_108 r_7_108; b_8_236=sub_x b_7_108 r_7_108; r_7_108=mul_x b_7_236 w_108;
+ b_8_109=add_x b_7_109 r_7_109; b_8_237=sub_x b_7_109 r_7_109; r_7_109=mul_x b_7_237 w_109;
+ b_8_110=add_x b_7_110 r_7_110; b_8_238=sub_x b_7_110 r_7_110; r_7_110=mul_x b_7_238 w_110;
+ b_8_111=add_x b_7_111 r_7_111; b_8_239=sub_x b_7_111 r_7_111; r_7_111=mul_x b_7_239 w_111;
+ b_8_112=add_x b_7_112 r_7_112; b_8_240=sub_x b_7_112 r_7_112; r_7_112=mul_x b_7_240 w_112;
+ b_8_113=add_x b_7_113 r_7_113; b_8_241=sub_x b_7_113 r_7_113; r_7_113=mul_x b_7_241 w_113;
+ b_8_114=add_x b_7_114 r_7_114; b_8_242=sub_x b_7_114 r_7_114; r_7_114=mul_x b_7_242 w_114;
+ b_8_115=add_x b_7_115 r_7_115; b_8_243=sub_x b_7_115 r_7_115; r_7_115=mul_x b_7_243 w_115;
+ b_8_116=add_x b_7_116 r_7_116; b_8_244=sub_x b_7_116 r_7_116; r_7_116=mul_x b_7_244 w_116;
+ b_8_117=add_x b_7_117 r_7_117; b_8_245=sub_x b_7_117 r_7_117; r_7_117=mul_x b_7_245 w_117;
+ b_8_118=add_x b_7_118 r_7_118; b_8_246=sub_x b_7_118 r_7_118; r_7_118=mul_x b_7_246 w_118;
+ b_8_119=add_x b_7_119 r_7_119; b_8_247=sub_x b_7_119 r_7_119; r_7_119=mul_x b_7_247 w_119;
+ b_8_120=add_x b_7_120 r_7_120; b_8_248=sub_x b_7_120 r_7_120; r_7_120=mul_x b_7_248 w_120;
+ b_8_121=add_x b_7_121 r_7_121; b_8_249=sub_x b_7_121 r_7_121; r_7_121=mul_x b_7_249 w_121;
+ b_8_122=add_x b_7_122 r_7_122; b_8_250=sub_x b_7_122 r_7_122; r_7_122=mul_x b_7_250 w_122;
+ b_8_123=add_x b_7_123 r_7_123; b_8_251=sub_x b_7_123 r_7_123; r_7_123=mul_x b_7_251 w_123;
+ b_8_124=add_x b_7_124 r_7_124; b_8_252=sub_x b_7_124 r_7_124; r_7_124=mul_x b_7_252 w_124;
+ b_8_125=add_x b_7_125 r_7_125; b_8_253=sub_x b_7_125 r_7_125; r_7_125=mul_x b_7_253 w_125;
+ b_8_126=add_x b_7_126 r_7_126; b_8_254=sub_x b_7_126 r_7_126; r_7_126=mul_x b_7_254 w_126;
+ b_8_127=add_x b_7_127 r_7_127; b_8_255=sub_x b_7_127 r_7_127; r_7_127=mul_x b_7_255 w_127;
+ w_0=fw_d sector_256 0.0;
+ w_1=fw_d sector_256 1.0;
+ w_2=fw_d sector_256 2.0;
+ w_3=fw_d sector_256 3.0;
+ w_4=fw_d sector_256 4.0;
+ w_5=fw_d sector_256 5.0;
+ w_6=fw_d sector_256 6.0;
+ w_7=fw_d sector_256 7.0;
+ w_8=fw_d sector_256 8.0;
+ w_9=fw_d sector_256 9.0;
+ w_10=fw_d sector_256 10.0;
+ w_11=fw_d sector_256 11.0;
+ w_12=fw_d sector_256 12.0;
+ w_13=fw_d sector_256 13.0;
+ w_14=fw_d sector_256 14.0;
+ w_15=fw_d sector_256 15.0;
+ w_16=fw_d sector_256 16.0;
+ w_17=fw_d sector_256 17.0;
+ w_18=fw_d sector_256 18.0;
+ w_19=fw_d sector_256 19.0;
+ w_20=fw_d sector_256 20.0;
+ w_21=fw_d sector_256 21.0;
+ w_22=fw_d sector_256 22.0;
+ w_23=fw_d sector_256 23.0;
+ w_24=fw_d sector_256 24.0;
+ w_25=fw_d sector_256 25.0;
+ w_26=fw_d sector_256 26.0;
+ w_27=fw_d sector_256 27.0;
+ w_28=fw_d sector_256 28.0;
+ w_29=fw_d sector_256 29.0;
+ w_30=fw_d sector_256 30.0;
+ w_31=fw_d sector_256 31.0;
+ w_32=fw_d sector_256 32.0;
+ w_33=fw_d sector_256 33.0;
+ w_34=fw_d sector_256 34.0;
+ w_35=fw_d sector_256 35.0;
+ w_36=fw_d sector_256 36.0;
+ w_37=fw_d sector_256 37.0;
+ w_38=fw_d sector_256 38.0;
+ w_39=fw_d sector_256 39.0;
+ w_40=fw_d sector_256 40.0;
+ w_41=fw_d sector_256 41.0;
+ w_42=fw_d sector_256 42.0;
+ w_43=fw_d sector_256 43.0;
+ w_44=fw_d sector_256 44.0;
+ w_45=fw_d sector_256 45.0;
+ w_46=fw_d sector_256 46.0;
+ w_47=fw_d sector_256 47.0;
+ w_48=fw_d sector_256 48.0;
+ w_49=fw_d sector_256 49.0;
+ w_50=fw_d sector_256 50.0;
+ w_51=fw_d sector_256 51.0;
+ w_52=fw_d sector_256 52.0;
+ w_53=fw_d sector_256 53.0;
+ w_54=fw_d sector_256 54.0;
+ w_55=fw_d sector_256 55.0;
+ w_56=fw_d sector_256 56.0;
+ w_57=fw_d sector_256 57.0;
+ w_58=fw_d sector_256 58.0;
+ w_59=fw_d sector_256 59.0;
+ w_60=fw_d sector_256 60.0;
+ w_61=fw_d sector_256 61.0;
+ w_62=fw_d sector_256 62.0;
+ w_63=fw_d sector_256 63.0;
+ w_64=fw_d sector_256 64.0;
+ w_65=fw_d sector_256 65.0;
+ w_66=fw_d sector_256 66.0;
+ w_67=fw_d sector_256 67.0;
+ w_68=fw_d sector_256 68.0;
+ w_69=fw_d sector_256 69.0;
+ w_70=fw_d sector_256 70.0;
+ w_71=fw_d sector_256 71.0;
+ w_72=fw_d sector_256 72.0;
+ w_73=fw_d sector_256 73.0;
+ w_74=fw_d sector_256 74.0;
+ w_75=fw_d sector_256 75.0;
+ w_76=fw_d sector_256 76.0;
+ w_77=fw_d sector_256 77.0;
+ w_78=fw_d sector_256 78.0;
+ w_79=fw_d sector_256 79.0;
+ w_80=fw_d sector_256 80.0;
+ w_81=fw_d sector_256 81.0;
+ w_82=fw_d sector_256 82.0;
+ w_83=fw_d sector_256 83.0;
+ w_84=fw_d sector_256 84.0;
+ w_85=fw_d sector_256 85.0;
+ w_86=fw_d sector_256 86.0;
+ w_87=fw_d sector_256 87.0;
+ w_88=fw_d sector_256 88.0;
+ w_89=fw_d sector_256 89.0;
+ w_90=fw_d sector_256 90.0;
+ w_91=fw_d sector_256 91.0;
+ w_92=fw_d sector_256 92.0;
+ w_93=fw_d sector_256 93.0;
+ w_94=fw_d sector_256 94.0;
+ w_95=fw_d sector_256 95.0;
+ w_96=fw_d sector_256 96.0;
+ w_97=fw_d sector_256 97.0;
+ w_98=fw_d sector_256 98.0;
+ w_99=fw_d sector_256 99.0;
+ w_100=fw_d sector_256 100.0;
+ w_101=fw_d sector_256 101.0;
+ w_102=fw_d sector_256 102.0;
+ w_103=fw_d sector_256 103.0;
+ w_104=fw_d sector_256 104.0;
+ w_105=fw_d sector_256 105.0;
+ w_106=fw_d sector_256 106.0;
+ w_107=fw_d sector_256 107.0;
+ w_108=fw_d sector_256 108.0;
+ w_109=fw_d sector_256 109.0;
+ w_110=fw_d sector_256 110.0;
+ w_111=fw_d sector_256 111.0;
+ w_112=fw_d sector_256 112.0;
+ w_113=fw_d sector_256 113.0;
+ w_114=fw_d sector_256 114.0;
+ w_115=fw_d sector_256 115.0;
+ w_116=fw_d sector_256 116.0;
+ w_117=fw_d sector_256 117.0;
+ w_118=fw_d sector_256 118.0;
+ w_119=fw_d sector_256 119.0;
+ w_120=fw_d sector_256 120.0;
+ w_121=fw_d sector_256 121.0;
+ w_122=fw_d sector_256 122.0;
+ w_123=fw_d sector_256 123.0;
+ w_124=fw_d sector_256 124.0;
+ w_125=fw_d sector_256 125.0;
+ w_126=fw_d sector_256 126.0;
+ w_127=fw_d sector_256 127.0
+ IN b_8_0:b_8_1:b_8_2:b_8_3:b_8_4:b_8_5:b_8_6:b_8_7:
+ b_8_8:b_8_9:b_8_10:b_8_11:b_8_12:b_8_13:b_8_14:b_8_15:
+ b_8_16:b_8_17:b_8_18:b_8_19:b_8_20:b_8_21:b_8_22:b_8_23:
+ b_8_24:b_8_25:b_8_26:b_8_27:b_8_28:b_8_29:b_8_30:b_8_31:
+ b_8_32:b_8_33:b_8_34:b_8_35:b_8_36:b_8_37:b_8_38:b_8_39:
+ b_8_40:b_8_41:b_8_42:b_8_43:b_8_44:b_8_45:b_8_46:b_8_47:
+ b_8_48:b_8_49:b_8_50:b_8_51:b_8_52:b_8_53:b_8_54:b_8_55:
+ b_8_56:b_8_57:b_8_58:b_8_59:b_8_60:b_8_61:b_8_62:b_8_63:
+ b_8_64:b_8_65:b_8_66:b_8_67:b_8_68:b_8_69:b_8_70:b_8_71:
+ b_8_72:b_8_73:b_8_74:b_8_75:b_8_76:b_8_77:b_8_78:b_8_79:
+ b_8_80:b_8_81:b_8_82:b_8_83:b_8_84:b_8_85:b_8_86:b_8_87:
+ b_8_88:b_8_89:b_8_90:b_8_91:b_8_92:b_8_93:b_8_94:b_8_95:
+ b_8_96:b_8_97:b_8_98:b_8_99:b_8_100:b_8_101:b_8_102:b_8_103:
+ b_8_104:b_8_105:b_8_106:b_8_107:b_8_108:b_8_109:b_8_110:b_8_111:
+ b_8_112:b_8_113:b_8_114:b_8_115:b_8_116:b_8_117:b_8_118:b_8_119:
+ b_8_120:b_8_121:b_8_122:b_8_123:b_8_124:b_8_125:b_8_126:b_8_127:
+ b_8_128:b_8_129:b_8_130:b_8_131:b_8_132:b_8_133:b_8_134:b_8_135:
+ b_8_136:b_8_137:b_8_138:b_8_139:b_8_140:b_8_141:b_8_142:b_8_143:
+ b_8_144:b_8_145:b_8_146:b_8_147:b_8_148:b_8_149:b_8_150:b_8_151:
+ b_8_152:b_8_153:b_8_154:b_8_155:b_8_156:b_8_157:b_8_158:b_8_159:
+ b_8_160:b_8_161:b_8_162:b_8_163:b_8_164:b_8_165:b_8_166:b_8_167:
+ b_8_168:b_8_169:b_8_170:b_8_171:b_8_172:b_8_173:b_8_174:b_8_175:
+ b_8_176:b_8_177:b_8_178:b_8_179:b_8_180:b_8_181:b_8_182:b_8_183:
+ b_8_184:b_8_185:b_8_186:b_8_187:b_8_188:b_8_189:b_8_190:b_8_191:
+ b_8_192:b_8_193:b_8_194:b_8_195:b_8_196:b_8_197:b_8_198:b_8_199:
+ b_8_200:b_8_201:b_8_202:b_8_203:b_8_204:b_8_205:b_8_206:b_8_207:
+ b_8_208:b_8_209:b_8_210:b_8_211:b_8_212:b_8_213:b_8_214:b_8_215:
+ b_8_216:b_8_217:b_8_218:b_8_219:b_8_220:b_8_221:b_8_222:b_8_223:
+ b_8_224:b_8_225:b_8_226:b_8_227:b_8_228:b_8_229:b_8_230:b_8_231:
+ b_8_232:b_8_233:b_8_234:b_8_235:b_8_236:b_8_237:b_8_238:b_8_239:
+ b_8_240:b_8_241:b_8_242:b_8_243:b_8_244:b_8_245:b_8_246:b_8_247:
+ b_8_248:b_8_249:b_8_250:b_8_251:b_8_252:b_8_253:b_8_254:b_8_255:NIL;
+INLINE sector_256=pi/128.0;
+
+end

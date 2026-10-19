@@ -1,0 +1,26 @@
+.file "case.c"
+.globl function
+function:
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	fprem
+	# 
+	# ---- start of the cost centers ----
+	# file names:
+	# canonicalised function names:
+	# raw source points:
+	# cooked source points:
+	.data
+	.align 4
+.Lcacheprof_magic_table:
+	# number of filenames, funcnames, points, cc addr
+	.long 0
+	.long 0
+	.long 0
+	.long .Lcacheprof_magic_buckets
+	.align 4
+.Lcacheprof_magic_buckets:
+	# 
+	# ---- end of the cost centers ----

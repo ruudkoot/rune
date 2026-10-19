@@ -1,0 +1,3 @@
+f095ced647f6fcce9e10262a4f7e8cd04516e4a2526ae5dc058edb18ccaf096b  benchmarks/hamming/hamming.ml
+b47920153ad073d1b601b75a086b8353d8550f0527911628ce622e1ec0f4580a  benchmarks/hamming/dune
+88d9b4eb60579c191ec391ca04c16130572d7eedc4a86daa58bf28c6e14c9bcd  LICENSE.md

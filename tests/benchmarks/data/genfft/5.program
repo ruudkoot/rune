@@ -1,0 +1,671 @@
+sed -e 's/^/||SYNTH_4 /' <<'end'     
+synth_fft_4 i1
+=LET b_0_0=head i1 IN
+ LET i2=tail i1 IN
+ LET b_0_2=head i2 IN
+ LET i3=tail i2 IN
+ LET b_0_1=head i3 IN
+ LET i4=tail i3 IN
+ LET b_0_3=head i4 IN
+ LET
+ b_1_0=add_x b_0_0 r_0_0; b_1_1=sub_x b_0_0 r_0_0; r_0_0=mul_x b_0_1 w_0;
+ b_1_2=add_x b_0_2 r_0_1; b_1_3=sub_x b_0_2 r_0_1; r_0_1=mul_x b_0_3 w_0;
+ b_2_0=add_x b_1_0 r_1_0; b_2_2=sub_x b_1_0 r_1_0; r_1_0=mul_x b_1_2 w_0;
+ b_2_1=add_x b_1_1 r_1_1; b_2_3=sub_x b_1_1 r_1_1; r_1_1=mul_x b_1_3 w_1;
+ w_0=fw_d sector_4 0.0;
+ w_1=fw_d sector_4 1.0
+ IN b_2_0:b_2_1:b_2_2:b_2_3:NIL;
+INLINE sector_4=pi/2.0;
+
+end
+sed -e 's/^/||SYNTH_8 /' <<'end'     
+synth_fft_8 i1
+=LET b_0_0=head i1 IN
+ LET i2=tail i1 IN
+ LET b_0_4=head i2 IN
+ LET i3=tail i2 IN
+ LET b_0_2=head i3 IN
+ LET i4=tail i3 IN
+ LET b_0_6=head i4 IN
+ LET i5=tail i4 IN
+ LET b_0_1=head i5 IN
+ LET i6=tail i5 IN
+ LET b_0_5=head i6 IN
+ LET i7=tail i6 IN
+ LET b_0_3=head i7 IN
+ LET i8=tail i7 IN
+ LET b_0_7=head i8 IN
+ LET
+ b_1_0=add_x b_0_0 r_0_0; b_1_1=sub_x b_0_0 r_0_0; r_0_0=mul_x b_0_1 w_0;
+ b_1_2=add_x b_0_2 r_0_1; b_1_3=sub_x b_0_2 r_0_1; r_0_1=mul_x b_0_3 w_0;
+ b_1_4=add_x b_0_4 r_0_2; b_1_5=sub_x b_0_4 r_0_2; r_0_2=mul_x b_0_5 w_0;
+ b_1_6=add_x b_0_6 r_0_3; b_1_7=sub_x b_0_6 r_0_3; r_0_3=mul_x b_0_7 w_0;
+ b_2_0=add_x b_1_0 r_1_0; b_2_2=sub_x b_1_0 r_1_0; r_1_0=mul_x b_1_2 w_0;
+ b_2_1=add_x b_1_1 r_1_1; b_2_3=sub_x b_1_1 r_1_1; r_1_1=mul_x b_1_3 w_2;
+ b_2_4=add_x b_1_4 r_1_2; b_2_6=sub_x b_1_4 r_1_2; r_1_2=mul_x b_1_6 w_0;
+ b_2_5=add_x b_1_5 r_1_3; b_2_7=sub_x b_1_5 r_1_3; r_1_3=mul_x b_1_7 w_2;
+ b_3_0=add_x b_2_0 r_2_0; b_3_4=sub_x b_2_0 r_2_0; r_2_0=mul_x b_2_4 w_0;
+ b_3_1=add_x b_2_1 r_2_1; b_3_5=sub_x b_2_1 r_2_1; r_2_1=mul_x b_2_5 w_1;
+ b_3_2=add_x b_2_2 r_2_2; b_3_6=sub_x b_2_2 r_2_2; r_2_2=mul_x b_2_6 w_2;
+ b_3_3=add_x b_2_3 r_2_3; b_3_7=sub_x b_2_3 r_2_3; r_2_3=mul_x b_2_7 w_3;
+ w_0=fw_d sector_8 0.0;
+ w_1=fw_d sector_8 1.0;
+ w_2=fw_d sector_8 2.0;
+ w_3=fw_d sector_8 3.0
+ IN b_3_0:b_3_1:b_3_2:b_3_3:b_3_4:b_3_5:b_3_6:b_3_7:NIL;
+INLINE sector_8=pi/4.0;
+
+end
+sed -e 's/^/||SYNTH_16 /' <<'end'     
+synth_fft_16 i1
+=LET b_0_0=head i1 IN
+ LET i2=tail i1 IN
+ LET b_0_8=head i2 IN
+ LET i3=tail i2 IN
+ LET b_0_4=head i3 IN
+ LET i4=tail i3 IN
+ LET b_0_12=head i4 IN
+ LET i5=tail i4 IN
+ LET b_0_2=head i5 IN
+ LET i6=tail i5 IN
+ LET b_0_10=head i6 IN
+ LET i7=tail i6 IN
+ LET b_0_6=head i7 IN
+ LET i8=tail i7 IN
+ LET b_0_14=head i8 IN
+ LET i9=tail i8 IN
+ LET b_0_1=head i9 IN
+ LET i10=tail i9 IN
+ LET b_0_9=head i10 IN
+ LET i11=tail i10 IN
+ LET b_0_5=head i11 IN
+ LET i12=tail i11 IN
+ LET b_0_13=head i12 IN
+ LET i13=tail i12 IN
+ LET b_0_3=head i13 IN
+ LET i14=tail i13 IN
+ LET b_0_11=head i14 IN
+ LET i15=tail i14 IN
+ LET b_0_7=head i15 IN
+ LET i16=tail i15 IN
+ LET b_0_15=head i16 IN
+ LET
+ b_1_0=add_x b_0_0 r_0_0; b_1_1=sub_x b_0_0 r_0_0; r_0_0=mul_x b_0_1 w_0;
+ b_1_2=add_x b_0_2 r_0_1; b_1_3=sub_x b_0_2 r_0_1; r_0_1=mul_x b_0_3 w_0;
+ b_1_4=add_x b_0_4 r_0_2; b_1_5=sub_x b_0_4 r_0_2; r_0_2=mul_x b_0_5 w_0;
+ b_1_6=add_x b_0_6 r_0_3; b_1_7=sub_x b_0_6 r_0_3; r_0_3=mul_x b_0_7 w_0;
+ b_1_8=add_x b_0_8 r_0_4; b_1_9=sub_x b_0_8 r_0_4; r_0_4=mul_x b_0_9 w_0;
+ b_1_10=add_x b_0_10 r_0_5; b_1_11=sub_x b_0_10 r_0_5; r_0_5=mul_x b_0_11 w_0;
+ b_1_12=add_x b_0_12 r_0_6; b_1_13=sub_x b_0_12 r_0_6; r_0_6=mul_x b_0_13 w_0;
+ b_1_14=add_x b_0_14 r_0_7; b_1_15=sub_x b_0_14 r_0_7; r_0_7=mul_x b_0_15 w_0;
+ b_2_0=add_x b_1_0 r_1_0; b_2_2=sub_x b_1_0 r_1_0; r_1_0=mul_x b_1_2 w_0;
+ b_2_1=add_x b_1_1 r_1_1; b_2_3=sub_x b_1_1 r_1_1; r_1_1=mul_x b_1_3 w_4;
+ b_2_4=add_x b_1_4 r_1_2; b_2_6=sub_x b_1_4 r_1_2; r_1_2=mul_x b_1_6 w_0;
+ b_2_5=add_x b_1_5 r_1_3; b_2_7=sub_x b_1_5 r_1_3; r_1_3=mul_x b_1_7 w_4;
+ b_2_8=add_x b_1_8 r_1_4; b_2_10=sub_x b_1_8 r_1_4; r_1_4=mul_x b_1_10 w_0;
+ b_2_9=add_x b_1_9 r_1_5; b_2_11=sub_x b_1_9 r_1_5; r_1_5=mul_x b_1_11 w_4;
+ b_2_12=add_x b_1_12 r_1_6; b_2_14=sub_x b_1_12 r_1_6; r_1_6=mul_x b_1_14 w_0;
+ b_2_13=add_x b_1_13 r_1_7; b_2_15=sub_x b_1_13 r_1_7; r_1_7=mul_x b_1_15 w_4;
+ b_3_0=add_x b_2_0 r_2_0; b_3_4=sub_x b_2_0 r_2_0; r_2_0=mul_x b_2_4 w_0;
+ b_3_1=add_x b_2_1 r_2_1; b_3_5=sub_x b_2_1 r_2_1; r_2_1=mul_x b_2_5 w_2;
+ b_3_2=add_x b_2_2 r_2_2; b_3_6=sub_x b_2_2 r_2_2; r_2_2=mul_x b_2_6 w_4;
+ b_3_3=add_x b_2_3 r_2_3; b_3_7=sub_x b_2_3 r_2_3; r_2_3=mul_x b_2_7 w_6;
+ b_3_8=add_x b_2_8 r_2_4; b_3_12=sub_x b_2_8 r_2_4; r_2_4=mul_x b_2_12 w_0;
+ b_3_9=add_x b_2_9 r_2_5; b_3_13=sub_x b_2_9 r_2_5; r_2_5=mul_x b_2_13 w_2;
+ b_3_10=add_x b_2_10 r_2_6; b_3_14=sub_x b_2_10 r_2_6; r_2_6=mul_x b_2_14 w_4;
+ b_3_11=add_x b_2_11 r_2_7; b_3_15=sub_x b_2_11 r_2_7; r_2_7=mul_x b_2_15 w_6;
+ b_4_0=add_x b_3_0 r_3_0; b_4_8=sub_x b_3_0 r_3_0; r_3_0=mul_x b_3_8 w_0;
+ b_4_1=add_x b_3_1 r_3_1; b_4_9=sub_x b_3_1 r_3_1; r_3_1=mul_x b_3_9 w_1;
+ b_4_2=add_x b_3_2 r_3_2; b_4_10=sub_x b_3_2 r_3_2; r_3_2=mul_x b_3_10 w_2;
+ b_4_3=add_x b_3_3 r_3_3; b_4_11=sub_x b_3_3 r_3_3; r_3_3=mul_x b_3_11 w_3;
+ b_4_4=add_x b_3_4 r_3_4; b_4_12=sub_x b_3_4 r_3_4; r_3_4=mul_x b_3_12 w_4;
+ b_4_5=add_x b_3_5 r_3_5; b_4_13=sub_x b_3_5 r_3_5; r_3_5=mul_x b_3_13 w_5;
+ b_4_6=add_x b_3_6 r_3_6; b_4_14=sub_x b_3_6 r_3_6; r_3_6=mul_x b_3_14 w_6;
+ b_4_7=add_x b_3_7 r_3_7; b_4_15=sub_x b_3_7 r_3_7; r_3_7=mul_x b_3_15 w_7;
+ w_0=fw_d sector_16 0.0;
+ w_1=fw_d sector_16 1.0;
+ w_2=fw_d sector_16 2.0;
+ w_3=fw_d sector_16 3.0;
+ w_4=fw_d sector_16 4.0;
+ w_5=fw_d sector_16 5.0;
+ w_6=fw_d sector_16 6.0;
+ w_7=fw_d sector_16 7.0
+ IN b_4_0:b_4_1:b_4_2:b_4_3:b_4_4:b_4_5:b_4_6:b_4_7:
+ b_4_8:b_4_9:b_4_10:b_4_11:b_4_12:b_4_13:b_4_14:b_4_15:NIL;
+INLINE sector_16=pi/8.0;
+
+end
+sed -e 's/^/||SYNTH_32 /' <<'end'     
+synth_fft_32 i1
+=LET b_0_0=head i1 IN
+ LET i2=tail i1 IN
+ LET b_0_16=head i2 IN
+ LET i3=tail i2 IN
+ LET b_0_8=head i3 IN
+ LET i4=tail i3 IN
+ LET b_0_24=head i4 IN
+ LET i5=tail i4 IN
+ LET b_0_4=head i5 IN
+ LET i6=tail i5 IN
+ LET b_0_20=head i6 IN
+ LET i7=tail i6 IN
+ LET b_0_12=head i7 IN
+ LET i8=tail i7 IN
+ LET b_0_28=head i8 IN
+ LET i9=tail i8 IN
+ LET b_0_2=head i9 IN
+ LET i10=tail i9 IN
+ LET b_0_18=head i10 IN
+ LET i11=tail i10 IN
+ LET b_0_10=head i11 IN
+ LET i12=tail i11 IN
+ LET b_0_26=head i12 IN
+ LET i13=tail i12 IN
+ LET b_0_6=head i13 IN
+ LET i14=tail i13 IN
+ LET b_0_22=head i14 IN
+ LET i15=tail i14 IN
+ LET b_0_14=head i15 IN
+ LET i16=tail i15 IN
+ LET b_0_30=head i16 IN
+ LET i17=tail i16 IN
+ LET b_0_1=head i17 IN
+ LET i18=tail i17 IN
+ LET b_0_17=head i18 IN
+ LET i19=tail i18 IN
+ LET b_0_9=head i19 IN
+ LET i20=tail i19 IN
+ LET b_0_25=head i20 IN
+ LET i21=tail i20 IN
+ LET b_0_5=head i21 IN
+ LET i22=tail i21 IN
+ LET b_0_21=head i22 IN
+ LET i23=tail i22 IN
+ LET b_0_13=head i23 IN
+ LET i24=tail i23 IN
+ LET b_0_29=head i24 IN
+ LET i25=tail i24 IN
+ LET b_0_3=head i25 IN
+ LET i26=tail i25 IN
+ LET b_0_19=head i26 IN
+ LET i27=tail i26 IN
+ LET b_0_11=head i27 IN
+ LET i28=tail i27 IN
+ LET b_0_27=head i28 IN
+ LET i29=tail i28 IN
+ LET b_0_7=head i29 IN
+ LET i30=tail i29 IN
+ LET b_0_23=head i30 IN
+ LET i31=tail i30 IN
+ LET b_0_15=head i31 IN
+ LET i32=tail i31 IN
+ LET b_0_31=head i32 IN
+ LET
+ b_1_0=add_x b_0_0 r_0_0; b_1_1=sub_x b_0_0 r_0_0; r_0_0=mul_x b_0_1 w_0;
+ b_1_2=add_x b_0_2 r_0_1; b_1_3=sub_x b_0_2 r_0_1; r_0_1=mul_x b_0_3 w_0;
+ b_1_4=add_x b_0_4 r_0_2; b_1_5=sub_x b_0_4 r_0_2; r_0_2=mul_x b_0_5 w_0;
+ b_1_6=add_x b_0_6 r_0_3; b_1_7=sub_x b_0_6 r_0_3; r_0_3=mul_x b_0_7 w_0;
+ b_1_8=add_x b_0_8 r_0_4; b_1_9=sub_x b_0_8 r_0_4; r_0_4=mul_x b_0_9 w_0;
+ b_1_10=add_x b_0_10 r_0_5; b_1_11=sub_x b_0_10 r_0_5; r_0_5=mul_x b_0_11 w_0;
+ b_1_12=add_x b_0_12 r_0_6; b_1_13=sub_x b_0_12 r_0_6; r_0_6=mul_x b_0_13 w_0;
+ b_1_14=add_x b_0_14 r_0_7; b_1_15=sub_x b_0_14 r_0_7; r_0_7=mul_x b_0_15 w_0;
+ b_1_16=add_x b_0_16 r_0_8; b_1_17=sub_x b_0_16 r_0_8; r_0_8=mul_x b_0_17 w_0;
+ b_1_18=add_x b_0_18 r_0_9; b_1_19=sub_x b_0_18 r_0_9; r_0_9=mul_x b_0_19 w_0;
+ b_1_20=add_x b_0_20 r_0_10; b_1_21=sub_x b_0_20 r_0_10; r_0_10=mul_x b_0_21 w_0;
+ b_1_22=add_x b_0_22 r_0_11; b_1_23=sub_x b_0_22 r_0_11; r_0_11=mul_x b_0_23 w_0;
+ b_1_24=add_x b_0_24 r_0_12; b_1_25=sub_x b_0_24 r_0_12; r_0_12=mul_x b_0_25 w_0;
+ b_1_26=add_x b_0_26 r_0_13; b_1_27=sub_x b_0_26 r_0_13; r_0_13=mul_x b_0_27 w_0;
+ b_1_28=add_x b_0_28 r_0_14; b_1_29=sub_x b_0_28 r_0_14; r_0_14=mul_x b_0_29 w_0;
+ b_1_30=add_x b_0_30 r_0_15; b_1_31=sub_x b_0_30 r_0_15; r_0_15=mul_x b_0_31 w_0;
+ b_2_0=add_x b_1_0 r_1_0; b_2_2=sub_x b_1_0 r_1_0; r_1_0=mul_x b_1_2 w_0;
+ b_2_1=add_x b_1_1 r_1_1; b_2_3=sub_x b_1_1 r_1_1; r_1_1=mul_x b_1_3 w_8;
+ b_2_4=add_x b_1_4 r_1_2; b_2_6=sub_x b_1_4 r_1_2; r_1_2=mul_x b_1_6 w_0;
+ b_2_5=add_x b_1_5 r_1_3; b_2_7=sub_x b_1_5 r_1_3; r_1_3=mul_x b_1_7 w_8;
+ b_2_8=add_x b_1_8 r_1_4; b_2_10=sub_x b_1_8 r_1_4; r_1_4=mul_x b_1_10 w_0;
+ b_2_9=add_x b_1_9 r_1_5; b_2_11=sub_x b_1_9 r_1_5; r_1_5=mul_x b_1_11 w_8;
+ b_2_12=add_x b_1_12 r_1_6; b_2_14=sub_x b_1_12 r_1_6; r_1_6=mul_x b_1_14 w_0;
+ b_2_13=add_x b_1_13 r_1_7; b_2_15=sub_x b_1_13 r_1_7; r_1_7=mul_x b_1_15 w_8;
+ b_2_16=add_x b_1_16 r_1_8; b_2_18=sub_x b_1_16 r_1_8; r_1_8=mul_x b_1_18 w_0;
+ b_2_17=add_x b_1_17 r_1_9; b_2_19=sub_x b_1_17 r_1_9; r_1_9=mul_x b_1_19 w_8;
+ b_2_20=add_x b_1_20 r_1_10; b_2_22=sub_x b_1_20 r_1_10; r_1_10=mul_x b_1_22 w_0;
+ b_2_21=add_x b_1_21 r_1_11; b_2_23=sub_x b_1_21 r_1_11; r_1_11=mul_x b_1_23 w_8;
+ b_2_24=add_x b_1_24 r_1_12; b_2_26=sub_x b_1_24 r_1_12; r_1_12=mul_x b_1_26 w_0;
+ b_2_25=add_x b_1_25 r_1_13; b_2_27=sub_x b_1_25 r_1_13; r_1_13=mul_x b_1_27 w_8;
+ b_2_28=add_x b_1_28 r_1_14; b_2_30=sub_x b_1_28 r_1_14; r_1_14=mul_x b_1_30 w_0;
+ b_2_29=add_x b_1_29 r_1_15; b_2_31=sub_x b_1_29 r_1_15; r_1_15=mul_x b_1_31 w_8;
+ b_3_0=add_x b_2_0 r_2_0; b_3_4=sub_x b_2_0 r_2_0; r_2_0=mul_x b_2_4 w_0;
+ b_3_1=add_x b_2_1 r_2_1; b_3_5=sub_x b_2_1 r_2_1; r_2_1=mul_x b_2_5 w_4;
+ b_3_2=add_x b_2_2 r_2_2; b_3_6=sub_x b_2_2 r_2_2; r_2_2=mul_x b_2_6 w_8;
+ b_3_3=add_x b_2_3 r_2_3; b_3_7=sub_x b_2_3 r_2_3; r_2_3=mul_x b_2_7 w_12;
+ b_3_8=add_x b_2_8 r_2_4; b_3_12=sub_x b_2_8 r_2_4; r_2_4=mul_x b_2_12 w_0;
+ b_3_9=add_x b_2_9 r_2_5; b_3_13=sub_x b_2_9 r_2_5; r_2_5=mul_x b_2_13 w_4;
+ b_3_10=add_x b_2_10 r_2_6; b_3_14=sub_x b_2_10 r_2_6; r_2_6=mul_x b_2_14 w_8;
+ b_3_11=add_x b_2_11 r_2_7; b_3_15=sub_x b_2_11 r_2_7; r_2_7=mul_x b_2_15 w_12;
+ b_3_16=add_x b_2_16 r_2_8; b_3_20=sub_x b_2_16 r_2_8; r_2_8=mul_x b_2_20 w_0;
+ b_3_17=add_x b_2_17 r_2_9; b_3_21=sub_x b_2_17 r_2_9; r_2_9=mul_x b_2_21 w_4;
+ b_3_18=add_x b_2_18 r_2_10; b_3_22=sub_x b_2_18 r_2_10; r_2_10=mul_x b_2_22 w_8;
+ b_3_19=add_x b_2_19 r_2_11; b_3_23=sub_x b_2_19 r_2_11; r_2_11=mul_x b_2_23 w_12;
+ b_3_24=add_x b_2_24 r_2_12; b_3_28=sub_x b_2_24 r_2_12; r_2_12=mul_x b_2_28 w_0;
+ b_3_25=add_x b_2_25 r_2_13; b_3_29=sub_x b_2_25 r_2_13; r_2_13=mul_x b_2_29 w_4;
+ b_3_26=add_x b_2_26 r_2_14; b_3_30=sub_x b_2_26 r_2_14; r_2_14=mul_x b_2_30 w_8;
+ b_3_27=add_x b_2_27 r_2_15; b_3_31=sub_x b_2_27 r_2_15; r_2_15=mul_x b_2_31 w_12;
+ b_4_0=add_x b_3_0 r_3_0; b_4_8=sub_x b_3_0 r_3_0; r_3_0=mul_x b_3_8 w_0;
+ b_4_1=add_x b_3_1 r_3_1; b_4_9=sub_x b_3_1 r_3_1; r_3_1=mul_x b_3_9 w_2;
+ b_4_2=add_x b_3_2 r_3_2; b_4_10=sub_x b_3_2 r_3_2; r_3_2=mul_x b_3_10 w_4;
+ b_4_3=add_x b_3_3 r_3_3; b_4_11=sub_x b_3_3 r_3_3; r_3_3=mul_x b_3_11 w_6;
+ b_4_4=add_x b_3_4 r_3_4; b_4_12=sub_x b_3_4 r_3_4; r_3_4=mul_x b_3_12 w_8;
+ b_4_5=add_x b_3_5 r_3_5; b_4_13=sub_x b_3_5 r_3_5; r_3_5=mul_x b_3_13 w_10;
+ b_4_6=add_x b_3_6 r_3_6; b_4_14=sub_x b_3_6 r_3_6; r_3_6=mul_x b_3_14 w_12;
+ b_4_7=add_x b_3_7 r_3_7; b_4_15=sub_x b_3_7 r_3_7; r_3_7=mul_x b_3_15 w_14;
+ b_4_16=add_x b_3_16 r_3_8; b_4_24=sub_x b_3_16 r_3_8; r_3_8=mul_x b_3_24 w_0;
+ b_4_17=add_x b_3_17 r_3_9; b_4_25=sub_x b_3_17 r_3_9; r_3_9=mul_x b_3_25 w_2;
+ b_4_18=add_x b_3_18 r_3_10; b_4_26=sub_x b_3_18 r_3_10; r_3_10=mul_x b_3_26 w_4;
+ b_4_19=add_x b_3_19 r_3_11; b_4_27=sub_x b_3_19 r_3_11; r_3_11=mul_x b_3_27 w_6;
+ b_4_20=add_x b_3_20 r_3_12; b_4_28=sub_x b_3_20 r_3_12; r_3_12=mul_x b_3_28 w_8;
+ b_4_21=add_x b_3_21 r_3_13; b_4_29=sub_x b_3_21 r_3_13; r_3_13=mul_x b_3_29 w_10;
+ b_4_22=add_x b_3_22 r_3_14; b_4_30=sub_x b_3_22 r_3_14; r_3_14=mul_x b_3_30 w_12;
+ b_4_23=add_x b_3_23 r_3_15; b_4_31=sub_x b_3_23 r_3_15; r_3_15=mul_x b_3_31 w_14;
+ b_5_0=add_x b_4_0 r_4_0; b_5_16=sub_x b_4_0 r_4_0; r_4_0=mul_x b_4_16 w_0;
+ b_5_1=add_x b_4_1 r_4_1; b_5_17=sub_x b_4_1 r_4_1; r_4_1=mul_x b_4_17 w_1;
+ b_5_2=add_x b_4_2 r_4_2; b_5_18=sub_x b_4_2 r_4_2; r_4_2=mul_x b_4_18 w_2;
+ b_5_3=add_x b_4_3 r_4_3; b_5_19=sub_x b_4_3 r_4_3; r_4_3=mul_x b_4_19 w_3;
+ b_5_4=add_x b_4_4 r_4_4; b_5_20=sub_x b_4_4 r_4_4; r_4_4=mul_x b_4_20 w_4;
+ b_5_5=add_x b_4_5 r_4_5; b_5_21=sub_x b_4_5 r_4_5; r_4_5=mul_x b_4_21 w_5;
+ b_5_6=add_x b_4_6 r_4_6; b_5_22=sub_x b_4_6 r_4_6; r_4_6=mul_x b_4_22 w_6;
+ b_5_7=add_x b_4_7 r_4_7; b_5_23=sub_x b_4_7 r_4_7; r_4_7=mul_x b_4_23 w_7;
+ b_5_8=add_x b_4_8 r_4_8; b_5_24=sub_x b_4_8 r_4_8; r_4_8=mul_x b_4_24 w_8;
+ b_5_9=add_x b_4_9 r_4_9; b_5_25=sub_x b_4_9 r_4_9; r_4_9=mul_x b_4_25 w_9;
+ b_5_10=add_x b_4_10 r_4_10; b_5_26=sub_x b_4_10 r_4_10; r_4_10=mul_x b_4_26 w_10;
+ b_5_11=add_x b_4_11 r_4_11; b_5_27=sub_x b_4_11 r_4_11; r_4_11=mul_x b_4_27 w_11;
+ b_5_12=add_x b_4_12 r_4_12; b_5_28=sub_x b_4_12 r_4_12; r_4_12=mul_x b_4_28 w_12;
+ b_5_13=add_x b_4_13 r_4_13; b_5_29=sub_x b_4_13 r_4_13; r_4_13=mul_x b_4_29 w_13;
+ b_5_14=add_x b_4_14 r_4_14; b_5_30=sub_x b_4_14 r_4_14; r_4_14=mul_x b_4_30 w_14;
+ b_5_15=add_x b_4_15 r_4_15; b_5_31=sub_x b_4_15 r_4_15; r_4_15=mul_x b_4_31 w_15;
+ w_0=fw_d sector_32 0.0;
+ w_1=fw_d sector_32 1.0;
+ w_2=fw_d sector_32 2.0;
+ w_3=fw_d sector_32 3.0;
+ w_4=fw_d sector_32 4.0;
+ w_5=fw_d sector_32 5.0;
+ w_6=fw_d sector_32 6.0;
+ w_7=fw_d sector_32 7.0;
+ w_8=fw_d sector_32 8.0;
+ w_9=fw_d sector_32 9.0;
+ w_10=fw_d sector_32 10.0;
+ w_11=fw_d sector_32 11.0;
+ w_12=fw_d sector_32 12.0;
+ w_13=fw_d sector_32 13.0;
+ w_14=fw_d sector_32 14.0;
+ w_15=fw_d sector_32 15.0
+ IN b_5_0:b_5_1:b_5_2:b_5_3:b_5_4:b_5_5:b_5_6:b_5_7:
+ b_5_8:b_5_9:b_5_10:b_5_11:b_5_12:b_5_13:b_5_14:b_5_15:
+ b_5_16:b_5_17:b_5_18:b_5_19:b_5_20:b_5_21:b_5_22:b_5_23:
+ b_5_24:b_5_25:b_5_26:b_5_27:b_5_28:b_5_29:b_5_30:b_5_31:NIL;
+INLINE sector_32=pi/16.0;
+
+end
+sed -e 's/^/||SYNTH_64 /' <<'end'     
+synth_fft_64 i1
+=LET b_0_0=head i1 IN
+ LET i2=tail i1 IN
+ LET b_0_32=head i2 IN
+ LET i3=tail i2 IN
+ LET b_0_16=head i3 IN
+ LET i4=tail i3 IN
+ LET b_0_48=head i4 IN
+ LET i5=tail i4 IN
+ LET b_0_8=head i5 IN
+ LET i6=tail i5 IN
+ LET b_0_40=head i6 IN
+ LET i7=tail i6 IN
+ LET b_0_24=head i7 IN
+ LET i8=tail i7 IN
+ LET b_0_56=head i8 IN
+ LET i9=tail i8 IN
+ LET b_0_4=head i9 IN
+ LET i10=tail i9 IN
+ LET b_0_36=head i10 IN
+ LET i11=tail i10 IN
+ LET b_0_20=head i11 IN
+ LET i12=tail i11 IN
+ LET b_0_52=head i12 IN
+ LET i13=tail i12 IN
+ LET b_0_12=head i13 IN
+ LET i14=tail i13 IN
+ LET b_0_44=head i14 IN
+ LET i15=tail i14 IN
+ LET b_0_28=head i15 IN
+ LET i16=tail i15 IN
+ LET b_0_60=head i16 IN
+ LET i17=tail i16 IN
+ LET b_0_2=head i17 IN
+ LET i18=tail i17 IN
+ LET b_0_34=head i18 IN
+ LET i19=tail i18 IN
+ LET b_0_18=head i19 IN
+ LET i20=tail i19 IN
+ LET b_0_50=head i20 IN
+ LET i21=tail i20 IN
+ LET b_0_10=head i21 IN
+ LET i22=tail i21 IN
+ LET b_0_42=head i22 IN
+ LET i23=tail i22 IN
+ LET b_0_26=head i23 IN
+ LET i24=tail i23 IN
+ LET b_0_58=head i24 IN
+ LET i25=tail i24 IN
+ LET b_0_6=head i25 IN
+ LET i26=tail i25 IN
+ LET b_0_38=head i26 IN
+ LET i27=tail i26 IN
+ LET b_0_22=head i27 IN
+ LET i28=tail i27 IN
+ LET b_0_54=head i28 IN
+ LET i29=tail i28 IN
+ LET b_0_14=head i29 IN
+ LET i30=tail i29 IN
+ LET b_0_46=head i30 IN
+ LET i31=tail i30 IN
+ LET b_0_30=head i31 IN
+ LET i32=tail i31 IN
+ LET b_0_62=head i32 IN
+ LET i33=tail i32 IN
+ LET b_0_1=head i33 IN
+ LET i34=tail i33 IN
+ LET b_0_33=head i34 IN
+ LET i35=tail i34 IN
+ LET b_0_17=head i35 IN
+ LET i36=tail i35 IN
+ LET b_0_49=head i36 IN
+ LET i37=tail i36 IN
+ LET b_0_9=head i37 IN
+ LET i38=tail i37 IN
+ LET b_0_41=head i38 IN
+ LET i39=tail i38 IN
+ LET b_0_25=head i39 IN
+ LET i40=tail i39 IN
+ LET b_0_57=head i40 IN
+ LET i41=tail i40 IN
+ LET b_0_5=head i41 IN
+ LET i42=tail i41 IN
+ LET b_0_37=head i42 IN
+ LET i43=tail i42 IN
+ LET b_0_21=head i43 IN
+ LET i44=tail i43 IN
+ LET b_0_53=head i44 IN
+ LET i45=tail i44 IN
+ LET b_0_13=head i45 IN
+ LET i46=tail i45 IN
+ LET b_0_45=head i46 IN
+ LET i47=tail i46 IN
+ LET b_0_29=head i47 IN
+ LET i48=tail i47 IN
+ LET b_0_61=head i48 IN
+ LET i49=tail i48 IN
+ LET b_0_3=head i49 IN
+ LET i50=tail i49 IN
+ LET b_0_35=head i50 IN
+ LET i51=tail i50 IN
+ LET b_0_19=head i51 IN
+ LET i52=tail i51 IN
+ LET b_0_51=head i52 IN
+ LET i53=tail i52 IN
+ LET b_0_11=head i53 IN
+ LET i54=tail i53 IN
+ LET b_0_43=head i54 IN
+ LET i55=tail i54 IN
+ LET b_0_27=head i55 IN
+ LET i56=tail i55 IN
+ LET b_0_59=head i56 IN
+ LET i57=tail i56 IN
+ LET b_0_7=head i57 IN
+ LET i58=tail i57 IN
+ LET b_0_39=head i58 IN
+ LET i59=tail i58 IN
+ LET b_0_23=head i59 IN
+ LET i60=tail i59 IN
+ LET b_0_55=head i60 IN
+ LET i61=tail i60 IN
+ LET b_0_15=head i61 IN
+ LET i62=tail i61 IN
+ LET b_0_47=head i62 IN
+ LET i63=tail i62 IN
+ LET b_0_31=head i63 IN
+ LET i64=tail i63 IN
+ LET b_0_63=head i64 IN
+ LET
+ b_1_0=add_x b_0_0 r_0_0; b_1_1=sub_x b_0_0 r_0_0; r_0_0=mul_x b_0_1 w_0;
+ b_1_2=add_x b_0_2 r_0_1; b_1_3=sub_x b_0_2 r_0_1; r_0_1=mul_x b_0_3 w_0;
+ b_1_4=add_x b_0_4 r_0_2; b_1_5=sub_x b_0_4 r_0_2; r_0_2=mul_x b_0_5 w_0;
+ b_1_6=add_x b_0_6 r_0_3; b_1_7=sub_x b_0_6 r_0_3; r_0_3=mul_x b_0_7 w_0;
+ b_1_8=add_x b_0_8 r_0_4; b_1_9=sub_x b_0_8 r_0_4; r_0_4=mul_x b_0_9 w_0;
+ b_1_10=add_x b_0_10 r_0_5; b_1_11=sub_x b_0_10 r_0_5; r_0_5=mul_x b_0_11 w_0;
+ b_1_12=add_x b_0_12 r_0_6; b_1_13=sub_x b_0_12 r_0_6; r_0_6=mul_x b_0_13 w_0;
+ b_1_14=add_x b_0_14 r_0_7; b_1_15=sub_x b_0_14 r_0_7; r_0_7=mul_x b_0_15 w_0;
+ b_1_16=add_x b_0_16 r_0_8; b_1_17=sub_x b_0_16 r_0_8; r_0_8=mul_x b_0_17 w_0;
+ b_1_18=add_x b_0_18 r_0_9; b_1_19=sub_x b_0_18 r_0_9; r_0_9=mul_x b_0_19 w_0;
+ b_1_20=add_x b_0_20 r_0_10; b_1_21=sub_x b_0_20 r_0_10; r_0_10=mul_x b_0_21 w_0;
+ b_1_22=add_x b_0_22 r_0_11; b_1_23=sub_x b_0_22 r_0_11; r_0_11=mul_x b_0_23 w_0;
+ b_1_24=add_x b_0_24 r_0_12; b_1_25=sub_x b_0_24 r_0_12; r_0_12=mul_x b_0_25 w_0;
+ b_1_26=add_x b_0_26 r_0_13; b_1_27=sub_x b_0_26 r_0_13; r_0_13=mul_x b_0_27 w_0;
+ b_1_28=add_x b_0_28 r_0_14; b_1_29=sub_x b_0_28 r_0_14; r_0_14=mul_x b_0_29 w_0;
+ b_1_30=add_x b_0_30 r_0_15; b_1_31=sub_x b_0_30 r_0_15; r_0_15=mul_x b_0_31 w_0;
+ b_1_32=add_x b_0_32 r_0_16; b_1_33=sub_x b_0_32 r_0_16; r_0_16=mul_x b_0_33 w_0;
+ b_1_34=add_x b_0_34 r_0_17; b_1_35=sub_x b_0_34 r_0_17; r_0_17=mul_x b_0_35 w_0;
+ b_1_36=add_x b_0_36 r_0_18; b_1_37=sub_x b_0_36 r_0_18; r_0_18=mul_x b_0_37 w_0;
+ b_1_38=add_x b_0_38 r_0_19; b_1_39=sub_x b_0_38 r_0_19; r_0_19=mul_x b_0_39 w_0;
+ b_1_40=add_x b_0_40 r_0_20; b_1_41=sub_x b_0_40 r_0_20; r_0_20=mul_x b_0_41 w_0;
+ b_1_42=add_x b_0_42 r_0_21; b_1_43=sub_x b_0_42 r_0_21; r_0_21=mul_x b_0_43 w_0;
+ b_1_44=add_x b_0_44 r_0_22; b_1_45=sub_x b_0_44 r_0_22; r_0_22=mul_x b_0_45 w_0;
+ b_1_46=add_x b_0_46 r_0_23; b_1_47=sub_x b_0_46 r_0_23; r_0_23=mul_x b_0_47 w_0;
+ b_1_48=add_x b_0_48 r_0_24; b_1_49=sub_x b_0_48 r_0_24; r_0_24=mul_x b_0_49 w_0;
+ b_1_50=add_x b_0_50 r_0_25; b_1_51=sub_x b_0_50 r_0_25; r_0_25=mul_x b_0_51 w_0;
+ b_1_52=add_x b_0_52 r_0_26; b_1_53=sub_x b_0_52 r_0_26; r_0_26=mul_x b_0_53 w_0;
+ b_1_54=add_x b_0_54 r_0_27; b_1_55=sub_x b_0_54 r_0_27; r_0_27=mul_x b_0_55 w_0;
+ b_1_56=add_x b_0_56 r_0_28; b_1_57=sub_x b_0_56 r_0_28; r_0_28=mul_x b_0_57 w_0;
+ b_1_58=add_x b_0_58 r_0_29; b_1_59=sub_x b_0_58 r_0_29; r_0_29=mul_x b_0_59 w_0;
+ b_1_60=add_x b_0_60 r_0_30; b_1_61=sub_x b_0_60 r_0_30; r_0_30=mul_x b_0_61 w_0;
+ b_1_62=add_x b_0_62 r_0_31; b_1_63=sub_x b_0_62 r_0_31; r_0_31=mul_x b_0_63 w_0;
+ b_2_0=add_x b_1_0 r_1_0; b_2_2=sub_x b_1_0 r_1_0; r_1_0=mul_x b_1_2 w_0;
+ b_2_1=add_x b_1_1 r_1_1; b_2_3=sub_x b_1_1 r_1_1; r_1_1=mul_x b_1_3 w_16;
+ b_2_4=add_x b_1_4 r_1_2; b_2_6=sub_x b_1_4 r_1_2; r_1_2=mul_x b_1_6 w_0;
+ b_2_5=add_x b_1_5 r_1_3; b_2_7=sub_x b_1_5 r_1_3; r_1_3=mul_x b_1_7 w_16;
+ b_2_8=add_x b_1_8 r_1_4; b_2_10=sub_x b_1_8 r_1_4; r_1_4=mul_x b_1_10 w_0;
+ b_2_9=add_x b_1_9 r_1_5; b_2_11=sub_x b_1_9 r_1_5; r_1_5=mul_x b_1_11 w_16;
+ b_2_12=add_x b_1_12 r_1_6; b_2_14=sub_x b_1_12 r_1_6; r_1_6=mul_x b_1_14 w_0;
+ b_2_13=add_x b_1_13 r_1_7; b_2_15=sub_x b_1_13 r_1_7; r_1_7=mul_x b_1_15 w_16;
+ b_2_16=add_x b_1_16 r_1_8; b_2_18=sub_x b_1_16 r_1_8; r_1_8=mul_x b_1_18 w_0;
+ b_2_17=add_x b_1_17 r_1_9; b_2_19=sub_x b_1_17 r_1_9; r_1_9=mul_x b_1_19 w_16;
+ b_2_20=add_x b_1_20 r_1_10; b_2_22=sub_x b_1_20 r_1_10; r_1_10=mul_x b_1_22 w_0;
+ b_2_21=add_x b_1_21 r_1_11; b_2_23=sub_x b_1_21 r_1_11; r_1_11=mul_x b_1_23 w_16;
+ b_2_24=add_x b_1_24 r_1_12; b_2_26=sub_x b_1_24 r_1_12; r_1_12=mul_x b_1_26 w_0;
+ b_2_25=add_x b_1_25 r_1_13; b_2_27=sub_x b_1_25 r_1_13; r_1_13=mul_x b_1_27 w_16;
+ b_2_28=add_x b_1_28 r_1_14; b_2_30=sub_x b_1_28 r_1_14; r_1_14=mul_x b_1_30 w_0;
+ b_2_29=add_x b_1_29 r_1_15; b_2_31=sub_x b_1_29 r_1_15; r_1_15=mul_x b_1_31 w_16;
+ b_2_32=add_x b_1_32 r_1_16; b_2_34=sub_x b_1_32 r_1_16; r_1_16=mul_x b_1_34 w_0;
+ b_2_33=add_x b_1_33 r_1_17; b_2_35=sub_x b_1_33 r_1_17; r_1_17=mul_x b_1_35 w_16;
+ b_2_36=add_x b_1_36 r_1_18; b_2_38=sub_x b_1_36 r_1_18; r_1_18=mul_x b_1_38 w_0;
+ b_2_37=add_x b_1_37 r_1_19; b_2_39=sub_x b_1_37 r_1_19; r_1_19=mul_x b_1_39 w_16;
+ b_2_40=add_x b_1_40 r_1_20; b_2_42=sub_x b_1_40 r_1_20; r_1_20=mul_x b_1_42 w_0;
+ b_2_41=add_x b_1_41 r_1_21; b_2_43=sub_x b_1_41 r_1_21; r_1_21=mul_x b_1_43 w_16;
+ b_2_44=add_x b_1_44 r_1_22; b_2_46=sub_x b_1_44 r_1_22; r_1_22=mul_x b_1_46 w_0;
+ b_2_45=add_x b_1_45 r_1_23; b_2_47=sub_x b_1_45 r_1_23; r_1_23=mul_x b_1_47 w_16;
+ b_2_48=add_x b_1_48 r_1_24; b_2_50=sub_x b_1_48 r_1_24; r_1_24=mul_x b_1_50 w_0;
+ b_2_49=add_x b_1_49 r_1_25; b_2_51=sub_x b_1_49 r_1_25; r_1_25=mul_x b_1_51 w_16;
+ b_2_52=add_x b_1_52 r_1_26; b_2_54=sub_x b_1_52 r_1_26; r_1_26=mul_x b_1_54 w_0;
+ b_2_53=add_x b_1_53 r_1_27; b_2_55=sub_x b_1_53 r_1_27; r_1_27=mul_x b_1_55 w_16;
+ b_2_56=add_x b_1_56 r_1_28; b_2_58=sub_x b_1_56 r_1_28; r_1_28=mul_x b_1_58 w_0;
+ b_2_57=add_x b_1_57 r_1_29; b_2_59=sub_x b_1_57 r_1_29; r_1_29=mul_x b_1_59 w_16;
+ b_2_60=add_x b_1_60 r_1_30; b_2_62=sub_x b_1_60 r_1_30; r_1_30=mul_x b_1_62 w_0;
+ b_2_61=add_x b_1_61 r_1_31; b_2_63=sub_x b_1_61 r_1_31; r_1_31=mul_x b_1_63 w_16;
+ b_3_0=add_x b_2_0 r_2_0; b_3_4=sub_x b_2_0 r_2_0; r_2_0=mul_x b_2_4 w_0;
+ b_3_1=add_x b_2_1 r_2_1; b_3_5=sub_x b_2_1 r_2_1; r_2_1=mul_x b_2_5 w_8;
+ b_3_2=add_x b_2_2 r_2_2; b_3_6=sub_x b_2_2 r_2_2; r_2_2=mul_x b_2_6 w_16;
+ b_3_3=add_x b_2_3 r_2_3; b_3_7=sub_x b_2_3 r_2_3; r_2_3=mul_x b_2_7 w_24;
+ b_3_8=add_x b_2_8 r_2_4; b_3_12=sub_x b_2_8 r_2_4; r_2_4=mul_x b_2_12 w_0;
+ b_3_9=add_x b_2_9 r_2_5; b_3_13=sub_x b_2_9 r_2_5; r_2_5=mul_x b_2_13 w_8;
+ b_3_10=add_x b_2_10 r_2_6; b_3_14=sub_x b_2_10 r_2_6; r_2_6=mul_x b_2_14 w_16;
+ b_3_11=add_x b_2_11 r_2_7; b_3_15=sub_x b_2_11 r_2_7; r_2_7=mul_x b_2_15 w_24;
+ b_3_16=add_x b_2_16 r_2_8; b_3_20=sub_x b_2_16 r_2_8; r_2_8=mul_x b_2_20 w_0;
+ b_3_17=add_x b_2_17 r_2_9; b_3_21=sub_x b_2_17 r_2_9; r_2_9=mul_x b_2_21 w_8;
+ b_3_18=add_x b_2_18 r_2_10; b_3_22=sub_x b_2_18 r_2_10; r_2_10=mul_x b_2_22 w_16;
+ b_3_19=add_x b_2_19 r_2_11; b_3_23=sub_x b_2_19 r_2_11; r_2_11=mul_x b_2_23 w_24;
+ b_3_24=add_x b_2_24 r_2_12; b_3_28=sub_x b_2_24 r_2_12; r_2_12=mul_x b_2_28 w_0;
+ b_3_25=add_x b_2_25 r_2_13; b_3_29=sub_x b_2_25 r_2_13; r_2_13=mul_x b_2_29 w_8;
+ b_3_26=add_x b_2_26 r_2_14; b_3_30=sub_x b_2_26 r_2_14; r_2_14=mul_x b_2_30 w_16;
+ b_3_27=add_x b_2_27 r_2_15; b_3_31=sub_x b_2_27 r_2_15; r_2_15=mul_x b_2_31 w_24;
+ b_3_32=add_x b_2_32 r_2_16; b_3_36=sub_x b_2_32 r_2_16; r_2_16=mul_x b_2_36 w_0;
+ b_3_33=add_x b_2_33 r_2_17; b_3_37=sub_x b_2_33 r_2_17; r_2_17=mul_x b_2_37 w_8;
+ b_3_34=add_x b_2_34 r_2_18; b_3_38=sub_x b_2_34 r_2_18; r_2_18=mul_x b_2_38 w_16;
+ b_3_35=add_x b_2_35 r_2_19; b_3_39=sub_x b_2_35 r_2_19; r_2_19=mul_x b_2_39 w_24;
+ b_3_40=add_x b_2_40 r_2_20; b_3_44=sub_x b_2_40 r_2_20; r_2_20=mul_x b_2_44 w_0;
+ b_3_41=add_x b_2_41 r_2_21; b_3_45=sub_x b_2_41 r_2_21; r_2_21=mul_x b_2_45 w_8;
+ b_3_42=add_x b_2_42 r_2_22; b_3_46=sub_x b_2_42 r_2_22; r_2_22=mul_x b_2_46 w_16;
+ b_3_43=add_x b_2_43 r_2_23; b_3_47=sub_x b_2_43 r_2_23; r_2_23=mul_x b_2_47 w_24;
+ b_3_48=add_x b_2_48 r_2_24; b_3_52=sub_x b_2_48 r_2_24; r_2_24=mul_x b_2_52 w_0;
+ b_3_49=add_x b_2_49 r_2_25; b_3_53=sub_x b_2_49 r_2_25; r_2_25=mul_x b_2_53 w_8;
+ b_3_50=add_x b_2_50 r_2_26; b_3_54=sub_x b_2_50 r_2_26; r_2_26=mul_x b_2_54 w_16;
+ b_3_51=add_x b_2_51 r_2_27; b_3_55=sub_x b_2_51 r_2_27; r_2_27=mul_x b_2_55 w_24;
+ b_3_56=add_x b_2_56 r_2_28; b_3_60=sub_x b_2_56 r_2_28; r_2_28=mul_x b_2_60 w_0;
+ b_3_57=add_x b_2_57 r_2_29; b_3_61=sub_x b_2_57 r_2_29; r_2_29=mul_x b_2_61 w_8;
+ b_3_58=add_x b_2_58 r_2_30; b_3_62=sub_x b_2_58 r_2_30; r_2_30=mul_x b_2_62 w_16;
+ b_3_59=add_x b_2_59 r_2_31; b_3_63=sub_x b_2_59 r_2_31; r_2_31=mul_x b_2_63 w_24;
+ b_4_0=add_x b_3_0 r_3_0; b_4_8=sub_x b_3_0 r_3_0; r_3_0=mul_x b_3_8 w_0;
+ b_4_1=add_x b_3_1 r_3_1; b_4_9=sub_x b_3_1 r_3_1; r_3_1=mul_x b_3_9 w_4;
+ b_4_2=add_x b_3_2 r_3_2; b_4_10=sub_x b_3_2 r_3_2; r_3_2=mul_x b_3_10 w_8;
+ b_4_3=add_x b_3_3 r_3_3; b_4_11=sub_x b_3_3 r_3_3; r_3_3=mul_x b_3_11 w_12;
+ b_4_4=add_x b_3_4 r_3_4; b_4_12=sub_x b_3_4 r_3_4; r_3_4=mul_x b_3_12 w_16;
+ b_4_5=add_x b_3_5 r_3_5; b_4_13=sub_x b_3_5 r_3_5; r_3_5=mul_x b_3_13 w_20;
+ b_4_6=add_x b_3_6 r_3_6; b_4_14=sub_x b_3_6 r_3_6; r_3_6=mul_x b_3_14 w_24;
+ b_4_7=add_x b_3_7 r_3_7; b_4_15=sub_x b_3_7 r_3_7; r_3_7=mul_x b_3_15 w_28;
+ b_4_16=add_x b_3_16 r_3_8; b_4_24=sub_x b_3_16 r_3_8; r_3_8=mul_x b_3_24 w_0;
+ b_4_17=add_x b_3_17 r_3_9; b_4_25=sub_x b_3_17 r_3_9; r_3_9=mul_x b_3_25 w_4;
+ b_4_18=add_x b_3_18 r_3_10; b_4_26=sub_x b_3_18 r_3_10; r_3_10=mul_x b_3_26 w_8;
+ b_4_19=add_x b_3_19 r_3_11; b_4_27=sub_x b_3_19 r_3_11; r_3_11=mul_x b_3_27 w_12;
+ b_4_20=add_x b_3_20 r_3_12; b_4_28=sub_x b_3_20 r_3_12; r_3_12=mul_x b_3_28 w_16;
+ b_4_21=add_x b_3_21 r_3_13; b_4_29=sub_x b_3_21 r_3_13; r_3_13=mul_x b_3_29 w_20;
+ b_4_22=add_x b_3_22 r_3_14; b_4_30=sub_x b_3_22 r_3_14; r_3_14=mul_x b_3_30 w_24;
+ b_4_23=add_x b_3_23 r_3_15; b_4_31=sub_x b_3_23 r_3_15; r_3_15=mul_x b_3_31 w_28;
+ b_4_32=add_x b_3_32 r_3_16; b_4_40=sub_x b_3_32 r_3_16; r_3_16=mul_x b_3_40 w_0;
+ b_4_33=add_x b_3_33 r_3_17; b_4_41=sub_x b_3_33 r_3_17; r_3_17=mul_x b_3_41 w_4;
+ b_4_34=add_x b_3_34 r_3_18; b_4_42=sub_x b_3_34 r_3_18; r_3_18=mul_x b_3_42 w_8;
+ b_4_35=add_x b_3_35 r_3_19; b_4_43=sub_x b_3_35 r_3_19; r_3_19=mul_x b_3_43 w_12;
+ b_4_36=add_x b_3_36 r_3_20; b_4_44=sub_x b_3_36 r_3_20; r_3_20=mul_x b_3_44 w_16;
+ b_4_37=add_x b_3_37 r_3_21; b_4_45=sub_x b_3_37 r_3_21; r_3_21=mul_x b_3_45 w_20;
+ b_4_38=add_x b_3_38 r_3_22; b_4_46=sub_x b_3_38 r_3_22; r_3_22=mul_x b_3_46 w_24;
+ b_4_39=add_x b_3_39 r_3_23; b_4_47=sub_x b_3_39 r_3_23; r_3_23=mul_x b_3_47 w_28;
+ b_4_48=add_x b_3_48 r_3_24; b_4_56=sub_x b_3_48 r_3_24; r_3_24=mul_x b_3_56 w_0;
+ b_4_49=add_x b_3_49 r_3_25; b_4_57=sub_x b_3_49 r_3_25; r_3_25=mul_x b_3_57 w_4;
+ b_4_50=add_x b_3_50 r_3_26; b_4_58=sub_x b_3_50 r_3_26; r_3_26=mul_x b_3_58 w_8;
+ b_4_51=add_x b_3_51 r_3_27; b_4_59=sub_x b_3_51 r_3_27; r_3_27=mul_x b_3_59 w_12;
+ b_4_52=add_x b_3_52 r_3_28; b_4_60=sub_x b_3_52 r_3_28; r_3_28=mul_x b_3_60 w_16;
+ b_4_53=add_x b_3_53 r_3_29; b_4_61=sub_x b_3_53 r_3_29; r_3_29=mul_x b_3_61 w_20;
+ b_4_54=add_x b_3_54 r_3_30; b_4_62=sub_x b_3_54 r_3_30; r_3_30=mul_x b_3_62 w_24;
+ b_4_55=add_x b_3_55 r_3_31; b_4_63=sub_x b_3_55 r_3_31; r_3_31=mul_x b_3_63 w_28;
+ b_5_0=add_x b_4_0 r_4_0; b_5_16=sub_x b_4_0 r_4_0; r_4_0=mul_x b_4_16 w_0;
+ b_5_1=add_x b_4_1 r_4_1; b_5_17=sub_x b_4_1 r_4_1; r_4_1=mul_x b_4_17 w_2;
+ b_5_2=add_x b_4_2 r_4_2; b_5_18=sub_x b_4_2 r_4_2; r_4_2=mul_x b_4_18 w_4;
+ b_5_3=add_x b_4_3 r_4_3; b_5_19=sub_x b_4_3 r_4_3; r_4_3=mul_x b_4_19 w_6;
+ b_5_4=add_x b_4_4 r_4_4; b_5_20=sub_x b_4_4 r_4_4; r_4_4=mul_x b_4_20 w_8;
+ b_5_5=add_x b_4_5 r_4_5; b_5_21=sub_x b_4_5 r_4_5; r_4_5=mul_x b_4_21 w_10;
+ b_5_6=add_x b_4_6 r_4_6; b_5_22=sub_x b_4_6 r_4_6; r_4_6=mul_x b_4_22 w_12;
+ b_5_7=add_x b_4_7 r_4_7; b_5_23=sub_x b_4_7 r_4_7; r_4_7=mul_x b_4_23 w_14;
+ b_5_8=add_x b_4_8 r_4_8; b_5_24=sub_x b_4_8 r_4_8; r_4_8=mul_x b_4_24 w_16;
+ b_5_9=add_x b_4_9 r_4_9; b_5_25=sub_x b_4_9 r_4_9; r_4_9=mul_x b_4_25 w_18;
+ b_5_10=add_x b_4_10 r_4_10; b_5_26=sub_x b_4_10 r_4_10; r_4_10=mul_x b_4_26 w_20;
+ b_5_11=add_x b_4_11 r_4_11; b_5_27=sub_x b_4_11 r_4_11; r_4_11=mul_x b_4_27 w_22;
+ b_5_12=add_x b_4_12 r_4_12; b_5_28=sub_x b_4_12 r_4_12; r_4_12=mul_x b_4_28 w_24;
+ b_5_13=add_x b_4_13 r_4_13; b_5_29=sub_x b_4_13 r_4_13; r_4_13=mul_x b_4_29 w_26;
+ b_5_14=add_x b_4_14 r_4_14; b_5_30=sub_x b_4_14 r_4_14; r_4_14=mul_x b_4_30 w_28;
+ b_5_15=add_x b_4_15 r_4_15; b_5_31=sub_x b_4_15 r_4_15; r_4_15=mul_x b_4_31 w_30;
+ b_5_32=add_x b_4_32 r_4_16; b_5_48=sub_x b_4_32 r_4_16; r_4_16=mul_x b_4_48 w_0;
+ b_5_33=add_x b_4_33 r_4_17; b_5_49=sub_x b_4_33 r_4_17; r_4_17=mul_x b_4_49 w_2;
+ b_5_34=add_x b_4_34 r_4_18; b_5_50=sub_x b_4_34 r_4_18; r_4_18=mul_x b_4_50 w_4;
+ b_5_35=add_x b_4_35 r_4_19; b_5_51=sub_x b_4_35 r_4_19; r_4_19=mul_x b_4_51 w_6;
+ b_5_36=add_x b_4_36 r_4_20; b_5_52=sub_x b_4_36 r_4_20; r_4_20=mul_x b_4_52 w_8;
+ b_5_37=add_x b_4_37 r_4_21; b_5_53=sub_x b_4_37 r_4_21; r_4_21=mul_x b_4_53 w_10;
+ b_5_38=add_x b_4_38 r_4_22; b_5_54=sub_x b_4_38 r_4_22; r_4_22=mul_x b_4_54 w_12;
+ b_5_39=add_x b_4_39 r_4_23; b_5_55=sub_x b_4_39 r_4_23; r_4_23=mul_x b_4_55 w_14;
+ b_5_40=add_x b_4_40 r_4_24; b_5_56=sub_x b_4_40 r_4_24; r_4_24=mul_x b_4_56 w_16;
+ b_5_41=add_x b_4_41 r_4_25; b_5_57=sub_x b_4_41 r_4_25; r_4_25=mul_x b_4_57 w_18;
+ b_5_42=add_x b_4_42 r_4_26; b_5_58=sub_x b_4_42 r_4_26; r_4_26=mul_x b_4_58 w_20;
+ b_5_43=add_x b_4_43 r_4_27; b_5_59=sub_x b_4_43 r_4_27; r_4_27=mul_x b_4_59 w_22;
+ b_5_44=add_x b_4_44 r_4_28; b_5_60=sub_x b_4_44 r_4_28; r_4_28=mul_x b_4_60 w_24;
+ b_5_45=add_x b_4_45 r_4_29; b_5_61=sub_x b_4_45 r_4_29; r_4_29=mul_x b_4_61 w_26;
+ b_5_46=add_x b_4_46 r_4_30; b_5_62=sub_x b_4_46 r_4_30; r_4_30=mul_x b_4_62 w_28;
+ b_5_47=add_x b_4_47 r_4_31; b_5_63=sub_x b_4_47 r_4_31; r_4_31=mul_x b_4_63 w_30;
+ b_6_0=add_x b_5_0 r_5_0; b_6_32=sub_x b_5_0 r_5_0; r_5_0=mul_x b_5_32 w_0;
+ b_6_1=add_x b_5_1 r_5_1; b_6_33=sub_x b_5_1 r_5_1; r_5_1=mul_x b_5_33 w_1;
+ b_6_2=add_x b_5_2 r_5_2; b_6_34=sub_x b_5_2 r_5_2; r_5_2=mul_x b_5_34 w_2;
+ b_6_3=add_x b_5_3 r_5_3; b_6_35=sub_x b_5_3 r_5_3; r_5_3=mul_x b_5_35 w_3;
+ b_6_4=add_x b_5_4 r_5_4; b_6_36=sub_x b_5_4 r_5_4; r_5_4=mul_x b_5_36 w_4;
+ b_6_5=add_x b_5_5 r_5_5; b_6_37=sub_x b_5_5 r_5_5; r_5_5=mul_x b_5_37 w_5;
+ b_6_6=add_x b_5_6 r_5_6; b_6_38=sub_x b_5_6 r_5_6; r_5_6=mul_x b_5_38 w_6;
+ b_6_7=add_x b_5_7 r_5_7; b_6_39=sub_x b_5_7 r_5_7; r_5_7=mul_x b_5_39 w_7;
+ b_6_8=add_x b_5_8 r_5_8; b_6_40=sub_x b_5_8 r_5_8; r_5_8=mul_x b_5_40 w_8;
+ b_6_9=add_x b_5_9 r_5_9; b_6_41=sub_x b_5_9 r_5_9; r_5_9=mul_x b_5_41 w_9;
+ b_6_10=add_x b_5_10 r_5_10; b_6_42=sub_x b_5_10 r_5_10; r_5_10=mul_x b_5_42 w_10;
+ b_6_11=add_x b_5_11 r_5_11; b_6_43=sub_x b_5_11 r_5_11; r_5_11=mul_x b_5_43 w_11;
+ b_6_12=add_x b_5_12 r_5_12; b_6_44=sub_x b_5_12 r_5_12; r_5_12=mul_x b_5_44 w_12;
+ b_6_13=add_x b_5_13 r_5_13; b_6_45=sub_x b_5_13 r_5_13; r_5_13=mul_x b_5_45 w_13;
+ b_6_14=add_x b_5_14 r_5_14; b_6_46=sub_x b_5_14 r_5_14; r_5_14=mul_x b_5_46 w_14;
+ b_6_15=add_x b_5_15 r_5_15; b_6_47=sub_x b_5_15 r_5_15; r_5_15=mul_x b_5_47 w_15;
+ b_6_16=add_x b_5_16 r_5_16; b_6_48=sub_x b_5_16 r_5_16; r_5_16=mul_x b_5_48 w_16;
+ b_6_17=add_x b_5_17 r_5_17; b_6_49=sub_x b_5_17 r_5_17; r_5_17=mul_x b_5_49 w_17;
+ b_6_18=add_x b_5_18 r_5_18; b_6_50=sub_x b_5_18 r_5_18; r_5_18=mul_x b_5_50 w_18;
+ b_6_19=add_x b_5_19 r_5_19; b_6_51=sub_x b_5_19 r_5_19; r_5_19=mul_x b_5_51 w_19;
+ b_6_20=add_x b_5_20 r_5_20; b_6_52=sub_x b_5_20 r_5_20; r_5_20=mul_x b_5_52 w_20;
+ b_6_21=add_x b_5_21 r_5_21; b_6_53=sub_x b_5_21 r_5_21; r_5_21=mul_x b_5_53 w_21;
+ b_6_22=add_x b_5_22 r_5_22; b_6_54=sub_x b_5_22 r_5_22; r_5_22=mul_x b_5_54 w_22;
+ b_6_23=add_x b_5_23 r_5_23; b_6_55=sub_x b_5_23 r_5_23; r_5_23=mul_x b_5_55 w_23;
+ b_6_24=add_x b_5_24 r_5_24; b_6_56=sub_x b_5_24 r_5_24; r_5_24=mul_x b_5_56 w_24;
+ b_6_25=add_x b_5_25 r_5_25; b_6_57=sub_x b_5_25 r_5_25; r_5_25=mul_x b_5_57 w_25;
+ b_6_26=add_x b_5_26 r_5_26; b_6_58=sub_x b_5_26 r_5_26; r_5_26=mul_x b_5_58 w_26;
+ b_6_27=add_x b_5_27 r_5_27; b_6_59=sub_x b_5_27 r_5_27; r_5_27=mul_x b_5_59 w_27;
+ b_6_28=add_x b_5_28 r_5_28; b_6_60=sub_x b_5_28 r_5_28; r_5_28=mul_x b_5_60 w_28;
+ b_6_29=add_x b_5_29 r_5_29; b_6_61=sub_x b_5_29 r_5_29; r_5_29=mul_x b_5_61 w_29;
+ b_6_30=add_x b_5_30 r_5_30; b_6_62=sub_x b_5_30 r_5_30; r_5_30=mul_x b_5_62 w_30;
+ b_6_31=add_x b_5_31 r_5_31; b_6_63=sub_x b_5_31 r_5_31; r_5_31=mul_x b_5_63 w_31;
+ w_0=fw_d sector_64 0.0;
+ w_1=fw_d sector_64 1.0;
+ w_2=fw_d sector_64 2.0;
+ w_3=fw_d sector_64 3.0;
+ w_4=fw_d sector_64 4.0;
+ w_5=fw_d sector_64 5.0;
+ w_6=fw_d sector_64 6.0;
+ w_7=fw_d sector_64 7.0;
+ w_8=fw_d sector_64 8.0;
+ w_9=fw_d sector_64 9.0;
+ w_10=fw_d sector_64 10.0;
+ w_11=fw_d sector_64 11.0;
+ w_12=fw_d sector_64 12.0;
+ w_13=fw_d sector_64 13.0;
+ w_14=fw_d sector_64 14.0;
+ w_15=fw_d sector_64 15.0;
+ w_16=fw_d sector_64 16.0;
+ w_17=fw_d sector_64 17.0;
+ w_18=fw_d sector_64 18.0;
+ w_19=fw_d sector_64 19.0;
+ w_20=fw_d sector_64 20.0;
+ w_21=fw_d sector_64 21.0;
+ w_22=fw_d sector_64 22.0;
+ w_23=fw_d sector_64 23.0;
+ w_24=fw_d sector_64 24.0;
+ w_25=fw_d sector_64 25.0;
+ w_26=fw_d sector_64 26.0;
+ w_27=fw_d sector_64 27.0;
+ w_28=fw_d sector_64 28.0;
+ w_29=fw_d sector_64 29.0;
+ w_30=fw_d sector_64 30.0;
+ w_31=fw_d sector_64 31.0
+ IN b_6_0:b_6_1:b_6_2:b_6_3:b_6_4:b_6_5:b_6_6:b_6_7:
+ b_6_8:b_6_9:b_6_10:b_6_11:b_6_12:b_6_13:b_6_14:b_6_15:
+ b_6_16:b_6_17:b_6_18:b_6_19:b_6_20:b_6_21:b_6_22:b_6_23:
+ b_6_24:b_6_25:b_6_26:b_6_27:b_6_28:b_6_29:b_6_30:b_6_31:
+ b_6_32:b_6_33:b_6_34:b_6_35:b_6_36:b_6_37:b_6_38:b_6_39:
+ b_6_40:b_6_41:b_6_42:b_6_43:b_6_44:b_6_45:b_6_46:b_6_47:
+ b_6_48:b_6_49:b_6_50:b_6_51:b_6_52:b_6_53:b_6_54:b_6_55:
+ b_6_56:b_6_57:b_6_58:b_6_59:b_6_60:b_6_61:b_6_62:b_6_63:NIL;
+INLINE sector_64=pi/32.0;
+
+end

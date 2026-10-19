@@ -1,0 +1,31 @@
+
+
+
+
+      , insertSort
+      , mergeSort
+      , quickSort
+      , quickSort2
+      , quickerSort
+      , treeSort
+      , treeSort2
+      [ heapSort
+      ]
+    (_:s:_) <- getArgs
+    f <- readFile s
+    print (hash (mangle f))
+    sort = foldr (.) id (intersperse reverse sorts)
+    sorts =
+  (n:_) <- getArgs
+  = (unlines . sort . lines) inpt
+  replicateM_ (read n) $ do
+  where
+import Control.Monad (replicateM_)
+import Data.List (intersperse)
+import NofibUtils (hash)
+import Sort
+import System.Environment (getArgs)
+main = do
+mangle :: String{-input to sort-} -> String{-output-}
+mangle inpt
+module Main where

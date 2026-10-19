@@ -1,0 +1,35 @@
+%module  "wavestream"
+%include "~pieter/lib/fast2mira"
+%include "../synch/misc"
+%include "wavematrix"
+%include "wavelib"
+ts1 = (:) tb1 hs1;
+hs1 = map fh vs1 v'b1 ur1;
+vs1 = map fv us1 uo1 ho1 uor1 ur1;
+us1 = map fu ts1 vhl1 vbl1 vb1;
+ur1 = map getur us2;
+uo1 = map getuo us3;
+ho1 = map getho ts3;
+uor1 = map getuor uo2;
+ts2 = (:) tb2 hs2;
+hs2 = map fh vs2 v'b2 ur2;
+vs2 = map fv us2 uo2 ho2 uor2 ur2;
+us2 = map fu ts2 vhl2 vbl2 vb2;
+uo2 = map getuo us4;
+ho2 = map getho ts4;
+vhl2 = map getvhl ts1;
+ts3 = (:) tb3 hs3;
+hs3 = map fh vs3 v'b3 ur3;
+vs3 = map fv us3 uo3 ho3 uor3 ur3;
+us3 = map fu ts3 vhl3 vbl3 vb3;
+vb3 = map getvb ts1;
+v'b3 = map getvb vs1;
+ur3 = map getur us4;
+ts4 = (:) tb4 hs4;
+hs4 = map fh vs4 v'b4 ur4;
+vs4 = map fv us4 uo4 ho4 uor4 ur4;
+us4 = map fu ts4 vhl4 vbl4 vb4;
+vb4 = map getvb ts2;
+v'b4 = map getvb vs2;
+vhl4 = map getvhl ts3;
+vbl4 = map getvbl vb3;

@@ -1,0 +1,7 @@
+{
+  "ghc_version": "9.4.7",
+  "ghc_version_full": "The Glorious Glasgow Haskell Compilation System, version 9.4.7",
+  "transformers_version": "version: 0.5.6.2",
+  "transformers_source_revision": "0fe761c9287111373ae64ab39b67fbcde212b3f7",
+  "source_sha256": "22a07143ed415e43596b2f0086e099ed84982afd0b4d3b16369f9654b7faafbd"
+}

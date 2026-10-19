@@ -1,0 +1,45 @@
+(executable (name kronecker) (modules kronecker))
+
+(library
+  (name generateSeq)
+  (modules generateSeq)
+  (libraries graphTypes)
+)
+
+(executable
+  (name gen)
+  (modules gen)
+  (libraries unix generateSeq)
+)
+
+(library
+  (name sparseGraphSeq)
+  (modules sparseGraphSeq)
+  (libraries graphTypes)
+)
+
+(library
+  (name kernel1Seq)
+  (modules kernel1Seq)
+  (libraries generateSeq sparseGraphSeq unix)
+)
+
+(executable
+  (name kernel1_run)
+  (modules kernel1_run)
+  (libraries graphTypes generateSeq kernel1Seq unix)
+)
+
+(rule
+  (targets edges.data)
+  (deps (:prog gen.exe))
+  (action (run %{prog} -scale 21 -edgefactor 16 %{targets})))
+
+(alias
+  (name buildbench)
+  (deps kronecker.exe kernel1_run.exe edges.data)
+)
+
+(alias
+  (name multibench_parallel)
+  (deps kernel1_run.exe edges.data))

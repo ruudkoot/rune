@@ -1,0 +1,3 @@
+upstream/** -text -whitespace
+*.report -text -whitespace
+*.model -text -whitespace

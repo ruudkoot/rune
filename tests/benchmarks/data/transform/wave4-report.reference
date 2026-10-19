@@ -1,0 +1,148 @@
+cat - <<'end' > wave4.dir/v.m
+|| wave4.dir v = v
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+%include "~pieter/mira/wave4/wave4.m"
+||
+output	= ((:) dummy_output a9);
+a1	= (maps_1 one_of_two two_of_two mf0 a7);
+a2	= (maps_1 one_of_two two_of_two mg0 a8);
+a3	= (map_1 first_borders a2);
+a4	= (map_2 fu a1 a3);
+a5	= (map_1 gu a2);
+a6	= (map_1 last_borders a4);
+a7	= (map_1 fvh a4);
+a8	= (map_2 gvh a5 a6);
+a9	= (map_2 join a1 a2);
+one_of_two x y	= x;
+two_of_two x y	= y;
+end
+cat - <<'end' > wave4.dir/v0.m
+|| wave4.dir v0 = inl v
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+%include "~pieter/mira/wave4/wave4.m"
+||
+output	= ((:) dummy_output a9);
+a1	= (maps_1 one_of_two two_of_two mf0 a7);
+a2	= (maps_1 one_of_two two_of_two mg0 a8);
+a3	= (map_1 first_borders a2);
+a4	= (map_2 fu a1 a3);
+a5	= (map_1 gu a2);
+a6	= (map_1 last_borders a4);
+a7	= (map_1 fvh a4);
+a8	= (map_2 gvh a5 a6);
+a9	= (map_2 join a1 a2);
+one_of_two x y	= x;
+two_of_two x y	= y;
+end
+cat - <<'end' > wave4.dir/v1.m
+|| wave4.dir v1 = t1 v0
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+%include "~pieter/mira/wave4/wave4.m"
+||
+output	= ((:) dummy_output a9);
+a1	= (maps_1 one_of_two two_of_two mf0 a7);
+a2	= (maps_1 one_of_two two_of_two mg0 a8);
+a3	= (map_1 first_borders a2);
+a4	= (map_2 fu a1 a3);
+a5	= (map_1 gu a2);
+a6	= (map_1 last_borders a4);
+a7	= (map_1 fvh a4);
+a8	= (map_2 gvh a5 a6);
+a9	= (map_2 join a1 a2);
+one_of_two x y	= x;
+two_of_two x y	= y;
+end
+cat - <<'end' > wave4.dir/v3.m
+|| wave4.dir v3 = t3 v1
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+%include "~pieter/mira/wave4/wave4.m"
+||
+output	= ((:) dummy_output a9);
+a1	= (map_2 one_of_two xxb3 a7);
+a2	= (map_2 one_of_two xxb5 a8);
+a3	= (map_1 first_borders a2);
+a4	= (map_2 fu a1 a3);
+a5	= (map_1 gu a2);
+a6	= (map_1 last_borders a4);
+a7	= (map_1 fvh a4);
+a8	= (map_2 gvh a5 a6);
+a9	= (map_2 join a1 a2);
+xxb3	= ((:) mf0 xxc3);
+xxb5	= ((:) mg0 xxc5);
+xxc3	= (map_2 two_of_two xxb3 a7);
+xxc5	= (map_2 two_of_two xxb5 a8);
+one_of_two x y	= x;
+two_of_two x y	= y;
+end
+cat - <<'end' > wave4.dir/v5.m
+|| wave4.dir v5 = t5 v3
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+%include "~pieter/mira/wave4/wave4.m"
+||
+output	= ((:) dummy_output a9);
+xxb3	= ((:) mf0 xxc3);
+xxb5	= ((:) mg0 xxc5);
+a1	= (map_2 one_of_two xxb3 a7);
+a2	= (map_2 one_of_two xxb5 a8);
+a3	= (map_1 first_borders a2);
+a4	= (map_2 fu a1 a3);
+a5	= (map_1 gu a2);
+a6	= (map_1 last_borders a4);
+a7	= (map_1 fvh a4);
+a8	= (map_2 gvh a5 a6);
+a9	= (map_2 join a1 a2);
+xxc3	= (map_2 two_of_two xxb3 a7);
+xxc5	= (map_2 two_of_two xxb5 a8);
+one_of_two x y	= x;
+two_of_two x y	= y;
+end
+cat - <<'end' > wave4.dir/v6.m
+|| wave4.dir v6 = t6 v5
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+%include "~pieter/mira/wave4/wave4.m"
+||
+output1	= (map_1 sel_3 (maps_0 id_1 nextstate (dummy_output,mf0,mg0) ));
+nextstate s
+= (a9,xxc3,xxc5)
+  where
+  (output,xxb3,xxb5)	= s;
+  a1	= xxb3;
+  a2	= xxb5;
+  a3	= (first_borders a2);
+  a4	= (fu a1 a3);
+  a5	= (gu a2);
+  a6	= (last_borders a4);
+  a7	= (fvh a4);
+  a8	= (gvh a5 a6);
+  a9	= (join a1 a2);
+  xxc3	= a7;
+  xxc5	= a8;;
+output	= ((:) dummy_output a9);
+xxb3	= ((:) mf0 xxc3);
+xxb5	= ((:) mg0 xxc5);
+a1	= (map_2 one_of_two xxb3 a7);
+a2	= (map_2 one_of_two xxb5 a8);
+a3	= (map_1 first_borders a2);
+a4	= (map_2 fu a1 a3);
+a5	= (map_1 gu a2);
+a6	= (map_1 last_borders a4);
+a7	= (map_1 fvh a4);
+a8	= (map_2 gvh a5 a6);
+a9	= (map_2 join a1 a2);
+xxc3	= (map_2 two_of_two xxb3 a7);
+xxc5	= (map_2 two_of_two xxb5 a8);
+one_of_two x y	= x;
+two_of_two x y	= y;
+end

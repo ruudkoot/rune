@@ -1,0 +1,8 @@
+
+
+Succeeded, with:
+   Size env = 21
+   Next token = (99997,99997,Leof,"")
+
+   Result = MkModule "Parser" [MkTopV (MkValBind 12 (LhsPat (PatVar "panic")) (ExprVar "error")),MkTopV (MkValBind 16 (LhsPat (PatVar "paLiteral")) (ExprApp (ExprVar "pgAlts") (ExprList [ExprApp (ExprApp (ExprVar "pgApply") (ExprApp (ExprApp (ExprVar ".") (ExprCon "LiteralInt")) (ExprVar "leStringToInt"))) (ExprApp (ExprVar "pgItem") (ExprCon "Lintlit")),ExprApp (ExprApp (ExprVar "pgApply") (ExprApp (ExprApp (ExprVar ".") (ExprCon "LiteralChar")) (ExprVar "head"))) (ExprApp (ExprVar "pgItem") (ExprCon "Lcharlit")),ExprApp (ExprApp (ExprVar "pgApply") (ExprCon "LiteralString")) (ExprApp (ExprVar "pgItem") (ExprCon "Lstringlit"))]))),MkTopV (MkValBind 24 (LhsPat (PatVar "paExpr")) (ExprApp (ExprVar "pgAlts") (ExprList [ExprVar "paCaseExpr",ExprVar "paLetExpr",ExprVar "paLamExpr",ExprVar "paIfExpr",ExprVar "paUnaryMinusExpr",ExprApp (ExprVar "hsDoExpr") (ExprList [])]))),MkTopV (MkValBind 35 (LhsPat (PatVar "paUnaryMinusExpr")) (ExprApp (ExprApp (ExprApp (ExprVar "pgThen2") (ExprLam [PatVar "minus",PatTuple [PatWild,PatVar "aexpr",PatWild]] (ExprApp (ExprApp (ExprCon "ExprApp") (ExprApp (ExprApp (ExprCon "ExprApp") (ExprApp (ExprCon "ExprVar") (ExprLiteral (LiteralString "-")))) (ExprApp (ExprCon "ExprLiteral") (ExprApp (ExprCon "LiteralInt") (ExprLiteral (LiteralInt 0)))))) (ExprVar "aexpr")))) (ExprVar "paMinus")) (ExprVar "paAExpr")))]
+

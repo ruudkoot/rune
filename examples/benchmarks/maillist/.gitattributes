@@ -1,0 +1,2 @@
+# Exact LaTeX labels end with the original backslash/backslash/space sequence.
+expected/*.tex -whitespace

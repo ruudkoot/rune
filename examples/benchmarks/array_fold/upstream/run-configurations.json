@@ -1,0 +1,17 @@
+[
+  {
+    "source": "run_config.json",
+    "entry": {
+      "executable": "benchmarks/stdlib/array_bench.exe",
+      "name": "array_bench",
+      "tags": [
+        "lt_1s"
+      ],
+      "runs": [
+        {
+          "params": "array_fold 1000 100000"
+        }
+      ]
+    }
+  }
+]

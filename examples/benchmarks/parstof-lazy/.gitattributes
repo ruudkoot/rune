@@ -1,0 +1,2 @@
+upstream/** -text -whitespace
+program.input -text -whitespace

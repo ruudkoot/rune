@@ -1,0 +1,3 @@
+# Preserve exact upstream grammar and generated-parser fixture bytes.
+*.reference -whitespace
+*.y -whitespace

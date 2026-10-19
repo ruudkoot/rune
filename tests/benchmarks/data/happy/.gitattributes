@@ -1,0 +1,3 @@
+# Original generated parser and input bytes are the correctness oracles.
+*.reference -whitespace
+*.y -whitespace

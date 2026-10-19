@@ -1,0 +1,32 @@
+[
+  {
+    "path": "smoke.fasta",
+    "bytes": 1095,
+    "sha256": "55993adf1577664cdad47f4988156ec7063407641576ed01e09162ac1577b7f5"
+  },
+  {
+    "path": "smoke.output",
+    "bytes": 259,
+    "sha256": "880de6d717b6d975bb6d3dac1b54262c5ce0ee76d86c86e580cf5626e3c004e8"
+  },
+  {
+    "path": "normal.fasta",
+    "bytes": 508411,
+    "sha256": "6b40f34703840e073cef7fd62cc95a65f280ba1cf3891aa189a820fe0e081f06"
+  },
+  {
+    "path": "normal.output",
+    "bytes": 274,
+    "sha256": "24ade570ad697631733bca6ecb310817cd6caed181d8471a68b74005bd75f970"
+  },
+  {
+    "path": "large.fasta",
+    "bytes": 5083411,
+    "sha256": "1dc21045102d2131a8ad4ee8cc426053b17bde4fe108539af7da33eb317fca93"
+  },
+  {
+    "path": "large.output",
+    "bytes": 286,
+    "sha256": "dd7aecb6cd9a7fdce36fd86d8a7e1c06a1dd8bfa6209e43aea3dd0e0f3a82947"
+  }
+]

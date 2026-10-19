@@ -1,0 +1,15 @@
+[
+  {
+    "executable": "benchmarks/multicore-numerical/quicksort.exe",
+    "name": "quicksort",
+    "tags": [
+      "1s_10s",
+      "macro_bench"
+    ],
+    "runs": [
+      {
+        "params": "4000000"
+      }
+    ]
+  }
+]

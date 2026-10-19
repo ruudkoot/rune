@@ -1,0 +1,3 @@
+*.exacttrace -text -whitespace
+*.in -text -whitespace
+*.data -text -whitespace

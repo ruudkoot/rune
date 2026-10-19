@@ -1,0 +1,80 @@
+cat - <<'end' > fibsum.dir/v.m
+|| fibsum.dir v = v
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+||
+output	= (maps_1 (+) (+) 0 a);
+a	= ((:) 0 b);
+b	= ((:) 1 c);
+c	= (map_2 (+) a (tl a));
+end
+cat - <<'end' > fibsum.dir/v0.m
+|| fibsum.dir v0 = inl v
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+||
+output	= (maps_1 (+) (+) 0 a);
+a	= ((:) 0 b);
+b	= ((:) 1 c);
+c	= (map_2 (+) a (tl a));
+end
+cat - <<'end' > fibsum.dir/v1.m
+|| fibsum.dir v1 = t1 v0
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+||
+output	= (maps_1 (+) (+) 0 a);
+a	= ((:) 0 b);
+b	= ((:) 1 c);
+c	= (map_2 (+) a xxa8);
+xxa8	= (tl a);
+end
+cat - <<'end' > fibsum.dir/v3.m
+|| fibsum.dir v3 = t3 v1
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+||
+output	= (map_2 (+) xxb1 a);
+a	= ((:) 0 b);
+b	= ((:) 1 c);
+c	= (map_2 (+) a xxa8);
+xxa8	= (tl a);
+xxb1	= ((:) 0 output);
+end
+cat - <<'end' > fibsum.dir/v5.m
+|| fibsum.dir v5 = t5 v3
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+||
+output	= ((:) ((+) (hd xxb1) (hd a)) xxv1);
+a	= ((:) 0 b);
+b	= ((:) 1 c);
+xxb1	= ((:) 0 output);
+xxv1	= (map_2 (+) output b);
+c	= (map_2 (+) a b);
+end
+cat - <<'end' > fibsum.dir/v6.m
+|| fibsum.dir v6 = t6 v5
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+||
+output1	= (map_1 sel_3 (maps_0 id_1 nextstate (((+) (hd xxb1) (hd a)),0,1) ));
+nextstate s
+= (xxv1,b,c)
+  where
+  (output,a,b)	= s;
+  c	= ((+) a b);
+  xxv1	= ((+) output b);;
+output	= ((:) ((+) (hd xxb1) (hd a)) xxv1);
+a	= ((:) 0 b);
+b	= ((:) 1 c);
+xxb1	= ((:) 0 output);
+xxv1	= (map_2 (+) output b);
+c	= (map_2 (+) a b);
+end

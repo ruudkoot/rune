@@ -1,0 +1,119 @@
+
+Jules's Strictness Analyser, version 0.400
+Copyright (c) Julian Seward 1992
+Read 9 lattice sizes.
+
+
+=============
+=== Input ===
+=============
+
+day  ::= Monday  |
+         Tuesday  |
+         Wednesday  |
+         Thursday  |
+         Friday  |
+         Saturday  |
+         Sunday ;
+
+
+domain  ::= Unit  |
+            Lift (domain );
+
+
+pair a b ::= Pair a b;
+
+
+list a ::= Nil  |
+           Cons a (list a);
+
+
+tree a ::= Leaf  |
+           Branch (tree a) a (tree a);
+
+
+assoc a b ::= NilAssoc  |
+              Assoc a b (assoc a b);
+
+;;
+
+letrec
+  _z4 = \l1 l2 -> case l1 of
+                    Nil  -> Nil;
+                    Cons x xs -> case l2 of
+                                   Nil  -> Nil;
+                                   Cons y ys -> Cons (_+ x y) (_z4 xs ys)
+                                 end
+                  end
+in 42
+
+
+=============
+=== Types ===
+=============
+
+   _z4 ::                    (list int) ->  (list int) ->  (list int)
+   Monday ::                 (day)
+   Tuesday ::                (day)
+   Wednesday ::              (day)
+   Thursday ::               (day)
+   Friday ::                 (day)
+   Saturday ::               (day)
+   Sunday ::                 (day)
+   Unit ::                   (domain)
+   Lift ::                   (domain) ->  (domain)
+   Pair ::                   a ->  b ->  (pair a b)
+   Nil ::                    (list a)
+   Cons ::                   a ->  (list a) ->  (list a)
+   Leaf ::                   (tree a)
+   Branch ::                 (tree a) ->  a ->  (tree a) ->  (tree a)
+   NilAssoc ::               (assoc a b)
+   Assoc ::                  a ->  b ->  (assoc a b) ->  (assoc a b)
+   True ::                   bool
+   False ::                  bool
+
+
+================
+=== Settings ===
+================
+
+Scaleup ratio = 20/10
+Lower lattice size limit = 0
+Upper lattice size limit = 1000000
+Polymorphic generalisation limit = 10000
+
+
+==================
+=== Strictness ===
+==================
+
+Domains for "_z4" are
+       4   [Two,Two]
+       8   [Lift2 [Two],Two]
+      16   [Lift2 [Two],Lift2 [Two]]
+
+Evaluated at size       4 using    6 evals live "_z4"
+Evaluated at size       4 using    6 evals live "_z4"
+Evaluated at size       4 using    6 evals safe "_z4"
+Evaluated at size       8 using    6 evals live "_z4"
+Evaluated at size       8 using    3 evals live "_z4"
+Evaluated at size       8 using    3 evals safe "_z4"
+Evaluated at size      16 using    4 evals live "_z4"
+Evaluated at size      16 using    2 evals live "_z4"
+Evaluated at size      16 using    2 evals safe "_z4"
+
+Function "_z4" has input domains:
+   1) {0 1 2 3}
+   2) {0 1 2 3}
+   and output domain
+      {0 1 2 3}
+
+   Output  |  Lower frontier
+   --------+----------------
+       3   |  1 3 and 3 0
+       2   |  1 2 and 2 1
+       1   |  1 1
+       0   |  0 0
+
+
+

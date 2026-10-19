@@ -1,0 +1,3 @@
+TYPE tList a = [ N | C, a, tList a ];
+FTYPE id = #a -> #a;
+id x = x;

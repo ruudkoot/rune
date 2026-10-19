@@ -1,0 +1,1 @@
+main x = IF x < 2 THEN 1 ELIF x == 2 THEN 2 ELSE 3 FI;

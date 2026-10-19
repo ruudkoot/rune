@@ -1,0 +1,2 @@
+upstream/** -text -whitespace
+batch.render -text -whitespace

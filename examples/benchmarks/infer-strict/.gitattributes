@@ -1,0 +1,2 @@
+data/*.input -text -whitespace
+data/*.text -text -whitespace

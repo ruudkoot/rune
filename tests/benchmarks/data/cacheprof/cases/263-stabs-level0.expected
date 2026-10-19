@@ -1,0 +1,3 @@
+.file "guess.c"
+f:
+	movl (%eax),%ebx

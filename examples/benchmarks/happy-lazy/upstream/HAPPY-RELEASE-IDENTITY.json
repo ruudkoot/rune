@@ -1,0 +1,137 @@
+{
+  "url": "https://hackage-content.haskell.org/package/happy-1.16.tar.gz",
+  "sha256": "4da47f4904dbdddfb58140edb0395383feba72dfc77759e57587a526dd9496c5",
+  "bytes": 226566,
+  "notices": [
+    {
+      "member": "happy-1.16/LICENSE",
+      "sha256": "079dc8e9d7f062d789196fd8733ee252ebadeb265726f70fef14753b52432bbc",
+      "bytes": 1461
+    },
+    {
+      "member": "happy-1.16/README",
+      "sha256": "d87f81ed0342efe0439b62e83780bcbbe0aed6b296c947b8e118de868006f301",
+      "bytes": 681
+    },
+    {
+      "member": "happy-1.16/happy.cabal",
+      "sha256": "aab1d24541e55e973139f2d387ec02ad3884f3227b18de1bacddc99e024b69e8",
+      "bytes": 4054
+    }
+  ],
+  "source_comparison": [
+    {
+      "nofib_member": "GenUtils.lhs",
+      "release_member": "happy-1.16/src/GenUtils.lhs",
+      "byte_equal": false,
+      "release_sha256": "ca90c4a9b78b62c4260d80e65816c2a0aa1ab8c52ca085abb08d741386367fe7",
+      "nofib_sha256": "84182600e1dfe00c3f3c7f876951f6a5c078ebed55a81fdcac734ac1e6a950b1"
+    },
+    {
+      "nofib_member": "Parser.hs",
+      "release_member": "happy-1.16/src/Parser.hs",
+      "byte_equal": false,
+      "release_sha256": "c379b7536ff8cf4fc811340a6d281ac97c12a6947e61a31edc6fe6a096cf41d5",
+      "nofib_sha256": "64e84c342fc3f8693a21c8563b2a7660e2c690ef14d9511c1fae82a1a4fa49eb"
+    },
+    {
+      "nofib_member": "AttrGrammar.lhs",
+      "release_member": "happy-1.16/src/AttrGrammar.lhs",
+      "byte_equal": false,
+      "release_sha256": "9ef7af63463771ef67846c6f591ce5ae99341ff93444596adb98c5876631db52",
+      "nofib_sha256": "ef09771ce6d19ecc83248cd5ef9877dc6399e4ee964b0d121aea47d58acc16bc"
+    },
+    {
+      "nofib_member": "Target.lhs",
+      "release_member": "happy-1.16/src/Target.lhs",
+      "byte_equal": true,
+      "release_sha256": "d1e0bad03c92ea222102ff229e4c74592f8fd0917a6b292d3890ab61839ad30b",
+      "nofib_sha256": "d1e0bad03c92ea222102ff229e4c74592f8fd0917a6b292d3890ab61839ad30b"
+    },
+    {
+      "nofib_member": "LALR.lhs",
+      "release_member": "happy-1.16/src/LALR.lhs",
+      "byte_equal": false,
+      "release_sha256": "e0422137b538a9471019d12b5fbad191d586fc87ce236f55849203a3a38b7b1f",
+      "nofib_sha256": "fd0e8a94cd959b1494b3905790f0b88414d5ce38dfbf6bc519705b6ee7568791"
+    },
+    {
+      "nofib_member": "ParseMonad.lhs",
+      "release_member": "happy-1.16/src/ParseMonad.lhs",
+      "byte_equal": false,
+      "release_sha256": "7a32c2731b07932a97e08fb6a48a84127ee8fcb12e3c42dde6b8e280f43f75c4",
+      "nofib_sha256": "a66ea9efc2f9bc60d5b09e627c434c03951feef2ec92d51f91962d07972ea126"
+    },
+    {
+      "nofib_member": "Info.lhs",
+      "release_member": "happy-1.16/src/Info.lhs",
+      "byte_equal": false,
+      "release_sha256": "b2f318bb8ce78ea0811bfaf4b56e32999ec6d9f299cddc0e85e47893ddae5849",
+      "nofib_sha256": "f305d8f44428a61c58fac79c9c8e218a53dd2ab3139c0e53799abb0685e18850"
+    },
+    {
+      "nofib_member": "AbsSyn.lhs",
+      "release_member": "happy-1.16/src/AbsSyn.lhs",
+      "byte_equal": false,
+      "release_sha256": "8bf8f5f175b93fb1920c3d9cfe4b85f0bd9b851f3fc72bf1b3db3e3397f8d27d",
+      "nofib_sha256": "9b4a43600b48d81febc380c0a6bda592294ada2616f575699896bdda005246b5"
+    },
+    {
+      "nofib_member": "Lexer.lhs",
+      "release_member": "happy-1.16/src/Lexer.lhs",
+      "byte_equal": false,
+      "release_sha256": "1ee2d97ca32c159acb17cbff5e740cebe6e6b4e36a7c3129b5a7109b823a9a97",
+      "nofib_sha256": "ecb7cff38d72f9058b3679d3ca3a8125be0669b8cbdcbbe7be0980a6ae08e58c"
+    },
+    {
+      "nofib_member": "AttrGrammarParser.hs",
+      "release_member": "happy-1.16/src/AttrGrammarParser.hs",
+      "byte_equal": false,
+      "release_sha256": "d6df917aaf4bd58c7d2e5a8df850408652404cc9f95ff8d2e73d22c2207abd65",
+      "nofib_sha256": "4709e9a459d1ec8515e38e78f4e6dc844d5f741ed7a1220077d449bab492edc3"
+    },
+    {
+      "nofib_member": "ProduceGLRCode.lhs",
+      "release_member": "happy-1.16/src/ProduceGLRCode.lhs",
+      "byte_equal": false,
+      "release_sha256": "2b56f0b0ec2b38ba5ba0911373e7eba2c045c585afd3490f759d3e55b51e78cd",
+      "nofib_sha256": "90f29dc3212d740c36e723ed88164fb9c23b7e90133b87ce4638b699f221c25d"
+    },
+    {
+      "nofib_member": "Grammar.lhs",
+      "release_member": "happy-1.16/src/Grammar.lhs",
+      "byte_equal": false,
+      "release_sha256": "ee76102d0de563c9c6a3ebfc1964af53319929c5e73dffbddef83b64e2d3eed8",
+      "nofib_sha256": "0eaceec0e17739708732304f79586dfdb41049980be91ab1cf3dc75f00cb04e0"
+    },
+    {
+      "nofib_member": "ProduceCode.lhs",
+      "release_member": "happy-1.16/src/ProduceCode.lhs",
+      "byte_equal": false,
+      "release_sha256": "a763a89e4abc185c5cd6068f7b091cf95a5dcf288f68a5005f9548b5e379b8ed",
+      "nofib_sha256": "edc2b69992b4dd0a394b3a494a152a321725a0bd8139f5d507f2578b89fc95c3"
+    },
+    {
+      "nofib_member": "Set.hs",
+      "release_member": "happy-1.16/src/Set.hs",
+      "byte_equal": false,
+      "release_sha256": "160f77b74e26e2e475383520ca045db41b97e61f71f15d1752874f8c8b22cabb",
+      "nofib_sha256": "22f997fc2f81939f7f5a7e61c5b87058540e7d937986e12695ca84e0874e5f8e"
+    },
+    {
+      "nofib_member": "Main.lhs",
+      "release_member": "happy-1.16/src/Main.lhs",
+      "byte_equal": false,
+      "release_sha256": "ad083aea710cfd0148052ead96df57fa05e3fb912d83f96163ffa31fbf735844",
+      "nofib_sha256": "75670c477e4d6b5e1b4a49068acd0568783cc11b777fb8dd12ae9aa41a098ab1"
+    },
+    {
+      "nofib_member": "First.lhs",
+      "release_member": "happy-1.16/src/First.lhs",
+      "byte_equal": false,
+      "release_sha256": "867466486b63b8ccb3c0e60e8c2fdf8fa97ff32d1ddda31887a2946ae89a8b9f",
+      "nofib_sha256": "1ca3b1a7aa13fe54aa3b33e7383d672385c1069c43345f61c27db87d3fd7e8ba"
+    }
+  ],
+  "license_review": "Archive LICENSE has two redistribution conditions; retain actual text rather than silently adopting different current registry metadata."
+}

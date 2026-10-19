@@ -345,3 +345,10 @@ smlnj/legacy, each saying whether the development version has the bug:
 `TextIO.inputAll/empty-stream-Div` has no draft: smlnj#449 is fixed in both
 lines. Its report notes that the readers of an empty string or vector
 still have the illegal `chunkSize` 0.
+
+## Benchmark-derived constructor diagnostic, 2026-10-17
+
+[Real-pair payload through a parameterized abstract type](Datatype/real-pair-through-type-constructor/BUGREPORT.md)
+reproduces wrong external pattern values on the managed 64-/32-bit 110.99.9 and
+2026.2 hosts, while their internal accessor passes. It is recorded separately
+from the arithmetic/GC reports above; no fix or upstream posting is claimed.

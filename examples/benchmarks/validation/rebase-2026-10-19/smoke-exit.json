@@ -1,0 +1,9 @@
+{
+  "command": [
+    "make",
+    "JOBS=4",
+    "bench-smoke"
+  ],
+  "exit": 0,
+  "elapsed_seconds": 106.88620574199012
+}

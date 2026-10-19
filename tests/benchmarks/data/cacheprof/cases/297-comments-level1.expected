@@ -1,0 +1,6 @@
+# leading
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	movl %eax,%ebx

@@ -2,6 +2,13 @@ structure BenchCatalogTests =
 struct
   val entries = BenchCatalog.load "examples/benchmarks/manifest.tsv"
   val base = hd entries
+  val _ = T.check ("benchmark.catalog/exact-filter", fn () =>
+    List.length(BenchCatalog.selected entries "smoke" ("=" ^ #name base)) = 1)
+  val _ = T.check ("benchmark.catalog/substring-filter", fn () =>
+    BenchCatalog.matches "tak" "takl" andalso not(BenchCatalog.matches "=tak" "takl"))
+  val _ = T.check ("benchmark.catalog/empty-exact-filter", fn () =>
+    List.null(BenchCatalog.selected entries "smoke" "=") andalso
+    List.null(BenchCatalog.selected entries "smoke" "=unknown-benchmark"))
   fun rejected needle f = (f (); false) handle Fail message => String.isSubstring needle message
   val _ = T.check ("benchmark.catalog/valid", fn () => (BenchCatalog.validate entries; not (List.null entries)))
   val _ = T.check ("benchmark.catalog/duplicate", fn () =>

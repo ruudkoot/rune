@@ -1,0 +1,17 @@
+[
+  {
+    "source": "run_config.json",
+    "entry": {
+      "executable": "benchmarks/stdlib/pervasives_bench.exe",
+      "name": "pervasives_bench",
+      "tags": [
+        "1s_10s"
+      ],
+      "runs": [
+        {
+          "params": "pervasives_compare_ints 1000000000"
+        }
+      ]
+    }
+  }
+]

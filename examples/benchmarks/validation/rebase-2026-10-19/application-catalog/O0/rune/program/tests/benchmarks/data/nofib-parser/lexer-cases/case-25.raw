@@ -1,0 +1,2 @@
+ok
+[(1,1,Lvar,"if"),(1,4,Lvar,"x"),(1,6,Lvar,"then"),(1,11,Lvar,"y"),(1,13,Lvar,"else"),(1,18,Lvar,"z"),(99997,99997,Leof,"")]

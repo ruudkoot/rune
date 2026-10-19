@@ -1,0 +1,4 @@
+repz
+cmpsb
+repnz
+scasb

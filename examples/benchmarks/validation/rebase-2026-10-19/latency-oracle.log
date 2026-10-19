@@ -1,0 +1,12 @@
+PASS manifest smoke: latency-ring 1000 20000 1024 0
+PASS manifest normal: latency-ring 10000 1000000 1024 0
+PASS manifest smoke: latency-map 1000 20000 1024 0
+PASS manifest normal: latency-map 10000 1000000 1024 0
+PASS manifest smoke: latency-static-map 1000 100 2000 8 25 0
+PASS manifest normal: latency-static-map 130000 100 100000 8 25 0
+PASS gc-eval.tsv lat-ring-10000: latency-ring 10000 3000000 1024 1
+PASS gc-eval.tsv lat-map-10000: latency-map 10000 3000000 1024 1
+PASS gc-eval.tsv lat-ring-100000: latency-ring 100000 3000000 1024 1
+PASS gc-eval.tsv lat-map-100000: latency-map 100000 3000000 1024 1
+PASS gc-eval.tsv static-130000: latency-static-map 130000 100 1000000 8 25 1
+latency-oracle: OK

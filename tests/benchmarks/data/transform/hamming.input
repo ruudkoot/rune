@@ -1,0 +1,9 @@
+%module  "hamming"
+%include "~pieter/lib/fast2mira"
+%include "~pieter/mira/synch/misc"
+%include "~pieter/mira/hamming/hamming"
+output = (:) 1 (maps hamFo hamFs hams0 ham2s ham3s);
+ham2s  = map ((*) 2) output;
+ham3s  = map ((*) 3) output;
+hamFo s a b        = (fst (hamstat s a b));
+hamFs s a b        = (snd (hamstat s a b));

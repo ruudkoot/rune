@@ -1,0 +1,18 @@
+	pushfl
+.Lcacheprof_x86_rep_expansion0:
+	testl %ecx,%ecx
+	jz .Lcacheprof_x86_rep_expansion1
+	decl %ecx
+	movsb
+	jmp .Lcacheprof_x86_rep_expansion0
+.Lcacheprof_x86_rep_expansion1:
+	popfl
+	pushfl
+.Lcacheprof_x86_rep_expansion2:
+	testl %ecx,%ecx
+	jz .Lcacheprof_x86_rep_expansion3
+	decl %ecx
+	stosl
+	jmp .Lcacheprof_x86_rep_expansion2
+.Lcacheprof_x86_rep_expansion3:
+	popfl

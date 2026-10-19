@@ -1,0 +1,2 @@
+*.fasta -text -whitespace
+*.output -text -whitespace

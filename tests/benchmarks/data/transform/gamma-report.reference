@@ -1,0 +1,146 @@
+cat - <<'end' > gamma.dir/v.m
+|| gamma.dir v = v
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+%include "~pieter/mira/gamma/gamma.m"
+||
+output	= ((:) dummy_output p9);
+p0	= ((:) lownumbers p6);
+p1	= (map_1 perm_2 p0);
+p2	= (map_1 map_divides p1);
+p3	= (map_2 select p2 p1);
+p4	= (map_2 (--) p0 p3);
+p5	= (map_1 remove1 p3);
+p6	= (map_2 (++) p5 p4);
+p7	= (map_1 or p2);
+p8	= (map_1 (~) p7);
+p9	= (map_2 mkpair p8 p0);
+map_divides xs	= (map1 divides xs);
+mkpair a b	= (a,b);
+perm_2 xs	= (perm 2 xs);
+end
+cat - <<'end' > gamma.dir/v0.m
+|| gamma.dir v0 = inl v
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+%include "~pieter/mira/gamma/gamma.m"
+||
+output	= ((:) dummy_output p9);
+p0	= ((:) lownumbers p6);
+p1	= (map_1 perm_2 p0);
+p2	= (map_1 map_divides p1);
+p3	= (map_2 select p2 p1);
+p4	= (map_2 (--) p0 p3);
+p5	= (map_1 remove1 p3);
+p6	= (map_2 (++) p5 p4);
+p7	= (map_1 or p2);
+p8	= (map_1 (~) p7);
+p9	= (map_2 mkpair p8 p0);
+map_divides xs	= (map1 divides xs);
+mkpair a b	= (a,b);
+perm_2 xs	= (perm 2 xs);
+end
+cat - <<'end' > gamma.dir/v1.m
+|| gamma.dir v1 = t1 v0
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+%include "~pieter/mira/gamma/gamma.m"
+||
+output	= ((:) dummy_output p9);
+p0	= ((:) lownumbers p6);
+p1	= (map_1 perm_2 p0);
+p2	= (map_1 map_divides p1);
+p3	= (map_2 select p2 p1);
+p4	= (map_2 (--) p0 p3);
+p5	= (map_1 remove1 p3);
+p6	= (map_2 (++) p5 p4);
+p7	= (map_1 or p2);
+p8	= (map_1 (~) p7);
+p9	= (map_2 mkpair p8 p0);
+map_divides xs	= (map1 divides xs);
+mkpair a b	= (a,b);
+perm_2 xs	= (perm 2 xs);
+end
+cat - <<'end' > gamma.dir/v3.m
+|| gamma.dir v3 = t3 v1
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+%include "~pieter/mira/gamma/gamma.m"
+||
+output	= ((:) dummy_output p9);
+p0	= ((:) lownumbers p6);
+p1	= (map_1 perm_2 p0);
+p2	= (map_1 map_divides p1);
+p3	= (map_2 select p2 p1);
+p4	= (map_2 (--) p0 p3);
+p5	= (map_1 remove1 p3);
+p6	= (map_2 (++) p5 p4);
+p7	= (map_1 or p2);
+p8	= (map_1 (~) p7);
+p9	= (map_2 mkpair p8 p0);
+map_divides xs	= (map1 divides xs);
+mkpair a b	= (a,b);
+perm_2 xs	= (perm 2 xs);
+end
+cat - <<'end' > gamma.dir/v5.m
+|| gamma.dir v5 = t5 v3
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+%include "~pieter/mira/gamma/gamma.m"
+||
+output	= ((:) dummy_output p9);
+p0	= ((:) lownumbers p6);
+p1	= (map_1 perm_2 p0);
+p2	= (map_1 map_divides p1);
+p3	= (map_2 select p2 p1);
+p4	= (map_2 (--) p0 p3);
+p5	= (map_1 remove1 p3);
+p6	= (map_2 (++) p5 p4);
+p7	= (map_1 or p2);
+p8	= (map_1 (~) p7);
+p9	= (map_2 mkpair p8 p0);
+map_divides xs	= (map1 divides xs);
+mkpair a b	= (a,b);
+perm_2 xs	= (perm 2 xs);
+end
+cat - <<'end' > gamma.dir/v6.m
+|| gamma.dir v6 = t6 v5
+||
+%include "~pieter/lib/fast2mira.m"
+%include "~pieter/mira/synch/misc.m"
+%include "~pieter/mira/gamma/gamma.m"
+||
+output1	= (map_1 sel_2 (maps_0 id_1 nextstate (dummy_output,lownumbers) ));
+nextstate s
+= (p9,p6)
+  where
+  (output,p0)	= s;
+  p1	= (perm 2 p0);
+  p2	= (map1 divides p1);
+  p3	= (select p2 p1);
+  p4	= ((--) p0 p3);
+  p5	= (remove1 p3);
+  p6	= ((++) p5 p4);
+  p7	= (or p2);
+  p8	= ((~) p7);
+  p9	= (p8,p0);;
+output	= ((:) dummy_output p9);
+p0	= ((:) lownumbers p6);
+p1	= (map_1 perm_2 p0);
+p2	= (map_1 map_divides p1);
+p3	= (map_2 select p2 p1);
+p4	= (map_2 (--) p0 p3);
+p5	= (map_1 remove1 p3);
+p6	= (map_2 (++) p5 p4);
+p7	= (map_1 or p2);
+p8	= (map_1 (~) p7);
+p9	= (map_2 mkpair p8 p0);
+map_divides xs	= (map1 divides xs);
+mkpair a b	= (a,b);
+perm_2 xs	= (perm 2 xs);
+end

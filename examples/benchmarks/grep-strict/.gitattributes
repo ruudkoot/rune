@@ -1,0 +1,3 @@
+# Keep pinned Wikipedia data and selected-line fixtures byte for byte.
+data/*.txt -whitespace
+expected/*.txt -whitespace

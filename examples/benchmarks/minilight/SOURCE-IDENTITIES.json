@@ -1,0 +1,19 @@
+{
+  "upstream/LICENSE.txt": "56d0c8894fc7207fcffe0381aba226b49843b41a929adaaffe865db5289d91f1",
+  "upstream/OMakefile": "168ff1e698acfcf07a8819c11f69cbff9d1fb580727b04f6983ea7833906d6d8",
+  "upstream/OMakeroot": "b6c4f6cb49d24a31c59b2522730809133d06006403a8faae4ec86bc8901acb00",
+  "upstream/camera.ml": "d1833d29e51dc1fbae9f1a5b632b9222a3105751981b183d31cf7dd91c12bae7",
+  "upstream/dune": "ddabe1e716e79cdf2d594dc460aec6d5413db2f3e184dd904fb8127cbb58ea82",
+  "upstream/image.ml": "9bd546232e8d833a701c970bcd71a463baf16c5ef5fec9847b34940b169c4a49",
+  "upstream/minilight.ml": "e456c18e4244e072d7eff3e505c006b4330694cdd444070bea21b75fb526533b",
+  "upstream/rayTracer.ml": "0e83b81ae1a107246a00808d3da9071ae29bab9fee5629f6fbbde74c353f3555",
+  "upstream/roomfront.ml.txt": "eca3b8a787e0f25a92b54645e8166703e52c9d16d93d62b5c307dd4c1eb0cb17",
+  "upstream/scene.ml": "42c9e877c4fc2060e7a11faf659f0321217878d572279fa5dbb53d187142e66b",
+  "upstream/spatialIndex.ml": "5c16bf1a66df9e3d9db1db3a18ce95a651e4344a73f4b9bead4659def47417a2",
+  "upstream/surfacePoint.ml": "b0c3ec4327a99400a89320a23689145ac503de69fbc8e73f96efb29b16125cf2",
+  "upstream/triangle.ml": "39c7f63eb0a72e3babe38785fb4b1a4031f4d72c16439c2134fc0ee476248b17",
+  "upstream/vector3f.ml": "0716f2eccbe4eb62c7563dbdae367876493773697ec93e52c6814a61720cd03a",
+  "large.model": "1724b7f93ef3efb64588ed21a248a7255121e3b340ab46198d208cf5ea12df41",
+  "normal.model": "f60b1e8af0fcfe8e8ac5da0b58eb24e374faef2e257377b433e599995cbf3191",
+  "smoke.model": "6811f1d0ac8c3d4694e676afc6a3f87feff7991175cae3b27d95448e363c9b56"
+}

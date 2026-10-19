@@ -1,0 +1,14 @@
+{
+  "revision": "86a8ccfba8567e67967c985a62afdb2173943c1c",
+  "dirty": true,
+  "mlkit": "4.7.25 explicit managed release; global alias unchanged",
+  "sources": {
+    "Makefile": "dfdfbc8cc22c8b01e064cc780832167339e5cc10eeacfb02d9d6d92ff1095629",
+    "examples/benchmarks/manifest.tsv": "fd569b5474d9a1e7ed78b387fc11e3bcf51163ff5d7746d09376b7316151a0c5",
+    "examples/benchmarks/shared/coverage.sml": "c0a264b2c0fc19d34b03e902088f736ad63ef26b9439f54670e30fca1724b1a4",
+    "scripts/benchmark-provenance.sh": "cc9246e560263a58559b05813f72bc97e6d8593fb7878f2552f62e61a51b41e9",
+    "tests/benchmarks/check-nofib-applications.sh": "7a1299ea14425cf1d81ed45a04eda60d479637fb1223261fd278095cb0629d45",
+    "tests/benchmarks/coverage.sml": "c14a93f2295ea764a3e3f3c6511117910d13fff11208f3acfff65abc3da19811",
+    "tests/benchmarks/check-provenance.sh": "6a008973f295762b07901b228863cea6189fccb2bd6f43416868e06843e78893"
+  }
+}

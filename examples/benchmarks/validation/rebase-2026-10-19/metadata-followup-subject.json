@@ -1,0 +1,7 @@
+{
+  "scope": "retain legacy payload names alongside current stack/register names for comparisons with older worktrees; workload/compiler/runtime code unchanged",
+  "sources": {
+    "scripts/benchmark-provenance.sh": "cc9246e560263a58559b05813f72bc97e6d8593fb7878f2552f62e61a51b41e9",
+    "tests/benchmarks/check-provenance.sh": "6a008973f295762b07901b228863cea6189fccb2bd6f43416868e06843e78893"
+  }
+}

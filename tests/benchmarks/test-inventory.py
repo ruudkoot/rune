@@ -31,6 +31,30 @@ class InventoryTest(unittest.TestCase):
     def build(self, source):
         return AUDIT.build(source, self.root, {"notices": ""})
 
+    def constraints_pair(self, second_source="main = print 1\n", second_normal="7"):
+        self.nofib_roots()
+        for directory, source, normal in [("gc/constraints", "main = print 1\n", "7"),
+                                           ("spectral/constraints", second_source, second_normal)]:
+            self.file(directory + "/Main.hs", source)
+            self.file(directory + "/Makefile", "FAST_OPTS = 6\nNORM_OPTS = " + normal + "\nSLOW_OPTS = 8\n")
+
+    def test_identical_constraints_share_implementation(self):
+        self.constraints_pair()
+        rows = {row["path"]: row for row in self.build("nofib")}
+        self.assertEqual(rows["gc/constraints"]["disposition"], "import")
+        self.assertEqual(rows["spectral/constraints"]["disposition"], "duplicate")
+        self.assertIn("measurement configurations", rows["spectral/constraints"]["reason"])
+
+    def test_changed_constraints_kernel_remains_distinct(self):
+        self.constraints_pair(second_source="main = print 2\n")
+        rows = {row["path"]: row for row in self.build("nofib")}
+        self.assertEqual(rows["spectral/constraints"]["disposition"], "import")
+
+    def test_changed_constraints_inputs_remain_distinct(self):
+        self.constraints_pair(second_normal="9")
+        rows = {row["path"]: row for row in self.build("nofib")}
+        self.assertEqual(rows["spectral/constraints"]["disposition"], "import")
+
     def test_region_reset_variants_require_their_storage_model(self):
         (self.root / "test_dev").mkdir()
         self.file("test/kitlife35u.sml", "fun run () = resetRegions ()\n")
@@ -117,6 +141,761 @@ class InventoryTest(unittest.TestCase):
         rows = self.build("nofib")
         self.assertEqual([(r["path"], r["disposition"]) for r in rows], [("gc/hash", "import")])
 
+    def test_circuit_authorship_is_recorded_from_the_literate_heading(self):
+        self.nofib_roots()
+        self.file("gc/circsim/Makefile", "\n")
+        self.file("gc/circsim/Main.lhs",
+                  "The Circuit Simulator example\nDavid J. King & John O'Donnell\nJanuary, 1998\n\n> main = return ()\n")
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "David J. King;John O'Donnell")
+        self.assertIn("gc/circsim/Main.lhs:authorship-heading", row["evidence"])
+
+    def test_changed_circuit_heading_does_not_inherit_unverified_authors(self):
+        self.nofib_roots()
+        self.file("gc/circsim/Makefile", "\n")
+        self.file("gc/circsim/Main.lhs",
+                  "The Circuit Simulator example\nDifferent authors\nJanuary, 1998\n\n> main = return ()\n")
+        self.assertEqual(self.build("nofib")[0]["authors"], "not stated in scanned source headers")
+
+    def test_hidden_correspondence_records_both_authors_and_permission(self):
+        self.nofib_roots()
+        self.file("real/hidden/Makefile", "\n")
+        self.file("real/hidden/Main.hs", "main = print 0\n")
+        self.file("real/hidden/MAIL",
+                  "From:    ramaer@cs.utwente.nl (Mark Ramaer)\n"
+                  "Certainly.  However, I should note that the program is written by\n"
+                  "Stef Joosten (joosten@cs.utwente.nl) in Miranda(TM) and I have translated\n"
+                  "it to Haskell to play with overloading; I also added the memoising.\n")
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "Mark Ramaer;Stef Joosten")
+        self.assertIn("real/hidden/MAIL:authorship-and-nofib-permission", row["evidence"])
+        self.assertIn("real/hidden/MAIL:nofib-permission", row["notices"])
+
+    def test_changed_hidden_correspondence_requires_review(self):
+        self.nofib_roots()
+        self.file("real/hidden/Makefile", "\n")
+        self.file("real/hidden/Main.hs", "main = print 0\n")
+        self.file("real/hidden/MAIL", "A different author and permission.\n")
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "not stated in scanned source headers")
+        self.assertNotIn("real/hidden/MAIL:nofib-permission", row["notices"])
+
+    def test_prolog_author_heading_is_recorded(self):
+        self.nofib_roots()
+        self.file("real/prolog/Makefile", "\n")
+        self.file("real/prolog/Main.hs",
+                  "-- Mark P. Jones November 1990\nmain = print 0\n")
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "Mark P. Jones")
+        self.assertIn("real/prolog/Main.hs:author-heading", row["evidence"])
+
+    def test_changed_prolog_author_heading_requires_review(self):
+        self.nofib_roots()
+        self.file("real/prolog/Makefile", "\n")
+        self.file("real/prolog/Main.hs",
+                  "-- Another author November 1990\nmain = print 0\n")
+        self.assertNotIn("Mark P. Jones", self.build("nofib")[0]["authors"])
+
+    def test_gamteb_author_heading_is_recorded(self):
+        self.nofib_roots()
+        self.file("real/gamteb/Makefile", "\n")
+        self.file("real/gamteb/Main.hs",
+                  "--      Patricia Fasel\n--      Los Alamos National Laboratory\nmain = print 0\n")
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "Patricia Fasel")
+        self.assertIn("real/gamteb/Main.hs:author-heading", row["evidence"])
+
+    def test_changed_gamteb_author_heading_requires_review(self):
+        self.nofib_roots()
+        self.file("real/gamteb/Makefile", "\n")
+        self.file("real/gamteb/Main.hs",
+                  "--      Another author\n--      Another laboratory\nmain = print 0\n")
+        self.assertNotIn("Patricia Fasel", self.build("nofib")[0]["authors"])
+
+    def test_mkhprog_literate_author_heading_is_recorded(self):
+        self.nofib_roots()
+        self.file("real/mkhprog/Makefile", "\n")
+        self.file("real/mkhprog/Main.lhs",
+                  "% Crown Copyright 1992\n\\author{N D North\\\\\n\n> main = print 0\n")
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "N. D. North")
+        self.assertIn("real/mkhprog/Main.lhs:author-and-crown-heading", row["evidence"])
+
+    def test_changed_mkhprog_author_heading_requires_review(self):
+        self.nofib_roots()
+        self.file("real/mkhprog/Makefile", "\n")
+        self.file("real/mkhprog/Main.lhs",
+                  "% Crown Copyright 1992\n\\author{Another author\\\\\n\n> main = print 0\n")
+        self.assertNotIn("N. D. North", self.build("nofib")[0]["authors"])
+
+    def test_rewrite_orwell_author_and_conversion_are_recorded(self):
+        self.nofib_roots()
+        self.file("spectral/rewrite/Makefile", "\\n")
+        self.file("spectral/rewrite/Main.lhs", "[converted to Haskell by partain]\\nMike Spivey,\\nSt. George's Day, 1991.\\n> main = print True\\n")
+        row = self.build("nofib")[0]
+        self.assertIn("Mike Spivey", row["authors"])
+        self.assertIn("partain (Haskell conversion)", row["authors"])
+
+    def test_changed_rewrite_heading_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/rewrite/Makefile", "\\n")
+        self.file("spectral/rewrite/Main.lhs", "Another author\\n> main = print True\\n")
+        self.assertNotIn("Mike Spivey", self.build("nofib")[0]["authors"])
+
+    def test_dominator_algorithm_author_is_recorded(self):
+        self.nofib_roots()
+        self.file("spectral/dom-lt/Makefile", "\n")
+        self.file("spectral/dom-lt/Main.hs", "module Main where\nmain = print 0\n")
+        self.file("spectral/dom-lt/Dom.hs", "Copyright   :  (c) Matt Morrow 2009\nLicense     :  BSD3\nmodule Dom where\n")
+        row = self.build("nofib")[0]
+        self.assertIn("Matt Morrow", row["authors"])
+        self.assertIn("spectral/dom-lt/Dom.hs:algorithm-author-and-BSD3-heading", row["evidence"])
+
+    def test_changed_dominator_author_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/dom-lt/Makefile", "\n")
+        self.file("spectral/dom-lt/Main.hs", "main = print 0\n")
+        self.file("spectral/dom-lt/Dom.hs", "Another author\nmodule Dom where\n")
+        self.assertNotIn("Matt Morrow", self.build("nofib")[0]["authors"])
+
+    def test_pinned_dominator_threshold_defect_requires_recorded_repair(self):
+        self.nofib_roots()
+        self.file("spectral/dom-lt/Makefile", "\n")
+        self.file("spectral/dom-lt/Main.hs", "main = print 0\n")
+        self.file("spectral/dom-lt/Dom.hs", (ROOT / "examples/benchmarks/dom-lt/upstream/Dom.hs").read_text())
+        self.assertIn("semidominator-minimum repair", self.build("nofib")[0]["reason"])
+
+    def test_changed_dominator_kernel_does_not_inherit_repair_claim(self):
+        self.nofib_roots()
+        self.file("spectral/dom-lt/Makefile", "\n")
+        self.file("spectral/dom-lt/Main.hs", "main = print 0\n")
+        self.file("spectral/dom-lt/Dom.hs", "module Dom where\nvalue = 0\n")
+        self.assertNotIn("semidominator-minimum repair", self.build("nofib")[0]["reason"])
+
+    def test_multiplier_author_and_copyright_are_recorded(self):
+        self.nofib_roots()
+        self.file("spectral/multiplier/Makefile", "\n")
+        self.file("spectral/multiplier/Main.hs", "-- John O'Donnell, University of Glasgow. jtod@dcs.glasgow.ac.uk\n-- Copyright (c) 1992 by John T. O'Donnell\nmain = print 0\n")
+        row = self.build("nofib")[0]
+        self.assertIn("John T. O'Donnell", row["authors"])
+        self.assertIn("spectral/multiplier/Main.hs:author-and-copyright-heading", row["evidence"])
+
+    def test_changed_multiplier_author_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/multiplier/Makefile", "\n")
+        self.file("spectral/multiplier/Main.hs", "-- Another multiplier author\nmain = print 0\n")
+        self.assertNotIn("John T. O'Donnell", self.build("nofib")[0]["authors"])
+
+    def application_source(self, name, source="main = print 0\n"):
+        self.nofib_roots()
+        self.file("real/" + name + "/Main.hs", source)
+        self.file("real/" + name + "/Makefile", "FAST_OPTS = 1\nNORM_OPTS = 2\n")
+        return "real/" + name
+
+    def test_anna_versioned_banner_records_stated_owner(self):
+        path = self.application_source("anna", "main = putStrLn banner\n"
+                 "banner = \"Jules's Strictness Analyser, version 0.400\"\n"
+                 "copyright = \"Copyright (c) Julian Seward 1992\"\n")
+        row = self.build("nofib")[0]
+        self.assertIn("Julian Seward (program banner)", row["authors"])
+        self.assertIn("versioned-program-copyright-banner", row["evidence"])
+
+    def test_changed_anna_banner_does_not_inherit_attribution(self):
+        self.application_source("anna", "main = putStrLn \"Another analyser\"\n"
+                                "copyright = \"Copyright (c) Julian Seward 1992\"\n")
+        self.assertNotIn("Julian Seward", self.build("nofib")[0]["authors"])
+
+    def test_runtime_directory_includes_unselected_data_and_results(self):
+        path = self.application_source("alternate-data")
+        self.file(path + "/runtime_files/alternate.plate", "[1,2,3]\n")
+        self.file(path + "/runtime_files/unused.soln", "solution\n")
+        row = self.build("nofib")[0]
+        self.assertIn(path + "/runtime_files/alternate.plate", row["inputs"])
+        self.assertIn(path + "/runtime_files/unused.soln", row["inputs"])
+
+    def test_hpg_generator_is_not_classified_as_arbitrary_precision_arithmetic(self):
+        self.assertEqual(AUDIT.family("hpg", "Integer values in generated programs"), "compiler-application")
+
+    def test_hpg_manual_records_program_author(self):
+        path = self.application_source("hpg")
+        self.file(path + "/hpg.tex", "\\title{The Haskell Program Generator}\n"
+                  "\\author{N D North\\\\\n{\\tt ndn@seg.npl.co.uk}}\n% Crown Copyright 1992\n")
+        row = next(r for r in self.build("nofib") if r["path"] == path)
+        self.assertIn("N. D. North", row["authors"])
+        self.assertIn(path + "/hpg.tex:Crown-Copyright-1992", row["notices"])
+
+    def test_changed_hpg_author_requires_review(self):
+        path = self.application_source("hpg")
+        self.file(path + "/hpg.tex", "\\title{The Haskell Program Generator}\n\\author{Another author}\n")
+        self.assertNotIn("N. D. North", self.build("nofib")[0]["authors"])
+
+    def test_reptile_keeps_original_and_translation_roles(self):
+        self.application_source("reptile", "-- LML original: Sandra Foubister, 1990\n"
+                                "-- Haskell translation: Colin Runciman, May 1991\nmain = print 0\n")
+        row = self.build("nofib")[0]
+        self.assertIn("Sandra Foubister (LML original)", row["authors"])
+        self.assertIn("Colin Runciman (Haskell translation)", row["authors"])
+
+    def test_changed_reptile_translation_does_not_inherit_porter(self):
+        self.application_source("reptile", "-- LML original: Sandra Foubister, 1990\nmain = print 0\n")
+        self.assertNotIn("Colin Runciman", self.build("nofib")[0]["authors"])
+
+    def test_fluid_keeps_initials_without_inventing_a_full_name(self):
+        path = self.application_source("fluid")
+        self.file(path + "/Defs.hs", "{- XZ, 24/10/91 -}\n{- XZ, 19/2/92 -}\nmodule Defs where\n")
+        row = self.build("nofib")[0]
+        self.assertIn("XZ (source initials)", row["authors"])
+        self.assertIn("dated-source-initials-not-expanded", row["evidence"])
+
+    def test_fluid_dynamic_filename_still_inventories_mesh(self):
+        path = self.application_source("fluid")
+        self.file(path + "/runtime_files/chan8.dat", "TEST CHANNEL PROBLEM WITH NONISOTHERMAL FLOW\n")
+        row = self.build("nofib")[0]
+        self.assertIn(path + "/runtime_files/chan8.dat", row["inputs"])
+        self.assertIn("channel-model-header", row["evidence"])
+
+    def test_changed_fluid_mesh_does_not_inherit_channel_description(self):
+        path = self.application_source("fluid")
+        self.file(path + "/runtime_files/chan8.dat", "Another model\n")
+        row = self.build("nofib")[0]
+        self.assertIn(path + "/runtime_files/chan8.dat", row["inputs"])
+        self.assertNotIn("channel-model-header", row["evidence"])
+
+    def nucleic2_sources(self, original=True, readme=True, single=True):
+        self.nofib_roots()
+        path = "spectral/hartel/nucleic2/"
+        self.file(path + "Makefile", "FAST_OPTS = 3\nNORM_OPTS = 25\nSLOW_OPTS = 125\n")
+        self.file(path + "Main.hs", ("-- Author: Marc Feeley (feeley@iro.umontreal.ca)\n"
+                  "-- Last modified: June 6, 1994\n" if original else "-- Another author\n") +
+                  "main = print 0\n#ifdef USE_HARTEL_LAZINESS\n-- make_relative_nuc t n\n#endif\n")
+        self.file(path + "README", "UPDATE(2017.01)\nnon-Haskell versions of the program\n" +
+                  ("Haskell version (for HBC, by Lennart Augustsson)\n" if readme else "Another translation.\n"))
+        self.file(path + "unboxery.h", "#define FLOAT_TY " + ("Float" if single else "Double") + "\n#define FL_LIT(x) (x)\n")
+        return next(r for r in self.build("nofib") if r["path"] == path.rstrip("/"))
+
+    def test_nucleic2_records_molecular_search_author(self):
+        row = self.nucleic2_sources()
+        self.assertIn("Marc Feeley", row["authors"].split(";"))
+        self.assertNotIn("(feeley@", row["authors"])
+        self.assertIn("spectral/hartel/nucleic2/Main.hs:molecular-search-author-and-date", row["evidence"])
+
+    def test_changed_nucleic2_heading_requires_author_review(self):
+        self.assertNotIn("Marc Feeley", self.nucleic2_sources(original=False)["authors"])
+
+    def test_nucleic2_records_Haskell_porter(self):
+        self.assertIn("Lennart Augustsson (Haskell version)", self.nucleic2_sources()["authors"])
+
+    def test_changed_nucleic2_readme_requires_porter_review(self):
+        self.assertNotIn("Lennart Augustsson", self.nucleic2_sources(readme=False)["authors"])
+
+    def test_nucleic2_records_default_precision_and_sharing_variants(self):
+        row = self.nucleic2_sources()
+        self.assertIn("spectral/hartel/nucleic2/unboxery.h:boxed-Float-default", row["evidence"])
+        self.assertIn("spectral/hartel/nucleic2/Main.hs:on-demand-and-shared-coordinate-variants", row["evidence"])
+
+    def test_nucleic2_double_header_does_not_inherit_single_precision_claim(self):
+        self.assertNotIn("boxed-Float-default", self.nucleic2_sources(single=False)["evidence"])
+
+    def test_nucleic2_historical_archive_is_not_claimed_present(self):
+        self.assertIn("spectral/hartel/nucleic2/README:historical-archive-files-removed-in-2017", self.nucleic2_sources()["evidence"])
+
+    def test_nucleic2_records_coordinator_without_inventing_program_authorship(self):
+        self.nucleic2_sources()
+        self.file("spectral/hartel/nucleic2/MAIL", "Date: Mon, 13 Jun 1994\n"
+                  "From: pieter@fwi.uva.nl (Pieter H. Hartel)\n"
+                  "Subject: Request participation pseudo knot benchmark\n")
+        row = next(r for r in self.build("nofib") if r["path"] == "spectral/hartel/nucleic2")
+        self.assertIn("Pieter H. Hartel (benchmark coordination)", row["authors"])
+        self.assertIn("spectral/hartel/nucleic2/MAIL:1994-benchmark-coordination-and-porting-invitation", row["evidence"])
+
+    def test_changed_nucleic2_mail_does_not_inherit_coordinator_claim(self):
+        self.nucleic2_sources()
+        self.file("spectral/hartel/nucleic2/MAIL", "A different correspondence.\n")
+        row = next(r for r in self.build("nofib") if r["path"] == "spectral/hartel/nucleic2")
+        self.assertNotIn("Pieter H. Hartel", row["authors"])
+
+    def happy_sources(self, original=True):
+        self.nofib_roots()
+        self.file("gc/happy/Makefile", "NORM_OPTS = TestInput.y\nEXCLUDED_SRCS += TestInput.hs\n")
+        self.file("gc/happy/Main.lhs", "(c) 1993-2003 Andy Gill, Simon Marlow\n> main = print 0\n" if original else "> main = print 0\n")
+        self.file("gc/happy/TestInput.y", "-- (c) The University of Glasgow 1997-2003\n-- Author(s): Simon Marlow, Sven Panne 1997, 1998, 1999\n" if original else "-- different grammar\n")
+        self.file("gc/happy/GenUtils.lhs", "All the code below is understood to be in the public domain.\n> helper = 0\n" if original else "> helper = 0\n")
+        return self.build("nofib")[0]
+
+    def test_happy_records_original_authors(self):
+        row = self.happy_sources()
+        self.assertIn("Andy Gill", row["authors"])
+        self.assertIn("Simon Marlow", row["authors"])
+        self.assertEqual("compiler-application", row["family"])
+
+    def test_happy_records_individual_grammar_notice(self):
+        row = self.happy_sources()
+        self.assertIn("Sven Panne (GHC grammar input)", row["authors"])
+        self.assertIn("gc/happy/TestInput.y:Glasgow-copyright-and-grammar-authors", row["notices"])
+
+    def test_happy_records_utility_permission(self):
+        self.assertIn("gc/happy/GenUtils.lhs:public-domain-statement", self.happy_sources()["notices"])
+
+    def test_changed_happy_notices_require_review(self):
+        row = self.happy_sources(original=False)
+        self.assertNotIn("Andy Gill", row["authors"])
+        self.assertNotIn("Sven Panne", row["authors"])
+        self.assertNotIn("public-domain-statement", row["notices"])
+
+    def test_happy_records_generated_source_build_scope(self):
+        self.assertIn("gc/happy/Makefile:grammar-input-and-generated-parser-exclusion", self.happy_sources()["evidence"])
+
+    def simple_sources(self, c_header="Andy Shaw and Kofi Fynn.\nWed Feb  2 14:59:18 EST 1994"):
+        self.nofib_roots()
+        self.file("spectral/simple/Makefile", "SRCS = Main.hs\n")
+        self.file("spectral/simple/Main.hs", "main = print 0\n")
+        self.file("spectral/simple/simple.c", "/* " + c_header + " */\n")
+        self.file("spectral/simple/simple.f", "      PARAMETER(II=101,JJ=100)\n")
+        return self.root / "spectral/simple"
+
+    def test_simple_records_both_C_comparator_authors(self):
+        self.simple_sources()
+        row = self.build("nofib")[0]
+        self.assertIn("Andy Shaw (C comparator)", row["authors"])
+        self.assertIn("Kofi Fynn (C comparator)", row["authors"])
+
+    def test_simple_changed_C_header_requires_review(self):
+        self.simple_sources("Other authors")
+        self.assertNotIn("Kofi Fynn (C comparator)", self.build("nofib")[0]["authors"])
+
+    def test_simple_preserves_Fortran_comparator_and_build_scope(self):
+        self.simple_sources()
+        row = self.build("nofib")[0]
+        self.assertIn("spectral/simple/simple.f", row["members"])
+        self.assertIn("spectral/simple/Makefile:excludes-C-and-Fortran-comparators", row["evidence"])
+
+    def test_simple_Fortran_identity_changes_with_source(self):
+        directory = self.simple_sources()
+        before = self.build("nofib")[0]["sha256"]
+        (directory / "simple.f").write_text("      PARAMETER(II=102,JJ=100)\n")
+        self.assertNotEqual(before, self.build("nofib")[0]["sha256"])
+
+    def test_simple_records_correspondence_roles(self):
+        self.simple_sources()
+        self.file("spectral/simple/MAIL", "RPaul Johnson told me\n"
+                  "This version may be useful because it is in 1.2 Haskell\n"
+                  "Here is the fortran in its original form from Olaf Lubeck:\n")
+        row = self.build("nofib")[0]
+        self.assertIn("RPaul Johnson (Haskell/pH correspondence)", row["authors"])
+        self.assertIn("Olaf Lubeck (Fortran supplier, not asserted sole author)", row["authors"])
+
+    def test_simple_changed_correspondence_does_not_invent_roles(self):
+        self.simple_sources()
+        self.file("spectral/simple/MAIL", "A different correspondence.\n")
+        self.assertNotIn("Olaf Lubeck", self.build("nofib")[0]["authors"])
+
+    def fem_header(self, heading, data=False):
+        self.nofib_roots()
+        self.file("real/fem/Makefile", "\n")
+        self.file("real/fem/Main.hs", "main = print 0\n")
+        self.file("real/fem/README", heading)
+        if data:
+            self.file("real/fem/data.0", "3 2 1 1\n")
+            self.file("real/fem/data.3", "36 72 2 1\n")
+        return self.build("nofib")[0]
+
+    def test_fem_individual_author_is_recorded(self):
+        heading = (ROOT / "examples/benchmarks/fem-lazy/upstream/README").read_text()
+        row = self.fem_header(heading)
+        self.assertIn("Junxian Liu", row["authors"])
+        self.assertIn("real/fem/README:author-and-model-description", row["evidence"])
+
+    def test_changed_fem_author_requires_review(self):
+        heading = (ROOT / "examples/benchmarks/fem-lazy/upstream/README").read_text()
+        self.assertNotIn("Junxian Liu", self.fem_header(heading.replace("Dr. Junxian Liu", "Dr. Another Author"))["authors"])
+
+    def test_fem_alternate_data_is_inventoried(self):
+        row = self.fem_header("", data=True)
+        self.assertIn("real/fem/data.0", row["inputs"])
+        self.assertIn("real/fem/data.3", row["inputs"])
+
+    def test_absent_fem_data_is_not_invented(self):
+        self.assertNotIn("real/fem/data.0", self.fem_header("")["inputs"])
+
+    def cacheprof_notice(self, family, heading, full=False):
+        self.nofib_roots()
+        self.file(family + "/cacheprof/Makefile", "\n")
+        self.file(family + "/cacheprof/Main.hs", heading + "\nmodule Main where\nmain = print 0\n")
+        if full:
+            self.file(family + "/cacheprof/cacheprof.full", '.file "case.c"\n')
+        return self.build("nofib")[0]
+
+    def test_cacheprof_gc_individual_credit_is_recorded(self):
+        heading = (ROOT / "examples/benchmarks/cacheprof-lazy/upstream/Main.hs").read_text().split("module Main")[0]
+        row = self.cacheprof_notice("gc", heading)
+        self.assertIn("Julian Seward", row["authors"])
+        self.assertIn("gc/cacheprof/Main.hs:author-and-GPL2-or-later-heading", row["evidence"])
+
+    def test_cacheprof_real_individual_credit_is_recorded(self):
+        heading = (ROOT / "examples/benchmarks/cacheprof-nofib-lazy/upstream/Main.hs").read_text().split("module Main")[0]
+        self.assertIn("Julian Seward", self.cacheprof_notice("real", heading)["authors"])
+
+    def test_changed_cacheprof_author_requires_review(self):
+        heading = (ROOT / "examples/benchmarks/cacheprof-lazy/upstream/Main.hs").read_text().split("module Main")[0]
+        self.assertNotIn("Julian Seward", self.cacheprof_notice("gc", heading.replace("Julian Seward", "Another author"))["authors"])
+
+    def test_changed_cacheprof_license_requires_review(self):
+        heading = (ROOT / "examples/benchmarks/cacheprof-lazy/upstream/Main.hs").read_text().split("module Main")[0]
+        self.assertNotIn("Julian Seward", self.cacheprof_notice("gc", heading.replace("either version 2 of the", "a changed license"))["authors"])
+
+    def test_cacheprof_complete_reservoir_is_inventoried(self):
+        row = self.cacheprof_notice("real", "", full=True)
+        self.assertIn("real/cacheprof/cacheprof.full", row["inputs"])
+        self.assertIn("real/cacheprof/cacheprof.full:complete-assembly-input-reservoir", row["evidence"])
+
+    def test_absent_cacheprof_reservoir_is_not_invented(self):
+        self.assertNotIn("real/cacheprof/cacheprof.full", self.cacheprof_notice("real", "")["inputs"])
+
+    def lift_paper(self, heading):
+        self.nofib_roots()
+        self.file("real/lift/Makefile", "\n")
+        self.file("real/lift/Main.lhs", "> module Main where\n> import LambdaLift\n> main = print 0\n")
+        self.file("real/lift/LambdaLift.lhs", heading + "\n> module LambdaLift where\n")
+        return next(row for row in self.build("nofib") if row["path"] == "real/lift")
+
+    def lift_heading(self):
+        return (ROOT / "examples/benchmarks/lift-lazy/upstream/LambdaLift.lhs").read_text().split(r"\end{abstract}")[0]
+
+    def test_lift_executable_paper_authors_are_recorded(self):
+        row = self.lift_paper(self.lift_heading())
+        self.assertIn("Simon L. Peyton Jones", row["authors"])
+        self.assertIn("David Lester", row["authors"])
+        self.assertIn("real/lift/LambdaLift.lhs:executable-paper-title-and-author-block", row["evidence"])
+        self.assertEqual("compiler-application", row["family"])
+
+    def test_changed_lift_title_requires_review(self):
+        row = self.lift_paper(self.lift_heading().replace("A modular fully-lazy lambda lifter", "Another lifter"))
+        self.assertNotIn("Simon L. Peyton Jones", row["authors"])
+
+    def test_changed_lift_author_requires_review(self):
+        row = self.lift_paper(self.lift_heading().replace("David Lester", "Another author"))
+        self.assertNotIn("David Lester", row["authors"])
+
+    def test_incomplete_lift_paper_heading_requires_review(self):
+        row = self.lift_paper(self.lift_heading().replace(r"\begin{abstract}", ""))
+        self.assertNotIn("Simon L. Peyton Jones", row["authors"])
+
+    def fulsom_notice(self, family, heading):
+        self.nofib_roots()
+        self.file(family + "/fulsom/Makefile", "EXCLUDED_SRCS = Bah.hs\n")
+        self.file(family + "/fulsom/Main.hs", "import Interval\nmain = print 0\n")
+        self.file(family + "/fulsom/Bah.hs", "main = print 0\n")
+        self.file(family + "/fulsom/Interval.hs", heading + "\nmodule Interval where\n")
+        return next(row for row in self.build("nofib") if row["path"] == family + "/fulsom/Main.hs")
+
+    def test_fulsom_gc_individual_credit_is_recorded(self):
+        heading = (ROOT / "examples/benchmarks/fulsom-lazy/upstream/Interval.hs").read_text().split("module Interval")[0]
+        row = self.fulsom_notice("gc", heading)
+        self.assertIn("Duncan Sinclair", row["authors"])
+        self.assertIn("gc/fulsom/Interval.hs:author-and-individual-permission", row["evidence"])
+
+    def test_fulsom_real_individual_credit_is_recorded(self):
+        heading = (ROOT / "examples/benchmarks/fulsom-nofib-lazy/upstream/Interval.hs").read_text().split("module Interval")[0]
+        self.assertIn("Duncan Sinclair", self.fulsom_notice("real", heading)["authors"])
+
+    def test_changed_fulsom_author_requires_review(self):
+        heading = (ROOT / "examples/benchmarks/fulsom-lazy/upstream/Interval.hs").read_text().split("module Interval")[0]
+        self.assertNotIn("Duncan Sinclair", self.fulsom_notice("gc", heading.replace("Duncan Sinclair", "Another author"))["authors"])
+
+    def test_changed_fulsom_permission_requires_review(self):
+        heading = (ROOT / "examples/benchmarks/fulsom-lazy/upstream/Interval.hs").read_text().split("module Interval")[0]
+        self.assertNotIn("Duncan Sinclair", self.fulsom_notice("gc", heading.replace("notice appear in all copies", "notice has changed"))["authors"])
+
+    def application_notice(self, directory, executable, file, source):
+        self.file("benchmarks/" + directory + "/dune", "(executable (name " + executable + "))\\n")
+        self.file("benchmarks/" + directory + "/" + file, source + "\\nlet () = ()\\n")
+        return self.build("sandmark")[0]
+
+    def test_lexifi_organization_credit_is_recorded(self):
+        text = (ROOT / "examples/benchmarks/lexifi-g2pp/upstream/main.ml").read_text().split("open G2pp_calibration")[0]
+        row = self.application_notice("lexifi-g2pp", "main", "main.ml", text)
+        self.assertIn("LexiFi SAS (copyright holder)", row["authors"])
+
+    def test_changed_lexifi_organization_does_not_inherit_credit(self):
+        text = (ROOT / "examples/benchmarks/lexifi-g2pp/upstream/main.ml").read_text().split("open G2pp_calibration")[0]
+        row = self.application_notice("lexifi-g2pp", "main", "main.ml", text.replace("LexiFi SAS", "Another organization"))
+        self.assertNotIn("LexiFi SAS", row["authors"])
+
+    def test_minilight_author_is_recorded(self):
+        text = (ROOT / "examples/benchmarks/minilight/upstream/minilight.ml").read_text().split("(**")[0]
+        row = self.application_notice("multicore-minilight/sequential", "minilight", "minilight.ml", text)
+        self.assertIn("Harrison Ainsworth / HXA7241", row["authors"])
+
+    def test_changed_minilight_heading_does_not_inherit_credit(self):
+        text = (ROOT / "examples/benchmarks/minilight/upstream/minilight.ml").read_text().split("(**")[0]
+        row = self.application_notice("multicore-minilight/sequential", "minilight", "minilight.ml", text.replace("Harrison Ainsworth", "Another author"))
+        self.assertNotIn("Harrison Ainsworth", row["authors"])
+
+    def test_contrast_author_is_recorded(self):
+        text = (ROOT / "examples/benchmarks/contrast/upstream/contrast.ml").read_text().split("open Images")[0]
+        row = self.application_notice("sauvola", "contrast", "contrast.ml", text)
+        self.assertIn("Andreas Romeyke", row["authors"])
+
+    def test_changed_contrast_heading_does_not_inherit_credit(self):
+        text = (ROOT / "examples/benchmarks/contrast/upstream/contrast.ml").read_text().split("open Images")[0]
+        row = self.application_notice("sauvola", "contrast", "contrast.ml", text.replace("Andreas Romeyke", "Another author"))
+        self.assertNotIn("Andreas Romeyke", row["authors"])
+
+    def test_regexredux_bytes_adaptation_credit_is_recorded(self):
+        self.file("benchmarks/benchmarksgame/dune", "(executable (name regexredux2))\n")
+        self.file("benchmarks/benchmarksgame/regexredux2.ml", "(* regex-dna program contributed by Christophe TROESTLER\nupdated by Roman Kashitsyn: use Bytes instead of String *)\nlet () = ()\n")
+        row = self.build("sandmark")[0]
+        self.assertIn("Roman Kashitsyn", row["authors"])
+        self.assertIn("benchmarks/benchmarksgame/regexredux2.ml:Bytes-adaptation-credit", row["evidence"])
+
+    def test_changed_regexredux_adaptation_credit_requires_review(self):
+        self.file("benchmarks/benchmarksgame/dune", "(executable (name regexredux2))\n")
+        self.file("benchmarks/benchmarksgame/regexredux2.ml", "(* Another regex adaptation *)\nlet () = ()\n")
+        self.assertNotIn("Roman Kashitsyn", self.build("sandmark")[0]["authors"])
+
+    def test_expert_readme_author_is_recorded(self):
+        self.nofib_roots()
+        self.file("spectral/expert/Makefile", "\n")
+        self.file("spectral/expert/Main.hs", "main = print 0\n")
+        self.file("spectral/expert/README", "Ian Holyer\nMarch 1993\n")
+        row = self.build("nofib")[0]
+        self.assertIn("Ian Holyer", row["authors"])
+        self.assertIn("spectral/expert/README:authorship-and-adaptation-heading", row["evidence"])
+
+    def test_changed_expert_readme_credit_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/expert/Makefile", "\n")
+        self.file("spectral/expert/Main.hs", "main = print 0\n")
+        self.file("spectral/expert/README", "Another adaptation\n")
+        self.assertNotIn("Ian Holyer", self.build("nofib")[0]["authors"])
+
+    def test_knights_readme_author_is_recorded(self):
+        self.nofib_roots()
+        self.file("spectral/knights/Makefile", "\n")
+        self.file("spectral/knights/Main.hs", "main = print 0\n")
+        self.file("spectral/knights/README", "The Knights Tour in Haskell\n---------------------------\n\nJonathan Hill\n")
+        row = self.build("nofib")[0]
+        self.assertIn("Jonathan Hill", row["authors"])
+        self.assertIn("spectral/knights/README:authorship-heading", row["evidence"])
+
+    def test_changed_knights_readme_heading_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/knights/Makefile", "\n")
+        self.file("spectral/knights/Main.hs", "main = print 0\n")
+        self.file("spectral/knights/README", "Another tour author\n")
+        self.assertNotIn("Jonathan Hill", self.build("nofib")[0]["authors"])
+
+    def test_linear_authorship_and_conversion_roles_are_recorded(self):
+        self.nofib_roots()
+        self.file("real/linear/Makefile", "\n")
+        self.file("real/linear/Main.lhs", "Written by Brian D. Moe (Summer 1990)\nModified by Kamini Shenoi (Summer 1991)\nConverted to Haskell by Ian R McLelland and Cordelia V Hall (Nov 1992)\n\\begin{code}\nmain = print 0\n\\end{code}\n")
+        row = self.build("nofib")[0]
+        for name in ["Brian D. Moe", "Kamini Shenoi", "Ian R. McLelland", "Cordelia V. Hall"]:
+            self.assertIn(name, row["authors"])
+        self.assertIn("real/linear/Main.lhs:authorship-and-conversion-roles", row["evidence"])
+
+    def test_changed_linear_conversion_header_requires_review(self):
+        self.nofib_roots()
+        self.file("real/linear/Makefile", "\n")
+        self.file("real/linear/Main.lhs", "Another conversion\n\\begin{code}\nmain = print 0\n\\end{code}\n")
+        self.assertNotIn("Cordelia V. Hall", self.build("nofib")[0]["authors"])
+
+    def test_linear_input_roles_are_recorded(self):
+        self.nofib_roots()
+        self.file("gc/linear/Makefile", "\n")
+        self.file("gc/linear/Main.lhs", "\\begin{code}\nmain = print 0\n\\end{code}\n")
+        self.file("gc/linear/Input.lhs", "Roger L. Wainwright  6-8-90\nwritten by Dan Vasicek and copied from his directory 6/22/90\n")
+        row = self.build("nofib")[0]
+        self.assertIn("Roger L. Wainwright", row["authors"])
+        self.assertIn("Dan Vasicek", row["authors"])
+
+    def test_changed_linear_input_credit_requires_review(self):
+        self.nofib_roots()
+        self.file("gc/linear/Makefile", "\n")
+        self.file("gc/linear/Main.lhs", "\\begin{code}\nmain = print 0\n\\end{code}\n")
+        self.file("gc/linear/Input.lhs", "Another input author\n")
+        self.assertNotIn("Dan Vasicek", self.build("nofib")[0]["authors"])
+
+    def test_sphere_source_port_author_is_recorded(self):
+        self.nofib_roots()
+        self.file("spectral/sphere/Makefile", "\n")
+        self.file("spectral/sphere/Main.lhs", "This is a Haskell port of the Id version from the Impala\n16 July, 1998, David J. King\n> module Main where\n> main = print 0\n")
+        row = self.build("nofib")[0]
+        self.assertIn("David J. King", row["authors"])
+        self.assertIn("spectral/sphere/Main.lhs:authorship-and-port-history", row["evidence"])
+
+    def test_changed_sphere_port_attribution_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/sphere/Makefile", "\n")
+        self.file("spectral/sphere/Main.lhs", "Another author\n> module Main where\n> main = print 0\n")
+        self.assertNotIn("David J. King", self.build("nofib")[0]["authors"])
+
+    def test_para_article_authors_are_recorded(self):
+        self.nofib_roots()
+        self.file("spectral/para/Makefile", "\n")
+        self.file("spectral/para/Main.lhs", "% \tA program by Oege de Moor and Jeremy Gibbons\n> module Main where\n> main = print 0\n")
+        row = self.build("nofib")[0]
+        self.assertIn("Oege de Moor", row["authors"])
+        self.assertIn("Jeremy Gibbons", row["authors"])
+
+    def test_changed_para_article_author_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/para/Makefile", "\n")
+        self.file("spectral/para/Main.lhs", "% A program by Another author\n> module Main where\n> main = print 0\n")
+        self.assertNotIn("Oege de Moor", self.build("nofib")[0]["authors"])
+
+    def test_para_individual_data_notice_is_recorded(self):
+        self.nofib_roots()
+        self.file("spectral/para/Makefile", "\n")
+        self.file("spectral/para/Main.lhs", "> module Main where\n> main = print 0\n")
+        self.file("spectral/para/runtime_files/input-data", "Far From The Madding Crowd, by Thomas Hardy\n*END*THE SMALL PRINT! FOR PUBLIC DOMAIN ETEXTS*Ver.04.29.93*END*\n")
+        self.assertIn("spectral/para/runtime_files/input-data:Project-Gutenberg-1993-notice", self.build("nofib")[0]["notices"])
+
+    def test_incomplete_para_notice_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/para/Makefile", "\n")
+        self.file("spectral/para/Main.lhs", "> module Main where\n> main = print 0\n")
+        self.file("spectral/para/runtime_files/input-data", "Far From The Madding Crowd, by Thomas Hardy\n")
+        self.assertNotIn("spectral/para/runtime_files/input-data:Project-Gutenberg-1993-notice", self.build("nofib")[0]["notices"])
+
+    def test_lambda_source_author_header_is_recorded(self):
+        self.nofib_roots()
+        self.file("spectral/lambda/Makefile", "\n")
+        self.file("spectral/lambda/Main.hs", "module Main where\n-- From Mark: marku@cs.waikato.ac.nz [Nov 2001]\nmain = print 0\n")
+        row = self.build("nofib")[0]
+        self.assertIn("Mark (marku@cs.waikato.ac.nz)", row["authors"])
+        self.assertIn("spectral/lambda/Main.hs:author-header", row["evidence"])
+
+    def test_changed_lambda_source_author_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/lambda/Makefile", "\n")
+        self.file("spectral/lambda/Main.hs", "module Main where\n-- From Another author\nmain = print 0\n")
+        self.assertNotIn("Mark (marku@cs.waikato.ac.nz)", self.build("nofib")[0]["authors"])
+
+    def test_fft2_source_author_header_is_recorded(self):
+        self.nofib_roots()
+        self.file("spectral/fft2/Makefile", "\n")
+        self.file("spectral/fft2/Main.lhs", "> module Main where\n> main = print 0\n> -- Rex Page (rpage@trc.amoco.com)\n> -- Amoco Production Research, Sep 1992\n")
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "Rex Page")
+        self.assertIn("spectral/fft2/Main.lhs:author-header", row["evidence"])
+
+    def test_changed_fft2_author_header_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/fft2/Makefile", "\n")
+        self.file("spectral/fft2/Main.lhs", "> module Main where\n> main = print 0\n> -- Another author\n")
+        self.assertNotIn("Rex Page", self.build("nofib")[0]["authors"])
+
+    def test_gg_manual_author_section_is_recorded(self):
+        self.nofib_roots()
+        self.file("real/gg/Makefile", "\n")
+        self.file("real/gg/Main.hs", "main = print 0\n")
+        self.file("real/gg/gg.1", ".SH AUTHOR\nIain Checkland, University of York.\n")
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "Iain Checkland")
+        self.assertIn("real/gg/gg.1:author-section", row["evidence"])
+
+    def test_changed_gg_manual_author_requires_review(self):
+        self.nofib_roots()
+        self.file("real/gg/Makefile", "\n")
+        self.file("real/gg/Main.hs", "main = print 0\n")
+        self.file("real/gg/gg.1", ".SH AUTHOR\nAnother author.\n")
+        self.assertNotIn("Iain Checkland", self.build("nofib")[0]["authors"])
+
+    def test_pic_author_heading_is_recorded(self):
+        self.nofib_roots()
+        self.file("real/pic/Makefile", "\n")
+        self.file("real/pic/Main.hs",
+                  "--\n--      Patricia Fasel\n--      Los Alamos National Laboratory\nmain = print 0\n")
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "Patricia Fasel")
+        self.assertIn("real/pic/Main.hs:author-heading", row["evidence"])
+
+    def test_changed_pic_author_heading_requires_review(self):
+        self.nofib_roots()
+        self.file("real/pic/Makefile", "\n")
+        self.file("real/pic/Main.hs",
+                  "--      Another author\n--      Another laboratory\nmain = print 0\n")
+        self.assertNotIn("Patricia Fasel", self.build("nofib")[0]["authors"])
+
+    def test_primetest_declared_author_replaces_rcs_committer(self):
+        self.nofib_roots()
+        self.file("spectral/primetest/Makefile", "\n")
+        self.file("spectral/primetest/Main.lhs",
+                  "\\def\\author{David Lester}\n%$Author: simonmar $\n> main = print 0\n")
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "David Lester")
+        self.assertIn("spectral/primetest/Main.lhs:author-macro", row["evidence"])
+
+    def test_changed_primetest_author_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/primetest/Makefile", "\n")
+        self.file("spectral/primetest/Main.lhs",
+                  "\\def\\author{Another author}\n> main = print 0\n")
+        self.assertNotIn("David Lester", self.build("nofib")[0]["authors"])
+
+    def test_quoted_primetest_macro_is_not_an_author_declaration(self):
+        self.nofib_roots()
+        self.file("spectral/primetest/Makefile", "\n")
+        self.file("spectral/primetest/Main.lhs",
+                  '> main = putStrLn "\\\\def\\\\author{David Lester}"\n')
+        self.assertNotIn("David Lester", self.build("nofib")[0]["authors"])
+
+    def test_reviewed_bigarray_storage_modes_are_deferred(self):
+        self.file("benchmarks/stdlib/dune", "(executable (name big_array_bench))\n")
+        self.file("benchmarks/stdlib/big_array_bench.ml",
+                  (ROOT / "tests/benchmarks/data/inventory-stdlib/big_array_bench.ml").read_text())
+        row = self.build("sandmark")[0]
+        self.assertEqual(row["disposition"], "defer")
+        self.assertIn("C-layout storage", row["reason"])
+
+    def test_changed_bigarray_source_requires_review(self):
+        self.file("benchmarks/stdlib/dune", "(executable (name big_array_bench))\n")
+        self.file("benchmarks/stdlib/big_array_bench.ml",
+                  (ROOT / "tests/benchmarks/data/inventory-stdlib/big_array_bench.ml").read_text()
+                  + "\nlet changed = true\n")
+        self.assertEqual(self.build("sandmark")[0]["disposition"], "import")
+
+    def test_bigarray_name_does_not_defer_portable_array_code(self):
+        self.file("benchmarks/stdlib/dune", "(executable (name big_array_bench))\n")
+        self.file("benchmarks/stdlib/big_array_bench.ml", "let a = Array.make 10 0\n")
+        self.assertEqual(self.build("sandmark")[0]["disposition"], "import")
+
+    def test_exact_reals_paper_attribution_is_recorded(self):
+        self.nofib_roots()
+        self.file("spectral/exact-reals/Makefile", "\n")
+        self.file("spectral/exact-reals/Main.hs",
+                  '-- Taken from "The worlds shortest correct exact real arithmetic program?"\n'
+                  '-- David Lester, Information and Computation 216, pp39-46, 2012, Elsevier\n'
+                  'main = print 0\n')
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "David Lester")
+        self.assertIn("spectral/exact-reals/Main.hs:paper-attribution", row["evidence"])
+
+    def test_changed_exact_reals_paper_attribution_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/exact-reals/Makefile", "\n")
+        self.file("spectral/exact-reals/Main.hs",
+                  '-- Taken from a different paper\n-- David Lester, another work\nmain = print 0\n')
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "not stated in scanned source headers")
+
+    def test_atom_multiline_attribution_is_recorded(self):
+        self.nofib_roots()
+        self.file("spectral/atom/Makefile", "\n")
+        self.file("spectral/atom/Main.hs",
+                  "{- A kernel fragment from a program written by\n\t\tRon Legere\n-}\nmain = print 1\n")
+        row = self.build("nofib")[0]
+        self.assertEqual(row["authors"], "Ron Legere")
+        self.assertIn("spectral/atom/Main.hs:attribution-header", row["evidence"])
+
+    def test_changed_atom_attribution_requires_review(self):
+        self.nofib_roots()
+        self.file("spectral/atom/Makefile", "\n")
+        self.file("spectral/atom/Main.hs",
+                  "{- A kernel fragment from a program written by\n\t\tDifferent Person\n-}\nmain = print 1\n")
+        self.assertNotIn("Ron Legere", self.build("nofib")[0]["authors"])
+
     def test_nested_haskell_programs_are_not_an_aggregate_workload(self):
         self.nofib_roots()
         self.file("spectral/group/Makefile", "SUBDIRS = one\n")
@@ -184,6 +963,59 @@ class InventoryTest(unittest.TestCase):
         self.file("benchmarks/kernels/dune", "(executable (name " + name + ") (modes native byte))\n")
         self.file("benchmarks/kernels/" + name + ".ml", text)
 
+    def opaque_call_probe(self, text):
+        self.file("benchmarks/simple-tests/morestacks.ml", text)
+        self.file("benchmarks/simple-tests/dune", "(executable (name morestacks) (modes native byte))\n")
+        return self.build("sandmark")[0]
+
+    def test_pinned_opaque_call_probe_has_a_capability_blocker(self):
+        original = (ROOT / "tests/benchmarks/data/sandmark-morestacks.ml").read_text()
+        row = self.opaque_call_probe(original)
+        self.assertEqual(row["disposition"], "defer")
+        self.assertIn("optimization barrier", row["reason"])
+        self.assertIn("reconsider", row["reason"])
+
+    def test_changed_opaque_call_probe_requires_fresh_review(self):
+        original = (ROOT / "tests/benchmarks/data/sandmark-morestacks.ml").read_text()
+        row = self.opaque_call_probe(original.replace("n + 5", "n * n + 5"))
+        self.assertEqual(row["disposition"], "import")
+
+    def test_algorithmic_opacity_is_not_blanket_deferred(self):
+        self.sandmark_program("kernel", "let f n = n * n\nlet result = Sys.opaque_identity f 13\n")
+        self.assertEqual(self.build("sandmark")[0]["disposition"], "import")
+
+    def allocation_probe(self, name, text):
+        self.file("benchmarks/simple-tests/" + name + ".ml", text)
+        self.file("benchmarks/simple-tests/dune",
+                  "(executable (name " + name + ") (modes native byte))\n")
+        return next(row for row in self.build("sandmark")
+                    if row["path"] == "benchmarks/simple-tests/" + name + ".exe")
+
+    def test_reviewed_allocation_probes_record_the_missing_barrier(self):
+        for name in ("alloc", "lists", "stacks", "stress"):
+            with self.subTest(name=name):
+                text = (ROOT / ("tests/benchmarks/data/sandmark-opaque/" + name + ".ml")).read_text()
+                row = self.allocation_probe(name, text)
+                self.assertEqual(row["disposition"], "defer")
+                self.assertIn("optimization barrier", row["reason"])
+                self.assertIn("reconsider", row["reason"])
+
+    def test_changed_allocation_probes_require_fresh_review(self):
+        for name in ("alloc", "lists", "stacks", "stress"):
+            with self.subTest(name=name):
+                text = (ROOT / ("tests/benchmarks/data/sandmark-opaque/" + name + ".ml")).read_text()
+                row = self.allocation_probe(name, text + "\n(* upstream changed *)\n")
+                self.assertEqual(row["disposition"], "import")
+
+    def test_reviewed_source_at_an_unreviewed_path_is_not_automatically_deferred(self):
+        for name in ("alloc", "lists", "stacks", "stress"):
+            with self.subTest(name=name):
+                text = (ROOT / ("tests/benchmarks/data/sandmark-opaque/" + name + ".ml")).read_text()
+                self.sandmark_program("algorithm_" + name, text)
+                row = next(row for row in self.build("sandmark")
+                           if row["path"] == "benchmarks/kernels/algorithm_" + name + ".exe")
+                self.assertEqual(row["disposition"], "import")
+
     def test_nested_comments_do_not_invent_runtime_dependencies(self):
         self.sandmark_program("trees", '(* Gc.set { (* nested *) } *)\nlet label = "Effect.perform x"\nlet result = 42\n')
         self.assertEqual(self.build("sandmark")[0]["disposition"], "import")
@@ -229,6 +1061,50 @@ class InventoryTest(unittest.TestCase):
         self.sandmark_program("strings", 'let result = "' + "x" * 10000 + '"\n')
         self.assertEqual(self.build("sandmark")[0]["inputs"], "")
 
+    def test_nofib_profile_arguments_include_graph_dataset(self):
+        self.nofib_roots()
+        self.file("spectral/dom-lt/Main.hs", "main = return ()\n")
+        self.file("spectral/dom-lt/Makefile", "FAST_OPTS = ghc-examples.in 50\nNORM_OPTS = ghc-examples.in 400\n")
+        self.file("spectral/dom-lt/ghc-examples.in", "graph data\n")
+        self.assertEqual(self.build("nofib")[0]["inputs"], "spectral/dom-lt/ghc-examples.in")
+
+    def test_nofib_profile_paths_support_quotes_flags_and_continuations(self):
+        self.nofib_roots()
+        self.file("spectral/graphs/Main.hs", "main = return ()\n")
+        self.file("spectral/graphs/Makefile",
+                  'NORM_OPTS = "data/input graph.bin" \\\n --lookup=names.tbl 400 # decoy.bin\n')
+        self.file("spectral/graphs/data/input graph.bin", "graph\n")
+        self.file("spectral/graphs/names.tbl", "names\n")
+        self.file("spectral/graphs/decoy.bin", "not an argument\n")
+        self.assertEqual(self.build("nofib")[0]["inputs"],
+                         "spectral/graphs/data/input graph.bin;spectral/graphs/names.tbl")
+
+    def test_nofib_input_stems_retain_circuit_files(self):
+        self.nofib_roots()
+        self.file("real/scs/Main.hs", 'main = readFile (file ++ ".in")\n')
+        self.file("real/scs/Makefile", "NORM_OPTS = runtime_files/inverter 345 2n 4u 1\n")
+        self.file("real/scs/runtime_files/inverter.in", "circuit data\n")
+        self.assertEqual(self.build("nofib")[0]["inputs"], "real/scs/runtime_files/inverter.in")
+
+    def test_nofib_profile_paths_stay_inside_pinned_tree(self):
+        self.nofib_roots()
+        self.file("spectral/graphs/Main.hs", "main = return ()\n")
+        with tempfile.TemporaryDirectory() as outside:
+            dataset = Path(outside) / "external.bin"
+            dataset.write_text("external\n")
+            self.file("spectral/graphs/Makefile", "NORM_OPTS = " + str(dataset) + " 400\n")
+            self.assertEqual(self.build("nofib")[0]["inputs"], "")
+
+    def test_related_names_are_independent_of_discovery_order(self):
+        rows = [dict(source=source, path=path, name="fft") for source, path in
+                [("smlnj", "programs/fft"), ("sandmark", "benchmarks/fft.exe"), ("mlton", "fft.sml")]]
+        reversed_rows = copy.deepcopy(list(reversed(rows)))
+        AUDIT.related(rows)
+        AUDIT.related(reversed_rows)
+        self.assertEqual({r["source"]: r["related"] for r in rows},
+                         {r["source"]: r["related"] for r in reversed_rows})
+        self.assertEqual(rows[0]["related"], "mlton:fft.sml;sandmark:benchmarks/fft.exe")
+
     def test_digest_includes_member_identity_and_content(self):
         a = self.file("a.sml", "structure A = struct end\n")
         b = self.file("b.sml", a.read_text())
@@ -236,6 +1112,88 @@ class InventoryTest(unittest.TestCase):
         before = AUDIT.digest(self.root, [a])
         a.write_text("structure A = struct val x = 1 end\n")
         self.assertNotEqual(before, AUDIT.digest(self.root, [a]))
+
+    def test_cpp_dependencies_are_transitive_source_members(self):
+        self.nofib_roots()
+        self.file("spectral/compiler/Makefile", "\n")
+        self.file("spectral/compiler/Main.hs", '#include "../shared.h"\nmain = print 1\n')
+        self.file("spectral/shared.h", '#include "constants.inc"\n')
+        header = self.file("spectral/constants.inc", "value = 1\n")
+        before = self.build("nofib")[0]
+        self.assertEqual(before["members"],
+                         "spectral/compiler/Main.hs;spectral/constants.inc;spectral/shared.h")
+        self.assertEqual(before["inputs"], "")
+        header.write_text("value = 2\n")
+        self.assertNotEqual(before["sha256"], self.build("nofib")[0]["sha256"])
+
+    def test_cpp_dependencies_follow_file_entrypoints(self):
+        self.nofib_roots()
+        self.file("spectral/compiler/Makefile", "\n")
+        self.file("spectral/compiler/one.hs", '#include "values.inc"\nmain = print value\n')
+        self.file("spectral/compiler/two.hs", "main = print 2\n")
+        self.file("spectral/compiler/values.inc", "value = 1\n")
+        rows = {r["path"]: r for r in self.build("nofib")}
+        self.assertIn("spectral/compiler/values.inc", rows["spectral/compiler/one.hs"]["members"])
+        self.assertNotIn("spectral/compiler/values.inc", rows["spectral/compiler/two.hs"]["members"])
+
+    def test_cpp_headers_cannot_hide_unavailable_primitive_imports(self):
+        self.nofib_roots()
+        self.file("spectral/compiler/Makefile", "\n")
+        self.file("spectral/compiler/Main.hs", '#include "primitive.inc"\nmain = print 1\n')
+        self.file("spectral/compiler/primitive.inc", "import GHC.Prim\n")
+        self.assertEqual(self.build("nofib")[0]["disposition"], "defer")
+
+    def test_cpp_c_helpers_retain_headers_outside_the_program_directory(self):
+        self.nofib_roots()
+        self.file("spectral/compiler/Makefile", "\n")
+        self.file("spectral/compiler/Main.hs", "main = print 1\n")
+        self.file("spectral/compiler/helper.c", '#include "../helper.h"\n')
+        self.file("spectral/helper.h", "int helper(void);\n")
+        self.assertIn("spectral/helper.h", self.build("nofib")[0]["members"])
+
+    def test_cpp_cycles_terminate_and_cannot_escape_the_upstream(self):
+        main = self.file("repo/Main.hs", '#include "a.inc"\n#include "../outside.inc"\n')
+        header = self.file("repo/a.inc", '#include "Main.hs"\n')
+        self.file("outside.inc", "must not enter the source identity\n")
+        self.assertEqual(AUDIT.source_files(self.root / "repo", "Main.hs"), sorted([main, header]))
+
+    def test_cpp_header_is_not_runtime_data_but_cli_source_is(self):
+        self.nofib_roots()
+        self.file("spectral/compiler/Makefile", "FAST_OPTS = table.hs\n")
+        self.file("spectral/compiler/Main.hs", '#include "helpers.hs"\nmain = print 1\n')
+        self.file("spectral/compiler/helpers.hs", "value = 1\n")
+        self.file("spectral/compiler/table.hs", "rows = []\n")
+        self.assertEqual(self.build("nofib")[0]["inputs"], "spectral/compiler/table.hs")
+
+    def hartel_shim(self):
+        self.nofib_roots()
+        self.file("spectral/hartel/listcompr/Makefile", "\n")
+        self.file("spectral/hartel/listcompr/Main.hs",
+                  '#include "../Fast2haskell.hs"\nmain = print 1\n')
+        shim = self.root / "spectral/hartel/Fast2haskell.hs"
+        shim.write_bytes((ROOT / "tests/benchmarks/data/inventory-hartel/Fast2haskell.hs").read_bytes())
+        return shim
+
+    def test_reviewed_hartel_shim_has_portable_scalar_operations(self):
+        self.hartel_shim()
+        self.assertEqual(self.build("nofib")[0]["disposition"], "import")
+
+    def test_changed_hartel_shim_requires_a_new_capability_review(self):
+        shim = self.hartel_shim()
+        shim.write_bytes(shim.read_bytes() + b"\n-- changed upstream shim\n")
+        self.assertEqual(self.build("nofib")[0]["disposition"], "defer")
+
+    def test_reviewed_shim_does_not_hide_direct_primitive_imports(self):
+        self.hartel_shim()
+        self.file("spectral/hartel/listcompr/Main.hs",
+                  '#include "../Fast2haskell.hs"\nimport GHC.Prim\nmain = print 1\n')
+        self.assertEqual(self.build("nofib")[0]["disposition"], "defer")
+
+    def test_unreviewed_shim_path_does_not_inherit_the_exception(self):
+        shim = self.hartel_shim()
+        self.file("spectral/hartel/listcompr/Main.hs", '#include "../other.hs"\nmain = print 1\n')
+        shim.rename(shim.with_name("other.hs"))
+        self.assertEqual(self.build("nofib")[0]["disposition"], "defer")
 
     def test_classic_names_are_reserved_before_foreign_variants(self):
         rows = [dict(source="nofib", path="spectral/tak", name="tak", disposition="import"),

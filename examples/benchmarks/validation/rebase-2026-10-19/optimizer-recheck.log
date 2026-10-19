@@ -1,0 +1,8 @@
+... 215/560 done, 0 failed, 4 running, 30.0 s
+... 379/560 done, 0 failed, 4 running, 60.0 s
+... 470/560 done, 0 failed, 4 running, 90.0 s
+... 559/560 done, 0 failed, 1 running, 120.0 s
+... 559/560 done, 0 failed, 1 running, 150.0 s
+slowest: make/test-opt 42.7 s, basis-compile/stack/mono.word16 3.6 s, basis-compile/stack/mono.int64 3.2 s, basis-compile/stack/mono.word 3.2 s, basis-compile/stack/mono.int32 3.2 s
+output: kept 0 bytes, freed 1005392; events in tests/out/r/20261019-090523-792536/events.jsonl, summary in tests/out/r/20261019-090523-792536/summary.md
+RESULT: PASS 560 of 560 tests (560 PASS), 154.9 s wall, 396.6 s CPU (64% of 4)

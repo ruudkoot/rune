@@ -1,0 +1,14 @@
+{
+  "samples": 351,
+  "features": 34,
+  "classes": 2,
+  "comparison": "all values, labels and order exactly match UCI data",
+  "sha256": {
+    "ionosphere.data": "46d52186b84e20be52918adb93e8fb9926b34795ff7504c24350ae0616a04bbd",
+    "ionosphere.names": "a368e4fd9b910a3ac97fa306add17446c13105367e17f5b691455db2ea8411cf",
+    "naive_multilayer_dataset.ml": "bcd3c8c6aa18f08b2f0f29ab39d23ed7f035e8763bd193090950368159a21f8d"
+  },
+  "citation": "Sigillito, V., Wing, S., Hutton, L., & Baker, K. (1989). Ionosphere [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5W01B",
+  "dataset_license": "CC BY 4.0",
+  "license_source": "https://archive.ics.uci.edu/dataset/52/ionosphere"
+}

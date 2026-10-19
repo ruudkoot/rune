@@ -1,0 +1,16 @@
+tests/benchmarks/data/nofib-fluid/.gitattributes
+tests/benchmarks/data/nofib-fluid/float-show.reference
+tests/benchmarks/data/nofib-fluid/fluid-monitor.reference
+tests/benchmarks/data/nofib-fluid/fluid-output.reference
+tests/benchmarks/data/nofib-fluid/fluid-tolerance-stop.reference
+tests/benchmarks/data/nofib-fluid/fluid-two-steps-monitor.reference
+tests/benchmarks/data/nofib-fluid/fluid-two-steps.reference
+tests/benchmarks/data/nofib-fluid/mesh-factor.reference
+tests/benchmarks/data/nofib-fluid/mesh-input.reference
+tests/benchmarks/data/nofib-fluid/mesh-order.reference
+tests/benchmarks/data/nofib-fluid/mesh-solution.reference
+tests/benchmarks/data/nofib-fluid/numeric.reference
+tests/benchmarks/data/nofib-fluid/ordering.reference
+tests/benchmarks/data/nofib-fluid/source/fluid.stdin
+tests/benchmarks/data/nofib-fluid/source/runtime_files/chan8.dat
+tests/benchmarks/data/nofib-fluid/sparse.reference

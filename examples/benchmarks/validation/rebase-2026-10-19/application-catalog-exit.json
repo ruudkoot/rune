@@ -1,0 +1,9 @@
+{
+  "command": [
+    "sh",
+    "tests/benchmarks/check-nofib-parser.sh"
+  ],
+  "BENCH_CONFIGS": "rune",
+  "exit": 0,
+  "elapsed_seconds": 57.33431910999934
+}

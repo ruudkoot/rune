@@ -1,0 +1,11 @@
+--- /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-solid-originals/source/Main.hs	2026-10-16 16:09:55.991875536 +0100
++++ /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/hartel-solid-originals/Main-index-corrected.hs	2026-10-18 11:16:47.606441020 +0100
+@@ -16,7 +16,7 @@
+ type
+     T_t_std_real=Double;
+     f_f_std_error ((a_x,a_s):a_y)=abortstr a_s;
+-    f_f_std_index a_lst a_n=(!!) a_lst a_n;
++    f_f_std_index a_lst a_n=(!!) a_lst (a_n-1);
+     f_id_THEPRIME a_x=a_x;
+     f_eq_c a_x a_y=((==) :: (Int -> Int -> Bool)) (fromEnum a_x) (fromEnum a_y);
+     f_f_StandardXfer_strtoreal a_i=f_stor a_i;

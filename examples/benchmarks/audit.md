@@ -1,4 +1,25 @@
-# Initial source audit
+# Source audit and review history
+
+Current closure: all 321 suitable paths are implemented in 507 programs and
+1473 profiles. The [M8 evidence](results/m8-closure/README.md) and
+[initial report](REPORT.md) record the final reconciliation. The reviews below
+retain their historical counts and status at each recorded source epoch.
+
+The [2026-10-16 circuit-input review](validation/inventory-oct16-circuit-input.md)
+adds the SCS inverter fixture whose .in suffix is added by the program. All 46
+inventory regressions pass, and the full clean pinned-source replay reproduces
+all 861 entries without changing dispositions or source identities.
+
+The [2026-10-16 profile-input review](validation/inventory-oct16-profile-inputs.md)
+records 22 additional input references across nine nofib entries and normalizes
+related-name ordering. All 861 entries reproduce from clean pinned trees and all 45
+inventory regressions pass. Dispositions and source identities are unchanged.
+
+The [2026-10-16 allocation/stack review](validation/sandmark-allocation-probes.md)
+adds four source-specific deferrals for unavailable optimization barriers.
+Current Sandmark dispositions are 61 import and 82 defer. The baseline table
+below records the initial audit; subsequent reviews preserve every inventory
+entry and record their changes explicitly.
 
 Recorded 2026-10-01; classic review extended 2026-10-02, on the `benchmarks` worktree branching from
 `origin/master` at `b30fba275d685600da4d64cf0d9f7288bed0663e`.
@@ -217,3 +238,524 @@ Native reference builds create source-looking cache filenames. Discovery
 now excludes `.cm`, `MLB`, `_build`, `.git`, `dist-newstyle` and Python cache
 directories from workload members, fixtures/notices and recursive discovery.
 Tests verify that native caches cannot change the pinned source inventory.
+
+## Opaque-call review, 2026-10-16
+
+The [morestacks review](validation/sandmark-opaque-call.md) identifies an unavailable
+optimization barrier for this call-overhead microbenchmark. Its source-guarded
+entry moves from import to defer under the existing feature policy, with an
+explicit reconsideration condition. All 143 pinned Sandmark entries were rebuilt
+and all 861 inventory entries reconcile; alias relationships and ordering are unchanged.
+All 38 discovery/classification tests pass. Other uses of opaque wrappers remain
+subject to individual algorithm/observation review.
+
+## CPP dependency review, 2026-10-16
+
+The [quoted-include review](validation/hartel-cpp-inventory.md) adds transitive
+source headers to member identities and removes include directives from runtime
+input discovery. All five clean pinned trees reproduce all 861 entries; 19
+records change only members, digests or inputs. The exact Hartel compatibility
+shim receives a source-identity-guarded scalar-operation review. Workload names,
+dispositions and scope are unchanged. All 56 inventory regressions pass.
+
+## Circuit simulator authorship review, 2026-10-16
+
+The gc/circsim and spectral/circsim literate headings explicitly name David J.
+King and John O'Donnell, January 1998. Discovery now recognizes that exact
+heading and records its source evidence. Two inventory rows change authors and
+evidence only; source identities, names and dispositions remain unchanged.
+All 58 inventory regressions pass and all five clean pinned trees reproduce
+861 entries. The shared simulator's different consumers retain separate ports.
+
+## Atom attribution review, 2026-10-16
+
+The atom header attributes its kernel to Ron Legere on the line after
+written by. Discovery now recognizes that exact multiline attribution.
+One inventory row gains authors/evidence; source identity, name and disposition
+are unchanged. All 60 regressions pass and all five clean pins reproduce 861
+entries. The source's historical Hugs/GHC anecdote is recorded as history.
+
+## Exact real arithmetic attribution review, 2026-10-17
+
+The exact-reals source explicitly cites David Lester's 2012 paper. Discovery now
+recognizes that exact title/citation and records its author and source evidence.
+One inventory row changes authors/evidence only; identities, names, dispositions
+and inputs are unchanged. All 62 inventory regressions pass, and all five clean
+pinned trees reproduce 861 entries. Paper metadata and numerical reference scopes
+are retained with the import.
+
+## Primetest author and stdlib selector review, 2026-10-17
+
+Primetest's exact author macro names David Lester. Its RCS Author field instead
+identifies the last committer; the reviewed heading now takes precedence over
+that tag. One inventory row changes authors/evidence only.
+
+The stdlib review identifies 71 cases across ten executables, including the
+already imported Stack cases and two byte operations defined but omitted from
+dispatch. [The selector inventory](stdlib-cases.tsv) records source hashes,
+evidence lines, reachability, implementation state and dispositions. Result-only
+opaque_identity wrappers do not justify blanket deferral of portable operations.
+Immediate integer equality is portable; three immutable-value physical-identity
+cases have explicit missing-facility conditions.
+
+Both pinned Bigarray modes specifically test typed C-layout storage. Managed
+SML arrays would change that storage policy, so the executable and its two cases
+are deferred until equivalent storage is available. No prerequisite runtime
+feature is introduced. The classification is guarded by the reviewed source
+hash; changed source and a portable same-named program require fresh review.
+
+All 68 discovery/classification regressions pass. All five clean pinned trees
+reproduce 861 inventory entries; only the two reviewed rows change. The additional
+selector table accounts for nested cases without presenting deferred cases as
+runnable programs.
+
+## PIC authorship and historical variants, 2026-10-17
+
+The exact Patricia Fasel/Los Alamos heading appears in nine source modules.
+Discovery records the declared author and each heading's evidence. Only that
+inventory row's authors/evidence change; all 70 regressions pass and all five
+clean pinned trees reproduce 861 primary entries.
+
+[Historical variants](source-variants.tsv) separately account for the retained
+Culler/Lubeck Id implementations and their call graphs. Three non-built dataflow
+implementations have explicit missing execution/setup facilities and conditions
+for reconsideration; the two call graphs are excluded as documentation.
+They are not runnable benchmarks or declared duplicates of the Haskell program.
+The Haskell copying notice is retained on the derivative kernel and independent
+model; no notice is inferred for a different historical component.
+
+## Sequential Graph500 naming and variants
+
+| Original executable | Run-plan aliases | Rune name | Disposition |
+|---|---|---|---|
+| graph500seq/gen.exe | graph500_gen | graph500-gen | Import efficient integer-row generation and original binary output. |
+| graph500seq/kernel1_run.exe | graph500_kernel1, graph500_seq_kernel1 | graph500-kernel1 | Import list-array adjacency construction over original deterministic Marshal fixtures. |
+| graph500seq/kronecker.exe | kronecker | kronecker | Import the distinct floating-array append/permutation prototype. |
+
+The shared GraphTypes interface in graph500par contains only numeric type
+aliases. Sequential ports require no parallel runtime. Their profile choices,
+larger configured parameter candidates, source notices, numeric differences
+and every driver/data adaptation are recorded in their provenance sections.
+
+## Knights representations and authorship, 2026-10-17
+
+The exact README heading declares Jonathan Hill as author. Discovery records
+that heading with two positive/changed-heading regressions: all 96 inventory
+tests pass, and five clean pinned trees reproduce 861 primary entries.
+
+The [supplementary variants](source-variants.tsv) separately record the inactive
+ChessSetArray representation, bringing that map to 27 entries. Its immutable
+arrays, layout, metadata and source indexTile quirk differ from ChessSetList.
+The original array spaces 64 1 recurses forever after reaching zero and produces
+a bounded stack-overflow diagnostic. Imported array variants apply the reviewed
+single formatter base-case repair logTen 0, select the array module in the
+original observer, and match its complete tours. The original module remains
+unchanged in provenance. This is an import with an explicit repair, not a duplicate
+or an unsupported-runtime deferral.
+
+## Expert, multiplier and regex adaptation credits, 2026-10-17
+
+Six guarded regressions record Ian Holyer's March 1993 expert adaptation heading,
+John T. O'Donnell's multiplier authorship/copyright heading and Roman Kashitsyn's
+Bytes adaptation in regexredux2. Changed headings do not inherit these credits.
+All 102 inventory tests and five clean pinned trees reproduce 861 primary entries.
+
+The supplementary map now has 28 entries. The multiplier source's inactive
+runMult consumer is imported separately from traceMult: it sums ready signals
+and leaves the product stream undemanded. Original observations, an independent
+clock model and explicit demand tests support that distinction. Generic unused
+component utilities are retained as source support, not separate executables.
+
+Regex profiles are generated by the pinned OCaml fasta3 source. Individual BSD
+notices, generator/conversion credits, exact data identities and the portable
+Str-fragment replacement are recorded. The published larger input remains a
+separate scale reference; selected profiles explicitly state their smaller N.
+
+## Dominator source and dependency audit, 2026-10-18
+
+Four guarded regressions pin Matt Morrow's BSD3 declaration and the reviewed
+stale-threshold defect at the known Dom.hs source identity; changed notices or
+source do not inherit those conclusions. All 106 inventory tests pass and five
+clean pinned trees reproduce 861 primary entries. The supplementary map has
+29 entries, including the explicitly deferred unrepaired dominator variant.
+containers 0.6.7 is pinned separately by archive hash with complete selected
+module notices and LICENSE; graph data retain their original bytes and stated
+limits of upstream attribution. The corrected import preserves Patricia maps,
+bitmap sets, immutable environment updates and continuation/state callbacks.
+
+## Spivey's completion workload, 2026-10-18
+
+Two guarded notice regressions record the joint Orwell/1991/Mike Spivey and
+partain Haskell-conversion heading; changed headings do not inherit those
+credits. All 108 inventory tests pass and all five pinned trees reproduce
+861 primary entries. The established name rewrite has no collision in that
+inventory, so the final ports are rewrite-lazy and rewrite-strict.
+
+The port retains the active lexicographic RPO extension, numbered theory,
+discrimination net and shared completion. Computed agenda costs remain lazy;
+a singleton agenda leaves an unused cost undemanded. A regression distinguishes
+that behavior from the preliminary eager-cost implementation. The source's
+map/zip classification uses shared tagged pairs in SML; the separate Boolean
+map spine is omitted and recorded as a representation adaptation.
+
+## Hartel IDA and Sandmark ordered trees, 2026-10-18
+
+The sequential Hartel IDA source uses the compatibility shim's no-op miraseq;
+it requires no parallel runtime. The lazy and strict finite-list ports retain
+the reversed shuffle distribution, sequential branch selection, stable shared
+partitions and cutoff demand. Original configuration/path observations and
+independent optimal lengths support their distinction; no unsupported feature
+is introduced.
+
+All eleven map/set selectors are individually imported. OCaml 4.14.1 library
+modules and notices are pinned separately from Sandmark benchmark sources and
+run-plan entries. NONE/SOME change flags replace physical-identity decisions;
+map/set node payloads remain distinct. Original remove/add-remove quirks are
+preserved rather than silently repaired. Forty-five other stdlib cases remain
+planned, including bytes_set and bytes_cat which are defined but unreachable
+from the upstream command-line selector.
+
+All 108 inventory regressions pass, and the five pinned trees reproduce
+861 primary entries. These imports bring the catalogue to 409 programs and
+1214 profiles. Remaining M3/M4/M5 coverage is still work in progress.
+
+## Sandmark stdlib closure, 2026-10-18
+
+All 45 remaining suitable selectors now have portable implementations:
+twelve bytes functions, thirteen string functions, six Str operations and
+fourteen hash/table selectors. bytes_set and bytes_cat remain explicitly
+unreachable from the original CLI; original reference programs export their
+defined bodies directly. The 71-case executable inventory now has no suitable
+planned selector. Existing capability-based deferrals remain explicit.
+
+The catalogue contains 454 programs and 1316 profiles. Fixed source inputs,
+operation-count parameters and per-call/global construction scopes remain.
+Original run-plan entries retain published counts beside the selected profile
+reductions. Complete selected benchmark/library/runtime sources, Dune credit,
+independent source hashes and distinct Unlicense/LGPL/linking-exception notices
+are retained. The numerical representation and library replacements are
+documented per workload rather than treated as identical OCaml runtime costs.
+
+This closes the stdlib selector inventory, not milestone M5: LexiFi G2++,
+sequential MiniLight and Sauvola remain pending. M3 and M4 also remain in
+progress. Canonical validation and outstanding checks are recorded separately
+in the validation ledger.
+
+## Sandmark applications and source credits, 2026-10-18
+
+The final three suitable primary executables now have portable imports:
+LexiFi G2++, contrast and sequential MiniLight. The pinned executable inventory
+has no remaining suitable Sandmark import; parallel/effect/FFI and ecosystem
+dispositions retain their explicit capability conditions. This code coverage
+does not by itself establish the pending repository acceptance result.
+
+Six guarded notice regressions record LexiFi SAS as copyright holder,
+Harrison Ainsworth/HXA7241 and Andreas Romeyke. Changed headings do not inherit
+those credits. All 114 inventory tests pass and five clean source pins reproduce
+861 entries. The catalogue contains 457 programs and 1325 profiles.
+
+Original numerical/image observations, independent component models and
+complete result checks support the ports. Known native 32-bit random arithmetic
+failures and default legacy 64-bit numeric/image failures remain explicit.
+Diagnostic nursery changes do not alter suite defaults or passing expectations.
+
+## Hartel scheduling workload, 2026-10-18
+
+The two sched policies import the sequential two-processor simulation/search.
+Its sandwich shim uses no-op miraseq, requiring no parallel runtime. All seven
+supplied job graphs are accounted for; historical selectors ten/fourteen do
+not equal their literal defined-node counts. Full source, shim and fixtures
+are retained without inferring individual authorship or licensing.
+
+Original complete tree observations and an independent DAG/event model agree.
+Finite data policies remain separate, with shared delayed processing pairs,
+guarded unused fields and lazy branch/hint control. Normal retains source
+100-by-eleven; selected large uses one fourteen-labelled graph for tree-size/
+memory scaling, while source SLOW500-by-eleven remains a recorded reference.
+The catalogue reaches 459 programs and 1331 profiles. M3/M4 remain in progress.
+
+## Hartel wave4main workload, 2026-10-18
+
+Two finite-data policies now implement the original split wave-state workload.
+Immutable bounded vector adapters preserve six array domains, source indices,
+halo exchange and U/V/height update dependencies. Direct vector construction
+replaces the original association-list array builder; full numeric validation
+adds an explicitly documented traversal before source formatting.
+
+Original complete observations and an independent unsplit-grid oracle agree.
+The source supplies no individual author or separate program notice; complete
+Main, shim, Makefile and fixtures remain available without inferred authorship.
+The catalogue contains 461 programs and 1337 profiles. M3/M4 remain in progress.
+
+## Fulsom and Symalg portable applications, 2026-10-18
+
+Four Fulsom ports preserve distinct GC/raw and real/repeated-hash consumers,
+with separately named finite-data policies and one shared reachable renderer.
+Complete original module notices credit Duncan Sinclair; README.nofib credits
+Will Partain's directory flattening. Four guarded inventory regressions verify
+the individual author/permission heading. All 118 discovery tests and the
+five-pin 861-entry replay pass. Original unused scene/library definitions and
+excluded Bah tests remain accounted for. Two raster-to-PGM viewing utilities
+are explicitly excluded ancillary tools, with source identities/notices.
+
+Two Symalg ports retain its command interpreter, exact-real approximation
+trees and IntInf arithmetic. Complete numeric strings supplement original
+hashed transcripts. Original and independent integer-square-root references
+agree through 40000 digits; selected profiles reduce repetition/precision
+explicitly. Neither the source zero-product magnitude loop nor SML/NJ's
+documented auxiliary failures are silently repaired.
+
+The catalogue contains 467 programs and 1355 profiles. Code coverage does not
+by itself establish pending full repository acceptance. M3/M4 remain in
+progress and M8 remains planned.
+
+## Cacheprof input/fixture reconciliation, 2026-10-18
+
+Four variants retain distinct GC/raw and real/200-iteration forced consumers
+of one shared text-annotation pipeline, with memoized/strict finite data.
+No generated assembly is executed. All original opcode/effect entries and the
+explicit 67-member basic-block classification are retained.
+
+The current GC stdin is a 600-line prefix, while its complete stdout fixture
+belongs to the 13708-line cacheprof.full reservoir. The unmodified original
+reproduces that golden fixture exactly with the full input. Preserve the
+pairing for GC large; use reviewed normal output rather than excluding the
+workload or overwriting the fixture. Both input identities remain explicit.
+
+Six new notice/input regressions bring inventory tests to 124; all pass.
+Five source pins reproduce 861 entries. Julian Seward's individual GPL2-or-later
+notices, missing upstream LICENSE reference, supplied GPL2 COPYING text and
+unattributed assembly-data origin are documented without inferred credits.
+
+The catalogue reaches 471 programs and 1367 profiles. Bounded semantic checks
+and explicit large checks are separated by their resource scope; the earlier
+ML Kit 1 GiB memory failure remains visible. M3/M4 remain in progress.
+
+## Hartel component-labelling modes, 2026-10-18
+
+Four ports preserve the original sifting labeller and its source-level
+non-sifting alternative with memoized/strict finite data. One shared kernel
+retains labelled persistent trees, global representatives, ordered union,
+ghost-leaf selection and no-op prediction hints. The inactive alternative is
+explicit in the variant inventory, with direct positive tiling and original
+observer evidence rather than a negative Main repetition loop.
+
+All 46 full original states agree with both policies and independent BFS/run/
+forest checks. Source individual authorship/notices are unstated and are not
+inferred from helper/collection credits. Whole original source/shim/fixtures
+remain. The catalogue contains 475 programs and 1379 profiles.
+
+Poly/ML's isolated auxiliary strict-tree compiler error remains distinct from
+passing standard applications and corrected earlier tuple-projection type
+ambiguity. M3/M4 remain in progress and M8 remains planned.
+
+## FEM scalar semantics and historical comparison, 2026-10-18
+
+Two FEM policies retain source binary32 operations, variable-bandwidth LL
+factorization, cyclic array dependencies and ordered assembly. Exact final
+bits supplement complete adapted report/hash validation; intermediate
+snapshots and an independent dense physical model remain separate checks.
+
+README and dated MAIL credit Junxian Liu and describe the packaged Haskell
+lineage. Four guarded author/data regressions bring inventory tests to 128;
+all pass and five clean source pins reproduce 861 entries. All author datasets
+are inventoried; data.3 is byte-identical to fem.stdin with both origins
+retained. The inC historical comparison is explicitly excluded from the
+maintained nofib invocation, with its whole source/data/timing tree preserved.
+
+Legacy 64-bit default numerical failures and separate nursery diagnostics
+remain visible. The catalogue contains 477 programs and 1385 profiles.
+M3/M4 remain in progress and M8 remains planned.
+
+## Hartel Solid classification repair, 2026-10-18
+
+Two ports preserve adaptive CSG geometry with memoized/strict finite data.
+The original table adapter applies one-based offsets to a zero-based list;
+union(OUT,OUT) and a 65-cell normal-scene overcount demonstrate the defect.
+A reviewed one-line index correction agrees with corrected Haskell and an
+independent direct geometric scan. The unrepaired baseline is explicitly
+deferred for correctness, with its original fixtures and reconsideration
+condition preserved in source-variants.tsv.
+
+The fixed scene contains 300 circles and 599 postfix operations. No separate
+individual author or input notice is stated. The unused line-expression
+grouping remains source-faithful and separately observed. SML/NJ formatting
+and legacy numerical failures remain visible; no expected answer is relaxed.
+
+The catalogue contains 479 programs and 1391 profiles. M3/M4 remain in progress
+and M8 remains planned.
+
+## Modular lambda lifting and executable-paper authorship, 2026-10-18
+
+Two evaluation policies retain both plain and fully-lazy lambda lifting,
+source AST/annotation types, recursive renaming, sorted name sets,
+supercombinator order and higher-order printing. The full primary executable
+paper in LambdaLift.lhs credits Simon L. Peyton Jones and David Lester.
+Four title/author/abstract guards bring inventory regressions to 132;
+the classifier maps lift to compiler applications and all five pins replay
+861 entries.
+
+All 56 primary cases and 1280 final semantic checks pass, with independent
+evaluation/scope checks and all original fixtures retained. The earlier ML Kit
+auxiliary region crash remains separate from its passing full applications
+and equivalent explicit fixture calls. The catalogue contains 481 programs
+and 1397 profiles. M3/M4 remain in progress and M8 remains planned.
+
+## Hartel Parstof parser and unused attributes, 2026-10-18
+
+Two policies preserve the original recognition consumer and its materially
+different strict finite-attribute variant. Typed AST constructors, all 42
+nonterminal grammars, shared character/token control and cached grammar
+closures retain source structure. The embedded scheduling program is parsed,
+not executed; the workload is distinct from the scheduling simulator.
+
+Complete source, helper, fixtures and byte-exact extracted input remain.
+No individual parser/input author or notice is stated. All 132 regressions
+and the five-pin 861-entry replay pass; parstof is a compiler application.
+Initial portable sort/cache type errors are retained separately from the
+passing final 56 primary and 1620 semantic cases. No expected result changes.
+
+The catalogue contains 483 programs and 1403 profiles. M3/M4 remain in progress
+and M8 remains planned.
+
+## Hartel Transform symbolic compiler workload, 2026-10-18
+
+Two finite-data policies preserve actual lexical analysis, prefix parsing,
+labelled ASTs, alias/use passes, inlining, stream/state rewrites and six
+rendered versions. Generated commands and numerical-network programs remain
+text data. All eleven embedded examples have full semantic observations;
+the original eight-example cycle remains the timed input. No separate
+individual program/input author or permission notice is stated.
+
+All 132 inventory regressions and the five-pin 861-entry replay pass.
+Transform is classified as a compiler application. Of 56 primary cases,
+54 pass; ML Kit lazy compilation has one diagnosed normal memory failure
+and one empty-log smoke error. The semantic matrix has 4914 passes and
+546 assertions incomplete because of ML Kit compilation-memory failures.
+No incorrect-result assertion is observed. See the archived raw outcomes.
+
+The catalogue contains 485 programs and 1409 profiles. M3/M4 remain in progress
+and M8 remains planned.
+
+## nofib SIMPLE variants and historical comparators, 2026-10-18
+
+Four ports preserve immutable boxed arrays and both source consumers: thirteen
+scalar reductions and complete array reporting, each with lazy and strict
+finite-cell policies. Step counts remain 1/20/100; smoke selects grid maximum
+8 and normal/large retain the original grid maximum 100.
+The size-ten comment is stale. Classic mutable SML implementations remain
+separate. Source recursive stores, arithmetic order, Newton stopping/residual
+quirks and boundary-work variable choices are retained.
+
+The complete individual source, MAIL and C/Fortran comparators are preserved.
+C explicitly credits Andy Shaw and Kofi Fynn; MAIL establishes RPaul Johnson's
+Haskell/pH correspondence and Olaf Lubeck's role as Fortran supplier without
+asserting sole authorship. Makefile's SRCS=Main.hs excludes both ancillary
+comparators from this nofib executable. The Fortran joins source identities.
+Six discovery guards bring inventory regressions to 138; all five pins replay
+861 entries. No additional individual permission notice is invented.
+
+Both initial policies agree bit for bit with complete original grid-100
+states at 0/1/2/5/20/100 steps. Independent initial geometry/equation checks,
+finite states, row-major scalar reductions and tolerance perturbations
+supplement the original observers. Physical-model correctness is not claimed.
+
+The catalogue contains 489 programs and 1421 profiles. M3/M4 remain in progress
+and M8 remains planned. Final profile/count/acceptance outcomes are recorded
+separately when their running gates finish.
+
+Final SIMPLE validation records 107 of 112 selected primary passes and
+2158 of 2160 semantic assertions, with remaining numerical failures on
+legacy 64-bit SML/NJ and one unclassified ML Kit lazy totals smoke compile error.
+Sixteen normal count samples agree and all twelve final serial native
+smoke diagnostics pass. Final repository acceptance exits zero with all compiler, runedoc and runeopt\ncross-build comparisons recorded.
+The earlier cancelled-sum false rejections are corrected by independently
+reviewed aggregate bounds, without changing per-cell limits or algorithms.
+Initial full-grid smoke attempts remain separate from selected grid-8 smoke.
+
+A final independent source-fidelity review restores nbc/pbb/pb/qb lookup
+tables and undefined entries, explicit lazy fold pipelines, the delayed
+thirteen-tuple of totals and the shared first revised-energy binding.
+The preliminary table-folded/strict-reduction encodings remain development
+evidence. Original complete table snapshots and demand/fault controls
+supplement result agreement; no compiler/runtime prerequisite is introduced.
+
+
+## Happy parser generator (M3, 2026-10-18)
+
+The catalogue contains 491 programs and 1425 profiles after importing
+happy-lazy and happy-strict. [Recorded evidence](results/m3-happy/README.md)
+includes complete original-language observers, 78 of 80 tagged profile passes,
+50280 semantic assertions, eight agreeing normal count samples, six serial
+native adapter diagnostics and repository acceptance with all compiler,
+runedoc and runeopt comparisons. The two remaining lazy smoke ML Kit
+compiles have empty logs and unclassified causes; the same host passes
+normal profiles and complete semantics. M3/M4 remain in progress and M8
+remains planned.
+
+The pinned gc/happy build generates Haskell parser text from TestInput.y.
+Its optional GLR, array, coercion, debugging and info modes remain original
+source outside the selected build. Main deliberately uses an empty template.
+The grammar's imports/foreign declarations are string data, not runtime
+dependencies. Individual grammar authorship/copyright, GenUtils permission
+and the exact historical release licence are recorded. All 143 inventory
+tests pass; five pinned inventories still contain 861 entries.
+
+Source observers validate complete structures and historical quirks.
+The reader uses equivalent quotient/remainder limits to avoid a reproduced
+SML/NJ32 dynamic subtraction false Overflow. Radix controls also prevent a
+translation-helper overflow from falling back to a decimal prefix.
+The selected source input and normal 706113-byte output stay unchanged.
+Resource overrides and native-runner status-reporting limitations remain
+explicit; failure-status capture is scheduled for M8.
+
+
+## Pseudoknot/nucleic2 and M3 coverage closure
+
+Four separately named ports preserve on-demand versus shared placed
+coordinates and memoized versus eager finite data. The catalogue contains
+495 programs and 1437 profiles. No scheduled M3 import path is absent from
+the manifest. All 92 suitable M3 paths have implemented smoke and normal
+profiles. [Final validation and coverage](results/m3-nucleic2/README.md)
+close M3, retaining host failures and incomplete assertion groups.
+
+The Marc Feeley source credit, Lennart Augustsson Haskell-port credit and
+Hartel coordination correspondence are separately guarded. The 2017 README
+cleanup is recorded without claiming removed archive members are present.
+All 152 inventory tests pass. Legacy unboxed/PrimIO paths have explicit
+facility blockers in source-variants.tsv; current GHC ignores historical
+STRICT pragmas, with complete source observations matching the default.
+Portable eager policies are not silently equated with that legacy pragma.
+
+Private source observations validate every binary32 constant, full molecular
+solutions, conformation identities, numerical budgets, exact pruning work,
+demand/sharing and planted faults. The public target passes all 5081 assertions in twelve complete groups.
+All 64 Rune profile combinations pass; the complete matrix has 98 of 112
+passes, with 116 raw attempts retained. Final native adapters pass on
+MLton/Poly/ML; legacy SML/NJ has
+domain/incorrect-result failures whose behavior changes with nursery size.
+The kernel and numerical bounds remain unchanged. Host-specific results,
+unclassified causes and incomplete groups remain explicit. Development
+SML/NJ has three smoke loading timeouts and one explicit allocation failure,
+and passes every normal profile. ML Kit has two empty-log smoke compiles
+and passes every normal profile. All normal allocation counts agree;
+repository acceptance and all 152 inventory tests pass.
+
+## Initial roadmap coverage closure, 2026-10-19
+
+All 861 primary entries have a disposition and reason. All 321 import paths
+map to implemented profiles; 38 companions include alternate engines,
+historical references and Anna's separately built Monster utility. The
+closure indexes every tracked nofib runtime_files member and preserves
+individual dataset credits/notices. All 163 inventory regressions and clean
+five-upstream replay pass.
+
+All 507 programs have linked overview rows, documentation sections,
+provenance and recorded evidence. The portable SML coverage checker rejects
+missing imports and runnable deferred/excluded entries. M4 completion is
+recorded with Veritas; the final M8 evidence retains full repository
+acceptance, metadata regressions, text snapshots and explicit host failures.
+
+The [maintenance procedures](MAINTENANCE.md) define refresh and baseline
+updates. [Additional candidates](CANDIDATES.md) record overlap and feature
+conditions; they do not silently enlarge the initial import commitment.

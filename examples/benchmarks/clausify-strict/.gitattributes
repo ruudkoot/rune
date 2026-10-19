@@ -1,0 +1,4 @@
+upstream/*.faststdout -text -whitespace
+upstream/*.stdout -text -whitespace
+upstream/*.slowstdout -text -whitespace
+expected/one.txt -text -whitespace

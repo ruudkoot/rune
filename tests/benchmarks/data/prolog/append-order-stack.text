@@ -1,0 +1,11 @@
+> ?- append(X,Y,cons(a,cons(b,nil)))
+X = nil
+Y = cons(a,cons(b,nil)) ;
+X = cons(a,nil)
+Y = cons(b,nil) ;
+X = cons(a,cons(b,nil))
+Y = nil ;
+no.
+> 
+> bye
+Thank you and goodbye

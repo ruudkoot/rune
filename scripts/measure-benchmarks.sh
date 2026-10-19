@@ -73,7 +73,7 @@ git diff --binary HEAD > "$out/worktree.patch"
 git status --porcelain > "$out/worktree-status.txt"
 cp examples/benchmarks/manifest.tsv examples/benchmarks/upstreams.tsv "$out/"
 mkdir -p "$out/tool-sources"
-for path in scripts/measure-benchmarks.sh tests/basis/run-matrix.sh examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/catalog-main.sml examples/benchmarks/shared/report.sml examples/benchmarks/shared/report-main.sml examples/benchmarks/shared/counts.sml examples/benchmarks/shared/counts-main.sml; do
+for path in scripts/measure-benchmarks.sh scripts/benchmark-result.sh scripts/benchmark-provenance.sh tests/basis/run-matrix.sh examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/catalog-main.sml examples/benchmarks/shared/report.sml examples/benchmarks/shared/report-main.sml examples/benchmarks/shared/counts.sml examples/benchmarks/shared/counts-main.sml; do
   destination=$out/tool-sources/$path
   mkdir -p "$(dirname "$destination")"
   cp "$path" "$destination"
@@ -96,14 +96,9 @@ execute() {
       bench-limit "$quota" "$memory" "$@" < "$phase_input" > "$phase_dir/stdout" 2> "$phase_dir/stderr" || phase_exit=$?
   printf '%s\n' "$phase_exit" > "$phase_dir/exit"
 }
-classify() {
-  category=pass
-  if [ "$phase_exit" = 124 ]; then category=timeout
-  elif [ "$phase_exit" = 125 ]; then category=limit-setup-failure
-  elif grep -Eiq 'out of memory|allocation failed|cannot allocate memory|heap limit|insufficient memory|unable to reserve' "$phase_dir/stderr" "$phase_dir/stdout"; then category=memory-limit
-  elif [ "$phase_exit" != 0 ]; then category=$1
-  fi
-}
+. "$root/scripts/benchmark-result.sh"
+. "$root/scripts/benchmark-provenance.sh"
+
 record() {
   record_phase=$1; record_process=$2; record_round=$3; record_category=$4; record_seconds=${5:-}
   metrics=$(tail -1 "$phase_dir/os.tsv" 2>/dev/null || true)
@@ -114,16 +109,7 @@ record() {
     "$name" "$profile" "$id" "$level" "$record_phase" "$record_process" "$record_round" "$record_category" \
     "$record_seconds" "$(printf '%s\n' "$metrics" | cut -f2-)" "$counters" "${phase_dir#"$out"/}" >> "$out/samples.tsv"
 }
-validate() {
-  classify runtime-failure
-  if grep -Eq '^FAIL .* -- (incorrect result|expected )' "$phase_dir/stdout"; then category=incorrect-result; fi
-  if [ "$category" = pass ]; then
-    if ! grep -q "^SUMMARY $rounds checks, 0 failed$" "$phase_dir/stdout" || \
-       grep -q '^FAIL ' "$phase_dir/stdout" || \
-       [ "$(grep -c '^PASS ' "$phase_dir/stdout")" != "$rounds" ]; then category=incorrect-result; fi
-  fi
-  [ "$category" = pass ] || status=1
-}
+
 stage_data() {
   destination=$1
   mkdir -p "$destination"
@@ -141,7 +127,7 @@ while IFS="$(printf '\t')" read -r name seconds memory sources args expected inp
     config_dir=$out/$name/$(printf '%s' "$spec" | tr ':/' '--')
     mkdir -p "$config_dir"
     id=$spec; counters=$(printf '%s\t%s\t%s' - - -)
-    if ! sh tests/basis/run-matrix.sh --configs "$spec" --resolve-out "$config_dir/config.tsv" < /dev/null > "$config_dir/resolve.log" 2>&1; then
+    if ! RUNE_MATRIX_RUN="$config_dir/resolve-work" sh tests/basis/run-matrix.sh --configs "$spec" --resolve-out "$config_dir/config.tsv" < /dev/null > "$config_dir/resolve.log" 2>&1; then
       phase_dir=$config_dir; record configuration 0 0 missing-configuration 0; status=1; continue
     fi
     # Alias groups are expanded by the caller into one row per configuration.
@@ -173,8 +159,9 @@ while IFS="$(printf '\t')" read -r name seconds memory sources args expected inp
     sha256sum "$compiler" > "$bundle/compiler.sha256"
     if [ "$kind" = rune ]; then
       sha256sum "$runtime" > "$bundle/runtime.sha256"
-      (cd "$root" && sha256sum lib/basis/MANIFEST lib/basis/*.sml) > "$bundle/basis.sha256"
-      sha256sum "$root/bin/rune.rbc" "$root/bin/rune.stack.rbc" "$root/bin/runevm-stack" "$root/bin/runevm" > "$bundle/rune-payloads.sha256"
+      bench_tool_repository compiler "$compiler" "$bundle"
+      bench_tool_repository runtime "$runtime" "$bundle"
+      cat "$bundle/compiler-payloads.sha256" "$bundle/runtime-payloads.sha256" > "$bundle/rune-payloads.sha256"
     fi
     # Portable main plus the thin host-specific launch/export adapter.
     if [ "$action" = time ]; then
@@ -194,6 +181,8 @@ while IFS="$(printf '\t')" read -r name seconds memory sources args expected inp
           # Native translation is a separately measured compile phase.
           classify compile-error; record compile 0 0 "$category"
           opt=${RUNEOPT:-$root/bin/runeopt-mlton}
+          sha256sum "$opt" > "$bundle/native-compiler.sha256"
+          bench_tool_repository native-compiler "$opt" "$bundle"
           execute "$bundle/native-compile" "$quota" "$opt" "$bundle/prog.rbc" -o "$bundle/prog"
           run_command=$bundle/prog; run_file=""
           compile_phase=native-compile
@@ -219,7 +208,10 @@ while IFS="$(printf '\t')" read -r name seconds memory sources args expected inp
           echo 'val _ = OS.Process.exit OS.Process.success;'
         } > "$bundle/export.sml"
         execute "$bundle/compile" "$quota" "$compiler" "$bundle/export.sml"
-        if ! ls "$bundle"/prog.* > /dev/null 2>&1; then phase_exit=1; fi
+        if [ "$phase_exit" = 0 ] && ! ls "$bundle"/prog.* > /dev/null 2>&1; then
+          phase_exit=1
+          echo 'compiler exited successfully without an exported SML/NJ image' >> "$phase_dir/stderr"
+        fi
         run_command=$compiler; run_file=@SMLload=$bundle/prog
         ;;
       native:polyml)

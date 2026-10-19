@@ -1,0 +1,4 @@
+profile	source	sha256
+smoke	real/cacheprof/cacheprof.faststdin	97882197d0a3f7234a3c683fce2874da321b88beb981d9de379ed32e1d65581a
+normal	real/cacheprof/cacheprof.stdin	ba15ed941edeba51cdc24b2e60f40daf840a756af0d70b0fe752246edc15d32a
+large	real/cacheprof/cacheprof.slowstdin	5997c57d136b6d1c363a11cea10cb2c35c1d99e95a4ca872916d97e8acb1be17

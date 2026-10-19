@@ -22,6 +22,14 @@ Ports should preserve this breadth. Demand-sensitive streams, exact real
 arithmetic, search and higher-order code require explicit decisions about
 sharing; strict rewrites are separate implementations.
 
+The [pinned clausify source](clausify-lazy/upstream/Main.hs) credits Colin
+Runciman's 1990 propositional rewriting program, David Wakeling's 1992 batch
+adaptation and the 1994 ordered-insertion correction. This is source history,
+separate from Gabriel ancestry. Formula expansion, lazy subtree sharing,
+ordered literal/clause lists and short-circuit tautology checks are useful
+diagnostic questions; an independent truth-table check establishes logical
+results without establishing a performance cause.
+
 For the list-sorting pilot, Larry C. Paulson's [*ML for the Working Programmer*,
 Lists chapter](https://doi.org/10.1017/CBO9780511811326.005) (second edition,
 1996) supplies the algorithmic background. ML Kit's `kittmergesort` source
@@ -31,6 +39,14 @@ name. Plain merge, top-down mergesort and region-friendly variants remain
 distinct entries until their workloads are compared.
 
 ## Numerical workloads
+
+McIlroy's [*Power series, power serious*](https://doi.org/10.1017/S0956796899003299)
+(JFP 9(3), 325-337, 1999) motivates exact compositional streams for generating
+functions and differential equations. nofib's GC and spectral versions retain
+recursive series knots but differ in coefficient types and forcing/output.
+Their explicit SML delays preserve the demand needed for integration to emit
+a leading zero before inspecting its operand. These are source-supported
+translation decisions; closure costs and retained prefixes require measurements.
 
 Hartel et al.'s [*Benchmarking Implementations of Functional Languages with
 Pseudoknot, a Float-Intensive Benchmark*](https://doi.org/10.1017/S0956796800001891)
@@ -55,7 +71,56 @@ Both exercise floating-point work, but their tree traversal, locality,
 allocation and asymptotic scaling differ. Keep them distinct and record
 physical inputs and approximation parameters.
 
+## Structured numerical workloads
+
+Levinson's [prediction/filter-design paper](https://doi.org/10.1002/sapm1946251261)
+(1946) provides context for autoregressive coefficient workloads. Sandmark's
+[Levinson-Durbin port](levinson-durbin/PROVENANCE.md) preserves unnormalized
+correlations, fresh coefficient arrays and its order-plus-one wrapper. Exact
+PCM conversion and independent high-precision dense solves establish the
+selected results; array lifetimes and scalar-ref optimization remain diagnostic
+questions.
+
+Householder's [unitary triangularization paper](https://web.stanford.edu/class/cme324/classics/householder.pdf)
+(1958) explains the reflection family. The [QR workload](qr-decomposition/PROVENANCE.md)
+constructs full Householder matrices and copies row suffixes. Its rank-deficient
+input makes reconstruction/orthogonality checks preferable to requiring one
+particular Q basis. These implementation details come from source inspection.
+
+[Crout's 1941 paper](https://doi.org/10.1109/T-AIEE.1941.5058258) anchors a method
+family; it does not certify this benchmark's pivot selector. The
+[retained Sandmark variant](crout-decomposition/PROVENANCE.md) selects raw-column
+pivots and has a reproducible full-size reconstruction limitation. Original
+execution and exact rational replay establish its actual result. Keep source
+behavior, mathematical reconstruction accuracy and performance hypotheses distinct.
+
+Aberth's [simultaneous-root-method paper](https://www.ams.org/mcom/1973-27-122/S0025-5718-1973-0329236-7/S0025-5718-1973-0329236-7.pdf)
+(1973) supplies context and references Durand and Kerner. The
+[source workload](durand-kerner-aberth/PROVENANCE.md) uses Durand-Kerner updates
+with a circle initializer and squared-displacement stopping. Complete
+high-precision refinement/coefficient reconstruction and one-to-one root matching
+validate selected outputs. Convergence variation, boxing and allocation require
+separate investigation before assigning performance causes.
+
+The [sequential multilayer workload](naive-multilayer/PROVENANCE.md) adds
+mutable model parameters, higher-order activation fields and dense Jacobian
+allocation. Rumelhart, Hinton and Williams's
+[backpropagation paper](https://doi.org/10.1038/323533a0) (1986) supplies method
+context. The [Ionosphere dataset record](https://doi.org/10.24432/C5W01B)
+provides provenance, citation and licensing. Gradient finite differences and
+independent structured-derivative training check the selected model results;
+training-set predictions are correctness observations. They do not establish
+generalization performance. Compiler specialization, temporary arrays and
+input/model initialization need separate investigation.
+
 ## Decision diagrams and closure lifetimes
+
+Welch's [*A Technique for High-Performance Data Compression*](https://doi.org/10.1109/MC.1984.1659158)
+(Computer 17(6), 8-19, 1984) anchors LZW ancestry. Sanders's nofib implementation
+retains a persistent prefix tree, fixed 12-bit codes and a specific odd-code
+packing rule. Those details come from the program, not a claim that every
+LZW implementation shares its representation. Inspect lookup depth, path copying,
+dictionary saturation and lazy versus eager updates before assigning costs.
 
 Randal E. Bryant's [*Graph-Based Algorithms for Boolean Function
 Manipulation*](https://www.cs.cmu.edu/~bryant/pubdir/ieeetc86.pdf) (1986)
@@ -142,3 +207,567 @@ history, and uncertain attribution must stay explicitly uncertain.
 * [Rivest, RFC 1321](https://www.rfc-editor.org/rfc/rfc1321): MD5 algorithm
   and standard result vectors; seven vectors are included in the independent
   correctness target.
+
+## SCC historical reference
+
+The pinned nofib SCC main identifies its graph as Figure 6.4 of
+[Peyton Jones, *The Implementation of Functional Programming Languages*](https://simon.peytonjones.org/slpj-book-1987/),
+Prentice Hall, 1987. The author provides a searchable edition. The port's lazy
+tuple-field explanation is established by its source and GHC demand observer;
+its performance implications remain hypotheses for measurements.
+
+## Heap consolidation and sequential array imports
+
+Okasaki's retained July 1995 correspondence identifies nofib's Fibonacci-heap
+example and its mutable-array versus functional consolidation comparison.
+[Fredman and Tarjan (1987)](https://www.cs.princeton.edu/courses/archive/fall03/cs528/handouts/fibonacci%20heaps.pdf)
+provide the algorithmic reference; the port implements the source's smaller
+persistent interface and retains its amortization caveats. GC's single large
+run and spectral's 200 smaller sorts remain separately named profile variants.
+
+Sandmark's sequential quicksort uses last-pivot Lomuto partitioning, while its
+mergesort uses alternating buffers and the original threshold-32 small-array
+routine. Aumüller and Hass's [*Simple and Fast BlockQuicksort using Lomuto's
+Partitioning Scheme*](https://arxiv.org/abs/1810.12047) (2018 preprint, accepted
+ALENEX 2019) supplies related partitioning literature. Its block algorithms
+are different from this direct port; the paper's performance findings are
+not measurements of this benchmark.
+
+Floyd's [*Algorithm 97: Shortest path*](https://doi.org/10.1145/367766.368168)
+(1962) anchors the all-pairs graph workload. The pinned Sandmark source, rather
+than the algorithm name alone, establishes Infinity/Value representation,
+update cases and the k/i/j loop order. Matrix multiplication preserves its
+integer row arrays and i/j/k loop nest.
+
+The [pinned OCaml Random source](https://github.com/ocaml/ocaml/blob/99cb5d93fc30f1a6f3e69f5aa5d2063994d33a93/stdlib/random.ml)
+defines the input generator. Its modified lagged-Fibonacci transition,
+rejection sampling and selected initial states are reproduced in SML97.
+Reference streams establish input identity; they do not establish performance
+sensitivity to a compiler transformation. Setup precomputation, validation
+work and the isolated 32-bit SML/NJ arithmetic failure are recorded separately.
+
+## Sorting source attribution
+
+The nofib sorting modules cite only a “Meira thesis.” Richard Jones's
+[University of Kent bibliography](https://www.cs.kent.ac.uk/people/staff/rej/gcbib/gcbibM.html)
+records Silvio R. de L. Meira, *On the Efficiency of Applicative Algorithms*,
+PhD thesis, March 1985 (entry meir85). This is a bibliographic candidate for the
+abbreviated attribution; exact code ancestry remains an inference. No technical
+or timing finding is taken from the unread thesis. The retained source and tagged
+GHC observers establish the port's algorithms, ties and composition order.
+
+## Functional geometry
+
+Henderson's [*Functional Geometry* (1982)](https://worrydream.com/refs/Henderson_1982_-_Functional_Geometry.pdf)
+uses compositional line pictures. Its pseudocorner/pseudolimit definitions match
+the nofib fish hierarchy. The benchmark's particular integer rounding and
+length-only formatter observation come from its pinned Haskell source; they are
+preserved separately from the paper's abstract geometric account. Source comments
+about scale inlining and formatter arity identify hypotheses for current compiler
+analysis, rather than measurements of Rune.
+
+## Sequential norm and bounded-grid Life
+
+The [Benchmarks Game spectral-norm specification](https://benchmarksgame-team.pages.debian.net/benchmarksgame/description/spectralnorm.html)
+identifies the task and requires the contributed algorithm, including separate
+matrix procedures; it recommends 5,500 for performance runs. The retained OCaml
+source establishes forty passes and per-call temporary allocation. Per-N scalar
+references validate the finite truncation, rather than claiming a fixed error
+to the infinite operator's norm.
+
+Gardner's [*Mathematical Games*, October 1970](https://www.scientificamerican.com/article/mathematical-games-1970-10/)
+is a historical reference for Conway's Life. Program-specific dense row arrays,
+zero boundaries, exception handling and buffer swaps come from the pinned
+Sandmark implementation, independently of that historical attribution. The
+shared generator and complete original/reference boards establish input and
+result identity; performance effects remain hypotheses until measured.
+
+## Benchmark Game references added with sequential ports
+
+* The [binary-tree task](https://benchmarksgame-team.pages.debian.net/benchmarksgame/description/binarytrees.html)
+  records GCBench ancestry and its allocation/lifetime model. Tree layout and
+  traversal observations in individual ports remain explicit source variants.
+* The [fannkuch task](https://benchmarksgame-team.pages.debian.net/benchmarksgame/description/fannkuchredux.html)
+  documents permutation/checksum ordering and cites Anderson and Rettig,
+  [*Performing Lisp Analysis of the FANNKUCH Benchmark*](https://doi.org/10.1145/382109.382124).
+  That paper is a historical reference here. The imported sequential variant's
+  bounds repair and correctness evidence come from the retained source,
+  checked OCaml reference and independent SML implementation.
+
+## Probability selection and fractal workloads
+
+Ferguson's [*Who Solved the Secretary Problem?*](https://doi.org/10.1214/ss/1177012493)
+provides historical/mathematical context for threshold selection. The nofib
+secretary workload's exact nub/demand pattern, seeded trials and expected
+probabilities come from its pinned program and random-1.1 dependency, rather
+than an asymptotic optimal-stopping claim. That dependency credits L'Ecuyer's
+[*Efficient and Portable Combined Random Number Generators*](https://doi.org/10.1145/62959.62969)
+and Augustsson's transliteration. Full source/independent state, permutation
+and trial checks establish the selected inputs; the paper does not measure
+this SML port.
+
+The literate Mandel sources cite Falconer. The publisher's later edition of
+[*Fractal Geometry*](https://doi.org/10.1002/0470013850) provides background;
+it is not identified as the historical edition cited by the source. Exact
+current/historical thresholds, scaled magnitude, cyclic lists and boundary
+behavior come from the retained modules and GHC Data.Complex. They are not
+interchangeable implementations of an abstract Mandelbrot task.
+
+Mandel2 cites Peitgen and Richter's [*The Beauty of Fractals*](https://doi.org/10.1007/978-3-642-61717-1),
+page121. The page attribution is retained from the source; no independent audit
+of that page is claimed. The source defines this workload's particular binary32
+steps, perimeter heuristic and direction conditions. Complete tree references
+preserve those conditions, including outward scans. Neither book establishes
+performance causes for the SML variants. Boxing, laziness, strict retention,
+normalization and validation costs remain source-based diagnostic questions
+until supported by measurements or compiler inspection.
+
+
+## Constructive exact real arithmetic
+
+See the [exact-real arithmetic literature review](validation/exact-reals-literature.md)
+for the imported source, precision argument and validation scopes.
+
+## Primality testing and generator state
+
+Rabin's [Probabilistic algorithm for testing primality](https://doi.org/10.1016/0022-314X(80)90084-0)
+(1980) supplies probabilistic-test context. L'Ecuyer's
+[Efficient and Portable Combined Random Number Generators](https://doi.org/10.1145/62959.62969)
+(1988), section 5 and figure 3, supplies the combined-generator context and
+32-bit implementation parameters. The retained nofib source credits Lester,
+Fasel and Augustsson for the program and its particular codings.
+
+The port-specific evidence comes from pinned source, exact original outputs,
+independent integer/state calculations and SML checks. Fixed seeded witnesses
+do not transfer an independent-uniform confidence bound to this benchmark.
+The recorded review scope uses publisher bibliographic/abstract information and
+the author paper's indexed generator section; direct full-text fetches failed.
+
+## Particle/grid simulation
+
+Hockney and Eastwood's [Computer Simulation Using Particles](https://www.routledge.com/Computer-Simulation-Using-Particles/Eastwood-Hockney/p/book/9780852743928)
+(1988) gives particle/grid and field-solver context, based on the publisher's
+description and contents. The nofib PIC source, rather than a generic physical
+model, defines its active interpolation constants, parameter order and demand.
+Exact reference traces and empirical SML checks establish the port-specific
+evidence separately.
+
+## Binary space partitioning modeller
+
+[Fuchs, Kedem and Naylor, On visible surface generation by a priori tree structures](https://doi.org/10.1145/800250.807481)
+(1980) supplies partition-tree rendering context. Publisher-indexed bibliographic
+information was checked; direct publisher retrieval failed. Do not infer this
+paper authorship for nofib's two-dimensional modeller or claim its algorithms
+are identical. The pinned program and GHC interface establish the specific
+wrapped rational semantics, local par stub, seq demand and global batch sharing.
+Compiler performance explanations remain hypotheses until separately measured.
+
+## Knight tours and mating search
+
+The pinned knights KnightHeuristic commentary credits Bornat's Programming from
+First Principles, Positively the last flourish. Its functional.bib gives a 1986
+Prentice-Hall reference; this records the program's attribution without claiming
+a separate review of the book. The source's Eq/Ord board conventions, quicksort,
+degree recomputation and list/array variants define the measured algorithms.
+
+The mate README describes AND–OR search of depth 2*N-1. Puzzle headers separately
+credit composers and publications, including Heathcote (Reading Observer, 1904),
+Kohtz and Kockelkorn (Schachaufgaben, 1875) and von Holzhausen (Deutsches
+Wochenschach, 1913). These are input origins, not program authorship or proof of
+full modern chess rules. Source-specific move ordering, pruning and printed
+subtree compaction are established by source and original output observations.
+Performance explanations remain diagnostic hypotheses.
+
+## Expert-system feedback and functional circuits
+
+The expert README credits Ian Holyer's Functional programming with Miranda
+(Pitman, 1991) and dates its adaptation March 1993. That is recorded ancestry,
+not a separate review of the textbook. Pinned Search.hs explains its November
+1999 shared-question-string change. Source and original dialogs establish the
+specific unification, lazy table and request/response behavior.
+
+[O'Donnell's research bibliography](https://www.dcs.gla.ac.uk/~jtod/research/)
+lists Hardware description with recursion equations (1987). It supplies
+functional circuit-simulation context; the 1992 multiplier source defines this
+benchmark's actual gates and strictness. Trace and ready-only consumers demand
+different portions of that circuit, demonstrated by original/model agreement and
+an explicit pending-product check.
+
+## Regex-redux and library boundaries
+
+[The Benchmarks Game description](https://benchmarksgame-team.pages.debian.net/benchmarksgame/description/regexredux.html)
+defines one-pattern-at-a-time searches and ordered substitutions, and distinguishes
+regex library algorithms. [The OCaml 4.14 Str manual](https://ocaml.org/manual/4.14/api/Str.html)
+supports the adapter's anchors, searching and replacement interface. Original
+library observations establish selected edge cases; the portable implementation
+covers only the fragment used by this program. The library replacement, buffered
+input and smaller generated profile sizes are explicit, separate from correctness
+and performance findings. All diagnostic performance explanations remain hypotheses.
+
+## Hartel circuit events and functional substitutions
+
+[Hartel and Langendoen's collection paper](https://doi.org/10.1145/165180.165230)
+(1993) provides translated-benchmark context, based on institution metadata and
+the abstract. It is not individual authorship evidence for the generated event
+or typecheck modules. Their pinned source and compatibility shim establish the
+particular evaluation details, including the no-op miraseq stub.
+
+[Milner's A theory of type polymorphism in programming](https://doi.org/10.1016/0022-0000(78)90014-4)
+(1978) provides polymorphic-inference context. The benchmark preserves its own
+functional substitution, environment, name-supply and unification ordering.
+Original inferred rows and explicit demand/collision controls support the port;
+the paper's soundness results are not transferred to source-specific arity or
+shadowing behavior. Performance questions remain hypotheses until separately
+supported by measurements or compiler analysis.
+
+## Dominator implementation evidence, 2026-10-18
+
+dom-lt cites Lengauer and Tarjan (1979), Muchnick (1997), and Brisk and
+Sarrafzadeh (2007); these are declared source references, not newly claimed
+paper reviews. The pinned code, minimal counterexample, exact threshold patch
+and independent fixed-point model establish the correctness finding recorded
+in validation/dom-lt-source-issue.md. Patricia/bitmap operations, DFS, path
+compression, persistent environment records, CPS specialization and array
+initialization are diagnostic questions inferred from source. Counts and
+timings do not establish their individual performance effects.
+
+## Spivey's free-group rewriting workload, 2026-10-18
+
+[Knuth and Bendix, Simple Word Problems in Universal Algebras](https://www.cs.tufts.edu/~nr/cs257/archive/don-knuth/knuth-bendix.pdf)
+(1970), summary and opening sections inspected, describes completion and
+common-normal-form reasoning, with group equations among its examples.
+[Dershowitz, Orderings for term-rewriting systems](https://www.sciencedirect.com/science/article/pii/0304397582900263)
+(1982), publisher abstract inspected, supplies termination-ordering context.
+The author's full-paper PDF retrieval timed out; no full review is claimed.
+
+Spivey's preserved 1991 Orwell description and the pinned Haskell conversion
+establish this benchmark's history and concrete algorithm. Source inspection
+establishes its active lexicographic RPO extension, discrimination-net rule
+order and shared completion; the generic multiset extension is inactive.
+Original theory/normal forms, an independent cancellation model and demand
+regressions support the port. These are separate from the papers' mathematical
+results and from measured compiler/collector behavior.
+
+## Hartel IDA and ordered-tree library evidence, 2026-10-18
+
+The pinned Hartel source and the collection context cited above establish the
+particular sequential IDA workload. Original path observations, independent
+breadth-first optimal lengths and explicit demand tests support the translation.
+They do not establish a review of a separate IDA paper.
+
+The OCaml 4.14.1 map/set source establishes this implementation's AVL balance,
+unchanged-path decisions and traversal ordering. Exact original shapes and
+independent ordered-content models support correctness. Specialization,
+persistent-node allocation, change-flag elimination, global baseline retention
+and additional consumers are source-based performance hypotheses. The recorded
+count agreement and adapter timings do not identify their individual costs.
+
+## OCaml stdlib text, Str and hash adapters, 2026-10-18
+
+The pinned OCaml 4.14.1 implementation sources establish the reviewed byte/
+string operations, Str state and splitting semantics, hash buckets/resizing,
+and tagged-integer/tuple MurmurHash3 mixing. Source notices distinguish
+Leroy/INRIA 1996 components from Doligez/INRIA 2014 String implementation code.
+hash.c records MurmurHash3 ancestry; this is source attribution rather than
+a newly claimed review of a hashing paper.
+
+Original-library observations and independent byte/word, duplicate-binding,
+iteration and modular-arithmetic models support expected results. The portable
+engine, reference cells, domain specialization, byte packing and signed63
+IntInf representation are explicit adapters. Compiler specialization, temporary
+allocation, barrier removal and consumer costs are source-based hypotheses;
+individual cost attribution requires further compiler analysis or experiments.
+
+## Calibration and image applications, 2026-10-18
+
+[Storn and Price (1997)](https://link.springer.com/article/10.1023/A:1008202821328),
+publisher abstract inspected, supplies optimization context for LexiFi.
+[Brigo and Mercurio's second edition](https://link.springer.com/book/10.1007/978-3-540-34604-3)
+is bibliographic context only; its publisher records 2006, while the source
+comment gives 2005. Source equations and original numerical observations
+establish the specific workload rather than a claimed full derivation review.
+
+[Sauvola and Pietikainen (2000)](https://www.sciencedirect.com/science/article/pii/S0031320399000552),
+abstract/opening material inspected, provides adaptive binarization context.
+Romeyke's source defines the actual eight formulas, windows and memo/cache
+policies. Niblack and Sezgin/Sankur are retained source-declared references.
+
+[MiniLight's author description](https://www.hxa.name/minilight/), algorithm
+sections inspected, supplies sampling/renderer context.
+[Moller and Trumbore (1997)](https://my.eng.utah.edu/~cs6965/papers/MT97.pdf),
+abstract and first page inspected, anchors ray/triangle intersection.
+The particular geometry, draw/forcing order and checkpoint adaptations come
+from pinned source and original observations.
+
+Per-application provenance separates these review scopes from measured checks.
+Array layout, closure/object specialization, temporary allocation, cache
+behavior and scalar representation remain performance hypotheses. Stable
+elementary-function approximation differences are distinguished from incorrect
+results and exceptions; no uniform Math ulp contract is claimed.
+
+## Scheduling simulation and translated demand
+
+The Hartel/Langendoen collection context cited above does not establish an
+individual author or a general optimal-scheduling theorem for sched.
+Pinned code establishes the source non-delay policy, join affinity and data.
+Original tree structure and an independent event/DAG oracle validate the
+supplied minima. Their different representations distinguish the oracle from
+the benchmark's enumeration workload.
+
+Persistent lists, paired-result sharing, global finite definitions, suspended
+control and strict/delayed initialization are source-based performance questions.
+Exact result/count agreement does not attribute their individual costs.
+
+## Split wave-state arrays and stencil evidence
+
+The Hartel/Langendoen collection reference supplies translation context at
+the survey scope already recorded above. Pinned wave4main source establishes
+the actual staggered arrays, constants, operation grouping and boundary
+exchange. The independent unsplit-grid model validates the observed states;
+it does not replace the split benchmark or establish a new paper review.
+
+Boxed numerical fields, immutable border views, memoized history retention,
+finite-data specialization and the extra validation consumer are source-based
+performance questions. Passing states and agreeing deterministic counts do
+not attribute their individual costs.
+
+## Solid modelling and arbitrary-precision symbolic arithmetic
+
+Sinclair's original Fulsom README and 30 June 1993 correspondence supply its
+program-specific account of solid modelling and historical space behavior.
+The historical figures are not present-day measurements. Pinned interval,
+CSG, octree, quadtree and raster modules establish the actual fixed scene and
+demand; an independent sphere/box projection supplies separate correctness
+evidence. No external solid-modelling derivation is claimed as reviewed.
+
+Symalg's RealM source establishes its memoized decimal approximation trees,
+scale/quot rules, magnitude search and integer refinement with a binary64
+seed. The nofib suite reference supplies application-coverage context at the
+survey scope already recorded. No external exact-real paper is claimed as
+the derivation of this particular implementation. Complete source values and
+independent integer-square-root bounds distinguish arithmetic validation
+from the original small output hash.
+
+Retention, specialization, finite-field forcing, arbitrary-precision costs and
+extra validation consumers remain source-based performance questions. Resource-
+limited pilots and successful smaller profiles are distinct observations.
+
+## Cacheprof annotation and allocation scope
+
+Seward's original 1999 notices and source stage comments establish the
+assembly annotator's provenance and design; Partain supplies the previously
+reviewed nofib context. No external cache-profiling paper is claimed as the
+derivation of this implementation. The program operates on assembly text,
+so generating hook calls does not make it an FFI benchmark.
+
+Persistent stage spines, grouped output, descriptor rollup, closure
+specialization, string/list adapters and strict materialization are
+source-based performance questions. Original full output, independently
+evaluated opcode metadata and prefix-demand controls establish correctness
+at separate scopes. The mixed-target ML Kit capacity failure and successful
+large-limit probe are observed resource outcomes, not a claimed diagnosis
+of a compiler pass or a generic collector cost.
+
+## Persistent connected-component trees and sifting
+
+The Hartel/Langendoen collection survey supplies the already recorded
+translation context. Pinned comp_lab_zift source establishes its run-based
+connected-component algorithm, persistent labelled sets, branch thresholds,
+source-level non-sifting alternative and ignored prediction fields.
+
+Independent BFS, row runs and ordered-tree invariants validate full results;
+they do not replace the benchmark kernel with a mutable disjoint-set algorithm.
+Sifting/generator demand, persistent sharing, memoized fold chains, strict
+materialization and whole-string consumers are source-based performance
+questions. Isolated compiler failures and measured counter agreement remain
+separate kinds of evidence.
+
+## FEM truss analysis and cyclic arrays
+
+The original README and April 1994 correspondence identify Junxian Liu's
+program, its Miranda/Hope+ lineage and the properly packaged Glasgow Haskell
+version. MAIL supplies source-declared titles Functional Programming for
+Finite Element Analysis and Functional Programming for Scientific Computation;
+journal-publication status and full text were not established in this review.
+Partain supplies the previously reviewed suite/application context.
+
+Source inspection establishes axial bar stiffness, variable-bandwidth storage,
+LL factorization, recursive dependencies and the peculiar binary32 numeric
+parser. Exact original state comparisons and an independent dense physical
+model validate recorded inputs. They do not constitute a general numerical
+stability proof. Boxed-cell retention, materialization, matrix/list builders,
+explicit rounding and output/validation costs remain performance hypotheses.
+
+Legacy default-process numeric variation and separate nursery successes are
+recorded diagnostics. They are consistent with a known GC-root issue but do
+not establish a new application-specific compiler-pass diagnosis.
+
+## Hartel Solid geometry and correctness scope
+
+The previously reviewed Hartel and Langendoen (1993) translation account
+provides collection context. The pinned Solid source establishes this CSG
+classifier, circle pruning, subdivision, stopping conditions and operation
+order; no separate solid-modelling derivation is claimed as reviewed.
+Original/corrected observers and the independent direct circle-membership
+oracle establish the recorded classification repair and finite-grid results.
+Lazy numeric sharing, parser specialization and allocation effects remain
+performance hypotheses until investigated by separate measurements.
+
+## Executable fully-lazy lambda-lifter paper
+
+The complete pinned LambdaLift.lhs contains *A modular fully-lazy lambda
+lifter in Haskell*, by Simon L. Peyton Jones and David Lester. Its abstract,
+introduction and executable algorithms were reviewed directly. The paper
+separates full laziness from lambda lifting and treats let/letrec rather than
+eliminating them before the transformation. These are paper-supported design
+statements; observed source renaming/supply behavior is recorded separately.
+
+Complete original transformed ASTs and an independent memoized evaluator
+establish the tested examples, including captured/shadowed bindings,
+recursion and factorial. The fixed benchmark is checked structurally rather
+than claimed to terminate under that evaluator. Allocation, higher-order
+printer fusion, annotation retention and pass-boundary materialization remain
+source-based performance hypotheses. No general transformation correctness
+proof or identical cross-language specialization/barrier behavior is claimed.
+
+## Hartel Parstof recognition and parser demand
+
+The previously reviewed Hartel and Langendoen translation paper provides
+collection context. Pinned source supplies the lexer dispatch, combinator
+grammar, recovery/error rules and recognition-only consumer. Original full
+token/AST observations, an independent ordered-regex lexer and structural
+checks establish the tested scope. No separate parser-construction paper or
+general parser-equivalence proof is claimed.
+
+Unused AST attributes, strict finite construction, shared input/token tails,
+cached higher-order grammar closures and checksum accumulators are diagnostic
+questions grounded in source inspection. Compiler-specific constant motion,
+allocation or specialization effects remain hypotheses rather than conclusions
+from single-sample adapter diagnostics.
+
+## Hartel Transform dataflow compiler and source consumers
+
+The previously reviewed Hartel and Langendoen translation account supplies
+collection context. The pinned program establishes its own lexical/parser
+rules, symbolic transformation pipeline and length consumer. Numerical papers
+for FFT or wave algorithms do not describe this executed compiler workload:
+the generated networks are rendered, not evaluated.
+
+Source inspection establishes prefix parsing, first-result cuts, ordered
+comparisons, ignored state fields in variable analysis, reversed rewrite
+prefixes, shared labels and character-list demand. Complete original
+observations support the tested cases; independent AST/cycle checks add a
+separate structural/arithmetic check without proving general equivalence.
+
+Parser closure caching, tree copying, literal sharing, retained prepared
+inputs and finite materialization are performance hypotheses. Single-sample
+adapter runs and ML Kit compilation failures do not establish runtime
+optimization mechanisms or steady-state performance.
+
+## SIMPLE: source ancestry, functions and numeric validation
+
+Arvind and Kattamuri Ekanadham, [Future scientific programming on parallel
+machines](https://research.ibm.com/publications/future-scientific-programming-on-parallel-machines),
+Journal of Parallel and Distributed Computing (1988). The IBM abstract and
+metadata were reviewed; the full paper was not. Its SIMPLE excerpt and Id
+Nouveau function composition provide historical context. No historical
+parallelism or inlining claim is presented as a measured mechanism in Rune.
+
+The pinned program and historical MAIL establish its own equation/edit
+history, translator/correspondence roles, actual grid/step parameters and
+physical-correctness caveats. Full original state and report observations
+establish program agreement. Independent initial geometry, polynomial
+values and scalar reductions add checks without constituting a second full
+hydrodynamics solver or validation of the physical model.
+
+Memoized immutable-array cells, recursive projections, directional sweeps,
+finite strict materialization, retained old-state data, floating primitives
+and full report construction/I/O remain source-based diagnostic hypotheses.
+Numerical values and structure, rather than a particular host's decimal
+spelling, determine correctness. Legacy SML/NJ failures remain observable
+under the fixed bounds and do not contribute accepted timing samples.
+
+## SIMPLE aggregate conditioning
+
+Higham, [The Accuracy of Floating Point Summation](https://nhigham.com/wp-content/uploads/2023/10/high93s.pdf),
+1993, section 2, gives the recursive-summation error model. The first three
+pages and equation 2.6 were reviewed. We retain source row-major left folds.
+
+Our separate application combines unchanged componentwise compatibility
+a+r*abs(e) with two floating reductions. For n values and an upward reference
+one-norm S, define B=n*a+r*S and gamma=n*u/(1-n*u), u=2^-53.
+The aggregate bound is (1+gamma)*B+2*gamma*S, rounded outward. This is
+conditional on compatible components, not physical-model validation.
+Exact rational checks cover every recorded scale/bound and reject injected
+out-of-bound perturbations. Time step and energy-error scalars keep their
+per-value limits.
+
+The earlier checker incorrectly applied a per-cell bound to a cancelled
+sum. Source snapshots show one small z-total discrepancy on each of 32-bit
+and development SML/NJ; their complete per-cell reports pass. It falls inside
+the derived sum bound. Separate legacy 64-bit snapshots contain eight totals
+outside even that bound. Neither the summation algorithm nor expected values
+change, and the numerical failures are kept separate from checker correction.
+
+
+## Happy: parser generation and lookahead propagation
+
+The [Happy introduction](https://haskell-happy.readthedocs.io/en/latest/introduction.html)
+describes annotated-grammar input and parser-generation modes; its
+[performance and conflict discussion](https://haskell-happy.readthedocs.io/en/latest/tips.html)
+supplies background questions. The pinned Happy 1.16/nofib sources establish
+the actual selected function backend and deliberately empty template.
+Present-day manual claims do not establish historical configuration or
+benchmark speed.
+
+[DeRemer and Pennello, Efficient Computation of LALR(1) Look-Ahead Sets,
+TOPLAS 4(4), 1982, pp. 615–649](https://3e8.org/pub/scheme/doc/parsing/Efficient%20Computation%20of%20LALR%281%29%20Look-Ahead%20Sets.pdf)
+provides background on lookahead relations, propagation and incorrect
+alternatives. This is not a claim that Happy implements that paper's SCC
+algorithm. Source inspection identifies memoized FIRST/closure fixed points,
+numbering, persistent sets, snapshot-based propagation and output builders
+as diagnostic candidates; causal performance findings require measurements.
+Complete source observers validate actual historical quirks rather than
+repairing them according to a textbook description.
+
+
+## Application import references, 2026-10-19
+
+The following sources supplement the initial survey. Publisher/author records
+were checked for bibliographic identity. Source inspection supports the workload
+mapping; no performance conclusion is inferred from a paper's title or abstract.
+
+| Application | Reference and scope | Diagnostic questions |
+|---|---|---|
+| parser | [Hutton and Meijer, Monadic parser combinators (1996)](https://nottingham-repository.worktribe.com/output/1024440/monadic-parser-combinators), background on higher-order parsing; no direct ancestry or authorship claim for this nofib program. | Recursive combinators, alternatives, fixity environments, retained token streams and AST/report allocation. |
+| hpg | [Wichmann and Hill, An Efficient and Portable Pseudo-Random Number Generator (1982)](https://academic.oup.com/jrsssc/article/31/2/188/6985277), the RNG reference identified in Env.lhs; the retained N. D. North manual describes the actual generator. | Binary32 random choices, continuation construction, name-stream sharing and generated-text allocation. |
+| fluid | [Liu, The Role of Elimination Trees in Sparse Factorization (1990)](https://epubs.siam.org/doi/abs/10.1137/0611010), background on elimination trees and sparse factorization; original comments identify the selected generalized-envelope implementation. | Persistent radix tries, minimum-degree/postordering, source forcing, numerical boxing and result formatting. |
+| reptile | Original Main.hs and module headings credit the LML program and Haskell translation; the selected source defines scripted MGR protocol behavior. A benchmark-specific paper attribution has not been established in this source review. | Editor-state retention, rational geometry, transformation lists and complete protocol construction. |
+
+The application provenance distinguishes these background references from
+independently checked fixture results and source-based hypotheses. Exact
+binary32-derived output is the selected Fluid validation rule; it has zero
+numerical error allowance for the recorded profiles.
+
+## Anna strictness analysis
+
+Baraki, [Abstract Interpretation of Polymorphic Higher-Order Functions](https://theses.gla.ac.uk/74619/),
+PhD thesis, University of Glasgow, 1993, develops embedding/closure-based
+relations between polymorphic instances. Anna's pinned BarakiConc3 and
+BarakiMeet sources explicitly identify that approach. The thesis supplies
+theoretical background; the original GHC program establishes the selected
+workload and its expected reports. Frontier representation, fixed-point
+iteration, sharing and polymorphic instantiation are source-based diagnostic
+hypotheses until benchmark measurements establish an effect.
+
+## Veritas proof-editor application
+
+Hanna, Daeche and Howells, [Implementation of the Veritas Design Logic](https://www.cs.kent.ac.uk/pubs/1992/427/index.html),
+1992, is related implementation literature identified by the authors'
+University of Kent record. The pinned nofib source and README identify the
+actual historical workload and input; the paper record alone does not
+establish this exact source snapshot's authorship or release. Source analysis
+suggests diagnostics involving dependent-type terms, signatures, attributes,
+state/output combinators, persistent proof trees and lazy result fields.
+The upstream Makefile warns that its fixed script exercises a limited part
+of the prover; preserve that limit when interpreting measurements.

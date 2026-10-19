@@ -1,0 +1,3 @@
+upstream/** -text -whitespace
+runtime_files/** -text -whitespace
+*.solution -text -whitespace
