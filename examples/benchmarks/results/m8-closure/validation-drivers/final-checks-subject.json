@@ -1,0 +1,10 @@
+{
+  "revision": "3d850d4cb9f96f6e25cb2ae28c05efeb32ee0578",
+  "dirty": true,
+  "files": {
+    "Makefile": "0d9771c5f6be687d520f8a4cb9aade6f922fb50ce5ae7d98a793803238296c70",
+    "scripts/measure-benchmarks.sh": "b8211e7cf4e1144b5fc47225f11db04cf5dc431a1286f55847a9cddc7f867355",
+    "scripts/benchmark-provenance.sh": "04094f78754cf558049ac78455316400a1cd0e5d79b262996119b6554bce0ee7",
+    "examples/benchmarks/shared/coverage.sml": "39429b17c0774fcb81b38011c133d5b774b8c7d5447fee291ef70fe188c1fa20"
+  }
+}

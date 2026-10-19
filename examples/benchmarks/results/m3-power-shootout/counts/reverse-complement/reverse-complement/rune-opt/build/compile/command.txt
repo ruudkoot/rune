@@ -1,0 +1,7 @@
+/home/ruud/rune/.worktrees/benchmarks/bin/rune
+-O2
+--lint
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.3uYt3R/reverse-complement/rune-opt/build/sources/1.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.3uYt3R/reverse-complement/rune-opt/build/sources/2.sml
+-o
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.3uYt3R/reverse-complement/rune-opt/build/prog.rbc

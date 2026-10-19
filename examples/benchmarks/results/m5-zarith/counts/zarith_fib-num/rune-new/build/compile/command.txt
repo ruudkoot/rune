@@ -1,0 +1,9 @@
+/home/ruud/rune/.worktrees/benchmarks/bin/rune-new
+-O2
+--lint
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.66AzJr/zarith_fib-num/rune-new/build/sources/1.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.66AzJr/zarith_fib-num/rune-new/build/sources/2.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.66AzJr/zarith_fib-num/rune-new/build/sources/3.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.66AzJr/zarith_fib-num/rune-new/build/sources/4.sml
+-o
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.66AzJr/zarith_fib-num/rune-new/build/prog.rbc

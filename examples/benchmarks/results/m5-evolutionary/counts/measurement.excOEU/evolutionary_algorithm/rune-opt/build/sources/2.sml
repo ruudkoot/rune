@@ -1,0 +1,67 @@
+(* Derived from OCaml stdlib/random.ml, Damien Doligez, INRIA Rocquencourt.
+   Copyright 1996 Institut National de Recherche en Informatique et en
+   Automatique. All rights reserved. Distributed under the GNU Lesser General
+   Public License version 2.1 with the OCaml special exception on linking.
+   Full original source and LICENSE: ../quicksort/upstream/ocaml/.
+   Fixed-state initialization is precomputed; all draw operations are retained. *)
+structure BenchOCamlRandom =
+struct
+  type state = {words: Word32.word array, index: int ref}
+  val defaultWords = Vector.fromList [
+    0w987910699,0w495797812,0w364182224,0w414272206,0w318284740,
+    0w990407751,0w383018966,0w270373319,0w840823159,0w24560019,
+    0w536292337,0w512266505,0w189156120,0w730249596,0w143776328,
+    0w51606627,0w140166561,0w366354223,0w1003410265,0w700563762,
+    0w981890670,0w913149062,0w526082594,0w1021425055,0w784300257,
+    0w667753350,0w630144451,0w949649812,0w48546892,0w415514493,
+    0w258888527,0w511570777,0w89983870,0w283659902,0w308386020,
+    0w242688715,0w482270760,0w865188196,0w1027664170,0w207196989,
+    0w193777847,0w619708188,0w671350186,0w149669678,0w257044018,
+    0w87658204,0w558145612,0w183450813,0w28133145,0w901332182,
+    0w710253903,0w510646120,0w652377910,0w409934019,0w801085050] : Word32.word vector
+  val seed42Words = Vector.fromList [
+    0w585663740,0w1068404066,0w440454258,0w83212758,0w767478040,
+    0w45939673,0w532378381,0w486279478,0w874159692,0w147944239,
+    0w458463925,0w646401755,0w382926816,0w1065437975,0w151428611,
+    0w923904790,0w600441670,0w341817647,0w148949552,0w387021036,
+    0w10223473,0w152359412,0w238701096,0w181942272,0w1006280522,
+    0w1006552745,0w464843384,0w1039820691,0w634765747,0w58190385,
+    0w263414985,0w496472754,0w770507123,0w183383216,0w942089194,
+    0w787575849,0w232621133,0w578221919,0w885602361,0w644865343,
+    0w356354539,0w131533169,0w678736645,0w82586026,0w836603098,
+    0w906236387,0w157936640,0w728940612,0w900946911,0w793909153,
+    0w571660412,0w805240380,0w616891808,0w899850444,0w1031650568] : Word32.word vector
+  val seed512Words = Vector.fromList [
+    0w471042344,0w8314420,0w953334787,0w827189630,0w24994876,
+    0w856251043,0w394880234,0w959893127,0w966396125,0w643663879,
+    0w1040049276,0w441755446,0w516665385,0w1037844973,0w932844386,
+    0w934724795,0w887262295,0w1055045462,0w371159125,0w862632241,
+    0w163253095,0w42871355,0w691641236,0w93592633,0w614339380,
+    0w787848767,0w993967919,0w428229173,0w598263661,0w852490653,
+    0w398193272,0w1023915711,0w581897680,0w191047345,0w194598972,
+    0w783411096,0w713012246,0w985367960,0w114983043,0w181875849,
+    0w54833351,0w942307727,0w306084938,0w117853964,0w1069725866,
+    0w455593704,0w423899962,0w914158799,0w63616671,0w131806015,
+    0w293682078,0w309652408,0w675541346,0w38575435,0w143529947] : Word32.word vector
+  fun make words : state = {words=Array.tabulate(55,fn i => Vector.sub(words,i)),index=ref 0}
+  fun default () = make defaultWords
+  fun seed42 () = make seed42Words
+  fun seed512 () = make seed512Words
+  fun bits ({words,index}:state) =
+    let val i=(!index+1) mod 55
+        val _=index:=i
+        val current=Array.sub(words,i)
+        val mixed=Word32.xorb(current,Word32.andb(Word32.>>(current,0w25),0wx1f))
+        val result=Word32.andb(Word32.+(Array.sub(words,(i+24)mod 55),mixed),0wx3fffffff)
+        val _=Array.update(words,i,result)
+    in Word32.toInt result end
+  fun integer state bound =
+    if bound<=0 orelse bound>1073741823 then raise Domain else
+      let val r=bits state
+          val v=r mod bound
+      in if r-v>1073741823-bound+1 then integer state bound else v end
+  fun real state bound =
+    let val r1=Real.fromInt(bits state)
+        val r2=Real.fromInt(bits state)
+    in ((r1/1073741824.0+r2)/1073741824.0)*bound end
+end

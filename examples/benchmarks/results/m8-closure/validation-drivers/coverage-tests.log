@@ -1,0 +1,7 @@
+PASS benchmark.coverage/complete
+PASS benchmark.coverage/missing-import
+PASS benchmark.coverage/deferred-cannot-run
+PASS benchmark.coverage/duplicate-source
+PASS benchmark.coverage/documentation
+PASS benchmark.coverage/companions-accounted
+SUMMARY 6 checks, 0 failed

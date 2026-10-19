@@ -1,0 +1,7 @@
+original_path	bytes	sha256
+tests/out/benchmarks/coverage-tests.PG5leH/checks/native-mlton-20241230/program/prog	321128	b82b7ef2bb70f642e606b680956ec096635d1d644af2706eadc6de40815f6a2b
+tests/out/benchmarks/coverage-tests.PG5leH/checks/rune/program/prog.rbc	48391	-
+tests/out/benchmarks/coverage-tests.yyKJGO/checks/native-mlton-20241230/program/prog	321128	b82b7ef2bb70f642e606b680956ec096635d1d644af2706eadc6de40815f6a2b
+tests/out/benchmarks/coverage-tests.yyKJGO/checks/rune/program/prog.rbc	48391	-
+tests/out/benchmarks/m8/retained-paths.nul	5841344	98a701d1458ae185ad68c2a47044b449a57d8d253e4330abd6b3250f6fd7cd0c
+tests/out/benchmarks/provenance-tests.Jq5Yow/compiler/bin/rune.rbc	16	-

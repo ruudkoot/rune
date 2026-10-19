@@ -1,0 +1,2 @@
+/home/ruud/.local/rune-hosts/smlnj-legacy/bin/sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.K6ncTH/mandel2-lazy/native-smlnj-legacy/build/export.sml

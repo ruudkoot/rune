@@ -1,0 +1,10 @@
+{
+  "command": [
+    "make",
+    "JOBS=4",
+    "bench-smoke",
+    "check-docs"
+  ],
+  "exit": 0,
+  "elapsed_seconds": 34.01369153401174
+}

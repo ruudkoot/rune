@@ -1,0 +1,6 @@
+/home/ruud/.local/rune-hosts/polyml/bin/polyc
+-b
+/home/ruud/.local/rune-hosts/polyml/bin/poly
+-o
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.bFMagD/linear-nofib-gc-strict/native-polyml/build/prog
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.bFMagD/linear-nofib-gc-strict/native-polyml/build/export.sml

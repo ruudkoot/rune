@@ -1,0 +1,167 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.PZYKWP/integer-strict/native-smlnj-legacy/build/export.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.PZYKWP/integer-strict/native-smlnj-legacy/build/sources/1.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.PZYKWP/integer-strict/native-smlnj-legacy/build/sources/2.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.PZYKWP/integer-strict/native-smlnj-legacy/build/sources/3.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.PZYKWP/integer-strict/native-smlnj-legacy/build/sources/4.sml]
+functor BenchCellSequenceFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type 'a node
+  type 'a sequence
+  val value : 'a -> 'a D.t
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromList : 'a list -> 'a <BaseFct>.<resultStr>.node D.t
+  val head : 'a <BaseFct>.<resultStr>.node D.t -> 'a
+  val tail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val delayedTail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val fromCell : 'a D.t D.t -> 'a D.t
+  val map :
+      ('a -> 'b)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val replicate : int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val init :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> 'd <BaseFct>.<resultStr>.node D.t
+  val zip3 :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+       -> ('a D.t * 'b D.t * 'c D.t) <BaseFct>.<resultStr>.node D.t
+  val equal :
+      ('a * 'b -> bool)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t -> bool
+  val toList : 'a <BaseFct>.<resultStr>.node D.t -> 'a list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.PZYKWP/integer-strict/native-smlnj-legacy/build/sources/5.sml]
+structure BenchSigned64 : sig
+  structure W : <sig>
+  val sign : Word64.word
+  val minusOne : Word64.word
+  val negative : Word64.word -> bool
+  val negate : Word64.word -> Word64.word
+  val magnitude : Word64.word -> Word64.word
+  val less : Word64.word * Word64.word -> bool
+  val leq : Word64.word * Word64.word -> bool
+  val quotient : Word64.word * ?.word64 -> Word64.word
+  val remainder : Word64.word * ?.word64 -> Word64.word
+  val divide : Word64.word * ?.word64 -> Word64.word
+  val modulo : Word64.word * ?.word64 -> Word64.word
+  val gcd : Word64.word * Word64.word -> Word64.word
+  val lcm : ?.word64 * ?.word64 -> ?.word64
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.PZYKWP/integer-strict/native-smlnj-legacy/build/sources/6.sml]
+[autoloading]
+[autoloading done]
+functor BenchIntegerFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  structure S : <sig>
+  structure W : <sig>
+  structure I : <sig>
+  structure M : <sig>
+  val bool : bool -> Word64.word
+  val bigGcd : IntInf.int * IntInf.int -> IntInf.int
+  val bigLcm : ?.intinf * ?.intinf -> ?.intinf
+  val machine : (Word64.word * Word64.word -> Word64.word) list
+  val arbitrary : (IntInf.int * IntInf.int -> Word64.word) list
+  val enum :
+      ('a * 'b -> 'a)
+       -> ('a * 'c -> bool)
+       -> 'a * 'b * 'c -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val concatMap :
+      ('a -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t)
+       -> 'a <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val pairs :
+      ('a * 'a -> 'b)
+       -> ('a * 'c -> 'a)
+       -> ('a * 'd -> bool)
+       -> 'a * 'c * 'd -> 'b <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+  val consume :
+      Word64.word <BaseFct>.<resultStr>.S.<returnStr>.node D.t
+       -> int * Word64.word
+  val run : IntInf.int * IntInf.int * IntInf.int -> (int * Word64.word) list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.PZYKWP/integer-strict/native-smlnj-legacy/build/sources/7.sml]
+[autoloading]
+[autoloading done]
+structure IntegerCheck : sig
+  val validate : (int * Word64.word) list -> string -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.PZYKWP/integer-strict/native-smlnj-legacy/build/sources/8.sml]
+functor BenchIntegerDriverFn(K: sig
+  val run : IntInf.int * IntInf.int * IntInf.int -> (int * Word64.word) list
+end) :
+sig
+  val integer : string -> IntInf.int
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.PZYKWP/integer-strict/native-smlnj-legacy/build/sources/9.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.PZYKWP/integer-strict/native-smlnj-legacy/build/sources/10.sml]
+structure BenchMeasure : sig
+  val print : TextIO.vector -> unit
+  val line : unit -> string
+  val main : unit -> OS.Process.status
+end

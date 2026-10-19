@@ -1,0 +1,19 @@
+{
+  "started": "2026-10-19T03:10:23.227674+00:00",
+  "revision": "f244f1a7bf08b10e4bbfe7d6399ef11af581887b",
+  "dirty": true,
+  "sources": {
+    "Makefile": "0d9771c5f6be687d520f8a4cb9aade6f922fb50ce5ae7d98a793803238296c70",
+    "scripts/benchmark-inventory.py": "5cabe7ebb54c9b680686619ff22351ae5111a6a0181103d6777c4cf796b69024",
+    "examples/benchmarks/manifest.tsv": "8fbc9a679d1eb6133503230d3bab7ad6bfbba918e41e67335591a3a89c93075b",
+    "examples/benchmarks/inventory.tsv": "dd60aee21f95158f4ca554f8826519c098b54e09b47a34e2f92ff3984b4a58ab",
+    "examples/benchmarks/source-variants.tsv": "b9d1f3b27120ac7db2143cd35231fcdb7b93de61e4c6cd485895e357b7dadb80",
+    "examples/benchmarks/shared/catalog.sml": "1d2a829fbf15eaba829bee17a286c5b84a477c074a6a4c280044be52c5cdd5be",
+    "examples/benchmarks/shared/coverage.sml": "39429b17c0774fcb81b38011c133d5b774b8c7d5447fee291ef70fe188c1fa20",
+    "examples/benchmarks/shared/coverage-main.sml": "dc13c92b9dfa54f5c52809c6864c6ce777a63a8fe970d778ba58baf144cb7dc1",
+    "examples/benchmarks/shared/nofib-veritas-kernel.sml": "a242f38533a09f28597e5ade1d3be4ee8cd295ae4b0b0edc08fa33028383c352",
+    "examples/benchmarks/shared/nofib-veritas-check.sml": "6385ce2de1b071453476997a4acf302108d75fd4c27ef1277ce5c61aa1a7678b",
+    "tests/benchmarks/nofib-veritas-tests.sml": "1fbe8b57907a6cef50faf10b46767dfd88618709485b4277bdf0b0f42e5538d6",
+    "tests/benchmarks/data/nofib-veritas/FILES": "d7e15ca1fe05690964dd83e2a40b3dfb67b7bcb56af44e63deb356773038273e"
+  }
+}

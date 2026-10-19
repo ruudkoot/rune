@@ -1,0 +1,6 @@
+/home/ruud/.local/rune-hosts/polyml/bin/polyc
+-b
+/home/ruud/.local/rune-hosts/polyml/bin/poly
+-o
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.sE90ac/kb_no_exc/native-polyml/build/prog
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.sE90ac/kb_no_exc/native-polyml/build/export.sml

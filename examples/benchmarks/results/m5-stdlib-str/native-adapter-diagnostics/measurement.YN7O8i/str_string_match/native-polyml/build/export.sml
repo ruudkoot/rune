@@ -1,0 +1,9 @@
+val _ = use "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YN7O8i/str_string_match/native-polyml/build/sources/1.sml";
+val _ = use "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YN7O8i/str_string_match/native-polyml/build/sources/2.sml";
+val _ = use "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YN7O8i/str_string_match/native-polyml/build/sources/3.sml";
+val _ = use "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YN7O8i/str_string_match/native-polyml/build/sources/4.sml";
+val _ = use "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YN7O8i/str_string_match/native-polyml/build/sources/5.sml";
+val _ = use "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YN7O8i/str_string_match/native-polyml/build/sources/6.sml";
+val _ = use "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YN7O8i/str_string_match/native-polyml/build/sources/7.sml";
+val _ = use "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YN7O8i/str_string_match/native-polyml/build/sources/8.sml";
+fun main () = OS.Process.exit (BenchMeasure.main ());

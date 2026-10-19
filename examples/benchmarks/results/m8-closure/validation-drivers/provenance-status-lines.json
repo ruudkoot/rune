@@ -1,0 +1,530 @@
+[
+  [
+    "almabench",
+    "host/count checks are recorded as they finish. Full large SML repetition checks"
+  ],
+  [
+    "almabench",
+    "remain unrecorded, separately from the original observer's complete large"
+  ],
+  [
+    "bspt-lazy",
+    "large-profile runs are unrecorded unless explicitly listed there."
+  ],
+  [
+    "bspt-strict",
+    "large-profile runs are unrecorded unless explicitly listed there."
+  ],
+  [
+    "bytes_blit",
+    "universal size argument. Full final large SML runs are unrecorded unless"
+  ],
+  [
+    "bytes_cat",
+    "universal size argument. Full final large SML runs are unrecorded unless"
+  ],
+  [
+    "bytes_concat",
+    "universal size argument. Full final large SML runs are unrecorded unless"
+  ],
+  [
+    "bytes_contains",
+    "universal size argument. Full final large SML runs are unrecorded unless"
+  ],
+  [
+    "bytes_get",
+    "universal size argument. Full final large SML runs are unrecorded unless"
+  ],
+  [
+    "bytes_index",
+    "universal size argument. Full final large SML runs are unrecorded unless"
+  ],
+  [
+    "bytes_iter",
+    "universal size argument. Full final large SML runs are unrecorded unless"
+  ],
+  [
+    "bytes_map",
+    "universal size argument. Full final large SML runs are unrecorded unless"
+  ],
+  [
+    "bytes_set",
+    "universal size argument. Full final large SML runs are unrecorded unless"
+  ],
+  [
+    "bytes_sub",
+    "universal size argument. Full final large SML runs are unrecorded unless"
+  ],
+  [
+    "bytes_trim",
+    "universal size argument. Full final large SML runs are unrecorded unless"
+  ],
+  [
+    "bytes_uppercase_ascii",
+    "universal size argument. Full final large SML runs are unrecorded unless"
+  ],
+  [
+    "caml_hash_int",
+    "large counts are recorded. Full final large SML runs remain unrecorded unless"
+  ],
+  [
+    "caml_hash_tuple",
+    "large counts are recorded. Full final large SML runs remain unrecorded unless"
+  ],
+  [
+    "comp_lab_nozift-lazy",
+    "hypotheses pending separate evidence."
+  ],
+  [
+    "comp_lab_nozift-strict",
+    "hypotheses pending separate evidence."
+  ],
+  [
+    "comp_lab_zift-lazy",
+    "hypotheses pending separate evidence."
+  ],
+  [
+    "comp_lab_zift-strict",
+    "hypotheses pending separate evidence."
+  ],
+  [
+    "dom-lt",
+    "Full final SML large-profile runs remain unrecorded unless listed in validation."
+  ],
+  [
+    "event-lazy",
+    "Merge the two periodic input clocks, process pending events in time order,"
+  ],
+  [
+    "event-lazy",
+    "snapshot at scheduling time. Stable merges process existing pending events before"
+  ],
+  [
+    "event-lazy",
+    "infinite clock streams, pending-event streams, event values and control roots."
+  ],
+  [
+    "event-lazy",
+    "remain unrecorded unless explicitly listed in validation."
+  ],
+  [
+    "event-strict",
+    "Merge the two periodic input clocks, process pending events in time order,"
+  ],
+  [
+    "event-strict",
+    "snapshot at scheduling time. Stable merges process existing pending events before"
+  ],
+  [
+    "event-strict",
+    "infinite clock streams, pending-event streams, event values and control roots."
+  ],
+  [
+    "event-strict",
+    "remain unrecorded unless explicitly listed in validation."
+  ],
+  [
+    "expert-lazy",
+    "repetitions remain unrecorded unless listed explicitly."
+  ],
+  [
+    "expert-strict",
+    "repetitions remain unrecorded unless listed explicitly."
+  ],
+  [
+    "fem-lazy",
+    "labels use host defaults; Rune O0/O2 are explicit. Unrecorded large checks"
+  ],
+  [
+    "fem-strict",
+    "labels use host defaults; Rune O0/O2 are explicit. Unrecorded large checks"
+  ],
+  [
+    "fft2-lazy",
+    "pass calibration. Full large SML repetition checks remain unrecorded, separately"
+  ],
+  [
+    "fft2-lazy",
+    "Canonical primary, count and semantic results are recorded as they finish."
+  ],
+  [
+    "fft2-strict",
+    "pass calibration. Full large SML repetition checks remain unrecorded, separately"
+  ],
+  [
+    "fft2-strict",
+    "Canonical primary, count and semantic results are recorded as they finish."
+  ],
+  [
+    "hashtbl_add_duplicate",
+    "large counts are recorded. Full final large SML runs remain unrecorded unless"
+  ],
+  [
+    "hashtbl_add_resizing",
+    "large counts are recorded. Full final large SML runs remain unrecorded unless"
+  ],
+  [
+    "hashtbl_add_sized",
+    "large counts are recorded. Full final large SML runs remain unrecorded unless"
+  ],
+  [
+    "hashtbl_filter_map",
+    "large counts are recorded. Full final large SML runs remain unrecorded unless"
+  ],
+  [
+    "hashtbl_find",
+    "large counts are recorded. Full final large SML runs remain unrecorded unless"
+  ],
+  [
+    "hashtbl_fold",
+    "large counts are recorded. Full final large SML runs remain unrecorded unless"
+  ],
+  [
+    "hashtbl_iter",
+    "large counts are recorded. Full final large SML runs remain unrecorded unless"
+  ],
+  [
+    "hashtbl_remove",
+    "large counts are recorded. Full final large SML runs remain unrecorded unless"
+  ],
+  [
+    "ida-lazy",
+    "repetitions remain unrecorded unless listed in validation. Private calibration"
+  ],
+  [
+    "ida-strict",
+    "repetitions remain unrecorded unless listed in validation. Private calibration"
+  ],
+  [
+    "int_find1",
+    "large counts are recorded. Full final large SML runs remain unrecorded unless"
+  ],
+  [
+    "int_find2",
+    "large counts are recorded. Full final large SML runs remain unrecorded unless"
+  ],
+  [
+    "int_replace1",
+    "large counts are recorded. Full final large SML runs remain unrecorded unless"
+  ],
+  [
+    "int_replace2",
+    "large counts are recorded. Full final large SML runs remain unrecorded unless"
+  ],
+  [
+    "kb",
+    "passes both variants. Full SML large repetitions remain unrecorded."
+  ],
+  [
+    "kb_no_exc",
+    "passes both variants. Full SML large repetitions remain unrecorded."
+  ],
+  [
+    "knights-array-lazy",
+    "configuration outcomes; full SML large repetitions remain unrecorded unless listed."
+  ],
+  [
+    "knights-array-strict",
+    "configuration outcomes; full SML large repetitions remain unrecorded unless listed."
+  ],
+  [
+    "knights-lazy",
+    "configuration outcomes; full SML large repetitions remain unrecorded unless listed."
+  ],
+  [
+    "knights-strict",
+    "configuration outcomes; full SML large repetitions remain unrecorded unless listed."
+  ],
+  [
+    "lambda-monad-lazy",
+    "while full SML large repetition runs remain unrecorded. No failing correctness"
+  ],
+  [
+    "lambda-monad-strict",
+    "while full SML large repetition runs remain unrecorded. No failing correctness"
+  ],
+  [
+    "lambda-simple-lazy",
+    "while full SML large repetition runs remain unrecorded. No failing correctness"
+  ],
+  [
+    "lambda-simple-strict",
+    "while full SML large repetition runs remain unrecorded. No failing correctness"
+  ],
+  [
+    "lazylist",
+    "Semantic tests verify pending heads, their independent shared-zero references,"
+  ],
+  [
+    "lexifi-g2pp",
+    "development evidence. Full final SML large runs remain unrecorded unless"
+  ],
+  [
+    "lift-lazy",
+    "pending indentation after newlines, restored outer indentation, definition"
+  ],
+  [
+    "lift-strict",
+    "pending indentation after newlines, restored outer indentation, definition"
+  ],
+  [
+    "linear-lazy",
+    "they finish. Full SML large repetition checks remain unrecorded unless explicitly"
+  ],
+  [
+    "linear-nofib-gc-lazy",
+    "they finish. Full SML large repetition checks remain unrecorded unless explicitly"
+  ],
+  [
+    "linear-nofib-gc-strict",
+    "they finish. Full SML large repetition checks remain unrecorded unless explicitly"
+  ],
+  [
+    "linear-strict",
+    "they finish. Full SML large repetition checks remain unrecorded unless explicitly"
+  ],
+  [
+    "maillist",
+    "preserving output identity and repeated creation/appending work."
+  ],
+  [
+    "mandelbrot-rat",
+    "IntInf, including counters, without depending on optional Int64. This"
+  ],
+  [
+    "map_add",
+    "remain unrecorded unless listed explicitly in validation."
+  ],
+  [
+    "map_add_duplicate",
+    "remain unrecorded unless listed explicitly in validation."
+  ],
+  [
+    "map_find",
+    "remain unrecorded unless listed explicitly in validation."
+  ],
+  [
+    "map_fold",
+    "remain unrecorded unless listed explicitly in validation."
+  ],
+  [
+    "map_for_all",
+    "remain unrecorded unless listed explicitly in validation."
+  ],
+  [
+    "map_iter",
+    "remain unrecorded unless listed explicitly in validation."
+  ],
+  [
+    "map_map",
+    "remain unrecorded unless listed explicitly in validation."
+  ],
+  [
+    "map_remove",
+    "remain unrecorded unless listed explicitly in validation."
+  ],
+  [
+    "multiplier-count-lazy",
+    "and a pending-product test establish that boundary. It is a ready/control-path"
+  ],
+  [
+    "multiplier-count-lazy",
+    "Full SML large traces are unrecorded unless explicitly listed in validation."
+  ],
+  [
+    "multiplier-count-strict",
+    "and a pending-product test establish that boundary. It is a ready/control-path"
+  ],
+  [
+    "multiplier-count-strict",
+    "Full SML large traces are unrecorded unless explicitly listed in validation."
+  ],
+  [
+    "multiplier-lazy",
+    "and a pending-product test establish that boundary. It is a ready/control-path"
+  ],
+  [
+    "multiplier-lazy",
+    "Full SML large traces are unrecorded unless explicitly listed in validation."
+  ],
+  [
+    "multiplier-strict",
+    "and a pending-product test establish that boundary. It is a ready/control-path"
+  ],
+  [
+    "multiplier-strict",
+    "Full SML large traces are unrecorded unless explicitly listed in validation."
+  ],
+  [
+    "para-lazy",
+    "recorded separately as they finish. Full large SML repetition checks remain"
+  ],
+  [
+    "para-lazy",
+    "unrecorded. An earlier development consumer materialized an extra full output"
+  ],
+  [
+    "para-strict",
+    "recorded separately as they finish. Full large SML repetition checks remain"
+  ],
+  [
+    "para-strict",
+    "unrecorded. An earlier development consumer materialized an extra full output"
+  ],
+  [
+    "queens-lazy",
+    "`shared/queens.sml`; pending functions are released after forcing. Exceptions"
+  ],
+  [
+    "rewrite-lazy",
+    "remain unrecorded unless explicitly listed in validation."
+  ],
+  [
+    "rewrite-strict",
+    "remain unrecorded unless explicitly listed in validation."
+  ],
+  [
+    "sched-lazy",
+    "Keep unused processor IDs, parents, join durations and child selectors pending"
+  ],
+  [
+    "sched-strict",
+    "Keep unused processor IDs, parents, join durations and child selectors pending"
+  ],
+  [
+    "secretary-lazy",
+    "stdout exactly. No replacement RNG, OS seed or unrecorded package version is"
+  ],
+  [
+    "secretary-strict",
+    "stdout exactly. No replacement RNG, OS seed or unrecorded package version is"
+  ],
+  [
+    "set_add_rem",
+    "remain unrecorded unless listed explicitly in validation."
+  ],
+  [
+    "set_fold",
+    "remain unrecorded unless listed explicitly in validation."
+  ],
+  [
+    "set_mem",
+    "remain unrecorded unless listed explicitly in validation."
+  ],
+  [
+    "sorting-lazy",
+    "compiler optimization. Equal-prepending run construction means global mergeSort"
+  ],
+  [
+    "sorting-strict",
+    "compiler optimization. Equal-prepending run construction means global mergeSort"
+  ],
+  [
+    "sphere-lazy",
+    "unrecorded, separately from their complete reference pixels and source fixtures."
+  ],
+  [
+    "sphere-strict",
+    "unrecorded, separately from their complete reference pixels and source fixtures."
+  ],
+  [
+    "str_global_replace",
+    "Full final large SML repetitions remain unrecorded unless listed separately."
+  ],
+  [
+    "str_regexp",
+    "Full final large SML repetitions remain unrecorded unless listed separately."
+  ],
+  [
+    "str_search_forward",
+    "Full final large SML repetitions remain unrecorded unless listed separately."
+  ],
+  [
+    "str_split",
+    "Full final large SML repetitions remain unrecorded unless listed separately."
+  ],
+  [
+    "str_string_match",
+    "Full final large SML repetitions remain unrecorded unless listed separately."
+  ],
+  [
+    "str_string_partial_match",
+    "Full final large SML repetitions remain unrecorded unless listed separately."
+  ],
+  [
+    "string_blit",
+    "universal size argument. Full final large SML runs are unrecorded unless"
+  ],
+  [
+    "string_compare",
+    "universal size argument. Full final large SML runs are unrecorded unless"
+  ],
+  [
+    "string_concat",
+    "universal size argument. Full final large SML runs are unrecorded unless"
+  ],
+  [
+    "string_contains",
+    "universal size argument. Full final large SML runs are unrecorded unless"
+  ],
+  [
+    "string_equal",
+    "universal size argument. Full final large SML runs are unrecorded unless"
+  ],
+  [
+    "string_get",
+    "universal size argument. Full final large SML runs are unrecorded unless"
+  ],
+  [
+    "string_index",
+    "universal size argument. Full final large SML runs are unrecorded unless"
+  ],
+  [
+    "string_iter",
+    "universal size argument. Full final large SML runs are unrecorded unless"
+  ],
+  [
+    "string_map",
+    "universal size argument. Full final large SML runs are unrecorded unless"
+  ],
+  [
+    "string_split_on_char",
+    "universal size argument. Full final large SML runs are unrecorded unless"
+  ],
+  [
+    "string_sub",
+    "universal size argument. Full final large SML runs are unrecorded unless"
+  ],
+  [
+    "string_trim",
+    "universal size argument. Full final large SML runs are unrecorded unless"
+  ],
+  [
+    "string_uppercase_ascii",
+    "universal size argument. Full final large SML runs are unrecorded unless"
+  ],
+  [
+    "typecheck-lazy",
+    "Full final SML large repetitions remain unrecorded unless listed in validation."
+  ],
+  [
+    "typecheck-strict",
+    "Full final SML large repetitions remain unrecorded unless listed in validation."
+  ],
+  [
+    "veritas-lazy",
+    "Public host/profile, count and repository acceptance gates are pending."
+  ],
+  [
+    "veritas-strict",
+    "Public host/profile, count and repository acceptance gates are pending."
+  ],
+  [
+    "wave4main-lazy",
+    "hypotheses pending separate evidence."
+  ],
+  [
+    "wave4main-strict",
+    "hypotheses pending separate evidence."
+  ]
+]

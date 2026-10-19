@@ -1,0 +1,18 @@
+{
+  "programs": 507,
+  "profiles": 1473,
+  "source_programs": {
+    "mlton": 49,
+    "mlkit": 51,
+    "nofib": 248,
+    "sandmark": 124,
+    "smlnj": 35
+  },
+  "linked_overview_rows": 507,
+  "named_sections": 507,
+  "provenance_documents": 507,
+  "routine_programs": 16,
+  "suitable_primary_paths": 321,
+  "primary_entries": 861,
+  "companions": 38
+}

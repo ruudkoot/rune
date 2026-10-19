@@ -1,0 +1,4 @@
+/home/ruud/rune/.worktrees/benchmarks/bin/runeopt-mlton
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.n1WjB1/contrast/rune-opt/build/prog.rbc
+-o
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.n1WjB1/contrast/rune-opt/build/prog

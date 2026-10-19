@@ -1,0 +1,17 @@
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.LWMtNw/hidden-lazy/native-polyml/build/sources/7.sml:26: error: Type error in function application.
+   Function: S.map N.negative :
+      int D.t S.node BenchLazy.delay -> int D.t S.node BenchLazy.delay
+   Argument: a : number S.stream
+   Reason:
+      Can't unify int (*In Basis*) with real (*In Basis*)
+         (Different type constructors)
+Found near vector (S.map N.negative a)
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.LWMtNw/hidden-lazy/native-polyml/build/sources/7.sml:26: error: Type error in function application.
+   Function: vector : real D.t S.node BenchLazy.delay -> vector
+   Argument: (S.map N.negative a) : int D.t S.node BenchLazy.delay
+   Reason:
+      Can't unify real (*In Basis*) with int (*In Basis*)
+         (Different type constructors)
+Found near vector (S.map N.negative a)
+Exception- Fail "Static Errors" raised
+Exception- Fail "Static Errors" raised

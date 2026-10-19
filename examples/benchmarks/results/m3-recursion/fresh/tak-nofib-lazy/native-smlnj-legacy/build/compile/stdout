@@ -1,0 +1,41 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.qQEcxY/tak-nofib-lazy/native-smlnj-legacy/build/export.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.qQEcxY/tak-nofib-lazy/native-smlnj-legacy/build/sources/1.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.qQEcxY/tak-nofib-lazy/native-smlnj-legacy/build/sources/2.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.qQEcxY/tak-nofib-lazy/native-smlnj-legacy/build/sources/3.sml]
+structure Benchmark : sig
+  val name : string
+  val tak :
+      int BenchLazy.state ref * int BenchLazy.state ref
+       * int BenchLazy.state ref
+       -> int
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.qQEcxY/tak-nofib-lazy/native-smlnj-legacy/build/sources/4.sml]
+[autoloading]
+[autoloading done]
+structure BenchMeasure : sig
+  val print : TextIO.vector -> unit
+  val line : unit -> string
+  val main : unit -> OS.Process.status
+end

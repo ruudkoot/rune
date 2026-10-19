@@ -1,0 +1,2 @@
+# Preserve exact historical source/input/stream snapshots in archived build trees.
+**/build/** -text -whitespace

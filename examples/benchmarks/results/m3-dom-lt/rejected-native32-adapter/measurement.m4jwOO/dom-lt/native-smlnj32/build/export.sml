@@ -1,0 +1,12 @@
+val _ = use "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.m4jwOO/dom-lt/native-smlnj32/build/sources/1.sml";
+val _ = use "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.m4jwOO/dom-lt/native-smlnj32/build/sources/2.sml";
+val _ = use "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.m4jwOO/dom-lt/native-smlnj32/build/sources/3.sml";
+val _ = use "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.m4jwOO/dom-lt/native-smlnj32/build/sources/4.sml";
+val _ = use "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.m4jwOO/dom-lt/native-smlnj32/build/sources/5.sml";
+val _ = use "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.m4jwOO/dom-lt/native-smlnj32/build/sources/6.sml";
+val _ = use "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.m4jwOO/dom-lt/native-smlnj32/build/sources/7.sml";
+val _ = use "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.m4jwOO/dom-lt/native-smlnj32/build/sources/8.sml";
+val _ = use "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.m4jwOO/dom-lt/native-smlnj32/build/sources/9.sml";
+val _ = use "/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.m4jwOO/dom-lt/native-smlnj32/build/sources/10.sml";
+val _ = SMLofNJ.exportFn ("/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.m4jwOO/dom-lt/native-smlnj32/build/prog", fn _ => BenchMeasure.main ());
+val _ = OS.Process.exit OS.Process.success;

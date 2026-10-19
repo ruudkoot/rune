@@ -1,0 +1,4 @@
+/home/ruud/.local/rune-hosts/mlton/bin/mlton
+-output
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.NWnc3Y/nbody-sandmark-multicore-numerical/native-mlton/build/prog
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.NWnc3Y/nbody-sandmark-multicore-numerical/native-mlton/build/prog.mlb

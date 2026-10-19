@@ -1,0 +1,4 @@
+/home/ruud/.local/rune-hosts/mlton/bin/mlton
+-output
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.k5d4JG/expert-lazy/native-mlton/build/prog
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.k5d4JG/expert-lazy/native-mlton/build/prog.mlb

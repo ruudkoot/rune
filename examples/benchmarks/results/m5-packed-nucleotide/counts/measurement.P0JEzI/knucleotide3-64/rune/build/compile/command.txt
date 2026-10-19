@@ -1,0 +1,10 @@
+/home/ruud/rune/.worktrees/benchmarks/bin/rune
+-O2
+--lint
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.P0JEzI/knucleotide3-64/rune/build/sources/1.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.P0JEzI/knucleotide3-64/rune/build/sources/2.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.P0JEzI/knucleotide3-64/rune/build/sources/3.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.P0JEzI/knucleotide3-64/rune/build/sources/4.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.P0JEzI/knucleotide3-64/rune/build/sources/5.sml
+-o
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.P0JEzI/knucleotide3-64/rune/build/prog.rbc

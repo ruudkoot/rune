@@ -73,7 +73,7 @@ git diff --binary HEAD > "$out/worktree.patch"
 git status --porcelain > "$out/worktree-status.txt"
 cp examples/benchmarks/manifest.tsv examples/benchmarks/upstreams.tsv "$out/"
 mkdir -p "$out/tool-sources"
-for path in scripts/measure-benchmarks.sh scripts/benchmark-result.sh tests/basis/run-matrix.sh examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/catalog-main.sml examples/benchmarks/shared/report.sml examples/benchmarks/shared/report-main.sml examples/benchmarks/shared/counts.sml examples/benchmarks/shared/counts-main.sml; do
+for path in scripts/measure-benchmarks.sh scripts/benchmark-result.sh scripts/benchmark-provenance.sh tests/basis/run-matrix.sh examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/catalog-main.sml examples/benchmarks/shared/report.sml examples/benchmarks/shared/report-main.sml examples/benchmarks/shared/counts.sml examples/benchmarks/shared/counts-main.sml; do
   destination=$out/tool-sources/$path
   mkdir -p "$(dirname "$destination")"
   cp "$path" "$destination"
@@ -97,6 +97,7 @@ execute() {
   printf '%s\n' "$phase_exit" > "$phase_dir/exit"
 }
 . "$root/scripts/benchmark-result.sh"
+. "$root/scripts/benchmark-provenance.sh"
 
 record() {
   record_phase=$1; record_process=$2; record_round=$3; record_category=$4; record_seconds=${5:-}
@@ -158,8 +159,9 @@ while IFS="$(printf '\t')" read -r name seconds memory sources args expected inp
     sha256sum "$compiler" > "$bundle/compiler.sha256"
     if [ "$kind" = rune ]; then
       sha256sum "$runtime" > "$bundle/runtime.sha256"
-      (cd "$root" && sha256sum lib/basis/MANIFEST lib/basis/*.sml) > "$bundle/basis.sha256"
-      sha256sum "$root/bin/rune.rbc" "$root/bin/rune.stack.rbc" "$root/bin/runevm-stack" "$root/bin/runevm" > "$bundle/rune-payloads.sha256"
+      bench_tool_repository compiler "$compiler" "$bundle"
+      bench_tool_repository runtime "$runtime" "$bundle"
+      cat "$bundle/compiler-payloads.sha256" "$bundle/runtime-payloads.sha256" > "$bundle/rune-payloads.sha256"
     fi
     # Portable main plus the thin host-specific launch/export adapter.
     if [ "$action" = time ]; then
@@ -179,6 +181,8 @@ while IFS="$(printf '\t')" read -r name seconds memory sources args expected inp
           # Native translation is a separately measured compile phase.
           classify compile-error; record compile 0 0 "$category"
           opt=${RUNEOPT:-$root/bin/runeopt-mlton}
+          sha256sum "$opt" > "$bundle/native-compiler.sha256"
+          bench_tool_repository native-compiler "$opt" "$bundle"
           execute "$bundle/native-compile" "$quota" "$opt" "$bundle/prog.rbc" -o "$bundle/prog"
           run_command=$bundle/prog; run_file=""
           compile_phase=native-compile

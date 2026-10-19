@@ -1,0 +1,7 @@
+{
+  "readable_files": 50815,
+  "readable_bytes": 158138605,
+  "text_state_aliases": 21,
+  "binary_excluded": 812,
+  "policy": "existing compiled/binary rules unchanged; all text retained, state observations have byte-identical renamed copies"
+}

@@ -1,0 +1,6 @@
+/home/ruud/.local/rune-hosts/polyml/bin/polyc
+-b
+/home/ruud/.local/rune-hosts/polyml/bin/poly
+-o
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.mdAtmJ/caml_hash_int/native-polyml/build/prog
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.mdAtmJ/caml_hash_int/native-polyml/build/export.sml

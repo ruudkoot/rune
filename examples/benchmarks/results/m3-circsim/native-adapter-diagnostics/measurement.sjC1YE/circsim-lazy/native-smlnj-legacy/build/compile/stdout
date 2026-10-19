@@ -1,0 +1,384 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.sjC1YE/circsim-lazy/native-smlnj-legacy/build/export.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.sjC1YE/circsim-lazy/native-smlnj-legacy/build/sources/1.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.sjC1YE/circsim-lazy/native-smlnj-legacy/build/sources/2.sml]
+structure BenchLazy : sig
+  datatype 'a state
+    = Evaluating
+    | Failed of exn
+    | Pending of unit -> 'a
+    | Value of 'a
+  type 'a delay = 'a state ref
+  val delay : (unit -> 'a) -> 'a state ref
+  val force : 'a state ref -> 'a
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.sjC1YE/circsim-lazy/native-smlnj-legacy/build/sources/3.sml]
+signature BENCH_SUSPEND =
+  sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end
+structure BenchNeed : BENCH_SUSPEND
+structure BenchStrict : BENCH_SUSPEND
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.sjC1YE/circsim-lazy/native-smlnj-legacy/build/sources/4.sml]
+structure BenchStream : sig
+  datatype 'a node
+    = Cons of 'a BenchLazy.delay * 'a node BenchLazy.delay
+    | Nil
+  type 'a stream = 'a node BenchLazy.delay
+  val empty : unit -> 'a node BenchLazy.state ref
+  val cons :
+      'a BenchLazy.delay * 'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref
+  val singleton : 'a -> 'a node BenchLazy.state ref
+  val fix : ('a BenchLazy.state ref -> 'a) -> 'a BenchLazy.state ref
+  val head : 'a node BenchLazy.state ref -> 'a
+  val tail : 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val iterate :
+      ('a -> 'a) -> 'a BenchLazy.state ref -> 'a node BenchLazy.state ref
+  val fromList : 'a list -> 'a node BenchLazy.delay
+  val map : ('a -> 'b) -> 'a node BenchLazy.delay -> 'b node BenchLazy.delay
+  val zipWith :
+      ('a * 'b -> 'c)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay -> 'c node BenchLazy.delay
+  val append :
+      'a node BenchLazy.delay
+       -> 'a node BenchLazy.state ref -> 'a node BenchLazy.delay
+  val concatMap :
+      ('a -> 'b node BenchLazy.delay)
+       -> 'a node BenchLazy.delay -> 'b node BenchLazy.state ref
+  val filter :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.delay
+  val dropWhile :
+      ('a -> bool) -> 'a node BenchLazy.delay -> 'a node BenchLazy.state ref
+  val foldrStream :
+      ('a * 'b BenchLazy.state ref -> 'b BenchLazy.state ref)
+       -> 'b BenchLazy.state ref
+       -> 'a node BenchLazy.delay -> 'b BenchLazy.state ref
+  val zipWith3 :
+      ('a * 'b * 'c -> 'd)
+       -> 'a node BenchLazy.delay
+       -> 'b node BenchLazy.delay
+       -> 'c node BenchLazy.delay -> 'd node BenchLazy.delay
+  val span :
+      ('a -> bool)
+       -> 'a node BenchLazy.delay
+       -> 'a node BenchLazy.delay * 'a node BenchLazy.state ref
+  val nth : 'a node BenchLazy.delay -> int -> 'a
+  val take : int -> 'a node BenchLazy.delay -> 'a list
+  val foldl : ('a * 'b -> 'b) -> 'b -> 'a node BenchLazy.delay -> 'b
+  val foldPrefix :
+      ('a * 'b -> 'b) -> 'b -> int -> 'a node BenchLazy.delay -> 'b
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.sjC1YE/circsim-lazy/native-smlnj-legacy/build/sources/5.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.sjC1YE/circsim-lazy/native-smlnj-legacy/build/sources/5.sml:150.34 Warning: calling polyEqual
+functor BenchCircsimFn(D: sig
+  type 'a t
+  val delay : (unit -> 'a) -> 'a t
+  val force : 'a t -> 'a
+end) :
+sig
+  type boolean
+  type component
+  type 'a node
+  type 'a seq
+  type signal
+  type label
+  type inport
+  type outport
+  type state
+  type circuit
+  type packet
+  type packetPair
+  type ('a,'b) treeNode
+  val empty : unit -> 'a <BaseFct>.<resultStr>.node D.t
+  val cons :
+      'a D.t * 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val cells : 'a D.t list -> 'a <BaseFct>.<resultStr>.node D.t
+  val map :
+      ('a D.t -> 'b D.t)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+  val zipWith :
+      ('a D.t * 'b D.t -> 'c D.t)
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+  val append :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val head : 'a <BaseFct>.<resultStr>.node D.t -> 'a D.t
+  val tail :
+      'a <BaseFct>.<resultStr>.node D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val lengthFrom : int * 'a <BaseFct>.<resultStr>.node D.t -> int
+  val length : 'a <BaseFct>.<resultStr>.node D.t -> int
+  val take :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val drop :
+      int
+       -> 'a <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val replicate : int -> 'a D.t -> 'a <BaseFct>.<resultStr>.node D.t
+  val foldr :
+      ('a D.t * 'b D.t -> 'b D.t)
+       -> 'b D.t -> 'a <BaseFct>.<resultStr>.node D.t -> 'b D.t
+  val any : ('a D.t -> bool) -> 'a <BaseFct>.<resultStr>.node D.t -> bool
+  val maximum : ('a D.t -> int) -> 'a <BaseFct>.<resultStr>.node D.t -> int
+  val first : ('a D.t * 'b) D.t -> 'a D.t
+  val second : ('a * 'b D.t) D.t -> 'b D.t
+  val transpose :
+      'a <BaseFct>.<resultStr>.node <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node <BaseFct>.<resultStr>.node D.t
+  val put :
+      'a <BaseFct>.<resultStr>.node D.t
+       -> ('a,unit) <BaseFct>.<resultStr>.treeNode D.t
+  val get :
+      ('a,'b) <BaseFct>.<resultStr>.treeNode D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val upsweep :
+      ('a D.t * 'a D.t -> 'a D.t)
+       -> ('a,'b) <BaseFct>.<resultStr>.treeNode D.t
+       -> ('a D.t * ('a,'a D.t * 'a D.t) <BaseFct>.<resultStr>.treeNode D.t) 
+         D.t
+  val downsweep :
+      ('a * 'b * 'c D.t -> ('c D.t * 'c D.t) D.t)
+       -> 'c D.t
+       -> ('d,'a * 'b) <BaseFct>.<resultStr>.treeNode D.t
+       -> ('c,unit) <BaseFct>.<resultStr>.treeNode D.t
+  val sweep :
+      ('a D.t * 'a D.t -> 'a D.t)
+       -> ('a D.t * 'a D.t * 'b D.t -> ('b D.t * 'b D.t) D.t)
+       -> 'b D.t
+       -> ('a,'c) <BaseFct>.<resultStr>.treeNode D.t
+       -> ('a D.t * ('b,unit) <BaseFct>.<resultStr>.treeNode D.t) D.t
+  val zero : <BaseFct>.<resultStr>.boolean D.t
+  val one : <BaseFct>.<resultStr>.boolean D.t
+  val emptyPacket : <BaseFct>.<resultStr>.packet D.t
+  val sendRight :
+      <BaseFct>.<resultStr>.packet D.t * <BaseFct>.<resultStr>.packet D.t
+       -> (int * int * <BaseFct>.<resultStr>.signal * bool * int * bool * int
+          * int) D.t
+  val sendLeft :
+      <BaseFct>.<resultStr>.packet D.t * <BaseFct>.<resultStr>.packet D.t
+       -> (int * int * <BaseFct>.<resultStr>.signal * bool * int * bool * int
+          * int) D.t
+  val send :
+      <BaseFct>.<resultStr>.packet <BaseFct>.<resultStr>.node D.t
+       -> (((int * int * <BaseFct>.<resultStr>.signal * bool * int * bool
+                * int * int) D.t
+             * (int * int * <BaseFct>.<resultStr>.signal * bool * int * bool
+                * int * int) D.t) D.t
+          * (<BaseFct>.<resultStr>.packet D.t
+               * <BaseFct>.<resultStr>.packet D.t) <BaseFct>.<resultStr>.node 
+            D.t) D.t
+  val info :
+      <BaseFct>.<resultStr>.state D.t
+       -> {depth:int,
+        ins:<BaseFct>.<resultStr>.inport <BaseFct>.<resultStr>.seq,
+        kind:<BaseFct>.<resultStr>.component,
+        outs:<BaseFct>.<resultStr>.outport <BaseFct>.<resultStr>.seq, pid:int}
+  val setIns :
+      <BaseFct>.<resultStr>.state D.t
+       -> <BaseFct>.<resultStr>.inport <BaseFct>.<resultStr>.seq
+       -> <BaseFct>.<resultStr>.state D.t
+  val setOuts :
+      <BaseFct>.<resultStr>.state D.t
+       -> <BaseFct>.<resultStr>.outport <BaseFct>.<resultStr>.seq
+       -> <BaseFct>.<resultStr>.state D.t
+  val updateRequests :
+      bool
+       -> <BaseFct>.<resultStr>.state D.t -> <BaseFct>.<resultStr>.state D.t
+  val checkDepth :
+      int
+       -> <BaseFct>.<resultStr>.state D.t -> <BaseFct>.<resultStr>.state D.t
+  val makePackets :
+      <BaseFct>.<resultStr>.state D.t
+       -> (int * int * <BaseFct>.<resultStr>.signal * bool * int * bool * int
+            * int) <BaseFct>.<resultStr>.node D.t
+  val padPackets :
+      <BaseFct>.<resultStr>.packet <BaseFct>.<resultStr>.node 
+           <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.packet <BaseFct>.<resultStr>.node 
+           <BaseFct>.<resultStr>.node D.t
+  val upIn :
+      <BaseFct>.<resultStr>.packet D.t
+       -> (int * int * <BaseFct>.<resultStr>.signal) 
+           <BaseFct>.<resultStr>.node D.t
+       -> (int * int * <BaseFct>.<resultStr>.signal) 
+           <BaseFct>.<resultStr>.node D.t
+  val updateIn :
+      (<BaseFct>.<resultStr>.packet D.t * <BaseFct>.<resultStr>.packet D.t) 
+         D.t
+       * (int * int * <BaseFct>.<resultStr>.signal) <BaseFct>.<resultStr>.node 
+         D.t
+       -> (int * int * <BaseFct>.<resultStr>.signal) 
+           <BaseFct>.<resultStr>.node D.t
+  val updateOut :
+      (('a * 'b * 'c * 'd * 'e * bool * int * 'f) D.t
+          * ('g * 'h * 'i * bool * int * 'j * 'k * 'l) D.t) D.t
+       * ('m * 'n * bool * 'o * bool * 'p) D.t
+       -> ('m * 'n * bool * 'o * bool * 'p) D.t
+  val updateIO :
+      int
+       -> (<BaseFct>.<resultStr>.packet D.t * <BaseFct>.<resultStr>.packet D.t)
+           <BaseFct>.<resultStr>.node D.t * <BaseFct>.<resultStr>.state D.t
+       -> <BaseFct>.<resultStr>.state D.t
+  val acknowledge :
+      int
+       -> <BaseFct>.<resultStr>.state <BaseFct>.<resultStr>.node D.t -> bool
+  val doSend :
+      int
+       -> <BaseFct>.<resultStr>.state <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.state <BaseFct>.<resultStr>.node D.t
+  val doSends :
+      int
+       -> <BaseFct>.<resultStr>.state <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.state <BaseFct>.<resultStr>.node D.t
+  val signalNot :
+      <BaseFct>.<resultStr>.boolean D.t -> <BaseFct>.<resultStr>.boolean
+  val signalAnd :
+      <BaseFct>.<resultStr>.boolean D.t * <BaseFct>.<resultStr>.boolean D.t
+       -> <BaseFct>.<resultStr>.boolean
+  val signalOr :
+      <BaseFct>.<resultStr>.boolean D.t * <BaseFct>.<resultStr>.boolean D.t
+       -> <BaseFct>.<resultStr>.boolean
+  val signalXor : ''a D.t * ''a D.t -> <BaseFct>.<resultStr>.boolean
+  val signals :
+      ('a * 'b * 'c D.t) <BaseFct>.<resultStr>.node D.t
+       -> 'c <BaseFct>.<resultStr>.node D.t
+  val apply :
+      <BaseFct>.<resultStr>.component
+       -> <BaseFct>.<resultStr>.boolean <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.boolean D.t option
+  val updateOutputs :
+      <BaseFct>.<resultStr>.state D.t
+       -> <BaseFct>.<resultStr>.signal -> <BaseFct>.<resultStr>.state D.t
+  val simulateComponent :
+      int
+       -> <BaseFct>.<resultStr>.state D.t -> <BaseFct>.<resultStr>.state D.t
+  val restore :
+      <BaseFct>.<resultStr>.state D.t * <BaseFct>.<resultStr>.state D.t
+       -> <BaseFct>.<resultStr>.state D.t
+  val storeInputs :
+      (('a * int) D.t * <BaseFct>.<resultStr>.signal) 
+           <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.state D.t -> <BaseFct>.<resultStr>.state D.t
+  val initDff :
+      <BaseFct>.<resultStr>.state D.t -> <BaseFct>.<resultStr>.state D.t
+  val doCycle :
+      int D.t
+       -> <BaseFct>.<resultStr>.circuit D.t
+       -> <BaseFct>.<resultStr>.boolean <BaseFct>.<resultStr>.node D.t
+       -> {inputs:<BaseFct>.<resultStr>.label <BaseFct>.<resultStr>.seq,
+          outputs:<BaseFct>.<resultStr>.label <BaseFct>.<resultStr>.seq,
+          size:int,
+          states:<BaseFct>.<resultStr>.state <BaseFct>.<resultStr>.node D.t} 
+         D.t
+  val scanl :
+      ('a D.t * 'b D.t -> 'a D.t)
+       -> 'a D.t
+       -> 'b <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val simulate :
+      <BaseFct>.<resultStr>.boolean <BaseFct>.<resultStr>.node 
+           <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.circuit D.t
+       -> <BaseFct>.<resultStr>.circuit <BaseFct>.<resultStr>.node D.t
+  val collectOutputs :
+      <BaseFct>.<resultStr>.circuit D.t
+       -> <BaseFct>.<resultStr>.boolean <BaseFct>.<resultStr>.node D.t
+  val circuitSimulate :
+      <BaseFct>.<resultStr>.boolean <BaseFct>.<resultStr>.node 
+           <BaseFct>.<resultStr>.node D.t
+       -> <BaseFct>.<resultStr>.circuit D.t
+       -> <BaseFct>.<resultStr>.boolean <BaseFct>.<resultStr>.node 
+           <BaseFct>.<resultStr>.node D.t
+  val range : int * int -> int <BaseFct>.<resultStr>.node D.t
+  val concat :
+      'a <BaseFct>.<resultStr>.node <BaseFct>.<resultStr>.node D.t
+       -> 'a <BaseFct>.<resultStr>.node D.t
+  val newState :
+      int
+       -> <BaseFct>.<resultStr>.component
+       -> int
+       -> (unit -> <BaseFct>.<resultStr>.inport list)
+       -> (unit -> <BaseFct>.<resultStr>.outport list)
+       -> <BaseFct>.<resultStr>.state D.t
+  val register :
+      int -> int -> <BaseFct>.<resultStr>.state <BaseFct>.<resultStr>.node D.t
+  val regs :
+      int
+       -> {inputs:(string D.t * int) <BaseFct>.<resultStr>.node D.t,
+          outputs:(string D.t * int) <BaseFct>.<resultStr>.node D.t, size:int,
+          states:<BaseFct>.<resultStr>.state <BaseFct>.<resultStr>.node D.t} 
+         D.t
+  val emptyState : <BaseFct>.<resultStr>.state D.t
+  val nearestPower : int -> int
+  val pad :
+      <BaseFct>.<resultStr>.circuit D.t
+       -> {inputs:<BaseFct>.<resultStr>.label <BaseFct>.<resultStr>.seq,
+          outputs:<BaseFct>.<resultStr>.label <BaseFct>.<resultStr>.seq,
+          size:int,
+          states:<BaseFct>.<resultStr>.state <BaseFct>.<resultStr>.node D.t} 
+         D.t
+  val run :
+      int
+       -> int
+       -> <BaseFct>.<resultStr>.boolean <BaseFct>.<resultStr>.node 
+           <BaseFct>.<resultStr>.node D.t
+  structure L : <sig>
+  structure S : <sig>
+  val charF : char BenchLazy.state ref
+  val charT : char BenchLazy.state ref
+  val charOpen : char BenchLazy.state ref
+  val charClose : char BenchLazy.state ref
+  val charComma : char BenchLazy.state ref
+  val charCell : char -> char BenchLazy.state ref
+  val renderChecked :
+      string
+       -> <BaseFct>.<resultStr>.boolean <BaseFct>.<resultStr>.node 
+           <BaseFct>.<resultStr>.node D.t
+       -> char BenchStream.node BenchLazy.state ref
+  val consume : bool -> char BenchStream.node BenchLazy.state ref -> int * int
+  val runChecked : bool -> int -> int -> string -> int * int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.sjC1YE/circsim-lazy/native-smlnj-legacy/build/sources/6.sml]
+[autoloading]
+[autoloading done]
+functor BenchCircsimDriverFn(K: sig
+  val runChecked : bool -> int -> int -> string -> int * int
+end) :
+sig
+  val run : bool -> string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.sjC1YE/circsim-lazy/native-smlnj-legacy/build/sources/7.sml]
+structure Benchmark : sig
+  val name : string
+  structure Kernel : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.sjC1YE/circsim-lazy/native-smlnj-legacy/build/sources/8.sml]
+structure BenchMeasure : sig
+  val print : TextIO.vector -> unit
+  val line : unit -> string
+  val main : unit -> OS.Process.status
+end

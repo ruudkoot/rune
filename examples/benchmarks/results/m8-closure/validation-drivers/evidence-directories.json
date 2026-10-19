@@ -1,0 +1,1098 @@
+{
+  "sphere-strict": [
+    "m3-sphere"
+  ],
+  "sphere-lazy": [
+    "m3-sphere"
+  ],
+  "gg-spark-strict": [
+    "m4-gg"
+  ],
+  "gg-strict": [
+    "m4-gg"
+  ],
+  "gg-lazy": [
+    "m4-gg"
+  ],
+  "gg-pool-lazy": [
+    "m4-gg"
+  ],
+  "gg-spark-lazy": [
+    "m4-gg"
+  ],
+  "gg-pool-strict": [
+    "m4-gg"
+  ],
+  "regexredux2": [
+    "m5-regexredux2"
+  ],
+  "hamming": [
+    "m5-hamming",
+    "m6-resolver-isolation"
+  ],
+  "awards-lazy": [
+    "m3-awards",
+    "m6-resolver-isolation"
+  ],
+  "awards-strict": [
+    "m3-awards",
+    "m6-resolver-isolation"
+  ],
+  "life-nofib-strict": [
+    "m3-life"
+  ],
+  "life-nofib-lazy": [
+    "m3-life"
+  ],
+  "last-piece-strict": [
+    "m3-last-piece"
+  ],
+  "last-piece-lazy": [
+    "m3-last-piece"
+  ],
+  "ansi-lazy": [
+    "m3-ansi"
+  ],
+  "ansi-strict": [
+    "m3-ansi"
+  ],
+  "knights-array-strict": [
+    "m3-knights"
+  ],
+  "knights-strict": [
+    "m3-knights"
+  ],
+  "knights-array-lazy": [
+    "m3-knights"
+  ],
+  "knights-lazy": [
+    "m3-knights"
+  ],
+  "scc-strict": [
+    "m3-scc"
+  ],
+  "scc-lazy": [
+    "m3-scc"
+  ],
+  "dom-lt": [
+    "m3-dom-lt"
+  ],
+  "sorting-lazy": [
+    "m3-sorting"
+  ],
+  "sorting-strict": [
+    "m3-sorting"
+  ],
+  "lambda-monad-strict": [
+    "m3-lambda"
+  ],
+  "lambda-simple-strict": [
+    "m3-lambda"
+  ],
+  "lambda-simple-lazy": [
+    "m3-lambda"
+  ],
+  "lambda-monad-lazy": [
+    "m3-lambda"
+  ],
+  "prolog-tree-strict": [
+    "m4-prolog"
+  ],
+  "prolog-lazy": [
+    "m4-prolog"
+  ],
+  "prolog-strict": [
+    "m4-prolog"
+  ],
+  "prolog-tree-lazy": [
+    "m4-prolog"
+  ],
+  "mandel2-strict": [
+    "m3-mandel2"
+  ],
+  "mandel2-lazy": [
+    "m3-mandel2"
+  ],
+  "binary-trees": [
+    "m5-tree-permutations"
+  ],
+  "binarytrees5": [
+    "m5-tree-permutations"
+  ],
+  "fannkuchredux": [
+    "m5-tree-permutations"
+  ],
+  "happy-lazy": [
+    "m3-happy"
+  ],
+  "happy-strict": [
+    "m3-happy"
+  ],
+  "rewrite-lazy": [
+    "m3-rewrite"
+  ],
+  "rewrite-strict": [
+    "m3-rewrite"
+  ],
+  "fibheaps-lazy": [
+    "m3-fibheaps"
+  ],
+  "fibheaps-strict": [
+    "m3-fibheaps"
+  ],
+  "pidigits5": [
+    "m5-pidigits5"
+  ],
+  "knucleotide3-64": [
+    "m5-packed-nucleotide"
+  ],
+  "knucleotide3-32": [
+    "m5-packed-nucleotide"
+  ],
+  "sched-strict": [
+    "m3-hartel-sched"
+  ],
+  "sched-lazy": [
+    "m3-hartel-sched"
+  ],
+  "pervasives_compare_floats": [
+    "m5-stdlib-primitives"
+  ],
+  "pervasives_equal_ints": [
+    "m5-stdlib-primitives"
+  ],
+  "array_iter": [
+    "m5-stdlib-primitives"
+  ],
+  "pervasives_compare_lists": [
+    "m5-stdlib-primitives"
+  ],
+  "array_fold": [
+    "m5-stdlib-primitives"
+  ],
+  "array_forall": [
+    "m5-stdlib-primitives"
+  ],
+  "pervasives_compare_strings": [
+    "m5-stdlib-primitives"
+  ],
+  "pervasives_compare_ints": [
+    "m5-stdlib-primitives"
+  ],
+  "stack_push_pop": [
+    "m5-stack"
+  ],
+  "stack_fold": [
+    "m5-stack"
+  ],
+  "integer-lazy": [
+    "m3-integer"
+  ],
+  "integer-strict": [
+    "m3-integer"
+  ],
+  "eliza-strict": [
+    "m3-eliza"
+  ],
+  "eliza-lazy": [
+    "m3-eliza"
+  ],
+  "calendar-lazy": [
+    "m3-calendar"
+  ],
+  "calendar-strict": [
+    "m3-calendar"
+  ],
+  "cryptarithm1-lazy": [
+    "m3-cryptarithm1"
+  ],
+  "cryptarithm1-strict": [
+    "m3-cryptarithm1"
+  ],
+  "wave4main-strict": [
+    "m3-wave4main"
+  ],
+  "wave4main-lazy": [
+    "m3-wave4main"
+  ],
+  "crout-decomposition": [
+    "m5-sequential-numerical"
+  ],
+  "durand-kerner-aberth": [
+    "m5-sequential-numerical"
+  ],
+  "qr-decomposition": [
+    "m5-sequential-numerical"
+  ],
+  "levinson-durbin": [
+    "m5-sequential-numerical"
+  ],
+  "cacheprof-strict": [
+    "m3-m4-cacheprof"
+  ],
+  "cacheprof-nofib-lazy": [
+    "m3-m4-cacheprof"
+  ],
+  "cacheprof-lazy": [
+    "m3-m4-cacheprof"
+  ],
+  "cacheprof-nofib-strict": [
+    "m3-m4-cacheprof"
+  ],
+  "fulsom-lazy": [
+    "m3-m4-fulsom"
+  ],
+  "fulsom-strict": [
+    "m3-m4-fulsom"
+  ],
+  "fulsom-nofib-lazy": [
+    "m3-m4-fulsom"
+  ],
+  "fulsom-nofib-strict": [
+    "m3-m4-fulsom"
+  ],
+  "banner-strict": [
+    "m3-banner"
+  ],
+  "banner-lazy": [
+    "m3-banner"
+  ],
+  "primetest-strict": [
+    "m3-primetest"
+  ],
+  "primetest-lazy": [
+    "m3-primetest"
+  ],
+  "lexifi-g2pp": [
+    "m5-lexifi-g2pp"
+  ],
+  "event-lazy": [
+    "m3-hartel-event"
+  ],
+  "event-strict": [
+    "m3-hartel-event"
+  ],
+  "clausify-lazy": [
+    "m3-clausify"
+  ],
+  "clausify-strict": [
+    "m3-clausify"
+  ],
+  "wang-lazy": [
+    "m3-wang"
+  ],
+  "wang-strict": [
+    "m3-wang"
+  ],
+  "bspt-strict": [
+    "m4-bspt"
+  ],
+  "bspt-lazy": [
+    "m4-bspt"
+  ],
+  "fft2-strict": [
+    "m3-fft2"
+  ],
+  "fft2-lazy": [
+    "m3-fft2"
+  ],
+  "para-lazy": [
+    "m3-para"
+  ],
+  "para-strict": [
+    "m3-para"
+  ],
+  "evolutionary_algorithm": [
+    "m5-evolutionary"
+  ],
+  "ida-lazy": [
+    "m3-ida"
+  ],
+  "ida-strict": [
+    "m3-ida"
+  ],
+  "symalg-strict": [
+    "m4-symalg"
+  ],
+  "symalg-lazy": [
+    "m4-symalg"
+  ],
+  "pic-strict": [
+    "m4-pic"
+  ],
+  "pic-lazy": [
+    "m4-pic"
+  ],
+  "minimax-lazy": [
+    "m3-minimax"
+  ],
+  "minimax-strict": [
+    "m3-minimax"
+  ],
+  "fibheaps-nofib-lazy": [
+    "m3-spectral-fibheaps"
+  ],
+  "fibheaps-nofib-strict": [
+    "m3-spectral-fibheaps"
+  ],
+  "secretary-strict": [
+    "m3-secretary"
+  ],
+  "secretary-lazy": [
+    "m3-secretary"
+  ],
+  "constraints-strict": [
+    "m3-constraints"
+  ],
+  "constraints-lazy": [
+    "m3-constraints"
+  ],
+  "exact-reals-lazy": [
+    "m3-exact-reals"
+  ],
+  "exact-reals-strict": [
+    "m3-exact-reals"
+  ],
+  "sequence_cps": [
+    "m5-lazy"
+  ],
+  "lazylist": [
+    "m5-lazy"
+  ],
+  "lazy_primes": [
+    "m5-lazy"
+  ],
+  "gen_regexps-strict": [
+    "m3-imaginary"
+  ],
+  "gen_regexps-lazy": [
+    "m3-imaginary"
+  ],
+  "x2n1-lazy": [
+    "m3-imaginary"
+  ],
+  "x2n1-strict": [
+    "m3-imaginary"
+  ],
+  "paraffins-strict": [
+    "m3-imaginary"
+  ],
+  "paraffins-lazy": [
+    "m3-imaginary"
+  ],
+  "bernouilli-lazy": [
+    "m3-imaginary"
+  ],
+  "bernouilli-strict": [
+    "m3-imaginary"
+  ],
+  "integrate-lazy": [
+    "m3-imaginary"
+  ],
+  "integrate-strict": [
+    "m3-imaginary"
+  ],
+  "wheel-sieve2-lazy": [
+    "m3-imaginary"
+  ],
+  "wheel-sieve1-lazy": [
+    "m3-imaginary"
+  ],
+  "str_global_replace": [
+    "m5-stdlib-str"
+  ],
+  "str_search_forward": [
+    "m5-stdlib-str"
+  ],
+  "str_regexp": [
+    "m5-stdlib-str"
+  ],
+  "str_string_match": [
+    "m5-stdlib-str"
+  ],
+  "str_string_partial_match": [
+    "m5-stdlib-str"
+  ],
+  "str_split": [
+    "m5-stdlib-str"
+  ],
+  "primes-lazy": [
+    "m6"
+  ],
+  "primes-strict": [
+    "m6"
+  ],
+  "tak": [
+    "m4-anna",
+    "m6"
+  ],
+  "parstof-strict": [
+    "m3-parstof"
+  ],
+  "parstof-lazy": [
+    "m3-parstof"
+  ],
+  "fem-strict": [
+    "m4-fem"
+  ],
+  "fem-lazy": [
+    "m4-fem"
+  ],
+  "game_of_life": [
+    "m5-array-life"
+  ],
+  "revcomp2": [
+    "m5-revcomp2"
+  ],
+  "boyer-nofib-strict": [
+    "m3-typed-boyer"
+  ],
+  "boyer-nofib-lazy": [
+    "m3-typed-boyer"
+  ],
+  "bytes_set": [
+    "m5-stdlib-text"
+  ],
+  "string_split_on_char": [
+    "m5-stdlib-text"
+  ],
+  "string_map": [
+    "m5-stdlib-text"
+  ],
+  "bytes_uppercase_ascii": [
+    "m5-stdlib-text"
+  ],
+  "bytes_map": [
+    "m5-stdlib-text"
+  ],
+  "bytes_cat": [
+    "m5-stdlib-text"
+  ],
+  "bytes_sub": [
+    "m5-stdlib-text"
+  ],
+  "string_concat": [
+    "m5-stdlib-text"
+  ],
+  "string_trim": [
+    "m5-stdlib-text"
+  ],
+  "bytes_get": [
+    "m5-stdlib-text"
+  ],
+  "bytes_trim": [
+    "m5-stdlib-text"
+  ],
+  "string_blit": [
+    "m5-stdlib-text"
+  ],
+  "bytes_contains": [
+    "m5-stdlib-text"
+  ],
+  "string_equal": [
+    "m5-stdlib-text"
+  ],
+  "string_uppercase_ascii": [
+    "m5-stdlib-text"
+  ],
+  "string_get": [
+    "m5-stdlib-text"
+  ],
+  "bytes_concat": [
+    "m5-stdlib-text"
+  ],
+  "bytes_iter": [
+    "m5-stdlib-text"
+  ],
+  "string_iter": [
+    "m5-stdlib-text"
+  ],
+  "string_contains": [
+    "m5-stdlib-text"
+  ],
+  "string_compare": [
+    "m5-stdlib-text"
+  ],
+  "string_sub": [
+    "m5-stdlib-text"
+  ],
+  "bytes_index": [
+    "m5-stdlib-text"
+  ],
+  "string_index": [
+    "m5-stdlib-text"
+  ],
+  "bytes_blit": [
+    "m5-stdlib-text"
+  ],
+  "nucleic2-shared-lazy": [
+    "m3-nucleic2"
+  ],
+  "nucleic2-strict": [
+    "m3-nucleic2"
+  ],
+  "nucleic2-lazy": [
+    "m3-nucleic2"
+  ],
+  "nucleic2-shared-strict": [
+    "m3-nucleic2"
+  ],
+  "transform-strict": [
+    "m3-transform"
+  ],
+  "transform-lazy": [
+    "m3-transform"
+  ],
+  "fft": [
+    "m3-hartel-fft",
+    "m3-m5-puzzle-fft"
+  ],
+  "puzzle-strict": [
+    "m3-m5-puzzle-fft"
+  ],
+  "fft-sandmark": [
+    "m3-m5-puzzle-fft"
+  ],
+  "puzzle-lazy": [
+    "m3-m5-puzzle-fft"
+  ],
+  "fluid-lazy": [
+    "m4-parser-reptile-hpg-fluid"
+  ],
+  "fluid-strict": [
+    "m4-parser-reptile-hpg-fluid"
+  ],
+  "hpg-strict": [
+    "m4-parser-reptile-hpg-fluid"
+  ],
+  "hpg-lazy": [
+    "m4-parser-reptile-hpg-fluid"
+  ],
+  "reptile-strict": [
+    "m4-parser-reptile-hpg-fluid"
+  ],
+  "reptile-lazy": [
+    "m4-parser-reptile-hpg-fluid"
+  ],
+  "parser-lazy": [
+    "m4-parser-reptile-hpg-fluid"
+  ],
+  "parser-strict": [
+    "m4-parser-reptile-hpg-fluid"
+  ],
+  "compress-lazy": [
+    "m4-compress",
+    "m4-compress2"
+  ],
+  "compress-strict": [
+    "m4-compress",
+    "m4-compress2"
+  ],
+  "typecheck-lazy": [
+    "m3-hartel-typecheck"
+  ],
+  "typecheck-strict": [
+    "m3-hartel-typecheck"
+  ],
+  "minilight": [
+    "m5-minilight"
+  ],
+  "cichelli-strict": [
+    "m3-cichelli"
+  ],
+  "cichelli-lazy": [
+    "m3-cichelli"
+  ],
+  "spectralnorm2": [
+    "m5-spectralnorm"
+  ],
+  "kronecker": [
+    "m5-graph500"
+  ],
+  "graph500-kernel1": [
+    "m5-graph500"
+  ],
+  "graph500-gen": [
+    "m5-graph500"
+  ],
+  "cryptarithm2-strict": [
+    "m3-cryptarithm2"
+  ],
+  "cryptarithm2-lazy": [
+    "m3-cryptarithm2"
+  ],
+  "fish-lazy": [
+    "m3-fish"
+  ],
+  "fish-strict": [
+    "m3-fish"
+  ],
+  "rec_seq_evenodd": [
+    "m5-recursive"
+  ],
+  "rec_seq_sudan": [
+    "m5-recursive"
+  ],
+  "fib": [
+    "m5-recursive"
+  ],
+  "rec_seq_tak": [
+    "m5-recursive"
+  ],
+  "rec_seq_motzkin": [
+    "m5-recursive"
+  ],
+  "rec_seq_fib": [
+    "m5-recursive"
+  ],
+  "mkhprog-lazy": [
+    "m4-mkhprog"
+  ],
+  "mkhprog-strict": [
+    "m4-mkhprog"
+  ],
+  "lift-lazy": [
+    "m4-lift"
+  ],
+  "lift-strict": [
+    "m4-lift"
+  ],
+  "linear-strict": [
+    "m3-m4-linear"
+  ],
+  "linear-lazy": [
+    "m3-m4-linear"
+  ],
+  "linear-nofib-gc-lazy": [
+    "m3-m4-linear"
+  ],
+  "linear-nofib-gc-strict": [
+    "m3-m4-linear"
+  ],
+  "kb": [
+    "m5-kb"
+  ],
+  "kb_no_exc": [
+    "m5-kb"
+  ],
+  "anna-lazy": [
+    "m4-anna"
+  ],
+  "anna-strict": [
+    "m4-anna"
+  ],
+  "boyer2-lazy": [
+    "m3-boyer2"
+  ],
+  "boyer2-strict": [
+    "m3-boyer2"
+  ],
+  "maillist": [
+    "m4-maillist"
+  ],
+  "hashtbl_find": [
+    "m5-stdlib-hashtbl"
+  ],
+  "int_find1": [
+    "m5-stdlib-hashtbl"
+  ],
+  "hashtbl_iter": [
+    "m5-stdlib-hashtbl"
+  ],
+  "hashtbl_add_sized": [
+    "m5-stdlib-hashtbl"
+  ],
+  "int_replace2": [
+    "m5-stdlib-hashtbl"
+  ],
+  "hashtbl_filter_map": [
+    "m5-stdlib-hashtbl"
+  ],
+  "caml_hash_int": [
+    "m5-stdlib-hashtbl"
+  ],
+  "hashtbl_add_duplicate": [
+    "m5-stdlib-hashtbl"
+  ],
+  "int_find2": [
+    "m5-stdlib-hashtbl"
+  ],
+  "int_replace1": [
+    "m5-stdlib-hashtbl"
+  ],
+  "hashtbl_add_resizing": [
+    "m5-stdlib-hashtbl"
+  ],
+  "hashtbl_remove": [
+    "m5-stdlib-hashtbl"
+  ],
+  "hashtbl_fold": [
+    "m5-stdlib-hashtbl"
+  ],
+  "caml_hash_tuple": [
+    "m5-stdlib-hashtbl"
+  ],
+  "zarith_fib-natint": [
+    "m5-zarith"
+  ],
+  "zarith_pi": [
+    "m5-zarith"
+  ],
+  "zarith_tak-num": [
+    "m5-zarith"
+  ],
+  "zarith_tak-natint": [
+    "m5-zarith"
+  ],
+  "zarith_fib-int": [
+    "m5-zarith"
+  ],
+  "zarith_tak-int": [
+    "m5-zarith"
+  ],
+  "zarith_tak": [
+    "m5-zarith"
+  ],
+  "zarith_fib-num": [
+    "m5-zarith"
+  ],
+  "zarith_fib": [
+    "m5-zarith"
+  ],
+  "zarith_fact": [
+    "m5-zarith"
+  ],
+  "scs-strict": [
+    "m4-scs"
+  ],
+  "scs-lazy": [
+    "m4-scs"
+  ],
+  "almabench": [
+    "m5-almabench"
+  ],
+  "solid-strict": [
+    "m3-solid"
+  ],
+  "solid-lazy": [
+    "m3-solid"
+  ],
+  "gamteb-strict": [
+    "m4-gamteb"
+  ],
+  "gamteb-lazy": [
+    "m4-gamteb"
+  ],
+  "cse": [
+    "m3-persistent"
+  ],
+  "treejoin-lazy": [
+    "m3-persistent"
+  ],
+  "treejoin-strict": [
+    "m3-persistent"
+  ],
+  "spellcheck-strict": [
+    "m3-persistent"
+  ],
+  "spellcheck-lazy": [
+    "m3-persistent"
+  ],
+  "hidden-strict": [
+    "m4-hidden"
+  ],
+  "hidden-lazy": [
+    "m4-hidden"
+  ],
+  "mandelbrot6": [
+    "m5-game-numerical"
+  ],
+  "nbody-sandmark": [
+    "m5-game-numerical"
+  ],
+  "nbody-sandmark-multicore-numerical": [
+    "m5-manybody"
+  ],
+  "comp_lab_zift-strict": [
+    "m3-comp-lab"
+  ],
+  "comp_lab_nozift-lazy": [
+    "m3-comp-lab"
+  ],
+  "comp_lab_zift-lazy": [
+    "m3-comp-lab"
+  ],
+  "comp_lab_nozift-strict": [
+    "m3-comp-lab"
+  ],
+  "atom-strict": [
+    "m3-atom"
+  ],
+  "atom-lazy": [
+    "m3-atom"
+  ],
+  "pretty-strict": [
+    "m3-pretty"
+  ],
+  "pretty-lazy": [
+    "m3-pretty"
+  ],
+  "pidigits-nofib-strict": [
+    "m3-gc"
+  ],
+  "pidigits-nofib-lazy": [
+    "m3-gc"
+  ],
+  "gc_bench": [
+    "m3-gc"
+  ],
+  "lcss-lazy": [
+    "m3-gc"
+  ],
+  "lcss-strict": [
+    "m3-gc"
+  ],
+  "gcd-strict": [
+    "m3-gc"
+  ],
+  "gcd-lazy": [
+    "m3-gc"
+  ],
+  "hash": [
+    "m3-gc"
+  ],
+  "mutstore2": [
+    "m3-gc"
+  ],
+  "mutstore1": [
+    "m3-gc"
+  ],
+  "power": [
+    "m3-power-shootout"
+  ],
+  "power-nofib": [
+    "m3-power-shootout"
+  ],
+  "n-body": [
+    "m3-power-shootout"
+  ],
+  "fasta": [
+    "m3-power-shootout"
+  ],
+  "reverse-complement": [
+    "m3-power-shootout"
+  ],
+  "treejoin-nofib-lazy": [
+    "m3-shared-spectral"
+  ],
+  "treejoin-nofib-strict": [
+    "m3-shared-spectral"
+  ],
+  "lcss-nofib-lazy": [
+    "m3-shared-spectral"
+  ],
+  "lcss-nofib-strict": [
+    "m3-shared-spectral"
+  ],
+  "infer-lazy": [
+    "m4-infer"
+  ],
+  "infer-strict": [
+    "m4-infer"
+  ],
+  "mate-strict": [
+    "m3-mate"
+  ],
+  "mate-lazy": [
+    "m3-mate"
+  ],
+  "rsa-lazy": [
+    "m4-rsa"
+  ],
+  "rsa-strict": [
+    "m4-rsa"
+  ],
+  "fasta3": [
+    "m5-fasta"
+  ],
+  "fasta6": [
+    "m5-fasta"
+  ],
+  "genfft-lazy": [
+    "m3-hartel-fft"
+  ],
+  "fft-nofib-strict": [
+    "m3-hartel-fft"
+  ],
+  "fft-nofib-lazy": [
+    "m3-hartel-fft"
+  ],
+  "genfft-strict": [
+    "m3-hartel-fft"
+  ],
+  "naive-multilayer": [
+    "m5-multilayer"
+  ],
+  "grep-strict": [
+    "m4-grep"
+  ],
+  "grep-lazy": [
+    "m4-grep"
+  ],
+  "compress2-lazy": [
+    "m4-compress2"
+  ],
+  "compress2-strict": [
+    "m4-compress2"
+  ],
+  "circsim-nofib-lazy": [
+    "m3-circsim"
+  ],
+  "circsim-strict": [
+    "m3-circsim"
+  ],
+  "circsim-lazy": [
+    "m3-circsim"
+  ],
+  "circsim-nofib-strict": [
+    "m3-circsim"
+  ],
+  "VSM": [
+    "m4-eff"
+  ],
+  "CS": [
+    "m4-eff"
+  ],
+  "VS": [
+    "m4-eff"
+  ],
+  "FS": [
+    "m4-eff"
+  ],
+  "VSD": [
+    "m4-eff"
+  ],
+  "CSD": [
+    "m4-eff"
+  ],
+  "S": [
+    "m4-eff"
+  ],
+  "listcompr-strict": [
+    "m3-hartel-compr"
+  ],
+  "listcopy-strict": [
+    "m3-hartel-compr"
+  ],
+  "listcompr-lazy": [
+    "m3-hartel-compr"
+  ],
+  "listcopy-lazy": [
+    "m3-hartel-compr"
+  ],
+  "LU_decomposition": [
+    "m5-lu"
+  ],
+  "simple-nofib-report-lazy": [
+    "m3-simple-nofib"
+  ],
+  "simple-nofib-lazy": [
+    "m3-simple-nofib"
+  ],
+  "simple-nofib-strict": [
+    "m3-simple-nofib"
+  ],
+  "simple-nofib-report-strict": [
+    "m3-simple-nofib"
+  ],
+  "multiplier-count-strict": [
+    "m3-multiplier"
+  ],
+  "multiplier-lazy": [
+    "m3-multiplier"
+  ],
+  "multiplier-count-lazy": [
+    "m3-multiplier"
+  ],
+  "multiplier-strict": [
+    "m3-multiplier"
+  ],
+  "smallpt": [
+    "m4-smallpt"
+  ],
+  "quicksort": [
+    "m5-sequential-arrays"
+  ],
+  "mergesort": [
+    "m5-sequential-arrays"
+  ],
+  "floyd_warshall": [
+    "m5-sequential-arrays"
+  ],
+  "matrix_multiplication": [
+    "m5-sequential-arrays"
+  ],
+  "contrast": [
+    "m5-contrast"
+  ],
+  "mandel-lazy": [
+    "m3-mandel"
+  ],
+  "mandel-old-lazy": [
+    "m3-mandel"
+  ],
+  "mandel-strict": [
+    "m3-mandel"
+  ],
+  "mandel-old-strict": [
+    "m3-mandel"
+  ],
+  "expert-lazy": [
+    "m3-expert"
+  ],
+  "expert-strict": [
+    "m3-expert"
+  ],
+  "tak-nofib-lazy": [
+    "m3-recursion"
+  ],
+  "tak-nofib-strict": [
+    "m3-recursion"
+  ],
+  "knucleotide": [
+    "m5-knucleotide"
+  ],
+  "map_for_all": [
+    "m5-stdlib-trees"
+  ],
+  "map_fold": [
+    "m5-stdlib-trees"
+  ],
+  "set_mem": [
+    "m5-stdlib-trees"
+  ],
+  "map_add": [
+    "m5-stdlib-trees"
+  ],
+  "map_map": [
+    "m5-stdlib-trees"
+  ],
+  "set_fold": [
+    "m5-stdlib-trees"
+  ],
+  "map_iter": [
+    "m5-stdlib-trees"
+  ],
+  "map_remove": [
+    "m5-stdlib-trees"
+  ],
+  "set_add_rem": [
+    "m5-stdlib-trees"
+  ],
+  "map_find": [
+    "m5-stdlib-trees"
+  ],
+  "map_add_duplicate": [
+    "m5-stdlib-trees"
+  ]
+}

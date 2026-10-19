@@ -1,0 +1,6 @@
+/home/ruud/.local/rune-hosts/polyml/bin/polyc
+-b
+/home/ruud/.local/rune-hosts/polyml/bin/poly
+-o
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YE8NhR/pervasives_compare_floats/native-polyml/build/prog
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YE8NhR/pervasives_compare_floats/native-polyml/build/export.sml

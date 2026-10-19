@@ -1,0 +1,3566 @@
+	.file	"heimdall.c"
+	.version	"01.01"
+gcc2_compiled.:
+.data
+	.align 4
+	.type	 num_insns_done,@object
+	.size	 num_insns_done,4
+num_insns_done:
+	.long 0
+.section	.rodata
+	.align 32
+.LC46:
+	.string	"heimdall: fatal error near insn %d:\n\t%s\n"
+.text
+	.align 4
+	.type	 panic,@function
+panic:
+	pushfl
+	addl $9,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	subl $12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 16(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+0,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 16(%esp),%eax
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+28,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl %eax
+	pushl %eax
+	pushl %ebx
+	leal num_insns_done,%eax
+	movl $.Lcacheprof_magic_buckets+56,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl num_insns_done,%eax
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+84,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl %eax
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+112,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl $.LC46
+	pushl %eax
+	pushl %ebx
+	leal stderr,%eax
+	movl $.Lcacheprof_magic_buckets+140,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl stderr,%eax
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+168,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl %eax
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+196,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	call fprintf
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $-12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+224,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl $1
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+252,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	call exit
+.Lfe1:
+	.size	 panic,.Lfe1-panic
+.section	.rodata
+.LC47:
+	.string	"getIMem"
+.text
+	.align 4
+	.type	 getIMem,@function
+getIMem:
+	pushfl
+	addl $5,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	subl $12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 16(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+280,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 16(%esp),%edx
+	pushl %eax
+	pushl %ebx
+	leal 20(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+308,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 20(%esp),%eax
+	cmpl $4,%edx
+	jne .L341
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	pushl %eax
+	pushl %ebx
+	leal (%eax),%eax
+	movl $.Lcacheprof_magic_buckets+336,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl (%eax),%eax
+	jmp .L345
+	.p2align 4,,7
+.L341:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $1,%edx
+	jne .L342
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	pushl %eax
+	pushl %ebx
+	leal (%eax),%eax
+	movl $.Lcacheprof_magic_buckets+364,%ebx
+	call cacheprof_hook_Rd1
+	popl %ebx
+	popl %eax
+	movzbl (%eax),%eax
+	jmp .L345
+	.p2align 4,,7
+.L342:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $2,%edx
+	je .L343
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $-12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+392,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl $.LC47
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+420,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	call panic
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	xorl %eax,%eax
+	addl $16,%esp
+	jmp .L340
+	.p2align 4,,7
+.L343:
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	pushl %eax
+	pushl %ebx
+	leal (%eax),%eax
+	movl $.Lcacheprof_magic_buckets+448,%ebx
+	call cacheprof_hook_Rd2
+	popl %ebx
+	popl %eax
+	movzwl (%eax),%eax
+.L345:
+.L340:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+476,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	ret
+.Lfe2:
+	.size	 getIMem,.Lfe2-getIMem
+.section	.rodata
+.LC48:
+	.string	"setIMem"
+.text
+	.align 4
+	.type	 setIMem,@function
+setIMem:
+	pushfl
+	addl $6,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	subl $12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 16(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+504,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 16(%esp),%eax
+	pushl %eax
+	pushl %ebx
+	leal 20(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+532,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 20(%esp),%ecx
+	pushl %eax
+	pushl %ebx
+	leal 24(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+560,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 24(%esp),%edx
+	cmpl $4,%eax
+	jne .L347
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	pushl %eax
+	pushl %ebx
+	leal (%ecx),%eax
+	movl $.Lcacheprof_magic_buckets+588,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	movl %edx,(%ecx)
+	jmp .L346
+	.p2align 4,,7
+.L347:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $1,%eax
+	jne .L348
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	pushl %eax
+	pushl %ebx
+	leal (%ecx),%eax
+	movl $.Lcacheprof_magic_buckets+616,%ebx
+	call cacheprof_hook_Wr1
+	popl %ebx
+	popl %eax
+	movb %dl,(%ecx)
+	jmp .L346
+	.p2align 4,,7
+.L348:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $2,%eax
+	jne .L349
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	pushl %eax
+	pushl %ebx
+	leal (%ecx),%eax
+	movl $.Lcacheprof_magic_buckets+644,%ebx
+	call cacheprof_hook_Wr2
+	popl %ebx
+	popl %eax
+	movw %dx,(%ecx)
+	jmp .L346
+	.p2align 4,,7
+.L349:
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $-12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+672,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl $.LC48
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+700,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	call panic
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $16,%esp
+.L346:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+728,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	ret
+.Lfe3:
+	.size	 setIMem,.Lfe3-setIMem
+	.align 4
+	.type	 getIRoM,@function
+getIRoM:
+	pushfl
+	addl $5,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	subl $12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 16(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+756,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 16(%esp),%edx
+	pushl %eax
+	pushl %ebx
+	leal 20(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+784,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 20(%esp),%eax
+	pushl %eax
+	pushl %ebx
+	leal 24(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+812,%ebx
+	call cacheprof_hook_Rd1
+	popl %ebx
+	popl %eax
+	cmpb $0,24(%esp)
+	je .L373
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $4,%edx
+	jne .L374
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	pushl %eax
+	pushl %ebx
+	leal m_regs(,%eax,4),%eax
+	movl $.Lcacheprof_magic_buckets+840,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl m_regs(,%eax,4),%eax
+	jmp .L372
+	.p2align 4,,7
+.L374:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $1,%edx
+	jne .L376
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $3,%eax
+	ja .L377
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	pushl %eax
+	pushl %ebx
+	leal m_regs(,%eax,4),%eax
+	movl $.Lcacheprof_magic_buckets+868,%ebx
+	call cacheprof_hook_Rd1
+	popl %ebx
+	popl %eax
+	movzbl m_regs(,%eax,4),%eax
+	jmp .L372
+	.p2align 4,,7
+.L377:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	pushl %eax
+	pushl %ebx
+	leal m_regs-15(,%eax,4),%eax
+	movl $.Lcacheprof_magic_buckets+896,%ebx
+	call cacheprof_hook_Rd1
+	popl %ebx
+	popl %eax
+	movzbl m_regs-15(,%eax,4),%eax
+	jmp .L372
+	.p2align 4,,7
+.L376:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $2,%edx
+	jne .L379
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	pushl %eax
+	pushl %ebx
+	leal m_regs(,%eax,4),%eax
+	movl $.Lcacheprof_magic_buckets+924,%ebx
+	call cacheprof_hook_Rd2
+	popl %ebx
+	popl %eax
+	movzwl m_regs(,%eax,4),%eax
+	jmp .L372
+	.p2align 4,,7
+.L379:
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $-12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+952,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl $.LC47
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+980,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	call panic
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	xorl %eax,%eax
+	jmp .L383
+	.p2align 4,,7
+.L373:
+	pushfl
+	addl $4,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $-8,%esp
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1008,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl %eax
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1036,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl %edx
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1064,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	call getIMem
+.L383:
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $16,%esp
+.L372:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1092,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	ret
+.Lfe4:
+	.size	 getIRoM,.Lfe4-getIRoM
+.section	.rodata
+.LC49:
+	.string	"calcBSF(1)"
+.LC50:
+	.string	"calcBSF(2)"
+.text
+	.align 4
+	.type	 calcBSF,@function
+calcBSF:
+	pushfl
+	addl $6,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	subl $24,%esp
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1120,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl %ebx
+	pushl %eax
+	pushl %ebx
+	leal 32(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1148,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 32(%esp),%eax
+	pushl %eax
+	pushl %ebx
+	leal 36(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1176,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 36(%esp),%ebx
+	cmpl $4,%eax
+	je .L385
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $2,%eax
+	je .L385
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $1,%eax
+	je .L385
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $-12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1204,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl $.LC49
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1232,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	call panic
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $16,%esp
+.L385:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	testl %ebx,%ebx
+	jne .L386
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $-12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1260,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl $.LC50
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1288,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	call panic
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $16,%esp
+.L386:
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	xorl %eax,%eax
+	testb $1,%bl
+	jne .L388
+	.p2align 4,,7
+.L389:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	incl %eax
+	btl %eax,%ebx
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	jnc .L389
+.L388:
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1316,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	popl %ebx
+	addl $24,%esp
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1344,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	ret
+.Lfe5:
+	.size	 calcBSF,.Lfe5-calcBSF
+.section	.rodata
+.LC51:
+	.string	"calcBSR(1)"
+.LC52:
+	.string	"calcBSR(2)"
+.text
+	.align 4
+	.type	 calcBSR,@function
+calcBSR:
+	pushfl
+	addl $7,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	subl $20,%esp
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1372,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl %esi
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1400,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl %ebx
+	pushl %eax
+	pushl %ebx
+	leal 32(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1428,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 32(%esp),%ebx
+	pushl %eax
+	pushl %ebx
+	leal 36(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1456,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 36(%esp),%esi
+	cmpl $4,%ebx
+	je .L392
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $2,%ebx
+	je .L392
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $1,%ebx
+	je .L392
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $-12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1484,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl $.LC51
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1512,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	call panic
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $16,%esp
+.L392:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	testl %esi,%esi
+	jne .L393
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $-12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1540,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl $.LC52
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1568,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	call panic
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $16,%esp
+.L393:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	leal -1(,%ebx,8),%eax
+	btl %eax,%esi
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	jc .L395
+	.p2align 4,,7
+.L396:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	decl %eax
+	btl %eax,%esi
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	jnc .L396
+.L395:
+	pushfl
+	addl $4,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1596,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	popl %ebx
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1624,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	popl %esi
+	addl $20,%esp
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1652,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	ret
+.Lfe6:
+	.size	 calcBSR,.Lfe6-calcBSR
+.section	.rodata
+.LC53:
+	.string	"calcSHLD"
+.text
+	.align 4
+	.type	 calcSHLD,@function
+calcSHLD:
+	pushfl
+	addl $8,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	subl $24,%esp
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1680,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl %ebx
+	pushl %eax
+	pushl %ebx
+	leal 32(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1708,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 32(%esp),%edx
+	pushl %eax
+	pushl %ebx
+	leal 36(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1736,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 36(%esp),%ecx
+	pushl %eax
+	pushl %ebx
+	leal 40(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1764,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 40(%esp),%ebx
+	pushl %eax
+	pushl %ebx
+	leal 44(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1792,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 44(%esp),%eax
+	cmpl $2,%edx
+	je .L401
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	ja .L405
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $1,%edx
+	je .L402
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	jmp .L403
+	.p2align 4,,7
+.L405:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $4,%edx
+	jne .L403
+	pushfl
+	addl $4,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	movl %eax,%edx
+	sall %cl,%edx
+	movl $32,%eax
+	jmp .L407
+	.p2align 4,,7
+.L401:
+	pushfl
+	addl $4,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	movl %eax,%edx
+	sall %cl,%edx
+	movl $16,%eax
+	jmp .L407
+	.p2align 4,,7
+.L402:
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	movl %eax,%edx
+	sall %cl,%edx
+	movl $8,%eax
+.L407:
+	pushfl
+	addl $7,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	subl %ecx,%eax
+	movl %eax,%ecx
+	movl %ebx,%eax
+	shrl %cl,%eax
+	orl %eax,%edx
+	movl %edx,%eax
+	jmp .L406
+	.p2align 4,,7
+.L403:
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $-12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1820,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl $.LC53
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1848,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	call panic
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $16,%esp
+	xorl %eax,%eax
+.L406:
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1876,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	popl %ebx
+	addl $24,%esp
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1904,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	ret
+.Lfe7:
+	.size	 calcSHLD,.Lfe7-calcSHLD
+.section	.rodata
+.LC54:
+	.string	"calcSHRD"
+.text
+	.align 4
+	.type	 calcSHRD,@function
+calcSHRD:
+	pushfl
+	addl $8,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	subl $24,%esp
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1932,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl %ebx
+	pushl %eax
+	pushl %ebx
+	leal 32(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1960,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 32(%esp),%edx
+	pushl %eax
+	pushl %ebx
+	leal 36(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+1988,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 36(%esp),%ecx
+	pushl %eax
+	pushl %ebx
+	leal 40(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2016,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 40(%esp),%ebx
+	pushl %eax
+	pushl %ebx
+	leal 44(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2044,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 44(%esp),%eax
+	cmpl $2,%edx
+	je .L411
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	ja .L415
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $1,%edx
+	je .L412
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	jmp .L413
+	.p2align 4,,7
+.L415:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $4,%edx
+	jne .L413
+	pushfl
+	addl $4,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	movl %eax,%edx
+	shrl %cl,%edx
+	movl $32,%eax
+	jmp .L417
+	.p2align 4,,7
+.L411:
+	pushfl
+	addl $4,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	movl %eax,%edx
+	shrl %cl,%edx
+	movl $16,%eax
+	jmp .L417
+	.p2align 4,,7
+.L412:
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	movl %eax,%edx
+	shrl %cl,%edx
+	movl $8,%eax
+.L417:
+	pushfl
+	addl $7,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	subl %ecx,%eax
+	movl %eax,%ecx
+	movl %ebx,%eax
+	sall %cl,%eax
+	orl %eax,%edx
+	movl %edx,%eax
+	jmp .L416
+	.p2align 4,,7
+.L413:
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $-12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2072,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl $.LC54
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2100,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	call panic
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $16,%esp
+	xorl %eax,%eax
+.L416:
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2128,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	popl %ebx
+	addl $24,%esp
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2156,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	ret
+.Lfe8:
+	.size	 calcSHRD,.Lfe8-calcSHRD
+.section	.rodata
+.LC55:
+	.string	"calcROL"
+.text
+	.align 4
+	.type	 calcROL,@function
+calcROL:
+	pushfl
+	addl $9,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	subl $16,%esp
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2184,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl %edi
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2212,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl %esi
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2240,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl %ebx
+	pushl %eax
+	pushl %ebx
+	leal 32(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2268,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 32(%esp),%edi
+	pushl %eax
+	pushl %ebx
+	leal 36(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2296,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 36(%esp),%esi
+	pushl %eax
+	pushl %ebx
+	leal 40(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2324,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 40(%esp),%ebx
+	testl %esi,%esi
+	je .L420
+	.p2align 4,,7
+.L421:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $2,%edi
+	je .L424
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	ja .L428
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $1,%edi
+	je .L425
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	jmp .L426
+	.p2align 4,,7
+.L428:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $4,%edi
+	jne .L426
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	movl %ebx,%eax
+	shrl $31,%eax
+	jmp .L430
+	.p2align 4,,7
+.L424:
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	movl %ebx,%eax
+	shrl $15,%eax
+	jmp .L431
+	.p2align 4,,7
+.L425:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	movl %ebx,%eax
+	shrl $7,%eax
+.L431:
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	andl $1,%eax
+.L430:
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl %ebx,%ebx
+	orl %eax,%ebx
+	jmp .L422
+	.p2align 4,,7
+.L426:
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $-12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2352,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl $.LC55
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2380,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	call panic
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $16,%esp
+.L422:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	decl %esi
+	jnz .L421
+.L420:
+	pushfl
+	addl $6,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	movl %ebx,%eax
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2408,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	popl %ebx
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2436,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	popl %esi
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2464,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	popl %edi
+	addl $16,%esp
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2492,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	ret
+.Lfe9:
+	.size	 calcROL,.Lfe9-calcROL
+.section	.rodata
+.LC56:
+	.string	"calcROR"
+.text
+	.align 4
+	.type	 calcROR,@function
+calcROR:
+	pushfl
+	addl $9,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	subl $16,%esp
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2520,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl %edi
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2548,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl %esi
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2576,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl %ebx
+	pushl %eax
+	pushl %ebx
+	leal 32(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2604,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 32(%esp),%edi
+	pushl %eax
+	pushl %ebx
+	leal 36(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2632,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 36(%esp),%esi
+	pushl %eax
+	pushl %ebx
+	leal 40(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2660,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 40(%esp),%ebx
+	testl %esi,%esi
+	je .L434
+	.p2align 4,,7
+.L435:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $2,%edi
+	je .L438
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	ja .L442
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $1,%edi
+	je .L439
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	jmp .L440
+	.p2align 4,,7
+.L442:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $4,%edi
+	jne .L440
+	pushfl
+	addl $6,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	movl %ebx,%eax
+	andl $1,%eax
+	shrl $1,%ebx
+	sall $31,%eax
+	orl %eax,%ebx
+	jmp .L436
+	.p2align 4,,7
+.L438:
+	pushfl
+	addl $6,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	movl %ebx,%eax
+	andl $1,%eax
+	shrl $1,%ebx
+	sall $15,%eax
+	orl %eax,%ebx
+	jmp .L436
+	.p2align 4,,7
+.L439:
+	pushfl
+	addl $6,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	movl %ebx,%eax
+	andl $1,%eax
+	shrl $1,%ebx
+	sall $7,%eax
+	orl %eax,%ebx
+	jmp .L436
+	.p2align 4,,7
+.L440:
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $-12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2688,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl $.LC56
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2716,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	call panic
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $16,%esp
+.L436:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	decl %esi
+	jnz .L435
+.L434:
+	pushfl
+	addl $6,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	movl %ebx,%eax
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2744,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	popl %ebx
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2772,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	popl %esi
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2800,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	popl %edi
+	addl $16,%esp
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2828,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	ret
+.Lfe10:
+	.size	 calcROR,.Lfe10-calcROR
+.section	.rodata
+.LC57:
+	.string	"calcSAR"
+.text
+	.align 4
+	.type	 calcSAR,@function
+calcSAR:
+	pushfl
+	addl $6,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	subl $24,%esp
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2856,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl %ebx
+	pushl %eax
+	pushl %ebx
+	leal 32(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2884,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 32(%esp),%eax
+	pushl %eax
+	pushl %ebx
+	leal 40(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2912,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 40(%esp),%ebx
+	cmpl $2,%eax
+	je .L447
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	ja .L451
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $1,%eax
+	je .L448
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	jmp .L449
+	.p2align 4,,7
+.L451:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $4,%eax
+	jne .L449
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	jmp .L445
+	.p2align 4,,7
+.L447:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	movswl %bx,%ebx
+	jmp .L445
+	.p2align 4,,7
+.L448:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	movsbl %bl,%ebx
+	jmp .L445
+	.p2align 4,,7
+.L449:
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $-12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2940,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl $.LC57
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2968,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	call panic
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $16,%esp
+.L445:
+	pushfl
+	addl $6,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	pushl %eax
+	pushl %ebx
+	leal 36(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+2996,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 36(%esp),%ecx
+	sarl %cl,%ebx
+	movl %ebx,%eax
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+3024,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	popl %ebx
+	addl $24,%esp
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+3052,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	ret
+.Lfe11:
+	.size	 calcSAR,.Lfe11-calcSAR
+.section	.rodata
+.LC58:
+	.string	"topBitOf"
+.text
+	.align 4
+	.type	 topBitOf,@function
+topBitOf:
+	pushfl
+	addl $7,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	subl $20,%esp
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+3080,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl %esi
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+3108,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl %ebx
+	pushl %eax
+	pushl %ebx
+	leal 32(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+3136,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 32(%esp),%esi
+	pushl %eax
+	pushl %ebx
+	leal 36(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+3164,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	movl 36(%esp),%ebx
+	cmpl $4,%esi
+	je .L453
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $2,%esi
+	je .L453
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	cmpl $1,%esi
+	je .L453
+	pushfl
+	addl $3,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $-12,%esp
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+3192,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	pushl $.LC58
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+3220,%ebx
+	call cacheprof_hook_Wr4
+	popl %ebx
+	popl %eax
+	call panic
+	pushfl
+	addl $1,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	addl $16,%esp
+.L453:
+	pushfl
+	addl $8,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	leal -1(,%esi,8),%ecx
+	shrl %cl,%ebx
+	movl %ebx,%eax
+	andl $1,%eax
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+3248,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	popl %ebx
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+3276,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	popl %esi
+	addl $20,%esp
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+3304,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	ret
+.Lfe12:
+	.size	 topBitOf,.Lfe12-topBitOf
+	.align 4
+	.type	 extend_s_8to16,@function
+extend_s_8to16:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+3332,%ebx
+	call cacheprof_hook_Rd2
+	popl %ebx
+	popl %eax
+	movswl 4(%esp),%eax
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+3360,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	ret
+.Lfe13:
+	.size	 extend_s_8to16,.Lfe13-extend_s_8to16
+	.align 4
+	.type	 extend_s_16to32,@function
+extend_s_16to32:
+	pushfl
+	addl $2,cacheprof_icount
+	adcl $0,4+cacheprof_icount
+	popfl
+	pushl %eax
+	pushl %ebx
+	leal 4(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+3388,%ebx
+	call cacheprof_hook_Rd2
+	popl %ebx
+	popl %eax
+	movswl 4(%esp),%eax
+	pushl %eax
+	pushl %ebx
+	leal 8(%esp),%eax
+	movl $.Lcacheprof_magic_buckets+3416,%ebx
+	call cacheprof_hook_Rd4
+	popl %ebx
+	popl %eax
+	ret
+.Lfe14:
+	.size	 extend_s_16to32,.Lfe14-extend_s_16to32
+.section	.rodata
+.LC59:
+	.string	"extend_s_to32"
+.LC60:
+	.string	"extend_s_8to"
+.text
+	.align 4
+	.type	 extend_s_8to,@function
+	# 
+	# ---- start of the cost centers ----
+	# file names:
+	#    heimdall.c
+	# canonicalised function names:
+	#    panic(heimdall.c)
+	#    getIMem(heimdall.c)
+	#    setIMem(heimdall.c)
+	#    getIRoM(heimdall.c)
+	#    calcBSF(heimdall.c)
+	#    calcBSR(heimdall.c)
+	#    calcSHLD(heimdall.c)
+	#    calcSHRD(heimdall.c)
+	#    calcROL(heimdall.c)
+	#    calcROR(heimdall.c)
+	#    calcSAR(heimdall.c)
+	#    topBitOf(heimdall.c)
+	#    extend_s_8to16(heimdall.c)
+	#    extend_s_16to32(heimdall.c)
+	# raw source points:
+	#    CC "heimdall.c" 0 "panic"
+	#    CC "heimdall.c" 0 "panic"
+	#    CC "heimdall.c" 0 "panic"
+	#    CC "heimdall.c" 0 "panic"
+	#    CC "heimdall.c" 0 "panic"
+	#    CC "heimdall.c" 0 "panic"
+	#    CC "heimdall.c" 0 "panic"
+	#    CC "heimdall.c" 0 "panic"
+	#    CC "heimdall.c" 0 "panic"
+	#    CC "heimdall.c" 0 "panic"
+	#    CC "heimdall.c" 0 "getIMem"
+	#    CC "heimdall.c" 0 "getIMem"
+	#    CC "heimdall.c" 0 "getIMem"
+	#    CC "heimdall.c" 0 "getIMem"
+	#    CC "heimdall.c" 0 "getIMem"
+	#    CC "heimdall.c" 0 "getIMem"
+	#    CC "heimdall.c" 0 "getIMem"
+	#    CC "heimdall.c" 0 "getIMem"
+	#    CC "heimdall.c" 0 "setIMem"
+	#    CC "heimdall.c" 0 "setIMem"
+	#    CC "heimdall.c" 0 "setIMem"
+	#    CC "heimdall.c" 0 "setIMem"
+	#    CC "heimdall.c" 0 "setIMem"
+	#    CC "heimdall.c" 0 "setIMem"
+	#    CC "heimdall.c" 0 "setIMem"
+	#    CC "heimdall.c" 0 "setIMem"
+	#    CC "heimdall.c" 0 "setIMem"
+	#    CC "heimdall.c" 0 "getIRoM"
+	#    CC "heimdall.c" 0 "getIRoM"
+	#    CC "heimdall.c" 0 "getIRoM"
+	#    CC "heimdall.c" 0 "getIRoM"
+	#    CC "heimdall.c" 0 "getIRoM"
+	#    CC "heimdall.c" 0 "getIRoM"
+	#    CC "heimdall.c" 0 "getIRoM"
+	#    CC "heimdall.c" 0 "getIRoM"
+	#    CC "heimdall.c" 0 "getIRoM"
+	#    CC "heimdall.c" 0 "getIRoM"
+	#    CC "heimdall.c" 0 "getIRoM"
+	#    CC "heimdall.c" 0 "getIRoM"
+	#    CC "heimdall.c" 0 "getIRoM"
+	#    CC "heimdall.c" 0 "calcBSF"
+	#    CC "heimdall.c" 0 "calcBSF"
+	#    CC "heimdall.c" 0 "calcBSF"
+	#    CC "heimdall.c" 0 "calcBSF"
+	#    CC "heimdall.c" 0 "calcBSF"
+	#    CC "heimdall.c" 0 "calcBSF"
+	#    CC "heimdall.c" 0 "calcBSF"
+	#    CC "heimdall.c" 0 "calcBSF"
+	#    CC "heimdall.c" 0 "calcBSF"
+	#    CC "heimdall.c" 0 "calcBSR"
+	#    CC "heimdall.c" 0 "calcBSR"
+	#    CC "heimdall.c" 0 "calcBSR"
+	#    CC "heimdall.c" 0 "calcBSR"
+	#    CC "heimdall.c" 0 "calcBSR"
+	#    CC "heimdall.c" 0 "calcBSR"
+	#    CC "heimdall.c" 0 "calcBSR"
+	#    CC "heimdall.c" 0 "calcBSR"
+	#    CC "heimdall.c" 0 "calcBSR"
+	#    CC "heimdall.c" 0 "calcBSR"
+	#    CC "heimdall.c" 0 "calcBSR"
+	#    CC "heimdall.c" 0 "calcSHLD"
+	#    CC "heimdall.c" 0 "calcSHLD"
+	#    CC "heimdall.c" 0 "calcSHLD"
+	#    CC "heimdall.c" 0 "calcSHLD"
+	#    CC "heimdall.c" 0 "calcSHLD"
+	#    CC "heimdall.c" 0 "calcSHLD"
+	#    CC "heimdall.c" 0 "calcSHLD"
+	#    CC "heimdall.c" 0 "calcSHLD"
+	#    CC "heimdall.c" 0 "calcSHLD"
+	#    CC "heimdall.c" 0 "calcSHRD"
+	#    CC "heimdall.c" 0 "calcSHRD"
+	#    CC "heimdall.c" 0 "calcSHRD"
+	#    CC "heimdall.c" 0 "calcSHRD"
+	#    CC "heimdall.c" 0 "calcSHRD"
+	#    CC "heimdall.c" 0 "calcSHRD"
+	#    CC "heimdall.c" 0 "calcSHRD"
+	#    CC "heimdall.c" 0 "calcSHRD"
+	#    CC "heimdall.c" 0 "calcSHRD"
+	#    CC "heimdall.c" 0 "calcROL"
+	#    CC "heimdall.c" 0 "calcROL"
+	#    CC "heimdall.c" 0 "calcROL"
+	#    CC "heimdall.c" 0 "calcROL"
+	#    CC "heimdall.c" 0 "calcROL"
+	#    CC "heimdall.c" 0 "calcROL"
+	#    CC "heimdall.c" 0 "calcROL"
+	#    CC "heimdall.c" 0 "calcROL"
+	#    CC "heimdall.c" 0 "calcROL"
+	#    CC "heimdall.c" 0 "calcROL"
+	#    CC "heimdall.c" 0 "calcROL"
+	#    CC "heimdall.c" 0 "calcROL"
+	#    CC "heimdall.c" 0 "calcROR"
+	#    CC "heimdall.c" 0 "calcROR"
+	#    CC "heimdall.c" 0 "calcROR"
+	#    CC "heimdall.c" 0 "calcROR"
+	#    CC "heimdall.c" 0 "calcROR"
+	#    CC "heimdall.c" 0 "calcROR"
+	#    CC "heimdall.c" 0 "calcROR"
+	#    CC "heimdall.c" 0 "calcROR"
+	#    CC "heimdall.c" 0 "calcROR"
+	#    CC "heimdall.c" 0 "calcROR"
+	#    CC "heimdall.c" 0 "calcROR"
+	#    CC "heimdall.c" 0 "calcROR"
+	#    CC "heimdall.c" 0 "calcSAR"
+	#    CC "heimdall.c" 0 "calcSAR"
+	#    CC "heimdall.c" 0 "calcSAR"
+	#    CC "heimdall.c" 0 "calcSAR"
+	#    CC "heimdall.c" 0 "calcSAR"
+	#    CC "heimdall.c" 0 "calcSAR"
+	#    CC "heimdall.c" 0 "calcSAR"
+	#    CC "heimdall.c" 0 "calcSAR"
+	#    CC "heimdall.c" 0 "topBitOf"
+	#    CC "heimdall.c" 0 "topBitOf"
+	#    CC "heimdall.c" 0 "topBitOf"
+	#    CC "heimdall.c" 0 "topBitOf"
+	#    CC "heimdall.c" 0 "topBitOf"
+	#    CC "heimdall.c" 0 "topBitOf"
+	#    CC "heimdall.c" 0 "topBitOf"
+	#    CC "heimdall.c" 0 "topBitOf"
+	#    CC "heimdall.c" 0 "topBitOf"
+	#    CC "heimdall.c" 0 "extend_s_8to16"
+	#    CC "heimdall.c" 0 "extend_s_8to16"
+	#    CC "heimdall.c" 0 "extend_s_16to32"
+	#    CC "heimdall.c" 0 "extend_s_16to32"
+	# cooked source points:
+	#    (0,0,0)
+	#    (0,0,0)
+	#    (0,0,0)
+	#    (0,0,0)
+	#    (0,0,0)
+	#    (0,0,0)
+	#    (0,0,0)
+	#    (0,0,0)
+	#    (0,0,0)
+	#    (0,0,0)
+	#    (0,0,1)
+	#    (0,0,1)
+	#    (0,0,1)
+	#    (0,0,1)
+	#    (0,0,1)
+	#    (0,0,1)
+	#    (0,0,1)
+	#    (0,0,1)
+	#    (0,0,2)
+	#    (0,0,2)
+	#    (0,0,2)
+	#    (0,0,2)
+	#    (0,0,2)
+	#    (0,0,2)
+	#    (0,0,2)
+	#    (0,0,2)
+	#    (0,0,2)
+	#    (0,0,3)
+	#    (0,0,3)
+	#    (0,0,3)
+	#    (0,0,3)
+	#    (0,0,3)
+	#    (0,0,3)
+	#    (0,0,3)
+	#    (0,0,3)
+	#    (0,0,3)
+	#    (0,0,3)
+	#    (0,0,3)
+	#    (0,0,3)
+	#    (0,0,3)
+	#    (0,0,4)
+	#    (0,0,4)
+	#    (0,0,4)
+	#    (0,0,4)
+	#    (0,0,4)
+	#    (0,0,4)
+	#    (0,0,4)
+	#    (0,0,4)
+	#    (0,0,4)
+	#    (0,0,5)
+	#    (0,0,5)
+	#    (0,0,5)
+	#    (0,0,5)
+	#    (0,0,5)
+	#    (0,0,5)
+	#    (0,0,5)
+	#    (0,0,5)
+	#    (0,0,5)
+	#    (0,0,5)
+	#    (0,0,5)
+	#    (0,0,6)
+	#    (0,0,6)
+	#    (0,0,6)
+	#    (0,0,6)
+	#    (0,0,6)
+	#    (0,0,6)
+	#    (0,0,6)
+	#    (0,0,6)
+	#    (0,0,6)
+	#    (0,0,7)
+	#    (0,0,7)
+	#    (0,0,7)
+	#    (0,0,7)
+	#    (0,0,7)
+	#    (0,0,7)
+	#    (0,0,7)
+	#    (0,0,7)
+	#    (0,0,7)
+	#    (0,0,8)
+	#    (0,0,8)
+	#    (0,0,8)
+	#    (0,0,8)
+	#    (0,0,8)
+	#    (0,0,8)
+	#    (0,0,8)
+	#    (0,0,8)
+	#    (0,0,8)
+	#    (0,0,8)
+	#    (0,0,8)
+	#    (0,0,8)
+	#    (0,0,9)
+	#    (0,0,9)
+	#    (0,0,9)
+	#    (0,0,9)
+	#    (0,0,9)
+	#    (0,0,9)
+	#    (0,0,9)
+	#    (0,0,9)
+	#    (0,0,9)
+	#    (0,0,9)
+	#    (0,0,9)
+	#    (0,0,9)
+	#    (0,0,10)
+	#    (0,0,10)
+	#    (0,0,10)
+	#    (0,0,10)
+	#    (0,0,10)
+	#    (0,0,10)
+	#    (0,0,10)
+	#    (0,0,10)
+	#    (0,0,11)
+	#    (0,0,11)
+	#    (0,0,11)
+	#    (0,0,11)
+	#    (0,0,11)
+	#    (0,0,11)
+	#    (0,0,11)
+	#    (0,0,11)
+	#    (0,0,11)
+	#    (0,0,12)
+	#    (0,0,12)
+	#    (0,0,13)
+	#    (0,0,13)
+	.data
+	.align 4
+.Lcacheprof_magic_table:
+	# number of filenames, funcnames, points, cc addr
+	.long 1
+	.long 14
+	.long 123
+	.long .Lcacheprof_magic_buckets
+	# "heimdall.c"
+	.byte 104
+	.byte 101
+	.byte 105
+	.byte 109
+	.byte 100
+	.byte 97
+	.byte 108
+	.byte 108
+	.byte 46
+	.byte 99
+	.byte 0
+	# "panic(heimdall.c)"
+	.byte 112
+	.byte 97
+	.byte 110
+	.byte 105
+	.byte 99
+	.byte 40
+	.byte 104
+	.byte 101
+	.byte 105
+	.byte 109
+	.byte 100
+	.byte 97
+	.byte 108
+	.byte 108
+	.byte 46
+	.byte 99
+	.byte 41
+	.byte 0
+	# "getIMem(heimdall.c)"
+	.byte 103
+	.byte 101
+	.byte 116
+	.byte 73
+	.byte 77
+	.byte 101
+	.byte 109
+	.byte 40
+	.byte 104
+	.byte 101
+	.byte 105
+	.byte 109
+	.byte 100
+	.byte 97
+	.byte 108
+	.byte 108
+	.byte 46
+	.byte 99
+	.byte 41
+	.byte 0
+	# "setIMem(heimdall.c)"
+	.byte 115
+	.byte 101
+	.byte 116
+	.byte 73
+	.byte 77
+	.byte 101
+	.byte 109
+	.byte 40
+	.byte 104
+	.byte 101
+	.byte 105
+	.byte 109
+	.byte 100
+	.byte 97
+	.byte 108
+	.byte 108
+	.byte 46
+	.byte 99
+	.byte 41
+	.byte 0
+	# "getIRoM(heimdall.c)"
+	.byte 103
+	.byte 101
+	.byte 116
+	.byte 73
+	.byte 82
+	.byte 111
+	.byte 77
+	.byte 40
+	.byte 104
+	.byte 101
+	.byte 105
+	.byte 109
+	.byte 100
+	.byte 97
+	.byte 108
+	.byte 108
+	.byte 46
+	.byte 99
+	.byte 41
+	.byte 0
+	# "calcBSF(heimdall.c)"
+	.byte 99
+	.byte 97
+	.byte 108
+	.byte 99
+	.byte 66
+	.byte 83
+	.byte 70
+	.byte 40
+	.byte 104
+	.byte 101
+	.byte 105
+	.byte 109
+	.byte 100
+	.byte 97
+	.byte 108
+	.byte 108
+	.byte 46
+	.byte 99
+	.byte 41
+	.byte 0
+	# "calcBSR(heimdall.c)"
+	.byte 99
+	.byte 97
+	.byte 108
+	.byte 99
+	.byte 66
+	.byte 83
+	.byte 82
+	.byte 40
+	.byte 104
+	.byte 101
+	.byte 105
+	.byte 109
+	.byte 100
+	.byte 97
+	.byte 108
+	.byte 108
+	.byte 46
+	.byte 99
+	.byte 41
+	.byte 0
+	# "calcSHLD(heimdall.c)"
+	.byte 99
+	.byte 97
+	.byte 108
+	.byte 99
+	.byte 83
+	.byte 72
+	.byte 76
+	.byte 68
+	.byte 40
+	.byte 104
+	.byte 101
+	.byte 105
+	.byte 109
+	.byte 100
+	.byte 97
+	.byte 108
+	.byte 108
+	.byte 46
+	.byte 99
+	.byte 41
+	.byte 0
+	# "calcSHRD(heimdall.c)"
+	.byte 99
+	.byte 97
+	.byte 108
+	.byte 99
+	.byte 83
+	.byte 72
+	.byte 82
+	.byte 68
+	.byte 40
+	.byte 104
+	.byte 101
+	.byte 105
+	.byte 109
+	.byte 100
+	.byte 97
+	.byte 108
+	.byte 108
+	.byte 46
+	.byte 99
+	.byte 41
+	.byte 0
+	# "calcROL(heimdall.c)"
+	.byte 99
+	.byte 97
+	.byte 108
+	.byte 99
+	.byte 82
+	.byte 79
+	.byte 76
+	.byte 40
+	.byte 104
+	.byte 101
+	.byte 105
+	.byte 109
+	.byte 100
+	.byte 97
+	.byte 108
+	.byte 108
+	.byte 46
+	.byte 99
+	.byte 41
+	.byte 0
+	# "calcROR(heimdall.c)"
+	.byte 99
+	.byte 97
+	.byte 108
+	.byte 99
+	.byte 82
+	.byte 79
+	.byte 82
+	.byte 40
+	.byte 104
+	.byte 101
+	.byte 105
+	.byte 109
+	.byte 100
+	.byte 97
+	.byte 108
+	.byte 108
+	.byte 46
+	.byte 99
+	.byte 41
+	.byte 0
+	# "calcSAR(heimdall.c)"
+	.byte 99
+	.byte 97
+	.byte 108
+	.byte 99
+	.byte 83
+	.byte 65
+	.byte 82
+	.byte 40
+	.byte 104
+	.byte 101
+	.byte 105
+	.byte 109
+	.byte 100
+	.byte 97
+	.byte 108
+	.byte 108
+	.byte 46
+	.byte 99
+	.byte 41
+	.byte 0
+	# "topBitOf(heimdall.c)"
+	.byte 116
+	.byte 111
+	.byte 112
+	.byte 66
+	.byte 105
+	.byte 116
+	.byte 79
+	.byte 102
+	.byte 40
+	.byte 104
+	.byte 101
+	.byte 105
+	.byte 109
+	.byte 100
+	.byte 97
+	.byte 108
+	.byte 108
+	.byte 46
+	.byte 99
+	.byte 41
+	.byte 0
+	# "extend_s_8to16(heimdall.c)"
+	.byte 101
+	.byte 120
+	.byte 116
+	.byte 101
+	.byte 110
+	.byte 100
+	.byte 95
+	.byte 115
+	.byte 95
+	.byte 56
+	.byte 116
+	.byte 111
+	.byte 49
+	.byte 54
+	.byte 40
+	.byte 104
+	.byte 101
+	.byte 105
+	.byte 109
+	.byte 100
+	.byte 97
+	.byte 108
+	.byte 108
+	.byte 46
+	.byte 99
+	.byte 41
+	.byte 0
+	# "extend_s_16to32(heimdall.c)"
+	.byte 101
+	.byte 120
+	.byte 116
+	.byte 101
+	.byte 110
+	.byte 100
+	.byte 95
+	.byte 115
+	.byte 95
+	.byte 49
+	.byte 54
+	.byte 116
+	.byte 111
+	.byte 51
+	.byte 50
+	.byte 40
+	.byte 104
+	.byte 101
+	.byte 105
+	.byte 109
+	.byte 100
+	.byte 97
+	.byte 108
+	.byte 108
+	.byte 46
+	.byte 99
+	.byte 41
+	.byte 0
+	.align 4
+.Lcacheprof_magic_buckets:
+	# (0,0,0)
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,0)
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,0)
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,0)
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,0)
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,0)
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,0)
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,0)
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,0)
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,0)
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,1)
+	.long 0
+	.long 0
+	.long 1
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,1)
+	.long 0
+	.long 0
+	.long 1
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,1)
+	.long 0
+	.long 0
+	.long 1
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,1)
+	.long 0
+	.long 0
+	.long 1
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,1)
+	.long 0
+	.long 0
+	.long 1
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,1)
+	.long 0
+	.long 0
+	.long 1
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,1)
+	.long 0
+	.long 0
+	.long 1
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,1)
+	.long 0
+	.long 0
+	.long 1
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,2)
+	.long 0
+	.long 0
+	.long 2
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,2)
+	.long 0
+	.long 0
+	.long 2
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,2)
+	.long 0
+	.long 0
+	.long 2
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,2)
+	.long 0
+	.long 0
+	.long 2
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,2)
+	.long 0
+	.long 0
+	.long 2
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,2)
+	.long 0
+	.long 0
+	.long 2
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,2)
+	.long 0
+	.long 0
+	.long 2
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,2)
+	.long 0
+	.long 0
+	.long 2
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,2)
+	.long 0
+	.long 0
+	.long 2
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,3)
+	.long 0
+	.long 0
+	.long 3
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,3)
+	.long 0
+	.long 0
+	.long 3
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,3)
+	.long 0
+	.long 0
+	.long 3
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,3)
+	.long 0
+	.long 0
+	.long 3
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,3)
+	.long 0
+	.long 0
+	.long 3
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,3)
+	.long 0
+	.long 0
+	.long 3
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,3)
+	.long 0
+	.long 0
+	.long 3
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,3)
+	.long 0
+	.long 0
+	.long 3
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,3)
+	.long 0
+	.long 0
+	.long 3
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,3)
+	.long 0
+	.long 0
+	.long 3
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,3)
+	.long 0
+	.long 0
+	.long 3
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,3)
+	.long 0
+	.long 0
+	.long 3
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,3)
+	.long 0
+	.long 0
+	.long 3
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,4)
+	.long 0
+	.long 0
+	.long 4
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,4)
+	.long 0
+	.long 0
+	.long 4
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,4)
+	.long 0
+	.long 0
+	.long 4
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,4)
+	.long 0
+	.long 0
+	.long 4
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,4)
+	.long 0
+	.long 0
+	.long 4
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,4)
+	.long 0
+	.long 0
+	.long 4
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,4)
+	.long 0
+	.long 0
+	.long 4
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,4)
+	.long 0
+	.long 0
+	.long 4
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,4)
+	.long 0
+	.long 0
+	.long 4
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,5)
+	.long 0
+	.long 0
+	.long 5
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,5)
+	.long 0
+	.long 0
+	.long 5
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,5)
+	.long 0
+	.long 0
+	.long 5
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,5)
+	.long 0
+	.long 0
+	.long 5
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,5)
+	.long 0
+	.long 0
+	.long 5
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,5)
+	.long 0
+	.long 0
+	.long 5
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,5)
+	.long 0
+	.long 0
+	.long 5
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,5)
+	.long 0
+	.long 0
+	.long 5
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,5)
+	.long 0
+	.long 0
+	.long 5
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,5)
+	.long 0
+	.long 0
+	.long 5
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,5)
+	.long 0
+	.long 0
+	.long 5
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,6)
+	.long 0
+	.long 0
+	.long 6
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,6)
+	.long 0
+	.long 0
+	.long 6
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,6)
+	.long 0
+	.long 0
+	.long 6
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,6)
+	.long 0
+	.long 0
+	.long 6
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,6)
+	.long 0
+	.long 0
+	.long 6
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,6)
+	.long 0
+	.long 0
+	.long 6
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,6)
+	.long 0
+	.long 0
+	.long 6
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,6)
+	.long 0
+	.long 0
+	.long 6
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,6)
+	.long 0
+	.long 0
+	.long 6
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,7)
+	.long 0
+	.long 0
+	.long 7
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,7)
+	.long 0
+	.long 0
+	.long 7
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,7)
+	.long 0
+	.long 0
+	.long 7
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,7)
+	.long 0
+	.long 0
+	.long 7
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,7)
+	.long 0
+	.long 0
+	.long 7
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,7)
+	.long 0
+	.long 0
+	.long 7
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,7)
+	.long 0
+	.long 0
+	.long 7
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,7)
+	.long 0
+	.long 0
+	.long 7
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,7)
+	.long 0
+	.long 0
+	.long 7
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,8)
+	.long 0
+	.long 0
+	.long 8
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,8)
+	.long 0
+	.long 0
+	.long 8
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,8)
+	.long 0
+	.long 0
+	.long 8
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,8)
+	.long 0
+	.long 0
+	.long 8
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,8)
+	.long 0
+	.long 0
+	.long 8
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,8)
+	.long 0
+	.long 0
+	.long 8
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,8)
+	.long 0
+	.long 0
+	.long 8
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,8)
+	.long 0
+	.long 0
+	.long 8
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,8)
+	.long 0
+	.long 0
+	.long 8
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,8)
+	.long 0
+	.long 0
+	.long 8
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,8)
+	.long 0
+	.long 0
+	.long 8
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,8)
+	.long 0
+	.long 0
+	.long 8
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,9)
+	.long 0
+	.long 0
+	.long 9
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,9)
+	.long 0
+	.long 0
+	.long 9
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,9)
+	.long 0
+	.long 0
+	.long 9
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,9)
+	.long 0
+	.long 0
+	.long 9
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,9)
+	.long 0
+	.long 0
+	.long 9
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,9)
+	.long 0
+	.long 0
+	.long 9
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,9)
+	.long 0
+	.long 0
+	.long 9
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,9)
+	.long 0
+	.long 0
+	.long 9
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,9)
+	.long 0
+	.long 0
+	.long 9
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,9)
+	.long 0
+	.long 0
+	.long 9
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,9)
+	.long 0
+	.long 0
+	.long 9
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,9)
+	.long 0
+	.long 0
+	.long 9
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,10)
+	.long 0
+	.long 0
+	.long 10
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,10)
+	.long 0
+	.long 0
+	.long 10
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,10)
+	.long 0
+	.long 0
+	.long 10
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,10)
+	.long 0
+	.long 0
+	.long 10
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,10)
+	.long 0
+	.long 0
+	.long 10
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,10)
+	.long 0
+	.long 0
+	.long 10
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,10)
+	.long 0
+	.long 0
+	.long 10
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,10)
+	.long 0
+	.long 0
+	.long 10
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,11)
+	.long 0
+	.long 0
+	.long 11
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,11)
+	.long 0
+	.long 0
+	.long 11
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,11)
+	.long 0
+	.long 0
+	.long 11
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,11)
+	.long 0
+	.long 0
+	.long 11
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,11)
+	.long 0
+	.long 0
+	.long 11
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,11)
+	.long 0
+	.long 0
+	.long 11
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,11)
+	.long 0
+	.long 0
+	.long 11
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,11)
+	.long 0
+	.long 0
+	.long 11
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,11)
+	.long 0
+	.long 0
+	.long 11
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,12)
+	.long 0
+	.long 0
+	.long 12
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,12)
+	.long 0
+	.long 0
+	.long 12
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,13)
+	.long 0
+	.long 0
+	.long 13
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# (0,0,13)
+	.long 0
+	.long 0
+	.long 13
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	# 
+	# ---- end of the cost centers ----

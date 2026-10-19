@@ -1,0 +1,4 @@
+/home/ruud/.local/rune-hosts/mlton/bin/mlton
+-output
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.rEBPk6/pervasives_compare_strings/native-mlton/build/prog
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.rEBPk6/pervasives_compare_strings/native-mlton/build/prog.mlb

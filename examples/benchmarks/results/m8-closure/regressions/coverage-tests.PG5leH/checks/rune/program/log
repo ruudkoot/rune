@@ -1,0 +1,5 @@
+runevm: uncaught exception Io <value>
+  in RuneFile.open' at /home/ruud/rune/.worktrees/benchmarks/bin/../lib/basis/runefile.sml:29:79
+  in TextIO.openIn at /home/ruud/rune/.worktrees/benchmarks/bin/../lib/basis/textio.sml:148:50
+  in BenchCatalog.lines at /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/catalog.sml:11:20
+  in BenchCatalog.load at /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/catalog.sml:51:12

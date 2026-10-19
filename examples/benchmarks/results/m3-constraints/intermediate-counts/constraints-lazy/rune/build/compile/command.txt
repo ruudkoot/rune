@@ -1,0 +1,12 @@
+/home/ruud/rune/.worktrees/benchmarks/bin/rune
+-O2
+--lint
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.phloaZ/constraints-lazy/rune/build/sources/1.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.phloaZ/constraints-lazy/rune/build/sources/2.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.phloaZ/constraints-lazy/rune/build/sources/3.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.phloaZ/constraints-lazy/rune/build/sources/4.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.phloaZ/constraints-lazy/rune/build/sources/5.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.phloaZ/constraints-lazy/rune/build/sources/6.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.phloaZ/constraints-lazy/rune/build/sources/7.sml
+-o
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.phloaZ/constraints-lazy/rune/build/prog.rbc

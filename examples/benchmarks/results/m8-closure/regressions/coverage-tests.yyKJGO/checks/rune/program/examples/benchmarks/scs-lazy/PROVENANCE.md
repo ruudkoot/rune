@@ -1,0 +1,138 @@
+# scs-lazy provenance
+
+Selected approximate numerical payload evaluation: lazy.
+
+## Algorithm and workload
+
+Parse the original inverter circuit and SI-valued parameters. Build exact
+rational circuit/derivative matrices, run the source Gauss–Jordan reductions and
+null-space corrections, then convert the prepared operators to binary64.
+Integrate rational time and approximate circuit state, update sources, solve and
+correct constraints, and evaluate tunnelling events with the original seeded
+combined generator and energy/probability formulas. Each tick emits its base
+output and, when selected, one corrected post-event output at the same time.
+The next tick integrates the last state. End-time selection is inclusive.
+
+The port formats every time/vector value and counts quoted-string escapes,
+retaining the original Main's length(show output) consumer work. It also validates
+all numerical results against complete reference traces before returning a stable
+rows:points:checked summary. Numerical validation is stronger than the upstream
+Done-only stdout fixture.
+
+## History, revision, authorship and notices
+
+nofib b7391df4540ac8b11b35e1b2e2c15819b5171798, real/scs/Main.hs, Types,
+Parse, ParseLib, RandomFix, LinearAlgebra, Simulate, Makefile, scs.stdout and
+runtime_files/inverter.in. The contribution email retained in Makefile credits
+Erik van der Meer's masters-thesis prototype, sent 17 March 2000. It explains exact
+rational preprocessing, approximate simulation and the inverter/temperature choice.
+Selected program/data state no separate redistribution notice; individual circuit
+authorship is unstated. Preserve all original text without assigning a grant from
+another component.
+
+RandomFix credits Lennart Augustsson's transliteration, Alastair Reid's 1997 changes
+and Erik van der Meer's 1999 Hugs 1.4 adaptation. Its range mapper differs from the
+later System.Random 1.1 implementation elsewhere in this suite. Retain its own
+source/history. Primary GHC base sources are pinned at
+00920f176b0235d5bb52a8e054d89a664f8938fe, with University of Glasgow and other
+notices preserved in the full base/LICENSE. Reference array 0.5.4.0 is pinned at
+77990b2132ba688f6282822891da2b9455e33c2f with its separate notice.
+
+## Algorithms, demand and variants
+
+Keep exact rational ranks/pivots and the first maximum-magnitude pivot on ties.
+Matrix updates are persistent; ordered accumulation retains source r,t,c and r,c
+contribution order. Conditional preprocessing remains memoized: an algebraically
+invertible circuit avoids the unused empty third reduction. Float conversion
+uses exact integer division and nearest-even rounding before power-of-two scaling,
+including separately tested subnormal/overflow boundaries.
+
+RandomFix keeps arbitrary-precision seed/range arithmetic, original base 2147483561,
+iLogBase draw count and fold-right digit accumulation. Word32 expresses its
+representable signed 32-bit Schrage transitions on every SML host. Result heads
+and state transitions have separate shared delays, preserving skipped heads and
+array overrides. Each tick advances size random values for offsets and one event
+selection position. Candidate events, correction/energy calculations, negative
+probability clamping, total normalization, cumulative order and strict p<cdf
+selection remain. The selected post-event solve/correction is recomputed as written.
+
+scs-lazy memoizes numerical array cells. scs-strict forces approximate matrices
+and newly constructed numerical vectors, including finite normalized probability
+values. Parser, rational preprocessing conditions, random streams and trace
+spines remain memoized in both. The strict scope is numerical payloads, preserving
+finite termination and source control pruning. No previous trajectory is reused
+as a repeated-run answer.
+
+## Portable SML97 translation
+
+Memoized cell vectors replace boxed immutable Data.Array payloads. Mutable arrays
+are confined to construction/update before freezing cell pointers; numeric values
+remain immutable. Ordered update callbacks avoid intermediate association-list
+spines while retaining scalar operation order. Gaussian arithmetic follows pinned
+GHC.Real cross-product/reduce operations and exact IntInf ratios; approximate
+operators use binary64. GHC.List's strict left sum is preserved. Native Int indices,
+row/point counters and formatted lengths fit signed 31-bit for selected profiles.
+
+The source parser's nondeterministic alternatives, allow-null repetition,
+whitespace/SI conventions and singleton complete-parse check remain. Existing
+portable parser primitives are shared; greedy cut repetition from infer is not
+used. Identifiers/input text use finite SML strings and lists over the selected
+ASCII domain. Source filename stems become explicit .in paths. Reading and parsing
+input occur per Benchmark.run, followed by fresh preprocessing/simulation.
+
+SML GEN17 formatting replaces Haskell's shortest Double renderer; streamed
+formatting/escape counting replaces materializing the whole shown string. The
+checked summary omits renderer-dependent lengths. Numerical checking and reference
+I/O are included costs. These representation/library/output changes belong in
+interpretation of comparisons. No FFI, parallelism, effect handler or prerequisite
+compiler/runtime feature is introduced.
+
+## Inputs, validation and resource profiles
+
+Smoke preserves inverter, seed 345, dt 10n, end 2u, temperature 1 and background 0.
+Normal preserves dt 2n/end 4u; selected large preserves dt 400p/end 4u, with other
+parameters identical. The source's omitted optional background is explicitly 0.
+The literal pinned circuit is retained. Its 18 variables produce 371/2913/11315
+rows, including 170/912/1314 extra event outputs. Large refines the time grid.
+Inputs/matrices/time use exact ratios; source-step/profile parameters are not
+replaced by a universal size argument. Default resource limits apply.
+
+Every reference label, dimension, rational time, row count and EOF must agree.
+Each finite current/voltage value is checked with relative bound 1e-11 and absolute
+floors 1e-24 amperes/1e-15 volts respectively. Floors cover cancellation near zero;
+relative bounds permit binary64 rounding differences. They validate this fixed
+workload, not physical accuracy. Perturbed inside/outside values, changed labels,
+times/values, nonfinite values, dimensions and truncated/extra traces are tested.
+Event times and row counts are checked exactly alongside numerical bounds.
+
+Original and independent rational/float implementations agree exactly on all
+three full traces and prepared matrices. The independent minimum distance from
+selection draws to cumulative thresholds is .00187519 for smoke and greater than
+8.56e-6 for normal/large. Explicit event/time checks still apply independently of
+that observed margin. All 3960 rounding-boundary/preprocessing bit cases agree on
+Rune. Small original runs and generated RC/RL/conductor-current test circuits
+exercise all element classes, zero temperature, background charge and huge seeds.
+Synthetic circuits are test data, not upstream workload profiles.
+
+## Host observations and references
+
+The auxiliary bit encoder converts an already integral significand using
+truncation. Separate nearest-conversion probes retain Poly/ML 5.9.2 failures; a
+local report records this native Basis defect. Three SML/NJ variants reproduce
+the existing fromManExp subnormal report outside the workload's normal/zero
+conversion domain. Legacy 64-bit numerical replays also vary under default allocation;
+a separate 64 MiB nursery replay passes. Default settings/expected values remain
+unchanged, failures are retained and incorrect results cannot contribute timings.
+These are recorded host observations, not kernel patches or an upstream-fix claim.
+
+The unmodified GHC 9.4.7 program reproduces all Done fixtures. Export-only observers
+retain full traces, exact preprocessing, numeric bit patterns, parsing and RNG
+vectors. A separate Fraction/mutable-matrix/binary64 simulator agrees exactly on
+all profiles. Broader host and large SML claims remain limited to recorded checks.
+
+P. L'Ecuyer, [Efficient and portable combined random number generators](https://doi.org/10.1145/62959.62969),
+Communications of the ACM 31(6), June 1988, pp. 742–751, supplies the source-cited
+generator context. The retained 2000 contribution email and exact modules specify
+this simulator; pinned GHC numeric/array sources explain its library operations.
+The suite's methodology survey frames measurements without transferring historical
+performance claims to current SML compilers.

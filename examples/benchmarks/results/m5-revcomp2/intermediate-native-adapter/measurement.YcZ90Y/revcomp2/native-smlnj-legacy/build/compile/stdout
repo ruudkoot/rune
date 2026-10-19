@@ -1,0 +1,25 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YcZ90Y/revcomp2/native-smlnj-legacy/build/export.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YcZ90Y/revcomp2/native-smlnj-legacy/build/sources/1.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+structure BenchReverseComplementTwo : sig
+  val for : int -> int -> (int -> 'a) -> unit
+  val run : string -> (Word8Array.elem -> 'a) -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YcZ90Y/revcomp2/native-smlnj-legacy/build/sources/2.sml]
+[autoloading]
+[autoloading done]
+structure RevcompCheck : sig
+  val run : string -> string -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YcZ90Y/revcomp2/native-smlnj-legacy/build/sources/3.sml]
+structure Benchmark : sig
+  val name : string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YcZ90Y/revcomp2/native-smlnj-legacy/build/sources/4.sml]
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YcZ90Y/revcomp2/native-smlnj-legacy/build/sources/4.sml:20.21-20.39 Error: unbound structure: BenchInput in path BenchInput.between
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YcZ90Y/revcomp2/native-smlnj-legacy/build/sources/4.sml:20.52-20.70 Error: unbound structure: BenchInput in path BenchInput.integer

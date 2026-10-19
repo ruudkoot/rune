@@ -292,6 +292,27 @@ class InventoryTest(unittest.TestCase):
         self.file("real/" + name + "/Makefile", "FAST_OPTS = 1\nNORM_OPTS = 2\n")
         return "real/" + name
 
+    def test_anna_versioned_banner_records_stated_owner(self):
+        path = self.application_source("anna", "main = putStrLn banner\n"
+                 "banner = \"Jules's Strictness Analyser, version 0.400\"\n"
+                 "copyright = \"Copyright (c) Julian Seward 1992\"\n")
+        row = self.build("nofib")[0]
+        self.assertIn("Julian Seward (program banner)", row["authors"])
+        self.assertIn("versioned-program-copyright-banner", row["evidence"])
+
+    def test_changed_anna_banner_does_not_inherit_attribution(self):
+        self.application_source("anna", "main = putStrLn \"Another analyser\"\n"
+                                "copyright = \"Copyright (c) Julian Seward 1992\"\n")
+        self.assertNotIn("Julian Seward", self.build("nofib")[0]["authors"])
+
+    def test_runtime_directory_includes_unselected_data_and_results(self):
+        path = self.application_source("alternate-data")
+        self.file(path + "/runtime_files/alternate.plate", "[1,2,3]\n")
+        self.file(path + "/runtime_files/unused.soln", "solution\n")
+        row = self.build("nofib")[0]
+        self.assertIn(path + "/runtime_files/alternate.plate", row["inputs"])
+        self.assertIn(path + "/runtime_files/unused.soln", row["inputs"])
+
     def test_hpg_generator_is_not_classified_as_arbitrary_precision_arithmetic(self):
         self.assertEqual(AUDIT.family("hpg", "Integer values in generated programs"), "compiler-application")
 

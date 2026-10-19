@@ -1,0 +1,4 @@
+Error: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YcZ90Y/revcomp2/native-mlton/build/sources/4.sml 20.21-20.38.
+  Undefined structure: BenchInput.
+Error: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YcZ90Y/revcomp2/native-mlton/build/sources/4.sml 20.52-20.69.
+  Undefined structure: BenchInput.

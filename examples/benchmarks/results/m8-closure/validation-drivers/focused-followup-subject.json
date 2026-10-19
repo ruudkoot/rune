@@ -1,0 +1,9 @@
+{
+  "scope": "focused final metadata and fixture-transport changes; no workload/compiler/runtime changes",
+  "files": {
+    "scripts/measure-benchmarks.sh": "b8211e7cf4e1144b5fc47225f11db04cf5dc431a1286f55847a9cddc7f867355",
+    "scripts/benchmark-provenance.sh": "04094f78754cf558049ac78455316400a1cd0e5d79b262996119b6554bce0ee7",
+    "tests/benchmarks/check-provenance.sh": "850d2ec8bba085fcf2144ba8e268ee50c139359bd7fc0adcad6a6f84d726082c",
+    "tests/benchmarks/check-coverage.sh": "ba14c64b1c2d62b5e0880ea4799b0b0d7b1c55555303519b589adcdd07f0bf8d"
+  }
+}

@@ -1,0 +1,2 @@
+Exception- Io {cause = SysErr ("No such file or directory", SOME ENOENT), function = "TextIO.openIn", name = "examples/benchmarks/manifest.tsv"} raised
+uncaught exception Io [Io {cause = SysErr ("No such file or directory", SOME ENOENT), function = "TextIO.openIn", name = "examples/benchmarks/manifest.tsv"}]

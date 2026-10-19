@@ -1,0 +1,9 @@
+/home/ruud/rune/.worktrees/benchmarks/bin/rune
+-O2
+--lint
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.mtz80U/mutstore1/rune/build/sources/1.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.mtz80U/mutstore1/rune/build/sources/2.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.mtz80U/mutstore1/rune/build/sources/3.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.mtz80U/mutstore1/rune/build/sources/4.sml
+-o
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.mtz80U/mutstore1/rune/build/prog.rbc

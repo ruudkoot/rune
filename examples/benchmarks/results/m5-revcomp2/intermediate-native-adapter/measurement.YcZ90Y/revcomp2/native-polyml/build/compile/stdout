@@ -1,0 +1,6 @@
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YcZ90Y/revcomp2/native-polyml/build/sources/4.sml:20: error: Structure (BenchInput) has not been declared
+Found near BenchInput.between (1, 100000) (BenchInput.integer (line ()))
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.YcZ90Y/revcomp2/native-polyml/build/sources/4.sml:20: error: Structure (BenchInput) has not been declared
+Found near BenchInput.between (1, 100000) (BenchInput.integer (line ()))
+Exception- Fail "Static Errors" raised
+Exception- Fail "Static Errors" raised

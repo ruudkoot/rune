@@ -1,0 +1,79 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.dXtH5O/caml_hash_tuple/native-smlnj-legacy/build/export.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.dXtH5O/caml_hash_tuple/native-smlnj-legacy/build/sources/1.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.dXtH5O/caml_hash_tuple/native-smlnj-legacy/build/sources/2.sml]
+structure BenchStdlibHash : sig
+  val rotate : Word32.word -> int -> Word32.word
+  val mix : Word32.word -> Word32.word -> Word32.word
+  val finish : Word32.word -> int
+  val tagged : int -> Word32.word
+  val integer : int -> int
+  val pair : int * int -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.dXtH5O/caml_hash_tuple/native-smlnj-legacy/build/sources/3.sml]
+[autoloading]
+[autoloading done]
+structure BenchStdlibHashtbl : sig
+  datatype 'a bucket = Cons of int * 'a ref * 'a bucket ref | Empty
+  datatype mode = Generic | Integer
+  datatype 'a table
+    = Table of {data:'a bucket array ref, initial:int ref, mode:mode,
+                 size:int ref}
+  val power : int -> int -> int
+  val create : mode -> int -> 'a table
+  val length : 'a table -> int
+  val bucketCount : 'a table -> int
+  val index : 'a table -> int -> int
+  val resize : 'a table -> unit
+  val add : 'a table -> int -> 'a -> unit
+  val replace : 'a table -> int -> 'a -> unit
+  val remove : 'a table -> int -> unit
+  val findOpt : 'a table -> int -> 'a option
+  val traversing : 'a table -> (unit -> 'b) -> 'b
+  val iter : (int -> 'a -> 'b) -> 'a table -> unit
+  val fold : (int -> 'a -> 'b -> 'b) -> 'a table -> 'b -> 'b
+  val filterMap : (int -> 'a -> 'a option) -> 'a table -> unit
+  val contents : 'a table -> (int * 'a) list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.dXtH5O/caml_hash_tuple/native-smlnj-legacy/build/sources/4.sml]
+structure BenchStdlibHashtblPrograms : sig
+  structure H : <sig>
+  structure Hash : <sig>
+  val seed : Word32.word
+  val mix : Word32.word -> Word32.word -> Word32.word
+  val loop : int -> int -> (int -> 'a) -> unit
+  val genericTable : int BenchStdlibHashtbl.table
+  val integerTable : int BenchStdlibHashtbl.table
+  val populated : unit -> int BenchStdlibHashtbl.table
+  val reject : bool -> unit
+  val checkRange : int BenchStdlibHashtbl.table -> int -> int -> int -> unit
+  val digest : int BenchStdlibHashtbl.table -> Word32.word
+  val modulus : IntInf.int
+  val sign : IntInf.int
+  val double : IntInf.int -> IntInf.int
+  val low32 : IntInf.int -> Word32.word
+  val run : string -> int -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.dXtH5O/caml_hash_tuple/native-smlnj-legacy/build/sources/5.sml]
+structure Benchmark : sig
+  val name : string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.dXtH5O/caml_hash_tuple/native-smlnj-legacy/build/sources/6.sml]
+[autoloading]
+[autoloading done]
+structure BenchMeasure : sig
+  val print : TextIO.vector -> unit
+  val line : unit -> string
+  val main : unit -> OS.Process.status
+end

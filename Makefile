@@ -1631,14 +1631,22 @@ BENCH_FILTER ?=
 build/bench-catalog.rbc: examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/catalog-main.sml $(RUNE)
 	$(RUNE_STACK) --lint examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/catalog-main.sml -o $@
 
+build/bench-coverage.rbc: examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/coverage.sml examples/benchmarks/shared/coverage-main.sml $(RUNE)
+	$(RUNE) --lint examples/benchmarks/shared/catalog.sml examples/benchmarks/shared/coverage.sml examples/benchmarks/shared/coverage-main.sml -o $@
+
+.PHONY: bench-coverage
+bench-coverage: build/bench-coverage.rbc vm
+	bin/runevm build/bench-coverage.rbc --check
+
 bench-check: build/bench-catalog.rbc vm
 	bin/runevm-stack build/bench-catalog.rbc --check
 	BENCH_PROFILE=$(BENCH_PROFILE) BENCH_CONFIGS=$(BENCH_CONFIGS) BENCH_FILTER='$(BENCH_FILTER)' sh scripts/run-benchmarks.sh
 
 # Bounded correctness/metadata only; wall-clock thresholds stay outside check.
-bench-smoke: build/bench-catalog.rbc build/bench-report.rbc vm
+bench-smoke: build/bench-catalog.rbc build/bench-report.rbc build/bench-coverage.rbc vm
 	bin/runevm-stack build/bench-catalog.rbc --check
 	sh tests/benchmarks/check-catalog.sh
+	bin/runevm build/bench-coverage.rbc --check
 	sh tests/benchmarks/check-matrix-status.sh
 	sh tests/benchmarks/check-measurement-status.sh
 	RUNE_BENCH_COMPILE_OPTIONS=-O2 sh scripts/run-benchmarks.sh --routine --configs rune

@@ -1,0 +1,41 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.2tqUmU/primes-strict/native-smlnj-legacy/build/export.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.2tqUmU/primes-strict/native-smlnj-legacy/build/sources/1.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.2tqUmU/primes-strict/native-smlnj-legacy/build/sources/2.sml]
+[autoloading]
+[autoloading done]
+structure BenchPrimes : sig
+  datatype 'a cell = Pending of unit -> 'a | Value of 'a
+  type 'a delay = 'a cell ref
+  val delay : (unit -> 'a) -> 'a cell ref
+  val force : 'a cell ref -> 'a
+  datatype stream = Empty | More of int * stream delay
+  val interval : int * int -> stream
+  val filter : (int -> bool) -> stream -> stream
+  val lazy : int -> int
+  val strict : int -> int
+  val run : (int -> int) -> string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.2tqUmU/primes-strict/native-smlnj-legacy/build/sources/3.sml]
+structure Benchmark : sig
+  val name : string
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.2tqUmU/primes-strict/native-smlnj-legacy/build/sources/4.sml]
+[autoloading]
+[autoloading done]
+structure BenchMeasure : sig
+  val print : TextIO.vector -> unit
+  val line : unit -> string
+  val main : unit -> OS.Process.status
+end

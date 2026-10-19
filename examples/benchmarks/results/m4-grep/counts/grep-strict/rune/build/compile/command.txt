@@ -1,0 +1,14 @@
+/home/ruud/rune/.worktrees/benchmarks/bin/rune
+-O2
+--lint
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.TN7rj7/grep-strict/rune/build/sources/1.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.TN7rj7/grep-strict/rune/build/sources/2.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.TN7rj7/grep-strict/rune/build/sources/3.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.TN7rj7/grep-strict/rune/build/sources/4.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.TN7rj7/grep-strict/rune/build/sources/5.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.TN7rj7/grep-strict/rune/build/sources/6.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.TN7rj7/grep-strict/rune/build/sources/7.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.TN7rj7/grep-strict/rune/build/sources/8.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.TN7rj7/grep-strict/rune/build/sources/9.sml
+-o
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.TN7rj7/grep-strict/rune/build/prog.rbc

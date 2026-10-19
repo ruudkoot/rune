@@ -1,0 +1,16 @@
+/home/ruud/rune/.worktrees/benchmarks/bin/rune-new
+-O2
+--lint
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.4n3otJ/hidden-strict/rune-jit/build/sources/1.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.4n3otJ/hidden-strict/rune-jit/build/sources/2.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.4n3otJ/hidden-strict/rune-jit/build/sources/3.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.4n3otJ/hidden-strict/rune-jit/build/sources/4.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.4n3otJ/hidden-strict/rune-jit/build/sources/5.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.4n3otJ/hidden-strict/rune-jit/build/sources/6.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.4n3otJ/hidden-strict/rune-jit/build/sources/7.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.4n3otJ/hidden-strict/rune-jit/build/sources/8.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.4n3otJ/hidden-strict/rune-jit/build/sources/9.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.4n3otJ/hidden-strict/rune-jit/build/sources/10.sml
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.4n3otJ/hidden-strict/rune-jit/build/sources/11.sml
+-o
+/home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.4n3otJ/hidden-strict/rune-jit/build/prog.rbc

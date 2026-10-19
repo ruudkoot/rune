@@ -1,0 +1,231 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.RWAYEN/dom-lt/native-smlnj-legacy/build/export.sml]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.RWAYEN/dom-lt/native-smlnj-legacy/build/sources/1.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+structure BenchInput : sig
+  val integer : string -> int
+  val between : int * int -> int -> int
+  val closeReal : real * real * real * real -> bool
+  val repeat : int -> (unit -> int) -> IntInf.int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.RWAYEN/dom-lt/native-smlnj-legacy/build/sources/2.sml]
+structure BenchDomWord : sig
+  structure W : <sig>
+  val sign : Word64.word
+  val word : int -> Word64.word
+  val integer : Word64.word -> int
+  val zero : Word64.word -> Word64.word -> bool
+  val mask : Word64.word -> Word64.word -> Word64.word
+  val match : Word64.word -> Word64.word -> Word64.word -> bool
+  val shorter : Word64.word -> Word64.word -> bool
+  val highest : Word64.word -> Word64.word
+  val branch : Word64.word -> Word64.word -> Word64.word
+  val bit : int -> Word64.word
+  val lowestIndex : ?.word64 -> int
+  val highestIndex : ?.word64 -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.RWAYEN/dom-lt/native-smlnj-legacy/build/sources/3.sml]
+[autoloading]
+[autoloading done]
+structure BenchDomIntMap : sig
+  structure B : <sig>
+  structure W : <sig>
+  datatype 'a map
+    = Bin of Word64.word * Word64.word * 'a map * 'a map
+    | Nil
+    | Tip of int * 'a
+  val link : Word64.word -> 'a map -> Word64.word -> 'a map -> 'a map
+  val lookup : int -> 'a map -> 'a option
+  val insertWith : ('a -> 'a -> 'a) -> int -> 'a -> 'a map -> 'a map
+  val insert : int -> 'a -> 'a map -> 'a map
+  val adjust : ('a -> 'a) -> int -> 'a map -> 'a map
+  val unionWith : ('a -> 'a -> 'a) -> 'a map -> 'a map -> 'a map
+  val map : ('a -> 'b) -> 'a map -> 'b map
+  val foldl : ('a -> int -> 'b -> 'a) -> 'a -> 'b map -> 'a
+  val foldr : (int -> 'a -> 'b -> 'b) -> 'b -> 'a map -> 'b
+  val toList : 'a map -> (int * 'a) list
+  val fromList : (int * 'a) list -> 'a map
+  val size : 'a map -> int
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.RWAYEN/dom-lt/native-smlnj-legacy/build/sources/4.sml]
+structure BenchDomIntSet : sig
+  structure B : <sig>
+  structure W : <sig>
+  datatype set
+    = Bin of Word64.word * Word64.word * set * set
+    | Nil
+    | Tip of Word64.word * Word64.word
+  val prefix : int -> Word64.word
+  val bitmap : int -> Word64.word
+  val tip : Word64.word -> ?.word64 -> set
+  val bin : Word64.word -> Word64.word -> set -> set -> set
+  val link : Word64.word -> set -> Word64.word -> set -> set
+  val insertBM : Word64.word -> Word64.word -> set -> set
+  val insert : int -> set -> set
+  val singleton : int -> set
+  val member : int -> set -> bool
+  val union : set -> set -> set
+  val deleteBM : Word64.word -> Word64.word -> set -> set
+  val difference : set -> set -> set
+  val foldr : (int -> 'a -> 'a) -> 'a -> set -> 'a
+  val toList : set -> int list
+  val filter : (int -> bool) -> set -> set
+  val fromList : int list -> set
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.RWAYEN/dom-lt/native-smlnj-legacy/build/sources/5.sml]
+[autoloading]
+[autoloading done]
+structure BenchDomGraph : sig
+  structure M : <sig>
+  structure S : <sig>
+  type graph = BenchDomIntSet.set BenchDomIntMap.map
+  type rooted = int * graph
+  val get : BenchDomIntSet.set BenchDomIntMap.map -> int -> BenchDomIntSet.set
+  val fromAdj : (int * int list) list -> BenchDomIntSet.set BenchDomIntMap.map
+  val toAdj : BenchDomIntSet.set BenchDomIntMap.map -> (int * int list) list
+  val pred :
+      BenchDomIntSet.set BenchDomIntMap.map
+       -> BenchDomIntSet.set BenchDomIntMap.map
+  val reachable : (int -> BenchDomIntSet.set) -> int -> BenchDomIntSet.set
+  val prune :
+      int * BenchDomIntSet.set BenchDomIntMap.map
+       -> int * BenchDomIntSet.set BenchDomIntMap.map
+  val renumber :
+      int
+       -> BenchDomIntSet.set BenchDomIntMap.map
+       -> BenchDomIntSet.set BenchDomIntMap.map * int BenchDomIntMap.map
+  val validate : int * BenchDomIntSet.set BenchDomIntMap.map -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.RWAYEN/dom-lt/native-smlnj-legacy/build/sources/6.sml]
+[autoloading]
+[autoloading done]
+functor BenchDomFn(P: sig
+  val checkInitialized : bool
+end) :
+sig
+  structure G : <sig>
+  structure M : <sig>
+  structure S : <sig>
+  type iarr
+  val newI : int -> <BaseFct>.<resultStr>.iarr
+  val read : <BaseFct>.<resultStr>.iarr -> int -> int
+  val write : <BaseFct>.<resultStr>.iarr -> int -> int -> unit
+  type env
+  type answer
+  type 'a action
+  val pure : 'a -> ('a -> 'b -> 'c) -> 'b -> 'c
+  val bind :
+      'a <BaseFct>.<resultStr>.action
+       -> ('a -> 'b <BaseFct>.<resultStr>.action)
+       -> 'b <BaseFct>.<resultStr>.action
+  val gets : ('a -> 'b) -> ('b -> 'a -> 'c) -> 'a -> 'c
+  val modify : ('a -> 'b) -> (unit -> 'b -> 'c) -> 'a -> 'c
+  val store :
+      ('a -> <BaseFct>.<resultStr>.iarr)
+       -> int -> int -> (unit -> 'a -> 'b) -> 'a -> 'b
+  val fetch :
+      ('a -> <BaseFct>.<resultStr>.iarr)
+       -> int -> (int -> 'a -> 'b) -> 'a -> 'b
+  val forEach :
+      'a list
+       -> ('a -> unit <BaseFct>.<resultStr>.action)
+       -> unit <BaseFct>.<resultStr>.action
+  val range :
+      int
+       -> int
+       -> (int -> unit <BaseFct>.<resultStr>.action)
+       -> unit <BaseFct>.<resultStr>.action
+  val backwards :
+      int
+       -> int
+       -> (int -> unit <BaseFct>.<resultStr>.action)
+       -> unit <BaseFct>.<resultStr>.action
+  val aLabel : <BaseFct>.<resultStr>.env -> <BaseFct>.<resultStr>.iarr
+  val aParent : <BaseFct>.<resultStr>.env -> <BaseFct>.<resultStr>.iarr
+  val aAncestor : <BaseFct>.<resultStr>.env -> <BaseFct>.<resultStr>.iarr
+  val aChild : <BaseFct>.<resultStr>.env -> <BaseFct>.<resultStr>.iarr
+  val aNdfs : <BaseFct>.<resultStr>.env -> <BaseFct>.<resultStr>.iarr
+  val aDfn : <BaseFct>.<resultStr>.env -> <BaseFct>.<resultStr>.iarr
+  val aSdno : <BaseFct>.<resultStr>.env -> <BaseFct>.<resultStr>.iarr
+  val aSize : <BaseFct>.<resultStr>.env -> <BaseFct>.<resultStr>.iarr
+  val aDom : <BaseFct>.<resultStr>.env -> <BaseFct>.<resultStr>.iarr
+  val aRn : <BaseFct>.<resultStr>.env -> <BaseFct>.<resultStr>.iarr
+  val withDfs : <BaseFct>.<resultStr>.env -> int -> <BaseFct>.<resultStr>.env
+  val withBucket :
+      <BaseFct>.<resultStr>.env
+       -> BenchDomGraph.graph -> <BaseFct>.<resultStr>.env
+  val succs :
+      int
+       -> (int list -> <BaseFct>.<resultStr>.env -> 'a)
+       -> <BaseFct>.<resultStr>.env -> 'a
+  val preds :
+      int
+       -> (int list -> <BaseFct>.<resultStr>.env -> 'a)
+       -> <BaseFct>.<resultStr>.env -> 'a
+  val bucket :
+      int
+       -> (int list -> <BaseFct>.<resultStr>.env -> 'a)
+       -> <BaseFct>.<resultStr>.env -> 'a
+  val next :
+      (int -> <BaseFct>.<resultStr>.env -> 'a)
+       -> <BaseFct>.<resultStr>.env -> 'a
+  val eval : int -> int <BaseFct>.<resultStr>.action
+  val compress : int -> unit <BaseFct>.<resultStr>.action
+  val link : int -> int -> unit <BaseFct>.<resultStr>.action
+  val dfs : int -> unit <BaseFct>.<resultStr>.action
+  val fromEnv :
+      ((int * int) list
+        -> <BaseFct>.<resultStr>.env -> <BaseFct>.<resultStr>.answer)
+       -> <BaseFct>.<resultStr>.env -> <BaseFct>.<resultStr>.answer
+  val updatePredecessor : int -> int -> unit <BaseFct>.<resultStr>.action
+  val assignDominator : int -> int -> unit <BaseFct>.<resultStr>.action
+  val processReverse : int -> unit <BaseFct>.<resultStr>.action
+  val processForward : int -> unit <BaseFct>.<resultStr>.action
+  val idomM : <BaseFct>.<resultStr>.answer <BaseFct>.<resultStr>.action
+  val initEnv :
+      int * BenchDomIntSet.set BenchDomIntMap.map -> <BaseFct>.<resultStr>.env
+  val idom :
+      int * BenchDomIntSet.set BenchDomIntMap.map
+       -> <BaseFct>.<resultStr>.answer
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.RWAYEN/dom-lt/native-smlnj-legacy/build/sources/7.sml]
+[autoloading]
+[autoloading done]
+structure BenchDomReader : sig
+  datatype value = Integer of int | List of value list | Tuple of value list
+  val parse : string -> value list
+  val integer : value -> int
+  val entry : value -> int * int list
+  val graph : value -> int * BenchDomIntSet.set BenchDomIntMap.map
+  val pair : value -> int * int
+  val parents : value -> (int * int) list
+  val graphs : string -> (int * BenchDomIntSet.set BenchDomIntMap.map) list
+  val results : string -> (int * int) list list
+  val read : string -> TextIO.vector
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.RWAYEN/dom-lt/native-smlnj-legacy/build/sources/8.sml]
+functor BenchDomDriverFn(P: sig
+  val idom : BenchDomGraph.rooted -> (int * int) list
+end) :
+sig
+  structure R : <sig>
+  val calculate :
+      BenchDomGraph.rooted list -> int -> (int * int) list list -> int
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.RWAYEN/dom-lt/native-smlnj-legacy/build/sources/9.sml]
+structure Benchmark : sig
+  val name : string
+  structure Program : <sig>
+  structure Driver : <sig>
+  val run : string list -> string
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.RWAYEN/dom-lt/native-smlnj-legacy/build/sources/10.sml]
+structure BenchMeasure : sig
+  val print : TextIO.vector -> unit
+  val line : unit -> string
+  val main : unit -> OS.Process.status
+end

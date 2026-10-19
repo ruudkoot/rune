@@ -1,0 +1,90 @@
+functor BenchHartelGenFftFn (D : BENCH_SUSPEND) =
+struct
+  datatype 'a node = Nil | Cons of 'a D.t * 'a node D.t
+  type 'a seq = 'a node D.t
+  type text = char seq
+  fun empty () = D.delay (fn () => Nil)
+  fun text value =
+    let fun loop i = D.delay (fn () => if i=String.size value then Nil
+          else Cons(D.delay(fn()=>String.sub(value,i)),loop(i+1)))
+    in loop 0 end
+  fun texts [] = empty () | texts (x::xs) = D.delay(fn()=>Cons(x,texts xs))
+  fun append first rest = D.delay (fn () => case D.force first of
+      Nil => D.force rest | Cons(x,xs) => Cons(x,append xs rest))
+  fun concat values = D.delay (fn () => case D.force values of
+      Nil => Nil | Cons(value,rest) => D.force(append value (concat rest)))
+  fun cat values = concat (texts values)
+  fun glue separator values = D.delay (fn () => case D.force values of
+      Nil => raise Empty
+    | Cons(value,rest) => case D.force rest of Nil=>D.force value
+      | _=>D.force(append value (append separator (glue separator rest))))
+  fun map f values = D.delay (fn () => case D.force values of
+      Nil => Nil | Cons(value,rest) => Cons(f value,map f rest))
+  fun range (first,last) = D.delay(fn()=>if first>last then Nil
+    else Cons(D.delay(fn()=>first),range(first+1,last)))
+  fun take 0 values = empty ()
+    | take n values = D.delay(fn()=>case D.force values of Nil=>Nil
+      | Cons(x,rest)=>Cons(x,take(n-1)rest))
+  fun drop 0 values = values
+    | drop n values = D.delay(fn()=>case D.force values of Nil=>Nil
+      | Cons(_,rest)=>D.force(drop(n-1)rest))
+  fun parts n values = D.delay(fn()=>case D.force values of Nil=>Nil
+    | _=>Cons(take n values,parts n(drop n values)))
+  fun number n = text(Int.toString n)
+  fun pow2 n = Word32.toInt(Word32.<<(0w1,Word.fromInt n))
+  fun reverseBits width value =
+    let fun loop(0,x,acc)=acc
+          | loop(w,x,acc)=loop(w-1,x div 2,2*acc+x mod 2)
+    in loop(width,value,0)end
+  fun insertZero position value =
+    let fun bits p 0 acc=acc
+          | bits 0 x acc=bits (~1) x (0::acc)
+          | bits p x acc=bits(p-1)(x div 2)(x mod 2::acc)
+    in List.foldl(fn(bit,acc)=>2*acc+bit)0(bits position value [])end
+  fun bvar n i = cat[text "b_",number n,text "_",number i]
+  fun rvar n i = cat[text "r_",number n,text "_",number i]
+  fun wvar n = cat[text "w_",number n]
+  fun equation logn m k = D.delay(fn()=>
+    let val n=m+1 val i=insertZero m k val j=i+pow2 m
+        val n2=pow2 logn val h=(k*pow2(logn-m))mod n2
+    in D.force(cat[bvar n i,text "=add_x ",bvar m i,text " ",rvar m k,text "; ",
+      bvar n j,text "=sub_x ",bvar m i,text " ",rvar m k,text "; ",
+      rvar m k,text "=mul_x ",bvar m j,text " ",wvar h])end)
+  fun level logn m = glue (text ";\n ")
+    (map(fn k=>equation logn m (D.force k))(range(0,pow2 logn-1)))
+  fun allLevels logn = glue (text ";\n ")
+    (map(fn m=>D.delay(fn()=>D.force(level logn (D.force m))))(range(0,logn)))
+  fun rootEquation nstring n = cat[wvar n,text "=fw_d sector_",nstring,text " ",number n,text ".0"]
+  fun roots n2 =
+    let val nstring=number(2*n2)
+    in glue(text ";\n ")(map(fn n=>D.delay(fn()=>D.force(rootEquation nstring (D.force n))))(range(0,n2-1)))end
+  fun inputHead k names = D.delay(fn()=>case D.force names of Nil=>raise Empty
+    | Cons(name,rest)=>Cons(cat[text "LET ",name,text "=head i",number k,text " IN\n "],inputTail k rest))
+  and inputTail k names = D.delay(fn()=>case D.force names of Nil=>Nil
+    | _=>Cons(cat[text "LET i",number(k+1),text "=tail i",number k,text " IN\n "],inputHead(k+1)names))
+  fun inputList logn =
+    let val n=2*pow2 logn
+        val shuffled=map(fn i=>D.delay(fn()=>reverseBits(logn+1)(D.force i)))(range(0,n-1))
+        val names=map(fn i=>D.delay(fn()=>D.force(bvar 0(D.force i))))shuffled
+    in concat(inputHead 1 names)end
+  fun outputList logn =
+    let val names=map(fn i=>D.delay(fn()=>D.force(bvar(logn+1)(D.force i))))(range(0,2*pow2 logn-1))
+    in glue(text ":\n ")(map(fn group=>glue(text ":")group)(parts 8 names))end
+  fun generate logn = D.delay(fn()=>
+    let val n2=pow2 logn val nstring=number(2*n2)
+    in D.force(cat[text "sed -e 's/^/||SYNTH_",nstring,text " /' <<'end'     \n",
+      text "synth_fft_",nstring,text " i1",text "\n=",inputList logn,text "LET",text "\n ",
+      allLevels logn,text ";\n ",roots n2,text "\n ",text "IN ",outputList logn,text ":NIL",
+      text ";\n",text "INLINE sector_",nstring,text "=pi/",number n2,text ".0;\n",text "\n",text "end\n"])end)
+  fun program maximum = concat(map(fn n=>D.delay(fn()=>D.force(generate(D.force n))))(range(1,maximum)))
+  fun check maximum expected =
+    let val size=String.size expected
+        fun loop(xs,sum,count)=case D.force xs of
+            Nil=>if count=size then (sum+count,count)else raise Fail "incorrect result: short generated program"
+          |Cons(value,rest)=>
+            let val c=D.force value
+                val _=if count<size andalso c=String.sub(expected,count)then()
+                  else raise Fail "incorrect result: generated byte differs"
+            in loop(rest,sum+Char.ord c,count+1)end
+    in loop(program maximum,0,0)end
+end

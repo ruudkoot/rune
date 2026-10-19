@@ -1,0 +1,10 @@
+Error: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.LWMtNw/hidden-lazy/native-mlton/build/sources/7.sml 26.30-26.47.
+  Function applied to incorrect argument.
+    expects: [int] D.t S.node L.state ref
+    but got: [real] D.t S.node L.state ref
+    in: (S.map N.negative) a
+Error: /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/measurement.LWMtNw/hidden-lazy/native-mlton/build/sources/7.sml 26.23-26.48.
+  Function applied to incorrect argument.
+    expects: [real] D.t S.node L.state ref
+    but got: [int] D.t S.node L.state ref
+    in: vector (S.map N.negative a)
