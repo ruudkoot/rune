@@ -1,0 +1,126 @@
+Standard ML of New Jersey [Version 110.99.9; 64-bit; November 4, 2025]
+[opening driver.sml]
+[autoloading]
+[library $SMLNJ-BASIS/basis.cm is stable]
+[library $SMLNJ-BASIS/(basis.cm):basis-common.cm is stable]
+[autoloading done]
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml]
+[autoloading]
+[autoloading done]
+/home/ruud/rune/.worktrees/benchmarks/tests/basis/harness.sml:86.14 Warning: calling polyEqual
+structure T : sig
+  val passes : int ref
+  val failures : int ref
+  val skips : int ref
+  val skipping : string option ref
+  val skip : string * string -> unit
+  val pass : string -> unit
+  val fail : string * string -> unit
+  val skipUnless : bool * string -> (unit -> unit) -> unit
+  val guard : string -> (unit -> unit) -> unit
+  val unit : unit -> string
+  val int : int -> string
+  val word : word -> string
+  val real : real -> string
+  val bool : bool -> string
+  val char : char -> string
+  val string : string -> string
+  val order : order -> string
+  val option : ('a -> string) -> 'a option -> string
+  val list : ('a -> string) -> 'a list -> string
+  val pair : ('a -> string) * ('b -> string) -> 'a * 'b -> string
+  val triple :
+      ('a -> string) * ('b -> string) * ('c -> string)
+       -> 'a * 'b * 'c -> string
+  val check : string * (unit -> bool) -> unit
+  val eq : (''a -> string) -> string * ''a * (unit -> ''a) -> unit
+  val sameReal : real * real -> bool
+  val eqReal : string * real * (unit -> real) -> unit
+  val approx : string * real * (unit -> real) -> unit
+  val raises : string * (exn -> bool) * (unit -> 'a) -> unit
+  val anyExn : exn -> bool
+  val isBind : exn -> bool
+  val isMatch : exn -> bool
+  val isChr : exn -> bool
+  val isDiv : exn -> bool
+  val isDomain : exn -> bool
+  val isEmpty : exn -> bool
+  val isFail : exn -> bool
+  val isOption : exn -> bool
+  val isOverflow : exn -> bool
+  val isSize : exn -> bool
+  val isSpan : exn -> bool
+  val isSubscript : exn -> bool
+  val modulus : int
+  val state : int ref
+  val seed : int -> unit
+  val rand : unit -> int
+  val range : int * int -> int
+  val oneOf : 'a list -> 'a
+  val repeat : int * (int -> unit) -> unit
+  val summary : unit -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/catalog.sml]
+[autoloading]
+[autoloading done]
+structure BenchCatalog : sig
+  type entry =
+    {args:string list, expected:string, inputFiles:string list, memory:int,
+      name:string, profile:string, resultCheck:string, seconds:int,
+      sourcePath:string, sources:string list, status:string, tags:string list,
+      upstream:string}
+  val root : string
+  val lines : string -> string list
+  val strip : string -> string
+  val relative : string -> bool
+  val exists : string -> unit
+  val localFile : string -> unit
+  val integer : string -> int
+  val load : string -> entry list
+  val validate : entry list -> unit
+  val matches : string -> string -> bool
+  val selected : entry list -> string -> string -> entry list
+  val emit : entry -> unit
+  val routine : entry list -> entry list
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/coverage.sml]
+/home/ruud/rune/.worktrees/benchmarks/examples/benchmarks/shared/coverage.sml:77.52 Warning: calling polyEqual
+structure BenchCoverage : sig
+  type source =
+    {disposition:string, identity:string, path:string, reason:string,
+      upstream:string}
+  val fields : string -> string list
+  val identity : string -> bool
+  val disposition : string -> bool
+  val sources :
+      string
+       -> {disposition:string, identity:string, path:string, reason:string,
+          upstream:string} list
+  val names : BenchCatalog.entry list -> string list
+  val matching : BenchCatalog.entry list -> source -> BenchCatalog.entry list
+  val validate : source list -> BenchCatalog.entry list -> unit
+  val companions : string -> int
+  val documentation : BenchCatalog.entry list -> unit
+  val report : source list -> BenchCatalog.entry list -> unit
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/benchmarks/coverage.sml]
+PASS benchmark.coverage/complete
+PASS benchmark.coverage/missing-import
+PASS benchmark.coverage/deferred-cannot-run
+PASS benchmark.coverage/duplicate-source
+PASS benchmark.coverage/builtin-source-required
+PASS benchmark.coverage/documentation
+PASS benchmark.coverage/companions-accounted
+structure BenchCoverageTests : sig
+  val entries : BenchCatalog.entry list
+  val sources :
+      {disposition:string, identity:string, path:string, reason:string,
+          upstream:string} list
+  val rejected : string -> (unit -> 'a) -> bool
+  val first : BenchCatalog.entry
+  val deferred : BenchCoverage.source -> BenchCoverage.source
+  val builtin : BenchCatalog.entry
+  val missingBuiltin : BenchCatalog.entry
+end
+[opening /home/ruud/rune/.worktrees/benchmarks/tests/basis/finish.sml]
+SUMMARY 7 checks, 0 failed

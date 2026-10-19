@@ -1,0 +1,22 @@
+bin/runevm-stack build/bench-catalog.rbc --check
+bench-catalog: OK (1482 profiles)
+BENCH_PROFILE=normal BENCH_CONFIGS=rune BENCH_FILTER='latency-' sh scripts/run-benchmarks.sh
+BENCH OUTPUT /home/ruud/rune/.worktrees/benchmarks/tests/out/benchmarks/normal/run.iyoZyw
+BENCH latency-ring normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 10000 1000000 1024 14533307
+PASS latency-ring
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH latency-map normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 10000 1000000 1024 14533307
+PASS latency-map
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune
+BENCH latency-static-map normal
+PROGRAM LIMIT AS 4194304 KiB
+RESULT 130000 100000 6754234
+PASS latency-static-map
+SUMMARY 1 checks, 0 failed
+PROGRAM PASS rune

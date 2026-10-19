@@ -1,0 +1,57 @@
+{
+  "reason": "rebuild generated project cache with master-pinned MLKit 4.7.25 after release-4.7.23 Impossible: Mul: diffef failed",
+  "moves": [
+    {
+      "source": "src/elab/MLB",
+      "saved": "tests/out/benchmarks/rebase-20261019/mlkit-4.7.23-cache/src/elab/MLB"
+    },
+    {
+      "source": "src/frontend/MLB",
+      "saved": "tests/out/benchmarks/rebase-20261019/mlkit-4.7.23-cache/src/frontend/MLB"
+    },
+    {
+      "source": "src/backend/MLB",
+      "saved": "tests/out/benchmarks/rebase-20261019/mlkit-4.7.23-cache/src/backend/MLB"
+    },
+    {
+      "source": "src/opt/MLB",
+      "saved": "tests/out/benchmarks/rebase-20261019/mlkit-4.7.23-cache/src/opt/MLB"
+    },
+    {
+      "source": "src/driver/MLB",
+      "saved": "tests/out/benchmarks/rebase-20261019/mlkit-4.7.23-cache/src/driver/MLB"
+    },
+    {
+      "source": "src/util/MLB",
+      "saved": "tests/out/benchmarks/rebase-20261019/mlkit-4.7.23-cache/src/util/MLB"
+    },
+    {
+      "source": "src/main/MLB",
+      "saved": "tests/out/benchmarks/rebase-20261019/mlkit-4.7.23-cache/src/main/MLB"
+    },
+    {
+      "source": "src/isa/MLB",
+      "saved": "tests/out/benchmarks/rebase-20261019/mlkit-4.7.23-cache/src/isa/MLB"
+    },
+    {
+      "source": "src/doc/MLB",
+      "saved": "tests/out/benchmarks/rebase-20261019/mlkit-4.7.23-cache/src/doc/MLB"
+    },
+    {
+      "source": "src/core/MLB",
+      "saved": "tests/out/benchmarks/rebase-20261019/mlkit-4.7.23-cache/src/core/MLB"
+    },
+    {
+      "source": "lib/unicode/MLB",
+      "saved": "tests/out/benchmarks/rebase-20261019/mlkit-4.7.23-cache/lib/unicode/MLB"
+    },
+    {
+      "source": "lib/json/MLB",
+      "saved": "tests/out/benchmarks/rebase-20261019/mlkit-4.7.23-cache/lib/json/MLB"
+    },
+    {
+      "source": "build/MLB",
+      "saved": "tests/out/benchmarks/rebase-20261019/mlkit-4.7.23-cache/build/MLB"
+    }
+  ]
+}

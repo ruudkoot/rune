@@ -1,0 +1,11 @@
+{
+  "command": [
+    "bin/rune-test",
+    "run",
+    "-j",
+    "4",
+    "make/test-opt"
+  ],
+  "exit": 0,
+  "elapsed_seconds": 156.05020647399942
+}

@@ -1,0 +1,11 @@
+{
+  "command": [
+    "make",
+    "JOBS=4",
+    "MLKIT=/home/ruud/.local/rune-hosts/mlkit-4.7.25/bin/mlkit",
+    "MLKIT_LIB=/home/ruud/.local/rune-hosts/mlkit-4.7.25/lib/mlkit",
+    "check"
+  ],
+  "exit": 2,
+  "elapsed_seconds": 3661.7156455689983
+}

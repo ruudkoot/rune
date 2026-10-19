@@ -16,6 +16,24 @@ struct
       rejected "non-import source"(fn()=>BenchCoverage.validate(List.map deferred sources)entries))
   val _=T.check("benchmark.coverage/duplicate-source",fn()=>
       rejected "duplicate coverage source"(fn()=>BenchCoverage.validate(hd sources::sources)entries))
+  val builtin=valOf(List.find(fn(row:BenchCatalog.entry)=> #upstream row="rune")entries)
+  val missingBuiltin:BenchCatalog.entry={
+    name= #name builtin,
+    profile= #profile builtin,
+    upstream= #upstream builtin,
+    sourcePath="shared/missing-built-in-source.sml",
+    args= #args builtin,
+    expected= #expected builtin,
+    sources= #sources builtin,
+    seconds= #seconds builtin,
+    memory= #memory builtin,
+    tags= #tags builtin,
+    inputFiles= #inputFiles builtin,
+    resultCheck= #resultCheck builtin,
+    status= #status builtin}
+  val _=T.check("benchmark.coverage/builtin-source-required",fn()=>
+      rejected "missing examples/benchmarks/shared/missing-built-in-source.sml"
+        (fn()=>BenchCoverage.validate sources(missingBuiltin::entries)))
   val _=T.check("benchmark.coverage/documentation",fn()=>(BenchCoverage.documentation entries;true))
   val _=T.check("benchmark.coverage/companions-accounted",fn()=>
       BenchCoverage.companions "examples/benchmarks/source-variants.tsv">0)

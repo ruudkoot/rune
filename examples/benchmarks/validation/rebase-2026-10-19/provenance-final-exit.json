@@ -1,0 +1,9 @@
+{
+  "command": [
+    "sh",
+    "tests/benchmarks/check-provenance.sh"
+  ],
+  "exit": 0,
+  "log": "provenance-final.log",
+  "scope": "current and legacy payload name regression after the metadata-only followup"
+}

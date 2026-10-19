@@ -2,7 +2,7 @@
 
 Status: **complete**, 2026-10-19. M0-M8 have
 [recorded validation](../../examples/benchmarks/validation.md).
-The initial suite has 507 programs and 1473 profiles. All suitable pinned
+The initial suite has 510 programs and 1482 profiles. All suitable pinned
 inventory entries are implemented; deferred and excluded entries retain
 concrete reasons. Host failures and unrecorded broader experiments remain
 explicit in the [initial report](../../examples/benchmarks/REPORT.md).
@@ -39,7 +39,7 @@ The [runnable catalogue](../../examples/benchmarks/README.md) contains the M1
 pilots, the validated M2 classic collection and the completed M5 sequential
 Sandmark collection. M3 kernels, M4 applications and M8 coverage closure
 are complete with recorded evidence.
-The current catalogue has 507 programs and 1473 profiles. The Happy wave
+The current catalogue has 510 programs and 1482 profiles. The Happy wave
 has [recorded validation](../../examples/benchmarks/results/m3-happy/README.md):
 all normal profiles and 50280 semantic assertions pass, with two unclassified
 ML Kit smoke compile failures retained. Counts, serial adapter diagnostics

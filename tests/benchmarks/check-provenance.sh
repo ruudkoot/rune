@@ -8,6 +8,8 @@ foreign=$out/compiler
 mkdir -p "$foreign/bin" "$foreign/lib/basis" "$out/record" "$out/custom-record"
 printf 'fixture compiler\n' > "$foreign/bin/rune"
 printf 'fixture payload\n' > "$foreign/bin/rune.rbc"
+printf 'fixture stack payload\n' > "$foreign/bin/rune.stack.rbc"
+printf 'fixture legacy register payload\n' > "$foreign/bin/rune.new.rbc"
 printf '# fixture basis\n' > "$foreign/lib/basis/MANIFEST"
 printf 'val basisFixture = 1\n' > "$foreign/lib/basis/fixture.sml"
 git init --quiet "$foreign"
@@ -22,6 +24,8 @@ grep -Fq "$(printf 'repository\t%s' "$foreign")" "$out/record/compiler-repositor
 grep -Fq "$(printf 'revision\t%s' "$revision")" "$out/record/compiler-repository.tsv"
 grep -Fq "$(printf 'dirty\t1')" "$out/record/compiler-repository.tsv"
 grep -Fq "$foreign/bin/rune.rbc" "$out/record/compiler-payloads.sha256"
+grep -Fq "$foreign/bin/rune.stack.rbc" "$out/record/compiler-payloads.sha256"
+grep -Fq "$foreign/bin/rune.new.rbc" "$out/record/compiler-payloads.sha256"
 (cd "$foreign" && sha256sum lib/basis/MANIFEST lib/basis/*.sml) > "$out/expected-basis.sha256"
 cmp "$out/expected-basis.sha256" "$out/record/basis.sha256"
 custom=$(mktemp -d /tmp/rune-benchmark-provenance.XXXXXX)

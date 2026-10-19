@@ -18,7 +18,7 @@ bench_tool_repository() {
   } > "$provenance_bundle/$provenance_role-repository.tsv"
   : > "$provenance_bundle/$provenance_role-payloads.sha256"
   if [ -n "$provenance_repo" ]; then
-    for provenance_payload in rune.rbc rune.new.rbc rune-mlton.bin rune-polyml.bin runevm runevm-new runeopt-mlton; do
+    for provenance_payload in rune.rbc rune.stack.rbc rune.new.rbc rune-mlton.bin rune-polyml.bin runevm runevm-stack runevm-new runevm-native runeopt-mlton runeopt-mlton.bin; do
       if [ -f "$provenance_repo/bin/$provenance_payload" ]; then
         sha256sum "$provenance_repo/bin/$provenance_payload" >> "$provenance_bundle/$provenance_role-payloads.sha256"
       fi

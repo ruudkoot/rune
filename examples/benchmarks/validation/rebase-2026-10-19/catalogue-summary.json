@@ -1,0 +1,12 @@
+{
+  "programs": 510,
+  "profiles": 1482,
+  "sources": {
+    "mlton": 49,
+    "mlkit": 51,
+    "nofib": 248,
+    "sandmark": 124,
+    "smlnj": 35,
+    "rune": 3
+  }
+}
