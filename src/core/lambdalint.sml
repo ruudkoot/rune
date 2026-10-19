@@ -41,12 +41,12 @@ struct
         case IntTable.find (Ty.binders, g) of
           SOME t => Ty.fromTypes t
         | NONE =>
-            if isSome (IntTable.find (Ty.exnArgs, g)) then Ty.ExnCon
+            if isSome (IntTable.find (Ty.exnArgs, g)) then Ty.exnCon
             else Error.bug ("global g" ^ Int.toString g ^ " has no type")
       (* the argument of a constructor of the datatype t: SOME NONE for a
          nullary one *)
       fun conArg (what, t, tag) =
-        case t of
+        case Ty.view t of
           Ty.Con (stamp, _, args) =>
             (case Ty.conArg (stamp, args, tag) of
                SOME a => a
@@ -71,7 +71,7 @@ struct
         | Const (_, t) => T t
         | Unit => T Ty.unit
         | Fn (x, t, b) =>
-            (case t of
+            (case Ty.view t of
                Ty.Arrow (d, r) =>
                  (bind x;
                   expect ("the body of a function", go (b, IntMap.insert (scope, x, d), no), r);
@@ -79,8 +79,10 @@ struct
              | _ => Error.bug ("a function of type " ^ Ty.toString t))
         | App (f, a) =>
             (case go (f, scope, no) of
-               T (Ty.Arrow (d, r)) => (expect ("an argument", go (a, scope, no), d); T r)
-             | T t => Error.bug ("an application of what has type " ^ Ty.toString t)
+               T t =>
+                 (case Ty.view t of
+                    Ty.Arrow (d, r) => (expect ("an argument", go (a, scope, no), d); T r)
+                  | _ => Error.bug ("an application of what has type " ^ Ty.toString t))
              | Never => (ignore (go (a, scope, no)); Never))
         | Let (x, a, b) =>
             (case go (a, scope, no) of
@@ -109,14 +111,16 @@ struct
             let val found = List.map (fn e => go (e, scope, no)) es
             in
               if List.exists (fn Never => true | _ => false) found then Never
-              else T (Ty.Tuple (List.map (fn T t => t | Never => Ty.unit) found))
+              else T (Ty.tuple (List.map (fn T t => t | Never => Ty.unit) found))
             end
         | Select (i, a) =>
             (case go (a, scope, no) of
-               T (Ty.Tuple ts) =>
-                 if i < List.length ts then T (List.nth (ts, i))
-                 else Error.bug ("field " ^ Int.toString i ^ " of a tuple of " ^ Int.toString (List.length ts))
-             | T t => Error.bug ("a field of what has type " ^ Ty.toString t)
+               T t =>
+                 (case Ty.view t of
+                    Ty.Tuple ts =>
+                      if i < List.length ts then T (List.nth (ts, i))
+                      else Error.bug ("field " ^ Int.toString i ^ " of a tuple of " ^ Int.toString (List.length ts))
+                  | _ => Error.bug ("a field of what has type " ^ Ty.toString t))
              | Never => Never)
         | Con0 (tag, t) =>
             (case conArg ("a nullary constructor", t, tag) of
@@ -135,8 +139,10 @@ struct
              | Never => Never)
         | ConTag a =>
             (case go (a, scope, no) of
-               T (Ty.Con _) => T Ty.int
-             | T t => Error.bug ("the tag of what has type " ^ Ty.toString t)
+               T t =>
+                 (case Ty.view t of
+                    Ty.Con _ => T Ty.int
+                  | _ => Error.bug ("the tag of what has type " ^ Ty.toString t))
              | Never => Never)
         | If (c, t, f) =>
             (expect ("a condition", go (c, scope, no), Ty.bool);
@@ -163,21 +169,21 @@ struct
         | Handle (a, x, h) =>
             let val ta = go (a, scope, no)
             in bind x; join ("a handled expression and its handler", ta, go (h, IntMap.insert (scope, x, Ty.exn), tail)) end
-        | NewExn _ => T Ty.ExnCon
-        | BuiltinExn _ => T Ty.ExnCon
+        | NewExn _ => T Ty.exnCon
+        | BuiltinExn _ => T Ty.exnCon
         | MkExn (c, p) =>
-            (expect ("an exception constructor", go (c, scope, no), Ty.ExnCon);
+            (expect ("an exception constructor", go (c, scope, no), Ty.exnCon);
              ignore (go (p, scope, no));
              T Ty.exn)
-        | ExnCon a => (expect ("an exception", go (a, scope, no), Ty.exn); T Ty.ExnCon)
+        | ExnCon a => (expect ("an exception", go (a, scope, no), Ty.exn); T Ty.exnCon)
         | ExnArg (t, a) => (expect ("an exception", go (a, scope, no), Ty.exn); T t)
         | Prim (p, SOME t, args) =>
             let
               val found = List.map (fn e => go (e, scope, no)) args
             in
-              case t of
+              case Ty.view t of
                 Ty.Arrow (d, r) =>
-                  (case (found, d) of
+                  (case (found, Ty.view d) of
                      ([x], _) => expect ("the argument of " ^ p, x, d)
                    | (xs, Ty.Tuple ds) =>
                        if List.length xs = List.length ds then ListPair.app (fn (x, d) => expect ("an argument of " ^ p, x, d)) (xs, ds)
@@ -188,7 +194,10 @@ struct
             end
         | Prim (p, NONE, args) =>
             (case (p, List.map (fn e => go (e, scope, no)) args) of
-               ("ref_get", [T (Ty.Con (_, "ref", [t]))]) => T t
+               ("ref_get", [T r]) =>
+                 (case Ty.view r of
+                    Ty.Con (s, _, [t]) => if s = #stamp Types.refTycon then T t else Error.bug ("ref_get of what has type " ^ Ty.toString r)
+                  | _ => Error.bug ("ref_get of what has type " ^ Ty.toString r))
              | ("poly_eq", [a, b]) => (ignore (join ("the arguments of =", a, b)); T Ty.bool)
              | ("ptr_eq", [a, b]) => (ignore (join ("the arguments of ptr_eq", a, b)); T Ty.bool)
              | (_, found) =>

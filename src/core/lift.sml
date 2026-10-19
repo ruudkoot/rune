@@ -99,12 +99,7 @@ struct
 
   (* The generic type variables a type names, added to acc. *)
   fun gensOfTy (t : Ty.ty, acc : unit IntMap.map) : unit IntMap.map =
-    case t of
-      Ty.Gen i => IntMap.insert (acc, i, ())
-    | Ty.Con (_, _, ts) => List.foldl gensOfTy acc ts
-    | Ty.Tuple ts => List.foldl gensOfTy acc ts
-    | Ty.Arrow (a, b) => gensOfTy (b, gensOfTy (a, acc))
-    | _ => acc
+    List.foldl (fn (i, acc) => IntMap.insert (acc, i, ())) acc (Ty.gens t)
 
   (* ... and those an expression names *)
   fun gensOf (e : exp, acc : unit IntMap.map) : unit IntMap.map =
@@ -279,14 +274,14 @@ struct
       fun call (f, ts, args) =
         case IntTable.find (lifted, f) of
           SOME {global, extra, outer} =>
-            SOME (App (Global (global, List.map Ty.Gen outer @ ts), List.map (fn x => Var (x, [])) extra @ args))
+            SOME (App (Global (global, List.map Ty.gen outer @ ts), List.map (fn x => Var (x, [])) extra @ args))
         | NONE => NONE
       (* a lifted function that is given nothing, as a value: the global *)
       fun atom a =
         case a of
           Var (f, ts) =>
             (case IntTable.find (lifted, f) of
-               SOME {global, extra = [], outer} => Global (global, List.map Ty.Gen outer @ ts)
+               SOME {global, extra = [], outer} => Global (global, List.map Ty.gen outer @ ts)
              | _ => a)
         | _ => a
       fun rhs r =

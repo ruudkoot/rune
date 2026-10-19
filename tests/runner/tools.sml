@@ -429,13 +429,27 @@ struct
                                         andalso tc "--match-work=1000" = 0)
       val () = check ("budgets: type", tc "--type-work=1" <> 0 andalso contains (f "err", "type inference exceeds 1 steps")
                                        andalso tc "--type-work=10000" = 0)
-      val () = write (f "input.sml", "fun f x = x\nfun g y = f f f f f f f f f f f f y\nval _ = g 3")
+      (* f applied n times: MLton's regression exponential, a type of 2^n
+         nodes as a tree *)
+      fun applied n = "fun f x = x\nfun g y = " ^ String.concat (List.tabulate (n, fn _ => "f ")) ^ "y\nval _ = g 3\n"
+      (* types shared while inferred and, hash-consed, once translated: at
+         32 applications some 300 steps of inference and 6400 of
+         translation *)
+      val () = write (f "input.sml", applied 32)
+      val () =
+        check ("budgets: shared types",
+               r (["--no-prelude", "--typecheck-only", "--type-work=1000", "input.sml"], NONE) = 0
+               andalso r (["--no-prelude", "--type-work=20000", "-o", "output.rbc", "input.sml"], NONE) = 0)
+      (* the translation has a budget of its own, a step for each node of
+         each type it converts, and of a big type each shared node once: at
+         128 applications some 1200 steps of inference and 32000 of
+         translation *)
+      val () = write (f "input.sml", applied 128)
       val () =
         check ("budgets: translation",
-               r (["--no-prelude", "--typecheck-only", "--type-work=2000", "input.sml"], NONE) = 0
-               andalso r (["--no-prelude", "--type-work=2000", "-o", "output.rbc", "input.sml"], NONE) <> 0
-               andalso contains (f "err", "type translation exceeds 2000 steps")
-               andalso r (["--type-work=1000000", "-o", "output.rbc", "input.sml"], NONE) = 0)
+               r (["--no-prelude", "--type-work=4000", "-o", "output.rbc", "input.sml"], NONE) <> 0
+               andalso contains (f "err", "type translation exceeds 4000 steps")
+               andalso r (["--no-prelude", "--type-work=100000", "-o", "output.rbc", "input.sml"], NONE) = 0)
       (* --pass-stats=elab: a line for each top-level declaration, its time by
          context and operation adding up to its total, and its counters, which
          do not depend on the machine (docs/ir.md, The elaborator's counters) *)

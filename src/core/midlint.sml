@@ -61,7 +61,7 @@ struct
         else Ty.subst (ListPair.foldl (fn (a, u, s) => IntMap.insert (s, a, u)) IntMap.empty (tyvars, args)) t
 
       fun conArg (what, t, tag) =
-        case t of
+        case Ty.view t of
           Ty.Con (stamp, _, args) =>
             (case Ty.conArg (stamp, args, tag) of
                SOME a => a
@@ -105,22 +105,27 @@ struct
               let
                 val name = case f of Var (x, _) => SOME x | Global (g, _) => SOME g | _ => NONE
                 val n = case Option.mapPartial (fn x => IntMap.find (!nary, x)) name of SOME ps => List.length ps | NONE => 1
+                val ft = callee (env, f)
+                fun wrong () = bug ("an application of what has type " ^ Ty.toString ft)
               in
-                case (callee (env, f), args) of
+                case (Ty.view ft, args) of
                   (Ty.Arrow (d, res), [a]) =>
                     if n = 1 then (expect ("an argument", at a, d); res)
                     else bug ("a function of " ^ Int.toString n ^ " parameters given 1 argument")
-                | (Ty.Arrow (Ty.Tuple ds, res), _) =>
-                    if n = List.length args andalso n = List.length ds then
-                      (ListPair.app (fn (a, d) => expect ("an argument", at a, d)) (args, ds); res)
-                    else bug ("a function of " ^ Int.toString n ^ " parameters given " ^ Int.toString (List.length args)
-                              ^ " arguments")
-                | (t, _) => bug ("an application of what has type " ^ Ty.toString t)
+                | (Ty.Arrow (d, res), _) =>
+                    (case Ty.view d of
+                       Ty.Tuple ds =>
+                         if n = List.length args andalso n = List.length ds then
+                           (ListPair.app (fn (a, d) => expect ("an argument", at a, d)) (args, ds); res)
+                         else bug ("a function of " ^ Int.toString n ^ " parameters given " ^ Int.toString (List.length args)
+                                   ^ " arguments")
+                     | _ => wrong ())
+                | _ => wrong ()
               end
           | Prim (p, t, args) =>
-              (case t of
+              (case Ty.view t of
                  Ty.Arrow (d, res) =>
-                   (case (args, d) of
+                   (case (args, Ty.view d) of
                       ([a], _) => expect ("the argument of " ^ p, at a, d)
                     | (xs, Ty.Tuple ds) =>
                         if List.length xs = List.length ds then
@@ -130,13 +135,16 @@ struct
                     | _ => bug ("primitive " ^ p ^ " of type " ^ Ty.toString t);
                     res)
                | _ => bug ("primitive " ^ p ^ " of type " ^ Ty.toString t))
-          | Tuple xs => Ty.Tuple (List.map at xs)
+          | Tuple xs => Ty.tuple (List.map at xs)
           | Select (i, a) =>
-              (case at a of
-                 Ty.Tuple ts =>
-                   if i < List.length ts then List.nth (ts, i)
-                   else bug ("field " ^ Int.toString i ^ " of a tuple of " ^ Int.toString (List.length ts))
-               | t => bug ("a field of what has type " ^ Ty.toString t))
+              let val t = at a
+              in
+                case Ty.view t of
+                  Ty.Tuple ts =>
+                    if i < List.length ts then List.nth (ts, i)
+                    else bug ("field " ^ Int.toString i ^ " of a tuple of " ^ Int.toString (List.length ts))
+                | _ => bug ("a field of what has type " ^ Ty.toString t)
+              end
           | Con (tag, t, a) =>
               (case conArg ("a constructor", t, tag) of
                  SOME arg => (expect ("the argument of a constructor", at a, arg); t)
@@ -147,13 +155,12 @@ struct
                  SOME arg => arg
                | NONE => bug ("constructor " ^ Int.toString tag ^ " of " ^ Ty.toString t ^ " has no argument"))
           | ConTag a =>
-              (case at a of
-                 Ty.Con _ => Ty.int
-               | t => bug ("the tag of what has type " ^ Ty.toString t))
-          | NewExn _ => Ty.ExnCon
-          | BuiltinExn _ => Ty.ExnCon
-          | MkExn (c, p) => (expect ("an exception constructor", at c, Ty.ExnCon); ignore (at p); Ty.exn)
-          | ExnCon a => (expect ("an exception", at a, Ty.exn); Ty.ExnCon)
+              let val t = at a
+              in case Ty.view t of Ty.Con _ => Ty.int | _ => bug ("the tag of what has type " ^ Ty.toString t) end
+          | NewExn _ => Ty.exnCon
+          | BuiltinExn _ => Ty.exnCon
+          | MkExn (c, p) => (expect ("an exception constructor", at c, Ty.exnCon); ignore (at p); Ty.exn)
+          | ExnCon a => (expect ("an exception", at a, Ty.exn); Ty.exnCon)
           | ExnArg (t, a) => (expect ("an exception", at a, Ty.exn); t)
           | SetGlobal (g, a) =>
               (case IntMap.find (!globals, g) of

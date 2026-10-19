@@ -137,7 +137,7 @@ struct
      raise: an atom. *)
   fun fold (p : string, pty : Ty.ty, xs : atom list) : atom option =
     let
-      val result = case pty of Ty.Arrow (_, r) => r | _ => Ty.int
+      val result = case Ty.view pty of Ty.Arrow (_, r) => r | _ => Ty.int
       fun ints () = case xs of [Const (Lambda.CInt a, _), Const (Lambda.CInt b, _)] => SOME (a, b) | _ => NONE
       fun words () = case xs of [Const (Lambda.CWord a, _), Const (Lambda.CWord b, _)] => SOME (a, b) | _ => NONE
       fun int f = case ints () of
@@ -226,7 +226,7 @@ struct
      words, chars, and the nullary constructors of a datatype that has no
      other (bool, order). `=` of them is imm_eq (M11). *)
   fun immediate (t : Ty.ty) : bool =
-    case t of
+    case Ty.view t of
       Ty.Con (stamp, _, _) =>
         List.exists (fn c => stamp = #stamp c) [Types.intTycon, Types.wordTycon, Types.charTycon, Types.boolTycon]
         orelse (case Ty.datatypeOf stamp of
@@ -237,14 +237,14 @@ struct
   (* Whether a type's values are compared by identity: a ref, an array,
      an array of bytes or of reals, whose `=` is their address. *)
   fun identity (t : Ty.ty) : bool =
-    case t of
+    case Ty.view t of
       Ty.Con (stamp, _, _) =>
         List.exists (fn c => stamp = #stamp c)
                     [Types.refTycon, Types.arrayTycon, Types.bytearrayTycon, Types.realarrayTycon]
     | _ => false
 
   fun isString (t : Ty.ty) : bool =
-    case t of
+    case Ty.view t of
       Ty.Con (stamp, _, []) => stamp = #stamp Types.stringTycon
     | _ => false
 
@@ -262,14 +262,10 @@ struct
 
   fun freshStamp () = Elaborate.freshStamp ()
 
-  fun tyKey (t : Ty.ty) : string =
-    case t of
-      Ty.Gen x => "G" ^ Int.toString x
-    | Ty.Var x => "V" ^ Int.toString x
-    | Ty.Con (stamp, _, ts) => "C" ^ Int.toString stamp ^ "(" ^ String.concatWith "," (List.map tyKey ts) ^ ")"
-    | Ty.Tuple ts => "T(" ^ String.concatWith "," (List.map tyKey ts) ^ ")"
-    | Ty.Arrow (a, b) => "A(" ^ tyKey a ^ "," ^ tyKey b ^ ")"
-    | Ty.ExnCon => "E"
+  (* a type as a key of a table: its node's number, which is the type's
+     (Ty.id) -- a key only looked up, so that the number's order is no
+     order of the output *)
+  fun tyKey (t : Ty.ty) : string = Int.toString (Ty.id t)
 
   val inlinable : fundef IntTable.table ref = ref (IntTable.table 16)
   (* whether inlining is on, for the local functions registered as they are
@@ -297,7 +293,7 @@ struct
   val pendingEqs : fundef list ref = ref []
 
   fun groundTy (t : Ty.ty) : bool =
-    case t of
+    case Ty.view t of
       Ty.Con (_, _, ts) => List.all groundTy ts
     | Ty.Tuple ts => List.all groundTy ts
     | _ => false
@@ -305,7 +301,7 @@ struct
   (* The constructors of a datatype at the arguments given, each its tag and
      its argument's type. *)
   fun consAt (t : Ty.ty) : (int * Ty.ty option) list option =
-    case t of
+    case Ty.view t of
       Ty.Con (stamp, _, args) =>
         (case Ty.datatypeOf stamp of
            SOME {params, cons = cons as _ :: _} =>
@@ -322,12 +318,12 @@ struct
     case eqByType (t, []) of
       SOME p => EqPrim p
     | NONE =>
-        (case t of
+        (case Ty.view t of
            Ty.Tuple [] => EqTrue
          | Ty.Tuple ts => EqTuple ts
          | _ => if groundTy t andalso isSome (consAt t) then EqFun else EqPrim "poly_eq")
 
-  fun eqTy t = Ty.Arrow (Ty.Tuple [t, t], Ty.bool)
+  fun eqTy t = Ty.arrow (Ty.tuple [t, t], Ty.bool)
 
   (* the function of `=` at t, made where there is none yet *)
   fun eqFunOf (t : Ty.ty) : var =
@@ -371,7 +367,7 @@ struct
             (* a tuple: its fields; a datatype: the tags, then the
                argument of the constructor *)
             val rest =
-              case t of
+              case Ty.view t of
                 Ty.Tuple ts => fields (ts, 0, Var (x, []), Var (y, []), NONE)
               | _ =>
                   Let (tx, ([], Ty.int), ConTag (Var (x, [])),
@@ -456,10 +452,16 @@ struct
           (case madeOf a of
              SOME (Made (Tuple xs)) => if i < List.length xs andalso spend () then Atom (List.nth (xs, i)) else r
            | _ => r)
-      | Prim ("poly_eq", pty as Ty.Arrow (Ty.Tuple [t, _], _), xs) =>
-          (case eqByType (t, xs) of
-             SOME p => if spend () then Prim (p, pty, xs) else r
-           | NONE => if eqCallable t andalso spend () then App (Global (eqFunOf t, []), xs) else r)
+      | Prim ("poly_eq", pty, xs) =>
+          (case Ty.view pty of
+             Ty.Arrow (d, _) =>
+               (case Ty.view d of
+                  Ty.Tuple [t, _] =>
+                    (case eqByType (t, xs) of
+                       SOME p => if spend () then Prim (p, pty, xs) else r
+                     | NONE => if eqCallable t andalso spend () then App (Global (eqFunOf t, []), xs) else r)
+                | _ => r)
+           | _ => r)
       | Decon (tag, _, a) =>
           (case madeOf a of
              SOME (Made (Con (tag', _, x))) => if tag = tag' andalso spend () then Atom x else r
@@ -705,11 +707,11 @@ struct
      functions it makes are known there, to be called, inlined or given to
      copies (performance M8). *)
   fun inlineLimit (f : fundef) : int =
-    let fun isFun t = case t of Ty.Arrow _ => true | _ => false
+    let fun isFun t = case Ty.view t of Ty.Arrow _ => true | _ => false
     in
-      case #result f of
+      case Ty.view (#result f) of
         Ty.Tuple ts => if List.exists isFun ts then 2 * inlineSize else inlineSize
-      | t => if isFun t then 2 * inlineSize else inlineSize
+      | _ => if isFun (#result f) then 2 * inlineSize else inlineSize
     end
   val knownConSize = 16
   (* Whether e always raises: a call of a function that does is on the way
@@ -815,7 +817,7 @@ struct
     let
       val n = List.length (#params f)
       val ps = Vector.fromList (#params f)
-      val static = Array.tabulate (n, fn i => case #2 (Vector.sub (ps, i)) of Ty.Arrow _ => true | _ => false)
+      val static = Array.tabulate (n, fn i => case Ty.view (#2 (Vector.sub (ps, i))) of Ty.Arrow _ => true | _ => false)
       val self = ref false
       fun given (_, []) = ()
         | given (i, a :: rest) =
@@ -846,14 +848,8 @@ struct
       List.filter (fn i => Array.sub (static, i)) (List.tabulate (n, fn i => i))
     end
 
-  fun closedTy (t : Ty.ty) : bool =
-    case t of
-      Ty.Gen _ => false
-    | Ty.Var _ => true
-    | Ty.Con (_, _, ts) => List.all closedTy ts
-    | Ty.Tuple ts => List.all closedTy ts
-    | Ty.Arrow (a, b) => closedTy a andalso closedTy b
-    | Ty.ExnCon => true
+  (* whether a type names no generic variable *)
+  fun closedTy (t : Ty.ty) : bool = List.null (Ty.gens t)
 
   (* What a static parameter is given in a copy: a function of the top
      level, or a local function (performance M8, D8 A, step 5) -- its code
@@ -1052,7 +1048,10 @@ struct
           val caps' = List.map (fn (x, t) => (x, freshStamp (), t)) caps
           val flat =
             case params of
-              [(p, Ty.Tuple (ts as _ :: _ :: _))] => if selectedOnly (p, body) then SOME (p, ts) else NONE
+              [(p, t)] =>
+                (case Ty.view t of
+                   Ty.Tuple (ts as _ :: _ :: _) => if selectedOnly (p, body) then SOME (p, ts) else NONE
+                 | _ => NONE)
             | _ => NONE
           val ps' =
             case flat of
@@ -1144,7 +1143,7 @@ struct
                            else
                              let val (p, t) = List.nth (params, i)
                              in
-                               case Ty.subst inst t of
+                               case Ty.view (Ty.subst inst t) of
                                  Ty.Arrow (a, b) =>
                                    let val z = freshStamp () val w = freshStamp ()
                                    in
@@ -1638,14 +1637,14 @@ struct
         | Mark (_, a) => argsAt (k, a)
         | _ => []
       (* the walks only where some parameter is a tuple *)
-      val tuples = List.exists (fn (_, Ty.Tuple (_ :: _)) => true | _ => false) ps
+      val tuples = List.exists (fn (_, t) => case Ty.view t of Ty.Tuple (_ :: _) => true | _ => false) ps
       val indexed = if tuples then ListPair.zip (List.tabulate (List.length ps, fn k => k), ps) else []
       val () = if tuples then collect scope else ()
       val flat =
         if not tuples then []
         else
         List.mapPartial (fn (k, (x, t)) =>
-                           case t of
+                           case Ty.view t of
                              Ty.Tuple (ts as _ :: _) =>
                                if onlySelected (x, jbody) andalso List.exists (isSome o madeOf) (argsAt (k, scope))
                                then SOME (k, ts) else NONE

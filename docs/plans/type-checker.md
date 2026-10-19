@@ -88,8 +88,24 @@ program then compiles up to 22 applications (5 s, 350 MB) and is refused
 from 23 (in about 9 s, at 690 MB); with 10000000 it was refused from 21
 (measured on 2026-10-09 on a loaded machine: 2 to 3 s, 150 MB).
 `tests/compiler/run-tests.py` tests both with budgets of its own, and
-`tests/external/mlton-skip.txt` skips `exponential` (32 applications) as
+`tests/external/mlton-skip.txt` skipped `exponential` (32 applications) as
 `LIMIT`.
+
+**Since performance M4** (direction 1 below, D4 A of
+[performance.md](performance.md)) the IR's types are hash-consed, and
+`exponential` compiles at 32 applications in 0.01 s and 11 MB, at `-O0` to
+`-O2` with `--lint` and `--mid-roundtrip`, as it does at 16, 20, 24, 64 and
+128 (the most, 13 MB at 128); `run-mlton.sh` runs it, and the budget
+`compile-expo` (`tests/perf`, 20 applications) keeps it so. The
+translation's budget stays, set by what the conversion now does: a type of
+at most 64 nodes as a tree (`Ty.smallType`) converted as a tree, a bigger
+one with each of its bound cells of more than 64 converted once; the
+declaration's conversion spends some 6400 steps at 32 applications and
+32000 at 128, and its inference some 300 and 1200
+(`tests/compiler/run-tests.py` tests both). It remains a bound for a type
+the elaborator shares without a cell, an abbreviation's expansion, which a
+conversion still walks as a tree, though inference walks such a type first
+and spends more.
 
 ## What a fix needs
 

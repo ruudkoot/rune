@@ -635,7 +635,7 @@ struct
   fun irTy (e : enc, t : Ty.ty) : unit =
     let val w = #w e
     in
-      case t of
+      case Ty.view t of
         Ty.Gen i => (P.byte (w, 0); name (e, kTvar, i))
       | Ty.Var i => (P.byte (w, 1); name (e, kTvar, i))
       | Ty.Con (s, n, args) => (P.byte (w, 2); name (e, kTycon, s); P.string (w, n); P.list (fn (_, a) => irTy (e, a)) (w, args))
@@ -1115,12 +1115,12 @@ struct
     let val r = #r d
     in
       case P.rbyte r of
-        0 => Ty.Gen (rname (d, kTvar))
-      | 1 => Ty.Var (rname (d, kTvar))
-      | 2 => let val s = rname (d, kTycon) val n = P.rstring r in Ty.Con (s, n, P.rlist (fn _ => rirTy d) r) end
-      | 3 => Ty.Tuple (P.rlist (fn _ => rirTy d) r)
-      | 4 => let val a = rirTy d in Ty.Arrow (a, rirTy d) end
-      | 5 => Ty.ExnCon
+        0 => Ty.gen (rname (d, kTvar))
+      | 1 => Ty.var (rname (d, kTvar))
+      | 2 => let val s = rname (d, kTycon) val n = P.rstring r in Ty.con (s, n, P.rlist (fn _ => rirTy d) r) end
+      | 3 => Ty.tuple (P.rlist (fn _ => rirTy d) r)
+      | 4 => let val a = rirTy d in Ty.arrow (a, rirTy d) end
+      | 5 => Ty.exnCon
       | _ => raise P.Bad "not a type of the IRs"
     end
 

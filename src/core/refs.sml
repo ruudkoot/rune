@@ -20,7 +20,7 @@ struct
   fun freshStamp () = Elaborate.freshStamp ()
 
   fun refArg (t : Ty.ty) : Ty.ty option =
-    case t of
+    case Ty.view t of
       Ty.Con (s, _, [a]) => if s = #stamp Types.refTycon then SOME a else NONE
     | _ => NONE
 

@@ -125,7 +125,7 @@ struct
       NONE => NONE
     | SOME taken =>
         SOME (List.tabulate (List.length ts, fn i =>
-                case (List.nth (ts, i), List.filter (fn (j, _, _) => j = i) taken) of
+                case (Ty.view (List.nth (ts, i)), List.filter (fn (j, _, _) => j = i) taken) of
                   (Ty.Tuple (us as _ :: _ :: _), vs as _ :: _) =>
                     let
                       val nested = List.map (fn (_, v, _) => if v < 0 then NONE else flatFields (v, us, e)) vs
@@ -136,7 +136,7 @@ struct
                                          (valOf (hd nested)) (tl nested))
                       else Leaf (List.nth (ts, i))
                     end
-                | (t, _) => Leaf t))
+                | _ => Leaf (List.nth (ts, i))))
 
   and meet (a : field list, b : field list) : field list =
     ListPair.map (fn (Nest x, Nest y) => Nest (meet (x, y))
@@ -219,7 +219,7 @@ struct
         | _ =>
             let
               val specs =
-                List.map (fn (x, Ty.Tuple ts) => if List.length ts >= 2 then flatFields (x, ts, body) else NONE
+                List.map (fn (x, t) => case Ty.view t of Ty.Tuple ts => if List.length ts >= 2 then flatFields (x, ts, body) else NONE
                            | _ => NONE) params
               val arity = List.foldl (fn (SOME fs, n) => n + List.length (leaves fs) | (NONE, n) => n + 1) 0 specs
             in
@@ -295,7 +295,7 @@ struct
             #2 (List.foldl
                   (fn (f, (i, (args, lets))) =>
                      let
-                       val t = Ty.subst s (case f of Leaf t => t | Nest fs => Ty.Tuple (leavesTy fs))
+                       val t = Ty.subst s (case f of Leaf t => t | Nest fs => Ty.tuple (leavesTy fs))
                        val x = freshStamp ()
                        val lets' = fn e => lets (Let (x, ([], t), Select (i, a), e))
                      in
@@ -311,7 +311,7 @@ struct
         end
       (* A nested field's type, back from its fields. *)
       and leavesTy (fs : field list) : Ty.ty list =
-        List.map (fn Leaf t => t | Nest fs => Ty.Tuple (leavesTy fs)) fs
+        List.map (fn Leaf t => t | Nest fs => Ty.tuple (leavesTy fs)) fs
 
       (* A call of a flattened function: the fields of each argument it
          flattens, each in a variable, and the worker's call in k. *)
@@ -448,7 +448,7 @@ struct
               val wrapperParams = List.map (fn ((x, t), NONE) => (renamed x, t) | ((x, t), SOME _) => (x, t)) ps
               val (args, lets) =
                 takeApart (IntMap.empty, ListPair.map (fn ((x, _), spec) => (Var (x, []), spec)) (wrapperParams, specs))
-              val call = App (Global (worker, List.map Ty.Gen tyvars), List.rev args)
+              val call = App (Global (worker, List.map Ty.gen tyvars), List.rev args)
             in
               [workerDef, {name = name, tyvars = tyvars, params = wrapperParams, result = result, body = lets (Return call)}]
             end
@@ -460,7 +460,7 @@ struct
               val workerDef = {name = worker, tyvars = tyvars, params = List.concat (List.map #1 ls),
                                result = #2 (List.last ls), body = exp inner}
               val ls' = List.map (fn (ps, r) => (List.map (fn (x, t) => (renamed x, t)) ps, r)) ls
-              val call = App (Global (worker, List.map Ty.Gen tyvars),
+              val call = App (Global (worker, List.map Ty.gen tyvars),
                               List.map (fn (x, _) => Var (x, [])) (List.concat (List.map #1 ls')))
               fun level [] = Return call
                 | level ((ps, r) :: rest) =

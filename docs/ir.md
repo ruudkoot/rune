@@ -157,9 +157,19 @@ compiler shows as a node whose parts do not fit. The types are `Ty.ty`
   themselves (`Ty.extrasOf`): those its constructors name, and those of the
   datatypes they name. An instance of the function -- inlined, specialised
   -- then gives its constructors' arguments the instance's types.
-* **Trees:** a type is a tree here, where the elaborator's was shared, so
-  one of n nodes there can be of 2^n here; the translation of each
-  top-level declaration's types spends `--type-work`
+* **Shared:** a type is hash-consed ([plans/performance.md](plans/performance.md),
+  M4): each node is made once, through a table, and has a number of its
+  own (`Ty.id`), so that two types are equal where their numbers are
+  (`Ty.equal`), and one the elaborator shares, of 2^n nodes as a tree, is
+  n nodes here too. A node is seen through `Ty.view` and made by `Ty.gen`,
+  `Ty.var`, `Ty.con`, `Ty.tuple`, `Ty.arrow` and `Ty.exnCon`; a node knows
+  its size as a tree (`Ty.size`) and its generic variables (`Ty.gens`).
+  Every walk over a type that could meet a big one is memoised on the
+  numbers of its nodes (`Ty.subst`, `Ty.match`, MidCanon's renaming,
+  MidText's printing), and walks one of at most `Ty.smallType` nodes as a
+  tree. Simplify's key of a type is its number. The translation of each
+  top-level declaration's types still spends `--type-work`, a step for a
+  node converted, a big type's shared node once
   ([plans/type-checker.md](plans/type-checker.md)).
 
 The elaborator fills four tables as it goes (`Ty.binders`, `Ty.exnArgs`,
@@ -274,6 +284,11 @@ program written by hand. The grammar is at the head of
   declared at the head.
 * A constant of the type its kind gives it is written bare; others as
   `(0w5 : word8)`.
+* A type of more than `MidText.bigType` (1000) nodes as a tree is declared
+  at the head as an abbreviation, `(type %N TYPE)`, after the
+  abbreviations of its parts, and written `%N` where it is: a type of 2^n
+  nodes as a tree, which the IR shares, is written in some n
+  abbreviations (performance M4).
 * Positions are written only with `--mid-roundtrip`, as `(at FILE START STOP
   FRAME ... EXP)`, where a frame is `(in "NAME" "FILE" START STOP)`, or `(in
   "NAME")` for one called in tail position; comments are SML's.

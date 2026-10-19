@@ -36,9 +36,9 @@ struct
     | NONE =>
         (case sc of
            SInt _ => Ty.int
-         | SWord _ => Ty.Con (#stamp Types.wordTycon, "word", [])
-         | SReal _ => Ty.Con (#stamp Types.realTycon, "real", [])
-         | SChar _ => Ty.Con (#stamp Types.charTycon, "char", [])
+         | SWord _ => Ty.con (#stamp Types.wordTycon, "word", [])
+         | SReal _ => Ty.con (#stamp Types.realTycon, "real", [])
+         | SChar _ => Ty.con (#stamp Types.charTycon, "char", [])
          | SString _ => Ty.string
          | SWideString _ => Ty.string)
 
@@ -63,7 +63,7 @@ struct
                rt as Types.TCon (c, _) =>
                  (case Overload.literalOf c of
                     SOME (Overload.Via f) =>
-                      let val make = App (Inst (Global f, Ty.Arrow (Ty.string, ty)), Const (CString digits, Ty.string))
+                      let val make = App (Inst (Global f, Ty.arrow (Ty.string, ty)), Const (CString digits, Ty.string))
                       in
                         if not once then SOME make
                         else
@@ -101,11 +101,11 @@ struct
          | _ => Error.bug ("flexible record pattern did not resolve to a record at " ^ Source.describe sp))
     | NONE => Error.bug "flexible record pattern not annotated"
 
-  fun eqTy t = Ty.Arrow (Ty.Tuple [t, t], Ty.bool)
+  fun eqTy t = Ty.arrow (Ty.tuple [t, t], Ty.bool)
   fun testEq (a, b, t, k) = If (Prim ("poly_eq", SOME (eqTy t), [a, b]), k, Fail)
   fun testTag (v, tag, k) =
     If (Prim ("poly_eq", SOME (eqTy Ty.int), [ConTag (Var v), Const (CInt (IntInf.fromInt tag), Ty.int)]), k, Fail)
-  fun testExn (v, exncon, k) = If (Prim ("ptr_eq", SOME (eqTy Ty.ExnCon), [ExnCon (Var v), exncon]), k, Fail)
+  fun testExn (v, exncon, k) = If (Prim ("ptr_eq", SOME (eqTy Ty.exnCon), [ExnCon (Var v), exncon]), k, Fail)
 
   (* The type of an exception's payload. *)
   fun exnArgTy (info : exninfo) : Ty.ty =
@@ -384,9 +384,9 @@ struct
 
   fun stringSwitch (v : int, cases : (string * lexp) list, deflt : lexp) : lexp =
     let
-      val charTy = Ty.Con (#stamp Types.charTycon, "char", [])
-      fun prim (p, dom, r, args) = Prim (p, SOME (Ty.Arrow (dom, r)), args)
-      fun pair t = Ty.Tuple [t, t]
+      val charTy = Ty.con (#stamp Types.charTycon, "char", [])
+      fun prim (p, dom, r, args) = Prim (p, SOME (Ty.arrow (dom, r)), args)
+      fun pair t = Ty.tuple [t, t]
       fun sameString s = prim ("poly_eq", pair Ty.string, Ty.bool, [Var v, Const (CString s, Ty.string)])
       (* the groups of xs by key, in the order of their keys *)
       fun groupBy (key : 'a -> int) (xs : 'a list) : (int * 'a list) list =
@@ -428,7 +428,7 @@ struct
             val w = freshVar ()
             val groups = groupBy (fn (s, _) => Char.ord (String.sub (s, i))) cs
           in
-            Let (w, prim ("string_sub", Ty.Tuple [Ty.string, Ty.int], charTy, [Var v, Const (CInt (IntInf.fromInt i), Ty.int)]),
+            Let (w, prim ("string_sub", Ty.tuple [Ty.string, Ty.int], charTy, [Var v, Const (CInt (IntInf.fromInt i), Ty.int)]),
                  dispatch (w, charTy, "char_lt", fn k => Const (CChar k, charTy),
                            List.map (fn (_, g) => (Char.ord (String.sub (#1 (hd g), i)), byChars (len, g))) groups))
           end
@@ -567,7 +567,7 @@ struct
                 val yes = if hasArg then Let (w, ExnArg (exnArgTy e, Var v), yes) else yes
                 val no = tree (cols, List.filter (fn r => not (same (cell r))) rows)
               in
-                If (Prim ("ptr_eq", SOME (eqTy Ty.ExnCon), [ExnCon (Var v), exnConExp e]), yes, no)
+                If (Prim ("ptr_eq", SOME (eqTy Ty.exnCon), [ExnCon (Var v), exnConExp e]), yes, no)
               end
           | KConst =>
               let

@@ -310,7 +310,7 @@ struct
      T_CON0; none nullary: in the heap; both: either); a tuple, a
      function, an exception in the heap; a type variable any. *)
   fun repOfTy (t : Ty.ty) : L.rep =
-    case t of
+    case Ty.view t of
       Ty.Tuple [] => L.RUnit
     | Ty.Tuple _ => L.RPtr
     | Ty.Arrow _ => L.RPtr
@@ -476,7 +476,7 @@ struct
   val currentSum : int option ref = ref NONE
 
   fun sumWidth (t : Ty.ty) : int option =
-    case t of
+    case Ty.view t of
       Ty.Con (stamp, _, _) =>
         (case Ty.datatypeOf stamp of
            SOME {cons, ...} =>
@@ -553,9 +553,9 @@ struct
       val () =
         List.app (fn M.Funs fs =>
                        List.app (fn f =>
-                                   case (#result f, IntTable.find (asValue, #name f), IntMap.member (!slotFuns, #name f)) of
-                                     (t as Ty.Con (stamp, _, _), NONE, false) =>
-                                       (case sumWidth t of
+                                   case (Ty.view (#result f), IntTable.find (asValue, #name f), IntMap.member (!slotFuns, #name f)) of
+                                     (Ty.Con (stamp, _, _), NONE, false) =>
+                                       (case sumWidth (#result f) of
                                           SOME w => IntTable.insert (cands, #name f, (stamp, w))
                                         | NONE => ())
                                    | _ => ()) fs
@@ -629,7 +629,7 @@ struct
       val cands0 =
         List.foldl (fn (M.Funs fs, m) =>
                          List.foldl (fn (f, m) =>
-                                       case #result f of
+                                       case Ty.view (#result f) of
                                          Ty.Tuple (ts as _ :: _ :: _) => IntMap.insert (m, #name f, (List.length ts, #body f))
                                        | _ => m) m fs
                      | (_, m) => m) IntMap.empty p
@@ -923,7 +923,7 @@ struct
       M.Atom a => atom (b, cx, a)
     | M.App (M.Global (g, _), xs) =>
         (case IntMap.find (!slotFuns, g) of
-           SOME n => def (b, L.Tuple (slotParts (b, cx, g, n, xs, List.tabulate (n, fn _ => Ty.Var 0), NONE)))
+           SOME n => def (b, L.Tuple (slotParts (b, cx, g, n, xs, List.tabulate (n, fn _ => Ty.var 0), NONE)))
          | NONE => defAs (b, oper (b, cx, r), repOfRhs r))
     | M.Select (i, a) =>
         (case virtualOf (b, a) of
@@ -943,7 +943,7 @@ struct
      heap, a tag an int; the rest the binder's type says (Let) *)
   and repOfRhs (r : M.rhs) : L.rep =
     case r of
-      M.Prim (_, Ty.Arrow (_, res), _) => repOfTy res
+      M.Prim (_, pt, _) => (case Ty.view pt of Ty.Arrow (_, res) => repOfTy res | _ => L.RAny)
     | M.Tuple (_ :: _) => L.RPtr
     | M.Tuple [] => L.RUnit
     | M.Con (_, t, _) => repOfTy t
@@ -1066,7 +1066,7 @@ struct
     | _ => returnTuple (b, cx, r)
 
   and letRest (b, cx, x, scheme, r, body) =
-             case (slotCall r, #2 scheme) of
+             case (slotCall r, Ty.view (#2 scheme)) of
                (SOME (g, n, xs), Ty.Tuple ts) =>
                  (case takenOnly x of
                     SOME is => (setVirtual (b, x, Parts (slotParts (b, cx, g, n, xs, ts, SOME is))); exp (b, body, cx))
