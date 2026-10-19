@@ -729,3 +729,22 @@ numbering, persistent sets, snapshot-based propagation and output builders
 as diagnostic candidates; causal performance findings require measurements.
 Complete source observers validate actual historical quirks rather than
 repairing them according to a textbook description.
+
+
+## Application import references, 2026-10-19
+
+The following sources supplement the initial survey. Publisher/author records
+were checked for bibliographic identity. Source inspection supports the workload
+mapping; no performance conclusion is inferred from a paper's title or abstract.
+
+| Application | Reference and scope | Diagnostic questions |
+|---|---|---|
+| parser | [Hutton and Meijer, Monadic parser combinators (1996)](https://nottingham-repository.worktribe.com/output/1024440/monadic-parser-combinators), background on higher-order parsing; no direct ancestry or authorship claim for this nofib program. | Recursive combinators, alternatives, fixity environments, retained token streams and AST/report allocation. |
+| hpg | [Wichmann and Hill, An Efficient and Portable Pseudo-Random Number Generator (1982)](https://academic.oup.com/jrsssc/article/31/2/188/6985277), the RNG reference identified in Env.lhs; the retained N. D. North manual describes the actual generator. | Binary32 random choices, continuation construction, name-stream sharing and generated-text allocation. |
+| fluid | [Liu, The Role of Elimination Trees in Sparse Factorization (1990)](https://epubs.siam.org/doi/abs/10.1137/0611010), background on elimination trees and sparse factorization; original comments identify the selected generalized-envelope implementation. | Persistent radix tries, minimum-degree/postordering, source forcing, numerical boxing and result formatting. |
+| reptile | Original Main.hs and module headings credit the LML program and Haskell translation; the selected source defines scripted MGR protocol behavior. A benchmark-specific paper attribution has not been established in this source review. | Editor-state retention, rational geometry, transformation lists and complete protocol construction. |
+
+The application provenance distinguishes these background references from
+independently checked fixture results and source-based hypotheses. Exact
+binary32-derived output is the selected Fluid validation rule; it has zero
+numerical error allowance for the recorded profiles.

@@ -393,7 +393,8 @@ load() {
         return
       fi
       # shellcheck disable=SC2086
-      timeout "$limit" "$cmd1" $flags -output "$loaddir/prog" "$loaddir/prog.mlb" > "$loaddir/log" 2>&1 || return 1
+      timeout "$limit" "$cmd1" $flags -output "$loaddir/prog" "$loaddir/prog.mlb" > "$loaddir/log" 2>&1 ||
+        { load_status=$?; [ "$load_status" != 124 ] || echo "compile timed out after $limit s" >> "$loaddir/log"; return 1; }
       (cd "$loaddir" && timeout "$limit" ./prog > stdout 2>> log < "$program_input")
       ;;
     *:mlkit)
@@ -421,11 +422,11 @@ load() {
       write_mlb "$loaddir/prog.mlb" $mlkit_files
       if [ "$mode" = check ]; then
         (cd "$loaddir" && SML_LIB=$cmd2 timeout $((limit * 8)) "$cmd1" --no_messages -c prog.mlb > log 2>&1) ||
-          { mlkit_error "$loaddir/log"; return 1; }
+          { load_status=$?; [ "$load_status" != 124 ] || echo "compile timed out after $((limit * 8)) s" >> "$loaddir/log"; mlkit_error "$loaddir/log"; return 1; }
         return
       fi
       (cd "$loaddir" && SML_LIB=$cmd2 timeout "$limit" "$cmd1" --no_messages -o prog prog.mlb > log 2>&1) ||
-        { mlkit_error "$loaddir/log"; return 1; }
+        { load_status=$?; [ "$load_status" != 124 ] || echo "compile timed out after $limit s" >> "$loaddir/log"; mlkit_error "$loaddir/log"; return 1; }
       # with a cap on its memory: IntInf.toString of a number that MLKit's
       # IntInf.scan made wrong allocates until the machine has no more
       # (docs/bugreport/mlkit/IntInf.scan/sign-inside-the-digits)

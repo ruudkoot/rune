@@ -1,0 +1,11 @@
+tests/benchmarks/data/nofib-hpg/.gitattributes
+tests/benchmarks/data/nofib-hpg/large-chunk-0.reference
+tests/benchmarks/data/nofib-hpg/large-chunk-1.reference
+tests/benchmarks/data/nofib-hpg/large-chunk-2.reference
+tests/benchmarks/data/nofib-hpg/normal-chunk-0.reference
+tests/benchmarks/data/nofib-hpg/normal-chunk-1.reference
+tests/benchmarks/data/nofib-hpg/normal-chunk-2.reference
+tests/benchmarks/data/nofib-hpg/random-bits.reference
+tests/benchmarks/data/nofib-hpg/smoke-chunk-0.reference
+tests/benchmarks/data/nofib-hpg/smoke-chunk-1.reference
+tests/benchmarks/data/nofib-hpg/smoke-chunk-2.reference

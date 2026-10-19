@@ -1,0 +1,6 @@
+# Preserve exact original notices, inputs and reviewed reference bytes.
+upstream/** -whitespace
+*.reference -whitespace
+*.input -whitespace
+input.stdin -whitespace
+runtime_files/** -whitespace

@@ -286,6 +286,60 @@ class InventoryTest(unittest.TestCase):
         self.file("spectral/multiplier/Main.hs", "-- Another multiplier author\nmain = print 0\n")
         self.assertNotIn("John T. O'Donnell", self.build("nofib")[0]["authors"])
 
+    def application_source(self, name, source="main = print 0\n"):
+        self.nofib_roots()
+        self.file("real/" + name + "/Main.hs", source)
+        self.file("real/" + name + "/Makefile", "FAST_OPTS = 1\nNORM_OPTS = 2\n")
+        return "real/" + name
+
+    def test_hpg_generator_is_not_classified_as_arbitrary_precision_arithmetic(self):
+        self.assertEqual(AUDIT.family("hpg", "Integer values in generated programs"), "compiler-application")
+
+    def test_hpg_manual_records_program_author(self):
+        path = self.application_source("hpg")
+        self.file(path + "/hpg.tex", "\\title{The Haskell Program Generator}\n"
+                  "\\author{N D North\\\\\n{\\tt ndn@seg.npl.co.uk}}\n% Crown Copyright 1992\n")
+        row = next(r for r in self.build("nofib") if r["path"] == path)
+        self.assertIn("N. D. North", row["authors"])
+        self.assertIn(path + "/hpg.tex:Crown-Copyright-1992", row["notices"])
+
+    def test_changed_hpg_author_requires_review(self):
+        path = self.application_source("hpg")
+        self.file(path + "/hpg.tex", "\\title{The Haskell Program Generator}\n\\author{Another author}\n")
+        self.assertNotIn("N. D. North", self.build("nofib")[0]["authors"])
+
+    def test_reptile_keeps_original_and_translation_roles(self):
+        self.application_source("reptile", "-- LML original: Sandra Foubister, 1990\n"
+                                "-- Haskell translation: Colin Runciman, May 1991\nmain = print 0\n")
+        row = self.build("nofib")[0]
+        self.assertIn("Sandra Foubister (LML original)", row["authors"])
+        self.assertIn("Colin Runciman (Haskell translation)", row["authors"])
+
+    def test_changed_reptile_translation_does_not_inherit_porter(self):
+        self.application_source("reptile", "-- LML original: Sandra Foubister, 1990\nmain = print 0\n")
+        self.assertNotIn("Colin Runciman", self.build("nofib")[0]["authors"])
+
+    def test_fluid_keeps_initials_without_inventing_a_full_name(self):
+        path = self.application_source("fluid")
+        self.file(path + "/Defs.hs", "{- XZ, 24/10/91 -}\n{- XZ, 19/2/92 -}\nmodule Defs where\n")
+        row = self.build("nofib")[0]
+        self.assertIn("XZ (source initials)", row["authors"])
+        self.assertIn("dated-source-initials-not-expanded", row["evidence"])
+
+    def test_fluid_dynamic_filename_still_inventories_mesh(self):
+        path = self.application_source("fluid")
+        self.file(path + "/runtime_files/chan8.dat", "TEST CHANNEL PROBLEM WITH NONISOTHERMAL FLOW\n")
+        row = self.build("nofib")[0]
+        self.assertIn(path + "/runtime_files/chan8.dat", row["inputs"])
+        self.assertIn("channel-model-header", row["evidence"])
+
+    def test_changed_fluid_mesh_does_not_inherit_channel_description(self):
+        path = self.application_source("fluid")
+        self.file(path + "/runtime_files/chan8.dat", "Another model\n")
+        row = self.build("nofib")[0]
+        self.assertIn(path + "/runtime_files/chan8.dat", row["inputs"])
+        self.assertNotIn("channel-model-header", row["evidence"])
+
     def nucleic2_sources(self, original=True, readme=True, single=True):
         self.nofib_roots()
         path = "spectral/hartel/nucleic2/"
