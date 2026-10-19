@@ -109,10 +109,16 @@ frame's caller from its header -- the info word where the return word
 is the interpreter's, else the landing's code object, which says the
 caller's function and pc for each of its landings (`jit_landing_info`:
 the code by address among the region's code objects, the landing by its
-offset, the last 256 return words asked kept). The collector scans a
-header as it scans the slots between frames, the closure made `unit`
-first where the frame's function does not read one, so that it keeps
-nothing alive; an image keeps the layout of every engine, without the
+offset, the last 256 return words asked kept, with how far below the
+frame the caller's base is). The walks of the collections and of the
+barrier (`vm_frames_from`, `reg_barrier_pass`) step down without a call:
+a return word one of the two they met last, as a deep recursion's frames
+are, or one of the 256, is read in line. Of a header the collector scans
+the closure alone, made `unit` where the frame's function does not read
+one, so that it keeps nothing alive, and makes `unit` the info word of a
+frame compiled code called, which does not write it, where the slot
+holds a pointer from before (`FrameRef.stale_slot`, `GC_BELOW_FRAME` in
+`gc/gc.h`); an image keeps the layout of every engine, without the
 headers, which the writer leaves out and the reader makes
 (`vm_frames_install`), so that images cross between the engines of this
 instruction set and its builds before M4.
@@ -454,8 +460,9 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   loop's message, from the stub), `jit_h_push_handler` (where the
   table of handlers is full), `jit_h_raise`, `jit_h_interrupt` (the
   user's interrupt raised from a poll), `jit_h_primpush`,
-  and `jit_h_grow` (the stack's clean part claimed where a call finds no
-  room, and the frames grown with it).
+  `jit_h_barrier` (a return through the stack's return barrier, which
+  lowers the watermark: native-frames.md, M5) and `jit_h_grow` (the
+  stack's clean part claimed where a call finds no room).
 * **`emit.c`**: the emitters, one per instruction, over the
   macro-assembler. `runeisa` writes `runtime/register/jit_emit.h`, their
   prototypes, so that an instruction without one does not build, and
@@ -547,7 +554,11 @@ word (`VM.barrier_stub`, at `VM.barrier_at`, its own word in
 watermark, goes through the stub, which lowers the watermark to the
 caller, moves the barrier there and goes on where the frame's own word
 says (`jit_h_barrier`, `reg_barrier_pass`; the loop's `RET` likewise).
-No other return compares anything. A collection moves the barrier to the
+No other return compares anything. Each return through the barrier since
+the last collection moves it twice as many frames down as the one before
+(to 1024), so that a deep recursion that unwinds passes it at every
+2^k-th return, not at every one, and the next collection scans at most
+twice the frames that ran. A collection moves the barrier to the
 frame that runs (`vm_frames_mark_low`), a raise or the debugger's frame
 dropped below it to the frame they leave running; the walk and every
 reader of a return word see through it; `--gc-verify` checks that it is

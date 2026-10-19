@@ -85,12 +85,13 @@ static void copy_value(VM *vm, Value *v) {
    and a dead one that holds a pointer is made unit: it is not copied, and it
    must not stay behind pointing into the space that is left, since the frame
    becomes the one that runs again, whose registers are all roots (what it is
-   doing when a collection comes is not known here). A frame's header in the
-   stack (runtime/register: native-frames.md, M4) is scanned as the slots
-   between frames are, its closure made unit first where the frame does not
-   read one (FrameRef.closure_slot). Above sp the stack's clean part is made
-   unit (vm_clean_stack, performance M6): a frame made there later takes its
-   slots as they are. */
+   doing when a collection comes is not known here). Of a frame's header in
+   the stack (runtime/register: native-frames.md, M4) only the closure is
+   visited, made unit where the frame does not read one, and a stale word
+   is made unit where it is a pointer (FrameRef.closure_slot, stale_slot;
+   GC_BELOW_FRAME, gc.h); the other slots between frames are visited. Above
+   sp the stack's clean part is made unit (vm_clean_stack, performance M6):
+   a frame made there later takes its slots as they are. */
 void gc_stack_roots(VM *vm, void (*visit)(VM *, Value *)) {
     size_t at = 0, dead = 0;
     FrameRef *fr = NULL;
@@ -100,8 +101,7 @@ void gc_stack_roots(VM *vm, void (*visit)(VM *, Value *)) {
             size_t end = fr[k + 1].base < vm->sp ? fr[k + 1].base : vm->sp;
             uint32_t n = vm->prog.funcs[f->func].nlocals;
             uint64_t live = vm->frame_live(vm, f->func, f->pc);
-            if (f->closure_slot && !f->closure) *f->closure_slot = mk_unit();
-            for (; at < f->base && at < end; at++) visit(vm, &vm->stack[at]);
+            GC_BELOW_FRAME(vm, f, at, end, visit);
             for (uint32_t r = 0; r < n && at < end; r++, at++) {
                 if (r >= 64 || ((live >> r) & 1)) visit(vm, &vm->stack[at]);
                 else {
@@ -118,8 +118,7 @@ void gc_stack_roots(VM *vm, void (*visit)(VM *, Value *)) {
            wrote, and none is filled with unit */
         const FrameRef *f = &fr[nf - 1];
         uint32_t n = vm->prog.funcs[f->func].nlocals;
-        if (f->closure_slot && !f->closure) *f->closure_slot = mk_unit();
-        for (; at < f->base && at < vm->sp; at++) visit(vm, &vm->stack[at]);
+        GC_BELOW_FRAME(vm, f, at, vm->sp, visit);
         for (uint32_t r = 0; r < n && at < vm->sp; r++, at++) {
             if (r >= 64 || ((vm->top_live >> r) & 1)) visit(vm, &vm->stack[at]);
             else {

@@ -87,6 +87,7 @@ void jit_depend(JitProgram *jit, uint32_t callee, uint32_t caller) {
 }
 
 static JitProgram *the_program;   /* one VM per process, for --jit-stats */
+struct LandingSeen *jit_landing_seen;
 static VM *the_vm;
 
 static void jit_make(VM *vm, JitProgram *jit) {
@@ -236,9 +237,8 @@ void jit_code_placed(JitProgram *jit, uint32_t f, const void *at, size_t size) {
    the call by the code's landings; the last 256 asked kept */
 int jit_landing_info(VM *vm, Value w, uint32_t *func, uint32_t *pc) {
     JitProgram *jit = the_program;
-    (void)vm;
     if (!jit || !jit->nranges) return 0;
-    struct LandingSeen *seen = &jit->seen[(uint32_t)((w >> 1) * 0x9E3779B97F4A7C15u >> 56)];
+    struct LandingSeen *seen = &jit->seen[jit_seen_slot(w)];
     if (seen->word == w) { *func = seen->func; *pc = seen->pc; return 1; }
     uintptr_t at = (uintptr_t)w - JIT_RET_BIAS;
     uint32_t a = 0, b = jit->nranges;
@@ -262,6 +262,7 @@ int jit_landing_info(VM *vm, Value w, uint32_t *func, uint32_t *pc) {
     *func = r->func;
     *pc = co->land_pcs[x];
     seen->word = w; seen->func = *func; seen->pc = *pc;
+    seen->below = REG_HEADER + vm->prog.funcs[*func].nlocals;
     jit->walked_landings++;
     return 1;
 }
@@ -355,6 +356,7 @@ JitProgram *jit_program(VM *vm) {
     if (!the_program) {
         the_program = calloc(1, sizeof(JitProgram));
         if (!the_program) { fprintf(stderr, "runevm: out of memory (JIT)\n"); exit(2); }
+        jit_landing_seen = the_program->seen;
         if (vm->jit.stats) the_program->prim_calls = calloc(PRIM__COUNT, sizeof(uint64_t));
         the_vm = vm;
         if (vm->jit.stats) atexit(jit_print_stats);

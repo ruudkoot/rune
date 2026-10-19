@@ -325,10 +325,10 @@ static Value ret_word(VM *vm) {
 
 /* the frame's return word, seen through the return barrier where the
    frame is the barrier's (below, M5) */
-static int barrier_at(const VM *vm, size_t b) {
+static inline int barrier_at(const VM *vm, size_t b) {
     return vm->barrier_at && b == vm->barrier_at && vm->stack[b - 1] == vm->barrier_stub;
 }
-static Value ret_word_at(const VM *vm, size_t b) { return barrier_at(vm, b) ? vm->barrier_word : vm->stack[b - 1]; }
+static inline Value ret_word_at(const VM *vm, size_t b) { return barrier_at(vm, b) ? vm->barrier_word : vm->stack[b - 1]; }
 static void set_ret_word_at(VM *vm, size_t b, Value w) {
     if (barrier_at(vm, b)) vm->barrier_word = w;
     else vm->stack[b - 1] = w;
@@ -338,16 +338,19 @@ static void set_ret_word_at(VM *vm, size_t b, Value w) {
    and where the header begins. A caller whose registers would not end
    below the header is a fault of the VM's (or of an image's, which
    vm_frames_install checks). */
+static void broken_below(VM *vm, size_t b) { vm_fatal(vm, "the frames are broken below the frame at %zu", b); }
 static void read_header(VM *vm, size_t b, FrameRef *f) {
     Value w = ret_word_at(vm, b);
     f->bottom = 0;
     f->head = b - 3;
+    f->stale_slot = NULL;
     if (reg_interp_word(vm, w)) {
         Value info = vm->stack[b - 3];
         f->caller_func = reg_info_func(info);
         f->ret_pc = reg_info_pc(info);
         int kind = reg_info_kind(info);
         if (kind == REG_INFO_BOTTOM) { f->caller_base = 0; f->bottom = 1; return; }
+        if (f->caller_func >= vm->prog.nfuncs) broken_below(vm, b);
         if (kind == REG_INFO_EXPLICIT) {
             f->head = b - 4;
             f->caller_base = (size_t)val_imm(vm->stack[b - 4]);
@@ -355,11 +358,57 @@ static void read_header(VM *vm, size_t b, FrameRef *f) {
     } else {
         if (!jit_landing_info(vm, w, &f->caller_func, &f->ret_pc))
             vm_fatal(vm, "a frame returns to no code (its return word %#llx)", (unsigned long long)w);
+        if (f->caller_func >= vm->prog.nfuncs) broken_below(vm, b);
         f->caller_base = b - 3 - vm->prog.funcs[f->caller_func].nlocals;
+        f->stale_slot = &vm->stack[b - 3];   /* compiled code called: the info word is not written */
     }
-    if (f->caller_func >= vm->prog.nfuncs || f->caller_base < 3 || f->caller_base >= b
-        || f->caller_base + vm->prog.funcs[f->caller_func].nlocals > f->head)
-        vm_fatal(vm, "the frames are broken below the frame at %zu", b);
+    if (f->caller_base < 3 || f->caller_base >= b || f->caller_base + vm->prog.funcs[f->caller_func].nlocals > f->head)
+        broken_below(vm, b);
+}
+/* The caller of the frame at b, as a walk steps down to it (the
+   collections' walk, vm_frames_from; the barrier's pass): one of the two
+   landings it met last -- a deep recursion's frames return to one or two,
+   a recursive call or two -- or one the region was asked of lately
+   (jit_landing_seen) read in line, the caller's base by how far below
+   the frame it is; else the header read as above (*f filled, the step
+   given 0). */
+typedef struct { Value word; uint32_t func, pc; size_t below; } LastLanding;
+typedef struct { size_t base; uint32_t func, pc; } Caller;
+static inline void met(LastLanding *last, Value w, uint32_t func, uint32_t pc, size_t below) {
+    last[1] = last[0];
+    last[0] = (LastLanding){w, func, pc, below};
+}
+static inline int step_down(VM *vm, size_t b, LastLanding *last, Caller *c, FrameRef *f) {
+    Value w = ret_word_at(vm, b);
+    size_t below;
+    if (w != last[0].word && w == last[1].word) {   /* the other of two, first now */
+        LastLanding t = last[1];
+        last[1] = last[0];
+        last[0] = t;
+    }
+    if (w == last[0].word) {
+        c->func = last[0].func;
+        c->pc = last[0].pc;
+        below = last[0].below;
+    } else {
+        const struct LandingSeen *seen = jit_landing_seen ? &jit_landing_seen[jit_seen_slot(w)] : NULL;
+        if (seen && seen->word == w) {
+            c->func = seen->func;
+            c->pc = seen->pc;
+            below = seen->below;
+        } else {
+            read_header(vm, b, f);
+            c->base = f->caller_base;
+            c->func = f->caller_func;
+            c->pc = f->ret_pc;
+            if (!f->bottom && !reg_interp_word(vm, w)) met(last, w, c->func, c->pc, b - c->base);
+            return 0;
+        }
+        met(last, w, c->func, c->pc, below);
+    }
+    c->base = b - below;   /* (below b, else it wraps above it) */
+    if (c->base < 3 || c->base >= b) broken_below(vm, b);
+    return 1;
 }
 /* frame b, of function func, waiting at pc (the running one: at vm->pc) */
 static void frame_at(VM *vm, size_t b, uint32_t func, uint32_t pc, FrameRef *f) {
@@ -397,26 +446,54 @@ int vm_frame_find(VM *vm, size_t id, FrameRef *f) {
 
 size_t vm_frames_from(VM *vm, size_t low, FrameRef **out) {
     *out = NULL;
-    size_t n = 0;
-    FrameRef f;
-    for (int more = vm_frame_top(vm, &f); more && f.id >= low; more = vm_frame_down(vm, &f)) {
-        if (n == vm->frame_buf_cap) {
-            size_t cap = vm->frame_buf_cap ? vm->frame_buf_cap * 2 : 64;
-            FrameRef *b = realloc(vm->frame_buf, cap * sizeof *b);
-            if (!b) vm_fatal(vm, "out of memory (the frames walked)");
-            vm->frame_buf = b;
-            vm->frame_buf_cap = cap;
-        }
-        vm->frame_buf[n++] = f;
+    if (!vm->frames_active || vm->fp < 3 || vm->fp > vm->stack_cap || low > vm->fp) return 0;
+    /* filled from the end, the walk being from the top: a frame is four
+       slots at least (a register and its header), which bounds how many */
+    size_t most = (vm->fp - low) / 4 + 2;
+    if (most > vm->frame_buf_cap) {
+        size_t cap = vm->frame_buf_cap ? vm->frame_buf_cap : 64;
+        while (cap < most) cap *= 2;
+        FrameRef *b = realloc(vm->frame_buf, cap * sizeof *b);
+        if (!b) vm_fatal(vm, "out of memory (the frames walked)");
+        vm->frame_buf = b;
+        vm->frame_buf_cap = cap;
     }
-    /* the deepest last */
-    for (size_t i = 0; i < n / 2; i++) {
-        FrameRef t = vm->frame_buf[i];
-        vm->frame_buf[i] = vm->frame_buf[n - 1 - i];
-        vm->frame_buf[n - 1 - i] = t;
+    /* each frame made in its place, as frame_at makes it, from the top
+       down: the walk of a collection, which goes as far as the watermark */
+    FrameRef *end = vm->frame_buf + most, *at = end;
+    const Function *funcs = vm->prog.funcs;
+    LastLanding last[2] = {{0, 0, 0, 0}, {0, 0, 0, 0}};
+    size_t b = vm->fp;
+    uint32_t func = vm->func, pc = vm->pc;
+    for (;;) {
+        if (at == vm->frame_buf) vm_fatal(vm, "the frames are broken (more than their slots hold)");
+        FrameRef *f = --at;
+        Caller c;
+        int bottom = 0;
+        size_t head = b - 3;
+        Value *stale = &vm->stack[b - 3];   /* a landing's: compiled code called */
+        if (!step_down(vm, b, last, &c, f)) { bottom = f->bottom; head = f->head; stale = f->stale_slot; }
+        Value k = vm->stack[b - 2];
+        f->func = func;
+        f->pc = pc;
+        f->ret_pc = c.pc;
+        f->base = b;
+        f->id = b;
+        f->head = head;
+        f->closure = funcs[func].reads_closure && val_is_ptr(k) ? val_ptr(k) : NULL;
+        f->closure_root = NULL;
+        f->closure_slot = &vm->stack[b - 2];
+        f->stale_slot = stale;
+        f->caller_base = c.base;
+        f->caller_func = c.func;
+        f->bottom = bottom;
+        if (bottom || c.base < low) break;
+        b = c.base;
+        func = c.func;
+        pc = c.pc;
     }
-    *out = n ? vm->frame_buf : NULL;
-    return n;
+    *out = at;
+    return (size_t)(end - at);
 }
 
 int vm_frame_top_live(const VM *vm, const FrameRef *top) { return vm->top_frame == (const void *)(vm->stack + top->base); }
@@ -453,14 +530,20 @@ static void frames_lower(VM *vm, size_t id) {
 void vm_frames_mark_low(VM *vm, size_t id) {
     if (barrier_at(vm, vm->barrier_at)) vm->stack[vm->barrier_at - 1] = vm->barrier_word;
     vm->barrier_at = 0;
+    vm->barrier_step = 1;
     vm->fp_low = id;
     FrameRef f;
     if (vm->barrier_stub && id >= 3 && vm_frame_find(vm, id, &f)) barrier_arm(vm, id);
 }
 size_t vm_frames_low(const VM *vm) { return vm->fp_low; }
 /* a return through the barrier, the frame at the watermark returning: its
-   return word, given back; the watermark lowered to its caller, and the
-   barrier there (the top level's frame has none below it) */
+   return word, given back; the watermark lowered to its caller -- or
+   further, by as many frames as the returns through the barrier since the
+   last collection, doubling to 1024, so that a deep recursion that
+   unwinds goes through it not at every return but at every 2^k-th, the
+   collection after scanning at most twice the frames that ran (none of
+   them is young but where it ran) -- and the barrier there (the top
+   level's frame has none below it) */
 Value reg_barrier_pass(VM *vm) {
     size_t b = vm->barrier_at;
     Value w = vm->barrier_word;
@@ -468,14 +551,20 @@ Value reg_barrier_pass(VM *vm) {
     vm->barrier_at = 0;
     vm->barrier_runs++;
     FrameRef f;
-    f.bottom = 0;
-    read_header(vm, b, &f);
-    if (!f.bottom) {
-        vm->fp_low = f.caller_base;
+    LastLanding last[2] = {{0, 0, 0, 0}, {0, 0, 0, 0}};
+    Caller c;
+    int bottom = !step_down(vm, b, last, &c, &f) && f.bottom;   /* the top level's frame returns */
+    for (uint32_t k = 1; !bottom && k < vm->barrier_step; k++) {
+        size_t at = c.base;
+        if (!step_down(vm, at, last, &c, &f) && f.bottom) { c.base = at; break; }   /* the watermark at the top level's frame */
+    }
+    if (vm->barrier_step < 1024) vm->barrier_step = vm->barrier_step ? 2 * vm->barrier_step : 1;
+    if (!bottom) {
+        vm->fp_low = c.base;
         if (vm->barrier_stub) {
-            vm->barrier_word = vm->stack[f.caller_base - 1];
-            vm->stack[f.caller_base - 1] = vm->barrier_stub;
-            vm->barrier_at = f.caller_base;
+            vm->barrier_word = vm->stack[c.base - 1];
+            vm->stack[c.base - 1] = vm->barrier_stub;
+            vm->barrier_at = c.base;
         }
     }
     return w;

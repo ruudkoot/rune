@@ -390,6 +390,7 @@ typedef struct VM {
     size_t barrier_at;
     Value barrier_word;
     uint64_t barrier_runs;
+    uint32_t barrier_step;   /* the frames a return through it lowers the watermark by, doubling from 1 after a collection */
     /* the frames vm_frames_from gives, walked into a buffer of the VM's (native-frames.md, M3) */
     struct FrameRef *frame_buf;
     size_t frame_buf_cap;
@@ -728,6 +729,11 @@ typedef struct FrameRef {
        where the frame has no closure it reads (closure NULL), so that it
        keeps nothing alive and points nowhere after the collection */
     Value *closure_slot;
+    /* a slot of its header that holds what the slot held before, or NULL:
+       runtime/register's info word where compiled code made the call,
+       which does not write it (native-frames.md, M4). The collector makes
+       it unit where it is a pointer, which it then need not follow. */
+    Value *stale_slot;
     /* the instruction set's own, for vm_frame_down: the caller's base and
        function, and whether the frame has none (the top level's) */
     size_t caller_base;

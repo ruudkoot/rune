@@ -233,7 +233,7 @@ typedef struct JitProgram {
        and a cache of the return words it was asked of last */
     struct CodeRange { uintptr_t lo, hi; uint32_t func; } *ranges;
     uint32_t nranges, ranges_cap;
-    struct LandingSeen { Value word; uint32_t func, pc; } seen[256];
+    struct LandingSeen { Value word; uint32_t func, pc; size_t below; } seen[256];   /* below: how far below the frame its caller's base is, the caller's registers and the header */
     uint64_t walked_landings;   /* --jit-stats: the return words of compiled code the walks of the frames read */
 } JitProgram;
 /* the lowest register of function f a call must fill with unit */
@@ -271,6 +271,10 @@ void jit_depend(JitProgram *jit, uint32_t callee, uint32_t caller);
    RESULT of the call (the walk of the frames, runtime/register/isa_regs.c);
    0 where it is none */
 int jit_landing_info(VM *vm, Value w, uint32_t *func, uint32_t *pc);
+/* the return words it was asked of last, by jit_seen_slot (JitProgram.seen;
+   NULL while there is no program): looked at in line by the walk first */
+extern struct LandingSeen *jit_landing_seen;
+static inline uint32_t jit_seen_slot(Value w) { return (uint32_t)((w >> 1) * 0x9E3779B97F4A7C15u >> 56); }
 /* function f's code is placed at at, size bytes: its range, for jit_landing_info */
 void jit_code_placed(JitProgram *jit, uint32_t f, const void *at, size_t size);
 /* runtime/register/isa_regs.c: the frames whose return word is a landing

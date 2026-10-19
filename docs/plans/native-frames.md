@@ -42,7 +42,7 @@ plan's.
 | M6 | Arguments in registers | done (2026-10-19), kept: a known call, and a tail call, puts its arguments in the homes the callee's tier-2 code takes them in, at its register entry; the bootstrap −0.93% instructions (the gate 0.5%), HOL's kernel work −1.06%; a `fib` call 27.0 to 26.0 instructions, a `tak` call 35.3 to 31.7 (target for `fib` 23.5 short); `--count` and every output unchanged (*M6*) |
 | M7 | Returns the processor predicts | done (2026-10-19) behind `--jit-returns=call`, the default staying `jmp`: a call by `call`, a return by `push [r14-8]; ret`; a `fib` call 8.05 to 7.62 cycles, a `tak` call 10.08 to 8.65, the instructions the same; on the whole programs 0.1% and 0.6% more instructions and the cycles not shown better on a loaded machine (the gate 1%); M9 measures again (*M7*) |
 | M8 | The allocation pointer in a register | done (2026-10-19): the pointer in `rbp` (`x21`), an object 5 instructions before its header (10), the bytes from the pointer's progress at the syncs, the objects by a counter per object -- D7's count per run not built, the lead's call (*M8*); the bootstrap −1.59% instructions (target 2%), HOL's kernel work −6.15% (target 2.5%); `--count`'s bytes and objects unchanged everywhere |
-| M9 | Measure again: the owner's goal | not started |
+| M9 | Measure again: the owner's goal | in progress: the walks of deep recursions made cheaper after MLton's set showed four programs slower than at M1 (*M9*, found on the way) |
 
 The owner took every decision as recommended on 2026-10-12 (*Decisions*).
 
@@ -1460,6 +1460,14 @@ loop's words and bodies (`reg_words.h`, `src/isa/regs.sml`), the JIT's
     programs), the bootstrap's output the same. (The bootstrap's own count
     is not one to compare between runs: the compiler reads the processor's
     clock, and its count moves by thousands with the time it took.)
+* **Slower on deep recursion** -- found at M9, in MLton's set, and fixed
+  after M8 (*M9*, found on the way): a walk of the frames is a step
+  through each header, its landing looked up and its caller's size read,
+  where `runevm-stack`'s array is indexed, and the collector visited
+  every word of a header; so a program whose collections walk deep
+  stacks took more instructions at M4 than at M3 -- `merge` 2.18G to
+  3.16G, `wc-input1` 1.85G to 2.59G -- until the walk read its landings
+  in line and the collector looked at a header's closure alone.
 
 ### M5. The watermark by a return barrier (S-M)
 
@@ -1519,6 +1527,13 @@ seen through by every walk.
   barrier passes is scanned once after; a collection at a shallower depth
   scans fewer than the returns it saw): some 140 instructions each under
   callgrind, 9M in all, where the landings' compares were 144M.
+* **Slower on deep recursion** -- found at M9 and fixed after M8 (*M9*,
+  found on the way): a recursion that unwinds deep returns through the
+  barrier at every frame, each pass a step of the walk, where M4's
+  landing compared two words; `DLXSimulator` made 43M passes, and
+  `merge` took 3.56G instructions at M5 to M4's 3.16G. The barrier now
+  goes down twice as many frames at each pass since the last collection
+  (to 1024), the steps read in line.
 
 ### M6. Arguments in registers (M, measured)
 
@@ -1704,6 +1719,31 @@ true; what is left moved to the plan that takes it.
   the floor F1 measured under Rune's contract (1.27 and 1.29 times); what
   lies below it -- the count, the overflow checks, frames the collector
   reads -- is the owner's to trade, not this plan's.
+
+**Found on the way** (2026-10-19, MLton's set's instructions on M8's VM
+against M1's): four programs of deep recursion took more instructions
+than at M1 -- `DLXSimulator` 119.7G to 143.1G (+19.5%), `merge` 2.13G to
+3.51G, `wc-input1` 1.82G to 2.69G, `wc-scanStream` 1.70G to 2.58G --
+where the geometric mean of the 37 that run fell 7.7%. The time went to
+the walks of the frames, which M4 made a step through each frame's
+header (its landing looked up, its caller's size read) where
+`runevm-stack`'s array is indexed; to the barrier's pass, a step at
+every return below the watermark; and to the collector's visit of every
+word of every header. A commit of its own, after M8, makes the walks of
+the collections and of the barrier step down in line -- a return word
+one of the two met last, as a recursion's frames are, or one of the 256
+the region was asked of last, its caller's distance kept with it --
+lowers the watermark at each return through the barrier by twice the
+frames of the one before since the last collection (to 1024), so that
+an unwinding recursion passes it at every 2^k-th return, and has the
+collector look at a header's closure alone, the info word, which
+compiled code does not write, made unit where it holds a pointer from
+before (`FrameRef.stale_slot`; `tests/lang/rt.gc_stale-header`, which
+`--gc-verify` fails where the word is left): `DLXSimulator` to 113.9G,
+`merge` to 2.23G, `wc-input1` to 1.80G, `wc-scanStream` to 1.69G; the
+bootstrap 13.604G to 13.246G (−2.6%), HOL's kernel work 40.54G to
+39.75G (−2.0%); `--count` and every output unchanged, the bootstrap's
+`--gc-verify` clean.
 
 ### Why this order
 

@@ -181,8 +181,7 @@ static void minor_stack(VM *vm, size_t low) {
             size_t end = fr[k + 1].base < vm->sp ? fr[k + 1].base : vm->sp;
             uint32_t n = vm->prog.funcs[f->func].nlocals;
             uint64_t live = vm->frame_live(vm, f->func, f->pc);
-            if (f->closure_slot && !f->closure) *f->closure_slot = mk_unit();
-            for (; at < f->base && at < end; at++) promote_value(vm, &vm->stack[at]);
+            GC_BELOW_FRAME(vm, f, at, end, promote_value);
             for (uint32_t r = 0; r < n && at < end; r++, at++) {
                 if (r >= 64 || ((live >> r) & 1)) promote_value(vm, &vm->stack[at]);
                 else {
@@ -197,8 +196,7 @@ static void minor_stack(VM *vm, size_t low) {
            (VM.top_live, M6): as a frame that waits */
         const FrameRef *f = &fr[nf - 1];
         uint32_t n = vm->prog.funcs[f->func].nlocals;
-        if (f->closure_slot && !f->closure) *f->closure_slot = mk_unit();
-        for (; at < f->base && at < vm->sp; at++) promote_value(vm, &vm->stack[at]);
+        GC_BELOW_FRAME(vm, f, at, vm->sp, promote_value);
         for (uint32_t r = 0; r < n && at < vm->sp; r++, at++) {
             if (r >= 64 || ((vm->top_live >> r) & 1)) promote_value(vm, &vm->stack[at]);
             else {

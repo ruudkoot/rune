@@ -18,6 +18,7 @@ static void frame_at(VM *vm, size_t i, FrameRef *f) {
     f->closure = fr->closure;
     f->closure_root = &vm->frames[i].closure;
     f->closure_slot = NULL;
+    f->stale_slot = NULL;
     f->pc = i == vm->fp ? vm->pc : vm->frames[i + 1].ret_pc;
     f->bottom = i == 0;
     f->caller_base = i ? vm->frames[i - 1].base : 0;
