@@ -121,7 +121,7 @@ four-budget perturbations after binary32 rounding. Additional controls
 cover round-to-even, arithmetic precision, signed zero, nonfinite results,
 unused coordinates and actual sharing. The unmodified GHC main succeeds
 for all three source counts and nonpositive controls.
-The [complete validation record](../results/m3-nucleic2/README.md) retains
+The [complete validation record](../../../../rune-benchmark-results/m3-nucleic2/README.md) retains
 all passing, failing and incomplete host/engine groups. All 64 Rune profile
 combinations pass, along with all sixteen normal count samples. This closes
 the final M3 import; host exceptions remain explicit and contribute no accepted

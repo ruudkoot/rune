@@ -10,11 +10,11 @@ expected values remain unchanged.
 | Word64 minimum minus one | 7FFFFFFFFFFFFFFF | 7FFFFFFF3FFFFFFF | 7FFFFFFFFFFFFFFF |
 | Word64 signed maximum times two | FFFFFFFFFFFFFFFE | FFFFFFFF3FFFFFFE | FFFFFFFFFFFFFFFE |
 
-[The complete probe](../results/m3-integer/word64-probe.log) records constant
+[The complete probe](../../../../rune-benchmark-results/m3-integer/word64-probe.log) records constant
 and runtime results across all ten configurations. Both runtime checks pass
-everywhere. Its [source](../results/m3-integer/word64-probe.sml) and
-[input](../results/m3-integer/word64-probe.input) are retained, as are both
-levels' [complete semantic logs](../results/m3-integer/semantics/O0.log).
+everywhere. Its [source](../../../../rune-benchmark-results/m3-integer/word64-probe.sml) and
+[input](../../../../rune-benchmark-results/m3-integer/word64-probe.input) are retained, as are both
+levels' [complete semantic logs](../../../../rune-benchmark-results/m3-integer/semantics/O0.log).
 The observed constant paths lose bits 30 and 31, consistent with the existing
 [Word64 low-half reports](../../../docs/bugreport/smlnj/README.md).
 No current upstream issue status is inferred from this local run.

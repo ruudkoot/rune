@@ -15,8 +15,8 @@ smaller probe pass, so it does not fully isolate the larger helper's failing
 constant comparison. It does establish a host arithmetic discrepancy independent
 of the benchmark algorithm and expected results.
 
-The retained [probe source](../results/m5-zarith/reference-observers/native-word-probe.sml)
-and [complete host transcript](../results/m5-zarith/reference-observers/native-word-reviewed.log)
+The retained [probe source](../../../../rune-benchmark-results/m5-zarith/reference-observers/native-word-probe.sml)
+and [complete host transcript](../../../../rune-benchmark-results/m5-zarith/reference-observers/native-word-reviewed.log)
 record all ten configurations. Nine pass all four probes; native32 fails only
 the equality between the constant subtraction and runtime conversion. This is
 consistent with the earlier [Word64 diagnostic](word64-host.md) and its linked

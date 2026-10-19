@@ -98,7 +98,7 @@ transformed output for 0/1/2 repetitions in both evaluation and copy modes; they
 also check unused character heads, fresh copy spines, shared head cells, repeated
 translation, renderer partiality and rejection of wrong/truncated/extra fixtures.
 Profile checks count and validate every output spine. Complete evidence and
-resource outcomes belong in results/m3-hartel-compr and validation.md.
+resource outcomes belong in [results/m3-hartel-compr](../../../../rune-benchmark-results/m3-hartel-compr) and validation.md.
 
 [Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) provides suite
 context, rather than measurements of this SML port. The pinned suite sources

@@ -4,7 +4,7 @@ Final evidence records 78 of 80 tagged profile passes: all 40 normal runs
 and 38 of 40 smoke runs. The two lazy ML Kit smoke compiles have empty logs
 and remain unclassified. The same host passes normal and complete semantics.
 All 2514 semantic assertions pass in each of 20 configuration/level groups
-(50280 total). See the [raw matrix](../results/m3-happy/correctness.tsv).
+(50280 total). See the [raw matrix](../../../../rune-benchmark-results/m3-happy/correctness.tsv).
 Native requested levels repeat host-default compiler options.
 
 The [small arithmetic reproducer](happy-smlnj32-arithmetic.sml) reads the

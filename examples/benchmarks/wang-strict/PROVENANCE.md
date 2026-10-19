@@ -100,7 +100,7 @@ source reconstruction formulas, unused RHS demand, memoized factors and delibera
 perturbed/nonfinite values. Default SML/NJ failures and separate replays are kept
 as diagnostics. Whole-program normal and large Rune pilots retain all 500 solves.
 Recorded coverage and the full repository check belong in validation.md and
-results/m3-wang; these pilot facts alone do not close M3.
+[results/m3-wang](../../../../rune-benchmark-results/m3-wang); these pilot facts alone do not close M3.
 
 [Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) provides suite
 context. The pinned source supplies the algorithm and evaluation evidence here.

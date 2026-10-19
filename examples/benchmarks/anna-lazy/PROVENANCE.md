@@ -104,7 +104,7 @@ lambda-lifting, type-inference, eta and analysis observations. The complete
 cover abstract routes/order/lattice operations/successors/predecessors,
 lattice normalization and sizing, RNG, shortest-path ties, complete frontier
 representations and memo order. All six complete formatted reports match
-byte for byte. Both 100-repeat smoke drivers pass privately. Public profile, count and acceptance checks are [recorded](../results/m4-anna/README.md), including all host exceptions.
+byte for byte. Both 100-repeat smoke drivers pass privately. Public profile, count and acceptance checks are [recorded](../../../../rune-benchmark-results/m4-anna/README.md), including all host exceptions.
 
 The original source establishes implementation ancestry. Baraki's
 [Abstract Interpretation of Polymorphic Higher-Order Functions (1993)](https://theses.gla.ac.uk/74619/)
@@ -114,7 +114,7 @@ the port's actual computation are checked against the pinned program.
 
 ### Recorded public validation
 
-[Recorded results](../results/m4-anna/README.md) cover all 32 Rune
+[Recorded results](../../../../rune-benchmark-results/m4-anna/README.md) cover all 32 Rune
 smoke/normal engine/level combinations, 12 complete semantic groups of 1963
 checks, normal allocation agreement and full repository acceptance. Host
 timeouts and the confirmed SML/NJ32 literal defect remain explicit. This

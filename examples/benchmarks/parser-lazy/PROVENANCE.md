@@ -86,7 +86,7 @@ not imply steady state. Profiling/count instrumentation runs separately.
 
 ### Recorded public validation
 
-The [application-wave evidence](../results/m4-parser-reptile-hpg-fluid/README.md)
+The [application-wave evidence](../../../../rune-benchmark-results/m4-parser-reptile-hpg-fluid/README.md)
 records smoke/normal checks at O0/O2, all applicable Rune engines, supplied SML
 hosts, independent semantic assertions, normal allocation counts, serial
 adapter diagnostics and full repository acceptance. All 128 Rune profile

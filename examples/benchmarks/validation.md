@@ -397,11 +397,11 @@ implementations. The suite contains 162 programs and 480 profiles; M3 remains
 in progress for spectral, shootout and GC coverage, and M4/M5/M8 are not closed.
 
 Each new port passes smoke/normal on all four Rune engines at both -O0 and -O2
-on the latest `4652d4a` base. The [latest-base ledger](results/m3-imaginary/latest-base-attempts.tsv)
+on the latest `4652d4a` base. The [latest-base ledger](../../../rune-benchmark-results/m3-imaginary/latest-base-attempts.tsv)
 records those attempts. Original GHC programs and independent exact integer,
 rational, prime, Cartesian-product and combinatorial references agree with
 reviewed fixtures. Primary native hosts pass except legacy SML/NJ's lazy-regex
-normal hash. [The full attempt ledger](results/m3-imaginary/correctness-attempts.tsv)
+normal hash. [The full attempt ledger](../../../rune-benchmark-results/m3-imaginary/correctness-attempts.tsv)
 retains earlier port errors and rejected results, with unknown optimization
 settings explicit where no surviving log identifies them.
 
@@ -413,7 +413,7 @@ show paraffin counts do not force unused tree values and range expansions retain
 order, descending endpoints and padding. These targets are reproducible through
 check-streams.sh, check-numeric-ports.sh and check-symbolic-ports.sh.
 
-Separate [count reports](results/m3-imaginary/README.md) cover the numerical,
+Separate [count reports](../../../rune-benchmark-results/m3-imaginary/README.md) cover the numerical,
 exact-arithmetic, wheel and symbolic variants. Allocations agree across all four
 Rune engines; stack/native and register/JIT instruction counts agree within
 their applicable pairs. Complete raw records, source/input snapshots, compiler
@@ -443,8 +443,8 @@ lazy/strict spectral extended GCD. The suite now contains 172 programs and
 workloads are still scheduled, and M4/M5/M8 are not closed.
 
 Each final smoke/normal profile passes on all four Rune engines at -O0/-O2;
-[the latest attempt record](results/m3-gc/latest-attempts.tsv) identifies those
-160 successful cases and the [broader ledger](results/m3-gc/correctness-attempts.tsv)
+[the latest attempt record](../../../rune-benchmark-results/m3-gc/latest-attempts.tsv) identifies those
+160 successful cases and the [broader ledger](../../../rune-benchmark-results/m3-gc/correctness-attempts.tsv)
 retains earlier failures. Managed MLton, Poly/ML and both 64-bit SML/NJ versions
 also validate selected profiles. Original GHC observers and independent tree,
 store, bucket-placement, sequence, pi and integer-arithmetic references agree.
@@ -467,7 +467,7 @@ profiles. Original GCBench's historical Java stretch phase is not added to the
 Haskell variant. Added full-state observers and representation/demand changes
 are recorded per benchmark rather than hidden in a uniform driver.
 
-Separate [count archives](results/m3-gc/README.md) retain source/input snapshots,
+Separate [count archives](../../../rune-benchmark-results/m3-gc/README.md) retain source/input snapshots,
 configuration/revision/dirty-state metadata and raw observations. Allocation
 agrees across all four engines; instruction comparisons agree within the
 applicable stack/native and register/JIT pairs. Instrumented run times are not
@@ -487,7 +487,7 @@ Five ports add lazy/strict treejoin, lazy/strict spellcheck, and CSE. The
 catalogue contains 177 programs and 525 profiles. M3 remains in progress;
 these imports do not close the remaining GC, spectral, or shootout coverage.
 
-[Recorded attempts](results/m3-persistent/correctness-attempts.tsv) include
+[Recorded attempts](../../../rune-benchmark-results/m3-persistent/correctness-attempts.tsv) include
 all 80 required final smoke/normal Rune cases, which pass on four engines at
 both -O0 and -O2. Managed MLton, legacy and modern 64-bit SML/NJ, and Poly/ML
 also pass both profiles. An initial CSE tuple-selector portability error is
@@ -503,7 +503,7 @@ labels, association lists, and closure-based renaming. Each adaptation and
 notice gap is documented in its benchmark provenance.
 
 The treejoin and word-set semantic targets pass all ten configurations at both
-optimization levels. Separate [count archives](results/m3-persistent/README.md)
+optimization levels. Separate [count archives](../../../rune-benchmark-results/m3-persistent/README.md)
 retain source/input identities and all samples: allocations agree across all
 four engines and applicable instruction comparisons agree. No headline timing
 or universal large-profile pass is claimed.
@@ -523,7 +523,7 @@ port. Other GC and spectral entries remain scheduled; M3 is still in progress.
 
 Final smoke/normal profiles pass on four Rune engines at both -O0 and -O2 and
 on managed MLton, both 64-bit SML/NJ versions, and Poly/ML. The
-[attempt ledger and raw results](results/m3-power-shootout/README.md) preserve
+[attempt ledger and raw results](../../../rune-benchmark-results/m3-power-shootout/README.md) preserve
 244 attempts and rejected early ports. Original GHC observers and independent
 analytic/Catalan identities validate every power coefficient; its GC integer
 and spectral rational generating functions remain distinct. Thirteen semantics
@@ -558,7 +558,7 @@ Together with the earlier Ackermann port, all six sequential recursive controls
 are covered. Their effect-based siblings remain deferred. The catalogue has
 187 programs and 555 profiles; M5 remains in progress for the other workloads.
 
-[The recorded ledger](results/m5-recursive/correctness.tsv) has 144 successful
+[The recorded ledger](../../../rune-benchmark-results/m5-recursive/correctness.tsv) has 144 successful
 runs: 120 for the five ports and 24 for the classic Fibonacci kernel extracted
 unchanged into shared/fib.sml. Smoke/normal pass on four Rune engines at both
 levels and four primary managed native hosts. Complete stdout and compilation
@@ -574,7 +574,7 @@ is explicit. Each repetition contributes to the result. SML operand order,
 added accumulation and optional original optimization barriers are documented.
 No universal large SML execution is claimed.
 
-Separate [count archives](results/m5-recursive/README.md) retain source/input
+Separate [count archives](../../../rune-benchmark-results/m5-recursive/README.md) retain source/input
 snapshots, metadata and all samples. All allocation and applicable instruction
 comparisons agree. The pinned Sandmark rebuild preserves every source identity
 and disposition while adding reviewed kernel relationships; all 32 inventory
@@ -593,7 +593,7 @@ memoized and strict forms sharing one implementation. M4 is now in progress;
 the other applications remain scheduled. The catalogue has 192 programs and
 570 profiles.
 
-[All 48 primary smoke/normal cases](results/m4-compress/correctness.tsv) pass:
+[All 48 primary smoke/normal cases](../../../rune-benchmark-results/m4-compress/correctness.tsv) pass:
 four Rune engines at -O0/-O2 and four managed native hosts. Standalone ML Kit
 smoke and normal programs also pass. Every compressed byte is checked before
 hashing; all 31 cut fixtures per profile and all 200 normal/large hash samples
@@ -607,7 +607,7 @@ byte range, EOF demand and dictionary freeze. ML Kit 4.7.23 crashes compiling
 the combined two-functor test; its [failure and reproduction](validation/mlkit-compress.md)
 are recorded separately from passing standalone benchmark runs. No workaround
 or alternate expected result is introduced. Separate
-[count archives](results/m4-compress/README.md) retain complete samples and
+[count archives](../../../rune-benchmark-results/m4-compress/README.md) retain complete samples and
 source/input/tool identities; all allocations and applicable instruction
 comparisons agree. No headline timing or universal large SML pass is claimed.
 
@@ -623,11 +623,11 @@ Six variants add spectral LCSS/treejoin and the RSA application, bringing the
 catalogue to 198 programs and 588 profiles. M3 and M4 remain in progress.
 The spectral ports share reviewed kernels while retaining 500 LCSS repetitions,
 100 treejoin repetitions and the shuffled relation datasets. Their
-[96 primary cases](results/m3-shared-spectral/correctness.tsv) pass on four Rune
+[96 primary cases](../../../rune-benchmark-results/m3-shared-spectral/correctness.tsv) pass on four Rune
 engines at both levels and four primary native hosts. Complete sequences/joins
 agree with GHC observers and independent references.
 
-RSA's [attempt ledger](results/m4-rsa/correctness-attempts.tsv) retains a rejected
+RSA's [attempt ledger](../../../rune-benchmark-results/m4-rsa/correctness-attempts.tsv) retains a rejected
 411-byte smoke timeout on the unoptimized stack VM. Its selected 64-byte prefix
 keeps one full exponentiation at the original key widths. All 48 final primary
 smoke/normal cases pass. Every ciphertext block and hash sum agrees with GHC
@@ -636,8 +636,8 @@ memoized versus eager encoding and added full-output validation are explicit.
 Eight semantics checks pass nine configurations at both levels; the paired
 ML Kit compiler failure is [recorded separately](validation/mlkit-compress.md).
 
-The [RSA](results/m4-rsa/README.md) and
-[spectral](results/m3-shared-spectral/README.md) count archives retain complete
+The [RSA](../../../rune-benchmark-results/m4-rsa/README.md) and
+[spectral](../../../rune-benchmark-results/m3-shared-spectral/README.md) count archives retain complete
 samples and identities. All allocation and applicable instruction comparisons
 agree. No headline timing or universal large SML execution is claimed.
 
@@ -651,7 +651,7 @@ those checks; all 32 inventory tests pass.
 
 Lazy primes, lazy-list allocation and the CPS sequence pipeline bring the
 catalogue to 190 programs and 564 profiles. All
-[72 required smoke/normal cases](results/m5-lazy/correctness.tsv) pass on four
+[72 required smoke/normal cases](../../../rune-benchmark-results/m5-lazy/correctness.tsv) pass on four
 Rune engines at both levels and four primary managed native hosts. M5 remains
 in progress for other suitable sequential workloads.
 
@@ -666,7 +666,7 @@ Original OCaml agrees with independent trial division, list identities and
 weighted-square sums. Eight lazy and seven CPS semantics checks pass all ten
 configurations at both levels. A rejected early CPS test transcript is retained:
 SML/NJ required an explicit type on its empty trace reference. This changes the
-test only. Separate [count archives](results/m5-lazy/README.md) retain all samples
+test only. Separate [count archives](../../../rune-benchmark-results/m5-lazy/README.md) retain all samples
 and source/input/tool identities; all allocations and applicable instruction
 comparisons agree. No headline timing or universal large SML pass is claimed.
 
@@ -680,8 +680,8 @@ records the complete run.
 
 Two Life variants and Paul Hudak's mailing-label application bring the catalogue
 to 201 programs and 597 profiles. M3 and M4 remain in progress. All
-[48 Life](results/m3-life/correctness.tsv) and
-[24 maillist](results/m4-maillist/correctness.tsv) primary smoke/normal cases
+[48 Life](../../../rune-benchmark-results/m3-life/correctness.tsv) and
+[24 maillist](../../../rune-benchmark-results/m4-maillist/correctness.tsv) primary smoke/normal cases
 pass on four Rune engines at both levels and four primary native hosts.
 Complete displays/files agree with original GHC and independent references.
 Life uses a nonempty smoke input and preserves adjacent-fixpoint stopping;
@@ -705,9 +705,9 @@ passing evidence. All 32 inventory tests pass.
 ## M3 SCC/awards and M5 Hamming, 2026-10-04
 
 Five variants bring the catalogue to 206 programs and 612 profiles. All
-[48 SCC](results/m3-scc/correctness.tsv),
-[48 awards](results/m3-awards/correctness.tsv) and
-[24 Hamming](results/m5-hamming/correctness.tsv) final primary smoke/normal cases
+[48 SCC](../../../rune-benchmark-results/m3-scc/correctness.tsv),
+[48 awards](../../../rune-benchmark-results/m3-awards/correctness.tsv) and
+[24 Hamming](../../../rune-benchmark-results/m5-hamming/correctness.tsv) final primary smoke/normal cases
 pass on four Rune engines at both levels and four primary native hosts.
 These matrices use final canonical suite source paths and inputs.
 
@@ -721,7 +721,7 @@ validation is not claimed. Semantic checks pass all ten configurations at both
 levels: nine each for SCC and awards, eight for Hamming.
 
 Complete instrumented counts agree across applicable Rune engines. A
-[resolver race](results/m6-resolver-isolation/README.md) discovered by concurrent
+[resolver race](../../../rune-benchmark-results/m6-resolver-isolation/README.md) discovered by concurrent
 count runs is fixed with private temporary paths and a regression that preserves
 an inherited matrix worker. Initial failed attempts remain recorded separately.
 No headline timing is inferred. The bounded routine smoke set adds maillist and
@@ -738,7 +738,7 @@ validates the final configuration-isolation change and its negative checks.
 ## M5 mutable Stack workloads, 2026-10-04
 
 Two Stack modes bring the catalogue to 208 programs and 618 profiles. All
-[48 primary cases](results/m5-stack/correctness.tsv) pass smoke/normal on four
+[48 primary cases](../../../rune-benchmark-results/m5-stack/correctness.tsv) pass smoke/normal on four
 Rune engines at both levels and four primary native hosts. Original normal
 iteration counts, list/length invariants, library algorithm and exact source
 notices are retained. Complete OCaml observers and independent arithmetic
@@ -764,7 +764,7 @@ passing benchmarks are distinct from ML Kit's test-program compilation crash.
 ## M4 pure state encodings, 2026-10-04
 
 Seven variants bring the catalogue to 215 programs and 639 profiles. All
-[168 primary smoke/normal cases](results/m4-eff/correctness.tsv) pass on four
+[168 primary smoke/normal cases](../../../rune-benchmark-results/m4-eff/correctness.tsv) pass on four
 Rune engines at both levels and four primary native hosts. Fourteen semantic
 checks pass all ten configurations at both levels. Original GHC observers
 agree on selected results and S's deferred counter; strict variants additionally
@@ -798,9 +798,9 @@ identical GC/spectral programs share one implementation and retain all source,
 fixture and runtime-setting provenance. The guarded inventory classification
 has 35 passing discovery/classification tests.
 
-[All 56 final cases](results/m3-constraints/correctness.tsv) pass smoke/normal
+[All 56 final cases](../../../rune-benchmark-results/m3-constraints/correctness.tsv) pass smoke/normal
 on four Rune engines at both levels and all six managed native hosts. The
-[attempt ledger](results/m3-constraints/correctness-attempts.tsv) retains the
+[attempt ledger](../../../rune-benchmark-results/m3-constraints/correctness-attempts.tsv) retains the
 rejected generic driver projection and a 600-second -O0 stack timeout.
 Explicit tuple typing and a recorded strict-normal 1,200-second override resolve
 those cases; input size 6 and all 240 normal repetitions remain fixed. Full
@@ -823,13 +823,13 @@ validation/negative checks and the recorded normal retries pass.
 ## M3 Fibonacci heaps, 2026-10-04
 
 Two variants bring the catalogue to 219 programs and 651 profiles. [All 56
-smoke/normal cases](results/m3-fibheaps/correctness.tsv) pass on four Rune engines
+smoke/normal cases](../../../rune-benchmark-results/m3-fibheaps/correctness.tsv) pass on four Rune engines
 at both levels and all six managed native hosts. Nine semantic checks pass all
 ten configurations at both levels. Original GHC observers and independent
 histograms agree for selected inputs; separate demand observations distinguish
 mutable from functional consolidation.
 
-The [attempt ledger](results/m3-fibheaps/correctness-attempts.tsv) preserves the
+The [attempt ledger](../../../rune-benchmark-results/m3-fibheaps/correctness-attempts.tsv) preserves the
 strict original-size -O0 pilot's 4 GiB memory failure. Paired normal inputs use
 30,000 elements; large retains the original 300,000. Both sorting algorithms,
 forest orders and sharing remain explicit. Count comparisons agree. No headline
@@ -848,8 +848,8 @@ Ten imports bring the catalogue to 229 programs and 681 profiles. The repeated
 spectral heap pair, ANSI pair and grep pair each pass 56 smoke/normal cases on
 four Rune engines at both levels and all six managed native hosts. Sandmark's
 four sequential array kernels pass 104 cases on Rune and five native hosts.
-The [spectral heaps](results/m3-spectral-fibheaps/), [ANSI](results/m3-ansi/),
-[grep](results/m4-grep/) and [array](results/m5-sequential-arrays/) archives
+The [spectral heaps](../../../rune-benchmark-results/m3-spectral-fibheaps/), [ANSI](../../../rune-benchmark-results/m3-ansi/),
+[grep](../../../rune-benchmark-results/m4-grep/) and [array](../../../rune-benchmark-results/m5-sequential-arrays/) archives
 retain complete case ledgers, raw results, provenance and source/input/tool
 identities. All ten count groups agree across applicable Rune engines.
 
@@ -894,7 +894,7 @@ run from the pre-final 675-profile baseline and interrupted debugger wait.
 ## M5 sequential LU, 2026-10-15
 
 One import brings the catalogue to 230 programs and 684 profiles. [All 28
-smoke/normal cases](results/m5-lu/correctness.tsv) pass on four Rune engines at
+smoke/normal cases](../../../rune-benchmark-results/m5-lu/correctness.tsv) pass on four Rune engines at
 both levels and all six managed native hosts. Fourteen numerical/perturbation
 checks pass all ten configurations at both levels; count comparisons agree.
 
@@ -914,7 +914,7 @@ records that acceptance run; all 35 inventory tests pass.
 ## M3 calendar pictures, 2026-10-15
 
 Two imports bring the catalogue to 232 programs and 690 profiles. [All 56
-smoke/normal cases](results/m3-calendar/correctness.tsv) pass on Rune's four
+smoke/normal cases](../../../rune-benchmark-results/m3-calendar/correctness.tsv) pass on Rune's four
 engines at both levels and all six managed native hosts. Twenty-one semantic
 checks pass all ten configurations at both levels, and count comparisons agree.
 
@@ -936,7 +936,7 @@ run; all 35 inventory tests pass.
 ## M3 banner pictures, 2026-10-16
 
 Two imports bring the catalogue to 234 programs and 696 profiles. [All 56
-smoke/normal cases](results/m3-banner/correctness.tsv) pass on Rune's four engines
+smoke/normal cases](../../../rune-benchmark-results/m3-banner/correctness.tsv) pass on Rune's four engines
 at both levels and all six managed native hosts. Twelve semantic checks pass all
 ten configurations at both levels; count comparisons agree.
 
@@ -957,7 +957,7 @@ records the run; all 35 inventory tests pass.
 ## M3 sorting and M5 barrier review, 2026-10-16
 
 Two imports bring the catalogue to 236 programs and 702 profiles. [All 56
-smoke/normal cases](results/m3-sorting/correctness.tsv) pass on Rune's four engines
+smoke/normal cases](../../../rune-benchmark-results/m3-sorting/correctness.tsv) pass on Rune's four engines
 at both levels and all six managed native hosts. Forty semantic checks pass all
 ten configurations at both levels, and count comparisons agree. Eight algorithms,
 seven reversals, guard/tie order and tree representations remain intact. Complete
@@ -983,8 +983,8 @@ records that run. All 38 inventory tests pass and all 861 entries validate.
 ## M3 geometry and M5 numerical/grid workloads, 2026-10-16
 
 Four imports bring the catalogue to 240 programs and 714 profiles. The
-[fish pair](results/m3-fish/) passes 56 smoke/normal cases, [spectral norm](results/m5-spectralnorm/)
-passes 28, and [dense-array Life](results/m5-array-life/) passes 26. The two Life
+[fish pair](../../../rune-benchmark-results/m3-fish/) passes 56 smoke/normal cases, [spectral norm](../../../rune-benchmark-results/m5-spectralnorm/)
+passes 28, and [dense-array Life](../../../rune-benchmark-results/m5-array-life/) passes 26. The two Life
 native32 attempts reproduce the independently isolated SML/NJ generator Overflow.
 All remaining selected host/engine cases pass with unchanged source/expected data.
 Ten geometry, seven numerical and ten Life semantic checks pass all ten
@@ -1007,7 +1007,7 @@ records the combined wave; all 38 inventory tests pass.
 ## M5 integer arithmetic variants, 2026-10-16
 
 Ten imports bring the catalogue to 250 programs and 744 profiles. [All 280
-canonical smoke/normal cases](results/m5-zarith/correctness.tsv) pass on Rune's
+canonical smoke/normal cases](../../../rune-benchmark-results/m5-zarith/correctness.tsv) pass on Rune's
 four engines at both levels and all six managed native hosts. Canonical
 arguments match the current manifest. Forty normal count samples pass and
 applicable instruction/allocation comparisons agree; these remain unbudgeted
@@ -1039,7 +1039,7 @@ records the run. All 38 inventory tests pass and all 861 entries validate.
 ## M3 column-pruned cryptarithm search, 2026-10-16
 
 Two imports bring the catalogue to 252 programs and 750 profiles. [All 56
-smoke/normal cases](results/m3-cryptarithm2/correctness.tsv) pass on Rune's four
+smoke/normal cases](../../../rune-benchmark-results/m3-cryptarithm2/correctness.tsv) pass on Rune's four
 engines at both levels and all six managed native hosts. Ten semantic checks
 pass all ten configurations at both levels. Eight normal count samples pass
 and applicable comparisons agree; these unbudgeted instrumented samples remain
@@ -1065,7 +1065,7 @@ records the run. All 38 inventory tests pass and all 861 entries validate.
 ## M3 exhaustive permutations and M5 source review, 2026-10-16
 
 Two imports bring the catalogue to 254 programs and 756 profiles. [All 56
-requested smoke/normal cases](results/m3-cryptarithm1/coverage.tsv) are accounted
+requested smoke/normal cases](../../../rune-benchmark-results/m3-cryptarithm1/coverage.tsv) are accounted
 for: 55 pass, and strict normal on legacy 64-bit SML/NJ 110.99.9 reaches its
 1,200-second cap without a result. That full-size host check remains incomplete.
 Native32 and SML/NJ 2026.2 complete it; every Rune engine passes both profiles at
@@ -1104,7 +1104,7 @@ benchmark sources and expected results remain the validated implementations.
 ## M5 sequential trees and indexed permutations, 2026-10-16
 
 Two imports bring the catalogue to 256 programs and 762 profiles. [All 84
-smoke/normal cases](results/m5-tree-permutations/correctness.tsv) pass for the
+smoke/normal cases](../../../rune-benchmark-results/m5-tree-permutations/correctness.tsv) pass for the
 new programs and refactored classic binary-trees on Rune's four engines at both
 levels and all six managed native hosts. Twelve normal count samples pass the
 combined comparison with unchanged budgets. Eight tree and ten permutation
@@ -1135,7 +1135,7 @@ records the run. All 41 inventory tests pass and all 861 entries validate.
 ## M5 sequential FASTA output strategies, 2026-10-16
 
 Two imports bring the catalogue to 258 programs and 768 profiles. [All 56
-smoke/normal cases](results/m5-fasta/correctness.tsv) pass on Rune's four engines
+smoke/normal cases](../../../rune-benchmark-results/m5-fasta/correctness.tsv) pass on Rune's four engines
 at both levels and all six managed native hosts. Nine semantic/negative checks
 pass all ten configurations at both levels. Eight normal count samples pass the
 combined comparison with unchanged budgets. These instrumented samples remain
@@ -1159,7 +1159,7 @@ records the run. All 41 inventory tests pass and all 861 entries validate.
 ## M4 variable-width compression, 2026-10-16
 
 Two imports bring the catalogue to 260 programs and 774 profiles. [All 112
-smoke/normal cases](results/m4-compress2/correctness.tsv) pass for both new
+smoke/normal cases](../../../rune-benchmark-results/m4-compress2/correctness.tsv) pass for both new
 variants and both existing users of the shared compression driver, on Rune's
 four engines at both levels and all six managed native hosts. Eighteen semantic,
 writer and demand checks pass all ten configurations at both levels. Sixteen
@@ -1187,7 +1187,7 @@ records the run. All 41 inventory tests pass and all 861 entries validate.
 ## M3 propositional rewriting, 2026-10-16
 
 Two imports bring the catalogue to 262 programs and 780 profiles. [All 56
-smoke/normal cases](results/m3-clausify/correctness.tsv) pass on Rune's four
+smoke/normal cases](../../../rune-benchmark-results/m3-clausify/correctness.tsv) pass on Rune's four
 engines at both levels and all six managed native hosts. Fifty-nine semantic
 and negative checks pass all ten configurations at both levels. Eight normal
 count samples pass the combined comparison with unchanged budgets. These
@@ -1213,7 +1213,7 @@ records the run. All 41 inventory tests pass and all 861 entries validate.
 ## M3 exhaustive histories and M5 sequential FFT, 2026-10-16
 
 Three imports bring the catalogue to 265 programs and 789 profiles. [All 84
-smoke/normal cases](results/m3-m5-puzzle-fft/correctness.tsv) pass on Rune's four
+smoke/normal cases](../../../rune-benchmark-results/m3-m5-puzzle-fft/correctness.tsv) pass on Rune's four
 engines at both levels and all six managed native hosts. Twelve puzzle and
 twelve FFT semantic/negative checks pass all ten configurations at both levels.
 Twelve normal count samples pass the combined comparison with unchanged budgets.
@@ -1242,7 +1242,7 @@ records the run. All 41 inventory tests pass and all 861 entries validate.
 ## M5 structured numerical workloads, 2026-10-16
 
 Four imports bring the catalogue to 269 programs and 801 profiles. [All 112
-smoke/normal cases](results/m5-sequential-numerical/correctness.tsv) pass on Rune's
+smoke/normal cases](../../../rune-benchmark-results/m5-sequential-numerical/correctness.tsv) pass on Rune's
 four engines at both levels and all six managed native hosts. Forty semantic
 and negative checks pass all ten configurations at both levels. Sixteen normal
 count samples pass the combined comparison with unchanged budgets. Twelve
@@ -1276,7 +1276,7 @@ records the run. All 41 inventory tests pass and all 861 entries validate.
 ## M5 sequential neural network and M6 failure categories, 2026-10-16
 
 One import brings the catalogue to 270 programs and 804 profiles. [All 28
-smoke/normal cases](results/m5-multilayer/coverage.tsv) are accounted for: 27 pass;
+smoke/normal cases](../../../rune-benchmark-results/m5-multilayer/coverage.tsv) are accounted for: 27 pass;
 legacy 64-bit SML/NJ normal produces an incorrect numerical result. Every Rune engine
 passes both profiles at both levels, and all other native hosts pass. Twelve
 semantic/negative checks run on all ten configurations at both levels. All pass
@@ -1314,7 +1314,7 @@ records the run. All 41 inventory tests pass and all 861 entries validate.
 ## M5 mutable-body integration and exact bitmap output, 2026-10-16
 
 Two imports bring the catalogue to 272 programs and 810 profiles. [All 56
-smoke/normal cases](results/m5-game-numerical/correctness.tsv) pass on Rune's four
+smoke/normal cases](../../../rune-benchmark-results/m5-game-numerical/correctness.tsv) pass on Rune's four
 engines at both levels and all six managed native hosts. Twenty semantic and
 negative checks pass all ten configurations at both levels. Eight normal
 count samples pass the combined comparison with unchanged budgets. Six serial
@@ -1346,7 +1346,7 @@ records the run. All 41 inventory tests pass and all 861 entries validate.
 ## M5 three-state arbitrary-precision pi, 2026-10-16
 
 One import brings the catalogue to 273 programs and 813 profiles. [All 28
-smoke/normal cases](results/m5-pidigits5/correctness.tsv) pass on Rune's four
+smoke/normal cases](../../../rune-benchmark-results/m5-pidigits5/correctness.tsv) pass on Rune's four
 engines at both levels and all six managed native hosts. Thirteen semantic
 and negative checks pass all ten configurations at both levels. Four normal
 count samples agree with unchanged budgets; three serial native smoke samples
@@ -1372,7 +1372,7 @@ records the run. All 41 inventory tests pass and all 861 entries validate.
 ## M5 seeded sequential evolutionary search, 2026-10-16
 
 One import brings the catalogue to 274 programs and 816 profiles. [All 28
-smoke/normal cases](results/m5-evolutionary/coverage.tsv) are accounted for: 26 pass;
+smoke/normal cases](../../../rune-benchmark-results/m5-evolutionary/coverage.tsv) are accounted for: 26 pass;
 both native32 cases raise the documented bounded-random arithmetic Overflow.
 Every Rune engine passes both profiles at both levels, as do the other native
 hosts. Twelve semantic/negative checks run at both levels on all ten
@@ -1401,7 +1401,7 @@ records the run. All 41 inventory tests pass and all 861 entries validate.
 ## M4 sequential smallpt rendering, 2026-10-16
 
 One import brings the catalogue to 275 programs and 819 profiles. [All 28
-smoke/normal cases](results/m4-smallpt/coverage.tsv) are accounted for: 26 pass;
+smoke/normal cases](../../../rune-benchmark-results/m4-smallpt/coverage.tsv) are accounted for: 26 pass;
 both native32 profiles reject different pixels. All Rune engines pass both
 profiles at both levels; the other five native hosts pass. Thirteen semantic/
 negative checks run on all ten configurations at both levels. Native32 fails
@@ -1433,8 +1433,8 @@ records the run. All 41 inventory tests pass and all 861 entries validate.
 ## M5 reverse complement and byte-key nucleotide counts, 2026-10-16
 
 Two imports bring the catalogue to 277 programs and 825 profiles. Each port's
-[28 smoke/normal cases](results/m5-revcomp2/correctness.tsv) pass across Rune's four
-engines at both levels and all six managed native hosts; [nucleotide coverage](results/m5-knucleotide/correctness.tsv)
+[28 smoke/normal cases](../../../rune-benchmark-results/m5-revcomp2/correctness.tsv) pass across Rune's four
+engines at both levels and all six managed native hosts; [nucleotide coverage](../../../rune-benchmark-results/m5-knucleotide/correctness.tsv)
 is also complete. Fifteen reverse-complement and sixteen nucleotide semantic/
 negative checks pass all ten configurations at both levels. Initial native32
 launches hit sandbox SIGSYS; exact replays outside that filter pass. Original
@@ -1473,7 +1473,7 @@ records the run. All 41 inventory tests pass and all 861 entries validate.
 ## M3 machine and arbitrary-precision integer grids, 2026-10-16
 
 Two imports bring the catalogue to 279 programs and 831 profiles. [All 56
-smoke/normal cases](results/m3-integer/correctness.tsv) pass across Rune's four
+smoke/normal cases](../../../rune-benchmark-results/m3-integer/correctness.tsv) pass across Rune's four
 engines at both levels and all six managed native hosts. Of 114 semantic/
 negative checks, native32 fails only constant subtraction/multiplication wrap
 at both levels; its other 112 and every other configuration's 114 pass.
@@ -1514,7 +1514,7 @@ records the run. All 41 inventory tests pass and all 861 entries validate.
 ## M3 demand-sensitive secretary simulation, 2026-10-16
 
 Two imports bring the catalogue to 281 programs and 837 profiles. [All 56
-smoke/normal cases](results/m3-secretary/correctness.tsv) pass across Rune's four
+smoke/normal cases](../../../rune-benchmark-results/m3-secretary/correctness.tsv) pass across Rune's four
 engines at both levels and all six managed native hosts. All 145 semantic/
 negative checks pass all ten configurations at both levels. Eight normal count
 samples agree across Rune engines. Existing budgets remain unchanged; these
@@ -1559,8 +1559,8 @@ Six imports bring the catalogue to 287 programs and 855 profiles. All 168
 selected cases are accounted for: 162 pass, five reject incorrect results and
 one raises Domain. Only managed legacy 64-bit SML/NJ fails. Every Rune engine passes
 both smoke/normal profiles at O0/O2; the other five native hosts pass all
-profiles. [Orbit coverage](results/m3-mandel/coverage.tsv) records 110/112 passes;
-[tree coverage](results/m3-mandel2/coverage.tsv) records 52/56. The historical
+profiles. [Orbit coverage](../../../rune-benchmark-results/m3-mandel/coverage.tsv) records 110/112 passes;
+[tree coverage](../../../rune-benchmark-results/m3-mandel2/coverage.tsv) records 52/56. The historical
 orbit variants pass both profiles on every host.
 
 Twenty-six orbit and 132 tree semantic/negative checks run on all configurations
@@ -1609,8 +1609,8 @@ records the run. All 41 inventory tests pass and all 861 entries validate.
 
 Four imports bring the catalogue to 291 programs and 867 profiles. All 112
 smoke/normal cases pass across Rune's four engines at both levels and all six
-managed native hosts. [Boyer2 coverage](results/m3-boyer2/correctness.tsv) and
-[pretty coverage](results/m3-pretty/correctness.tsv) each record 56 cases.
+managed native hosts. [Boyer2 coverage](../../../rune-benchmark-results/m3-boyer2/correctness.tsv) and
+[pretty coverage](../../../rune-benchmark-results/m3-pretty/correctness.tsv) each record 56 cases.
 Twenty-five Boyer2 and 42 formatting semantic/negative checks pass all ten
 configurations twice, with Rune O0/O2 and native defaults. Sixteen normal
 count samples agree across Rune engines. Existing budgets are unchanged;
@@ -1651,7 +1651,7 @@ records the run. All 41 inventory tests pass and all 861 entries validate.
 ## M3 Last Piece persistent-map board search, 2026-10-16
 
 Two imports bring the catalogue to 293 programs and 871 profiles. [All 56
-smoke/normal cases](results/m3-last-piece/correctness.tsv) pass across Rune's four
+smoke/normal cases](../../../rune-benchmark-results/m3-last-piece/correctness.tsv) pass across Rune's four
 engines at both levels and all six managed native hosts. Twenty semantic/
 negative checks pass all ten configurations twice, with Rune O0/O2 and native
 defaults. Eight normal count samples agree across Rune engines. Existing budgets
@@ -1685,7 +1685,7 @@ records the run. All 41 inventory tests pass and all 861 entries validate.
 ## M3 typed Boyer terms and recursive lemma graphs, 2026-10-16
 
 Two imports bring the committed catalogue to 295 programs and 877 profiles.
-[All 56 final smoke/normal cases](results/m3-typed-boyer/correctness.tsv) pass
+[All 56 final smoke/normal cases](../../../rune-benchmark-results/m3-typed-boyer/correctness.tsv) pass
 across Rune's four engines at O0/O2 and all six managed native hosts. The initial
 run's Rune O0 strict-smoke timeout at 30 seconds is retained in the complete
 60-attempt ledger. A documented 60-second override preserves FAST2 and all 100
@@ -1720,8 +1720,8 @@ and pass all 41 tests before the subsequent profile-input audit refresh.
 
 Four imports bring the catalogue to 299 programs and 889 profiles. All 112
 smoke/normal cases pass across Rune's four engines at O0/O2 and all six managed
-native hosts: [Eliza](results/m3-eliza/correctness.tsv) and
-[packed nucleotide counting](results/m5-packed-nucleotide/correctness.tsv).
+native hosts: [Eliza](../../../rune-benchmark-results/m3-eliza/correctness.tsv) and
+[packed nucleotide counting](../../../rune-benchmark-results/m5-packed-nucleotide/correctness.tsv).
 All 60 Eliza and 32 nucleotide semantic/negative checks pass all ten
 configurations twice, with Rune O0/O2 and native defaults. Sixteen normal count
 samples agree under the execution-model rules, including allocation across all
@@ -1764,7 +1764,7 @@ and related-name-order fixes.
 ## M4 polymorphic inference application, 2026-10-16
 
 Two imports bring the catalogue to 301 programs and 895 profiles. [All 56
-smoke/normal cases](results/m4-infer/correctness.tsv) pass across Rune's four
+smoke/normal cases](../../../rune-benchmark-results/m4-infer/correctness.tsv) pass across Rune's four
 engines at O0/O2 and all six managed native hosts. All 74 semantic/negative checks
 pass all ten configurations twice, with Rune O0/O2 and native defaults. Eight
 normal count samples agree under the execution-model rules, including allocation
@@ -1813,7 +1813,7 @@ the preceding full clean pinned-tree replay remains recorded separately.
 ## M3 Cichelli perfect-hash search, 2026-10-16
 
 Two imports bring the catalogue to 303 programs and 901 profiles. [All 56 smoke/
-normal cases](results/m3-cichelli/correctness.tsv) pass across Rune's four engines
+normal cases](../../../rune-benchmark-results/m3-cichelli/correctness.tsv) pass across Rune's four engines
 at O0/O2 and all six managed native hosts. All 36 semantic/negative checks pass all
 ten configurations twice, with Rune O0/O2 and native defaults. Eight normal count
 samples agree under the execution-model rules, including allocation across all
@@ -1858,7 +1858,7 @@ the preceding full clean pinned-tree replay remains separately recorded.
 ## M4 SET circuit simulation and host arithmetic diagnostics, 2026-10-16
 
 Two numerical variants bring the catalogue to 305 programs and 907 profiles.
-[The complete 56-case smoke/normal ledger](results/m4-scs/coverage.tsv) records 53
+[The complete 56-case smoke/normal ledger](../../../rune-benchmark-results/m4-scs/coverage.tsv) records 53
 passes and three incorrect native legacy 64-bit SML/NJ results. All four Rune engines
 pass both optimization levels/profiles/variants; all five other native hosts
 pass. Default-setting failures remain recorded, with no accepted timing. Separate
@@ -1918,7 +1918,7 @@ Haskell/C headers to source identities and removes preprocessor include paths
 from runtime input metadata. The exact pinned Hartel shim receives a narrowly
 scoped portable scalar-operation review. Changed shims and direct primitive
 imports still require review. No compiler/runtime feature or benchmark profile
-changes. [All 19 metadata differences](results/m0-cpp-includes/source-differences.json)
+changes. [All 19 metadata differences](../../../rune-benchmark-results/m0-cpp-includes/source-differences.json)
 affect only members, SHA-256 identities or inputs; names, dispositions and
 milestones remain unchanged. All five clean pinned trees reproduce 861 entries.
 All 56 discovery/classification regressions pass.
@@ -1927,19 +1927,19 @@ Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 907 catalogue profiles,
 the 16-program routine set, 331 language fixtures per compiler, existing budgets,
 bootstrap and 498 identical bytecode comparisons across seven builds. runedoc
 and runeopt also agree. [The complete transcript](validation/oct16-cpp-inventory-907-acceptance.log)
-records the run. [Source identities and replay logs](results/m0-cpp-includes/README.md)
+records the run. [Source identities and replay logs](../../../rune-benchmark-results/m0-cpp-includes/README.md)
 make the correction reviewable. Timing and count baselines are unchanged.
 
 ## M3 Hartel comprehension compiler/copy wave — 2026-10-16
 
 Four variants bring the catalogue to 309 programs and 919 profiles:
-listcompr-lazy/strict and listcopy-lazy/strict. The [complete coverage ledger](results/m3-hartel-compr/coverage.tsv)
+listcompr-lazy/strict and listcopy-lazy/strict. The [complete coverage ledger](../../../rune-benchmark-results/m3-hartel-compr/coverage.tsv)
 records all 112 canonical smoke/normal cases passing on Rune's four engines at
 O0/O2 and six native hosts at compiler defaults. All 42 semantic checks pass on
 each configuration in both invocations (840 assertions). Native hosts are not
 claimed to have been tested with Rune optimization flags.
 
-[Sixteen normal count samples](results/m3-hartel-compr/count-samples.tsv) agree
+[Sixteen normal count samples](../../../rune-benchmark-results/m3-hartel-compr/count-samples.tsv) agree
 under execution-model rules, including allocation across all Rune engines.
 Existing budgets are unchanged; new profiles remain unbudgeted. Twelve serial
 single fresh-process native smoke samples validate the adapters on MLton,
@@ -1964,7 +1964,7 @@ limit. Whole large SML validation under the selected 8 GiB limit is unrecorded.
 An earlier prototype introduced quadratic suffix copies through concatenation;
 that implementation was corrected before the canonical checks. Its stopped and
 bounded preflights are retained separately and cannot supply timing samples.
-[Raw evidence and source identities](results/m3-hartel-compr/README.md) accompany
+[Raw evidence and source identities](../../../rune-benchmark-results/m3-hartel-compr/README.md) accompany
 the accepted results. M3 remains in progress.
 
 Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 919 catalogue profiles,
@@ -1976,14 +1976,14 @@ records the run. All 56 inventory regressions and all 861 inventory entries pass
 ## M3 Wang numerical wave — 2026-10-16
 
 Two variants bring the catalogue to 311 programs and 925 profiles. All [56
-canonical smoke/normal cases](results/m3-wang/coverage.tsv) pass on Rune's four
+canonical smoke/normal cases](../../../rune-benchmark-results/m3-wang/coverage.tsv) pass on Rune's four
 engines at O0/O2 and six native hosts at their compiler defaults. All eight
 normal count samples agree under execution-model rules, including allocation
 across all Rune engines. Existing budgets remain unchanged. Six serial single
 fresh-process native smoke samples validate the adapters separately from
 instrumentation and headline comparisons.
 
-The [37-check auxiliary program](results/m3-wang/semantic-summary.tsv) records
+The [37-check auxiliary program](../../../rune-benchmark-results/m3-wang/semantic-summary.tsv) records
 14 complete passing runs, four with incorrect results and two runtime failures.
 Of 740 planned assertions, 714 pass, six fail and 20 remain unfinished after
 32-bit SML/NJ aborts. The [host note](validation/wang-host-results.md) distinguishes
@@ -2002,7 +2002,7 @@ and reject deliberately perturbed and nonfinite values. All source notices and
 literal fixtures are preserved. Smoke reduces only repetitions to one at block
 size 25; normal and large retain sizes 80/150 and all 500 repetitions. Both
 whole-program Rune O2 normal and large pilots pass under their recorded guards.
-[Raw evidence and source identities](results/m3-wang/README.md) accompany every
+[Raw evidence and source identities](../../../rune-benchmark-results/m3-wang/README.md) accompany every
 scope. M3 remains in progress.
 
 Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 925 catalogue profiles,
@@ -2014,7 +2014,7 @@ records the run. All 56 inventory regressions and all 861 inventory entries pass
 ## M3 Hartel FFT execution/generation wave — 2026-10-16
 
 Four variants bring the catalogue to 315 programs and 937 profiles. All [112
-canonical smoke/normal cases](results/m3-hartel-fft/coverage.tsv) pass on Rune's
+canonical smoke/normal cases](../../../rune-benchmark-results/m3-hartel-fft/coverage.tsv) pass on Rune's
 four engines at O0/O2 and six native hosts at compiler defaults. The numerical
 family's 45 checks and generator's 39 checks pass on every configuration in both
 invocations (1680 assertions). Sixteen normal count samples agree under
@@ -2044,7 +2044,7 @@ only repetitions to one at the original FAST input. Large vectors/text have
 recorded complete and auxiliary repeat checks; whole original-repeat large
 profile validation is not claimed. Profile, library, forcing, initialization,
 validation and output adaptations accompany individual source notices and pins.
-[Raw evidence, resource guards and source identities](results/m3-hartel-fft/README.md)
+[Raw evidence, resource guards and source identities](../../../rune-benchmark-results/m3-hartel-fft/README.md)
 record each scope. M3 remains in progress.
 
 Full `DEBUGINFOD_URLS= make JOBS=4 check` exits 0 with 937 catalogue profiles,
@@ -2056,7 +2056,7 @@ records the run. All 56 inventory regressions and all 861 inventory entries pass
 ## M3 circuit simulator wave — 2026-10-16
 
 Four variants bring the catalogue to 319 programs and 949 profiles. All [112
-canonical smoke/normal cases](results/m3-circsim/coverage.tsv) pass on Rune's four
+canonical smoke/normal cases](../../../rune-benchmark-results/m3-circsim/coverage.tsv) pass on Rune's four
 engines at O0/O2 and six native hosts at compiler defaults. All 79 semantic
 checks pass in every configuration in both invocations (1580 assertions).
 Sixteen normal count samples agree under execution-model rules, including
@@ -2080,7 +2080,7 @@ checksum-colliding traces, inactive gates, empty-input/label/root-summary demand
 packet windows/payloads and transpose. Both normal Rune O2 policies/consumers
 retain all 97 repetitions. Smoke reduces only repetitions to one. Large complete
 and auxiliary-repeat checks have their recorded scope; whole original-repeat
-large validation is unrecorded. [Raw evidence and source identities](results/m3-circsim/README.md)
+large validation is unrecorded. [Raw evidence and source identities](../../../rune-benchmark-results/m3-circsim/README.md)
 include every accepted scope and resource guard. M3 remains in progress.
 
 The exact literate heading credits David J. King and John O'Donnell. Two inventory
@@ -2097,7 +2097,7 @@ records the run.
 ## M3 atom stream wave — 2026-10-17
 
 Two variants bring the catalogue to 321 programs and 955 profiles. The
-[56-case canonical smoke/normal ledger](results/m3-atom/coverage.tsv) records 52
+[56-case canonical smoke/normal ledger](../../../rune-benchmark-results/m3-atom/coverage.tsv) records 52
 passes and four incorrect results on legacy 64-bit SML/NJ 110.99.9. All Rune
 engines at O0/O2 and five other native hosts pass. Auxiliary checks record
 996 passing assertions and four failures in the same legacy configuration.
@@ -2125,7 +2125,7 @@ Tests cover exact position/state bits, stream/field demand, head sharing, vector
 quirks, rounding ties, signed zero, formatting roundtrips and wrong/short/extra
 references. Whole normal Rune O2 pilots pass for both policies. Smoke is a
 bounded 100-state prefix; normal=2500 and large=4000 retain original parameters.
-Whole original large SML validation is unrecorded. [Raw evidence and identities](results/m3-atom/README.md)
+Whole original large SML validation is unrecorded. [Raw evidence and identities](../../../rune-benchmark-results/m3-atom/README.md)
 distinguish original, independent, semantic, guarded and measured scopes.
 
 The source's exact multiline heading credits Ron Legere. One inventory row gains
@@ -2142,7 +2142,7 @@ records the run.
 ## M3 constructive exact real arithmetic wave — 2026-10-17
 
 Two variants bring the catalogue to 323 programs and 961 profiles. All [56
-canonical smoke/normal cases](results/m3-exact-reals/coverage.tsv) pass on Rune's
+canonical smoke/normal cases](../../../rune-benchmark-results/m3-exact-reals/coverage.tsv) pass on Rune's
 four engines at O0/O2 and six native hosts at compiler defaults. All 209
 arithmetic/demand checks pass in every configuration in both invocations
 (4180 assertions). Eight normal count samples agree under execution-model rules,
@@ -2174,7 +2174,7 @@ Initial calibration used the earlier square-root implementation; its source is
 retained. Fresh final canonical/semantic/count checks use the restored explicit
 ratio-normalizing improvement. The final scalar pilot exercises that branch.
 
-[Raw results and source identities](results/m3-exact-reals/README.md) preserve
+[Raw results and source identities](../../../rune-benchmark-results/m3-exact-reals/README.md) preserve
 complete attempts, samples, numerical references, semantic logs and guards.
 All 62 inventory regressions pass and all five clean pinned trees reproduce
 861 entries. One row gains David Lester's exact paper attribution/evidence only;
@@ -2189,8 +2189,8 @@ records the run.
 ## M3 minimax and M5 sequential many-body wave — 2026-10-17
 
 Three programs bring the catalogue to 326 programs and 970 profiles. All 84
-canonical smoke/normal cases pass: [56 minimax cases](results/m3-minimax/coverage.tsv)
-and [28 many-body cases](results/m5-manybody/coverage.tsv), across Rune's four
+canonical smoke/normal cases pass: [56 minimax cases](../../../rune-benchmark-results/m3-minimax/coverage.tsv)
+and [28 many-body cases](../../../rune-benchmark-results/m5-manybody/coverage.tsv), across Rune's four
 engines at O0/O2 and six native hosts at compiler defaults. Twelve normal count
 samples agree under execution-model rules, including allocation across all Rune
 engines. Existing budgets remain unchanged. Nine serial single fresh-process
@@ -2224,7 +2224,7 @@ agrees exactly on checked initial/small/smoke/normal numbers. Bounds are
 absolute 1e-9 plus relative 1e-11 for both energies and every final field.
 Whole large SML integration is unrecorded.
 
-[Minimax evidence](results/m3-minimax/README.md) and [many-body evidence](results/m5-manybody/README.md)
+[Minimax evidence](../../../rune-benchmark-results/m3-minimax/README.md) and [many-body evidence](../../../rune-benchmark-results/m5-manybody/README.md)
 retain complete attempts, count samples, original/independent references,
 source identities, diagnostic failures and resource guards. Individual notices,
 pins, input origins, variants and every adaptation are documented. M3 and M5
@@ -2239,8 +2239,8 @@ records the run.
 ## M3 probable-prime and M5 stdlib primitive wave — 2026-10-17
 
 Ten programs bring the catalogue to 336 programs and 1000 profiles. All 280
-canonical smoke/normal cases pass: [56 primetest cases](results/m3-primetest/coverage.tsv)
-and [224 stdlib cases](results/m5-stdlib-primitives/coverage.tsv), on Rune's four
+canonical smoke/normal cases pass: [56 primetest cases](../../../rune-benchmark-results/m3-primetest/coverage.tsv)
+and [224 stdlib cases](../../../rune-benchmark-results/m5-stdlib-primitives/coverage.tsv), on Rune's four
 engines at O0/O2 and six native hosts at compiler defaults. All 2720 semantic
 assertions pass: 95 primetest and 41 stdlib assertions in each of twenty
 invocations. Forty normal count samples agree under execution-model rules,
@@ -2284,8 +2284,8 @@ are retained through consumption without a blanket exclusion.
 All 68 inventory regressions pass; all five clean pinned trees reproduce 861
 entries. Only primetest's declared-author evidence and Bigarray's disposition/
 reason change. Individual notices, original run parameters, data origins,
-translation decisions and scoped [primality evidence](results/m3-primetest/README.md)
-and [stdlib evidence](results/m5-stdlib-primitives/README.md) accompany every
+translation decisions and scoped [primality evidence](../../../rune-benchmark-results/m3-primetest/README.md)
+and [stdlib evidence](../../../rune-benchmark-results/m5-stdlib-primitives/README.md) accompany every
 import. M3 and M5 remain in progress.
 
 Full DEBUGINFOD_URLS= make JOBS=4 check exits 0 with 1000 catalogue profiles,
@@ -2297,7 +2297,7 @@ records the run.
 ## M4 particle-in-cell application wave — 2026-10-17
 
 Two programs bring the catalogue to 338 programs and 1006 profiles. All [56
-primary smoke/normal cases](results/m4-pic/coverage.tsv) pass on Rune's four
+primary smoke/normal cases](../../../rune-benchmark-results/m4-pic/coverage.tsv) pass on Rune's four
 engines at O0/O2 and six native hosts at compiler defaults. Eight normal count
 samples agree under execution-model rules, including allocation across all Rune
 engines. Existing budgets remain unchanged. Six serial single fresh-process
@@ -2329,7 +2329,7 @@ Every final timestep uses absolute bound 1e-12 plus relative 1e-10. Full-state
 checks use absolute/relative 1e-10. GEN17 roundtrip, source-width Word64 hash
 consumption and stable checked-run output are documented adaptations. Large
 retains original 1000/300 parameters; whole large SML validation is unrecorded.
-[Raw evidence](results/m4-pic/README.md) retains source/model notices, reference
+[Raw evidence](../../../rune-benchmark-results/m4-pic/README.md) retains source/model notices, reference
 runs, canonical attempts, samples, partial failures, reduced programs and guards.
 
 All 70 inventory regressions pass and five clean pinned trees reproduce 861
@@ -2348,12 +2348,12 @@ records the run.
 ## October 17: hidden-line application variants
 
 Two programs bring the catalogue to 340 programs and 1012 profiles.
-The [complete primary ledger](results/m4-hidden/coverage.tsv) records 48 passes
+The [complete primary ledger](../../../rune-benchmark-results/m4-hidden/coverage.tsv) records 48 passes
 and eight SML/NJ failures across all 56 smoke/normal cases. Every Rune engine
 passes at O0/O2. MLton, Poly/ML and ML Kit pass at defaults; the lazy variant
 also passes both profiles on 32-bit legacy SML/NJ and 2026.2.
 
-The [20-invocation auxiliary ledger](results/m4-hidden/semantic-summary.tsv)
+The [20-invocation auxiliary ledger](../../../rune-benchmark-results/m4-hidden/semantic-summary.tsv)
 records 1724 passing assertions, two failed assertions and 434 unreached checks.
 Fourteen invocations pass all 108 checks. Each 32-bit/development SML/NJ
 invocation passes 53 before strict rendering fails. Each 64-bit legacy
@@ -2379,7 +2379,7 @@ runs remain unrecorded.
 All 72 inventory regressions and the clean five-pin 861-entry replay pass.
 The hidden entry gains reviewed MAIL authorship/permission evidence; the
 historical pseudo-terminal wrapper has an explicit supplementary exclusion.
-[The evidence archive](results/m4-hidden/README.md) includes initial errors,
+[The evidence archive](../../../rune-benchmark-results/m4-hidden/README.md) includes initial errors,
 complete failures, guards, reduced probes, counts and source identities.
 
 Full DEBUGINFOD_URLS= make JOBS=4 check exits 0 with 1012 catalogue profiles.
@@ -2389,9 +2389,9 @@ acceptance run. M4 remains in progress.
 ## October 17: Mini Prolog inference engines
 
 Four programs bring the catalogue to 344 programs and 1024 profiles.
-All [112 primary cases](results/m4-prolog/coverage.tsv) pass on Rune's four
+All [112 primary cases](../../../rune-benchmark-results/m4-prolog/coverage.tsv) pass on Rune's four
 engines at O0/O2 and six native hosts at defaults. Every one of twenty
-[auxiliary invocations](results/m4-prolog/semantic-summary.tsv) passes all
+[auxiliary invocations](../../../rune-benchmark-results/m4-prolog/semantic-summary.tsv) passes all
 111 assertions, totaling 2220.
 
 Sixteen normal count samples agree under Rune's engine comparison rules.
@@ -2417,7 +2417,7 @@ Raw fixture trailing prompt spaces and backspaces are preserved.
 All 74 inventory regressions and the clean five-pin 861-entry replay pass.
 One row gains Mark P. Jones's reviewed author headings. The supplementary
 inventory records the exact stack-module duplicate and distinct proof-tree
-engine. [The complete evidence](results/m4-prolog/README.md) includes original
+engine. [The complete evidence](../../../rune-benchmark-results/m4-prolog/README.md) includes original
 runs, observers, initial corrected errors, guards, samples and source identities.
 
 Full DEBUGINFOD_URLS= make JOBS=4 check exits 0 with 1024 catalogue profiles.
@@ -2427,15 +2427,15 @@ acceptance run. M4 remains in progress.
 ## October 17: photon transport and command parser generation
 
 Four programs bring the catalogue to 348 programs and 1036 profiles.
-GAMTEB records [50 passes and six SML/NJ failures](results/m4-gamteb/coverage.tsv)
+GAMTEB records [50 passes and six SML/NJ failures](../../../rune-benchmark-results/m4-gamteb/coverage.tsv)
 across 56 primary cases; every Rune configuration passes at O0/O2.
-The parser generator records [56 primary passes](results/m4-mkhprog/coverage.tsv)
+The parser generator records [56 primary passes](../../../rune-benchmark-results/m4-mkhprog/coverage.tsv)
 across all configurations. All sixteen normal count samples agree under Rune's
 engine comparison rules. Twelve serial single fresh-process native smoke
 samples pass; these remain adapter diagnostics separate from headline timings.
 
 GAMTEB's separate raw-kernel and full-checker targets total 8613 passing
-assertions, 115 failures and twelve unreached checks. The [complete ledger](results/m4-gamteb/semantic-summary.tsv)
+assertions, 115 failures and twelve unreached checks. The [complete ledger](../../../rune-benchmark-results/m4-gamteb/semantic-summary.tsv)
 retains every invocation. Legacy 64-bit raw-stream mismatches respond to nursery
 size; legacy 32-bit decimal scanning fails the exact formatter roundtrip.
 Generic real tuples inside references reproduce a representation problem on all
@@ -2451,7 +2451,7 @@ policies validate all 200 repetitions of normal and large. The source's lazy
 cached prefix, control sharing, order and historical numerical quirks remain.
 Derived modules/model retain the complete required Regents 1990 notice.
 
-The command parser generator passes [2240 auxiliary assertions](results/m4-mkhprog/semantic-summary.tsv).
+The command parser generator passes [2240 auxiliary assertions](../../../rune-benchmark-results/m4-mkhprog/semantic-summary.tsv).
 Both policies match nine full outputs, block hashes and channels, plus seven
 original invalid-input usage cases. Literal type comparisons preserve lazy
 prefix demand, and the original CPS/per-block consumer is retained. Source
@@ -2463,8 +2463,8 @@ whole 18000-iteration large SML validation remains unrecorded. Crown Copyright
 All 78 inventory regressions and the clean five-pin 861-entry replay pass.
 Two primary rows gain reviewed author headings. Nine historical GAMTEB program
 or support entries receive individual supplementary dispositions, source hashes,
-notice review and reasons. [GAMTEB evidence](results/m4-gamteb/README.md) and
-[generator evidence](results/m4-mkhprog/README.md) retain complete attempts,
+notice review and reasons. [GAMTEB evidence](../../../rune-benchmark-results/m4-gamteb/README.md) and
+[generator evidence](../../../rune-benchmark-results/m4-mkhprog/README.md) retain complete attempts,
 samples, guards, references and initial-versus-final checks.
 
 Full DEBUGINFOD_URLS= make JOBS=4 check exits 0 with 1036 catalogue profiles.
@@ -2474,9 +2474,9 @@ acceptance. M4 remains in progress.
 ## GRIP graph utilities, 2026-10-17
 
 Six imports bring the catalogue to 354 programs and 1054 profiles.
-[Primary coverage](results/m4-gg/coverage.tsv) records 144 passes and 24 failing
+[Primary coverage](../../../rune-benchmark-results/m4-gg/coverage.tsv) records 144 passes and 24 failing
 64-bit SML/NJ checker cases across 168 attempts. All Rune configurations pass.
-The [semantic ledger](results/m4-gg/semantic-summary.tsv) records 1976 passing
+The [semantic ledger](../../../rune-benchmark-results/m4-gg/semantic-summary.tsv) records 1976 passing
 assertions, 164 failures and no unreached checks. The
 [host-result note](validation/gg-host-results.md) and reduced source/control
 transcripts preserve the observed discrepancy without asserting its cause.
@@ -2485,7 +2485,7 @@ Twenty-four normal count samples agree across the four Rune engines.
 Twelve serial fresh-process native adapter samples pass; six failed SML/NJ
 prechecks supply no accepted timings. GHC fixture agreement, thirty complete
 PostScript comparisons, supplementary trace checks and final normal-profile
-calibration are retained with [raw evidence](results/m4-gg/README.md).
+calibration are retained with [raw evidence](../../../rune-benchmark-results/m4-gg/README.md).
 Large repetition profiles remain unrecorded.
 
 All 80 inventory tests and the five-pin 861-entry replay pass. Individual source
@@ -2498,17 +2498,17 @@ records the acceptance check. M4 remains in progress.
 ## Fourier, interpreter and paragraph workloads, 2026-10-17
 
 Eight imports bring the catalogue to 362 programs and 1078 profiles.
-[FFT2 primary coverage](results/m3-fft2/coverage.tsv) records 54 passes and two
+[FFT2 primary coverage](../../../rune-benchmark-results/m3-fft2/coverage.tsv) records 54 passes and two
 legacy 64-bit SML/NJ normal-profile failures. All Rune cases pass. Its
-[semantic ledger](results/m3-fft2/semantic-summary.tsv) records 2236 passing
+[semantic ledger](../../../rune-benchmark-results/m3-fft2/semantic-summary.tsv) records 2236 passing
 assertions, two failed assertions and 402 unreached checks from incomplete
 SML/NJ invocations. The [host note](validation/fft2-host-results.md) separates
 the observed contexts without assigning a compiler cause.
 
-All [112 lambda primary cases](results/m3-lambda/coverage.tsv) and 4820 semantic
+All [112 lambda primary cases](../../../rune-benchmark-results/m3-lambda/coverage.tsv) and 4820 semantic
 assertions pass. Separate direct/state-monadic names retain each source count,
 call-by-name closures and caller environment restoration. All
-[56 paragraph primary cases](results/m3-para/coverage.tsv) and 2240 semantic
+[56 paragraph primary cases](../../../rune-benchmark-results/m3-para/coverage.tsv) and 2240 semantic
 assertions pass. Source queue representation, pruning and text consumers remain.
 
 Thirty-two complete normal count samples agree under Rune's engine rules.
@@ -2522,8 +2522,8 @@ non-power-of-two source FFT errors, interpreted terms/environments and paragraph
 layout. The independent formatter finds optimum costs for 3573 of 3574 source
 paragraphs. Source linear par3 gives cost 5 for paragraph 483; both independent
 dynamic programming and original quadratic par1 give cost 1. Retain par3's
-exact layout and counterexample. [FFT2](results/m3-fft2/README.md),
-[lambda](results/m3-lambda/README.md) and [para](results/m3-para/README.md)
+exact layout and counterexample. [FFT2](../../../rune-benchmark-results/m3-fft2/README.md),
+[lambda](../../../rune-benchmark-results/m3-lambda/README.md) and [para](../../../rune-benchmark-results/m3-para/README.md)
 retain full raw evidence and program-specific limits.
 
 All 88 inventory regressions pass; clean five-pin replay retains 861 primary
@@ -2541,7 +2541,7 @@ records acceptance of this combined wave. M3 remains in progress.
 ## Sphere tracing and sequential numerical/symbolic workloads, 2026-10-17
 
 Five imports bring the catalogue to 367 programs and 1093 profiles.
-[Sphere coverage](results/m3-sphere/coverage.tsv) records 55 of 56 primary cases
+[Sphere coverage](../../../rune-benchmark-results/m3-sphere/coverage.tsv) records 55 of 56 primary cases
 passing. Only lazy normal on legacy 64-bit SML/NJ fails pixel validation.
 All Rune cases pass, and all 1380 semantic assertions pass. A diagnostic
 reproduces a substantial wrong color at (33,74), while the separate pixel passes
@@ -2549,7 +2549,7 @@ a smaller control on legacy SML/NJ. Development SML/NJ does not load that smalle
 context. [The host note](validation/sphere-host-results.md) preserves all findings
 without asserting a compiler cause or changing the canonical source.
 
-[ALMABENCH coverage](results/m5-almabench/coverage.tsv) records all 28 primary
+[ALMABENCH coverage](../../../rune-benchmark-results/m5-almabench/coverage.tsv) records all 28 primary
 cases passing. Its semantic target records 3254 passes and six auxiliary
 exact-remainder failures with no unreached checks. All original and independent
 state vectors pass. [The host note](validation/almabench-host-results.md)
@@ -2557,7 +2557,7 @@ separates known SML/NJ Real.rem inexactness from corrected private harness error
 Pinned ERFA Plan94 agrees exactly on all 384 sampled state coordinates.
 Full source normal profiles and 27-moment numerical checks are validated.
 
-[Knuth–Bendix coverage](results/m5-kb/coverage.tsv) records all 56 primary cases
+[Knuth–Bendix coverage](../../../rune-benchmark-results/m5-kb/coverage.tsv) records all 56 primary cases
 and all 25700 semantic assertions passing. Both original programs give the same
 complete 24-rule system. Checks cover all 576 ordered final critical-pair
 combinations under each variant, rule orientation and normalization, input
@@ -2569,8 +2569,8 @@ Twenty full normal Rune count samples agree under the execution-model rules.
 Fifteen serial single fresh-process native smoke adapter samples pass, separately
 from instrumentation. Default sampling and count-budget policies remain.
 Every full normal Rune calibration passes; full large SML repetition runs remain
-unrecorded. [Sphere](results/m3-sphere/README.md),
-[ALMABENCH](results/m5-almabench/README.md) and [KB](results/m5-kb/README.md)
+unrecorded. [Sphere](../../../rune-benchmark-results/m3-sphere/README.md),
+[ALMABENCH](../../../rune-benchmark-results/m5-almabench/README.md) and [KB](../../../rune-benchmark-results/m5-kb/README.md)
 retain complete raw evidence, source identities and notices.
 
 All 90 inventory tests pass, and five clean pins reproduce 861 primary entries.
@@ -2586,9 +2586,9 @@ records acceptance. M3, M4 and M5 remain in progress; M8 remains planned.
 ## Sequential Graph500 generation and construction, 2026-10-17
 
 Three imports bring the catalogue to 370 programs and 1102 profiles.
-[Primary coverage](results/m5-graph500/coverage.tsv) records 70 passes and
+[Primary coverage](../../../rune-benchmark-results/m5-graph500/coverage.tsv) records 70 passes and
 fourteen failures across 84 cases. Every Rune, MLton and ML Kit primary case
-passes. The [semantic ledger](results/m5-graph500/semantic-summary.tsv) records
+passes. The [semantic ledger](../../../rune-benchmark-results/m5-graph500/semantic-summary.tsv) records
 5606 passing assertions, twelve failures and 622 unreached checks.
 
 Original binary generation and prototype CSV outputs match selected normal and
@@ -2607,7 +2607,7 @@ the old classifier labelled runtime failure. A tooling regression follows.
 
 Data origins, fixed random state, three executable aliases, distinct algorithms,
 individual stdlib notices and binary fixture identities are recorded with
-[complete evidence](results/m5-graph500/README.md). Larger published parameters
+[complete evidence](../../../rune-benchmark-results/m5-graph500/README.md). Larger published parameters
 remain explicitly separate candidates. All 90 inventory tests pass.
 
 Full DEBUGINFOD_URLS= make JOBS=4 check exits zero with 1102 profiles and all
@@ -2632,9 +2632,9 @@ timing results; historical raw statuses remain unchanged.
 ## Sparse block linear solvers, 2026-10-17
 
 Four imports bring the catalogue to 374 programs and 1114 profiles.
-[Primary coverage](results/m3-m4-linear/coverage.tsv) records 104 passes and
+[Primary coverage](../../../rune-benchmark-results/m3-m4-linear/coverage.tsv) records 104 passes and
 eight legacy 64-bit SML/NJ failures in 112 attempts. All Rune and other native
-cases pass. The [semantic ledger](results/m3-m4-linear/semantic-summary.tsv)
+cases pass. The [semantic ledger](../../../rune-benchmark-results/m3-m4-linear/semantic-summary.tsv)
 records 1341 passing assertions, 39 failures and no unreached checks.
 [Host findings](validation/linear-host-results.md) retain context-sensitive
 legacy differences without introducing compiler/nursery/tolerance workarounds.
@@ -2648,7 +2648,7 @@ remain. Full SML large repetition checks remain unrecorded.
 
 All 94 inventory tests and five-pin 861-entry replay pass. Six contributor roles
 and two concrete reservoir-data blockers are recorded; default generated-data
-workloads are runnable. [Complete source/validation evidence](results/m3-m4-linear/README.md)
+workloads are runnable. [Complete source/validation evidence](../../../rune-benchmark-results/m3-m4-linear/README.md)
 distinguishes private development attempts from final source identities.
 
 [Full make JOBS=4 check](validation/oct17-quoted-fail-1114-acceptance.log) exits
@@ -2659,7 +2659,7 @@ M3, M4 and M5 remain in progress; M8 remains planned.
 ## Binary space partitioning modeller, 2026-10-17
 
 Two ports bring the catalogue to 376 programs and 1120 profiles.
-[Primary coverage](results/m4-bspt/coverage.tsv) records 55 passes in 56 cases:
+[Primary coverage](../../../rune-benchmark-results/m4-bspt/coverage.tsv) records 55 passes in 56 cases:
 all Rune cases pass, while ML Kit lazy smoke compilation reaches its unchanged
 30-second limit. An isolated clean compiler probe confirms timeout status 124;
 its normal-profile case passes. The original empty harness diagnostic remains.
@@ -2670,7 +2670,7 @@ Original full batch text, eleven interactive commands, signed-64 rational
 operations and the GHC updatable batch thunk support exact correctness and
 demand/sharing checks. Character comparison adds validation work to the original
 hash consumer; globally shared geometry is computed once per fresh program.
-[Complete evidence](results/m4-bspt/README.md) retains the profile limit,
+[Complete evidence](../../../rune-benchmark-results/m4-bspt/README.md) retains the profile limit,
 consumer adaptations, source identities and unrecorded SML large checks.
 
 [Full make JOBS=4 check](validation/oct17-bspt-1120-acceptance.log) exits zero
@@ -2680,8 +2680,8 @@ M3, M4 and M5 remain in progress; M8 remains planned.
 ## Knight tours and mating search, 2026-10-17
 
 Six ports bring the catalogue to 382 programs and 1138 profiles.
-[Knights coverage](results/m3-knights/coverage.tsv) records 112/112 passing
-primary cases; [mate coverage](results/m3-mate/coverage.tsv) records 56/56.
+[Knights coverage](../../../rune-benchmark-results/m3-knights/coverage.tsv) records 112/112 passing
+primary cases; [mate coverage](../../../rune-benchmark-results/m3-mate/coverage.tsv) records 56/56.
 All Rune O0/O2 engines and all six managed native hosts pass. The semantic
 ledgers record 1720 passing knight-tour assertions and 960 mating-search
 assertions, with no failed or unreached checks.
@@ -2695,8 +2695,8 @@ failure; exact output validation adds work to the original length consumer.
 
 All 96 inventory regressions and the five-pin 861-entry replay pass, recording
 Jonathan Hill's attribution and the twenty-seventh supplementary variant.
-[Knights evidence](results/m3-knights/README.md) and
-[mate evidence](results/m3-mate/README.md) retain original notices, input origins,
+[Knights evidence](../../../rune-benchmark-results/m3-knights/README.md) and
+[mate evidence](../../../rune-benchmark-results/m3-mate/README.md) retain original notices, input origins,
 source identities, complete attempts, development failures and unrecorded final
 large-profile runs.
 
@@ -2707,9 +2707,9 @@ M3, M4 and M5 remain in progress; M8 remains planned.
 ## Expert feedback, regex-redux and stream multiplier, 2026-10-17
 
 Seven ports bring the catalogue to 389 programs and 1159 profiles.
-[Expert coverage](results/m3-expert/coverage.tsv) records 56/56 passes,
-[regex-redux coverage](results/m5-regexredux2/coverage.tsv) 28/28 and
-[multiplier coverage](results/m3-multiplier/coverage.tsv) 112/112. All Rune O0/O2
+[Expert coverage](../../../rune-benchmark-results/m3-expert/coverage.tsv) records 56/56 passes,
+[regex-redux coverage](../../../rune-benchmark-results/m5-regexredux2/coverage.tsv) 28/28 and
+[multiplier coverage](../../../rune-benchmark-results/m3-multiplier/coverage.tsv) 112/112. All Rune O0/O2
 engines and six managed native SML hosts pass. The semantic ledgers record
 900 expert, 460 regex and 1120 multiplier passing assertions, none failed or
 unreached. All 28 normal count samples agree; 21 serial single fresh-process
@@ -2725,8 +2725,8 @@ source arithmetic widths and unrecorded final large runs are documented.
 All 102 inventory regressions and five-pin 861-entry replay pass. Holyer,
 O'Donnell and Kashitsyn credits are recorded, with the twenty-eighth supplementary
 variant preserving multiplier's count-only consumer. Complete
-[expert](results/m3-expert/README.md), [regex-redux](results/m5-regexredux2/README.md)
-and [multiplier](results/m3-multiplier/README.md) evidence retains notices,
+[expert](../../../rune-benchmark-results/m3-expert/README.md), [regex-redux](../../../rune-benchmark-results/m5-regexredux2/README.md)
+and [multiplier](../../../rune-benchmark-results/m3-multiplier/README.md) evidence retains notices,
 input/source identities, raw samples and development failures separately.
 
 [Full make JOBS=4 check](validation/oct17-expert-regex-multiplier-1159-acceptance.log)
@@ -2736,8 +2736,8 @@ comparisons. M3/M4/M5 remain in progress; M8 remains planned.
 ## Hartel event simulation and functional type inference, 2026-10-17
 
 Four ports bring the catalogue to 393 programs and 1171 profiles.
-[Event coverage](results/m3-hartel-event/coverage.tsv) and
-[typechecker coverage](results/m3-hartel-typecheck/coverage.tsv) each record
+[Event coverage](../../../rune-benchmark-results/m3-hartel-event/coverage.tsv) and
+[typechecker coverage](../../../rune-benchmark-results/m3-hartel-typecheck/coverage.tsv) each record
 56/56 passing primary cases. All Rune O0/O2 engines and six managed native SML
 hosts pass. The semantic ledgers record 1440 event and 560 type-inference
 assertions, none failed or unreached. All sixteen normal count samples agree;
@@ -2752,8 +2752,8 @@ AST sharing, no-op compatibility annotations, profile reductions and additional
 validation work are explicit. Full final SML large repetition checks remain
 unrecorded.
 
-[Event evidence](results/m3-hartel-event/README.md) and
-[typechecker evidence](results/m3-hartel-typecheck/README.md) retain the original
+[Event evidence](../../../rune-benchmark-results/m3-hartel-event/README.md) and
+[typechecker evidence](../../../rune-benchmark-results/m3-hartel-typecheck/README.md) retain the original
 modules/shim, expected data, source identities, raw results and development scopes.
 [Full make JOBS=4 check](validation/oct17-hartel-event-typecheck-1171-acceptance.log)
 exits zero with 1171 profiles and all compiler/runedoc/runeopt cross-build
@@ -2771,8 +2771,8 @@ commit. Benchmark source, inputs and recorded validation results are unchanged.
 ## Corrected dominators, 2026-10-18
 
 The catalogue now has 394 programs and 1174 profiles.
-[Coverage](results/m3-dom-lt/coverage.tsv) records 26/28 primary passes;
-[semantic results](results/m3-dom-lt/semantic-summary.tsv) record 2220 passing
+[Coverage](../../../rune-benchmark-results/m3-dom-lt/coverage.tsv) records 26/28 primary passes;
+[semantic results](../../../rune-benchmark-results/m3-dom-lt/semantic-summary.tsv) record 2220 passing
 and 160 failing assertions, with none unreached. All failures are native
 32-bit SML/NJ, independently reproduced by a Word64 zero-shift probe; valid
 arithmetic remains unchanged and that configuration contributes no timing sample.
@@ -2782,7 +2782,7 @@ an upstream dominator algorithm defect hidden by its length-only checksum.
 Corrected original and an independent model agree on all 86 graphs. Every
 measured repetition checks full ordered parents. Four normal count samples
 agree; three serial single fresh-process native smoke adapter samples pass.
-[Evidence](results/m3-dom-lt/README.md) retains rejected measurements and raw
+[Evidence](../../../rune-benchmark-results/m3-dom-lt/README.md) retains rejected measurements and raw
 original/corrected observations.
 [Full make JOBS=4 check](validation/oct18-dom-lt-1174-acceptance.log) exits zero
 with 1174 profiles and all cross-build comparisons. M3/M4/M5 remain in progress
@@ -2791,12 +2791,12 @@ and M8 remains planned; final SML large repetitions are unrecorded.
 ## Free-group completion and rewriting, 2026-10-18
 
 The catalogue now contains 396 programs and 1180 profiles.
-[Final wrapper coverage](results/m3-rewrite/coverage.tsv) records 54/56
+[Final wrapper coverage](../../../rune-benchmark-results/m3-rewrite/coverage.tsv) records 54/56
 passing smoke/normal cases. All Rune O0/O2 engines and five native SML hosts
 pass. Both normal ML Kit attempts report allocation failure at the 4 GiB
 limit; their raw failures remain in the ledger.
 
-[Semantic results](results/m3-rewrite/semantic-summary.tsv) record all 6880
+[Semantic results](../../../rune-benchmark-results/m3-rewrite/semantic-summary.tsv) record all 6880
 assertions passing across twenty invocations of the 344-check target, with
 none failed or unreached. The original ten-rule theory, full normal forms and
 an independent free-group cancellation model agree. Demand controls include
@@ -2807,7 +2807,7 @@ driver result is fully checked.
 exits zero with 1180 profiles and all compiler/runedoc/runeopt cross-build
 comparisons. Its bounded routine set is separate from the new ports' explicit
 final profile and semantic runs; those runs include the final agenda-cost fix.
-[The evidence report](results/m3-rewrite/README.md) distinguishes final records
+[The evidence report](../../../rune-benchmark-results/m3-rewrite/README.md) distinguishes final records
 from provisional names, the initial fixture-path mistake and earlier cost
 handling. Final SML large repetitions remain unrecorded. M3/M4/M5 remain in
 progress; M8 remains planned.
@@ -2821,8 +2821,8 @@ interruptions are separate development evidence and do not supply final results.
 ## Hartel IDA and Sandmark ordered trees, 2026-10-18
 
 The catalogue now contains 409 programs and 1214 profiles.
-[IDA coverage](results/m3-ida/coverage.tsv) records 56/56 primary passes;
-[map/set coverage](results/m5-stdlib-trees/coverage.tsv) records 308/308.
+[IDA coverage](../../../rune-benchmark-results/m3-ida/coverage.tsv) records 56/56 primary passes;
+[map/set coverage](../../../rune-benchmark-results/m5-stdlib-trees/coverage.tsv) records 308/308.
 All Rune O0/O2 engines and six managed native hosts pass smoke and normal.
 The semantic ledgers record 2160 IDA and 7280 tree assertions passing, with
 none failed or unreached. Native O0/O2 group labels repeat host-default builds.
@@ -2846,8 +2846,8 @@ comparisons. An earlier run was interrupted and has no final result; its log
 is retained separately. All 108 inventory regressions and the five-pin
 861-entry replay pass.
 
-[IDA evidence](results/m3-ida/README.md) and
-[map/set evidence](results/m5-stdlib-trees/README.md) retain source identities,
+[IDA evidence](../../../rune-benchmark-results/m3-ida/README.md) and
+[map/set evidence](../../../rune-benchmark-results/m5-stdlib-trees/README.md) retain source identities,
 notices, raw outputs and development scopes. Final SML large repetitions
 remain unrecorded. M3/M4/M5 remain in progress and M8 remains planned.
 
@@ -2865,9 +2865,9 @@ zero and no interruptions. All 135 serial single fresh-process native smoke
 adapter samples pass before heavy validation. These remain diagnostics rather
 than ten-sample comparative performance claims.
 
-[Text/byte evidence](results/m5-stdlib-text/README.md),
-[Str evidence](results/m5-stdlib-str/README.md) and
-[hashtable evidence](results/m5-stdlib-hashtbl/README.md) retain complete original
+[Text/byte evidence](../../../rune-benchmark-results/m5-stdlib-text/README.md),
+[Str evidence](../../../rune-benchmark-results/m5-stdlib-str/README.md) and
+[hashtable evidence](../../../rune-benchmark-results/m5-stdlib-hashtbl/README.md) retain complete original
 observations, independent models, notices, source identities and raw records.
 The imported kernel bytes match the final semantic subjects. Original source
 quirks, explicit library/representation replacements and profile reductions
@@ -2907,9 +2907,9 @@ smoke diagnostics pass before the heavy checks. Legacy G2++ correctness fails
 before its timing phase, contributing zero accepted samples. These are
 adapter diagnostics, not ten-sample comparative performance claims.
 
-[LexiFi evidence](results/m5-lexifi-g2pp/README.md),
-[contrast evidence](results/m5-contrast/README.md) and
-[MiniLight evidence](results/m5-minilight/README.md) retain raw failures,
+[LexiFi evidence](../../../rune-benchmark-results/m5-lexifi-g2pp/README.md),
+[contrast evidence](../../../rune-benchmark-results/m5-contrast/README.md) and
+[MiniLight evidence](../../../rune-benchmark-results/m5-minilight/README.md) retain raw failures,
 full numerical/image/random-state references, independent component models,
 notices, source/input identities and separate development scopes. Original
 observer outputs agree with unmodified executables. Perturbation controls reject
@@ -2945,7 +2945,7 @@ tests and the five-pin 861-entry replay pass.
 
 [Full make JOBS=4 check](validation/oct18-hartel-sched-1331-acceptance.log)
 exits zero with 1331 profiles and all compiler/runedoc/runeopt cross-build
-comparisons. [Evidence](results/m3-hartel-sched/README.md) retains raw outputs,
+comparisons. [Evidence](../../../rune-benchmark-results/m3-hartel-sched/README.md) retains raw outputs,
 source identities, notices/attribution limits and separate source-order setup
 diagnostics. Final full SML large repetitions remain unrecorded.
 M3/M4 remain in progress and M8 remains planned.
@@ -2972,7 +2972,7 @@ inventory tests and the five-pin 861-entry replay pass.
 
 [Full make JOBS=4 check](validation/oct18-wave4main-1337-acceptance.log)
 exits zero with 1337 profiles and all compiler/runedoc/runeopt cross-build
-comparisons. [Evidence](results/m3-wave4main/README.md) retains raw outputs,
+comparisons. [Evidence](../../../rune-benchmark-results/m3-wave4main/README.md) retains raw outputs,
 source identities, notices/attribution limits and separate source-order setup
 failures. M3/M4 remain in progress and M8 remains planned.
 
@@ -3008,8 +3008,8 @@ Both public semantic shell targets pass Rune O0/O2. All 118 inventory tests
 and the five-pin 861-entry replay pass. Complete source notices, input origins,
 ancillary-tool exclusions, original/independent references, source identities
 and distinct development failures are retained in
-[Fulsom evidence](results/m3-m4-fulsom/README.md) and
-[Symalg evidence](results/m4-symalg/README.md).
+[Fulsom evidence](../../../rune-benchmark-results/m3-m4-fulsom/README.md) and
+[Symalg evidence](../../../rune-benchmark-results/m4-symalg/README.md).
 
 [Full make JOBS=4 check](validation/oct18-fulsom-symalg-1355-acceptance.log)
 exits zero with 1355 profiles and all compiler/runedoc/runeopt cross-build
@@ -3044,7 +3044,7 @@ These are adapter diagnostics rather than ten-sample comparative claims.
 Broader final large-profile runs remain unrecorded beyond the explicit probe.
 
 The public bounded semantic shell target passes Rune O0/O2. All 124 inventory
-regressions and the five-pin 861-entry replay pass. [Evidence](results/m3-m4-cacheprof/README.md)
+regressions and the five-pin 861-entry replay pass. [Evidence](../../../rune-benchmark-results/m3-m4-cacheprof/README.md)
 retains individual notices, source/input identities, original references,
 raw outcomes and distinct development/resource failures. Repeated archived
 input copies are replaced by byte-verified canonical references and group
@@ -3077,7 +3077,7 @@ These are not ten-sample comparative performance claims. Full selected large
 100-repetition runs remain unrecorded.
 
 The public Rune O0/O2 semantic target, all 124 inventory regressions and the
-five-pin 861-entry replay pass. [Evidence](results/m3-comp-lab/README.md)
+five-pin 861-entry replay pass. [Evidence](../../../rune-benchmark-results/m3-comp-lab/README.md)
 retains raw outcomes, notices/attribution limits, independent references and
 canonical input identity/group maps.
 
@@ -3113,7 +3113,7 @@ model does not establish legacy normal correctness; these are not ten-sample
 comparative claims. Full selected large runs remain unrecorded.
 
 The public Rune O0/O2 semantic target, 128 inventory regressions and five-pin
-861-entry replay pass. [Evidence](results/m4-fem/README.md) preserves original
+861-entry replay pass. [Evidence](../../../rune-benchmark-results/m4-fem/README.md) preserves original
 notices, model origins and exact data.3/fem.stdin alias, historical C-reference
 disposition, source/input identities and all raw failed diagnostics.
 Repeated archive fixture copies use verified canonical identity/group maps.
@@ -3140,7 +3140,7 @@ keep output-library differences distinct from the variable numerical failure.
 Eight full-normal Rune count samples agree with uninterrupted zero-exit guards.
 Original defective fixtures, the one-line index repair, thirteen corrected
 areas, ten complete trees, independent midpoint-grid counts and all table/
-synthetic/demand/checker controls are [archived](results/m3-solid/README.md).
+synthetic/demand/checker controls are [archived](../../../rune-benchmark-results/m3-solid/README.md).
 The source's unused line grouping remains; no tolerance accepts wrong results.
 Full selected large profiles remain unrecorded. Public Rune O0/O2 checks,
 128 inventory regressions and the five-pin 861-entry replay pass.
@@ -3173,7 +3173,7 @@ and passes all hosts, preserving every assertion and expected answer.
 [Details](validation/lift-mlkit-region.md) distinguish those outcomes.
 
 The public Rune O0/O2 semantic target, 132 inventory regressions and five-pin
-861-entry replay pass. [Archived evidence](results/m4-lift/README.md) retains
+861-entry replay pass. [Archived evidence](../../../rune-benchmark-results/m4-lift/README.md) retains
 the complete primary executable paper, guarded author credits, original and
 adapted sources, full results, diagnostics and canonical fixture identities.
 
@@ -3205,7 +3205,7 @@ full host coverage without algorithm or expected-answer changes.
 attempts from the passing final matrix.
 
 All 132 inventory regressions and the five-pin 861-entry replay pass.
-[Archived evidence](results/m3-parstof/README.md) retains complete source,
+[Archived evidence](../../../rune-benchmark-results/m3-parstof/README.md) retains complete source,
 embedded-data origins, translation/type-query scripts, raw outcomes, source
 identities and byte-verified canonical fixture maps.
 
@@ -3232,7 +3232,7 @@ Eight full-normal count samples agree with uninterrupted guards. Six serial
 single fresh-process native smoke samples and all preflights pass; they are
 adapter checks rather than ten-sample comparisons. Both private normal runs
 pass under default Rune O1. Full selected large SML runs remain unrecorded.
-[Archived evidence](results/m3-transform/README.md) retains all raw outcomes.
+[Archived evidence](../../../rune-benchmark-results/m3-transform/README.md) retains all raw outcomes.
 
 [Full make JOBS=4 check](validation/oct18-transform-1409-acceptance.log)
 exits zero with 1409 profiles, performance budgets, JIT checks, generated
@@ -3264,7 +3264,7 @@ ten-sample performance comparisons. Initial full large-state observations
 are retained separately; final-driver large runs remain unrecorded.
 
 The public Rune semantic target, 138 inventory regressions and five-pin
-861-entry replay pass. [Archived evidence](results/m3-simple-nofib/README.md)
+861-entry replay pass. [Archived evidence](../../../rune-benchmark-results/m3-simple-nofib/README.md)
 retains all 392 primary attempts, final canonical coverage, earlier source
 subjects, diagnostics, historical credits and fixture/matrix-log maps.
 
@@ -3277,8 +3277,8 @@ M3/M4 remain in progress and M8 remains planned.
 ## Happy parser-generator wave, 2026-10-18
 
 Imports happy-lazy and happy-strict: 491 programs and 1425 profiles.
-[Complete evidence and reproduction](results/m3-happy/README.md),
-[all profile outcomes](results/m3-happy/correctness.tsv) and
+[Complete evidence and reproduction](../../../rune-benchmark-results/m3-happy/README.md),
+[all profile outcomes](../../../rune-benchmark-results/m3-happy/correctness.tsv) and
 [host observations](validation/happy-host-results.md) retain failures
 alongside passing runs. This completes the Happy import wave; M3/M4 remain
 in progress and M8 remains planned.
@@ -3323,9 +3323,9 @@ Selected inputs, source algorithms and expected results remain unchanged.
 ## M3 closure: Pseudoknot/nucleic2, 2026-10-18
 
 Four imported variants bring the catalogue to 495 programs and 1437 profiles.
-[Complete evidence](results/m3-nucleic2/README.md),
-[all outcomes](results/m3-nucleic2/correctness.tsv) and
-[92-path coverage reconciliation](results/m3-nucleic2/inventory-coverage.tsv)
+[Complete evidence](../../../rune-benchmark-results/m3-nucleic2/README.md),
+[all outcomes](../../../rune-benchmark-results/m3-nucleic2/correctness.tsv) and
+[92-path coverage reconciliation](../../../rune-benchmark-results/m3-nucleic2/inventory-coverage.tsv)
 close the suitable pinned nofib kernel/GC inventory. M3 is complete;
 M4 remains in progress and M8 remains planned.
 
@@ -3368,7 +3368,7 @@ is not claimed. Native compile exit-status capture remains an M8 follow-up.
 
 ## Parser, Reptile, HPG and Fluid application wave, 2026-10-19
 
-[Complete evidence](results/m4-parser-reptile-hpg-fluid/README.md) covers eight
+[Complete evidence](../../../rune-benchmark-results/m4-parser-reptile-hpg-fluid/README.md) covers eight
 ports and 24 profiles, bringing the catalogue to 503 programs/1461 profiles.
 209/224 profile combinations pass, including all 128 Rune combinations.
 Three ML Kit smoke compile timeouts and twelve SML/NJ failures remain explicit.
@@ -3386,7 +3386,7 @@ Veritas; M8 remains open.
 
 ## Anna application wave, 2026-10-19
 
-[Recorded evidence](results/m4-anna/README.md) covers two ports and six
+[Recorded evidence](../../../rune-benchmark-results/m4-anna/README.md) covers two ports and six
 profiles, bringing the catalogue to 505 programs/1467 profiles. All 32 Rune
 combinations pass; the matrix has 45/56 passes. Eight smoke host deadlines,
 two normal SML/NJ32 type-inference failures and one normal lazy ML Kit compile
@@ -3406,7 +3406,7 @@ measurement regressions passing. M4 remains in progress and M8 remains open.
 
 The lazy and strict Veritas ports complete all 34 suitable pinned nofib real
 application paths. The catalogue contains 507 programs and 1473 profiles.
-[The complete evidence](results/m4-veritas/README.md) retains 46 passing
+[The complete evidence](../../../rune-benchmark-results/m4-veritas/README.md) retains 46 passing
 profile combinations out of 56, including all 32 Rune combinations at O0/O2
 across four engines. Nonpassing host compiles/source loads retain their
 actual deadline and phase status; no incorrect or incomplete run contributes
@@ -3429,7 +3429,7 @@ maintenance and final retention audit are still in progress.
 
 ## M8 closure: coverage, report and maintenance, 2026-10-19
 
-[The closure evidence](results/m8-closure/README.md) accounts for all 861
+[The closure evidence](../../../rune-benchmark-results/m8-closure/README.md) accounts for all 861
 primary entries and 38 companion variants. All 321 suitable source paths
 map to the 507 runnable programs and 1473 profiles. No suitable import
 remains merely scheduled. The independent evidence index links each program

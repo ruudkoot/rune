@@ -12,11 +12,18 @@ evaluation set ([latency-ring](#latency-ring), [latency-map](#latency-map),
 [latency-static-map](#latency-static-map)): their manifest rows name `rune`
 as the upstream and the program's own file as its source, and they have no
 inventory entry.
-M3 kernel coverage is [complete with recorded host exceptions](results/m3-nucleic2/README.md);
-M4 application coverage is [complete with recorded host exceptions](results/m4-veritas/README.md);
-M8 coverage closure is [complete](results/m8-closure/README.md). See the
+M3 kernel coverage is [complete with recorded host exceptions](../../../rune-benchmark-results/m3-nucleic2/README.md);
+M4 application coverage is [complete with recorded host exceptions](../../../rune-benchmark-results/m4-veritas/README.md);
+M8 coverage closure is [complete](../../../rune-benchmark-results/m8-closure/README.md). See the
 [initial report](REPORT.md), [maintenance procedures](MAINTENANCE.md) and
 [additional candidate review](CANDIDATES.md).
+
+Historical import-wave evidence is in the sibling
+[rune-benchmark-results archive](../../../rune-benchmark-results/README.md).
+These relative links assume `{PREFIX}/rune` and
+`{PREFIX}/rune-benchmark-results`; normal builds and benchmark runs work
+without the archive. The original `m6` and `m3-recursion` records remain
+under `results/` in this repository.
 
 | Name | Source | Description |
 |---|---|---|
@@ -14791,7 +14798,7 @@ transformed output for 0/1/2 repetitions in both evaluation and copy modes; they
 also check unused character heads, fresh copy spines, shared head cells, repeated
 translation, renderer partiality and rejection of wrong/truncated/extra fixtures.
 Profile checks count and validate every output spine. Complete evidence and
-resource outcomes belong in results/m3-hartel-compr and validation.md.
+resource outcomes belong in [results/m3-hartel-compr](../../../rune-benchmark-results/m3-hartel-compr) and validation.md.
 
 [Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) provides suite
 context, rather than measurements of this SML port. The pinned suite sources
@@ -14899,7 +14906,7 @@ transformed output for 0/1/2 repetitions in both evaluation and copy modes; they
 also check unused character heads, fresh copy spines, shared head cells, repeated
 translation, renderer partiality and rejection of wrong/truncated/extra fixtures.
 Profile checks count and validate every output spine. Complete evidence and
-resource outcomes belong in results/m3-hartel-compr and validation.md.
+resource outcomes belong in [results/m3-hartel-compr](../../../rune-benchmark-results/m3-hartel-compr) and validation.md.
 
 [Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) provides suite
 context, rather than measurements of this SML port. The pinned suite sources
@@ -15007,7 +15014,7 @@ transformed output for 0/1/2 repetitions in both evaluation and copy modes; they
 also check unused character heads, fresh copy spines, shared head cells, repeated
 translation, renderer partiality and rejection of wrong/truncated/extra fixtures.
 Profile checks count and validate every output spine. Complete evidence and
-resource outcomes belong in results/m3-hartel-compr and validation.md.
+resource outcomes belong in [results/m3-hartel-compr](../../../rune-benchmark-results/m3-hartel-compr) and validation.md.
 
 [Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) provides suite
 context, rather than measurements of this SML port. The pinned suite sources
@@ -15115,7 +15122,7 @@ transformed output for 0/1/2 repetitions in both evaluation and copy modes; they
 also check unused character heads, fresh copy spines, shared head cells, repeated
 translation, renderer partiality and rejection of wrong/truncated/extra fixtures.
 Profile checks count and validate every output spine. Complete evidence and
-resource outcomes belong in results/m3-hartel-compr and validation.md.
+resource outcomes belong in [results/m3-hartel-compr](../../../rune-benchmark-results/m3-hartel-compr) and validation.md.
 
 [Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) provides suite
 context, rather than measurements of this SML port. The pinned suite sources
@@ -15225,7 +15232,7 @@ source reconstruction formulas, unused RHS demand, memoized factors and delibera
 perturbed/nonfinite values. Default SML/NJ failures and separate replays are kept
 as diagnostics. Whole-program normal and large Rune pilots retain all 500 solves.
 Recorded coverage and the full repository check belong in validation.md and
-results/m3-wang; these pilot facts alone do not close M3.
+[results/m3-wang](../../../rune-benchmark-results/m3-wang); these pilot facts alone do not close M3.
 
 [Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) provides suite
 context. The pinned source supplies the algorithm and evaluation evidence here.
@@ -15334,7 +15341,7 @@ source reconstruction formulas, unused RHS demand, memoized factors and delibera
 perturbed/nonfinite values. Default SML/NJ failures and separate replays are kept
 as diagnostics. Whole-program normal and large Rune pilots retain all 500 solves.
 Recorded coverage and the full repository check belong in validation.md and
-results/m3-wang; these pilot facts alone do not close M3.
+[results/m3-wang](../../../rune-benchmark-results/m3-wang); these pilot facts alone do not close M3.
 
 [Partain's nofib paper](https://doi.org/10.1007/978-1-4471-3215-8_17) provides suite
 context. The pinned source supplies the algorithm and evaluation evidence here.
@@ -20176,7 +20183,7 @@ runs terminate with bus/segmentation faults or a fatal bogus-overflow diagnostic
 Retain valid source and canonical host settings; the compiler mechanism is
 unresolved. Failed correctness checks cannot supply accepted timing samples.
 Canonical primary, count and semantic results are recorded in the
-[Fourier wave evidence](results/m3-fft2/README.md).
+[Fourier wave evidence](../../../rune-benchmark-results/m3-fft2/README.md).
 
 ### Literature and diagnostic questions
 
@@ -20274,7 +20281,7 @@ runs terminate with bus/segmentation faults or a fatal bogus-overflow diagnostic
 Retain valid source and canonical host settings; the compiler mechanism is
 unresolved. Failed correctness checks cannot supply accepted timing samples.
 Canonical primary, count and semantic results are recorded in the
-[Fourier wave evidence](results/m3-fft2/README.md).
+[Fourier wave evidence](../../../rune-benchmark-results/m3-fft2/README.md).
 
 ### Literature and diagnostic questions
 
@@ -20758,7 +20765,7 @@ small full text, the source counterexample, output corruption/length rejection,
 zero iterations, front/back queue rebalancing and unused-field demand.
 Both policies agree with the complete original text in a guarded streaming
 pilot. Full normal calibration and canonical primary/count/semantic runs are
-recorded in the [paragraph wave evidence](results/m3-para/README.md). Full large SML repetition checks remain
+recorded in the [paragraph wave evidence](../../../rune-benchmark-results/m3-para/README.md). Full large SML repetition checks remain
 unrecorded. An earlier development consumer materialized an extra full output
 list and exceeded a private 1-GiB guard; retain that development observation
 separately from the final streaming consumer's checks.
@@ -20875,7 +20882,7 @@ small full text, the source counterexample, output corruption/length rejection,
 zero iterations, front/back queue rebalancing and unused-field demand.
 Both policies agree with the complete original text in a guarded streaming
 pilot. Full normal calibration and canonical primary/count/semantic runs are
-recorded in the [paragraph wave evidence](results/m3-para/README.md). Full large SML repetition checks remain
+recorded in the [paragraph wave evidence](../../../rune-benchmark-results/m3-para/README.md). Full large SML repetition checks remain
 unrecorded. An earlier development consumer materialized an extra full output
 list and exceeded a private 1-GiB guard; retain that development observation
 separately from the final streaming consumer's checks.
@@ -21160,7 +21167,7 @@ The 163-check target compares 64 original states, 64 independent states,
 angle/remainder semantics, smoke moments, every individually perturbed moment,
 nonfinite values and malformed/short references. Point comparisons use absolute
 and relative 1e-11. Full normal final-source Rune calibration passes; canonical
-host/count checks are recorded in the [Almabench evidence](results/m5-almabench/README.md). Full large SML repetition checks
+host/count checks are recorded in the [Almabench evidence](../../../rune-benchmark-results/m5-almabench/README.md). Full large SML repetition checks
 remain unrecorded, separately from the original observer's complete large
 moments. Incorrect results cannot supply accepted measurements.
 
@@ -34530,56 +34537,56 @@ independent result checks and literature.
 
 See the [complete provenance](parser-lazy/PROVENANCE.md) for the workload,
 source history, variants, translation, input profiles, result checks and references.
-Public profile, count and acceptance checks are [recorded](results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.
+Public profile, count and acceptance checks are [recorded](../../../rune-benchmark-results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.
 
 
 ## parser-strict
 
 See the [complete provenance](parser-strict/PROVENANCE.md) for the workload,
 source history, variants, translation, input profiles, result checks and references.
-Public profile, count and acceptance checks are [recorded](results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.
+Public profile, count and acceptance checks are [recorded](../../../rune-benchmark-results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.
 
 
 ## reptile-lazy
 
 See the [complete provenance](reptile-lazy/PROVENANCE.md) for the workload,
 source history, variants, translation, input profiles, result checks and references.
-Public profile, count and acceptance checks are [recorded](results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.
+Public profile, count and acceptance checks are [recorded](../../../rune-benchmark-results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.
 
 
 ## reptile-strict
 
 See the [complete provenance](reptile-strict/PROVENANCE.md) for the workload,
 source history, variants, translation, input profiles, result checks and references.
-Public profile, count and acceptance checks are [recorded](results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.
+Public profile, count and acceptance checks are [recorded](../../../rune-benchmark-results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.
 
 
 ## hpg-lazy
 
 See the [complete provenance](hpg-lazy/PROVENANCE.md) for the workload,
 source history, variants, translation, input profiles, result checks and references.
-Public profile, count and acceptance checks are [recorded](results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.
+Public profile, count and acceptance checks are [recorded](../../../rune-benchmark-results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.
 
 
 ## hpg-strict
 
 See the [complete provenance](hpg-strict/PROVENANCE.md) for the workload,
 source history, variants, translation, input profiles, result checks and references.
-Public profile, count and acceptance checks are [recorded](results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.
+Public profile, count and acceptance checks are [recorded](../../../rune-benchmark-results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.
 
 
 ## fluid-lazy
 
 See the [complete provenance](fluid-lazy/PROVENANCE.md) for the workload,
 source history, variants, translation, input profiles, result checks and references.
-Public profile, count and acceptance checks are [recorded](results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.
+Public profile, count and acceptance checks are [recorded](../../../rune-benchmark-results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.
 
 
 ## fluid-strict
 
 See the [complete provenance](fluid-strict/PROVENANCE.md) for the workload,
 source history, variants, translation, input profiles, result checks and references.
-Public profile, count and acceptance checks are [recorded](results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.
+Public profile, count and acceptance checks are [recorded](../../../rune-benchmark-results/m4-parser-reptile-hpg-fluid/README.md), including all host failures.
 
 ## anna-lazy
 
@@ -34595,7 +34602,7 @@ on every repetition, as the original driver does.
 
 See [anna-lazy/PROVENANCE.md](anna-lazy/PROVENANCE.md) for history,
 variants, adaptations, runtime questions, inputs, checks and references.
-Public validation is [recorded](results/m4-anna/README.md), including host exceptions.
+Public validation is [recorded](../../../rune-benchmark-results/m4-anna/README.md), including host exceptions.
 
 ## anna-strict
 
@@ -34611,7 +34618,7 @@ on every repetition, as the original driver does.
 
 See [anna-strict/PROVENANCE.md](anna-strict/PROVENANCE.md) for history,
 variants, adaptations, runtime questions, inputs, checks and references.
-Public validation is [recorded](results/m4-anna/README.md), including host exceptions.
+Public validation is [recorded](../../../rune-benchmark-results/m4-anna/README.md), including host exceptions.
 
 ## veritas-lazy
 
@@ -34624,7 +34631,7 @@ The maintained nofib driver repeats the same session 400/4000/20000 times.
 
 See [veritas-lazy/PROVENANCE.md](veritas-lazy/PROVENANCE.md) for history,
 variants, adaptations, runtime questions, inputs, checks and references.
-Public validation is [recorded](results/m4-veritas/README.md), including host deadlines and incomplete attempts.
+Public validation is [recorded](../../../rune-benchmark-results/m4-veritas/README.md), including host deadlines and incomplete attempts.
 
 ## veritas-strict
 
@@ -34637,4 +34644,4 @@ The maintained nofib driver repeats the same session 400/4000/20000 times.
 
 See [veritas-strict/PROVENANCE.md](veritas-strict/PROVENANCE.md) for history,
 variants, adaptations, runtime questions, inputs, checks and references.
-Public validation is [recorded](results/m4-veritas/README.md), including host deadlines and incomplete attempts.
+Public validation is [recorded](../../../rune-benchmark-results/m4-veritas/README.md), including host deadlines and incomplete attempts.

@@ -24,7 +24,7 @@ Classification is guarded by the exact pinned source SHA256
 b4153c8f1a4c4e9ea948113ee300fe62a7aee31e1ae0b69d79e121d4232eb946.
 A changed program requires fresh review. Opaque wrappers on algorithmic workloads
 receive individual review; the keyword alone does not trigger this disposition.
-The original OCaml Cmm [retains the opaque load and indirect call](../results/m5-opaque-audit/cmm.log).
+The original OCaml Cmm [retains the opaque load and indirect call](../../../../rune-benchmark-results/m5-opaque-audit/cmm.log).
 Three discovery tests cover this blocker, changed-source reconsideration and
 algorithmic opacity. All 38 inventory tests pass.
 

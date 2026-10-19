@@ -34,5 +34,5 @@ No access-path rewrite, numeric tolerance increase or host-specific program is
 used to turn the failure into a pass. The suite's added full-state observations
 remain distinct from the original timestep-only demand. No issue was posted.
 
-See the [semantic ledger](../results/m4-pic/semantic-summary.tsv) and
-[raw diagnostic records](../results/m4-pic/host-diagnostics/point-probe.sml).
+See the [semantic ledger](../../../../rune-benchmark-results/m4-pic/semantic-summary.tsv) and
+[raw diagnostic records](../../../../rune-benchmark-results/m4-pic/host-diagnostics/point-probe.sml).

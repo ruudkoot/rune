@@ -109,7 +109,7 @@ in the SML tests. Original inputs and notices retain their exact bytes.
 The [pinned suite sources](https://gitlab.haskell.org/ghc/nofib/-/tree/b7391df4540ac8b11b35e1b2e2c15819b5171798/real/veritas)
 establish exact workload ancestry. The [University of Kent publication record](https://www.cs.kent.ac.uk/pubs/1992/427/index.html)
 identifies Implementation of the Veritas Design Logic (1992) as related
-literature. [Public validation](../results/m4-veritas/README.md) records all 32
+literature. [Public validation](../../../../rune-benchmark-results/m4-veritas/README.md) records all 32
 Rune smoke/normal combinations passing, thirteen complete 218-check semantic
 groups, agreeing normal allocation counts and full repository acceptance.
 Host deadlines and incomplete attempts remain explicit; broader large-host

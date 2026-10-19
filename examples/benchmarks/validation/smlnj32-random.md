@@ -5,7 +5,7 @@ ports raise `Overflow` in their shared bounded random generator. Their raw
 30-bit bit streams match the pinned OCaml reference; integer rejection draws
 fail. This is separate from sandbox SIGSYS termination and earlier Word64 bugs.
 
-The [minimal checked probe](../results/m5-sequential-arrays/reference-observers/threshold-checked.sml)
+The [minimal checked probe](../../../../rune-benchmark-results/m5-sequential-arrays/reference-observers/threshold-checked.sml)
 is independent of the random generator:
 
 ```sml
@@ -22,7 +22,7 @@ operations have representable results. Supplying the same maximum through input
 and calling `variable` passes all three checks on that host.
 
 Six comparison configurations (Rune, MLton, both managed 64-bit SML/NJ releases,
-Poly/ML and ML Kit) pass all six checks. The [complete checked transcript](../results/m5-sequential-arrays/reference-observers/threshold-checked.log)
+Poly/ML and ML Kit) pass all six checks. The [complete checked transcript](../../../../rune-benchmark-results/m5-sequential-arrays/reference-observers/threshold-checked.log)
 records the 32-bit three-failure result separately. The compiler transformation
 responsible is not isolated by this probe; no optimizer cause or upstream issue
 identity is asserted.
@@ -37,13 +37,13 @@ Recheck after a managed host update and retain the failing baseline.
 The later dense-array game_of_life import reproduces this same Overflow on its
 smoke and normal profiles. Its independent rule/buffer/checker tests pass on the
 32-bit host; the source generator call triggers the isolated threshold failure.
-[Both complete attempts](../results/m5-array-life/correctness-attempts.tsv) remain
+[Both complete attempts](../../../../rune-benchmark-results/m5-array-life/correctness-attempts.tsv) remain
 separate from 26 passing correctness cases on other configurations.
 
 The seeded sequential evolutionary import also reproduces this Overflow in
 both selected profiles. Its six semantic cases involving tournament selection
 fail, while the six Onemax/tie/mutation/nonselection cases pass. All other
 configurations pass the unchanged tests and full population references.
-[Complete coverage](../results/m5-evolutionary/coverage.tsv) and both-level
+[Complete coverage](../../../../rune-benchmark-results/m5-evolutionary/coverage.tsv) and both-level
 semantic logs retain those failures. The RNG arithmetic and ordinary host
 configuration remain unchanged.

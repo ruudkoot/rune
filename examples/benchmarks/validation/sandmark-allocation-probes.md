@@ -16,7 +16,7 @@ feature policy, alongside the previously reviewed [morestacks](sandmark-opaque-c
 The [pinned OCaml interface](https://github.com/ocaml/ocaml/blob/99cb5d93fc30f1a6f3e69f5aa5d2063994d33a93/stdlib/sys.mli)
 defines Sys.opaque_identity with the compiler's %opaque primitive. Retained
 OCaml 4.14.1 Cmm shows opaque function values and indirect calls in
-[each reviewed program](../results/m5-allocation-audit/). The scripts compile
+[each reviewed program](../../../../rune-benchmark-results/m5-allocation-audit/). The scripts compile
 these sources for inspection without executing their large default loops.
 Complete original source bytes, aggregate Unlicense and source digests are
 retained as classification fixtures; individual authorship/grants are unstated.

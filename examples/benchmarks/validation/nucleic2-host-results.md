@@ -55,5 +55,5 @@ preflights. These single samples are adapter checks, not performance claims.
 The repository acceptance run passes, including all 498 compiler comparisons
 and seven-host runedoc and runeopt agreement. Private GHC and independent
 oracles, incomplete host groups and final profile outcomes are retained
-in the [complete evidence archive](../results/m3-nucleic2/README.md). No numerical bound or valid kernel computation has been weakened
+in the [complete evidence archive](../../../../rune-benchmark-results/m3-nucleic2/README.md). No numerical bound or valid kernel computation has been weakened
 to accommodate a host failure.

@@ -156,7 +156,7 @@ background and recorded observations from timing conclusions.
 
 ### Recorded validation outcome
 
-[Full evidence](../results/m3-happy/README.md) records 78 of 80 tagged
+[Full evidence](../../../../rune-benchmark-results/m3-happy/README.md) records 78 of 80 tagged
 profile passes, all 40 normal runs and 50280 semantic assertions.
 Two lazy smoke ML Kit compiles fail with empty logs and unclassified causes;
 normal and complete semantics pass on that host. Eight normal count samples

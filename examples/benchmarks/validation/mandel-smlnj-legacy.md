@@ -17,8 +17,8 @@ The historical orbit variants pass both profiles on this host. A passing smoke
 sample must not be presented as evidence of normal-profile correctness. The
 measurement adapter independently rejects mandel2-lazy's incorrect smoke
 precheck; that configuration supplies no fresh timing sample in that run.
-[Orbit coverage](../results/m3-mandel/coverage.tsv) and
-[tree coverage](../results/m3-mandel2/coverage.tsv) retain every case and category.
+[Orbit coverage](../../../../rune-benchmark-results/m3-mandel/coverage.tsv) and
+[tree coverage](../../../../rune-benchmark-results/m3-mandel2/coverage.tsv) retain every case and category.
 
 Twenty-six orbit and 132 tree semantic/negative checks run on all ten
 configurations twice, with Rune levels O0/O2 and native host defaults. Only
@@ -32,8 +32,8 @@ inputs and working directories. All six pass with @SMLalloc=64m. Default
 replays give four incorrect results, one Domain error and one pass: the lazy
 tree smoke replay passes although its canonical run fails. Replay command,
 input/source identities, working directory, limits and outputs are retained in
-[orbit diagnostics](../results/m3-mandel/host-diagnostics/canonical-legacy-replays.json)
-and [tree diagnostics](../results/m3-mandel2/host-diagnostics/canonical-legacy-replays.json).
+[orbit diagnostics](../../../../rune-benchmark-results/m3-mandel/host-diagnostics/canonical-legacy-replays.json)
+and [tree diagnostics](../../../../rune-benchmark-results/m3-mandel2/host-diagnostics/canonical-legacy-replays.json).
 The parent watchdog includes 15 seconds of launch overhead; these runs are
 supplementary diagnostics and supply no accepted timing samples.
 

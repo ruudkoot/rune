@@ -40,34 +40,34 @@ pilots, the validated M2 classic collection and the completed M5 sequential
 Sandmark collection. M3 kernels, M4 applications and M8 coverage closure
 are complete with recorded evidence.
 The current catalogue has 510 programs and 1482 profiles. The Happy wave
-has [recorded validation](../../examples/benchmarks/results/m3-happy/README.md):
+has [recorded validation](../../../rune-benchmark-results/m3-happy/README.md):
 all normal profiles and 50280 semantic assertions pass, with two unclassified
 ML Kit smoke compile failures retained. Counts, serial adapter diagnostics
 and repository acceptance (498 compiler comparisons plus seven-host
 runedoc/runeopt agreement) are recorded.
-Hartel nucleic2 closes M3 with [recorded validation](../../examples/benchmarks/results/m3-nucleic2/README.md):
+Hartel nucleic2 closes M3 with [recorded validation](../../../rune-benchmark-results/m3-nucleic2/README.md):
 all 64 Rune smoke/normal combinations pass at O0/O2. The full matrix has
 98 of 112 passes; all host exceptions and 116 raw attempts remain recorded.
 Twelve complete semantic groups each pass 5081 assertions; the partial
 legacy SML/NJ and empty-log ML Kit groups remain incomplete. Normal counts
 and repository acceptance pass. All 92 suitable M3 inventory paths now have
 implemented smoke/normal profiles and documented variants.
-M4 now registers parser, reptile, hpg and fluid with [recorded validation](../../examples/benchmarks/results/m4-parser-reptile-hpg-fluid/README.md):
+M4 now registers parser, reptile, hpg and fluid with [recorded validation](../../../rune-benchmark-results/m4-parser-reptile-hpg-fluid/README.md):
 209 of 224 profile combinations pass, including all 128 Rune combinations.
 All 32 normal allocation samples agree, 52 semantic groups complete, and
-repository acceptance passes. Host failures remain explicit. Anna has [recorded public validation](../../examples/benchmarks/results/m4-anna/README.md):
+repository acceptance passes. Host failures remain explicit. Anna has [recorded public validation](../../../rune-benchmark-results/m4-anna/README.md):
 45 of 56 profile combinations pass, including all 32 Rune combinations.
 Twelve semantic groups pass all 1963 assertions, eight normal allocation
 samples agree, and repository acceptance passes. Source-loading/compile
 timeouts and the confirmed SML/NJ32 literal defect remain explicit.
-Veritas closes M4 with [recorded validation](../../examples/benchmarks/results/m4-veritas/README.md):
+Veritas closes M4 with [recorded validation](../../../rune-benchmark-results/m4-veritas/README.md):
 46 of 56 profile combinations pass, including all 32 Rune combinations.
 Thirteen complete semantic groups each pass 218 assertions, eight normal
 allocation samples agree, and full repository acceptance passes. All 34
 suitable nofib real application paths now have implemented profiles;
 source-loading/compile deadlines remain recorded host failures.
 M8 closes the inventories, evidence, documentation and maintenance procedures.
-The [closure evidence](../../examples/benchmarks/results/m8-closure/README.md)
+The [closure evidence](../../../rune-benchmark-results/m8-closure/README.md)
 reconciles all 861 primary entries and 38 companions, indexes validation for
 every program and records the final acceptance checks. The
 [maintenance procedures](../../examples/benchmarks/MAINTENANCE.md) and
@@ -224,10 +224,10 @@ fixture references, and profile completeness.
 M5 completion is recorded in the [application closure evidence](../../examples/benchmarks/validation.md#m5-closure-sequential-sandmark-applications-2026-10-18):
 all suitable pinned executables/selectors are imported and documented. Native
 SML/NJ failures remain recorded, with incorrect results excluded from timings.
-M4 completion is recorded in the [Veritas closure evidence](../../examples/benchmarks/results/m4-veritas/README.md).
-M8 completion is recorded in the [coverage closure evidence](../../examples/benchmarks/results/m8-closure/README.md).
+M4 completion is recorded in the [Veritas closure evidence](../../../rune-benchmark-results/m4-veritas/README.md).
+M8 completion is recorded in the [coverage closure evidence](../../../rune-benchmark-results/m8-closure/README.md).
 M3 closure is recorded in the
-[Nucleic2 evidence](../../examples/benchmarks/results/m3-nucleic2/README.md),
+[Nucleic2 evidence](../../../rune-benchmark-results/m3-nucleic2/README.md),
 including retained host failures and all 92 suitable inventory paths.
 
 M1 depends on M0. M2, M3, and M5 build on M1; M4 follows M3's translation
@@ -424,4 +424,4 @@ Four planted fake-host error/timeout checks and full repository acceptance
 pass. Earlier empty-log failures retain their original unclassified causes;
 the change does not retroactively explain them. The application-wave evidence
 records this tooling change; the final M8 audit and maintenance work is recorded
-in the [coverage closure evidence](../../examples/benchmarks/results/m8-closure/README.md).
+in the [coverage closure evidence](../../../rune-benchmark-results/m8-closure/README.md).

@@ -20,7 +20,7 @@ original GHC program and independent blocked model return one. The 32-bit
 transcripts include a bogus fault or a bad object tag. The default diagnostic
 replay reproduces failures; all three supplied SML/NJ hosts pass with
 @SMLalloc=64m. The replay changes only that runtime argument. The archived
-[diagnostic source identities](../results/m3-wang/host-diagnostics/diagnostic-source-identities.tsv)
+[diagnostic source identities](../../../../rune-benchmark-results/m3-wang/host-diagnostics/diagnostic-source-identities.tsv)
 identify kernel/driver/checker bytes, also used by the imports.
 
 These outcomes establish sensitivity to garbage collection. Their exact cause

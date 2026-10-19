@@ -58,10 +58,10 @@ Source-loading and compile timeouts retain their actual status and phase.
 
 The latest completed Anna wave records all 32 Rune profile combinations
 passing, 12 complete semantic groups of 1963 checks, normal allocation
-agreement and full repository acceptance. [Veritas](results/m4-veritas/README.md)
+agreement and full repository acceptance. [Veritas](../../../rune-benchmark-results/m4-veritas/README.md)
 closes M4 with all 32 Rune combinations passing, thirteen complete groups of
 218 semantic checks, agreeing normal allocation counts and full acceptance.
-The [M8 closure](results/m8-closure/README.md) records the final inventory,
+The [M8 closure](../../../rune-benchmark-results/m8-closure/README.md) records the final inventory,
 metadata, documentation, routine and retained-evidence checks. Full large-host sweeps are explicit broader experiments, not
 implied by smoke/normal evidence.
 

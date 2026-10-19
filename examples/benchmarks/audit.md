@@ -1,7 +1,7 @@
 # Source audit and review history
 
 Current closure: all 321 suitable paths are implemented in 507 programs and
-1473 profiles. The [M8 evidence](results/m8-closure/README.md) and
+1473 profiles. The [M8 evidence](../../../rune-benchmark-results/m8-closure/README.md) and
 [initial report](REPORT.md) record the final reconciliation. The reviews below
 retain their historical counts and status at each recorded source epoch.
 
@@ -684,7 +684,7 @@ supplement result agreement; no compiler/runtime prerequisite is introduced.
 ## Happy parser generator (M3, 2026-10-18)
 
 The catalogue contains 491 programs and 1425 profiles after importing
-happy-lazy and happy-strict. [Recorded evidence](results/m3-happy/README.md)
+happy-lazy and happy-strict. [Recorded evidence](../../../rune-benchmark-results/m3-happy/README.md)
 includes complete original-language observers, 78 of 80 tagged profile passes,
 50280 semantic assertions, eight agreeing normal count samples, six serial
 native adapter diagnostics and repository acceptance with all compiler,
@@ -716,7 +716,7 @@ Four separately named ports preserve on-demand versus shared placed
 coordinates and memoized versus eager finite data. The catalogue contains
 495 programs and 1437 profiles. No scheduled M3 import path is absent from
 the manifest. All 92 suitable M3 paths have implemented smoke and normal
-profiles. [Final validation and coverage](results/m3-nucleic2/README.md)
+profiles. [Final validation and coverage](../../../rune-benchmark-results/m3-nucleic2/README.md)
 close M3, retaining host failures and incomplete assertion groups.
 
 The Marc Feeley source credit, Lennart Augustsson Haskell-port credit and

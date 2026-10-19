@@ -105,10 +105,21 @@ measurement-time checkout; payload hashes identify the executed bytes.
 
 ## Evidence retention
 
-Retain readable source snapshots, generated build descriptions, compiler
-status/streams, inputs, samples and reports even when a directory named build
-matches an ignore rule. Force-add reviewed text deliberately. Compiled caches,
-executables and heap images stay excluded; record their identities when useful.
+Store bulk run evidence outside the Rune repository, in the sibling
+[rune-benchmark-results archive](../../../rune-benchmark-results/README.md).
+Relative archive links assume `{PREFIX}/rune` beside
+`{PREFIX}/rune-benchmark-results`. Keep runnable sources, reviewed expected
+results, required input data and correctness tests in Rune. Preserve concise
+provenance and validation explanations with each benchmark; link to the
+external archive for historical reports and complete observations.
+
+Retain useful source/input identities, reference-generation code, notices,
+compiler status/streams, samples and reports in the external archive. Preserve
+each report's source/configuration epoch and distinguish incomplete attempts
+from completed checks. Review repeated snapshots and verbose raw logs before
+retaining them; the archive README describes what is safe to discard later.
+Compiled caches, executables and heap images stay excluded; record their
+identities when useful.
 ASCII hexadecimal can preserve binary protocol observations without adding
 binary payload exceptions. Preserve notices and raw fixture bytes.
 

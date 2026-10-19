@@ -22,7 +22,7 @@ The first player returns its first argument; the second returns its second
 argument. Strict right-fold evaluation calls the first twice and the second
 once. Rune and MLton reproduce that result and call counts.
 
-[The isolated probe](../results/m3-minimax/host-diagnostics/strict-only-probe.sml)
+[The isolated probe](../../../../rune-benchmark-results/m3-minimax/host-diagnostics/strict-only-probe.sml)
 reproduces the allocation error with the full minimax functor, one strict
 instantiation and a 256-MiB cap. It requires no game search, input file or prior
 auxiliary checks. A version without the counters also fails. A plain three-node
@@ -32,7 +32,7 @@ context but do not identify a compiler/runtime cause.
 
 The imported kernel and valid custom-player check are retained. No source
 rewrite or increased cap is used to turn this diagnostic into a pass. The
-complete [semantic ledger](../results/m3-minimax/semantic-summary.tsv), logs and
+complete [semantic ledger](../../../../rune-benchmark-results/m3-minimax/semantic-summary.tsv), logs and
 probe sources retain the failure and control scopes. No updated ML Kit build
 was tested and no upstream issue was posted.
 
@@ -44,7 +44,7 @@ for source in tests/basis/harness.sml \
   examples/benchmarks/shared/lazy.sml \
   examples/benchmarks/shared/suspend.sml \
   examples/benchmarks/shared/nofib-minimax.sml \
-  examples/benchmarks/results/m3-minimax/host-diagnostics/strict-only-probe.sml \
+  [examples/benchmarks/results/m3-minimax/host-diagnostics/strict-only-probe.sml](../../../../rune-benchmark-results/m3-minimax/host-diagnostics/strict-only-probe.sml) \
   tests/basis/finish.sml; do
   printf '%s/%s\n' "$PWD" "$source"
 done > tests/out/benchmarks/mlkit-minimax-repro/sources.txt

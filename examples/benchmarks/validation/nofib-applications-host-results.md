@@ -1,6 +1,6 @@
 # Parser, Reptile, HPG and Fluid host results
 
-The [recorded wave](../results/m4-parser-reptile-hpg-fluid/README.md) contains
+The [recorded wave](../../../../rune-benchmark-results/m4-parser-reptile-hpg-fluid/README.md) contains
 209 passing profile combinations out of 224. All 128 Rune combinations pass.
 Fifteen host failures remain visible: three ML Kit smoke compile timeouts,
 four HPG legacy SML/NJ result failures, two Fluid legacy result failures and
