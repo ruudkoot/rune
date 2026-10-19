@@ -1109,6 +1109,50 @@ static void make_registers(Jit *j, uint32_t n, const uint8_t *L, uint32_t f, con
     }
 }
 
+/* The arguments of a known call in registers (native-frames.md, M6): the
+   callee's code takes them at its register entry, each parameter in its
+   home (ph: jit.h, CodeObject.param_home), or in its slot, or not at all.
+   The slots' first, read from where the arguments are; then the homes,
+   as a parallel move -- each argument's word from its home of words or
+   from its slot (a raw home's slot ms_need_word made current), the
+   caller's homes being free once written back for the call, rax the one
+   to break a cycle with. */
+static void args_in_registers(Jit *j, uint32_t n, const uint8_t *L, const int8_t *ph) {
+    uint32_t above = j->m.nlocals + MS_HEADER;
+    for (uint32_t i = 0; i < n; i++)
+        if (ph[i] == REG_ARG_SLOT) ms_store_nth(M, BASER, above + i, read_i32(L + 4 * i));
+    int dst[64], src[64];   /* src: a machine register, or -1 for the slot of slot_of */
+    int32_t slot_of[64];
+    uint32_t k = 0;
+    for (uint32_t i = 0; i < n; i++) {
+        if (ph[i] < 0) continue;
+        int32_t s = read_i32(L + 4 * i);
+        const Home *h = ms_word_home(M, s);
+        dst[k] = ph[i];
+        src[k] = h ? h->reg : -1;
+        slot_of[k] = s;
+        k++;
+    }
+    while (k) {
+        uint32_t pick = k;
+        for (uint32_t x = 0; x < k && pick == k; x++) {
+            int busy = 0;   /* is its destination a source still to be read? */
+            for (uint32_t y = 0; y < k && !busy; y++) busy = y != x && src[y] == dst[x];
+            if (!busy) pick = x;
+        }
+        if (pick == k) {
+            /* a cycle: the destination of the first kept in rax, its readers told */
+            int d = dst[0];
+            as_mov_rr(A, R_S0, d);
+            for (uint32_t y = 0; y < k; y++) if (src[y] == d) src[y] = R_S0;
+            pick = 0;
+        }
+        if (src[pick] >= 0) { if (src[pick] != dst[pick]) as_mov_rr(A, dst[pick], src[pick]); }
+        else ms_load_bits(M, dst[pick], slot_of[pick]);
+        dst[pick] = dst[k - 1]; src[pick] = src[k - 1]; slot_of[pick] = slot_of[k - 1];
+        k--;
+    }
+}
 void emit_CALLK(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint32_t n) {
     (void)pc; (void)b;
     const Function *fn = &j->vm->prog.funcs[a];
@@ -1121,12 +1165,31 @@ void emit_CALLK(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uin
     ms_role(M, MR_ROOM);
     room(j, j->m.nlocals + MS_HEADER + fn->nlocals + fn->maxstack);
     ms_role(M, MR_ARGS);
-    make_registers(j, n, L, (uint32_t)a, fn);
+    /* the arguments in registers where the callee's code takes them so --
+       this very function, or one compiled already (native-frames.md, M6) --
+       else in the callee's slots */
+    const int8_t *ph = NULL;
+    const void *reg_entry = NULL;
+    if ((uint32_t)a == j->f) { if (j->nparams == n && n) ph = j->param_home; }
+    else {
+        const CodeObject *co = &j->jit->codes[a];
+        if (co->entry && co->param_home && co->nparams == n && n) {
+            ph = co->param_home;
+            reg_entry = (const char *)co->entry + co->reg_entry;
+        }
+    }
+    if (ph) args_in_registers(j, n, L, ph);
+    else make_registers(j, n, L, (uint32_t)a, fn);
     ms_role(M, MR_FRAME);
     call_header(j, -1, fn->reads_closure, &after, R_S3);
     as_add_ri(A, BASER, (int32_t)sizeof(Value) * (int32_t)(j->m.nlocals + MS_HEADER));   /* the callee's registers the code's */
     ms_role(M, MR_JUMP);
-    to_callee(j, (uint32_t)a, fn);
+    if (!ph) to_callee(j, (uint32_t)a, fn);
+    else if (!reg_entry) as_jmp(A, &j->labels[0]);   /* itself, past its entry's landing */
+    else {
+        jit_depend(j->jit, (uint32_t)a, j->f);
+        as_jmp_to(A, reg_entry);
+    }
     call_landing(j, &after);
     as_label_free(&after);
 }
@@ -1140,6 +1203,37 @@ void emit_TAILCALLK(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L,
     ms_role(M, MR_ROOM);
     room(j, need);
     ms_role(M, MR_ARGS);
+    /* the arguments in registers where the callee's code takes them so and
+       wants none in its slots, a parallel move into its homes -- a loop of
+       tail calls of itself, above all (native-frames.md, M6) */
+    {
+        const int8_t *ph = NULL;
+        const void *reg_entry = NULL;
+        if ((uint32_t)a == j->f) { if (j->nparams == n && n) ph = j->param_home; }
+        else {
+            const CodeObject *co = &j->jit->codes[a];
+            if (co->entry && co->param_home && co->nparams == n && n) {
+                ph = co->param_home;
+                reg_entry = (const char *)co->entry + co->reg_entry;
+            }
+        }
+        for (uint32_t i = 0; ph && i < n; i++) if (ph[i] == REG_ARG_SLOT) ph = NULL;
+        if (ph) {
+            args_in_registers(j, n, L, ph);
+            if (fn->reads_closure) {
+                ms_role(M, MR_FRAME);
+                as_st64i(A, BASER, HEADER_AT(0, 2), (int32_t)mk_unit());
+            }
+            ms_role(M, MR_JUMP);
+            if (!reg_entry) as_jmp(A, &j->labels[0]);
+            else {
+                jit_depend(j->jit, (uint32_t)a, j->f);
+                as_jmp_to(A, reg_entry);
+            }
+            ms_role(M, MR_BODY);
+            return;
+        }
+    }
     /* the arguments into the slots that are the callee's registers: in
        place where no argument is read from a slot an earlier one has
        written, else above the frame first, then moved down (M6). A

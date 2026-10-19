@@ -24,6 +24,7 @@ static void free_tables(JitProgram *jit) {
         free(jit->codes[i].pending);
         free(jit->codes[i].sites);
         free(jit->codes[i].land_offs); free(jit->codes[i].land_pcs);
+        free(jit->codes[i].param_home);
         if (jit->names) free(jit->names[i]);
     }
     free(jit->names);
@@ -276,6 +277,10 @@ void jit_invalidate(VM *vm, JitProgram *jit, uint32_t f) {
     free(co->land_offs); free(co->land_pcs);
     co->land_offs = co->land_pcs = NULL;
     co->nlands = 0;
+    free(co->param_home);
+    co->param_home = NULL;
+    co->nparams = 0;
+    co->reg_entry = -1;
     for (size_t i = 0; i < vm->hp; i++) {
         uintptr_t r = (uintptr_t)vm->handlers[i].native;
         if (r >= lo && r < hi) vm->handlers[i].native = NULL;

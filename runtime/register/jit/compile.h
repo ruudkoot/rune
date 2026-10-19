@@ -57,6 +57,12 @@ typedef struct Jit {
        code (CodeObject.land_offs) */
     uint32_t *land_offs, *land_pcs;
     uint32_t nlands, lands_cap;
+    /* this function's arguments in registers (native-frames.md, M6): per
+       parameter its home, REG_ARG_SLOT or REG_ARG_DEAD (jit.h), where its
+       code takes them so at its first instruction's label (nparams 0:
+       not so) -- for its own calls of itself, and its code object */
+    uint32_t nparams;
+    int8_t param_home[64];
 } Jit;
 /* a landing of a call bound here, returning to the RESULT at pc */
 void jit_landing_here(Jit *j, uint32_t pc);

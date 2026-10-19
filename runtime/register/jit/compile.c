@@ -397,6 +397,30 @@ int jit_h_primpush(VM *vm, int prim, uint32_t at) {
     return 0;
 }
 
+/* Whether tier 2's code takes its arguments in registers (native-frames.md,
+   M6), and where: at its first instruction's label, past the entry's
+   landing, the parameters live there in their homes -- each a home of
+   words, its value's word as the slot would hold it -- or in their slots
+   where they have none; a parameter it never reads is passed nowhere. Not
+   where a parameter's home is raw (a real's, a number's 64 bits: its
+   slot holds a word or a box the caller does not make), nor where the
+   function reads at its entry a register no argument gives. */
+static void param_homes(Jit *j) {
+    j->nparams = 0;
+    const Function *fn = &j->vm->prog.funcs[j->f];
+    if (j->tier != 2 || !j->landings || !j->live_in || !fn->has_meta || fn->arity > 64 || fn->arity > fn->nlocals) return;
+    uint64_t live = j->live_in[0];
+    for (uint32_t r = fn->arity; r < fn->nlocals && r < 64; r++) if ((live >> r) & 1) return;
+    for (uint32_t i = 0; i < fn->arity; i++) {
+        if (!((live >> i) & 1)) { j->param_home[i] = REG_ARG_DEAD; continue; }
+        const Home *h = ms_home(&j->m, (int32_t)i);
+        if (!h) { j->param_home[i] = REG_ARG_SLOT; continue; }
+        if (h->kind != HOME_GPR || !ms_word_home(&j->m, (int32_t)i)) return;
+        j->param_home[i] = (int8_t)h->reg;
+    }
+    j->nparams = fn->arity;   /* (0 where it has none: no argument to give) */
+}
+
 /* ---- the context ---- */
 
 /* the scan of a function (below): what the analysis of tier 2 walks */
@@ -1069,6 +1093,7 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
             }
         } else { free(j.live_in); j.live_in = NULL; }
     }
+    if (ok) param_homes(&j);
     /* at both tiers: what is live at each instruction, for a collection
        that comes while the frame runs (VM.top_live, M6) */
     uint64_t *sync_live = j.live_in;
@@ -1136,6 +1161,16 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
                 free(co->land_offs); free(co->land_pcs);
                 co->land_offs = j.land_offs; co->land_pcs = j.land_pcs; co->nlands = j.nlands;
                 j.land_offs = j.land_pcs = NULL;
+                /* its arguments in registers (M6) */
+                free(co->param_home);
+                co->param_home = NULL;
+                co->nparams = 0;
+                co->reg_entry = -1;
+                if (j.nparams && j.labels[0].at >= 0 && (co->param_home = malloc(j.nparams))) {
+                    memcpy(co->param_home, j.param_home, j.nparams);
+                    co->nparams = j.nparams;
+                    co->reg_entry = (int32_t)j.labels[0].at;
+                }
                 jit_code_placed(jit, f, at, j.m.a.n);
                 co->tier = (uint32_t)j.tier;
                 co->size = (uint32_t)j.m.a.n;

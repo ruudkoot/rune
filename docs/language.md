@@ -192,6 +192,7 @@ Where each part of the Definition is exercised. The rows are the ids above.
 | ID | Feature | Status | Notes |
 |---|---|---|---|
 | rt.tailcall | Proper tail calls (constant stack for tail recursion) | Supported | Not in the body of a `handle`. |
+| rt.call | A call passes each argument to its parameter, whatever the order of the caller's values (compiled code passes them in the callee's registers: docs/plans/native-frames.md, M6) | Supported | |
 | rt.deeprec | Deep non-tail recursion (the VM stack grows on demand) | Supported | |
 | rt.stack | A recursion without end stops at the stack's limit (`runevm --stack-size N`, 1 GiB by default) with `stack overflow` and status 2, not with the machine's memory | Supported | |
 | rt.gc | Garbage collection (generational copying collector, heap grows as needed) | Supported | `runevm --heap-size N` sets the initial semispace, `--nursery N` the nursery. `--heap-limit N` caps one semispace (at least 4096 bytes); no cap by default. Collection may reach the cap even when the requested fill ratio cannot be met; a retained graph plus a new allocation that cannot fit fails with `heap limit exceeded` and status 2. Two semispaces and non-heap storage are outside the managed size of live objects. |

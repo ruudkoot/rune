@@ -96,7 +96,18 @@ typedef struct CodeObject {
     uint32_t nlands;
     uint32_t *land_offs;
     uint32_t *land_pcs;
+    /* its arguments in registers (native-frames.md, M6): where tier 2's
+       code may be entered with the parameters already in their homes --
+       the first instruction's label, past the entry's landing, which
+       loads them from the slots -- as its offset from the entry, or -1
+       where there is none; and per parameter (the arity's) the home a
+       known call puts it in, or REG_ARG_SLOT (into its slot) or
+       REG_ARG_DEAD (nowhere: the callee never reads it) */
+    int32_t reg_entry;
+    uint32_t nparams;
+    int8_t *param_home;
 } CodeObject;
+enum { REG_ARG_SLOT = -1, REG_ARG_DEAD = -2 };
 
 /* Where compiled code's calls go (performance M6): per function, the
    entry of its code, or the region's stub that hands the frame, pushed

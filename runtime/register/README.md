@@ -475,7 +475,19 @@ unless the caller's code is gone or compiled again; the caller then
 depends on the callee as above). A tail call writes the arguments
 straight into the slots that are the callee's registers where no
 argument is read from a slot an earlier one wrote, else above the frame
-first and then down. A call through a closure (`CALL`, `TAILCALL`) finds
+first and then down. **Arguments in registers** (native-frames.md, M6):
+where the callee is this function or one compiled already at tier 2,
+whose code takes its parameters at its *register entry* -- its first
+instruction's label, past the entry's landing, which loads them from
+their slots (`CodeObject.reg_entry`, `param_home`) -- a known call, and a
+tail call that leaves no argument to a slot, puts each argument's word
+straight into the callee's home for it, as a parallel move (`rax` breaks
+a cycle), a parameter without a home into its slot and one the callee
+never reads nowhere, and jumps there; the callee's slots of those
+parameters are written when its homes are, at its first safepoint. A
+parameter whose home is raw, a register read at the entry that no
+argument gives, and tier 1 keep the slots; so do calls through a closure,
+whose callee is not known. A call through a closure (`CALL`, `TAILCALL`) finds
 both in that table by the word of the closure's function (`2f + 1`: the
 entry at 8 times it less 8, the room at 8 times it; checked against the
 number of functions where the section does not vouch for the closure),

@@ -39,7 +39,7 @@ plan's.
 | M3 | Frames walked, not indexed | done (2026-10-19): the walk of `vm.h`, given by each instruction set over the array, and every reader of frames outside the engines on it; the bootstrap 14.516G to 14.519G instructions (+0.02%), every output and count unchanged (*M3*) |
 | M4 | Frames in the value stack | done (2026-10-19): a header of three words below each frame's registers, `vm->frames` gone from `runevm`, returns by `jmp [r14-8]`, the watermark compared at the landing; a `fib` call 39.0 to 29.0 instructions and 11.0 to 8.3 cycles (MLton 8.7), a `tak` call 47.3 to 37.3 and 13.1 to 11.0; HOL's kernel work 49.98G to 43.95G instructions (−12.1%), the bootstrap's compiled code −10.3% and the whole −2.9%; the targets of instructions short (*M4*); `--count`, every output and the images' format unchanged |
 | M5 | The watermark by a return barrier | done (2026-10-19): the frame at the watermark returns through a stub that lowers it and moves itself to the caller; no other return compares anything; a `fib` call 29.0 to 27.0 instructions, a `tak` call 37.3 to 35.3 (targets 24 and 32 short); the bootstrap −1.1% instructions, HOL's kernel work −2.6%; 64,033 returns through the barrier in the bootstrap's 72M; `--count` and every output unchanged (*M5*) |
-| M6 | Arguments in registers | not started; prototype F1 |
+| M6 | Arguments in registers | done (2026-10-19), kept: a known call, and a tail call, puts its arguments in the homes the callee's tier-2 code takes them in, at its register entry; the bootstrap −0.93% instructions (the gate 0.5%), HOL's kernel work −1.06%; a `fib` call 27.0 to 26.0 instructions, a `tak` call 35.3 to 31.7 (target for `fib` 23.5 short); `--count` and every output unchanged (*M6*) |
 | M7 | Returns the processor predicts | not started; prototype F1 |
 | M8 | The allocation pointer in a register | not started |
 | M9 | Measure again: the owner's goal | not started |
@@ -1529,6 +1529,40 @@ driver.
 **Targets:** a `fib` call at most 23.5 instructions (variant 4: 23.0);
 kept if the bootstrap's instructions drop by at least 0.5%, otherwise
 dropped and the measurement recorded here.
+
+**Done** (2026-10-19; `runtime/register/jit/emit.c`, `compile.c`,
+`jit.h`), and kept:
+
+* **The register entry.** Tier 2's code with homes takes its parameters,
+  each live one in its home of words or else in its slot, at its first
+  instruction's label, past the entry's landing that loads them from the
+  slots (`param_homes`: not where a parameter's home is raw, nor where a
+  register no argument gives is read at the entry). The code object
+  records the entry and, per parameter, its home, `REG_ARG_SLOT` or
+  `REG_ARG_DEAD` (`CodeObject.reg_entry`, `param_home`); the slot entry
+  stays for the driver, the interpreter's calls, OSR and the calls that
+  do not know the callee's homes.
+* **The call.** A known call to this function or to one compiled already
+  puts each argument's word into the callee's home for it, a parallel
+  move from the caller's homes and slots (the homes are free once
+  written back for the call; `rax` breaks a cycle), a parameter with no
+  home into its slot and one the callee never reads nowhere, and jumps
+  to the register entry, depending on the callee as a direct jump does
+  (`jit_depend`). A tail call does so where no argument goes to a slot;
+  a loop's tail call of itself is a jump already. A call through a
+  closure keeps its argument in the slot (D5's "a call through a
+  closure's one": it would want an entry of its own in the table of
+  calls for its one argument, and the bootstrap makes 10.6M such calls
+  against 61.4M known ones -- not built).
+* **Measured** (`perf stat`, exact; M5's VM against M6's): a `fib` call
+  27.0 to 26.0 instructions and a `tak` call 35.33 to 31.67 (`fib`'s
+  target 23.5: what is left is M4's and the body's); the bootstrap
+  13.955G to 13.826G instructions (−0.93%: kept), HOL's kernel work
+  42.822G to 42.369G (−1.06%); the tail calls' part of it 0.06% and
+  0.32%; the seven programs of MLton's set `tak` −8.0%, `fib` −3.3%,
+  `tyan` −1.7%, `logic` −1.4%, `nucleic` and `model-elimination` −0.7%,
+  `barnes-hut` 0. A test permutes arguments through calls and tail calls
+  (`tests/lang/rt.call_argument-cycle`).
 
 ### M7. Returns the processor predicts (M, measured)
 
