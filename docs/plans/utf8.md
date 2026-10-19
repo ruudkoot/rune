@@ -76,6 +76,122 @@ The milestones form two tracks. Neither waits for the other:
 M1 can go first; two of its items carry out D5's DEL row and D8. M5 can
 start on the first day. M11 closes both tracks.
 
+All eleven are done; *At the close* has the last checks, the bugs found,
+and what is left open.
+
+## At the close
+
+M0 to M11 are done (2026-10-19). This section gathers what a later
+review needs: the last checks, the bugs found and where they went, and
+what is left open. The campaign's logs are in the drafts
+(`~/.cache/claude-rune-drafts/utf8/impl`, `logs/` and `README.md`).
+
+### The last checks
+
+On M11's commit (`667ca3eb`), with MLKit 4.7.25 (*Left open*):
+- `make check`: 16,522 passed, 2 skipped (`m11-final`).
+- HOL-rune built afresh under the default: "Hol built successfully", 221
+  theories (`m11-final-hol`).
+- MLton's compiler, 606 files, compiled under the default: 725 s, 5.7 GB
+  (`m11-final-mlton`).
+- D2, once (`m11/d2-modes.sh`): the 288 tests of `tests/lang` that name no
+  mode compiled and ran the same in the default and under `--unicode`:
+  the compiler's messages and status, and the program's output and
+  status. Left out: 21 whose `.cargs` name a mode, and 8 that restore an
+  image.
+
+### Bugs found in Rune
+
+| Bug | Found | Fixed |
+|---|---|---|
+| `WideTextIO`'s decoder took overlong forms and surrogates, and raised `Chr` past 0x10FFFF; its encoder wrote surrogates | M0, M1 | M1 (`362762f7`) |
+| `WideTextIO` lost the characters before a bad sequence in the same chunk | M1 | M8 |
+| `Serve.parse` turned a lone surrogate's `\u` into bytes that are not UTF-8 | M0 | M1 (`c6d588ad`) |
+| `Json.encode` raised `Domain` on text that is not UTF-8, so `--diagnostics-json` died on a Latin-1 file name | M0 | M1 (`c6d588ad`) |
+| `\ddd` above 255 refused at the wide types; DEL taken raw in a literal; "unexpected character" named a byte | M0 | M1 |
+| A raw `"é"` at `WideString` was two code points; wide literals were parsed again at every evaluation | E2, M0 | M4 |
+| A lone CR miscounted lines; a byte order mark at the start was an error | E2 | M3 |
+| `WideString.^` and `concat` went through lists; `WideTextIO` decoded a byte at a time | E8 | M8 (`ad4e1a56`) |
+| Type names printed without their structure ("char in the structure but char in the signature") | E6 | M8 |
+| `tests/lib/unicode/utf8.sml` tested 7 of Kuhn's 85 cases | E4 | M5 (`9acaf5f3`) |
+| File names printed unescaped in a diagnostic's first line; `keepLines` dropped the text columns need | M0 (*Appendix A*), E10 | M7 (`c398b6d1`) |
+| `docs/unicode.md` wrong on surrogates, `WideString.scan` and MLton's `WideChar`; `docs/language.md` contradicted itself on `\u`; `docs/bytecode.md` gave the basis version as 1 | M0, M2 | M1, M2 |
+| `make check` flaky: two makes raced on `build/gmp/selected.tmp` | M1 | `f322ed7e` |
+| `make check` flaky: the REPL's four ways shared `reload.in`'s files | M3 | `9f7834ff` |
+| A name took the byte order mark's `ï` before the "looks like UTF-8" check; a cached unit kept its warnings whatever `--no-unicode-lints` said | M6 | M6 |
+| The REPL counted an old frame's column in the newest of the texts named `stdIn` | M7 | M7, by keeping such a column in bytes |
+| The REPL's `:search 'a list -> int` found `size`, once it was overloaded | M10 | `2f56b2a3` |
+| A reader of random functions never ended in `WideStringCvt`'s laws | M9 | `811787715` |
+| Paths opened with `CreateFileA`, and arguments in the ANSI code page, on Windows | M0 | not fixed: *Later* |
+
+### Bugs found in other compilers
+
+| System | What | Report |
+|---|---|---|
+| MLKit 4.7.23 and 4.7.25 | a tail call inside a `let` keeps a region and a frame for every step, despite `--preserve_tail_calls`, so `unicode.utf8` takes 7 GB | `docs/bugreport/mlkit/preserve-tail-calls` (M5); not sent upstream |
+| SML/NJ 110.99.9, 64 bits | "bogus overflow fault" now and then in `Normalize`'s properties | `docs/bugreport/smlnj/GC/bogus-overflow-fault` (M5); not reduced, not sent upstream |
+| MLKit 4.7.25 | a raw TAB in a string is taken, as six spaces | none |
+| HaMLet 2.0.1 | a literal silently loses characters: `"café"` in Latin-1 is `"caf"`, and one with U+202E or a combining mark keeps only what comes before it | none |
+| Moscow ML 2.10.1 | a NUL in a comment ends the input ("comment not terminated"), where the Definition allows any character | none, here or in `rune-mosml` |
+| MLKit 4.7.25 and SML/NJ 110.99.9 | a raw DEL taken in a string, which the Definition refuses | none (an extension rather than a fault) |
+| SML/NJ 110.99.9 | `Real.fromLargeInt`'s `maxFinite` check of xc1 wrong under load, right alone | none, and no `HOST-FLAKY` line |
+| MLton 20241230 with `allowExtendedTextConsts` | checks only the shape of UTF-8, and reads a wide literal one character a byte | none (an opt-in extension) |
+
+Smaller: Poly/ML reports an escape out of range as "Conversion exception",
+and reports an error on a line ended by a lone CR on line 1; SML/NJ reports
+it on "line 3.5". MLton's `lib/mlton/set/universe-equal.fun` writes
+`functor UniverseEqual (Error.: T)`, which is not Standard ML and which no
+build of MLton compiles; Rune refuses it rightly.
+
+### Left open
+
+- **Bug reports to write and send.** The three without one above (MLKit's
+  TAB, HaMLet's literals, Moscow ML's NUL, the last for `rune-mosml`), and
+  the two written, which are not sent.
+- **`~/.local/rune-hosts/mlkit` links to MLKit 4.7.23**, and the tree needs
+  4.7.25 (`scripts/fetch-hosts.sh`): `make check` stops at
+  `bin/rune-mlkit.bin`, with "Mul: diffef failed", fixed in 4.7.24. Every
+  check of the campaign gave `MLKIT=` and `MLKIT_LIB=` of the 4.7.25 beside
+  it. Repointing the link is the owner's.
+- **`Word8Vector.vector` admits equality** where the specification says
+  it need not: the owner's note `docs/plans/deviation-word8vector.md`, in
+  the main tree and on no branch, with options A, B and C, "to look at
+  later". It is why `RUNE_MONO_VECTOR_EQ` stays inside the library (D18,
+  M8).
+- **D2's check as a test.** *Testing the modes* asks that every accept test
+  of the default also run under `--unicode` with the same output. It ran
+  once (*The last checks*); no tier runs it.
+- **The corpora as a test.** `scripts/lex-corpus.sh` against a recorded
+  expectation, in the runner's nightly tier (*Testing the modes*): the
+  script is there, the expectation and the tier are not.
+- **`WideStringCvt`'s `skipWS` law**, to be restated for both widths
+  (`tests/basis/law-skips.txt`), and `WideTextIO`'s stream laws (*Later*).
+- **`WideChar.fromCString` and `\x` above 255:** MLton's
+  `regression/widechar.sml` test42 wants `\x67ab` to be U+67AB; Rune's
+  reads `\x` to 255, as the note on `WideChar` says (M1). The Basis
+  track's question, not taken up.
+- **rune-ide** builds against Rune `3a3c504f`, and would need three changes
+  to build against this branch (M7's *Done*): `rune.build` for
+  `sources.txt`, a mode for `Source.readFile`, and its own name for its
+  UTF-8 decoder. None is made.
+- **Parsing** was not measured apart from lexing (brief line 31): it sees
+  the same tokens.
+- **The merge.** This branch, `utf8`, is not pushed and not in master.
+
+### Decided by the lead, for the owner to confirm
+
+- **G1**, the ASCII default, passed on the corpus results, which were as
+  predicted (M3). The owner may still object.
+- **`Compiler.compileIn MODE`** in place of a field of `Compiler.compile`,
+  so that `compile`'s type, which HOL-rune uses, stays (M2).
+- **The REPL's escapes of a wide value** are Standard ML's short ones
+  where there is one (`\n`), else `\u` or `\U` (M7). D14 says what is
+  escaped, not how.
+- **D17's Unicode version in the cache** needs no setting of its own: the
+  compiler's identity (`scripts/gen-version.sh`) hashes the files of
+  `rune.build`, `lib/unicode`'s tables among them, so new tables are a new
+  compiler to the cache.
+
 ## The request
 
 The owner's brief, as written:
@@ -152,8 +268,9 @@ Two plans changed with them:
   while ASCII is asked for by flag. So the ASCII mode becomes the default as
   its rules land, in M3 and M4, and not in M11 (D16).
 - **How the mode is set.** The name `ascii` stays in the mode's vocabulary,
-  for build files and `Compiler.compile`, which must be able to say it when
-  the command line says `--unicode` (D1).
+  for build files and `Compiler.compileIn`, which must be able to say it when
+  the command line says `--unicode` (D1; M2 kept `Compiler.compile`'s type,
+  for HOL-rune, and added `compileIn`).
 
 **And (2026-10-18):** `\U`, Rune's extension from Successor ML, is allowed only
 under `--unicode` (D7). The default then adds nothing to the Definition's
@@ -194,15 +311,15 @@ segmented digit one that is also among the lookalikes of `|`, counts once.
 | record the fix in `docs/unicode.md` as a specification change request | M9, *Appendix C* |
 | record and pin deviations | M9; each milestone's *Done when* |
 | the deviation about real vectors and equality | D18; *Where we are* (*The wide family*) |
-| shims if xc1 or xc2 break | E6, M8, M9 (gate G3) |
+| shims if xc1 or xc2 break | E6, M8, M9 (gate G3), M10 (three lines for xc1) |
 | literals and `^` at both widths, through overloading and the signatures | partly: literals already, and `^ size concat substring` (D20, M10); `str implode explode` later, `chr print` never (*Where this roadmap recommends otherwise*) |
 | code points in literals limited to what the type holds | D8, M4 |
 | read source as `WideChar`/`WideString` | *What the brief gets wrong* (W2), *The architecture* |
 | `--ascii`: 32 to 126 and the usual control characters; escapes for the rest | D4, D5, M3 |
 | no raw control characters in literals | D5, M3 |
-| Rune's own source keeps to it | A3, E9, M11 |
+| Rune's own source keeps to it | A3, E9; done in M3 and M4 |
 | a deviation where this is stricter than SML '97 | *What the specifications say*, D4 |
-| check MLton and HOL4 | C4, D4, E1, E9: both pass the ASCII default if comments may hold UTF-8 |
+| check MLton and HOL4 | C4, D4, E1, E9: both pass the ASCII default if comments may hold UTF-8; M11 built HOL-rune and compiled MLton under it |
 | `--ascii`, `--latin1` and `--utf8` | the owner's names: the default, `--unicode`, `--unicode=latin1` (*The request*); D1, D3, D6, M2 to M4 |
 | `--latin1` and the Latin-1 code page | C1 to C3, D2, D3 |
 | `--utf8`, with the control characters still restricted | D5, D6 |
@@ -780,7 +897,9 @@ checks it against `tests/basis/deviations.txt` (`docs/doc-comments.md`;
 
 ### What is wrong today
 
-Found while writing this, all to be fixed in M1:
+Found while writing this. M1 fixed the first eight rows, M5 the tests of
+`Utf8`, M8 the three rows of the wide family; MLKit's memory is MLKit's
+(*At the close* has the report), and Windows is *Later*:
 
 | What | Where | Effect |
 |---|---|---|
@@ -1583,7 +1702,7 @@ and continue) decodes in 0.58M at first use.
 | `make check-docs` | passes: 65 signatures token-equal to their transcriptions, 205 claims |
 | `make matrix-quick`, rune | 139,371/139,371 |
 | `make matrix-quick`, xc1 on MLton, SML/NJ (three builds), Poly/ML | no failure |
-| `make matrix-quick`, xc1 on MLKit | 175 failures, the same with master's library: not this change's |
+| `make matrix-quick`, xc1 on MLKit | 175 failures, the same with master's library: not this change's (MLKit 4.7.23; none under 4.7.25, which the tree needs: M1) |
 | xc2:mlton | 138,711 checks, no failure |
 | compile of the compiler with the new library | +0.036% instructions; with the edits kept line-neutral, `bin/rune.rbc` is byte for byte master's |
 
@@ -2270,7 +2389,9 @@ when it lexes a cached unit's source again.
     `--color always` with a space, takes `--unicode` only with `=` as well;
   - by an annotation on a unit's line in a build file, which can also say
     `ascii` for a unit of a build whose command line says `--unicode`;
-  - by a field of `Compiler.compile`'s parameters;
+  - by a field of `Compiler.compile`'s parameters (built in M2 as an entry
+    of its own, `Compiler.compileIn MODE`, so that `compile`'s type, which
+    HOL-rune uses, stays);
   - and stored in the unit's cache settings. **Recommended.**
   - One program may mix modes. HOL4's theories can be read with `--unicode`
     where Rune's Basis is ASCII.
@@ -2949,7 +3070,8 @@ The sizes are lines of code and tests, not counting generated tables.
     - by `--unicode` and `--unicode=utf8|latin1`, the owner's names, with the
       hint for `--unicode latin1` written with a space (D1);
     - by a build-file annotation (`ascii`, `unicode`, `unicode=latin1`);
-    - by `Compiler.compile`'s parameters.
+    - by `Compiler.compileIn MODE` (*Done* below: not a parameter of
+      `Compiler.compile`).
     
     The REPL's `use` and typed input take the REPL's own.
   - The unit cache's settings take the mode, and so do the unit files. The
@@ -4079,7 +4201,7 @@ was passed on 2026-10-18 with D20.
 | `--unicode`, `--unicode=utf8` | M2 | a UTF-8 file, Unicode outside comments |
 | `--unicode=latin1` | M2, M4 (D3) | a Latin-1 file, converted as it is read; a raw character is its code point |
 | a mode on a unit's line in a build file: `ascii`, `unicode`, `unicode=latin1` | M2 | the unit's mode, over the command line's |
-| `Compiler.compile`'s `mode` | M2 | the mode of what it compiles |
+| `Compiler.compileIn MODE` (in place of a `mode` of `Compiler.compile`) | M2 | the mode of what it compiles |
 | `rune -i --unicode` | M2 | the REPL's mode for typed input and `use`; typed input is always UTF-8, so `=latin1` applies only to files it `use`s |
 | `--no-unicode-lints` (settled in M6), for `rune` and `rune-repl` | M6 | turns off D13's warnings, and is in an input file's key |
 
@@ -4117,7 +4239,7 @@ existing generator. The hosts are those of `make hosts`.
   some, by design.
   - The corpora of E1 and E9 are the guard: every source milestone runs them.
   - G1 settles the default with the results in hand.
-  - The five files of Rune's tree are known, and M11 rewrites them.
+  - The five files of Rune's tree are known; M3 and M4 rewrote them.
 - **The cache serves a unit compiled under another mode.** M2 puts the mode
   in the key before any mode refuses anything, with a test.
 - **Tables slow the compiler down.** They are decoded at first use, and
@@ -4412,8 +4534,8 @@ What M9 writes into `docs/unicode.md`, for the maintainers of the Basis
 Library specification. E6 type-checked it on Rune, HaMLet, MLton, Poly/ML and
 SML/NJ, and built it into a copy of Rune's library, where every configuration
 of the Basis suite passed with it (rune; xc1 on MLton, Poly/ML and three
-builds of SML/NJ; xc2:mlton). xc1 on MLKit has 175 failures, the same with
-master's library.
+builds of SML/NJ; xc2:mlton). xc1 on MLKit 4.7.23 has 175 failures, the same
+with master's library, and none under 4.7.25 (M1).
 
 ### What is wrong
 
